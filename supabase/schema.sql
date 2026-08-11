@@ -1838,7 +1838,7 @@ DECLARE
   v_participant_id uuid;
   v_group_id       uuid;
   v_product_id     uuid;
-  v_gamer          jsonb;
+  v_participant    jsonb;
   v_product        jsonb;
   v_group          jsonb;
   v_site           jsonb;
@@ -1849,8 +1849,8 @@ BEGIN
   -- no uid there is nobody for it to be scoped TO, so there is no correct
   -- document to return and the only safe reply is a refusal. Checked FIRST and
   -- on its own, rather than folded into the predicate below, because the whole
-  -- failure this migration exists to fix was a NULL uid disappearing into a
-  -- larger boolean expression.
+  -- failure 00152 exists to fix was a NULL uid disappearing into a larger
+  -- boolean expression.
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -1864,6 +1864,10 @@ BEGIN
   -- answer IDENTICALLY, on purpose. Distinguishing them would turn this
   -- function into an oracle for "is this a real enrollment id", which is a
   -- question no caller has a right to ask about a row that is not theirs.
+  --
+  -- The first arm is also what admits a PARENT'S OWN SEAT with no change: the
+  -- participant is the caller, so it matches directly and the parent-link
+  -- fallback is never reached.
   --
   -- `IS NOT DISTINCT FROM`, not `=`: the equality form is only safe here
   -- because of the guard above, and a predicate whose correctness depends on a
@@ -1887,15 +1891,16 @@ BEGIN
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- The child this page is about. The page is gamer-scoped and reachable by
+  -- Whoever holds the seat. The page is participant-scoped and reachable by
   -- URL, so it cannot get the name from a dashboard card it was not opened
-  -- from. This is the caller's own child (or the caller themselves) — the
-  -- ownership check above is what makes that true.
+  -- from. This is the caller's own child, or the caller themselves — the
+  -- ownership check above is what makes that true, and it is why the key is
+  -- not spelled for a gamer any more.
   SELECT jsonb_build_object(
     'id',         pr.id,
     'first_name', pr.first_name
   )
-  INTO v_gamer
+  INTO v_participant
   FROM public.profiles pr WHERE pr.id = v_participant_id;
 
   -- The product shell. Names live in product_translations, not on `products`,
@@ -1960,7 +1965,7 @@ BEGIN
 
   -- Who teaches this group, by first name. Nothing else about them: not the
   -- surname, not the email, not the verification state. A family is being told
-  -- who their child is with, which is a first name's worth of information.
+  -- who they are with, which is a first name's worth of information.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
     INTO v_gedus
     FROM (
@@ -1974,14 +1979,14 @@ BEGIN
     ) AS gedu_rows;
 
   -- The group's whole stored history, newest first — including sessions that
-  -- predate this child's enrolment, and including rows the schedule no longer
-  -- projects. See 00151's header for why there is no window here.
+  -- predate this participant's enrolment, and including rows the schedule no
+  -- longer projects. See 00151's header for why there is no window here.
   --
   -- `report` and nothing else of the two note fields. `attendance` is ONE
-  -- answer — this gamer's — rather than the gedu feed's map over the roster,
-  -- which is what makes another child's mark structurally unreachable rather
-  -- than merely unrendered. NULL means unmarked, which is a third state and not
-  -- the same claim as 'absent'.
+  -- answer — this participant's — rather than the gedu feed's map over the
+  -- roster, which is what makes another child's mark structurally unreachable
+  -- rather than merely unrendered. NULL means unmarked, which is a third state
+  -- and not the same claim as 'absent'.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'session_date' DESC), '[]'::jsonb)
     INTO v_sessions
     FROM (
@@ -2003,12 +2008,12 @@ BEGIN
     ) AS session_rows;
 
   RETURN jsonb_build_object(
-    'gamer',    v_gamer,
-    'product',  v_product,
-    'group',    v_group,
-    'site',     v_site,
-    'gedus',    v_gedus,
-    'sessions', v_sessions
+    'participant', v_participant,
+    'product',     v_product,
+    'group',       v_group,
+    'site',        v_site,
+    'gedus',       v_gedus,
+    'sessions',    v_sessions
   );
 END;
 $$;
@@ -2018,7 +2023,7 @@ $$;
 -- Name: FUNCTION get_my_family_product_feed(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports, and the named gamer''s own attendance marks. Self-scoping — the caller must be the participation''s gamer or a parent linked to them; an unplaced participation has no page. Carries no gedu note of any scope, no roster, no other child''s marks, no parent email, no material link and no owed/completeness state.';
+COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports, and the named participant''s own attendance marks. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page. Carries no gedu note of any scope, no roster, no other participant''s marks, no parent email, no material link and no owed/completeness state.';
 
 
 SET default_tablespace = '';
