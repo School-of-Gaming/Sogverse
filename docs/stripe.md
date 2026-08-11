@@ -39,6 +39,8 @@ Two things decide when it runs:
 
 Throwaway per-checkout products that Stripe minted for past camp sales carry no `product_id` metadata and are left alone: those sales are closed and their invoices already record the tax that was applied.
 
+One more thing the report surfaces: **archiving a Stripe product in the dashboard breaks checkout for that product** — the checkout still finds and reuses the archived product, and the session creation then fails. The report marks every owned product active or inactive, and an `inactive` marker on something still on sale is that failure waiting to happen; unarchive it in the dashboard.
+
 ## Test Mode Card Details
 
 - **Card number:** `4242 4242 4242 4242`

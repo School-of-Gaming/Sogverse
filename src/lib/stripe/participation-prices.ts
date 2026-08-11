@@ -298,6 +298,12 @@ async function reconcileStripeProduct(
  * the mutable name, so a create attempted under the same key within 24 hours of
  * a rename answers `idempotency_error` instead of deduping. That window is
  * sub-minute in practice and only on a product that has never sold.
+ *
+ * Two *genuinely simultaneous* first purchases are the case the key exists for:
+ * Stripe answers a request whose key is still in flight with a 409, so one of
+ * the two checkouts fails and its retry finds the product. That is deliberate —
+ * fail closed rather than mint a duplicate — but it reads as an unexplained 409
+ * in the logs, hence this sentence.
  */
 export async function ensureStripeProductForProduct(
   product: StripeProductSource,
