@@ -350,10 +350,9 @@ before the switch is flippable. Do not reorder step 8 earlier.
 2. **The rename commit (behavior-free, not small — see The decision for true scope).**
    Migration renaming the two columns (+ FK/index/constraint names), hand-rewriting the
    ~19 function bodies, drop/recreate/re-grant for the 7 with renamed parameters, and
-   the end-state assertion scanning `pg_proc` for the old token. **Caution: the
-   CI-maintained `supabase/schema.sql` is currently stale** — it still shows the
-   retired padlet column on the product create/update RPCs; copy those two bodies from
-   the retire-padlet migration, everything else from `schema.sql`. Then: regenerate
+   the end-state assertion scanning `pg_proc` for the old token. Function bodies are
+   read from the CI-maintained `supabase/schema.sql`, which is current for everything
+   merged to `dev`. Then: regenerate
    types; update the five embed hints, the enrollment wire contracts
    (`gamerId` → `participantId`) and their routes/services; webhook writes the new
    Stripe metadata key with the legacy fallback resolved once at the destructure guard.
@@ -462,9 +461,11 @@ before the switch is flippable. Do not reorder step 8 earlier.
 - **A column rename does not rewrite function bodies, and nothing local catches a stale
   one** — they fail at call time; lint/type-check/jsdom tests stay green and DB tests
   are CI-only. Hence the drop/recreate/re-grant inventory and the end-state assertion.
-- **`supabase/schema.sql` is stale right now** (pre-padlet-retirement bodies on the two
-  product RPCs) — copying `update_product` from it would resurrect a deliberately
-  dropped column. Copy those two from the retire-padlet migration until CI regenerates.
+- **`supabase/schema.sql` regenerates on every push to `dev`** and is current for
+  everything merged there; only this plan's own unlanded work is missing from it. Do
+  not trust any point-in-time staleness claim about it (an earlier one in this plan
+  went stale itself, and following it would have reverted two later migrations) —
+  read function bodies from `schema.sql` as it stands when each step starts.
 - **Renaming a column renames its FK constraint, which breaks PostgREST embed hints**
   (`table!constraint_name` strings in supabase-js queries) — five occurrences, all on
   the participations constraint, none on attendance.
