@@ -289,7 +289,7 @@ $$;
 -- Name: admin_enroll_gamer(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) RETURNS jsonb
+CREATE FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -323,20 +323,20 @@ BEGIN
   -- whatever the planner returned. Multi-parent reckoning is future work.
   SELECT parent_id INTO v_customer_id
     FROM public.parent_gamer
-    WHERE gamer_id = p_gamer_id
+    WHERE gamer_id = p_participant_id
     ORDER BY created_at ASC
     LIMIT 1;
   IF v_customer_id IS NULL THEN
-    RAISE EXCEPTION 'gamer % has no linked parent', p_gamer_id
+    RAISE EXCEPTION 'gamer % has no linked parent', p_participant_id
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- The partial unique index on (product_id, gamer_id) for non-reserving
+  -- The partial unique index on (product_id, participant_id) for non-reserving
   -- statuses is the source of truth for "already enrolled"; it raises 23505 and
   -- the route maps that to 409. Re-checking it here would be a race, not a
   -- safeguard.
-  INSERT INTO public.participations (product_id, gamer_id, customer_id, status)
-  VALUES (p_product_id, p_gamer_id, v_customer_id, 'active')
+  INSERT INTO public.participations (product_id, participant_id, customer_id, status)
+  VALUES (p_product_id, p_participant_id, v_customer_id, 'active')
   RETURNING id INTO v_participation_id;
 
   RETURN jsonb_build_object(
@@ -348,10 +348,10 @@ $$;
 
 
 --
--- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_participant_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) IS 'Admin-gated comp-enrollment: drops a gamer onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event.';
+COMMENT ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) IS 'Admin-gated comp-enrollment: drops a gamer onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event.';
 
 
 --
@@ -593,7 +593,7 @@ CREATE FUNCTION public.can_read_product(p_product_id uuid) RETURNS boolean
     OR EXISTS (
       SELECT 1 FROM public.participations p
       WHERE p.product_id = p_product_id
-        AND (p.gamer_id = (SELECT auth.uid()) OR p.customer_id = (SELECT auth.uid()))
+        AND (p.participant_id = (SELECT auth.uid()) OR p.customer_id = (SELECT auth.uid()))
         AND p.status IN ('active'::public.participation_status, 'waitlisted'::public.participation_status)
     )
     -- assigned gedu
@@ -662,7 +662,7 @@ $$;
 -- Name: confirm_paid_participation(uuid, uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) RETURNS jsonb
+CREATE FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -678,13 +678,13 @@ BEGIN
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- Pre-check the partial UNIQUE on (product_id, gamer_id): under the gate lock
+  -- Pre-check the partial UNIQUE on (product_id, participant_id): under the gate lock
   -- this decides the outcome, and the index itself is left as the backstop.
   SELECT id, status, stripe_checkout_session_id
     INTO v_conflict_id, v_conflict_status, v_conflict_session
     FROM public.participations
     WHERE product_id = p_product_id
-      AND gamer_id   = p_gamer_id
+      AND participant_id = p_participant_id
       AND status    IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
 
@@ -706,9 +706,9 @@ BEGIN
   END IF;
 
   INSERT INTO public.participations (
-    product_id, gamer_id, customer_id, status, stripe_checkout_session_id
+    product_id, participant_id, customer_id, status, stripe_checkout_session_id
   ) VALUES (
-    p_product_id, p_gamer_id, p_customer_id, 'active', p_checkout_session_id
+    p_product_id, p_participant_id, p_customer_id, 'active', p_checkout_session_id
   )
   RETURNING id INTO v_participation_id;
 
@@ -722,10 +722,10 @@ $$;
 
 
 --
--- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this gamer on this product.';
+COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this gamer on this product.';
 
 
 --
@@ -803,7 +803,7 @@ $$;
 -- Name: create_participation(uuid, uuid, uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) RETURNS jsonb
+CREATE FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -824,10 +824,10 @@ BEGIN
 
   SELECT EXISTS (
     SELECT 1 FROM public.parent_gamer
-    WHERE parent_id = p_customer_id AND gamer_id = p_gamer_id
+    WHERE parent_id = p_customer_id AND gamer_id = p_participant_id
   ) INTO v_is_parent;
   IF NOT v_is_parent THEN
-    RAISE EXCEPTION 'customer % is not the parent of gamer %', p_customer_id, p_gamer_id
+    RAISE EXCEPTION 'customer % is not the parent of gamer %', p_customer_id, p_participant_id
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -863,11 +863,11 @@ BEGIN
   SELECT id, status INTO v_existing_id, v_existing_status
     FROM public.participations
     WHERE product_id = p_product_id
-      AND gamer_id = p_gamer_id
+      AND participant_id = p_participant_id
       AND status IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
-    RAISE EXCEPTION 'gamer % already has a participation on this product (status: %)', p_gamer_id, v_existing_status
+    RAISE EXCEPTION 'gamer % already has a participation on this product (status: %)', p_participant_id, v_existing_status
       USING ERRCODE = 'unique_violation';
   END IF;
 
@@ -888,9 +888,9 @@ BEGIN
         USING ERRCODE = 'check_violation';
     END IF;
     INSERT INTO public.participations (
-      product_id, gamer_id, customer_id, status
+      product_id, participant_id, customer_id, status
     ) VALUES (
-      p_product_id, p_gamer_id, p_customer_id, 'active'
+      p_product_id, p_participant_id, p_customer_id, 'active'
     )
     RETURNING id INTO v_participation_id;
     RETURN jsonb_build_object(
@@ -908,9 +908,9 @@ BEGIN
         USING ERRCODE = 'check_violation';
     END IF;
     INSERT INTO public.participations (
-      product_id, gamer_id, customer_id, status
+      product_id, participant_id, customer_id, status
     ) VALUES (
-      p_product_id, p_gamer_id, p_customer_id, 'active'
+      p_product_id, p_participant_id, p_customer_id, 'active'
     )
     RETURNING id INTO v_participation_id;
     RETURN jsonb_build_object(
@@ -1464,7 +1464,7 @@ BEGIN
             COALESCE((
               SELECT jsonb_agg(
                        jsonb_build_object(
-                         'gamer_id',           part.gamer_id,
+                         'gamer_id',           part.participant_id,
                          'first_name',         gmp.first_name,
                          'date_of_birth',      gprof.date_of_birth,
                          'gender',             gprof.gender,
@@ -1474,7 +1474,7 @@ BEGIN
                            SELECT pp.email
                              FROM parent_gamer pgm
                              JOIN profiles pp ON pp.id = pgm.parent_id
-                            WHERE pgm.gamer_id = part.gamer_id
+                            WHERE pgm.gamer_id = part.participant_id
                             ORDER BY pgm.created_at ASC NULLS LAST,
                                      pgm.id           ASC
                             LIMIT 1
@@ -1483,9 +1483,9 @@ BEGIN
                        ORDER BY gmp.first_name
                      )
                 FROM participations part
-                JOIN profiles gmp              ON gmp.id        = part.gamer_id
-                LEFT JOIN gamer_profiles gprof  ON gprof.user_id = part.gamer_id
-                LEFT JOIN minecraft_accounts mca ON mca.user_id  = part.gamer_id
+                JOIN profiles gmp              ON gmp.id        = part.participant_id
+                LEFT JOIN gamer_profiles gprof  ON gprof.user_id = part.participant_id
+                LEFT JOIN minecraft_accounts mca ON mca.user_id  = part.participant_id
                WHERE part.group_id = pg.id
                  AND part.status   = 'active'
             ), '[]'::jsonb)
@@ -1602,7 +1602,7 @@ BEGIN
     INTO v_roster
     FROM (
       SELECT jsonb_build_object(
-        'gamer_id',           part.gamer_id,
+        'gamer_id',           part.participant_id,
         'first_name',         gmp.first_name,
         'signed_up_at',       part.signed_up_at,
         'date_of_birth',      gprof.date_of_birth,
@@ -1615,15 +1615,15 @@ BEGIN
           SELECT pp.email
             FROM public.parent_gamer pgm
             JOIN public.profiles pp ON pp.id = pgm.parent_id
-           WHERE pgm.gamer_id = part.gamer_id
+           WHERE pgm.gamer_id = part.participant_id
            ORDER BY pgm.created_at ASC NULLS LAST, pgm.id ASC
            LIMIT 1
         )
       ) AS entry
         FROM public.participations part
-        JOIN public.profiles gmp                ON gmp.id        = part.gamer_id
-        LEFT JOIN public.gamer_profiles gprof   ON gprof.user_id = part.gamer_id
-        LEFT JOIN public.minecraft_accounts mca ON mca.user_id   = part.gamer_id
+        JOIN public.profiles gmp                ON gmp.id        = part.participant_id
+        LEFT JOIN public.gamer_profiles gprof   ON gprof.user_id = part.participant_id
+        LEFT JOIN public.minecraft_accounts mca ON mca.user_id   = part.participant_id
        WHERE part.group_id = p_group_id
          AND part.status   = 'active'::public.participation_status
     ) AS roster_rows;
@@ -1652,7 +1652,7 @@ BEGIN
         -- Sparse map keyed by gamer id. A roster member absent from this object
         -- is UNMARKED, which is a different claim from 'absent'.
         'attendance', COALESCE((
-          SELECT jsonb_object_agg(a.gamer_id, a.status)
+          SELECT jsonb_object_agg(a.participant_id, a.status)
             FROM public.session_attendance a
            WHERE a.session_id = s.id
         ), '{}'::jsonb)
@@ -1751,16 +1751,16 @@ CREATE FUNCTION public.get_my_family_product_feed(p_participation_id uuid) RETUR
     SET search_path TO ''
     AS $$
 DECLARE
-  v_uid        uuid := (SELECT auth.uid());
-  v_gamer_id   uuid;
-  v_group_id   uuid;
-  v_product_id uuid;
-  v_gamer      jsonb;
-  v_product    jsonb;
-  v_group      jsonb;
-  v_site       jsonb;
-  v_gedus      jsonb;
-  v_sessions   jsonb;
+  v_uid            uuid := (SELECT auth.uid());
+  v_participant_id uuid;
+  v_group_id       uuid;
+  v_product_id     uuid;
+  v_gamer          jsonb;
+  v_product        jsonb;
+  v_group          jsonb;
+  v_site           jsonb;
+  v_gedus          jsonb;
+  v_sessions       jsonb;
 BEGIN
   -- No caller, no answer. This function is scoped entirely to auth.uid(); with
   -- no uid there is nobody for it to be scoped TO, so there is no correct
@@ -1772,8 +1772,8 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  SELECT part.gamer_id, part.group_id, part.product_id
-    INTO v_gamer_id, v_group_id, v_product_id
+  SELECT part.participant_id, part.group_id, part.product_id
+    INTO v_participant_id, v_group_id, v_product_id
     FROM public.participations part
    WHERE part.id = p_participation_id;
 
@@ -1786,9 +1786,9 @@ BEGIN
   -- because of the guard above, and a predicate whose correctness depends on a
   -- check twenty lines away is one edit away from being wrong again. This form
   -- is false — never NULL — for every input, so the IF cannot be skipped.
-  IF v_gamer_id IS NULL
-     OR NOT (v_gamer_id IS NOT DISTINCT FROM v_uid
-             OR public.is_parent_of(v_gamer_id))
+  IF v_participant_id IS NULL
+     OR NOT (v_participant_id IS NOT DISTINCT FROM v_uid
+             OR public.is_parent_of(v_participant_id))
   THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -1813,7 +1813,7 @@ BEGIN
     'first_name', pr.first_name
   )
   INTO v_gamer
-  FROM public.profiles pr WHERE pr.id = v_gamer_id;
+  FROM public.profiles pr WHERE pr.id = v_participant_id;
 
   -- The product shell. Names live in product_translations, not on `products`,
   -- so the translations array IS the name. `material_url` lives on
@@ -1912,7 +1912,7 @@ BEGIN
           SELECT a.status
             FROM public.session_attendance a
            WHERE a.session_id = s.id
-             AND a.gamer_id   = v_gamer_id
+             AND a.participant_id   = v_participant_id
         )
       ) AS entry
         FROM public.group_sessions s
@@ -2107,7 +2107,7 @@ BEGIN
                  FROM public.session_attendance att
                  JOIN public.group_sessions gs2 ON gs2.id = att.session_id
                  JOIN public.participations part2
-                   ON part2.gamer_id = att.gamer_id
+                   ON part2.participant_id = att.participant_id
                   AND part2.group_id = g.id
                   AND part2.status   = 'active'::public.participation_status
                 WHERE gs2.group_id     = g.id
@@ -2172,7 +2172,7 @@ CREATE FUNCTION public.get_my_participation_subscription_states() RETURNS TABLE(
   WHERE fs.status IN ('past_due', 'canceling')
     AND (
       p.customer_id = (SELECT auth.uid())
-      OR p.gamer_id = (SELECT auth.uid())
+      OR p.participant_id = (SELECT auth.uid())
     );
 $$;
 
@@ -2202,7 +2202,7 @@ CREATE FUNCTION public.get_my_waitlist_positions() RETURNS TABLE(participation_i
     FROM public.participations mine
    WHERE mine.status = 'waitlisted'::public.participation_status
      AND (mine.customer_id = (SELECT auth.uid())
-          OR mine.gamer_id = (SELECT auth.uid()));
+          OR mine.participant_id = (SELECT auth.uid()));
 $$;
 
 
@@ -2256,7 +2256,7 @@ BEGIN
           SELECT jsonb_agg(
                    jsonb_build_object(
                      'id',                       p.id,
-                     'gamer_id',                 p.gamer_id,
+                     'gamer_id',                 p.participant_id,
                      'gamer_first_name',         gmp.first_name,
                      'gamer_date_of_birth',      gprof.date_of_birth,
                      'gamer_gender',             gprof.gender,
@@ -2278,9 +2278,9 @@ BEGIN
                    ORDER BY p.updated_at, p.id
                  )
             FROM participations p
-            JOIN profiles gmp ON gmp.id = p.gamer_id
-            LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.gamer_id
-            LEFT JOIN minecraft_accounts mca ON mca.user_id = p.gamer_id
+            JOIN profiles gmp ON gmp.id = p.participant_id
+            LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.participant_id
+            LEFT JOIN minecraft_accounts mca ON mca.user_id = p.participant_id
             -- participation_id is UNIQUE here, so this cannot fan the row out.
             -- The status predicate lives in the JOIN rather than a WHERE so a
             -- dead subscription simply fails to match and leaves fs.id NULL,
@@ -2292,7 +2292,7 @@ BEGIN
               SELECT pp.first_name, pp.last_name
                 FROM parent_gamer pgm
                 JOIN profiles pp ON pp.id = pgm.parent_id
-               WHERE pgm.gamer_id = p.gamer_id
+               WHERE pgm.gamer_id = p.participant_id
                ORDER BY pgm.created_at ASC NULLS LAST, pgm.id ASC
                LIMIT 1
             ) parent ON true
@@ -2307,7 +2307,7 @@ BEGIN
   SELECT COALESCE(jsonb_agg(
            jsonb_build_object(
              'id',                       p.id,
-             'gamer_id',                 p.gamer_id,
+             'gamer_id',                 p.participant_id,
              'gamer_first_name',         gmp.first_name,
              'gamer_date_of_birth',      gprof.date_of_birth,
              'gamer_gender',             gprof.gender,
@@ -2324,9 +2324,9 @@ BEGIN
          ), '[]'::jsonb)
     INTO v_unassigned
     FROM participations p
-    JOIN profiles gmp ON gmp.id = p.gamer_id
-    LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.gamer_id
-    LEFT JOIN minecraft_accounts mca ON mca.user_id = p.gamer_id
+    JOIN profiles gmp ON gmp.id = p.participant_id
+    LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.participant_id
+    LEFT JOIN minecraft_accounts mca ON mca.user_id = p.participant_id
     LEFT JOIN family_subscriptions fs
            ON fs.participation_id = p.id
           AND fs.status <> 'cancelled'
@@ -2334,7 +2334,7 @@ BEGIN
       SELECT pp.first_name, pp.last_name
         FROM parent_gamer pgm
         JOIN profiles pp ON pp.id = pgm.parent_id
-       WHERE pgm.gamer_id = p.gamer_id
+       WHERE pgm.gamer_id = p.participant_id
        ORDER BY pgm.created_at ASC NULLS LAST, pgm.id ASC
        LIMIT 1
     ) parent ON true
@@ -2363,7 +2363,7 @@ BEGIN
   SELECT COALESCE(jsonb_agg(
            jsonb_build_object(
              'id',                       p.id,
-             'gamer_id',                 p.gamer_id,
+             'gamer_id',                 p.participant_id,
              'gamer_first_name',         gmp.first_name,
              'gamer_date_of_birth',      gprof.date_of_birth,
              'gamer_gender',             gprof.gender,
@@ -2380,9 +2380,9 @@ BEGIN
          ), '[]'::jsonb)
     INTO v_waitlist
     FROM participations p
-    JOIN profiles gmp ON gmp.id = p.gamer_id
-    LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.gamer_id
-    LEFT JOIN minecraft_accounts mca ON mca.user_id = p.gamer_id
+    JOIN profiles gmp ON gmp.id = p.participant_id
+    LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.participant_id
+    LEFT JOIN minecraft_accounts mca ON mca.user_id = p.participant_id
     LEFT JOIN family_subscriptions fs
            ON fs.participation_id = p.id
           AND fs.status <> 'cancelled'
@@ -2390,7 +2390,7 @@ BEGIN
       SELECT pp.first_name, pp.last_name
         FROM parent_gamer pgm
         JOIN profiles pp ON pp.id = pgm.parent_id
-       WHERE pgm.gamer_id = p.gamer_id
+       WHERE pgm.gamer_id = p.participant_id
        ORDER BY pgm.created_at ASC NULLS LAST, pgm.id ASC
        LIMIT 1
     ) parent ON true
@@ -2438,7 +2438,7 @@ CREATE FUNCTION public.get_waitlist_position(p_participation_id uuid) RETURNS in
     AS $$
 DECLARE
   v_product_id     UUID;
-  v_gamer_id       UUID;
+  v_participant_id UUID;
   v_customer_id    UUID;
   v_status         public.participation_status;
   v_waitlisted_at  TIMESTAMPTZ;
@@ -2450,8 +2450,8 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  SELECT product_id, gamer_id, customer_id, status, waitlisted_at
-    INTO v_product_id, v_gamer_id, v_customer_id, v_status, v_waitlisted_at
+  SELECT product_id, participant_id, customer_id, status, waitlisted_at
+    INTO v_product_id, v_participant_id, v_customer_id, v_status, v_waitlisted_at
     FROM public.participations
     WHERE id = p_participation_id;
 
@@ -2460,7 +2460,7 @@ BEGIN
   -- NULL rather than raising avoids leaking whether the id exists.
   IF NOT FOUND
      OR v_status <> 'waitlisted'
-     OR (v_uid <> v_customer_id AND v_uid <> v_gamer_id) THEN
+     OR (v_uid <> v_customer_id AND v_uid <> v_participant_id) THEN
     RETURN NULL;
   END IF;
 
@@ -2605,7 +2605,7 @@ CREATE FUNCTION public.has_active_participation_in_group(p_group_id uuid) RETURN
     SELECT 1
       FROM public.participations p
      WHERE p.group_id = p_group_id
-       AND (p.customer_id = (SELECT auth.uid()) OR p.gamer_id = (SELECT auth.uid()))
+       AND (p.customer_id = (SELECT auth.uid()) OR p.participant_id = (SELECT auth.uid()))
        AND p.status = 'active'
   );
 $$;
@@ -2623,7 +2623,7 @@ CREATE FUNCTION public.has_active_participation_on_product(p_product_id uuid) RE
     SELECT 1
       FROM public.participations p
      WHERE p.product_id = p_product_id
-       AND (p.customer_id = (SELECT auth.uid()) OR p.gamer_id = (SELECT auth.uid()))
+       AND (p.customer_id = (SELECT auth.uid()) OR p.participant_id = (SELECT auth.uid()))
        AND p.status = 'active'
   );
 $$;
@@ -2693,7 +2693,7 @@ CREATE FUNCTION public.is_voice_group_member(p_group_id uuid) RETURNS boolean
       select 1
       from public.participations p
       where p.group_id = p_group_id
-        and p.gamer_id = (select auth.uid())
+        and p.participant_id = (select auth.uid())
         and p.status = 'active'
     )
     or exists (
@@ -2730,7 +2730,7 @@ $$;
 -- Name: join_product_waitlist(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) RETURNS jsonb
+CREATE FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -2741,23 +2741,23 @@ BEGIN
   -- gate, idempotency, the clock_timestamp() ordering stamp — is unchanged and
   -- lives in the engine. This function's whole job is authorization plus
   -- pinning the actor to the session.
-  RETURN public.join_waitlist(p_product_id, p_gamer_id, (SELECT auth.uid()));
+  RETURN public.join_waitlist(p_product_id, p_participant_id, (SELECT auth.uid()));
 END;
 $$;
 
 
 --
--- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_participant_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) IS 'Guarded, authenticated-facing entry point for joining a product waitlist. The customer is auth.uid(); the parent-of-gamer check lives in join_waitlist.';
+COMMENT ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) IS 'Guarded, authenticated-facing entry point for joining a product waitlist. The customer is auth.uid(); the parent-of-gamer check lives in join_waitlist.';
 
 
 --
 -- Name: join_waitlist(uuid, uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid) RETURNS jsonb
+CREATE FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -2779,10 +2779,10 @@ BEGIN
 
   SELECT EXISTS (
     SELECT 1 FROM public.parent_gamer
-    WHERE parent_id = p_customer_id AND gamer_id = p_gamer_id
+    WHERE parent_id = p_customer_id AND gamer_id = p_participant_id
   ) INTO v_is_parent;
   IF NOT v_is_parent THEN
-    RAISE EXCEPTION 'customer % is not the parent of gamer %', p_customer_id, p_gamer_id
+    RAISE EXCEPTION 'customer % is not the parent of gamer %', p_customer_id, p_participant_id
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -2796,7 +2796,7 @@ BEGIN
     INTO v_existing_id, v_existing_ts, v_existing_status
     FROM public.participations
     WHERE product_id = p_product_id
-      AND gamer_id = p_gamer_id
+      AND participant_id = p_participant_id
       AND status IN ('waitlisted', 'reserving', 'active')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
@@ -2825,9 +2825,9 @@ BEGIN
   -- the prior joiner committed — so stamps are monotonic with real join order.
   v_now := clock_timestamp();
   INSERT INTO public.participations (
-    product_id, gamer_id, customer_id, status, waitlisted_at
+    product_id, participant_id, customer_id, status, waitlisted_at
   ) VALUES (
-    p_product_id, p_gamer_id, p_customer_id, 'waitlisted', v_now
+    p_product_id, p_participant_id, p_customer_id, 'waitlisted', v_now
   )
   RETURNING id INTO v_participation_id;
 
@@ -3101,7 +3101,7 @@ $$;
 -- Name: record_attendance(uuid, date, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) RETURNS jsonb
+CREATE FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -3124,7 +3124,7 @@ BEGIN
     SELECT 1
       FROM public.participations part
      WHERE part.group_id = p_group_id
-       AND part.gamer_id = p_gamer_id
+       AND part.participant_id = p_participant_id
        AND part.status   = 'active'::public.participation_status
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
@@ -3151,20 +3151,20 @@ BEGIN
 
   IF v_status IS NULL THEN
     DELETE FROM public.session_attendance
-     WHERE session_id = v_session_id AND gamer_id = p_gamer_id;
+     WHERE session_id = v_session_id AND participant_id = p_participant_id;
 
     RETURN jsonb_build_object(
       'session_id', v_session_id,
-      'gamer_id',   p_gamer_id,
+      'gamer_id',   p_participant_id,
       'status',     NULL
     );
   END IF;
 
   INSERT INTO public.session_attendance (
-    session_id, gamer_id, status, recorded_by
+    session_id, participant_id, status, recorded_by
   )
-  VALUES (v_session_id, p_gamer_id, v_status, v_uid)
-  ON CONFLICT (session_id, gamer_id) DO UPDATE
+  VALUES (v_session_id, p_participant_id, v_status, v_uid)
+  ON CONFLICT (session_id, participant_id) DO UPDATE
     SET status      = EXCLUDED.status,
         recorded_by = EXCLUDED.recorded_by,
         recorded_at = now();
@@ -3177,7 +3177,7 @@ BEGIN
 
   RETURN jsonb_build_object(
     'session_id', v_session_id,
-    'gamer_id',   p_gamer_id,
+    'gamer_id',   p_participant_id,
     'status',     v_status
   );
 END;
@@ -3185,10 +3185,10 @@ $$;
 
 
 --
--- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE child''s attendance mark for one session. Per-mark so concurrent gedus cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before; authorizes both the calling gedu and the target child.';
+COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE child''s attendance mark for one session. Per-mark so concurrent gedus cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before; authorizes both the calling gedu and the target child.';
 
 
 --
@@ -3479,7 +3479,7 @@ $$;
 -- Name: set_group_member_minecraft(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) RETURNS jsonb
+CREATE FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -3496,7 +3496,7 @@ BEGIN
     SELECT 1
       FROM public.participations part
       JOIN public.gedu_group_assignments ga ON ga.group_id = part.group_id
-     WHERE part.gamer_id = p_gamer_id
+     WHERE part.participant_id = p_participant_id
        AND part.status   = 'active'::public.participation_status
        AND ga.gedu_id    = (SELECT auth.uid())
   ) THEN
@@ -3512,13 +3512,13 @@ BEGIN
             END;
 
   INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
-  VALUES (p_gamer_id, v_username, v_uuid)
+  VALUES (p_participant_id, v_username, v_uuid)
   ON CONFLICT (user_id) DO UPDATE
     SET minecraft_username = EXCLUDED.minecraft_username,
         minecraft_uuid     = EXCLUDED.minecraft_uuid;
 
   RETURN jsonb_build_object(
-    'gamer_id',           p_gamer_id,
+    'gamer_id',           p_participant_id,
     'minecraft_username', v_username,
     'minecraft_uuid',     v_uuid
   );
@@ -3527,10 +3527,10 @@ $$;
 
 
 --
--- Name: FUNCTION set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to gamers actively participating in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified.';
+COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to gamers actively participating in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified.';
 
 
 --
@@ -4537,7 +4537,7 @@ CREATE TABLE public.participations (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     product_id uuid NOT NULL,
     group_id uuid,
-    gamer_id uuid NOT NULL,
+    participant_id uuid NOT NULL,
     customer_id uuid NOT NULL,
     status public.participation_status NOT NULL,
     signed_up_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -4545,9 +4545,16 @@ CREATE TABLE public.participations (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     waitlisted_at timestamp with time zone,
     stripe_checkout_session_id text,
-    CONSTRAINT chk_participations_no_self_signup CHECK ((gamer_id <> customer_id)),
+    CONSTRAINT chk_participations_no_self_signup CHECK ((participant_id <> customer_id)),
     CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
 );
+
+
+--
+-- Name: COLUMN participations.participant_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.participant_id IS 'The profile occupying this seat. Today always a gamer; the column is named for what it means rather than for who currently fills it, because a parent seat on a for-parents product is the next step.';
 
 
 --
@@ -4858,7 +4865,7 @@ COMMENT ON COLUMN public.schedule_slots.weekday IS '0=Monday .. 6=Sunday (ISO-st
 CREATE TABLE public.session_attendance (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     session_id uuid NOT NULL,
-    gamer_id uuid NOT NULL,
+    participant_id uuid NOT NULL,
     status text NOT NULL,
     recorded_by uuid,
     recorded_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -4871,6 +4878,13 @@ CREATE TABLE public.session_attendance (
 --
 
 COMMENT ON TABLE public.session_attendance IS 'One row per explicit attendance mark. A roster member with NO row here is unanswered, never absent — the three-state distinction a boolean cannot express. Marks are written one at a time and reverting to unmarked deletes the row, so two gedus marking different children in one session never clobber each other.';
+
+
+--
+-- Name: COLUMN session_attendance.participant_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.session_attendance.participant_id IS 'The profile the mark is about — whoever holds the seat, matching participations.participant_id.';
 
 
 --
@@ -5273,11 +5287,11 @@ ALTER TABLE ONLY public.session_attendance
 
 
 --
--- Name: session_attendance session_attendance_session_gamer_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: session_attendance session_attendance_session_participant_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.session_attendance
-    ADD CONSTRAINT session_attendance_session_gamer_key UNIQUE (session_id, gamer_id);
+    ADD CONSTRAINT session_attendance_session_participant_key UNIQUE (session_id, participant_id);
 
 
 --
@@ -5457,17 +5471,17 @@ CREATE INDEX idx_participations_customer ON public.participations USING btree (c
 
 
 --
--- Name: idx_participations_gamer; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_participations_gamer ON public.participations USING btree (gamer_id);
-
-
---
 -- Name: idx_participations_group; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_participations_group ON public.participations USING btree (group_id) WHERE (group_id IS NOT NULL);
+
+
+--
+-- Name: idx_participations_participant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_participations_participant ON public.participations USING btree (participant_id);
 
 
 --
@@ -5632,10 +5646,10 @@ CREATE INDEX minecraft_accounts_uuid_idx ON public.minecraft_accounts USING btre
 
 
 --
--- Name: session_attendance_gamer_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: session_attendance_participant_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX session_attendance_gamer_idx ON public.session_attendance USING btree (gamer_id);
+CREATE INDEX session_attendance_participant_idx ON public.session_attendance USING btree (participant_id);
 
 
 --
@@ -5663,7 +5677,7 @@ CREATE UNIQUE INDEX uq_locations_geonames_id ON public.locations USING btree (ge
 -- Name: uq_participations_active_or_waitlisted; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, gamer_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status, 'completed'::public.participation_status]));
+CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, participant_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status, 'completed'::public.participation_status]));
 
 
 --
@@ -6073,19 +6087,19 @@ ALTER TABLE ONLY public.participations
 
 
 --
--- Name: participations participations_gamer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.participations
-    ADD CONSTRAINT participations_gamer_id_fkey FOREIGN KEY (gamer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
-
---
 -- Name: participations participations_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.participations
     ADD CONSTRAINT participations_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE SET NULL;
+
+
+--
+-- Name: participations participations_participant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.participations
+    ADD CONSTRAINT participations_participant_id_fkey FOREIGN KEY (participant_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 --
@@ -6233,11 +6247,11 @@ ALTER TABLE ONLY public.schedule_slots
 
 
 --
--- Name: session_attendance session_attendance_gamer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: session_attendance session_attendance_participant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.session_attendance
-    ADD CONSTRAINT session_attendance_gamer_id_fkey FOREIGN KEY (gamer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+    ADD CONSTRAINT session_attendance_participant_id_fkey FOREIGN KEY (participant_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 --
@@ -6665,7 +6679,7 @@ ALTER TABLE public.gamer_profiles ENABLE ROW LEVEL SECURITY;
 -- Name: participations gamer_select_own_participations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY gamer_select_own_participations ON public.participations FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND (gamer_id = ( SELECT auth.uid() AS uid))));
+CREATE POLICY gamer_select_own_participations ON public.participations FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND (participant_id = ( SELECT auth.uid() AS uid))));
 
 
 --
@@ -7186,12 +7200,12 @@ GRANT ALL ON FUNCTION public._list_tables_without_rls() TO service_role;
 
 
 --
--- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_participant_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) TO service_role;
 
 
 --
@@ -7257,11 +7271,11 @@ GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_rea
 
 
 --
--- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) TO service_role;
+REVOKE ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text) TO service_role;
 
 
 --
@@ -7281,11 +7295,11 @@ GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_f
 
 
 --
--- Name: FUNCTION create_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) TO service_role;
+REVOKE ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) TO service_role;
 
 
 --
@@ -7594,19 +7608,19 @@ GRANT ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) TO authen
 
 
 --
--- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_participant_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid) FROM PUBLIC;
 
 
 --
@@ -7672,12 +7686,12 @@ GRANT ALL ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_gr
 
 
 --
--- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) TO authenticated;
-GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) TO service_role;
+REVOKE ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) TO authenticated;
+GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) TO service_role;
 
 
 --
@@ -7715,12 +7729,12 @@ GRANT ALL ON FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolea
 
 
 --
--- Name: FUNCTION set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO authenticated;
-GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+REVOKE ALL ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO service_role;
 
 
 --
