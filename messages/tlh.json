@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "toy’wI’ ghom – Sogverse",
+    "title": "noH Quj yejHaD – Sogverse",
     "description": "nuqDaq Qapla’ ’oH? Minecraft ghom’a’Daq. Gedu’pu’ Dun chaH — toy’wI’pu’ tIqhommoH, jIH mevbe’.",
-    "shortDescription": "toy’wI’ ghom – DaH yIQam, batlh yIghoS",
+    "shortDescription": "noH Quj yejHaD – DaH yIQam, batlh yIghoS",
     "pages": {
       "signIn": "yI’el",
       "createAccount": "Account yIchenmoH",
@@ -105,12 +105,12 @@
   },
   "about": {
     "hero": {
-      "title": "<primary>toy’wI’ ghom</primary> tIqel",
+      "title": "<primary>noH Quj yejHaD</primary> tIqel",
       "subtitle": "Minecraft ghom’a’meyDaq, tIvqu’ poH moj DuHmoHwI’ poH. puqpu’, Gedu’pu’ Dun, je Minecraft — wa’ Daq ngeHlu’. jaHDaq jIH mojaH, juppu’ chu’ wISuqta’, Hujqu’ nughpu’ wISovmoH."
     },
     "quote": {
       "text": "”DaHjaj bIHtaHbogh, chalDaq qablaHbogh neH ’oH.”",
-      "attribution": "— toy’wI’ ghom HoD"
+      "attribution": "— noH Quj yejHaD HoD"
     },
     "mission": {
       "heading": "maH ngoQ",
@@ -1276,7 +1276,7 @@
     "title": "Sogverse ’el ’Iv?"
   },
   "footer": {
-    "copyright": "© {year} toy’wI’ ghom. Hoch batlh.",
+    "copyright": "© {year} noH Quj yejHaD. Hoch batlh.",
     "contact": {
       "email": "QIn: {email}"
     }
@@ -1468,7 +1468,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Sogverse ’oH nuq?",
-          "a": "Quj yejHaD Daq ’oH Sogverse’e’. Minecraft ghom’a’mey wIcheH, ghojmoHwI’pu’ Quj DevtaHvIS, vaj Daq tIv mojchoH Qap tIv."
+          "a": "noH Quj yejHaD Daq ’oH Sogverse’e’. Minecraft ghom’a’mey wIcheH, ghojmoHwI’pu’ Quj DevtaHvIS, vaj Daq tIv mojchoH Qap tIv."
         },
         "productTypes": {
           "q": "ghom’a’mey, raghmey, wanI’mey: chay’ juHHa’chuq?",
