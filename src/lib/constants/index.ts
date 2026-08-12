@@ -34,6 +34,11 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
  * the inbox list next time regardless of which language the body is in. Same
  * reasoning as "My SOG" — locales translate the copy around a brand name, not
  * the name.
+ *
+ * Brand first, platform second: "School of Gaming" is what a parent recognises,
+ * "Sogverse" is what they log in to. An inbox list truncates, and the half worth
+ * keeping is the half they already know. See the brand-vs-platform rule in the
+ * root CLAUDE.md.
  */
 export const SENDER_NAME = "School of Gaming - Sogverse";
 

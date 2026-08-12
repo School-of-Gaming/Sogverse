@@ -74,10 +74,11 @@ export const POST = defineRoute({
 
     if (body.mode === "custom") {
       subject = body.subject;
-      // The one send that may end up with no Reply-To, deliberately: in
-      // free-form mode the admin is composing the entire message and picking
-      // its reply behaviour, so defaulting to support here would override a
-      // blank they meant. Every *product* send states its reply-to explicitly.
+      // The one send that may end up with no Reply-To, deliberately: free-form
+      // mode is a manual tool for checking the sending path works, never a way
+      // to write to a customer, so the admin composing the message picks its
+      // reply behaviour and a blank stays blank. Every *product* send states
+      // its reply-to explicitly.
       replyToEmail = body.replyToEmail;
       htmlContent = escapeHtml(body.body).replace(/\n/g, "<br/>");
     } else {

@@ -14,9 +14,9 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 
 **Rule: every email sent from this codebase is from the same address and the same display name — `SENDER_EMAIL` and `SENDER_NAME` in `src/lib/constants`, with no per-template or per-route override.** The name is one literal, deliberately *not* translated: it is the company's mark, and a recipient who has learned to recognise it in an inbox list should keep recognising it whatever language the body is in. Locales translate the copy around a brand name, not the name — the same reasoning that keeps "My SOG" untranslated. A template that wants its own sender is a template arguing the reader should not be sure who wrote to them.
 
-**"From this codebase" is a real limit, not a hedge.** Supabase Auth's own emails (see "Auth emails outside this directory" below) and Stripe's receipts are rendered and sent by those services, and their sender identity is dashboard configuration this repo cannot reach. Keeping them on the same name is an ops step that has to be done by hand, and it is the half of the invariant a grep will never verify — so a send that appears nowhere in `src/` is outside this rule's enforcement, not outside its intent.
+**"From this codebase" is a real limit, not a hedge** — but it is a narrow one. Stripe's receipts are the only mail a user receives that this repo does not render (see "Every email a user receives is ours" below), and Stripe's sender identity is dashboard configuration. Keeping it on the same name is a hand-done ops step and the one half of the invariant a grep will never verify.
 
-**Rule: Reply-To is set explicitly on every product send, and the default is the support inbox (`SUPPORT_EMAIL`).** Omitting it silently points replies at the sending address, which nobody reads — a family replying to ask for help would be writing into a void. The one exception is a mail we send *to ourselves* about a person: there the reply-to is that person, because replying is how a staff member answers them. State which of the two a send is, in a comment, at the call site. The admin harness's free-form mode is the sole send that may carry no Reply-To at all, because there the admin is composing the whole message and choosing its reply behaviour.
+**Rule: Reply-To is set explicitly on every product send, and the default is the support inbox (`SUPPORT_EMAIL`).** Omitting it silently points replies at the sending address, which nobody reads — a family replying to ask for help would be writing into a void. The one exception is a mail we send *to ourselves* about a person: there the reply-to is that person, because replying is how a staff member answers them. State which of the two a send is, in a comment, at the call site. The admin harness's free-form mode is the sole send that may carry no Reply-To at all: it is a manual test tool for checking that the sending path works, never a way to write to a customer, so the admin composing the message picks its reply behaviour.
 
 ## Conventions
 
@@ -48,9 +48,11 @@ Templates that are *not* exposed to the testing UI (currently the PIN-reset emai
 
 The `<meta color-scheme: dark>` tags tell clients the email is already dark-themed so they skip their own dark-mode color adjustment.
 
-## Auth emails outside this directory
+## Every email a user receives is ours
 
-Supabase Auth (signup confirmation, magic link) sends its own plain-HTML templates edited in the Supabase dashboard; those flow through Brevo's SMTP but are **not** code-owned here. Password reset and parent-PIN reset are the exceptions: they bypass Supabase's built-in templates and are rendered by builders in this directory, then sent via the Brevo API from their routes.
+**Supabase Auth sends no mail.** Confirmations are off, accounts are created with `email_confirm` set, and password reset takes only the `token_hash` from `generateLink` and renders our own builder — so nothing reaches a user through Supabase's dashboard-edited templates. Magic links and email verification are Sogverse's to build and send, not Supabase's to template. Treat "configure it in the Supabase dashboard" as the wrong answer to any email question, and add a builder here instead.
+
+Stripe is the one genuine exception: receipts, invoices and dunning notices are composed and sent by Stripe, and their sender identity is dashboard configuration this repo cannot reach.
 
 ## Tests
 

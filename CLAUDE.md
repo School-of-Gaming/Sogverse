@@ -146,6 +146,17 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 
 **Rule: A pure calendar date with no time of day stays UTC-pinned — do not give it the viewer's zone.** A camp's start/end date range, a club term date, a legal "last updated" date — these are zoneless; parse the bare date at UTC midnight and render in UTC, because re-anchoring it to a viewer's zone shifts it off-by-one. Rule of thumb: **a value with a clock face converts; a bare date does not.** (An event's date *does* shift when it carries a slot time — that's a date+time instant; an event with no time stays date-only.)
 
+### Brand vs. Platform: "School of Gaming" and "Sogverse"
+
+**Rule: "School of Gaming" is the brand, "Sogverse" is the platform, and outward-facing copy leads with the brand.** They are two names for two things, and which one a string reaches for is a real decision:
+
+- **School of Gaming** — who we are to a family. It is the name a parent recognises, the one they were told by a school or another parent, and the one that has to be legible in a crowded inbox list or a browser tab. Anything a customer meets cold — a sender name, a page title, an OG image, marketing copy — leads with it.
+- **Sogverse** — the product families log in to and the system we build. It is the right word for the app itself, the codebase, the database and every internal conversation. A parent who has an account knows it; a parent who does not has no reason to.
+
+The two combine as **School of Gaming - Sogverse** (brand first, platform second) wherever a string has to carry both — the transactional email sender is the canonical use. Leading with "Sogverse" puts the word that needs the most explanation in the position that survives truncation.
+
+This is a deliberate, in-progress shift: older site strings still read "Sogverse – School of Gaming" and will be moved over. Write new copy the new way; don't treat an unmigrated string as the precedent.
+
 ### Locale vs. Spoken Language
 
 **Rule: Use *locale* for the UI translation system and *spoken language* for human languages.** They are deliberately named differently because they are distinct concepts.
