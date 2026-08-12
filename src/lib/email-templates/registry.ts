@@ -245,8 +245,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
     // The live route resolves the reply-to first and passes it in as
-    // `userEmail` (a gamer's resolves to their parent), so this param already
-    // *is* the address the real mail replies to.
+    // `userEmail` (a gamer's resolves to their linked parent's), so this param
+    // already *is* the address the real mail replies to.
     replyTo: (p) => p.userEmail,
   }),
   enrollmentParent: defineTemplate({

@@ -139,6 +139,12 @@ export const POST = defineRoute({
       // stays that way: this mail goes to admins, so replying is how an admin
       // answers the family who wrote in. Pointing it at support would send the
       // reply back to ourselves.
+      //
+      // For a gamer this is their parent's address *when the link above
+      // resolves*. A gamer with no linked parent leaves their own synthetic
+      // handle here, which would bounce — accepted, because every gamer is
+      // created through a parent, so an unlinked one is a broken row rather
+      // than a state to design a reply-to for.
       replyToEmail: replyToEmail || undefined,
     });
 
