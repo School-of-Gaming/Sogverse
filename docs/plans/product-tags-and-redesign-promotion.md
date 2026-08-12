@@ -129,29 +129,41 @@ Ordered; 1–2 are prerequisites for 3–4; 5 and 6 ride behind 4.
   product is legitimately untagged).
 - Extend both product-writing RPC paths (create and update — they live in
   `supabase/migrations/` as versioned function definitions) to accept and persist the
-  tag, **following the audience-params precedent migration exactly** (the one that
-  added `p_for_gamers`/`p_for_parents`):
-  - **`p_tag` is non-defaulted on both functions.** The update RPC assigns every
-    editable column on every call, so a defaulted parameter is one an omitting caller
-    silently clears a product's tag with. Callers pass `null` explicitly to mean
-    untagged.
+  tag, **following the audience-params precedent migration's mechanics** (the one
+  that added `p_for_gamers`/`p_for_parents`) — but not its non-defaulted choice:
+  - **`p_tag product_tag DEFAULT NULL`, defaulted deliberately.** Codegen types a
+    non-defaulted argument as required and non-nullable, so "pass `null` explicitly"
+    is not expressible in this codebase — the established pattern is `?? undefined`
+    against a `DEFAULT NULL` parameter, and omission is how a null reaches the
+    column. The audience flags could afford non-defaulted because a CHECK backstops
+    an omitted age; `tag` has no analogous CHECK (null is a legal value), so the
+    silent-clear risk is closed at the wire instead: the **update body schema makes
+    the field required-nullable**, so the one write path cannot omit it by accident,
+    and the route maps `null → undefined → DEFAULT NULL → cleared`, which is the
+    intended meaning of null.
   - Adding a parameter changes the function signature, so `CREATE OR REPLACE` would
     create a second overload and break PostgREST's candidate resolution: the migration
     must `DROP FUNCTION` with the full old signature, `CREATE` the new one,
     re-issue the `REVOKE`/`GRANT` pair for both roles, re-`COMMENT`, and keep the
     executable assertion block that precedent migration ends with.
-  - Contracts mirror the audience fields: the wire field is required-nullable on
-    update and optional-nullable on create, for the same reason those are.
-  - Re-verify both functions' classification in the authorization spine.
+  - Contracts: the tag field joins the shared product-data base schema as
+    **required-nullable on both create and update** — structurally where the
+    audience booleans live, no create/update asymmetry.
+  - Re-verify both functions' classification in the authorization spine (adding a
+    parameter does not change the admin-only classification).
 - CI db tests: add a tag round-trip case to the update-product suite (the per-session
-  fees case is the template), plus a case pinning that an explicit `null` clears and
-  that create-then-read preserves the value.
+  fees case is the template), plus a case pinning that an **omitted parameter clears**
+  (that is `DEFAULT NULL` doing its job) and that create-then-read preserves the
+  value.
+- The `docs/products-architecture.md` tags section is written in THIS workstream —
+  the column and its rules land here, and the doc must not wait on a later
+  workstream that might be deferred.
 - Push, regenerate `database.types.ts`, add a `ProductTag` alias in `src/types/index.ts`.
 - Rewrite `src/components/public/products/product-tag.ts` to derive from the generated
   `Constants` enum instead of a hand-written union (its header comment already says
   this happens now). The label map keys become exhaustively checked against codegen.
-- Contracts: the admin product body schemas in the relevant `*.contracts.ts` gain the
-  optional tag, derived from `Constants` per the service-layer convention.
+- The zod field derives from `Constants` per the service-layer convention (its shape
+  — required-nullable in the shared base — is decided above).
 - DB tests run in CI only — push the branch to exercise them.
 
 ### 2. Copy finalization (parallel, non-blocking)
@@ -208,17 +220,29 @@ and `src/components/preview/` to find them all; the list here is the map:
   as no-image is already written in the draft adapter — keep it). Delete the
   `renderCard` seam from the browse-results grid and the draft-grid branch from the
   shop scene.
-- **Detail-page loading skeleton:** the route's skeleton mirrors the old single-column
-  layout (square hero, flat stack). It must be rebuilt to mirror the promoted
-  three-track layout per the house loading/layout rules — a skeleton that disagrees
-  with the body it precedes is a shift on arrival, not cosmetics.
+- **Detail-page loading skeleton:** the route's current skeleton mirrors the old
+  single-column layout AND carries a comment arguing a skeleton need not mirror the
+  final grid — the promotion must engage both, not silently contradict them. Decide
+  the loading state from the house three-category model: the detail read is a single
+  indexed row by id, which argues for category 2 (render the route-static pieces —
+  band chrome, containers at final size — and nothing else, no structured skeleton).
+  Whatever the implementer concludes, the old skeleton and its comment are replaced
+  together so the code never argues with itself.
+- **Tag prop normalization:** the two bodies currently disagree (`DraftCardTag |
+  null` on the card, `tag?: ProductTag` on the detail body). The row field will be
+  `ProductTag | null` — normalize both bodies to that, and make sure a `null` renders
+  neither chip nor note (an unnormalized null must not render an empty note block).
+- **The view-props rename, named:** the shared view-props interface's
+  `imagePath: string | null` becomes `imageSrc: string | null` (an already-resolved
+  URL) — the draft's prop docs already say so; this is where it happens.
 - **Vestigial props:** `railFrom2xl` on the overview card becomes always-true with one
   body — inline it. `BackLink` stays a shared export (its comment currently promises
   it "goes back to being private", which promotion makes false — fix the comment).
 - **Detail:** the draft page body replaces the live one; the live body's `MainColumn`
   wrapper and old masthead go; the scene's draft/live switch goes (one body again).
   The signup panel's `flat` prop is deleted and the flat styling becomes the only
-  styling, on live single-column pages too.
+  styling, on live single-column pages too — note the prop threads through three
+  files (the panel view, the pricing view, and the preview wrapper), not one.
 - **Chips:** the `Draft*` chip components lose the draft naming and get a proper
   module home (they are now the product chip vocabulary, used by card, hero, and tag
   note).
@@ -232,10 +256,17 @@ and `src/components/preview/` to find them all; the list here is the map:
   comparison, both with their ` · label` name suffixes and pinned invariants intact.
   The per-scenario tag map folds into the fixture rows (`tag` becomes a real row
   field on the builder); the art map folds into the builder as per-scenario
-  `image_path` values. **Accepted side effect:** every scene fed by the shared
-  builder (purchase confirmation, family/gedu product pages, style-guide cards) then
-  shows real art instead of the wordmark fallback — that is more honest, not less;
-  the fallback stays reviewable via the deliberately un-imaged scenario.
+  `image_path` values. **Accepted side effect, and it covers tags as much as art:**
+  the three shop grids share scenarios, so after the fold the default and audience
+  grids inherit tags and art too, and every scene fed by the shared builder
+  (purchase confirmation, family/gedu product pages, style-guide cards — which
+  build from the same fixtures and so inherit their scenarios' tags) shows them as
+  well. That is more honest, not less: post-launch, the realistic storefront is a
+  mixed grid, and "the ordinary storefront" regression scenario is re-described to
+  mean exactly that rather than "no tags anywhere". The test pinning "tags and
+  art only on the redesign grid" is a draft-period invariant and **retires at the
+  fold** — replace it with one pinning that the untagged case and the wordmark
+  fallback each remain represented somewhere on the showcase grid.
   For demo art, make the product-image URL resolver pass through root-relative paths
   (a path starting with `/` is already a servable URL, not a storage object) so
   fixture rows can point `image_path` at `/preview-art/*.svg` and the scenes need no
@@ -268,7 +299,10 @@ and `src/components/preview/` to find them all; the list here is the map:
   component is square-only and letterboxes (`object-contain`-style fitting, no crop);
   only its wordmark fallback has a banner variant. Give it (or a sibling) a 3:2
   `object-cover` presentation and use that on the in-scope surface — the card and
-  hero already carry their own markup for it.
+  hero already carry their own markup for it. The no-image branch must plumb the
+  banner-variant fallback too: the confirmation page passes an empty path when a
+  product has no picture, and today the component hardcodes the square wordmark
+  there.
 - The admin image upload control previews the image inside a 3:2 `object-cover` frame
   at upload time — the crop, not the whole file letterboxed — so what the admin
   approves is what the card shows. Keeping a secondary full-image view beside it is
