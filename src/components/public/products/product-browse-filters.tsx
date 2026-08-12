@@ -54,10 +54,13 @@ interface ProductBrowseFiltersProps {
    *  rest of the filters instead of popping in after its own fetch resolves. */
   initialSpokenLanguages: SpokenLanguage[];
   /** Lead with the Clubs|Camps|Events Type row — and, by owner decision, with
-   *  the two rows that share its guard (Audience and Designed for). The shop
-   *  shows all three; the per-municipality page hides them (everything there is
-   *  that school's own club, and a filter with one answer controls nothing).
-   *  Default true. */
+   *  the Audience row that shares its guard. The shop shows both; the
+   *  per-municipality page hides them, because there both have one answer
+   *  (everything is that school's own gamers-only club) and a filter with one
+   *  answer controls nothing. The Designed-for row deliberately does NOT share
+   *  this guard — a tag is orthogonal to what makes those two vacuous, and one
+   *  school can offer a beginner club beside a neuroinclusive one. Default
+   *  true. */
   showTypeFilter?: boolean;
 }
 
@@ -193,13 +196,14 @@ export function ProductBrowseFilters({
 
         {/* "Designed for" follows Audience because it is the other half of the
             same question — the row above says who may hold a seat, this says
-            who the sessions were built for — and it shares that row's guard for
-            the same owner decision: the municipality school pages hide it, one
-            school's own clubs being no place for a three-chip narrowing. (The
-            tag *note* on a detail page is content rather than a filter, so a
-            tagged municipality club still shows its chip and its explanation.)
-            Keeping the two shop-only rows adjacent is also what lets the
-            municipality rail open on Subject with no gap where they were.
+            who the sessions were built for. Unlike Audience it renders on the
+            municipality pages too (owner decision, 2026-08-12): Type and
+            Audience hide there because everything on a school page is that
+            school's own gamers-only club and both rows would have one answer,
+            but a tag is orthogonal to that structure — one school can offer a
+            beginner club beside a neuroinclusive one, and "which of my
+            school's clubs fits my child" is that page's whole question. On the
+            municipality rail this row therefore leads the card.
 
             A chip is the chip the card wears, so each matches exactly the
             products carrying that tag: OR across the lit chips, and untagged
@@ -217,19 +221,17 @@ export function ProductBrowseFilters({
             The values are enumerated from the tag module's ordered list, so the
             row and the admin picker offer the same vocabulary in the same order
             and a tag added by migration appears in both without an edit here. */}
-        {showTypeFilter && (
-          <FilterRow label={t("designedFor")}>
-            {PRODUCT_TAG_VALUES.map((tag) => (
-              <Chip
-                key={tag}
-                icon={<TagGlyph tag={tag} className="h-3 w-3" />}
-                label={tTag(productTagLabelKey(tag))}
-                active={selectedTags.includes(tag)}
-                onToggle={() => toggleTag(tag)}
-              />
-            ))}
-          </FilterRow>
-        )}
+        <FilterRow label={t("designedFor")}>
+          {PRODUCT_TAG_VALUES.map((tag) => (
+            <Chip
+              key={tag}
+              icon={<TagGlyph tag={tag} className="h-3 w-3" />}
+              label={tTag(productTagLabelKey(tag))}
+              active={selectedTags.includes(tag)}
+              onToggle={() => toggleTag(tag)}
+            />
+          ))}
+        </FilterRow>
 
         {/* Wraps instead of scrolling: every subject should be visible without
             a gesture, on any device. */}
