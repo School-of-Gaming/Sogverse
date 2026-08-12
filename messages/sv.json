@@ -2268,7 +2268,7 @@
       "heading": "Kort sammanfattning",
       "paragraphs": [
         "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Att skydda din familjs integritet – och framför allt ditt barns – är viktigt för oss, så vi har skrivit det här på ett tydligt språk utan juridisk jargong.",
-        "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla hello@sog.gg."
+        "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla {supportEmail}."
       ]
     },
     "sections": {
@@ -2281,7 +2281,7 @@
         "bullets": [
           "School of Gaming Galactic Oy (FO-nummer 3110461-1)",
           "Isokatu 56, 90100 Uleåborg, Finland",
-          "E-post: hello@sog.gg"
+          "E-post: {supportEmail}"
         ]
       },
       "infoWeCollect": {
@@ -2305,7 +2305,7 @@
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
           "Vi håller barnens uppgifter till ett minimum, vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Under träffarna är barnen alltid tillsammans med en av våra utbildade ledare (vi kallar dem Gedus).",
-          "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla hello@sog.gg, så ordnar vi det."
+          "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
       "howWeUse": {
@@ -2402,7 +2402,7 @@
       "contact": {
         "heading": "Kontakt och din rätt att klaga",
         "paragraphs": [
-          "Om du vill använda någon av rättigheterna ovan eller har en fråga om din integritet eller ditt barns uppgifter är det bara att mejla hello@sog.gg. Det är kostnadsfritt, vi svarar alltid, och e-post är det bästa sättet att nå oss.",
+          "Om du vill använda någon av rättigheterna ovan eller har en fråga om din integritet eller ditt barns uppgifter är det bara att mejla {supportEmail}. Det är kostnadsfritt, vi svarar alltid, och e-post är det bästa sättet att nå oss.",
           "Om du är missnöjd med hur vi har hanterat dina uppgifter har du rätt att lämna in ett klagomål till dataombudsmannens byrå i Finland (tietosuoja.fi)."
         ]
       }
@@ -2415,7 +2415,7 @@
       "heading": "Kort sagt",
       "paragraphs": [
         "Det här är villkoren för att använda Sogverse och anmäla ditt barn till våra klubbar, läger och evenemang. Vi har skrivit dem på ett enkelt språk, eftersom vi vill att du faktiskt ska förstå vad du går med på – inte tvingas vada genom juridiskt krångel.",
-        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad pedagog som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och ditt barns första gång omfattas av en pengarna-tillbaka-garanti. Om du undrar över något är det bara att mejla kanslia@sog.gg, så hjälper en riktig människa dig."
+        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad pedagog som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och ditt barns första gång omfattas av en pengarna-tillbaka-garanti. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
       ]
     },
     "sections": {
@@ -2428,7 +2428,7 @@
         "bullets": [
           "School of Gaming Galactic Oy (FO-nummer 3110461-1)",
           "Isokatu 56, 90100 Uleåborg, Finland",
-          "E-post: kanslia@sog.gg"
+          "E-post: {supportEmail}"
         ]
       },
       "service": {
@@ -2472,7 +2472,7 @@
           "14 dagar eller mer innan lägret börjar: du får full återbetalning.",
           "Mellan 7 och 14 dagar innan: vi återbetalar dig minus en administrativ avgift på 50 euro.",
           "Mindre än 7 dagar innan: vi kan tyvärr inte återbetala beloppet, eftersom platsen har hållits och förberetts för ditt barn – om det inte rör sig om ett akut sjukdomsfall eller något helt utanför din kontroll.",
-          "Om ditt barn inte kan delta på grund av sjukdom återbetalar vi dig när du skickar oss ett läkarintyg till kanslia@sog.gg."
+          "Om ditt barn inte kan delta på grund av sjukdom återbetalar vi dig när du skickar oss ett läkarintyg till {supportEmail}."
         ]
       },
       "conduct": {
@@ -2497,7 +2497,7 @@
       "contact": {
         "heading": "Kontakta oss",
         "paragraphs": [
-          "Om något här är oklart, eller om du vill prata igenom något, är det bara att mejla kanslia@sog.gg. Det är en riktig människa i andra änden, och vi hjälper gärna till."
+          "Om något här är oklart, eller om du vill prata igenom något, är det bara att mejla {supportEmail}. Det är en riktig människa i andra änden, och vi hjälper gärna till."
         ]
       }
     }
@@ -2547,7 +2547,7 @@
       "step4": {
         "heading": "Steg 4 – En paus från en session",
         "paragraphs": [
-          "Om det ändå inte lugnar sig kan geduen be ditt barn sitta över resten av den sessionen. Om en längre paus behövs berättar vi det i förväg. Geduen pratar igenom det enskilt med ditt barn, vi hör av oss hem, och vårt kansli (kanslia@sog.gg) kommer med i samtalet."
+          "Om det ändå inte lugnar sig kan geduen be ditt barn sitta över resten av den sessionen. Om en längre paus behövs berättar vi det i förväg. Geduen pratar igenom det enskilt med ditt barn, vi hör av oss hem, och vårt kansli ({supportEmail}) kommer med i samtalet."
         ]
       },
       "step5": {
@@ -2571,7 +2571,7 @@
       "contact": {
         "heading": "Kontakta oss",
         "paragraphs": [
-          "Om du har frågor om den här policyn, eller vill prata om något som har hänt, mejla vårt kansli på kanslia@sog.gg. Det är en riktig människa i andra änden, och vi finns här för att hjälpa till."
+          "Om du har frågor om den här policyn, eller vill prata om något som har hänt, mejla vårt kansli på {supportEmail}. Det är en riktig människa i andra änden, och vi finns här för att hjälpa till."
         ]
       }
     }
@@ -2690,7 +2690,7 @@
         ],
         "Vanliga träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
-        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta support@lynxeducate.com eller hello@sog.gg."
+        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta support@lynxeducate.com eller {supportEmail}."
       ]
     },
     "sections": {
@@ -2726,7 +2726,7 @@
           "FO-nummer: 3110461-1",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
-          "E-post: hello@sog.gg"
+          "E-post: {supportEmail}"
         ]
       },
       "responsibleRoblox": {
@@ -3021,7 +3021,7 @@
           "Att återkalla ett samtycke påverkar inte den behandling som var laglig innan återkallelsen.",
           "Barn får kontakta oss direkt om sina egna uppgifter. Föräldrar och vårdnadshavare kan också göra en begäran för ett barn, med hänsyn till barnets egna rättigheter, ålder och mognad.",
           "Det förekommer inget helt automatiserat beslutsfattande som får rättsliga följder eller på liknande sätt i betydande grad påverkar deltagarna.",
-          "Skicka din begäran till support@lynxeducate.com eller hello@sog.gg. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
+          "Skicka din begäran till support@lynxeducate.com eller {supportEmail}. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
           "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – CNIL."
         ]
       },
@@ -3059,7 +3059,7 @@
           "School of Gaming Galactic Oy",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
-          "hello@sog.gg"
+          "{supportEmail}"
         ]
       }
     }

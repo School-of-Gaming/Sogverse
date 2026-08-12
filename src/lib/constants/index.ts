@@ -23,7 +23,16 @@ export const DISPLAY_NAME_MAX = 32;
  */
 export const MAX_GAMERS_PER_PARENT = 7;
 
-/** Verified sender for transactional emails via Brevo. */
+/**
+ * Verified sender for transactional emails via Brevo.
+ *
+ * Deliberately *not* `SUPPORT_EMAIL`, and the one place the two diverge. This
+ * address is a sending identity Brevo has verified (DKIM/SPF signed for it), so
+ * changing it is a deliverability change rather than a copy one — mail from an
+ * unverified From lands in spam or is rejected outright. `SUPPORT_EMAIL` is the
+ * address a human is invited to write to, and it is already the Reply-To on
+ * every template, so a parent who hits reply reaches the inbox we answer.
+ */
 export const SENDER_EMAIL = "sogverse@sog.gg";
 
 /**
@@ -42,5 +51,14 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
  */
 export const SENDER_NAME = "School of Gaming - Sogverse";
 
-/** Customer-facing support inbox shown in the footer and on auth screens. */
+/**
+ * The one customer-facing address, and the source of truth for it.
+ *
+ * Shown in the footer and on the auth screens, used as the Reply-To on every
+ * transactional email, and named by the legal pages through their
+ * `{supportEmail}` placeholder rather than spelled out per document — a literal
+ * in `messages/` is how we ended up with three different addresses across four
+ * legal documents, in five languages, with no way to notice from English.
+ * Anything customer-facing points here; nothing introduces a second address.
+ */
 export const SUPPORT_EMAIL = "help@sog.gg";

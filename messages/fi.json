@@ -2268,7 +2268,7 @@
       "heading": "Lyhyesti",
       "paragraphs": [
         "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Perheesi yksityisyyden – ja ennen kaikkea lapsesi yksityisyyden – suojaaminen on meille tärkeää, joten kirjoitimme tämän selkeällä kielellä ilman juridista jargonia.",
-        "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen hello@sog.gg."
+        "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen {supportEmail}."
       ]
     },
     "sections": {
@@ -2281,7 +2281,7 @@
         "bullets": [
           "School of Gaming Galactic Oy (Y-tunnus 3110461-1)",
           "Isokatu 56, 90100 Oulu",
-          "Sähköposti: hello@sog.gg"
+          "Sähköposti: {supportEmail}"
         ]
       },
       "infoWeCollect": {
@@ -2305,7 +2305,7 @@
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
           "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisissa lapset ovat aina koulutetun ohjaajan (kutsumme heitä Geduiksi) seurassa.",
-          "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen hello@sog.gg, niin hoidamme asian."
+          "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
       "howWeUse": {
@@ -2402,7 +2402,7 @@
       "contact": {
         "heading": "Yhteydenotto ja oikeutesi tehdä valitus",
         "paragraphs": [
-          "Jos haluat käyttää mitä tahansa yllä mainituista oikeuksista tai sinulla on kysyttävää yksityisyydestäsi tai lapsesi tiedoista, lähetä viesti osoitteeseen hello@sog.gg. Se on maksutonta, vastaamme aina, ja sähköposti on paras tapa tavoittaa meidät.",
+          "Jos haluat käyttää mitä tahansa yllä mainituista oikeuksista tai sinulla on kysyttävää yksityisyydestäsi tai lapsesi tiedoista, lähetä viesti osoitteeseen {supportEmail}. Se on maksutonta, vastaamme aina, ja sähköposti on paras tapa tavoittaa meidät.",
           "Jos olet tyytymätön siihen, miten olemme käsitelleet tietojasi, sinulla on oikeus tehdä valitus tietosuojavaltuutetun toimistolle (tietosuoja.fi)."
         ]
       }
@@ -2415,7 +2415,7 @@
       "heading": "Lyhyesti",
       "paragraphs": [
         "Nämä ovat Sogversen käyttöehdot ja ehdot, joilla ilmoitat lapsesi kerhoihin, leireille ja tapahtumiin. Olemme kirjoittaneet ne selkeällä kielellä, koska haluamme sinun ymmärtävän, mihin sitoudut – emme halua piilottaa asioita lakitekstin taakse.",
-        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu ohjaaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja lapsesi ensimmäiseen kertaan liittyy rahat takaisin -takuu. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen kanslia@sog.gg, niin oikea ihminen auttaa."
+        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu ohjaaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja lapsesi ensimmäiseen kertaan liittyy rahat takaisin -takuu. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
       ]
     },
     "sections": {
@@ -2428,7 +2428,7 @@
         "bullets": [
           "School of Gaming Galactic Oy (y-tunnus 3110461-1)",
           "Isokatu 56, 90100 Oulu",
-          "Sähköposti: kanslia@sog.gg"
+          "Sähköposti: {supportEmail}"
         ]
       },
       "service": {
@@ -2472,7 +2472,7 @@
           "Vähintään 14 päivää ennen leirin alkua: saat koko maksun takaisin.",
           "7–14 päivää ennen: palautamme maksun, mutta pidätämme 50 euron hallinnointikulun.",
           "Alle 7 päivää ennen: emme valitettavasti voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole sairaustapaus tai muu sinusta riippumaton syy.",
-          "Jos lapsesi ei voi osallistua sairauden vuoksi, palautamme maksun, kun lähetät meille lääkärintodistuksen osoitteeseen kanslia@sog.gg."
+          "Jos lapsesi ei voi osallistua sairauden vuoksi, palautamme maksun, kun lähetät meille lääkärintodistuksen osoitteeseen {supportEmail}."
         ]
       },
       "conduct": {
@@ -2497,7 +2497,7 @@
       "contact": {
         "heading": "Yhteydenotto",
         "paragraphs": [
-          "Jos jokin tässä jää epäselväksi tai haluat keskustella jostakin, lähetä viesti osoitteeseen kanslia@sog.gg. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
+          "Jos jokin tässä jää epäselväksi tai haluat keskustella jostakin, lähetä viesti osoitteeseen {supportEmail}. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
         ]
       }
     }
@@ -2547,7 +2547,7 @@
       "step4": {
         "heading": "Vaihe 4 – Jäähy istunnosta",
         "paragraphs": [
-          "Jos tilanne ei vieläkään rauhoitu, gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia (kanslia@sog.gg) liittyy mukaan keskusteluun."
+          "Jos tilanne ei vieläkään rauhoitu, gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
         ]
       },
       "step5": {
@@ -2571,7 +2571,7 @@
       "contact": {
         "heading": "Yhteydenotto",
         "paragraphs": [
-          "Jos sinulla on kysyttävää tästä ohjeesta tai haluat keskustella jostakin tapahtuneesta, lähetä kanslialle viesti osoitteeseen kanslia@sog.gg. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
+          "Jos sinulla on kysyttävää tästä ohjeesta tai haluat keskustella jostakin tapahtuneesta, lähetä kanslialle viesti osoitteeseen {supportEmail}. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
         ]
       }
     }
@@ -2690,7 +2690,7 @@
         ],
         "Tavanomaisia verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
         "Lynx Educate ja School of Gaming eivät myy Ohjelman ilmoittautumistietoja eivätkä käytä niitä lapsille suunnattuun mainontaan.",
-        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen support@lynxeducate.com tai hello@sog.gg."
+        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen support@lynxeducate.com tai {supportEmail}."
       ]
     },
     "sections": {
@@ -2726,7 +2726,7 @@
           "Y-tunnus: 3110461-1",
           "Isokatu 56",
           "90100 Oulu, Suomi",
-          "Sähköposti: hello@sog.gg"
+          "Sähköposti: {supportEmail}"
         ]
       },
       "responsibleRoblox": {
@@ -3021,7 +3021,7 @@
           "Suostumuksen peruuttaminen ei vaikuta ennen peruutusta tapahtuneen käsittelyn lainmukaisuuteen.",
           "Lapset voivat ottaa meihin yhteyttä suoraan omia tietojaan koskevissa asioissa. Myös vanhempi tai huoltaja voi tehdä pyynnön lapsen puolesta ottaen huomioon lapsen omat oikeudet, iän ja kehitystason.",
           "Osallistujiin ei kohdisteta pelkästään automaattiseen käsittelyyn perustuvaa päätöksentekoa, jolla on oikeusvaikutuksia tai vastaavalla tavalla merkittäviä vaikutuksia.",
-          "Lähetä pyynnöt osoitteeseen support@lynxeducate.com tai hello@sog.gg. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
+          "Lähetä pyynnöt osoitteeseen support@lynxeducate.com tai {supportEmail}. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
           "Perheillä on myös oikeus tehdä valitus Ranskan tietosuojaviranomaiselle, joka on Commission nationale de l’informatique et des libertés – CNIL."
         ]
       },
@@ -3059,7 +3059,7 @@
           "School of Gaming Galactic Oy",
           "Isokatu 56",
           "90100 Oulu, Suomi",
-          "hello@sog.gg"
+          "{supportEmail}"
         ]
       }
     }

@@ -7,6 +7,7 @@ import sv from "@/../messages/sv.json";
 import tlh from "@/../messages/tlh.json";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { policyTextSegments } from "@/components/legal/policy-content";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 
 /**
@@ -190,6 +191,68 @@ describe("policy cross-reference tags", () => {
       "An <unknownTag>unwrapped</unknownTag> run beside a <linkPrivacy>real</linkPrivacy> one.",
     ]) {
       expect(rendered(source)).toBe(source.replace(/<\/?[A-Za-z][A-Za-z0-9]*>/g, ""));
+    }
+  });
+});
+
+/**
+ * **The address a family is told to write to is defined once, in code, and named
+ * by the copy.** Spelling it out per document is what produced three different
+ * addresses across four legal pages, in five languages, none of them the one the
+ * footer showed — and nothing reading English could see it.
+ *
+ * The completeness script already fails a locale that drops or renames a
+ * `{supportEmail}`, because it reads these as the ICU placeholders they are
+ * spelled to look like. What it cannot see is a catalog that stops using the
+ * placeholder and hardcodes an address again, which is the regression that
+ * actually happened. Hence the ratchet below, over every catalog.
+ */
+describe("the support address in policy copy", () => {
+  it("fills the placeholder in with the constant", () => {
+    expect(policyTextSegments("Just email {supportEmail} and we'll help.")).toEqual([
+      { text: `Just email ${SUPPORT_EMAIL} and we'll help.` },
+    ]);
+  });
+
+  it("fills one inside a cross-reference link too", () => {
+    expect(
+      policyTextSegments("See <linkPrivacy>our policy, or {supportEmail}</linkPrivacy>."),
+    ).toEqual([
+      { text: "See " },
+      { text: `our policy, or ${SUPPORT_EMAIL}`, href: ROUTES.privacy },
+      { text: "." },
+    ]);
+  });
+
+  it("leaves a placeholder it does not know exactly as written", () => {
+    const typo = "Write to {supportEmial} or {somethingElse}.";
+    expect(policyTextSegments(typo)).toEqual([{ text: typo }]);
+  });
+
+  it("carries no hardcoded address in any catalog's legal namespaces", () => {
+    for (const [locale, catalog] of Object.entries(CATALOGS)) {
+      for (const { name } of LEGAL_DOCUMENTS) {
+        for (const [path, value] of flatStrings(catalog[name])) {
+          expect(
+            value,
+            `${locale}: ${name}.${path} spells an address out — use {supportEmail}`,
+          ).not.toMatch(/[a-z0-9._%+-]+@sog\.gg/i);
+        }
+      }
+    }
+  });
+
+  it("still shows the address on the pages that promise one", () => {
+    // A sample rather than a census: each document's "contact" section is where
+    // a reader goes looking, so losing the placeholder there is the failure that
+    // matters most.
+    for (const contact of [
+      messages.privacy.sections.contact.paragraphs[0],
+      messages.terms.sections.contact.paragraphs[0],
+      messages.discipline.sections.contact.paragraphs[0],
+    ]) {
+      expect(contact).toContain("{supportEmail}");
+      expect(rendered(contact)).toContain(SUPPORT_EMAIL);
     }
   });
 });
