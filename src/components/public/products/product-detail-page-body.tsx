@@ -136,7 +136,16 @@ export function ProductDetailPageBody({
   );
 }
 
-function BackLink({
+// Exported for the draft page body (`product-detail-page-body-draft.tsx`),
+// which rearranges this page rather than rewriting it. The draft composes the
+// same section components this file does — `LongDescription`, the overview card
+// and the topic card, each imported from its own module — but it cannot reuse
+// `MainColumn` itself: from `2xl` the overview card becomes a grid item in a
+// left facts rail, and a component cannot be inside another component's flow at
+// one breakpoint and its sibling at the next. The back link has no such
+// problem, so it is shared rather than restated. At promotion the draft body
+// replaces this one and this goes back to being private.
+export function BackLink({
   productType,
   municipality,
 }: {

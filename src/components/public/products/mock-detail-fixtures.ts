@@ -7,6 +7,7 @@ import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
 import type { ParticipationCounts } from "@/services/participations";
 import type { RegistrationState } from "./derive-registration-state";
+import type { ProductTag } from "./product-tag";
 import type {
   AuthState,
   MyParticipationState,
@@ -632,6 +633,199 @@ export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
 ];
 
 /**
+ * Scene-only demo art for the **card redesign** grid, in `public/preview-art/`.
+ *
+ * Every fixture row carries `image_path: null` — no storage object backs a
+ * mock — so a grid built straight from them would put the fallback banner on
+ * every card and leave the redesign's media block unjudged. These four flat
+ * SVGs stand in for product photos, and are picked for spread rather than
+ * prettiness: `park` is near-white at its bottom-left, which is precisely where
+ * the tag chip sits, and `racetrack` is a night scene, so the two ends of the
+ * contrast problem are on the same page. They are demo art and die with the
+ * override that feeds them.
+ *
+ * **The directory is world-readable, whatever the scenes' own gating says.**
+ * The proxy admin-gates `/preview/*` pages, but its matcher deliberately
+ * excludes image extensions, so anything under `public/` is served to anyone
+ * who guesses the URL — which is why this is `preview-art/` and not
+ * `preview/`, a name that would read as covered by that gate. Nothing that
+ * even resembles family data — a real photograph, a name, a screenshot of a
+ * real page — may ever be put in this directory.
+ */
+const DEMO_ART = {
+  terrain: "/preview-art/card-terrain.svg",
+  racetrack: "/preview-art/card-racetrack.svg",
+  park: "/preview-art/card-park.svg",
+  interior: "/preview-art/card-interior.svg",
+} as const;
+
+/**
+ * **The tag a scenario carries, for every surface that renders it.**
+ *
+ * One map, because a card and the page it opens are the same product: the shop
+ * grid links each card to `/preview/products/<slug>`, so a card wearing
+ * "Neuroinclusive" that landed on an untagged detail page would be the preview
+ * telling a family two different things about one club. Neither surface may
+ * own this list. A scenario absent from the map is untagged, which is most of
+ * them and is the ordinary case.
+ *
+ * Not a row field: there is no column for it yet (see `product-tag.ts`), so it
+ * is keyed by scenario and handed to the draft components directly. When the
+ * column lands, this map dies and the fixture rows carry their own tags.
+ */
+const SCENARIO_TAG: Partial<Record<PreviewScenario, ProductTag>> = {
+  "consumer-club": "beginner",
+  "consumer-club-free": "neuroinclusive",
+  "consumer-club-full-waitlist": "advanced",
+  "consumer-club-threshold": "beginner",
+  "camp-open": "beginner",
+  "event-both-audiences": "neuroinclusive",
+};
+
+/**
+ * The demo art a scenario's card and detail hero both paint. Same reasoning as
+ * the tag map: a card's picture and the page behind it are the same product's
+ * picture. Absent means the scenario has no art and renders the wordmark
+ * banner — exactly one grid card is deliberately in that state.
+ */
+const SCENARIO_ART: Partial<Record<PreviewScenario, string>> = {
+  "consumer-club": DEMO_ART.terrain,
+  "consumer-club-free": DEMO_ART.park,
+  "consumer-club-full-waitlist": DEMO_ART.interior,
+  "consumer-club-parents-only": DEMO_ART.interior,
+  "camp-open": DEMO_ART.terrain,
+  "camp-full-closed": DEMO_ART.racetrack,
+  "event-both-audiences": DEMO_ART.park,
+  "event-parents-only": DEMO_ART.racetrack,
+  "free-event": DEMO_ART.racetrack,
+};
+
+/** The scenario's tag, or null when it carries none. */
+export function scenarioTag(slug: PreviewScenario): ProductTag | null {
+  return SCENARIO_TAG[slug] ?? null;
+}
+
+/** The scenario's demo art URL, or null when it deliberately has none. */
+export function scenarioArt(slug: PreviewScenario): string | null {
+  return SCENARIO_ART[slug] ?? null;
+}
+
+export interface ShopRedesignEntry {
+  slug: PreviewScenario;
+  /**
+   * The product's name, replacing both the per-type copy and the ` · label`
+   * suffix every other scene's cards carry.
+   *
+   * Required here, unlike everywhere else, and that is the point: the suffix
+   * makes a title unrepresentative — ten cards reading "Minecraft Redstone Club
+   * · €45/mo — open" say nothing about how a real catalogue's titles sit in a
+   * full-width row. So the redesign grid carries names a shop would actually
+   * ship (varied, so the grid does not read as one club ten times), and the
+   * scenario descriptor moves down into `descriptionOverride` where it is still
+   * legible but is no longer pretending to be a product name.
+   */
+  nameOverride: string;
+  /**
+   * The card's short description, and where each card says which fixture it is
+   * — the job the name suffix used to do, moved somewhere it does not distort
+   * what is being judged.
+   */
+  descriptionOverride: string;
+}
+
+/**
+ * The **card redesign** grid: one page carrying every combination the draft
+ * card has to survive, reusing the existing scenarios rather than authoring a
+ * parallel set of products.
+ *
+ * What it puts side by side, and why each earns its place:
+ *
+ * - a tagged card of each tag, so the three labels — and their three icons —
+ *   are comparable at a glance;
+ * - the free capped club tagged, because a Free chip in the footer and a tag
+ *   chip on the image are two chips on one card;
+ * - the family event tagged, which is the fullest card the design produces: a
+ *   tag bottom-left and an audience badge top-right, both over a bright photo;
+ * - the parents-only club and event untagged, so the top-right slot is seen
+ *   carrying a badge with no tag opposite it;
+ * - the threshold club un-imaged **but tagged**, which is the nastiest
+ *   combination on the page: a chip over the muted fallback banner rather than
+ *   over a photograph, and the one most likely to read badly;
+ * - the full-with-waitlist club under a deliberately long Finnish name, because
+ *   a grid of comfortable titles proves nothing about the title row;
+ * - and the two dead ends — a full camp and, in the footer, the inert CTA —
+ *   because nothing below the rule changed and that has to stay visibly true.
+ *
+ * Names are what a real catalogue would carry and are varied on purpose; each
+ * card's *description* is what says which fixture it is. The tag and the art
+ * are **not** listed here — they come from `SCENARIO_TAG` / `SCENARIO_ART`
+ * above, so the detail page a card opens shows the same tag and the same
+ * picture.
+ */
+export const SHOP_SCENE_REDESIGN: readonly ShopRedesignEntry[] = [
+  {
+    slug: "consumer-club",
+    nameOverride: "Minecraft Redstone Club",
+    descriptionOverride:
+      "Paid monthly club, open, ages 8–12 in the top-right slot. The ordinary card, and the one everything else is a deviation from.",
+  },
+  {
+    slug: "consumer-club-free",
+    nameOverride: "Roblox Studio Beginners",
+    descriptionOverride:
+      "Free and capped: the Free chip in the footer and a tag chip on the image, on the brightest photo of the set — the bottom-left corner this art is lightest in is exactly where the tag sits.",
+  },
+  {
+    slug: "consumer-club-full-waitlist",
+    nameOverride: "Minecraft-rakentelukerho edistyneille konepajamestareille",
+    descriptionOverride:
+      "Full with a waitlist, so it still opens and still says View — indistinguishable from an open card, which is inherited behaviour. The name is deliberately long: this is the card the full-width title row is judged on.",
+  },
+  {
+    slug: "consumer-club-threshold",
+    nameOverride: "Fortnite Creative Workshop",
+    descriptionOverride:
+      "The only card with no image, on purpose: it is here to judge the SOG fallback banner in the grid rather than on its own — and, since it is tagged, to show a chip over that muted ground instead of over a photograph. Awaiting its signup threshold, which the card says nothing about.",
+  },
+  {
+    slug: "consumer-club-parents-only",
+    nameOverride: "Vanhempien peli-ilta · Parents' Gaming Evening",
+    descriptionOverride:
+      "For parents only: the top-right slot carries the audience badge, no age range anywhere, and nothing opposite it bottom-left.",
+  },
+  {
+    slug: "camp-open",
+    nameOverride: "Minecraft Builders Camp",
+    descriptionOverride:
+      "An upfront-priced camp, open. Two schedule lines instead of one, which is what the meta list has to absorb without pushing the description around.",
+  },
+  {
+    slug: "camp-full-closed",
+    nameOverride: "Roblox Obby Bootcamp",
+    descriptionOverride:
+      "Full with no waitlist: the inert card. Muted label, no chevron, no link — and the darkest photo of the set, which is the other end of the chip-legibility question.",
+  },
+  {
+    slug: "event-both-audiences",
+    nameOverride: "Pokémon GO -perheretki · Family Outing",
+    descriptionOverride:
+      "The fullest card the design makes: a tag bottom-left and the families badge top-right, both over the bright art. Its age range yields the slot to the badge, exactly as the live card decides it.",
+  },
+  {
+    slug: "event-parents-only",
+    nameOverride: "Vanhempainilta · Parents' Evening",
+    descriptionOverride:
+      "For parents only, and free. No tag, no age, one badge on a dark photo — the sparsest the media block ever gets.",
+  },
+  {
+    slug: "free-event",
+    nameOverride: "Friday Night Mario Kart",
+    descriptionOverride:
+      "Free and untagged: the age range has the top-right slot to itself, and the Free chip sits in the footer beneath it.",
+  },
+];
+
+/**
  * The shop browse scene's scenario slugs and guard.
  *
  * They live here — not in the scene component — because the scene file is
@@ -639,8 +833,17 @@ export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
  * exported from a client module is a client reference there, and calling it
  * during server render is a runtime error. Same arrangement as every other
  * surface (the guard lives with the fixtures, the component imports it).
+ *
+ * `redesign` is the draft card's grid and is temporary by construction: it goes
+ * when the draft body is promoted onto the live card, along with the
+ * `renderCard` seam in `ProductBrowseResults` that lets a scene substitute a
+ * card at all.
  */
-export const SHOP_BROWSE_SCENARIOS = ["default", "audiences"] as const;
+export const SHOP_BROWSE_SCENARIOS = [
+  "default",
+  "audiences",
+  "redesign",
+] as const;
 
 export type ShopBrowseScenario = (typeof SHOP_BROWSE_SCENARIOS)[number];
 
@@ -656,10 +859,19 @@ export function isShopBrowseScenario(s: string): s is ShopBrowseScenario {
  * them. The suffix is what makes each card identifiable as the fixture behind
  * it — the browse scene's whole job is comparing cards side by side, and cards
  * you cannot tell apart defeat it.
+ *
+ * `copy` overrides both halves of that, and the redesign grid passes it for
+ * every card: a suffixed name is unrepresentative of a real catalogue, so those
+ * cards carry names a shop would ship and move the scenario descriptor into the
+ * description instead — which the draft card renders anyway. Overriding belongs
+ * here rather than in the scene because this is the only place a fixture's copy
+ * is decided; a scene rewriting names after the fact would be a second naming
+ * rule, free to disagree with this one.
  */
 export function buildBrowseFixture(
   slug: PreviewScenario,
   now: Date,
+  copy?: { name: string; description: string },
 ): ProductDetailRow {
   const { product } = buildScenarioFixture(slug);
   // The browse card DERIVES its registration state from the row's calendar
@@ -685,7 +897,8 @@ export function buildBrowseFixture(
           ).toISOString(),
     product_translations: product.product_translations.map((tr) => ({
       ...tr,
-      name: `${tr.name} · ${SCENARIOS[slug].label}`,
+      name: copy?.name ?? `${tr.name} · ${SCENARIOS[slug].label}`,
+      short_description: copy?.description ?? tr.short_description,
     })),
   };
 }

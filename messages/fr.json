@@ -1522,11 +1522,22 @@
     "families": "Pour les familles",
     "familiesWithAges": "Pour les familles, {min}–{max} ans"
   },
+  "productTag": {
+    "neuroinclusive": "Neuro-inclusif",
+    "beginner": "Débutant",
+    "advanced": "Avancé"
+  },
+  "productTagDetail": {
+    "neuroinclusive": "De petits groupes, la même structure prévisible à chaque séance et des Gedus habitués à accompagner des enfants neuroatypiques. Personne n'a besoin de faire semblant, et il y a toujours une façon plus calme de participer.",
+    "beginner": "Aucune expérience requise. Les Gedus commencent vraiment au début et avancent au rythme du groupe : un enfant qui n'a jamais ouvert le jeu est exactement à sa place.",
+    "advanced": "Pour les enfants qui connaissent déjà bien le jeu et veulent un vrai défi — des projets plus ambitieux, des problèmes plus difficiles et un groupe capable de les suivre."
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",
     "waitlistAvailable": "Liste d’attente"
   },
   "productDetail": {
+    "jumpToSignup": "{verb} maintenant !",
     "back": {
       "consumer_club": "Tous les clubs",
       "municipality_club": "Tous les clubs municipaux",
