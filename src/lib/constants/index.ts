@@ -40,7 +40,7 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
  * keeping is the half they already know. See the brand-vs-platform rule in the
  * root CLAUDE.md.
  */
-export const SENDER_NAME = "School of Gaming - Sogverse";
+export const SENDER_NAME = "School of Gaming – Sogverse";
 
 /** Customer-facing support inbox shown in the footer and on auth screens. */
 export const SUPPORT_EMAIL = "help@sog.gg";

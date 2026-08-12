@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "Sogverse – School of Gaming",
+    "title": "School of Gaming – Sogverse",
     "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattimaisten pelikasvattajien johdolla.",
     "shortDescription": "School of Gaming – Kun ruutuajasta tulee laatuaikaa",
     "pages": {
@@ -1424,7 +1424,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Mikä Sogverse on?",
-          "a": "Sogverse — School of Gaming — järjestää Minecraft-kerhoja, joita vetävät ammattilaiset pelikasvattajat, jotta ruutuajasta tulisi laatuaikaa."
+          "a": "Sogverse on School of Gamingin alusta Minecraft-kerhoille, joita vetävät ammattilaiset pelikasvattajat, jotta ruutuajasta tulisi laatuaikaa."
         },
         "productTypes": {
           "q": "Mikä on kerhojen, leirien ja tapahtumien ero?",

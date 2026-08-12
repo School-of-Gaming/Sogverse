@@ -153,9 +153,11 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 - **School of Gaming** — who we are to a family. It is the name a parent recognises, the one they were told by a school or another parent, and the one that has to be legible in a crowded inbox list or a browser tab. Anything a customer meets cold — a sender name, a page title, an OG image, marketing copy — leads with it.
 - **Sogverse** — the product families log in to and the system we build. It is the right word for the app itself, the codebase, the database and every internal conversation. A parent who has an account knows it; a parent who does not has no reason to.
 
-The two combine as **School of Gaming - Sogverse** (brand first, platform second) wherever a string has to carry both — the transactional email sender is the canonical use. Leading with "Sogverse" puts the word that needs the most explanation in the position that survives truncation.
+**The combined lockup is `School of Gaming – Sogverse`: brand first, platform second, separated by a spaced en dash (`–`, U+2013) — never a hyphen and never an em dash.** Use it wherever a string has to carry both names; the transactional email sender and the site's `metadata.title` are the canonical uses. Leading with "Sogverse" puts the word that needs the most explanation in the position that survives truncation, and naming the character is the point of writing this down — the separator was previously left to whoever typed the string, which is how the codebase ended up with three different dashes in one lockup.
 
-This is a deliberate, in-progress shift: older site strings still read "Sogverse – School of Gaming" and will be moved over. Write new copy the new way; don't treat an unmigrated string as the precedent.
+**An em dash between the two names is a different construct, not a variant of the lockup.** Prose that reads "Sogverse — School of Gaming — runs clubs" is an appositive asserting the two names are the same thing, which is exactly what this rule says they are not. Copy that needs to relate them states the relationship instead: Sogverse is School of Gaming's platform.
+
+This is a deliberate, in-progress shift, and the lockups are the part of it that is finished — every string carrying both names now leads with the brand. The unfinished part is prose: `messages/` mentions "Sogverse" around fifty times in English alone, and each one is its own judgment about whether the reader is being introduced to the company (brand) or is already inside the product (platform). Migrate those as you touch them rather than in a sweep, and don't read an un-migrated one as the precedent.
 
 ### Locale vs. Spoken Language
 
