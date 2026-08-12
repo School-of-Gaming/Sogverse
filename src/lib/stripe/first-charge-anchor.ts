@@ -1,4 +1,5 @@
 import { fromZonedTime } from "date-fns-tz";
+import { formatDate, formatDateOnly } from "@/lib/utils";
 
 /**
  * When a consumer club's first subscription invoice should fall.
@@ -13,7 +14,9 @@ import { fromZonedTime } from "date-fns-tz";
  * **This module is deliberately pure and client-safe**: no Stripe SDK, no
  * secrets, no I/O. The checkout route uses it to set the anchor; the public
  * signup panel uses it to tell the parent, before they click, when the first
- * charge lands. One computation, so the two cannot disagree.
+ * charge lands; the confirmation restates it afterwards. One computation, so
+ * none of them can disagree — which is why the *rendering* rule
+ * (`formatFirstChargeDate`) lives here too rather than at each surface.
  *
  * **Date handling is deliberately arithmetic-free.** There is exactly one
  * zone-aware step — `fromZonedTime`, turning the bare `start_date` into an
@@ -47,6 +50,23 @@ const MAX_ANCHOR_LEAD_MS = 28 * 24 * 60 * 60 * 1000;
 const ANCHOR_CLOCK_SKEW_MARGIN_MS = 60 * 60 * 1000;
 
 /**
+ * How close to "now" a start instant may be and still be worth deferring to.
+ *
+ * The real constraint is that the anchor is computed when the Checkout Session
+ * is *created*, but the subscription it parameterises is created when the
+ * session is *completed* — up to `CHECKOUT_SESSION_LIFETIME_MINUTES` (30) later,
+ * plus however long the parent spends on Stripe's page. An anchor that has
+ * fallen into the past by then is rejected outright, and the parent meets that
+ * failure at the payment page with a card in their hand. An hour covers that
+ * whole session lifetime with room for clock skew between us and Stripe.
+ *
+ * A club starting inside the hour is effectively starting now, so charging at
+ * checkout is also the honest answer — the same one every launch-day club has
+ * always got.
+ */
+const MIN_ANCHOR_LEAD_MS = 60 * 60 * 1000;
+
+/**
  * The instant a product's `start_date` begins, in the product's own timezone.
  *
  * Midnight, product-local — not the first session's slot time. The charge lands
@@ -66,9 +86,11 @@ export function productLocalStartInstant(
  * The instant Stripe should raise the first invoice on, or `null` when billing
  * should start immediately (today's behaviour, unchanged).
  *
- * Returns `null` for a product with no start date and for one starting now or
- * in the past — a stale date or a launch-day club is charged at checkout, which
- * is exactly what happens without an anchor.
+ * Returns `null` for a product with no start date and for one starting in the
+ * past, now, or inside the next hour — a stale date or a launch-day club is
+ * charged at checkout, which is exactly what happens without an anchor, and the
+ * hour is the floor that keeps an anchor from expiring inside the Checkout
+ * Session's own lifetime (see `MIN_ANCHOR_LEAD_MS`).
  *
  * Otherwise the answer is `min(start instant, now + 28 days − 1 hour)`. A parent
  * buying more than about four weeks ahead is therefore charged **before** the
@@ -89,8 +111,65 @@ export function firstChargeAnchor(
   if (!Number.isFinite(startMs)) return null;
 
   const nowMs = now.getTime();
-  if (startMs <= nowMs) return null;
+  if (startMs - nowMs < MIN_ANCHOR_LEAD_MS) return null;
 
   const ceilingMs = nowMs + MAX_ANCHOR_LEAD_MS - ANCHOR_CLOCK_SKEW_MARGIN_MS;
   return new Date(Math.min(startMs, ceilingMs));
+}
+
+/**
+ * Is this first-charge instant the club's own start, rather than a clamped one?
+ *
+ * Compared at **whole seconds**, because that is the resolution the value
+ * survives a round trip at: the anchor is sent to Stripe as epoch seconds, comes
+ * back as the subscription's period end, and is read off our row as a timestamp.
+ * Product-local midnight has no sub-second part to lose, so the floor only
+ * absorbs noise added on the way.
+ */
+export function isFirstChargeAtProductStart(
+  chargeAt: Date,
+  startDate: string,
+  timezone: string,
+): boolean {
+  const startMs = productLocalStartInstant(startDate, timezone).getTime();
+  const chargeMs = chargeAt.getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(chargeMs)) return false;
+  return Math.floor(chargeMs / 1000) === Math.floor(startMs / 1000);
+}
+
+/**
+ * The parent-facing date of a first charge — the single rule both surfaces that
+ * state one (the shop's signup panel before the click, the confirmation after
+ * it) render through, so a parent cannot be shown two different days for the
+ * same charge.
+ *
+ * The rule turns on whether the anchor was clamped:
+ *
+ *   - **Unclamped** — the charge instant *is* the club's start date, so it is
+ *     rendered as that bare calendar date, identical to the start date shown
+ *     everywhere else on the page. Projecting it into a viewer's zone would slip
+ *     it a day for anyone west of the product's zone and make the same club
+ *     start on two different dates on one screen.
+ *   - **Clamped** — the charge is a true instant with no calendar date of its
+ *     own, so it goes into the **viewer's** zone: that is the day the money
+ *     leaves their account and the day their statement will name.
+ */
+export function formatFirstChargeDate(
+  chargeAt: Date | string,
+  startDate: string | null,
+  timezone: string,
+  locale: string,
+  viewerTimezone: string,
+): string {
+  const instant = typeof chargeAt === "string" ? new Date(chargeAt) : chargeAt;
+  if (
+    startDate !== null &&
+    isFirstChargeAtProductStart(instant, startDate, timezone)
+  ) {
+    return formatDateOnly(startDate, locale);
+  }
+  return formatDate(instant, locale, {
+    dateStyle: "medium",
+    timeZone: viewerTimezone,
+  });
 }

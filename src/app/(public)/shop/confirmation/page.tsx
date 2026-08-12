@@ -196,19 +196,26 @@ async function renderConfirmation(
     confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
 
   try {
-    product = await new ProductsService(supabase).getDetailById(
-      confirmation.productId,
-    );
+    // Side by side, not one after the other: the deferred-charge read knows
+    // nothing about the product row and every enrolled confirmation makes both,
+    // so serialising them would put two round trips in front of first paint
+    // where one wait does. It swallows its own failure rather than sharing the
+    // outer catch, because the billing line is optional and the summary is not —
+    // a read that fails here must cost the line, never the whole page.
+    [product, firstChargeAt] = await Promise.all([
+      new ProductsService(supabase).getDetailById(confirmation.productId),
+      outcome === "enrolled" && confirmation.participationId
+        ? participations
+            .getDeferredFirstChargeAt(confirmation.participationId)
+            .catch(() => null)
+        : null,
+    ]);
     // "You're #N" — fetched live (not the stale join-time value) so a parent
     // who revisits sees their position shrink as people ahead leave. Null is
-    // tolerated: the view just omits the line.
+    // tolerated: the view just omits the line. Left sequential because it is the
+    // other outcome's read: a waitlisted row never runs the pair above.
     if (outcome === "waitlisted" && confirmation.participationId) {
       waitlistPosition = await participations.getWaitlistPosition(
-        confirmation.participationId,
-      );
-    }
-    if (outcome === "enrolled" && confirmation.participationId) {
-      firstChargeAt = await participations.getDeferredFirstChargeAt(
         confirmation.participationId,
       );
     }

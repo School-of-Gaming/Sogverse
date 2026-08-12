@@ -93,11 +93,14 @@ describe("the signup panel's first-charge date", () => {
 });
 
 describe("the confirmation's first-charge line", () => {
-  function renderConfirmation(firstChargeAt: string | null) {
+  function renderConfirmation(
+    firstChargeAt: string | null,
+    startDate: string | null = "2027-06-01",
+  ) {
     const { product } = buildScenarioFixture("consumer-club");
     return render(
       <PurchaseConfirmationView
-        product={product}
+        product={{ ...product, start_date: startDate }}
         participantName="Aino"
         outcome="enrolled"
         firstChargeAt={firstChargeAt}
@@ -105,8 +108,27 @@ describe("the confirmation's first-charge line", () => {
     );
   }
 
-  it("states the stored anchor in the viewer's zone", () => {
-    // The same instant-vs-day trap as the clamped panel case: 22:30 UTC is the
+  it("renders the club's bare start date when the stored anchor is not clamped", () => {
+    // The stored instant is product-local midnight of the start date — an
+    // unclamped anchor, i.e. the club's own start — so it must print as that
+    // bare calendar date, exactly as the panel printed it before the click and
+    // as the start date reads elsewhere on this page. The viewer is five hours
+    // behind Helsinki, where a viewer-zone projection would slip it to the 23rd
+    // and make one club start on two days on one screen.
+    viewerZone.value = "America/New_York";
+    const { container } = renderConfirmation(
+      "2027-02-23T22:00:00.000Z",
+      "2027-02-24",
+    );
+    expect(container.textContent).toContain(
+      'next.firstCharge|{"date":"Feb 24, 2027"}',
+    );
+  });
+
+  it("states a clamped anchor in the viewer's zone", () => {
+    // Nowhere near the June start, so this instant is Stripe's ceiling rather
+    // than the club's start: a true instant with no calendar date of its own.
+    // The same instant-vs-day trap as the clamped panel case — 22:30 UTC is the
     // next day in Helsinki, and the parent's statement will say so.
     viewerZone.value = "Europe/Helsinki";
     const { container } = renderConfirmation("2027-03-03T22:30:00.000Z");

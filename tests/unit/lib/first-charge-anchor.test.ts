@@ -8,11 +8,13 @@ import {
  * The one decision behind deferred billing: when Stripe raises the first
  * invoice for a club bought before it starts.
  *
- * Two things are being pinned. The **conversion** — a bare `start_date` becomes
- * product-local midnight, which is an offset question and therefore a
- * DST-sensitive one — and the **clamp**, which exists because Stripe rejects a
+ * Three things are being pinned. The **conversion** — a bare `start_date`
+ * becomes product-local midnight, which is an offset question and therefore a
+ * DST-sensitive one — the **clamp**, which exists because Stripe rejects a
  * `billing_cycle_anchor` later than the buyer's next natural billing date and
- * is the reason an early buyer is charged before their club begins.
+ * is the reason an early buyer is charged before their club begins, and the
+ * **floor**, which exists because the anchor is computed at session creation but
+ * read at session completion, up to half an hour later.
  */
 
 const HELSINKI = "Europe/Helsinki";
@@ -84,11 +86,22 @@ describe("firstChargeAnchor", () => {
     expect(firstChargeAnchor("2026-09-01", HELSINKI, now)).toBeNull();
   });
 
-  it("defers for a start date later today but still ahead", () => {
-    // The anchor has no minimum — Stripe accepts one an hour out — so a club
-    // starting at midnight tonight still defers rather than falling back to an
-    // immediate charge.
+  it("defers nothing for a start inside the one-hour floor", () => {
+    // The anchor is computed when the Checkout Session is *created*, but the
+    // subscription it parameterises is created when the session is completed —
+    // up to half an hour later. An anchor half an hour out would therefore be in
+    // the past by the time Stripe reads it, and rejected at the payment page
+    // with the parent's card already in hand. Inside the floor we charge at
+    // checkout instead, which for a club starting within the hour is also the
+    // honest answer.
     const now = new Date("2027-01-31T21:30:00Z"); // 23:30 Helsinki, 31 Jan
+    expect(firstChargeAnchor("2027-02-01", HELSINKI, now)).toBeNull();
+  });
+
+  it("defers for a start comfortably outside the floor", () => {
+    // Six hours out: past the floor with room to spare, so the club's own start
+    // instant is the anchor and nothing falls back to an immediate charge.
+    const now = new Date("2027-01-31T16:00:00Z"); // 18:00 Helsinki, 31 Jan
     expect(firstChargeAnchor("2027-02-01", HELSINKI, now)?.toISOString()).toBe(
       "2027-01-31T22:00:00.000Z",
     );

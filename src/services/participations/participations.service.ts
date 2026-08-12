@@ -668,20 +668,36 @@ export class ParticipationsService {
    * or `null` when there is no deferred first charge to state.
    *
    * A club bought before it starts completes Checkout at €0 and bills for the
-   * first time at the anchor, so the confirmation has to say when that is. Two
-   * facts decide it, and neither works alone:
+   * first time at the anchor, so the confirmation has to say when that is. One
+   * fact turns the line on and two guards turn it off, and none works alone:
    *
    *   - **The signal is the €0 subscription payment row** — the marker the
    *     webhook writes for a completion that collected nothing. A future
    *     `current_period_end` on its own is not a signal: an immediately-charged
    *     subscription has one too (its renewal), and calling a renewal the "first
    *     charge" is a lie about money.
-   *   - **The guard is the absence of a positive-amount one.** The €0 row is
-   *     permanent, the deferral is not: once the anchor fires,
-   *     `current_period_end` advances to the *next* renewal, and a parent
-   *     revisiting their confirmation link — which they do — would be told a
-   *     renewal date under a "first charge" label. So the line disappears the
-   *     moment a real charge lands.
+   *   - **The first guard is the absence of a positive-amount row** for this
+   *     subscription. The €0 marker is permanent, the deferral is not: once the
+   *     anchor fires, `current_period_end` advances to the *next* renewal, and a
+   *     parent revisiting their confirmation link — which they do — would be told
+   *     a renewal date under a "first charge" label.
+   *   - **The second guard is the clock.** The line only makes a claim about the
+   *     future, so an instant that is not in the future retires it whatever the
+   *     ledger says. That covers what the payment row cannot: an anchor charge
+   *     that *failed* (the subscription goes `past_due`, no positive payment row
+   *     is ever written, and `current_period_end` sits in the past), and an
+   *     `invoice.paid` delivery we never received.
+   *
+   * **What is still open, honestly.** The two guards do not close the
+   * webhook-ordering race: Stripe can deliver `customer.subscription.updated` for
+   * the anchor cycle before the matching `invoice.paid`, and in the window
+   * between them `current_period_end` has already advanced to the next renewal
+   * while no positive payment row exists yet — so a confirmation loaded in that
+   * window states a renewal date under the "first charge" label. The window is
+   * seconds to minutes, both events are near-simultaneous, and the clock guard
+   * does not help because the advanced value is in the future. Closing it (by
+   * recording the anchor at purchase and comparing against it, rather than
+   * inferring from the period end) is a decision deliberately still pending.
    *
    * The date itself is the subscription row's `current_period_end`, which for a
    * deferred purchase *is* the anchor.
@@ -700,6 +716,13 @@ export class ParticipationsService {
       .maybeSingle();
     if (subError) throw subError;
     if (!sub?.current_period_end) return null;
+
+    // A first charge is a promise about the future; an instant already behind us
+    // is not one, whatever the ledger looks like. Checked before the payments
+    // read because it is free and settles the common stale cases on its own. An
+    // instant comparison, not a local-date one — nothing here is being formatted
+    // against anybody's calendar yet.
+    if (new Date(sub.current_period_end).getTime() <= Date.now()) return null;
 
     // Filtered in JS rather than with a jsonb path filter: the two links live
     // under different metadata keys (the checkout marker records the

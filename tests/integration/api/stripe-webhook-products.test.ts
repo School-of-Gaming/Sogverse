@@ -413,7 +413,7 @@ describe("POST /api/webhooks/stripe/products", () => {
    * it also covers a 100%-off promotion code on a club starting today.
    */
   describe("checkout.session.completed — a €0 subscription still buys a seat", () => {
-    function zeroDueSubscription(mode: string) {
+    function zeroDueSubscription(mode: string, invoice: string | null = null) {
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({
           paymentStatus: "no_payment_required",
@@ -421,7 +421,7 @@ describe("POST /api/webhooks/stripe/products", () => {
           amountTotal: 0,
           paymentIntent: null,
           subscription: "sub_deferred_1",
-          invoice: null,
+          invoice,
           purchaseShape: "subscription_monthly",
         }),
       );
@@ -473,11 +473,16 @@ describe("POST /api/webhooks/stripe/products", () => {
     });
 
     it("leaves the zero-amount payment row as the idempotency marker", async () => {
-      // Amount 0, the ordinary `subscription_invoice` purpose, and no invoice id
-      // — because no invoice exists yet. That exact shape is the accepted
-      // outcome: it is what stops a redelivery re-running the handler, and the
-      // real charge lands later through invoice.paid.
-      zeroDueSubscription("subscription");
+      // Amount 0 and the ordinary `subscription_invoice` purpose. That exact
+      // shape is the accepted outcome: it is what stops a redelivery re-running
+      // the handler, and the real charge lands later through invoice.paid.
+      //
+      // The session here *does* name an invoice, because whether Stripe raises a
+      // €0 `subscription_create` invoice for an anchored subscription is not
+      // something this route depends on either way — what it must do is record
+      // whichever invoice the session names, so a marker row can be traced back.
+      // (A session naming none simply leaves the column null.)
+      zeroDueSubscription("subscription", "in_zero_1");
       const inserts = mockAdmin();
 
       await POST(createWebhookRequest());
@@ -486,7 +491,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.payments[0]).toMatchObject({
         amount_cents: 0,
         purpose: "subscription_invoice",
-        stripe_invoice_id: null,
+        stripe_invoice_id: "in_zero_1",
       });
       expect(inserts.payments[0].metadata).toMatchObject({
         participationId: PARTICIPATION_ID,

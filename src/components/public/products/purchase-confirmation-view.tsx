@@ -9,7 +9,8 @@ import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
@@ -55,9 +56,10 @@ interface PurchaseConfirmationViewProps {
    * line renders at all.
    *
    * An instant rather than a calendar date on purpose: it is the subscription's
-   * stored period end, which carries a clock face and therefore lands on the
-   * viewer's own day. It is projected into the **viewer's** timezone below —
-   * that is the date the charge appears on their statement.
+   * stored period end, and whether that instant is the club's own start or a
+   * clamped one is exactly the question that decides how it renders. The answer
+   * comes from the shared anchor helper, which the shop's signup panel asks the
+   * same way — a bare start date when unclamped, the viewer's own day when not.
    */
   firstChargeAt?: string | null;
 }
@@ -224,17 +226,21 @@ export function PurchaseConfirmationView({
                   {/* Before the general "you'll be billed monthly" line, and
                       only when the first charge has genuinely been deferred:
                       the parent has just seen €0 due on Stripe's page and is
-                      owed the real date in the same breath. The instant is
-                      projected into the reader's own zone — it is what their
-                      statement will say — while the club's start date elsewhere
-                      on this page stays the bare calendar date it is. */}
+                      owed the real date in the same breath. Which date that is
+                      is the shared rule's call, not this component's — a charge
+                      landing on the club's own start renders as that bare
+                      calendar date (the same one shown further up this page), a
+                      clamped one as the day it hits the reader's statement. */}
                   {firstChargeAt !== null && (
                     <li>
                       {t("next.firstCharge", {
-                        date: formatDate(firstChargeAt, locale, {
-                          dateStyle: "medium",
-                          timeZone: viewerTimezone,
-                        }),
+                        date: formatFirstChargeDate(
+                          firstChargeAt,
+                          product.start_date,
+                          product.timezone,
+                          locale,
+                          viewerTimezone,
+                        ),
                       })}
                     </li>
                   )}

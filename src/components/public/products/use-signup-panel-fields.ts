@@ -11,9 +11,8 @@ import {
 } from "@/lib/constants/currency";
 import {
   firstChargeAnchor,
-  productLocalStartInstant,
+  formatFirstChargeDate,
 } from "@/lib/stripe/first-charge-anchor";
-import { formatDate, formatDateOnly } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
 import type { AuthState } from "./signup-panel-view";
@@ -70,9 +69,16 @@ export function useSignupPanelFields(
   const locale = resolveLocale(useLocale());
   // The shared, server-seeded clock rather than a bare `new Date()`: this feeds
   // a date the server renders too, and a per-render wall clock would differ
-  // across hydration. It also means the clamped date is re-derived on the same
-  // 30-second tick the rest of the panel already runs on.
-  const now = useNow();
+  // across hydration.
+  //
+  // Pinned to its first-render value, though, because that clock ticks every 30
+  // seconds and the first-charge line is *conditional* on it: a page left open
+  // across product-local midnight of the start date would watch the line vanish
+  // and the CTA jump up under the reader's cursor — a layout change on data's
+  // own schedule, which the layout rule forbids. Seeding from `useNow()` keeps
+  // SSR and hydration agreeing; freezing it keeps the panel still. The line is
+  // a promise about the click, and the click is minutes away at most.
+  const [now] = useState(useNow());
   const viewerTimezone = useTimezone();
 
   const pricingOption = useMemo(
@@ -101,19 +107,16 @@ export function useSignupPanelFields(
     if (pricingOption.kind !== "subscription" || startDate === null) return null;
     const anchor = firstChargeAnchor(startDate, product.timezone, now);
     if (anchor === null) return null;
-    const clamped =
-      anchor.getTime() <
-      productLocalStartInstant(startDate, product.timezone).getTime();
-    // Unclamped, the anchor *is* the start date — render the bare calendar date,
-    // matching the start date shown elsewhere on the page. Clamped, it is an
-    // instant with no calendar date of its own, so it goes into the viewer's
-    // zone: that is the day the charge appears on their statement.
-    return clamped
-      ? formatDate(anchor, locale, {
-          dateStyle: "medium",
-          timeZone: viewerTimezone,
-        })
-      : formatDateOnly(startDate, locale);
+    // Clamped-vs-not, and what that means for the rendered date, is decided in
+    // the anchor helper — the same call the confirmation page makes, so the two
+    // surfaces cannot state different days for the same charge.
+    return formatFirstChargeDate(
+      anchor,
+      startDate,
+      product.timezone,
+      locale,
+      viewerTimezone,
+    );
   }, [pricingOption.kind, startDate, product.timezone, now, locale, viewerTimezone]);
 
   // Only participants who aren't already on the product are selectable. The

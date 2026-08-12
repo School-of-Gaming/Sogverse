@@ -1038,7 +1038,7 @@
       "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
       "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
-      "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksusi on {date}."
+      "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
     },
     "goToDashboard": "Siirry Oma SOG -sivulle",
     "keepBrowsing": "Jatka selailua",

@@ -1038,7 +1038,7 @@
       "placement": "Vi placerar {gamer} i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
       "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala.",
-      "firstCharge": "Inget debiterades i dag. Din första betalning sker {date}."
+      "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}."
     },
     "goToDashboard": "Gå till Min SOG",
     "keepBrowsing": "Fortsätt bläddra",

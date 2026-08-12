@@ -359,13 +359,16 @@ async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
   // already recorded that purchase, so recording it again here would double it.
   //
   // Note what this does NOT skip. A club whose first charge was deferred to a
-  // future start date raises **no invoice at creation at all** — the first real
-  // charge arrives weeks later with `billing_reason: "subscription_cycle"`,
-  // i.e. shaped exactly like a month-2 renewal, and the ordinary renewal path
-  // below is the right one to record it. So no gate here needs widening for
-  // deferred billing: the €0 checkout leaves a zero-amount payment row (its
-  // idempotency marker) and this handler writes the real one when the money
-  // actually moves.
+  // future start date may or may not raise a €0 invoice at creation — and this
+  // gate means we do not have to know: any invoice belonging to that creation
+  // carries `billing_reason: "subscription_create"` and is skipped here either
+  // way, exactly as an ordinary immediate purchase's is. The first *real* charge
+  // arrives weeks later at the anchor with `billing_reason:
+  // "subscription_cycle"`, i.e. shaped exactly like a month-2 renewal, so the
+  // ordinary renewal path below is the right one to record it. No gate here
+  // needs widening for deferred billing: the €0 checkout leaves a zero-amount
+  // payment row (its idempotency marker) and this handler writes the real one
+  // when the money actually moves.
   if (!subId || invoice.billing_reason === "subscription_create") return;
   const { data: famSub } = await admin
     .from("family_subscriptions")
