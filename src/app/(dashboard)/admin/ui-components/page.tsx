@@ -67,11 +67,8 @@ import {
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
 import { useAuth, useNow, useTimezone } from "@/providers";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { computeGlowStyle } from "@/lib/voice/glow";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { ZoneList } from "@/components/voice/ZoneList";
@@ -88,22 +85,12 @@ import {
   type LocationSummary,
 } from "@/components/locations/location-picker-panel";
 import { HomeLocationField } from "@/components/locations/home-location-field";
-import {
-  ProductBrowseCardView,
-  type LocationLine,
-  type SeatBarValue,
-} from "@/components/public/products/product-browse-card-view";
+import { ProductBrowseCardView } from "@/components/public/products/product-browse-card-view";
+import { useBrowseCardViewProps } from "@/components/public/products/product-browse-card";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
-import { audienceLabelKey } from "@/components/public/products/product-audience";
-import { formatProductLocation } from "@/components/public/products/format-product-location";
-import { formatProductPrice } from "@/components/public/products/format-product-price";
 import {
-  formatProductSchedule,
-  scheduleCardLines,
-} from "@/components/public/products/format-product-schedule";
-import {
+  buildBrowseCounts,
   buildScenarioFixture,
-  scenarioFilledSeats,
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
@@ -1213,16 +1200,27 @@ function ProductsDemo() {
   );
 }
 
-// One demo card per scenario, rendered from that scenario's mocked product. It
-// feeds the *pure* `ProductBrowseCardView` directly, deriving the display props
-// from the same fixture row that drives the full-page preview (via the shared
-// schedule / price / location formatters) and passing the authored registration
-// `state` straight through as a prop. The production `deriveRegistrationState`
-// adapter is intentionally bypassed — the style guide authors the state it wants
-// to eyeball, the card never computes it. A card whose state opens takes its
-// whole surface to the matching full page at /preview/products/[slug]; a
-// dead-end state gets no href and stays inert, which is the same split the
-// shop makes.
+// One demo card per scenario, rendered from that scenario's mocked product
+// through the production adapter hook — the same row→props resolution the shop
+// runs, not a restatement of it. The one thing the style guide authors is the
+// registration `state`, overridden after the spread: `deriveRegistrationState`
+// is intentionally bypassed so each demo shows exactly the state it exists to
+// eyeball, and the counts fed to the hook are synthesized from that same
+// authored state (`buildBrowseCounts`) so the muni seat bar agrees with it.
+// A card whose state opens takes its whole surface to the matching full page
+// at /preview/products/[slug]; a dead-end state stays inert — the card's own
+// split, not the demo's.
+//
+// The tag and the picture are read off the row by the adapter, for the same
+// reason the state is not hand-picked per card: a hand-picked tag would let a
+// demo card disagree with that scenario's own detail scene, and the fixture
+// has already decided it. All three tags and the untagged case appear on this
+// grid because the scenarios carry them, not because this function chose them.
+//
+// `municipalityScoped` is true because muni clubs are only ever surfaced on
+// the per-municipality page, which renders them scoped — an online muni club
+// collapses its (redundant) city name to the generic "Online" label here
+// exactly as it does there. The flag is inert for every other product type.
 function ScenarioBrowseCard({
   slug,
   label,
@@ -1230,91 +1228,22 @@ function ScenarioBrowseCard({
   slug: PreviewScenario;
   label: string;
 }) {
-  const t = useTranslations("productBrowse.card");
-  const tAudience = useTranslations("productAudience");
-  const uiLocale = resolveLocale(useLocale());
-  const timeZone = useTimezone();
-  const now = useNow();
-  const topicLabel = useTopicLabel();
-
   const { product, state } = buildScenarioFixture(slug);
-  // Every scenario passes its href; the card decides whether to use it, from
-  // the state, exactly as it does in the shop. Withholding it here used to
-  // double as a way of saying "this one is inert", which was the style guide
-  // second-guessing the component about the one thing the component owns.
-  const detailHref = `/preview/products/${slug}`;
-  const tr = resolveTranslation(product.product_translations, uiLocale);
-  const isMuniClub = product.product_type === "municipality_club";
-
-  const scheduleLines = scheduleCardLines(
-    formatProductSchedule({ product, locale: uiLocale, timeZone, now }),
+  const viewProps = useBrowseCardViewProps(
+    product,
+    buildBrowseCounts(slug, product.id),
+    // Every scenario passes its href; the card decides whether to use it, from
+    // the state, exactly as it does in the shop. Withholding it here used to
+    // double as a way of saying "this one is inert", which was the style guide
+    // second-guessing the component about the one thing the component owns.
+    `/preview/products/${slug}`,
+    true,
   );
-  const price = formatProductPrice({
-    prices: product.product_prices,
-    billingMode: product.billing_mode,
-    productType: product.product_type,
-    currency: DEFAULT_CURRENCY,
-    locale: uiLocale,
-  });
-
-  // Muni clubs are only ever surfaced on the per-municipality page, which
-  // renders them `municipalityScoped` — so an online muni club collapses its
-  // (redundant) city name to the generic "Online" label, exactly as the
-  // production adapter does there. In-person muni clubs still show their school
-  // site. (The `online_muni` city-name branch never fires for muni clubs in the
-  // live app, so the demo doesn't reproduce it.)
-  const loc = formatProductLocation(product, uiLocale);
-  const locationLine: LocationLine = !loc
-    ? { kind: "online", label: t("online") }
-    : loc.kind === "site"
-      ? { kind: "in_person", label: loc.site }
-      : { kind: "online", label: t("online") };
-
-  // Muni clubs swap the price for a seat-fill bar; the fill comes from the
-  // scenario's authored state so the bar and the card agree. Nothing else on
-  // any card carries seat information — which is why the two capped non-muni
-  // scenarios below (a club full with a waitlist, a camp full without one) are
-  // worth looking at: neither says a word about capacity, and the only
-  // difference between them is whether the card opens.
-  const seatBar: SeatBarValue | undefined = isMuniClub
-    ? {
-        filled: scenarioFilledSeats(slug),
-        total: product.seat_count,
-        waitlistEnabled: product.waitlist_enabled,
-      }
-    : undefined;
-
-  // The badge-or-nothing decision (gamers-only unbadged) lives in
-  // product-audience.ts — this grid is where the three audiences sit beside
-  // each other, and the shop scene shows the same comparison at page width.
-  const audienceLabelMessageKey = audienceLabelKey(product);
 
   return (
     <div className="flex flex-col gap-2">
       <DemoCaption>{label}</DemoCaption>
-      <ProductBrowseCardView
-        name={tr?.name ?? ""}
-        description={tr?.short_description ?? null}
-        imagePath={product.image_path}
-        topicLabel={topicLabel(product.topic)}
-        scheduleLines={scheduleLines}
-        ageLine={
-          product.min_age !== null && product.max_age !== null
-            ? t("ages", { min: product.min_age, max: product.max_age })
-            : null
-        }
-        audienceLabel={
-          audienceLabelMessageKey === null
-            ? null
-            : tAudience(audienceLabelMessageKey)
-        }
-        locationLine={locationLine}
-        spokenLanguageCode={product.spoken_language_code}
-        price={price}
-        seatBar={seatBar}
-        state={state}
-        detailHref={detailHref}
-      />
+      <ProductBrowseCardView {...viewProps} state={state} />
     </div>
   );
 }

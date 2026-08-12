@@ -178,6 +178,11 @@ export const POST = defineRoute({
       // audience CHECK refuses it on a product that still has a gamer audience.
       p_min_age: body.min_age ?? undefined,
       p_max_age: body.max_age ?? undefined,
+      // Clearing a tag IS an omission here — the RPC assigns `tag` on every call
+      // and its parameter defaults to NULL, so undefined is the only way to
+      // write "untagged". That is safe only because the contract schema demands
+      // the field: a caller that forgot it never reaches this line.
+      p_tag: body.tag ?? undefined,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

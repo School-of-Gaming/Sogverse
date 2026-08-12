@@ -144,30 +144,25 @@ export interface SignupPanelViewProps {
   submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
-  /**
-   * **Presentation only, and opt-in.** Nothing about what is rendered,
-   * selectable, disabled or announced changes — every state, label and role is
-   * identical in both modes.
-   *
-   * It exists because the panel is a card, holding a card, holding a card per
-   * participant, and each layer spends padding: in the draft detail page's
-   * 20rem rail that left a row about 195px wide, which is not enough for a
-   * name, an age and "Already joined" on one line.
-   *
-   * What it drops is decided by one rule — **a border means you can act on
-   * it.** So the picker's outer box goes (it is a grouping, not a control) and
-   * the pricing section's box goes (it is a statement of the price, with no
-   * choice attached), while the participant rows keep a border, because that
-   * border is what says "you can pick this"; the consent toggle keeps one,
-   * because it is a control; and the add-a-child affordance keeps one, because
-   * it is a button. The rows spend a little less on padding than they do live,
-   * which is where the width comes back.
-   *
-   * Passed only by the draft detail page's rail. Every live route leaves it
-   * unset and renders exactly as it always has.
-   */
-  flat?: boolean;
 }
+
+// ---------- Why the panel is flat ----------
+//
+// The panel used to be a card, holding a card, holding a card per participant,
+// and each layer spent padding: in the detail page's 20rem rail that left a row
+// about 195px wide, which is not enough for a name, an age and "Already joined"
+// on one line.
+//
+// What has no box is decided by one rule — **a border means you can act on
+// it.** So the picker's outer box is gone (it is a grouping, not a control) and
+// the pricing section has none (it is a statement of the price, with no choice
+// attached), while the participant rows keep a border, because that border is
+// what says "you can pick this"; the consent toggle keeps one, because it is a
+// control; and the add-a-child affordance keeps one, because it is a button.
+//
+// This was an opt-in variant while the rail was being judged and is now the
+// only look, on single-column pages too. Nothing about what is rendered,
+// selectable, disabled or announced ever depended on it.
 
 export function SignupPanelView(props: SignupPanelViewProps) {
   switch (props.state.kind) {
@@ -315,7 +310,6 @@ function SignupBody(props: SignupPanelViewProps) {
         option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
-        flat={props.flat}
         firstChargeDate={props.firstChargeDate ?? null}
       />
       <FormOrAuth
@@ -491,15 +485,10 @@ function SignupForm(
 
   return (
     <div className="space-y-4">
-      {/* The picker's own box. `flat` drops it entirely — see the prop's note:
-          three nested paddings is what squeezed the rows in a 20rem rail, and
-          the heading below is enough to mark the section without a container
-          around it. */}
-      <div
-        className={cn(
-          !props.flat && "rounded-md border border-border bg-muted/30 p-4",
-        )}
-      >
+      {/* No box around the picker — it is a grouping, not a control, and the
+          heading below marks the section without a container around it. See
+          the border-means-interactive note above. */}
+      <div>
         <h3 id="gamer-picker-label" className="text-sm font-semibold">
           {/* Per-type heading — matches the product's action verb
               (enrol / register / sign up / join). A parents-only product has
@@ -535,27 +524,22 @@ function SignupForm(
                   disabled={alreadyOn !== null}
                   onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md border text-sm transition-colors",
-                    // Both modes keep the border and the fills: this row is the
-                    // one thing in the picker you can act on, and the border is
-                    // what says so. `flat` differs only in what surrounds it —
-                    // no box around the group, so the row can spend a little
-                    // less on its own padding (22px of horizontal cost against
-                    // the live 26px) and give the name/age/status line the room
-                    // it needs at rail width.
-                    props.flat ? "px-2.5 py-2.5" : "px-3 py-2",
+                    "flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2.5 text-sm transition-colors",
+                    // The border and the fills stay: this row is the one thing
+                    // in the picker you can act on, and the border is what says
+                    // so. With no box around the group the row spends a little
+                    // less on its own padding (22px of horizontal cost) and
+                    // gives the name/age/status line the room it needs at rail
+                    // width.
                     alreadyOn !== null
                       ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
                       : selected
-                        ? cn(
-                            "border-primary bg-primary/10",
-                            // With no outer box to sit inside, a 1px primary
-                            // border against a 1px input border is a thin
-                            // distinction. An inset ring doubles the line
-                            // without changing the box, so selecting a row
-                            // cannot nudge its own text by a pixel.
-                            props.flat && "ring-1 ring-inset ring-primary/50",
-                          )
+                        ? // With no outer box to sit inside, a 1px primary
+                          // border against a 1px input border is a thin
+                          // distinction. An inset ring doubles the line without
+                          // changing the box, so selecting a row cannot nudge
+                          // its own text by a pixel.
+                          "border-primary bg-primary/10 ring-1 ring-inset ring-primary/50"
                         : "border-input hover:bg-accent hover:text-accent-foreground",
                   )}
                 >

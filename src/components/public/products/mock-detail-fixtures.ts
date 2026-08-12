@@ -46,7 +46,7 @@ import type {
 //
 // Three of them exist for the **audience** axis rather than for a registration
 // state, because a product sold to parents is otherwise unreachable: no such
-// product exists yet, and the admin switch that creates one lands last. They
+// product exists yet. They
 // are the only place the three signup-panel cases can be looked at, so between
 // them they carry all three — a parents-only panel with the reader
 // preselected, a mixed one with children and the reader in the same picker,
@@ -661,13 +661,19 @@ export function isPreviewScenario(s: string): s is PreviewScenario {
  * one would be showing a card the real page cannot produce.
  *
  * Two lists, because the two questions are different. `SHOP_SCENE_DEFAULT` is
- * the ordinary storefront: every card gamers-only, which is the regression case
- * and the shape the grid has today. `SHOP_SCENE_AUDIENCES` is the audience
- * question, and it is deliberately the *smallest* grid that can answer it —
- * one card of each audience per section, so the badge's presence on two of
- * them and its absence on the third is a comparison the eye makes in one pass
- * rather than a hunt. It is also the only place the audience chips have
- * anything to filter.
+ * the ordinary storefront: every card gamers-only, which is the audience
+ * regression case. `SHOP_SCENE_AUDIENCES` is the audience question, and it is
+ * deliberately the *smallest* grid that can answer it — one card of each
+ * audience per section, so the badge's presence on two of them and its absence
+ * on the third is a comparison the eye makes in one pass rather than a hunt.
+ * (The tagged catalog carries the audience scenarios too, so its chips filter
+ * there as well — this list stays the isolated comparison.)
+ *
+ * **Both inherit whatever tag and picture their scenarios carry**, because tags
+ * and art are row fields now and these lists are scenario slugs. That is
+ * deliberate rather than tolerated: a real storefront is a mixed grid, so
+ * "ordinary" means an ordinary mix, not "no tags anywhere". Each list is still
+ * narrow on the axis it is about — audience — and says nothing about tags.
  */
 export const SHOP_SCENE_DEFAULT: readonly PreviewScenario[] = [
   "consumer-club",
@@ -688,16 +694,18 @@ export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
 ];
 
 /**
- * Scene-only demo art for the **card redesign** grid, in `public/preview-art/`.
+ * Scene-only demo art, in `public/preview-art/`.
  *
- * Every fixture row carries `image_path: null` — no storage object backs a
- * mock — so a grid built straight from them would put the fallback banner on
- * every card and leave the redesign's media block unjudged. These four flat
- * SVGs stand in for product photos, and are picked for spread rather than
- * prettiness: `park` is near-white at its bottom-left, which is precisely where
- * the tag chip sits, and `racetrack` is a night scene, so the two ends of the
- * contrast problem are on the same page. They are demo art and die with the
- * override that feeds them.
+ * A fixture row has no storage object behind it, so a grid built from rows with
+ * no picture would put the fallback banner on every card and leave the media
+ * block unjudged. These four flat SVGs stand in for product photos, and are
+ * picked for spread rather than prettiness: `park` is near-white at its
+ * bottom-left, which is precisely where the tag chip sits, and `racetrack` is a
+ * night scene, so the two ends of the contrast problem are on the same page.
+ *
+ * They reach a card through the row's own `image_path` and ordinary image
+ * resolution — the resolver passes a root-relative path straight through — so
+ * no surface needs an image seam to show them.
  *
  * **The directory is world-readable, whatever the scenes' own gating says.**
  * The proxy admin-gates `/preview/*` pages, but its matcher deliberately
@@ -715,18 +723,13 @@ const DEMO_ART = {
 } as const;
 
 /**
- * **The tag a scenario carries, for every surface that renders it.**
+ * **The tag a scenario's product carries.** Folded onto the row by
+ * `buildBaseProduct`, exactly as the real `products.tag` column arrives — so
+ * every surface reads it the one way, and a card and the page it opens cannot
+ * say different things about the same club.
  *
- * One map, because a card and the page it opens are the same product: the shop
- * grid links each card to `/preview/products/<slug>`, so a card wearing
- * "Neuroinclusive" that landed on an untagged detail page would be the preview
- * telling a family two different things about one club. Neither surface may
- * own this list. A scenario absent from the map is untagged, which is most of
- * them and is the ordinary case.
- *
- * Not a row field: there is no column for it yet (see `product-tag.ts`), so it
- * is keyed by scenario and handed to the draft components directly. When the
- * column lands, this map dies and the fixture rows carry their own tags.
+ * A scenario absent from the map is untagged, which is most of them and is the
+ * ordinary state.
  */
 const SCENARIO_TAG: Partial<Record<PreviewScenario, ProductTag>> = {
   "consumer-club": "beginner",
@@ -738,10 +741,10 @@ const SCENARIO_TAG: Partial<Record<PreviewScenario, ProductTag>> = {
 };
 
 /**
- * The demo art a scenario's card and detail hero both paint. Same reasoning as
- * the tag map: a card's picture and the page behind it are the same product's
- * picture. Absent means the scenario has no art and renders the wordmark
- * banner — exactly one grid card is deliberately in that state.
+ * The demo art a scenario's card and detail hero both paint, folded onto the
+ * row as its `image_path` for the same reason the tag is. Absent means the
+ * scenario has no picture and renders the wordmark banner — exactly one card on
+ * the tagged-catalog grid is deliberately in that state.
  */
 const SCENARIO_ART: Partial<Record<PreviewScenario, string>> = {
   "consumer-club": DEMO_ART.terrain,
@@ -755,17 +758,7 @@ const SCENARIO_ART: Partial<Record<PreviewScenario, string>> = {
   "free-event": DEMO_ART.racetrack,
 };
 
-/** The scenario's tag, or null when it carries none. */
-export function scenarioTag(slug: PreviewScenario): ProductTag | null {
-  return SCENARIO_TAG[slug] ?? null;
-}
-
-/** The scenario's demo art URL, or null when it deliberately has none. */
-export function scenarioArt(slug: PreviewScenario): string | null {
-  return SCENARIO_ART[slug] ?? null;
-}
-
-export interface ShopRedesignEntry {
+export interface ShopCatalogEntry {
   slug: PreviewScenario;
   /**
    * The product's name, replacing both the per-type copy and the ` · label`
@@ -774,7 +767,7 @@ export interface ShopRedesignEntry {
    * Required here, unlike everywhere else, and that is the point: the suffix
    * makes a title unrepresentative — ten cards reading "Minecraft Redstone Club
    * · €45/mo — open" say nothing about how a real catalogue's titles sit in a
-   * full-width row. So the redesign grid carries names a shop would actually
+   * full-width row. So the showcase grid carries names a shop would actually
    * ship (varied, so the grid does not read as one club ten times), and the
    * scenario descriptor moves down into `descriptionOverride` where it is still
    * legible but is no longer pretending to be a product name.
@@ -789,7 +782,7 @@ export interface ShopRedesignEntry {
 }
 
 /**
- * The **card redesign** grid: one page carrying every combination the draft
+ * The **tagged catalog** grid: one page carrying every combination the browse
  * card has to survive, reusing the existing scenarios rather than authoring a
  * parallel set of products.
  *
@@ -813,11 +806,11 @@ export interface ShopRedesignEntry {
  *
  * Names are what a real catalogue would carry and are varied on purpose; each
  * card's *description* is what says which fixture it is. The tag and the art
- * are **not** listed here — they come from `SCENARIO_TAG` / `SCENARIO_ART`
- * above, so the detail page a card opens shows the same tag and the same
- * picture.
+ * are **not** listed here — they are row fields, folded on from `SCENARIO_TAG`
+ * / `SCENARIO_ART` above, so the detail page a card opens shows the same tag
+ * and the same picture without either surface owning the list.
  */
-export const SHOP_SCENE_REDESIGN: readonly ShopRedesignEntry[] = [
+export const SHOP_SCENE_TAGGED_CATALOG: readonly ShopCatalogEntry[] = [
   {
     slug: "consumer-club",
     nameOverride: "Minecraft Redstone Club",
@@ -889,15 +882,15 @@ export const SHOP_SCENE_REDESIGN: readonly ShopRedesignEntry[] = [
  * during server render is a runtime error. Same arrangement as every other
  * surface (the guard lives with the fixtures, the component imports it).
  *
- * `redesign` is the draft card's grid and is temporary by construction: it goes
- * when the draft body is promoted onto the live card, along with the
- * `renderCard` seam in `ProductBrowseResults` that lets a scene substitute a
- * card at all.
+ * All three render the one browse card; they differ only in the rows they put
+ * under it. `tagged-catalog` is the showcase — the widest grid, with realistic
+ * names, the long Finnish title and the un-imaged-but-tagged card — while the
+ * other two stay the narrow comparisons they were built as.
  */
 export const SHOP_BROWSE_SCENARIOS = [
   "default",
   "audiences",
-  "redesign",
+  "tagged-catalog",
 ] as const;
 
 export type ShopBrowseScenario = (typeof SHOP_BROWSE_SCENARIOS)[number];
@@ -915,10 +908,10 @@ export function isShopBrowseScenario(s: string): s is ShopBrowseScenario {
  * it — the browse scene's whole job is comparing cards side by side, and cards
  * you cannot tell apart defeat it.
  *
- * `copy` overrides both halves of that, and the redesign grid passes it for
- * every card: a suffixed name is unrepresentative of a real catalogue, so those
- * cards carry names a shop would ship and move the scenario descriptor into the
- * description instead — which the draft card renders anyway. Overriding belongs
+ * `copy` overrides both halves of that, and the tagged-catalog grid passes it
+ * for every card: a suffixed name is unrepresentative of a real catalogue, so
+ * those cards carry names a shop would ship and move the scenario descriptor
+ * into the description instead — which the card renders anyway. Overriding belongs
  * here rather than in the scene because this is the only place a fixture's copy
  * is decided; a scene rewriting names after the fact would be a second naming
  * rule, free to disagree with this one.
@@ -1304,6 +1297,10 @@ function buildBaseProduct(
     for_parents: audience !== "gamers",
     min_age: audience === "parents" ? null : 8,
     max_age: audience === "parents" ? null : 12,
+    // A real row field, like every other product column: the card, the detail
+    // hero and the tag note all read `product.tag`, so nothing keyed by
+    // scenario can leave two surfaces disagreeing about one club.
+    tag: SCENARIO_TAG[slug] ?? null,
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,
@@ -1322,7 +1319,11 @@ function buildBaseProduct(
     seat_count: config.seatCount,
     waitlist_enabled: config.waitlistEnabled,
     registration_opens_at: registrationOpensAt,
-    image_path: null,
+    // Demo art under `public/preview-art/`, reached through ordinary image
+    // resolution: `productImageUrl` passes a root-relative path through
+    // untouched, so a fixture needs no image seam anywhere. Null renders the
+    // wordmark banner.
+    image_path: SCENARIO_ART[slug] ?? null,
     // Fixed product_topic enum; the label is resolved via PRODUCT_TOPICS, so
     // the value just needs to be valid. Events get Fortnite, the rest
     // Minecraft Java.

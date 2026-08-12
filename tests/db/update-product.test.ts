@@ -11,7 +11,9 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *
  * What we cover:
  *   - admin happy path: parent fields update; child sets (translations,
- *     prices, schedule slots, tags, holiday calendars) wipe-and-replace.
+ *     prices, schedule slots, holiday calendars) wipe-and-replace.
+ *   - the design tag (00178) round-trips, and an OMITTED p_tag clears it —
+ *     the defaulted-parameter half that has no CHECK behind it.
  *   - non-admin denied (customer client gets 42501).
  *   - product_type and status are NOT mutable through this RPC (the
  *     stored status is preserved across an update).
@@ -483,6 +485,79 @@ describe("update_product", () => {
       .update({ municipality_fee_cents: 0 })
       .eq("id", MUNI_PRODUCT_ID);
     expect(zero.error?.code).toBe("23514"); // check_violation
+  });
+
+  // Design tag (00178). One nullable enum column, threaded through the RPC the
+  // same way the fees above are — with one difference that earns its own case
+  // below: `p_tag` is DEFAULTED, so omitting it is not "leave it alone", it is
+  // "clear it".
+  it("round-trips a tag through update_product", async () => {
+    await freshProduct();
+
+    const { error } = await adminAuth.rpc("update_product", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [{ locale: "en", name: "Tagged", short_description: "" }],
+      p_topic: "minecraft_java",
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+      p_tag: "neuroinclusive",
+    });
+    expect(error).toBeNull();
+
+    const { data: row } = await admin
+      .from("products")
+      .select("tag")
+      .eq("id", PRODUCT_ID)
+      .single();
+    expect(row?.tag).toBe("neuroinclusive");
+  });
+
+  it("clears an existing tag when p_tag is omitted", async () => {
+    // The half of `DEFAULT NULL` that has no CHECK behind it, pinned. The RPC
+    // assigns every editable column on every call, so an omitted p_tag writes
+    // its default and the tag is gone — which is exactly how the admin form
+    // clears one (the route maps a null field to `undefined`). What stops it
+    // happening by accident is a wire schema that requires the field, and that
+    // guard lives in the contract, not here; this case is the reason it has to.
+    await freshProduct();
+    const seeded = await admin
+      .from("products")
+      .update({ tag: "advanced" })
+      .eq("id", PRODUCT_ID);
+    expect(seeded.error).toBeNull();
+
+    const { error } = await adminAuth.rpc("update_product", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [{ locale: "en", name: "Untagged", short_description: "" }],
+      p_topic: "minecraft_java",
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+      // p_tag deliberately absent.
+    });
+    expect(error).toBeNull();
+
+    const { data: row } = await admin
+      .from("products")
+      .select("tag")
+      .eq("id", PRODUCT_ID)
+      .single();
+    expect(row?.tag).toBeNull();
   });
 
   // -------------------------------------------------------------------------

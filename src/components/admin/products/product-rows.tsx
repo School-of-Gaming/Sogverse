@@ -12,10 +12,11 @@ import {
   Hourglass,
 } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
-import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-banner";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
+import { formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
 import {
   effectiveStatus,
   pendingHintKey,
@@ -157,14 +158,16 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
             className="group flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex min-w-0 flex-1 items-center gap-4">
-              <ProductThumbnail
-                imagePath={p.image_path ?? ""}
-                alt=""
-                size="h-14 w-14"
-                className={cn(
-                  "rounded-md border bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
-                  !p.image_path && "[&>img]:hidden",
-                )}
+              {/* The project ratio at row-thumb size (owner rule — one aspect
+                  ratio wherever a product image shows), shaped the way the
+                  shop card shapes it: the 3:2 crop with rounded corners and no
+                  border, sitting in the row's ordinary padding. An admin's
+                  mental picture of a product is formed here, and a thumb
+                  cropped differently from the shop has them approving a
+                  picture families never meet. */}
+              <ProductBanner
+                src={productImageSrc(p.image_path)}
+                className="w-24 shrink-0 rounded-md"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

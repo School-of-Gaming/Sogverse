@@ -1,6 +1,6 @@
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { ProductLongDescription, ProductTopic } from "@/types";
+import type { ProductLongDescription, ProductTag, ProductTopic } from "@/types";
 import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
@@ -118,6 +118,17 @@ export interface FormState {
   // costs nothing for as long as the form stays open.
   minAge: string;
   maxAge: string;
+  // Who the product was *designed* for, as the one optional badge families see
+  // on the shop card and detail page. A different question from the audience
+  // flags above — an audience says who may hold the seat, a tag says who the
+  // sessions were built for — which is why it sits beside them rather than in
+  // its own section. `null` is untagged: the default on create, the ordinary
+  // stored state, and the value that renders nothing anywhere.
+  //
+  // Freely editable for the product's whole life: the picker deliberately takes
+  // no part in the form-lock machinery, because retagging a running club has no
+  // consequence for anyone already enrolled.
+  tag: ProductTag | null;
   spokenLanguageCode: string;
 
   // Where
@@ -206,6 +217,9 @@ export function initialState(
     forParents: false,
     minAge: "7",
     maxAge: "12",
+    // Untagged until somebody decides otherwise. There is no sensible default
+    // design tag — a wrong one advertises a promise to families we did not make.
+    tag: null,
     spokenLanguageCode: "",
     isRemote: true,
     locationId: null,

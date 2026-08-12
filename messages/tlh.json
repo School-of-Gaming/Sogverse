@@ -300,6 +300,7 @@
           "assistantGeduFee": "Gedu boQwI’ Huch / qaStaHvIS",
           "municipalityFee": "veng Huch / qaStaHvIS",
           "registrationOpensAt": "ghIH poSchoH",
+          "tag": "’Iv chenmoHlu’pu’",
           "visibility": "leghlu"
         }
       },
@@ -352,6 +353,7 @@
         "topic": "Doch",
         "materialUrl": "ghojmoHmeH De’ URL",
         "seatAudience": "quS Suq ’Iv",
+        "tag": "’Iv chenmoHlu’pu’",
         "forGamers": "toy’wI’pu’vaD",
         "forParents": "vavpu’vaD",
         "minAge": "DIS mach",
@@ -483,6 +485,9 @@
         "dated": "jaj van yIngu’",
         "datedDescription": "jaj van ngu’lu’pu’bogh ghoStaHvIS ghom; ngugh mev."
       },
+      "tagOptions": {
+        "none": "per pagh"
+      },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
         "longDescription": "vItlhutlh. Doch ’aqroSDaq neH cha’lu’. nargh je ’ay’mey lo’.",
@@ -491,6 +496,7 @@
         "seatAudienceHint": "wa’ yIwIv, pagh cha’. cha’ DawIvDI’, qorDu’ lop: vav toy’wI’ je tay’. malja’Daq per: qorDu’pu’vaD.",
         "forGamersHint": "toy’wI’ chel vav, ’ej quS Suq toy’wI’. DIS mach DIS tIn je poQ.",
         "forParentsHint": "quS Suq vav ’ej lop ghaH. DIS poQbe’ — puqpu’ DIS qel, loDpu’ DISbe’.",
+        "tagHint": "poQbe’lu’. per legh qorDu’pu’ — tetlh HaSta ’ej Doch HaSta. ’Iv chenmoHlu’pu’ ja’ per; quS Suqbogh nuv ja’be’.",
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
         "onlineNoLocation": "rurmey — Daq poQbe’. Hoch vavmey nej Hoch lulegh, qo’Daq pagh.",
         "voiceRoomAuto": "voice room chenmoHlu’.",
@@ -592,7 +598,7 @@
         "formats": "JPG, PNG, WebP, AVIF, qoj SVG.",
         "chooseFile": "DocH yIwIv",
         "remove": "yIteq",
-        "hint": "vavmey nej De’Daq DochlIj cha’."
+        "hint": "vavmey nej De’Daq DochlIj cha’. 3:2 ’echletvaD pe’lu’; leghmeH mIw rap cha’lu’."
       },
       "filters": {
         "day": "jaj",
@@ -1528,6 +1534,7 @@
     "filters": {
       "type": "mIw",
       "audience": "ghotpu’",
+      "designedFor": "’IvvaD",
       "typeClubs": "ghom’a’mey",
       "typeCamps": "raghmey",
       "typeEvents": "wanI’mey",

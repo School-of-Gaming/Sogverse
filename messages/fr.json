@@ -252,6 +252,7 @@
           "assistantGeduFee": "Rémunération Gedu assistant / session",
           "municipalityFee": "Montant commune / session",
           "registrationOpensAt": "Ouverture des inscriptions",
+          "tag": "Conçu pour",
           "visibility": "Visibilité"
         }
       },
@@ -304,6 +305,7 @@
         "topic": "Thème",
         "materialUrl": "URL du matériel pédagogique",
         "seatAudience": "Qui peut occuper une place",
+        "tag": "Conçu pour",
         "forGamers": "Pour les joueurs",
         "forParents": "Pour les parents",
         "minAge": "Âge min.",
@@ -435,6 +437,9 @@
         "dated": "Définir une date de fin",
         "datedDescription": "Le club se déroule jusqu’à une date précise, puis se termine automatiquement."
       },
+      "tagOptions": {
+        "none": "Aucune étiquette"
+      },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
         "longDescription": "Facultatif. Affiché uniquement sur la page de détail du produit. Construisez-le à partir de titres et de paragraphes.",
@@ -443,6 +448,7 @@
         "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
         "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
         "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
+        "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
         "voiceRoomAuto": "Une salle vocale sera créée automatiquement pour ce produit.",
@@ -544,7 +550,7 @@
         "formats": "JPG, PNG, WebP, AVIF ou SVG.",
         "chooseFile": "Choisir un fichier",
         "remove": "Retirer",
-        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue."
+        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue. L'image est recadrée au format 3:2, et l'aperçu montre ce même recadrage."
       },
       "filters": {
         "day": "Jour",
@@ -1484,6 +1490,7 @@
     "filters": {
       "type": "Type",
       "audience": "Public",
+      "designedFor": "Conçu pour",
       "typeClubs": "Clubs",
       "typeCamps": "Stages",
       "typeEvents": "Événements",

@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { filterProducts } from "@/components/public/products/filter-products";
-import type { ProductBrowseRow, ProductTopic, ProductType } from "@/types";
+import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
+import type {
+  ProductBrowseRow,
+  ProductTag,
+  ProductTopic,
+  ProductType,
+} from "@/types";
 
 // Row factory — only the fields filterProducts() looks at are overridable;
 // every other ProductBrowseRow column carries an honest, fully-typed default
@@ -17,6 +23,8 @@ function row(overrides: {
   maxAge?: number | null;
   forGamers?: boolean;
   forParents?: boolean;
+  // Null is untagged — the ordinary state, and the factory's default.
+  tag?: ProductTag | null;
   // Weekdays (0=Mon..6=Sun) the product's schedule touches. Each becomes a
   // schedule_slot; only `weekday` matters for filterProducts().
   weekdays?: number[];
@@ -36,6 +44,7 @@ function row(overrides: {
     for_parents: overrides.forParents ?? false,
     min_age: overrides.minAge === undefined ? 7 : overrides.minAge,
     max_age: overrides.maxAge === undefined ? 17 : overrides.maxAge,
+    tag: overrides.tag ?? null,
     product_type: overrides.productType ?? "consumer_club",
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
@@ -98,6 +107,7 @@ describe("filterProducts", () => {
         format: null,
         languages: [],
         audiences: [],
+        tags: [],
         age: null,
         days: [],
       }),
@@ -111,6 +121,7 @@ describe("filterProducts", () => {
         format: null,
         languages: [],
         audiences: [],
+        tags: [],
         age: null,
         days: [],
       }).map((p) => p.id),
@@ -123,6 +134,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -137,6 +149,7 @@ describe("filterProducts", () => {
         format: "online",
         languages: [],
         audiences: [],
+        tags: [],
         age: null,
         days: [],
       }),
@@ -149,6 +162,7 @@ describe("filterProducts", () => {
       format: "online",
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -162,6 +176,7 @@ describe("filterProducts", () => {
       format: "in_person",
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -174,6 +189,7 @@ describe("filterProducts", () => {
       format: "online",
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -187,6 +203,7 @@ describe("filterProducts", () => {
       format: null,
       languages: ["fi"],
       audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -200,6 +217,7 @@ describe("filterProducts", () => {
       format: null,
       languages: ["en", "fi"],
       audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -212,6 +230,7 @@ describe("filterProducts", () => {
       format: null,
       languages: ["en"],
       audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -225,6 +244,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       audiences: [],
+      tags: [],
       age: { min: 7, max: 9 },
       days: [],
     }).map((p) => p.id);
@@ -239,6 +259,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       audiences: [],
+      tags: [],
       age: { min: 10, max: 12 },
       days: [],
     }).map((p) => p.id);
@@ -261,6 +282,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [] as string[],
       audiences: [],
+      tags: [],
       days: [] as number[],
     };
 
@@ -285,6 +307,7 @@ describe("filterProducts", () => {
       format: "online",
       languages: [],
       audiences: [],
+      tags: [],
       age: { min: 13, max: 16 },
       days: [],
     }).map((p) => p.id);
@@ -300,6 +323,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [2], // Wed
     }).map((p) => p.id);
@@ -312,6 +336,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [0, 4], // Mon or Fri
     }).map((p) => p.id);
@@ -325,6 +350,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [1, 3, 5], // Tue/Thu/Sat — nobody meets these
     }).map((p) => p.id);
@@ -337,6 +363,7 @@ describe("filterProducts", () => {
       format: "online",
       languages: [],
       audiences: [],
+      tags: [],
       age: null,
       days: [0], // Mon
     }).map((p) => p.id);
@@ -368,6 +395,7 @@ describe("filterProducts", () => {
         format: null,
         languages: [],
         audiences: [],
+        tags: [],
         age: null,
         days: [1],
       }).map((p) => p.id),
@@ -378,6 +406,7 @@ describe("filterProducts", () => {
         format: null,
         languages: [],
         audiences: [],
+        tags: [],
         age: null,
         days: [5],
       }).map((p) => p.id),
@@ -388,6 +417,7 @@ describe("filterProducts", () => {
         format: null,
         languages: [],
         audiences: [],
+        tags: [],
         age: null,
         days: [0], // Mon — neither meets then
       }),
@@ -423,6 +453,7 @@ describe("filterProducts", () => {
       topics: [] as string[],
       format: null,
       languages: [] as string[],
+      tags: [] as ProductTag[],
       age: null,
       days: [] as number[],
     };
@@ -518,6 +549,114 @@ describe("filterProducts", () => {
           age: { min: 7, max: 9 },
         }).map((p) => p.id),
       ).toEqual(["both"]);
+    });
+  });
+
+  /**
+   * The design-tag row, which behaves like the audience row above and unlike
+   * the topic and language rows beside it: a chip is the chip the card wears,
+   * so it matches exactly the products carrying that tag, and an untagged
+   * product — the ordinary state, wearing no chip — answers only an empty row.
+   * Lighting every chip is therefore narrower than lighting none.
+   */
+  describe("tag", () => {
+    const neuro = row({
+      id: "neuro",
+      topic: "minecraft_java",
+      tag: "neuroinclusive",
+    });
+    const beginner = row({
+      id: "beginner",
+      topic: "minecraft_java",
+      tag: "beginner",
+      isRemote: true,
+    });
+    const advanced = row({
+      id: "advanced",
+      topic: "fortnite",
+      tag: "advanced",
+    });
+    const tagged = [neuro, beginner, advanced];
+    // ALL is three untagged products; the three above are one per tag value.
+    const rows = [...ALL, ...tagged];
+    const base = {
+      topics: [] as string[],
+      format: null,
+      languages: [] as string[],
+      audiences: [],
+      age: null,
+      days: [] as number[],
+    };
+
+    it("passes everything when nothing is selected", () => {
+      expect(
+        filterProducts(rows, { ...base, tags: [] }).map((p) => p.id),
+      ).toEqual(rows.map((p) => p.id));
+    });
+
+    it("keeps exactly the products wearing a chip's tag", () => {
+      // Chip-equals-tag, stated over the whole vocabulary rather than one
+      // value at a time: whatever the enum holds, a lone chip's result set is
+      // precisely the rows whose `tag` column is that value. A fourth tag added
+      // by migration is covered here the day it exists.
+      for (const tag of PRODUCT_TAG_VALUES) {
+        expect(
+          filterProducts(rows, { ...base, tags: [tag] }).map((p) => p.id),
+        ).toEqual(rows.filter((p) => p.tag === tag).map((p) => p.id));
+      }
+    });
+
+    it("ORs the chips — the union of their tags, and nothing else", () => {
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: ["neuroinclusive", "advanced"],
+        }).map((p) => p.id),
+      ).toEqual(["neuro", "advanced"]);
+    });
+
+    it("surfaces an untagged product under no chip at all", () => {
+      // The inversion worth pinning: every chip lit is every *tagged* product,
+      // which is narrower than the unfiltered grid — the untagged majority is
+      // reachable only by clearing the row.
+      expect(
+        filterProducts(rows, { ...base, tags: [...PRODUCT_TAG_VALUES] }).map(
+          (p) => p.id,
+        ),
+      ).toEqual(tagged.map((p) => p.id));
+      for (const tag of PRODUCT_TAG_VALUES) {
+        expect(
+          filterProducts(rows, { ...base, tags: [tag] }).map((p) => p.id),
+        ).not.toContain("a");
+      }
+      // Every other row still reaches the untagged products: the tag row is the
+      // only one that treats "no tag" as unmatched.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: [],
+          topics: ["roblox_studio"],
+        }).map((p) => p.id),
+      ).toEqual(["c"]);
+    });
+
+    it("ANDs with the other rows", () => {
+      // Beginner is the only remote tagged product, so an online + beginner
+      // query keeps it and an online + advanced query keeps nothing.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: ["beginner"],
+          format: "online",
+        }).map((p) => p.id),
+      ).toEqual(["beginner"]);
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: ["advanced"],
+          format: "online",
+        }).map((p) => p.id),
+      ).toEqual([]);
     });
   });
 });

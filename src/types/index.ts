@@ -127,6 +127,12 @@ export type ProductStatus = Database["public"]["Enums"]["product_status"];
 // Fixed set of product topics — one flat axis, no game/subject split. Display
 // labels and per-topic info live in src/lib/products/topics.ts (PRODUCT_TOPICS).
 export type ProductTopic = Database["public"]["Enums"]["product_topic"];
+// Who a product was *designed* for — a different question from the audience
+// flags, which say who may hold a seat. At most one per product: the column is
+// nullable and untagged is the ordinary state. This alias is the canonical type;
+// the tag module under src/components/public/products/ re-exports it and owns the
+// label-key resolution.
+export type ProductTag = Database["public"]["Enums"]["product_tag"];
 
 // products
 export type Product = Database["public"]["Tables"]["products"]["Row"];

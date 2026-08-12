@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { TagGlyph } from "./product-browse-card-view-draft";
+import { TagGlyph } from "./product-chips";
 import { productTagLabelKey, type ProductTag } from "./product-tag";
 
 /**
@@ -21,21 +21,26 @@ import { productTagLabelKey, type ProductTag } from "./product-tag";
  *
  * **It belongs in the reading column, and that is the whole reason it is a
  * component of its own.** It first lived inside the overview card, which was
- * fine until the draft page moved that card into a 16rem facts rail from `2xl`
- * — where this paragraph gets about 191px, or twenty-seven characters a line,
+ * fine until the page moved that card into a 16rem facts rail from `2xl` —
+ * where this paragraph gets about 191px, or twenty-seven characters a line,
  * roughly half a comfortable measure and eight or nine lines deep. Prose does
  * not belong in a facts rail. So the rail stays facts, and this sits under the
  * short description at the reading column's full width, which is also where a
  * parent who just read the chip on the picture looks next.
  *
- * Draft vocabulary for now — the glyph comes from the draft chip module, and
- * both want a proper home together at promotion. The copy it prints is
- * placeholder text: see the `productTagDetail` marker in `product-tag.ts`.
+ * The glyph comes from the shared chip vocabulary (`product-chips.tsx`), which
+ * is what keeps the icon here and the icon in the hero's pill on one map. The
+ * copy it prints ships approved but awaits the owner's final text: see the
+ * `productTagDetail` marker in `product-tag.ts`.
+ *
+ * Takes a non-null tag: an untagged product renders no note at all, and the
+ * caller decides that before it gets here.
  */
 export function ProductTagNote({ tag }: { tag: ProductTag }) {
   const tTag = useTranslations("productTag");
-  // DRAFT COPY. The product owner is writing the real source text and these
-  // strings are placeholders that get replaced wholesale, in every locale.
+  // Cleared to ship, but not final: the product owner is writing the real
+  // source text and these strings get replaced wholesale, in every locale.
+  // The full story is the `productTagDetail` marker in `product-tag.ts`.
   const tTagDetail = useTranslations("productTagDetail");
   const key = productTagLabelKey(tag);
 

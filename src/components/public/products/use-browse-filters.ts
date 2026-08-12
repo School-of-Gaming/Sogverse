@@ -9,12 +9,14 @@ import {
   isAudienceFilterValue,
   type AudienceFilterValue,
 } from "./product-audience";
+import { isProductTag, type ProductTag } from "./product-tag";
 import { CATEGORY_PARAM } from "./shop-categories";
 
 const TOPIC_PARAM = "topic";
 const FORMAT_PARAM = "format";
 const LANGUAGE_PARAM = "lang";
 const AUDIENCE_PARAM = "audience";
+const TAG_PARAM = "tag";
 const AGE_PARAM = "age";
 const DAYS_PARAM = "days";
 
@@ -48,6 +50,19 @@ function parseAudiences(raw: string | null): AudienceFilterValue[] {
   const seen = new Set<AudienceFilterValue>();
   for (const value of parseList(raw)) {
     if (isAudienceFilterValue(value)) seen.add(value);
+  }
+  return [...seen];
+}
+
+// The design-tag chips, deduped and restricted to the enum's own values through
+// the tag module's guard — so a hand-edited `?tag=gifted`, or a link written
+// against a tag a later migration renamed, reads as no selection rather than
+// emptying the grid. Never spelled out here: the vocabulary is codegen's, and
+// this file is not a second copy of it.
+function parseTags(raw: string | null): ProductTag[] {
+  const seen = new Set<ProductTag>();
+  for (const value of parseList(raw)) {
+    if (isProductTag(value)) seen.add(value);
   }
   return [...seen];
 }
@@ -103,6 +118,10 @@ export function useBrowseFilters() {
     () => parseAudiences(searchParams.get(AUDIENCE_PARAM)),
     [searchParams],
   );
+  const tags = useMemo(
+    () => parseTags(searchParams.get(TAG_PARAM)),
+    [searchParams],
+  );
   const age = useMemo(
     () => parseAge(searchParams.get(AGE_PARAM)),
     [searchParams],
@@ -120,6 +139,7 @@ export function useBrowseFilters() {
     format !== null ||
     languages.length > 0 ||
     audiences.length > 0 ||
+    tags.length > 0 ||
     age !== null ||
     days.length > 0;
 
@@ -130,6 +150,7 @@ export function useBrowseFilters() {
         format?: ProductFormat | null;
         languages?: string[];
         audiences?: AudienceFilterValue[];
+        tags?: ProductTag[];
         age?: AgeBand | null;
         days?: number[];
       },
@@ -153,6 +174,10 @@ export function useBrowseFilters() {
       if (next.audiences !== undefined) {
         if (next.audiences.length === 0) params.delete(AUDIENCE_PARAM);
         else params.set(AUDIENCE_PARAM, next.audiences.join(","));
+      }
+      if (next.tags !== undefined) {
+        if (next.tags.length === 0) params.delete(TAG_PARAM);
+        else params.set(TAG_PARAM, next.tags.join(","));
       }
       if (next.age !== undefined) {
         if (next.age === null) params.delete(AGE_PARAM);
@@ -230,6 +255,20 @@ export function useBrowseFilters() {
     [audiences, writeNext],
   );
 
+  // The audience row's shape exactly, for the same reason: a chip is the chip
+  // the card wears, so the row never widens back to the unfiltered grid. Every
+  // chip lit is every tagged product, and the untagged majority — which carries
+  // no chip at all — is reachable only by clearing the row.
+  const toggleTag = useCallback(
+    (value: ProductTag) => {
+      const next = tags.includes(value)
+        ? tags.filter((tag) => tag !== value)
+        : [...tags, value];
+      writeNext({ tags: next });
+    },
+    [tags, writeNext],
+  );
+
   const setAge = useCallback(
     (value: AgeBand | null) => {
       writeNext({ age: value });
@@ -265,6 +304,7 @@ export function useBrowseFilters() {
         format: null,
         languages: [],
         audiences: [],
+        tags: [],
         age: null,
         days: [],
       },
@@ -277,6 +317,7 @@ export function useBrowseFilters() {
     format,
     languages,
     audiences,
+    tags,
     age,
     days,
     hasAny,
@@ -284,6 +325,7 @@ export function useBrowseFilters() {
     toggleFormat,
     toggleLanguage,
     toggleAudience,
+    toggleTag,
     setAge,
     toggleDay,
     clear,

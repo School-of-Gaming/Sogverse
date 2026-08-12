@@ -3,21 +3,54 @@
 // from the audience label beside it: an audience says who may hold the seat, a
 // tag says who the thing was built for.
 //
-// **Display-side only, for now.** There is no `product_tags` column, no admin
-// form field and no shop filter behind this yet: the vocabulary exists so the
-// redesigned browse card can be judged in a preview scene before any of that is
-// committed to. The DB enum, the admin form and the shop filter row land with
-// the real feature — and when they do, this module is where the filter's
-// chip-equals-tag rule belongs, exactly as `product-audience.ts` holds it for
-// the audience badge. Until then the only source of a tag is a scene fixture.
+// **A tag is real data.** `products.tag` is a nullable `product_tag` column,
+// both product-writing RPCs carry it, and an admin sets it on the product form
+// — so the value a card renders came from a person deciding it, not from a
+// scene fixture. Null is untagged, which is the ordinary state and renders
+// nothing at all: no chip, no explanation block.
 //
-// Deliberately just the type and the label resolution. A value list and a
-// string guard were written first and had no callers: once the enum exists in
-// the database, both come off the generated `Constants` object (the schema
-// rule for every other enum in the app), so hand-maintained copies here would
-// be born stale.
+// **The canonical type is the `ProductTag` alias in `src/types/index.ts`**,
+// generated from the enum. This module re-exports it so the surfaces that
+// already import a tag type from here keep working, and so that the label
+// resolution below sits next to the type it resolves. Adding a value to the
+// enum is a migration; the map below then fails to compile until its copy is
+// written, which is the point of routing every rendered tag through it.
+//
+// Four things live here: the type, the ordered value list, the string guard and
+// the label resolution. The list and the guard arrived with the shop's tag
+// filter row — the row is what needs to enumerate the vocabulary and to read a
+// tag back out of a URL — and every surface that wants either now takes it from
+// here, the admin form's picker included. Both are derived from the generated
+// `Constants` object rather than written out, because a hand-maintained copy of
+// the database's vocabulary is born stale.
 
-export type ProductTag = "neuroinclusive" | "beginner" | "advanced";
+import { Constants, type ProductTag } from "@/types";
+
+export type { ProductTag };
+
+/**
+ * Every tag value, in the order the enum declares them — which is the order the
+ * shop's filter chips and the admin form's picker both present, so a parent and
+ * the admin who tagged the product read the same list in the same sequence.
+ *
+ * Derived from codegen: a fourth tag added by migration appears in both places
+ * the moment types are regenerated, and the label map below fails to compile
+ * until its copy is written.
+ */
+export const PRODUCT_TAG_VALUES: readonly ProductTag[] =
+  Constants.public.Enums.product_tag;
+
+/**
+ * Whether an arbitrary string is a tag value — the guard the filter row reads
+ * its URL param through, so a hand-edited or stale `?tag=` term resolves to no
+ * selection rather than narrowing the grid to nothing.
+ *
+ * Compared value-by-value rather than by `includes`, so the caller's plain
+ * `string` needs no cast to be checked against the generated literal union.
+ */
+export function isProductTag(value: string): value is ProductTag {
+  return PRODUCT_TAG_VALUES.some((tag) => tag === value);
+}
 
 /**
  * The `productTag.*` message key a surface labels a tag with.
@@ -29,9 +62,14 @@ export type ProductTag = "neuroinclusive" | "beginner" | "advanced";
  * word differently — there is one edit, and the literal keys stay greppable
  * against the message files in the meantime.
  *
+ * The `satisfies Record<ProductTag, string>` is the exhaustiveness check
+ * against codegen: `ProductTag` is the generated enum, so a value added to the
+ * database with no key here fails to compile.
+ *
  * Unlike `audienceLabelKey`, there is no null case: a tag is optional on the
  * product, so "no label" is the absence of a tag rather than a tag that
- * declines to label itself.
+ * declines to label itself. A caller holding `ProductTag | null` decides that
+ * before it gets here.
  */
 const TAG_LABEL_KEYS = {
   neuroinclusive: "neuroinclusive",
@@ -46,16 +84,18 @@ export function productTagLabelKey(tag: ProductTag): ProductTagLabelKey {
 }
 
 // ---------------------------------------------------------------------------
-// **`productTagDetail.*` IS DRAFT COPY.**
+// **`productTagDetail.*` is engineer-written copy awaiting the owner's text.**
 //
 // The same keys as `productTag.*`, in the same five message files, carrying the
 // sentence or two the product detail page prints under the chip — what SOG
 // actually does about the tag (small groups and a predictable structure; start
 // from zero; a real challenge). Every one of those strings, in every locale,
-// was written by an engineer as a placeholder so the surface could be looked
-// at. **Sonja is writing the real source text, and these get replaced
-// wholesale** — do not polish them, do not translate around them, and do not
-// treat the current English as the source anybody approved.
+// was written by an engineer so the surface could be looked at, and was
+// **cleared to ship as-is on 2026-08-12** after review in the preview scenes —
+// live is fine, this is not a launch blocker. It is still not the final text:
+// **Sonja is writing the real source copy, and these get replaced wholesale as
+// a follow-up** — do not polish them, do not translate around them, and do not
+// treat the current English as a source anybody wants preserved.
 //
 // The marker lives here rather than in the message files because those are
 // strict JSON with no comment syntax and no key convention for annotations;

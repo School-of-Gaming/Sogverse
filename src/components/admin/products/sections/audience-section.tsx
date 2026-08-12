@@ -8,8 +8,28 @@ import { cn } from "@/lib/utils";
 import { useSpokenLanguages } from "@/services/users";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Field } from "@/components/ui/field";
+import { TagGlyph } from "@/components/public/products/product-chips";
+import {
+  PRODUCT_TAG_VALUES,
+  productTagLabelKey,
+} from "@/components/public/products/product-tag";
+import type { ProductTag } from "@/types";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
+
+// The design-tag choices, in the order the admin reads them: "no tag" first
+// because it is the default and by far the commonest answer, then the tag
+// values.
+//
+// The values come from the tag module's ordered list — the same list the shop's
+// filter chips enumerate — so the admin sets a tag from the vocabulary a parent
+// filters by, in that order. That list is itself derived from codegen, so a
+// fourth tag added by migration appears in both places the moment types are
+// regenerated, and its missing label key fails the build in the tag module.
+const TAG_OPTIONS: readonly (ProductTag | null)[] = [
+  null,
+  ...PRODUCT_TAG_VALUES,
+];
 
 interface AudienceSectionProps {
   state: FormState;
@@ -18,6 +38,10 @@ interface AudienceSectionProps {
 
 export function AudienceSection({ state, setState }: AudienceSectionProps) {
   const t = useTranslations("admin.products");
+  // The family-facing tag words, so the admin picks from the same vocabulary the
+  // parent will read on the card. Resolved through the tag module's key map, not
+  // by spelling the message key from the enum value.
+  const tTag = useTranslations("productTag");
   const { data: spokenLanguages } = useSpokenLanguages();
   const languageName = useLanguageNames();
 
@@ -131,6 +155,70 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
           </Field>
         </div>
       )}
+
+      {/* Sits with the audience pair because it answers the neighbouring half of
+          the same question — the flags above say who may hold a seat, this says
+          who the sessions were built for — and above "Delivered in", which is a
+          property of how the product runs rather than of who it is for. It takes
+          no part in the form locks: a tag is freely editable for the product's
+          whole life, on a running club as much as a pending one. */}
+      <Field label={t("labels.tag")} hint={t("hints.tagHint")}>
+        {/* Function children for the same reason the pair above uses them: a
+            radio group needs the label to name it and the hint to describe it,
+            and neither is announced as loose text. The options are a wrapping
+            row of intrinsic-width chips — the same shape as the language chips
+            below — rather than a column grid sized to today's count: the enum
+            is expected to grow, and a wrap adds rows where fixed columns would
+            squeeze. Each tag option wears the glyph from the shared chip
+            vocabulary, so the admin picks from the same icon-and-word pairing
+            the parent will meet on the card; "no tag" alone has no glyph,
+            because it is the absence being chosen. */}
+        {({ hintId, labelId }) => (
+          <div
+            role="radiogroup"
+            aria-labelledby={labelId}
+            aria-describedby={hintId}
+            className="flex flex-wrap gap-2"
+          >
+            {TAG_OPTIONS.map((option) => {
+              const selected = state.tag === option;
+              return (
+                <label
+                  key={option ?? "none"}
+                  className={cn(
+                    "inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                    selected
+                      ? "border-primary bg-primary/5"
+                      : "border-input hover:border-foreground/30"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="productTag"
+                    className="h-4 w-4"
+                    checked={selected}
+                    onChange={() => setState({ ...state, tag: option })}
+                  />
+                  {option !== null && (
+                    <TagGlyph
+                      tag={option}
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        selected ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
+                  )}
+                  <span className="font-medium">
+                    {option === null
+                      ? t("tagOptions.none")
+                      : tTag(productTagLabelKey(option))}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </Field>
 
       {/* The reference set is a bounded, near-instant read (category 2 of the
           loading rules), so the field renders at once with its final chrome —

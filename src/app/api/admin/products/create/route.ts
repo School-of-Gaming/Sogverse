@@ -129,6 +129,10 @@ export const POST = defineRoute({
       // missing age on a for-gamers product fail loudly instead of silently.
       p_min_age: body.min_age ?? undefined,
       p_max_age: body.max_age ?? undefined,
+      // Untagged is an omission for the same reason an absent age is: the RPC's
+      // DEFAULT NULL writes the null. What keeps the omission deliberate is the
+      // contract schema, which requires the field and admits an explicit null.
+      p_tag: body.tag ?? undefined,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

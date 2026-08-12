@@ -473,6 +473,12 @@ function buildSharedFields(
     for_parents: state.forParents,
     min_age: minAge,
     max_age: maxAge,
+    // Round-tripped from state like the audience pair above, and for a sharper
+    // version of the same reason: the RPC parameter is DEFAULT NULL, so a tag
+    // left out of the payload does not preserve the stored one — it clears it.
+    // Sending state's answer on every save, including the `null` that means
+    // untagged, is what makes clearing something an admin chose.
+    tag: state.tag,
     spoken_language_code: state.spokenLanguageCode,
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
@@ -757,6 +763,9 @@ export function existingFormState(
     // never a stringified null.
     minAge: product.min_age == null ? "" : String(product.min_age),
     maxAge: product.max_age == null ? "" : String(product.max_age),
+    // Straight through: the column is already `ProductTag | null` and the
+    // picker's "no tag" option *is* null, so there is nothing to translate.
+    tag: product.tag,
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,

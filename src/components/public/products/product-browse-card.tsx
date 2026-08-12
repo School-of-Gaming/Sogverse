@@ -6,6 +6,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
@@ -18,11 +19,12 @@ import {
   scheduleCardLines,
 } from "./format-product-schedule";
 import {
-  ProductBrowseCardView,
   type LocationLine,
   type ProductBrowseCardViewProps,
   type SeatBarValue,
-} from "./product-browse-card-view";
+} from "./browse-card-shell";
+import { ProductBrowseCardView } from "./product-browse-card-view";
+import { productTagLabelKey } from "./product-tag";
 
 interface ProductBrowseCardProps {
   product: ProductBrowseRow;
@@ -49,9 +51,11 @@ interface ProductBrowseCardProps {
 
 // Adapter: resolves a `ProductBrowseRow` into the display props
 // `ProductBrowseCardView` consumes. All locale / currency / time /
-// participation lookups happen here so the View stays purely
-// presentational — that's what lets the UI Components page render every
-// state by hand without forging a full BrowseRow.
+// participation lookups happen here, and so do the two resolutions the row
+// cannot hand over as-is — the image path into a URL and the tag into a
+// value-plus-label pair — so the View stays purely presentational. That's
+// what lets the UI Components page render every state by hand without forging
+// a full BrowseRow, and it is why the View renders no message keys of its own.
 export function ProductBrowseCard({
   product,
   counts,
@@ -70,12 +74,9 @@ export function ProductBrowseCard({
 /**
  * The row→view-props resolution above, as a hook.
  *
- * Split out of the component because the card's *body* is being redesigned and
- * the draft body needs exactly these props: one resolution, two views, so the
- * live card and the draft cannot answer differently about the same row while
- * the redesign is being judged. When the draft is promoted its adapter goes
- * away and this stays — a component that is a hook call plus a view is the
- * shape the adapter wanted anyway.
+ * Split out of the component so a surface that already holds a row can build
+ * the same props without going through the card — and so a component that is a
+ * hook call plus a view stays exactly that.
  */
 export function useBrowseCardViewProps(
   product: ProductBrowseRow,
@@ -87,6 +88,9 @@ export function useBrowseCardViewProps(
   // Shared with the filter chips and the detail page's overview card, so the
   // words a parent filtered by are the words the card answers with.
   const tAudience = useTranslations("productAudience");
+  // Same namespace the detail page's hero and tag note read, so one product
+  // wears one word wherever a family meets it.
+  const tTag = useTranslations("productTag");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   // `useNow()` is seeded server-side at request time, so SSR and the first
@@ -155,7 +159,16 @@ export function useBrowseCardViewProps(
   return {
     name: tr?.name ?? "",
     description: tr?.short_description ?? null,
-    imagePath: product.image_path,
+    // The shared row-level resolution owns the empty-string-means-no-image
+    // rule; null paints the wordmark banner.
+    imageSrc: productImageSrc(product.image_path),
+    // The value travels with the label because the view picks the chip's icon
+    // from it; two loose props could be handed a label belonging to a
+    // different tag. Null is untagged, which is most products.
+    tag:
+      product.tag === null
+        ? null
+        : { value: product.tag, label: tTag(productTagLabelKey(product.tag)) },
     topicLabel: topicLabel(product.topic),
     scheduleLines,
     ageLine:
