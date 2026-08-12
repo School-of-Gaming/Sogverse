@@ -136,7 +136,7 @@ describe("POST /api/admin/send-test-email", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         fromEmail: "sogverse@sog.gg",
-        fromName: "School of Gaming - Sogverse",
+        fromName: "School of Gaming – Sogverse",
       })
     );
   });
@@ -200,7 +200,7 @@ describe("POST /api/admin/send-test-email", () => {
     expect(data.messageId).toBe("msg-123");
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith({
       fromEmail: "sogverse@sog.gg",
-      fromName: "School of Gaming - Sogverse",
+      fromName: "School of Gaming – Sogverse",
       toEmail: ["test@example.com"],
       subject: "Test Subject",
       htmlContent: "Hello world",

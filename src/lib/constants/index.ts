@@ -49,7 +49,7 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
  * keeping is the half they already know. See the brand-vs-platform rule in the
  * root CLAUDE.md.
  */
-export const SENDER_NAME = "School of Gaming - Sogverse";
+export const SENDER_NAME = "School of Gaming – Sogverse";
 
 /**
  * The one customer-facing address, and the source of truth for it.
