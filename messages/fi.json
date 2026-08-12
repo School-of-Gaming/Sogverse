@@ -997,7 +997,7 @@
     "heading": "Valmista tuli!",
     "subheading": {
       "consumer_club": "{gamer} on ilmoitettu toimintaan {product}.",
-      "municipality_club": "{gamer} on rekisteröity toimintaan {product}.",
+      "municipality_club": "{gamer} on ilmoitettu toimintaan {product}.",
       "camp": "{gamer} on ilmoitettu toimintaan {product}.",
       "event": "{gamer} on liittynyt toimintaan {product}."
     },
@@ -1005,7 +1005,7 @@
     "self": {
       "subheading": {
         "consumer_club": "Sinut on ilmoitettu toimintaan {product}.",
-        "municipality_club": "Sinut on rekisteröity toimintaan {product}.",
+        "municipality_club": "Sinut on ilmoitettu toimintaan {product}.",
         "camp": "Sinut on ilmoitettu toimintaan {product}.",
         "event": "Olet liittynyt toimintaan {product}."
       },
@@ -1024,7 +1024,7 @@
     "summaryTitle": "Tilauksesi",
     "forLabel": {
       "consumer_club": "Ilmoitettu",
-      "municipality_club": "Rekisteröity",
+      "municipality_club": "Ilmoitettu",
       "camp": "Ilmoitettu",
       "event": "Liittynyt"
     },
@@ -1616,13 +1616,13 @@
     "signupPanel": {
       "verb": {
         "consumer_club": "Ilmoittaudu",
-        "municipality_club": "Rekisteröidy",
+        "municipality_club": "Ilmoittaudu",
         "camp": "Ilmoittaudu",
         "event": "Liity"
       },
       "noun": {
         "consumer_club": "Ilmoittautuminen",
-        "municipality_club": "Rekisteröinti",
+        "municipality_club": "Ilmoittautuminen",
         "camp": "Ilmoittautuminen",
         "event": "Liittyminen"
       },
@@ -1644,7 +1644,7 @@
       "ctaCreateAccount": "Luo tili",
       "gamerAlreadySignedUp": {
         "consumer_club": "Jo ilmoitettu",
-        "municipality_club": "Jo rekisteröity",
+        "municipality_club": "Jo ilmoitettu",
         "camp": "Jo ilmoitettu",
         "event": "Jo liittynyt"
       },
@@ -1662,7 +1662,7 @@
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Kenet ilmoitat?",
-        "municipality_club": "Kenet rekisteröit?",
+        "municipality_club": "Kenet ilmoitat?",
         "camp": "Kenet ilmoitat?",
         "event": "Kuka liittyy?"
       },
