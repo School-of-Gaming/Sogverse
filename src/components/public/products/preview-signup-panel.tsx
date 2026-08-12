@@ -32,6 +32,9 @@ interface PreviewSignupPanelProps {
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
   summaryHref: string;
+  /** Forwarded verbatim to the view — the draft detail page's rail sets it.
+   *  Presentation only; see `SignupPanelViewProps.flat`. */
+  flat?: boolean;
 }
 
 // Long enough that the "Signing up…" state is visibly the same beat a real
@@ -43,6 +46,7 @@ export function PreviewSignupPanel({
   state,
   authState,
   summaryHref,
+  flat,
 }: PreviewSignupPanelProps) {
   const router = useRouter();
   const fields = useSignupPanelFields(product, authState);
@@ -66,6 +70,7 @@ export function PreviewSignupPanel({
       onSubmit={goToSummary}
       onJoinWaitlist={goToSummary}
       submitting={committing}
+      flat={flat}
     />
   );
 }

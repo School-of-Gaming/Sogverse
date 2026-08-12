@@ -42,20 +42,23 @@ export function ProductDetailScene({ scenario }: { scenario: PreviewScenario }) 
   const summaryHref = previewSceneHref("confirmation", scenario);
   const tag = scenarioTag(scenario);
 
-  const signupPanel = (
-    <PreviewSignupPanel
-      product={fixture.product}
-      state={fixture.state}
-      authState={fixture.authState}
-      summaryHref={summaryHref}
-    />
-  );
+  const panelProps = {
+    product: fixture.product,
+    state: fixture.state,
+    authState: fixture.authState,
+    summaryHref,
+  };
 
   if (tag !== null) {
     return (
       <ProductDetailPageBodyDraft
         product={fixture.product}
-        signupPanel={signupPanel}
+        // `flat` is the panel's opt-in presentation variant, set only here: the
+        // draft's rail is 20rem, and the panel's card-in-card-in-card nesting
+        // leaves a participant row too narrow there for a name, an age and
+        // "Already joined" on one line. Nothing about the panel's behaviour or
+        // states changes — see `SignupPanelViewProps.flat`.
+        signupPanel={<PreviewSignupPanel {...panelProps} flat />}
         tag={tag}
         // Fixture rows carry no storage path, so the hero needs the same demo
         // art the card showed; `null` from the map is a deliberate "no picture"
@@ -68,7 +71,7 @@ export function ProductDetailScene({ scenario }: { scenario: PreviewScenario }) 
   return (
     <ProductDetailPageBody
       product={fixture.product}
-      signupPanel={signupPanel}
+      signupPanel={<PreviewSignupPanel {...panelProps} />}
     />
   );
 }

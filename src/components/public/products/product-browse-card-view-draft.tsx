@@ -161,18 +161,7 @@ export function ProductBrowseCardViewDraft({
             for the other and a card wearing only one of them has no hole where
             the other would be. Nothing else is ever overlaid — the price stays
             in the footer, where a seat bar can take its place. */}
-        {tag !== null && (
-          <DraftTagChip
-            tag={tag}
-            className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)]"
-          />
-        )}
-        {whoLabel !== null && (
-          <DraftWhoChip
-            label={whoLabel}
-            className="absolute right-2 top-2 max-w-[calc(100%-1rem)]"
-          />
-        )}
+        <DraftMediaChips tag={tag} whoLabel={whoLabel} />
       </div>
 
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
@@ -287,6 +276,48 @@ function DraftChip({
       <Icon className="h-3 w-3 shrink-0" aria-hidden />
       <span className="truncate">{children}</span>
     </span>
+  );
+}
+
+/**
+ * **The two chips in their corners** — the whole overlaid treatment, exported
+ * as one piece rather than as two chips plus a pair of corner offsets for the
+ * next surface to restate.
+ *
+ * The detail page's hero wears exactly this, and "exactly" is the requirement:
+ * a parent who tapped a card with "Neuroinclusive" bottom-left has to meet the
+ * same pill in the same corner on the page they land on. Two call sites copying
+ * `absolute bottom-2 left-2` would agree today and drift the first time either
+ * is nudged.
+ *
+ * Opposite corners, one fact each, so neither chip reserves room for the other
+ * and a picture wearing only one of them has no hole where the other would be.
+ * Render it inside a `relative` media box; it positions itself. No scrim: the
+ * fills are solid, which is what makes them legible over a bright sky and a
+ * night scene alike.
+ */
+export function DraftMediaChips({
+  tag,
+  whoLabel,
+}: {
+  tag: DraftCardTag | null;
+  whoLabel: string | null;
+}) {
+  return (
+    <>
+      {tag !== null && (
+        <DraftTagChip
+          tag={tag}
+          className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)]"
+        />
+      )}
+      {whoLabel !== null && (
+        <DraftWhoChip
+          label={whoLabel}
+          className="absolute right-2 top-2 max-w-[calc(100%-1rem)]"
+        />
+      )}
+    </>
   );
 }
 

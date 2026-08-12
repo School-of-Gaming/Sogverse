@@ -137,6 +137,24 @@ export interface SignupPanelViewProps {
   submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
+  /**
+   * **Presentation only, and opt-in.** Strips the picker's *inner* chrome: the
+   * "who's joining" box loses its border, fill and padding, and each
+   * participant row loses its border and keeps a rounded fill for its hover and
+   * selected states instead. Nothing about what is rendered, selectable,
+   * disabled or announced changes — every state, label and role is identical in
+   * both modes.
+   *
+   * It exists because the panel is a card, holding a card, holding a card per
+   * participant, and each layer spends padding: in the draft detail page's
+   * 20rem rail that left a row about 205px wide, which is not enough for a name,
+   * an age and "Already joined" on one line. Flattening the two inner layers
+   * gives the row back ~40px and the pairing fits.
+   *
+   * Passed only by the draft detail page's rail. Every live route leaves it
+   * unset and renders exactly as it always has.
+   */
+  flat?: boolean;
 }
 
 export function SignupPanelView(props: SignupPanelViewProps) {
@@ -459,7 +477,15 @@ function SignupForm(
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-border bg-muted/30 p-4">
+      {/* The picker's own box. `flat` drops it entirely — see the prop's note:
+          three nested paddings is what squeezed the rows in a 20rem rail, and
+          the heading below is enough to mark the section without a container
+          around it. */}
+      <div
+        className={cn(
+          !props.flat && "rounded-md border border-border bg-muted/30 p-4",
+        )}
+      >
         <h3 id="gamer-picker-label" className="text-sm font-semibold">
           {/* Per-type heading — matches the product's action verb
               (enrol / register / sign up / join). A parents-only product has
@@ -495,12 +521,24 @@ function SignupForm(
                   disabled={alreadyOn !== null}
                   onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                    "flex w-full items-center justify-between gap-2 rounded-md text-sm transition-colors",
+                    // Same fills in both modes, so selection and the
+                    // already-joined lockout read identically; `flat` only
+                    // drops the border each row would otherwise draw inside
+                    // two other borders, and spends the width it saves on a
+                    // taller, comfortable tap target instead.
+                    props.flat ? "px-2 py-2.5" : "border px-3 py-2",
                     alreadyOn !== null
-                      ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
+                      ? cn(
+                          "cursor-not-allowed bg-muted/40 opacity-60",
+                          !props.flat && "border-input",
+                        )
                       : selected
-                        ? "border-primary bg-primary/10"
-                        : "border-input hover:bg-accent hover:text-accent-foreground",
+                        ? cn("bg-primary/10", !props.flat && "border-primary")
+                        : cn(
+                            "hover:bg-accent hover:text-accent-foreground",
+                            !props.flat && "border-input",
+                          ),
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2.5">

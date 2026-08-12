@@ -17,7 +17,6 @@ import type {
 } from "@/types";
 import { LongDescription } from "./long-description";
 import { ProductOverviewCard } from "./product-overview-card";
-import type { ProductTag } from "./product-tag";
 import { TopicInfoCard } from "./topic-info-card";
 
 // Page body — pure layout + presentation. Owns nothing about fetching, and is
@@ -138,12 +137,14 @@ export function ProductDetailPageBody({
 }
 
 // Exported for the draft page body (`product-detail-page-body-draft.tsx`),
-// which rearranges this page rather than rewriting it: the draft moves the
-// signup panel into a sticky rail and puts the title above a 3:2 hero, but the
-// back link and the sections below are the *same components in the same order*.
-// Sharing them is what stops the draft from becoming a second product page —
-// a section added here appears there too, and neither can drift. At promotion
-// the draft body replaces this one and both go back to being private.
+// which rearranges this page rather than rewriting it. The draft composes the
+// same section components this file does — `LongDescription`, the overview card
+// and the topic card, each imported from its own module — but it cannot reuse
+// `MainColumn` itself: from `2xl` the overview card becomes a grid item in a
+// left facts rail, and a component cannot be inside another component's flow at
+// one breakpoint and its sibling at the next. The back link has no such
+// problem, so it is shared rather than restated. At promotion the draft body
+// replaces this one and this goes back to being private.
 export function BackLink({
   productType,
   municipality,
@@ -172,19 +173,12 @@ export function BackLink({
   );
 }
 
-/** Shared with the draft page body — see the note on `BackLink` above. */
-export function MainColumn({
+function MainColumn({
   product,
   longDescription,
-  tag,
 }: {
   product: ProductDetailPageBodyProps["product"];
   longDescription: ProductLongDescription;
-  /**
-   * Draft-redesign only: the overview card grows a block explaining the tag.
-   * Undefined on both live routes and on this body, which never passes it.
-   */
-  tag?: ProductTag;
 }) {
   // The topic card renders itself only when the topic carries an `info` block
   // (all current topics do); a hypothetical info-less topic gets no card.
@@ -194,7 +188,7 @@ export function MainColumn({
           the logistics cards. Omitted when the admin left it empty. */}
       <LongDescription blocks={longDescription} />
 
-      <ProductOverviewCard product={product} tag={tag} />
+      <ProductOverviewCard product={product} />
 
       <TopicInfoCard topic={product.topic} />
     </div>

@@ -6,11 +6,10 @@ import { Clock, Globe, Languages, MapPin, UserRound, Users } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
+import { cn } from "@/lib/utils";
 import type { ProductBrowseRow } from "@/types";
 import { formatProductLocation } from "./format-product-location";
 import { audienceLabelKey } from "./product-audience";
-import { DraftTagChip } from "./product-browse-card-view-draft";
-import { productTagLabelKey, type ProductTag } from "./product-tag";
 import { formatClubTermDates } from "./format-product-term-dates";
 import {
   formatProductSchedule,
@@ -45,32 +44,26 @@ interface ProductOverviewCardProps {
     | "spoken_language_code"
   >;
   /**
-   * **Draft-redesign only, and additive.** No live caller passes it — not the
-   * shop detail body, not the confirmation view, not the admin product page —
-   * so this card renders exactly as it always has for all three. Given a tag,
-   * it grows one block beneath the 2×2 grid: the same chip the browse card and
-   * the draft masthead wear, plus a sentence or two on what SOG actually does
-   * about it.
+   * **Draft-redesign only, and a class switch — nothing else.** From `2xl` the
+   * draft detail page moves this card out of the reading column into a 16rem
+   * facts rail, where a two-up grid would give each fact about 110px. This
+   * collapses the grid back to a single stacked column at exactly that
+   * breakpoint, and only for the instance that moves.
    *
-   * Below the grid rather than inside it, deliberately. The four facts are a
-   * filled 2×2 whatever the product's shape is — that invariant is why the
-   * audience and the age range already share one cell — and this is prose, not
-   * a fact: a paragraph in a `dd` sized for "Tuesdays 15:30" would wreck the
-   * row it sits in. It stays in the who-it's-for *area* by sitting directly
-   * under it, which is where a parent reading "For families, ages 8–12" looks
-   * next.
+   * A prop rather than a breakpoint the card decides for itself, because the
+   * card cannot know how wide its column is — `sm:` and friends measure the
+   * viewport, and a 1920px viewport says nothing about a 256px rail. The prop
+   * names the arrangement its caller put it in. No live caller passes it.
    */
-  tag?: ProductTag;
+  railFrom2xl?: boolean;
 }
 
-export function ProductOverviewCard({ product, tag }: ProductOverviewCardProps) {
+export function ProductOverviewCard({
+  product,
+  railFrom2xl,
+}: ProductOverviewCardProps) {
   const t = useTranslations("productDetail");
   const tAudience = useTranslations("productAudience");
-  // DRAFT COPY. See `productTagDetail` in the message files: the product owner
-  // is writing the real source text and these strings are placeholders that get
-  // replaced wholesale, in every locale, when it lands.
-  const tTagDetail = useTranslations("productTagDetail");
-  const tTag = useTranslations("productTag");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -158,7 +151,15 @@ export function ProductOverviewCard({ product, tag }: ProductOverviewCardProps) 
             whatever the product's shape is. That invariant is why the audience
             and the age range share one cell above rather than taking one
             each. */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4",
+            // The rail is 16rem: two columns there are ~110px each, which is
+            // narrower than half these values need. Back to one column, and
+            // back to the tighter single-column gap that goes with it.
+            railFrom2xl && "2xl:grid-cols-1 2xl:gap-3",
+          )}
+        >
           <DetailRow icon={Clock} label={t("info.schedule")}>
             {scheduleDisplayLines.length === 1 ? (
               scheduleDisplayLines[0]
@@ -198,20 +199,6 @@ export function ProductOverviewCard({ product, tag }: ProductOverviewCardProps) 
             <LanguageFlag code={product.spoken_language_code} />
           </DetailRow>
         </div>
-
-        {/* The tag, explained. The chip alone is a promise with no content
-            behind it — "Neuroinclusive" tells a parent the product claims
-            something, not what the claim is — so wherever a family can stop and
-            read, the claim is spelled out. The card and the masthead carry the
-            label; this is the only place that says what SOG does about it. */}
-        {tag !== undefined && (
-          <div className="space-y-2 border-t pt-3">
-            <DraftTagChip tag={{ value: tag, label: tTag(productTagLabelKey(tag)) }} />
-            <p className="text-muted-foreground">
-              {tTagDetail(productTagLabelKey(tag))}
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
