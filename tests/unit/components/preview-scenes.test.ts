@@ -44,6 +44,7 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
+import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
@@ -449,13 +450,16 @@ describe("the shop browse scene", () => {
    * detail page's explanation of it — has no preview at all. The three are the
    * vocabulary; a grid carrying two of them reviews two thirds of the design.
    */
-  it("puts all three tags on the showcase grid", () => {
+  it("puts every tag on the showcase grid", () => {
     const tags = new Set(
       taggedCatalogRows
         .map(({ product }) => product.tag)
         .filter((tag) => tag !== null),
     );
-    expect(tags).toEqual(new Set(["neuroinclusive", "beginner", "advanced"]));
+    // Against the generated value list, not a literal — a fourth enum value
+    // must fail this test until a scenario carries it, which is the moment
+    // the invariant above matters most.
+    expect(tags).toEqual(new Set(PRODUCT_TAG_VALUES));
   });
 
   /**

@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductDetailPageBody } from "@/components/public/products/product-detail-page-body";
+import { registrationCtaKind } from "@/components/public/products/derive-registration-state";
 import { PreviewSignupPanel } from "@/components/public/products/preview-signup-panel";
 import {
   buildScenarioFixture,
@@ -36,6 +37,7 @@ export function ProductDetailScene({ scenario }: { scenario: PreviewScenario }) 
           summaryHref={summaryHref}
         />
       }
+      signupActionable={registrationCtaKind(fixture.state) === "primary"}
     />
   );
 }

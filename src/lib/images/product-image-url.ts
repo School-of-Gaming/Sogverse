@@ -22,3 +22,18 @@ export function productImageUrl(path: string): string {
   }
   return `${base}/storage/v1/object/public/product-images/${path}`;
 }
+
+/**
+ * The row-level resolution: `products.image_path` into a servable URL, or null
+ * for "no image". **Truthiness, not a null check, on purpose** — `image_path`
+ * is a plain text column and an empty string is representable in it, meaning
+ * the same thing as null; a `=== null` test would send `""` down the URL path
+ * and paint a broken frame. Every family surface (card adapter, detail hero,
+ * purchase confirmation) resolves through this one function so the
+ * empty-string rule cannot be forgotten at the next call site.
+ */
+export function productImageSrc(
+  imagePath: string | null | undefined,
+): string | null {
+  return imagePath ? productImageUrl(imagePath) : null;
+}

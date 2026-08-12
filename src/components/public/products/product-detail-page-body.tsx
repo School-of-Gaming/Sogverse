@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductBanner } from "@/components/ui/product-thumbnail";
 import { ROUTES } from "@/lib/constants";
-import { productImageUrl } from "@/lib/images/product-image-url";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -53,6 +53,16 @@ export interface ProductDetailPageBodyProps {
    *  the live `SignupPanel`; the preview passes a navigating one. Every state
    *  it can render, it renders here. */
   signupPanel: ReactNode;
+  /** Whether the panel currently offers an action to take — the caller derives
+   *  it from the registration state (`registrationCtaKind(state) ===
+   *  "primary"`), the same source the browse card's openability reads, so the
+   *  two surfaces cannot disagree. Gates the phone jump button below: a
+   *  full-width "{verb} now!" pointing at a panel whose whole content is "not
+   *  open right now" is a control promising what it cannot deliver, so on a
+   *  closed or ended product the button is withdrawn, not disabled — exactly
+   *  as it is withdrawn at `lg` where the panel is already on screen.
+   *  Required, so a caller cannot forget to decide. */
+  signupActionable: boolean;
   /** When opened from a `/schools/<slug>` listing, sends the back link there
    *  (labelled with the municipality) instead of the storefront. */
   municipality?: MunicipalityBackLink;
@@ -86,6 +96,7 @@ export interface ProductDetailPageBodyProps {
 export function ProductDetailPageBody({
   product,
   signupPanel,
+  signupActionable,
   municipality,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
@@ -111,12 +122,9 @@ export function ProductDetailPageBody({
 
   const verb = tVerb(product.product_type);
 
-  // Truthiness, not a null check: `image_path` is a plain text column and an
-  // empty string is representable in it, which the thumbnail already treats as
-  // "no image". Null paints the wordmark banner at the hero's own ratio.
-  const heroSrc = product.image_path
-    ? productImageUrl(product.image_path)
-    : null;
+  // The shared row-level resolution owns the empty-string-means-no-image rule;
+  // null paints the wordmark banner at the hero's own ratio.
+  const heroSrc = productImageSrc(product.image_path);
 
   // Untagged is the ordinary state and renders nothing at all — no chip here,
   // no explanation block below. The value travels with the label so the chip
@@ -276,7 +284,9 @@ export function ProductDetailPageBody({
             no picture gets the wordmark banner at the same ratio — and wears the
             chips on it, exactly as an un-imaged card does. */}
         <div className="relative overflow-hidden rounded-lg border">
-          <ProductBanner src={heroSrc} />
+          {/* Eager: the hero is the page's picture and reliably above the
+              fold — the one banner that must not wait for a scroll. */}
+          <ProductBanner src={heroSrc} eager />
           <ProductMediaChips tag={tag} whoLabel={whoLabel} />
         </div>
 
@@ -317,18 +327,31 @@ export function ProductDetailPageBody({
             It renders with the page: no measurement, no post-mount reveal, no
             appearing once something has been scrolled past. Its scroll is the
             direct result of the tap, which is the one thing the layout rules ask
-            of a jump like this. */}
-        <Button
-          type="button"
-          size="lg"
-          // Full width at phone width: it is the only action in the reading
-          // column, and a thumb should not have to find it. Natural width from
-          // `sm`, where a full-width button starts reading as a banner.
-          className="mt-6 w-full sm:w-auto lg:hidden"
-          onClick={() => scrollToAnchor(SIGNUP_PANEL_ANCHOR_ID)}
-        >
-          {t("jumpToSignup", { verb })}
-        </Button>
+            of a jump like this.
+
+            And only while the panel has an action to offer: on a full, started
+            or ended product the panel's whole content is a closed note, and a
+            primary "{verb} now!" pointing at that would promise what the page
+            cannot deliver — the same rule the browse card enforces by not
+            looking openable without being openable. `signupActionable` reads
+            the card's own state source, so the two cannot drift. (The state
+            re-derives on the clock tick, so a product opening or closing under
+            an open tab adds or withdraws the button in place — permitted, and
+            it sits at the reading column's end where nothing below it but the
+            blurb can shift.) */}
+        {signupActionable && (
+          <Button
+            type="button"
+            size="lg"
+            // Full width at phone width: it is the only action in the reading
+            // column, and a thumb should not have to find it. Natural width from
+            // `sm`, where a full-width button starts reading as a banner.
+            className="mt-6 w-full sm:w-auto lg:hidden"
+            onClick={() => scrollToAnchor(SIGNUP_PANEL_ANCHOR_ID)}
+          >
+            {t("jumpToSignup", { verb })}
+          </Button>
+        )}
 
         {/* Marketing blurb — the expanded pitch under the hero, ahead of the
             logistics. Omitted when the admin left it empty. */}

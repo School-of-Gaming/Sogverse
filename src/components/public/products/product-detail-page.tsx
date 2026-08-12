@@ -14,7 +14,10 @@ import {
   useParticipationCounts,
   useProductSeatCountsRealtime,
 } from "@/services/participations";
-import { deriveRegistrationState } from "./derive-registration-state";
+import {
+  deriveRegistrationState,
+  registrationCtaKind,
+} from "./derive-registration-state";
 import {
   ProductDetailPageBody,
   type MunicipalityBackLink,
@@ -179,6 +182,7 @@ export function ProductDetailPage({
       signupPanel={
         <SignupPanel product={product} state={state} authState={authState} />
       }
+      signupActionable={registrationCtaKind(state) === "primary"}
     />
   );
 }

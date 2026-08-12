@@ -42,8 +42,9 @@ export interface ProductBrowseCardViewProps {
   topicLabel: string | null;
   /**
    * Pre-formatted lines describing when the product runs. Typically 1
-   * (clubs/events) or 2 (camps). The adapter — `scheduleLinesForCard`
-   * in `product-browse-card.tsx` — owns the splitting rule.
+   * (clubs/events) or 2 (camps). Already split by the shared schedule
+   * formatter the adapter calls — the splitting rule lives with the
+   * formatter, beside the separator it splits on, not here.
    */
   scheduleLines: readonly string[];
   /**

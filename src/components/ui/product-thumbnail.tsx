@@ -92,15 +92,28 @@ const BANNER_FRAME = "aspect-[3/2] w-full";
  *
  * Plain <img> for the same reason `ProductThumbnail` uses one: product images
  * bypass next/image's optimizer.
+ *
+ * **Lazy by default, eager by request.** These are admin-uploaded photos with
+ * no optimizer in front of them, and a storefront section trio can put dozens
+ * of banners on one page — fetching them all on first paint costs the pages
+ * that can least afford it (family surfaces are mobile-first). So the banner
+ * defaults to `loading="lazy" decoding="async"` and the one caller whose
+ * banner is reliably above the fold — the detail page's hero — opts into
+ * `eager`. Lazy or eager, the frame's size is fixed by `aspect-[3/2]`, so
+ * loading order never moves layout.
  */
 export function ProductBanner({
   src,
   className,
+  eager = false,
 }: {
   /** Resolved image URL, or `null` for a product with no picture. */
   src: string | null;
   /** Width, corners and borders for the frame — never its aspect ratio. */
   className?: string;
+  /** Fetch on first paint. For banners reliably above the fold (the detail
+   *  hero); everything else lazy-loads as it scrolls into reach. */
+  eager?: boolean;
 }) {
   if (src === null) {
     return <SogFallback variant="banner" className={cn(BANNER_FRAME, className)} />;
@@ -110,6 +123,8 @@ export function ProductBanner({
     <img
       src={src}
       alt=""
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
       className={cn(BANNER_FRAME, "object-cover", className)}
     />
   );

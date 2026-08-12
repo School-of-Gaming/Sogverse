@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { productImageUrl } from "@/lib/images/product-image-url";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
@@ -159,11 +159,9 @@ export function useBrowseCardViewProps(
   return {
     name: tr?.name ?? "",
     description: tr?.short_description ?? null,
-    // Truthiness, not a null check: `image_path` is a plain text column and an
-    // empty string is representable in it, which the thumbnail already treats
-    // as "no image". A `=== null` test would send `""` down the resolution
-    // path and paint a broken 3:2 box.
-    imageSrc: product.image_path ? productImageUrl(product.image_path) : null,
+    // The shared row-level resolution owns the empty-string-means-no-image
+    // rule; null paints the wordmark banner.
+    imageSrc: productImageSrc(product.image_path),
     // The value travels with the label because the view picks the chip's icon
     // from it; two loose props could be handed a label belonging to a
     // different tag. Null is untagged, which is most products.

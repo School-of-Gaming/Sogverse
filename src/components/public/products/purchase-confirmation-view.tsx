@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ProductBanner } from "@/components/ui/product-thumbnail";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { productImageUrl } from "@/lib/images/product-image-url";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
@@ -140,11 +140,7 @@ export function PurchaseConfirmationView({
                 square did not. */}
             <div className="mt-4 flex items-center gap-4">
               <ProductBanner
-                src={
-                  product.image_path
-                    ? productImageUrl(product.image_path)
-                    : null
-                }
+                src={productImageSrc(product.image_path)}
                 className="w-24 shrink-0 rounded-lg"
               />
               <div className="min-w-0">

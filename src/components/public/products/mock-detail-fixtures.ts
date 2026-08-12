@@ -41,7 +41,7 @@ import type {
 //
 // Three of them exist for the **audience** axis rather than for a registration
 // state, because a product sold to parents is otherwise unreachable: no such
-// product exists yet, and the admin switch that creates one lands last. They
+// product exists yet. They
 // are the only place the three signup-panel cases can be looked at, so between
 // them they carry all three — a parents-only panel with the reader
 // preselected, a mixed one with children and the reader in the same picker,
@@ -610,8 +610,9 @@ export function isPreviewScenario(s: string): s is PreviewScenario {
  * regression case. `SHOP_SCENE_AUDIENCES` is the audience question, and it is
  * deliberately the *smallest* grid that can answer it — one card of each
  * audience per section, so the badge's presence on two of them and its absence
- * on the third is a comparison the eye makes in one pass rather than a hunt. It
- * is also the only place the audience chips have anything to filter.
+ * on the third is a comparison the eye makes in one pass rather than a hunt.
+ * (The tagged catalog carries the audience scenarios too, so its chips filter
+ * there as well — this list stays the isolated comparison.)
  *
  * **Both inherit whatever tag and picture their scenarios carry**, because tags
  * and art are row fields now and these lists are scenario slugs. That is
