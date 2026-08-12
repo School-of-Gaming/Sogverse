@@ -138,18 +138,23 @@ export interface SignupPanelViewProps {
   currency: SupportedCurrency;
   locale: string;
   /**
-   * **Presentation only, and opt-in.** Strips the picker's *inner* chrome: the
-   * "who's joining" box loses its border, fill and padding, and each
-   * participant row loses its border and keeps a rounded fill for its hover and
-   * selected states instead. Nothing about what is rendered, selectable,
-   * disabled or announced changes — every state, label and role is identical in
-   * both modes.
+   * **Presentation only, and opt-in.** Nothing about what is rendered,
+   * selectable, disabled or announced changes — every state, label and role is
+   * identical in both modes.
    *
    * It exists because the panel is a card, holding a card, holding a card per
    * participant, and each layer spends padding: in the draft detail page's
-   * 20rem rail that left a row about 205px wide, which is not enough for a name,
-   * an age and "Already joined" on one line. Flattening the two inner layers
-   * gives the row back ~40px and the pairing fits.
+   * 20rem rail that left a row about 195px wide, which is not enough for a
+   * name, an age and "Already joined" on one line.
+   *
+   * What it drops is decided by one rule — **a border means you can act on
+   * it.** So the picker's outer box goes (it is a grouping, not a control) and
+   * the pricing section's box goes (it is a statement of the price, with no
+   * choice attached), while the participant rows keep a border, because that
+   * border is what says "you can pick this"; the consent toggle keeps one,
+   * because it is a control; and the add-a-child affordance keeps one, because
+   * it is a button. The rows spend a little less on padding than they do live,
+   * which is where the width comes back.
    *
    * Passed only by the draft detail page's rail. Every live route leaves it
    * unset and renders exactly as it always has.
@@ -303,6 +308,7 @@ function SignupBody(props: SignupPanelViewProps) {
         option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
+        flat={props.flat}
       />
       <FormOrAuth
         {...props}
@@ -521,24 +527,28 @@ function SignupForm(
                   disabled={alreadyOn !== null}
                   onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md text-sm transition-colors",
-                    // Same fills in both modes, so selection and the
-                    // already-joined lockout read identically; `flat` only
-                    // drops the border each row would otherwise draw inside
-                    // two other borders, and spends the width it saves on a
-                    // taller, comfortable tap target instead.
-                    props.flat ? "px-2 py-2.5" : "border px-3 py-2",
+                    "flex w-full items-center justify-between gap-2 rounded-md border text-sm transition-colors",
+                    // Both modes keep the border and the fills: this row is the
+                    // one thing in the picker you can act on, and the border is
+                    // what says so. `flat` differs only in what surrounds it —
+                    // no box around the group, so the row can spend a little
+                    // less on its own padding (22px of horizontal cost against
+                    // the live 26px) and give the name/age/status line the room
+                    // it needs at rail width.
+                    props.flat ? "px-2.5 py-2.5" : "px-3 py-2",
                     alreadyOn !== null
-                      ? cn(
-                          "cursor-not-allowed bg-muted/40 opacity-60",
-                          !props.flat && "border-input",
-                        )
+                      ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
                       : selected
-                        ? cn("bg-primary/10", !props.flat && "border-primary")
-                        : cn(
-                            "hover:bg-accent hover:text-accent-foreground",
-                            !props.flat && "border-input",
-                          ),
+                        ? cn(
+                            "border-primary bg-primary/10",
+                            // With no outer box to sit inside, a 1px primary
+                            // border against a 1px input border is a thin
+                            // distinction. An inset ring doubles the line
+                            // without changing the box, so selecting a row
+                            // cannot nudge its own text by a pixel.
+                            props.flat && "ring-1 ring-inset ring-primary/50",
+                          )
+                        : "border-input hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2.5">

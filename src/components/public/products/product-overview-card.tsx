@@ -141,7 +141,14 @@ export function ProductOverviewCard({
 
   return (
     <Card>
-      <CardContent className="space-y-3 p-5 sm:p-6 text-sm">
+      <CardContent
+        className={cn(
+          "space-y-3 p-5 sm:p-6 text-sm",
+          // A step tighter in the rail: 16rem is not a place to spend 24px a
+          // side, and the 16px this frees goes straight into the values.
+          railFrom2xl && "2xl:p-4",
+        )}
+      >
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           {t("sections.overview")}
         </h2>
@@ -160,13 +167,19 @@ export function ProductOverviewCard({
             railFrom2xl && "2xl:grid-cols-1 2xl:gap-3",
           )}
         >
-          <DetailRow icon={Clock} label={t("info.schedule")}>
+          <DetailRow
+            icon={Clock}
+            label={t("info.schedule")}
+            railFrom2xl={railFrom2xl}
+          >
             {scheduleDisplayLines.length === 1 ? (
-              scheduleDisplayLines[0]
+              <ScheduleLine line={scheduleDisplayLines[0]} />
             ) : (
               <ul className="space-y-0.5">
                 {scheduleDisplayLines.map((line, idx) => (
-                  <li key={idx}>{line}</li>
+                  <li key={idx}>
+                    <ScheduleLine line={line} />
+                  </li>
                 ))}
               </ul>
             )}
@@ -178,6 +191,7 @@ export function ProductOverviewCard({
                 ? t("info.format")
                 : t("info.where")
             }
+            railFrom2xl={railFrom2xl}
           >
             {renderLocationLine({
               location,
@@ -191,11 +205,19 @@ export function ProductOverviewCard({
               would fall back to three facts rather than render an empty
               cell. */}
           {whoItsFor !== null && (
-            <DetailRow icon={whoItsFor.icon} label={whoItsFor.label}>
+            <DetailRow
+              icon={whoItsFor.icon}
+              label={whoItsFor.label}
+              railFrom2xl={railFrom2xl}
+            >
               {whoItsFor.value}
             </DetailRow>
           )}
-          <DetailRow icon={Languages} label={t("info.language")}>
+          <DetailRow
+            icon={Languages}
+            label={t("info.language")}
+            railFrom2xl={railFrom2xl}
+          >
             <LanguageFlag code={product.spoken_language_code} />
           </DetailRow>
         </div>
@@ -204,25 +226,96 @@ export function ProductOverviewCard({
   );
 }
 
+/**
+ * One fact.
+ *
+ * In the ordinary card the icon sits in a gutter to the left of the label and
+ * the value, which is right at 300px-plus a column: the indent gives the four
+ * facts a shared spine to line up on.
+ *
+ * In the rail that gutter is 28px off a ~207px measure, spent on decoration
+ * while "Tapiolan koulu, Espoo" wraps beside it. So from `2xl` the icon joins
+ * the label on its own line — uppercase, small, the same treatment the card's
+ * own heading uses — and the value drops beneath it at the **full** rail width.
+ * Same elements, same order, same words; the icon simply stops indenting the
+ * only thing in the row that needs the room.
+ */
 function DetailRow({
   icon: Icon,
   label,
   children,
+  railFrom2xl,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   children: React.ReactNode;
+  railFrom2xl?: boolean;
 }) {
   return (
-    <div className="flex gap-3">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+    <div className={cn("flex gap-3", railFrom2xl && "2xl:block")}>
+      <Icon
+        className={cn(
+          "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground",
+          railFrom2xl && "2xl:mt-0 2xl:hidden",
+        )}
+      />
       <div className="min-w-0">
-        <dt className="text-xs text-muted-foreground">{label}</dt>
+        <dt
+          className={cn(
+            "text-xs text-muted-foreground",
+            railFrom2xl &&
+              "2xl:flex 2xl:items-center 2xl:gap-1.5 2xl:text-[10px] 2xl:font-medium 2xl:uppercase 2xl:tracking-wider",
+          )}
+        >
+          {railFrom2xl === true && (
+            <Icon className="hidden h-3 w-3 shrink-0 2xl:block" />
+          )}
+          {label}
+        </dt>
         <dd className="mt-0.5">{children}</dd>
       </div>
     </div>
   );
 }
+
+/**
+ * A schedule line, with its parts kept whole.
+ *
+ * The formatter joins a line's parts with a middot — "Mon, Wed, Fri · 10:00–14:00
+ * (EEST)" — and at rail width that wraps wherever the browser likes, which is
+ * routinely *inside* the time: a clock face broken across two lines is briefly
+ * unreadable and looks like a rendering fault. So each part is a no-wrap span
+ * and only the separator between them may break, which puts the fold where a
+ * reader would put it: after the days, before the time.
+ *
+ * The split is on the separator the formatter itself writes, so this cannot
+ * mangle a locale's own punctuation — a line with no middot is one part and
+ * comes back unchanged.
+ *
+ * **It runs in both presentations on purpose.** Scoping it to the rail would
+ * mean two renderings of the same string, and the spans are inert wherever
+ * there is width: nothing can overflow that would not already have overflowed,
+ * because a no-wrap part is at most as wide as the line it came from, and every
+ * other surface rendering these lines (the live detail page's overview card at
+ * ~300px+, the confirmation page, the admin product page) gives them a column
+ * several times a part's width.
+ */
+function ScheduleLine({ line }: { line: string }) {
+  const parts = line.split(SCHEDULE_SEPARATOR);
+  return (
+    <>
+      {parts.map((part, idx) => (
+        <span key={idx}>
+          {idx > 0 && SCHEDULE_SEPARATOR}
+          <span className="whitespace-nowrap">{part}</span>
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** The joiner `renderScheduleLinesForDetail` puts between a line's parts. */
+const SCHEDULE_SEPARATOR = " · ";
 
 function renderLocationLine({
   location,

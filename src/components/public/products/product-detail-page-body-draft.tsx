@@ -31,9 +31,12 @@ import { TopicInfoCard } from "./topic-info-card";
  * injected signup panel — in a different layout. What changes is where the
  * pieces sit:
  *
- * - **The title block leads, everywhere.** Eyebrow, h1, *then* the picture. One
- *   order at every width, rather than the live page's thumbnail-beside-title
- *   that becomes title-above-blurb on a phone.
+ * - **The page names itself in a band across the top.** Back link, then the h1
+ *   with the type · topic eyebrow baseline-aligned at the far right, spanning
+ *   every column — so the title belongs to the page rather than to the reading
+ *   column, and the hero leads the column beneath it. On a phone the band is
+ *   just the top of the stack in the order it always had: back, eyebrow, title,
+ *   hero. No right-aligned meta at that width; there is nothing to align to.
  * - **The hero wears the card's two chips**, in the card's corners, from the
  *   card's own exported treatment: tag bottom-left, audience-or-age top-right.
  *   A parent who tapped a card carrying "Neuroinclusive" bottom-left meets the
@@ -142,30 +145,46 @@ export function ProductDetailPageBodyDraft({
     // 1920 and at everything between: at 1536 the gutters are 64px each, at 1920
     // 256px each, and the reading column holds its 704px cap throughout.
     //
-    // Placement is explicit because auto-placement cannot express this. The
-    // grid holds four items — three reading blocks in one column and the signup
-    // rail beside them — and each rail has to **span every row**, because a
-    // sticky element travels only within its own grid area: parked in row 1 it
-    // would come unstuck the moment that row scrolled past. The spans are
-    // counted (`row-span-3` at `lg`, `row-span-2` at `2xl`, where the overview
-    // card has left the reading column) rather than written `1 / -1`, because
-    // these rows are implicit — with no `grid-template-rows`, line `-1` is line
-    // 1 and the span collapses to nothing. **A fourth block in the reading
-    // column means bumping both counts.** At `2xl` the reading blocks also name
-    // their rows, because with the overview card gone from their column an
-    // auto-placed topic card would leave the empty row behind it as a 3rem hole.
+    // Placement is explicit because auto-placement cannot express this. Every
+    // row is named, and the counts are worth reading before moving anything:
+    //
+    //            lg (3 tracks)                 2xl (5 tracks)
+    //   row 1    header band, all columns      header band, all columns
+    //   row 2    hero block   | signup rail    facts | hero block | signup rail
+    //   row 3    facts card   |   "            facts | topic card |   "
+    //   row 4    topic card   |   "            —
+    //
+    // Each rail has to **span every row below the band**, because a sticky
+    // element travels only within its own grid area: parked in one row it comes
+    // unstuck the moment that row scrolls past. So both rails start at row 2 —
+    // the band spans all columns, so nothing can sit beside it — and span 3 at
+    // `lg`, 2 at `2xl` where the facts card has left the reading column.
+    //
+    // The spans are **counted** rather than written `2 / -1`, because these rows
+    // are implicit: with no `grid-template-rows`, line `-1` is line 1 and the
+    // span silently collapses to nothing. **A fourth block in the reading column
+    // means bumping both counts and adding a row above.**
     <div className="container mx-auto space-y-6 px-4 py-8 sm:py-12 lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,44rem)_20rem] lg:gap-6 lg:space-y-0 2xl:grid-cols-[minmax(0,1fr)_16rem_minmax(0,44rem)_20rem_minmax(0,1fr)]">
-      {/* Reading block 1: everything above the facts. */}
-      <div className="lg:col-start-2 lg:min-w-0 2xl:col-start-3 2xl:row-start-1">
+      {/* The header band: row 1, every column. It names the page across the
+          whole width the page occupies — from the facts rail's left edge to the
+          signup rail's right — rather than inside the reading column, so the
+          title reads as the page's title and not as the reading column's.
+
+          Below `lg` it is not a band at all, just the top of the single stack in
+          the order it has always been: back link, eyebrow, title. From `lg` the
+          inner row turns horizontal and the two swap places — the h1 takes the
+          left, the type · topic eyebrow the right — baseline-aligned, which is
+          what stops a 12px eyebrow from floating against a 30px title. The swap
+          is `order`, not a second copy: one DOM order, read top-to-bottom on a
+          phone and left-to-right on a laptop. */}
+      <div className="lg:col-start-1 lg:col-span-3 lg:row-start-1 2xl:col-span-5">
         <BackLink
           productType={product.product_type}
           municipality={municipality}
         />
 
-        {/* Words first: type and topic, then the name. The chips are not here —
-            they are on the picture below, where the card puts them. */}
-        <div className="mt-6">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <div className="mt-6 lg:flex lg:items-baseline lg:justify-between lg:gap-6">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground lg:order-2 lg:shrink-0">
             {t(`typeLabel.${product.product_type}`)}
             {/* Same treatment as the live masthead, unconditional for the same
                 reason it is there: every topic resolves to a label. The middot
@@ -175,17 +194,20 @@ export function ProductDetailPageBodyDraft({
               {topicLabel}
             </span>
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl lg:order-1 lg:mt-0 lg:min-w-0">
             {tr?.name}
           </h1>
         </div>
+      </div>
 
+      {/* Reading block 1: the hero and everything under it. */}
+      <div className="lg:col-start-2 lg:row-start-2 lg:min-w-0 2xl:col-start-3">
         {/* The hero at the full width of the reading column, at the card's
             ratio, crop and chip treatment, so the two surfaces read as one
             design. `relative` is what the chips position against. A product with
             no picture gets the wordmark banner at the same ratio — and wears the
             chips on it, exactly as the grid's un-imaged card does. */}
-        <div className="relative mt-4 overflow-hidden rounded-lg border">
+        <div className="relative overflow-hidden rounded-lg border">
           {heroSrc !== null ? (
             // eslint-disable-next-line @next/next/no-img-element -- product images bypass next/image, exactly as `ProductThumbnail` does; the scene's demo art is a local file
             <img
@@ -236,12 +258,12 @@ export function ProductDetailPageBodyDraft({
           column 2, exactly where the live page puts it), and in the left rail
           from `2xl`. Sticky there with the signup rail's mechanics — see that
           rail's note for why the gutter is reserved. */}
-      <div className="lg:col-start-2 lg:min-w-0 2xl:col-start-2 2xl:row-start-1 2xl:row-span-2 2xl:self-start 2xl:sticky 2xl:top-[calc(var(--header-height)+1.5rem)] 2xl:max-h-[calc(100vh-var(--header-height)-3rem)] 2xl:overflow-y-auto 2xl:[scrollbar-gutter:stable]">
+      <div className="lg:col-start-2 lg:row-start-3 lg:min-w-0 2xl:col-start-2 2xl:row-start-2 2xl:row-span-2 2xl:self-start 2xl:sticky 2xl:top-[calc(var(--header-height)+1.5rem)] 2xl:max-h-[calc(100vh-var(--header-height)-3rem)] 2xl:overflow-y-auto 2xl:[scrollbar-gutter:stable]">
         <ProductOverviewCard product={product} railFrom2xl />
       </div>
 
       {/* Reading block 2: what is left below the facts. */}
-      <div className="lg:col-start-2 lg:min-w-0 2xl:col-start-3 2xl:row-start-2">
+      <div className="lg:col-start-2 lg:row-start-4 lg:min-w-0 2xl:col-start-3 2xl:row-start-3">
         <TopicInfoCard topic={product.topic} />
       </div>
 
@@ -258,7 +280,7 @@ export function ProductDetailPageBodyDraft({
           ~15px of the rail's width and buys the guarantee. Nothing else here
           constrains the panel: no fixed height, no `overflow-hidden`, so it
           keeps rendering every state at its own natural size. */}
-      <div className="lg:col-start-3 lg:row-start-1 lg:row-span-3 lg:self-start lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:overflow-y-auto lg:[scrollbar-gutter:stable] 2xl:col-start-4 2xl:row-span-2">
+      <div className="lg:col-start-3 lg:row-start-2 lg:row-span-3 lg:self-start lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:overflow-y-auto lg:[scrollbar-gutter:stable] 2xl:col-start-4 2xl:row-span-2">
         {signupPanel}
       </div>
     </div>
