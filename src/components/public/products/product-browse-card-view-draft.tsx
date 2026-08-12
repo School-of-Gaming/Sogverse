@@ -22,6 +22,48 @@ import {
 } from "./product-browse-card-view";
 import type { ProductTag } from "./product-tag";
 
+/** A tag, resolved for display: the value drives the icon, the label the word. */
+export interface DraftCardTag {
+  /** Drives the icon — which is why the value travels, not only its label. */
+  value: ProductTag;
+  /** Already translated by the adapter; this body renders no message keys. */
+  label: string;
+}
+
+export interface ProductBrowseCardViewDraftProps
+  extends ProductBrowseCardViewProps {
+  /** The product's tag, or null on an untagged product — which is most of them,
+   *  and stays the unremarkable case. */
+  tag: DraftCardTag | null;
+  /**
+   * An already-resolved image URL, not a storage path: the adapter decides
+   * where the picture comes from (a product's `image_path` in the live shop, a
+   * local demo file in the preview scene), and this body only paints it. Null
+   * renders the wordmark banner.
+   *
+   * The inherited `imagePath` is deliberately unread — it comes along because
+   * this takes the live view's props verbatim, and comes off the interface at
+   * promotion, when a resolved URL is what the whole card takes.
+   */
+  imageSrc: string | null;
+}
+
+/**
+ * One icon per tag, and the reason the tag's *value* is carried alongside its
+ * label. A generic tag icon was tried first and read as a price tag — a sale
+ * sticker on a club — which is the opposite of what these say.
+ *
+ * **`Puzzle` is never the neuroinclusive icon.** The puzzle piece is a
+ * contested symbol in the neurodivergent community and is not ours to reclaim
+ * on a shop card; `Brain` is deliberate and is not to be "fixed" back to a
+ * puzzle by anybody reading this later.
+ */
+const TAG_ICON: Record<ProductTag, LucideIcon> = {
+  neuroinclusive: Brain,
+  beginner: Sprout,
+  advanced: Rocket,
+};
+
 /**
  * **The DRAFT browse card body.** One body, two shells: this is the body that
  * replaces `ProductBrowseCardView`'s at promotion, not a third fork of it. It
@@ -67,48 +109,7 @@ import type { ProductTag } from "./product-tag";
  * preview**, because the fixtures re-base their calendar onto the live clock
  * and no shop-scene scenario is authored as finished. Judge that state on the
  * `camp-ended` product scene, or trust the shared code; it is not on this grid.
- *
- * `imagePath` stays in the props because this takes the live view's props
- * verbatim, and is deliberately unread: a resolved `imageSrc` is what this body
- * takes, and the path prop comes off the interface at promotion.
  */
-export interface DraftCardTag {
-  /** Drives the icon — which is why the value travels, not only its label. */
-  value: ProductTag;
-  /** Already translated by the adapter; this body renders no message keys. */
-  label: string;
-}
-
-export interface ProductBrowseCardViewDraftProps
-  extends ProductBrowseCardViewProps {
-  /** The product's tag, or null on an untagged product — which is most of them,
-   *  and stays the unremarkable case. */
-  tag: DraftCardTag | null;
-  /**
-   * An already-resolved image URL, not a storage path: the adapter decides
-   * where the picture comes from (a product's `image_path` in the live shop, a
-   * local demo file in the preview scene), and this body only paints it. Null
-   * renders the wordmark banner.
-   */
-  imageSrc: string | null;
-}
-
-/**
- * One icon per tag, and the reason the tag's *value* is carried alongside its
- * label. A generic tag icon was tried first and read as a price tag — a sale
- * sticker on a club — which is the opposite of what these say.
- *
- * **`Puzzle` is never the neuroinclusive icon.** The puzzle piece is a
- * contested symbol in the neurodivergent community and is not ours to reclaim
- * on a shop card; `Brain` is deliberate and is not to be "fixed" back to a
- * puzzle by anybody reading this later.
- */
-const TAG_ICON: Record<ProductTag, LucideIcon> = {
-  neuroinclusive: Brain,
-  beginner: Sprout,
-  advanced: Rocket,
-};
-
 export function ProductBrowseCardViewDraft({
   name,
   description,
@@ -208,7 +209,11 @@ export function ProductBrowseCardViewDraft({
         {/* Three lines, as the live card allows. Two was tried and rejected:
             a short description is prose, and two lines cuts most real ones off
             mid-thought. The cards are free to differ in height for it. */}
-        {description !== null && (
+        {/* Truthiness, not a null check, for the same reason the image
+            resolution uses it: `short_description` is a plain text column and
+            an empty string is representable in it, which would otherwise render
+            an empty paragraph and the flex gap above it as a hole. */}
+        {description && (
           <p className="line-clamp-3 text-sm text-muted-foreground">
             {description}
           </p>
@@ -229,12 +234,18 @@ export function ProductBrowseCardViewDraft({
 
 // ---------- The draft's chip vocabulary ----------
 //
-// Exported because the redesign is not only the card any more: the product
-// detail page wears the same two chips in its masthead, and a family arriving
-// there from a card must meet the same pill saying the same thing. They are
-// exported as two *purpose-built* chips rather than one generic chip plus an
-// icon map, so a caller cannot pair the tag's icon with the audience's fill —
-// which fill means which fact is the whole point of having two.
+// Four pieces, and only two of them leave this file. `DraftMediaChips` is the
+// whole overlaid treatment — both chips, both corners — which the detail page's
+// hero renders so that a family meets the same pill in the same corner as on
+// the card that sent them there; `TagGlyph` is the tag's icon and word without
+// a pill around it, which the detail page's tag note uses where a second copy
+// of the pill would only repeat the hero.
+//
+// The two chips themselves stay private. They are purpose-built rather than one
+// generic chip plus an icon map, so nothing can pair the tag's icon with the
+// audience's fill — which fill means which fact is the whole point of having
+// two — and keeping them here is what stops a third surface from assembling its
+// own arrangement of them.
 //
 // They live in this file because the card is where the vocabulary was invented
 // and is still its main reader. At promotion they want a module of their own
@@ -340,7 +351,7 @@ export function TagGlyph({
 }
 
 /** Who the product is designed for. Primary fill, one icon per tag. */
-export function DraftTagChip({
+function DraftTagChip({
   tag,
   className,
 }: {
@@ -363,7 +374,7 @@ export function DraftTagChip({
  * only guarantees that both wear the same secondary fill wherever they appear,
  * so the corner keeps meaning one thing.
  */
-export function DraftWhoChip({
+function DraftWhoChip({
   label,
   className,
 }: {

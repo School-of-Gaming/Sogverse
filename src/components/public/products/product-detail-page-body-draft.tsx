@@ -298,9 +298,23 @@ export function ProductDetailPageBodyDraft({
       {/* The facts. One instance, moved between tracks by breakpoint: in the
           reading column's flow below `2xl` (where it is an ordinary grid row in
           column 2, exactly where the live page puts it), and in the left rail
-          from `2xl`. Sticky there with the signup rail's mechanics — see that
-          rail's note for why the gutter is reserved. */}
-      <div className="lg:col-start-2 lg:row-start-3 lg:min-w-0 2xl:col-start-2 2xl:row-start-2 2xl:row-span-2 2xl:self-start 2xl:sticky 2xl:top-[calc(var(--header-height)+1.5rem)] 2xl:max-h-[calc(100vh-var(--header-height)-3rem)] 2xl:overflow-y-auto 2xl:[scrollbar-gutter:stable]">
+          from `2xl`, sticky under the site header like the signup rail.
+
+          `self-start` at both, so the card is only as tall as its facts — as a
+          grid item it would otherwise stretch to its row, and at `lg` its row is
+          as tall as the signup rail spanning beside it, which would draw the
+          card's border a long way past the last thing in it.
+
+          **No reserved scrollbar gutter here**, unlike the signup rail, and the
+          difference is the point: that rail reserves one because the panel
+          re-renders on a clock and a scrollbar appearing mid-swap would shift
+          its controls sideways. Nothing in this card has a clock — four facts
+          resolved at render — so a scrollbar cannot arrive on its own schedule,
+          and 15px of a 256px rail held open for one that can never appear is
+          just dead space. `max-h` + `overflow-y-auto` stay as the safety valve
+          for a short viewport, where the scrollbar would be a response to the
+          reader's own window rather than a surprise. */}
+      <div className="lg:col-start-2 lg:row-start-3 lg:min-w-0 lg:self-start 2xl:col-start-2 2xl:row-start-2 2xl:row-span-2 2xl:sticky 2xl:top-[calc(var(--header-height)+1.5rem)] 2xl:max-h-[calc(100vh-var(--header-height)-3rem)] 2xl:overflow-y-auto">
         <ProductOverviewCard product={product} railFrom2xl />
       </div>
 

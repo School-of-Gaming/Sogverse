@@ -14,6 +14,7 @@ import { formatClubTermDates } from "./format-product-term-dates";
 import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
+  SCHEDULE_PART_SEPARATOR,
 } from "./format-product-schedule";
 
 // Shared "Good to know" overview card. Renders schedule (day/time),
@@ -281,41 +282,41 @@ function DetailRow({
 /**
  * A schedule line, with its parts kept whole.
  *
- * The formatter joins a line's parts with a middot — "Mon, Wed, Fri · 10:00–14:00
- * (EEST)" — and at rail width that wraps wherever the browser likes, which is
- * routinely *inside* the time: a clock face broken across two lines is briefly
- * unreadable and looks like a rendering fault. So each part is a no-wrap span
- * and only the separator between them may break, which puts the fold where a
- * reader would put it: after the days, before the time.
+ * The formatter joins a line's parts with `SCHEDULE_PART_SEPARATOR` — "Mon, Wed,
+ * Fri · 10:00–14:00 (EEST)" — and at rail width that wraps wherever the browser
+ * likes, which is routinely *inside* the time: a clock face broken across two
+ * lines is briefly unreadable and looks like a rendering fault. So each part
+ * becomes a no-wrap span and only the separator between them may break, which
+ * puts the fold where a reader would put it: after the days, before the time.
  *
- * The split is on the separator the formatter itself writes, so this cannot
- * mangle a locale's own punctuation — a line with no middot is one part and
- * comes back unchanged.
+ * **A line with no separator is returned untouched, and that is the whole of the
+ * care needed here.** Several lines carry no parts to keep together — a camp's
+ * date range, a club's term range, the "—" placeholder — and wrapping one of
+ * those in a no-wrap span would not be preserving a clock face, it would be
+ * taking away the wrapping the line had before anybody thought about this. The
+ * split runs first and the one-part case exits before any span is added.
  *
  * **It runs in both presentations on purpose.** Scoping it to the rail would
- * mean two renderings of the same string, and the spans are inert wherever
- * there is width: nothing can overflow that would not already have overflowed,
- * because a no-wrap part is at most as wide as the line it came from, and every
- * other surface rendering these lines (the live detail page's overview card at
- * ~300px+, the confirmation page, the admin product page) gives them a column
- * several times a part's width.
+ * mean two renderings of the same string, and on a multi-part line the spans are
+ * inert wherever there is width: a part is at most as wide as the line it came
+ * from, and every other surface rendering these lines (the live detail page's
+ * overview card at ~300px+, the confirmation page, the admin product page) gives
+ * them a column several times a part's width.
  */
 function ScheduleLine({ line }: { line: string }) {
-  const parts = line.split(SCHEDULE_SEPARATOR);
+  const parts = line.split(SCHEDULE_PART_SEPARATOR);
+  if (parts.length === 1) return line;
   return (
     <>
       {parts.map((part, idx) => (
         <span key={idx}>
-          {idx > 0 && SCHEDULE_SEPARATOR}
+          {idx > 0 && SCHEDULE_PART_SEPARATOR}
           <span className="whitespace-nowrap">{part}</span>
         </span>
       ))}
     </>
   );
 }
-
-/** The joiner `renderScheduleLinesForDetail` puts between a line's parts. */
-const SCHEDULE_SEPARATOR = " · ";
 
 function renderLocationLine({
   location,

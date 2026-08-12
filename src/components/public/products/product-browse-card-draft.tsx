@@ -37,7 +37,11 @@ interface ProductBrowseCardDraftProps {
    * preview scene**: fixture rows carry `image_path: null` (no storage object
    * backs them), so a scene that let the row decide would render every card on
    * the fallback banner and the media block would go unjudged. The scene passes
-   * local demo art from `public/preview/` instead.
+   * local demo art from `public/preview-art/` instead — that directory, and not
+   * `public/preview/`, because anything under `public/` is served to anyone who
+   * guesses the URL whatever the proxy's `/preview/*` gate says, and a name that
+   * looked covered by that gate is exactly the confusion the rename exists to
+   * kill.
    *
    * `undefined` means "no override, resolve the row" — which is what the live
    * shop would do, and what keeps this prop from being load-bearing. An

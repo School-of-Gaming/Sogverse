@@ -174,13 +174,24 @@ function firstDateForWeekday(startDate: string, weekday: number): string {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * What separates the parts of one schedule line — the days from the time they
+ * run at.
+ *
+ * A named constant because it is not only decoration: a renderer at rail width
+ * splits a line back apart on it to keep a clock face from wrapping across two
+ * lines, and a separator agreed on by coincidence between a formatter and a
+ * renderer is one edit away from silently disagreeing.
+ */
+export const SCHEDULE_PART_SEPARATOR = " · ";
+
 // Joins per-time-group entries onto one line ("Mon, Wed · 16:00–17:30,
 // Fri · 18:00–19:30"). Shared by every card that renders a single-line summary.
 export function joinScheduleGroups(
   groups: readonly ScheduleTimeGroup[],
 ): string {
   return groups
-    .map((g) => `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`)
+    .map((g) => `${g.weekdaysLabel}${SCHEDULE_PART_SEPARATOR}${g.startTime}–${g.endTime}`)
     .join(", ");
 }
 
@@ -218,7 +229,7 @@ export function scheduleCardLines(schedule: ProductScheduleSummary): string[] {
     case "single": {
       const line = schedule.time
         ? withTz(
-            `${schedule.date} · ${schedule.time.start}–${schedule.time.end}`,
+            `${schedule.date}${SCHEDULE_PART_SEPARATOR}${schedule.time.start}–${schedule.time.end}`,
             abbrev,
           )
         : schedule.date;
@@ -239,20 +250,20 @@ export function renderScheduleLinesForDetail(
       return ["—"];
     case "recurring":
       return schedule.groups.map((g, idx) => {
-        const line = `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`;
+        const line = `${g.weekdaysLabel}${SCHEDULE_PART_SEPARATOR}${g.startTime}–${g.endTime}`;
         return idx === 0 ? withTz(line, abbrev) : line;
       });
     case "ranged": {
       const dateLine = `${schedule.startDate} – ${schedule.endDate}`;
       const groupLines = schedule.groups.map((g, idx) =>
-        withTz(`${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`, idx === 0 ? abbrev : ""),
+        withTz(`${g.weekdaysLabel}${SCHEDULE_PART_SEPARATOR}${g.startTime}–${g.endTime}`, idx === 0 ? abbrev : ""),
       );
       return [dateLine, ...groupLines];
     }
     case "single": {
       const line = schedule.time
         ? withTz(
-            `${schedule.date} · ${schedule.time.start}–${schedule.time.end}`,
+            `${schedule.date}${SCHEDULE_PART_SEPARATOR}${schedule.time.start}–${schedule.time.end}`,
             abbrev,
           )
         : schedule.date;

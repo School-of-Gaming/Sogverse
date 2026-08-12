@@ -33,28 +33,6 @@ import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import { previewSceneHref } from "../href";
 
 /**
- * The shop storefront, over fixtures.
- *
- * It renders the same `ProductBrowseResults` the live `/shop` renders — the
- * body that owns the filter rail, the width budget, the headed grids and the
- * empty states. The live route's own shell does the fetching and the Type
- * narrowing above it; here the sections are handed over directly, which is the
- * one honest difference.
- *
- * The chip filters genuinely work: they live in the URL and `filterProducts`
- * runs client-side over these rows, so the audience row can be toggled against
- * a grid that actually answers. Cards open the matching product-detail scene
- * rather than `/shop/<id>`, which no fixture id resolves to.
- *
- * The `redesign` scenario is the exception to "the scene renders the live
- * body": it renders the *draft* browse card in the same grid, which is the
- * one-body-two-shells rule doing its job — the draft body is what will replace
- * the live card's, and it is being judged as a page first. The filter chips
- * keep working there too, because they run over the rows' real fields; a
- * product's tag is not among them and is not filterable yet, which is expected
- * until the tag becomes a column.
- */
-/**
  * The reference set the Language chip row paints from.
  *
  * Passed as `initialData` exactly as the live page passes its server-prefetched
@@ -112,6 +90,28 @@ function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
   }
 }
 
+/**
+ * The shop storefront, over fixtures.
+ *
+ * It renders the same `ProductBrowseResults` the live `/shop` renders — the
+ * body that owns the filter rail, the width budget, the headed grids and the
+ * empty states. The live route's own shell does the fetching and the Type
+ * narrowing above it; here the sections are handed over directly, which is the
+ * one honest difference.
+ *
+ * The chip filters genuinely work: they live in the URL and `filterProducts`
+ * runs client-side over these rows, so the audience row can be toggled against
+ * a grid that actually answers. Cards open the matching product-detail scene
+ * rather than `/shop/<id>`, which no fixture id resolves to.
+ *
+ * The `redesign` scenario is the exception to "the scene renders the live
+ * body": it renders the *draft* browse card in the same grid, which is the
+ * one-body-two-shells rule doing its job — the draft body is what will replace
+ * the live card's, and it is being judged as a page first. The filter chips
+ * keep working there too, because they run over the rows' real fields; a
+ * product's tag is not among them and is not filterable yet, which is expected
+ * until the tag becomes a column.
+ */
 export function ShopBrowseScene({
   scenario,
 }: {

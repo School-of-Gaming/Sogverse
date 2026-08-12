@@ -426,7 +426,7 @@ export function StretchedCardLink({
  * media-top redesign changes what is *above* the rule and nothing below it, so
  * a second copy of these five branches could only ever drift from this one.
  */
-export function PriceBlock({ price }: { price: ProductPriceLine }) {
+function PriceBlock({ price }: { price: ProductPriceLine }) {
   const t = useTranslations("productBrowse.card");
 
   switch (price.kind) {
