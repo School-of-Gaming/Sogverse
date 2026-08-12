@@ -92,6 +92,8 @@ export function ProductDetailPageBody({
   const t = useTranslations("productDetail");
   const tAudience = useTranslations("productAudience");
   const tTag = useTranslations("productTag");
+  // The browse card's chip strings — shared, not copied; see whoLabel below.
+  const tCardChip = useTranslations("productBrowse.card");
   // **The jump button's verb is the panel's verb, read from the panel's own
   // keys.** The panel composes its live CTA as "{verb} now" from exactly these
   // strings (see `useVerb` in `signup-panel-view.tsx`), so taking the same
@@ -129,13 +131,17 @@ export function ProductDetailPageBody({
   // from the same `audienceLabelKey` decision the card reads, so the chip a
   // parent tapped and the chip they land on cannot be different halves of it.
   // Deliberately not the overview card's composed "For families, ages 8–12" —
-  // a chip is a label, and that string is a sentence.
+  // a chip is a label, and that string is a sentence. The ages wording comes
+  // from the CARD's key for the same reason the decision does: chip and hero
+  // are one pill in two places, and two keys with identical copy today would
+  // let a translator split them tomorrow. (`productDetail.info.ages` stays the
+  // overview card's facts-rail string — a different construct.)
   const audienceKey = audienceLabelKey(product);
   const whoLabel =
     audienceKey !== null
       ? tAudience(audienceKey)
       : product.min_age !== null && product.max_age !== null
-        ? t("info.ages", { min: product.min_age, max: product.max_age })
+        ? tCardChip("ages", { min: product.min_age, max: product.max_age })
         : null;
 
   return (

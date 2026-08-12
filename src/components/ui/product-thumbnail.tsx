@@ -22,9 +22,12 @@ interface ProductThumbnailProps {
  * same file to the 3:2 frame the whole design language is built on. This one
  * survives on the admin product list and the admin product page on purpose: a
  * dense row wants a small square thumb that identifies a product at a glance,
- * and the admin panel is not the audience the 3:2 crop is for. It also keeps
- * letterboxing, which is the right answer where the question is "which file is
- * on this product" rather than "what will a parent see".
+ * and the admin panel is not the audience the 3:2 crop is for. Note that both
+ * of those call sites override the letterboxed default below with a centred
+ * square crop (`[&>img]:object-cover` via className) — acceptable there
+ * because the thumb is a recognition cue, not an approval surface; the crop an
+ * admin signs off for families is the upload preview's 3:2. The letterboxed
+ * default remains for any caller that wants the whole file visible.
  *
  * Empty `imagePath` renders the SOG-branded fallback below. The admin
  * create form requires an image, but the DB doesn't enforce it, and
