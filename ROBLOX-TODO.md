@@ -6,6 +6,13 @@ documents promise that the app does not have yet. Same semantics as `TODO.md`: t
 tracks open work only — when an item is fully done, delete it; when the file is empty,
 delete the file. The record of what was done lives in git history.
 
+**Sogverse is the source of truth for this copy.** The Notion documents were the draft.
+They have been accepted one-way, and the published pages are now the document of record —
+so a wording problem in one of these documents is *ours to fix*, not an upstream edit to
+request, and there is no longer an upstream to drift from. Lynx remains a party to the
+joint documents, so changing what someone is **obliged to do** still goes to them; changing
+how a sentence **reads** does not.
+
 An item has three states. **Open** — still being researched, or carrying a decision
 nobody has been asked for yet; it sits in one of the topic sections below. **Escalated**
 — the question is with whoever owns it and we are waiting; it stays in its topic section
@@ -53,9 +60,12 @@ item and keep going until nothing is left that we can move on our own.
      handbook do not answer it: what the CEO will commit to publicly, what staff
      actually do. Draft the message for the clipboard and keep it neutral — it is
      Kyle's message to his colleagues, not Claude's, so it carries no Claude framing.
-   - **The Lynx × SOG Slack channel** — Lynx's call, or an upstream Notion edit. Draft
-     it **explicitly framed as coming from Claude**, with the context and a clear ask.
-     Keep it short; the channel already has the context that we're editing this copy.
+   - **The Lynx × SOG Slack channel** — Lynx's call: anything changing what one of the
+     parties is obliged to do, or naming Lynx as holding a duty. Not wording. Since the
+     copy was accepted one-way, how a sentence *reads* is ours; what it *commits anyone
+     to* is still joint. Draft it **explicitly framed as coming from Claude**, with the
+     context and a clear ask. Keep it short; the channel already has the context that
+     we're editing this copy.
 
    Record the escalation on the item — who, when, which channel, what was asked — and
    move on. If the answer comes back as "you decide" (it does), make the call, and write
@@ -150,34 +160,43 @@ banner until its copy is signed off.
       **Escalated 2026-08-11 — Lynx × SOG Slack, awaiting Lynx.** Rides on the same held
       reply as the in-person section above; it has not been put to Lynx separately, and
       should go in the same message when that thread unblocks.
-- [ ] **/roblox landing page copy** is still pending SOG + Roblox signoff (why the whole
-      surface is noindex).
+- [ ] **/roblox landing page copy.** Open work like everything else here, not a wait —
+      no signoff was ever separately requested for it. Signoff is the **final gate on the
+      whole surface**, taken once with the rest of the list (see the publish-flip note at
+      the top), so the landing page gets researched, proposed and resolved on the same
+      terms as every other item, and joins the same pass. Nothing about it is blocked on
+      anyone today.
 
-      **Escalated — awaiting SOG + Roblox signoff.** Who was asked, when, and through
-      which channel is not recorded; this predates the convention. Fill it in, or re-ask,
-      before treating the wait as live — an escalation nobody can date is indistinguishable
-      from one that was never sent.
+## Copy that needs correcting
 
-## Claims that need correcting (upstream, in Notion / with Lynx)
+Both are ours to fix now — they were held back only because the wording was thought to
+belong upstream, which it no longer does. Neither changes an obligation, so neither needs
+Lynx.
 
-- [ ] **The facilitator↔parent messaging claim is gone from our pages but still lives in
-      the upstream documents.** Both Notion originals claim Game Educators can reach
-      parents through the platform without seeing parent contact details ("Facilitators
-      can communicate with parents through Sogverse without seeing the parent's email
-      address or telephone number" in the Privacy Policy; the equivalent bullet was
-      struck through in the Safeguarding Policy). Not currently true — removed from the
-      web copy on 2026-08-11. The Notion documents (and whatever version Lynx's lawyers
-      reviewed) need the same edit so the document of record matches the published page.
 - [ ] **"Child Safeguarding Policy, available upon request" (Terms & Conditions).** That
       policy now has a page at `/roblox/safeguarding`, so "upon request" undersells it —
       the Terms wording should point at the page instead. The document's name in that
-      sentence is now a link to the page, but the words "available upon request" are
-      rendered faithfully as written, because changing them is an upstream/Notion edit.
+      sentence is already a link to the page, so the sentence currently invites a reader
+      to *request* a document it is simultaneously offering them a click away. Lives at
+      `robloxTerms.sections.safety.blocks.0`.
 - [ ] **"Sessions are not recorded" wording mismatch.** The Safeguarding Policy says it
-      flatly; the Privacy Policy says "*Routine* online sessions are not recorded" and
-      contemplates announced photography/filming at selected sessions/events. Align the
-      safeguarding wording ("Routine sessions are not recorded") so the two documents
-      cannot be read against each other. Also an upstream/Notion edit.
+      flatly (`robloxSafeguarding.sections.online.blocks.0.3`); the Privacy Policy says
+      "*Routine* online sessions are not recorded" in three places and contemplates
+      announced photography/filming at selected sessions and events. The two cannot both
+      be read as written.
+
+      *The directions are not equivalent.* Qualifying the safeguarding line to "Routine
+      sessions are not recorded" makes it accurate and matches the Privacy Policy — but it
+      is a **weakening of a safety promise**, and the safeguarding policy is where a parent
+      goes looking for the strong version. Tightening the Privacy Policy the other way
+      would mean committing that nothing is ever recorded, which the announced-filming
+      provision contradicts.
+
+      **Escalated 2026-08-12 — Lynx × SOG Slack, awaiting Lynx.** This one changes what
+      the documents commit us to rather than how a sentence reads, so it is Lynx's call
+      under the rule at the top, not ours. Asked which is the real commitment: routine
+      sessions only, or no recording at all. Whichever comes back, the other document is
+      the one that gets edited.
 
 ## Features the policies promise that the app does not have
 
@@ -209,8 +228,10 @@ The house standard (set by the existing `/privacy` and `/terms-and-conditions` c
 plain language a parent can read in full without feeling overwhelmed; warm second
 person ("you", "your child"); jargon translated inline the moment it appears ("in legal
 terms, we're the 'data controller'"); every collected item explained with a "— so we
-can…" reason. These are joint documents, so tone rewrites are upstream (Notion/Lynx)
-edits first — the web copy follows the signed-off text.
+can…" reason. Tone is ours: the copy has been accepted one-way and Sogverse
+holds it now, so a rewrite that changes how a sentence reads without changing what it
+commits anyone to needs no upstream pass. Where a rewrite would alter an obligation
+rather than its wording, that part goes to Lynx.
 
 - [ ] **Programme Privacy Policy — the "short version" fails its own audience.** It is
       titled "for parents and young people" yet leads with the controller/processor/
