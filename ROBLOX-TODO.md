@@ -1,5 +1,49 @@
 # ROBLOX-TODO
 
+## PAUSED — 2026-08-12
+
+**This effort is on hold until a lawyer has reviewed the programme copy in full.** Kyle's
+call. Nothing here is being worked, and **nothing in *Resolved — ready to apply* should be
+applied**, until the reviewed copy comes back and has been compared against the platform.
+
+*Why pausing is safe:* the whole programme surface is unpublished — noindex, absent from
+the sitemap, no nav links — so none of the copy discussed below is reaching a family. That
+is what makes it reasonable to leave known-inaccurate wording sitting in the catalog rather
+than racing to fix it. **If any part of `/roblox` is published before this resumes, that
+reasoning is void** and the findings listed below have to be dealt with first.
+
+**On resume, do this before touching anything else.** Diff the returned copy against
+`messages/`. The resolved entries were written against today's strings, and a legal rewrite
+can move a key, merge a section, or delete the very sentence an entry edits. **The
+decisions survive; the strings and keys may not** — re-derive each entry's mechanical steps
+against the new text rather than applying them blind. Then re-read the escalations below,
+since some may have been answered inside the review itself.
+
+**Outstanding with Lynx when the pause began:**
+
+- The in-person section's two wording choices, and the vetting-scope question. Our reply
+  was drafted and held: Lynx asked a SOG colleague for her view first.
+- The photography wording, and whether a written release covers projects shown at the
+  closing event.
+- The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
+  will tell us)" — so the direction is chosen and the answer is not.
+
+**Findings surfaced but deliberately not opened as items,** so the pause does not start
+work. Pick these up on resume:
+
+- **A published claim we now know is inaccurate.** `robloxSafeguarding.sections.data` tells
+  parents that any photography, filming or use of a child's image is "never assumed, always
+  optional, always changeable". Lynx has since described Gedus routinely taking photographs
+  and screenshots for internal records and safety, which consent does not gate — consent
+  gates the external sharing. Proposed replacement wording is in the message drafted for
+  Lynx on 2026-08-12. **Highest priority on resume**, and the one thing here that would
+  need doing immediately if the surface were published.
+- **The media sections assume two consent boxes.** If the single combined box is approved,
+  `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic` merge, and two strings that
+  count the boxes move with them — see the registration checkboxes item for the exact keys.
+
+---
+
 Everything still open for the Roblox / Lynx Educate programme launch: placeholder copy
 waiting on real content, published claims that need correcting, and features the legal
 documents promise that the app does not have yet. Same semantics as `TODO.md`: this file
@@ -167,14 +211,23 @@ banner until its copy is signed off.
       terms as every other item, and joins the same pass. Nothing about it is blocked on
       anyone today.
 
-      *Review started 2026-08-12.* The copy is written and complete — this item is a
-      review, not a drafting job. First finding is already resolved (the age range said
-      15–18 against the legal documents' 8–17; see *Resolved*). **The review is not
-      finished:** the age claim was checked against the legal documents, and the rest of
-      the page has not yet been read the same way. Finish by checking every factual claim
-      it makes — the format and duration in `how.subheading`, "free", "in France", the
-      published-creation promise in `what.paragraph2`, the closing-event claim in
-      `why.recognised` — against what the Terms and Privacy Policy actually commit to.
+      *Reviewed 2026-08-12.* The copy is written and complete — this was a review, not a
+      drafting job, and every factual claim on the page has now been checked against the
+      Terms and the Privacy Policy. Three findings, all written up: the age range
+      (15–18 against the documents' 8–17), Roblox described as a partner rather than a
+      sponsor, and an unconditional publishing promise. All three are in *Resolved*.
+      Verified correct and left alone: "free", "in France", the online/in-person split,
+      and the parent sessions.
+
+      **Escalated 2026-08-12 — Lynx × SOG Slack, awaiting Lynx.** One claim could not be
+      settled here: `why.recognised` sells showcasing at the closing event as a benefit,
+      but the Privacy Policy says the registration media boxes cover "photographs and
+      footage only" and that participant-created content needs a **separate written
+      release**. So the page markets something registration does not consent to. Asked
+      whether a release is collected at the event, and whether the checkbox set should
+      cover participant-created content — raised while their lawyer still has the wording,
+      since adding a consent later means re-review. **This item closes when that answer
+      lands and `why.recognised` is either confirmed or softened.**
 
 ## Copy that needs correcting
 
@@ -213,6 +266,23 @@ where the fix would change what we commit to rather than how it reads.
       checkbox, and the two *optional* media checkboxes. None exist — programme
       registration itself doesn't exist yet (planned as a superset of `/register`; see
       the note in `src/components/roblox/partnership-cta.tsx`).
+
+      *Lynx's proposed set, 2026-08-12, wording with their lawyer:* (1) mandatory "I am
+      the parent/legal guardian", (2) mandatory "I have read and agree to the Programme
+      Terms & Privacy Policy", (3) optional Lynx marketing emails, (4) optional consent to
+      external use of the child's photo/video — plus a **non-consent notice** that photos
+      or footage may be taken during sessions for internal records, safety and reporting.
+      It differs from the Privacy Policy in two ways: it adds the guardian checkbox, and
+      it collapses our **two** media choices into **one**.
+
+      **Lynx's preference, 2026-08-12: the one combined box, "if it's compliant (the
+      lawyer will tell us)."** So the direction is chosen but the answer is not — do not
+      restructure the policy's media sections until the lawyer confirms. If one box wins,
+      `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic` merge, and two other
+      strings that count the boxes have to move with them:
+      `robloxPrivacy.sections.mediaCaseStudies.blocks.0` ("The **two** registration media
+      boxes cover photographs and footage only") and
+      `robloxPrivacy.sections.useMedia.blocks.0` ("Declining **either** media option").
 - [ ] **Facilitator↔parent messaging without exposing parent contact details.** The
       feature behind the claim removed above. If we ever want the claim back in the
       policies, the feature has to exist first.
@@ -235,6 +305,14 @@ can…" reason. Tone is ours: the copy has been accepted one-way and Sogverse
 holds it now, so a rewrite that changes how a sentence reads without changing what it
 commits anyone to needs no upstream pass. Where a rewrite would alter an obligation
 rather than its wording, that part goes to Lynx.
+
+**Blocked 2026-08-12 by Kyle: none of this starts until a lawyer has reviewed the copy as
+a whole.** Two reasons it has to be that order. A tone pass on text a lawyer may rewrite
+is work done twice; and tone edits to legal prose move meaning whether or not they intend
+to, so the version a lawyer signs off should be the version families read. **This review
+has not been requested yet** — it needs arranging, and it is nobody's job until someone
+takes it. Best sequenced after the media-consent structure settles with Lynx, so the
+lawyer is not reviewing sections that are about to be restructured.
 
 - [ ] **Programme Privacy Policy — the "short version" fails its own audience.** It is
       titled "for parents and young people" yet leads with the controller/processor/
@@ -283,6 +361,63 @@ rather than its wording, that part goes to Lynx.
 
 Decided, with the exact change written out. Nothing here has been applied yet; it all
 lands in one pass. Delete an entry once its change is in.
+
+### Landing page — Roblox is a sponsor, not a partner; and the publishing promise
+
+Decided 2026-08-12. Two findings from the landing page's factual sweep, both ours: they
+change how the page reads, not what anyone is obliged to do, and the legal documents
+already settle the facts.
+
+**Roblox is described wrongly, and it is the page Roblox signs off.** The Terms say
+"Roblox Corporation ("Roblox") sponsors the Programme and provides the platform your child
+will build on. **Roblox is not a party to these Terms.**" The Privacy Policy's subtitle
+says "sponsored by Roblox". The landing page's hero says "in **partnership** with Roblox"
+and the logo lockup is headed "A **partnership** between" over all three marks. The page
+already disagrees with itself — `what.paragraph1` says "supported by Roblox", which is
+fine. Aligning down is the safe direction: understating the relationship cannot offend
+Roblox, overstating it can, and a company whose lawyers wrote "is not a party" into the
+Terms is the one most likely to object to "a partnership between" above its own logo.
+Deliberately not asked of Lynx — the documents are unanimous, and if Roblox's brand team
+did approve "partnership" for promotional use, signoff is the gate that surfaces it.
+
+**The publishing promise is unconditional and the Terms' is not.** The page says
+participants "**will have published** their own original creation"; the Terms say sessions
+culminate "in publishing their own game or item" — a destination, not a guarantee for
+every child.
+
+**Final English copy:**
+
+> `roblox.hero.subtitle`
+>
+> A free Roblox game design programme for teens — brought to you by Lynx Educate and
+> School of Gaming, sponsored by Roblox.
+
+> `roblox.lockup.heading`
+>
+> Made possible by
+
+> `roblox.what.paragraph2`
+>
+> The programme builds towards publishing their own original creation on Roblox. No
+> experience necessary — just curiosity.
+
+**To apply:**
+
+1. Change those three keys in all five locales. `tlh` carries the `roblox` namespace (it
+   is not a legal page), so it is included.
+2. `roblox.what.paragraph1` keeps "supported by Roblox" — it is accurate and claims no
+   partnership. **Do not also edit it here:** the age-range entry below rewrites that same
+   string, and two entries editing one string is how one of them gets silently reverted.
+   The page carrying both "sponsored by" and "supported by" is fine; neither is a false
+   claim.
+3. `roblox.lockup.heading` sits above the three logos, so keep the replacement short —
+   "Made possible by" covers a sponsor and two deliverers without asserting a relationship
+   between them.
+4. Delete this entry.
+
+**Checked and correct, so leave alone:** "free" (matches the Terms' cost section), "in
+France" (matches eligibility), the online/in-person split and the parent sessions (both
+match `robloxTerms.sections.whatsInvolved`).
 
 ### Landing page states the wrong age range
 
