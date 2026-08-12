@@ -60,16 +60,18 @@ export function productTagLabelKey(tag: ProductTag): ProductTagLabelKey {
 }
 
 // ---------------------------------------------------------------------------
-// **`productTagDetail.*` IS DRAFT COPY.**
+// **`productTagDetail.*` is engineer-written copy awaiting the owner's text.**
 //
 // The same keys as `productTag.*`, in the same five message files, carrying the
 // sentence or two the product detail page prints under the chip — what SOG
 // actually does about the tag (small groups and a predictable structure; start
 // from zero; a real challenge). Every one of those strings, in every locale,
-// was written by an engineer as a placeholder so the surface could be looked
-// at. **Sonja is writing the real source text, and these get replaced
-// wholesale** — do not polish them, do not translate around them, and do not
-// treat the current English as the source anybody approved.
+// was written by an engineer so the surface could be looked at, and was
+// **cleared to ship as-is on 2026-08-12** after review in the preview scenes —
+// live is fine, this is not a launch blocker. It is still not the final text:
+// **Sonja is writing the real source copy, and these get replaced wholesale as
+// a follow-up** — do not polish them, do not translate around them, and do not
+// treat the current English as a source anybody wants preserved.
 //
 // The marker lives here rather than in the message files because those are
 // strict JSON with no comment syntax and no key convention for annotations;
