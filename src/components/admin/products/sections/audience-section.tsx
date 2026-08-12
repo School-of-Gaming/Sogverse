@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useSpokenLanguages } from "@/services/users";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Field } from "@/components/ui/field";
+import { TagGlyph } from "@/components/public/products/product-chips";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
 import { Constants, type ProductTag } from "@/types";
 import { FormSection } from "../form-primitives";
@@ -162,15 +163,20 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
       <Field label={t("labels.tag")} hint={t("hints.tagHint")}>
         {/* Function children for the same reason the pair above uses them: a
             radio group needs the label to name it and the hint to describe it,
-            and neither is announced as loose text. Four short words, so the
-            options sit in one row on the desktop widths admin pages are built
-            for and stack on a narrow one. */}
+            and neither is announced as loose text. The options are a wrapping
+            row of intrinsic-width chips — the same shape as the language chips
+            below — rather than a column grid sized to today's count: the enum
+            is expected to grow, and a wrap adds rows where fixed columns would
+            squeeze. Each tag option wears the glyph from the shared chip
+            vocabulary, so the admin picks from the same icon-and-word pairing
+            the parent will meet on the card; "no tag" alone has no glyph,
+            because it is the absence being chosen. */}
         {({ hintId, labelId }) => (
           <div
             role="radiogroup"
             aria-labelledby={labelId}
             aria-describedby={hintId}
-            className="grid gap-2 sm:grid-cols-4"
+            className="flex flex-wrap gap-2"
           >
             {TAG_OPTIONS.map((option) => {
               const selected = state.tag === option;
@@ -178,7 +184,7 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
                 <label
                   key={option ?? "none"}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition-colors",
+                    "inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
                     selected
                       ? "border-primary bg-primary/5"
                       : "border-input hover:border-foreground/30"
@@ -191,7 +197,16 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
                     checked={selected}
                     onChange={() => setState({ ...state, tag: option })}
                   />
-                  <span className="min-w-0 flex-1 font-medium">
+                  {option !== null && (
+                    <TagGlyph
+                      tag={option}
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        selected ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
+                  )}
+                  <span className="font-medium">
                     {option === null
                       ? t("tagOptions.none")
                       : tTag(productTagLabelKey(option))}
