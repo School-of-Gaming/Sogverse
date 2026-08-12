@@ -31,12 +31,14 @@ import { TopicInfoCard } from "./topic-info-card";
  * injected signup panel — in a different layout. What changes is where the
  * pieces sit:
  *
- * - **The page names itself in a band across the top.** One row — back link,
- *   h1, type · topic eyebrow at the far right — spanning the content tracks
- *   (never the gutters), so the title belongs to the page, shares the columns'
- *   edges, and the hero leads the column beneath it. On a phone the band is
- *   just the top of the stack in the order it always had: back, eyebrow, title,
- *   hero. No right-aligned meta at that width; there is nothing to align to.
+ * - **The page names itself in a band across the top**, each element above the
+ *   column it belongs to: back link right-aligned over the facts rail, title
+ *   left-aligned over the hero, type · topic eyebrow left-aligned over the
+ *   signup panel. The band spans the content tracks (never the gutters) and
+ *   mirrors their template, so its cells share the columns' edges. On a phone
+ *   the band is just the top of the stack in the order it always had: back,
+ *   eyebrow, title, hero. No column alignment at that width; there is nothing
+ *   to align to.
  * - **The hero wears the card's two chips**, in the card's corners, from the
  *   card's own exported treatment: tag bottom-left, audience-or-age top-right.
  *   A parent who tapped a card carrying "Neuroinclusive" bottom-left meets the
@@ -173,29 +175,46 @@ export function ProductDetailPageBodyDraft({
           column below starts hundreds of pixels further in, which reads as the
           page coming apart (owner-flagged, and how the first cut shipped).
 
-          One row, three things: the back link, the h1, and the type · topic
-          eyebrow — a lone back link renting a whole row was the vertical waste
-          this band replaces. The side items are optically centred on the
-          title's FIRST line (an `h-9` box, the h1's text-3xl line height), not
-          baseline-aligned: a 12px link on a 30px title's baseline looks sunk,
-          and when a long name wraps, centring against the whole block would
-          drift both side items downward — the first-line box keeps them put.
+          Each header element sits above the column it belongs to (owner
+          ruling): the back link right-aligned over the facts rail, the title
+          left-aligned over the hero, the type · topic eyebrow left-aligned
+          over the signup panel. The band is an inner grid whose template and
+          gap MIRROR the outer content tracks exactly — the band item spans
+          those same tracks, so equal templates distribute equal widths and the
+          cells align with the columns beneath without subgrid. Change the
+          outer tracks and these must change with them.
+
+          At `lg` the facts column does not exist yet (the card is still in the
+          reading flow), so the back link keeps the inline spot left of the
+          title; from `2xl` it moves to its own cell. That parent swap cannot
+          be expressed with one node, so the link renders once per range —
+          mobile / lg-inline / 2xl-cell, each copy `display:none` outside its
+          range and so absent from the accessibility tree. Side cells are
+          optically centred on the title's FIRST line (an `h-9` box, the h1's
+          text-3xl line height), never its baseline and never the whole block:
+          a wrapping name must not drag them down.
 
           Below `lg` it is not a band at all, just the top of the single stack
-          in the order it has always been: back link, eyebrow, title. The swap
-          to back · title · eyebrow is `order`, not a second copy: one DOM
-          order, read top-to-bottom on a phone and left-to-right on a laptop. */}
-      <div className="lg:col-start-2 lg:col-span-2 lg:row-start-1 lg:flex lg:items-start lg:gap-6 2xl:col-start-2 2xl:col-span-3">
-        {/* Quiet and gapped so it cannot read as a clickable prefix of the
-            product's name. */}
-        <div className="lg:order-1 lg:flex lg:h-9 lg:shrink-0 lg:items-center">
+          in the order it has always been: back link, eyebrow, title — which is
+          the DOM order; desktop placement is explicit per cell. */}
+      <div className="lg:col-start-2 lg:col-span-2 lg:row-start-1 lg:grid lg:grid-cols-[minmax(0,44rem)_20rem] lg:gap-6 2xl:col-start-2 2xl:col-span-3 2xl:grid-cols-[16rem_minmax(0,44rem)_20rem]">
+        {/* Mobile copy: its own line at the top of the stack, as always. */}
+        <div className="lg:hidden">
           <BackLink
             productType={product.product_type}
             municipality={municipality}
           />
         </div>
 
-        <p className="mt-6 text-xs font-medium uppercase tracking-wider text-muted-foreground lg:order-3 lg:mt-0 lg:flex lg:h-9 lg:shrink-0 lg:items-center">
+        {/* 2xl copy: right-aligned over the facts rail, hugging the title. */}
+        <div className="hidden 2xl:col-start-1 2xl:row-start-1 2xl:flex 2xl:h-9 2xl:items-center 2xl:justify-self-end">
+          <BackLink
+            productType={product.product_type}
+            municipality={municipality}
+          />
+        </div>
+
+        <p className="mt-6 text-xs font-medium uppercase tracking-wider text-muted-foreground lg:col-start-2 lg:row-start-1 lg:mt-0 lg:flex lg:h-9 lg:items-center lg:justify-self-start 2xl:col-start-3">
           <span>
             {t(`typeLabel.${product.product_type}`)}
             {/* Same treatment as the live masthead, unconditional for the same
@@ -208,9 +227,19 @@ export function ProductDetailPageBodyDraft({
           </span>
         </p>
 
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl lg:order-2 lg:mt-0 lg:min-w-0 lg:flex-1">
-          {tr?.name}
-        </h1>
+        <div className="lg:col-start-1 lg:row-start-1 lg:flex lg:min-w-0 lg:items-start lg:gap-6 2xl:col-start-2">
+          {/* lg-only inline copy — quiet and gapped so it cannot read as a
+              clickable prefix of the product's name. */}
+          <div className="hidden lg:flex lg:h-9 lg:shrink-0 lg:items-center 2xl:hidden">
+            <BackLink
+              productType={product.product_type}
+              municipality={municipality}
+            />
+          </div>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl lg:mt-0 lg:min-w-0 lg:flex-1">
+            {tr?.name}
+          </h1>
+        </div>
       </div>
 
       {/* Reading block 1: the hero and everything under it. */}
