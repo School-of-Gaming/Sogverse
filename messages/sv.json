@@ -464,8 +464,7 @@
         "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
-        "startDateToday": "Låst till dagens datum tills vidare.",
-        "startDateLocked": "Startdatumet är låst tills vidare."
+        "startDateBillingAnchor": "Datumet då klubben börjar, och då familjerna debiteras första gången. Att ändra det i efterhand flyttar inte första betalningen för dem som redan har anmält sig — rätta de prenumerationerna i Stripe."
       },
       "errors": {
         "translationRequired": "Minst ett språk med namn och beskrivning krävs",
@@ -1038,7 +1037,8 @@
     "next": {
       "placement": "Vi placerar {gamer} i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
-      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala."
+      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala.",
+      "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}."
     },
     "goToDashboard": "Gå till Min SOG",
     "keepBrowsing": "Fortsätt bläddra",
@@ -1680,7 +1680,8 @@
       "externalHint": "Ingen betalning behövs – din kommun täcker kostnaden.",
       "upfrontHint": "Engångsbetalning.",
       "notAvailable": "Pris inte tillgängligt i {currency} ännu.",
-      "cadenceMonth": "/ mån"
+      "cadenceMonth": "/ mån",
+      "firstChargeOn": "Första betalningen {date} — inget att betala i dag."
     },
     "countdown": {
       "days": "dagar",

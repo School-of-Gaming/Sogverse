@@ -10,6 +10,8 @@ import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
+import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
@@ -46,6 +48,20 @@ interface PurchaseConfirmationViewProps {
    * (RLS miss / no longer waitlisted) → the position line is simply omitted.
    */
   waitlistPosition?: number | null;
+  /**
+   * When the first subscription charge falls, as a true instant (ISO), for a
+   * club bought before it started — the parent paid €0 at checkout and is owed
+   * the real date. Null on every other signup, and whenever the reader is not
+   * the payer (the `payments` policy is customer-only), in which case no billing
+   * line renders at all.
+   *
+   * An instant rather than a calendar date on purpose: it is the subscription's
+   * stored period end, and whether that instant is the club's own start or a
+   * clamped one is exactly the question that decides how it renders. The answer
+   * comes from the shared anchor helper, which the shop's signup panel asks the
+   * same way — a bare start date when unclamped, the viewer's own day when not.
+   */
+  firstChargeAt?: string | null;
 }
 
 export function PurchaseConfirmationView({
@@ -54,11 +70,13 @@ export function PurchaseConfirmationView({
   isSelfSeat = false,
   outcome = "enrolled",
   waitlistPosition = null,
+  firstChargeAt = null,
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
   const tSelf = useTranslations("purchaseConfirmation.self");
   const tProduct = useTranslations("productDetail");
   const locale = resolveLocale(useLocale());
+  const viewerTimezone = useTimezone();
 
   const isWaitlist = outcome === "waitlisted";
   const tr = resolveTranslation(product.product_translations, locale);
@@ -205,6 +223,27 @@ export function PurchaseConfirmationView({
                       ? tSelf("nextPlacement")
                       : t("next.placement", { gamer: participant })}
                   </li>
+                  {/* Before the general "you'll be billed monthly" line, and
+                      only when the first charge has genuinely been deferred:
+                      the parent has just seen €0 due on Stripe's page and is
+                      owed the real date in the same breath. Which date that is
+                      is the shared rule's call, not this component's — a charge
+                      landing on the club's own start renders as that bare
+                      calendar date (the same one shown further up this page), a
+                      clamped one as the day it hits the reader's statement. */}
+                  {firstChargeAt !== null && (
+                    <li>
+                      {t("next.firstCharge", {
+                        date: formatFirstChargeDate(
+                          firstChargeAt,
+                          product.start_date,
+                          product.timezone,
+                          locale,
+                          viewerTimezone,
+                        ),
+                      })}
+                    </li>
+                  )}
                   {pricingOption.kind === "subscription" && (
                     <li>{t("next.subscription")}</li>
                   )}

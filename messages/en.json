@@ -464,8 +464,7 @@
         "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of participants, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
-        "startDateToday": "Locked to today’s date for now.",
-        "startDateLocked": "Start date is locked for now."
+        "startDateBillingAnchor": "The date the club starts, and the date families are first charged. Changing it later does not move the first charge for anyone who has already signed up — correct those subscriptions in Stripe."
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",
@@ -1038,7 +1037,8 @@
     "next": {
       "placement": "We’ll place {gamer} in a group with a Gedu. The sessions will then appear under My SOG.",
       "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
-      "oneTime": "This was a one-time payment — there’s nothing more to pay."
+      "oneTime": "This was a one-time payment — there’s nothing more to pay.",
+      "firstCharge": "Nothing was charged today. Your first payment is on {date}."
     },
     "goToDashboard": "Go to My SOG",
     "keepBrowsing": "Keep browsing",
@@ -1680,7 +1680,8 @@
       "externalHint": "No payment needed — your municipality covers the cost.",
       "upfrontHint": "One-time payment.",
       "notAvailable": "Pricing isn’t available in {currency} yet.",
-      "cadenceMonth": "/ month"
+      "cadenceMonth": "/ month",
+      "firstChargeOn": "First payment on {date} — nothing to pay today."
     },
     "countdown": {
       "days": "days",

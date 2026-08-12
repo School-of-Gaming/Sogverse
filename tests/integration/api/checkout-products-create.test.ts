@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { fromZonedTime } from "date-fns-tz";
 import { POST } from "@/app/api/checkout/products/create/route";
 import { NextResponse } from "next/server";
 
@@ -97,7 +98,14 @@ const PAID_CLUB: ProductFixture = {
   spoken_language_code: "en",
   // A club's end date is nullable (a check constraint forces one for every
   // other type), which is also the case that has to omit its metadata key.
-  start_date: "2026-09-01",
+  //
+  // The start date is deliberately in the **past**, and deliberately a fixed
+  // one: a consumer club whose start date is still ahead defers its first
+  // charge (a billing anchor on the session), so a "future" fixture date would
+  // quietly add two parameters to every subscription assertion below — and
+  // would flip behaviour the day the wall clock passed it. The deferred cases
+  // get their own fixtures and their own frozen clock further down.
+  start_date: "2024-09-01",
   end_date: null,
   product_translations: [{ locale: "en", name: "Test Club" }],
 };
@@ -892,13 +900,17 @@ describe("POST /api/checkout/products/create", () => {
         spoken_language_code: "en",
         // A consumer club is the one type whose end date may be null, and a
         // null date omits its key rather than sending an empty one.
-        delivery_start: "2026-09-01",
+        delivery_start: "2024-09-01",
       },
       description: `Test Club — ${GAMER_FIRST_NAME}`,
     });
     expect(params.subscription_data.metadata).not.toHaveProperty(
       "delivery_end",
     );
+    // An already-started club charges at checkout, exactly as before deferred
+    // billing existed — no anchor, no proration override.
+    expect(params.subscription_data).not.toHaveProperty("billing_cycle_anchor");
+    expect(params.subscription_data).not.toHaveProperty("proration_behavior");
     // A subscription checkout resolves its Stripe Product through the price
     // cache, which returns early when the cached amount still matches — so the
     // route must not reach for one itself.
@@ -1022,6 +1034,155 @@ describe("POST /api/checkout/products/create", () => {
     expect(data.error).toBe("Product is not sold in eur");
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
     expect(mockAdminRpc).toHaveBeenCalledTimes(1);
+  });
+
+  // ── Deferred billing on a club that has not started ───────────────
+  //
+  // A consumer club can now be listed before it opens, and a subscription
+  // created through Checkout would otherwise start billing at once — three
+  // weeks of paying for nothing. The route defers the first charge with
+  // `billing_cycle_anchor` + `proration_behavior: "none"`, which makes the
+  // session complete at €0.
+  //
+  // The clock is frozen for the whole block: the anchor is derived from "now"
+  // against the product's start date, so a live clock would make both the
+  // deferral and the clamp drift with the calendar and eventually invert.
+
+  describe("deferred first charge", () => {
+    // A Wednesday, mid-morning UTC — nowhere near a Helsinki midnight, so no
+    // assertion here sits on a day boundary.
+    const FROZEN_NOW = new Date("2027-02-03T09:00:00Z");
+
+    /** Product-local midnight in Helsinki, in unix seconds. */
+    function helsinkiMidnightSeconds(date: string): number {
+      return Math.floor(fromZonedTime(`${date}T00:00:00`, "Europe/Helsinki").getTime() / 1000);
+    }
+
+    function subscriptionCheckout(product: ProductFixture) {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+        product_id: PRODUCT_ID,
+        currency: "eur",
+        stripe_price_id: STRIPE_PRICE_ID,
+        unit_amount_cents: 4500,
+      });
+      mockStripeSessionCreate.mockResolvedValue({
+        url: "https://checkout.stripe.com/c/test_deferred",
+      });
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers({ now: FROZEN_NOW });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("anchors the first invoice at the club's own start date", async () => {
+      // Three weeks out — inside Stripe's ceiling, so the anchor is the start
+      // date itself and the parent is charged the day the club begins.
+      const startDate = "2027-02-24";
+      subscriptionCheckout({ ...PAID_CLUB, start_date: startDate });
+
+      const res = await POST(createRequest(VALID_BODY));
+      expect(res.status).toBe(200);
+
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      expect(params.subscription_data.billing_cycle_anchor).toBe(
+        helsinkiMidnightSeconds(startDate),
+      );
+      // Without this the parent would be billed a part-month today; with it the
+      // session totals €0 and the first full invoice fires at the anchor.
+      expect(params.subscription_data.proration_behavior).toBe("none");
+      // No trial anywhere: the anchor is mutually exclusive with one, and a club
+      // that starts later is not a free trial.
+      expect(params.subscription_data).not.toHaveProperty("trial_end");
+      expect(params.subscription_data).not.toHaveProperty("trial_period_days");
+    });
+
+    it("clamps a club starting further out than Stripe will accept", async () => {
+      // Eight weeks ahead. Stripe rejects an anchor past the next natural
+      // billing date, so the charge lands ~four weeks from purchase — before
+      // the club starts. Accepted product decision; the shop states the clamped
+      // date rather than the start date.
+      const startDate = "2027-04-01";
+      subscriptionCheckout({ ...PAID_CLUB, start_date: startDate });
+
+      const res = await POST(createRequest(VALID_BODY));
+      expect(res.status).toBe(200);
+
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      const expected = Math.floor(
+        (FROZEN_NOW.getTime() + 28 * 24 * 60 * 60 * 1000 - 60 * 60 * 1000) /
+          1000,
+      );
+      expect(params.subscription_data.billing_cycle_anchor).toBe(expected);
+      expect(params.subscription_data.billing_cycle_anchor).toBeLessThan(
+        helsinkiMidnightSeconds(startDate),
+      );
+      expect(params.subscription_data.proration_behavior).toBe("none");
+    });
+
+    it("charges immediately for a club that has already started", async () => {
+      subscriptionCheckout({ ...PAID_CLUB, start_date: "2027-01-05" });
+
+      const res = await POST(createRequest(VALID_BODY));
+      expect(res.status).toBe(200);
+
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      expect(params.subscription_data).not.toHaveProperty(
+        "billing_cycle_anchor",
+      );
+      expect(params.subscription_data).not.toHaveProperty("proration_behavior");
+    });
+
+    it("charges immediately for a club with no start date at all", async () => {
+      subscriptionCheckout({ ...PAID_CLUB, start_date: null });
+
+      const res = await POST(createRequest(VALID_BODY));
+      expect(res.status).toBe(200);
+
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      expect(params.subscription_data).not.toHaveProperty(
+        "billing_cycle_anchor",
+      );
+      expect(params.subscription_data).not.toHaveProperty("proration_behavior");
+      // And no delivery_start key either, which is the pre-existing rule for a
+      // null date and is worth keeping visible beside the new one.
+      expect(params.subscription_data.metadata).not.toHaveProperty(
+        "delivery_start",
+      );
+    });
+
+    it("never anchors a single-payment session, however far off the camp is", async () => {
+      // The anchor is a subscription parameter. A camp is bought outright, so a
+      // future start date changes nothing about when the money moves.
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: { ...PAID_CAMP, start_date: "2027-08-03" } });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+      mockComputeSinglePaymentAmount.mockResolvedValue(25000);
+      mockStripeSessionCreate.mockResolvedValue({
+        url: "https://checkout.stripe.com/c/test_camp_future",
+      });
+
+      const res = await POST(
+        createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
+      );
+      expect(res.status).toBe(200);
+
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      expect(params.mode).toBe("payment");
+      expect(params.subscription_data).toBeUndefined();
+    });
   });
 
   // ── Defensive: unexpected RPC return shapes ───────────────────────

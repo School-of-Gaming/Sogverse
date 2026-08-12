@@ -1,8 +1,6 @@
-import { formatInTimeZone } from "date-fns-tz";
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductLongDescription, ProductTopic } from "@/types";
-import { formLocksFor } from "./form-locks";
 import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
@@ -193,17 +191,6 @@ export function initialState(
   // chooser. Events start free; clubs and camps start paid; municipality clubs
   // have no choice to make and the pick is ignored for them.
   const initialPaidMode = defaultPaidMode(config);
-  // The locks in effect for a brand-new product of this type, resolved through
-  // the same function the sections use — never FORM_LOCKS directly, so there is
-  // one place deciding.
-  const locks = formLocksFor(config);
-  // Consumer clubs launch starting today while the start-date control is
-  // locked. Helsinki-local "today" — the form is fixed to FIXED_TIMEZONE —
-  // never UTC (see CLAUDE.md "Date & Time Formatting").
-  const lockedConsumerStartDate =
-    locks.consumerClubStartDateToday && config.productType === "consumer_club"
-      ? formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd")
-      : "";
   const startsCapped = capacityDefaultsToCapped(config, initialPaidMode);
   return {
     translations: {
@@ -223,7 +210,10 @@ export function initialState(
     isRemote: true,
     locationId: null,
     startMode: config.allowedStartModes[0],
-    startDate: lockedConsumerStartDate,
+    // Blank on every type, consumer clubs included: a club may now start on a
+    // future date (billing defers to it), so there is no safe date to pin and
+    // `startDateRequired` makes the admin choose one.
+    startDate: "",
     hasEndDate: false,
     endDate: "",
     scheduleSlots: defaultSlots(config),

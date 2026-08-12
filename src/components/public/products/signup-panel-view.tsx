@@ -121,6 +121,13 @@ export interface SignupPanelViewProps {
   authState: AuthState;
   /** The single purchase option for this product (one per type). */
   pricingOption: PricingOption;
+  /**
+   * Formatted date of the first charge, on a subscription whose billing is
+   * deferred to a start date still ahead — null on everything else. Resolved by
+   * `useSignupPanelFields` (which owns the projection); the panel only places
+   * it, under the price it qualifies.
+   */
+  firstChargeDate?: string | null;
   /** Resolved by the adapter; null while nobody selectable is selected. */
   selectedParticipantId: string | null;
   onSelectParticipant: (participantId: string) => void;
@@ -309,6 +316,7 @@ function SignupBody(props: SignupPanelViewProps) {
         currency={props.currency}
         locale={props.locale}
         flat={props.flat}
+        firstChargeDate={props.firstChargeDate ?? null}
       />
       <FormOrAuth
         {...props}

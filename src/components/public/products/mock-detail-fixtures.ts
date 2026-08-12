@@ -1,9 +1,11 @@
+import { formatInTimeZone } from "date-fns-tz";
 import type {
   BrowseRowLocation,
   ProductLongDescription,
   ProductType,
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
+import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import type { ProductDetailRow } from "@/services/products";
 import type { ParticipationCounts } from "@/services/participations";
 import type { RegistrationState } from "./derive-registration-state";
@@ -27,8 +29,11 @@ import type {
 // The set is curated down to the *visually distinct* surfaces worth eyeballing,
 // grouped by product type:
 //   • Consumer club — a subscription club, open; a free one (billing is a
-//     per-product choice on every type now); one full behind a waitlist; and
-//     one capped club still short of its signup threshold.
+//     per-product choice on every type now); one full behind a waitlist; one
+//     capped club still short of its signup threshold; and two that have not
+//     started yet, which is where deferred billing is looked at — one close
+//     enough that the first charge lands on the start date, one far enough out
+//     that Stripe's ceiling pulls the charge earlier than the club begins.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
 //     countdown across the three auth states a parent can be in, one of them
 //     with places already comped away.
@@ -71,6 +76,8 @@ export type PreviewScenario =
   | "consumer-club-free"
   | "consumer-club-full-waitlist"
   | "consumer-club-threshold"
+  | "consumer-club-future-start"
+  | "consumer-club-future-start-clamped"
   | "consumer-club-parents-only"
   | "muni-empty"
   | "muni-filling"
@@ -138,6 +145,18 @@ interface ScenarioBase {
    * line instead of the in-person school. Only meaningful for muni clubs.
    */
   online?: boolean;
+  /**
+   * A club that has not started yet: its `start_date` is this many days ahead of
+   * *today* (product-local), rather than the static January calendar the other
+   * fixtures share, and it runs open-ended.
+   *
+   * Live-derived like the countdown scenarios' `opensAt`, and for the same
+   * reason: the whole point of these two is the deferred-billing line, which
+   * only exists while the start date is genuinely in the future. A hardcoded
+   * date would stop being one, and the line would silently vanish from the
+   * previews.
+   */
+  startsInDays?: number;
 }
 
 // A scenario either authors a static registration state, or is a live
@@ -259,6 +278,40 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       seatsLeft: 18,
       waitlistEnabled: false,
     },
+  },
+  "consumer-club-future-start": {
+    // A club listed for signup before it opens its doors — the ordinary
+    // deferred-billing case, and the one where the two dates on the page agree:
+    // the term line says the club starts on a date, and the pricing panel says
+    // that is also the day the first payment leaves. Three weeks out, so the
+    // anchor is inside Stripe's ceiling and is the start date itself.
+    label: "€45/mo — starts in 3 weeks, first payment deferred",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: 12,
+    waitlistEnabled: true,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    startsInDays: 21,
+    state: { kind: "open", seatCount: 12, seatsLeft: 9, waitlistEnabled: true },
+  },
+  "consumer-club-future-start-clamped": {
+    // The same club bought too early, and the reason this is a second scenario
+    // rather than a variant of the one above: Stripe refuses an anchor more than
+    // about a month out, so a parent buying eight weeks ahead is charged roughly
+    // four weeks from today — *before* the club starts. The page therefore
+    // states a first-payment date that deliberately disagrees with the start
+    // date printed above it, and that disagreement is the thing to sign off on.
+    // Showing the start date there instead would be a lie about money.
+    label: "€45/mo — starts in 8 weeks, first payment clamped",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: 12,
+    waitlistEnabled: true,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    startsInDays: 56,
+    state: { kind: "open", seatCount: 12, seatsLeft: 12, waitlistEnabled: true },
   },
   "consumer-club-parents-only": {
     // The lockout on a self seat, and the one scenario that proves it comes for
@@ -554,6 +607,8 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club-free",
   "consumer-club-full-waitlist",
   "consumer-club-threshold",
+  "consumer-club-future-start",
+  "consumer-club-future-start-clamped",
   "consumer-club-parents-only",
   "muni-empty",
   "muni-filling",
@@ -904,10 +959,14 @@ export function buildBrowseFixture(
 }
 
 /** UTC-pinned day arithmetic on a bare `yyyy-mm-dd` — exact, no DST to hit. */
-function shiftDateOnly(date: string | null, days: number): string | null {
-  if (date === null) return null;
+function addDaysToDateOnly(date: string, days: number): string {
   const [y, m, d] = date.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** The same walk, tolerating the nullable end date on the row. */
+function shiftDateOnly(date: string | null, days: number): string | null {
+  return date === null ? null : addDaysToDateOnly(date, days);
 }
 
 /**
@@ -1023,6 +1082,11 @@ export function scenarioFilledSeats(slug: PreviewScenario): number {
 const STATIC_REF_MS = Date.UTC(2026, 0, 5, 12, 0, 0); // Mon 5 Jan 2026, 12:00 UTC
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Every product is authored in Helsinki, as the admin form fixes them to be.
+// Named because the future-start scenarios resolve "today" in it as well as
+// stamping it on the row, and the two must be the same zone.
+const FIXTURE_TIMEZONE = "Europe/Helsinki";
+
 interface BuildFixtureResult {
   product: ProductDetailRow;
   state: RegistrationState;
@@ -1077,6 +1141,19 @@ export interface ConfirmationFixtureResult {
   outcome: SignupOutcome;
   /** Mock waitlist position for the waitlist outcome; null otherwise. */
   waitlistPosition: number | null;
+  /**
+   * The deferred first charge, as the live page would resolve it: an ISO
+   * instant on a subscription club bought before it starts, null everywhere
+   * else.
+   *
+   * On the real page this stands for two reads the fixture has no database for
+   * — the €0 subscription payment row that marks the purchase as deferred, and
+   * the subscription's `current_period_end`, which for such a purchase *is* the
+   * anchor. Computed here from the same helper the checkout route sets the
+   * anchor with, so the confirmation preview states the date the signup panel
+   * promised.
+   */
+  firstChargeAt: string | null;
 }
 
 // Post-signup summary fixture for /preview/confirmation/<scenario>. Reuses the
@@ -1094,6 +1171,14 @@ export function buildConfirmationFixture(
   // reviewable. A mixed product's panel preselects the first child, so it lands
   // on the ordinary third-person page like everything else.
   const isSelfSeat = audienceOf(SCENARIOS[slug]) === "parents";
+  // Only a paid consumer club is bought as a subscription, and only a
+  // subscription carries a billing anchor — a camp starting in three weeks was
+  // paid for in full at checkout and has no first charge still to come.
+  const config = SCENARIOS[slug];
+  const anchor =
+    config.productType === "consumer_club" && config.billingMode === "paid"
+      ? firstChargeAnchor(product.start_date, product.timezone, new Date())
+      : null;
   return {
     product,
     // A literal placeholder rather than a demo child's name — it makes obvious
@@ -1104,6 +1189,8 @@ export function buildConfirmationFixture(
     outcome: isWaitlist ? "waitlisted" : "enrolled",
     // A sample rank so the "You're #N" row shows in the preview.
     waitlistPosition: isWaitlist ? 3 : null,
+    // A waitlist join has bought nothing, so it has no first charge either.
+    firstChargeAt: isWaitlist ? null : (anchor?.toISOString() ?? null),
   };
 }
 
@@ -1171,7 +1258,21 @@ function buildBaseProduct(
   const { productType, billingMode } = config;
   const audience = audienceOf(config);
   const copy = copyFor(productType, audience);
-  const { startDate, endDate, scheduleSlots } = pickSchedule(productType);
+  const schedule = pickSchedule(productType);
+  const scheduleSlots = schedule.scheduleSlots;
+  // A not-yet-started club replaces the static calendar with a live one, walked
+  // forward from today's *product-local* date with UTC-pinned day arithmetic
+  // (never by stepping an instant, which repeats or skips a date across a DST
+  // transition). It runs open-ended, which a consumer club may.
+  const futureStart =
+    config.startsInDays === undefined
+      ? null
+      : addDaysToDateOnly(
+          formatInTimeZone(new Date(), FIXTURE_TIMEZONE, "yyyy-MM-dd"),
+          config.startsInDays,
+        );
+  const startDate = futureStart ?? schedule.startDate;
+  const endDate = futureStart === null ? schedule.endDate : null;
   // Online muni clubs are remote and reference a municipality node (not a
   // school site); everything else keeps its per-type location + remoteness.
   const isOnlineMuni = config.online === true;
@@ -1191,7 +1292,7 @@ function buildBaseProduct(
     id,
     product_type: productType,
     billing_mode: billingMode,
-    status: pickStatus(state),
+    status: pickStatus(state, config),
     is_visible: true,
     is_remote: isRemote,
     // Audience, and the age range the schema ties to it: `min_age`/`max_age`
@@ -1217,7 +1318,7 @@ function buildBaseProduct(
     signup_threshold: state.kind === "pending_thr" ? state.threshold : null,
     start_date: startDate,
     end_date: endDate,
-    timezone: "Europe/Helsinki",
+    timezone: FIXTURE_TIMEZONE,
     seat_count: config.seatCount,
     waitlist_enabled: config.waitlistEnabled,
     registration_opens_at: registrationOpensAt,
@@ -1525,8 +1626,14 @@ function buildPriceRows(
 // `status` is the stored DB status. The panel renders from the authored
 // `state`, not this, but matching the shape a real row would carry avoids
 // confusing future readers: open/ended products stay 'running', full or
-// pre-launch ones sit in 'pending'.
-function pickStatus(state: RegistrationState): "pending" | "running" {
+// pre-launch ones sit in 'pending'. A club whose start date has not arrived is
+// 'pending' whatever its registration state says — signups are open, the club
+// is not.
+function pickStatus(
+  state: RegistrationState,
+  config: ScenarioConfig,
+): "pending" | "running" {
+  if (config.startsInDays !== undefined) return "pending";
   switch (state.kind) {
     case "full_closed":
     case "full_waitlist":

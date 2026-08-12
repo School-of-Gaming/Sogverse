@@ -90,10 +90,10 @@ export default async function ShopConfirmationPage({
  * proved.
  *
  * When there is no row, the gates become load-bearing and all three run: Stripe
- * must recognise the session, it must actually be paid, and its metadata must
- * name the signed-in user as the purchaser. Without them a stranger's pasted
- * session id would be answered "Payment received", which is both a lie and a
- * leak.
+ * must recognise the session, it must actually have bought something, and its
+ * metadata must name the signed-in user as the purchaser. Without them a
+ * stranger's pasted session id would be answered "Payment received", which is
+ * both a lie and a leak.
  */
 async function renderPaidConfirmation(
   supabase: AppSupabaseClient,
@@ -124,14 +124,22 @@ async function renderPaidConfirmation(
     return <PurchaseConfirmationFallback />;
   }
 
-  if (
-    session.payment_status !== "paid" ||
-    session.metadata?.customerId !== user.id
-  ) {
+  // "It was actually bought" — which for a subscription does not mean money
+  // moved today. A club whose first charge is deferred to a future start date
+  // (and a 100%-off promotion code) completes at €0, which Stripe reports as
+  // `no_payment_required`; the subscription is live and will bill later, so
+  // requiring `"paid"` here would answer a real purchaser with "we couldn't find
+  // that order". Payment-mode sessions (camps, events) still require `"paid"`:
+  // a one-off that collected nothing bought nothing.
+  const boughtSomething =
+    session.payment_status === "paid" ||
+    (session.mode === "subscription" &&
+      session.payment_status === "no_payment_required");
+  if (!boughtSomething || session.metadata?.customerId !== user.id) {
     return <PurchaseConfirmationFallback />;
   }
 
-  // Paid, and no row. Two very different reasons, and the parent deserves to be
+  // Bought, and no row. Two very different reasons, and the parent deserves to be
   // told which: the webhook hasn't landed yet (wait), or the payment was refused
   // as a duplicate because this gamer already holds a spot on this product. In
   // the second case no row will *ever* carry this session id, so waiting would
@@ -180,17 +188,32 @@ async function renderConfirmation(
 
   let product: ProductBrowseRow | null = null;
   let waitlistPosition: number | null = null;
+  // "Your first charge is on …", for a club bought before it starts. Null on
+  // every other signup, and on any read the viewer isn't the payer for.
+  let firstChargeAt: string | null = null;
   // A waitlisted participation lands on the waitlist summary variant.
   const outcome: SignupOutcome =
     confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
 
   try {
-    product = await new ProductsService(supabase).getDetailById(
-      confirmation.productId,
-    );
+    // Side by side, not one after the other: the deferred-charge read knows
+    // nothing about the product row and every enrolled confirmation makes both,
+    // so serialising them would put two round trips in front of first paint
+    // where one wait does. It swallows its own failure rather than sharing the
+    // outer catch, because the billing line is optional and the summary is not —
+    // a read that fails here must cost the line, never the whole page.
+    [product, firstChargeAt] = await Promise.all([
+      new ProductsService(supabase).getDetailById(confirmation.productId),
+      outcome === "enrolled" && confirmation.participationId
+        ? participations
+            .getDeferredFirstChargeAt(confirmation.participationId)
+            .catch(() => null)
+        : null,
+    ]);
     // "You're #N" — fetched live (not the stale join-time value) so a parent
     // who revisits sees their position shrink as people ahead leave. Null is
-    // tolerated: the view just omits the line.
+    // tolerated: the view just omits the line. Left sequential because it is the
+    // other outcome's read: a waitlisted row never runs the pair above.
     if (outcome === "waitlisted" && confirmation.participationId) {
       waitlistPosition = await participations.getWaitlistPosition(
         confirmation.participationId,
@@ -212,6 +235,7 @@ async function renderConfirmation(
       isSelfSeat={confirmation.isSelfSeat}
       outcome={outcome}
       waitlistPosition={waitlistPosition}
+      firstChargeAt={firstChargeAt}
     />
   );
 }

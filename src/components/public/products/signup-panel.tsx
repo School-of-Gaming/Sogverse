@@ -28,7 +28,15 @@ import type { RegistrationState } from "./derive-registration-state";
 interface SignupPanelProps {
   product: Pick<
     ProductBrowseRow,
-    "id" | "product_type" | "billing_mode" | "product_prices" | "for_gamers"
+    | "id"
+    | "product_type"
+    | "billing_mode"
+    | "product_prices"
+    | "for_gamers"
+    // The two the deferred-first-charge line is derived from — see
+    // `useSignupPanelFields`.
+    | "start_date"
+    | "timezone"
   >;
   state: RegistrationState;
   authState: AuthState;

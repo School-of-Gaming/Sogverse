@@ -18,6 +18,7 @@ import {
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
+import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { stripe } from "@/lib/stripe/client";
 import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { getOrigin } from "@/lib/url";
@@ -420,6 +421,34 @@ export const POST = defineRoute({
             participantId === user.id,
           )}`,
         };
+
+        // A club that has not started yet defers its first charge to its start
+        // date: the anchor is product-local midnight on `start_date`, clamped to
+        // what Stripe accepts, and prorations are off so the parent pays €0 at
+        // checkout rather than a part-month. The subscription is `active`
+        // immediately either way — the seat is held and sessions show — and no
+        // trial vocabulary appears anywhere on Stripe's page. A product with no
+        // start date, or one starting now or in the past, gets neither parameter
+        // and behaves exactly as it did before.
+        //
+        // **The anchor is stamped once, here, and never revisited.** An admin who
+        // later moves the product's start date does NOT move the first-charge
+        // date of subscriptions that already exist — that correction is manual in
+        // the Stripe dashboard for now (the sync is a recorded TODO.md
+        // follow-up). The admin start-date field carries a hint saying so; this
+        // comment is the other end of the same gap, at the site where the anchor
+        // is born.
+        const anchor = firstChargeAnchor(
+          product.start_date,
+          product.timezone,
+          new Date(),
+        );
+        if (anchor !== null) {
+          sessionParams.subscription_data.billing_cycle_anchor = Math.floor(
+            anchor.getTime() / 1000,
+          );
+          sessionParams.subscription_data.proration_behavior = "none";
+        }
       }
 
       const session = await stripe.checkout.sessions.create(sessionParams);

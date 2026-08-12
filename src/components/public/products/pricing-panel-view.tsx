@@ -27,6 +27,12 @@ interface PricingPanelViewProps {
    * every live route leaves it unset and keeps the boxes.
    */
   flat?: boolean;
+  /**
+   * Already-formatted date of the first charge, when a subscription's billing is
+   * deferred to a start date still ahead. Null everywhere else — including on
+   * every non-subscription option, which is why only that branch reads it.
+   */
+  firstChargeDate?: string | null;
 }
 
 export function PricingPanelView({
@@ -34,6 +40,7 @@ export function PricingPanelView({
   currency,
   locale,
   flat,
+  firstChargeDate = null,
 }: PricingPanelViewProps) {
   return (
     <div className="space-y-3">
@@ -42,6 +49,7 @@ export function PricingPanelView({
         currency={currency}
         locale={locale}
         flat={flat}
+        firstChargeDate={firstChargeDate}
       />
     </div>
   );
@@ -57,11 +65,13 @@ function OptionRow({
   currency,
   locale,
   flat,
+  firstChargeDate,
 }: {
   option: PricingOption;
   currency: SupportedCurrency;
   locale: string;
   flat?: boolean;
+  firstChargeDate: string | null;
 }) {
   const t = useTranslations("productDetail.pricing");
   switch (option.kind) {
@@ -77,6 +87,16 @@ function OptionRow({
           <p className="mt-0.5 text-xs text-muted-foreground">
             {t("subscriptionHint")}
           </p>
+          {/* The club has not started, so Stripe will show €0 due today. Say
+              why, and say when the money actually moves, before the parent
+              clicks through to a page that would otherwise look like a
+              mistake. Rendered from data present on first paint, so it never
+              arrives late and pushes the CTA down. */}
+          {firstChargeDate !== null && (
+            <p className="mt-1.5 text-xs font-medium text-primary">
+              {t("firstChargeOn", { date: firstChargeDate })}
+            </p>
+          )}
         </div>
       );
     case "upfront":
