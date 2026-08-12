@@ -88,7 +88,23 @@ async function handleCheckoutCompleted(
   event: Stripe.CheckoutSessionCompletedEvent,
 ) {
   const session = event.data.object;
-  if (session.payment_status !== "paid") return;
+  // A completion is acted on when money arrived — OR when a subscription-mode
+  // session legitimately cost nothing today.
+  //
+  // Stripe reports a €0 total as `no_payment_required`, and two things produce
+  // one: a club whose first charge is deferred to a future start date
+  // (`billing_cycle_anchor` + `proration_behavior: "none"` — see the checkout
+  // route), and a 100%-off promotion code. Both create a live subscription that
+  // will bill later, so requiring `"paid"` here meant creating no participation
+  // at all for either — a silent failure, since the route still answered 200.
+  //
+  // The widening is per *mode*, not per deferral: payment-mode sessions
+  // (camps, events) still require `"paid"`, because a one-off purchase that
+  // collected nothing has bought nothing.
+  const isZeroDueSubscription =
+    session.mode === "subscription" &&
+    session.payment_status === "no_payment_required";
+  if (session.payment_status !== "paid" && !isZeroDueSubscription) return;
 
   const purchaseShape = session.metadata?.purchaseShape;
   const customerId = session.metadata?.customerId;
@@ -338,7 +354,18 @@ function expandableId(
 async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
   const invoice = event.data.object;
   const subId = invoiceSubscriptionId(invoice);
-  // First-period invoices come in via checkout.session.completed.
+  // `subscription_create` is the invoice Stripe raises alongside the very
+  // Checkout Session that created the subscription; `checkout.session.completed`
+  // already recorded that purchase, so recording it again here would double it.
+  //
+  // Note what this does NOT skip. A club whose first charge was deferred to a
+  // future start date raises **no invoice at creation at all** — the first real
+  // charge arrives weeks later with `billing_reason: "subscription_cycle"`,
+  // i.e. shaped exactly like a month-2 renewal, and the ordinary renewal path
+  // below is the right one to record it. So no gate here needs widening for
+  // deferred billing: the €0 checkout leaves a zero-amount payment row (its
+  // idempotency marker) and this handler writes the real one when the money
+  // actually moves.
   if (!subId || invoice.billing_reason === "subscription_create") return;
   const { data: famSub } = await admin
     .from("family_subscriptions")
