@@ -26,5 +26,16 @@ export const MAX_GAMERS_PER_PARENT = 7;
 /** Verified sender for transactional emails via Brevo. */
 export const SENDER_EMAIL = "sogverse@sog.gg";
 
+/**
+ * Sender display name on every transactional email, whatever the template.
+ *
+ * Deliberately one literal rather than a per-locale translation: this is the
+ * company's mark, and a recipient who has seen it once should recognise it in
+ * the inbox list next time regardless of which language the body is in. Same
+ * reasoning as "My SOG" — locales translate the copy around a brand name, not
+ * the name.
+ */
+export const SENDER_NAME = "School of Gaming - Sogverse";
+
 /** Customer-facing support inbox shown in the footer and on auth screens. */
 export const SUPPORT_EMAIL = "help@sog.gg";

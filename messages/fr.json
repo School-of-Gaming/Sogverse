@@ -2154,9 +2154,6 @@
     }
   },
   "email": {
-    "senderAuth": "Équipe Sogverse",
-    "senderFeedback": "Retours Sogverse",
-    "senderEnrollment": "Inscriptions Sogverse",
     "footer": "© {year} Sogverse. Tous droits réservés.",
     "roleAdmin": "Administrateur",
     "roleParent": "Parent",

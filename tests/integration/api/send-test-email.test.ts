@@ -52,8 +52,6 @@ function createRequest(body: Record<string, unknown>): Request {
 const validBody = {
   mode: "custom",
   provider: "brevo",
-  fromEmail: "noreply@example.com",
-  fromName: "Sogverse",
   toEmail: "test@example.com",
   subject: "Test Subject",
   body: "Hello world",
@@ -119,16 +117,28 @@ describe("POST /api/admin/send-test-email", () => {
     expect(data.error).toContain("provider");
   });
 
-  it("should return 400 for invalid fromEmail", async () => {
+  it("ignores a caller-supplied sender identity rather than honouring it", async () => {
+    // Sender identity is a constant, so these keys are not part of the wire
+    // shape. The assertion that matters is not the 200 — it is that the mail
+    // still goes out under our own name, i.e. the harness cannot be talked into
+    // sending as someone else.
     mockAuthenticatedWithRole("admin");
 
     const response = await POST(
-      createRequest({ ...validBody, fromEmail: "not-an-email" })
+      createRequest({
+        ...validBody,
+        fromEmail: "attacker@evil.example",
+        fromName: "Your Bank",
+      })
     );
-    const data = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(data.error).toContain("fromEmail");
+    expect(response.status).toBe(200);
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromEmail: "sogverse@sog.gg",
+        fromName: "School of Gaming - Sogverse",
+      })
+    );
   });
 
   it("should return 400 for missing toEmail", async () => {
@@ -190,7 +200,7 @@ describe("POST /api/admin/send-test-email", () => {
     expect(data.messageId).toBe("msg-123");
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith({
       fromEmail: "sogverse@sog.gg",
-      fromName: "Sogverse",
+      fromName: "School of Gaming - Sogverse",
       toEmail: ["test@example.com"],
       subject: "Test Subject",
       htmlContent: "Hello world",
@@ -282,6 +292,37 @@ describe("POST /api/admin/send-test-email", () => {
         toEmail: ["test@example.com"],
         subject: expect.stringContaining("Jane Doe"),
       }),
+    );
+  });
+
+  /**
+   * The two halves of the reply-to policy, asserted through the harness because
+   * the harness is where they are easiest to get wrong: a test send that always
+   * defaulted to support would show an admin the wrong thing about the one
+   * template that replies to a person.
+   */
+  it("replies to the submitter for the feedback template", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await POST(createRequest(validTemplateBody));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ replyToEmail: "jane@example.com" }),
+    );
+  });
+
+  it("replies to support for a family-facing template", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await POST(createRequest({
+      mode: "template",
+      toEmail: "test@example.com",
+      template: "passwordReset",
+      params: { resetLink: "https://sogverse.sog.gg/reset-password?token_hash=abc" },
+    }));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ replyToEmail: "help@sog.gg" }),
     );
   });
 

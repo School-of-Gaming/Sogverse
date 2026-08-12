@@ -2198,9 +2198,6 @@
     }
   },
   "email": {
-    "senderAuth": "Sogverse ghom",
-    "senderFeedback": "Sogverse QIn",
-    "senderEnrollment": "Sogverse qo’ ghoH",
     "footer": "© {year} Sogverse. Hoch batlh.",
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
