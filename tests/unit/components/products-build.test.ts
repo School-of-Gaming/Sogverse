@@ -895,6 +895,64 @@ describe("audience and ages on the wire", () => {
   });
 });
 
+// The design tag rides on the same payload as the audience above but answers a
+// different question — who the sessions were built for, not who may hold a seat
+// — so it gets its own block rather than being folded into the audience cases.
+describe("the design tag on the wire", () => {
+  it("creates an untagged product by default", () => {
+    const s = initialState(consumerConfig, "en");
+    expect(s.tag).toBeNull();
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    // Present and null, never absent. The wire schema requires the field and
+    // the RPC parameter is DEFAULT NULL, so a missing key is a 400 rather than
+    // a quietly untagged product.
+    expect(out).toHaveProperty("tag");
+    expect(out.tag).toBeNull();
+  });
+
+  it("carries a chosen tag through to the create payload", () => {
+    const s = validConsumerState();
+    s.tag = "neuroinclusive";
+    expect(buildCreateInput(s, "consumer_club", consumerConfig).tag).toBe(
+      "neuroinclusive",
+    );
+  });
+
+  it("carries a chosen tag through to the update payload", () => {
+    const s = validConsumerState();
+    s.tag = "advanced";
+    expect(buildUpdateInput(s, consumerConfig).tag).toBe("advanced");
+  });
+
+  // Clearing has to be expressible, and it has to travel as an explicit null:
+  // the update RPC assigns every editable column, so a field that went missing
+  // would make "leave the tag alone" and "clear the tag" the same wire shape.
+  it("emits an explicit null when a tagged product is untagged again", () => {
+    const s = validConsumerState();
+    s.tag = "beginner";
+    expect(buildUpdateInput(s, consumerConfig).tag).toBe("beginner");
+
+    s.tag = null;
+    const cleared = buildUpdateInput(s, consumerConfig);
+    expect(cleared).toHaveProperty("tag");
+    expect(cleared.tag).toBeNull();
+  });
+
+  it("carries the tag on every product type", () => {
+    const camp = validConsumerState();
+    camp.tag = "beginner";
+    camp.endDate = "2026-09-05";
+    camp.prices = { eur: { session: "120.00", month: "" } };
+    expect(buildCreateInput(camp, "camp", campConfig).tag).toBe("beginner");
+  });
+
+});
+
 describe("fees", () => {
   it("maps fee drafts to cents: fee→cents, volunteer→0, unknown/none→null", () => {
     const s = validConsumerState();
@@ -1228,6 +1286,22 @@ describe("cloneFormState", () => {
     // the `month` slot; the unused `session` slot stays blank.
     expect(state.prices.eur).toEqual({ session: "", month: "30.00" });
     expect(state.isVisible).toBe(true);
+  });
+
+  // A tag is data, not identity: nothing about it is bound to the one bucket
+  // file the way the image is, so a clone carries the source's tag like it
+  // carries the dates and the schedule.
+  it("copies the source's tag", () => {
+    const state = cloneFormState(
+      mockDetailRow({ tag: "neuroinclusive" }),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    expect(state.tag).toBe("neuroinclusive");
+    expect(
+      buildCreateInput(state, "consumer_club", consumerConfig).tag,
+    ).toBe("neuroinclusive");
   });
 
   it("preserves a hidden source's visibility (does not force-hide)", () => {

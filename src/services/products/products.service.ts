@@ -3,6 +3,7 @@ import type {
   ProductLongDescription,
   ProductType,
   ProductTopic,
+  ProductTag,
   BillingMode,
   ProductStatus,
 } from "@/types";
@@ -185,6 +186,18 @@ export type CreateProductInput = {
   /** Null on a product with no gamer audience — never a sentinel adult range. */
   min_age: number | null;
   max_age: number | null;
+  /**
+   * Who the product was *designed* for — a different question from the audience
+   * above, which says who may hold a seat. One tag or none: `null` is untagged,
+   * the ordinary state, and it renders nothing on any family surface.
+   *
+   * Required on the type, and nullable — never optional. The wire schema demands
+   * the field for the same reason (see products.contracts.ts): the RPC parameter
+   * is `DEFAULT NULL`, so an omitted tag would clear a product's tag rather than
+   * leave it alone. Making the field mandatory here is what forces every builder
+   * to state the answer.
+   */
+  tag: ProductTag | null;
   spoken_language_code: string;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
@@ -234,6 +247,10 @@ export type UpdateProductInput = {
   /** Null on a product with no gamer audience — never a sentinel adult range. */
   min_age: number | null;
   max_age: number | null;
+  /** Design tag — see CreateProductInput. Required and nullable on the update
+   *  half too, and that is the load-bearing one: the RPC assigns every editable
+   *  column, so an omitted tag clears the stored one. */
+  tag: ProductTag | null;
   spoken_language_code: string;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a

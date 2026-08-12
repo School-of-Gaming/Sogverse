@@ -252,6 +252,7 @@
           "assistantGeduFee": "Avustavan Gedun palkkio / kerta",
           "municipalityFee": "Kunnan maksu / kerta",
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
+          "tag": "Kenelle suunniteltu",
           "visibility": "Näkyvyys"
         }
       },
@@ -304,6 +305,7 @@
         "topic": "Aihe",
         "materialUrl": "Oppimateriaalin osoite",
         "seatAudience": "Kuka voi ottaa paikan",
+        "tag": "Kenelle suunniteltu",
         "forGamers": "Pelaajille",
         "forParents": "Vanhemmille",
         "minAge": "Alaikäraja",
@@ -435,6 +437,9 @@
         "dated": "Aseta loppupäivä",
         "datedDescription": "Kerho jatkuu tiettyyn päivään asti ja päättyy sitten automaattisesti."
       },
+      "tagOptions": {
+        "none": "Ei merkintää"
+      },
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
@@ -443,6 +448,7 @@
         "seatAudienceHint": "Valitse vähintään yksi. Molempien valitseminen tarkoittaa toimintaa, johon vanhempi ja pelaaja osallistuvat yhdessä — kaupassa se näkyy merkinnällä ”Perheille”.",
         "forGamersHint": "Vanhempi ilmoittaa pelaajan, ja pelaaja ottaa paikan. Vaatii ala- ja yläikärajan.",
         "forParentsHint": "Vanhempi ottaa paikan itselleen ja osallistuu toimintaan. Ei ikärajoja – ikä koskee lapsia, ei aikuisia.",
+        "tagHint": "Valinnainen. Perheet näkevät sen merkintänä selauskortissa ja tuotesivulla. Se kertoo, kenelle kerrat on suunniteltu – ei sitä, kuka voi ottaa paikan.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",

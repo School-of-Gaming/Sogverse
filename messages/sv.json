@@ -252,6 +252,7 @@
           "assistantGeduFee": "Assisterande Gedu-arvode / tillfälle",
           "municipalityFee": "Kommunavgift / tillfälle",
           "registrationOpensAt": "Anmälan öppnar",
+          "tag": "Utformad för",
           "visibility": "Synlighet"
         }
       },
@@ -304,6 +305,7 @@
         "topic": "Ämne",
         "materialUrl": "URL till lektionsmaterial",
         "seatAudience": "Vem kan ta en plats",
+        "tag": "Utformad för",
         "forGamers": "För spelare",
         "forParents": "För föräldrar",
         "minAge": "Min ålder",
@@ -435,6 +437,9 @@
         "dated": "Ange ett slutdatum",
         "datedDescription": "Klubben pågår fram till ett visst datum och avslutas sedan automatiskt."
       },
+      "tagOptions": {
+        "none": "Ingen märkning"
+      },
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
@@ -443,6 +448,7 @@
         "seatAudienceHint": "Välj minst ett. Väljer du båda blir det en produkt som en förälder och hens spelare deltar i tillsammans – i butiken märks den ”För familjer”.",
         "forGamersHint": "En förälder anmäler sin spelare och spelaren tar platsen. Kräver ett åldersintervall.",
         "forParentsHint": "En förälder tar en plats åt sig själv och deltar. Inget åldersintervall – ålder beskriver barn, inte vuxna.",
+        "tagHint": "Valfritt. Familjer ser den som en märkning på butikskortet och produktsidan. Den säger vem tillfällena är utformade för, inte vem som får ta en plats.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",

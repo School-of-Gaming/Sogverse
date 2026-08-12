@@ -12,6 +12,7 @@ import {
   Landmark,
   Pencil,
   Shapes,
+  Tag,
   Wallet,
   ExternalLink,
 } from "lucide-react";
@@ -29,6 +30,7 @@ import {
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
+import { productTagLabelKey } from "@/components/public/products/product-tag";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -291,6 +293,10 @@ function OperationalFacts({
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
   const isMuni = product.product_type === "municipality_club";
+  // The family-facing tag words, so this row and the shop card cannot disagree
+  // about what a tag is called. Plain text, no chip: this is the admin panel,
+  // and the chip treatment belongs to the surfaces families read.
+  const tTag = useTranslations("productTag");
 
   // Render a per-session fee from its stored cents. The state is derived from
   // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
@@ -396,6 +402,17 @@ function OperationalFacts({
 
         <Fact icon={Shapes} label={t("detailsPage.fields.topic")}>
           {topicName ?? <span className="text-muted-foreground">{c("notSet")}</span>}
+        </Fact>
+
+        {/* Untagged is the ordinary state rather than a gap in the setup, so it
+            says so in muted text — the same word the form's picker offers —
+            instead of the "not set" the topic above uses for a missing answer. */}
+        <Fact icon={Tag} label={t("detailsPage.fields.tag")}>
+          {product.tag === null ? (
+            <span className="text-muted-foreground">{t("tagOptions.none")}</span>
+          ) : (
+            tTag(productTagLabelKey(product.tag))
+          )}
         </Fact>
 
         {/* Staff-only, and it lives on its own embedded row for exactly that

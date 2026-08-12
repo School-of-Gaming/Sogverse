@@ -99,6 +99,21 @@ describe("existingFormState", () => {
     expect(state.image).toBe("abc.png");
     expect(state.forGamers).toBe(true);
     expect(state.forParents).toBe(false);
+    // Untagged is the fixture's stored state and the picker's default, so the
+    // two agree here — the interesting direction is the one below.
+    expect(state.tag).toBeNull();
+  });
+
+  // The tag is freely editable for the product's whole life (no form lock), so
+  // the only thing the edit form has to get right is loading the stored value —
+  // and loading it as the enum member it is, never as a string the picker's
+  // equality check would miss.
+  it("seeds the picker from a tagged row", () => {
+    const product = syntheticConsumerProduct();
+    product.tag = "advanced";
+    expect(existingFormState(product, consumerConfig, "en").tag).toBe(
+      "advanced",
+    );
   });
 
   // A parents-only row carries no age range at all — never a sentinel adult
@@ -299,5 +314,32 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.for_parents).toBe(true);
     expect(input.min_age).toBe(7);
     expect(input.max_age).toBe(12);
+  });
+
+  // Same trap as the audience above, and a worse one: the tag's RPC parameter is
+  // DEFAULT NULL, so a stored tag that fails to make the round trip is not left
+  // alone — it is cleared, and the shop card silently loses its chip on the next
+  // edit of anything at all.
+  it("re-emits a stored tag through an unrelated edit", () => {
+    const product = syntheticConsumerProduct();
+    product.tag = "neuroinclusive";
+    const state = existingFormState(product, consumerConfig, "en");
+    state.translations = {
+      en: {
+        name: "Build Club Renamed",
+        shortDescription: "Build castles together.",
+        longDescription: [],
+      },
+    };
+    expect(buildUpdateInput(state, consumerConfig).tag).toBe("neuroinclusive");
+  });
+
+  it("round-trips an untagged product as an explicit null", () => {
+    const product = syntheticConsumerProduct(); // tag: null
+    const state = existingFormState(product, consumerConfig, "en");
+    const input = buildUpdateInput(state, consumerConfig);
+
+    expect(input).toHaveProperty("tag");
+    expect(input.tag).toBeNull();
   });
 });

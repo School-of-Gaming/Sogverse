@@ -252,6 +252,7 @@
           "assistantGeduFee": "Assistant Gedu fee / session",
           "municipalityFee": "Municipality fee / session",
           "registrationOpensAt": "Registration opens",
+          "tag": "Designed for",
           "visibility": "Visibility"
         }
       },
@@ -304,6 +305,7 @@
         "topic": "Topic",
         "materialUrl": "Lesson material URL",
         "seatAudience": "Who can take a seat",
+        "tag": "Designed for",
         "forGamers": "For gamers",
         "forParents": "For parents",
         "minAge": "Min age",
@@ -435,6 +437,9 @@
         "dated": "Set an end date",
         "datedDescription": "The club runs until a specific date, then completes automatically."
       },
+      "tagOptions": {
+        "none": "No tag"
+      },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. Shown only on the product’s detail page. Build it from headings and paragraphs.",
@@ -443,6 +448,7 @@
         "seatAudienceHint": "Pick at least one. Both means a product a parent and their gamer take part in together — the shop labels it “For families”.",
         "forGamersHint": "A parent signs their gamer up and the gamer takes the seat. Needs an age range.",
         "forParentsHint": "A parent takes a seat for themselves and attends it. No age range — age describes children, not adults.",
+        "tagHint": "Optional. Families see it as a badge on the shop card and product page. It says who the sessions were built for, not who may take a seat.",
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",
