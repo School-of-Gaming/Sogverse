@@ -157,7 +157,10 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 
 **An em dash between the two names is a different construct, not a variant of the lockup.** Prose that reads "Sogverse — School of Gaming — runs clubs" is an appositive asserting the two names are the same thing, which is exactly what this rule says they are not. Copy that needs to relate them states the relationship instead: Sogverse is School of Gaming's platform.
 
-This is a deliberate, in-progress shift, and the lockups are the part of it that is finished — every string carrying both names now leads with the brand. The unfinished part is prose: `messages/` mentions "Sogverse" around fifty times in English alone, and each one is its own judgment about whether the reader is being introduced to the company (brand) or is already inside the product (platform). Migrate those as you touch them rather than in a sweep, and don't read an un-migrated one as the precedent.
+This is a deliberate, in-progress shift, and only the *lockups* are finished — every string carrying both names now leads with the brand. Two parts are not, and neither should be read as settled:
+
+- **The sub-page title template and `og:site_name`** (`src/app/layout.tsx`) are platform-only: every page but the root renders as `<page> | Sogverse`, and a shared link names Sogverse alone. That is more cold-contact title surface than the root title this rule already governs. Changing it is an SEO and information-architecture decision, not a typo fix, which is why it is still open rather than quietly done.
+- **Prose.** `messages/` mentions "Sogverse" around fifty times in English alone, and each is its own judgment about whether the reader is being introduced to the company (brand) or is already inside the product (platform). Migrate those as you touch them rather than in a sweep, and don't read an un-migrated one as the precedent.
 
 ### Locale vs. Spoken Language
 
