@@ -57,6 +57,19 @@ const productDataBase = z.object({
   // carries no range rather than a sentinel one.
   min_age: z.number().nullable(),
   max_age: z.number().nullable(),
+  // Who the product was *designed* for — a different question from the audience
+  // above, which says who may hold a seat. One tag or none: null is untagged,
+  // the ordinary state, and it renders nothing anywhere.
+  //
+  // Required-nullable, on create and update alike, and the update half is the
+  // load-bearing one. The RPC parameter is `DEFAULT NULL` (it has to be: null is
+  // a legal tag, no CHECK backstops it, and codegen cannot express an explicit
+  // null for a non-defaulted argument), so an omitted field would reach a
+  // function that assigns every editable column and clear the tag without
+  // anybody asking. Demanding the field on the wire is what makes clearing a
+  // deliberate `null` rather than an accident of omission — the route then maps
+  // null → undefined → DEFAULT NULL → cleared.
+  tag: z.enum(Constants.public.Enums.product_tag).nullable(),
   spoken_language_code: z.string(),
   // Gedu/admin-only lesson-material link. It is a field of the product *form*
   // but not a column on `products` — the RPC files it under

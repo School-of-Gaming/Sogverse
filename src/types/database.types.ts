@@ -902,6 +902,7 @@ export type Database = {
           spoken_language_code: string
           start_date: string | null
           status: Database["public"]["Enums"]["product_status"]
+          tag: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at: string
@@ -931,6 +932,7 @@ export type Database = {
           spoken_language_code: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
+          tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
@@ -960,6 +962,7 @@ export type Database = {
           spoken_language_code?: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
+          tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
@@ -1554,6 +1557,7 @@ export type Database = {
           p_spoken_language_code: string
           p_start_date?: string
           p_status?: Database["public"]["Enums"]["product_status"]
+          p_tag?: Database["public"]["Enums"]["product_tag"]
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
@@ -1843,6 +1847,7 @@ export type Database = {
           p_signup_threshold?: number
           p_spoken_language_code: string
           p_start_date?: string
+          p_tag?: Database["public"]["Enums"]["product_tag"]
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
@@ -1869,6 +1874,7 @@ export type Database = {
         | "single_payment"
         | "reservation_duplicate"
       product_status: "pending" | "running" | "completed" | "cancelled"
+      product_tag: "neuroinclusive" | "beginner" | "advanced"
       product_topic:
         | "minecraft_java"
         | "minecraft_education"
@@ -2023,6 +2029,7 @@ export const Constants = {
         "reservation_duplicate",
       ],
       product_status: ["pending", "running", "completed", "cancelled"],
+      product_tag: ["neuroinclusive", "beginner", "advanced"],
       product_topic: [
         "minecraft_java",
         "minecraft_education",

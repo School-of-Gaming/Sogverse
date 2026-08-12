@@ -56,6 +56,12 @@ import { TEST_IDS } from "./constants";
  *                  allocate it to a real fixture and that test quietly starts
  *                  pointing at a row that exists, which is the one thing it
  *                  must never do.
+ *
+ * One file reserves nothing and is listed anyway, so nobody goes looking for
+ * its range: **create-product.test.ts**. It is the only file that calls
+ * `create_product`, which mints its own id and accepts none, so it has no
+ * fixture UUID to collide on — it collects the ids the RPC hands back and
+ * deletes those.
  */
 
 export interface ProductOptions {

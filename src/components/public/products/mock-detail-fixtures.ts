@@ -1203,6 +1203,7 @@ function buildBaseProduct(
     for_parents: audience !== "gamers",
     min_age: audience === "parents" ? null : 8,
     max_age: audience === "parents" ? null : 12,
+    tag: null,
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,

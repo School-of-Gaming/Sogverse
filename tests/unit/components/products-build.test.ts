@@ -1138,6 +1138,7 @@ function mockDetailRow(
     for_parents: false,
     min_age: 8,
     max_age: 12,
+    tag: null,
     spoken_language_code: "en",
     // The lesson link rides on its own staff-only row, not on the product.
     product_staff_details: { material_url: "https://drive.sog.gg/x" },

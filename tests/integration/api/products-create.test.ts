@@ -99,6 +99,7 @@ const validBody = {
   for_parents: false,
   min_age: 7,
   max_age: 12,
+  tag: null,
   spoken_language_code: "en",
   material_url: null,
   location_id: null,
@@ -290,6 +291,34 @@ describe("POST /api/admin/products/create", () => {
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_min_age).toBeUndefined();
     expect(args.p_max_age).toBeUndefined();
+  });
+
+  it("passes a tag through, and sends an omission for an untagged product", async () => {
+    mockAuthenticatedAdmin();
+    await POST(createRequest({ data: { ...validBody, tag: "beginner" } }));
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_tag: "beginner" }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Same shape as a null age: the route maps null to undefined, supabase-js
+    // JSON-serializes the arguments (dropping undefined keys), and the RPC's
+    // DEFAULT NULL fills in the omission — untagged reaches the column.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_tag).toBeUndefined();
+  });
+
+  it("returns 400 when the tag field is missing", async () => {
+    // Required-nullable on the wire even though the RPC parameter is defaulted:
+    // the default means an omitted argument CLEARS the tag, so the one thing
+    // that must never happen is a caller forgetting the field.
+    mockAuthenticatedAdmin();
+    const { tag: _tag, ...noTag } = validBody;
+    const response = await POST(createRequest({ data: noTag }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("surfaces RPC errors as 400 with the message", async () => {

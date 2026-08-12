@@ -25,6 +25,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     for_parents: false,
     min_age: 7,
     max_age: 12,
+    tag: null,
     spoken_language_code: "en",
     image_path: "abc.png",
     // Staff-only, so it arrives on its own embedded row rather than as a column

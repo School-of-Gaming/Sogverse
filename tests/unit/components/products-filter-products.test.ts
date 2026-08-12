@@ -36,6 +36,7 @@ function row(overrides: {
     for_parents: overrides.forParents ?? false,
     min_age: overrides.minAge === undefined ? 7 : overrides.minAge,
     max_age: overrides.maxAge === undefined ? 17 : overrides.maxAge,
+    tag: null,
     product_type: overrides.productType ?? "consumer_club",
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
