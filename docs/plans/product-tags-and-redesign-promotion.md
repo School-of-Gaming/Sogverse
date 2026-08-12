@@ -119,7 +119,8 @@ between "heard about SOG" and "paid".
 
 ## Workstreams
 
-Ordered; 1–2 are prerequisites for 3–4; 5 and 6 ride behind 4.
+Ordered; 1 is the prerequisite for 3–4; 2 blocks nothing (its own rule); 5 and 6
+ride behind 4.
 
 ### 1. Database: the `product_tag` enum and column
 
@@ -154,7 +155,10 @@ Ordered; 1–2 are prerequisites for 3–4; 5 and 6 ride behind 4.
 - CI db tests: add a tag round-trip case to the update-product suite (the per-session
   fees case is the template), plus a case pinning that an **omitted parameter clears**
   (that is `DEFAULT NULL` doing its job) and that create-then-read preserves the
-  value.
+  value. Fair warning on the create half: **no db test currently calls the create
+  RPC at all** (fixtures insert directly through the shared product helper), so
+  that case is a new describe with its own UUID sub-range in the helper's registry
+  and a full explicit-arguments RPC call — budget it as such, not as "add a case".
 - The `docs/products-architecture.md` tags section is written in THIS workstream —
   the column and its rules land here, and the doc must not wait on a later
   workstream that might be deferred.
@@ -180,7 +184,10 @@ Ordered; 1–2 are prerequisites for 3–4; 5 and 6 ride behind 4.
 - The create-product form (and edit, which shares its build path in
   `src/components/admin/products/`) gains a tag picker: a four-option radio group —
   None (default) plus the three tags, labeled with the same `productTag.*` strings the
-  shop renders, so the admin sees the words the parent will see. It belongs near the
+  shop renders, so the admin sees the words the parent will see. The form enumerates
+  the three options from `Constants.public.Enums.product_tag` directly — the tag
+  module deliberately owns no ordered value list until the filter row lands, and
+  the generated enum is the source both will eventually share. It belongs near the
   audience section — same "who is this for" neighborhood; whether it sits inside that
   section or as its own small section after it is the implementer's call.
 - New admin copy in all five locales: the field's label, a one-line hint, and the
@@ -201,8 +208,13 @@ Ordered; 1–2 are prerequisites for 3–4; 5 and 6 ride behind 4.
 ### 4. Promotion: the draft bodies become live
 
 The seam-removal checklist. Every item below exists in the code with a comment saying
-promotion removes it — grep for "promotion" under `src/components/public/products/`
-and `src/components/preview/` to find them all; the list here is the map:
+promotion removes it — grep for the stem **"promot"** (not the full word — three
+files say "promoted") under `src/components/public/products/` and
+`src/components/preview/` to find them, plus two the grep cannot see: the tag
+module's whole "display-side only, no column, no admin field" header (stale the
+moment workstreams 1 and 3 land) and the fixtures module's claim that the redesign
+scenario "goes when the draft body is promoted" (superseded by the renamed-not-
+deleted ruling above — rewrite it, don't obey it). The list here is the map:
 
 - **Card:** the draft card view replaces the live browse card view (delete the old
   view's body; rename the draft files to drop the `-draft` suffix). **The old view
@@ -223,21 +235,37 @@ and `src/components/preview/` to find them all; the list here is the map:
 - **Detail-page loading skeleton:** the route's current skeleton mirrors the old
   single-column layout AND carries a comment arguing a skeleton need not mirror the
   final grid — the promotion must engage both, not silently contradict them. Decide
-  the loading state from the house three-category model: the detail read is a single
-  indexed row by id, which argues for category 2 (render the route-static pieces —
-  band chrome, containers at final size — and nothing else, no structured skeleton).
+  the loading state from the house three-category model against the gate the page
+  *actually* holds: it waits on four queries (product, auth, and two
+  customer-scoped reads), not one indexed row, and nothing in the header band is
+  route-static on `/shop/[id]` (back link, eyebrow and h1 all derive from the
+  product row; only the municipality route has a static back link). So
+  "containers at final size" is achievable and "band chrome early" mostly is not.
   Whatever the implementer concludes, the old skeleton and its comment are replaced
   together so the code never argues with itself.
-- **Tag prop normalization:** the two bodies currently disagree (`DraftCardTag |
-  null` on the card, `tag?: ProductTag` on the detail body). The row field will be
-  `ProductTag | null` — normalize both bodies to that, and make sure a `null` renders
-  neither chip nor note (an unnormalized null must not render an empty note block).
+- **Tag null-handling:** the row field is `ProductTag | null`; a `null` must render
+  neither chip nor note (an unhandled null must not render an empty note block). The
+  precise prop shapes are in the "Tag shapes, decided precisely" item below.
 - **The view-props rename, named:** the shared view-props interface's
   `imagePath: string | null` becomes `imageSrc: string | null` (an already-resolved
   URL) — the draft's prop docs already say so; this is where it happens.
-- **Vestigial props:** `railFrom2xl` on the overview card becomes always-true with one
-  body — inline it. `BackLink` stays a shared export (its comment currently promises
-  it "goes back to being private", which promotion makes false — fix the comment).
+- **Vestigial props:** `railFrom2xl` on the overview card **stays a prop** — the card
+  has two callers that survive promotion at full width (the purchase-confirmation
+  view and the admin product page), so only the detail body passes it; update its
+  "no live caller passes it" doc rather than inlining it. `BackLink` stays a shared
+  export (its comment currently promises it "goes back to being private", which
+  promotion makes false — fix the comment).
+- **Tag shapes, decided precisely:** adapter-level inputs (the card adapter's and the
+  detail body's `tag`) normalize to `ProductTag | null`; the *views* keep the
+  resolved `{ value, label }` shape (renamed off its Draft prefix), preserving the
+  adapter-translates rule — the view renders no message keys, and a label cannot be
+  paired with the wrong tag's icon. The detail body's `tag`/`imageSrc` props **die**
+  at promotion like the card's: the body reads `product.tag` and resolves
+  `product.image_path` itself, exactly as its own prop docs predict.
+- **The mobile jump-to-signup rides along free** (it is part of the draft body): no
+  work, but the scene-description rewrite must cover it, and that description is
+  separately stale about the header band (it still says the eyebrow is
+  baseline-aligned at the far right; the band is per-column now).
 - **Detail:** the draft page body replaces the live one; the live body's `MainColumn`
   wrapper and old masthead go; the scene's draft/live switch goes (one body again).
   The signup panel's `flat` prop is deleted and the flat styling becomes the only
@@ -280,9 +308,12 @@ and `src/components/preview/` to find them all; the list here is the map:
   props across its states — it is the reused-component home and must not go stale.
   Note the demos hand-build view props and today pass a raw `imagePath`; the promoted
   view takes a resolved image URL, so the demos resolve it themselves (through the
-  same resolver, which the pass-through above makes work for demo art). Which demo
-  cards wear which tag is the implementer's choice; all three tags and the untagged
-  case must appear.
+  same resolver, which the pass-through above makes work for demo art). The demos
+  read each scenario's tag **from the fixture row** — the fold has already decided
+  it, the demo page iterates every scenario, and a hand-picked tag would let a demo
+  card disagree with that scenario's own detail scene, which is exactly what the
+  one-map-feeds-both-surfaces rule exists to prevent. All three tags and the
+  untagged case appear automatically.
 - **Tests:** the preview-scene sweeps and registry pins already cover the redesign
   grid; update them as the scenario names consolidate. The route posture registry is
   untouched (no new routes).
@@ -294,7 +325,10 @@ and `src/components/preview/` to find them all; the list here is the map:
   crop), the old detail masthead (dies with promotion), the two browse-card views
   (already 3:2 after promotion), and two admin product surfaces (**stay square** —
   dense admin rows want a small thumb, and admin is not the design language's
-  audience).
+  audience). The confirmation page's exact geometry (today a 64px square inline
+  beside the summary text; a 3:2 crop reshapes that row) is not pre-decided here:
+  judge it in the existing `/preview/confirmation/*` scenes before landing, the
+  same way every other layout call on this feature was made.
 - **The banner/cover treatment must be built, not selected**: the shared thumbnail
   component is square-only and letterboxes (`object-contain`-style fitting, no crop);
   only its wordmark fallback has a banner variant. Give it (or a sibling) a 3:2
@@ -340,6 +374,11 @@ the tag-list/guard exports to the tag module from the generated enum when this l
 - The settled rules this plan records (chip-equals-tag identity, corner exclusivity,
   never-the-puzzle-piece, border-means-interactive, the 3:2 single-crop model) survive
   the plan's deletion: carried as comments into the renamed modules, plus a short
-  tags section in `docs/products-architecture.md` written during workstream 4.
+  tags section in `docs/products-architecture.md` written during workstream 1 (the
+  contradiction some earlier drafts had — "during workstream 4" — is resolved in
+  favor of 1, which carries the reason: the doc must not wait on a workstream that
+  might be deferred). That doc section also receives **workstream 6's settled
+  filter-row design** under its deferred-work conventions, so deleting this plan
+  file does not delete the one place that design is recorded.
 - This plan file is deleted in the change that completes workstream 4 (or the last
   workstream built), per `docs/plans/` lifecycle.
