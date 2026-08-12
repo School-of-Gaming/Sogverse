@@ -46,7 +46,6 @@ interface ProductBrowseCardDraftProps {
    * promotion.
    */
   imageSrc?: string | null;
-  variant: "overlay" | "chip-row";
 }
 
 export function ProductBrowseCardDraft({
@@ -56,7 +55,6 @@ export function ProductBrowseCardDraft({
   municipalityScoped = false,
   tag = null,
   imageSrc,
-  variant,
 }: ProductBrowseCardDraftProps) {
   const tTag = useTranslations("productTag");
   const viewProps = useBrowseCardViewProps(
@@ -69,15 +67,24 @@ export function ProductBrowseCardDraft({
   return (
     <ProductBrowseCardViewDraft
       {...viewProps}
-      tagLabel={tag === null ? null : tTag(productTagLabelKey(tag))}
+      // The value travels with the label because the draft body picks the
+      // chip's icon from it; two loose props could be handed a label that
+      // belongs to a different tag.
+      tag={
+        tag === null ? null : { value: tag, label: tTag(productTagLabelKey(tag)) }
+      }
+      // Truthiness, not a null check: `image_path` is a plain text column and
+      // an empty string is representable in it, which the live thumbnail
+      // already treats as "no image". A `=== null` test would send `""` down
+      // the resolution path and paint a broken 3:2 box — and this line is
+      // exactly what survives as the live resolution at promotion.
       imageSrc={
         imageSrc !== undefined
           ? imageSrc
-          : product.image_path === null
-            ? null
-            : productImageUrl(product.image_path)
+          : product.image_path
+            ? productImageUrl(product.image_path)
+            : null
       }
-      variant={variant}
     />
   );
 }

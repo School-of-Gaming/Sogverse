@@ -44,11 +44,11 @@ import { previewSceneHref } from "../href";
  * a grid that actually answers. Cards open the matching product-detail scene
  * rather than `/shop/<id>`, which no fixture id resolves to.
  *
- * The two `redesign-*` scenarios are the exception to "the scene renders the
- * live body": they render the *draft* browse card in the same grid, which is
- * the one-body-two-shells rule doing its job — the draft body is what will
- * replace the live card's, and it is being judged as a page first. The filter
- * chips keep working there too, because they run over the rows' real fields; a
+ * The `redesign` scenario is the exception to "the scene renders the live
+ * body": it renders the *draft* browse card in the same grid, which is the
+ * one-body-two-shells rule doing its job — the draft body is what will replace
+ * the live card's, and it is being judged as a page first. The filter chips
+ * keep working there too, because they run over the rows' real fields; a
  * product's tag is not among them and is not filterable yet, which is expected
  * until the tag becomes a column.
  */
@@ -78,35 +78,26 @@ function categoryOf(productType: string): ShopCategory | undefined {
   );
 }
 
-/** The card variant a scenario asks for, or null on the live-card scenarios. */
-function draftVariantFor(
-  scenario: ShopBrowseScenario,
-): "overlay" | "chip-row" | null {
-  switch (scenario) {
-    case "redesign-overlay":
-      return "overlay";
-    case "redesign-chip-row":
-      return "chip-row";
-    default:
-      return null;
-  }
+/**
+ * A live-card grid's entries: a slug and nothing else. The redesign grid adds
+ * the tag, the demo art and the copy overrides, and `SHOP_SCENE_REDESIGN`
+ * carries all three; giving both shapes one type is what keeps the fixture
+ * build below a single path.
+ */
+type SceneEntry = ShopRedesignEntry | { slug: PreviewScenario };
+
+/** Whether this scenario renders the draft card rather than the live one. */
+function isRedesign(entry: SceneEntry): entry is ShopRedesignEntry {
+  return "tag" in entry;
 }
 
-/**
- * One list shape for all four scenarios: the two live-card grids are the
- * redesign entries minus everything the redesign added, so the fixture build
- * below has a single path through it.
- */
-function entriesFor(scenario: ShopBrowseScenario): readonly ShopRedesignEntry[] {
-  const plain = (slugs: readonly PreviewScenario[]) =>
-    slugs.map((slug) => ({ slug, tag: null, imageSrc: null }));
+function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
   switch (scenario) {
     case "default":
-      return plain(SHOP_SCENE_DEFAULT);
+      return SHOP_SCENE_DEFAULT.map((slug) => ({ slug }));
     case "audiences":
-      return plain(SHOP_SCENE_AUDIENCES);
-    case "redesign-overlay":
-    case "redesign-chip-row":
+      return SHOP_SCENE_AUDIENCES.map((slug) => ({ slug }));
+    case "redesign":
       return SHOP_SCENE_REDESIGN;
   }
 }
@@ -128,7 +119,7 @@ export function ShopBrowseScene({
   // Memoised because the live-card scenarios build their entry list on the fly:
   // a fresh array every render would re-run the fixture build below with it.
   const entries = useMemo(() => entriesFor(scenario), [scenario]);
-  const variant = draftVariantFor(scenario);
+  const isDraftGrid = scenario === "redesign";
 
   // The fixtures are anchored once, on the first `useNow()` value, and held —
   // the same arrangement every other scene uses. The card keeps deriving its
@@ -140,7 +131,16 @@ export function ShopBrowseScene({
   const { sections, counts, hrefById, tagById, imageById } = useMemo(() => {
     const products = entries.map((entry) => ({
       entry,
-      product: buildBrowseFixture(entry.slug, anchorNow, entry.nameOverride),
+      product: buildBrowseFixture(
+        entry.slug,
+        anchorNow,
+        // The redesign grid replaces both halves of a card's copy: real names,
+        // with the scenario descriptor moved down into the description. The
+        // live-card grids keep the ` · label` suffix they have always had.
+        isRedesign(entry)
+          ? { name: entry.nameOverride, description: entry.descriptionOverride }
+          : undefined,
+      ),
     }));
     // Fixture ids resolve to no real product, so a card must open its own
     // detail scene rather than `/shop/<id>`.
@@ -168,10 +168,16 @@ export function ShopBrowseScene({
       // The two facts the draft card needs and no row carries: the tag has no
       // column yet, and a fixture has no storage object to point an image at.
       tagById: new Map<string, ProductTag | null>(
-        products.map(({ entry, product }) => [product.id, entry.tag]),
+        products.map(({ entry, product }) => [
+          product.id,
+          isRedesign(entry) ? entry.tag : null,
+        ]),
       ),
       imageById: new Map<string, string | null>(
-        products.map(({ entry, product }) => [product.id, entry.imageSrc]),
+        products.map(({ entry, product }) => [
+          product.id,
+          isRedesign(entry) ? entry.imageSrc : null,
+        ]),
       ),
     };
   }, [anchorNow, entries, t, visible]);
@@ -185,29 +191,26 @@ export function ShopBrowseScene({
   // real `<ProductBrowseCard>` — see the `renderCard` seam's own note, which
   // this whole branch is removed alongside at promotion.
   const renderCard = useMemo(() => {
-    if (variant === null) return undefined;
-    // Bound after the guard so the narrowed type is the *declared* one: a
-    // hoisted function declaration cannot see a narrowing that happened above
-    // it, however constant the value is.
-    const cardVariant = variant;
+    if (!isDraftGrid) return undefined;
     function renderDraftCard(
       product: ProductBrowseRow,
       cardCounts: ParticipationCounts | null,
       detailHref: string | undefined,
+      municipalityScoped: boolean | undefined,
     ) {
       return (
         <ProductBrowseCardDraft
           product={product}
           counts={cardCounts}
           detailHref={detailHref}
+          municipalityScoped={municipalityScoped}
           tag={tagById.get(product.id) ?? null}
           imageSrc={imageById.get(product.id) ?? null}
-          variant={cardVariant}
         />
       );
     }
     return renderDraftCard;
-  }, [imageById, tagById, variant]);
+  }, [imageById, isDraftGrid, tagById]);
 
   return (
     <ProductBrowseBody

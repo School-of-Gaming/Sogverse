@@ -91,18 +91,24 @@ interface ProductBrowseResultsProps {
    * `<ProductBrowseCard>`, which is what both real browse surfaces get.
    *
    * **This exists for the draft-card preview and is removed at promotion.** The
-   * shop scene's redesign scenarios render the draft body over these same rows,
+   * shop scene's redesign scenario renders the draft body over these same rows,
    * in this same grid, at these same widths — which is the only honest way to
    * judge a card redesign, since a card is judged against its neighbours. A
    * callback rather than a variant prop, so nothing about the draft card leaks
    * into this component's types; the callback owns whatever extra props its
    * adapter needs (the tag, the demo image), and this component keeps owning
    * the key.
+   *
+   * It is handed **everything** the default card is given, `municipalityScoped`
+   * included — which today's only caller ignores, since the shop scene is not a
+   * municipality page. Withholding it would make the seam quietly lossy the
+   * moment anything on the `/schools` surface reached for it.
    */
   renderCard?: (
     product: ProductBrowseRow,
     counts: ParticipationCounts | null,
     detailHref: string | undefined,
+    municipalityScoped: boolean | undefined,
   ) => ReactNode;
 }
 
@@ -205,7 +211,7 @@ export function ProductBrowseResults({
                     // the grid is byte-for-byte what it was on the live path.
                     <Fragment key={p.id}>
                       {renderCard ? (
-                        renderCard(p, cardCounts, href)
+                        renderCard(p, cardCounts, href, municipalityScoped)
                       ) : (
                         <ProductBrowseCard
                           product={p}

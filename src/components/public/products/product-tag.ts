@@ -10,24 +10,14 @@
 // the real feature — and when they do, this module is where the filter's
 // chip-equals-tag rule belongs, exactly as `product-audience.ts` holds it for
 // the audience badge. Until then the only source of a tag is a scene fixture.
+//
+// Deliberately just the type and the label resolution. A value list and a
+// string guard were written first and had no callers: once the enum exists in
+// the database, both come off the generated `Constants` object (the schema
+// rule for every other enum in the app), so hand-maintained copies here would
+// be born stale.
 
 export type ProductTag = "neuroinclusive" | "beginner" | "advanced";
-
-/**
- * Display order, and the list a future filter row would paint from. Explicit
- * rather than derived, so the sequence is a decision: the tag that changes who
- * can take part leads, and the two skill levels follow in the order a reader
- * would put them in.
- */
-export const PRODUCT_TAGS = [
-  "neuroinclusive",
-  "beginner",
-  "advanced",
-] as const satisfies readonly ProductTag[];
-
-export function isProductTag(v: string): v is ProductTag {
-  return (PRODUCT_TAGS as readonly string[]).includes(v);
-}
 
 /**
  * The `productTag.*` message key a surface labels a tag with.

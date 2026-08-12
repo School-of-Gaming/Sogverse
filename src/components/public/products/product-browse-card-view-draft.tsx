@@ -1,69 +1,89 @@
 "use client";
 
-import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { MapPin, Globe, Tag, UserRound } from "lucide-react";
+import {
+  Brain,
+  Globe,
+  MapPin,
+  Rocket,
+  Sprout,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
+import type { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { NavChevron } from "@/components/ui/nav-chevron";
 import { SogFallback } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
-import { useRegistrationCta } from "./registration-cta";
-import { SeatAvailabilityBar } from "./seat-availability-bar";
-import { StatusChip } from "./status-chip";
 import {
-  PriceBlock,
+  BrowseCardFooter,
+  StretchedCardLink,
+  useBrowseCardShell,
   type ProductBrowseCardViewProps,
 } from "./product-browse-card-view";
+import type { ProductTag } from "./product-tag";
 
 /**
  * **The DRAFT browse card body.** One body, two shells: this is the body that
  * replaces `ProductBrowseCardView`'s at promotion, not a third fork of it. It
- * is rendered today only by the shop preview scene's two redesign scenarios,
- * over fixtures, so the design can be signed off as a *page* — a grid of cards
- * at real widths — before the live storefront is touched.
+ * is rendered today only by the shop preview scene's `redesign` scenario, over
+ * fixtures, so the design can be signed off as a *page* — a grid of cards at
+ * real widths — before the live storefront is touched.
  *
- * What changes from the live card, and why each is worth looking at:
+ * What changes from the live card:
  *
- * - **Media on top.** A full-card-width 3:2 image instead of the 80–96px
- *   square beside the text, which is what frees the title and the meta list to
- *   run the whole width. A product with no image gets the same wordmark
- *   treatment at the same ratio, so an imaged card and an un-imaged one are the
- *   same height on the grid.
- * - **A tag chip** — who the product is *designed* for (see `product-tag.ts`) —
- *   which is a different question from the audience badge that may sit beside
- *   it. Two variants place them differently and that is the main thing to
- *   judge: `overlay` puts both chips on the image, bottom-left, with no scrim
- *   (a `StatusChip` carries `bg-background`, so it stays legible over a bright
- *   photo on its own); `chip-row` leaves the image clean and gives them a row
- *   under the topic line, alongside the age and the language flag.
- * - **The audience badge and the age line may now coexist.** The live card
- *   makes the badge *replace* the age line, which was a width compromise: the
- *   badge, an age range and a flag would not fit one narrow row beside a
- *   thumbnail. A full-width layout dissolves that constraint, so the rule is
- *   deliberately reopened here — a badged card shows both — and Kyle judges it
- *   in the scene. If the answer is "still too busy", the fix is to restore the
- *   live card's rule in this body, not to narrow the layout again.
- * - **No description.** Deliberate: the detail page owns the prose, and
- *   card-scanning is facts plus an image. It is also what pays for the media
- *   block's height. `description` is still in the props (this takes the live
- *   view's props verbatim) and is deliberately unread — at promotion it comes
- *   off the interface, and `imagePath` goes with it, since a resolved
- *   `imageSrc` is what this body takes.
+ * - **Media on top.** A full-card-width 3:2 image instead of the 80–96px square
+ *   beside the text, which is what frees the title and the meta list to run the
+ *   whole width. A product with no image gets the same wordmark treatment at
+ *   the same ratio, so an imaged card and an un-imaged one are the same height
+ *   on the grid.
+ * - **Two overlaid chips, in two corners, one fact each.** The tag — who the
+ *   product is *designed* for (`product-tag.ts`) — sits bottom-left. The
+ *   top-right slot holds the audience badge, or the age range when there is no
+ *   badge: **one slot, exclusive**, which is the live card's rule kept rather
+ *   than reopened. So a parents-only card shows "For parents", a family one
+ *   "For families", and an ordinary gamers-only one "Ages 9–12" — never two of
+ *   those at once, and the age line no longer appears in the meta list at all.
+ * - **Filled chips, not the outline `StatusChip`.** These sit on a photograph,
+ *   where an outline pill with a translucent-looking ground is exactly the
+ *   thing that stops being legible. Solid semantic fills instead, and local to
+ *   this file: the draft owns its own chip vocabulary until promotion decides
+ *   whether it is worth pushing back into the shared component.
+ * - **No description above the fold of the card, but one below the facts.** The
+ *   short description returns beneath the meta rows at `line-clamp-2` (the live
+ *   card allows three): the image has taken the height that a third line used
+ *   to spend, and two lines is enough to tell two products apart when the
+ *   picture and the title have not.
  *
- * Everything else is preserved exactly: the stretched link with its `cardLink`
- * accessible name, the hover / focus-within / active feedback gated on whether
- * the card actually opens, the ended card's desaturation and note, the inert
- * dead-ends, and the whole footer (price or seat bar left, CTA right) — which
- * reuses the live view's own `PriceBlock` rather than restating it.
+ * Everything below the rule, and everything about whether the card opens, is
+ * **shared code rather than a copy**: `useBrowseCardShell` decides openability
+ * and hands back the card's own class string, `BrowseCardFooter` renders the
+ * footer, and `StretchedCardLink` renders the link with its `cardLink`
+ * accessible name. So the two bodies cannot drift on the rules that matter, and
+ * this file has no opinion about them at all.
+ *
+ * One caveat on what the scene can actually show: the ended treatment (the
+ * desaturated card and the note in place of the footer row) is implemented —
+ * it comes with the shared shell and footer — but is **not reachable in the
+ * preview**, because the fixtures re-base their calendar onto the live clock
+ * and no shop-scene scenario is authored as finished. Judge that state on the
+ * `camp-ended` product scene, or trust the shared code; it is not on this grid.
+ *
+ * `imagePath` stays in the props because this takes the live view's props
+ * verbatim, and is deliberately unread: a resolved `imageSrc` is what this body
+ * takes, and the path prop comes off the interface at promotion.
  */
+export interface DraftCardTag {
+  /** Drives the icon — which is why the value travels, not only its label. */
+  value: ProductTag;
+  /** Already translated by the adapter; this body renders no message keys. */
+  label: string;
+}
+
 export interface ProductBrowseCardViewDraftProps
   extends ProductBrowseCardViewProps {
-  /**
-   * Pre-resolved tag label, or null on an untagged product — which is most of
-   * them, and stays the unremarkable case.
-   */
-  tagLabel: string | null;
+  /** The product's tag, or null on an untagged product — which is most of them,
+   *  and stays the unremarkable case. */
+  tag: DraftCardTag | null;
   /**
    * An already-resolved image URL, not a storage path: the adapter decides
    * where the picture comes from (a product's `image_path` in the live shop, a
@@ -71,12 +91,27 @@ export interface ProductBrowseCardViewDraftProps
    * renders the wordmark banner.
    */
   imageSrc: string | null;
-  /** Where the tag and audience chips sit — see the component doc above. */
-  variant: "overlay" | "chip-row";
 }
+
+/**
+ * One icon per tag, and the reason the tag's *value* is carried alongside its
+ * label. A generic tag icon was tried first and read as a price tag — a sale
+ * sticker on a club — which is the opposite of what these say.
+ *
+ * **`Puzzle` is never the neuroinclusive icon.** The puzzle piece is a
+ * contested symbol in the neurodivergent community and is not ours to reclaim
+ * on a shop card; `Brain` is deliberate and is not to be "fixed" back to a
+ * puzzle by anybody reading this later.
+ */
+const TAG_ICON: Record<ProductTag, LucideIcon> = {
+  neuroinclusive: Brain,
+  beginner: Sprout,
+  advanced: Rocket,
+};
 
 export function ProductBrowseCardViewDraft({
   name,
+  description,
   topicLabel,
   scheduleLines,
   ageLine,
@@ -87,37 +122,22 @@ export function ProductBrowseCardViewDraft({
   seatBar,
   state,
   detailHref,
-  tagLabel,
+  tag,
   imageSrc,
-  variant,
 }: ProductBrowseCardViewDraftProps) {
-  const t = useTranslations("productBrowse.card");
-  const cta = useRegistrationCta(state);
-  const isEnded = state.kind === "ended";
+  // Openability, the card's class string, and the footer's inputs — all of it
+  // shared with the live body rather than restated here.
+  const shell = useBrowseCardShell(state, detailHref);
 
-  // Identical to the live card's rule: only a "primary" CTA has anywhere worth
-  // going, so every clickable affordance — the chevron, the hover/focus/active
-  // feedback, the label's colour and the stretched link — reads this one value
-  // and a card cannot look openable without being openable.
-  const openHref = cta?.kind === "primary" ? detailHref : undefined;
-
-  const isOverlay = variant === "overlay";
-  const hasChips = tagLabel !== null || audienceLabel !== null;
+  // The top-right slot, resolved once. The badge is the coarser fact and wins
+  // when both exist; the range fills the slot on the ordinary gamers-only card,
+  // which is what stops that corner reading as empty on most of the grid.
+  const whoLabel = audienceLabel ?? ageLine;
+  const TagIcon = tag === null ? null : TAG_ICON[tag.value];
 
   return (
-    <Card
-      className={cn(
-        "group relative flex h-full flex-col overflow-hidden transition-[border-color,box-shadow]",
-        isEnded && "opacity-70 grayscale-[40%]",
-        openHref && [
-          "cursor-pointer",
-          "hover:border-primary/40 hover:shadow-lg",
-          "focus-within:border-primary/40 focus-within:shadow-lg",
-          "active:border-primary/40",
-        ],
-      )}
-    >
-      {/* The media block. `relative` is what the overlay chips are positioned
+    <Card className={shell.cardClassName}>
+      {/* The media block. `relative` is what the two chips are positioned
           against; the card's own `overflow-hidden` is what rounds the top two
           corners of whatever is painted here. */}
       <div className="relative">
@@ -138,26 +158,19 @@ export function ProductBrowseCardViewDraft({
           <SogFallback variant="banner" className="aspect-[3/2] w-full" />
         )}
 
-        {/* Overlay variant only: the chips ride the bottom-left of the image
-            with no scrim behind them — `StatusChip` is already an opaque
-            `bg-background` pill, which is what carries the contrast over a
-            bright photo. The tag leads, because it is the newer fact and the
-            one a family might be scanning for; the audience badge follows it.
-            Nothing else is ever overlaid — the price stays in the footer where
-            the seat bar can take its place. */}
-        {isOverlay && hasChips && (
-          <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center gap-1.5 p-2">
-            {tagLabel !== null && (
-              <StatusChip tone="primary" icon={Tag}>
-                {tagLabel}
-              </StatusChip>
-            )}
-            {audienceLabel !== null && (
-              <StatusChip tone="info" icon={UserRound}>
-                {audienceLabel}
-              </StatusChip>
-            )}
-          </div>
+        {/* Opposite corners, one fact each, so neither chip has to reserve room
+            for the other and a card wearing only one of them has no hole where
+            the other would be. Nothing else is ever overlaid — the price stays
+            in the footer, where a seat bar can take its place. */}
+        {tag !== null && TagIcon !== null && (
+          <OverlayChip className="bottom-2 left-2 bg-primary text-primary-foreground" icon={TagIcon}>
+            {tag.label}
+          </OverlayChip>
+        )}
+        {whoLabel !== null && (
+          <OverlayChip className="right-2 top-2 bg-secondary text-secondary-foreground" icon={UserRound}>
+            {whoLabel}
+          </OverlayChip>
         )}
       </div>
 
@@ -169,44 +182,22 @@ export function ProductBrowseCardViewDraft({
               long-name fixture on the scene is there to check. */}
           <h3 className="line-clamp-2 text-base font-semibold">{name}</h3>
 
-          {/* Topic left, delivery language right. In the chip-row variant the
-              flag moves down into the chip row instead, so this row can be the
-              topic alone — and is dropped entirely when there is neither. */}
-          {(topicLabel !== null || isOverlay) && (
-            <div className="flex items-center gap-2">
-              {topicLabel !== null && (
-                <p className="text-xs font-medium tracking-wide text-primary">
-                  {topicLabel}
-                </p>
-              )}
-              {isOverlay && (
-                <LanguageFlag className="ml-auto" code={spokenLanguageCode} />
-              )}
-            </div>
-          )}
+          {/* Topic left, delivery language right — the flag stays down here
+              rather than joining the chips on the image: it is a standing fact
+              about the product, not a label somebody browses for. Dropped
+              entirely when there is no topic and no flag to hang it on. */}
+          <div className="flex items-center gap-2">
+            {topicLabel !== null && (
+              <p className="text-xs font-medium tracking-wide text-primary">
+                {topicLabel}
+              </p>
+            )}
+            <LanguageFlag className="ml-auto" code={spokenLanguageCode} />
+          </div>
 
-          {/* Chip-row variant: the image stays clean and every short fact sits
-              on one wrapping row — tag, audience, ages, language. The flag is
-              always here, so the row always renders. */}
-          {!isOverlay && (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              {tagLabel !== null && (
-                <StatusChip tone="primary" icon={Tag}>
-                  {tagLabel}
-                </StatusChip>
-              )}
-              {audienceLabel !== null && (
-                <StatusChip tone="info" icon={UserRound}>
-                  {audienceLabel}
-                </StatusChip>
-              )}
-              {ageLine !== null && (
-                <span className="text-xs text-muted-foreground">{ageLine}</span>
-              )}
-              <LanguageFlag code={spokenLanguageCode} />
-            </div>
-          )}
-
+          {/* Schedule and place. The age range is deliberately absent — it is
+              up in the top-right chip, or it has yielded that slot to the
+              audience badge. */}
           <ul className="space-y-0.5 text-xs text-muted-foreground">
             {scheduleLines.map((line, idx) => (
               <li key={idx} className="line-clamp-1">
@@ -221,70 +212,66 @@ export function ProductBrowseCardViewDraft({
               )}
               <span className="truncate">{locationLine.label}</span>
             </li>
-            {/* Overlay variant: the age range joins the muted meta list as
-                plain text, because the chips it would otherwise share a row
-                with are up on the image. It renders alongside an audience
-                badge rather than yielding to it — the reopened rule described
-                at the top of this file. */}
-            {isOverlay && ageLine !== null && <li>{ageLine}</li>}
           </ul>
         </div>
 
-        {/* Verbatim from the live card: the ended note, or the two-piece footer
-            row whose halves are anchored to the card rather than to each
-            other. Changing this in a draft body would mean judging the
-            redesign against a footer the shop does not have. */}
-        <div className="mt-auto border-t pt-3">
-          {isEnded ? (
-            <p className="text-xs italic text-muted-foreground">
-              {t("endedNote")}
-            </p>
-          ) : (
-            <div className="flex items-center justify-between gap-6">
-              {seatBar !== undefined ? (
-                <SeatAvailabilityBar
-                  className="flex-1"
-                  seatCount={seatBar.total}
-                  seatsLeft={
-                    seatBar.total === null
-                      ? 0
-                      : Math.max(0, seatBar.total - seatBar.filled)
-                  }
-                  waitlistEnabled={seatBar.waitlistEnabled}
-                />
-              ) : (
-                <PriceBlock price={price} />
-              )}
-              {cta &&
-                (openHref ? (
-                  <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
-                    {cta.labelText}
-                    <NavChevron size="sm" className="text-primary" />
-                  </span>
-                ) : (
-                  <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-muted-foreground">
-                    {cta.labelText}
-                  </span>
-                ))}
-            </div>
-          )}
-        </div>
+        {/* Two lines, not the live card's three: the media block has taken that
+            height, and the picture plus the title already do most of the work
+            of telling one product from another. */}
+        {description !== null && (
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {description}
+          </p>
+        )}
+
+        {/* The same footer the live card renders — the same component, not the
+            same markup twice. The redesign is a change above the rule only. */}
+        <BrowseCardFooter shell={shell} seatBar={seatBar} price={price} />
       </CardContent>
 
-      {/* The whole card as one link, exactly as the live card does it: an empty
-          stretched anchor, an inset focus ring (the card clips its overflow and
-          would shave off an outset one), and an accessible name leading with
-          the footer's visible word so voice control can reach it. Nothing on
-          this card owns a click of its own, so nothing is lifted above the
-          anchor — including the overlaid chips, which are labels, not
-          controls. */}
-      {openHref && cta && (
-        <Link
-          href={openHref}
-          aria-label={t("cardLink", { action: cta.labelText, name })}
-          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        />
-      )}
+      {/* Nothing on this card owns a click of its own — the overlaid chips are
+          labels, not controls — so the shared stretched link is the whole of
+          its interactivity. */}
+      <StretchedCardLink shell={shell} name={name} />
     </Card>
+  );
+}
+
+/**
+ * A chip that sits on a photograph.
+ *
+ * Local to the draft rather than a widening of `StatusChip`, deliberately: that
+ * component's whole visual argument is an outline pill on the page's own
+ * background, which is right beside a thumbnail and wrong on top of one. This
+ * is the opposite construction — a solid semantic fill with its paired
+ * foreground token, which is legible over a bright sky and a night scene alike
+ * because it does not depend on what is behind it at all. If the redesign
+ * ships, that is the moment to decide whether the shared component grows a
+ * filled tone; until then the draft carries its own.
+ *
+ * The caller supplies the corner and the fill/foreground pair in one
+ * `className`, because those two decisions are the same decision: a chip's
+ * colour is what says which fact it is, and its corner is where that fact
+ * lives.
+ */
+function OverlayChip({
+  className,
+  icon: Icon,
+  children,
+}: {
+  className?: string;
+  icon: LucideIcon;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "absolute inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shadow-sm",
+        className,
+      )}
+    >
+      <Icon className="h-3 w-3 shrink-0" aria-hidden />
+      <span className="truncate">{children}</span>
+    </span>
   );
 }
