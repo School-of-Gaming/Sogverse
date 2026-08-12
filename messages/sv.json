@@ -1522,6 +1522,11 @@
     "families": "För familjer",
     "familiesWithAges": "För familjer, ålder {min}–{max}"
   },
+  "productTag": {
+    "neuroinclusive": "Neuroinkluderande",
+    "beginner": "Nybörjare",
+    "advanced": "Avancerad"
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
     "waitlistAvailable": "Väntelista"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { ParticipationCounts } from "@/services/participations";
@@ -86,6 +86,24 @@ interface ProductBrowseResultsProps {
   /** True on a single-municipality page — drops the redundant municipality name
    *  from online muni cards (see `ProductBrowseCard`). */
   municipalityScoped?: boolean;
+  /**
+   * Substitutes the card each grid cell renders. Defaults to the live
+   * `<ProductBrowseCard>`, which is what both real browse surfaces get.
+   *
+   * **This exists for the draft-card preview and is removed at promotion.** The
+   * shop scene's redesign scenarios render the draft body over these same rows,
+   * in this same grid, at these same widths — which is the only honest way to
+   * judge a card redesign, since a card is judged against its neighbours. A
+   * callback rather than a variant prop, so nothing about the draft card leaks
+   * into this component's types; the callback owns whatever extra props its
+   * adapter needs (the tag, the demo image), and this component keeps owning
+   * the key.
+   */
+  renderCard?: (
+    product: ProductBrowseRow,
+    counts: ParticipationCounts | null,
+    detailHref: string | undefined,
+  ) => ReactNode;
 }
 
 export function ProductBrowseResults({
@@ -95,6 +113,7 @@ export function ProductBrowseResults({
   scopeHasProducts,
   productHref,
   municipalityScoped,
+  renderCard,
 }: ProductBrowseResultsProps) {
   const t = useTranslations("productBrowse");
   // The empty state's clear affordance is the rail's button in another place,
@@ -177,15 +196,27 @@ export function ProductBrowseResults({
                   is also the ceiling — a fourth column was tried and reverted,
                   see the width-budget comment on the root element. */}
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {section.products.map((p) => (
-                  <ProductBrowseCard
-                    key={p.id}
-                    product={p}
-                    counts={countsByProduct.get(p.id) ?? null}
-                    detailHref={productHref?.(p.id)}
-                    municipalityScoped={municipalityScoped}
-                  />
-                ))}
+                {section.products.map((p) => {
+                  const cardCounts = countsByProduct.get(p.id) ?? null;
+                  const href = productHref?.(p.id);
+                  return (
+                    // The Fragment is what keeps the key here rather than in a
+                    // caller's callback; it renders no element of its own, so
+                    // the grid is byte-for-byte what it was on the live path.
+                    <Fragment key={p.id}>
+                      {renderCard ? (
+                        renderCard(p, cardCounts, href)
+                      ) : (
+                        <ProductBrowseCard
+                          product={p}
+                          counts={cardCounts}
+                          detailHref={href}
+                          municipalityScoped={municipalityScoped}
+                        />
+                      )}
+                    </Fragment>
+                  );
+                })}
               </div>
             </section>
           ))}

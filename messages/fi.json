@@ -1522,6 +1522,11 @@
     "families": "Perheille",
     "familiesWithAges": "Perheille, ikä {min}–{max}"
   },
+  "productTag": {
+    "neuroinclusive": "Neurokirjo",
+    "beginner": "Aloittelijoille",
+    "advanced": "Edistyneille"
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
     "waitlistAvailable": "Jonotuslista"

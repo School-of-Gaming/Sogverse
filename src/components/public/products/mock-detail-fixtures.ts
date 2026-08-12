@@ -7,6 +7,7 @@ import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
 import type { ParticipationCounts } from "@/services/participations";
 import type { RegistrationState } from "./derive-registration-state";
+import type { ProductTag } from "./product-tag";
 import type {
   AuthState,
   MyParticipationState,
@@ -632,6 +633,89 @@ export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
 ];
 
 /**
+ * Scene-only demo art for the **card redesign** grids, in `public/preview/`.
+ *
+ * Every fixture row carries `image_path: null` — no storage object backs a
+ * mock — so a grid built straight from them would put the fallback banner on
+ * every card and leave the redesign's media block unjudged. These four flat
+ * SVGs stand in for product photos, and are picked for spread rather than
+ * prettiness: `park` is near-white at its bottom-left, which is precisely where
+ * the overlay variant parks its chips, and `racetrack` is a night scene, so the
+ * two ends of the contrast problem are on the same page. They are demo art and
+ * die with the override that feeds them.
+ */
+const DEMO_ART = {
+  terrain: "/preview/card-terrain.svg",
+  racetrack: "/preview/card-racetrack.svg",
+  park: "/preview/card-park.svg",
+  interior: "/preview/card-interior.svg",
+} as const;
+
+export interface ShopRedesignEntry {
+  slug: PreviewScenario;
+  /**
+   * The product tag the draft card wears. Not a fixture *row* field — there is
+   * no column for it yet (see `product-tag.ts`) — so it rides alongside the
+   * scenario and is handed to the draft adapter directly.
+   */
+  tag: ProductTag | null;
+  /** Demo art URL, or null on the one card that shows the fallback banner. */
+  imageSrc: string | null;
+  /**
+   * Replaces the product's name outright — including the ` · label` suffix
+   * every other card carries. Exactly one card uses it, and its whole job is to
+   * be too long: the media-top layout's claim is that a full-width title row
+   * rarely needs its clamp, and a grid of comfortable names cannot test that.
+   * Losing the label suffix on that one card is the accepted cost; the long
+   * name identifies it well enough.
+   */
+  nameOverride?: string;
+}
+
+/**
+ * The **card redesign** grid: one page carrying every combination the draft
+ * card has to survive, reusing the existing scenarios rather than authoring a
+ * parallel set of products.
+ *
+ * What it puts side by side, and why each earns its place:
+ *
+ * - a tagged card of each tag, so the three labels are comparable at a glance;
+ * - the free capped club tagged, because a Free chip in the footer and a tag
+ *   chip on the image are the two chips a card can wear at once;
+ * - the family event tagged — the maximal card: tag chip, audience badge, an
+ *   age line *and* a flag, which is exactly the combination the live card
+ *   refuses and this redesign reopens;
+ * - the parents-only club and event untagged, so an audience badge is seen
+ *   without a tag beside it (and the event has no age line at all);
+ * - the threshold club untagged **and** un-imaged, so the fallback banner is
+ *   judged in the grid rather than on its own;
+ * - the full-with-waitlist club under a deliberately long Finnish name;
+ * - and the two dead ends — a full camp and, in the footer, the inert CTA —
+ *   because nothing below the rule changed and that has to stay visibly true.
+ */
+export const SHOP_SCENE_REDESIGN: readonly ShopRedesignEntry[] = [
+  { slug: "consumer-club", tag: "beginner", imageSrc: DEMO_ART.terrain },
+  { slug: "consumer-club-free", tag: "neuroinclusive", imageSrc: DEMO_ART.park },
+  {
+    slug: "consumer-club-full-waitlist",
+    tag: "advanced",
+    imageSrc: DEMO_ART.interior,
+    nameOverride: "Minecraft-rakentelukerho edistyneille konepajamestareille",
+  },
+  { slug: "consumer-club-threshold", tag: null, imageSrc: null },
+  { slug: "consumer-club-parents-only", tag: null, imageSrc: DEMO_ART.interior },
+  { slug: "camp-open", tag: "beginner", imageSrc: DEMO_ART.terrain },
+  { slug: "camp-full-closed", tag: null, imageSrc: DEMO_ART.racetrack },
+  {
+    slug: "event-both-audiences",
+    tag: "neuroinclusive",
+    imageSrc: DEMO_ART.park,
+  },
+  { slug: "event-parents-only", tag: null, imageSrc: DEMO_ART.racetrack },
+  { slug: "free-event", tag: null, imageSrc: DEMO_ART.racetrack },
+];
+
+/**
  * The shop browse scene's scenario slugs and guard.
  *
  * They live here — not in the scene component — because the scene file is
@@ -639,8 +723,18 @@ export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
  * exported from a client module is a client reference there, and calling it
  * during server render is a runtime error. Same arrangement as every other
  * surface (the guard lives with the fixtures, the component imports it).
+ *
+ * The two `redesign-*` entries are the draft card's grids and are temporary by
+ * construction: they go when the draft body is promoted onto the live card,
+ * along with the `renderCard` seam in `ProductBrowseResults` that lets a scene
+ * substitute a card at all.
  */
-export const SHOP_BROWSE_SCENARIOS = ["default", "audiences"] as const;
+export const SHOP_BROWSE_SCENARIOS = [
+  "default",
+  "audiences",
+  "redesign-overlay",
+  "redesign-chip-row",
+] as const;
 
 export type ShopBrowseScenario = (typeof SHOP_BROWSE_SCENARIOS)[number];
 
@@ -656,10 +750,17 @@ export function isShopBrowseScenario(s: string): s is ShopBrowseScenario {
  * them. The suffix is what makes each card identifiable as the fixture behind
  * it — the browse scene's whole job is comparing cards side by side, and cards
  * you cannot tell apart defeat it.
+ *
+ * `nameOverride` replaces the whole thing, suffix included: a grid that needs
+ * to prove what its title row does with a long name needs one name that is not
+ * built out of a short one. It belongs here rather than in the scene because
+ * this is the only place a fixture's name is decided — a scene rewriting names
+ * after the fact would be a second naming rule, free to disagree with this one.
  */
 export function buildBrowseFixture(
   slug: PreviewScenario,
   now: Date,
+  nameOverride?: string,
 ): ProductDetailRow {
   const { product } = buildScenarioFixture(slug);
   // The browse card DERIVES its registration state from the row's calendar
@@ -685,7 +786,7 @@ export function buildBrowseFixture(
           ).toISOString(),
     product_translations: product.product_translations.map((tr) => ({
       ...tr,
-      name: `${tr.name} · ${SCENARIOS[slug].label}`,
+      name: nameOverride ?? `${tr.name} · ${SCENARIOS[slug].label}`,
     })),
   };
 }

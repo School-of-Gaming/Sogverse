@@ -34,7 +34,7 @@ export function ProductThumbnail({
         className={cn("flex shrink-0 items-center justify-center", size, className)}
         aria-label={alt}
       >
-        <SogFallback />
+        <SogFallback className="aspect-square rounded-md" />
       </div>
     );
   }
@@ -50,7 +50,7 @@ export function ProductThumbnail({
   );
 }
 
-// Neutral square shown when a product is missing its image. Admin form
+// Neutral ground shown when a product is missing its image. Admin form
 // requires one but the DB doesn't enforce it, and mocks intentionally
 // omit one — without this, those surfaces render a broken-image icon.
 // Real visitors should never see this; mocks always will until image
@@ -59,19 +59,39 @@ export function ProductThumbnail({
 // Mirrors the OG image's wordmark choice: muted ground, yellow "SOG".
 // SVG so it scales pixel-cleanly from browse-card 80–96px through
 // detail-hero 96–140px without container queries.
-function SogFallback() {
+//
+// Exported because the shape is a caller's decision, not this file's: the
+// square thumbnail here asks for a square, and the draft browse card's
+// no-image banner asks for the same treatment at its image's 3:2 — same
+// ground, same wordmark, so an imaged card and an un-imaged one are the same
+// height on a grid. The variant picks the viewBox rather than the caller
+// passing coordinates, because a caller has no business restating the
+// wordmark's geometry; the rect and the text are sized in percentages, so the
+// mark stays centred and proportional at either ratio.
+const FALLBACK_VIEW_BOX = {
+  square: "0 0 100 100",
+  banner: "0 0 150 100",
+} as const;
+
+export function SogFallback({
+  className,
+  variant = "square",
+}: {
+  className?: string;
+  variant?: keyof typeof FALLBACK_VIEW_BOX;
+}) {
   return (
     <svg
       role="img"
       aria-hidden
-      viewBox="0 0 100 100"
+      viewBox={FALLBACK_VIEW_BOX[variant]}
       preserveAspectRatio="xMidYMid meet"
-      className="aspect-square h-full w-full rounded-md"
+      className={cn("h-full w-full", className)}
     >
-      <rect width="100" height="100" className="fill-muted" />
+      <rect width="100%" height="100%" className="fill-muted" />
       <text
-        x="50"
-        y="50"
+        x="50%"
+        y="50%"
         textAnchor="middle"
         dominantBaseline="central"
         fontSize="36"

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" role="img" aria-label="A floodlit racetrack at night">
+  <!-- Preview-scene demo art. The DARK one: it is what proves the overlaid
+       chips read against a night image as well as a bright one. Never
+       rendered by the live app; hardcoded hex is fine in an image file. -->
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1030"/>
+      <stop offset="1" stop-color="#181c3d"/>
+    </linearGradient>
+    <linearGradient id="tarmac" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2d44"/>
+      <stop offset="1" stop-color="#14161f"/>
+    </linearGradient>
+  </defs>
+  <rect width="300" height="200" fill="url(#night)"/>
+  <g fill="#ffffff" opacity="0.75">
+    <circle cx="28" cy="26" r="1.4"/><circle cx="72" cy="16" r="1"/>
+    <circle cx="118" cy="32" r="1.2"/><circle cx="163" cy="14" r="1"/>
+    <circle cx="205" cy="30" r="1.4"/><circle cx="252" cy="20" r="1"/>
+    <circle cx="286" cy="40" r="1.2"/><circle cx="46" cy="52" r="1"/>
+  </g>
+  <!-- distant city -->
+  <g fill="#232a55">
+    <rect x="0" y="66" width="34" height="40"/><rect x="38" y="54" width="22" height="52"/>
+    <rect x="64" y="72" width="30" height="34"/><rect x="100" y="48" width="26" height="58"/>
+    <rect x="132" y="70" width="40" height="36"/><rect x="178" y="58" width="24" height="48"/>
+    <rect x="208" y="74" width="36" height="32"/><rect x="250" y="62" width="50" height="44"/>
+  </g>
+  <g fill="#ffd166" opacity="0.85">
+    <rect x="44" y="62" width="4" height="4"/><rect x="52" y="74" width="4" height="4"/>
+    <rect x="106" y="58" width="4" height="4"/><rect x="114" y="76" width="4" height="4"/>
+    <rect x="184" y="66" width="4" height="4"/><rect x="262" y="70" width="4" height="4"/>
+    <rect x="278" y="86" width="4" height="4"/><rect x="18" y="80" width="4" height="4"/>
+  </g>
+  <!-- floodlights -->
+  <g fill="#3a4272">
+    <rect x="58" y="72" width="4" height="34"/><rect x="228" y="72" width="4" height="34"/>
+  </g>
+  <g fill="#fff3c4">
+    <rect x="50" y="66" width="20" height="7" rx="2"/><rect x="220" y="66" width="20" height="7" rx="2"/>
+  </g>
+  <!-- track -->
+  <rect x="0" y="104" width="300" height="96" fill="url(#tarmac)"/>
+  <path d="M0 104h300v6H0z" fill="#454b6b"/>
+  <!-- lane markings, converging -->
+  <g fill="#f2f4ff" opacity="0.9">
+    <path d="M96 200l24-90h7l-16 90z"/>
+    <path d="M196 200l-22-90h-7l14 90z"/>
+  </g>
+  <g fill="#f2f4ff" opacity="0.55">
+    <rect x="146" y="118" width="4" height="10"/><rect x="146" y="136" width="5" height="12"/>
+    <rect x="145" y="158" width="6" height="14"/><rect x="144" y="182" width="7" height="18"/>
+  </g>
+  <!-- kart, with headlight wash -->
+  <path d="M118 176l64-8 10 22H126z" fill="#e23b4a"/>
+  <path d="M132 168h34l6 10h-44z" fill="#ff6b6b"/>
+  <g fill="#14161f">
+    <rect x="120" y="186" width="16" height="12" rx="3"/>
+    <rect x="176" y="182" width="16" height="12" rx="3"/>
+  </g>
+  <path d="M150 168l-30-46 12-2 24 46z" fill="#ffe9a8" opacity="0.18"/>
+</svg>

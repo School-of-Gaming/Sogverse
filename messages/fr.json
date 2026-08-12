@@ -1522,6 +1522,11 @@
     "families": "Pour les familles",
     "familiesWithAges": "Pour les familles, {min}–{max} ans"
   },
+  "productTag": {
+    "neuroinclusive": "Neuro-inclusif",
+    "beginner": "Débutant",
+    "advanced": "Avancé"
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",
     "waitlistAvailable": "Liste d’attente"

@@ -20,6 +20,7 @@ import {
 import {
   ProductBrowseCardView,
   type LocationLine,
+  type ProductBrowseCardViewProps,
   type SeatBarValue,
 } from "./product-browse-card-view";
 
@@ -57,6 +58,31 @@ export function ProductBrowseCard({
   detailHref,
   municipalityScoped = false,
 }: ProductBrowseCardProps) {
+  const viewProps = useBrowseCardViewProps(
+    product,
+    counts,
+    detailHref,
+    municipalityScoped,
+  );
+  return <ProductBrowseCardView {...viewProps} />;
+}
+
+/**
+ * The row→view-props resolution above, as a hook.
+ *
+ * Split out of the component because the card's *body* is being redesigned and
+ * the draft body needs exactly these props: one resolution, two views, so the
+ * live card and the draft cannot answer differently about the same row while
+ * the redesign is being judged. When the draft is promoted its adapter goes
+ * away and this stays — a component that is a hook call plus a view is the
+ * shape the adapter wanted anyway.
+ */
+export function useBrowseCardViewProps(
+  product: ProductBrowseRow,
+  counts: ParticipationCounts | null | undefined,
+  detailHref: string | undefined,
+  municipalityScoped: boolean,
+): ProductBrowseCardViewProps {
   const t = useTranslations("productBrowse.card");
   // Shared with the filter chips and the detail page's overview card, so the
   // words a parent filtered by are the words the card answers with.
@@ -126,27 +152,24 @@ export function ProductBrowseCard({
     municipalityScoped,
   );
 
-  return (
-    <ProductBrowseCardView
-      name={tr?.name ?? ""}
-      description={tr?.short_description ?? null}
-      imagePath={product.image_path}
-      topicLabel={topicLabel(product.topic)}
-      scheduleLines={scheduleLines}
-      ageLine={
-        product.min_age !== null && product.max_age !== null
-          ? t("ages", { min: product.min_age, max: product.max_age })
-          : null
-      }
-      audienceLabel={audienceLabel}
-      locationLine={locationLine}
-      spokenLanguageCode={product.spoken_language_code}
-      price={price}
-      seatBar={seatBar}
-      state={state}
-      detailHref={detailHref ?? ROUTES.shopProduct(product.id)}
-    />
-  );
+  return {
+    name: tr?.name ?? "",
+    description: tr?.short_description ?? null,
+    imagePath: product.image_path,
+    topicLabel: topicLabel(product.topic),
+    scheduleLines,
+    ageLine:
+      product.min_age !== null && product.max_age !== null
+        ? t("ages", { min: product.min_age, max: product.max_age })
+        : null,
+    audienceLabel,
+    locationLine,
+    spokenLanguageCode: product.spoken_language_code,
+    price,
+    seatBar,
+    state,
+    detailHref: detailHref ?? ROUTES.shopProduct(product.id),
+  };
 }
 
 // Card stays compact: site name only (no parent) for in-person, city

@@ -1566,6 +1566,11 @@
     "families": "qorDu’pu’vaD",
     "familiesWithAges": "qorDu’pu’vaD, qan {min}–{max}"
   },
+  "productTag": {
+    "neuroinclusive": "Hoch yab SuvwI’pu’",
+    "beginner": "ghojwI’",
+    "advanced": "po’wI’"
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} pa’ ratlh} other {# / {total} pa’ ratlh}}",
     "waitlistAvailable": "loS tetlh"

@@ -88,7 +88,7 @@ export const PREVIEW_SCENES = [
     surface: "shop",
     title: "Shop browse",
     description:
-      "The storefront grid a family lands on, over fixtures: the filter rail (a strip above the cards on a phone, a sticky rail beside them from `lg`), one headed section per shop category, and the cards themselves. The chips are live — they write the URL and the client-side predicate runs over these rows — so a filter can actually be toggled against a grid that answers. Municipality clubs are absent because the storefront does not carry them; every card opens the matching product-detail scene. Card names carry their fixture's label so the grid is readable as a comparison.",
+      "The storefront grid a family lands on, over fixtures: the filter rail (a strip above the cards on a phone, a sticky rail beside them from `lg`), one headed section per shop category, and the cards themselves. The chips are live — they write the URL and the client-side predicate runs over these rows — so a filter can actually be toggled against a grid that answers. Municipality clubs are absent because the storefront does not carry them; every card opens the matching product-detail scene. Card names carry their fixture's label so the grid is readable as a comparison — bar the one deliberately long name on the redesign grids, which is there to be long. The first two scenarios render the live card; the two `redesign-*` ones render the draft media-top card that is going to replace it, over the same grid, rail and widths.",
     chrome: "public",
     scenarios: [
       {
@@ -102,6 +102,18 @@ export const PREVIEW_SCENES = [
         label: "Mixed audiences",
         description:
           "The smallest grid that answers the audience question: a gamers-only club beside a parents-only one, and an events section holding one card of each of the three audiences. It is the only page where the badge's presence on two cards and its absence on the third can be compared in one pass — and the only place the Audience chips have something to filter, one chip per badge: “For parents” leaves the parents-only cards, “For families” the both-audience ones, and neither leaves a gamers-only card standing. The parents-only cards are also where the missing age line is visible: no range, no “18+”, the badge carrying the whole meaning.",
+      },
+      {
+        slug: "redesign-overlay",
+        label: "Redesign — chips on image",
+        description:
+          "The draft card, in the live grid: a full-width 3:2 image on top of every card, the title on a row of its own beneath it, no description at all (the detail page owns the prose; a card is facts and a picture), and the same footer as today — price or Free chip left, CTA or muted dead-end right. This variant puts the two chips ON the image, bottom-left and tag first, with no scrim behind them: the demo art is chosen to stress exactly that, one card near-white in that corner and two night scenes. What to compare against the chip-row scenario beside it: whether a chip reads as a label on a photograph or as clutter over it, and whether the topic row still needs the language flag on its right once the chips have moved up. Three things to judge on either variant — the long Finnish club name, which is the only card whose title should reach its second line; the un-imaged club, whose wordmark banner has to sit in the grid without reading as a broken card; and the family event, which is the maximal card and the one carrying the reopened question, since it shows an audience badge AND an age line where the live card makes the badge replace the range. The full camp is still inert and the full-with-waitlist club still opens, unchanged below the rule.",
+      },
+      {
+        slug: "redesign-chip-row",
+        label: "Redesign — chip row",
+        description:
+          "The same draft card and the same ten fixtures, with the image left clean: tag, audience badge, age and language flag sit together on one wrapping row under the topic line instead. It is the quieter of the two and the one to open if the question is whether a photo should carry any furniture at all — the cost is a taller card and a row that can wrap to two lines on the maximal (tag + badge + age + flag) card, which is the family event. Everything else — media block, full-width title, absent description, footer, inert and full states — is identical to the overlay scenario, so opening both in adjacent tabs isolates the one decision.",
       },
     ],
   },
