@@ -1537,7 +1537,7 @@
     "waitlistAvailable": "Waitlist"
   },
   "productDetail": {
-    "jumpToSignup": "Go to sign-up",
+    "jumpToSignup": "{verb} now!",
     "back": {
       "consumer_club": "All clubs",
       "municipality_club": "All municipality clubs",

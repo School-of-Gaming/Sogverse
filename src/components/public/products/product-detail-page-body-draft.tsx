@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SogFallback } from "@/components/ui/product-thumbnail";
 import { productImageUrl } from "@/lib/images/product-image-url";
@@ -100,11 +99,22 @@ export function ProductDetailPageBodyDraft({
   const t = useTranslations("productDetail");
   const tAudience = useTranslations("productAudience");
   const tTag = useTranslations("productTag");
+  // **The jump button's verb is the panel's verb, read from the panel's own
+  // keys.** The panel composes its live CTA as "{verb} now" from exactly these
+  // strings (see `useVerb` in `signup-panel-view.tsx`), so taking the same
+  // namespace here means the word a parent taps in the reading column is the
+  // word waiting on the button they land on — a club says Enrol in both places,
+  // an event says Join in both, a municipality club says Register. Composing
+  // rather than writing a phrase per type is what makes that a guarantee
+  // instead of a promise: there is no second copy of the verb to drift.
+  const tVerb = useTranslations("productDetail.signupPanel.verb");
   const getTopicLabel = useTopicLabel();
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const topicLabel = getTopicLabel(product.topic);
   const longDescription = parseLongDescription(tr?.long_description);
+
+  const verb = tVerb(product.product_type);
 
   const heroSrc =
     imageSrc !== undefined
@@ -299,35 +309,36 @@ export function ProductDetailPageBodyDraft({
         )}
 
         {/* **The way down to the signup panel on a phone.**
-            From `lg` the panel is in the rail beside this column and the button
-            would be pointing at something already on screen, so it is withdrawn
-            there rather than disabled — hence `lg:hidden` and nothing else.
+            From `lg` the panel is in the rail beside this column and this would
+            be pointing at something already on screen, so it is withdrawn there
+            rather than disabled — hence `lg:hidden` and nothing else.
 
             Below that the panel is the last thing in the document, under the
             blurb, the facts and the topic card, which is the right place for it
             to *live* (a parent reads before they buy) and a long way to scroll
-            for a parent who has already decided. The button is the shortcut, and
-            it is on every product, tagged or not: what it offers has nothing to
-            do with tags.
+            for a parent who has already decided. This is the shortcut, and it is
+            on every product, tagged or not: what it offers has nothing to do
+            with tags.
 
-            It renders with the page — no measurement, no post-mount reveal, no
+            Text only — no icon. The label is the whole affordance: it names the
+            action the parent is going to take, in the word they will meet on the
+            panel's own button, so a downward arrow beside it would be decorating
+            a sentence that already says where it goes.
+
+            It renders with the page: no measurement, no post-mount reveal, no
             appearing once something has been scrolled past. Its scroll is the
             direct result of the tap, which is the one thing the layout rules ask
-            of a jump like this.
-
-            The wording promises the panel, not a purchase: this navigates, and
-            the actual commitment is made by the CTA it lands on, whose label
-            names the price. */}
+            of a jump like this. */}
         <Button
           type="button"
           size="lg"
           // Full width at phone width: it is the only action in the reading
-          // column, and a thumb should not have to find it.
+          // column, and a thumb should not have to find it. Natural width from
+          // `sm`, where a full-width button starts reading as a banner.
           className="mt-6 w-full sm:w-auto lg:hidden"
           onClick={() => scrollToAnchor(SIGNUP_PANEL_ANCHOR_ID)}
         >
-          {t("jumpToSignup")}
-          <ArrowDown className="h-4 w-4" aria-hidden />
+          {t("jumpToSignup", { verb })}
         </Button>
 
         {/* Marketing blurb — the expanded pitch under the hero, ahead of the
