@@ -1537,6 +1537,7 @@
     "waitlistAvailable": "Liste d’attente"
   },
   "productDetail": {
+    "jumpToSignup": "Aller à l’inscription",
     "back": {
       "consumer_club": "Tous les clubs",
       "municipality_club": "Tous les clubs municipaux",

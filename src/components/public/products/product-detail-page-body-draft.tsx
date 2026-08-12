@@ -2,8 +2,11 @@
 
 import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { SogFallback } from "@/components/ui/product-thumbnail";
 import { productImageUrl } from "@/lib/images/product-image-url";
+import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
@@ -62,6 +65,13 @@ import { TopicInfoCard } from "./topic-info-card";
  * fourth section added to the live page's `MainColumn` will not appear here,
  * and whoever adds it has to add it twice until promotion.
  */
+/**
+ * The signup panel's anchor. One constant, because a jump is two halves that
+ * have to agree — the button naming a target and the target carrying the id —
+ * and two string literals is how they stop agreeing.
+ */
+const SIGNUP_PANEL_ANCHOR_ID = "product-signup";
+
 export interface ProductDetailPageBodyDraftProps {
   product: ProductDetailPageBodyProps["product"];
   /** Injected exactly as the live body injects it — this moves the panel, it
@@ -288,6 +298,38 @@ export function ProductDetailPageBodyDraft({
           </div>
         )}
 
+        {/* **The way down to the signup panel on a phone.**
+            From `lg` the panel is in the rail beside this column and the button
+            would be pointing at something already on screen, so it is withdrawn
+            there rather than disabled — hence `lg:hidden` and nothing else.
+
+            Below that the panel is the last thing in the document, under the
+            blurb, the facts and the topic card, which is the right place for it
+            to *live* (a parent reads before they buy) and a long way to scroll
+            for a parent who has already decided. The button is the shortcut, and
+            it is on every product, tagged or not: what it offers has nothing to
+            do with tags.
+
+            It renders with the page — no measurement, no post-mount reveal, no
+            appearing once something has been scrolled past. Its scroll is the
+            direct result of the tap, which is the one thing the layout rules ask
+            of a jump like this.
+
+            The wording promises the panel, not a purchase: this navigates, and
+            the actual commitment is made by the CTA it lands on, whose label
+            names the price. */}
+        <Button
+          type="button"
+          size="lg"
+          // Full width at phone width: it is the only action in the reading
+          // column, and a thumb should not have to find it.
+          className="mt-6 w-full sm:w-auto lg:hidden"
+          onClick={() => scrollToAnchor(SIGNUP_PANEL_ANCHOR_ID)}
+        >
+          {t("jumpToSignup")}
+          <ArrowDown className="h-4 w-4" aria-hidden />
+        </Button>
+
         {/* Marketing blurb — the expanded pitch under the hero, ahead of the
             logistics. Omitted when the admin left it empty. */}
         <div className="mt-8">
@@ -335,8 +377,18 @@ export function ProductDetailPageBodyDraft({
           no-shift work exists to prevent. Reserving the gutter costs a permanent
           ~15px of the rail's width and buys the guarantee. Nothing else here
           constrains the panel: no fixed height, no `overflow-hidden`, so it
-          keeps rendering every state at its own natural size. */}
-      <div className="lg:col-start-3 lg:row-start-2 lg:row-span-3 lg:self-start lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:overflow-y-auto lg:[scrollbar-gutter:stable] 2xl:col-start-4 2xl:row-span-2">
+          keeps rendering every state at its own natural size.
+
+          It is also the jump button's target. The landing offset is CSS's job,
+          not the scroll helper's — `scroll-mt` reads the same
+          `--header-height` the header is sized from, which is the site-wide
+          rule for hash anchors, with a rem of breathing room so the panel's own
+          top edge is not tucked against the header. Harmless from `lg`, where
+          the panel is sticky and nothing jumps to it. */}
+      <div
+        id={SIGNUP_PANEL_ANCHOR_ID}
+        className="scroll-mt-[calc(var(--header-height)+1rem)] lg:col-start-3 lg:row-start-2 lg:row-span-3 lg:self-start lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:overflow-y-auto lg:[scrollbar-gutter:stable] 2xl:col-start-4 2xl:row-span-2"
+      >
         {signupPanel}
       </div>
     </div>

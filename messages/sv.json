@@ -1537,6 +1537,7 @@
     "waitlistAvailable": "Väntelista"
   },
   "productDetail": {
+    "jumpToSignup": "Gå till anmälan",
     "back": {
       "consumer_club": "Alla klubbar",
       "municipality_club": "Alla kommunklubbar",

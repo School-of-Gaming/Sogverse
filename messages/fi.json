@@ -1537,6 +1537,7 @@
     "waitlistAvailable": "Jonotuslista"
   },
   "productDetail": {
+    "jumpToSignup": "Siirry ilmoittautumiseen",
     "back": {
       "consumer_club": "Kaikki kerhot",
       "municipality_club": "Kaikki kuntakerhot",

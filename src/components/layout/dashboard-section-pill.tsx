@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { cn } from "@/lib/utils";
 
 export interface DashboardSection {
@@ -71,9 +72,10 @@ export function DashboardSectionPill({
     id: string,
   ) => {
     e.preventDefault();
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Shared with the home pill and the product page's jump-to-signup button —
+    // see the helper for why it is native `scrollIntoView` and why the landing
+    // offset stays in CSS (`scroll-mt-*` on the section).
+    scrollToAnchor(id);
   };
 
   return (
