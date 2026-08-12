@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
-import { SENDER_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { findOption } from "@/lib/utils";
@@ -53,7 +53,6 @@ export default function TestingPage() {
   const [result, setResult] = useState<EmailResult | null>(null);
 
   // Custom mode state
-  const [fromName, setFromName] = useState("Sogverse");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [replyToEmail, setReplyToEmail] = useState("");
@@ -96,8 +95,6 @@ export default function TestingPage() {
           body: JSON.stringify({
             mode: "custom",
             provider,
-            fromEmail: SENDER_EMAIL,
-            fromName,
             toEmail,
             subject,
             body,
@@ -298,9 +295,8 @@ export default function TestingPage() {
                   <Field label={t('fromName')} htmlFor="fromName">
                     <Input
                       id="fromName"
-                      required
-                      value={fromName}
-                      onChange={(e) => setFromName(e.target.value)}
+                      value={SENDER_NAME}
+                      disabled
                     />
                   </Field>
                 </div>

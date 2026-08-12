@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { SENDER_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import {
   detectLocaleFromHeader,
   isSupportedLocale,
@@ -128,13 +128,23 @@ export const POST = defineRoute({
 
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
-      fromName: t("senderFeedback"),
+      fromName: SENDER_NAME,
       toEmail: adminEmails,
       subject: t("feedback.subject", {
         displayName,
         role: t(ROLE_LABEL_KEYS[role]),
       }),
       htmlContent,
+      // The one email whose reply-to is a person rather than an inbox, and it
+      // stays that way: this mail goes to admins, so replying is how an admin
+      // answers the family who wrote in. Pointing it at support would send the
+      // reply back to ourselves.
+      //
+      // For a gamer this is their parent's address *when the link above
+      // resolves*. A gamer with no linked parent leaves their own synthetic
+      // handle here, which would bounce — accepted, because every gamer is
+      // created through a parent, so an unlinked one is a broken row rather
+      // than a state to design a reply-to for.
       replyToEmail: replyToEmail || undefined,
     });
 

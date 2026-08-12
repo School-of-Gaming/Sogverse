@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { escapeHtml } from "@/lib/email-templates/utils";
@@ -11,11 +11,12 @@ import { resolveLocale } from "@/lib/constants/locales";
 
 // --- Request schemas ---
 
+// No `fromEmail`/`fromName`: sender identity is a constant now, not something a
+// caller chooses. A harness that could send under any name would be testing a
+// mail the product cannot produce.
 const customSchema = z.object({
   mode: z.literal("custom"),
   provider: z.literal("brevo"),
-  fromEmail: z.string().email(),
-  fromName: z.string().min(1),
   toEmail: z.string().min(1),
   subject: z.string().min(1),
   body: z.string().min(1),
@@ -67,14 +68,17 @@ export const POST = defineRoute({
       }
     }
 
-    let fromName: string;
     let subject: string;
     let htmlContent: string;
     let replyToEmail: string | undefined;
 
     if (body.mode === "custom") {
-      fromName = body.fromName;
       subject = body.subject;
+      // The one send that may end up with no Reply-To, deliberately: free-form
+      // mode is a manual tool for checking the sending path works, never a way
+      // to write to a customer, so the admin composing the message picks its
+      // reply behaviour and a blank stays blank. Every *product* send states
+      // its reply-to explicitly.
       replyToEmail = body.replyToEmail;
       htmlContent = escapeHtml(body.body).replace(/\n/g, "<br/>");
     } else {
@@ -98,15 +102,17 @@ export const POST = defineRoute({
       const locale = resolveLocale(body.locale);
       const t = await getEmailTranslator(locale);
 
-      fromName = t(tmpl.fromNameKey);
       const rendered = tmpl.render(paramsParsed.data, t, locale);
       subject = rendered.subject;
       htmlContent = rendered.html;
+      // The template's own reply-to, so a test send lands the same way the live
+      // mail does rather than silently defaulting to the sending address.
+      replyToEmail = rendered.replyTo;
     }
 
     const emailResult = await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
-      fromName,
+      fromName: SENDER_NAME,
       toEmail: toEmails,
       subject,
       htmlContent,

@@ -2154,9 +2154,6 @@
     }
   },
   "email": {
-    "senderAuth": "Sogverse-tiimi",
-    "senderFeedback": "Sogverse-palaute",
-    "senderEnrollment": "Sogverse-ilmoittautuminen",
     "footer": "© {year} Sogverse. Kaikki oikeudet pidätetään.",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",

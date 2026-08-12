@@ -9,6 +9,7 @@ import {
 import { buildPasswordResetEmail } from "./password-reset";
 import type { EmailTranslator } from "./translator";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
 
 // --- Field types for the testing UI ---
@@ -41,6 +42,8 @@ type TemplateParams = Record<string, string | boolean | null>;
 export interface RenderedTemplate {
   subject: string;
   html: string;
+  /** Reply-To this template's real sending route would set. */
+  replyTo: string;
 }
 
 export interface TemplateDefinition {
@@ -51,12 +54,10 @@ export interface TemplateDefinition {
   /** Zod schema for API-side param validation. */
   schema: z.ZodType<TemplateParams>;
   /**
-   * Validate raw params against `schema`, then build the subject line and
-   * HTML email content. Throws a ZodError when params are malformed.
+   * Validate raw params against `schema`, then build the subject line, HTML
+   * email content and Reply-To. Throws a ZodError when params are malformed.
    */
   render: (rawParams: unknown, t: EmailTranslator, locale: string) => RenderedTemplate;
-  /** Translation key for sender display name (e.g. "senderAuth"). */
-  fromNameKey: "senderAuth" | "senderEnrollment" | "senderFeedback";
   /** Optional: transform UI field values into API params (e.g. minecraft status → username + uuid). */
   resolveParams?: (params: Record<string, string>) => TemplateParams;
 }
@@ -76,16 +77,26 @@ function defineTemplate<P extends TemplateParams>(entry: {
   build: (params: P, t: EmailTranslator, locale: string) => string;
   /** Generate the email subject line from validated params and translator. */
   subject: (params: P, t: EmailTranslator) => string;
-  fromNameKey: TemplateDefinition["fromNameKey"];
+  /**
+   * Reply-To for this template, defaulting to the support inbox — which is the
+   * answer for every mail we send *to* a family. Only a template whose real
+   * route replies to a person overrides it, and overriding is what makes a test
+   * send reproduce the live behaviour instead of a plausible-looking stand-in.
+   */
+  replyTo?: (params: P) => string;
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
-  const { schema, build, subject, ...rest } = entry;
+  const { schema, build, subject, replyTo, ...rest } = entry;
   return {
     ...rest,
     schema,
     render: (rawParams, t, locale) => {
       const params = schema.parse(rawParams);
-      return { subject: subject(params, t), html: build(params, t, locale) };
+      return {
+        subject: subject(params, t),
+        html: build(params, t, locale),
+        replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
+      };
     },
   };
 }
@@ -208,7 +219,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: passwordResetParamsSchema,
     build: (p, t, locale) => buildPasswordResetEmail(t, p.resetLink, locale),
     subject: (_p, t) => t("passwordReset.subject"),
-    fromNameKey: "senderAuth",
   }),
   feedback: defineTemplate({
     label: "Feedback",
@@ -234,7 +244,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
     }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
-    fromNameKey: "senderFeedback",
+    // The live route resolves the reply-to first and passes it in as
+    // `userEmail` (a gamer's resolves to their linked parent's), so this param
+    // already *is* the address the real mail replies to.
+    replyTo: (p) => p.userEmail,
   }),
   enrollmentParent: defineTemplate({
     label: "Enrollment (Parent)",
@@ -256,7 +269,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       p.isSelfSeat
         ? t("enrollmentParent.subjectSelf", { productName: p.productName })
         : t("enrollmentParent.subject", { participantName: p.participantName, productName: p.productName }),
-    fromNameKey: "senderEnrollment",
     resolveParams: resolveEnrollmentParent,
   }),
   enrollmentGedu: defineTemplate({
@@ -270,7 +282,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: enrollmentGeduParamsSchema,
     build: (p, t, locale) => buildEnrollmentGeduEmail(t, locale, p),
     subject: (p, t) => t("enrollmentGedu.subject", { participantName: p.participantName, productName: p.productName }),
-    fromNameKey: "senderEnrollment",
     resolveParams: resolveMinecraftStatus,
   }),
   unenrollmentParent: defineTemplate({
@@ -288,7 +299,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       p.isSelfSeat
         ? t("unenrollmentParent.subjectSelf", { productName: p.productName })
         : t("unenrollmentParent.subject", { participantName: p.participantName, productName: p.productName }),
-    fromNameKey: "senderEnrollment",
     resolveParams: resolveUnenrollmentParent,
   }),
   unenrollmentGedu: defineTemplate({
@@ -302,7 +312,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: unenrollmentGeduParamsSchema,
     build: (p, t, locale) => buildUnenrollmentGeduEmail(t, locale, p),
     subject: (p, t) => t("unenrollmentGedu.subject", { participantName: p.participantName, productName: p.productName }),
-    fromNameKey: "senderEnrollment",
     resolveParams: resolveMinecraftStatus,
   }),
 };

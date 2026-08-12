@@ -153,6 +153,22 @@ describe("POST /api/auth/forgot-password", () => {
     );
   });
 
+  // The recipient here is locked out by definition, so a reply has to reach a
+  // human. Omitting reply-to would silently point it at the unattended sending
+  // address, which is the failure this asserts against — and the sender is one
+  // constant now, so the mail is recognisably ours whatever locale it renders in.
+  it("sends under the shared sender identity and replies to the support inbox", async () => {
+    await POST(createRequest({ email: "user@example.com" }));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromEmail: "sogverse@sog.gg",
+        fromName: "School of Gaming - Sogverse",
+        replyToEmail: "help@sog.gg",
+      })
+    );
+  });
+
   // The email rides in the reset link as the username hint for the reset page's
   // hidden autocomplete="username" field (so password managers save the new
   // password against the right account). It's a hint, not a credential — but it

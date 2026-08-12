@@ -2154,9 +2154,6 @@
     }
   },
   "email": {
-    "senderAuth": "Sogverse-teamet",
-    "senderFeedback": "Sogverse Feedback",
-    "senderEnrollment": "Sogverse Anmälan",
     "footer": "© {year} Sogverse. Alla rättigheter förbehållna.",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",

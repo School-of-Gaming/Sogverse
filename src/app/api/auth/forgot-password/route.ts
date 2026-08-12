@@ -3,7 +3,7 @@ import { defineRoute } from "@/lib/api/define-route";
 import { getOrigin } from "@/lib/url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { buildPasswordResetEmail } from "@/lib/email-templates/password-reset";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
@@ -111,9 +111,15 @@ async function sendResetLink(request: Request): Promise<void> {
 
   await sendTransactionalEmail({
     fromEmail: SENDER_EMAIL,
-    fromName: t("senderAuth"),
+    fromName: SENDER_NAME,
     toEmail: parsed.data.email,
     subject: t("passwordReset.subject"),
     htmlContent: buildPasswordResetEmail(t, resetUrl, locale),
+    // Someone who replies to this is locked out and asking for help, so the
+    // reply goes to the monitored support inbox rather than the unattended
+    // sending address. Note that a reply quotes this mail, recovery token and
+    // all — that inbox is therefore credential-bearing and shared, which is the
+    // trade accepted to keep a stuck user reachable.
+    replyToEmail: SUPPORT_EMAIL,
   });
 }
