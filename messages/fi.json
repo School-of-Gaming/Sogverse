@@ -464,8 +464,7 @@
         "visibleHint": "Ilman valintaa tuote ei näy millään julkisella sivulla, mutta jokainen, jolla on suora linkki, voi silti avata sen ja ostaa paikan. Juuri siksi tämä sopii julkistamattomiin, kutsuvieraille tarkoitettuihin ja kampanjatuotteisiin. Tämä ei ole keino lopettaa ilmoittautumisia, eikä se vaikuta jo mukana oleviin vanhempiin ja pelaajiin.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
-        "startDateToday": "Lukittu toistaiseksi tähän päivään.",
-        "startDateLocked": "Aloituspäivä on toistaiseksi lukittu."
+        "startDateBillingAnchor": "Kerhon aloituspäivä ja samalla perheiden ensimmäisen maksun päivä. Päivän muuttaminen jälkikäteen ei siirrä jo ilmoittautuneiden ensimmäistä maksua — korjaa nuo tilaukset Stripessä."
       },
       "errors": {
         "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
@@ -1038,7 +1037,8 @@
     "next": {
       "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
-      "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole."
+      "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
+      "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksusi on {date}."
     },
     "goToDashboard": "Siirry Oma SOG -sivulle",
     "keepBrowsing": "Jatka selailua",
@@ -1669,7 +1669,8 @@
       "externalHint": "Maksua ei tarvita – kuntasi kattaa kustannukset.",
       "upfrontHint": "Kertamaksu.",
       "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
-      "cadenceMonth": "/ kk"
+      "cadenceMonth": "/ kk",
+      "firstChargeOn": "Ensimmäinen maksu: {date} — tänään ei veloiteta mitään."
     },
     "countdown": {
       "days": "pv",

@@ -59,8 +59,19 @@ describe("formLocksFor", () => {
       for (const config of EVERY_CONFIG) {
         const locks = formLocksFor(config);
         expect(locks.startMode).toBe(true);
-        expect(locks.consumerClubStartDateToday).toBe(true);
         expect(locks.holidayCalendars).toBe(true);
+      }
+    });
+
+    it("no longer carries a consumer-club start-date lock at all", () => {
+      // The lock was retired, not flipped off: a consumer club's first charge is
+      // deferred to its start date now, so there is nothing left for the flag to
+      // protect. Asserted as *absence* rather than as `false`, because a flag
+      // left sitting there reading false is an invitation to switch it back on.
+      for (const config of EVERY_CONFIG) {
+        expect(formLocksFor(config)).not.toHaveProperty(
+          "consumerClubStartDateToday",
+        );
       }
     });
   });
@@ -183,6 +194,15 @@ describe("initialState capacity defaults", () => {
       expect(s.uncapped).toBe(true);
       expect(s.waitlistEnabled).toBe(false);
       expect(s.seatCount).toBe("");
+    }
+  });
+
+  it("starts every type with an empty start date", () => {
+    // Consumer clubs used to open pinned to today, because billing could not
+    // wait. It can now, so a fresh form asks the admin for the date like every
+    // other type does, and `startDateRequired` is what makes them answer.
+    for (const config of EVERY_CONFIG) {
+      expect(initialState(config, "en").startDate, config.productType).toBe("");
     }
   });
 

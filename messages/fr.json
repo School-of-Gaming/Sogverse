@@ -464,8 +464,7 @@
         "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
         "seatLimitHint": "Plafonnez le nombre de participants, ou fonctionnez sans limite.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
-        "startDateToday": "Verrouillée sur la date du jour pour le moment.",
-        "startDateLocked": "La date de début est verrouillée pour le moment."
+        "startDateBillingAnchor": "La date de début du club, et celle du premier prélèvement pour les familles. La modifier ensuite ne déplace pas le premier prélèvement des familles déjà inscrites — corrigez ces abonnements dans Stripe."
       },
       "errors": {
         "translationRequired": "Au moins une langue avec un nom et une description est requise",
@@ -1038,7 +1037,8 @@
     "next": {
       "placement": "Nous placerons {gamer} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
-      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler."
+      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
+      "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
     },
     "goToDashboard": "Aller à Mon SOG",
     "keepBrowsing": "Continuer à explorer",
@@ -1669,7 +1669,8 @@
       "externalHint": "Aucun paiement nécessaire — votre commune prend en charge le coût.",
       "upfrontHint": "Paiement unique.",
       "notAvailable": "Les tarifs ne sont pas encore disponibles en {currency}.",
-      "cadenceMonth": "/ mois"
+      "cadenceMonth": "/ mois",
+      "firstChargeOn": "Premier paiement le {date} — rien à payer aujourd’hui."
     },
     "countdown": {
       "days": "j",

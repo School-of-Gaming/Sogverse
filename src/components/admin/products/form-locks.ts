@@ -22,8 +22,6 @@ import type { ProductTypeConfig } from "./product-type-config";
 interface FormLocks {
   /** Start trigger is pinned to "On a specific date" (no threshold launches). */
   startMode: boolean;
-  /** Consumer-club start date is pinned to today (set in initialState). */
-  consumerClubStartDateToday: boolean;
   /** Holiday-calendar selection is shown as "coming soon" instead of editable. */
   holidayCalendars: boolean;
   /** Registration always opens immediately (no scheduled ticket drop). */
@@ -32,7 +30,6 @@ interface FormLocks {
 
 export const FORM_LOCKS: FormLocks = {
   startMode: true,
-  consumerClubStartDateToday: true,
   holidayCalendars: true,
   registrationTiming: true,
 };

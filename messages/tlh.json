@@ -512,8 +512,7 @@
         "visibleHint": "yIchu’Ha’chugh, pagh tetlhDaq Doch tu’lu’ — ’ach He nIH ghajbogh nuv Doch legh ’ej pa’ je’laH. vaj ’angbe’lu’bogh Doch, ri’bogh Doch, ghap tlhIngan may’ Doch DaSuqmeH QaQ. ghItlh chu’ DamevmeH mIw ghaHbe’, ’ej ghoStaHbogh vavpu’ QujwI’pu’ je luQaHbe’.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
         "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
-        "startDateToday": "DaHjaj Daq poSmoHlu’pu’.",
-        "startDateLocked": "DaH taghDaq poSmoHlu’pu’."
+        "startDateBillingAnchor": "tagh ghom jaj ’ej DIl qorDu’ jaj. jaj Da’choHchugh, DIlpu’bogh qorDu’vaD pagh choH — Stripe Daq yIchoH!"
       },
       "errors": {
         "translationRequired": "wa’ Hol pong QIn je poQ",
@@ -1086,7 +1085,8 @@
     "next": {
       "placement": "Gedu tlhej ghomDaq {gamer} wIlanpu’. My SOG-Daq Qu’mey legh.",
       "subscription": "Hoch jar DaDIlnIS. My SOG-Daq Dajondaq ghap Damevmeh laH.",
-      "oneTime": "wa’logh neH DIl — latlh DIl Hutlh."
+      "oneTime": "wa’logh neH DIl — latlh DIl Hutlh.",
+      "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}."
     },
     "goToDashboard": "My SOG yIghoS",
     "keepBrowsing": "yIqIm taH",
@@ -1713,7 +1713,8 @@
       "externalHint": "Huch poQbe’ — veng Huch nob.",
       "upfrontHint": "wa’logh Huch.",
       "notAvailable": "{currency} Huch DaH ghajbe’.",
-      "cadenceMonth": "/ jar"
+      "cadenceMonth": "/ jar",
+      "firstChargeOn": "wa’DIch DIlmeH jaj: {date} — DaHjaj pagh DaDIlnIS."
     },
     "countdown": {
       "days": "jaj",
