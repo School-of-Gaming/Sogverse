@@ -112,13 +112,6 @@ banner until its copy is signed off.
       French in-person events, either Lynx's equivalent vetting belongs alongside it or
       the heading needs to say it is SOG-specific. Same conversation as the in-person
       section above.
-- [ ] **SOG contact address, needed in two documents.** The Safeguarding Policy says
-      `xxx@sog.gg` ("If you have a concern") and the Terms & Conditions says `xx@sog.gg`
-      (same section). Decide: `hello@sog.gg` (matches the privacy policy) or a dedicated
-      safeguarding address, and use it consistently in both.
-- [ ] **Terms & Conditions — "[contact]" placeholder.** "The short version" ends with
-      "If anything's unclear, email [contact]." Which address — Lynx's
-      `support@lynxeducate.com`, the SOG address above, or both?
 - [ ] **/roblox landing page copy** is still pending SOG + Roblox signoff (why the whole
       surface is noindex).
 
@@ -229,6 +222,67 @@ edits first — the web copy follows the signed-off text.
 
 Decided, with the exact change written out. Nothing here has been applied yet; it all
 lands in one pass. Delete an entry once its change is in.
+
+### The SOG contact address in the two "If you have a concern" sections
+
+Decided 2026-08-12. Two questions, both closed.
+
+**The address is `help@sog.gg`**, decided by the team: one customer-facing address
+everywhere, replacing a three-way split (`help@` in the app chrome, `hello@` in the
+Privacy Policy, `kanslia@` in the Terms and the discipline policy) that was one address
+per document by accident. **That sweep is already applied** across all four locale files
+that carry these strings, and the address is no longer written in `messages/` at all:
+legal copy names it with a `{supportEmail}` placeholder that the policy renderer fills
+from the `SUPPORT_EMAIL` constant, which is now the single source of truth. So the copy
+below writes the placeholder, never the address — a unit test fails any legal string
+that spells one out.
+
+**We add it only where the copy is already asking for it.** Both documents render a
+visible pending notice at "If you have a concern" saying a School of Gaming contact
+address is still being confirmed; that is the gap, and it closes here. Everywhere the
+programme copy names Lynx alone and shows no pending marker, Lynx stays the only
+address — `robloxTerms.intro`'s "If anything's unclear, email support@lynxeducate.com"
+is complete as written and is **not** part of this change. (The list previously recorded
+these as `xxx@sog.gg` / `xx@sog.gg` placeholders in the copy. They are not literals in
+the message files; the pending notices are how the hole is shown.)
+
+**Final English copy.** SOG is named first because the escalation section directly above
+already says concerns are handled by School of Gaming in the first instance; Lynx's
+address is unchanged and stays alongside.
+
+> `robloxSafeguarding.sections.concern.blocks.0`
+>
+> If you or your child have a safeguarding concern, please contact School of Gaming at
+> {supportEmail} or Lynx Educate at support@lynxeducate.com.
+
+> `robloxTerms.sections.concern.blocks.0`
+>
+> If you’re concerned about your child’s experience in the Programme, contact School of
+> Gaming at {supportEmail} or Lynx Educate at support@lynxeducate.com — we’ll make sure
+> it reaches the right people.
+
+The apostrophes above are curly (’) and the dash is an em dash, matching the surrounding
+message strings — paste them through, don’t retype them straight.
+
+**To apply:**
+
+1. Replace those two strings in each locale file that carries the namespaces. Keep
+   `{supportEmail}` exactly as written — it is filled at render, and the
+   translation-completeness script fails a locale that drops or renames it. `tlh` omits
+   legal pages and falls back to English, so check before translating.
+2. In `src/app/(public)/roblox/safeguarding/page.tsx`, change the `concern` entry in
+   `SECTIONS` from `pending: "pendingContact"` to `pending: null`.
+3. In `src/app/(public)/roblox/terms/page.tsx`, change the `concern` entry in `SECTIONS`
+   from `pending: true` to `pending: false`.
+4. Delete the now-unused `pendingContact` key from `robloxSafeguarding` and `robloxTerms`
+   in every locale file — it is the last thing referencing it, and the completeness
+   script flags a key present in one catalog and absent from another.
+5. Delete this entry.
+
+**Still open upstream:** the Notion originals carry the `xxx@sog.gg` / `xx@sog.gg`
+placeholders these notices stand in for. Resolving them there to `help@sog.gg` keeps the
+document of record matching the published page — same class as the other entries under
+*Claims that need correcting*, and worth folding into the next Lynx/Notion pass.
 
 ### Child Safeguarding Policy — vetting & training list
 

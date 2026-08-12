@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 
 /**
@@ -48,6 +49,44 @@ function isPolicyLinkTag(tag: string): tag is PolicyLinkTag {
 }
 
 /**
+ * Values a policy string may name instead of spelling out, and where each one
+ * really comes from. Same reasoning as the cross-reference allow-list above: a
+ * message file should never carry a fact the app already defines elsewhere,
+ * because the copy and the constant then drift apart silently — and in five
+ * languages at once. The customer-facing address is the proof. It sat as a
+ * literal in every legal document until there were three different addresses
+ * across four of them, none of them the one the footer and the auth screens
+ * showed, and no locale that disagreed could be spotted by reading English.
+ *
+ * These strings reach the renderer through `t.raw()` — the policy pages read
+ * every block raw so ICU never touches the cross-reference tags — so next-intl
+ * does not interpolate them and this substitution is what fills them in. The
+ * braces are literal characters to this file, not ICU syntax. They are spelled
+ * as ICU placeholders anyway because the translation-completeness script reads
+ * them as such, which gets a locale that drops or renames one failed for free.
+ *
+ * An unrecognised `{placeholder}` is left exactly as written, like an unknown
+ * tag: showing the writer's own text is the least harmful reading of a mistake
+ * in a binding document.
+ */
+const POLICY_VALUES = {
+  supportEmail: SUPPORT_EMAIL,
+} as const satisfies Record<string, string>;
+
+type PolicyValueName = keyof typeof POLICY_VALUES;
+
+function isPolicyValueName(name: string): name is PolicyValueName {
+  return Object.hasOwn(POLICY_VALUES, name);
+}
+
+/** Substitutes the {@link POLICY_VALUES} a string names, leaving the rest be. */
+function fillPolicyValues(text: string): string {
+  return text.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (whole, name: string) =>
+    isPolicyValueName(name) ? POLICY_VALUES[name] : whole,
+  );
+}
+
+/**
  * A run of policy copy, split into the pieces the page renders: plain text, or
  * a stretch of text that links to one of our other legal pages.
  */
@@ -61,6 +100,12 @@ export interface PolicySegment {
 /**
  * Splits one policy string into {@link PolicySegment}s, turning the tags in
  * {@link POLICY_LINK_HREFS} into links and leaving everything else as text.
+ * Any {@link POLICY_VALUES} the string names are filled in first, so a value
+ * that lands inside a linked run still reads as part of that run.
+ *
+ * This is where the filling happens because it is the one place *all* authored
+ * policy prose passes through — the subtitle reaches the page component on its
+ * own, not via the block builders below, so filling at ingest would miss it.
  *
  * **An unrecognised tag unwraps to its own words rather than becoming a link or
  * disappearing** — the same philosophy as the shared markdown renderer's
@@ -70,7 +115,8 @@ export interface PolicySegment {
  * invent a destination nobody chose. Malformed markup (an unclosed tag, a stray
  * `<`) never matches at all, so it survives as the literal text it already is.
  */
-export function policyTextSegments(text: string): PolicySegment[] {
+export function policyTextSegments(source: string): PolicySegment[] {
+  const text = fillPolicyValues(source);
   // Declared here rather than at module scope: a `g` regex carries `lastIndex`
   // between calls, and a shared one would make each call depend on the last.
   const tagPattern = /<([A-Za-z][A-Za-z0-9]*)>([^<]*)<\/\1>/g;

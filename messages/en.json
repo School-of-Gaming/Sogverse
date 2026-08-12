@@ -1876,7 +1876,7 @@
         ],
         "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
-        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting support@lynxeducate.com or hello@sog.gg."
+        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting support@lynxeducate.com or {supportEmail}."
       ]
     },
     "sections": {
@@ -1912,7 +1912,7 @@
           "Business ID: 3110461-1",
           "Isokatu 56",
           "90100 Oulu, Finland",
-          "Email: hello@sog.gg"
+          "Email: {supportEmail}"
         ]
       },
       "responsibleRoblox": {
@@ -2207,7 +2207,7 @@
           "Withdrawing consent does not affect processing that was lawful before withdrawal.",
           "Children may contact us directly about their own information. Parents or legal guardians may also make a request for a child, subject to the child’s own rights, age and maturity.",
           "There is no solely automated decision-making that produces legal or similarly significant effects on participants.",
-          "Send requests to support@lynxeducate.com or hello@sog.gg. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
+          "Send requests to support@lynxeducate.com or {supportEmail}. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
           "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — CNIL."
         ]
       },
@@ -2245,7 +2245,7 @@
           "School of Gaming Galactic Oy",
           "Isokatu 56",
           "90100 Oulu, Finland",
-          "hello@sog.gg"
+          "{supportEmail}"
         ]
       }
     }
@@ -2900,7 +2900,7 @@
       "heading": "The short version",
       "paragraphs": [
         "School of Gaming exists to give children a safe, fun place to learn through gaming. Protecting your family’s privacy — and your child’s most of all — matters to us, so we’ve written this in plain language instead of legal jargon.",
-        "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child’s. Only a parent can create a child’s account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing hello@sog.gg."
+        "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child’s. Only a parent can create a child’s account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing {supportEmail}."
       ]
     },
     "sections": {
@@ -2913,7 +2913,7 @@
         "bullets": [
           "School of Gaming Galactic Oy (business ID 3110461-1)",
           "Isokatu 56, 90100 Oulu, Finland",
-          "Email: hello@sog.gg"
+          "Email: {supportEmail}"
         ]
       },
       "infoWeCollect": {
@@ -2937,7 +2937,7 @@
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
           "We keep children’s information to a minimum, we never show children advertising, and we never sell or share their data for marketing. During live sessions, children are always with one of our trained educators (we call them Gedus).",
-          "If you ever want to see, change, or delete your child’s information, just email hello@sog.gg and we’ll take care of it."
+          "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
       "howWeUse": {
@@ -3034,7 +3034,7 @@
       "contact": {
         "heading": "Getting in touch and your right to complain",
         "paragraphs": [
-          "To use any of the rights above, or if you have a question about your privacy or your child’s information, just email hello@sog.gg. There’s no charge, we’ll always reply, and email is the best way to reach us.",
+          "To use any of the rights above, or if you have a question about your privacy or your child’s information, just email {supportEmail}. There’s no charge, we’ll always reply, and email is the best way to reach us.",
           "If you’re ever unhappy with how we’ve handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at tietosuoja.fi."
         ]
       }
@@ -3047,7 +3047,7 @@
       "heading": "The short version",
       "paragraphs": [
         "These are the terms for using Sogverse and signing your child up for our clubs, camps, and events. We’ve written them in plain language, because we want you to actually understand what you’re agreeing to — not wade through legal jargon.",
-        "In short: our clubs happen online, with your child always supervised by a trained educator. You can cancel a monthly club whenever you like, and there’s a money-back guarantee on your child’s first session. If you ever have a question, email kanslia@sog.gg and a real person will help."
+        "In short: our clubs happen online, with your child always supervised by a trained educator. You can cancel a monthly club whenever you like, and there’s a money-back guarantee on your child’s first session. If you ever have a question, email {supportEmail} and a real person will help."
       ]
     },
     "sections": {
@@ -3060,7 +3060,7 @@
         "bullets": [
           "School of Gaming Galactic Oy (business ID 3110461-1)",
           "Isokatu 56, 90100 Oulu, Finland",
-          "Email: kanslia@sog.gg"
+          "Email: {supportEmail}"
         ]
       },
       "service": {
@@ -3104,7 +3104,7 @@
           "14 days or more before the camp starts: you get a full refund.",
           "Between 7 and 14 days before: we refund you minus a €50 administration fee.",
           "Less than 7 days before: we’re unable to refund the payment, because the place has been held and prepared for your child — unless it’s a medical emergency or something genuinely outside your control.",
-          "If your child can’t attend because of illness, we’ll refund you when you send us a doctor’s certificate at kanslia@sog.gg."
+          "If your child can’t attend because of illness, we’ll refund you when you send us a doctor’s certificate at {supportEmail}."
         ]
       },
       "conduct": {
@@ -3129,7 +3129,7 @@
       "contact": {
         "heading": "Getting in touch",
         "paragraphs": [
-          "If anything here is unclear, or you’d like to talk something through, just email kanslia@sog.gg. There’s a real person at the other end, and we’re always happy to help."
+          "If anything here is unclear, or you’d like to talk something through, just email {supportEmail}. There’s a real person at the other end, and we’re always happy to help."
         ]
       }
     }
@@ -3179,7 +3179,7 @@
       "step4": {
         "heading": "Step 4 — A time-out from a session",
         "paragraphs": [
-          "If things still don’t settle, the Gedu may ask your child to sit out the rest of that session. If a longer break is needed, we’ll tell you in advance. The Gedu talks it through privately with your child, we message you at home, and our office (kanslia@sog.gg) joins the conversation."
+          "If things still don’t settle, the Gedu may ask your child to sit out the rest of that session. If a longer break is needed, we’ll tell you in advance. The Gedu talks it through privately with your child, we message you at home, and our office ({supportEmail}) joins the conversation."
         ]
       },
       "step5": {
@@ -3203,7 +3203,7 @@
       "contact": {
         "heading": "Getting in touch",
         "paragraphs": [
-          "If you have any questions about this policy, or you’d like to talk about something that’s happened, email our office at kanslia@sog.gg. There’s a real person at the other end, and we’re here to help."
+          "If you have any questions about this policy, or you’d like to talk about something that’s happened, email our office at {supportEmail}. There’s a real person at the other end, and we’re here to help."
         ]
       }
     }
