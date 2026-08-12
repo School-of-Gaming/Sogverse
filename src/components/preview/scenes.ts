@@ -123,7 +123,7 @@ export const PREVIEW_SCENES = [
     surface: "confirmation",
     title: "Purchase confirmation",
     description:
-      "The post-signup summary, reached in the preview by clicking the CTA on the matching product scene — plus the three paid states with no order to show, where the page arrived before (or instead of) the row the webhook writes.",
+      "The post-signup summary, reached in the preview by clicking the CTA on the matching product scene — plus the three paid states with no order to show, where the page arrived before (or instead of) the row the webhook writes. The summary card's first row carries the product's picture at the same 3:2 crop the browse card and the detail hero paint, so the parent is looking at the photograph they clicked and then read a page of. It stays inline beside the type and the name rather than becoming a banner across the card: at this column's width a banner stands over 400px tall and would push the facts this card exists to state — who the seat is for, what it costs — off a phone screen. A scenario whose product has no picture wears the wordmark in that same frame, which is the case worth opening the un-imaged scenarios for.",
     chrome: "public",
     scenarios: [
       ...PRODUCT_SCENARIOS,

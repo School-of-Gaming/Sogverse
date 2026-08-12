@@ -551,7 +551,7 @@
         "formats": "JPG, PNG, WebP, AVIF tai SVG.",
         "chooseFile": "Valitse tiedosto",
         "remove": "Poista",
-        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat."
+        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen, ja esikatselu näyttää saman rajauksen."
       },
       "filters": {
         "day": "Viikonpäivä",

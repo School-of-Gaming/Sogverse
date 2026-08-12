@@ -551,7 +551,7 @@
         "formats": "JPG, PNG, WebP, AVIF eller SVG.",
         "chooseFile": "Välj fil",
         "remove": "Ta bort",
-        "hint": "Visas på produktkortet när föräldrar bläddrar."
+        "hint": "Visas på produktkortet när föräldrar bläddrar. Bilden beskärs till en 3:2-ram, och förhandsgranskningen visar samma beskärning."
       },
       "filters": {
         "day": "Veckodag",

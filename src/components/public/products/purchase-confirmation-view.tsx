@@ -5,9 +5,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-thumbnail";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
+import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
@@ -126,12 +127,25 @@ export function PurchaseConfirmationView({
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
             </h2>
-            <div className="mt-4 flex items-start gap-4">
-              <ProductThumbnail
-                imagePath={product.image_path ?? ""}
-                alt={productName}
-                size="h-16 w-16"
-                className="shrink-0 rounded-lg [&>img]:h-full [&>img]:w-full [&>img]:rounded-lg [&>img]:object-cover"
+            {/* The picture, at the 3:2 crop the card and the detail hero paint
+                — the parent is looking at the same photograph they clicked and
+                then read a page of, so it must be the same crop of it.
+                Deliberately *not* a full-width banner on top of this card: at
+                this column's width that stands over 400px tall, and it would
+                push the facts this card exists to state — who the seat is for,
+                what it costs — off a phone screen. So the picture stays inline
+                and identifying, and keeps the row's existing 64px height (96px
+                wide at 3:2) rather than growing the summary. Centred against
+                the two text lines, which a wide short frame wants where a
+                square did not. */}
+            <div className="mt-4 flex items-center gap-4">
+              <ProductBanner
+                src={
+                  product.image_path
+                    ? productImageUrl(product.image_path)
+                    : null
+                }
+                className="w-24 shrink-0 rounded-lg"
               />
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

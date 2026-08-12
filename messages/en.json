@@ -551,7 +551,7 @@
         "formats": "JPG, PNG, WebP, AVIF, or SVG.",
         "chooseFile": "Choose file",
         "remove": "Remove",
-        "hint": "Shown on the product card when parents are browsing."
+        "hint": "Shown on the product card when parents are browsing. The image is cropped to a 3:2 frame, and the preview shows that same crop."
       },
       "filters": {
         "day": "Day",

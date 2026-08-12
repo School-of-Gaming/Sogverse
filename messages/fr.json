@@ -551,7 +551,7 @@
         "formats": "JPG, PNG, WebP, AVIF ou SVG.",
         "chooseFile": "Choisir un fichier",
         "remove": "Retirer",
-        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue."
+        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue. L'image est recadrée au format 3:2, et l'aperçu montre ce même recadrage."
       },
       "filters": {
         "day": "Jour",

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SogFallback } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-thumbnail";
 import { ROUTES } from "@/lib/constants";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
@@ -270,18 +270,7 @@ export function ProductDetailPageBody({
             no picture gets the wordmark banner at the same ratio — and wears the
             chips on it, exactly as an un-imaged card does. */}
         <div className="relative overflow-hidden rounded-lg border">
-          {heroSrc !== null ? (
-            // eslint-disable-next-line @next/next/no-img-element -- product images bypass next/image, exactly as `ProductThumbnail` does
-            <img
-              src={heroSrc}
-              // Decorative: the h1 above already names the product, so alt text
-              // here would announce the name twice.
-              alt=""
-              className="aspect-[3/2] w-full object-cover"
-            />
-          ) : (
-            <SogFallback variant="banner" className="aspect-[3/2] w-full" />
-          )}
+          <ProductBanner src={heroSrc} />
           <ProductMediaChips tag={tag} whoLabel={whoLabel} />
         </div>
 

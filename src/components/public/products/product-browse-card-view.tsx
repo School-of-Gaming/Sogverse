@@ -3,7 +3,7 @@
 import { Globe, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { SogFallback } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-thumbnail";
 import {
   BrowseCardFooter,
   StretchedCardLink,
@@ -89,22 +89,14 @@ export function ProductBrowseCardView({
           against; the card's own `overflow-hidden` is what rounds the top two
           corners of whatever is painted here. */}
       <div className="relative">
-        {imageSrc !== null ? (
-          // eslint-disable-next-line @next/next/no-img-element -- product images bypass next/image, exactly as `ProductThumbnail` does
-          <img
-            src={imageSrc}
-            // Empty on purpose. The picture is decorative here: the card's own
-            // accessible name already carries the product name (and the title
-            // is the next thing in the DOM), so alt text would read the name
-            // twice to a screen reader for no added meaning.
-            alt=""
-            className="aspect-[3/2] w-full object-cover"
-          />
-        ) : (
-          // Same ground, same wordmark, same ratio as a photo — so the grid
-          // does not develop short cards where a product has no image.
-          <SogFallback variant="banner" className="aspect-[3/2] w-full" />
-        )}
+        {/* The shared 3:2 crop — the same component the detail hero and the
+            confirmation summary paint, so one stored file is cropped one way
+            everywhere a family meets it. A product with no picture gets the
+            wordmark at the same ratio, so the grid does not develop short
+            cards; the picture is decorative here (the card's accessible name
+            and the title beneath already say the product's name), which is why
+            the component carries no alt. */}
+        <ProductBanner src={imageSrc} />
 
         {/* Opposite corners, one fact each, so neither chip has to reserve room
             for the other and a card wearing only one of them has no hole where
