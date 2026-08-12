@@ -177,7 +177,11 @@ ride behind 4.
   Remove the DRAFT markers when it lands.
 - Confirm the fi label ("Neurokirjo" vs "neuroinklusiivinen") with the owner. One
   string either way.
-- Code never blocks on this workstream; the placeholders are shippable.
+- Code never blocks on this workstream — but **the placeholder explanations are a
+  soft gate on promotion going live**: swap in Sonja's text if it has landed by
+  workstream 4; shipping the placeholder `productTagDetail.*` copy to real families
+  requires the owner's explicit okay in that moment, not this plan's. (The tag
+  *labels* are owner-approved and carry no such gate.)
 
 ### 3. Admin form: setting the tag
 
