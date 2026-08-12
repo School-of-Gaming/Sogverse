@@ -1527,6 +1527,11 @@
     "beginner": "Nybörjare",
     "advanced": "Avancerad"
   },
+  "productTagDetail": {
+    "neuroinclusive": "Små grupper, samma förutsägbara struktur varje gång och Geduer som är vana att arbeta med neurodivergenta barn. Ingen behöver maskera sig, och det finns alltid ett lugnare sätt att vara med.",
+    "beginner": "Ingen erfarenhet behövs. Geduerna börjar från allra första början och håller gruppens tempo, så ett barn som aldrig öppnat spelet är precis rätt ute.",
+    "advanced": "För barn som redan kan spelet väl och vill ha en riktig utmaning – större projekt, svårare problem och en grupp som hänger med dem."
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
     "waitlistAvailable": "Väntelista"

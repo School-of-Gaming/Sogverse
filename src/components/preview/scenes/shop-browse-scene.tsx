@@ -8,6 +8,8 @@ import {
   SHOP_SCENE_AUDIENCES,
   SHOP_SCENE_DEFAULT,
   SHOP_SCENE_REDESIGN,
+  scenarioArt,
+  scenarioTag,
   type PreviewScenario,
   type ShopBrowseScenario,
   type ShopRedesignEntry,
@@ -80,15 +82,16 @@ function categoryOf(productType: string): ShopCategory | undefined {
 
 /**
  * A live-card grid's entries: a slug and nothing else. The redesign grid adds
- * the tag, the demo art and the copy overrides, and `SHOP_SCENE_REDESIGN`
- * carries all three; giving both shapes one type is what keeps the fixture
- * build below a single path.
+ * the copy overrides, which `SHOP_SCENE_REDESIGN` carries; giving both shapes
+ * one type is what keeps the fixture build below a single path. The tag and the
+ * demo art are *not* here — they come from the shared per-scenario maps, so the
+ * detail page a card opens shows the same two things.
  */
 type SceneEntry = ShopRedesignEntry | { slug: PreviewScenario };
 
-/** Whether this scenario renders the draft card rather than the live one. */
+/** Whether this entry carries the redesign grid's copy overrides. */
 function isRedesign(entry: SceneEntry): entry is ShopRedesignEntry {
-  return "tag" in entry;
+  return "nameOverride" in entry;
 }
 
 function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
@@ -167,16 +170,19 @@ export function ShopBrowseScene({
       hrefById: hrefs,
       // The two facts the draft card needs and no row carries: the tag has no
       // column yet, and a fixture has no storage object to point an image at.
+      // Both come from the shared per-scenario maps rather than from this
+      // scene, so the detail page each card links to shows the same tag and the
+      // same picture.
       tagById: new Map<string, ProductTag | null>(
         products.map(({ entry, product }) => [
           product.id,
-          isRedesign(entry) ? entry.tag : null,
+          scenarioTag(entry.slug),
         ]),
       ),
       imageById: new Map<string, string | null>(
         products.map(({ entry, product }) => [
           product.id,
-          isRedesign(entry) ? entry.imageSrc : null,
+          scenarioArt(entry.slug),
         ]),
       ),
     };

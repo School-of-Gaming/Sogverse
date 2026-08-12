@@ -48,11 +48,11 @@ import type { ProductTag } from "./product-tag";
  *   thing that stops being legible. Solid semantic fills instead, and local to
  *   this file: the draft owns its own chip vocabulary until promotion decides
  *   whether it is worth pushing back into the shared component.
- * - **No description above the fold of the card, but one below the facts.** The
- *   short description returns beneath the meta rows at `line-clamp-2` (the live
- *   card allows three): the image has taken the height that a third line used
- *   to spend, and two lines is enough to tell two products apart when the
- *   picture and the title have not.
+ * - **The description sits below the facts, not above them.** It returns
+ *   beneath the meta rows at `line-clamp-3`, the same three lines the live card
+ *   allows — two was tried and overruled: a real short description is a
+ *   sentence or two of prose, and clamping it at two lines cuts most of them
+ *   mid-thought.
  *
  * Everything below the rule, and everything about whether the card opens, is
  * **shared code rather than a copy**: `useBrowseCardShell` decides openability
@@ -133,7 +133,6 @@ export function ProductBrowseCardViewDraft({
   // when both exist; the range fills the slot on the ordinary gamers-only card,
   // which is what stops that corner reading as empty on most of the grid.
   const whoLabel = audienceLabel ?? ageLine;
-  const TagIcon = tag === null ? null : TAG_ICON[tag.value];
 
   return (
     <Card className={shell.cardClassName}>
@@ -162,15 +161,17 @@ export function ProductBrowseCardViewDraft({
             for the other and a card wearing only one of them has no hole where
             the other would be. Nothing else is ever overlaid — the price stays
             in the footer, where a seat bar can take its place. */}
-        {tag !== null && TagIcon !== null && (
-          <OverlayChip className="bottom-2 left-2 bg-primary text-primary-foreground" icon={TagIcon}>
-            {tag.label}
-          </OverlayChip>
+        {tag !== null && (
+          <DraftTagChip
+            tag={tag}
+            className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)]"
+          />
         )}
         {whoLabel !== null && (
-          <OverlayChip className="right-2 top-2 bg-secondary text-secondary-foreground" icon={UserRound}>
-            {whoLabel}
-          </OverlayChip>
+          <DraftWhoChip
+            label={whoLabel}
+            className="absolute right-2 top-2 max-w-[calc(100%-1rem)]"
+          />
         )}
       </div>
 
@@ -215,11 +216,11 @@ export function ProductBrowseCardViewDraft({
           </ul>
         </div>
 
-        {/* Two lines, not the live card's three: the media block has taken that
-            height, and the picture plus the title already do most of the work
-            of telling one product from another. */}
+        {/* Three lines, as the live card allows. Two was tried and rejected:
+            a short description is prose, and two lines cuts most real ones off
+            mid-thought. The cards are free to differ in height for it. */}
         {description !== null && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">
+          <p className="line-clamp-3 text-sm text-muted-foreground">
             {description}
           </p>
         )}
@@ -237,6 +238,19 @@ export function ProductBrowseCardViewDraft({
   );
 }
 
+// ---------- The draft's chip vocabulary ----------
+//
+// Exported because the redesign is not only the card any more: the product
+// detail page wears the same two chips in its masthead, and a family arriving
+// there from a card must meet the same pill saying the same thing. They are
+// exported as two *purpose-built* chips rather than one generic chip plus an
+// icon map, so a caller cannot pair the tag's icon with the audience's fill —
+// which fill means which fact is the whole point of having two.
+//
+// They live in this file because the card is where the vocabulary was invented
+// and is still its main reader. At promotion they want a module of their own
+// (beside the shared card machinery), since by then nothing will be a "draft".
+
 /**
  * A chip that sits on a photograph.
  *
@@ -249,12 +263,12 @@ export function ProductBrowseCardViewDraft({
  * ships, that is the moment to decide whether the shared component grows a
  * filled tone; until then the draft carries its own.
  *
- * The caller supplies the corner and the fill/foreground pair in one
- * `className`, because those two decisions are the same decision: a chip's
- * colour is what says which fact it is, and its corner is where that fact
- * lives.
+ * Deliberately **not** positioned: the card absolutely-positions these into two
+ * corners of its image and the detail masthead sets them in ordinary flow, so
+ * the caller supplies the placement. Everything that says *which fact this is*
+ * — fill, foreground, icon — is fixed by the two wrappers below.
  */
-function OverlayChip({
+function DraftChip({
   className,
   icon: Icon,
   children,
@@ -266,12 +280,53 @@ function OverlayChip({
   return (
     <span
       className={cn(
-        "absolute inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shadow-sm",
+        "inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shadow-sm",
         className,
       )}
     >
       <Icon className="h-3 w-3 shrink-0" aria-hidden />
       <span className="truncate">{children}</span>
     </span>
+  );
+}
+
+/** Who the product is designed for. Primary fill, one icon per tag. */
+export function DraftTagChip({
+  tag,
+  className,
+}: {
+  tag: DraftCardTag;
+  className?: string;
+}) {
+  return (
+    <DraftChip
+      className={cn("bg-primary text-primary-foreground", className)}
+      icon={TAG_ICON[tag.value]}
+    >
+      {tag.label}
+    </DraftChip>
+  );
+}
+
+/**
+ * Who may hold the seat, or how old they should be — the exclusive pair. The
+ * caller resolves which of the two it is (`audienceLabel ?? ageLine`); this
+ * only guarantees that both wear the same secondary fill wherever they appear,
+ * so the corner keeps meaning one thing.
+ */
+export function DraftWhoChip({
+  label,
+  className,
+}: {
+  label: string;
+  className?: string;
+}) {
+  return (
+    <DraftChip
+      className={cn("bg-secondary text-secondary-foreground", className)}
+      icon={UserRound}
+    >
+      {label}
+    </DraftChip>
   );
 }

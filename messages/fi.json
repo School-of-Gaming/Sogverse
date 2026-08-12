@@ -1527,6 +1527,11 @@
     "beginner": "Aloittelijoille",
     "advanced": "Edistyneille"
   },
+  "productTagDetail": {
+    "neuroinclusive": "Pienet ryhmät, joka kerta sama ennakoitava rakenne ja Gedut, joilla on kokemusta neurokirjon lasten ohjaamisesta. Kenenkään ei tarvitse esittää muuta kuin on, ja mukaan pääsee aina myös rauhallisemmin.",
+    "beginner": "Aiempaa kokemusta ei tarvita. Gedut aloittavat ihan alusta ja etenevät ryhmän tahtiin, joten lapsi, joka ei ole koskaan avannut peliä, on juuri oikeassa paikassa.",
+    "advanced": "Lapsille, jotka osaavat pelin jo hyvin ja haluavat oikeaa haastetta – isompia projekteja, vaikeampia pulmia ja ryhmän, joka pysyy heidän vauhdissaan."
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
     "waitlistAvailable": "Jonotuslista"

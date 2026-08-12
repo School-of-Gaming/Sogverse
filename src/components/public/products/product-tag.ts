@@ -44,3 +44,21 @@ export type ProductTagLabelKey = (typeof TAG_LABEL_KEYS)[ProductTag];
 export function productTagLabelKey(tag: ProductTag): ProductTagLabelKey {
   return TAG_LABEL_KEYS[tag];
 }
+
+// ---------------------------------------------------------------------------
+// **`productTagDetail.*` IS DRAFT COPY.**
+//
+// The same keys as `productTag.*`, in the same five message files, carrying the
+// sentence or two the product detail page prints under the chip — what SOG
+// actually does about the tag (small groups and a predictable structure; start
+// from zero; a real challenge). Every one of those strings, in every locale,
+// was written by an engineer as a placeholder so the surface could be looked
+// at. **Sonja is writing the real source text, and these get replaced
+// wholesale** — do not polish them, do not translate around them, and do not
+// treat the current English as the source anybody approved.
+//
+// The marker lives here rather than in the message files because those are
+// strict JSON with no comment syntax and no key convention for annotations;
+// this module is what owns the vocabulary the namespace is keyed by, so it is
+// the one place a reader of either half will pass through.
+// ---------------------------------------------------------------------------

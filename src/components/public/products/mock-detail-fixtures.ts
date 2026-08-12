@@ -659,16 +659,59 @@ const DEMO_ART = {
   interior: "/preview-art/card-interior.svg",
 } as const;
 
+/**
+ * **The tag a scenario carries, for every surface that renders it.**
+ *
+ * One map, because a card and the page it opens are the same product: the shop
+ * grid links each card to `/preview/products/<slug>`, so a card wearing
+ * "Neuroinclusive" that landed on an untagged detail page would be the preview
+ * telling a family two different things about one club. Neither surface may
+ * own this list. A scenario absent from the map is untagged, which is most of
+ * them and is the ordinary case.
+ *
+ * Not a row field: there is no column for it yet (see `product-tag.ts`), so it
+ * is keyed by scenario and handed to the draft components directly. When the
+ * column lands, this map dies and the fixture rows carry their own tags.
+ */
+const SCENARIO_TAG: Partial<Record<PreviewScenario, ProductTag>> = {
+  "consumer-club": "beginner",
+  "consumer-club-free": "neuroinclusive",
+  "consumer-club-full-waitlist": "advanced",
+  "consumer-club-threshold": "beginner",
+  "camp-open": "beginner",
+  "event-both-audiences": "neuroinclusive",
+};
+
+/**
+ * The demo art a scenario's card and detail hero both paint. Same reasoning as
+ * the tag map: a card's picture and the page behind it are the same product's
+ * picture. Absent means the scenario has no art and renders the wordmark
+ * banner — exactly one grid card is deliberately in that state.
+ */
+const SCENARIO_ART: Partial<Record<PreviewScenario, string>> = {
+  "consumer-club": DEMO_ART.terrain,
+  "consumer-club-free": DEMO_ART.park,
+  "consumer-club-full-waitlist": DEMO_ART.interior,
+  "consumer-club-parents-only": DEMO_ART.interior,
+  "camp-open": DEMO_ART.terrain,
+  "camp-full-closed": DEMO_ART.racetrack,
+  "event-both-audiences": DEMO_ART.park,
+  "event-parents-only": DEMO_ART.racetrack,
+  "free-event": DEMO_ART.racetrack,
+};
+
+/** The scenario's tag, or null when it carries none. */
+export function scenarioTag(slug: PreviewScenario): ProductTag | null {
+  return SCENARIO_TAG[slug] ?? null;
+}
+
+/** The scenario's demo art URL, or null when it deliberately has none. */
+export function scenarioArt(slug: PreviewScenario): string | null {
+  return SCENARIO_ART[slug] ?? null;
+}
+
 export interface ShopRedesignEntry {
   slug: PreviewScenario;
-  /**
-   * The product tag the draft card wears. Not a fixture *row* field — there is
-   * no column for it yet (see `product-tag.ts`) — so it rides alongside the
-   * scenario and is handed to the draft adapter directly.
-   */
-  tag: ProductTag | null;
-  /** Demo art URL, or null on the one card that shows the fallback banner. */
-  imageSrc: string | null;
   /**
    * The product's name, replacing both the per-type copy and the ` · label`
    * suffix every other scene's cards carry.
@@ -714,85 +757,68 @@ export interface ShopRedesignEntry {
  *   because nothing below the rule changed and that has to stay visibly true.
  *
  * Names are what a real catalogue would carry and are varied on purpose; each
- * card's *description* is what says which fixture it is.
+ * card's *description* is what says which fixture it is. The tag and the art
+ * are **not** listed here — they come from `SCENARIO_TAG` / `SCENARIO_ART`
+ * above, so the detail page a card opens shows the same tag and the same
+ * picture.
  */
 export const SHOP_SCENE_REDESIGN: readonly ShopRedesignEntry[] = [
   {
     slug: "consumer-club",
-    tag: "beginner",
-    imageSrc: DEMO_ART.terrain,
     nameOverride: "Minecraft Redstone Club",
     descriptionOverride:
       "Paid monthly club, open, ages 8–12 in the top-right slot. The ordinary card, and the one everything else is a deviation from.",
   },
   {
     slug: "consumer-club-free",
-    tag: "neuroinclusive",
-    imageSrc: DEMO_ART.park,
     nameOverride: "Roblox Studio Beginners",
     descriptionOverride:
       "Free and capped: the Free chip in the footer and a tag chip on the image, on the brightest photo of the set — the bottom-left corner this art is lightest in is exactly where the tag sits.",
   },
   {
     slug: "consumer-club-full-waitlist",
-    tag: "advanced",
-    imageSrc: DEMO_ART.interior,
     nameOverride: "Minecraft-rakentelukerho edistyneille konepajamestareille",
     descriptionOverride:
       "Full with a waitlist, so it still opens and still says View — indistinguishable from an open card, which is inherited behaviour. The name is deliberately long: this is the card the full-width title row is judged on.",
   },
   {
     slug: "consumer-club-threshold",
-    tag: "beginner",
-    imageSrc: null,
     nameOverride: "Fortnite Creative Workshop",
     descriptionOverride:
       "The only card with no image, on purpose: it is here to judge the SOG fallback banner in the grid rather than on its own — and, since it is tagged, to show a chip over that muted ground instead of over a photograph. Awaiting its signup threshold, which the card says nothing about.",
   },
   {
     slug: "consumer-club-parents-only",
-    tag: null,
-    imageSrc: DEMO_ART.interior,
     nameOverride: "Vanhempien peli-ilta · Parents' Gaming Evening",
     descriptionOverride:
       "For parents only: the top-right slot carries the audience badge, no age range anywhere, and nothing opposite it bottom-left.",
   },
   {
     slug: "camp-open",
-    tag: "beginner",
-    imageSrc: DEMO_ART.terrain,
     nameOverride: "Minecraft Builders Camp",
     descriptionOverride:
       "An upfront-priced camp, open. Two schedule lines instead of one, which is what the meta list has to absorb without pushing the description around.",
   },
   {
     slug: "camp-full-closed",
-    tag: null,
-    imageSrc: DEMO_ART.racetrack,
     nameOverride: "Roblox Obby Bootcamp",
     descriptionOverride:
       "Full with no waitlist: the inert card. Muted label, no chevron, no link — and the darkest photo of the set, which is the other end of the chip-legibility question.",
   },
   {
     slug: "event-both-audiences",
-    tag: "neuroinclusive",
-    imageSrc: DEMO_ART.park,
     nameOverride: "Pokémon GO -perheretki · Family Outing",
     descriptionOverride:
       "The fullest card the design makes: a tag bottom-left and the families badge top-right, both over the bright art. Its age range yields the slot to the badge, exactly as the live card decides it.",
   },
   {
     slug: "event-parents-only",
-    tag: null,
-    imageSrc: DEMO_ART.racetrack,
     nameOverride: "Vanhempainilta · Parents' Evening",
     descriptionOverride:
       "For parents only, and free. No tag, no age, one badge on a dark photo — the sparsest the media block ever gets.",
   },
   {
     slug: "free-event",
-    tag: null,
-    imageSrc: DEMO_ART.racetrack,
     nameOverride: "Friday Night Mario Kart",
     descriptionOverride:
       "Free and untagged: the age range has the top-right slot to itself, and the Free chip sits in the footer beneath it.",

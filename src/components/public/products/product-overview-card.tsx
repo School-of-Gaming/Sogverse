@@ -9,6 +9,8 @@ import { resolveLocale } from "@/lib/constants/locales";
 import type { ProductBrowseRow } from "@/types";
 import { formatProductLocation } from "./format-product-location";
 import { audienceLabelKey } from "./product-audience";
+import { DraftTagChip } from "./product-browse-card-view-draft";
+import { productTagLabelKey, type ProductTag } from "./product-tag";
 import { formatClubTermDates } from "./format-product-term-dates";
 import {
   formatProductSchedule,
@@ -42,11 +44,33 @@ interface ProductOverviewCardProps {
     | "for_parents"
     | "spoken_language_code"
   >;
+  /**
+   * **Draft-redesign only, and additive.** No live caller passes it — not the
+   * shop detail body, not the confirmation view, not the admin product page —
+   * so this card renders exactly as it always has for all three. Given a tag,
+   * it grows one block beneath the 2×2 grid: the same chip the browse card and
+   * the draft masthead wear, plus a sentence or two on what SOG actually does
+   * about it.
+   *
+   * Below the grid rather than inside it, deliberately. The four facts are a
+   * filled 2×2 whatever the product's shape is — that invariant is why the
+   * audience and the age range already share one cell — and this is prose, not
+   * a fact: a paragraph in a `dd` sized for "Tuesdays 15:30" would wreck the
+   * row it sits in. It stays in the who-it's-for *area* by sitting directly
+   * under it, which is where a parent reading "For families, ages 8–12" looks
+   * next.
+   */
+  tag?: ProductTag;
 }
 
-export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
+export function ProductOverviewCard({ product, tag }: ProductOverviewCardProps) {
   const t = useTranslations("productDetail");
   const tAudience = useTranslations("productAudience");
+  // DRAFT COPY. See `productTagDetail` in the message files: the product owner
+  // is writing the real source text and these strings are placeholders that get
+  // replaced wholesale, in every locale, when it lands.
+  const tTagDetail = useTranslations("productTagDetail");
+  const tTag = useTranslations("productTag");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -174,6 +198,20 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
             <LanguageFlag code={product.spoken_language_code} />
           </DetailRow>
         </div>
+
+        {/* The tag, explained. The chip alone is a promise with no content
+            behind it — "Neuroinclusive" tells a parent the product claims
+            something, not what the claim is — so wherever a family can stop and
+            read, the claim is spelled out. The card and the masthead carry the
+            label; this is the only place that says what SOG does about it. */}
+        {tag !== undefined && (
+          <div className="space-y-2 border-t pt-3">
+            <DraftTagChip tag={{ value: tag, label: tTag(productTagLabelKey(tag)) }} />
+            <p className="text-muted-foreground">
+              {tTagDetail(productTagLabelKey(tag))}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

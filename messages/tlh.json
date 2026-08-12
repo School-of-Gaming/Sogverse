@@ -1571,6 +1571,11 @@
     "beginner": "ghojwI’",
     "advanced": "po’wI’"
   },
+  "productTagDetail": {
+    "neuroinclusive": "mach ghom. rap chenmoHwI’ mIw; not Sov’eghbe’ SuvwI’. yabDu’ pIm luSov Gedupu’. So’eghnIS pagh — tam He je tu’lu’.",
+    "beginner": "Sovbe’chugh SuvwI’, qay’be’. taghDI’ Gedu, wa’DIch mI’vo’ taghtaH, ghom Do lulaj. QaQ Daq ghaH.",
+    "advanced": "Qu’mey nIvqu’ neH puqpu’ Sovbogh. tIn qach; Qatlh QaghHom; ghom laH nIv. Qapla’!"
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} pa’ ratlh} other {# / {total} pa’ ratlh}}",
     "waitlistAvailable": "loS tetlh"

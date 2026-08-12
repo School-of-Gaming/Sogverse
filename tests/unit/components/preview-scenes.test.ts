@@ -40,7 +40,9 @@ import {
   buildBrowseFixture,
   buildConfirmationFixture,
   buildScenarioFixture,
+  scenarioArt,
   scenarioFilledSeats,
+  scenarioTag,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
@@ -415,9 +417,44 @@ describe("the shop browse scene", () => {
    * the previews entirely.
    */
   it("puts one un-imaged card on the redesign grid, and tags it", () => {
-    const unimaged = SHOP_SCENE_REDESIGN.filter((e) => e.imageSrc === null);
+    const unimaged = SHOP_SCENE_REDESIGN.filter(
+      (e) => scenarioArt(e.slug) === null,
+    );
     expect(unimaged).toHaveLength(1);
-    expect(unimaged[0].tag).not.toBeNull();
+    expect(scenarioTag(unimaged[0].slug)).not.toBeNull();
+  });
+
+  /**
+   * **The card and the page it opens are the same product.** Each grid card
+   * links to `/preview/products/<slug>`, and the detail scene switches to the
+   * draft masthead on the tag — so a tag reachable from no card, or a card
+   * whose tag the detail page does not know about, is the preview telling a
+   * family two different things about one club. One map feeds both surfaces,
+   * and this is what stops a scenario being tagged outside the grid.
+   */
+  it("tags and illustrates only scenarios the redesign grid carries", () => {
+    const onGrid = new Set<string>(SHOP_SCENE_REDESIGN.map((e) => e.slug));
+    for (const { slug } of PREVIEW_SCENARIOS) {
+      if (onGrid.has(slug)) continue;
+      expect(scenarioTag(slug), slug).toBeNull();
+      expect(scenarioArt(slug), slug).toBeNull();
+    }
+  });
+
+  /**
+   * Every tag has to be on the grid, or a whole chip — icon, fill and the
+   * detail page's explanation of it — has no preview at all. The three are the
+   * vocabulary; a grid carrying two of them reviews two thirds of the design.
+   */
+  it("puts all three tags on the redesign grid", () => {
+    const tags = new Set(
+      SHOP_SCENE_REDESIGN.map((e) => scenarioTag(e.slug)).filter(
+        (tag) => tag !== null,
+      ),
+    );
+    expect(tags).toEqual(
+      new Set(["neuroinclusive", "beginner", "advanced"]),
+    );
   });
 });
 
