@@ -7,12 +7,10 @@ import {
   buildBrowseFixture,
   SHOP_SCENE_AUDIENCES,
   SHOP_SCENE_DEFAULT,
-  SHOP_SCENE_REDESIGN,
-  scenarioArt,
-  scenarioTag,
+  SHOP_SCENE_TAGGED_CATALOG,
   type PreviewScenario,
   type ShopBrowseScenario,
-  type ShopRedesignEntry,
+  type ShopCatalogEntry,
 } from "@/components/public/products/mock-detail-fixtures";
 import { useNow } from "@/providers";
 import { type ProductBrowseSection } from "@/components/public/products/product-browse-results";
@@ -20,16 +18,13 @@ import {
   ProductBrowseBody,
   sectionHeading,
 } from "@/components/public/products/product-browse-page";
-import { ProductBrowseCardDraft } from "@/components/public/products/product-browse-card-draft";
-import type { ProductTag } from "@/components/public/products/product-tag";
 import {
   CATEGORY_TYPE,
   visibleCategories,
   type ShopCategory,
 } from "@/components/public/products/shop-categories";
 import { useShopCategories } from "@/components/public/products/use-shop-categories";
-import type { ParticipationCounts } from "@/services/participations";
-import type { ProductBrowseRow, SpokenLanguage } from "@/types";
+import type { SpokenLanguage } from "@/types";
 import { previewSceneHref } from "../href";
 
 /**
@@ -66,16 +61,16 @@ function categoryOf(productType: string): ShopCategory | undefined {
 }
 
 /**
- * A live-card grid's entries: a slug and nothing else. The redesign grid adds
- * the copy overrides, which `SHOP_SCENE_REDESIGN` carries; giving both shapes
- * one type is what keeps the fixture build below a single path. The tag and the
- * demo art are *not* here — they come from the shared per-scenario maps, so the
- * detail page a card opens shows the same two things.
+ * A comparison grid's entries: a slug and nothing else. The tagged-catalog grid
+ * adds the copy overrides, which `SHOP_SCENE_TAGGED_CATALOG` carries; giving
+ * both shapes one type is what keeps the fixture build below a single path. The
+ * tag and the picture are *not* here — they are row fields on the fixture, so
+ * the detail page a card opens shows the same two things.
  */
-type SceneEntry = ShopRedesignEntry | { slug: PreviewScenario };
+type SceneEntry = ShopCatalogEntry | { slug: PreviewScenario };
 
-/** Whether this entry carries the redesign grid's copy overrides. */
-function isRedesign(entry: SceneEntry): entry is ShopRedesignEntry {
+/** Whether this entry carries the tagged-catalog grid's copy overrides. */
+function hasCopyOverride(entry: SceneEntry): entry is ShopCatalogEntry {
   return "nameOverride" in entry;
 }
 
@@ -85,8 +80,8 @@ function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
       return SHOP_SCENE_DEFAULT.map((slug) => ({ slug }));
     case "audiences":
       return SHOP_SCENE_AUDIENCES.map((slug) => ({ slug }));
-    case "redesign":
-      return SHOP_SCENE_REDESIGN;
+    case "tagged-catalog":
+      return SHOP_SCENE_TAGGED_CATALOG;
   }
 }
 
@@ -95,22 +90,19 @@ function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
  *
  * It renders the same `ProductBrowseResults` the live `/shop` renders — the
  * body that owns the filter rail, the width budget, the headed grids and the
- * empty states. The live route's own shell does the fetching and the Type
+ * cards themselves. The live route's own shell does the fetching and the Type
  * narrowing above it; here the sections are handed over directly, which is the
  * one honest difference.
  *
  * The chip filters genuinely work: they live in the URL and `filterProducts`
  * runs client-side over these rows, so the audience row can be toggled against
- * a grid that actually answers. Cards open the matching product-detail scene
- * rather than `/shop/<id>`, which no fixture id resolves to.
+ * a grid that actually answers. A product's tag is not filterable yet — the
+ * filter row is gated on the owner's go-ahead — so no chip narrows by it.
  *
- * The `redesign` scenario is the exception to "the scene renders the live
- * body": it renders the *draft* browse card in the same grid, which is the
- * one-body-two-shells rule doing its job — the draft body is what will replace
- * the live card's, and it is being judged as a page first. The filter chips
- * keep working there too, because they run over the rows' real fields; a
- * product's tag is not among them and is not filterable yet, which is expected
- * until the tag becomes a column.
+ * Cards open the matching product-detail scene rather than `/shop/<id>`, which
+ * no fixture id resolves to. Everything else about a card — its picture, its
+ * tag, its audience — comes off the row, so the three scenarios differ only in
+ * which rows they put on the grid.
  */
 export function ShopBrowseScene({
   scenario,
@@ -126,10 +118,10 @@ export function ShopBrowseScene({
   const { categories } = useShopCategories();
   const visible = visibleCategories(categories);
 
-  // Memoised because the live-card scenarios build their entry list on the fly:
-  // a fresh array every render would re-run the fixture build below with it.
+  // Memoised because the comparison scenarios build their entry list on the
+  // fly: a fresh array every render would re-run the fixture build below with
+  // it.
   const entries = useMemo(() => entriesFor(scenario), [scenario]);
-  const isDraftGrid = scenario === "redesign";
 
   // The fixtures are anchored once, on the first `useNow()` value, and held —
   // the same arrangement every other scene uses. The card keeps deriving its
@@ -138,16 +130,16 @@ export function ShopBrowseScene({
   const liveNow = useNow();
   const [anchorNow] = useState(() => liveNow);
 
-  const { sections, counts, hrefById, tagById, imageById } = useMemo(() => {
+  const { sections, counts, hrefById } = useMemo(() => {
     const products = entries.map((entry) => ({
       entry,
       product: buildBrowseFixture(
         entry.slug,
         anchorNow,
-        // The redesign grid replaces both halves of a card's copy: real names,
-        // with the scenario descriptor moved down into the description. The
-        // live-card grids keep the ` · label` suffix they have always had.
-        isRedesign(entry)
+        // The tagged-catalog grid replaces both halves of a card's copy: real
+        // names, with the scenario descriptor moved down into the description.
+        // The comparison grids keep the ` · label` suffix they have always had.
+        hasCopyOverride(entry)
           ? { name: entry.nameOverride, description: entry.descriptionOverride }
           : undefined,
       ),
@@ -175,23 +167,6 @@ export function ShopBrowseScene({
         buildBrowseCounts(entry.slug, product.id),
       ),
       hrefById: hrefs,
-      // The two facts the draft card needs and no row carries: the tag has no
-      // column yet, and a fixture has no storage object to point an image at.
-      // Both come from the shared per-scenario maps rather than from this
-      // scene, so the detail page each card links to shows the same tag and the
-      // same picture.
-      tagById: new Map<string, ProductTag | null>(
-        products.map(({ entry, product }) => [
-          product.id,
-          scenarioTag(entry.slug),
-        ]),
-      ),
-      imageById: new Map<string, string | null>(
-        products.map(({ entry, product }) => [
-          product.id,
-          scenarioArt(entry.slug),
-        ]),
-      ),
     };
   }, [anchorNow, entries, t, visible]);
 
@@ -200,31 +175,6 @@ export function ShopBrowseScene({
     [hrefById],
   );
 
-  // Undefined on the live-card scenarios, which is what makes them render the
-  // real `<ProductBrowseCard>` — see the `renderCard` seam's own note, which
-  // this whole branch is removed alongside at promotion.
-  const renderCard = useMemo(() => {
-    if (!isDraftGrid) return undefined;
-    function renderDraftCard(
-      product: ProductBrowseRow,
-      cardCounts: ParticipationCounts | null,
-      detailHref: string | undefined,
-      municipalityScoped: boolean | undefined,
-    ) {
-      return (
-        <ProductBrowseCardDraft
-          product={product}
-          counts={cardCounts}
-          detailHref={detailHref}
-          municipalityScoped={municipalityScoped}
-          tag={tagById.get(product.id) ?? null}
-          imageSrc={imageById.get(product.id) ?? null}
-        />
-      );
-    }
-    return renderDraftCard;
-  }, [imageById, isDraftGrid, tagById]);
-
   return (
     <ProductBrowseBody
       sections={sections}
@@ -232,7 +182,6 @@ export function ShopBrowseScene({
       filters={{ initialSpokenLanguages: SPOKEN_LANGUAGES }}
       scopeHasProducts
       productHref={productHref}
-      renderCard={renderCard}
     />
   );
 }

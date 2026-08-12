@@ -89,10 +89,12 @@ import {
 } from "@/components/locations/location-picker-panel";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import {
-  ProductBrowseCardView,
   type LocationLine,
   type SeatBarValue,
-} from "@/components/public/products/product-browse-card-view";
+} from "@/components/public/products/browse-card-shell";
+import { ProductBrowseCardView } from "@/components/public/products/product-browse-card-view";
+import { productTagLabelKey } from "@/components/public/products/product-tag";
+import { productImageUrl } from "@/lib/images/product-image-url";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { audienceLabelKey } from "@/components/public/products/product-audience";
 import { formatProductLocation } from "@/components/public/products/format-product-location";
@@ -1223,6 +1225,12 @@ function ProductsDemo() {
 // whole surface to the matching full page at /preview/products/[slug]; a
 // dead-end state gets no href and stays inert, which is the same split the
 // shop makes.
+//
+// The tag and the picture are read off the row rather than picked here, for the
+// same reason the state is not: a hand-picked tag would let a demo card
+// disagree with that scenario's own detail scene, and the fixture has already
+// decided it. All three tags and the untagged case appear on this grid because
+// the scenarios carry them, not because this function chose them.
 function ScenarioBrowseCard({
   slug,
   label,
@@ -1232,6 +1240,7 @@ function ScenarioBrowseCard({
 }) {
   const t = useTranslations("productBrowse.card");
   const tAudience = useTranslations("productAudience");
+  const tTag = useTranslations("productTag");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -1295,7 +1304,20 @@ function ScenarioBrowseCard({
       <ProductBrowseCardView
         name={tr?.name ?? ""}
         description={tr?.short_description ?? null}
-        imagePath={product.image_path}
+        // The card takes an already-resolved URL, so the demo resolves it
+        // through the same helper the shop's adapter uses — which passes the
+        // fixtures' root-relative demo art straight through.
+        imageSrc={
+          product.image_path ? productImageUrl(product.image_path) : null
+        }
+        tag={
+          product.tag === null
+            ? null
+            : {
+                value: product.tag,
+                label: tTag(productTagLabelKey(product.tag)),
+              }
+        }
         topicLabel={topicLabel(product.topic)}
         scheduleLines={scheduleLines}
         ageLine={

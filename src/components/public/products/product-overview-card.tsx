@@ -45,16 +45,19 @@ interface ProductOverviewCardProps {
     | "spoken_language_code"
   >;
   /**
-   * **Draft-redesign only, and a class switch — nothing else.** From `2xl` the
-   * draft detail page moves this card out of the reading column into a 16rem
-   * facts rail, where a two-up grid would give each fact about 110px. This
-   * collapses the grid back to a single stacked column at exactly that
-   * breakpoint, and only for the instance that moves.
+   * **A class switch, nothing else.** From `2xl` the product detail page moves
+   * this card out of the reading column into a 16rem facts rail, where a
+   * two-up grid would give each fact about 110px. This collapses the grid back
+   * to a single stacked column at exactly that breakpoint, and only for the
+   * instance that moves.
    *
    * A prop rather than a breakpoint the card decides for itself, because the
    * card cannot know how wide its column is — `sm:` and friends measure the
    * viewport, and a 1920px viewport says nothing about a 256px rail. The prop
-   * names the arrangement its caller put it in. No live caller passes it.
+   * names the arrangement its caller put it in, which is why it stays a prop:
+   * the detail page is the only caller in a rail, while the purchase
+   * confirmation view and the admin product page render this card at full
+   * width and leave it unset.
    */
   railFrom2xl?: boolean;
 }

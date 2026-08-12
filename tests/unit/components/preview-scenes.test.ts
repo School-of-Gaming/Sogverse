@@ -36,13 +36,11 @@ import {
   PREVIEW_SCENARIOS,
   SHOP_SCENE_AUDIENCES,
   SHOP_SCENE_DEFAULT,
-  SHOP_SCENE_REDESIGN,
+  SHOP_SCENE_TAGGED_CATALOG,
   buildBrowseFixture,
   buildConfirmationFixture,
   buildScenarioFixture,
-  scenarioArt,
   scenarioFilledSeats,
-  scenarioTag,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
@@ -300,12 +298,22 @@ describe("the shop browse scene", () => {
     !product.for_parents ? "gamers" : product.for_gamers ? "both" : "parents";
 
   /**
-   * Every grid the scene can render, built the way the scene builds it — which
-   * for the redesign grid means through its own copy overrides. Sweeping the
-   * *rendered* rows rather than the slug lists is what makes those overrides
-   * covered: a name override colliding with another card's, or a description
-   * that swallowed a card's identity, is invisible to a slug-level check.
+   * The showcase grid's rows, built the way the scene builds them — through its
+   * own copy overrides. Sweeping the *rendered* rows rather than the slug list
+   * is what makes those overrides covered: a name override colliding with
+   * another card's, or a description that swallowed a card's identity, is
+   * invisible to a slug-level check. It is also how the tag and the picture are
+   * read, since both are row fields now rather than scene-side maps.
    */
+  const taggedCatalogRows = SHOP_SCENE_TAGGED_CATALOG.map((entry) => ({
+    slug: entry.slug,
+    product: buildBrowseFixture(entry.slug, anchor, {
+      name: entry.nameOverride,
+      description: entry.descriptionOverride,
+    }),
+  }));
+
+  /** Every grid the scene can render. */
   const GRIDS = [
     {
       name: "default",
@@ -321,16 +329,7 @@ describe("the shop browse scene", () => {
         product: buildBrowseFixture(slug, anchor),
       })),
     },
-    {
-      name: "redesign",
-      rows: SHOP_SCENE_REDESIGN.map((entry) => ({
-        slug: entry.slug,
-        product: buildBrowseFixture(entry.slug, anchor, {
-          name: entry.nameOverride,
-          description: entry.descriptionOverride,
-        }),
-      })),
-    },
+    { name: "tagged-catalog", rows: taggedCatalogRows },
   ];
 
   it("puts all three audiences on the audience grid", () => {
@@ -362,11 +361,11 @@ describe("the shop browse scene", () => {
 
   it("gives every card on a grid a distinct name", () => {
     // The per-type copy names every consumer club the same thing, which is fine
-    // on a detail page and unreadable on a grid of them. The first two grids
-    // suffix each name with its fixture's label for exactly this reason; the
-    // redesign grid instead overrides the name outright with something a real
-    // catalogue would carry — same obligation, different mechanism, and the
-    // override is the one that can collide by hand.
+    // on a detail page and unreadable on a grid of them. The two comparison
+    // grids suffix each name with its fixture's label for exactly this reason;
+    // the showcase grid instead overrides the name outright with something a
+    // real catalogue would carry — same obligation, different mechanism, and
+    // the override is the one that can collide by hand.
     for (const grid of GRIDS) {
       const names = grid.rows.map(
         ({ product }) => product.product_translations[0].name,
@@ -381,8 +380,8 @@ describe("the shop browse scene", () => {
     // clock; the raw fixtures are anchored to a static January reference, so
     // an un-rebased grid renders every card as months-over ("wrapped") — the
     // bug this pins. A fixture authored as ended would legitimately fail this
-    // sweep, and should: no shop list carries one, which is also why the draft
-    // card's ended treatment cannot be looked at on the redesign grid.
+    // sweep, and should: no shop list carries one, which is also why the card's
+    // ended treatment cannot be looked at on any shop grid.
     for (const grid of GRIDS) {
       for (const { slug, product } of grid.rows) {
         if (product.end_date === null) continue;
@@ -395,14 +394,16 @@ describe("the shop browse scene", () => {
   });
 
   /**
-   * The redesign grid moved each card's identity out of its name and into its
+   * The showcase grid moved each card's identity out of its name and into its
    * description, which is what lets the titles be realistic. That only works if
    * the descriptions actually differ — ten cards whose names are plausible and
    * whose descriptions are interchangeable is worse than the suffixes it
    * replaced, and nothing else here would notice.
    */
-  it("gives every redesign card its own description", () => {
-    const descriptions = SHOP_SCENE_REDESIGN.map((e) => e.descriptionOverride);
+  it("gives every showcase card its own description", () => {
+    const descriptions = SHOP_SCENE_TAGGED_CATALOG.map(
+      (e) => e.descriptionOverride,
+    );
     expect(new Set(descriptions).size).toBe(descriptions.length);
     for (const description of descriptions) {
       expect(description.trim()).not.toBe("");
@@ -410,35 +411,37 @@ describe("the shop browse scene", () => {
   });
 
   /**
-   * Exactly one card with no art, and it carries a tag: the fallback banner has
-   * to be judged in the grid rather than alone, and a chip over that muted
-   * ground is the combination most likely to read badly. Two un-imaged cards
-   * would be a grid making a different point; none would take the banner off
-   * the previews entirely.
+   * Exactly one card with no picture, and it carries a tag: the wordmark
+   * fallback has to be judged in the grid rather than alone, and a chip over
+   * that muted ground is the combination most likely to read badly. Two
+   * un-imaged cards would be a grid making a different point; none would take
+   * the banner off the previews entirely.
    */
-  it("puts one un-imaged card on the redesign grid, and tags it", () => {
-    const unimaged = SHOP_SCENE_REDESIGN.filter(
-      (e) => scenarioArt(e.slug) === null,
+  it("puts one un-imaged card on the showcase grid, and tags it", () => {
+    const unimaged = taggedCatalogRows.filter(
+      ({ product }) => product.image_path === null,
     );
     expect(unimaged).toHaveLength(1);
-    expect(scenarioTag(unimaged[0].slug)).not.toBeNull();
+    expect(unimaged[0].product.tag).not.toBeNull();
   });
 
   /**
-   * **The card and the page it opens are the same product.** Each grid card
-   * links to `/preview/products/<slug>`, and the detail scene switches to the
-   * draft masthead on the tag — so a tag reachable from no card, or a card
-   * whose tag the detail page does not know about, is the preview telling a
-   * family two different things about one club. One map feeds both surfaces,
-   * and this is what stops a scenario being tagged outside the grid.
+   * **The untagged case is a review case too**, and it is the fragile one: it
+   * is the *absence* of a chip, so nothing else fails if the grid quietly
+   * becomes all-tagged. Untagged is what most of the catalogue looks like, and
+   * the corner it leaves empty — no hole, no reserved slot — is exactly what
+   * the two-chips-in-two-corners arrangement claims.
+   *
+   * This replaces a draft-period invariant that pinned tags and demo art to
+   * this grid alone. Tags and pictures are row fields now, so every grid built
+   * from these scenarios inherits them; that is the honest storefront, and what
+   * still has to hold is only that the showcase keeps showing both states.
    */
-  it("tags and illustrates only scenarios the redesign grid carries", () => {
-    const onGrid = new Set<string>(SHOP_SCENE_REDESIGN.map((e) => e.slug));
-    for (const { slug } of PREVIEW_SCENARIOS) {
-      if (onGrid.has(slug)) continue;
-      expect(scenarioTag(slug), slug).toBeNull();
-      expect(scenarioArt(slug), slug).toBeNull();
-    }
+  it("keeps the untagged case on the showcase grid", () => {
+    const untagged = taggedCatalogRows.filter(
+      ({ product }) => product.tag === null,
+    );
+    expect(untagged.length).toBeGreaterThan(0);
   });
 
   /**
@@ -446,15 +449,31 @@ describe("the shop browse scene", () => {
    * detail page's explanation of it — has no preview at all. The three are the
    * vocabulary; a grid carrying two of them reviews two thirds of the design.
    */
-  it("puts all three tags on the redesign grid", () => {
+  it("puts all three tags on the showcase grid", () => {
     const tags = new Set(
-      SHOP_SCENE_REDESIGN.map((e) => scenarioTag(e.slug)).filter(
-        (tag) => tag !== null,
-      ),
+      taggedCatalogRows
+        .map(({ product }) => product.tag)
+        .filter((tag) => tag !== null),
     );
-    expect(tags).toEqual(
-      new Set(["neuroinclusive", "beginner", "advanced"]),
+    expect(tags).toEqual(new Set(["neuroinclusive", "beginner", "advanced"]));
+  });
+
+  /**
+   * **A card and the page it opens are the same product**, and after the fold
+   * that is structural rather than asserted: the grid card and the detail scene
+   * are built from one row, so neither can carry a tag or a picture the other
+   * does not. What this pins instead is the fold itself — that the demo art
+   * still arrives as an ordinary `image_path` a card resolves like any other,
+   * rather than creeping back into a scene-side override.
+   */
+  it("carries its demo art as an ordinary row path", () => {
+    const imaged = taggedCatalogRows.filter(
+      ({ product }) => product.image_path !== null,
     );
+    expect(imaged.length).toBeGreaterThan(0);
+    for (const { slug, product } of imaged) {
+      expect(product.image_path, slug).toMatch(/^\/preview-art\/.+\.svg$/);
+    }
   });
 });
 
