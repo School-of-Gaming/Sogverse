@@ -3,7 +3,7 @@
 import { Globe, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { ProductBanner } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-banner";
 import {
   BrowseCardFooter,
   StretchedCardLink,

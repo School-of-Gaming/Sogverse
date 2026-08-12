@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProductBanner } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-banner";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { productImageSrc } from "@/lib/images/product-image-url";

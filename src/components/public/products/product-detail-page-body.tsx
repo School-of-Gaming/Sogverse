@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductBanner } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-banner";
 import { ROUTES } from "@/lib/constants";
 import { productImageSrc } from "@/lib/images/product-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";

@@ -22,12 +22,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import {
-  cn,
-  formatCurrencyFromCents,
-  formatDate,
-} from "@/lib/utils";
-import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { ProductBanner } from "@/components/ui/product-banner";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
@@ -223,14 +220,14 @@ function HeaderCard({
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
-        <ProductThumbnail
-          imagePath={imagePath ?? ""}
-          alt=""
-          size="h-28 w-28"
-          className={cn(
-            "rounded-md border bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
-            !imagePath && "[&>img]:hidden",
-          )}
+        {/* The project ratio here too (owner rule — one aspect ratio wherever
+            a product image shows), shaped the way the shop card shapes it —
+            rounded, borderless: this header is where an admin looks at a
+            product they manage, and it must show the same crop the family
+            surfaces paint. w-40 lands near the old square's 112px height. */}
+        <ProductBanner
+          src={productImageSrc(imagePath)}
+          className="w-40 shrink-0 rounded-md"
         />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
