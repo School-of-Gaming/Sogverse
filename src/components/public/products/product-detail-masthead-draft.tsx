@@ -70,7 +70,16 @@ export function ProductDetailMastheadDraft({
     // the picture media-forward without letting it become a billboard — a 3:2
     // banner across the page's full 5xl would stand 680px tall and push the
     // title below the fold on a laptop.
-    <div className="mt-6 grid grid-cols-1 items-start gap-4 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] sm:gap-6">
+    //
+    // `items-center`, not `items-start`: the text column is usually shorter
+    // than the 3:2 hero beside it, and top-aligned it left all its slack
+    // pooled beneath the description — an awkward hole under the shortest
+    // content (owner-flagged). Centering splits the slack above and below, the
+    // ordinary hero composition. On the rare product whose text outgrows the
+    // hero, the same rule centers the image instead, which is symmetric and
+    // reads just as deliberately. Moot below `sm`, where each row hugs its own
+    // content.
+    <div className="mt-6 grid grid-cols-1 items-center gap-4 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] sm:gap-6">
       <div className="overflow-hidden rounded-lg border">
         {imageSrc !== null ? (
           // eslint-disable-next-line @next/next/no-img-element -- product images bypass next/image, exactly as `ProductThumbnail` does; the scene's demo art is a local file

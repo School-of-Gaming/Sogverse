@@ -60,11 +60,18 @@ import { previewSceneHref } from "../href";
  * Passed as `initialData` exactly as the live page passes its server-prefetched
  * copy, so the row is on screen in the first frame instead of appearing after
  * its own fetch — which is the layout behaviour being judged.
+ *
+ * This list mirrors the `spoken_languages` reference table and has to track
+ * it: it was once authored as fi/en/sv, the DB later gained French, and the
+ * scene's filter row silently fell out of step with the live shop's until
+ * someone compared them side by side. When a language is added to the table,
+ * add it here in the same change.
  */
 const SPOKEN_LANGUAGES: SpokenLanguage[] = [
-  { code: "fi", name: "Suomi" },
+  { code: "fi", name: "Finnish" },
   { code: "en", name: "English" },
-  { code: "sv", name: "Svenska" },
+  { code: "sv", name: "Swedish" },
+  { code: "fr", name: "French" },
 ];
 
 /**
