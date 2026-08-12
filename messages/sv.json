@@ -1489,6 +1489,7 @@
     "filters": {
       "type": "Typ",
       "audience": "Målgrupp",
+      "designedFor": "Utformad för",
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "typeEvents": "Evenemang",

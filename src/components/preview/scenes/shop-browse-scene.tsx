@@ -95,9 +95,10 @@ function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
  * one honest difference.
  *
  * The chip filters genuinely work: they live in the URL and `filterProducts`
- * runs client-side over these rows, so the audience row can be toggled against
- * a grid that actually answers. A product's tag is not filterable yet — the
- * filter row is gated on the owner's go-ahead — so no chip narrows by it.
+ * runs client-side over these rows, so the audience and design-tag rows can be
+ * toggled against a grid that actually answers — the tagged-catalog scenario is
+ * the one that answers the tag row properly, carrying every tag value and a
+ * handful of untagged products beside them.
  *
  * Cards open the matching product-detail scene rather than `/shop/<id>`, which
  * no fixture id resolves to. Everything else about a card — its picture, its

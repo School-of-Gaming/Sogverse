@@ -101,7 +101,7 @@ export function ProductBrowseResults({
   // so it reuses that button's label rather than authoring a second word for
   // the same action.
   const tFilters = useTranslations("productBrowse.filters");
-  const { topics, format, languages, audiences, age, days, clear } =
+  const { topics, format, languages, audiences, tags, age, days, clear } =
     useBrowseFilters();
 
   const countsByProduct = useMemo(() => {
@@ -125,12 +125,13 @@ export function ProductBrowseResults({
             format,
             languages,
             audiences,
+            tags,
             age,
             days,
           }),
         }))
         .filter((section) => section.products.length > 0),
-    [sections, topics, format, languages, audiences, age, days],
+    [sections, topics, format, languages, audiences, tags, age, days],
   );
 
   // "Nothing here yet" vs "no matches" is decided before *all* filtering, Type

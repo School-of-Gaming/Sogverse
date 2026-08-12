@@ -4,6 +4,7 @@ import {
   matchesAudienceFilter,
   type AudienceFilterValue,
 } from "./product-audience";
+import type { ProductTag } from "./product-tag";
 
 // Topic + format + language filters as the parent navigates the catalog.
 //
@@ -26,6 +27,13 @@ import {
 //   empty set skips the filter. It is the tool for "shopping for me"; the age
 //   band below is the tool for "shopping for a child of age X", which is why
 //   the two never fold into one row.
+// - `tags`: list of design-tag values the parent has selected. A chip is the
+//   chip the card wears: each matches exactly the products carrying that tag,
+//   with OR semantics across the set, and an untagged product — the ordinary
+//   state, wearing nothing — answers only an empty row. So the row behaves like
+//   the audience one and unlike topic or language: lighting every chip is
+//   *narrower* than lighting none, and clearing the row is the only way back to
+//   the untagged majority.
 // - `age`: a selected age band ({min, max}), or null. A product passes when its
 //   [min_age, max_age] *overlaps* the band — i.e. it serves some age the band
 //   covers. Null means "any age" and skips the filter. The offered bands come
@@ -54,6 +62,7 @@ export interface BrowseFilters {
   format: ProductFormat | null;
   languages: string[];
   audiences: AudienceFilterValue[];
+  tags: ProductTag[];
   age: AgeBand | null;
   days: number[];
 }
@@ -63,6 +72,7 @@ export const EMPTY_FILTERS: BrowseFilters = {
   format: null,
   languages: [],
   audiences: [],
+  tags: [],
   age: null,
   days: [],
 };
@@ -86,6 +96,12 @@ export function filterProducts(
       }
     }
     if (!matchesAudienceFilter(p, filters.audiences)) return false;
+    if (filters.tags.length > 0) {
+      // An untagged product carries no chip, so no chip carries it: the null
+      // test is the whole of "untagged answers only an empty row", and the
+      // membership test is chip-equals-tag with nothing between them.
+      if (p.tag === null || !filters.tags.includes(p.tag)) return false;
+    }
     if (filters.age !== null) {
       // A band expresses "I am shopping for a child of this age", so a product
       // with no age range at all — one with no gamer audience — is not a near

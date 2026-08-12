@@ -1489,6 +1489,7 @@
     "filters": {
       "type": "Type",
       "audience": "Public",
+      "designedFor": "Conçu pour",
       "typeClubs": "Clubs",
       "typeCamps": "Stages",
       "typeEvents": "Événements",

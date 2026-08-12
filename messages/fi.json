@@ -1489,6 +1489,7 @@
     "filters": {
       "type": "Tyyppi",
       "audience": "Kohderyhmä",
+      "designedFor": "Kenelle",
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "typeEvents": "Tapahtumat",

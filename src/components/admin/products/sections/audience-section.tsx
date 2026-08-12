@@ -9,24 +9,26 @@ import { useSpokenLanguages } from "@/services/users";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Field } from "@/components/ui/field";
 import { TagGlyph } from "@/components/public/products/product-chips";
-import { productTagLabelKey } from "@/components/public/products/product-tag";
-import { Constants, type ProductTag } from "@/types";
+import {
+  PRODUCT_TAG_VALUES,
+  productTagLabelKey,
+} from "@/components/public/products/product-tag";
+import type { ProductTag } from "@/types";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
 
 // The design-tag choices, in the order the admin reads them: "no tag" first
-// because it is the default and by far the commonest answer, then the enum's
-// own three values.
+// because it is the default and by far the commonest answer, then the tag
+// values.
 //
-// Enumerated from `Constants` rather than from the tag module, deliberately.
-// That module owns the type and the label-key map and no ordered value list —
-// the list belongs to the shop's (unbuilt, owner-gated) tag filter row, and a
-// hand-written copy of the enum would be born stale. `Constants` is codegen, so
-// a fourth tag added by migration appears here the moment types are
+// The values come from the tag module's ordered list — the same list the shop's
+// filter chips enumerate — so the admin sets a tag from the vocabulary a parent
+// filters by, in that order. That list is itself derived from codegen, so a
+// fourth tag added by migration appears in both places the moment types are
 // regenerated, and its missing label key fails the build in the tag module.
 const TAG_OPTIONS: readonly (ProductTag | null)[] = [
   null,
-  ...Constants.public.Enums.product_tag,
+  ...PRODUCT_TAG_VALUES,
 ];
 
 interface AudienceSectionProps {

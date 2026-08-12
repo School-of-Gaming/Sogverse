@@ -10,6 +10,8 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
 import type { SpokenLanguage } from "@/types";
 import { cn } from "@/lib/utils";
+import { TagGlyph } from "./product-chips";
+import { PRODUCT_TAG_VALUES, productTagLabelKey } from "./product-tag";
 import { formatWeekday } from "./format-product-schedule";
 import { useBrowseFilters } from "./use-browse-filters";
 import { useShopCategories } from "./use-shop-categories";
@@ -20,7 +22,8 @@ import { useShopCategories } from "./use-shop-categories";
 // The per-chip labels are still localised via `formatWeekday`.
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
-// The filter control — chip rows (type, subject, format, language, age, days).
+// The filter control — chip rows (type, audience, designed-for, subject,
+// format, language, age, days).
 // Chips are pill-shaped with a clear active state (filled primary) so taps
 // register on small phone screens.
 //
@@ -50,8 +53,11 @@ interface ProductBrowseFiltersProps {
   /** Server-prefetched spoken-language set so the Language row paints with the
    *  rest of the filters instead of popping in after its own fetch resolves. */
   initialSpokenLanguages: SpokenLanguage[];
-  /** Lead with the Clubs|Camps|Events Type row. The shop does; the
-   *  per-municipality page hides it (everything there is a club). Default true. */
+  /** Lead with the Clubs|Camps|Events Type row — and, by owner decision, with
+   *  the two rows that share its guard (Audience and Designed for). The shop
+   *  shows all three; the per-municipality page hides them (everything there is
+   *  that school's own club, and a filter with one answer controls nothing).
+   *  Default true. */
   showTypeFilter?: boolean;
 }
 
@@ -63,6 +69,10 @@ export function ProductBrowseFilters({
   // The audience chips share their labels with the card badge and the overview
   // card's audience row — one vocabulary for the whole concept.
   const tAudience = useTranslations("productAudience");
+  // Likewise the design tags: the chips wear the same words the cards' own tag
+  // chips do, resolved through the tag module's key map rather than spelled
+  // from the enum value.
+  const tTag = useTranslations("productTag");
   const locale = useLocale();
   const topicLabel = useTopicLabel();
   const { data: spokenLanguages } = useSpokenLanguages({
@@ -80,6 +90,7 @@ export function ProductBrowseFilters({
     format: selectedFormat,
     languages: selectedLanguages,
     audiences: selectedAudiences,
+    tags: selectedTags,
     age: selectedAge,
     days: selectedDays,
     hasAny,
@@ -87,6 +98,7 @@ export function ProductBrowseFilters({
     toggleFormat,
     toggleLanguage,
     toggleAudience,
+    toggleTag,
     setAge,
     toggleDay,
     clear,
@@ -176,6 +188,46 @@ export function ProductBrowseFilters({
               active={selectedAudiences.includes("families")}
               onToggle={() => toggleAudience("families")}
             />
+          </FilterRow>
+        )}
+
+        {/* "Designed for" follows Audience because it is the other half of the
+            same question — the row above says who may hold a seat, this says
+            who the sessions were built for — and it shares that row's guard for
+            the same owner decision: the municipality school pages hide it, one
+            school's own clubs being no place for a three-chip narrowing. (The
+            tag *note* on a detail page is content rather than a filter, so a
+            tagged municipality club still shows its chip and its explanation.)
+            Keeping the two shop-only rows adjacent is also what lets the
+            municipality rail open on Subject with no gap where they were.
+
+            A chip is the chip the card wears, so each matches exactly the
+            products carrying that tag: OR across the lit chips, and untagged
+            products — the ordinary state, wearing nothing — answer only an
+            empty row. Lighting all three is therefore narrower than lighting
+            none, exactly as on the Audience row above.
+
+            The chips carry the glyphs, unlike Audience and like Format: the tag
+            vocabulary is icon-and-word everywhere it is met — on the card, on
+            the detail hero, in the admin picker that set it — so a parent who
+            taps the sprout here recognises the sprout on the cards it leaves
+            standing. The glyph comes from the shared chip module, so a chip
+            cannot pair a tag with the wrong icon.
+
+            The values are enumerated from the tag module's ordered list, so the
+            row and the admin picker offer the same vocabulary in the same order
+            and a tag added by migration appears in both without an edit here. */}
+        {showTypeFilter && (
+          <FilterRow label={t("designedFor")}>
+            {PRODUCT_TAG_VALUES.map((tag) => (
+              <Chip
+                key={tag}
+                icon={<TagGlyph tag={tag} className="h-3 w-3" />}
+                label={tTag(productTagLabelKey(tag))}
+                active={selectedTags.includes(tag)}
+                onToggle={() => toggleTag(tag)}
+              />
+            ))}
           </FilterRow>
         )}
 
