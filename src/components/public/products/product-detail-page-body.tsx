@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
-import { productImageUrl } from "@/lib/images/product-image-url";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -17,10 +16,8 @@ import type {
   ProductType,
 } from "@/types";
 import { LongDescription } from "./long-description";
-import { audienceLabelKey } from "./product-audience";
-import { ProductDetailMastheadDraft } from "./product-detail-masthead-draft";
 import { ProductOverviewCard } from "./product-overview-card";
-import { productTagLabelKey, type ProductTag } from "./product-tag";
+import type { ProductTag } from "./product-tag";
 import { TopicInfoCard } from "./topic-info-card";
 
 // Page body — pure layout + presentation. Owns nothing about fetching, and is
@@ -54,53 +51,20 @@ export interface ProductDetailPageBodyProps {
   /** When opened from a `/schools/<slug>` listing, sends the back link there
    *  (labelled with the municipality) instead of the storefront. */
   municipality?: MunicipalityBackLink;
-  /**
-   * **Draft-redesign switch, and the whole of this page's part in it.** Absent
-   * — which is what both live routes pass — the page renders exactly as it
-   * always has, down to the DOM. Present, it renders the draft masthead (3:2
-   * banner, the browse card's two chips) in place of the thumbnail one, and
-   * hands the tag to the overview card so the who-it's-for area can explain
-   * what SOG actually does about it.
-   *
-   * A prop rather than a second page, because everything below the masthead is
-   * unchanged and a forked page would fork all of it; a *fork* of the masthead
-   * itself, because that piece's redesign is a different grid with different
-   * children, and expressing both inside one component would thread draft
-   * styling through live code. At promotion the draft masthead becomes the
-   * masthead and this prop disappears.
-   *
-   * The preview scene is its only caller. `imageSrc` is there for the same
-   * reason the browse card's override is: a fixture row has no storage object,
-   * so a scene that let the row decide would show the fallback banner on every
-   * page and leave the hero unjudged.
-   */
-  draft?: {
-    tag?: ProductTag;
-    /** Resolved URL; `null` deliberately paints the wordmark banner. */
-    imageSrc?: string | null;
-  };
 }
 
 export function ProductDetailPageBody({
   product,
   signupPanel,
   municipality,
-  draft,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
   const t = useTranslations("productDetail");
-  const tAudience = useTranslations("productAudience");
-  const tTag = useTranslations("productTag");
   const getTopicLabel = useTopicLabel();
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const topicLabel = getTopicLabel(product.topic);
   const longDescription = parseLongDescription(tr?.long_description);
-
-  const draftTag =
-    draft?.tag === undefined
-      ? null
-      : { value: draft.tag, label: tTag(productTagLabelKey(draft.tag)) };
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -110,37 +74,45 @@ export function ProductDetailPageBody({
           municipality={municipality}
         />
 
-        {draft === undefined ? (
-          <LiveMasthead
-            imagePath={product.image_path}
-            typeLabel={t(`typeLabel.${product.product_type}`)}
-            topicLabel={topicLabel}
-            name={tr?.name ?? ""}
-            shortDescription={tr?.short_description ?? null}
+        <div className="mt-6 grid grid-cols-[96px_1fr] items-start gap-x-4 gap-y-3 sm:grid-cols-[140px_1fr] sm:gap-x-6">
+          <ProductThumbnail
+            imagePath={product.image_path ?? ""}
+            alt={tr?.name ?? ""}
+            size="aspect-square w-full"
+            className="rounded-lg [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover"
           />
-        ) : (
-          <ProductDetailMastheadDraft
-            typeLabel={t(`typeLabel.${product.product_type}`)}
-            topicLabel={topicLabel}
-            name={tr?.name ?? ""}
-            shortDescription={tr?.short_description ?? null}
-            // `undefined` means "no override, resolve the row" — the same
-            // distinction the draft browse card's adapter draws, and the line
-            // that survives as the live resolution at promotion.
-            imageSrc={
-              draft.imageSrc !== undefined
-                ? draft.imageSrc
-                : product.image_path
-                  ? productImageUrl(product.image_path)
-                  : null
-            }
-            tag={draftTag}
-            // The card's exclusive pair, resolved to one value here so the
-            // masthead and the corner of the card that sent the reader here
-            // cannot pick differently.
-            whoLabel={resolveWhoLabel(product, t, tAudience)}
-          />
-        )}
+
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {t(`typeLabel.${product.product_type}`)}
+              {/* Topic (game brand / subject) sits beside the type label as the
+                  most scannable "what's this about" attribute — surfaced here in
+                  the hero rather than its own near-empty card lower down. The
+                  middot separator is a CSS pseudo-element, not a text node, so it
+                  stays out of the translation system. */}
+              <span className="normal-case text-primary before:mx-1.5 before:text-muted-foreground/50 before:content-['·']">
+                {topicLabel}
+              </span>
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+              {tr?.name}
+            </h1>
+            {/* Short description on its own row at mobile width — squeezing it
+                next to a 96px thumbnail makes it 4-5 cramped lines.
+                Spans both columns from sm+ via the `sm:hidden` swap. */}
+            {tr?.short_description && (
+              <p className="mt-2 hidden text-muted-foreground sm:block">
+                {tr.short_description}
+              </p>
+            )}
+          </div>
+
+          {tr?.short_description && (
+            <p className="col-span-2 text-muted-foreground sm:hidden">
+              {tr.short_description}
+            </p>
+          )}
+        </div>
 
         {/* `minmax(0,…)` on every breakpoint (via `grid-cols-1` on
             mobile, which is shorthand for `minmax(0,1fr)`, and the
@@ -151,11 +123,7 @@ export function ProductDetailPageBody({
             this on mobile the default implicit track is `auto`, which
             sizes to content. */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <MainColumn
-            product={product}
-            longDescription={longDescription}
-            tag={draft?.tag}
-          />
+          <MainColumn product={product} longDescription={longDescription} />
           {/* Pin the whole panel just below the sticky site header (64px) with
               a 1rem comfort gap — matches the --header-height offset convention
               used elsewhere. Without the offset the card's top tucks under the
@@ -169,7 +137,14 @@ export function ProductDetailPageBody({
   );
 }
 
-function BackLink({
+// Exported for the draft page body (`product-detail-page-body-draft.tsx`),
+// which rearranges this page rather than rewriting it: the draft moves the
+// signup panel into a sticky rail and puts the title above a 3:2 hero, but the
+// back link and the sections below are the *same components in the same order*.
+// Sharing them is what stops the draft from becoming a second product page —
+// a section added here appears there too, and neither can drift. At promotion
+// the draft body replaces this one and both go back to being private.
+export function BackLink({
   productType,
   municipality,
 }: {
@@ -197,14 +172,18 @@ function BackLink({
   );
 }
 
-function MainColumn({
+/** Shared with the draft page body — see the note on `BackLink` above. */
+export function MainColumn({
   product,
   longDescription,
   tag,
 }: {
   product: ProductDetailPageBodyProps["product"];
   longDescription: ProductLongDescription;
-  /** Draft-only; undefined on both live routes. See the `draft` prop above. */
+  /**
+   * Draft-redesign only: the overview card grows a block explaining the tag.
+   * Undefined on both live routes and on this body, which never passes it.
+   */
   tag?: ProductTag;
 }) {
   // The topic card renders itself only when the topic carries an `info` block
@@ -220,85 +199,4 @@ function MainColumn({
       <TopicInfoCard topic={product.topic} />
     </div>
   );
-}
-
-/**
- * The live masthead, unchanged — lifted into a component of its own only so the
- * draft can stand beside it in a legible ternary. Same markup, same classes,
- * same DOM; the props are the values the body had already resolved.
- */
-function LiveMasthead({
-  imagePath,
-  typeLabel,
-  topicLabel,
-  name,
-  shortDescription,
-}: {
-  imagePath: string | null;
-  typeLabel: string;
-  topicLabel: string | null;
-  name: string;
-  shortDescription: string | null;
-}) {
-  return (
-    <div className="mt-6 grid grid-cols-[96px_1fr] items-start gap-x-4 gap-y-3 sm:grid-cols-[140px_1fr] sm:gap-x-6">
-      <ProductThumbnail
-        imagePath={imagePath ?? ""}
-        alt={name}
-        size="aspect-square w-full"
-        className="rounded-lg [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover"
-      />
-
-      <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {typeLabel}
-          {/* Topic (game brand / subject) sits beside the type label as the
-              most scannable "what's this about" attribute — surfaced here in
-              the hero rather than its own near-empty card lower down. The
-              middot separator is a CSS pseudo-element, not a text node, so it
-              stays out of the translation system. */}
-          <span className="normal-case text-primary before:mx-1.5 before:text-muted-foreground/50 before:content-['·']">
-            {topicLabel}
-          </span>
-        </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {name}
-        </h1>
-        {/* Short description on its own row at mobile width — squeezing it
-            next to a 96px thumbnail makes it 4-5 cramped lines.
-            Spans both columns from sm+ via the `sm:hidden` swap. */}
-        {shortDescription && (
-          <p className="mt-2 hidden text-muted-foreground sm:block">
-            {shortDescription}
-          </p>
-        )}
-      </div>
-
-      {shortDescription && (
-        <p className="col-span-2 text-muted-foreground sm:hidden">
-          {shortDescription}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/**
- * The single "who" value the draft masthead's chip shows: the audience badge
- * when the product carries one, the age range otherwise — the browse card's
- * exclusivity rule, resolved from the same `audienceLabelKey` decision so the
- * card and the page it opens cannot show different halves of the pair.
- *
- * Draft-only, and it deliberately does *not* use the overview card's composed
- * "For families, ages 8–12": a chip is a label, and that string is a sentence.
- */
-function resolveWhoLabel(
-  product: ProductDetailPageBodyProps["product"],
-  t: ReturnType<typeof useTranslations<"productDetail">>,
-  tAudience: ReturnType<typeof useTranslations<"productAudience">>,
-): string | null {
-  const audienceKey = audienceLabelKey(product);
-  if (audienceKey !== null) return tAudience(audienceKey);
-  if (product.min_age === null || product.max_age === null) return null;
-  return t("info.ages", { min: product.min_age, max: product.max_age });
 }
