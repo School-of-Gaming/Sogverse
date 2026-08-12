@@ -321,6 +321,24 @@ export function DraftMediaChips({
   );
 }
 
+/**
+ * The tag's icon alone, for the one surface that speaks the tag in running text
+ * rather than as a pill: the tag note leads with icon + name inline, because a
+ * second pill an inch under the hero's chip read as double-labeling
+ * (owner-flagged). Routing it through here keeps the glyph and the chips on the
+ * same map — a caller cannot pair a tag with the wrong icon.
+ */
+export function TagGlyph({
+  tag,
+  className,
+}: {
+  tag: ProductTag;
+  className?: string;
+}) {
+  const Icon = TAG_ICON[tag];
+  return <Icon className={className} aria-hidden />;
+}
+
 /** Who the product is designed for. Primary fill, one icon per tag. */
 export function DraftTagChip({
   tag,
