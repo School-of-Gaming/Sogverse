@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CollapsibleRegion,
+  FamilyNoteBlock,
   StaffNoteBlock,
 } from "@/components/gedu/session-feed";
 
@@ -227,25 +228,27 @@ export function TwoAudienceNotesPanel({
         {/* `pb-1` gives the Save row's focus ring room: a collapsible region
             has to clip its overflow for the open/close animation to work. */}
         <div className="space-y-4 pb-1 pt-3">
-          <Field
-            label={copy.publicLabel}
-            htmlFor={`${fieldId}-public`}
-            hint={copy.publicHint}
-          >
-            {({ hintId }) => (
-              <Textarea
-                id={`${fieldId}-public`}
-                rows={4}
-                value={draft.publicNote}
-                placeholder={copy.publicPlaceholder}
-                aria-describedby={hintId}
-                disabled={committing}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, publicNote: e.target.value }))
-                }
-              />
-            )}
-          </Field>
+          <FamilyNoteBlock>
+            <Field
+              label={copy.publicLabel}
+              htmlFor={`${fieldId}-public`}
+              hint={copy.publicHint}
+            >
+              {({ hintId }) => (
+                <Textarea
+                  id={`${fieldId}-public`}
+                  rows={4}
+                  value={draft.publicNote}
+                  placeholder={copy.publicPlaceholder}
+                  aria-describedby={hintId}
+                  disabled={committing}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, publicNote: e.target.value }))
+                  }
+                />
+              )}
+            </Field>
+          </FamilyNoteBlock>
 
           <StaffNoteBlock>
             <Field

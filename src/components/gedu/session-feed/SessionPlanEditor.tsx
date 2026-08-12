@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { planDraftFromEditorState } from "./entry-state";
+import { FamilyNoteBlock } from "./FamilyNoteBlock";
 import { RichNoteField } from "./RichNoteField";
 import { EditorActionRow } from "./SessionRecordEditor";
 import { StaffNoteBlock } from "./StaffNoteBlock";
@@ -81,16 +82,18 @@ export function SessionPlanEditor({
     // renders inside a collapsible region, which clips its overflow so the
     // open/close animation has something to reveal.
     <div className="space-y-4 pb-1 pt-4">
-      <RichNoteField
-        label={t("reportLabel")}
-        hint={t("reportFormattingHint")}
-        placeholder={t("reportPlaceholder")}
-        value={initialState.report}
-        seed={opens}
-        ready={opens > 0}
-        disabled={committing}
-        onChange={(report) => setDraft((d) => ({ ...d, report }))}
-      />
+      <FamilyNoteBlock>
+        <RichNoteField
+          label={t("reportLabel")}
+          hint={t("reportFormattingHint")}
+          placeholder={t("reportPlaceholder")}
+          value={initialState.report}
+          seed={opens}
+          ready={opens > 0}
+          disabled={committing}
+          onChange={(report) => setDraft((d) => ({ ...d, report }))}
+        />
+      </FamilyNoteBlock>
 
       <StaffNoteBlock>
         <RichNoteField

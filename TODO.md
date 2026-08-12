@@ -108,6 +108,62 @@ Every supported country is seeded complete from GeoNames and admins never hand-t
 
 - [ ] **`/admin/users` needs real server-side pagination before the page gets heavy.** The *truncation* is fixed — every read the page depends on walks its pages now, and the capped search reports its true match count — so the page is correct at any table size. What it still does is fetch and render **every** profile client-side, building the parent↔gamer nesting maps in the browser. That is fine at prod's 482 profiles (2026-07-30) and merely wasteful in the low thousands; somewhere around ~5k it becomes real DOM weight and a payload nobody reads. The restructure was deliberately deferred rather than forgotten: paginate server-side, move search entirely to the server, and join each page's linked gamers and gedu verification per page instead of loading three whole tables to cross-reference them. Revisit when the profile count approaches ~5k, or sooner if the page starts feeling slow.
 
+### Admins can't see session notes, reports or attendance
+
+Raised in the 2026-08-10 testing session. The admin product details page already
+carries everything about a product's *people* — the groups panel on it renders
+each group with its assigned gedus, its seated participants, the unassigned
+inbox and the waitlist. What no admin surface carries is what happened *in* the
+sessions: the session report families read, the gedu-only staff note, and the
+attendance sheet. Those exist only on the gedu session feed and — for the public
+report alone — on the family product page, neither of which an admin can reach.
+
+Three reasons the gap bites:
+
+- **Attendance doubles as pay confirmation**, so whoever signs off gedu invoices
+  cannot see the record the invoice is derived from.
+- A parent writing in about a session ("what did they actually do last Tuesday?")
+  is answerable only by asking the gedu.
+- Nothing tells an admin that a session ran and no report was ever written.
+
+- [ ] Decide where it hangs — another panel on the product details page, or its
+  own route — and build it as a third audience over the existing feed rows
+  rather than a second feed. The shared session-feed machinery already splits the
+  presentational feed from the role reading it, so the read is the work, not the
+  rendering.
+- [ ] Decide whether admins see the **gedu-only staff note**. They can read it in
+  the database either way; the question is whether the surface shows it, and
+  whether gedus are told it does — a note written under "families never see this"
+  is not the same promise as "nobody but gedus sees this".
+
+### "Needs attention" — one admin surface for problems across the whole platform
+
+Raised in the 2026-08-10 testing session, where it surfaced from the family side
+first: gamers enrolled into a club nobody had assigned to a group, and no admin
+had any way to know. Its own project, not a panel someone adds in passing.
+
+Today every condition an admin must notice is discoverable only by opening the
+thing that has it. A club with unassigned gamers looks healthy in the products
+list — the only tell is opening its details page and finding the unassigned inbox
+non-empty. Same for a club with no gedu assigned, a session that ran without a
+report, a subscription in a payment-problem state, a gedu account waiting on
+verification. Each has a surface that shows it; none has a surface that
+*announces* it, so noticing is a matter of an admin happening to look.
+
+- [ ] **Decide the inventory of conditions before designing anything.** The value
+  is entirely in which checks exist, and each one is a judgement about whether it
+  is genuinely actionable or merely unusual — a list that cries wolf gets ignored
+  within a week and is worse than no list. Known candidates: unassigned
+  participants on a running product, a product with no gedu, a past session with
+  no report, an unverified gedu awaiting approval, a family subscription in a
+  payment-problem state, a waitlist with free seats above it.
+- [ ] **Decide where it lives and how it stays cheap.** A dashboard section is the
+  ask, but every condition is a query and the surface loads on every admin visit
+  — so it wants one aggregate read (a view or an RPC returning counts plus enough
+  identity to link through), not a fan-out of per-condition queries.
+- [ ] Each entry links straight to the thing that needs fixing, so the surface is
+  a work queue rather than a report.
+
 ### Deferred billing for future-start clubs — the follow-ups
 
 Deferred-start billing itself (a future-start consumer club's sub first-charges at `subscription_data.billing_cycle_anchor` + `proration_behavior: 'none'` on the Checkout Session — the anchor is the club's start instant, clamped to ~1 month out for early buyers) is decided work. Two pieces were deliberately kept out of it:

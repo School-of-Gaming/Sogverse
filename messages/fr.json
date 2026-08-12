@@ -1015,7 +1015,7 @@
         "next2": {
           "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
           "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
-          "camp": "Vous conservez votre place dans la file pendant toute la durée du camp.",
+          "camp": "Vous conservez votre place dans la file pendant toute la durée du stage.",
           "event": "Vous conservez votre place dans la file jusqu’à l’événement."
         }
       }
@@ -1074,7 +1074,7 @@
       "next2": {
         "consumer_club": "{gamer} conserve sa place dans la file pendant toute la période.",
         "municipality_club": "{gamer} conserve sa place dans la file pendant toute la période.",
-        "camp": "{gamer} conserve sa place dans la file pendant toute la durée du camp.",
+        "camp": "{gamer} conserve sa place dans la file pendant toute la durée du stage.",
         "event": "{gamer} conserve sa place dans la file jusqu’à l’événement."
       },
       "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
@@ -1298,14 +1298,15 @@
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",
       "staffNoteLabel": "Gedus uniquement",
+      "familyNoteLabel": "Visible par les familles",
       "staffNoteFieldLabel": "Note pour les Gedus",
       "staffNoteHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffNotePlaceholder": "Tout ce qu’un autre Gedu devrait savoir sur cette séance.",
       "attendanceLegend": "Présences",
       "attendanceRevertHint": "Choisissez de nouveau la même réponse pour effacer une marque. Vous pouvez enregistrer une partie de la liste et terminer plus tard.",
       "reportLabel": "Compte rendu de séance",
-      "reportFormattingHint": "Les parents et les gamers de ce groupe le liront. Les titres, le gras et les listes en facilitent la lecture.",
-      "reportPlaceholder": "Ce que le groupe a construit, joué ou découvert pendant cette séance.",
+      "reportFormattingHint": "N’indiquez jamais d’informations privées ou sensibles concernant un gamer. Les titres, le gras et les listes en facilitent la lecture.",
+      "reportPlaceholder": "Commencez par un Titre clair, puis développez : le travail du groupe, les temps forts et les moments à retenir.",
       "save": "Enregistrer",
       "cancel": "Annuler",
       "alertBadge": "{count, plural, one {# séance à traiter} other {# séances à traiter}}",
@@ -1322,7 +1323,7 @@
       "save": "Enregistrer",
       "emptyHint": "Ajoutez une note de groupe — tout ce qui reste vrai d’une séance à l’autre.",
       "publicLabel": "Note pour les familles",
-      "publicHint": "Les parents et les gamers de ce groupe pourront le lire.",
+      "publicHint": "N’indiquez jamais d’informations privées ou sensibles concernant un gamer.",
       "publicPlaceholder": "Comment ce groupe fonctionne, ce qui se poursuit d’une séance à l’autre…",
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
@@ -1339,7 +1340,7 @@
       "save": "Enregistrer",
       "emptyHint": "Ajoutez une note sur le lieu — tout ce qui concerne les locaux eux-mêmes.",
       "publicLabel": "Note pour les familles",
-      "publicHint": "Les parents et les gamers qui viennent sur ce lieu pourront le lire.",
+      "publicHint": "N’indiquez jamais d’informations privées ou sensibles ici.",
       "publicPlaceholder": "Par quelle porte entrer, où attendre, quoi apporter…",
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",

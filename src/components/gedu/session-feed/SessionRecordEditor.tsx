@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { AttendanceMark } from "@/components/session-feed";
 import { attendanceTally, draftFromEditorState } from "./entry-state";
 import { AttendanceRoster } from "./AttendanceRoster";
+import { FamilyNoteBlock } from "./FamilyNoteBlock";
 import { RichNoteField } from "./RichNoteField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
@@ -163,16 +164,21 @@ export function SessionRecordEditor({
         </div>
       </div>
 
-      <RichNoteField
-        label={t("reportLabel")}
-        hint={t("reportFormattingHint")}
-        placeholder={t("reportPlaceholder")}
-        value={initialState.report}
-        seed={opens}
-        ready={opens > 0}
-        disabled={committing}
-        onChange={(report) => setDraft((d) => ({ ...d, report }))}
-      />
+      {/* Both audiences are banner-marked, and the public one is not the
+          afterthought: this is the field whose mistakes reach every parent in
+          the group. */}
+      <FamilyNoteBlock>
+        <RichNoteField
+          label={t("reportLabel")}
+          hint={t("reportFormattingHint")}
+          placeholder={t("reportPlaceholder")}
+          value={initialState.report}
+          seed={opens}
+          ready={opens > 0}
+          disabled={committing}
+          onChange={(report) => setDraft((d) => ({ ...d, report }))}
+        />
+      </FamilyNoteBlock>
 
       {/* The gedu note keeps the padlocked recessed treatment while it is being
           *written*, not only while it is read: the whole risk of a two-audience
