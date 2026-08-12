@@ -167,18 +167,21 @@ banner until its copy is signed off.
       terms as every other item, and joins the same pass. Nothing about it is blocked on
       anyone today.
 
+      *Review started 2026-08-12.* The copy is written and complete — this item is a
+      review, not a drafting job. First finding is already resolved (the age range said
+      15–18 against the legal documents' 8–17; see *Resolved*). **The review is not
+      finished:** the age claim was checked against the legal documents, and the rest of
+      the page has not yet been read the same way. Finish by checking every factual claim
+      it makes — the format and duration in `how.subheading`, "free", "in France", the
+      published-creation promise in `what.paragraph2`, the closing-event claim in
+      `why.recognised` — against what the Terms and Privacy Policy actually commit to.
+
 ## Copy that needs correcting
 
-Both are ours to fix now — they were held back only because the wording was thought to
-belong upstream, which it no longer does. Neither changes an obligation, so neither needs
-Lynx.
+Wording in the published documents that is wrong or self-contradictory. Now that Sogverse
+owns the copy, most of this is ours to fix outright; what is left here is the exception,
+where the fix would change what we commit to rather than how it reads.
 
-- [ ] **"Child Safeguarding Policy, available upon request" (Terms & Conditions).** That
-      policy now has a page at `/roblox/safeguarding`, so "upon request" undersells it —
-      the Terms wording should point at the page instead. The document's name in that
-      sentence is already a link to the page, so the sentence currently invites a reader
-      to *request* a document it is simultaneously offering them a click away. Lives at
-      `robloxTerms.sections.safety.blocks.0`.
 - [ ] **"Sessions are not recorded" wording mismatch.** The Safeguarding Policy says it
       flatly (`robloxSafeguarding.sections.online.blocks.0.3`); the Privacy Policy says
       "*Routine* online sessions are not recorded" in three places and contemplates
@@ -280,6 +283,77 @@ rather than its wording, that part goes to Lynx.
 
 Decided, with the exact change written out. Nothing here has been applied yet; it all
 lands in one pass. Delete an entry once its change is in.
+
+### Landing page states the wrong age range
+
+Decided 2026-08-12 by Kyle: **8–17 is correct.** The landing page says 15–18 and the legal
+documents say 8–17; the landing page is the one that is wrong.
+
+**Why this outranks a wording fix.** The range is load-bearing in both legal documents —
+it is the Terms' eligibility criterion, and the Privacy Policy leans on it for parent-led
+registration and its child-safety reasoning. The two ranges also disagree at *both* ends,
+so it is not a typo: 15–18 excludes the 8–14s the documents cover and admits 18-year-olds,
+who are adults and cannot be registered by a parent, which is the structure both documents
+assume. And it is the page families meet first, so the error costs real registrations.
+
+**Scope: one string per locale, five in total** — `roblox.what.paragraph1`. Nothing else in
+the catalog states a programme age; the four legal mentions (`robloxPrivacy.intro.blocks.0`,
+`robloxPrivacy.sections.applies.blocks.1` and `.4`, `robloxTerms.sections.eligibility.blocks.0`)
+already say 8–17 and are **not** to be touched.
+
+**Final English copy** — the paragraph is otherwise unchanged:
+
+> This programme gives 8–17 year-olds in France the chance to design, code, and publish
+> their own Roblox game — with the people who matter most cheering them on. Delivered by
+> Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction
+> to game design, digital creativity, and safe online collaboration.
+
+**"Teens" stays where we speak generally** — Kyle's call. `roblox.hero.subtitle`,
+`roblox.how.step3.title` and `roblox.parents.body` keep it in every locale; they name no
+range, and a general word for the audience is not a claim about eligibility.
+
+**To apply:**
+
+1. Change `15–18` to `8–17` in `roblox.what.paragraph1` in all five locales — `tlh` carries
+   this namespace (it is not a legal page), so it is included. `fi` reads
+   `15–18-vuotiaille`, `sv` `15–18-åringar`, `tlh` `15–18 ben`; each takes the digits only.
+2. **French needs one more word changed.** It reads `aux ados de 15–18 ans` — `ados` means
+   teenagers, which was consistent with 15–18 and is not with 8–17. Use `aux jeunes de 8 à
+   17 ans`. This is the one place a general term sits directly against the explicit range in
+   the same breath, so it is the one place the general/specific split above does not hold.
+3. Delete this entry.
+
+### Programme Terms — drop "available upon request"
+
+Decided 2026-08-12. `robloxTerms.sections.safety.blocks.0` currently invites a reader to
+*request* a document the same sentence is already offering them a click away: the policy
+name is a cross-reference link to `/roblox/safeguarding`, and that page **is** the policy.
+
+**Ours, not Lynx's.** Removing the clause strengthens the commitment rather than weakening
+it — "on request" means you have to ask, a link means you do not — so it changes how the
+sentence reads, not what anyone is obliged to do.
+
+**Final English copy** — the whole block, unchanged but for the deleted trailing clause:
+
+> Every session is supervised by a trained facilitator. Our approach to behaviour and
+> safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding
+> Policy</linkRobloxSafeguarding>.
+
+Nothing replaces the clause. A "you can read it here" would restate what the link already
+says, and the link is the only pointer these pages ever use.
+
+**To apply:**
+
+1. In each locale, delete the trailing clause and close the sentence after the link tag.
+   Each language phrases it differently, so it is a per-locale deletion, not one string
+   swap — `en` ", available upon request.", `fi` ", joka on saatavilla pyynnöstä.",
+   `sv` ", som finns tillgänglig på begäran.", `fr` ", disponible sur demande.". Leave the
+   `<linkRobloxSafeguarding>` tag and its label exactly as they are. `tlh` omits
+   `robloxTerms` and falls back to English.
+2. Delete this entry.
+
+**Also verified:** this was the only "upon request" anywhere in the programme copy, so
+nothing is left inconsistent with it.
 
 ### External references become links — regulators only
 
