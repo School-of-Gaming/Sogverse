@@ -1411,7 +1411,8 @@
     "linkUrl": "Länkadress",
     "linkApply": "Lägg till länk",
     "linkRemove": "Ta bort länk",
-    "linkCancel": "Avbryt"
+    "linkCancel": "Avbryt",
+    "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen."
   },
   "header": {
     "nav": {

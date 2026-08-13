@@ -31,12 +31,10 @@ export type MarkdownHeadingLevel = 1 | 2 | 3;
  * **What is preserved.** Block order; heading-versus-paragraph; every literal
  * character of the text; and the single newlines inside a paragraph, which
  * become hard breaks — today's paragraphs render with `whitespace-pre-line`, so
- * a break the admin typed is visible on the page and has to survive. A run of
- * blank lines inside one block becomes an ordinary paragraph break, which is
- * what it already looks like.
+ * a break the admin typed is visible on the page and has to survive.
  *
- * **What is lost, deliberately, because markdown cannot represent it.** Two
- * things, both stated here because neither is recoverable afterwards:
+ * **What is lost, deliberately, because markdown cannot represent it.** Three
+ * things, all stated here because none is recoverable afterwards:
  *
  * 1. **Leading indentation is stripped from every line.** Four or more leading
  *    spaces open an indented code block, which would render the line in a
@@ -46,6 +44,14 @@ export type MarkdownHeadingLevel = 1 | 2 | 3;
  * 2. **Newlines inside a heading are flattened to single spaces.** An ATX
  *    heading is one line by definition; the alternative is splitting one
  *    heading into several, which invents structure.
+ * 3. **A run of blank lines inside one block collapses to a single paragraph
+ *    break.** `whitespace-pre-line` renders each of those blank lines as its
+ *    own empty line today, so three of them are three lines of vertical space
+ *    and after the conversion they are one paragraph gap. The page gets tighter
+ *    where an admin was spacing copy out by hand. Markdown has no way to say
+ *    "two blank lines" — consecutive ones are one break by definition — so the
+ *    alternatives are inventing an empty paragraph per line or accepting the
+ *    collapse, and this accepts the collapse.
  *
  * A block whose text is blank is dropped rather than emitted as an empty
  * heading or paragraph. It renders as nothing but a margin today, and an empty

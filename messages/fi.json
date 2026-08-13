@@ -1411,7 +1411,8 @@
     "linkUrl": "Linkin osoite",
     "linkApply": "Lisää linkki",
     "linkRemove": "Poista linkki",
-    "linkCancel": "Peruuta"
+    "linkCancel": "Peruuta",
+    "linkInvalid": "Tätä osoitetta ei voi linkittää. Käytä verkko-osoitetta, sähköpostiosoitetta tai tämän sivuston sisäistä polkua."
   },
   "header": {
     "nav": {

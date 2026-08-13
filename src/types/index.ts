@@ -168,8 +168,21 @@ export type ProductTranslationInsert = Database["public"]["Tables"]["product_tra
  * One block of a product's structured long description. The flat, ordered
  * array renders top-to-bottom on the shop detail page: `heading` blocks become
  * semantic headings, `paragraph` blocks become `<p>`. Plain text only — no
- * inline marks (bold/links). If those are ever needed, `text` becomes an
- * inline-node array (a localized, lossless follow-up migration).
+ * inline marks, no links, no lists, and a heading carries no level, because
+ * there was only ever one kind of heading.
+ *
+ * **This shape is being replaced by markdown, not extended.** The field is
+ * moving to a single authored markdown string, written in the same rich editor
+ * the staff-authored feed fields use and read through the shared markdown
+ * renderer — which is where the marks, the levelled headings, the real lists
+ * and the links come from, and what lets the same copy convert cleanly into the
+ * email it is later sent as. So none of the widenings this comment used to
+ * promise are coming: the answer to "we need bold here" is the new format.
+ *
+ * The block type survives until the stored values are converted and the column
+ * changes type. While both exist the traffic is one-way — blocks convert to
+ * markdown, never back — and the conversion is lossy in a few named ways,
+ * documented beside the code that performs it.
  */
 export type ProductLongDescriptionBlock = {
   type: "heading" | "paragraph";

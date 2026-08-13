@@ -2492,8 +2492,13 @@ function RichTextEditorDemo() {
               An eighth button. Select some words and press it: the address row
               opens between the toolbar and the text, seeded with the current
               link&rsquo;s address when the caret is already inside one. Enter
-              applies, Escape closes, and the middle button unlinks. Headings are
-              a page&rsquo;s scale here rather than a card&rsquo;s.
+              applies, Escape closes, and the middle button unlinks. A bare
+              &ldquo;sog.gg/privacy&rdquo; is treated as an external address and
+              gets https:// rather than becoming a path under this page; an
+              address the reader&rsquo;s renderer would strip (tel:, ftp://)
+              keeps the row open and says so, instead of closing on nothing.
+              Headings are a page&rsquo;s scale here rather than a
+              card&rsquo;s.
             </DemoCaption>
             <RichTextEditor
               variant="marketing"

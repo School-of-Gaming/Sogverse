@@ -1411,7 +1411,8 @@
     "linkUrl": "Link address",
     "linkApply": "Apply link",
     "linkRemove": "Remove link",
-    "linkCancel": "Cancel"
+    "linkCancel": "Cancel",
+    "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site."
   },
   "header": {
     "nav": {

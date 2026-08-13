@@ -120,6 +120,12 @@ const FEED_ELEMENTS = [
  * And **headings are scaled to the page** rather than to a card: this text is
  * the body of the page it sits on, so its sections need to read as sections
  * beneath the product's own `h1`.
+ *
+ * *Which* addresses survive is a second, narrower list, and it is not written
+ * here: the library's default URL transform keeps a relative address plus
+ * `http`, `https`, `irc`, `ircs`, `mailto` and `xmpp`, and blanks the rest. The
+ * editor restates that list so it cannot offer a scheme this end would strip —
+ * one decision in two places, and changing it means changing both.
  */
 const MARKETING_ELEMENTS = [...FEED_ELEMENTS, "a"];
 
@@ -176,8 +182,17 @@ const MARKETING_COMPONENTS: Components = {
    * already produces elsewhere, which makes it the honest fallback here too.
    *
    * No `target`: a link in body copy behaves like every other link on the site,
-   * and forcing a new tab takes the decision away from the reader. `rel` still
-   * withholds the referrer, since the destination is somebody else's.
+   * and forcing a new tab takes the decision away from the reader. `rel` is
+   * unconditional and withholds the referrer from every destination, our own
+   * included: the alternative is inspecting each href to decide, which buys
+   * nothing — an internal page has no use for a referrer header it could read
+   * off the URL anyway.
+   *
+   * **The underline is persistent, not a hover treatment.** It is what the
+   * editor paints while the same sentence is being written, so writer and
+   * reader see one thing; and against this variant's muted body copy, colour
+   * plus weight is a thin non-colour cue, so an always-on underline is what
+   * satisfies WCAG 1.4.1 without asking the reader to hover first.
    */
   a: ({ href, children }) =>
     href === undefined || href === "" ? (
@@ -186,7 +201,7 @@ const MARKETING_COMPONENTS: Components = {
       <a
         href={href}
         rel="noreferrer"
-        className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="rounded-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {children}
       </a>

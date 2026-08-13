@@ -111,7 +111,7 @@ export const LONG_DESCRIPTION_BLOCKS: ProductLongDescription = [
 /**
  * **The section that only markdown can hold**, appended to the converted copy.
  *
- * It exists because the two markdown scenarios are not only about heading
+ * It exists because the three markdown scenarios are not only about heading
  * size: the format also brings a real list and, for the first time on an
  * admin-authored field, links. Both are invisible if every scenario renders
  * copy the block format could already express — and a list rendered as bullets
@@ -120,7 +120,7 @@ export const LONG_DESCRIPTION_BLOCKS: ProductLongDescription = [
  *
  * It is deliberately **absent from the blocks scenario**, because there is no
  * way to put it there: the block format has no list and no link. The first four
- * sections are identical across all three pages and are where the heading
+ * sections are identical across all four pages and are where the heading
  * question gets answered; this one is the postscript.
  *
  * The heading level is the scenario's, so the appended section sits in the same

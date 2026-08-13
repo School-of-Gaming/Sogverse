@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   Bold,
   Check,
@@ -114,6 +114,16 @@ export function RichTextEditor({
    */
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
 
+  /**
+   * Whether the address the writer last tried was refused.
+   *
+   * It is a property of that attempt rather than a state the row sits in, so
+   * typing into the field clears it and so does closing the row — the message
+   * has to stop describing a value that is no longer there.
+   */
+  const [linkRejected, setLinkRejected] = useState(false);
+  const linkErrorId = useId();
+
   const editor = useEditor({
     // Next.js renders client components on the server too, and ProseMirror
     // needs a DOM — rendering immediately would throw during SSR.
@@ -135,8 +145,15 @@ export function RichTextEditor({
         // silently mark it up (the markdown serialiser's `linkify` is off for
         // the same reason), and `openOnClick` off, so a click inside a link
         // while editing puts the caret there instead of navigating away from
-        // an unsaved draft.
-        link: linksAllowed ? { autolink: false, openOnClick: false } : false,
+        // an unsaved draft. `isAllowedUri` narrows the accepted schemes to the
+        // ones the reader's renderer keeps — see `ALLOWED_LINK_SCHEMES`.
+        link: linksAllowed
+          ? {
+              autolink: false,
+              openOnClick: false,
+              isAllowedUri: (url) => isRenderableHref(url),
+            }
+          : false,
         // Three levels, because a real write-up opens with a title line and
         // then sections under it. Anything deeper is switched off at the
         // schema, so it cannot be typed, pasted or undone into existence.
@@ -234,11 +251,17 @@ export function RichTextEditor({
    */
   function toggleLinkRow() {
     if (linkDraft !== null) {
-      setLinkDraft(null);
+      closeLinkRow();
       return;
     }
     const href: unknown = editor?.getAttributes("link").href;
     setLinkDraft(typeof href === "string" ? href : "");
+  }
+
+  /** Put the row away, and the message about the value it held with it. */
+  function closeLinkRow() {
+    setLinkDraft(null);
+    setLinkRejected(false);
   }
 
   /**
@@ -249,33 +272,50 @@ export function RichTextEditor({
    * its own label. The alternative — a stored mark waiting for the next
    * keystroke — gives the writer a button click with nothing on screen to show
    * for it.
+   *
+   * **An address the reader's renderer would refuse keeps the row open.** The
+   * row closing on a value that was never applied is the worst of both — the
+   * writer is told the link is in, and the page shows plain text — and the
+   * realistic way to reach it is not a hostile scheme but a bare `sog.gg/x`,
+   * which is a *relative* path and would resolve under the product's own URL.
+   * That one is corrected rather than refused, by `normalizeLinkHref`.
    */
   function applyLink() {
     if (editor === null || linkDraft === null) return;
-    const href = linkDraft.trim();
+    const href = normalizeLinkHref(linkDraft);
     if (href === "") {
       removeLink();
       return;
     }
-    if (editor.state.selection.empty && !editor.isActive("link")) {
-      editor
-        .chain()
-        .focus()
-        .insertContent({
-          type: "text",
-          text: href,
-          marks: [{ type: "link", attrs: { href } }],
-        })
-        .run();
-    } else {
-      editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+    // Checked here rather than left to the command: the collapsed-caret branch
+    // below marks the text up directly, which skips the mark's own validation
+    // and would serialise the refused address into the stored markdown.
+    if (!isRenderableHref(href)) {
+      setLinkRejected(true);
+      return;
     }
-    setLinkDraft(null);
+    const applied =
+      editor.state.selection.empty && !editor.isActive("link")
+        ? editor
+            .chain()
+            .focus()
+            .insertContent({
+              type: "text",
+              text: href,
+              marks: [{ type: "link", attrs: { href } }],
+            })
+            .run()
+        : editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+    if (!applied) {
+      setLinkRejected(true);
+      return;
+    }
+    closeLinkRow();
   }
 
   function removeLink() {
     editor?.chain().focus().extendMarkRange("link").unsetLink().run();
-    setLinkDraft(null);
+    closeLinkRow();
   }
 
   // Built as data rather than as near-identical JSX blocks: the toolbar is a
@@ -388,36 +428,59 @@ export function RichTextEditor({
           somebody was typing a URL would be a disaster with a keyboard
           shortcut. */}
       {linkDraft !== null && (
-        <div className="flex items-center gap-1 border-b border-input px-1 py-1">
-          <input
-            type="url"
-            autoFocus
-            value={linkDraft}
-            onChange={(e) => setLinkDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                applyLink();
-              } else if (e.key === "Escape") {
-                e.preventDefault();
-                setLinkDraft(null);
-              }
-            }}
-            aria-label={t("linkUrl")}
-            className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          <IconButton label={t("linkApply")} icon={Check} onClick={applyLink} />
-          <IconButton
-            label={t("linkRemove")}
-            icon={Unlink}
-            onClick={removeLink}
-            disabled={!activeTools.link}
-          />
-          <IconButton
-            label={t("linkCancel")}
-            icon={X}
-            onClick={() => setLinkDraft(null)}
-          />
+        <div className="border-b border-input px-1 py-1">
+          <div className="flex items-center gap-1">
+            <input
+              // The row is not a form, so this buys a URL keyboard on a phone
+              // and nothing else — there is no submit for the browser to
+              // validate against, and the check that matters is ours.
+              type="url"
+              autoFocus
+              value={linkDraft}
+              onChange={(e) => {
+                setLinkDraft(e.target.value);
+                setLinkRejected(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  applyLink();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  closeLinkRow();
+                }
+              }}
+              aria-label={t("linkUrl")}
+              aria-invalid={linkRejected || undefined}
+              aria-describedby={linkRejected ? linkErrorId : undefined}
+              className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <IconButton
+              label={t("linkApply")}
+              icon={Check}
+              onClick={applyLink}
+            />
+            <IconButton
+              label={t("linkRemove")}
+              icon={Unlink}
+              onClick={removeLink}
+              disabled={!activeTools.link}
+            />
+            <IconButton label={t("linkCancel")} icon={X} onClick={closeLinkRow} />
+          </div>
+          {/* Not reserved space, for the same reason the row itself is not: it
+              appears as the direct result of the writer clicking Apply, and a
+              line held open under every address they type would be a hole
+              waiting for a failure that mostly never comes. */}
+          {linkRejected && (
+            <p
+              id={linkErrorId}
+              role="alert"
+              className="px-2 pb-0.5 pt-1 text-xs text-destructive"
+            >
+              {t("linkInvalid")}
+            </p>
+          )}
         </div>
       )}
 
@@ -455,6 +518,10 @@ const NOTHING_ACTIVE: Record<ToolbarToolKey, boolean> = {
  * attribute needs. The two have to move together: a heading that looks like a
  * section title while being typed and like body copy once saved is the trap the
  * same-subset rule exists to close.
+ *
+ * The marketing variant's link treatment is here for the same reason, and the
+ * underline is persistent at both ends: a link the writer sees underlined and
+ * the reader only sees underlined on hover is that same trap, one element down.
  */
 const FEED_PROSE = cn(
   "[&_h1]:mt-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
@@ -468,6 +535,78 @@ const MARKETING_PROSE = cn(
   "[&_h3]:mt-5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:leading-snug",
   "[&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4",
 );
+
+/**
+ * **The schemes a link may carry — one decision, and the other half of it is
+ * not ours to write.**
+ *
+ * The read-only renderer takes no scheme list of its own: it leaves the href to
+ * react-markdown's default URL transform, which keeps a relative address and
+ * the schemes below, and replaces every other one with an empty string. An
+ * anchor with an empty href renders as its own plain label, so a scheme outside
+ * this list does not fail loudly on the page — it silently stops being a link.
+ *
+ * Tiptap's default is a *different* list (`ftp`, `ftps`, `tel`, `callto`,
+ * `sms` and `cid` are on it; `irc` and `ircs` are not), and it is a default that
+ * can only be widened — the extension's `protocols` option appends. So the
+ * editor has to state the renderer's list outright, which is what this is: an
+ * admin who types a `tel:` number would otherwise see it underlined here, save
+ * it, and have a parent read it as plain text — exactly the trap the
+ * same-subset rule exists to close.
+ *
+ * **These two lists are one decision in two places, and the second place is a
+ * library default.** Widening this one without changing what the renderer keeps
+ * re-opens the trap; the only honest way to widen it at all is to give the
+ * renderer an explicit `urlTransform` and change both in the same edit.
+ */
+const ALLOWED_LINK_SCHEMES = ["http", "https", "irc", "ircs", "mailto", "xmpp"];
+
+/**
+ * The scheme a value carries, lower-cased, or `null` when it carries none.
+ *
+ * Deliberately the same reading react-markdown takes: a colon only introduces a
+ * scheme when it comes before the first `/`, `?` and `#`, so `sog.gg/a:b` is a
+ * relative path rather than a `sog.gg/a` scheme.
+ */
+function schemeOf(value: string): string | null {
+  const colon = value.indexOf(":");
+  if (colon === -1) return null;
+  for (const delimiter of ["/", "?", "#"]) {
+    const at = value.indexOf(delimiter);
+    if (at !== -1 && at < colon) return null;
+  }
+  return value.slice(0, colon).toLowerCase();
+}
+
+/**
+ * Whether the reader's renderer would keep this address as a link.
+ *
+ * Takes a nullable href because tiptap's link mark defaults its `href`
+ * attribute to `null` and hands whatever it holds to the validator; an address
+ * that is not there is left to the mark's own handling rather than reported as
+ * a bad scheme.
+ */
+function isRenderableHref(href: string | null | undefined): boolean {
+  if (href === null || href === undefined || href === "") return true;
+  const scheme = schemeOf(href);
+  return scheme === null || ALLOWED_LINK_SCHEMES.includes(scheme);
+}
+
+/**
+ * What the writer typed, read as the address they meant.
+ *
+ * A value with no scheme is the one that goes wrong quietly. `sog.gg/privacy`
+ * is a valid *relative* path, so nothing rejects it and the stored link
+ * resolves under the current page — `/products/<slug>/sog.gg/privacy`, a broken
+ * link nobody is told about. A leading `/` is how somebody says "a page on this
+ * site" and is left alone; anything else with no scheme is an address
+ * elsewhere, and gets the scheme it was missing.
+ */
+function normalizeLinkHref(draft: string): string {
+  const trimmed = draft.trim();
+  if (trimmed === "" || trimmed.startsWith("/")) return trimmed;
+  return schemeOf(trimmed) === null ? `https://${trimmed}` : trimmed;
+}
 
 interface ToolbarTool {
   key: ToolbarToolKey;

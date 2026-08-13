@@ -188,7 +188,8 @@ describe("registry scenarios match their fixtures", () => {
  *
  * The long-description scene exists to answer a single question — what heading
  * level should today's unlevelled `heading` blocks become — and it answers it
- * by putting the same copy on three pages. Everything that is *not* the heading
+ * by putting the same copy on four pages: the block control and one page per
+ * candidate level. Everything that is *not* the heading
  * level has to be identical across them, or the owner is comparing two things
  * at once and cannot tell which one they are reacting to. Nothing else in the
  * app fails if a fixture edit quietly gives one page different copy, a
@@ -200,7 +201,7 @@ describe("the long-description scene varies the heading level and nothing else",
     ...buildLongDescriptionSceneFixture(scenario),
   }));
 
-  it("renders one product, with one blurb, on all three pages", () => {
+  it("renders one product, with one blurb, on all four pages", () => {
     const ids = new Set(fixtures.map((f) => f.product.id));
     expect(ids.size).toBe(1);
     for (const { scenario, product } of fixtures) {
@@ -217,7 +218,7 @@ describe("the long-description scene varies the heading level and nothing else",
     expect(fixtures.filter((f) => f.markdown !== null).length).toBeGreaterThan(1);
   });
 
-  it("converts the same copy at two different levels", () => {
+  it("converts the same copy at each of the three candidate levels", () => {
     const markdowns = fixtures
       .map((f) => f.markdown)
       .filter((m): m is string => m !== null);
@@ -227,8 +228,16 @@ describe("the long-description scene varies the heading level and nothing else",
     expect(new Set(markdowns).size).toBe(markdowns.length);
     const stripped = markdowns.map((m) => m.replace(/^#+ /gm, ""));
     expect(new Set(stripped).size).toBe(1);
-    expect(markdowns.some((m) => /^# \S/m.test(m))).toBe(true);
-    expect(markdowns.some((m) => /^## \S/m.test(m))).toBe(true);
+    // The level each page converts at, read off its first heading. Counting the
+    // hashes rather than testing a `# ` prefix per level: `^## ` also matches a
+    // `###` heading's first three characters, so prefix tests cannot tell the
+    // three pages apart.
+    const levels = markdowns.map((markdown) => {
+      const heading = /^(#+) \S/m.exec(markdown);
+      if (heading === null) throw new Error("converted copy has no heading");
+      return heading[1].length;
+    });
+    expect(new Set(levels)).toEqual(new Set([1, 2, 3]));
   });
 
   /**
