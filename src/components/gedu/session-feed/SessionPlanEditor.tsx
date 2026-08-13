@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eye, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { planDraftFromEditorState } from "./entry-state";
 import { FamilyNoteBlock } from "./FamilyNoteBlock";
@@ -82,9 +83,10 @@ export function SessionPlanEditor({
     // renders inside a collapsible region, which clips its overflow so the
     // open/close animation has something to reveal.
     <div className="space-y-4 pb-1 pt-4">
-      <FamilyNoteBlock>
+      <FamilyNoteBlock audienceStatedByField>
         <RichNoteField
-          label={t("reportLabel")}
+          label={t("reportTitle")}
+          icon={Eye}
           hint={t("reportFormattingHint")}
           placeholder={t("reportPlaceholder")}
           value={initialState.report}
@@ -95,9 +97,10 @@ export function SessionPlanEditor({
         />
       </FamilyNoteBlock>
 
-      <StaffNoteBlock>
+      <StaffNoteBlock audienceStatedByField>
         <RichNoteField
-          label={t("staffNoteFieldLabel")}
+          label={t("staffNoteTitle")}
+          icon={Lock}
           hint={t("staffNoteHint")}
           placeholder={t("staffNotePlaceholder")}
           value={initialState.staffNote}

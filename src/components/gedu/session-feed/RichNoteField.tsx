@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { LucideIcon } from "lucide-react";
 import { Field } from "@/components/ui/field";
 
 /**
@@ -32,6 +33,13 @@ const RichTextEditor = dynamic(
 
 interface RichNoteFieldProps {
   label: string;
+  /**
+   * Decorative glyph at the head of the label, for a label that also names the
+   * field's audience. It is hidden from assistive technology and adds nothing
+   * to the field's accessible name — the label text is what says who reads
+   * this, and the glyph only makes that visible at a glance.
+   */
+  icon?: LucideIcon;
   hint?: string;
   placeholder: string;
   /** Markdown to seed the editor with. Re-read whenever `seed` changes. */
@@ -78,8 +86,8 @@ interface RichNoteFieldProps {
  * produced was two different writing experiences inside one editor, and the
  * note nobody outside the team reads is exactly where a handover is written:
  * three things to know about the room, which is a list. The two fields differ
- * in *audience*, and the padlocked treatment around this one is what says so —
- * not the absence of formatting.
+ * in *audience*, and what says so is the title naming it in words plus the
+ * container treatment around it — never the absence of formatting.
  *
  * **No "(optional)" marker on either.** Both genuinely are optional — attendance
  * is the half a gedu is paid on — but marking them says, at the exact moment
@@ -95,6 +103,7 @@ interface RichNoteFieldProps {
  */
 export function RichNoteField({
   label,
+  icon,
   hint,
   placeholder,
   value,
@@ -104,7 +113,7 @@ export function RichNoteField({
   onChange,
 }: RichNoteFieldProps) {
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} icon={icon} hint={hint}>
       {({ hintId }) =>
         ready ? (
           <RichTextEditor
