@@ -579,7 +579,7 @@
       "participantPicker": {
         "title": "Ajouter un participant",
         "description": "Ajoutez un enfant ou un parent directement à ce produit, sans passer par le paiement. Un parent ne peut prendre une place que sur un produit ouvert aux parents.",
-        "searchPlaceholder": "Rechercher par nom de parent ou de joueur…",
+        "searchPlaceholder": "Rechercher un parent ou un joueur par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
         "searchHint": "Saisissez au moins 2 caractères pour lancer la recherche.",
         "noParents": "Aucun parent pour l’instant.",
         "noSearchResults": "Aucun parent ni joueur ne correspond à votre recherche.",
@@ -694,7 +694,7 @@
     "users": {
       "title": "Utilisateurs",
       "manageAccounts": "Gérer les comptes utilisateurs et les rôles",
-      "searchPlaceholder": "Rechercher par nom, e-mail ou nom d’utilisateur...",
+      "searchPlaceholder": "Rechercher par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
       "searchAriaLabel": "Rechercher des utilisateurs",
       "roleFilterLabel": "Rôle",
       "all": "Tous",

@@ -627,7 +627,7 @@
       "participantPicker": {
         "title": "ghom yIchel",
         "description": "DochvamDaq puq qoj vav yIchel; Huch DaH poQbe’. vavpu’vaD poSmoHlu’bogh Dochmey neH lo’laH vav.",
-        "searchPlaceholder": "vav pong, qoj SuvwI’ pong yInej…",
+        "searchPlaceholder": "vav SuvwI’ ghap yInej: pong, QIn, ghogh mI’, qoj Quj pong…",
         "searchHint": "cha’ mu’ pIm yIghItlh, vaj yInej.",
         "noParents": "vav pagh tu’lu’.",
         "noSearchResults": "vav qoj SuvwI’ tu’be’lu’.",
@@ -742,7 +742,7 @@
     "users": {
       "title": "lo’wI’pu’",
       "manageAccounts": "lo’wI’ accountmey je Qu’mey tI’ang",
-      "searchPlaceholder": "pong, QIn, qoj lo’wI’ pong yInej...",
+      "searchPlaceholder": "pong, QIn, ghogh mI’, qoj Quj pong yInej…",
       "searchAriaLabel": "lo’wI’pu’ yInej",
       "roleFilterLabel": "Qu’",
       "all": "Hoch",

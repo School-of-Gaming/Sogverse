@@ -1,7 +1,64 @@
 import { z } from "zod";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
+import { Constants } from "@/types";
+import type { Profile } from "@/types";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+
+/**
+ * A profile as it comes back off `user_search_index`.
+ *
+ * **The view is where this schema earns its place.** PostgreSQL does not carry
+ * a column's NOT NULL through a view, so the type generator — reading the
+ * catalog faithfully — types every one of these columns as nullable, including
+ * the eight `profiles` declares NOT NULL and that a LEFT JOIN cannot null
+ * anyway (the join nulls its right-hand side, never the profile). Without this
+ * the search would answer `(string | null)[]` where every caller wants
+ * `Profile[]`, and the honest ways to bridge that are a cast, which lint
+ * forbids and which would go stale in silence, or this.
+ *
+ * `satisfies z.ZodType<Profile>` is the half that does not rot: the schema is
+ * checked against `Profile` — the *table's* row type, not the view's — so a
+ * column added to `profiles` fails to compile here until it is given a rule.
+ * Leaving it out of the view does not clear that: the check knows nothing about
+ * which columns the view selects. The only other way out is for the search to
+ * stop answering in `Profile`, which is a larger decision than adding a line.
+ */
+export const searchedProfile = z.object({
+  id: z.string(),
+  email: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  role: z.enum(Constants.public.Enums.user_role),
+  phone: z.string().nullable(),
+  currency: z.string().nullable(),
+  home_location_id: z.string().nullable(),
+  locale: z.string().nullable(),
+  spoken_languages: z.array(z.string()),
+  created_at: z.string(),
+  updated_at: z.string(),
+}) satisfies z.ZodType<Profile>;
+
+/**
+ * The columns the search selects.
+ *
+ * `search_blob` is deliberately absent. It is the longest value on the row and
+ * carries nothing the other columns do not, so selecting it would put every
+ * searchable string about twenty people on the wire to be thrown away. Naming
+ * the columns is also what keeps the schema above honest: `*` returns a wider
+ * row, and a wider row parses against a narrower schema without complaint,
+ * because zod strips what it does not know.
+ *
+ * **Spelled out as a literal rather than joined from the schema's keys**, even
+ * though the joined form cannot drift. The Supabase client infers the response
+ * shape *from this string*, so a value computed at runtime is just `string` to
+ * the compiler and collapses that inference — which would leave the zod parse
+ * below as the only thing standing between a mistyped column and production.
+ * The drift the literal reintroduces is closed by a unit test asserting these
+ * are exactly the schema's keys.
+ */
+export const SEARCHED_PROFILE_COLUMNS =
+  "id,email,first_name,last_name,role,phone,currency,home_location_id,locale,spoken_languages,created_at,updated_at" as const;
 
 /**
  * Wire shapes for the admin's edit of somebody else's game identity

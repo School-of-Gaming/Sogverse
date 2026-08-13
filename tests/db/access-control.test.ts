@@ -7,7 +7,8 @@ import { createAdminTestClient } from "./helpers";
 /**
  * Grant- and schema-level access control: which tables `authenticated` and
  * `anon` may write, that every SECURITY DEFINER function pins its search_path,
- * and that every table has RLS.
+ * that every table has RLS, that no materialized view exists, and that every
+ * view answers as its caller.
  *
  * The *function*-grant allowlists that used to live here are gone. They proved
  * someone had meant to expose a function, not that its body enforced anything —
@@ -24,6 +25,22 @@ const tableGrantRows = z.array(
   z.object({
     table_name: z.string(),
     privilege_type: z.string(),
+  })
+);
+
+/**
+ * `kind` is an enum rather than a string on purpose: `_list_views` derives it
+ * from `relkind` with a two-arm CASE and no ELSE, so a third relation class
+ * arriving in its filter comes back NULL. Parsing that here fails loudly at the
+ * one place that could otherwise treat an unknown class as a plain view.
+ */
+const viewRows = z.array(
+  z.object({
+    view_name: z.string(),
+    kind: z.enum(["view", "materialized view"]),
+    security_invoker: z.boolean(),
+    authenticated_select: z.boolean(),
+    anon_select: z.boolean(),
   })
 );
 
@@ -186,5 +203,68 @@ describe("Access Control", () => {
     const tables = (data as { table_name: string }[] | null) ?? [];
 
     expect(tables).toEqual([]);
+  });
+
+  // The view-shaped sibling of the RLS sweep above, and it has to be its own
+  // pair of checks because pg_tables — which that one reads — does not list
+  // views at all. They are two `it`s rather than one because the two classes of
+  // relation `_list_views` returns have different remedies, and a single check
+  // could only name one of them.
+
+  it("no public relation is a materialized view", async () => {
+    // A matview is the one member of this family with no safe form. It cannot
+    // take `security_invoker` (there is no query left to re-run as the caller),
+    // it cannot carry RLS, and its rows were computed under the role that
+    // refreshed it — which holds BYPASSRLS, so what is stored is already every
+    // row of everything it selected from, with no predicate left to narrow it.
+    // Any Data API grant on one therefore hands every caller the lot, and the
+    // only instruction that would be true is "delete it", which is why this is
+    // a ban rather than a flag check.
+    const { data, error } = await admin.rpc("_list_views");
+
+    expect(error).toBeNull();
+
+    const materialized = viewRows
+      .parse(data)
+      .filter((view) => view.kind === "materialized view")
+      .map((view) => view.view_name);
+
+    expect(
+      materialized,
+      "materialized views are banned in `public` — one can take neither " +
+        "security_invoker nor RLS, and its rows were materialized under a " +
+        "BYPASSRLS role; use a plain security_invoker view, or an indexed " +
+        "table maintained by a trigger if the cost is real"
+    ).toEqual([]);
+  });
+
+  it("all public views run as their caller (security_invoker)", async () => {
+    // A view without `security_invoker` runs with its OWNER's rights, and the
+    // owner is postgres, which holds BYPASSRLS: it would hand every caller every
+    // row of everything it selects from, with a working feature on top and
+    // nothing else in CI objecting. `security_invoker` is the structural switch
+    // that decides this, exactly as `rowsecurity` is for a table.
+    //
+    // Scoped to plain views because the flag is meaningless on a matview — the
+    // check above is what speaks to those, and a matview failing *this* one
+    // would be told to set an option Postgres does not accept.
+    //
+    // Assert the offending list is empty rather than counting it, so a failure
+    // names the view instead of reporting a number.
+    const { data, error } = await admin.rpc("_list_views");
+
+    expect(error).toBeNull();
+
+    const ownerRights = viewRows
+      .parse(data)
+      .filter((view) => view.kind === "view")
+      .filter((view) => !view.security_invoker)
+      .map((view) => view.view_name);
+
+    expect(
+      ownerRights,
+      "a view must be created WITH (security_invoker = true) or it returns rows " +
+        "its caller's RLS forbids"
+    ).toEqual([]);
   });
 });

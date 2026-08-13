@@ -259,6 +259,36 @@ is a privilege escalation vector.
 **Rule: All new tables must enable RLS.** Add
 `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and appropriate policies.
 
+**Rule: All new views must be declared `WITH (security_invoker = true)`, and a view
+readable by `authenticated`/`anon` must additionally be classified in the DB test
+suite's authorization spine.** A view has no RLS of its own; the flag is what makes the
+*caller's* policies on the underlying tables decide its rows. Without it the view runs
+with its owner's rights — and the owner holds `BYPASSRLS` — so it returns every row to
+every caller, which is a data leak that looks from the application exactly like a
+feature that works. Two checks enforce this and both fail the build: the access-control
+test sweeps every public view for the flag (the direct analogue of its every-table-has-RLS
+sweep), and the spine requires each exposed view to name a scope test proving two
+different callers each get only what their own policies allow. Self-scoping is the only
+classification a view can hold — there is no body to gate, so "role-gated" does not
+apply. Write the flag in exactly that spelling: the check reads `reloptions` as stored
+text, so `security_invoker = on` is reported as an offender. Exposure is measured per
+*column*, so a view reachable only through a `GRANT SELECT(col)` still has to be
+classified — that is a grant PostgREST answers reads against, and measuring at table
+level would let one through unnamed.
+
+**Rule: materialized views are banned outright in `public`.** This is not the
+`security_invoker` rule applied to a second object class — it is a ban, because a matview
+has no safe form. The option is not valid on one (there is no query left to re-run as the
+caller), it cannot carry RLS, and its contents were computed under the role that
+refreshed it — which holds `BYPASSRLS`, so what is stored is already every row of
+everything it selected from, with no predicate left anywhere to narrow it. Granting one
+to `authenticated` therefore publishes the underlying tables wholesale through the Data
+API, and nothing the application does can walk that back. CI enforces it: the
+access-control test fails on any relation of kind `materialized view` in `public`, and so
+does the migration that widened the catalog helper to see them. If a rollup is genuinely
+too expensive to compute per read, the answer is an ordinary table maintained by triggers
+— RLS-capable, indexable, and cheap to reason about — not a matview with a grant on it.
+
 **Rule: RLS INSERT/UPDATE policies must authorize both the actor AND the target.**
 Checking only `column = auth.uid()` is insufficient — also verify the user is authorized
 to reference the target entity (prevents IDOR).
@@ -278,12 +308,16 @@ two things, with nothing escaping both:
   named to a scope test that proves it cannot answer about anyone else. `LANGUAGE sql`
   functions have no first statement, so they can only ever be this.
 
+**Views are held to the same requirement in their own registry**, with the difference
+that self-scoping is the only classification available to one — see the views rule above
+for what to write and which two checks enforce it.
+
 Alongside it: no exposed function may be `STRICT` (a `STRICT` function skips its body on
 NULL input, so its guard would never run); no privilege-bearing column may be reachable by
 an `UPDATE` grant, at table or column level; and every table `authenticated` can UPDATE or
 DELETE needs a write-IDOR case proving a wrong user's statement affects zero rows. RLS
-coverage (every table has it) and the table-level write-grant allowlist live in the
-access-control test. (DB tests run against a real Postgres in CI — see `tests/CLAUDE.md`.)
+coverage (every table has it), the `security_invoker` sweep over every view, and the
+table-level write-grant allowlist live in the access-control test. (DB tests run against a real Postgres in CI — see `tests/CLAUDE.md`.)
 
 ## `now()` is frozen at transaction start
 

@@ -579,7 +579,7 @@
       "participantPicker": {
         "title": "Add a participant",
         "description": "Drop a child or a parent straight into this product, bypassing payment. A parent can only take a seat on a product that is open to parents.",
-        "searchPlaceholder": "Search by parent or gamer name…",
+        "searchPlaceholder": "Search a parent or gamer by name, email, phone or game username…",
         "searchHint": "Type at least 2 characters to search.",
         "noParents": "No parents yet.",
         "noSearchResults": "No parents or gamers match your search.",
@@ -694,7 +694,7 @@
     "users": {
       "title": "Users",
       "manageAccounts": "Manage user accounts and roles",
-      "searchPlaceholder": "Search by name, email, or username...",
+      "searchPlaceholder": "Search by name, email, phone or game username…",
       "searchAriaLabel": "Search users",
       "roleFilterLabel": "Role",
       "all": "All",

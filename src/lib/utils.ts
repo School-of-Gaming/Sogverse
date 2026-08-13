@@ -169,6 +169,48 @@ export function escapeLikePattern(str: string): string {
   return str.replace(/[%_\\]/g, "\\$&");
 }
 
+/**
+ * Split what someone typed into the terms every match has to satisfy.
+ *
+ * Someone searching types the name they know — "Anna Virtanen" — and no single
+ * field holds it: the two words are a first name and a surname, so matching the
+ * whole string against a field finds nobody even though either word alone finds
+ * them. Each word is matched separately instead and a person has to match all
+ * of them, which is also what makes adding the surname *narrow* the results
+ * rather than change what is being asked.
+ *
+ * Terms are cut on whitespace, on commas — how a name gets typed surname-first
+ * — and on `*`, which PostgREST reads as a wildcard for `ilike` before the
+ * pattern ever reaches SQL, so a stray one would match everybody rather than
+ * nobody. None of the three means anything inside a name, an email or a handle.
+ *
+ * **This lives here, rather than beside either caller, because two of them
+ * exist**: the admin user search matches these terms in SQL, and the gedu
+ * picker matches them in the browser over a list it already holds. What counts
+ * as a term cannot be allowed to differ between the two — the failure is silent
+ * and asymmetric, one surface quietly ceasing to find a person the other still
+ * finds.
+ */
+export function searchTerms(query: string): string[] {
+  return query.split(/[\s,*]+/).filter(Boolean);
+}
+
+/**
+ * Whether every term appears somewhere in one person's searchable text.
+ *
+ * The rule is shared; the haystack is not. A caller assembles whichever fields
+ * it can both see and match honestly — the database reaches a person's game
+ * handles across two more tables, and recognises a phone number before it
+ * tokenizes; a picker narrowing a list of profiles does neither — and this
+ * decides what matching those fields *means*. Keeping the rule here and the
+ * field list at the call site is what lets the two surfaces differ in reach
+ * without differing in behaviour.
+ */
+export function matchesAllTerms(haystack: string, terms: string[]): boolean {
+  const hay = haystack.toLowerCase();
+  return terms.every((term) => hay.includes(term.toLowerCase()));
+}
+
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }

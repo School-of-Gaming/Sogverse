@@ -579,7 +579,7 @@
       "participantPicker": {
         "title": "Lägg till en deltagare",
         "description": "Lägg till ett barn eller en förälder direkt i denna produkt, förbi betalningen. En förälder kan bara ta en plats på en produkt som är öppen för föräldrar.",
-        "searchPlaceholder": "Sök på förälder eller spelarnamn…",
+        "searchPlaceholder": "Sök en förälder eller spelare på namn, e-post, telefon eller spelanvändarnamn…",
         "searchHint": "Skriv minst 2 tecken för att söka.",
         "noParents": "Inga föräldrar ännu.",
         "noSearchResults": "Inga föräldrar eller spelare matchar din sökning.",
@@ -694,7 +694,7 @@
     "users": {
       "title": "Användare",
       "manageAccounts": "Hantera användarkonton och roller",
-      "searchPlaceholder": "Sök på namn, e-post eller användarnamn...",
+      "searchPlaceholder": "Sök på namn, e-post, telefon eller spelanvändarnamn…",
       "searchAriaLabel": "Sök användare",
       "roleFilterLabel": "Roll",
       "all": "Alla",
