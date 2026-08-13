@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Profile, ProfileUpdate, UserRole, ParentGamer, SpokenLanguage, AppSupabaseClient } from "@/types";
-import { escapeLikePattern } from "@/lib/utils";
+import { escapeLikePattern, searchTerms } from "@/lib/utils";
 import { walkPages } from "@/lib/supabase/paging";
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import {
@@ -35,25 +35,6 @@ const PHONE_MATCH_DIGITS = 7;
  * (`EnderDragon42`) or a house number than a number somebody is dialling.
  */
 const PHONE_MIN_DIGITS = 5;
-
-/**
- * Split what was typed into the terms every match has to satisfy.
- *
- * Someone searching types the name they know — "Jon Smith" — and no single
- * field holds it: the two words are a first name and a surname, so matching the
- * whole string against a field finds nobody even though either word alone finds
- * them. Each word is matched separately instead and a profile has to match all
- * of them, which is also what makes adding the surname *narrow* the results
- * rather than change what is being asked.
- *
- * Terms are cut on whitespace, on commas — how a name gets typed surname-first
- * — and on `*`, which PostgREST reads as a wildcard for `ilike` before the
- * pattern ever reaches SQL, so a stray one would match everybody rather than
- * nobody. None of the three means anything inside a name, an email or a handle.
- */
-function searchTerms(query: string): string[] {
-  return query.split(/[\s,*]+/).filter(Boolean);
-}
 
 /**
  * The one term a phone-shaped query becomes, or null if it is not one.

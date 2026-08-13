@@ -18,7 +18,7 @@ import {
 import { useUsersByRole, useSpokenLanguages } from "@/services/users";
 import { useGeduVerificationMap } from "@/services/gedu";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { cn } from "@/lib/utils";
+import { cn, matchesAllTerms, searchTerms } from "@/lib/utils";
 import type { Profile } from "@/types";
 
 interface GeduPickerSheetProps {
@@ -31,6 +31,26 @@ interface GeduPickerSheetProps {
   /** The id currently filling this slot — shown with a "current" badge. */
   highlightId?: string;
   onSelect: (gedu: Profile) => void;
+}
+
+/**
+ * The text one gedu is matched against, and the reason it is only these three
+ * fields.
+ *
+ * This is the browser's half of a rule the database also implements: the admin
+ * user search matches the same terms against a `search_blob` that additionally
+ * carries a phone number and both game handles. This picker narrows a list of
+ * profiles it already holds, and a `Profile` carries neither — so the reach
+ * differs while the rule (every term, anywhere) does not.
+ *
+ * **The two halves existing at all is the thing to be uncomfortable about**,
+ * not the field list. Pointing this picker at the shared search instead would
+ * leave one definition of a match rather than two that agree by habit; it is
+ * deferred rather than settled, and the surname bug this replaced is what a
+ * second implementation drifting looks like.
+ */
+export function geduSearchText(gedu: Profile): string {
+  return `${gedu.first_name} ${gedu.last_name} ${gedu.email}`;
 }
 
 export function GeduPickerSheet({
@@ -69,16 +89,13 @@ export function GeduPickerSheet({
 
   const filtered = useMemo(() => {
     if (!gedus) return [];
-    const q = search.trim().toLowerCase();
+    const terms = searchTerms(search);
     return gedus.filter((g) => {
       if (languageFilter && !g.spoken_languages.includes(languageFilter)) {
         return false;
       }
-      if (!q) return true;
-      return (
-        g.first_name.toLowerCase().includes(q) ||
-        g.email.toLowerCase().includes(q)
-      );
+      if (terms.length === 0) return true;
+      return matchesAllTerms(geduSearchText(g), terms);
     });
   }, [gedus, search, languageFilter]);
 
