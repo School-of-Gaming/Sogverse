@@ -2,6 +2,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import type {
   BrowseRowLocation,
   ProductLongDescription,
+  ProductTopic,
   ProductType,
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
@@ -758,6 +759,29 @@ const SCENARIO_ART: Partial<Record<PreviewScenario, string>> = {
   "free-event": DEMO_ART.racetrack,
 };
 
+/**
+ * The topic a scenario's row carries, where the default below is not the point.
+ *
+ * Two things are only visible at page scale, so each gets one scenario:
+ *
+ * - **A topic with no card.** Most topics bring an "About {name}" card to the
+ *   detail page; a few name subject matter rather than one piece of software
+ *   and bring none, and the page then renders no card *and no wrapper for one*.
+ *   The difference between those two is a gap in the reading column. This goes
+ *   on a municipality club rather than the flagship consumer one — the card is
+ *   the thing most worth looking at on the default scenario, and this map
+ *   exists to make its absence reviewable somewhere, not to take it away from
+ *   where it reads best.
+ * - **A card whose copy is new.** A card renders on the default scenario
+ *   already, but always the same one, so freshly written topic prose has
+ *   nowhere to be read at full width against the sections above and below it.
+ *   The camp carries whichever topic that currently is.
+ */
+const SCENARIO_TOPIC: Partial<Record<PreviewScenario, ProductTopic>> = {
+  "muni-uncapped": "programming",
+  "camp-open": "rocket_league",
+};
+
 export interface ShopCatalogEntry {
   slug: PreviewScenario;
   /**
@@ -1326,8 +1350,11 @@ function buildBaseProduct(
     image_path: SCENARIO_ART[slug] ?? null,
     // Fixed product_topic enum; the label is resolved via PRODUCT_TOPICS, so
     // the value just needs to be valid. Events get Fortnite, the rest
-    // Minecraft Java.
-    topic: productType === "event" ? "fortnite" : "minecraft_java",
+    // Minecraft Java — unless the scenario names one, which is how the
+    // info-less (no About card) shape gets a page to be seen on.
+    topic:
+      SCENARIO_TOPIC[slug] ??
+      (productType === "event" ? "fortnite" : "minecraft_java"),
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,

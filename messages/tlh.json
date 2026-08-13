@@ -1621,7 +1621,7 @@
         },
         "minecraft_education": {
           "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH. Minecraft Education ’oH ghojmoHmeH pa’vaD chenmoHbogh mIllogh: rap chenmoHmeH qo’ Dun, ’ach ghojmoHwI’vaD jan chu’mey, ’ej ghojmoHwI’ Dev, mob Quj net qaSmoHbe’.",
-          "note": "ghojwI’choH pat pagh Microsoft 365 Education-Daq qel net tlhob, malja’Daq je’be’lu’. Qujvam DIlmeH puqlI’ poQchugh, ghotlh maH, ’ej DInIS.",
+          "note": "pagh yIje’ ’ej ghojwI’choH pat pong yInIDQo’ – Minecraft Education pongmey nob School of Gaming, ’ej ghomHomDaq lulo’ QujwI’pu’. ’ach Hop ghomHommeyDaq, Quj naQ je lIng puqlI’: DIl HInobbe’, Microsoft Store pagh Minecraft Education Daq yISuq.",
           "linkLabel": "Minecraft Education De’"
         },
         "fortnite": {
@@ -1638,6 +1638,11 @@
           "description": "Roblox Studio ’oH tlhab jan’e’, Roblox Qujmey chenmoHlu’meH lo’lu’bogh. qo’mey Hutlhbogh chenmoH puqpu’, teH 3D janmey lo’, ’ej teH ngoq ghItlh – qechmeychaj Qujmey moj, ’ej bIQujlaHbogh latlhpu’. ghom’a’meymajDaq Qujbe’ puqpu’ – chenmoH! Quj chenmoHwI’ teH mIw ’oH.",
           "note": "tlhab ’oH Roblox Studio’e’ – pagh yIje’. Windows De’wI’ Mac je neH: iPad ghobe’, tablet ghobe’, Chromebook ghobe’, telategh ghobe’, qImroQ ghobe’ – vaj De’wI’’a’ pagh laptop poQ puqlI’. tlhab Roblox pong je poQlu’, ’ej pong qan chur QIn ’ej pegh lojmIt che’. chenmoHpu’bogh Dochmey ngeHlaH, vaj Sam ’ej Quj latlh QujwI’pu’.",
           "linkLabel": "Roblox Studio yISuq"
+        },
+        "rocket_league": {
+          "description": "Rocket League ’oH Ho’DoS’e’ – qul’a’ ghajbogh Dujmey lo’lu’, ’ej moQ tIn luqIp. cha’ ghom: jagh lojmItDaq moQ ghoSmoHmeH lulo’. vagh tup neH Suvmey; ngaj ’ej pay’. wov ’ej na’rural mIllogh, ’Iw tu’lu’be’, nuH tu’lu’be’ – Ho’DoS ’oH, Suv-Quj ghobe’. Qujbe’bogh vav je: nuq qaS, tugh yaj. ghom wa’chuqchugh neH Qapla’ chav – vaj ghomHommeymajvaD QaQqu’.",
+          "note": "Rocket League yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. tlhab Epic Games pong chenmoH puqlI’. Windows De’wI’, PlayStation, Xbox, Nintendo Switch je Daq Qop, ’ej jan pIm lo’bogh QujwI’pu’ tay’ Quj – vaj janlIj rap jan poQbe’lu’. Quj qoDDaq wejwI’ DachmeH Huch poQlu’ (Duj ’IHmoHmeH Dochmey), ’ach SoH yI’el lojmIt.",
+          "linkLabel": "Rocket League yISuq"
         }
       }
     },

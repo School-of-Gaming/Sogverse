@@ -2078,6 +2078,11 @@ export type Database = {
         | "fortnite"
         | "roblox_studio"
         | "pokemon_go"
+        | "rocket_league"
+        | "creator_studio"
+        | "programming"
+        | "ai"
+        | "esports"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
@@ -2233,6 +2238,11 @@ export const Constants = {
         "fortnite",
         "roblox_studio",
         "pokemon_go",
+        "rocket_league",
+        "creator_studio",
+        "programming",
+        "ai",
+        "esports",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       user_role: ["admin", "customer", "gamer", "gedu"],

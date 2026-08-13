@@ -114,36 +114,32 @@ describe("TopicInfoCard", () => {
     );
   });
 
-  it("renders no card at all for a topic without an info block", async () => {
-    // No such topic exists in the enum today — every current topic carries
-    // info — so manufacture one: re-import the card against a topics module
-    // whose fortnite entry is label-only. This is the render condition's
-    // contract (info presence, not any category), so it deserves a test that
-    // survives the day someone adds an info-less topic for real.
-    vi.resetModules();
-    vi.doMock("@/lib/products/topics", async (importOriginal) => {
-      const mod =
-        await importOriginal<typeof import("@/lib/products/topics")>();
-      return {
-        ...mod,
-        PRODUCT_TOPICS: {
-          ...mod.PRODUCT_TOPICS,
-          fortnite: { label: "Fortnite" },
-        },
-      };
-    });
+  it("renders Rocket League's PEGI 3 and its single official-site link", () => {
+    const { getByText, getByRole } = render(
+      <TopicInfoCard topic="rocket_league" />,
+    );
 
-    try {
-      const { TopicInfoCard: InfolessCard } = await import(
-        "@/components/public/products/topic-info-card"
-      );
-      const { container } = render(<InfolessCard topic="fortnite" />);
-      expect(container.innerHTML).toBe("");
-    } finally {
-      // Unwind even on assertion failure, so a later test in this file can
-      // never run against the patched registry.
-      vi.doUnmock("@/lib/products/topics");
-      vi.resetModules();
-    }
+    expect(getByText("About Rocket League")).toBeTruthy();
+    expect(getByText("PEGI 3")).toBeTruthy();
+
+    // Free to install on four platforms, so this looked like Bedrock's
+    // multi-store shape and deliberately is not: Nintendo's American and
+    // European stores share no URL structure, so there is no Switch link that
+    // is right from both, and one link to the game's own (single, global) site
+    // beats a store row that 404s for half the audience. Assert the single
+    // link, because a `stores` list creeping back in is exactly the regression.
+    const link = getByRole("link");
+    expect(link.getAttribute("href")).toBe("https://www.rocketleague.com/");
+    expect(link.getAttribute("rel")).toContain("noopener");
+  });
+
+  it("renders no card at all for a topic without an info block", () => {
+    // `programming` is a real registry entry with no info: it names subject
+    // matter rather than one piece of software, so there is nothing to rate or
+    // link to and the page renders no card. This used to be a `vi.doMock` of a
+    // manufactured info-less topic, because none existed; now the contract can
+    // be tested against the actual registry.
+    const { container } = render(<TopicInfoCard topic="programming" />);
+    expect(container.innerHTML).toBe("");
   });
 });
