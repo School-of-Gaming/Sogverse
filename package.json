@@ -17,10 +17,9 @@
     "test": "vitest --run",
     "test:ui": "vitest --ui",
     "test:db": "vitest --run --config vitest.config.db.mts",
-    "test:db:ui": "vitest --ui --config vitest.config.db.mts",
     "test:smoke": "playwright test",
-      "check-translations": "node scripts/check-translations.mjs",
-  "perf:insights": "node scripts/speed-insights.mjs"
+    "check-translations": "node scripts/check-translations.mjs",
+    "perf:insights": "node scripts/speed-insights.mjs"
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.87.0",
