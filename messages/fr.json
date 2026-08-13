@@ -8,7 +8,7 @@
       "createAccount": "Créer un compte",
       "forgotPassword": "Mot de passe oublié",
       "resetPassword": "Réinitialiser le mot de passe",
-      "registerGedu": "Devenir éducateur de jeu",
+      "registerGedu": "Devenir animateur",
       "about": "À propos",
       "yty": "Yty – la Force du Sogverse",
       "minecraftApi": "API du serveur Minecraft",
@@ -2324,7 +2324,7 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l’un de nos éducateurs formés (nous les appelons les Gedus).",
+          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l’un de nos animateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
@@ -2335,7 +2335,7 @@
         ],
         "bullets": [
           "Pour créer et gérer votre compte et celui de votre enfant.",
-          "Pour placer votre enfant dans le bon groupe de club, de stage ou d’événement et le mettre en relation avec un éducateur.",
+          "Pour placer votre enfant dans le bon groupe de club, de stage ou d’événement et le mettre en relation avec un animateur.",
           "Pour assurer les sessions audio et vidéo en direct.",
           "Pour encaisser les paiements et envoyer les reçus, rappels et informations importantes concernant vos clubs.",
           "Pour répondre à vos questions lorsque vous nous contactez.",
@@ -2379,7 +2379,7 @@
       "voice": {
         "heading": "Sessions audio et vidéo",
         "paragraphs": [
-          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos éducateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
+          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos animateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
         ]
       },
       "retention": {
@@ -2435,7 +2435,7 @@
       "heading": "En bref",
       "paragraphs": [
         "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, stages et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
-        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un éducateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
+        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un animateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
       ]
     },
     "sections": {
@@ -2467,7 +2467,7 @@
       "online": {
         "heading": "La sécurité en ligne",
         "paragraphs": [
-          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l’un de nos éducateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
+          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l’un de nos animateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
         ]
       },
       "pricing": {
@@ -2536,13 +2536,13 @@
       "commitment": {
         "heading": "Notre promesse à votre enfant",
         "paragraphs": [
-          "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos éducateurs et par les autres enfants."
+          "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos animateurs et par les autres enfants."
         ]
       },
       "approach": {
         "heading": "Comment nous traitons les problèmes",
         "paragraphs": [
-          "Quand un enfant se comporte d’une façon qui blesse ou perturbe les autres, nos éducateurs (nous les appelons les Gedus) réagissent avec calme et bienveillance, d’une manière adaptée à son âge. L’objectif est toujours d’aider l’enfant à comprendre l’effet de ce qu’il a fait et à le réparer — pas simplement de le punir.",
+          "Quand un enfant se comporte d’une façon qui blesse ou perturbe les autres, nos animateurs (nous les appelons les Gedus) réagissent avec calme et bienveillance, d’une manière adaptée à son âge. L’objectif est toujours d’aider l’enfant à comprendre l’effet de ce qu’il a fait et à le réparer — pas simplement de le punir.",
           "Nous réglons la plupart des situations en douceur, par un mot discret. Si le comportement se poursuit, nous passons à des mesures plus fermes, une étape à la fois. Les étapes ci-dessous constituent l’échelle que nous suivons, et vous serez tenu informé au fur et à mesure."
         ]
       },
@@ -2741,7 +2741,7 @@
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming exploite Sogverse, gère l’environnement d’inscription et d’apprentissage, fournit le programme pédagogique et les éducateurs de jeu, anime les sessions d’apprentissage et assure la supervision en matière de protection de l’enfance.",
+          "School of Gaming exploite Sogverse, gère l’environnement d’inscription et d’apprentissage, fournit le programme pédagogique et les animateurs, anime les sessions d’apprentissage et assure la supervision en matière de protection de l’enfance.",
           "School of Gaming Galactic Oy",
           "Numéro d’entreprise : 3110461-1",
           "Isokatu 56",
@@ -2845,7 +2845,7 @@
             "Instruire les réclamations et les signalements relatifs à la protection de l’enfance.",
             "Communiquer avec un parent ou un représentant légal.",
             "Contacter les services d’urgence ou les autorités compétentes lorsque cela est nécessaire.",
-            "Protéger les droits, la sécurité et le bien-être des participants, des éducateurs de jeu et des autres personnes."
+            "Protéger les droits, la sécurité et le bien-être des participants, des animateurs et des autres personnes."
           ],
           "Nous nous fondons sur nos intérêts légitimes à assurer un Programme sûr, sur les obligations légales applicables et, en cas d’urgence, sur la sauvegarde des intérêts vitaux d’une personne."
         ]
@@ -2967,7 +2967,7 @@
           [
             "Le profil de chaque enfant est rattaché à un compte parent ou représentant légal.",
             "Les enfants utilisent un nom d’affichage plutôt que de publier leurs coordonnées.",
-            "Seuls les participants inscrits et les éducateurs de jeu vérifiés peuvent rejoindre les sessions.",
+            "Seuls les participants inscrits et les animateurs vérifiés peuvent rejoindre les sessions.",
             "Les échanges se font en groupe et sous supervision.",
             "Il n’existe pas de messagerie privée directe entre enfants.",
             "Les sessions habituelles ne sont pas enregistrées.",
@@ -2983,7 +2983,7 @@
           "Les informations ne sont accessibles, et uniquement lorsque cela est nécessaire, qu’aux personnes et organismes suivants :",
           [
             "Le personnel habilité de Lynx Educate.",
-            "Le personnel habilité de School of Gaming et les éducateurs de jeu formés.",
+            "Le personnel habilité de School of Gaming et les animateurs formés.",
             "Roblox, pour l’étude limitée et les usages média consentis décrits ci-dessus.",
             "Les lieux d’accueil, les prestataires d’accessibilité ou les photographes qui ont besoin d’informations limitées pour une activité précise.",
             "Les conseils professionnels, assureurs, services d’urgence, organismes de protection de l’enfance ou autorités publiques, lorsque cela est requis.",
@@ -3099,13 +3099,13 @@
       "covers": {
         "heading": "Qui est concerné",
         "blocks": [
-          "Cette politique s’applique à l’ensemble du personnel de Lynx Educate et de School of Gaming, aux éducateurs de jeu (les « Gedus »), aux bénévoles et à tout prestataire en contact avec des enfants dans le cadre de ce Programme."
+          "Cette politique s’applique à l’ensemble du personnel de Lynx Educate et de School of Gaming, aux animateurs (les « Gedus »), aux bénévoles et à tout prestataire en contact avec des enfants dans le cadre de ce Programme."
         ]
       },
       "vetting": {
         "heading": "Avant de travailler auprès d’enfants",
         "blocks": [
-          "Tous les éducateurs de jeu (Gedus) doivent suivre le processus de vérification et de formation propre à School of Gaming avant de travailler auprès d’enfants sur Sogverse. Cela comprend :"
+          "Tous les animateurs (Gedus) doivent suivre le processus de vérification et de formation propre à School of Gaming avant de travailler auprès d’enfants sur Sogverse. Cela comprend :"
         ]
       },
       "online": {
@@ -3113,8 +3113,8 @@
         "blocks": [
           [
             "Le compte de chaque Joueur est rattaché à un compte parent ; les enfants ne peuvent pas s’inscrire eux-mêmes.",
-            "Il n’existe pas de messagerie directe entre enfants — tous les échanges se font en groupe et sont activement supervisés par un éducateur de jeu formé.",
-            "Seuls les Joueurs inscrits et les éducateurs vérifiés peuvent participer — aucune invitation externe ni aucun contact extérieur.",
+            "Il n’existe pas de messagerie directe entre enfants — tous les échanges se font en groupe et sont activement supervisés par un animateur formé.",
+            "Seuls les Joueurs inscrits et les animateurs vérifiés peuvent participer — aucune invitation externe ni aucun contact extérieur.",
             "Les sessions ne sont pas enregistrées."
           ]
         ]
@@ -3198,7 +3198,7 @@
       "safety": {
         "heading": "Sécurité et encadrement",
         "blocks": [
-          "Chaque session est encadrée par un éducateur de jeu formé. Notre approche du comportement et de la protection de l’enfance est exposée dans notre <linkRobloxSafeguarding>Politique commune de protection de l’enfance</linkRobloxSafeguarding>, disponible sur demande."
+          "Chaque session est encadrée par un animateur formé. Notre approche du comportement et de la protection de l’enfance est exposée dans notre <linkRobloxSafeguarding>Politique commune de protection de l’enfance</linkRobloxSafeguarding>, disponible sur demande."
         ]
       },
       "information": {

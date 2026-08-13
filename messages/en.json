@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "School of Gaming – Sogverse",
-    "description": "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
+    "description": "Where screen time becomes quality time through Minecraft clubs led by professional Game Educators.",
     "shortDescription": "School of Gaming – Where screen time becomes quality time",
     "pages": {
       "signIn": "Sign In",
@@ -113,7 +113,7 @@
   "about": {
     "hero": {
       "title": "About <primary>School of Gaming</primary>",
-      "subtitle": "In our Minecraft clubs, screen time becomes quality time. We bring together children, professional game educators, and the game kids already love — creating playful learning experiences where they make new friends, develop real skills, and have fun."
+      "subtitle": "In our Minecraft clubs, screen time becomes quality time. We bring together children, professional Game Educators, and the game kids already love — creating playful learning experiences where they make new friends, develop real skills, and have fun."
     },
     "quote": {
       "text": "“What is true now, was once just your imagination.”",
@@ -121,7 +121,7 @@
     },
     "mission": {
       "heading": "Our Mission",
-      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children’s love for games to their advantage — with good friends and a professional game educator who is there to guide and help."
+      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children’s love for games to their advantage — with good friends and a professional Game Educator who is there to guide and help."
     },
     "values": {
       "heading": "Things We Care About",
@@ -144,7 +144,7 @@
     },
     "howClubsWork": {
       "heading": "How Our Clubs Work",
-      "paragraph1": "Each week, our gamers log in and are greeted by their own game educator — a Gedu. The Gedu guides them through the day’s topic, giving children space and freedom to make the adventures their own.",
+      "paragraph1": "Each week, our gamers log in and are greeted by their own Game Educator — a Gedu. The Gedu guides them through the day’s topic, giving children space and freedom to make the adventures their own.",
       "paragraph2": "Our Gedus are gamers themselves. They understand firsthand that as children and teenagers, identity and friendships are built both online and offline. That understanding shapes every session they lead.",
       "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly sessions, gamers get fun challenges to do online and offline. During holidays we organise camps, and every week there are community events, tournaments, and competitions.",
       "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or out in the real world. The same values apply everywhere."
@@ -156,7 +156,7 @@
     },
     "cta": {
       "heading": "Join Our Community",
-      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional game educator."
+      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional Game Educator."
     }
   },
   "admin": {
@@ -1431,7 +1431,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "What is Sogverse?",
-          "a": "Sogverse is School of Gaming’s platform for Minecraft clubs led by professional game educators, turning screen time into quality time."
+          "a": "Sogverse is School of Gaming’s platform for Minecraft clubs led by professional Game Educators, turning screen time into quality time."
         },
         "productTypes": {
           "q": "What’s the difference between clubs, camps, and events?",
@@ -1439,11 +1439,11 @@
         },
         "whoLeads": {
           "q": "Who leads the sessions?",
-          "a": "Every session is hosted by a Gedu — a game educator who’s also a gamer and knows how to support kids in-game and out."
+          "a": "Every session is hosted by a Gedu — a Game Educator who’s also a gamer and knows how to support kids in-game and out."
         },
         "safety": {
           "q": "Is it safe for my child?",
-          "a": "An educator hosts every session, our communities are moderated, and we have zero tolerance for bullying."
+          "a": "A Game Educator hosts every session, our communities are moderated, and we have zero tolerance for bullying."
         },
         "howToStart": {
           "q": "How do I get started?",
@@ -1456,7 +1456,7 @@
     "hero": {
       "title": "Game clubs in <primary>your municipality</primary>",
       "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what’s on offer.",
-      "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child’s school. A professional game educator is always there to guide the activity."
+      "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child’s school. A professional Game Educator is always there to guide the activity."
     },
     "search": {
       "label": "Search for your municipality",
@@ -1566,7 +1566,7 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Java” is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our instructors rely on.",
+          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Java” is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our Game Educators rely on.",
           "note": "For our clubs your child needs Minecraft on a computer. On Minecraft.net it’s sold as “Minecraft: Java & Bedrock Edition for PC” — a single one-time purchase (not a subscription) that includes the version we use. The separate console, phone and tablet version won’t work for these clubs.",
           "linkLabel": "Get Minecraft for PC"
         },
@@ -1706,8 +1706,8 @@
     "geduGroups": {
       "heading": "Groups",
       "yourGroupBadge": "Your group",
-      "educatorsLabel": "Educators",
-      "noEducators": "No educators assigned yet.",
+      "educatorsLabel": "Game Educators",
+      "noEducators": "No Game Educators assigned yet.",
       "gamersLabel": "Gamers",
       "gamerCount": "{count, plural, =0 {0 gamers} one {# gamer} other {# gamers}}",
       "emptyNoGamers": "No gamers in this group yet.",
@@ -1738,14 +1738,14 @@
   "home": {
     "hero": {
       "title": "Where<br></br><primary>Screen Time</primary><br></br>Becomes<br></br><secondary>Quality Time</secondary>",
-      "subtitle": "Our skilfully designed Minecraft clubs promote healthy gaming as a hobby. World-class game educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love."
+      "subtitle": "Our skilfully designed Minecraft clubs promote healthy gaming as a hobby. World-class Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love."
     },
     "features": {
       "heading": "Make Gaming a Great Hobby",
-      "subheading": "Gaming is a hobby just like any other — better with good friends and with a professional instructor who is there to guide and help.",
+      "subheading": "Gaming is a hobby just like any other — better with good friends and with a professional Game Educator who is there to guide and help.",
       "minecraftClubs": {
         "title": "Minecraft Clubs with Gedus",
-        "description": "Our game educators — Gedus — are gamers themselves. They understand that as children, identity and friendships are built both online and offline. Every session is guided by someone who truly gets it."
+        "description": "Our Game Educators — Gedus — are gamers themselves. They understand that as children, identity and friendships are built both online and offline. Every session is guided by someone who truly gets it."
       },
       "screenTime": {
         "title": "Screen Time Becomes Quality Time",
@@ -1778,7 +1778,7 @@
     },
     "cta": {
       "heading": "Ready to Turn Gaming into Learning?",
-      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional game educator.",
+      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional Game Educator.",
       "createFreeAccount": "Create Free Account"
     }
   },
@@ -2300,7 +2300,7 @@
           [
             "Every Gamer’s account is linked to a parent account; children cannot register themselves.",
             "There is no direct messaging between children — all communication is group-based and actively supervised by a trained Game Educator.",
-            "Only registered Gamers and vetted Educators can take part — no external invites or outside contacts.",
+            "Only registered Gamers and vetted Game Educators can take part — no external invites or outside contacts.",
             "Sessions are not recorded."
           ]
         ]
@@ -2956,7 +2956,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "We keep children’s information to a minimum, we never show children advertising, and we never sell or share their data for marketing. During live sessions, children are always with one of our trained educators (we call them Gedus).",
+          "We keep children’s information to a minimum, we never show children advertising, and we never sell or share their data for marketing. During live sessions, children are always with one of our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -2967,7 +2967,7 @@
         ],
         "bullets": [
           "To create and manage your account and your child’s account.",
-          "To place your child in the right club, camp, or event group and connect them with an educator.",
+          "To place your child in the right club, camp, or event group and connect them with a Game Educator.",
           "To run the live voice and video sessions.",
           "To take payments and send receipts, reminders, and important updates about your clubs.",
           "To answer your questions when you contact us for help.",
@@ -3011,7 +3011,7 @@
       "voice": {
         "heading": "Voice and video sessions",
         "paragraphs": [
-          "Live clubs, camps, and events take place over voice and video, powered by Daily.co. Every session is led and supervised by one of our trained educators, and we use it only to deliver the session your child signed up for."
+          "Live clubs, camps, and events take place over voice and video, powered by Daily.co. Every session is led and supervised by one of our trained Game Educators, and we use it only to deliver the session your child signed up for."
         ]
       },
       "retention": {
@@ -3067,7 +3067,7 @@
       "heading": "The short version",
       "paragraphs": [
         "These are the terms for using Sogverse and signing your child up for our clubs, camps, and events. We’ve written them in plain language, because we want you to actually understand what you’re agreeing to — not wade through legal jargon.",
-        "In short: our clubs happen online, with your child always supervised by a trained educator. You can cancel a monthly club whenever you like, and there’s a money-back guarantee on your child’s first session. If you ever have a question, email {supportEmail} and a real person will help."
+        "In short: our clubs happen online, with your child always supervised by a trained Game Educator. You can cancel a monthly club whenever you like, and there’s a money-back guarantee on your child’s first session. If you ever have a question, email {supportEmail} and a real person will help."
       ]
     },
     "sections": {
@@ -3099,7 +3099,7 @@
       "online": {
         "heading": "Staying safe online",
         "paragraphs": [
-          "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent’s account, and every session is supervised by one of our trained educators (we call them Gedus). Children are never online with us unsupervised."
+          "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent’s account, and every session is supervised by one of our trained Game Educators (we call them Gedus). Children are never online with us unsupervised."
         ]
       },
       "pricing": {
@@ -3168,13 +3168,13 @@
       "commitment": {
         "heading": "Our promise to your child",
         "paragraphs": [
-          "Our clubs are a place to learn, make friends, and have fun — and that only works if everyone feels safe. We’re committed to a community free of bullying, harassment, and cruelty, where every child is treated with respect by our educators and by each other."
+          "Our clubs are a place to learn, make friends, and have fun — and that only works if everyone feels safe. We’re committed to a community free of bullying, harassment, and cruelty, where every child is treated with respect by our Game Educators and by each other."
         ]
       },
       "approach": {
         "heading": "How we handle problems",
         "paragraphs": [
-          "When a child behaves in a way that hurts or disrupts others, our educators (we call them Gedus) respond in a way that’s calm, kind, and right for the child’s age. The goal is always to help the child understand the effect of what they did and to put it right — not simply to punish.",
+          "When a child behaves in a way that hurts or disrupts others, our Game Educators (we call them Gedus) respond in a way that’s calm, kind, and right for the child’s age. The goal is always to help the child understand the effect of what they did and to put it right — not simply to punish.",
           "We deal with most situations gently, with a quiet word. If the behaviour continues, we take firmer steps, one at a time. The steps below are the ladder we follow, and you’ll always be kept in the loop as we go."
         ]
       },

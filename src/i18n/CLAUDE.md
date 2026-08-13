@@ -47,14 +47,44 @@ Gates for a catalog change: the completeness script under `scripts/`, **plus** a
 
 French typography: U+2019 for apostrophes (never U+0027, outside code samples) and a no-break space only after `n°`. Copy pasted from a person or a spreadsheet always arrives with straight apostrophes; normalise on the way in.
 
+## The role name: `Gedu`, and what to call the role otherwise
+
+**Rule: `Gedu` is a product name — never translated, and never used cold.** It carries the
+signed-in product (dashboards, voice, admin, email), where the reader already knows the
+word, and appears in public prose only where the copy introduces it with a gloss ("a Gedu
+— a Game Educator"). A public string using it cold has leaked in-house vocabulary at the
+one moment the reader cannot decode it.
+
+**Rule: wherever `Gedu` is not the word, each locale has exactly one word for the role.**
+Chosen by native speakers, 2026-08-13:
+
+| locale | the role |
+|---|---|
+| `en` | **Game Educator** — capitalised, a defined term rather than a common noun |
+| `fi` | **pelikasvattaja** |
+| `sv` | **spelfostrare** |
+| `fr` | **animateur** / **animatrice** |
+
+**There is no register split**: one word covers marketing copy, product surfaces and legal
+text alike. Earlier catalogues drifted into a second, plainer word for legal pages in every
+locale (and French documented the split deliberately). That is retired — a legal page uses
+the same word as the home page.
+
+**The one exception is the Roblox programme documents** (`robloxPrivacy`,
+`robloxSafeguarding`, `robloxTerms`), co-authored with Lynx Educate. Where those name a
+generic legal *category* of person, listed alongside staff, volunteers and contractors, the
+category word is the partner's and stays put — `facilitator` in English, `ohjaaja` in
+Finnish, `ledare` in Swedish. Any gloss beside it still uses the house term from the table.
+French never used a separate category word there, so it carries `animateur` throughout.
+Do not sweep these to the house term without a ruling from whoever owns the joint policy.
+
 ## French register and glossary
 
 **Rule: French is a transcreation, not a literal mirror of `en.json`.** Public-page marketing copy — including the slogan, whose French imagery deliberately differs from the English — was rewritten by a native speaker rather than translated. CI enforces key parity and cannot see meaning, so a French string that says something other than its English counterpart on a public page is intentional and must not be "corrected" back.
 
 **The divergence is scoped to French alone.** `fi`, `sv` and `tlh` render the English positioning; French does not. Do not reconcile the two in either direction — neither by pulling French back toward the English source, nor by pushing the French imagery outward into the other locales. Diverging a second locale is a positioning decision for the owner, not a consistency fix.
 
-- **Role name splits by register.** `animateur` / `animatrice` on public and parent-facing surfaces; `éducateur de jeu` in formal copy — terms, privacy policy, discipline policy, the educator registration page, and staff back-office. `animateur` is the familiar word from French youth-club and summer-camp culture; `éducateur de jeu` reads as a calque but is the right register for legal and internal text.
-- **`Gedu` is a product name, never translated — but never used cold in general public prose.** Describe the adult as an `animateur` there. `Gedu` appears where the copy introduces it with a gloss, and throughout the signed-in product (dashboards, voice, admin, email), where the reader already knows the word.
+- **The role name is `animateur` / `animatrice` in every register** — see the glossary section above. French once split this by register, using `éducateur de jeu` in formal copy; that split is retired and the calque is no longer used anywhere.
 - **Municipality: the adjective is `municipal` / `municipaux`, the noun stays `commune`.** "Clubs municipaux", but "payé par votre commune". `municipal` maps to town-funded public services in French; `communal` is correct but less instinctive.
 - **`vous` to adults, `tu` in child-facing strings.**
 - **Never use the middle dot (`Prêt·e`) to dodge gender agreement — reframe instead.** It is visually awkward on screen and contested in France. Open child-facing prompts with a construction that takes no agreement, and where inserting a name would force a participle to inflect, state the event as a noun phrase (an enrolment is confirmed) rather than agreeing with the person.

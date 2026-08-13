@@ -94,14 +94,14 @@ export function productTagLabelKey(tag: ProductTag): ProductTagLabelKey {
 // English and Finnish are now her words, and the other three locales are
 // translations of them. Reword only with her, not to taste.
 //
-// Two of her decisions are load-bearing and easy to undo by accident. The
-// Finnish copy names the role **pelikasvattaja** and the English **Game
-// Educator**, spelled out rather than the in-house "Gedu" the rest of the
-// message files lean on — this is the shop, where a parent meets us cold and
-// has not been taught the word yet. And the beginner tag deliberately does not
-// promise the group starts from zero: the non-stop groups do not restart for a
-// newcomer, they run at a pace a newcomer can join, and the copy says that
-// instead.
+// One of her decisions is load-bearing and easy to undo by accident: the
+// beginner tag deliberately does not promise the group starts from zero. The
+// non-stop groups do not restart for a newcomer — they run at a pace a
+// newcomer can join — and the copy says that instead.
+//
+// These strings also name the role in full rather than as "Gedu". That began
+// here but is no longer a decision local to this copy: it is the site-wide
+// glossary rule, and the word each locale uses lives with the i18n docs.
 //
 // The marker lives here rather than in the message files because those are
 // strict JSON with no comment syntax and no key convention for annotations;

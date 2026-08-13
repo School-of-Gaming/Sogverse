@@ -1431,7 +1431,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Vad är Sogverse?",
-          "a": "Sogverse är School of Gamings plattform för Minecraft-klubbar ledda av professionella spelpedagoger, där skärmtid blir kvalitetstid."
+          "a": "Sogverse är School of Gamings plattform för Minecraft-klubbar ledda av professionella spelfostrare, där skärmtid blir kvalitetstid."
         },
         "productTypes": {
           "q": "Vad är skillnaden mellan klubbar, läger och evenemang?",
@@ -1439,11 +1439,11 @@
         },
         "whoLeads": {
           "q": "Vem leder träffarna?",
-          "a": "Varje träff leds av en Gedu — en spelpedagog som själv är gamer och vet hur man stöttar barn i spelet och utanför."
+          "a": "Varje träff leds av en Gedu — en spelfostrare som själv är gamer och vet hur man stöttar barn i spelet och utanför."
         },
         "safety": {
           "q": "Är det säkert för mitt barn?",
-          "a": "En pedagog är med vid varje träff, våra gemenskaper är modererade och vi har nolltolerans mot mobbning."
+          "a": "En spelfostrare är med vid varje träff, våra gemenskaper är modererade och vi har nolltolerans mot mobbning."
         },
         "howToStart": {
           "q": "Hur kommer jag igång?",
@@ -1456,7 +1456,7 @@
     "hero": {
       "title": "Spelklubbar i <primary>din kommun</primary>",
       "subtitle": "School of Gaming ordnar klubbar tillsammans med finländska kommuner. Hitta din kommun och utforska utbudet.",
-      "howItWorks": "Beroende på kommun träffas klubben antingen online hemifrån eller på plats i ditt barns skola. En professionell spelpedagog finns alltid med och leder verksamheten."
+      "howItWorks": "Beroende på kommun träffas klubben antingen online hemifrån eller på plats i ditt barns skola. En professionell spelfostrare finns alltid med och leder verksamheten."
     },
     "search": {
       "label": "Sök din kommun",
@@ -1536,8 +1536,8 @@
     "advanced": "Avancerad"
   },
   "productTagDetail": {
-    "neuroinclusive": "Små grupper som följer en välbekant och förutsägbar struktur. Våra spelpedagoger har erfarenhet av att arbeta med neurodivergenta barn. Alla får vara sig själva och delta i sin egen takt.",
-    "beginner": "Ingen tidigare spelerfarenhet krävs. Våra spelpedagoger vägleder handgripligt när det behövs och hjälper var och en att delta utifrån sin egen nivå. Du kan vara med även om spelet är helt nytt för dig.",
+    "neuroinclusive": "Små grupper som följer en välbekant och förutsägbar struktur. Våra spelfostrare har erfarenhet av att arbeta med neurodivergenta barn. Alla får vara sig själva och delta i sin egen takt.",
+    "beginner": "Ingen tidigare spelerfarenhet krävs. Våra spelfostrare vägleder handgripligt när det behövs och hjälper var och en att delta utifrån sin egen nivå. Du kan vara med även om spelet är helt nytt för dig.",
     "advanced": "För barn som redan har grunderna i spelet och vill utveckla sina färdigheter vidare. Mer utmanande projekt och en grupp som hänger med dem."
   },
   "seatAvailability": {
@@ -1566,7 +1566,7 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft är ett kreativt byggspel – tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer, och det är den våra distansklubbar använder eftersom den stöder verktygen våra instruktörer behöver.",
+          "description": "Minecraft är ett kreativt byggspel – tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer, och det är den våra distansklubbar använder eftersom den stöder verktygen våra spelfostrare behöver.",
           "note": "För våra klubbar behöver ditt barn Minecraft på en dator. På Minecraft.net säljs det som ”Minecraft: Java & Bedrock Edition for PC” – ett enda engångsköp (inte en prenumeration) som inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
           "linkLabel": "Skaffa Minecraft för PC"
         },
@@ -1706,8 +1706,8 @@
     "geduGroups": {
       "heading": "Grupper",
       "yourGroupBadge": "Din grupp",
-      "educatorsLabel": "Spelpedagoger",
-      "noEducators": "Inga spelpedagoger tilldelade ännu.",
+      "educatorsLabel": "Spelfostrare",
+      "noEducators": "Inga spelfostrare tilldelade ännu.",
       "gamersLabel": "Spelare",
       "gamerCount": "{count, plural, =0 {0 spelare} one {# spelare} other {# spelare}}",
       "emptyNoGamers": "Inga spelare i den här gruppen ännu.",
@@ -1742,7 +1742,7 @@
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
-      "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell handledare som finns där för att vägleda och hjälpa.",
+      "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell spelfostrare som finns där för att vägleda och hjälpa.",
       "minecraftClubs": {
         "title": "Minecraft-klubbar med Gedus",
         "description": "Våra spelfostrare — Gedus — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
@@ -2324,7 +2324,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Vi håller barnens uppgifter till ett minimum, vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Under träffarna är barnen alltid tillsammans med en av våra utbildade ledare (vi kallar dem Gedus).",
+          "Vi håller barnens uppgifter till ett minimum, vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Under träffarna är barnen alltid tillsammans med en av våra utbildade spelfostrare (vi kallar dem Gedus).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -2335,7 +2335,7 @@
         ],
         "bullets": [
           "För att skapa och hantera ditt konto och ditt barns konto.",
-          "För att placera ditt barn i rätt klubb-, läger- eller evenemangsgrupp och koppla ihop barnet med en ledare.",
+          "För att placera ditt barn i rätt klubb-, läger- eller evenemangsgrupp och koppla ihop barnet med en spelfostrare.",
           "För att hålla de direktsända röst- och videoträffarna.",
           "För att ta betalt och skicka kvitton, påminnelser och viktig information om dina klubbar.",
           "För att svara på dina frågor när du kontaktar oss.",
@@ -2379,7 +2379,7 @@
       "voice": {
         "heading": "Röst- och videoträffar",
         "paragraphs": [
-          "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Varje träff leds och övervakas av en av våra utbildade ledare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till."
+          "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Varje träff leds och övervakas av en av våra utbildade spelfostrare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till."
         ]
       },
       "retention": {
@@ -2435,7 +2435,7 @@
       "heading": "Kort sagt",
       "paragraphs": [
         "Det här är villkoren för att använda Sogverse och anmäla ditt barn till våra klubbar, läger och evenemang. Vi har skrivit dem på ett enkelt språk, eftersom vi vill att du faktiskt ska förstå vad du går med på – inte tvingas vada genom juridiskt krångel.",
-        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad pedagog som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och ditt barns första gång omfattas av en pengarna-tillbaka-garanti. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
+        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad spelfostrare som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och ditt barns första gång omfattas av en pengarna-tillbaka-garanti. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
       ]
     },
     "sections": {
@@ -2467,7 +2467,7 @@
       "online": {
         "heading": "Trygghet online",
         "paragraphs": [
-          "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto, och varje session övervakas av en av våra utbildade pedagoger (vi kallar dem geduer). Barn är aldrig online hos oss utan uppsikt."
+          "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto, och varje session övervakas av en av våra utbildade spelfostrare (vi kallar dem geduer). Barn är aldrig online hos oss utan uppsikt."
         ]
       },
       "pricing": {
@@ -2536,13 +2536,13 @@
       "commitment": {
         "heading": "Vårt löfte till ditt barn",
         "paragraphs": [
-          "Våra klubbar är en plats för att lära, få vänner och ha kul – och det fungerar bara om alla känner sig trygga. Vi är engagerade i en gemenskap fri från mobbning, trakasserier och elakhet, där varje barn behandlas med respekt av våra pedagoger och av varandra."
+          "Våra klubbar är en plats för att lära, få vänner och ha kul – och det fungerar bara om alla känner sig trygga. Vi är engagerade i en gemenskap fri från mobbning, trakasserier och elakhet, där varje barn behandlas med respekt av våra spelfostrare och av varandra."
         ]
       },
       "approach": {
         "heading": "Så hanterar vi problem",
         "paragraphs": [
-          "När ett barn beter sig på ett sätt som sårar eller stör andra svarar våra pedagoger (vi kallar dem geduer) på ett sätt som är lugnt, vänligt och anpassat efter barnets ålder. Målet är alltid att hjälpa barnet förstå effekten av det de gjorde och att ställa det till rätta – inte att bara straffa.",
+          "När ett barn beter sig på ett sätt som sårar eller stör andra svarar våra spelfostrare (vi kallar dem geduer) på ett sätt som är lugnt, vänligt och anpassat efter barnets ålder. Målet är alltid att hjälpa barnet förstå effekten av det de gjorde och att ställa det till rätta – inte att bara straffa.",
           "Vi hanterar de flesta situationer varsamt, med ett lugnt samtal. Om beteendet fortsätter tar vi bestämdare steg, ett i taget. Stegen nedan är den trappa vi följer, och du hålls alltid med på vägen."
         ]
       },
@@ -2983,7 +2983,7 @@
           "Uppgifterna får bara nås när det behövs, av:",
           [
             "Behörig personal hos Lynx Educate.",
-            "Behörig personal hos School of Gaming och utbildade spelpedagoger.",
+            "Behörig personal hos School of Gaming och utbildade spelfostrare.",
             "Roblox, för den begränsade forskningen och den mediaanvändning som samtyckts till ovan.",
             "Evenemangslokaler, tillgänglighetsleverantörer eller fotografer som behöver begränsade uppgifter för en viss aktivitet.",
             "Professionella rådgivare, försäkringsbolag, räddningstjänst, barnskyddsorgan eller myndigheter när det krävs.",
@@ -3099,13 +3099,13 @@
       "covers": {
         "heading": "Vilka omfattas",
         "blocks": [
-          "Policyn gäller all personal hos Lynx Educate och School of Gaming, alla ledare (spelpedagoger, eller ”Geduer”), volontärer och alla uppdragstagare som möter barn genom Programmet."
+          "Policyn gäller all personal hos Lynx Educate och School of Gaming, alla ledare (spelfostrare, eller ”Geduer”), volontärer och alla uppdragstagare som möter barn genom Programmet."
         ]
       },
       "vetting": {
         "heading": "Innan någon arbetar med barn",
         "blocks": [
-          "Alla spelpedagoger (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:"
+          "Alla spelfostrare (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:"
         ]
       },
       "online": {
@@ -3113,8 +3113,8 @@
         "blocks": [
           [
             "Varje Spelares konto är kopplat till ett föräldrakonto; barn kan inte anmäla sig själva.",
-            "Det finns inga direktmeddelanden mellan barn – all kommunikation sker i grupp och övervakas aktivt av en utbildad spelpedagog.",
-            "Endast anmälda Spelare och kontrollerade pedagoger får delta – inga externa inbjudningar eller utomstående kontakter.",
+            "Det finns inga direktmeddelanden mellan barn – all kommunikation sker i grupp och övervakas aktivt av en utbildad spelfostrare.",
+            "Endast anmälda Spelare och kontrollerade spelfostrare får delta – inga externa inbjudningar eller utomstående kontakter.",
             "Träffarna spelas inte in."
           ]
         ]

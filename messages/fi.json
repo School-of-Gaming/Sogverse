@@ -1443,7 +1443,7 @@
         },
         "safety": {
           "q": "Onko se turvallista lapselleni?",
-          "a": "Jokaisessa tapaamisessa on kasvattaja paikalla, yhteisömme ovat moderoituja, eikä kiusaamista suvaita."
+          "a": "Jokaisessa tapaamisessa on pelikasvattaja paikalla, yhteisömme ovat moderoituja, eikä kiusaamista suvaita."
         },
         "howToStart": {
           "q": "Miten pääsen alkuun?",
@@ -1566,7 +1566,7 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä; se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Java” on alkuperäinen versio Windows-, Mac- ja Linux-tietokoneille, ja sitä etäkerhomme käyttävät, koska se tukee ohjaajiemme tarvitsemia työkaluja.",
+          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä; se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Java” on alkuperäinen versio Windows-, Mac- ja Linux-tietokoneille, ja sitä etäkerhomme käyttävät, koska se tukee pelikasvattajiemme tarvitsemia työkaluja.",
           "note": "Kerhojamme varten lapsesi tarvitsee Minecraftin tietokoneella. Minecraft.net-sivustolla se myydään nimellä ”Minecraft: Java & Bedrock Edition for PC” – yksi kertaluonteinen osto (ei tilaus), joka sisältää käyttämämme version. Erillinen konsoli-, puhelin- ja tablettiversio ei toimi näissä kerhoissa.",
           "linkLabel": "Hanki Minecraft tietokoneelle"
         },
@@ -1706,8 +1706,8 @@
     "geduGroups": {
       "heading": "Ryhmät",
       "yourGroupBadge": "Oma ryhmä",
-      "educatorsLabel": "Ohjaajat",
-      "noEducators": "Ei vielä ohjaajia.",
+      "educatorsLabel": "Pelikasvattajat",
+      "noEducators": "Ei vielä pelikasvattajia.",
       "gamersLabel": "Pelaajat",
       "gamerCount": "{count, plural, =0 {0 pelaajaa} one {# pelaaja} other {# pelaajaa}}",
       "emptyNoGamers": "Tässä ryhmässä ei ole vielä pelaajia.",
@@ -1742,10 +1742,10 @@
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
-      "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattimaisen ohjaajan kanssa.",
+      "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattimaisen pelikasvattajan kanssa.",
       "minecraftClubs": {
         "title": "Ohjatut Minecraft-kerhot",
-        "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa kasvattaja, joka todella ymmärtää."
+        "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
         "title": "Ruutuajasta laatuaikaa",
@@ -1773,7 +1773,7 @@
       },
       "step3": {
         "title": "Liity seikkailuun",
-        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat ohjaajansa ja sukeltavat Minecraft-seikkailuihin uusien ystävien kanssa."
+        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat pelikasvattajansa ja sukeltavat Minecraft-seikkailuihin uusien ystävien kanssa."
       }
     },
     "cta": {
@@ -2206,7 +2206,7 @@
       "subjectSelf": "Sinut on nyt ilmoitettu toimintaan {productName}",
       "heading": "Ilmoittautuminen vahvistettu",
       "body": "Hei {parentName}, {participantName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa.",
-      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu toimintaan {productName}, ohjaajana Gedu {geduName}."
+      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu toimintaan {productName}, pelikasvattajana Gedu {geduName}."
     },
     "enrollmentGedu": {
       "subject": "{participantName} on liittynyt ryhmääsi – {productName}",
@@ -2324,7 +2324,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisissa lapset ovat aina koulutetun ohjaajan (kutsumme heitä Geduiksi) seurassa.",
+          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisissa lapset ovat aina koulutetun pelikasvattajan (kutsumme heitä Geduiksi) seurassa.",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -2335,7 +2335,7 @@
         ],
         "bullets": [
           "Tilisi ja lapsesi tilin luomiseen ja hallintaan.",
-          "Lapsesi sijoittamiseen oikeaan kerho-, leiri- tai tapahtumaryhmään ja ohjaajan kanssa yhdistämiseen.",
+          "Lapsesi sijoittamiseen oikeaan kerho-, leiri- tai tapahtumaryhmään ja pelikasvattajan kanssa yhdistämiseen.",
           "Suorien ääni- ja videotapaamisten järjestämiseen.",
           "Maksujen perimiseen sekä kuittien, muistutusten ja kerhojasi koskevien tärkeiden tiedotteiden lähettämiseen.",
           "Kysymyksiisi vastaamiseen, kun otat meihin yhteyttä.",
@@ -2379,7 +2379,7 @@
       "voice": {
         "heading": "Ääni- ja videotapaamiset",
         "paragraphs": [
-          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Jokaista tapaamista johtaa ja valvoo yksi koulutetuista ohjaajistamme, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
+          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Jokaista tapaamista johtaa ja valvoo yksi koulutetuista pelikasvattajistamme, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
         ]
       },
       "retention": {
@@ -2435,7 +2435,7 @@
       "heading": "Lyhyesti",
       "paragraphs": [
         "Nämä ovat Sogversen käyttöehdot ja ehdot, joilla ilmoitat lapsesi kerhoihin, leireille ja tapahtumiin. Olemme kirjoittaneet ne selkeällä kielellä, koska haluamme sinun ymmärtävän, mihin sitoudut – emme halua piilottaa asioita lakitekstin taakse.",
-        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu ohjaaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja lapsesi ensimmäiseen kertaan liittyy rahat takaisin -takuu. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
+        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu pelikasvattaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja lapsesi ensimmäiseen kertaan liittyy rahat takaisin -takuu. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
       ]
     },
     "sections": {
@@ -2467,7 +2467,7 @@
       "online": {
         "heading": "Turvallisesti verkossa",
         "paragraphs": [
-          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta, ja koulutettu ohjaajamme (kutsumme heitä geduiksi) valvoo jokaista istuntoa. Lapset eivät ole koskaan verkossa kanssamme ilman valvontaa."
+          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta, ja koulutettu pelikasvattajamme (kutsumme heitä geduiksi) valvoo jokaista istuntoa. Lapset eivät ole koskaan verkossa kanssamme ilman valvontaa."
         ]
       },
       "pricing": {
@@ -2536,13 +2536,13 @@
       "commitment": {
         "heading": "Lupauksemme lapsellesi",
         "paragraphs": [
-          "Kerhomme ovat paikka oppia, saada kavereita ja pitää hauskaa – ja se onnistuu vain, jos jokainen tuntee olonsa turvalliseksi. Olemme sitoutuneet yhteisöön, jossa ei ole kiusaamista, häirintää eikä ilkeyttä ja jossa sekä ohjaajat että lapset kohtelevat toisiaan kunnioittavasti."
+          "Kerhomme ovat paikka oppia, saada kavereita ja pitää hauskaa – ja se onnistuu vain, jos jokainen tuntee olonsa turvalliseksi. Olemme sitoutuneet yhteisöön, jossa ei ole kiusaamista, häirintää eikä ilkeyttä ja jossa sekä pelikasvattajat että lapset kohtelevat toisiaan kunnioittavasti."
         ]
       },
       "approach": {
         "heading": "Miten käsittelemme ongelmia",
         "paragraphs": [
-          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, ohjaajamme (kutsumme heitä geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
+          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
           "Hoidamme useimmat tilanteet hellävaraisesti, juttelemalla kahden kesken. Jos käytös jatkuu, otamme tiukempia askelia yksi kerrallaan. Alla olevat vaiheet ovat portaikko, jota seuraamme, ja pidämme sinut mukana koko matkan."
         ]
       },
