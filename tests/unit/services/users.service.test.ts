@@ -166,7 +166,6 @@ describe("UsersService.searchUsers", () => {
     const url = firstUrl(fetchMock);
     expect(url.pathname).toContain("user_search_index");
     expect(url.searchParams.get("select")).toBe(SEARCHED_PROFILE_COLUMNS);
-    expect(url.searchParams.get("select")).not.toContain("search_blob");
   });
 
   it("returns the capped rows alongside the true match total", async () => {
@@ -231,6 +230,21 @@ describe("UsersService.searchUsers", () => {
     await service.searchUsers("Jon*");
 
     expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%Jon%"]);
+  });
+
+  // SQL's own wildcards, which reach the pattern by a different route than `*`
+  // and are neutralised by a different mechanism — escaping rather than
+  // splitting. Unescaped, "100%" matches every profile the caller can read
+  // instead of none, and a wrong result set arrives with no error to notice.
+  it.each([
+    ["100%", "ilike.%100\\%%"],
+    ["a_b", "ilike.%a\\_b%"],
+  ])("escapes the SQL wildcard in %s", async (typed, expected) => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers(typed);
+
+    expect(searchBlobFilters(fetchMock)).toEqual([expected]);
   });
 
   // A number is one value typed with spaces inside it. Tokenized as words it

@@ -73,7 +73,10 @@
 -- property is load-bearing rather than incidental: the caller reads its match
 -- total from this view's row count, so a join that duplicated a profile would
 -- not merely repeat a row on screen, it would overstate "showing 20 of N" by
--- however many game accounts that person holds. It is asserted at the foot.
+-- however many game accounts that person holds.
+--
+-- What holds the property is the primary key, not the check at the foot of this
+-- file — see the note there for what that check can and cannot say.
 -- ---------------------------------------------------------------------------
 
 CREATE VIEW public.user_search_index
@@ -147,6 +150,16 @@ GRANT SELECT ON public.user_search_index TO service_role;
 --   (b) A join that multiplies rows, making the reported match total larger than
 --       the number of people found.
 --   (c) A write privilege, or an anon grant, arriving by accident.
+--
+-- (b) IS WEAKER THAN IT LOOKS, and is written down rather than trusted. It
+-- compares counts over whatever rows exist WHEN THIS FILE RUNS — and on any
+-- from-scratch build (CI, a new environment) `profiles` is empty at that
+-- moment, so it reduces to 0 = 0 and proves nothing there. Against a populated
+-- database it is a real check, which is why it stays. What it CANNOT do is
+-- catch the case it is most tempting to credit it with: a third platform joined
+-- later on a non-unique key arrives in a LATER migration, and this block will
+-- not run again. That guarantee lives in the DB test over this view, which asks
+-- the same question of a person deliberately holding two game accounts.
 -- ---------------------------------------------------------------------------
 
 DO $assert$

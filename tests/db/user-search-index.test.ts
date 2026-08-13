@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { searchedProfile } from "@/services/users/users.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
-import { TEST_IDS, TEST_CREDENTIALS, SEED } from "./constants";
+import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
  * `user_search_index` — the view the admin user search matches against.
@@ -36,6 +36,21 @@ describe("user_search_index", () => {
   const STORED_PHONE = "358401234567";
   const PHONE_TAIL = "1234567";
 
+  /**
+   * Handles this file owns, and the reason they are not `SEED.*`.
+   *
+   * The seeded Minecraft name is `TestGamer`, and the seeded gamer's email is
+   * `testgamer@gamer.sogverse.internal` — so `ILIKE '%TestGamer%'` matches that
+   * profile through its *email*, and every assertion below would pass with the
+   * `minecraft_accounts` join deleted from the view outright. A fixture that
+   * cannot fail is worse than no fixture, because it reads as coverage.
+   *
+   * These share no substring with any seeded email, name or the phone digits
+   * above, so a match can only have come through the join under test.
+   */
+  const MINECRAFT_HANDLE = "EnderDragon42";
+  const ROBLOX_HANDLE = "ZephyrPilot88";
+
   beforeAll(async () => {
     admin = createAdminTestClient();
     adminClient = await createAuthenticatedClient(
@@ -61,11 +76,11 @@ describe("user_search_index", () => {
     // One person holding BOTH platforms — which is also the row that would
     // duplicate if either join were ever written against a non-unique key.
     await admin.from("minecraft_accounts").upsert(
-      [{ user_id: TEST_IDS.GAMER, minecraft_username: SEED.MINECRAFT_USERNAME_GAMER }],
+      [{ user_id: TEST_IDS.GAMER, minecraft_username: MINECRAFT_HANDLE }],
       { onConflict: "user_id" },
     );
     await admin.from("roblox_accounts").upsert(
-      [{ user_id: TEST_IDS.GAMER, roblox_username: SEED.ROBLOX_USERNAME_GAMER }],
+      [{ user_id: TEST_IDS.GAMER, roblox_username: ROBLOX_HANDLE }],
       { onConflict: "user_id" },
     );
     await admin
@@ -110,7 +125,7 @@ describe("user_search_index", () => {
   // so their game handle is the only real-world name they have. Before this
   // view, "who is TestGamer?" was unanswerable.
   it("finds a gamer by their Minecraft handle", async () => {
-    expect(await searchAsAdmin(SEED.MINECRAFT_USERNAME_GAMER)).toContain(
+    expect(await searchAsAdmin(MINECRAFT_HANDLE)).toContain(
       TEST_IDS.GAMER,
     );
   });
@@ -118,7 +133,7 @@ describe("user_search_index", () => {
   // Independently of the other platform — the two are separate tables and a
   // person may hold either, both, or neither.
   it("finds a gamer by their Roblox handle", async () => {
-    expect(await searchAsAdmin(SEED.ROBLOX_USERNAME_GAMER)).toContain(
+    expect(await searchAsAdmin(ROBLOX_HANDLE)).toContain(
       TEST_IDS.GAMER,
     );
   });
@@ -201,7 +216,7 @@ describe("user_search_index", () => {
     const { data } = await customer2Client
       .from("user_search_index")
       .select("id")
-      .ilike("search_blob", `%${SEED.MINECRAFT_USERNAME_GAMER}%`);
+      .ilike("search_blob", `%${MINECRAFT_HANDLE}%`);
 
     expect(data).toEqual([]);
   });
@@ -210,7 +225,7 @@ describe("user_search_index", () => {
     const { data } = await customerClient
       .from("user_search_index")
       .select("id")
-      .ilike("search_blob", `%${SEED.MINECRAFT_USERNAME_GAMER}%`);
+      .ilike("search_blob", `%${MINECRAFT_HANDLE}%`);
 
     expect((data ?? []).map((row) => row.id)).toContain(TEST_IDS.GAMER);
   });
