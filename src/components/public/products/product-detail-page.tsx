@@ -22,6 +22,7 @@ import {
   ProductDetailPageBody,
   type MunicipalityBackLink,
 } from "./product-detail-page-body";
+import { audienceAdmitsRole, productAudience } from "./product-audience";
 import { SignupPanel } from "./signup-panel";
 import type { AuthState } from "./signup-panel-view";
 
@@ -118,11 +119,10 @@ export function ProductDetailPage({
     // waitlisted) so the picker can disable an already-enrolled one in place.
     //
     // **This is where the three audience cases decide which rows exist**, and
-    // the whole of the difference is which rows go into the array. It is no
-    // longer the only place the two columns answer "who may hold a seat" —
-    // `audienceAdmitsRole` in `product-audience` states the same rule for the
-    // admin picker — and the two agreeing is currently a matter of habit.
-    // Routing this through that predicate is the fix and is a small one:
+    // the whole of the difference is which rows go into the array. The rule is
+    // `audienceAdmitsRole` — the same predicate the admin picker offers seats
+    // by — so "who may hold a seat" has one home and the two surfaces cannot
+    // drift:
     //
     //   gamers-only  — the children, exactly as before.
     //   parents-only — the reader alone, so the hook's "first selectable row"
@@ -135,8 +135,9 @@ export function ProductDetailPage({
     // lockout needs no work at all: `myGamerStates` is built from the rows where
     // `customer_id` is the reader, keyed on the participant column, so a self
     // seat is already filed under the reader's own id.
+    const audience = productAudience(product);
     const participantStates = myCount?.myGamerStates ?? {};
-    const gamerRows = product.for_gamers
+    const gamerRows = audienceAdmitsRole(audience, "gamer")
       ? (gamers ?? []).map((g) => ({
           id: g.id,
           name: g.first_name,
@@ -144,7 +145,7 @@ export function ProductDetailPage({
           signupState: participantStates[g.id] ?? null,
         }))
       : [];
-    const selfRow = product.for_parents
+    const selfRow = audienceAdmitsRole(audience, "customer")
       ? [
           {
             id: user.id,

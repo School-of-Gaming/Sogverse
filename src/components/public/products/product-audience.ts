@@ -7,14 +7,10 @@ import type { ProductBrowseRow, UserRole } from "@/types";
 // that somehow carried neither flag falls out as `gamers`, which is what every
 // product was before audiences existed.
 //
-// This is meant to be the only place the two columns are read together, and
-// currently is not: the family signup panel in `product-detail-page` still
-// builds its selectable rows straight off `for_gamers` / `for_parents`, under a
-// comment of its own claiming to be where the three cases are told apart. Both
-// answer the same question — who may hold a seat — so a future change to the
-// rule has two homes and a third since `audienceAdmitsRole` arrived below.
-// Routing that panel through this module is the fix, and it is a small one;
-// until it happens, treat this sentence as the intent rather than the state.
+// This is the only place the two columns are read together: every surface that
+// answers "who may hold a seat" — the family signup panel's selectable rows and
+// the admin picker alike — asks `audienceAdmitsRole` below, so a change to the
+// rule has exactly one home.
 //
 // The browse card, the overview card and the filter chips all speak in these
 // three words, so widening the vocabulary later is one edit rather than three.
