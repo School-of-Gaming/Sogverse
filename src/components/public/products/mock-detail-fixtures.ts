@@ -1385,7 +1385,22 @@ function buildBaseProduct(
 interface TypeCopy {
   name: string;
   description: string;
-  /** Optional markdown long description — exercises the detail-page card. */
+  /**
+   * Optional markdown long description — exercises the detail-page card.
+   *
+   * **The club's blurb is the one written to full length, and it is the only
+   * place any preview shows an authored field carrying links.** Marketing copy
+   * on our own shop pages is the link-bearing variant of the renderer — an
+   * admin writing for strangers browsing a shop, rather than a gedu writing to
+   * one family — so a preview that never renders a link cannot show whether
+   * that variant reads correctly in place. It is deliberately long as well: a
+   * page of marketing copy judged against two short paragraphs is judged
+   * against nothing, and the blurb's real job is to sit under the hero and
+   * beside the signup rail without either losing the reader.
+   *
+   * Leaving most types without one is equally deliberate — a product carrying
+   * no blurb renders no card at all, and that is the common case.
+   */
   long?: string;
   isRemote: boolean;
 }
@@ -1397,10 +1412,20 @@ const COPY: Record<ProductType, TypeCopy> = {
       "We build little machines together — doors that open on command, item sorters, hidden traps, and small automated factories. A playful, hands-on way for kids to learn how circuits actually think, one contraption at a time.",
     long: [
       "# What happens each week",
-      "Every session starts with a quick show-and-tell of what the group built last time, then we take on one new contraption together — a hidden door, an item sorter, an automatic farm.",
-      'Gedus keep the pace gentle and hands-on. There\'s no winning or losing, just steady building and plenty of "wait, how did you do that?" moments.',
+      "Every session starts with a quick show-and-tell of what the group built last time, then we take on one new contraption together — a hidden door, an item sorter, an automatic farm. The gedu builds alongside the group rather than in front of it, so nobody spends the hour watching somebody else's screen.",
+      'Gedus keep the pace gentle and hands-on. There\'s no winning or losing, just steady building and plenty of "wait, how did you do that?" moments. A session that ends with one working machine and four half-finished ones is a good session.',
+      "# Who it is for",
+      "Ages 8 to 12, and the only thing we assume is that your child can move around a Minecraft world without help. Redstone itself we start from nothing — the first three weeks are levers, torches and repeaters, and by the end of the term the same children are reading each other's circuits and spotting where the signal dies.",
       "# What your child takes away",
-      "Logical thinking, a bit of patience, and the quiet confidence that comes from making a machine work. Friendships, too — the same gamers come back week after week.",
+      "Logical thinking, a bit of patience, and the quiet confidence that comes from making a machine work. Friendships, too — the same gamers come back week after week, and by spring they are planning builds between sessions without anybody organising it.",
+      "# Before the first session",
+      "There is nothing to install beyond the game itself — the server, the mods and the world are all ours. If you do not have a copy yet, the **Java edition** is the one you want, and it is the cheaper of the two:",
+      [
+        "- [Minecraft: Java & Bedrock Edition](https://www.minecraft.net/en-us/store/minecraft-deluxe-collection-pc), from Mojang's own store",
+        "- a headset with a microphone — a phone's earbuds are fine",
+        "- your child's Minecraft username, which we ask for at checkout",
+      ].join("\n"),
+      "Once you have signed up we mail you the server address and a short note about how the voice room works. How we look after your child's data while they are with us is set out in our [privacy policy](/privacy), and there is nothing else to do before the first evening.",
     ].join("\n\n"),
     isRemote: true,
   },
