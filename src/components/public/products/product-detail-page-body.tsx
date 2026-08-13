@@ -66,6 +66,16 @@ export interface ProductDetailPageBodyProps {
   /** When opened from a `/schools/<slug>` listing, sends the back link there
    *  (labelled with the municipality) instead of the storefront. */
   municipality?: MunicipalityBackLink;
+  /**
+   * The marketing blurb under the hero, injected so the body stays agnostic to
+   * *how* the field is stored while it changes format. Left out, the body
+   * renders the stored block array itself, which is what every live caller
+   * does; the draft body beside this one fills it with the markdown renderer so
+   * the two can be compared full-page. **Optional on purpose and temporary:**
+   * when the column becomes markdown this slot and its default collapse back
+   * into one line here, and the draft wrapper is deleted.
+   */
+  longDescription?: ReactNode;
 }
 
 /**
@@ -98,6 +108,7 @@ export function ProductDetailPageBody({
   signupPanel,
   signupActionable,
   municipality,
+  longDescription,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
   const t = useTranslations("productDetail");
@@ -118,7 +129,7 @@ export function ProductDetailPageBody({
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const topicLabel = getTopicLabel(product.topic);
-  const longDescription = parseLongDescription(tr?.long_description);
+  const longDescriptionBlocks = parseLongDescription(tr?.long_description);
 
   const verb = tVerb(product.product_type);
 
@@ -354,9 +365,12 @@ export function ProductDetailPageBody({
         )}
 
         {/* Marketing blurb — the expanded pitch under the hero, ahead of the
-            logistics. Omitted when the admin left it empty. */}
+            logistics. Omitted when the admin left it empty. The stored block
+            array unless a caller injects a different rendering of the same
+            field; either way it is one card in one place, so the slot cannot
+            move the page around it. */}
         <div className="mt-8">
-          <LongDescription blocks={longDescription} />
+          {longDescription ?? <LongDescription blocks={longDescriptionBlocks} />}
         </div>
       </div>
 

@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import {
   Bold,
+  Check,
   Heading1,
   Heading2,
   Heading3,
   Italic,
+  Link as LinkIcon,
   List,
   ListOrdered,
+  Unlink,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Placeholder } from "@tiptap/extensions";
@@ -26,24 +31,28 @@ import { cn } from "@/lib/utils";
  * writer sees formatting rather than syntax, markdown comes back out.
  *
  * **Why rich rather than a textarea.** The text this edits is read by families,
- * and the person writing it is a gedu at the end of a session, not somebody who
- * knows what `##` does. A textarea over markdown asks every writer to hold two
- * pictures at once — what they typed and what it will look like — and the ones
- * who don't know the syntax simply never use it, so the formatting the feature
- * exists for never gets written. Storage stays markdown regardless: it is what
- * converts cleanly to the email these reports will eventually be sent as.
+ * and the person writing it is a gedu at the end of a session or an admin
+ * drafting a product page, not somebody who knows what `##` does. A textarea
+ * over markdown asks every writer to hold two pictures at once — what they
+ * typed and what it will look like — and the ones who don't know the syntax
+ * simply never use it, so the formatting the feature exists for never gets
+ * written. Storage stays markdown regardless: it is what converts cleanly to
+ * the email these values are eventually sent as.
  *
- * **The toolbar is deliberately seven buttons and cannot grow into a word
- * processor.** Bold, italic, three heading levels, two list kinds — exactly the
- * subset the read-only renderer styles, so nothing can be produced here that
- * renders as a surprise. They are icon-only and never wrap: this editor has to
- * survive a one-third-width rail and a phone, and a toolbar that reflows to two
- * rows as the viewport narrows moves the writing surface underneath it.
+ * **The toolbar is the rendered subset, and cannot grow into a word
+ * processor.** Bold, italic, three heading levels, two list kinds — exactly
+ * what the read-only renderer styles, so nothing can be produced here that
+ * renders as a surprise. The buttons are icon-only and never wrap: this editor
+ * has to survive a one-third-width rail and a phone, and a toolbar that reflows
+ * to two rows as the viewport narrows moves the writing surface underneath it.
  *
- * **There is no link button, and that is a policy rather than an omission.** A
- * report is written for a family to read, and this platform does not point them
- * off-site — so links are off at the schema here and absent from the read-only
- * renderer's allow-list, where a pasted one unwraps to its own label.
+ * **The variant matches the renderer's, and is a property of the field.**
+ * `feed` is a staff-authored, family-facing note: no links, and headings scaled
+ * to the card a report renders in. `marketing` is a product's long description
+ * on our own public pages: links are part of the copy's job there, and headings
+ * are scaled to a page. Whichever a field stores, both ends of it use the same
+ * name — a toolbar wider than the renderer is a trap, and a renderer wider than
+ * the toolbar is a construct that can only arrive by paste.
  *
  * **Everything the toolbar cannot produce degrades rather than breaks.** Pasted
  * markdown genuinely goes through the same parser — plain text on the clipboard
@@ -57,12 +66,15 @@ import { cn } from "@/lib/utils";
  * it with a changed React key, which is both cheaper and less surprising than an
  * effect racing the user's typing.
  */
+export type RichTextEditorVariant = "feed" | "marketing";
+
 export function RichTextEditor({
   initialValue,
   onChange,
   placeholder,
   ariaLabel,
   describedBy,
+  variant = "feed",
   className,
   disabled = false,
 }: {
@@ -79,10 +91,28 @@ export function RichTextEditor({
    * every other editor attribute.
    */
   describedBy?: string;
+  /**
+   * Which field this is, matching the read-only renderer's variant of the same
+   * name. Defaults to `feed`, the conservative half: a caller that has not
+   * thought about it gets no link control rather than one whose output the
+   * renderer would strip. Read once, at mount — the schema is built from it.
+   */
+  variant?: RichTextEditorVariant;
   className?: string;
   disabled?: boolean;
 }) {
   const t = useTranslations("richText");
+  const linksAllowed = variant === "marketing";
+
+  /**
+   * The URL row's draft, and whether it is open.
+   *
+   * Local state rather than a popover: the row is one input and three buttons,
+   * it belongs to this editor and nothing else, and opening it is the direct
+   * result of the writer clicking the link button — so pushing the writing
+   * surface down by a row is a shift they asked for.
+   */
+  const [linkDraft, setLinkDraft] = useState<string | null>(null);
 
   const editor = useEditor({
     // Next.js renders client components on the server too, and ProseMirror
@@ -100,7 +130,13 @@ export function RichTextEditor({
         horizontalRule: false,
         strike: false,
         underline: false,
-        link: false,
+        // Links exist only where the field's own policy allows them, and only
+        // ever deliberately: `autolink` off, so typing an address does not
+        // silently mark it up (the markdown serialiser's `linkify` is off for
+        // the same reason), and `openOnClick` off, so a click inside a link
+        // while editing puts the caret there instead of navigating away from
+        // an unsaved draft.
+        link: linksAllowed ? { autolink: false, openOnClick: false } : false,
         // Three levels, because a real write-up opens with a title line and
         // then sections under it. Anything deeper is switched off at the
         // schema, so it cannot be typed, pasted or undone into existence.
@@ -138,14 +174,12 @@ export function RichTextEditor({
           // report field and a gedu-note field read as the same kind of box.
           "min-h-40 w-full px-3 py-2 text-base focus-visible:outline-none",
           // The rendered subset, styled with the same tokens the read-only
-          // renderer uses — what you type is what the feed shows.
+          // renderer uses — what you type is what the reader sees.
           "[&_p]:leading-relaxed [&_p:not(:first-child)]:mt-2",
-          "[&_h1]:mt-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
-          "[&_h2]:mt-3 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug",
-          "[&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug [&_h3]:text-muted-foreground",
           "[&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-2 [&_ol]:list-decimal [&_ol]:pl-5",
           "[&_li]:leading-relaxed",
           "[&_strong]:font-semibold",
+          linksAllowed ? MARKETING_PROSE : FEED_PROSE,
           // Placeholder: the extension marks the first empty node, and the
           // text is drawn as a non-selectable pseudo-element so it never
           // becomes content.
@@ -157,7 +191,7 @@ export function RichTextEditor({
   });
 
   /**
-   * Which of the seven marks the caret currently sits in, recomputed on every
+   * Which of the marks the caret currently sits in, recomputed on every
    * transaction.
    *
    * It has to be a subscription rather than a read taken during render: this
@@ -166,9 +200,13 @@ export function RichTextEditor({
    * whatever the document looked like at mount and never change again — Bold
    * would stay unlit inside bold text, and toggling it with a collapsed cursor
    * (a stored mark, with nothing else on screen to show for it) would give no
-   * feedback at all. `useEditorState` re-renders only when one of these seven
-   * booleans actually flips, so the subscription costs a comparison per
-   * transaction rather than a render per keystroke.
+   * feedback at all. `useEditorState` re-renders only when one of these booleans
+   * actually flips, so the subscription costs a comparison per transaction
+   * rather than a render per keystroke.
+   *
+   * `link` is asked for unconditionally. Tiptap answers `false` for a mark its
+   * schema has never heard of, so the feed variant reads a permanent `false`
+   * and renders no button to show it on.
    */
   const activeTools =
     useEditorState({
@@ -184,11 +222,64 @@ export function RichTextEditor({
               subheading: instance.isActive("heading", { level: 3 }),
               bulletList: instance.isActive("bulletList"),
               orderedList: instance.isActive("orderedList"),
+              link: instance.isActive("link"),
             },
     }) ?? NOTHING_ACTIVE;
 
-  // Built as data rather than as seven near-identical JSX blocks: the toolbar is
-  // a list, the separators are where the list changes subject, and describing it
+  /**
+   * Open the URL row on whatever the caret is in: the current link's address
+   * when there is one (so the row edits rather than replaces), empty otherwise.
+   * Clicking the button a second time closes it, which is what an active-state
+   * toggle is expected to do.
+   */
+  function toggleLinkRow() {
+    if (linkDraft !== null) {
+      setLinkDraft(null);
+      return;
+    }
+    const href: unknown = editor?.getAttributes("link").href;
+    setLinkDraft(typeof href === "string" ? href : "");
+  }
+
+  /**
+   * Commit the row.
+   *
+   * Three cases, and the third is the one worth naming: with a collapsed caret
+   * and no link under it there is no text to mark up, so the address becomes
+   * its own label. The alternative — a stored mark waiting for the next
+   * keystroke — gives the writer a button click with nothing on screen to show
+   * for it.
+   */
+  function applyLink() {
+    if (editor === null || linkDraft === null) return;
+    const href = linkDraft.trim();
+    if (href === "") {
+      removeLink();
+      return;
+    }
+    if (editor.state.selection.empty && !editor.isActive("link")) {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "text",
+          text: href,
+          marks: [{ type: "link", attrs: { href } }],
+        })
+        .run();
+    } else {
+      editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+    }
+    setLinkDraft(null);
+  }
+
+  function removeLink() {
+    editor?.chain().focus().extendMarkRange("link").unsetLink().run();
+    setLinkDraft(null);
+  }
+
+  // Built as data rather than as near-identical JSX blocks: the toolbar is a
+  // list, the separators are where the list changes subject, and describing it
   // that way is what keeps "add a button" from meaning "paste twelve lines".
   const toolGroups: ToolbarTool[][] = [
     [
@@ -241,6 +332,15 @@ export function RichTextEditor({
     ],
   ];
 
+  // Last, and only where the field allows one: the link is the only tool that
+  // needs a value typed rather than a state toggled, so it is the one that
+  // opens a row.
+  if (linksAllowed) {
+    toolGroups.push([
+      { key: "link", label: t("link"), icon: LinkIcon, run: toggleLinkRow },
+    ]);
+  }
+
   // The `disabled` prop, not `editor.isEditable`: the editor's own flag is read
   // during render and only changes through a method call, so a toolbar keyed to
   // it would keep answering for the value the editor was constructed with.
@@ -254,10 +354,14 @@ export function RichTextEditor({
         className,
       )}
     >
-      {/* `flex-nowrap` and a fixed height: seven shrink-proof buttons is still
-          under 240px, so the row fits every width this editor is used at, and
-          pinning the height means focusing or toggling a button can never
-          change where the writing surface starts. */}
+      {/* `flex-nowrap` and a fixed height: the seven shrink-proof buttons come
+          to roughly 260px including their separators, which fits the narrowest
+          place the feed variant is used — a one-third-width rail on a phone —
+          and pinning the height means focusing or toggling a button can never
+          change where the writing surface starts. The link group takes that to
+          roughly 305px, and it only ever appears on the marketing variant,
+          which lives on a full-width admin form. **A ninth button is a decision
+          about the narrow case, not a paste job.** */}
       <div className="flex h-10 flex-nowrap items-center gap-0.5 border-b border-input px-1">
         {toolGroups.map((group, index) => (
           <div key={group[0].key} className="flex items-center gap-0.5">
@@ -276,12 +380,53 @@ export function RichTextEditor({
         ))}
       </div>
 
+      {/* The address row, between the toolbar and the writing surface. It is
+          not reserved space — it exists only while the writer is typing an
+          address, and the surface below moves down as the direct result of the
+          click that opened it. Buttons rather than a form: this editor is used
+          inside admin forms, and an Enter that submitted the page while
+          somebody was typing a URL would be a disaster with a keyboard
+          shortcut. */}
+      {linkDraft !== null && (
+        <div className="flex items-center gap-1 border-b border-input px-1 py-1">
+          <input
+            type="url"
+            autoFocus
+            value={linkDraft}
+            onChange={(e) => setLinkDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                applyLink();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                setLinkDraft(null);
+              }
+            }}
+            aria-label={t("linkUrl")}
+            className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <IconButton label={t("linkApply")} icon={Check} onClick={applyLink} />
+          <IconButton
+            label={t("linkRemove")}
+            icon={Unlink}
+            onClick={removeLink}
+            disabled={!activeTools.link}
+          />
+          <IconButton
+            label={t("linkCancel")}
+            icon={X}
+            onClick={() => setLinkDraft(null)}
+          />
+        </div>
+      )}
+
       <EditorContent editor={editor} />
     </div>
   );
 }
 
-/** The seven things the toolbar can toggle, and the keys the active map uses. */
+/** The things the toolbar can toggle, and the keys the active map uses. */
 type ToolbarToolKey =
   | "bold"
   | "italic"
@@ -289,7 +434,8 @@ type ToolbarToolKey =
   | "heading"
   | "subheading"
   | "bulletList"
-  | "orderedList";
+  | "orderedList"
+  | "link";
 
 /** What the toolbar shows before there is an editor to ask. */
 const NOTHING_ACTIVE: Record<ToolbarToolKey, boolean> = {
@@ -300,7 +446,28 @@ const NOTHING_ACTIVE: Record<ToolbarToolKey, boolean> = {
   subheading: false,
   bulletList: false,
   orderedList: false,
+  link: false,
 };
+
+/**
+ * The writing surface's heading scale, per variant — the read-only renderer's
+ * own scale, restated in the arbitrary-variant form the editor's single class
+ * attribute needs. The two have to move together: a heading that looks like a
+ * section title while being typed and like body copy once saved is the trap the
+ * same-subset rule exists to close.
+ */
+const FEED_PROSE = cn(
+  "[&_h1]:mt-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
+  "[&_h2]:mt-3 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug",
+  "[&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug [&_h3]:text-muted-foreground",
+);
+
+const MARKETING_PROSE = cn(
+  "[&_h1]:mt-5 [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:leading-snug",
+  "[&_h2]:mt-5 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:leading-snug",
+  "[&_h3]:mt-5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:leading-snug",
+  "[&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4",
+);
 
 interface ToolbarTool {
   key: ToolbarToolKey;
@@ -318,21 +485,56 @@ function ToolbarButton({
   active: boolean;
   disabled: boolean;
 }) {
-  const Icon = tool.icon;
+  return (
+    <IconButton
+      label={tool.label}
+      icon={tool.icon}
+      onClick={tool.run}
+      disabled={disabled}
+      active={active}
+    />
+  );
+}
+
+/**
+ * One square icon control — a toolbar button, or one of the address row's
+ * three. Shared because they sit two rows apart in the same box and any drift
+ * in size or hover treatment would read as a rendering fault.
+ *
+ * `onMouseDown` preventing default keeps the document's selection alive:
+ * without it the click blurs the editor first and the command applies to
+ * nothing.
+ */
+function IconButton({
+  label,
+  icon: Icon,
+  onClick,
+  disabled = false,
+  active,
+}: {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  onClick: () => void;
+  disabled?: boolean;
+  /**
+   * Omitted on the address row's three, which do a thing rather than hold a
+   * state — `aria-pressed="false"` on a button that never lights up announces a
+   * toggle that isn't there.
+   */
+  active?: boolean;
+}) {
   return (
     <button
       type="button"
-      // `onMouseDown` preventing default keeps the selection alive: without it
-      // the click blurs the document first and the command applies to nothing.
       onMouseDown={(e) => e.preventDefault()}
-      onClick={tool.run}
+      onClick={onClick}
       disabled={disabled}
-      aria-label={tool.label}
+      aria-label={label}
       aria-pressed={active}
-      title={tool.label}
+      title={label}
       className={cn(
         "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-        active
+        active === true
           ? "bg-accent text-accent-foreground"
           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
       )}

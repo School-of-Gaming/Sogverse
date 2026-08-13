@@ -2,6 +2,7 @@ import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
 } from "@/components/public/products/mock-detail-fixtures";
+import { LONG_DESCRIPTION_SCENARIOS } from "@/components/public/products/mock-long-description-fixtures";
 
 /**
  * The **full-page preview scene registry**.
@@ -83,6 +84,37 @@ const PRODUCT_SCENARIOS: readonly PreviewScenarioMeta[] = PREVIEW_SCENARIOS.map(
   ({ slug, label, group }) => ({ slug, label: `${group} — ${label}` }),
 );
 
+/**
+ * The long-description comparison's three scenarios, keyed off the fixture's
+ * own slug list so the registry cannot list a page the scene will not serve.
+ */
+const LONG_DESCRIPTION_SCENARIO_META: Record<
+  (typeof LONG_DESCRIPTION_SCENARIOS)[number],
+  { label: string; description: string }
+> = {
+  "blocks-today": {
+    label: "Blocks — the field as it is today",
+    description:
+      "The control. The same copy, rendered by the block path that ships now: every heading a single unlabelled level at `text-base`, every paragraph muted beneath it, and a hand-typed dash list sitting inside a paragraph because the format has nowhere else to put one. Open this first and keep it in a tab — the two pages beside it differ from it in exactly one respect each.",
+  },
+  "markdown-h1": {
+    label: "Markdown — headings converted at `#`",
+    description:
+      "The same copy converted to markdown with every heading block becoming a top-level `#`, which the renderer paints as an `h2` at `text-xl` (the page's `h1` is the product's name, so the writer's highest level opens one step below it). The loud answer: sections that clearly out-rank the prose and can be found by scrolling past them, at the cost of a page whose largest text below the title is a subheading of it.",
+  },
+  "markdown-h2": {
+    label: "Markdown — headings converted at `##`",
+    description:
+      "The same copy again, converted at `##` — an `h3` at `text-lg`. The quiet answer: sections that read as sections without competing with the product's name, and one step of headroom left above them for a future level nobody has needed yet. It is also the closest of the two to what the block card does today, which is the argument for it and the argument against it.",
+  },
+};
+
+const LONG_DESCRIPTION_PREVIEW_SCENARIOS: readonly PreviewScenarioMeta[] =
+  LONG_DESCRIPTION_SCENARIOS.map((slug) => ({
+    slug,
+    ...LONG_DESCRIPTION_SCENARIO_META[slug],
+  }));
+
 export const PREVIEW_SCENES = [
   {
     surface: "shop",
@@ -118,6 +150,14 @@ export const PREVIEW_SCENES = [
       "The public product page a parent lands on from the shop, with the registration signup panel in each of its states — and, at the end of each product type's run, the audience scenarios: the three shapes the picker takes once a product can be sold to parents. Those three are the only way to look at a for-parents product at all, since none exists yet. The page is three tracks and a band: the band spans the content columns with each element over the column it belongs to — back link right-aligned over the facts rail, h1 over the hero, type · topic eyebrow over the signup panel — and never over the gutters. Beneath it the reading column leads with a 3:2 hero at the browse card's treatment, wearing the same two chips in the same corners (tag bottom-left, audience-or-age top-right), so a family meets the same pill on the page a card sent them to; a product with no picture wears them on the wordmark banner instead. The short description follows, and on a tagged product the tag explained: what SOG actually does about that tag, in a quiet block at the reading column's full width, with the tag's icon and word but deliberately no second pill. An untagged product — most of them — shows neither chip nor block, with no hole where either would be. Under that, on a phone only, the jump button down to the signup panel: full width, text only, carrying the panel's own verb, since below `lg` the panel is the last thing in a long document. The panel itself sits in a sticky right rail from `lg`, its picker unboxed so a name, an age and “Already joined” fit one line at that width; from 2xl the overview card moves out again into a sticky left facts rail, label-over-value at rail width, leaving the reading column between them. The tag explanation copy is placeholder text written by an engineer and is being replaced wholesale by the product owner — read it for shape and length, not for wording.",
     chrome: "public",
     scenarios: PRODUCT_SCENARIOS,
+  },
+  {
+    surface: "product-long-description",
+    title: "Product long description — which heading level?",
+    description:
+      "One decision, three pages. A product's marketing long description is stored today as a flat array of heading and paragraph blocks; it is becoming markdown, authored in the same rich editor gedus write session reports in, and with links allowed because this copy is written by an admin for our own shop pages rather than by a gedu for one family. A `heading` block never carried a level — there was only one kind of heading — so the conversion has to choose one, and the choice is not a fact about the data: it is about how loud a section should be on a page whose `h1` is already the product's name. These three scenarios are one body of realistic copy (four sections, paragraphs at full length, the specifics a parent scans for) rendered by today's block path, converted at `#`, and converted at `##`. Nothing else varies between them — same product, same hero, same signup rail, same card, same type scale, same body size — so the only thing to judge is the headings. The markdown pages carry one extra section at the end that the block format cannot express at all: a real bulleted list, and links out to the game's store and back to our privacy policy. It sits last on purpose, after the sections that answer the heading question, and it is the whole of what the field gains. **Note what does not change:** the hand-typed dash list in the fourth section stays literal text on all three pages, because the conversion escapes anything that would otherwise start meaning something in markdown. Copy that was plain must not silently acquire formatting nobody typed.",
+    chrome: "public",
+    scenarios: LONG_DESCRIPTION_PREVIEW_SCENARIOS,
   },
   {
     surface: "confirmation",

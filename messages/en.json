@@ -1406,7 +1406,12 @@
     "heading": "Heading",
     "subheading": "Subheading",
     "bulletList": "Bulleted list",
-    "orderedList": "Numbered list"
+    "orderedList": "Numbered list",
+    "link": "Link",
+    "linkUrl": "Link address",
+    "linkApply": "Apply link",
+    "linkRemove": "Remove link",
+    "linkCancel": "Cancel"
   },
   "header": {
     "nav": {

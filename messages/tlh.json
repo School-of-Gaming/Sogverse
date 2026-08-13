@@ -1450,7 +1450,12 @@
     "heading": "per",
     "subheading": "per mach",
     "bulletList": "tetlh",
-    "orderedList": "mI’ tetlh"
+    "orderedList": "mI’ tetlh",
+    "link": "rarwI’",
+    "linkUrl": "rarwI’ Daq",
+    "linkApply": "rarwI’ chu’",
+    "linkRemove": "rarwI’ Qaw’",
+    "linkCancel": "qIl"
   },
   "header": {
     "nav": {

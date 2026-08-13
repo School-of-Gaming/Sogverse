@@ -2425,12 +2425,29 @@ const DEMO_MARKDOWN = `# Mob-proofing night
 We lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.`;
 
 /**
- * The writer, with its own serialised output beside it.
+ * The marketing variant's seed, which has to carry a link: the link control is
+ * the only part of this editor that opens a second row, and it is unreachable
+ * from the feed variant.
+ */
+const DEMO_MARKETING_MARKDOWN = `## Before the first session
+
+There is nothing to install beyond the game itself — the **Java edition** is the one you want.
+
+Our [privacy policy](/privacy) covers what we keep and for how long.`;
+
+/**
+ * The writer, in both variants, with its own serialised output beside each.
  *
  * Showing the stored markdown next to the editor is the one thing worth being
  * able to see at a glance: a writer never meets the syntax, so this is the only
  * place to confirm the round trip is honest. Type a heading, watch the `#`
  * appear in the serialised output.
+ *
+ * Both variants are here because the variant is the difference between two
+ * toolbars over one component, and the point of a style-guide section is
+ * exactly that — every state of a reused piece, side by side. It is also the
+ * only place the link control can be exercised at all until the admin form
+ * starts storing markdown.
  *
  * How stored markdown *renders* is deliberately not demoed here — a renderer is
  * only meaningful inside the surface that owns it, at that surface's width and
@@ -2438,14 +2455,17 @@ We lit the paths, walled the gaps and got through a whole session without losing
  */
 function RichTextEditorDemo() {
   const [markdown, setMarkdown] = useState(DEMO_MARKDOWN);
+  const [marketingMarkdown, setMarketingMarkdown] = useState(
+    DEMO_MARKETING_MARKDOWN,
+  );
 
   return (
     <div className="space-y-8">
-      <SubSection title="The editor, and what it stores">
+      <SubSection title="The feed variant, and what it stores">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2">
             <DemoCaption>
-              Rich editor — seven buttons, fixed toolbar height
+              Rich editor — seven buttons, fixed toolbar height, no link control
             </DemoCaption>
             <RichTextEditor
               initialValue={DEMO_MARKDOWN}
@@ -2460,6 +2480,35 @@ function RichTextEditorDemo() {
             </DemoCaption>
             <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
               {markdown}
+            </pre>
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="The marketing variant — the same editor, plus links">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>
+              An eighth button. Select some words and press it: the address row
+              opens between the toolbar and the text, seeded with the current
+              link&rsquo;s address when the caret is already inside one. Enter
+              applies, Escape closes, and the middle button unlinks. Headings are
+              a page&rsquo;s scale here rather than a card&rsquo;s.
+            </DemoCaption>
+            <RichTextEditor
+              variant="marketing"
+              initialValue={DEMO_MARKETING_MARKDOWN}
+              onChange={setMarketingMarkdown}
+              ariaLabel="Product long description"
+              placeholder="The expanded pitch under the hero."
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>
+              Serialised markdown — links included
+            </DemoCaption>
+            <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+              {marketingMarkdown}
             </pre>
           </div>
         </div>

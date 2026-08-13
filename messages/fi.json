@@ -1406,7 +1406,12 @@
     "heading": "Otsikko",
     "subheading": "Väliotsikko",
     "bulletList": "Luettelo",
-    "orderedList": "Numeroitu luettelo"
+    "orderedList": "Numeroitu luettelo",
+    "link": "Linkki",
+    "linkUrl": "Linkin osoite",
+    "linkApply": "Lisää linkki",
+    "linkRemove": "Poista linkki",
+    "linkCancel": "Peruuta"
   },
   "header": {
     "nav": {

@@ -1406,7 +1406,12 @@
     "heading": "Rubrik",
     "subheading": "Underrubrik",
     "bulletList": "Punktlista",
-    "orderedList": "Numrerad lista"
+    "orderedList": "Numrerad lista",
+    "link": "Länk",
+    "linkUrl": "Länkadress",
+    "linkApply": "Lägg till länk",
+    "linkRemove": "Ta bort länk",
+    "linkCancel": "Avbryt"
   },
   "header": {
     "nav": {
