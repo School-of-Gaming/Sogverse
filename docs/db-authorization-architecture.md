@@ -222,6 +222,11 @@ What the DB test suite covers (don't rebuild this — extend it):
   `SECURITY DEFINER` function sets `search_path`; table-level write grants match a
   bidirectional allowlist; `anon` holds no table write grant. The *function*-grant
   allowlists it used to carry were retired when the spine subsumed them.
+- **Views** (both files): every public view is `security_invoker`, and every view either
+  Data API role can read is classified with a named scope test. Views arrived late — the
+  admin user search is the first — and both halves of the existing machinery had walked
+  past them, the RLS sweep because it reads `pg_tables` and check 5 because it enumerates
+  `pg_proc`. Adding a view without its scope test now fails CI.
 - **Behavioral, handwritten per-target**: SELECT-side IDOR tests (customer A cannot read
   customer B's rows) for participations, payments, family subscriptions, groups, and
   products; the per-RPC happy-path and business-rule tests. These are the fixture-bearing
@@ -342,6 +347,28 @@ guarantees nothing escapes both.
    with no scope test is vetted by nothing. Allowlist growth is this design's failure
    mode; check 5 is what polices it. 1+2+5 subsume the old grant-allowlist test, which
    was retired with them (§5 Phase 2).
+
+   **Views are held to the same requirement, in their own registry.** A view has no
+   body, so checks 1 and 2 have nothing to say about one and "role-gated" is not a
+   category it can occupy: the only classification open to a view is self-scoping, and
+   the only question worth asking is whether the caller's own RLS decides its rows.
+   Two things answer that, and the checks are deliberately split along the line §4
+   draws between testing a property and testing a proxy for one. `security_invoker` is
+   a structural switch — off, the view runs as its owner, and the owner holds
+   `BYPASSRLS` — which makes it the exact analogue of `rowsecurity` on a table rather
+   than a stand-in for a body that does not exist, so the access-control test sweeps it
+   the same way and in the same place. But the switch being on is still only an
+   intention: it says the author meant the underlying policies to govern, not that they
+   do. Check 5 is what turns that into a property, because the registry entry a view
+   must carry names a test, and the test has to show two callers getting exactly the
+   rows their own policies allow. That tie-in is the load-bearing half — it is what
+   makes the *next* view arrive with a scope test instead of arriving unnoticed, which
+   is how the first one arrived.
+
+   Both directions are checked, as for functions: an exposed view with no entry fails,
+   and an entry for a view that was dropped or un-granted fails too — a stale entry
+   reads as coverage while covering nothing, and would hand the next view created under
+   that name a vetting it never earned.
 
 **What "self-scoping" admits, precisely.** The common case is a function keyed to
 `auth.uid()` on every read and write. The category is slightly wider than that, and the

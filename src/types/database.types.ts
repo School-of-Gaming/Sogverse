@@ -1651,6 +1651,15 @@ export type Database = {
           table_name: string
         }[]
       }
+      _list_views: {
+        Args: never
+        Returns: {
+          anon_select: boolean
+          authenticated_select: boolean
+          security_invoker: boolean
+          view_name: string
+        }[]
+      }
       admin_enroll_participant: {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json

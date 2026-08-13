@@ -7,7 +7,7 @@ import { createAdminTestClient } from "./helpers";
 /**
  * Grant- and schema-level access control: which tables `authenticated` and
  * `anon` may write, that every SECURITY DEFINER function pins its search_path,
- * and that every table has RLS.
+ * that every table has RLS, and that every view answers as its caller.
  *
  * The *function*-grant allowlists that used to live here are gone. They proved
  * someone had meant to expose a function, not that its body enforced anything —
@@ -24,6 +24,15 @@ const tableGrantRows = z.array(
   z.object({
     table_name: z.string(),
     privilege_type: z.string(),
+  })
+);
+
+const viewRows = z.array(
+  z.object({
+    view_name: z.string(),
+    security_invoker: z.boolean(),
+    authenticated_select: z.boolean(),
+    anon_select: z.boolean(),
   })
 );
 
@@ -186,5 +195,32 @@ describe("Access Control", () => {
     const tables = (data as { table_name: string }[] | null) ?? [];
 
     expect(tables).toEqual([]);
+  });
+
+  it("all public views run as their caller (security_invoker)", async () => {
+    // The view-shaped sibling of the RLS sweep above, and it has to be its own
+    // check because pg_tables — which that one reads — does not list views at
+    // all. A view without `security_invoker` runs with its OWNER's rights, and
+    // the owner is postgres, which holds BYPASSRLS: it would hand every caller
+    // every row of everything it selects from, with a working feature on top
+    // and nothing else in CI objecting. `security_invoker` is the structural
+    // switch that decides this, exactly as `rowsecurity` is for a table.
+    //
+    // Assert the offending list is empty rather than counting it, so a failure
+    // names the view instead of reporting a number.
+    const { data, error } = await admin.rpc("_list_views");
+
+    expect(error).toBeNull();
+
+    const ownerRights = viewRows
+      .parse(data)
+      .filter((view) => !view.security_invoker)
+      .map((view) => view.view_name);
+
+    expect(
+      ownerRights,
+      "a view must be created WITH (security_invoker = true) or it returns rows " +
+        "its caller's RLS forbids"
+    ).toEqual([]);
   });
 });
