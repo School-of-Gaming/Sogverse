@@ -73,13 +73,16 @@ vi.mock("@/services/users", () => ({
   }),
 }));
 
-function openPicker(audience: ProductAudience) {
+function openPicker(
+  audience: ProductAudience,
+  enrolledParticipantIds: Set<string> = new Set(),
+) {
   render(
     <ParticipantPickerSheet
       open
       onOpenChange={() => {}}
       audience={audience}
-      enrolledParticipantIds={new Set()}
+      enrolledParticipantIds={enrolledParticipantIds}
       onAddParticipant={async () => {}}
     />,
   );
@@ -90,13 +93,20 @@ function openPicker(audience: ProductAudience) {
  * the row carries none. Both row shapes — the parent header and a nested child
  * — are the flex container the name and the button share, so the nearest
  * `justify-between` ancestor of the name is exactly one person's row.
+ *
+ * **Any button in that row counts, not only the one reading "add".** The button
+ * carries four captions depending on state (add / adding / added /
+ * alreadyAdded), so matching one of them would report "no button" for a row
+ * that has one in another state — which is precisely the distinction the
+ * already-enrolled case below turns on. Looking up the row first is what makes
+ * the loose match safe: there is only ever one button in it.
  */
 function addButtonFor(name: string): HTMLElement | null {
   const row = screen.getByText(name).closest("div.justify-between");
   if (!(row instanceof HTMLElement)) {
     throw new Error(`no row rendered for ${name}`);
   }
-  return within(row).queryByRole("button", { name: "add" });
+  return within(row).queryByRole("button");
 }
 
 describe("audienceAdmitsRole", () => {
@@ -109,7 +119,18 @@ describe("audienceAdmitsRole", () => {
     gedu: [],
     admin: [],
   };
-  const ALL: ProductAudience[] = ["gamers", "parents", "both"];
+  // Audiences are enumerated through a record keyed by the union rather than as
+  // a bare array, for the same reason the roles come from the generated enum
+  // tuple: `satisfies Record<ProductAudience, …>` means a fourth audience fails
+  // to compile here instead of silently going untested against every role.
+  // Values rather than keys, so `Object.values` hands back the union itself and
+  // the loop needs no assertion to spend it.
+  const EVERY_AUDIENCE = {
+    gamers: "gamers",
+    parents: "parents",
+    both: "both",
+  } as const satisfies Record<ProductAudience, ProductAudience>;
+  const ALL = Object.values(EVERY_AUDIENCE);
 
   // Roles come from the generated enum tuple rather than a list typed here, so
   // a role added to the schema arrives in this loop on its own and the Record
@@ -160,6 +181,24 @@ describe("ParticipantPickerSheet — the audience reaches the buttons", () => {
   it("lists that same parent with no action on a gamers-only product", () => {
     openPicker("gamers");
     expect(screen.getByText("Petri")).toBeTruthy();
+    expect(addButtonFor("Petri")).toBeNull();
+  });
+
+  // A product's audience can be narrowed after seats were given out —
+  // update_product assigns both columns on every save and guards no existing
+  // participation — so this crossing is reachable rather than theoretical. The
+  // button is this sheet's only sign that somebody already holds a seat, and
+  // withholding it here would leave a seated parent indistinguishable from an
+  // unseated one on the only surface that lists both.
+  it("keeps the button for someone already seated whom the audience no longer admits", () => {
+    openPicker("gamers", new Set([IDS.parent]));
+    expect(addButtonFor("Marja")).not.toBeNull();
+  });
+
+  it("still withholds it from an unseated person of the same role", () => {
+    // The pair matters: without this, the case above would also pass if the
+    // audience gate had simply been dropped.
+    openPicker("gamers", new Set([IDS.parent]));
     expect(addButtonFor("Petri")).toBeNull();
   });
 });

@@ -117,8 +117,12 @@ export function ProductDetailPage({
     // separate state. Each row carries its own signup state (active /
     // waitlisted) so the picker can disable an already-enrolled one in place.
     //
-    // **This is the one place the three audience cases are told apart**, and
-    // the whole of the difference is which rows go into the array:
+    // **This is where the three audience cases decide which rows exist**, and
+    // the whole of the difference is which rows go into the array. It is no
+    // longer the only place the two columns answer "who may hold a seat" —
+    // `audienceAdmitsRole` in `product-audience` states the same rule for the
+    // admin picker — and the two agreeing is currently a matter of habit.
+    // Routing this through that predicate is the fix and is a small one:
     //
     //   gamers-only  — the children, exactly as before.
     //   parents-only — the reader alone, so the hook's "first selectable row"

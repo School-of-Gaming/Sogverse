@@ -7,9 +7,17 @@ import type { ProductBrowseRow, UserRole } from "@/types";
 // that somehow carried neither flag falls out as `gamers`, which is what every
 // product was before audiences existed.
 //
-// This is deliberately the only place the two columns are read together. The
-// browse card, the overview card and the filter chips all speak in these three
-// words, so widening the vocabulary later is one edit rather than three.
+// This is meant to be the only place the two columns are read together, and
+// currently is not: the family signup panel in `product-detail-page` still
+// builds its selectable rows straight off `for_gamers` / `for_parents`, under a
+// comment of its own claiming to be where the three cases are told apart. Both
+// answer the same question — who may hold a seat — so a future change to the
+// rule has two homes and a third since `audienceAdmitsRole` arrived below.
+// Routing that panel through this module is the fix, and it is a small one;
+// until it happens, treat this sentence as the intent rather than the state.
+//
+// The browse card, the overview card and the filter chips all speak in these
+// three words, so widening the vocabulary later is one edit rather than three.
 
 export type ProductAudience = "gamers" | "parents" | "both";
 
@@ -69,11 +77,18 @@ export function audienceLabelKey(
 
 /**
  * Whether a person of this role may occupy a seat on a product with this
- * audience. It is the browser's statement of the rule the enrollment RPCs
- * enforce: a `gamer` needs `for_gamers`, and a `customer` — an adult taking a
- * seat on their own account — needs `for_parents`. Staff hold no seats on any
- * product, so `admin` and `gedu` are admitted nowhere; they are spelled out
- * rather than defaulted so a new role has to be answered for here.
+ * audience: a `gamer` needs `for_gamers`, and a `customer` — an adult taking a
+ * seat on their own account — needs `for_parents`. For those two roles this
+ * restates exactly what the enrollment RPCs enforce, in both directions.
+ *
+ * **`admin` and `gedu` are refused here as a browser-side policy that no RPC
+ * states**, which is worth knowing before trusting this as a mirror of the
+ * server. The admin enrollment function branches on `customer` and sends every
+ * other role down the parent-link path, so a linked staff profile is something
+ * it would seat; the participation and waitlist functions do not consult role
+ * at all. Nothing reaches that today — the only caller lists families, and a
+ * family block holds none — so the strictness costs nobody an action. It is
+ * spelled out rather than defaulted so a new role has to be answered for here.
  *
  * Written over the collapsed audience rather than the two columns, which keeps
  * this module the only place they are read together, and asked per role rather
