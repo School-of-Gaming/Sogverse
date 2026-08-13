@@ -38,7 +38,11 @@
 --      description"; an empty or whitespace-only string would be a second
 --      spelling of the same thing that every reader would then have to know
 --      about, so the constraint refuses it and the admin form folds a cleared
---      editor to NULL.
+--      editor to NULL. The whitespace characters are named explicitly, because
+--      btrim's default set is the space alone -- a value of one newline would
+--      otherwise trim to itself, pass a bare btrim(...) <> '' test, and store a
+--      second spelling of empty that renders as an empty card. A rich-text
+--      editor emptied by hand is exactly how such a value arrives.
 --
 -- Then the two writers. create_product and update_product assign this column and
 -- were passing a jsonb expression into it, which stops type-checking the moment
@@ -57,7 +61,10 @@ ALTER TABLE public.product_translations
 
 ALTER TABLE public.product_translations
   ADD CONSTRAINT product_translations_long_description_check
-  CHECK (long_description IS NULL OR btrim(long_description) <> '');
+  CHECK (
+    long_description IS NULL
+    OR btrim(long_description, E' \t\r\n') <> ''
+  );
 
 CREATE OR REPLACE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_status public.product_status DEFAULT 'pending'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag) RETURNS uuid
     LANGUAGE plpgsql
