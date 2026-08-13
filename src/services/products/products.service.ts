@@ -1,6 +1,5 @@
 import type {
   AppSupabaseClient,
-  ProductLongDescription,
   ProductType,
   ProductTopic,
   ProductTag,
@@ -149,8 +148,9 @@ export type ProductTranslationInput = {
   locale: SupportedLocale;
   name: string;
   short_description: string;
-  // null = no long description for this locale (the RPC stores SQL NULL).
-  long_description: ProductLongDescription | null;
+  // The marketing blurb as authored markdown; null = no long description for
+  // this locale (the RPC stores SQL NULL).
+  long_description: string | null;
 };
 
 export type ScheduleSlotInput = {

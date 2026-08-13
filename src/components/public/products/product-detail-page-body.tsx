@@ -13,7 +13,6 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { topicHasInfoCard } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { parseLongDescription } from "@/types";
 import type { ProductBrowseRow, ProductType } from "@/types";
 import { LongDescription } from "./long-description";
 import { audienceLabelKey } from "./product-audience";
@@ -67,16 +66,6 @@ export interface ProductDetailPageBodyProps {
   /** When opened from a `/schools/<slug>` listing, sends the back link there
    *  (labelled with the municipality) instead of the storefront. */
   municipality?: MunicipalityBackLink;
-  /**
-   * The marketing blurb under the hero, injected so the body stays agnostic to
-   * *how* the field is stored while it changes format. Left out, the body
-   * renders the stored block array itself, which is what every live caller
-   * does; the draft body beside this one fills it with the markdown renderer so
-   * the two can be compared full-page. **Optional on purpose and temporary:**
-   * when the column becomes markdown this slot and its default collapse back
-   * into one line here, and the draft wrapper is deleted.
-   */
-  longDescription?: ReactNode;
 }
 
 /**
@@ -109,7 +98,6 @@ export function ProductDetailPageBody({
   signupPanel,
   signupActionable,
   municipality,
-  longDescription,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
   const t = useTranslations("productDetail");
@@ -130,7 +118,9 @@ export function ProductDetailPageBody({
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const topicLabel = getTopicLabel(product.topic);
-  const longDescriptionBlocks = parseLongDescription(tr?.long_description);
+  // Authored markdown, and the empty string is the ordinary "no blurb" state:
+  // most products carry none, and the card below withdraws itself for it.
+  const longDescription = tr?.long_description ?? "";
 
   const verb = tVerb(product.product_type);
 
@@ -366,13 +356,14 @@ export function ProductDetailPageBody({
         )}
 
         {/* Marketing blurb — the expanded pitch under the hero, ahead of the
-            logistics. Omitted when the admin left it empty. The stored block
-            array unless a caller injects a different rendering of the same
-            field; either way it is one card in one place, so the slot cannot
-            move the page around it. */}
-        <div className="mt-8">
-          {longDescription ?? <LongDescription blocks={longDescriptionBlocks} />}
-        </div>
+            logistics. Authored markdown, optional, and absent on most
+            products, so the spacing is withdrawn with the card rather than
+            left behind as a hole at the foot of the reading column. */}
+        {longDescription.trim() !== "" && (
+          <div className="mt-8">
+            <LongDescription markdown={longDescription} />
+          </div>
+        )}
       </div>
 
       {/* The facts. One instance, moved between tracks by breakpoint: in the

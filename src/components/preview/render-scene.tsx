@@ -49,7 +49,7 @@ const SCENE_RENDERERS: Record<
   },
   "product-long-description": (scenario) => {
     if (!isLongDescriptionScenario(scenario)) notFound();
-    return <ProductLongDescriptionScene scenario={scenario} />;
+    return <ProductLongDescriptionScene />;
   },
   confirmation: (scenario) => {
     // The paid no-order states need no fixture — the notice component takes

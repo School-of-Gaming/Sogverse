@@ -319,13 +319,13 @@ describe("update_product", () => {
     expect(error?.code).toBe("P0002");
   });
 
-  it("stores and round-trips a structured long_description", async () => {
+  it("stores and round-trips a markdown long_description", async () => {
     await freshProduct();
 
-    const longDesc = [
-      { type: "heading", text: "What you'll learn" },
-      { type: "paragraph", text: "Build a redstone door together." },
-    ];
+    // Newlines, an escaped character and non-ASCII in one value: the column is
+    // text, so all three have to survive the RPC's JSON payload untouched.
+    const longDesc =
+      "# What you'll learn\n\nBuild a redstone door together — a hidden 3 \\* 3 piston door, and a wheat farm that harvests itself.\n\n- bring a headset\n- bring a mouse";
 
     const { error } = await adminAuth.rpc("update_product", {
       p_id: PRODUCT_ID,
@@ -364,20 +364,20 @@ describe("update_product", () => {
     ]);
   });
 
-  it("rejects a non-array long_description via the CHECK constraint", async () => {
+  it("rejects a blank long_description via the CHECK constraint", async () => {
     await freshProduct();
 
-    // Direct insert — admin bypasses RLS but not the CHECK. The lightweight
-    // guard (00092) only enforces NULL-or-array: a JSON string (or any
-    // non-array) violates product_translations_long_description_check. Finer
-    // block-shape validation lives in the UI on write and parseLongDescription
-    // on read.
+    // Direct insert — admin bypasses RLS but not the CHECK. NULL is how a
+    // locale says it has no long description, so a whitespace-only string
+    // would be a second spelling of the same thing that every reader would
+    // then have to know about. The constraint (00183) refuses it, and the
+    // admin form folds a cleared editor to NULL rather than sending one.
     const { error } = await admin.from("product_translations").insert({
       product_id: PRODUCT_ID,
       locale: "sv",
       name: "Bad",
       short_description: "",
-      long_description: "not an array",
+      long_description: "   \n  ",
     });
     expect(error?.code).toBe("23514"); // check_violation
   });

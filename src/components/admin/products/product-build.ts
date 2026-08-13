@@ -21,7 +21,6 @@ import type {
   ProductAdminDetailRow,
   UpdateProductInput,
 } from "@/services/products";
-import { parseLongDescription } from "@/types";
 import type { ProductType } from "@/types";
 import { formLocksFor } from "./form-locks";
 import {
@@ -440,18 +439,17 @@ function buildSharedFields(
   for (const locale of SUPPORTED_LOCALES) {
     const v = state.translations[locale];
     if (!v) continue;
-    // Trim each block's text and drop any that end up empty — a half-typed
-    // block (heading added, text not filled) must neither block submit nor
-    // trip the DB's non-empty-text CHECK. An all-empty result becomes null
-    // ("no long description"), matching how the RPC folds it to SQL NULL.
-    const blocks = v.longDescription
-      .map((b) => ({ type: b.type, text: b.text.trim() }))
-      .filter((b) => b.text.length > 0);
+    // A cleared editor does not serialise to "" — an empty ProseMirror document
+    // still round-trips through the markdown serialiser as whitespace — so the
+    // blank check is on the trimmed value, and a blank one becomes null ("no
+    // long description"). Sending "" instead would trip the column's CHECK,
+    // which exists precisely so there is one spelling of empty.
+    const longDescription = v.longDescription.trim();
     translations.push({
       locale,
       name: v.name.trim(),
       short_description: v.shortDescription.trim(),
-      long_description: blocks.length > 0 ? blocks : null,
+      long_description: longDescription === "" ? null : longDescription,
     });
   }
 
@@ -683,7 +681,7 @@ export function existingFormState(
       translations[t.locale] = {
         name: t.name,
         shortDescription: t.short_description,
-        longDescription: parseLongDescription(t.long_description),
+        longDescription: t.long_description ?? "",
       };
       translationLocales.push(t.locale);
     }

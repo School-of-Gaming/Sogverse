@@ -1,7 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type {
   BrowseRowLocation,
-  ProductLongDescription,
   ProductTopic,
   ProductType,
 } from "@/types";
@@ -1386,8 +1385,8 @@ function buildBaseProduct(
 interface TypeCopy {
   name: string;
   description: string;
-  /** Optional structured long description — exercises the detail-page card. */
-  long?: ProductLongDescription;
+  /** Optional markdown long description — exercises the detail-page card. */
+  long?: string;
   isRemote: boolean;
 }
 
@@ -1397,21 +1396,12 @@ const COPY: Record<ProductType, TypeCopy> = {
     description:
       "We build little machines together — doors that open on command, item sorters, hidden traps, and small automated factories. A playful, hands-on way for kids to learn how circuits actually think, one contraption at a time.",
     long: [
-      { type: "heading", text: "What happens each week" },
-      {
-        type: "paragraph",
-        text: "Every session starts with a quick show-and-tell of what the group built last time, then we take on one new contraption together — a hidden door, an item sorter, an automatic farm.",
-      },
-      {
-        type: "paragraph",
-        text: "Gedus keep the pace gentle and hands-on. There's no winning or losing, just steady building and plenty of \"wait, how did you do that?\" moments.",
-      },
-      { type: "heading", text: "What your child takes away" },
-      {
-        type: "paragraph",
-        text: "Logical thinking, a bit of patience, and the quiet confidence that comes from making a machine work. Friendships, too — the same gamers come back week after week.",
-      },
-    ],
+      "# What happens each week",
+      "Every session starts with a quick show-and-tell of what the group built last time, then we take on one new contraption together — a hidden door, an item sorter, an automatic farm.",
+      'Gedus keep the pace gentle and hands-on. There\'s no winning or losing, just steady building and plenty of "wait, how did you do that?" moments.',
+      "# What your child takes away",
+      "Logical thinking, a bit of patience, and the quiet confidence that comes from making a machine work. Friendships, too — the same gamers come back week after week.",
+    ].join("\n\n"),
     isRemote: true,
   },
   municipality_club: {
@@ -1425,21 +1415,12 @@ const COPY: Record<ProductType, TypeCopy> = {
     description:
       "Three mornings a week across two weeks of school holiday. Each session the group takes on a fresh build, and by the end everyone shares one big world they can explore, show off, and keep playing in together.",
     long: [
-      { type: "heading", text: "How it runs" },
-      {
-        type: "paragraph",
-        text: "We meet Monday, Wednesday, and Friday mornings across two weeks — enough rhythm to build something real without taking over the whole holiday.",
-      },
-      {
-        type: "paragraph",
-        text: "Each morning starts by looking at what the group made last time, then we take on one new build together — a redstone gadget, a themed house, a small adventure map.",
-      },
-      { type: "heading", text: "Who it's for" },
-      {
-        type: "paragraph",
-        text: "Curious kids who love games and want to try making one. No prior experience needed — just a laptop and an account.",
-      },
-    ],
+      "# How it runs",
+      "We meet Monday, Wednesday, and Friday mornings across two weeks — enough rhythm to build something real without taking over the whole holiday.",
+      "Each morning starts by looking at what the group made last time, then we take on one new build together — a redstone gadget, a themed house, a small adventure map.",
+      "# Who it's for",
+      "Curious kids who love games and want to try making one. No prior experience needed — just a laptop and an account.",
+    ].join("\n\n"),
     isRemote: false,
   },
   event: {
@@ -1471,17 +1452,11 @@ const AUDIENCE_COPY: Record<
       description:
         "A monthly evening for the grown-ups: we play the games your kids play, badly and cheerfully, and talk about what they actually do online. No prior experience, no judgement, and nobody is grading you.",
       long: [
-        { type: "heading", text: "What happens each month" },
-        {
-          type: "paragraph",
-          text: "We pick one game the children in our clubs are playing, and spend the evening in it together. A Gedu hosts, explains what you are looking at, and answers the questions that are hard to ask a twelve-year-old.",
-        },
-        { type: "heading", text: "What you take away" },
-        {
-          type: "paragraph",
-          text: "A feel for the thing your child disappears into after school, some vocabulary to talk about it, and an evening with other parents who are working the same thing out.",
-        },
-      ],
+        "# What happens each month",
+        "We pick one game the children in our clubs are playing, and spend the evening in it together. A Gedu hosts, explains what you are looking at, and answers the questions that are hard to ask a twelve-year-old.",
+        "# What you take away",
+        "A feel for the thing your child disappears into after school, some vocabulary to talk about it, and an evening with other parents who are working the same thing out.",
+      ].join("\n\n"),
       isRemote: true,
     },
     event: {

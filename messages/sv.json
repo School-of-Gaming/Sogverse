@@ -355,16 +355,7 @@
         }
       },
       "longDescription": {
-        "empty": "Ingen lång beskrivning ännu. Lägg till en rubrik eller ett stycke för att börja.",
-        "headingLabel": "Rubrik",
-        "paragraphLabel": "Stycke",
-        "headingPlaceholder": "Avsnittsrubrik",
-        "paragraphPlaceholder": "Skriv ett stycke…",
-        "addHeading": "Lägg till rubrik",
-        "addParagraph": "Lägg till stycke",
-        "moveUp": "Flytta upp",
-        "moveDown": "Flytta ner",
-        "remove": "Ta bort"
+        "placeholder": "Skriv hela presentationen för produkten…"
       },
       "locationPicker": {
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
@@ -442,7 +433,7 @@
       },
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
-        "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
+        "longDescription": "Valfritt. Hela presentationen, som visas endast på produktens detaljsida. Rubriker, listor, betoning och länkar är tillgängliga.",
         "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
         "materialUrlHint": "Valfritt. Endast för Gedus — familjer ser aldrig detta.",
         "seatAudienceHint": "Välj minst ett. Väljer du båda blir det en produkt som en förälder och hens spelare deltar i tillsammans – i butiken märks den ”För familjer”.",

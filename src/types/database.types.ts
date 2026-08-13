@@ -955,7 +955,7 @@ export type Database = {
         Row: {
           created_at: string
           locale: string
-          long_description: Json | null
+          long_description: string | null
           name: string
           product_id: string
           short_description: string
@@ -964,7 +964,7 @@ export type Database = {
         Insert: {
           created_at?: string
           locale: string
-          long_description?: Json | null
+          long_description?: string | null
           name: string
           product_id: string
           short_description: string
@@ -973,7 +973,7 @@ export type Database = {
         Update: {
           created_at?: string
           locale?: string
-          long_description?: Json | null
+          long_description?: string | null
           name?: string
           product_id?: string
           short_description?: string

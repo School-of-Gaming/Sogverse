@@ -1,7 +1,4 @@
-import {
-  longDescriptionToMarkdown,
-  type MarkdownHeadingLevel,
-} from "@/lib/products/long-description-to-markdown";
+import { longDescriptionToMarkdown } from "@/lib/products/long-description-to-markdown";
 import type { ProductDetailRow } from "@/services/products";
 import type { AuthState } from "./signup-panel-view";
 import type { RegistrationState } from "./derive-registration-state";
@@ -9,34 +6,22 @@ import { buildScenarioFixture } from "./mock-detail-fixtures";
 import type { ProductLongDescription } from "@/types";
 
 /**
- * **Fixtures for the one question the long-description format change cannot
- * answer on paper: how loud should a section heading be?**
+ * **A product detail page carrying a real product's worth of marketing copy.**
  *
- * The stored field is a flat block array of headings and paragraphs, and a
- * `heading` block never carried a level — there was only one kind. Markdown
- * needs one, so the conversion has to pick, and the only honest way to pick is
- * to look at the same copy rendered both ways on the page it actually lands on:
- * full width, under the product's own `h1`, with the hero above it and the
- * signup rail beside it.
+ * The long description is authored markdown: levelled headings, real lists,
+ * emphasis, and links out to a game's own store page or back to one of our
+ * policies. Most products carry none at all — which is why the ordinary product
+ * scenes are the wrong place to judge this — so there is one page here, with a
+ * full one, at the page's real width beneath the hero and beside the signup
+ * rail.
  *
- * So there is one body of copy and one page per candidate — today's blocks as
- * the control, then that same copy converted at `#`, at `##` and at `###`.
- * Nothing else differs between them: same product, same hero, same panel, same
- * card, same type scale. Anything that varied besides the heading level would
- * be a second variable in a one-variable comparison.
- *
- * All three levels are here rather than the two that look most likely, because
- * the third is the one that renders at the size the block card already uses —
- * the option where the format changes and the page does not. Leaving it out
- * would have hidden the only candidate that can be judged against the control
- * by looking for a difference and finding none.
+ * There is a single scenario on purpose. The scene once carried four, comparing
+ * the heading level today's unlevelled `heading` blocks should convert to; that
+ * question is answered (`#`, which is what the editor's Title button produces),
+ * and a comparison left standing after its question is settled reads as an open
+ * decision to whoever opens it next.
  */
-export const LONG_DESCRIPTION_SCENARIOS = [
-  "blocks-today",
-  "markdown-h1",
-  "markdown-h2",
-  "markdown-h3",
-] as const;
+export const LONG_DESCRIPTION_SCENARIOS = ["showcase"] as const;
 
 export type LongDescriptionScenario =
   (typeof LONG_DESCRIPTION_SCENARIOS)[number];
@@ -48,36 +33,38 @@ export function isLongDescriptionScenario(
 }
 
 /**
- * **The copy, as an admin has it stored today.**
+ * **The copy, in the shape an admin had it stored before the format changed.**
  *
  * Written to the length and shape a real product page carries — four sections,
  * paragraphs that run past a screen's width, and the specifics a parent
- * actually scans for — because a heading scale judged against two short
- * paragraphs is judged against nothing.
+ * actually scans for — because a page of marketing copy judged against two
+ * short paragraphs is judged against nothing.
+ *
+ * It is kept as blocks, and run through the real conversion below rather than
+ * pasted in as finished markdown, because that conversion is what produces
+ * every product's restored copy: a fixture of hand-written markdown would look
+ * like the page and prove nothing about what the page will actually hold.
  *
  * Three details in it are load-bearing rather than decorative, and each is
- * something an admin has genuinely typed into a plain-text field:
+ * something an admin genuinely typed into a plain-text field:
  *
  * - **A hand-typed list**, dash-prefixed lines inside one paragraph block. It
- *   is the closest the block format gets to a list, it renders as literal lines
- *   today, and the conversion has to keep it that way — a paragraph that
- *   quietly became a bulleted list would be the format change rewriting
- *   somebody's copy.
+ *   is the closest the old format got to a list, it rendered as literal lines,
+ *   and the conversion has to keep it that way — a paragraph that quietly
+ *   became a bulleted list would be the format change rewriting somebody's
+ *   copy.
  * - **Punctuation that is markdown syntax**: a `3 * 3` door, a command with an
  *   underscore in it, a version number opening a line. All three would change
  *   how the surrounding text renders if they were passed through unescaped.
- * - **A line break inside a paragraph**, which the page shows today and must
- *   still show afterwards.
+ * - **A line break inside a paragraph**, which the page showed before and must
+ *   still show.
  *
- * **On the markdown pages, expect the dash list to sit further apart than the
- * blocks page shows it — that difference is the point, not a bug in the
- * scene.** A line that only stays literal because it is escaped has to begin
- * its own markdown paragraph, or the first save through the rich-text editor
- * strips the escape and the lines become real bullets. So each dashed line
- * renders with a paragraph gap above it rather than a tight break, and so does
- * the `1.21` line further up, for the same reason. The words are identical
- * across all four pages; the vertical rhythm around those two places is not,
- * and the heading question is still the only thing the scene is asking about.
+ * **Expect each of those dashed lines to sit a paragraph apart rather than on a
+ * tight break — that is the conversion working, not the scene misrendering.** A
+ * line that stays literal only because it is escaped has to begin its own
+ * markdown paragraph, or the first save through the rich-text editor strips the
+ * escape and the lines become real bullets. The `1.21` line further up carries
+ * the same treatment for the same reason.
  */
 export const LONG_DESCRIPTION_BLOCKS: ProductLongDescription = [
   { type: "heading", text: "What happens in a session" },
@@ -119,27 +106,21 @@ export const LONG_DESCRIPTION_BLOCKS: ProductLongDescription = [
 ];
 
 /**
- * **The section that only markdown can hold**, appended to the converted copy.
+ * **The section only the new format can hold**, appended to the converted copy.
  *
- * It exists because the three markdown scenarios are not only about heading
- * size: the format also brings a real list and, for the first time on an
- * admin-authored field, links. Both are invisible if every scenario renders
- * copy the block format could already express — and a list rendered as bullets
- * next to the hand-typed one above is the clearest possible statement of what
- * changed.
+ * The four sections above are copy that already existed, and they say nothing
+ * about what changed: a real bulleted list, emphasis, and — for the first time
+ * on an admin-authored field — links out to the game's own store and back to
+ * our own policies. Without a section using them, the scene shows a page that
+ * looks exactly like the one it replaced.
  *
- * It is deliberately **absent from the blocks scenario**, because there is no
- * way to put it there: the block format has no list and no link. The first four
- * sections are identical across all four pages and are where the heading
- * question gets answered; this one is the postscript.
- *
- * The heading level is the scenario's, so the appended section sits in the same
- * hierarchy as the converted ones rather than introducing a fourth size.
+ * It sits last on purpose, as a postscript to copy that reads as a product's
+ * own, and its heading is at the same level as the converted ones so it joins
+ * the page's hierarchy rather than introducing a second one.
  */
-function newCapabilitiesSection(headingLevel: MarkdownHeadingLevel): string {
-  const hashes = "#".repeat(headingLevel);
+function newCapabilitiesSection(): string {
   return [
-    `${hashes} Before the first session`,
+    "# Before the first session",
     "There is nothing to install beyond the game itself — the server, the mods and the world are all ours. If you do not have a copy yet, the **Java edition** is the one you want, and it is the cheaper of the two:",
     [
       "- [Minecraft: Java & Bedrock Edition](https://www.minecraft.net/en-us/store/minecraft-deluxe-collection-pc), from Mojang's own store",
@@ -150,37 +131,11 @@ function newCapabilitiesSection(headingLevel: MarkdownHeadingLevel): string {
   ].join("\n\n");
 }
 
-/**
- * Which heading level each markdown scenario converts at. Exhaustive over the
- * markdown slugs by its own type, so adding a scenario without deciding its
- * level does not compile.
- */
-const MARKDOWN_SCENARIO_LEVEL: Record<
-  Exclude<LongDescriptionScenario, "blocks-today">,
-  MarkdownHeadingLevel
-> = {
-  "markdown-h1": 1,
-  "markdown-h2": 2,
-  "markdown-h3": 3,
-};
-
-/**
- * The markdown a scenario renders, or `null` for the one that renders today's
- * blocks instead.
- *
- * The conversion is run here rather than pasted in as a literal, so the scene
- * is looking at the output of the function that will do the real data
- * conversion — a preview of hand-written markdown would prove nothing about
- * either the escaping or the heading level.
- */
-export function longDescriptionScenarioMarkdown(
-  scenario: LongDescriptionScenario,
-): string | null {
-  if (scenario === "blocks-today") return null;
-  const level: MarkdownHeadingLevel = MARKDOWN_SCENARIO_LEVEL[scenario];
+/** The whole blurb the scene renders: converted copy plus the postscript. */
+export function longDescriptionShowcaseMarkdown(): string {
   return [
-    longDescriptionToMarkdown(LONG_DESCRIPTION_BLOCKS, level),
-    newCapabilitiesSection(level),
+    longDescriptionToMarkdown(LONG_DESCRIPTION_BLOCKS, 1),
+    newCapabilitiesSection(),
   ].join("\n\n");
 }
 
@@ -188,8 +143,6 @@ export interface LongDescriptionSceneFixture {
   product: ProductDetailRow;
   state: RegistrationState;
   authState: AuthState;
-  /** The blurb as markdown, or null on the scenario that renders blocks. */
-  markdown: string | null;
 }
 
 /**
@@ -197,26 +150,22 @@ export interface LongDescriptionSceneFixture {
  * swapped for the long copy above.
  *
  * Built on the product-detail fixtures rather than beside them, so everything
- * this comparison is *not* about — the hero, the chips, the facts card, the
- * signup panel and its live clock — is the same page the other product scenes
- * already show, and no second product row exists to drift from it.
+ * this page is *not* about — the hero, the chips, the facts card, the signup
+ * panel and its live clock — is the same page the other product scenes already
+ * show, and no second product row exists to drift from it.
  */
-export function buildLongDescriptionSceneFixture(
-  scenario: LongDescriptionScenario,
-): LongDescriptionSceneFixture {
+export function buildLongDescriptionSceneFixture(): LongDescriptionSceneFixture {
   const { product, state, authState } = buildScenarioFixture("consumer-club");
+  const markdown = longDescriptionShowcaseMarkdown();
   return {
     product: {
       ...product,
-      product_translations: product.product_translations.map(
-        (translation) => ({
-          ...translation,
-          long_description: LONG_DESCRIPTION_BLOCKS,
-        }),
-      ),
+      product_translations: product.product_translations.map((translation) => ({
+        ...translation,
+        long_description: markdown,
+      })),
     },
     state,
     authState,
-    markdown: longDescriptionScenarioMarkdown(scenario),
   };
 }

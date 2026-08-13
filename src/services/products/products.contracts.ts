@@ -18,15 +18,10 @@ const productTranslationInput = z.object({
   locale: z.enum(SUPPORTED_LOCALES),
   name: z.string(),
   short_description: z.string(),
-  // null = no long description for this locale (the RPC stores SQL NULL).
-  long_description: z
-    .array(
-      z.object({
-        type: z.enum(["heading", "paragraph"]),
-        text: z.string(),
-      })
-    )
-    .nullable(),
+  // The marketing blurb as authored markdown; null = this locale has none, and
+  // the RPC stores SQL NULL. The form folds a blank editor to null rather than
+  // sending "", which the column's CHECK refuses.
+  long_description: z.string().nullable(),
 });
 
 const scheduleSlotInput = z.object({

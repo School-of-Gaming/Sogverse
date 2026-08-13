@@ -403,16 +403,7 @@
         }
       },
       "longDescription": {
-        "empty": "QIn nI’ tu’be’. nargh pagh ’ay’ yIchu’.",
-        "headingLabel": "nargh",
-        "paragraphLabel": "’ay’",
-        "headingPlaceholder": "’ay’ nargh",
-        "paragraphPlaceholder": "’ay’ yIghItlh…",
-        "addHeading": "nargh yIchu’",
-        "addParagraph": "’ay’ yIchu’",
-        "moveUp": "Dung yIvIH",
-        "moveDown": "bIng yIvIH",
-        "remove": "yIteq"
+        "placeholder": "Doch QIn naQ yIghItlh…"
       },
       "locationPicker": {
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
@@ -490,7 +481,7 @@
       },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
-        "longDescription": "vItlhutlh. Doch ’aqroSDaq neH cha’lu’. nargh je ’ay’mey lo’.",
+        "longDescription": "vItlhutlh. QIn naQ, Doch ’aqroSDaq neH cha’lu’. nargh, tetlh, ’ej ghomHa’ ghItlh lo’laH.",
         "topicHint": "Doch qel malja’vam. qech-lojmIt lulegh qorDu’pu’ malja’Daq, ’ej De’ navDaq je.",
         "materialUrlHint": "vItlhutlh. Gedupu’vaD neH — ghu’pu’ luleghbe’.",
         "seatAudienceHint": "wa’ yIwIv, pagh cha’. cha’ DawIvDI’, qorDu’ lop: vav toy’wI’ je tay’. malja’Daq per: qorDu’pu’vaD.",
