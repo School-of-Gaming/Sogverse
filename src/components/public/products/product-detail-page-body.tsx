@@ -387,13 +387,24 @@ export function ProductDetailPageBody({
 
           The wrapper is conditional, not just its contents. Several topics name
           subject matter rather than one piece of software and carry no info
-          card at all, and an empty grid item is not free: this container is
-          `space-y-6` below `lg` and a gapped grid above it, so a wrapper around
-          nothing still opens ~24px of hole under the facts card. Nothing
-          survives that reveal to be pushed around — the card is either here or
-          it never was — so there is nothing to reserve space for, and reserving
-          it anyway would be the defect. Both this check and the card's own
-          early return read the same predicate, so they cannot disagree. */}
+          card at all, and below `lg` an empty wrapper is not free: the
+          container is `space-y-6`, whose sibling margin lands on the empty
+          element just the same, so a wrapper around nothing opened ~24px of
+          hole under the facts card. Nothing survives that reveal to be pushed
+          around — the card is either here or it never was — so there is nothing
+          to reserve space for, and reserving it anyway would be the defect.
+
+          From `lg` it changes nothing, and it is worth being exact about that
+          rather than claiming a fix twice: this row exists whether or not the
+          card does, because the signup rail spans it (`lg:row-span-3`, and
+          `2xl:row-span-2` on the facts card), and an empty grid item is
+          zero-height anyway. Any trailing gap up there belongs to those spans,
+          not to this wrapper, and is not worth two more conditional class
+          strings to chase — the row-count tripwire above stays far easier to
+          reason about while these placements are static.
+
+          Both this check and the card's own early return read the same
+          predicate, so they cannot disagree. */}
       {topicHasInfoCard(product.topic) && (
         <div className="lg:col-start-2 lg:row-start-4 lg:min-w-0 2xl:col-start-3 2xl:row-start-3">
           <TopicInfoCard topic={product.topic} />

@@ -16,11 +16,12 @@
 --
 -- Two consequences worth stating, because both are load-bearing elsewhere:
 --
---   - Four of the five are common nouns, not brands, which is the first time
---     that has been true. Whether their labels get translated is an open
---     product decision (topics.ts describes the `labelKey` variant it would
---     use); until it is taken they render as English literals like every other
---     topic, which is a deliberate hold, not an oversight.
+--   - Three of the five are common nouns rather than brands — Programming, AI
+--     and Esports — which is the first time that has been true. (Creator Studio
+--     is School of Gaming's own name for that programme, so it is a proper noun
+--     like the game brands.) Their labels stay English literals anyway: that
+--     was looked at and decided, not deferred, so topics.ts describes the
+--     `labelKey` variant as an escape hatch deliberately left unbuilt.
 --   - An info-less topic now exists in production for the first time, so the
 --     product page's card-or-nothing branch stops being theoretical.
 --

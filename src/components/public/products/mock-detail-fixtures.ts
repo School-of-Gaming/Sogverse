@@ -762,17 +762,24 @@ const SCENARIO_ART: Partial<Record<PreviewScenario, string>> = {
 /**
  * The topic a scenario's row carries, where the default below is not the point.
  *
- * Most topics bring an "About {name}" card to the detail page; a few name
- * subject matter rather than one piece of software and bring none, and the page
- * then renders no card *and no wrapper for one* — the difference between those
- * two is a gap in the reading column, which is only visible at page scale. So
- * exactly one scenario is put on an info-less topic, and it is a municipality
- * club rather than the flagship consumer one: the card is the thing most worth
- * looking at on the default scenario, and this map exists to make its absence
- * reviewable somewhere, not to take it away from where it reads best.
+ * Two things are only visible at page scale, so each gets one scenario:
+ *
+ * - **A topic with no card.** Most topics bring an "About {name}" card to the
+ *   detail page; a few name subject matter rather than one piece of software
+ *   and bring none, and the page then renders no card *and no wrapper for one*.
+ *   The difference between those two is a gap in the reading column. This goes
+ *   on a municipality club rather than the flagship consumer one — the card is
+ *   the thing most worth looking at on the default scenario, and this map
+ *   exists to make its absence reviewable somewhere, not to take it away from
+ *   where it reads best.
+ * - **A card whose copy is new.** A card renders on the default scenario
+ *   already, but always the same one, so freshly written topic prose has
+ *   nowhere to be read at full width against the sections above and below it.
+ *   The camp carries whichever topic that currently is.
  */
 const SCENARIO_TOPIC: Partial<Record<PreviewScenario, ProductTopic>> = {
   "muni-uncapped": "programming",
+  "camp-open": "rocket_league",
 };
 
 export interface ShopCatalogEntry {

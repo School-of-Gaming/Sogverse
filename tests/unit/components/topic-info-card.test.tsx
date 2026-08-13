@@ -128,9 +128,9 @@ describe("TopicInfoCard", () => {
     // is right from both, and one link to the game's own (single, global) site
     // beats a store row that 404s for half the audience. Assert the single
     // link, because a `stores` list creeping back in is exactly the regression.
-    const links = getByRole("link");
-    expect(links.getAttribute("href")).toBe("https://www.rocketleague.com/");
-    expect(links.getAttribute("rel")).toContain("noopener");
+    const link = getByRole("link");
+    expect(link.getAttribute("href")).toBe("https://www.rocketleague.com/");
+    expect(link.getAttribute("rel")).toContain("noopener");
   });
 
   it("renders no card at all for a topic without an info block", () => {
