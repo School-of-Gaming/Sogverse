@@ -1,15 +1,77 @@
+import { z } from "zod";
 import type { Profile, ProfileUpdate, UserRole, ParentGamer, SpokenLanguage, AppSupabaseClient } from "@/types";
 import { escapeLikePattern } from "@/lib/utils";
 import { walkPages } from "@/lib/supabase/paging";
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import {
   adminGameAccountWriteResult,
+  searchedProfile,
+  SEARCHED_PROFILE_COLUMNS,
   type AdminGameAccountBody,
   type AdminGameAccountWriteResult,
 } from "./users.contracts";
 
 /** How many matches one user search returns. */
 const USER_SEARCH_LIMIT = 20;
+
+/**
+ * How many digits of a phone number are matched, counting from the end.
+ *
+ * A Finnish number reaches us as `358401234567` (E.164 without the `+`) and
+ * gets typed either way round — `+358 40 123 4567` internationally, or
+ * `040 123 4567` nationally, where the trunk `0` stands in for the country
+ * code. The two forms share their tail and differ in their head, so matching a
+ * fixed number of trailing digits finds the row from either without the search
+ * having to know a single dialling rule. Seven is the subscriber part of a
+ * Finnish mobile number: long enough not to collide at any size this table will
+ * reach, short enough to survive whatever prefix was typed in front of it.
+ */
+const PHONE_MATCH_DIGITS = 7;
+
+/**
+ * The fewest digits that make a query a phone number rather than a name.
+ *
+ * Below this a digit string is far likelier to be part of a game handle
+ * (`EnderDragon42`) or a house number than a number somebody is dialling.
+ */
+const PHONE_MIN_DIGITS = 5;
+
+/**
+ * Split what was typed into the terms every match has to satisfy.
+ *
+ * Someone searching types the name they know — "Jon Smith" — and no single
+ * field holds it: the two words are a first name and a surname, so matching the
+ * whole string against a field finds nobody even though either word alone finds
+ * them. Each word is matched separately instead and a profile has to match all
+ * of them, which is also what makes adding the surname *narrow* the results
+ * rather than change what is being asked.
+ *
+ * Terms are cut on whitespace, on commas — how a name gets typed surname-first
+ * — and on `*`, which PostgREST reads as a wildcard for `ilike` before the
+ * pattern ever reaches SQL, so a stray one would match everybody rather than
+ * nobody. None of the three means anything inside a name, an email or a handle.
+ */
+function searchTerms(query: string): string[] {
+  return query.split(/[\s,*]+/).filter(Boolean);
+}
+
+/**
+ * The one term a phone-shaped query becomes, or null if it is not one.
+ *
+ * This has to run *before* the tokenizer rather than beside it, because a phone
+ * number is the one thing people type with spaces inside a single value:
+ * `040 123 4567` split into words would demand a profile matching "040" and
+ * "123" and "4567" separately, which is nobody. A query with no letters in it
+ * is not three terms, it is one number typed with its groups spaced out.
+ */
+function phoneTerm(query: string): string | null {
+  if (/\p{L}/u.test(query)) return null;
+
+  const digits = query.replace(/\D/g, "");
+  if (digits.length < PHONE_MIN_DIGITS) return null;
+
+  return digits.slice(-PHONE_MATCH_DIGITS);
+}
 
 /**
  * A capped page of search matches, plus how many there really were.
@@ -156,25 +218,59 @@ export class UsersService {
   /**
    * The newest profiles matching a needle, capped, with the true match count.
    *
+   * Runs against `user_search_index` rather than `profiles`, which is what puts
+   * a phone number and a game handle within reach: the view carries one
+   * `search_blob` per person holding every string they can be found by, so an
+   * admin working from a WhatsApp message or a gedu's "who is EnderDragon42?"
+   * asks the same question as one working from a name. A platform added later
+   * changes the view and nothing here.
+   *
    * Capped rather than walked on purpose: this runs on every keystroke and a
    * two-letter needle matches half the table. The count is the price of
    * capping — it costs one extra aggregate and it is what stops the cap being
    * invisible to whoever is searching.
    */
   async searchUsers(query: string): Promise<UserSearchResult> {
-    const needle = escapeLikePattern(query);
-    const { data, error, count } = await this.supabase
-      .from("profiles")
-      .select("*", { count: "exact" })
-      .or(`email.ilike.%${needle}%,first_name.ilike.%${needle}%,last_name.ilike.%${needle}%`)
+    // A phone number is one value typed with spaces inside it, so it has to be
+    // recognised before the tokenizer gets to split it into three useless
+    // fragments. Everything else is words.
+    const phone = phoneTerm(query);
+    const terms = phone ? [phone] : searchTerms(query);
+
+    // Nothing searchable was typed — punctuation alone, say. Answering it with
+    // an unfiltered read would hand back the twenty newest accounts as if they
+    // had matched something.
+    if (terms.length === 0) return { results: [], total: 0 };
+
+    let search = this.supabase
+      .from("user_search_index")
+      .select(SEARCHED_PROFILE_COLUMNS, { count: "exact" });
+
+    // One filter per term, and PostgREST ANDs repeated filters — so "jon smith"
+    // asks for somebody whose blob contains "jon" *and* "smith", in either
+    // order and across any of the fields the view folded into it. That is what
+    // makes adding the surname narrow the results rather than change the
+    // question, which is the whole bug this started as.
+    for (const term of terms) {
+      search = search.ilike("search_blob", `%${escapeLikePattern(term)}%`);
+    }
+
+    const { data, error, count } = await search
       .order("created_at", { ascending: false })
       .order("id")
       .limit(USER_SEARCH_LIMIT);
 
     if (error) throw error;
-    // `count` is only absent if `count: "exact"` were dropped above; falling
-    // back to what arrived keeps the shape total rather than making it lie.
-    return { results: data, total: count ?? data.length };
+
+    // The view cannot promise NOT NULL through PostgreSQL's catalog, so the
+    // generated row type is nullable everywhere and the parse is what puts the
+    // guarantee back — loudly, if the view's shape ever stops matching.
+    return {
+      results: z.array(searchedProfile).parse(data),
+      // `count` is only absent if `count: "exact"` were dropped above; falling
+      // back to what arrived keeps the shape total rather than making it lie.
+      total: count ?? data.length,
+    };
   }
 
   /**
