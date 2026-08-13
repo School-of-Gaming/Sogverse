@@ -263,9 +263,16 @@ where the fix would change what we commit to rather than how it reads.
       two media consents (private sponsor reporting / public impact communications).
 - [ ] **Programme registration consent checkboxes.** The Privacy Policy describes four:
       the *required* privacy-acknowledgement checkbox, the *optional* Lynx email
-      checkbox, and the two *optional* media checkboxes. None exist — programme
-      registration itself doesn't exist yet (planned as a superset of `/register`; see
-      the note in `src/components/roblox/partnership-cta.tsx`).
+      checkbox, and the two *optional* media checkboxes. None exist.
+
+      **Where they now live has changed — Kyle, 2026-08-13.** The programme is no longer
+      getting its own registration form. The superset of `/register` is **dropped**:
+      programme families sign up through the same registration everyone uses, and a
+      product can be marked as requiring additional consents, which are then collected
+      at the point of joining that product. So these four checkboxes are a
+      *product-join* surface, not a sign-up surface, and the mechanism behind them is
+      generic platform work rather than anything Roblox-specific. This does not change
+      **which** consents are needed or what they say — only where a parent meets them.
 
       *Lynx's proposed set, 2026-08-12, wording with their lawyer:* (1) mandatory "I am
       the parent/legal guardian", (2) mandatory "I have read and agree to the Programme
