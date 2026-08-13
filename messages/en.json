@@ -355,16 +355,7 @@
         }
       },
       "longDescription": {
-        "empty": "No long description yet. Add a heading or a paragraph to build one.",
-        "headingLabel": "Heading",
-        "paragraphLabel": "Paragraph",
-        "headingPlaceholder": "Section heading",
-        "paragraphPlaceholder": "Write a paragraph…",
-        "addHeading": "Add heading",
-        "addParagraph": "Add paragraph",
-        "moveUp": "Move up",
-        "moveDown": "Move down",
-        "remove": "Remove"
+        "placeholder": "Write the full pitch for this product…"
       },
       "locationPicker": {
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
@@ -442,7 +433,7 @@
       },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
-        "longDescription": "Optional. Shown only on the product’s detail page. Build it from headings and paragraphs.",
+        "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
         "topicHint": "What this product is about. Families see it as the Subject filter in the shop and on the product page’s About card.",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
         "seatAudienceHint": "Pick at least one. Both means a product a parent and their gamer take part in together — the shop labels it “For families”.",

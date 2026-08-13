@@ -17,7 +17,7 @@ import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
 import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
-import { LongDescriptionBlocksEditor } from "../long-description-blocks-editor";
+import { LongDescriptionEditor } from "../long-description-editor";
 import {
   type FormState,
   type TranslationDraft,
@@ -50,7 +50,7 @@ export function IdentitySection({
   const emptyDraft: TranslationDraft = {
     name: "",
     shortDescription: "",
-    longDescription: [],
+    longDescription: "",
   };
   const activeDraft: TranslationDraft =
     state.translations[state.activeLocale] ?? emptyDraft;
@@ -73,7 +73,7 @@ export function IdentitySection({
       ...s,
       translations: {
         ...s.translations,
-        [locale]: { name: "", shortDescription: "", longDescription: [] },
+        [locale]: { name: "", shortDescription: "", longDescription: "" },
       },
       activeLocale: locale,
     }));
@@ -186,17 +186,26 @@ export function IdentitySection({
         />
       </Field>
 
+      {/* The editor reads its content once at mount, so the locale is its
+          React key: switching tabs remounts it against that locale's draft
+          rather than leaving the previous language's copy in the box. */}
       <Field
         label={t("labels.longDescription")}
         optional
         hint={t("hints.longDescription")}
       >
-        <LongDescriptionBlocksEditor
-          value={activeDraft.longDescription}
-          onChange={(longDescription) =>
-            setActiveTranslation({ longDescription })
-          }
-        />
+        {({ hintId }) => (
+          <LongDescriptionEditor
+            key={state.activeLocale}
+            value={activeDraft.longDescription}
+            placeholder={t("longDescription.placeholder")}
+            ariaLabel={t("labels.longDescription")}
+            describedBy={hintId}
+            onChange={(longDescription) =>
+              setActiveTranslation({ longDescription })
+            }
+          />
+        )}
       </Field>
 
       <ImagePicker

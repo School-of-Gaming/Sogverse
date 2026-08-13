@@ -1,6 +1,6 @@
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { ProductLongDescription, ProductTag, ProductTopic } from "@/types";
+import type { ProductTag, ProductTopic } from "@/types";
 import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
@@ -74,13 +74,14 @@ export type RegistrationOpensMode =
 export type SeatLimitMode = (typeof SEAT_LIMIT_MODE_VALUES)[number];
 
 // Per-locale draft. `shortDescription` is the required teaser (the old single
-// `description`); `longDescription` is the optional structured blurb edited as
-// an ordered list of heading/paragraph blocks. An empty `longDescription`
-// array means "no long description" and submits as SQL NULL.
+// `description`); `longDescription` is the optional marketing blurb, authored
+// as markdown in the rich-text editor. A blank `longDescription` means "no long
+// description" and submits as SQL NULL — the column's CHECK refuses an empty
+// string, so the payload builder folds one rather than sending it.
 export type TranslationDraft = {
   name: string;
   shortDescription: string;
-  longDescription: ProductLongDescription;
+  longDescription: string;
 };
 
 export interface FormState {
@@ -205,7 +206,7 @@ export function initialState(
   const startsCapped = capacityDefaultsToCapped(config, initialPaidMode);
   return {
     translations: {
-      [uiLocale]: { name: "", shortDescription: "", longDescription: [] },
+      [uiLocale]: { name: "", shortDescription: "", longDescription: "" },
     },
     activeLocale: uiLocale,
     topic: "",

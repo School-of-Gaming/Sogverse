@@ -48,6 +48,7 @@ import {
   LONG_DESCRIPTION_BLOCKS,
   LONG_DESCRIPTION_SCENARIOS,
   buildLongDescriptionSceneFixture,
+  longDescriptionShowcaseMarkdown,
 } from "@/components/public/products/mock-long-description-fixtures";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
@@ -184,66 +185,31 @@ describe("registry scenarios match their fixtures", () => {
 });
 
 /**
- * **A comparison scene is only worth opening if it varies one thing.**
+ * **The showcase page has to carry a real product's worth of copy, and has to
+ * show what the format is for.**
  *
- * The long-description scene exists to answer a single question — what heading
- * level should today's unlevelled `heading` blocks become — and it answers it
- * by putting the same copy on four pages: the block control and one page per
- * candidate level. Everything that is *not* the heading
- * level has to be identical across them, or the owner is comparing two things
- * at once and cannot tell which one they are reacting to. Nothing else in the
- * app fails if a fixture edit quietly gives one page different copy, a
- * different product or a shorter blurb, so it is pinned here.
+ * The scene exists because most products have no long description at all, so
+ * the ordinary product scenes cannot answer how a full one sits on the page. It
+ * once carried four scenarios comparing heading levels; that question is
+ * settled, the comparison is gone, and what is left is one page whose whole
+ * value is the copy on it. A fixture edit that quietly shortened the blurb, or
+ * dropped the list and links, would take the point of the page away without
+ * failing anything else — so it is pinned here.
  */
-describe("the long-description scene varies the heading level and nothing else", () => {
-  const fixtures = LONG_DESCRIPTION_SCENARIOS.map((scenario) => ({
-    scenario,
-    ...buildLongDescriptionSceneFixture(scenario),
-  }));
+describe("the long-description scene shows a full blurb", () => {
+  const fixture = buildLongDescriptionSceneFixture();
+  const markdown = longDescriptionShowcaseMarkdown();
 
-  it("renders one product, with one blurb, on all four pages", () => {
-    const ids = new Set(fixtures.map((f) => f.product.id));
-    expect(ids.size).toBe(1);
-    for (const { scenario, product } of fixtures) {
-      expect(product.product_translations[0].long_description, scenario).toEqual(
-        LONG_DESCRIPTION_BLOCKS,
-      );
+  it("puts the same blurb on every translation of one product", () => {
+    for (const translation of fixture.product.product_translations) {
+      expect(translation.long_description).toBe(markdown);
     }
   });
 
-  it("gives exactly one page the block path and the rest markdown", () => {
-    const blockPages = fixtures.filter((f) => f.markdown === null);
-    expect(blockPages).toHaveLength(1);
-    expect(blockPages[0].scenario).toBe("blocks-today");
-    expect(fixtures.filter((f) => f.markdown !== null).length).toBeGreaterThan(1);
-  });
-
-  it("converts the same copy at each of the three candidate levels", () => {
-    const markdowns = fixtures
-      .map((f) => f.markdown)
-      .filter((m): m is string => m !== null);
-    // Different pages, or there is no comparison — and the difference has to be
-    // the heading marks rather than the words, which is what stripping the
-    // leading hashes checks.
-    expect(new Set(markdowns).size).toBe(markdowns.length);
-    const stripped = markdowns.map((m) => m.replace(/^#+ /gm, ""));
-    expect(new Set(stripped).size).toBe(1);
-    // The level each page converts at, read off its first heading. Counting the
-    // hashes rather than testing a `# ` prefix per level: `^## ` also matches a
-    // `###` heading's first three characters, so prefix tests cannot tell the
-    // three pages apart.
-    const levels = markdowns.map((markdown) => {
-      const heading = /^(#+) \S/m.exec(markdown);
-      if (heading === null) throw new Error("converted copy has no heading");
-      return heading[1].length;
-    });
-    expect(new Set(levels)).toEqual(new Set([1, 2, 3]));
-  });
-
   /**
-   * A heading scale judged against two short paragraphs is judged against
-   * nothing: the whole point of the page is that the sections have enough prose
-   * between them to read as sections.
+   * A page of marketing copy judged against two short paragraphs is judged
+   * against nothing: the sections need enough prose between them to read as
+   * sections.
    */
   it("carries a real product's worth of copy", () => {
     const headings = LONG_DESCRIPTION_BLOCKS.filter(
@@ -257,47 +223,46 @@ describe("the long-description scene varies the heading level and nothing else",
   });
 
   /**
-   * The two things the block format cannot express, and therefore the two the
-   * markdown pages have to actually show — otherwise the only visible
-   * difference between the scenarios is a font size, and the reviewer never
-   * sees what the change is for.
+   * The four converted sections are copy that already existed and say nothing
+   * about what changed. Without the closing section using a real list, emphasis
+   * and links, the page looks exactly like the one it replaced.
    */
-  it("shows off the list and the links the new format allows", () => {
-    for (const { scenario, markdown } of fixtures) {
-      if (markdown === null) continue;
-      expect(markdown, scenario).toMatch(/^- \S/m);
-      const links = markdown.match(/\]\(([^)]+)\)/g) ?? [];
-      expect(links.length, scenario).toBeGreaterThan(1);
-      expect(markdown, scenario).toContain("](https://");
-    }
+  it("shows off the list and the links the format allows", () => {
+    expect(markdown).toMatch(/^- \S/m);
+    expect(markdown).toMatch(/\*\*[^*]+\*\*/);
+    const links = markdown.match(/\]\(([^)]+)\)/g) ?? [];
+    expect(links.length).toBeGreaterThan(1);
+    expect(markdown).toContain("](https://");
+  });
+
+  /** Every heading converts at the level the editor's Title button writes. */
+  it("converts every heading to a top-level hash", () => {
+    const levels = [...markdown.matchAll(/^(#+) \S/gm)].map((m) => m[1].length);
+    expect(levels.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(levels)).toEqual(new Set([1]));
   });
 
   /**
    * The hand-typed dash list inside a paragraph block is the case the
-   * conversion is most likely to "improve": it is what an admin does when the
-   * format has no list, it renders as plain lines today, and it must still
-   * render as plain lines afterwards. Losing it from the fixture would take the
-   * regression off the page entirely.
+   * conversion is most likely to "improve": it is what an admin did when the
+   * format had no list, it rendered as plain lines, and it must still render as
+   * plain lines. Losing it from the fixture would take the regression off the
+   * page entirely.
    *
    * **Each of those lines stands as its own paragraph, and the scene is meant
    * to show that.** An escaped line reached over a hard break loses its
    * backslash the first time the field is saved in the rich-text editor, so the
-   * conversion gives it a paragraph start instead — which is a visible gap
-   * rather than a tight break, and the one thing about the markdown pages that
-   * does not match the blocks control. Pinning the shape rather than just the
-   * escape is what keeps somebody from "fixing" the spacing by putting the hard
-   * break back.
+   * conversion gives it a paragraph start instead — a visible gap rather than a
+   * tight break. Pinning the shape rather than just the escape is what keeps
+   * somebody from "fixing" the spacing by putting the hard break back.
    */
-  it("keeps a hand-typed list in the source copy, each line its own paragraph", () => {
+  it("keeps a hand-typed list literal, each line its own paragraph", () => {
     const typedList = LONG_DESCRIPTION_BLOCKS.filter(
       (b) => b.type === "paragraph" && /\n- /.test(b.text),
     );
     expect(typedList.length).toBeGreaterThan(0);
-    for (const { scenario, markdown } of fixtures) {
-      if (markdown === null) continue;
-      expect(markdown, scenario).toContain("\n\n\\- a computer");
-      expect(markdown, scenario).not.toContain("\\\n\\- ");
-    }
+    expect(markdown).toContain("\n\n\\- a computer");
+    expect(markdown).not.toContain("\\\n\\- ");
   });
 });
 

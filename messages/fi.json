@@ -355,16 +355,7 @@
         }
       },
       "longDescription": {
-        "empty": "Ei vielä pitkää kuvausta. Lisää otsikko tai kappale aloittaaksesi.",
-        "headingLabel": "Otsikko",
-        "paragraphLabel": "Kappale",
-        "headingPlaceholder": "Osion otsikko",
-        "paragraphPlaceholder": "Kirjoita kappale…",
-        "addHeading": "Lisää otsikko",
-        "addParagraph": "Lisää kappale",
-        "moveUp": "Siirrä ylös",
-        "moveDown": "Siirrä alas",
-        "remove": "Poista"
+        "placeholder": "Kirjoita tuotteen koko esittely…"
       },
       "locationPicker": {
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
@@ -442,7 +433,7 @@
       },
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
-        "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
+        "longDescription": "Valinnainen. Koko esittely, joka näkyy vain tuotteen tuotesivulla. Käytettävissä ovat otsikot, luettelot, korostukset ja linkit.",
         "topicHint": "Mistä tuotteessa on kyse. Perheet näkevät tämän Aihe-suodattimena kaupassa ja tuotesivun tietokortissa.",
         "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
         "seatAudienceHint": "Valitse vähintään yksi. Molempien valitseminen tarkoittaa toimintaa, johon vanhempi ja pelaaja osallistuvat yhdessä — kaupassa se näkyy merkinnällä ”Perheille”.",

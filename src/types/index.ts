@@ -159,30 +159,34 @@ export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"][
 //
 // Two description columns (migration 00091): `short_description` (the teaser
 // shown on cards, the detail hero, and admin lists) and `long_description`
-// (the optional structured blurb rendered only on the shop detail page —
-// shape below).
+// (the optional marketing blurb rendered only on the shop detail page).
+//
+// `long_description` is **authored markdown** in a `text` column: written in the
+// same rich editor the staff-authored feed fields use, read through the shared
+// markdown renderer. NULL and the empty string both mean "this locale has no
+// long description", and the page renders no card at all for either.
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
 export type ProductTranslationInsert = Database["public"]["Tables"]["product_translations"]["Insert"];
 
 /**
- * One block of a product's structured long description. The flat, ordered
- * array renders top-to-bottom on the shop detail page: `heading` blocks become
- * semantic headings, `paragraph` blocks become `<p>`. Plain text only — no
- * inline marks, no links, no lists, and a heading carries no level, because
- * there was only ever one kind of heading.
+ * **The shape `long_description` held before it became markdown**, and the
+ * narrowing that reads one safely.
  *
- * **This shape is being replaced by markdown, not extended.** The field is
- * moving to a single authored markdown string, written in the same rich editor
- * the staff-authored feed fields use and read through the shared markdown
- * renderer — which is where the marks, the levelled headings, the real lists
- * and the links come from, and what lets the same copy convert cleanly into the
- * email it is later sent as. So none of the widenings this comment used to
- * promise are coming: the answer to "we need bold here" is the new format.
+ * A flat, ordered array of heading/paragraph blocks holding plain text — no
+ * marks, no links, no lists, and a heading carried no level, because there was
+ * only ever one kind. Nothing in the running app produces or consumes it: the
+ * column is `text`, the editor writes markdown, and the page renders markdown.
  *
- * The block type survives until the stored values are converted and the column
- * changes type. While both exist the traffic is one-way — blocks convert to
- * markdown, never back — and the conversion is lossy in a few named ways,
- * documented beside the code that performs it.
+ * **It survives for exactly one purpose.** The migration that changed the
+ * column's type cleared its contents, and the copy is restored afterwards from
+ * an audited dump of the old values — read into these blocks and converted by
+ * `longDescriptionToMarkdown` in `src/lib/products/`, which is the audited,
+ * heavily-tested conversion and the only thing allowed to perform it. This pair
+ * is that path's input side. When the restore is done, all three go together.
+ *
+ * `parseLongDescription` drops anything that is not a well-formed
+ * `{ type, text }` block, so a dump with a stray element converts what is
+ * genuinely there rather than throwing or inventing copy.
  */
 export type ProductLongDescriptionBlock = {
   type: "heading" | "paragraph";
@@ -190,16 +194,6 @@ export type ProductLongDescriptionBlock = {
 };
 export type ProductLongDescription = ProductLongDescriptionBlock[];
 
-/**
- * Narrow a `product_translations.long_description` value (generated as
- * `Json | null`) into the structured block array. The DB CHECK
- * `product_translations_long_description_check` only enforces NULL-or-array
- * (migration 00092 deliberately dropped the deeper per-element validator —
- * see its header), so the per-block filtering here is the real read-side guard:
- * it drops anything that isn't a well-formed `{ type, text }` block. On the
- * write side the block-editor UI is the matching guard. Returns `[]` for
- * null/non-array/garbage so call sites can map directly.
- */
 export function parseLongDescription(
   value: Json | null | undefined,
 ): ProductLongDescription {

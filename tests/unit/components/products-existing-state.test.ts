@@ -84,7 +84,7 @@ describe("existingFormState", () => {
       en: {
         name: "Build Club",
         shortDescription: "Build castles together.",
-        longDescription: [],
+        longDescription: "",
       },
     });
     expect(state.activeLocale).toBe("en");
@@ -276,7 +276,7 @@ describe("buildUpdateInput round-trip", () => {
       en: {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
-        longDescription: [],
+        longDescription: "",
       },
     };
     const input = buildUpdateInput(state, consumerConfig);
@@ -328,7 +328,7 @@ describe("buildUpdateInput round-trip", () => {
       en: {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
-        longDescription: [],
+        longDescription: "",
       },
     };
     expect(buildUpdateInput(state, consumerConfig).tag).toBe("neuroinclusive");

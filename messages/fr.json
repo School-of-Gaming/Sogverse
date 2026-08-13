@@ -355,16 +355,7 @@
         }
       },
       "longDescription": {
-        "empty": "Pas encore de description longue. Ajoutez un titre ou un paragraphe pour la construire.",
-        "headingLabel": "Titre",
-        "paragraphLabel": "Paragraphe",
-        "headingPlaceholder": "Titre de section",
-        "paragraphPlaceholder": "Rédigez un paragraphe…",
-        "addHeading": "Ajouter un titre",
-        "addParagraph": "Ajouter un paragraphe",
-        "moveUp": "Déplacer vers le haut",
-        "moveDown": "Déplacer vers le bas",
-        "remove": "Retirer"
+        "placeholder": "Rédigez la présentation complète de ce produit…"
       },
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
@@ -442,7 +433,7 @@
       },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
-        "longDescription": "Facultatif. Affiché uniquement sur la page de détail du produit. Construisez-le à partir de titres et de paragraphes.",
+        "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
         "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
         "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",

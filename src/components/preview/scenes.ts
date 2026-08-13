@@ -85,33 +85,14 @@ const PRODUCT_SCENARIOS: readonly PreviewScenarioMeta[] = PREVIEW_SCENARIOS.map(
 );
 
 /**
- * The long-description comparison's scenarios, keyed off the fixture's own slug
+ * The long-description scene's one scenario, keyed off the fixture's own slug
  * list so the registry cannot list a page the scene will not serve.
  */
 const LONG_DESCRIPTION_SCENARIO_META: Record<
   (typeof LONG_DESCRIPTION_SCENARIOS)[number],
-  { label: string; description: string }
+  { label: string }
 > = {
-  "blocks-today": {
-    label: "Blocks — the field as it is today",
-    description:
-      "The control. The same copy, rendered by the block path that ships now: every heading a single unlabelled level at `text-base`, every paragraph muted beneath it, and a hand-typed dash list sitting inside a paragraph because the format has nowhere else to put one. Open this first and keep it in a tab — each of the three pages beside it differs from it in two respects: the heading level, and the list-and-links section the markdown pages carry at the end.",
-  },
-  "markdown-h1": {
-    label: "Markdown at `#` — what the migration produces",
-    description:
-      "**The page to judge.** Every heading block becomes a top-level `#`, which is what the editor's own Title button produces and what the renderer paints as an `h2` at `text-lg` — one step above the body, under the product's name. Converting at this level is what keeps migrated copy and newly typed copy the same thing: an admin adding a section presses Title, and it matches what is already there. Convert any lower and the field carries two conventions, split by whether the text predates the migration, with nothing on screen to explain the difference.",
-  },
-  "markdown-h2": {
-    label: "Markdown at `##` — the second level, for reference",
-    description:
-      "Not a candidate for the conversion — this is what an admin gets from the **Heading** button, one step under Title, rendered as an `h3` at `text-base`. Open it to see whether a sub-section reads as subordinate to the sections on the page beside it without disappearing into the prose.",
-  },
-  "markdown-h3": {
-    label: "Markdown at `###` — the third level, for reference",
-    description:
-      "Also not a conversion candidate: the **Subheading** button, an `h4` at `text-sm`. It is the same size as the body copy and carries its weight and full-strength colour alone, which is the level to check if you think three heading buttons is one more than this field needs.",
-  },
+  showcase: { label: "A product page with a full blurb on it" },
 };
 
 const LONG_DESCRIPTION_PREVIEW_SCENARIOS: readonly PreviewScenarioMeta[] =
@@ -158,9 +139,9 @@ export const PREVIEW_SCENES = [
   },
   {
     surface: "product-long-description",
-    title: "Product long description — which heading level?",
+    title: "Product long description",
     description:
-      "A product's marketing long description is stored today as a flat array of heading and paragraph blocks; it is becoming markdown, authored in the same rich editor gedus write session reports in, and with links allowed because this copy is written by an admin for our own shop pages rather than by a gedu for one family. A `heading` block never carried a level — there was only one kind of heading — so the conversion has to choose one. **It converts at `#`**, because that is what the editor's Title button produces: any lower and copy written after the migration would out-rank the copy migrated into it, in the same field, with nothing on screen to say why. These scenarios are one body of realistic copy (four sections, paragraphs at full length, the specifics a parent scans for) rendered by today's block path, then converted — the first markdown page is what the migration actually produces, and the two below it show the levels an admin reaches from the second and third heading buttons. Nothing else varies between them — same product, same hero, same signup rail, same card, same body size — so the only thing to judge is the headings. The markdown pages carry one extra section at the end that the block format cannot express at all: a real bulleted list, and links out to the game's store and back to our privacy policy. It sits last on purpose, after the sections that answer the heading question, and it is the whole of what the field gains. Note what does not change: the hand-typed dash list in the fourth section stays literal text on all three markdown pages, because the conversion escapes anything that would otherwise start meaning something in markdown. Copy that was plain must not silently acquire formatting nobody typed.",
+      "The public product page with a full marketing long description on it — the field is authored markdown, written in the same rich editor gedus write session reports in, and with links allowed because this copy is written by an admin for our own shop pages rather than by a gedu for one family. Most products carry no blurb at all, so this is the page to open when the question is how a long one sits: four sections of realistic copy at full paragraph length beneath the hero and beside the signup rail, then a closing section carrying the three things the field gained — a real bulleted list, emphasis, and links out to the game's own store and back to our privacy policy. Two details are worth looking for. Headings render one step above the body, under the product's own name, which is what the editor's Title button produces. And the hand-typed dash list in the fourth section stays literal text rather than becoming bullets: it is copy that predates the format and was converted, and the conversion escapes anything that would otherwise start meaning something in markdown — copy that was plain must not silently acquire formatting nobody typed. Those converted lines each sit a paragraph apart rather than on a tight break, which is the conversion protecting the escape from the first save, not the page misrendering.",
     chrome: "public",
     scenarios: LONG_DESCRIPTION_PREVIEW_SCENARIOS,
   },

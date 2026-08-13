@@ -33,7 +33,7 @@ function validConsumerState(): FormState {
     en: {
       name: "Test Club",
       shortDescription: "A great club",
-      longDescription: [],
+      longDescription: "",
     },
   };
   s.activeLocale = "en";
@@ -63,7 +63,7 @@ function validConsumerState(): FormState {
 function validMuniState(): FormState {
   const s = initialState(muniConfig, "en");
   s.translations = {
-    en: { name: "Muni Club", shortDescription: "A muni club", longDescription: [] },
+    en: { name: "Muni Club", shortDescription: "A muni club", longDescription: "" },
   };
   s.activeLocale = "en";
   s.topic = "minecraft_java";
@@ -84,7 +84,7 @@ describe("validate", () => {
     it("requires at least one filled locale", () => {
       const s = validConsumerState();
       s.translations = {
-        en: { name: "", shortDescription: "", longDescription: [] },
+        en: { name: "", shortDescription: "", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
@@ -97,7 +97,7 @@ describe("validate", () => {
       // still resolves for any viewer.
       const s = validConsumerState();
       s.translations = {
-        sv: { name: "Klubb", shortDescription: "En klubb", longDescription: [] },
+        sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toBeNull();
     });
@@ -108,9 +108,9 @@ describe("validate", () => {
         en: {
           name: "Test Club",
           shortDescription: "A great club",
-          longDescription: [],
+          longDescription: "",
         },
-        sv: { name: "Klubb", shortDescription: "", longDescription: [] },
+        sv: { name: "Klubb", shortDescription: "", longDescription: "" },
       };
       const result = validate(s, consumerConfig);
       // The locale *code*: the validator is pure, so the form resolves the
@@ -124,7 +124,7 @@ describe("validate", () => {
     it("accepts whitespace-only as empty (trims for emptiness check)", () => {
       const s = validConsumerState();
       s.translations = {
-        en: { name: "   ", shortDescription: "   ", longDescription: [] },
+        en: { name: "   ", shortDescription: "   ", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
@@ -718,7 +718,7 @@ describe("buildCreateInput", () => {
       en: {
         name: "  Padded Club  ",
         shortDescription: "  Padded desc  ",
-        longDescription: [],
+        longDescription: "",
       },
     };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
@@ -1262,12 +1262,12 @@ describe("cloneFormState", () => {
     expect(state.translations.en).toEqual({
       name: "Summer Club (Copy)",
       shortDescription: "A great club",
-      longDescription: [],
+      longDescription: "",
     });
     expect(state.translations.fi).toEqual({
       name: "Kesäkerho (Copy)",
       shortDescription: "Mahtava kerho",
-      longDescription: [],
+      longDescription: "",
     });
   });
 
@@ -1330,5 +1330,70 @@ describe("cloneFormState", () => {
       short_description: "A great club",
       long_description: null,
     });
+  });
+});
+
+/**
+ * **The long description is markdown, and blank means the column holds NULL.**
+ *
+ * The field is optional and left empty far more often than it is filled, and
+ * the column's CHECK refuses an empty string — NULL is the single spelling of
+ * "this locale has no long description". So the case worth pinning is not the
+ * copy travelling intact, it is what a cleared editor produces: an empty
+ * ProseMirror document does not serialise to `""` but to whitespace, and
+ * sending that would fail the save on a field the admin never touched.
+ */
+describe("long description", () => {
+  function payloadFor(longDescription: string) {
+    const state = validConsumerState();
+    state.translations = {
+      en: {
+        name: "Test Club",
+        shortDescription: "A great club",
+        longDescription,
+      },
+    };
+    const out = buildCreateInput(state, "consumer_club", consumerConfig);
+    return out.translations.find((t) => t.locale === "en");
+  }
+
+  it("sends authored markdown through unchanged apart from its outer padding", () => {
+    const markdown =
+      "# What happens\n\nWe build **redstone** together.\n\n- a headset\n- a mouse";
+    expect(payloadFor(`\n${markdown}\n`)?.long_description).toBe(markdown);
+  });
+
+  it("folds a cleared editor to null rather than an empty string", () => {
+    for (const blank of ["", "   ", "\n", "\n\n  \n"]) {
+      expect(
+        payloadFor(blank)?.long_description,
+        JSON.stringify(blank),
+      ).toBeNull();
+    }
+  });
+
+  it("hydrates the form straight from the stored text, null as blank", () => {
+    const markdown = "# Stored\n\nCopy that is already markdown.";
+    const withCopy = existingFormState(
+      mockDetailRow({
+        product_translations: [
+          {
+            product_id: "prod-1",
+            locale: "en",
+            name: "Summer Club",
+            short_description: "A great club",
+            long_description: markdown,
+            created_at: "2026-01-01T00:00:00Z",
+            updated_at: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+      consumerConfig,
+      "en",
+    );
+    expect(withCopy.translations.en?.longDescription).toBe(markdown);
+
+    const withNone = existingFormState(mockDetailRow(), consumerConfig, "en");
+    expect(withNone.translations.en?.longDescription).toBe("");
   });
 });
