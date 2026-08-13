@@ -9,6 +9,7 @@ import {
   isPreviewScenario,
   isShopBrowseScenario,
 } from "@/components/public/products/mock-detail-fixtures";
+import { isLongDescriptionScenario } from "@/components/public/products/mock-long-description-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
 import type { PreviewSurface } from "./scenes";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -17,6 +18,7 @@ import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
+import { ProductLongDescriptionScene } from "./scenes/product-long-description-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 
@@ -44,6 +46,10 @@ const SCENE_RENDERERS: Record<
   products: (scenario) => {
     if (!isPreviewScenario(scenario)) notFound();
     return <ProductDetailScene scenario={scenario} />;
+  },
+  "product-long-description": (scenario) => {
+    if (!isLongDescriptionScenario(scenario)) notFound();
+    return <ProductLongDescriptionScene scenario={scenario} />;
   },
   confirmation: (scenario) => {
     // The paid no-order states need no fixture — the notice component takes

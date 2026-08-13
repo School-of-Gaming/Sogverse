@@ -1406,7 +1406,13 @@
     "heading": "Heading",
     "subheading": "Subheading",
     "bulletList": "Bulleted list",
-    "orderedList": "Numbered list"
+    "orderedList": "Numbered list",
+    "link": "Link",
+    "linkUrl": "Link address",
+    "linkApply": "Apply link",
+    "linkRemove": "Remove link",
+    "linkCancel": "Cancel",
+    "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site."
   },
   "header": {
     "nav": {
