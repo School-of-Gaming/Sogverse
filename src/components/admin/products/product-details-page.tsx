@@ -25,6 +25,7 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { productImageSrc } from "@/lib/images/product-image-url";
+import { productAudience } from "@/components/public/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
@@ -172,6 +173,7 @@ export function ProductDetailsPage({
         productId={productId}
         productType={productType}
         billingMode={product.billing_mode}
+        audience={productAudience(product)}
         seatCount={product.seat_count}
         waitlistEnabled={product.waitlist_enabled}
         voiceAvailable={voiceAvailable}

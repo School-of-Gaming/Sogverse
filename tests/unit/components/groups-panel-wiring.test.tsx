@@ -202,6 +202,9 @@ function renderPanel(productType: ProductType, billingMode: BillingMode) {
       productId="product-1"
       productType={productType}
       billingMode={billingMode}
+      // Irrelevant to every case here: the audience is read by the participant
+      // picker alone (stubbed above), never by the drag rules under test.
+      audience="gamers"
       seatCount={null}
       waitlistEnabled
       voiceAvailable={false}
