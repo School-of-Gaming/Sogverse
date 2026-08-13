@@ -1577,7 +1577,7 @@
         },
         "minecraft_education": {
           "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii. Minecraft Education on luokkahuoneeseen tehty versio: samaa mukavaa ja avointa rakentamista, mutta mukana on lisätyökaluja opettajille, ja se on suunniteltu ohjaajan johtamaan toimintaan eikä yksin pelaamiseen.",
-          "note": "Tämä versio hankitaan yleensä koulun tai Microsoft 365 Education -tilin kautta, ei kaupasta. Jos lapsesi tarvitsee sen tähän kerhoon, kysy meiltä, niin autamme järjestämään sen.",
+          "note": "Mitään ei tarvitse ostaa eikä koulun tiliä järjestää – School of Gaming tarjoaa Minecraft Education -tilit, joita osallistujat käyttävät kerhossa. Etäkerhoissa lapsesi tarvitsee lisäksi itse pelin, jonka voi ladata maksutta Microsoft Storesta tai Minecraft Educationin omilta sivuilta.",
           "linkLabel": "Tietoa Minecraft Educationista"
         },
         "fortnite": {
@@ -1594,6 +1594,11 @@
           "description": "Roblox Studio on ilmainen työkalu, jolla Roblox-pelit tehdään. Lapset suunnittelevat maailmoja, rakentavat 3D-työkaluilla ja ohjelmoivat oikealla koodilla, joten omat ideat muuttuvat peleiksi, joita muut voivat oikeasti pelata. Kerhoissamme lapset eivät pelaa vaan luovat – kyse on oikeasta pelinkehityksestä.",
           "note": "Roblox Studio on ilmainen – mitään ei tarvitse ostaa. Se toimii vain Windows- ja Mac-tietokoneilla: ei iPadilla tai muulla tabletilla, ei Chromebookilla, puhelimella eikä pelikonsolilla, joten osallistumiseen lapsesi tarvitsee pöytäkoneen tai kannettavan. Lisäksi tarvitaan ilmainen Roblox-tili, jonka ikäasetus määrää keskustelu- ja yksityisyysasetukset. Valmiit luomukset voi julkaista muiden pelaajien löydettäväksi ja pelattavaksi.",
           "linkLabel": "Hanki Roblox Studio"
+        },
+        "rocket_league": {
+          "description": "Rocket League on jalkapalloa rakettiautoilla. Kaksi joukkuetta ajaa areenalla ja yrittää työntää ylisuuren pallon vastustajan maaliin noin viiden minuutin otteluissa. Ulkoasu on kirkas ja piirrosmainen, eikä pelissä ole väkivaltaa – kyse on urheilulajista, ei räiskintäpelistä. Peliä on siksi helppo seurata sivustakin, vaikka ei itse pelaisi. Lähes jokainen maali syntyy joukkueen yhteistyöstä, ja siksi peli sopii hyvin kerhotoimintaan.",
+          "note": "Rocket League on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi tarvitsee ilmaisen Epic Games -tilin. Peli toimii Windows-tietokoneilla, PlayStationilla, Xboxilla ja Nintendo Switchillä, ja eri laitteiden pelaajat voivat pelata yhdessä, joten lapsesi laitteen ei tarvitse olla sama kuin muilla. Peli sisältää valinnaisia ostoksia, kuten koristeita autoihin, ja niitä voi rajoittaa lapsilukon asetuksilla.",
+          "linkLabel": "Mistä sen saa"
         }
       }
     },

@@ -5,6 +5,7 @@ import {
   PRODUCT_TOPICS,
   PRODUCT_TOPIC_VALUES,
   TOPIC_FILTER_CHIPS,
+  topicHasInfoCard,
   type TopicMeta,
 } from "@/lib/products/topics";
 
@@ -25,6 +26,14 @@ import {
 // they are mapped straight off it) is not a test — it cannot fail short of
 // someone deleting the line, and it makes the file look better covered than
 // it is.
+//
+// The `info` block is optional and, since the subject-matter topics arrived,
+// genuinely absent on several entries — so the checks below that only make
+// sense for a topic with a card skip the ones without, and one of them asserts
+// that both kinds still exist. That last one is not bookkeeping: the product
+// page decides whether to render the About card's *grid wrapper* from the same
+// condition, and a registry that drifted back to "every topic has info" would
+// leave that branch unexercised everywhere.
 
 describe("product topics", () => {
   it("contains exactly the enum's values, each exactly once", () => {
@@ -48,9 +57,10 @@ describe("product topics", () => {
 
   it("gives every topic a non-empty label, and every info block exactly one way to get it", () => {
     for (const topic of PRODUCT_TOPIC_VALUES) {
-      // Widen to the declared shape: the const map's literal types make
-      // `info` ever-present today, but the contract is that it is optional
-      // and its presence drives the product page's About card.
+      // Widen to the declared shape rather than reading the const map's
+      // literal member types, which say per-entry whether `info` is there.
+      // The contract is that it is optional and its presence drives the
+      // product page's About card, so the loop below is written against that.
       const meta: TopicMeta = PRODUCT_TOPICS[topic];
 
       expect(meta.label.trim().length).toBeGreaterThan(0);
@@ -119,6 +129,32 @@ describe("product topics", () => {
         ).toBeGreaterThan(0);
       }
     }
+  });
+
+  it("keeps both sides of the About-card condition populated, with the subject-matter topics on the no-card side", () => {
+    const withCard = PRODUCT_TOPIC_VALUES.filter(topicHasInfoCard);
+    const withoutCard = PRODUCT_TOPIC_VALUES.filter(
+      (t) => !topicHasInfoCard(t),
+    );
+
+    // The product page renders the card's grid wrapper only when this predicate
+    // is true, so both branches have to be reachable from the real registry —
+    // otherwise one of them is dead code nobody is looking at.
+    expect(withCard.length).toBeGreaterThan(0);
+    expect(withoutCard.length).toBeGreaterThan(0);
+
+    // Which topics land on the no-card side is a product decision, not an
+    // oversight: none of these four is one piece of software a family installs,
+    // so what they need is written into that product's own description by an
+    // admin instead. Giving one of them an info block is a decision to revisit,
+    // and naming them here is what makes it a deliberate move rather than a
+    // quiet one.
+    expect([...withoutCard].sort()).toEqual([
+      "ai",
+      "creator_studio",
+      "esports",
+      "programming",
+    ]);
   });
 
   it("covers every topic with exactly one filter chip", () => {

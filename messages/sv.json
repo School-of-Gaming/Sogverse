@@ -1577,7 +1577,7 @@
         },
         "minecraft_education": {
           "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för klassrummet: samma trevliga och öppna byggande, plus extra verktyg för lärare, utformad för guidade aktiviteter som leds av en instruktör snarare än för ensamspel.",
-          "note": "Den här versionen tillhandahålls vanligtvis via en skola eller ett Microsoft 365 Education-konto snarare än köps i en butik. Om ditt barn behöver tillgång för den här klubben, fråga oss bara, så hjälper vi dig att ordna det.",
+          "note": "Det finns inget att köpa och inget skolkonto att ordna – School of Gaming tillhandahåller de Minecraft Education-konton som deltagarna använder under klubben. För distansklubbar behöver ditt barn dessutom ladda ner själva spelet, gratis, från Microsoft Store eller från Minecraft Educations egen webbplats.",
           "linkLabel": "Om Minecraft Education"
         },
         "fortnite": {
@@ -1594,6 +1594,11 @@
           "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och programmerar med riktig kod, så att deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela – det är riktig spelutveckling.",
           "note": "Roblox Studio är gratis – det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac: inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol, så ditt barn behöver en stationär eller bärbar dator för att delta. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsskydd. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
           "linkLabel": "Skaffa Roblox Studio"
+        },
+        "rocket_league": {
+          "description": "Rocket League är fotboll som spelas med raketdrivna bilar. Två lag kör runt på en arena och försöker knuffa in en jättestor boll i motståndarlagets mål, i korta matcher på ungefär fem minuter. Stilen är ljus och tecknad och det finns inget våld – det är en sport, inte ett skjutspel – så det går lätt att följa från sidan även om man aldrig spelat själv. Nästan varje mål bygger på att laget samarbetar, och det är därför spelet passar så bra i en klubb.",
+          "note": "Rocket League är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn behöver ett gratis Epic Games-konto. Spelet fungerar på Windows-datorer, PlayStation, Xbox och Nintendo Switch, och spelare på olika enheter kan spela tillsammans, så ditt barns enhet behöver inte vara samma som någon annans. Det finns valfria köp i spelet, som dekorationer till bilarna, och du kan begränsa dem med föräldrakontroller.",
+          "linkLabel": "Var du laddar ner det"
         }
       }
     },

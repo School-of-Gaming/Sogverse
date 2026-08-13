@@ -1577,7 +1577,7 @@
         },
         "minecraft_education": {
           "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine. Minecraft Education is a version made for the classroom: the same friendly, open-ended building, plus extra tools for teachers, designed for guided activities led by an instructor rather than solo play.",
-          "note": "This edition is normally provided through a school or a Microsoft 365 Education account rather than bought in a shop. If your child needs access for this club, just ask — we’ll help you sort it out.",
+          "note": "There’s nothing to buy and no school account to arrange — School of Gaming provides the Minecraft Education accounts participants use during the club. For our remote clubs, your child also needs to download the game itself, free of charge, from the Microsoft Store or from Minecraft Education’s own site.",
           "linkLabel": "About Minecraft Education"
         },
         "fortnite": {
@@ -1594,6 +1594,11 @@
           "description": "Roblox Studio is the free tool that Roblox games themselves are made with. Children design worlds, build with real 3D tools and script with real code, turning their own ideas into experiences other people can actually play. In our clubs they create rather than play — it’s a first step into real game development.",
           "note": "Roblox Studio is free — there’s nothing to buy. It runs on Windows PCs and Macs only: not on an iPad or other tablet, not on a Chromebook, phone or games console, so your child needs a desktop or laptop computer to take part. A free Roblox account is needed too, and the account’s age setting governs its chat and privacy controls. Finished creations can be published for other players to find and play.",
           "linkLabel": "Get Roblox Studio"
+        },
+        "rocket_league": {
+          "description": "Rocket League is football played with rocket-powered cars. Two teams drive around an arena and try to push an oversized ball into the other team’s goal, in short matches of about five minutes. The look is bright and cartoonish and there’s no violence — it’s a sport, not a shooter — so it’s easy to follow from the sidelines even if you’ve never played it yourself. Almost every goal comes out of the team working together, which is why it suits club play so well.",
+          "note": "Rocket League is free to download and play — you don’t buy the game itself. Your child needs a free Epic Games account. It runs on Windows PCs, PlayStation, Xbox and Nintendo Switch, and players on different devices can play together, so your child’s device doesn’t have to match anyone else’s. There are optional in-game purchases (decorations for the cars), which you can limit with parental controls.",
+          "linkLabel": "Where to get it"
         }
       }
     },

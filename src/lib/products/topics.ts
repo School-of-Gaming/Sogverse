@@ -9,17 +9,36 @@ import type { ProductTopic } from "@/types";
 // thing in the catalogue).
 //
 // Two rules replace it:
-//   - Labels are brand literals. Every current topic is a proper noun,
-//     identical in every locale, so labels never go through i18n. If a
-//     common-noun topic ever arrives (an "Online safety" parent session is the
-//     likely first), add a `labelKey` variant as a two-case union on the *name
-//     only* — orthogonal to `info`, never a reintroduced kind.
+//   - Labels are literals and are never translated. Most topics are proper
+//     nouns and settle that on their own — Minecraft, Rocket League, Roblox
+//     Studio, and Creator Studio, which is School of Gaming's own brand word
+//     for that programme rather than a description of what happens in it.
+//     Three are ordinary common nouns: Programming, AI and Esports. Those were
+//     looked at deliberately and left in English anyway, which is a decision
+//     that has been taken rather than one still open — a parent browsing in
+//     Finnish or French sees "Programming" verbatim, on the filter chips, in
+//     the admin picker and in any card heading. The escape hatch if that is
+//     ever reversed is a `labelKey` variant: a two-case union on the *name
+//     only* (a literal `label` or a message key), orthogonal to `info` and
+//     never a reintroduced kind discriminator. It is described here and
+//     deliberately not built — an unused branch at every label read site is a
+//     cost, and the decision it would implement went the other way.
 //   - The optional `info` block is what drives the "About {name}" card on the
 //     product detail page: present ⇒ the card renders, absent ⇒ no card. Its
 //     facts are literals (a PEGI age rating where the topic has one, and where
 //     to get the software); the parent-facing prose — description, the
 //     needs/costs note, the link/heading label — lives in the
 //     productDetail.topicInfo message namespace, keyed by topic.
+//
+// Four topics are label-only and render no card at all: creator_studio,
+// programming, ai and esports. That is the design, not an omission waiting to
+// be filled. None of them is one piece of software a family installs — three
+// name subject matter, and Creator Studio names a programme of ours — so there
+// is nothing single to rate, price or link to. What a family needs for an
+// Esports club is a fact about *that* club, and an admin writes it into that
+// product's own description, where it can differ between two products sharing
+// the topic. A generic card would be the wrong altitude and would push the
+// specific answer further down the page.
 //
 // This map is the home for future per-topic config too — e.g. the account
 // field a signup requires (Minecraft → Java username, Fortnite → Epic). A
@@ -131,6 +150,29 @@ export const PRODUCT_TOPICS = {
       url: "https://www.fortnite.com/",
     },
   },
+  rocket_league: {
+    label: "Rocket League",
+    info: {
+      pegi: 3,
+      // Free to install on every platform it runs on, so this looked like a
+      // Bedrock-shaped `stores` list — and three of the four links check out as
+      // region-neutral (Epic's bare /p/ form, which is what /en-US/ itself
+      // canonicalises to; Xbox's bare games/store form, which redirects to the
+      // visitor's regional store; and PlayStation's *concept* URL, the one PS
+      // form that is not region-bound — the product SKUs are split, and the
+      // North American one resolves to nothing on the Finnish store).
+      //
+      // Nintendo is the one that fails, and it takes the list down with it:
+      // Nintendo's American and European sites do not share a URL structure at
+      // all (/us/store/products/<slug>/ against /en-gb/Games/…-<id>.html), so
+      // there is no Switch link that is correct from both. A store row that
+      // silently 404s for a Finnish parent is worse than a less specific link,
+      // so the whole list gives way to the game's own official site, which
+      // carries its own platform picker and is one global page with no regional
+      // variants to get wrong.
+      url: "https://www.rocketleague.com/",
+    },
+  },
   pokemon_go: {
     label: "Pokémon GO",
     info: {
@@ -153,6 +195,11 @@ export const PRODUCT_TOPICS = {
       ],
     },
   },
+  // Label-only: competitive play across whichever game the product is actually
+  // about, so there is nothing single to rate or link to. See the header note.
+  esports: {
+    label: "Esports",
+  },
   roblox_studio: {
     label: "Roblox Studio",
     info: {
@@ -164,7 +211,56 @@ export const PRODUCT_TOPICS = {
       url: "https://create.roblox.com/",
     },
   },
+  // Label-only, for the reason in the header note: each names subject matter,
+  // and the software (if any) varies by product. Creator Studio is our own
+  // programme name, so it is a proper noun like the game brands above even
+  // though the three below it are common nouns.
+  creator_studio: {
+    label: "Creator Studio",
+  },
+  programming: {
+    label: "Programming",
+  },
+  ai: {
+    label: "AI",
+  },
 } as const satisfies Record<ProductTopic, TopicMeta>;
+
+// The topics that carry an info block, derived from the map rather than listed
+// — so adding or removing one `info` is the whole edit. This is the type the
+// About card's message keys are resolved against: only these topics have prose
+// under productDetail.topicInfo.topics, and typing the card's `topic` as the
+// full enum would ask next-intl for keys that are deliberately absent.
+export type TopicWithInfoCard = {
+  [K in ProductTopic]: (typeof PRODUCT_TOPICS)[K] extends { info: unknown }
+    ? K
+    : never;
+}[ProductTopic];
+
+/** A `TopicMeta` known to carry its info block — what a card-bearing topic
+ *  resolves to once `topicHasInfoCard` has narrowed it. */
+export type TopicMetaWithInfoCard = TopicMeta & {
+  info: NonNullable<TopicMeta["info"]>;
+};
+
+// The card's render condition, in one place, asked by two callers: the card
+// itself returns null on false, and the product detail page skips rendering the
+// card's *grid wrapper* — an empty wrapper is still a grid item in a gapped
+// container and would leave a hole in the reading column. Two `info` checks in
+// two files would drift; one predicate cannot.
+//
+// It is a type predicate rather than a plain boolean because the card needs
+// both halves of the same fact: that a block exists, and that this topic is one
+// of the ones the message catalog has prose for. The lookup inside widens to
+// `TopicMeta` deliberately — the const map's literal member types answer the
+// question per entry, and reading it through the declared shape keeps the
+// runtime check honest instead of something the compiler folds away.
+export function topicHasInfoCard(
+  topic: ProductTopic,
+): topic is TopicWithInfoCard {
+  const meta: TopicMeta = PRODUCT_TOPICS[topic];
+  return meta.info !== undefined;
+}
 
 // Display order for pickers and filter chips. This is hand-ordered rather than
 // derived from the generated `Constants` tuple, because the enum's own order is
@@ -177,13 +273,21 @@ export const PRODUCT_TOPICS = {
 // value omitted here type-checks fine and simply never appears in the admin
 // picker or any filter chip. A unit test asserts this tuple covers the enum,
 // because the compiler will not.
+// The order is games first, then esports, then the creation and tech subjects —
+// so the row reads from the concrete thing a child names ("Minecraft") toward
+// the subject a parent names ("Programming"), rather than alphabetically.
 export const PRODUCT_TOPIC_VALUES = [
   "minecraft_java",
   "minecraft_education",
   "minecraft_bedrock",
   "fortnite",
+  "rocket_league",
   "pokemon_go",
+  "esports",
   "roblox_studio",
+  "creator_studio",
+  "programming",
+  "ai",
 ] as const satisfies readonly ProductTopic[];
 
 // A topic filter chip groups one or more product topics behind a single chip.
