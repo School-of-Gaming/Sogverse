@@ -84,12 +84,24 @@ they say so.
 orchestration: write the implementation prompt, launch an agent into this
 worktree (model `opus` — the Models section below governs the whole flow, not
 just parallel work), judge what comes back, and iterate. Doing the
-implementation directly in the session is the expensive arrangement the Models
-section warns about, and it is the default failure mode precisely because it
-never feels like a decision — nobody chooses the session's model, they just
-start editing. The moment the work in front of you is more than the small
-interactive kind (a review-round fix, a two-file tweak), that is the cue to
-write a prompt instead of an edit.
+implementation directly in the session is the default failure mode precisely
+because it never feels like a decision — nobody chooses the session's model,
+they just start editing.
+
+**The thing being protected is the orchestrator's context window, so "trivial"
+means cheap in context — not easy.** The two come apart constantly, and the
+distinction is the whole rule. A sprawling but mechanical job — a locale sweep
+across five files, a fixture regeneration, a rename with forty call sites —
+is *easy* and is not *trivial*: it fills the window with diffs the session will
+never need again, and every one of those tokens is one the session no longer
+has for the big picture. Conversely a genuinely intricate two-line fix in a
+file already open is trivial in the only sense that matters here. Judge by what
+the work will cost to *hold*, never by what it will cost to *solve*.
+
+So the question at every piece of work is "will doing this myself clutter my
+context?", and if the answer is yes it goes to an agent however simple it looks.
+Only the small interactive kind stays — a review-round fix, a two-file tweak, an
+edit you are already mid-way through.
 
 The unit of feedback is completed work, not elapsed time: run to done, report,
 take the rulings, fix, repeat. Block mid-build only on a question the work cannot
@@ -128,7 +140,14 @@ to start a second one.
 
 ---
 
-## Phase 4 — Review (when the change is not trivial)
+## Phase 4 — Review (skip only for a change that could not be wrong)
+
+**Whether to review is a question about risk; how to review is not a question
+at all.** Phase 2's "trivial" is about what work costs the orchestrator to
+hold, and it has no bearing here — a one-line change can be context-free and
+still be the line that leaks data. Skip this phase only when the change could
+not plausibly be wrong (a typo fix, a comment). Everything else is reviewed,
+and everything reviewed is reviewed by an agent.
 
 **Review cadence is a judgment call the session must make out loud.** One
 branch-level review after the build completes is the default, and it is usually
@@ -147,10 +166,26 @@ and a diff against moved `dev` pollutes the review with other work inverted.
 Diff from the merge-base (`git merge-base dev HEAD`) instead; the review is of
 this branch's commits, not of the gap between two moving points.
 
-If you delegate it to a subagent, **launch that agent from inside this
-worktree** — an agent inherits the session's worktree as its write root and
-cannot be redirected into another one, even by calling `EnterWorktree` first.
-Tell it explicitly that it is already in the right directory.
+**The review always runs in a subagent — every time, with no threshold and no
+exception, and for a different reason than Phase 2's delegation.** That rule is
+about context economy and admits a "trivial" carve-out. This one is about
+*validity*, and admits nothing: a session that just built the code cannot review
+it. It knows what every line was meant to do, so it reads intent instead of
+text, and the defects it is least able to see are precisely the ones its own
+reasoning produced. A fresh agent meets the diff as the diff. Reviewing in the
+session does not produce a weaker review — it produces the same mind marking its
+own work, which is not a review at all, however long the output is.
+
+**Launch that agent from inside this worktree** — an agent inherits the
+session's worktree as its write root and cannot be redirected into another one,
+even by calling `EnterWorktree` first. Tell it explicitly that it is already in
+the right directory, and that it must not edit, stage or commit anything.
+
+Give it the branch's context and the decisions already settled with the user, so
+it spends its attention on defects rather than re-litigating choices — but state
+those as decisions it may still challenge on the merits, never as findings it is
+forbidden to make. Independence is the entire point of running it out of
+process; a prompt that fences off the contentious parts hands that back.
 
 Then **assess the findings before relaying them**. Say which you accept, which
 you think are wrong and why, and which are judgement calls for the user. A review
@@ -257,27 +292,47 @@ edits to one file are a merge conflict manufactured on purpose.
 - A preview server per piece follows Phase 3 unchanged: one port each,
   verified free.
 
-## Models
+## Models and delegation
 
 The session orchestrates — decomposes, writes the agent prompts, judges
 findings, lands the result — and delegates the work itself. This is the
-arrangement for the whole command, single worktree or several: Phase 2's build
-and Phase 4's review are delegated work, not session work. Delegated work
-runs on **Opus** by default: pass `model` explicitly on every agent launch,
-because an agent silently inherits the session's model when none is passed,
-and on a stronger session tier that is the most expensive arrangement
-available, invisible unless you look.
+arrangement for the whole command, single worktree or several. **Invoking this
+command is the user asking for agents**: a standing instruction elsewhere
+against unprompted agent use does not override it, and a session that quietly
+collapses into single-threaded work because of one has misread the request
+rather than made a judgment call.
+
+**Two rules, two different reasons, and they are not interchangeable.**
+Conflating them is how both get weakened — the review rule inherits an escape
+hatch it must not have, and the build rule inherits a rigidity it does not need.
+
+- **Implementation is delegated unless it is trivial, where trivial means
+  cheap in *context*, not easy.** What is being protected is the orchestrator's
+  window, which has to stay clear enough to hold the big picture. A mechanical
+  sweep is easy and expensive to hold; an intricate fix in an open file is hard
+  and nearly free. Judge by what the work costs to *hold*, not to *solve*, and
+  see Phase 2 for the full statement.
+- **The review is always delegated. No threshold, no exception.** This one is
+  not about context at all — it is about whether the review means anything. The
+  session that wrote the code knows what each line was for and reads intent
+  instead of text, so the defects it is least equipped to find are exactly the
+  ones its own reasoning introduced. Freshness is the property being bought, and
+  a review run in the authoring context has not bought it.
+
+Delegated work runs on **Opus**: pass `model` explicitly on every agent launch,
+because an agent silently inherits the session's model when none is passed, and
+on a stronger session tier that is the most expensive arrangement available,
+invisible unless you look.
 
 - **Implementation and review agents: `opus`.** Review findings still pass
   through the session's own judgment before being relayed or applied — that
-  second tier comes free with orchestration.
+  second tier comes free with orchestration, and is why an independent reviewer
+  costs nothing in accuracy.
 - **Below Opus only for a specific task you are very confident does not need
   it** — a mechanical sweep (locale keys, fixture regeneration, rename
   plumbing) can run `sonnet` at low effort; the gates catch what it fumbles.
-  Confidence is the bar: when unsure, Opus.
-- **Small interactive work is not delegated at all.** An agent costs a
-  setup, a transcript and a report; a two-file edit is cheaper done directly
-  in the session, whatever it runs on.
+  Confidence is the bar: when unsure, Opus. This applies to *implementation*
+  only — a review is never run below Opus.
 
 ## Guardrails
 
