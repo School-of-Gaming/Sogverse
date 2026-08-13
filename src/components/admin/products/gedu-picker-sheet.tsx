@@ -39,9 +39,20 @@ interface GeduPickerSheetProps {
  *
  * This is the browser's half of a rule the database also implements: the admin
  * user search matches the same terms against a `search_blob` that additionally
- * carries a phone number and both game handles. This picker narrows a list of
- * profiles it already holds, and a `Profile` carries neither — so the reach
- * differs while the rule (every term, anywhere) does not.
+ * carries a phone number and both game handles. The two fields are left out for
+ * two different reasons, and it is worth keeping them apart:
+ *
+ * - **A game handle is genuinely not here.** It lives in `minecraft_accounts` /
+ *   `roblox_accounts`, and this picker holds `Profile` rows. Reaching it means
+ *   pointing the picker at the shared query, which is the larger change below.
+ * - **A phone number *is* here** — `Profile` carries `phone`, and the list read
+ *   selects it — and is omitted anyway, because reaching it honestly needs more
+ *   than one more field. A number is typed with spaces inside it, so the search
+ *   side recognises a digit-shaped query *before* tokenizing and matches its
+ *   trailing digits; nothing in the browser does that. Appending `gedu.phone`
+ *   here would find a number pasted in stored form and miss the same number
+ *   typed the way a person writes it — which is precisely the two surfaces
+ *   beginning to disagree about what a phone search means.
  *
  * **The two halves existing at all is the thing to be uncomfortable about**,
  * not the field list. Pointing this picker at the shared search instead would

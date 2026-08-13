@@ -199,11 +199,12 @@ export function searchTerms(query: string): string[] {
  * Whether every term appears somewhere in one person's searchable text.
  *
  * The rule is shared; the haystack is not. A caller assembles whichever fields
- * it can actually see — the database has a person's phone and game handles in
- * reach, a picker holding a list of profiles does not — and this decides what
- * matching those fields *means*. Keeping the rule here and the field list at
- * the call site is what lets the two surfaces differ in reach without differing
- * in behaviour.
+ * it can both see and match honestly — the database reaches a person's game
+ * handles across two more tables, and recognises a phone number before it
+ * tokenizes; a picker narrowing a list of profiles does neither — and this
+ * decides what matching those fields *means*. Keeping the rule here and the
+ * field list at the call site is what lets the two surfaces differ in reach
+ * without differing in behaviour.
  */
 export function matchesAllTerms(haystack: string, terms: string[]): boolean {
   const hay = haystack.toLowerCase();
