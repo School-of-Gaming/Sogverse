@@ -275,6 +275,19 @@ describe("UsersService.searchUsers", () => {
     expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%EnderDragon42%"]);
   });
 
+  // The digit floor, which the case above does not reach — that one is excluded
+  // by having letters in it, so a regression dropping PHONE_MIN_DIGITS to zero
+  // would leave it passing. An all-digit needle under the floor is a house
+  // number or a fragment, and must stay the literal term the user typed rather
+  // than being silently re-read as the tail of a phone number.
+  it("does not treat a short run of digits as a phone number", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("42");
+
+    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%42%"]);
+  });
+
   // Without the guard this reads the view with no filter at all and the twenty
   // newest accounts come back looking like matches.
   it("answers a query with no searchable term without asking the database", async () => {

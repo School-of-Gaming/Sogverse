@@ -11,16 +11,18 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
  * **The view is where this schema earns its place.** PostgreSQL does not carry
  * a column's NOT NULL through a view, so the type generator — reading the
  * catalog faithfully — types every one of these columns as nullable, including
- * the seven `profiles` declares NOT NULL and that a LEFT JOIN cannot null
+ * the eight `profiles` declares NOT NULL and that a LEFT JOIN cannot null
  * anyway (the join nulls its right-hand side, never the profile). Without this
  * the search would answer `(string | null)[]` where every caller wants
  * `Profile[]`, and the honest ways to bridge that are a cast, which lint
  * forbids and which would go stale in silence, or this.
  *
- * `satisfies z.ZodType<Profile>` is the half that does not rot: the schema has
- * to keep describing the generated row exactly, so a column added to `profiles`
- * fails to compile here until it is either given a rule or deliberately left
- * out of the view.
+ * `satisfies z.ZodType<Profile>` is the half that does not rot: the schema is
+ * checked against `Profile` — the *table's* row type, not the view's — so a
+ * column added to `profiles` fails to compile here until it is given a rule.
+ * Leaving it out of the view does not clear that: the check knows nothing about
+ * which columns the view selects. The only other way out is for the search to
+ * stop answering in `Profile`, which is a larger decision than adding a line.
  */
 export const searchedProfile = z.object({
   id: z.string(),

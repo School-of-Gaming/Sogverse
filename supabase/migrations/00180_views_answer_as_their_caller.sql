@@ -51,8 +51,10 @@
 -- NULL reloptions — a view declared with no options at all, which is precisely
 -- the dangerous case — must read as false rather than NULL: `NULL @> …` is NULL,
 -- and a NULL here would arrive at the test as a third value its filters do not
--- expect. COALESCE makes the column a total boolean, the same reasoning §3.2
--- applies to the predicates policies compose from.
+-- expect. COALESCE makes the column a total boolean, which is the same rule the
+-- authorization predicates already follow: a boolean an exposed object hands to
+-- a consumer is never three-valued, because only a policy's USING clause treats
+-- NULL as deny and everything else treats it as a surprise.
 -- ---------------------------------------------------------------------------
 
 CREATE FUNCTION public._list_views()
