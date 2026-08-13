@@ -168,46 +168,6 @@ export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"][
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
 export type ProductTranslationInsert = Database["public"]["Tables"]["product_translations"]["Insert"];
 
-/**
- * **The shape `long_description` held before it became markdown**, and the
- * narrowing that reads one safely.
- *
- * A flat, ordered array of heading/paragraph blocks holding plain text — no
- * marks, no links, no lists, and a heading carried no level, because there was
- * only ever one kind. Nothing in the running app produces or consumes it: the
- * column is `text`, the editor writes markdown, and the page renders markdown.
- *
- * **It survives for exactly one purpose.** The migration that changed the
- * column's type cleared its contents, and the copy is restored afterwards from
- * an audited dump of the old values — read into these blocks and converted by
- * `longDescriptionToMarkdown` in `src/lib/products/`, which is the audited,
- * heavily-tested conversion and the only thing allowed to perform it. This pair
- * is that path's input side. When the restore is done, all three go together.
- *
- * `parseLongDescription` drops anything that is not a well-formed
- * `{ type, text }` block, so a dump with a stray element converts what is
- * genuinely there rather than throwing or inventing copy.
- */
-export type ProductLongDescriptionBlock = {
-  type: "heading" | "paragraph";
-  text: string;
-};
-export type ProductLongDescription = ProductLongDescriptionBlock[];
-
-export function parseLongDescription(
-  value: Json | null | undefined,
-): ProductLongDescription {
-  if (!Array.isArray(value)) return [];
-  return value.filter(
-    (block): block is ProductLongDescriptionBlock =>
-      typeof block === "object" &&
-      block !== null &&
-      !Array.isArray(block) &&
-      (block.type === "heading" || block.type === "paragraph") &&
-      typeof block.text === "string",
-  );
-}
-
 // product_prices
 export type ProductPrice = Database["public"]["Tables"]["product_prices"]["Row"];
 export type ProductPriceInsert = Database["public"]["Tables"]["product_prices"]["Insert"];

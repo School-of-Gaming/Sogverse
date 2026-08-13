@@ -44,12 +44,6 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
-import {
-  LONG_DESCRIPTION_BLOCKS,
-  LONG_DESCRIPTION_SCENARIOS,
-  buildLongDescriptionSceneFixture,
-  longDescriptionShowcaseMarkdown,
-} from "@/components/public/products/mock-long-description-fixtures";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
@@ -177,31 +171,32 @@ describe("registry scenarios match their fixtures", () => {
     expect(slugsFor("shop")).toEqual([...SHOP_BROWSE_SCENARIOS]);
   });
 
-  it("product long description", () => {
-    expect(slugsFor("product-long-description")).toEqual([
-      ...LONG_DESCRIPTION_SCENARIOS,
-    ]);
-  });
 });
 
 /**
- * **The showcase page has to carry a real product's worth of copy, and has to
- * show what the format is for.**
+ * **One product scenario has to carry a real product's worth of marketing copy,
+ * and it has to be the copy that shows what the field can do.**
  *
- * The scene exists because most products have no long description at all, so
- * the ordinary product scenes cannot answer how a full one sits on the page. It
- * once carried four scenarios comparing heading levels; that question is
- * settled, the comparison is gone, and what is left is one page whose whole
- * value is the copy on it. A fixture edit that quietly shortened the blurb, or
- * dropped the list and links, would take the point of the page away without
- * failing anything else — so it is pinned here.
+ * There was a scene of its own for this once, on the reasoning that most
+ * products carry no blurb so the ordinary product pages could not answer how a
+ * full one sits. That reasoning does not survive the club and camp scenarios
+ * carrying blurbs of their own: a second page showing the same thing is a
+ * preview whose only distinction is being longer, and it is the isolated one
+ * that goes stale, because the page people actually open to review the product
+ * detail design is this one.
+ *
+ * What that scene was genuinely alone in showing is pinned here instead — the
+ * length, and the three constructs a shop page's copy is allowed that a gedu's
+ * writing to one family is not. A fixture edit that quietly shortened the blurb
+ * or dropped the list and the links would take that away without failing
+ * anything else.
  */
-describe("the long-description scene shows a full blurb", () => {
-  const fixture = buildLongDescriptionSceneFixture();
-  const markdown = longDescriptionShowcaseMarkdown();
+describe("a product scenario carries a full marketing blurb", () => {
+  const { product } = buildScenarioFixture("consumer-club");
+  const markdown = product.product_translations[0]?.long_description ?? "";
 
   it("puts the same blurb on every translation of one product", () => {
-    for (const translation of fixture.product.product_translations) {
+    for (const translation of product.product_translations) {
       expect(translation.long_description).toBe(markdown);
     }
   });
@@ -212,20 +207,16 @@ describe("the long-description scene shows a full blurb", () => {
    * sections.
    */
   it("carries a real product's worth of copy", () => {
-    const headings = LONG_DESCRIPTION_BLOCKS.filter(
-      (b) => b.type === "heading",
-    );
+    const headings = [...markdown.matchAll(/^#+ \S/gm)];
     expect(headings.length).toBeGreaterThanOrEqual(4);
-    const prose = LONG_DESCRIPTION_BLOCKS.filter((b) => b.type === "paragraph")
-      .map((b) => b.text)
-      .join("");
-    expect(prose.length).toBeGreaterThan(2000);
+    expect(markdown.length).toBeGreaterThan(1500);
   });
 
   /**
-   * The four converted sections are copy that already existed and say nothing
-   * about what changed. Without the closing section using a real list, emphasis
-   * and links, the page looks exactly like the one it replaced.
+   * Marketing copy on our own shop pages is the link-bearing variant of the
+   * renderer, and this is the only fixture anywhere that renders one. Without
+   * the closing section's list, emphasis and links, no preview shows that
+   * variant at all.
    */
   it("shows off the list and the links the format allows", () => {
     expect(markdown).toMatch(/^- \S/m);
@@ -233,36 +224,14 @@ describe("the long-description scene shows a full blurb", () => {
     const links = markdown.match(/\]\(([^)]+)\)/g) ?? [];
     expect(links.length).toBeGreaterThan(1);
     expect(markdown).toContain("](https://");
+    expect(markdown).toContain("](/privacy)");
   });
 
-  /** Every heading converts at the level the editor's Title button writes. */
-  it("converts every heading to a top-level hash", () => {
+  /** Every heading sits at the level the editor's Title button writes. */
+  it("keeps every heading at a top-level hash", () => {
     const levels = [...markdown.matchAll(/^(#+) \S/gm)].map((m) => m[1].length);
-    expect(levels.length).toBeGreaterThanOrEqual(5);
+    expect(levels.length).toBeGreaterThanOrEqual(4);
     expect(new Set(levels)).toEqual(new Set([1]));
-  });
-
-  /**
-   * The hand-typed dash list inside a paragraph block is the case the
-   * conversion is most likely to "improve": it is what an admin did when the
-   * format had no list, it rendered as plain lines, and it must still render as
-   * plain lines. Losing it from the fixture would take the regression off the
-   * page entirely.
-   *
-   * **Each of those lines stands as its own paragraph, and the scene is meant
-   * to show that.** An escaped line reached over a hard break loses its
-   * backslash the first time the field is saved in the rich-text editor, so the
-   * conversion gives it a paragraph start instead — a visible gap rather than a
-   * tight break. Pinning the shape rather than just the escape is what keeps
-   * somebody from "fixing" the spacing by putting the hard break back.
-   */
-  it("keeps a hand-typed list literal, each line its own paragraph", () => {
-    const typedList = LONG_DESCRIPTION_BLOCKS.filter(
-      (b) => b.type === "paragraph" && /\n- /.test(b.text),
-    );
-    expect(typedList.length).toBeGreaterThan(0);
-    expect(markdown).toContain("\n\n\\- a computer");
-    expect(markdown).not.toContain("\\\n\\- ");
   });
 });
 

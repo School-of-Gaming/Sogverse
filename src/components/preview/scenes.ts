@@ -2,7 +2,6 @@ import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
 } from "@/components/public/products/mock-detail-fixtures";
-import { LONG_DESCRIPTION_SCENARIOS } from "@/components/public/products/mock-long-description-fixtures";
 
 /**
  * The **full-page preview scene registry**.
@@ -84,23 +83,6 @@ const PRODUCT_SCENARIOS: readonly PreviewScenarioMeta[] = PREVIEW_SCENARIOS.map(
   ({ slug, label, group }) => ({ slug, label: `${group} — ${label}` }),
 );
 
-/**
- * The long-description scene's one scenario, keyed off the fixture's own slug
- * list so the registry cannot list a page the scene will not serve.
- */
-const LONG_DESCRIPTION_SCENARIO_META: Record<
-  (typeof LONG_DESCRIPTION_SCENARIOS)[number],
-  { label: string }
-> = {
-  showcase: { label: "A product page with a full blurb on it" },
-};
-
-const LONG_DESCRIPTION_PREVIEW_SCENARIOS: readonly PreviewScenarioMeta[] =
-  LONG_DESCRIPTION_SCENARIOS.map((slug) => ({
-    slug,
-    ...LONG_DESCRIPTION_SCENARIO_META[slug],
-  }));
-
 export const PREVIEW_SCENES = [
   {
     surface: "shop",
@@ -133,17 +115,9 @@ export const PREVIEW_SCENES = [
     surface: "products",
     title: "Product detail page",
     description:
-      "The public product page a parent lands on from the shop, with the registration signup panel in each of its states — and, at the end of each product type's run, the audience scenarios: the three shapes the picker takes once a product can be sold to parents. Those three are the only way to look at a for-parents product at all, since none exists yet. The page is three tracks and a band: the band spans the content columns with each element over the column it belongs to — back link right-aligned over the facts rail, h1 over the hero, type · topic eyebrow over the signup panel — and never over the gutters. Beneath it the reading column leads with a 3:2 hero at the browse card's treatment, wearing the same two chips in the same corners (tag bottom-left, audience-or-age top-right), so a family meets the same pill on the page a card sent them to; a product with no picture wears them on the wordmark banner instead. The short description follows, and on a tagged product the tag explained: what SOG actually does about that tag, in a quiet block at the reading column's full width, with the tag's icon and word but deliberately no second pill. An untagged product — most of them — shows neither chip nor block, with no hole where either would be. Under that, on a phone only, the jump button down to the signup panel: full width, text only, carrying the panel's own verb, since below `lg` the panel is the last thing in a long document. The panel itself sits in a sticky right rail from `lg`, its picker unboxed so a name, an age and “Already joined” fit one line at that width; from 2xl the overview card moves out again into a sticky left facts rail, label-over-value at rail width, leaving the reading column between them. The tag explanation copy is placeholder text written by an engineer and is being replaced wholesale by the product owner — read it for shape and length, not for wording.",
+      "The public product page a parent lands on from the shop, with the registration signup panel in each of its states — and, at the end of each product type's run, the audience scenarios: the three shapes the picker takes once a product can be sold to parents. Those three are the only way to look at a for-parents product at all, since none exists yet. The page is three tracks and a band: the band spans the content columns with each element over the column it belongs to — back link right-aligned over the facts rail, h1 over the hero, type · topic eyebrow over the signup panel — and never over the gutters. Beneath it the reading column leads with a 3:2 hero at the browse card's treatment, wearing the same two chips in the same corners (tag bottom-left, audience-or-age top-right), so a family meets the same pill on the page a card sent them to; a product with no picture wears them on the wordmark banner instead. The short description follows, and on a tagged product the tag explained: what SOG actually does about that tag, in a quiet block at the reading column's full width, with the tag's icon and word but deliberately no second pill. An untagged product — most of them — shows neither chip nor block, with no hole where either would be. Under that, on a phone only, the jump button down to the signup panel: full width, text only, carrying the panel's own verb, since below `lg` the panel is the last thing in a long document. The panel itself sits in a sticky right rail from `lg`, its picker unboxed so a name, an age and “Already joined” fit one line at that width; from 2xl the overview card moves out again into a sticky left facts rail, label-over-value at rail width, leaving the reading column between them. The club and camp scenarios also carry a full marketing long description below the short one, which is where to look when the question is how a long blurb sits on the page: several sections of realistic copy at full paragraph length, with a real bulleted list, emphasis, and links out to the game's own store and back to our privacy policy. That field is authored markdown, written in the same rich editor gedus write session reports in, and it is the one authored field that carries links — this copy is an admin's, for our own shop pages, rather than a gedu's for one family. Its headings render one step above the body, under the product's own name, which is what the editor's Title button produces. The scenarios carrying no blurb render no card at all and leave no hole where one would be. The tag explanation copy is placeholder text written by an engineer and is being replaced wholesale by the product owner — read it for shape and length, not for wording.",
     chrome: "public",
     scenarios: PRODUCT_SCENARIOS,
-  },
-  {
-    surface: "product-long-description",
-    title: "Product long description",
-    description:
-      "The public product page with a full marketing long description on it — the field is authored markdown, written in the same rich editor gedus write session reports in, and with links allowed because this copy is written by an admin for our own shop pages rather than by a gedu for one family. Most products carry no blurb at all, so this is the page to open when the question is how a long one sits: four sections of realistic copy at full paragraph length beneath the hero and beside the signup rail, then a closing section carrying the three things the field gained — a real bulleted list, emphasis, and links out to the game's own store and back to our privacy policy. Two details are worth looking for. Headings render one step above the body, under the product's own name, which is what the editor's Title button produces. And the hand-typed dash list in the fourth section stays literal text rather than becoming bullets: it is copy that predates the format and was converted, and the conversion escapes anything that would otherwise start meaning something in markdown — copy that was plain must not silently acquire formatting nobody typed. Those converted lines each sit a paragraph apart rather than on a tight break, which is the conversion protecting the escape from the first save, not the page misrendering.",
-    chrome: "public",
-    scenarios: LONG_DESCRIPTION_PREVIEW_SCENARIOS,
   },
   {
     surface: "confirmation",
