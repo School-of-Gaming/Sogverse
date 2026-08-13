@@ -1536,9 +1536,9 @@
     "advanced": "Advanced"
   },
   "productTagDetail": {
-    "neuroinclusive": "Small groups, the same predictable structure every session, and Gedus who are used to working with neurodivergent children. Nobody is asked to mask, and there is always a quieter way to join in.",
-    "beginner": "No experience needed. The Gedus start from the very beginning and keep to the group's pace, so a child who has never opened the game is in exactly the right place.",
-    "advanced": "For children who already know the game well and want a real challenge — bigger projects, harder problems, and a group that can keep up with them."
+    "neuroinclusive": "Small groups that follow a familiar, predictable structure. Our Game Educators have experience working with neurodivergent children. Everyone can be themselves and take part at their own pace.",
+    "beginner": "No previous gaming experience is required. Our Game Educators are there to provide hands-on guidance when needed and help each participant join in at their own level. You can join even if the game is completely new to you.",
+    "advanced": "For children who already know the basics of the game and are ready to take their skills further. More challenging projects and a group that can keep up with them."
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",

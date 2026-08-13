@@ -84,18 +84,24 @@ export function productTagLabelKey(tag: ProductTag): ProductTagLabelKey {
 }
 
 // ---------------------------------------------------------------------------
-// **`productTagDetail.*` is engineer-written copy awaiting the owner's text.**
+// **`productTagDetail.*` is owner-approved copy — treat it as source.**
 //
 // The same keys as `productTag.*`, in the same five message files, carrying the
 // sentence or two the product detail page prints under the chip — what SOG
-// actually does about the tag (small groups and a predictable structure; start
-// from zero; a real challenge). Every one of those strings, in every locale,
-// was written by an engineer so the surface could be looked at, and was
-// **cleared to ship as-is on 2026-08-12** after review in the preview scenes —
-// live is fine, this is not a launch blocker. It is still not the final text:
-// **Sonja is writing the real source copy, and these get replaced wholesale as
-// a follow-up** — do not polish them, do not translate around them, and do not
-// treat the current English as a source anybody wants preserved.
+// actually does about the tag (small groups and a predictable structure; help
+// at your own level; a real challenge). These strings were engineer-written
+// placeholders until the product owner reviewed and rewrote them on 2026-08-13;
+// English and Finnish are now her words, and the other three locales are
+// translations of them. Reword only with her, not to taste.
+//
+// Two of her decisions are load-bearing and easy to undo by accident. The
+// Finnish copy names the role **pelikasvattaja** and the English **Game
+// Educator**, spelled out rather than the in-house "Gedu" the rest of the
+// message files lean on — this is the shop, where a parent meets us cold and
+// has not been taught the word yet. And the beginner tag deliberately does not
+// promise the group starts from zero: the non-stop groups do not restart for a
+// newcomer, they run at a pace a newcomer can join, and the copy says that
+// instead.
 //
 // The marker lives here rather than in the message files because those are
 // strict JSON with no comment syntax and no key convention for annotations;

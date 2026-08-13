@@ -30,17 +30,14 @@ import { productTagLabelKey, type ProductTag } from "./product-tag";
  *
  * The glyph comes from the shared chip vocabulary (`product-chips.tsx`), which
  * is what keeps the icon here and the icon in the hero's pill on one map. The
- * copy it prints ships approved but awaits the owner's final text: see the
- * `productTagDetail` marker in `product-tag.ts`.
+ * copy it prints is the owner's own: see the `productTagDetail` marker in
+ * `product-tag.ts` for the decisions inside it.
  *
  * Takes a non-null tag: an untagged product renders no note at all, and the
  * caller decides that before it gets here.
  */
 export function ProductTagNote({ tag }: { tag: ProductTag }) {
   const tTag = useTranslations("productTag");
-  // Cleared to ship, but not final: the product owner is writing the real
-  // source text and these strings get replaced wholesale, in every locale.
-  // The full story is the `productTagDetail` marker in `product-tag.ts`.
   const tTagDetail = useTranslations("productTagDetail");
   const key = productTagLabelKey(tag);
 

@@ -1531,14 +1531,14 @@
     "familiesWithAges": "Perheille, ikä {min}–{max}"
   },
   "productTag": {
-    "neuroinclusive": "Neurokirjo",
+    "neuroinclusive": "Neuroinklusiivinen",
     "beginner": "Aloittelijoille",
     "advanced": "Edistyneille"
   },
   "productTagDetail": {
-    "neuroinclusive": "Pienet ryhmät, joka kerta sama ennakoitava rakenne ja Gedut, joilla on kokemusta neurokirjon lasten ohjaamisesta. Kenenkään ei tarvitse esittää muuta kuin on, ja mukaan pääsee aina myös rauhallisemmin.",
-    "beginner": "Aiempaa kokemusta ei tarvita. Gedut aloittavat ihan alusta ja etenevät ryhmän tahtiin, joten lapsi, joka ei ole koskaan avannut peliä, on juuri oikeassa paikassa.",
-    "advanced": "Lapsille, jotka osaavat pelin jo hyvin ja haluavat oikeaa haastetta – isompia projekteja, vaikeampia pulmia ja ryhmän, joka pysyy heidän vauhdissaan."
+    "neuroinclusive": "Pienryhmät, joissa toimitaan tutun ja ennakoitavan rakenteen mukaan. Pelikasvattajilla on kokemusta neurokirjon lasten ohjaamisesta. Jokainen saa olla oma itsensä ja osallistua omassa tahdissaan.",
+    "beginner": "Aiempaa pelikokemusta ei tarvita. Pelikasvattaja auttaa tarvittaessa ihan kädestä pitäen ja ohjaa jokaisen mukaan tehtäviin omalta lähtötasoltaan. Mukaan voi tulla, vaikka peli olisi ennestään täysin vieras.",
+    "advanced": "Lapsille, joilla pelin perusteet ovat jo hallussa ja jotka haluavat kehittää taitojaan eteenpäin. Haastavampia projekteja ja ryhmä, joka pysyy heidän vauhdissaan."
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
