@@ -21,6 +21,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
+  Eye,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -1434,6 +1435,21 @@ export default function AdminUIComponentsPage() {
               hint="Must be at least 8 characters."
             >
               <Input id="demo-field-hint" type="password" autoComplete="new-password" />
+            </Field>
+            {/*
+              The icon variant, for a label that has become a title — one
+              carrying a fact beyond the field's name, such as who ends up
+              reading what is typed in. The glyph is decorative and adds
+              nothing to the accessible name; the label text is what states
+              the fact.
+            */}
+            <Field
+              label="Visible to families"
+              htmlFor="demo-field-icon"
+              icon={Eye}
+              hint="Everyone enrolled here can read this."
+            >
+              <Input id="demo-field-icon" placeholder="Say hello…" autoComplete="off" />
             </Field>
           </form>
         </SubSection>

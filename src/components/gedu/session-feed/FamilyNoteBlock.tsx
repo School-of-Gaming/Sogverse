@@ -15,18 +15,24 @@ import { cn } from "@/lib/utils";
  * a reader gets without reading anything, and it holds wherever either block is
  * used.
  *
- * **The banner is for a caller with nowhere else to say who reads this.** A
- * block wrapped straight around body copy, or around a field whose label is
- * only the field's name, has no other place to name its audience, so the block
- * supplies one: a small uppercase line above the content. A caller whose own
- * title already names the audience in words passes `audienceStatedByField` and
- * gets the container treatment without the banner — two labels stacked on one
- * box is a heading competing with a heading, and the words a writer actually
- * reads are the ones attached to the field they are typing into.
+ * **The banner is for a caller with nowhere else to say who reads this** — a
+ * field whose label is only the field's name has no other place to name its
+ * audience, so the block supplies one: a small uppercase line above the
+ * content. A caller whose own title already names the audience in words passes
+ * `audienceStatedByField` and gets the container treatment without the banner —
+ * two labels stacked on one box is a heading competing with a heading, and the
+ * words a writer actually reads are the ones attached to the field they are
+ * typing into.
  *
  * Whichever way it is composed, the audience must be *stated*: the risk this
  * whole feature carries is a gedu writing for one audience while picturing the
  * other, and inference from a border style is not a statement.
+ *
+ * **Editors only, deliberately** — which is why this block, unlike its
+ * staff-only counterpart, is never wrapped around body copy in a read view. A
+ * published write-up needs no warning after the fact: there is nothing for its
+ * reader to be careful about, and a marked box around every entry in a feed
+ * would be noise standing where the writing should be.
  */
 export function FamilyNoteBlock({
   className,

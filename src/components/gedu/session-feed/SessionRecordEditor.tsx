@@ -182,7 +182,7 @@ export function SessionRecordEditor({
         />
       </FamilyNoteBlock>
 
-      {/* The gedu note keeps the padlocked recessed treatment while it is being
+      {/* The gedu note keeps the recessed treatment while it is being
           *written*, not only while it is read: the whole risk of a two-audience
           field is somebody typing for one and picturing the other. */}
       <StaffNoteBlock audienceStatedByField>
