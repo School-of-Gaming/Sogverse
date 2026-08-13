@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Eye, Loader2, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { AttendanceMark } from "@/components/session-feed";
@@ -164,12 +164,14 @@ export function SessionRecordEditor({
         </div>
       </div>
 
-      {/* Both audiences are banner-marked, and the public one is not the
-          afterthought: this is the field whose mistakes reach every parent in
-          the group. */}
-      <FamilyNoteBlock>
+      {/* One title per box, naming the field and its audience together, so the
+          words a writer reads are attached to the thing they are typing into.
+          The public field is not the afterthought: this is the one whose
+          mistakes reach every parent in the group. */}
+      <FamilyNoteBlock audienceStatedByField>
         <RichNoteField
-          label={t("reportLabel")}
+          label={t("reportTitle")}
+          icon={Eye}
           hint={t("reportFormattingHint")}
           placeholder={t("reportPlaceholder")}
           value={initialState.report}
@@ -183,9 +185,10 @@ export function SessionRecordEditor({
       {/* The gedu note keeps the padlocked recessed treatment while it is being
           *written*, not only while it is read: the whole risk of a two-audience
           field is somebody typing for one and picturing the other. */}
-      <StaffNoteBlock>
+      <StaffNoteBlock audienceStatedByField>
         <RichNoteField
-          label={t("staffNoteFieldLabel")}
+          label={t("staffNoteTitle")}
+          icon={Lock}
           hint={t("staffNoteHint")}
           placeholder={t("staffNotePlaceholder")}
           value={initialState.staffNote}
