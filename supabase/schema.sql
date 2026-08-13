@@ -1114,7 +1114,7 @@ BEGIN
       v_translation->>'locale',
       v_translation->>'name',
       COALESCE(v_translation->>'short_description', ''),
-      NULLIF(v_translation->'long_description', 'null'::jsonb)
+      v_translation->>'long_description'
     );
   END LOOP;
 
@@ -4261,7 +4261,7 @@ BEGIN
       v_translation->>'locale',
       v_translation->>'name',
       COALESCE(v_translation->>'short_description', ''),
-      NULLIF(v_translation->'long_description', 'null'::jsonb)
+      v_translation->>'long_description'
     )
     ON CONFLICT (product_id, locale) DO UPDATE SET
       name              = EXCLUDED.name,
@@ -4998,8 +4998,9 @@ CREATE TABLE public.product_translations (
     short_description text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    long_description jsonb,
-    CONSTRAINT product_translations_long_description_check CHECK (((long_description IS NULL) OR (jsonb_typeof(long_description) = 'array'::text))),
+    long_description text,
+    CONSTRAINT product_translations_long_description_check CHECK (((long_description IS NULL) OR (btrim(long_description, ' 	
+'::text) <> ''::text))),
     CONSTRAINT product_translations_name_check CHECK ((length(TRIM(BOTH FROM name)) > 0))
 );
 
