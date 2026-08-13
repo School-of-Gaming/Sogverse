@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "School of Gaming – Sogverse",
-    "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattimaisten pelikasvattajien johdolla.",
+    "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattitaitoisten pelikasvattajien johdolla.",
     "shortDescription": "School of Gaming – Kun ruutuajasta tulee laatuaikaa",
     "pages": {
       "signIn": "Kirjaudu sisään",
@@ -121,7 +121,7 @@
     },
     "mission": {
       "heading": "Missiomme",
-      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattimaisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
+      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
     },
     "values": {
       "heading": "Asiat joista välitämme",
@@ -156,7 +156,7 @@
     },
     "cta": {
       "heading": "Liity yhteisöömme",
-      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattimaisen pelikasvattajan ohjaamana."
+      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattitaitoisen pelikasvattajan ohjaamana."
     }
   },
   "admin": {
@@ -1431,7 +1431,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Mikä Sogverse on?",
-          "a": "Sogverse on School of Gamingin alusta Minecraft-kerhoille, joita vetävät ammattilaiset pelikasvattajat, jotta ruutuajasta tulisi laatuaikaa."
+          "a": "Sogverse on School of Gamingin alusta Minecraft-kerhoille, joita vetävät ammattitaitoiset pelikasvattajat, jotta ruutuajasta tulisi laatuaikaa."
         },
         "productTypes": {
           "q": "Mikä on kerhojen, leirien ja tapahtumien ero?",
@@ -1742,7 +1742,7 @@
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
-      "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattimaisen pelikasvattajan kanssa.",
+      "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
       "minecraftClubs": {
         "title": "Ohjatut Minecraft-kerhot",
         "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
@@ -1778,7 +1778,7 @@
     },
     "cta": {
       "heading": "Valmis muuttamaan pelaamisen oppimiseksi?",
-      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattimaisen pelikasvattajan ohjaamana.",
+      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattitaitoisen pelikasvattajan ohjaamana.",
       "createFreeAccount": "Luo ilmainen tili"
     }
   },
