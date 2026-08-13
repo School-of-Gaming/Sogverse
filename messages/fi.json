@@ -579,7 +579,7 @@
       "participantPicker": {
         "title": "Lisää osallistuja",
         "description": "Lisää lapsi tai vanhempi suoraan tähän tuotteeseen ohittaen maksun. Vanhempi voi ottaa paikan vain tuotteesta, joka on avoin vanhemmille.",
-        "searchPlaceholder": "Hae vanhemman tai pelaajan nimellä…",
+        "searchPlaceholder": "Hae vanhempaa tai pelaajaa nimellä, sähköpostilla, puhelinnumerolla tai pelin käyttäjänimellä…",
         "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
         "noParents": "Ei vielä yhtään vanhempaa.",
         "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
