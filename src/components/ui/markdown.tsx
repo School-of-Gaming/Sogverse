@@ -138,6 +138,13 @@ const MARKETING_ELEMENTS = [...FEED_ELEMENTS, "a"];
  * produce two visible sizes is a choice the writer cannot see themselves
  * making.
  *
+ * **The top level is a step above the body, not two.** It is the size of a
+ * section heading inside a card in a reading column, which is what these are —
+ * not the size of a page title, which the product's own name already holds a
+ * few centimetres above. The scale was briefly a step louder, and the argument
+ * against it is that the loudest text on the page below the title was a
+ * subheading of it.
+ *
  * `text-foreground` is explicit on every heading because this variant renders
  * inside a muted body — the block-based long description it replaces set the
  * same contrast between its headings and its paragraphs, and losing it would
@@ -145,17 +152,17 @@ const MARKETING_ELEMENTS = [...FEED_ELEMENTS, "a"];
  */
 const MARKETING_COMPONENTS: Components = {
   h1: ({ children }) => (
-    <h2 className="mt-5 text-xl font-semibold leading-snug text-foreground">
+    <h2 className="mt-5 text-lg font-semibold leading-snug text-foreground">
       {children}
     </h2>
   ),
   h2: ({ children }) => (
-    <h3 className="mt-5 text-lg font-semibold leading-snug text-foreground">
+    <h3 className="mt-5 text-base font-semibold leading-snug text-foreground">
       {children}
     </h3>
   ),
   h3: ({ children }) => (
-    <h4 className="mt-5 text-base font-semibold leading-snug text-foreground">
+    <h4 className="mt-5 text-sm font-semibold leading-snug text-foreground">
       {children}
     </h4>
   ),
