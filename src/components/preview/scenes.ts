@@ -85,8 +85,8 @@ const PRODUCT_SCENARIOS: readonly PreviewScenarioMeta[] = PREVIEW_SCENARIOS.map(
 );
 
 /**
- * The long-description comparison's three scenarios, keyed off the fixture's
- * own slug list so the registry cannot list a page the scene will not serve.
+ * The long-description comparison's scenarios, keyed off the fixture's own slug
+ * list so the registry cannot list a page the scene will not serve.
  */
 const LONG_DESCRIPTION_SCENARIO_META: Record<
   (typeof LONG_DESCRIPTION_SCENARIOS)[number],
@@ -105,7 +105,12 @@ const LONG_DESCRIPTION_SCENARIO_META: Record<
   "markdown-h2": {
     label: "Markdown — headings converted at `##`",
     description:
-      "The same copy again, converted at `##` — an `h3` at `text-lg`. The quiet answer: sections that read as sections without competing with the product's name, and one step of headroom left above them for a future level nobody has needed yet. It is also the closest of the two to what the block card does today, which is the argument for it and the argument against it.",
+      "The same copy again, converted at `##` — an `h3` at `text-lg`. The quiet answer: sections that read as sections without competing with the product's name, and one step of headroom left above them for a future level nobody has needed yet.",
+  },
+  "markdown-h3": {
+    label: "Markdown — headings converted at `###`",
+    description:
+      "The same copy at `###` — an `h4` at `text-base`, which is the size the block card paints today. The conservative answer, and the only one of the three that changes nothing about how this page looks: put it beside the control and the headings should be indistinguishable, leaving the appended list-and-links section as the entire visible difference. That is either the whole point — a format change nobody has to notice — or an argument that the sections were always too quiet and this was the moment to fix it.",
   },
 };
 
@@ -155,7 +160,7 @@ export const PREVIEW_SCENES = [
     surface: "product-long-description",
     title: "Product long description — which heading level?",
     description:
-      "One decision, three pages. A product's marketing long description is stored today as a flat array of heading and paragraph blocks; it is becoming markdown, authored in the same rich editor gedus write session reports in, and with links allowed because this copy is written by an admin for our own shop pages rather than by a gedu for one family. A `heading` block never carried a level — there was only one kind of heading — so the conversion has to choose one, and the choice is not a fact about the data: it is about how loud a section should be on a page whose `h1` is already the product's name. These three scenarios are one body of realistic copy (four sections, paragraphs at full length, the specifics a parent scans for) rendered by today's block path, converted at `#`, and converted at `##`. Nothing else varies between them — same product, same hero, same signup rail, same card, same type scale, same body size — so the only thing to judge is the headings. The markdown pages carry one extra section at the end that the block format cannot express at all: a real bulleted list, and links out to the game's store and back to our privacy policy. It sits last on purpose, after the sections that answer the heading question, and it is the whole of what the field gains. **Note what does not change:** the hand-typed dash list in the fourth section stays literal text on all three pages, because the conversion escapes anything that would otherwise start meaning something in markdown. Copy that was plain must not silently acquire formatting nobody typed.",
+      "One decision, four pages. A product's marketing long description is stored today as a flat array of heading and paragraph blocks; it is becoming markdown, authored in the same rich editor gedus write session reports in, and with links allowed because this copy is written by an admin for our own shop pages rather than by a gedu for one family. A `heading` block never carried a level — there was only one kind of heading — so the conversion has to choose one, and the choice is not a fact about the data: it is about how loud a section should be on a page whose `h1` is already the product's name. These scenarios are one body of realistic copy (four sections, paragraphs at full length, the specifics a parent scans for) rendered by today's block path, then converted at each of the three candidate levels — the last of which paints headings at exactly the size the block card uses now, and is therefore the option where the format changes and the page does not. Nothing else varies between them — same product, same hero, same signup rail, same card, same type scale, same body size — so the only thing to judge is the headings. The markdown pages carry one extra section at the end that the block format cannot express at all: a real bulleted list, and links out to the game's store and back to our privacy policy. It sits last on purpose, after the sections that answer the heading question, and it is the whole of what the field gains. **Note what does not change:** the hand-typed dash list in the fourth section stays literal text on all three pages, because the conversion escapes anything that would otherwise start meaning something in markdown. Copy that was plain must not silently acquire formatting nobody typed.",
     chrome: "public",
     scenarios: LONG_DESCRIPTION_PREVIEW_SCENARIOS,
   },

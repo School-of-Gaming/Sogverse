@@ -19,16 +19,23 @@ import type { ProductLongDescription } from "@/types";
  * full width, under the product's own `h1`, with the hero above it and the
  * signup rail beside it.
  *
- * So there are three scenarios over **one body of copy** — today's blocks, that
- * copy converted at `#`, and the same copy converted at `##`. Nothing else
- * differs between them: same product, same hero, same panel, same card, same
- * type scale. Anything that varied besides the heading level would be a second
- * variable in a one-variable comparison.
+ * So there is one body of copy and one page per candidate — today's blocks as
+ * the control, then that same copy converted at `#`, at `##` and at `###`.
+ * Nothing else differs between them: same product, same hero, same panel, same
+ * card, same type scale. Anything that varied besides the heading level would
+ * be a second variable in a one-variable comparison.
+ *
+ * All three levels are here rather than the two that look most likely, because
+ * the third is the one that renders at the size the block card already uses —
+ * the option where the format changes and the page does not. Leaving it out
+ * would have hidden the only candidate that can be judged against the control
+ * by looking for a difference and finding none.
  */
 export const LONG_DESCRIPTION_SCENARIOS = [
   "blocks-today",
   "markdown-h1",
   "markdown-h2",
+  "markdown-h3",
 ] as const;
 
 export type LongDescriptionScenario =
@@ -134,6 +141,20 @@ function newCapabilitiesSection(headingLevel: MarkdownHeadingLevel): string {
 }
 
 /**
+ * Which heading level each markdown scenario converts at. Exhaustive over the
+ * markdown slugs by its own type, so adding a scenario without deciding its
+ * level does not compile.
+ */
+const MARKDOWN_SCENARIO_LEVEL: Record<
+  Exclude<LongDescriptionScenario, "blocks-today">,
+  MarkdownHeadingLevel
+> = {
+  "markdown-h1": 1,
+  "markdown-h2": 2,
+  "markdown-h3": 3,
+};
+
+/**
  * The markdown a scenario renders, or `null` for the one that renders today's
  * blocks instead.
  *
@@ -146,7 +167,7 @@ export function longDescriptionScenarioMarkdown(
   scenario: LongDescriptionScenario,
 ): string | null {
   if (scenario === "blocks-today") return null;
-  const level: MarkdownHeadingLevel = scenario === "markdown-h1" ? 1 : 2;
+  const level: MarkdownHeadingLevel = MARKDOWN_SCENARIO_LEVEL[scenario];
   return [
     longDescriptionToMarkdown(LONG_DESCRIPTION_BLOCKS, level),
     newCapabilitiesSection(level),
