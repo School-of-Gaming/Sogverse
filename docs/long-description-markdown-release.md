@@ -55,13 +55,23 @@ behave before pointing them at production.
 1. **Export and convert, immediately before the release.**
 
    ```bash
-   npx tsx scripts/export-long-descriptions.tsx --target=production ./out-prod
+   npx tsx scripts/export-long-descriptions.tsx --target=production ~/work/sog-prod-desc
    ```
 
    This only reads. It writes two files into the output directory: a snapshot of
    every row exactly as the database held it, and the restore SQL. It renders
    every converted value and refuses to write anything at all if one row's words
    or headings do not survive, so a clean run is also the go-ahead.
+
+   **Write the output outside the repository.** `~/work/sog-prod-desc` is the
+   agreed home and is a sibling of the checkout, so a directory of production
+   marketing copy cannot be committed by accident. That folder also already
+   holds a snapshot taken while this change was being built — useful as a second
+   copy of what the field held before any of this, and not the file to restore
+   from, because it predates every edit made since.
+
+   Credentials come from `.env.local`, which the script reads itself; the target
+   argument, not the environment, is what decides which database is opened.
 
 2. **Release.** Merge to `main` as usual. CI applies the migration, which
    changes the column to `text` and clears it.
@@ -77,8 +87,12 @@ behave before pointing them at production.
    PGPASSWORD='<SUPABASE_PROD_DB_PASSWORD>' psql \
      -h aws-1-eu-north-1.pooler.supabase.com -p 6543 \
      -U postgres.<SUPABASE_PROD_PROJECT_REF> -d postgres \
-     -v ON_ERROR_STOP=1 -f ./out-prod/long-descriptions.restore.sql
+     -v ON_ERROR_STOP=1 -f ~/work/sog-prod-desc/long-descriptions.restore.sql
    ```
+
+   The password and project ref are `SUPABASE_PROD_DB_PASSWORD` and
+   `SUPABASE_PROD_PROJECT_REF` in `.env.local`. Read them into the command
+   rather than pasting the values anywhere they persist.
 
    The file is one transaction and ends by asserting how many rows came out
    carrying a description. A mismatch rolls the whole thing back rather than
@@ -112,9 +126,31 @@ products that never had a blurb. Anyone watching the site during a release
 should be told, so the gap is not reported as a fault and nobody reaches for a
 rollback.
 
-## Afterwards
+## Afterwards — the cleanup
 
-Once production is restored and read, the block shape has no remaining purpose:
-the type describing it, the narrowing that reads one, the conversion, its two
-test suites, the export script and this page all go together in one change.
-Until then, none of them is dead code.
+Once production is restored and somebody has read a few of the pages, the block
+shape has no remaining purpose anywhere. **Nothing here is dead code until that
+has happened**, which is why it is a separate change on its own branch rather
+than something folded into the release.
+
+Delete, in one change:
+
+- `src/lib/products/long-description-to-markdown.ts` — the conversion.
+- `tests/unit/lib/products/long-description-to-markdown.test.tsx` and
+  `tests/unit/lib/products/long-description-editor-round-trip.test.tsx` — the two
+  suites that made the conversion trustworthy.
+- `scripts/export-long-descriptions.tsx`, `scripts/lib/long-description-export.tsx`
+  and `tests/unit/scripts/long-description-export.test.tsx` — the export.
+- The block types and the helper that parses one, in `src/types/index.ts`, plus
+  any fixture still built from blocks rather than from markdown.
+- This page.
+
+The compiler and the linter find the remainder: delete the list above, then run
+`npm run lint`, `npm run type-check` and `npm run test`, and follow what breaks.
+Every remaining reference is something that should have gone with it.
+
+Two things that are **not** part of the cleanup. The column is already `text`,
+so no migration is involved — this change touches no database at all. And the
+snapshot in `~/work/sog-prod-desc` is the last copy of the pre-markdown content;
+keep or delete it as a deliberate decision, not as a side effect of tidying the
+repository.
