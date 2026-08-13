@@ -147,6 +147,79 @@ describe("line breaks inside a paragraph", () => {
   });
 });
 
+/**
+ * **Which lines get a hard break and which get a paragraph of their own.**
+ *
+ * An escape that only holds at the start of a paragraph does not survive being
+ * reached over a hard break — the editor this field is edited in re-derives its
+ * markdown on every save and does not write those backslashes back — so a line
+ * that depends on one opens a fresh paragraph instead. The cost is a visible
+ * gap where there used to be a tight break, which is why the rule is keyed to
+ * the escaping rather than applied to every line.
+ *
+ * The round trip itself is pinned in `long-description-editor-round-trip`;
+ * these are the arithmetic, so a change to which lines split shows up as a
+ * failure here rather than only as a rendered difference somewhere else.
+ */
+describe("a line whose escaping is load-bearing starts its own paragraph", () => {
+  it("leaves a line that needs no escaping on a hard break", () => {
+    expect(
+      longDescriptionToMarkdown([paragraph("Line one.\nLine two.")], 2),
+    ).toBe("Line one.\\\nLine two.");
+  });
+
+  it("splits every line-leading marker off into its own paragraph", () => {
+    for (const [typed, expected] of [
+      ["Ready:\n- a computer", "Ready:\n\n\\- a computer"],
+      ["Ready:\n+ a mouse", "Ready:\n\n\\+ a mouse"],
+      ["Ready:\n1. first", "Ready:\n\n1\\. first"],
+      ["Ready:\n2) second", "Ready:\n\n2\\) second"],
+      ["Ready:\n# a hash", "Ready:\n\n\\# a hash"],
+      ["Ready:\n> a quote", "Ready:\n\n\\> a quote"],
+      ["Ready:\n| a table row", "Ready:\n\n\\| a table row"],
+      ["A line\n---", "A line\n\n\\---"],
+      ["A line\n===", "A line\n\n\\==="],
+    ]) {
+      expect(longDescriptionToMarkdown([paragraph(typed)], 2), typed).toBe(
+        expected,
+      );
+    }
+  });
+
+  it("splits a line carrying an escaped character reference", () => {
+    // The one escape a paragraph start cannot rescue either — see the round-trip
+    // suite — but the line is no less fragile, and the rule is read off the
+    // escaper's passes rather than a hand-picked subset of them.
+    expect(
+      longDescriptionToMarkdown([paragraph("Ready:\nthe AT&amp;T of it")], 2),
+    ).toBe("Ready:\n\nthe AT\\&amp;T of it");
+    // A bare `&` is not escaped, so it is not fragile and keeps its break.
+    expect(
+      longDescriptionToMarkdown([paragraph("Ready:\na mouse & a headset")], 2),
+    ).toBe("Ready:\\\na mouse & a headset");
+  });
+
+  it("keeps the safe lines around a split on their hard breaks", () => {
+    // The rule fires per line, not per block: one dashed line does not cost the
+    // whole paragraph its spacing.
+    expect(
+      longDescriptionToMarkdown(
+        [paragraph("Kit list:\n- a computer\nanything recent is fine\nand a mouse")],
+        2,
+      ),
+    ).toBe("Kit list:\n\n\\- a computer\\\nanything recent is fine\\\nand a mouse");
+  });
+
+  it("does not split the first line of a block, which is already at a start", () => {
+    expect(longDescriptionToMarkdown([paragraph("- a computer")], 2)).toBe(
+      "\\- a computer",
+    );
+    expect(
+      longDescriptionToMarkdown([paragraph("Intro.\n\n- a computer")], 2),
+    ).toBe("Intro.\n\n\\- a computer");
+  });
+});
+
 describe("text that would read as markdown syntax stays plain text", () => {
   /**
    * Each case is a string an admin has plausibly typed into a field that was
@@ -212,7 +285,12 @@ describe("text that would read as markdown syntax stays plain text", () => {
     ]) {
       const typed = `Lead in:\n${line}`;
       const container = renderConverted([paragraph(typed)]);
-      expect(container.querySelectorAll("p"), line).toHaveLength(1);
+      // Two paragraphs rather than one: a line whose escaping is what keeps it
+      // literal has to begin its own — see the paragraph-start describe below.
+      expect(container.querySelectorAll("p"), line).toHaveLength(2);
+      expect(container.querySelector("ul"), line).toBeNull();
+      expect(container.querySelector("ol"), line).toBeNull();
+      expect(container.querySelector("blockquote"), line).toBeNull();
       expect(words(container), line).toBe(typed.replace("\n", " "));
     }
   });

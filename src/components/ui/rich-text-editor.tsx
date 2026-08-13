@@ -21,6 +21,7 @@ import {
   useEditor,
   useEditorState,
   type Editor,
+  type Extensions,
 } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown as MarkdownExtension } from "tiptap-markdown";
@@ -129,54 +130,7 @@ export function RichTextEditor({
     // needs a DOM — rendering immediately would throw during SSR.
     immediatelyRender: false,
     editable: !disabled,
-    extensions: [
-      StarterKit.configure({
-        // Everything the toolbar can't produce and the renderer doesn't style
-        // is switched off at the schema, so it cannot be typed, pasted or
-        // undone into existence.
-        blockquote: false,
-        code: false,
-        codeBlock: false,
-        horizontalRule: false,
-        strike: false,
-        underline: false,
-        // Links exist only where the field's own policy allows them, and only
-        // ever deliberately: `autolink` off, so typing an address does not
-        // silently mark it up (the markdown serialiser's `linkify` is off for
-        // the same reason), and `openOnClick` off, so a click inside a link
-        // while editing puts the caret there instead of navigating away from
-        // an unsaved draft. `isAllowedUri` narrows the accepted schemes to the
-        // ones the reader's renderer keeps — see `ALLOWED_LINK_SCHEMES`.
-        link: linksAllowed
-          ? {
-              autolink: false,
-              openOnClick: false,
-              isAllowedUri: (url) => isRenderableHref(url),
-            }
-          : false,
-        // Three levels, because a real write-up opens with a title line and
-        // then sections under it. Anything deeper is switched off at the
-        // schema, so it cannot be typed, pasted or undone into existence.
-        heading: { levels: [1, 2, 3] },
-      }),
-      Placeholder.configure({ placeholder: placeholder ?? "" }),
-      MarkdownExtension.configure({
-        // No HTML in, no HTML out: the read-only renderer refuses raw HTML for
-        // the same reason, and a value that round-trips through this editor
-        // must stay inside the subset that renderer knows how to style.
-        html: false,
-        tightLists: true,
-        bulletListMarker: "-",
-        linkify: false,
-        breaks: false,
-        // Plain text arriving on the clipboard is parsed as markdown rather
-        // than pasted literally, so a write-up drafted elsewhere keeps its
-        // headings and lists instead of showing the writer their own `##`.
-        // Only plain text: a paste carrying HTML already has structure and
-        // goes through the schema's own parser.
-        transformPastedText: true,
-      }),
-    ],
+    extensions: richTextExtensions({ variant, placeholder }),
     content: initialValue,
     editorProps: {
       attributes: {
@@ -489,6 +443,73 @@ export function RichTextEditor({
   );
 }
 
+/**
+ * **The editor's schema and its markdown dialect, as one value.**
+ *
+ * Exported rather than written inline in the hook above, because this list is
+ * what decides how a stored value is read in and what a save writes back — so
+ * it is the thing a round-trip test has to drive. A test that rebuilt the same
+ * options beside it would be testing a copy, and a copy is exactly what stops
+ * failing when somebody changes the original.
+ */
+export function richTextExtensions({
+  variant,
+  placeholder = "",
+}: {
+  variant: RichTextEditorVariant;
+  placeholder?: string;
+}): Extensions {
+  return [
+    StarterKit.configure({
+      // Everything the toolbar can't produce and the renderer doesn't style is
+      // switched off at the schema, so it cannot be typed, pasted or undone
+      // into existence.
+      blockquote: false,
+      code: false,
+      codeBlock: false,
+      horizontalRule: false,
+      strike: false,
+      underline: false,
+      // Links exist only where the field's own policy allows them, and only
+      // ever deliberately: `autolink` off, so typing an address does not
+      // silently mark it up (the markdown serialiser's `linkify` is off for the
+      // same reason), and `openOnClick` off, so a click inside a link while
+      // editing puts the caret there instead of navigating away from an unsaved
+      // draft. `isAllowedUri` narrows the accepted schemes to the ones the
+      // reader's renderer keeps — see `ALLOWED_LINK_SCHEMES`.
+      link:
+        variant === "marketing"
+          ? {
+              autolink: false,
+              openOnClick: false,
+              isAllowedUri: (url) => isRenderableHref(url),
+            }
+          : false,
+      // Three levels, because a real write-up opens with a title line and then
+      // sections under it. Anything deeper is switched off at the schema, so it
+      // cannot be typed, pasted or undone into existence.
+      heading: { levels: [1, 2, 3] },
+    }),
+    Placeholder.configure({ placeholder }),
+    MarkdownExtension.configure({
+      // No HTML in, no HTML out: the read-only renderer refuses raw HTML for
+      // the same reason, and a value that round-trips through this editor must
+      // stay inside the subset that renderer knows how to style.
+      html: false,
+      tightLists: true,
+      bulletListMarker: "-",
+      linkify: false,
+      breaks: false,
+      // Plain text arriving on the clipboard is parsed as markdown rather than
+      // pasted literally, so a write-up drafted elsewhere keeps its headings
+      // and lists instead of showing the writer their own `##`. Only plain
+      // text: a paste carrying HTML already has structure and goes through the
+      // schema's own parser.
+      transformPastedText: true,
+    }),
+  ];
+}
+
 /** The things the toolbar can toggle, and the keys the active map uses. */
 type ToolbarToolKey =
   | "bold"
@@ -684,13 +705,17 @@ function IconButton({
 }
 
 /**
- * Read the document back as markdown.
+ * Read the document back as markdown — what a save writes to the column.
  *
  * The serialiser lives on the editor's extension storage. Tiptap's `Storage`
  * interface is the declared extension point for exactly this, and the markdown
  * extension's slot on it is declared in `src/types/tiptap.d.ts` — so this is a
  * plain typed property access rather than an assertion.
+ *
+ * Exported for the same reason the extension list is: a round-trip test has to
+ * read the document the way this editor does, not the way it happens to be
+ * spelled somewhere else.
  */
-function readMarkdown(editor: Editor): string {
+export function readMarkdown(editor: Editor): string {
   return editor.storage.markdown.getMarkdown();
 }

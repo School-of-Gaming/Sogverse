@@ -68,6 +68,16 @@ export function isLongDescriptionScenario(
  *   how the surrounding text renders if they were passed through unescaped.
  * - **A line break inside a paragraph**, which the page shows today and must
  *   still show afterwards.
+ *
+ * **On the markdown pages, expect the dash list to sit further apart than the
+ * blocks page shows it — that difference is the point, not a bug in the
+ * scene.** A line that only stays literal because it is escaped has to begin
+ * its own markdown paragraph, or the first save through the rich-text editor
+ * strips the escape and the lines become real bullets. So each dashed line
+ * renders with a paragraph gap above it rather than a tight break, and so does
+ * the `1.21` line further up, for the same reason. The words are identical
+ * across all four pages; the vertical rhythm around those two places is not,
+ * and the heading question is still the only thing the scene is asking about.
  */
 export const LONG_DESCRIPTION_BLOCKS: ProductLongDescription = [
   { type: "heading", text: "What happens in a session" },

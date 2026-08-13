@@ -33,6 +33,35 @@ export type MarkdownHeadingLevel = 1 | 2 | 3;
  * become hard breaks — today's paragraphs render with `whitespace-pre-line`, so
  * a break the admin typed is visible on the page and has to survive.
  *
+ * **Except that a line whose escaping is load-bearing begins its own
+ * paragraph.** Converted copy is not a write-once artefact: the column it lands
+ * in is edited in a rich-text editor, and *that* editor re-derives the markdown
+ * from the document on every save. Its serialiser only applies the line-start
+ * half of its escaping at the start of a paragraph — a line reached over a hard
+ * break is treated as mid-paragraph and its backslashes are not written back.
+ * So an escape that only exists to stop a line opening a list, a quote or a
+ * heading survives the page but not the first unrelated save: the text acquires
+ * formatting nobody typed, and the original is unrecoverable because the
+ * conversion rewrites the column in place. Starting a fresh paragraph puts the
+ * line where the serialiser does re-escape it, and the round trip is then
+ * stable.
+ *
+ * **What that costs, where it fires: a paragraph gap instead of a line break.**
+ * A hand-typed dash list inside one block used to render as tight lines and now
+ * renders with the spacing between paragraphs. That is why the rule is keyed to
+ * the escaping rather than applied to every line — lines that need no escape
+ * keep their hard break, so the tight spacing survives everywhere it safely
+ * can.
+ *
+ * **One escape is beyond rescuing here, and it is recorded rather than
+ * pretended away.** A backslash before entity-shaped text — `AT&amp;T`, where
+ * the `&` would otherwise decode — is not re-derived by that serialiser at
+ * *any* position, because a bare `&` is not on the list of characters it
+ * escapes. Such a line still opens its own paragraph, which is the most this
+ * end can do; the first save through the editor nonetheless collapses it to
+ * `AT&T`. The fix would have to be at the editing end, and no product's copy
+ * currently contains one.
+ *
  * **What is lost, deliberately, because markdown cannot represent it.** Three
  * things, all stated here because none is recoverable afterwards:
  *
@@ -134,23 +163,49 @@ function paragraphToMarkdown(text: string): string {
   // within a run are joined with a trailing backslash, which is a hard break.
   // (Two trailing spaces would do the same and is invisible in the stored
   // value, so the next person to touch it would strip it without knowing.)
-  const paragraphs: string[] = [];
+  //
+  // A line whose escaping only holds at a paragraph start opens a run of its
+  // own instead of continuing the previous one — see the note on the exported
+  // function for what a hard break does to those backslashes, and what the
+  // extra paragraph gap buys.
+  const paragraphs: string[][] = [];
   let run: string[] = [];
+
+  function endRun() {
+    if (run.length > 0) {
+      paragraphs.push(run);
+      run = [];
+    }
+  }
 
   for (const rawLine of text.split("\n")) {
     const line = escapeLine(rawLine);
-    if (line === "") {
-      if (run.length > 0) {
-        paragraphs.push(run.join("\\\n"));
-        run = [];
-      }
+    if (line === null) {
+      endRun();
       continue;
     }
-    run.push(line);
+    if (line.ownParagraph) endRun();
+    run.push(line.text);
   }
-  if (run.length > 0) paragraphs.push(run.join("\\\n"));
+  endRun();
 
-  return paragraphs.join("\n\n");
+  return paragraphs.map((lines) => lines.join("\\\n")).join("\n\n");
+}
+
+/** One line of paragraph text, made inert, or `null` for a blank one. */
+interface EscapedLine {
+  text: string;
+  /**
+   * Whether the escaping this line carries is the kind that has to sit at the
+   * start of a paragraph to be read back correctly.
+   *
+   * Read off the passes below as they run rather than restated as a second list
+   * of dangerous prefixes: the two would drift, and the one that drifted
+   * silently is this one — a marker added to the line-start pass but missed
+   * here would still be escaped on the way out and still lose its backslash on
+   * the first save.
+   */
+  ownParagraph: boolean;
 }
 
 /**
@@ -162,13 +217,28 @@ function paragraphToMarkdown(text: string): string {
  * with a block marker, so the second pass cannot double-escape what the first
  * one handled.
  */
-function escapeLine(rawLine: string): string {
+function escapeLine(rawLine: string): EscapedLine | null {
   const trimmed = rawLine.trim();
-  if (trimmed === "") return "";
-  const inline = trimmed.replace(INLINE_SYNTAX, (match) => `\\${match}`);
+  if (trimmed === "") return null;
+  // The inline pass, watching for the one escape it makes that a mid-paragraph
+  // position loses: a backslash before an entity-shaped `&`. (A paragraph start
+  // does not actually rescue that one either — see the exported function's note
+  // — but the line is no less fragile for it, and the split is what this end
+  // can do about it.)
+  let escapedEntity = false;
+  const inline = trimmed.replace(INLINE_SYNTAX, (match) => {
+    if (match === "&") escapedEntity = true;
+    return `\\${match}`;
+  });
   const ordered = LEADING_ORDERED_MARKER.exec(inline);
   if (ordered !== null) {
-    return `${ordered[1]}\\${ordered[2]}${inline.slice(ordered[0].length)}`;
+    return {
+      text: `${ordered[1]}\\${ordered[2]}${inline.slice(ordered[0].length)}`,
+      ownParagraph: true,
+    };
   }
-  return LEADING_BLOCK_MARKER.test(inline) ? `\\${inline}` : inline;
+  if (LEADING_BLOCK_MARKER.test(inline)) {
+    return { text: `\\${inline}`, ownParagraph: true };
+  }
+  return { text: inline, ownParagraph: escapedEntity };
 }

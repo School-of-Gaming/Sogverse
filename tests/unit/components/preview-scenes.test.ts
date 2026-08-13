@@ -278,15 +278,25 @@ describe("the long-description scene varies the heading level and nothing else",
    * format has no list, it renders as plain lines today, and it must still
    * render as plain lines afterwards. Losing it from the fixture would take the
    * regression off the page entirely.
+   *
+   * **Each of those lines stands as its own paragraph, and the scene is meant
+   * to show that.** An escaped line reached over a hard break loses its
+   * backslash the first time the field is saved in the rich-text editor, so the
+   * conversion gives it a paragraph start instead — which is a visible gap
+   * rather than a tight break, and the one thing about the markdown pages that
+   * does not match the blocks control. Pinning the shape rather than just the
+   * escape is what keeps somebody from "fixing" the spacing by putting the hard
+   * break back.
    */
-  it("keeps a hand-typed list in the source copy, escaped in the output", () => {
+  it("keeps a hand-typed list in the source copy, each line its own paragraph", () => {
     const typedList = LONG_DESCRIPTION_BLOCKS.filter(
       (b) => b.type === "paragraph" && /\n- /.test(b.text),
     );
     expect(typedList.length).toBeGreaterThan(0);
     for (const { scenario, markdown } of fixtures) {
       if (markdown === null) continue;
-      expect(markdown, scenario).toContain("\\- a computer");
+      expect(markdown, scenario).toContain("\n\n\\- a computer");
+      expect(markdown, scenario).not.toContain("\\\n\\- ");
     }
   });
 });
