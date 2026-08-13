@@ -304,6 +304,52 @@ $$;
 
 
 --
+-- Name: _list_views(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._list_views() RETURNS TABLE(view_name text, kind text, security_invoker boolean, authenticated_select boolean, anon_select boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT
+    c.relname::text,
+    CASE c.relkind
+      WHEN 'v' THEN 'view'
+      WHEN 'm' THEN 'materialized view'
+    END,
+    COALESCE(c.reloptions @> ARRAY['security_invoker=true'], false),
+    EXISTS (
+      SELECT 1
+        FROM pg_catalog.pg_attribute a
+       WHERE a.attrelid = c.oid
+         AND a.attnum > 0
+         AND NOT a.attisdropped
+         AND pg_catalog.has_column_privilege('authenticated', c.oid, a.attnum, 'SELECT')
+    ),
+    EXISTS (
+      SELECT 1
+        FROM pg_catalog.pg_attribute a
+       WHERE a.attrelid = c.oid
+         AND a.attnum > 0
+         AND NOT a.attisdropped
+         AND pg_catalog.has_column_privilege('anon', c.oid, a.attnum, 'SELECT')
+    )
+  FROM pg_catalog.pg_class c
+  JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('v', 'm')
+  ORDER BY 1;
+$$;
+
+
+--
+-- Name: FUNCTION _list_views(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public._list_views() IS 'Every view-shaped relation in the public schema — plain and materialized — with the three things that decide whether it is safe: which class it is, whether it runs as its caller (security_invoker), and which of the two Data API roles can read any part of it. Exposure is measured per column, so a relation reachable only through a column-level GRANT still reports as exposed. Materialized views are reported so the tests can ban them: one can take neither security_invoker nor RLS, and its rows were computed under a BYPASSRLS role. Read only by the DB test suite — the sweep in access-control.test.ts and the completeness checks in authorization-spine.test.ts — which is why it is service_role only.';
+
+
+--
 -- Name: admin_enroll_participant(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5155,6 +5201,43 @@ CREATE TABLE public.spoken_languages (
 
 
 --
+-- Name: user_search_index; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.user_search_index WITH (security_invoker='true') AS
+ SELECT p.id,
+    p.email,
+    p.first_name,
+    p.last_name,
+    p.role,
+    p.phone,
+    p.currency,
+    p.home_location_id,
+    p.locale,
+    p.spoken_languages,
+    p.created_at,
+    p.updated_at,
+    concat_ws(' '::text, p.first_name, p.last_name, p.email, p.phone, mc.minecraft_username, rb.roblox_username) AS search_blob
+   FROM ((public.profiles p
+     LEFT JOIN public.minecraft_accounts mc ON ((mc.user_id = p.id)))
+     LEFT JOIN public.roblox_accounts rb ON ((rb.user_id = p.id)));
+
+
+--
+-- Name: VIEW user_search_index; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON VIEW public.user_search_index IS 'Profiles as the admin user search matches them: every profile column, plus search_blob. Read by that one search and nothing else. SECURITY INVOKER, so RLS on profiles, minecraft_accounts and roblox_accounts governs every row exactly as it would a direct read — which also means a role granted SELECT here must hold SELECT on all three. The joins are on those tables'' primary key and so cannot multiply a profile into several rows; the search reads its match total from this view''s row count, so that is asserted rather than assumed. A future game platform is one more LEFT JOIN and one more argument to concat_ws, with no change anywhere outside the database.';
+
+
+--
+-- Name: COLUMN user_search_index.search_blob; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.user_search_index.search_blob IS 'Every string a person can be found by — name, email, phone, and each game handle — space-joined. Derived, never written, and never selected: the search filters on it and reads the profile columns beside it, so it does not cross the wire. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
+
+
+--
 -- Name: voice_private_zone_occupants; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -7432,6 +7515,14 @@ GRANT ALL ON FUNCTION public._list_tables_without_rls() TO service_role;
 
 
 --
+-- Name: FUNCTION _list_views(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public._list_views() FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_views() TO service_role;
+
+
+--
 -- Name: FUNCTION admin_enroll_participant(p_product_id uuid, p_participant_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -8386,6 +8477,14 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_staff_details TO authenti
 GRANT SELECT ON TABLE public.spoken_languages TO anon;
 GRANT ALL ON TABLE public.spoken_languages TO service_role;
 GRANT SELECT ON TABLE public.spoken_languages TO authenticated;
+
+
+--
+-- Name: TABLE user_search_index; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.user_search_index TO authenticated;
+GRANT SELECT ON TABLE public.user_search_index TO service_role;
 
 
 --
