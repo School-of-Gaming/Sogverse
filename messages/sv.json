@@ -2741,7 +2741,7 @@
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming driver Sogverse, sköter anmälnings- och lärmiljön, tillhandahåller innehållet och ledarna, håller i lärandeträffarna och ansvarar för tillsynen av barns trygghet.",
+          "School of Gaming driver Sogverse, sköter anmälnings- och lärmiljön, tillhandahåller innehållet och spelfostrarna, håller i lärandeträffarna och ansvarar för tillsynen av barns trygghet.",
           "School of Gaming Galactic Oy",
           "FO-nummer: 3110461-1",
           "Isokatu 56",
@@ -2845,7 +2845,7 @@
             "Utreda klagomål och oro som rör barns trygghet.",
             "Kommunicera med en förälder eller vårdnadshavare.",
             "Kontakta räddningstjänst eller behöriga myndigheter när det behövs.",
-            "Skydda deltagarnas, ledarnas och andra personers rättigheter, säkerhet och välbefinnande."
+            "Skydda deltagarnas, spelfostrarnas och andra personers rättigheter, säkerhet och välbefinnande."
           ],
           "Vi stöder oss på våra berättigade intressen av att driva ett tryggt Program, på tillämpliga rättsliga skyldigheter och, i en nödsituation, på skyddet av någons grundläggande intressen."
         ]
@@ -2967,7 +2967,7 @@
           [
             "Varje barns profil är kopplad till ett konto för en förälder eller vårdnadshavare.",
             "Barnen använder ett visningsnamn i stället för att publicera sina kontaktuppgifter.",
-            "Endast anmälda deltagare och kontrollerade ledare får delta.",
+            "Endast anmälda deltagare och kontrollerade spelfostrare får delta.",
             "Kommunikationen sker i grupp och under uppsikt.",
             "Det finns inga privata direktmeddelanden mellan barn.",
             "Vanliga träffar spelas inte in.",
@@ -3099,7 +3099,7 @@
       "covers": {
         "heading": "Vilka omfattas",
         "blocks": [
-          "Policyn gäller all personal hos Lynx Educate och School of Gaming, alla ledare (spelfostrare, eller ”Geduer”), volontärer och alla uppdragstagare som möter barn genom Programmet."
+          "Policyn gäller all personal hos Lynx Educate och School of Gaming, alla spelfostrare (eller ”Geduer”), volontärer och alla uppdragstagare som möter barn genom Programmet."
         ]
       },
       "vetting": {
@@ -3198,7 +3198,7 @@
       "safety": {
         "heading": "Trygghet och tillsyn",
         "blocks": [
-          "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>, som finns tillgänglig på begäran."
+          "Varje träff leds av en utbildad spelfostrare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>, som finns tillgänglig på begäran."
         ]
       },
       "information": {

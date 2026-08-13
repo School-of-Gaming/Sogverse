@@ -1927,7 +1927,7 @@
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming operates Sogverse, manages the registration and learning environment, provides the curriculum and facilitators, delivers learning sessions and ensures safeguarding oversight.",
+          "School of Gaming operates Sogverse, manages the registration and learning environment, provides the curriculum and Game Educators, delivers learning sessions and ensures safeguarding oversight.",
           "School of Gaming Galactic Oy",
           "Business ID: 3110461-1",
           "Isokatu 56",
@@ -2031,7 +2031,7 @@
             "Investigate complaints and safeguarding concerns.",
             "Communicate with a parent or guardian.",
             "Contact emergency services or competent authorities where necessary.",
-            "Protect the rights, safety and welfare of participants, facilitators and other people."
+            "Protect the rights, safety and welfare of participants, Game Educators and other people."
           ],
           "We rely on our legitimate interests in operating a safe Programme, applicable legal obligations and, in an emergency, the protection of someone’s vital interests."
         ]
@@ -2153,7 +2153,7 @@
           [
             "Every child’s profile is linked to a parent or guardian account.",
             "Children use a display name rather than publishing their contact details.",
-            "Only registered participants and vetted facilitators may join.",
+            "Only registered participants and vetted Game Educators may join.",
             "Communication is group-based and supervised.",
             "There is no private direct messaging between children.",
             "Routine sessions are not recorded.",
@@ -2285,7 +2285,7 @@
       "covers": {
         "heading": "Who this covers",
         "blocks": [
-          "This policy applies to all Lynx Educate and School of Gaming staff, facilitators (Game Educators, or “Gedus”), volunteers, and any contractor who interacts with children through this Programme."
+          "This policy applies to all Lynx Educate and School of Gaming staff, Game Educators (or “Gedus”), volunteers, and any contractor who interacts with children through this Programme."
         ]
       },
       "vetting": {
@@ -2384,7 +2384,7 @@
       "safety": {
         "heading": "Safety and supervision",
         "blocks": [
-          "Every session is supervised by a trained facilitator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>, available upon request."
+          "Every session is supervised by a trained Game Educator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>, available upon request."
         ]
       },
       "information": {

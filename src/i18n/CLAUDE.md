@@ -70,13 +70,14 @@ text alike. Earlier catalogues drifted into a second, plainer word for legal pag
 locale (and French documented the split deliberately). That is retired — a legal page uses
 the same word as the home page.
 
-**The one exception is the Roblox programme documents** (`robloxPrivacy`,
-`robloxSafeguarding`, `robloxTerms`), co-authored with Lynx Educate. Where those name a
-generic legal *category* of person, listed alongside staff, volunteers and contractors, the
-category word is the partner's and stays put — `facilitator` in English, `ohjaaja` in
-Finnish, `ledare` in Swedish. Any gloss beside it still uses the house term from the table.
-French never used a separate category word there, so it carries `animateur` throughout.
-Do not sweep these to the house term without a ruling from whoever owns the joint policy.
+**There is no exception for the Roblox programme documents** (`robloxPrivacy`,
+`robloxSafeguarding`, `robloxTerms`), even though they are co-authored with Lynx Educate.
+They once named a generic legal *category* of person alongside staff, volunteers and
+contractors — `facilitator`, `ohjaaja`, `ledare` — and glossed it back to the house term in
+the same breath. Both now collapse into the house term plus a gloss to `Gedu`, because the
+gloss said the two sets were the same anyway, so nothing narrowed. Keep it that way: a
+policy that names the role differently from the product page is the confusion these
+documents can least afford.
 
 ## French register and glossary
 
