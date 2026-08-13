@@ -416,9 +416,22 @@ const functionSurfaceRows = z.array(
 
 type FunctionSurface = z.infer<typeof functionSurfaceRows>[number];
 
+/**
+ * `kind` is carried here even though the completeness checks below never branch
+ * on it: `_list_views` returns both plain and materialized views, and a matview
+ * is *more* in need of a classification than a view, not less. Whether the ban
+ * on them holds is access-control.test.ts's question; if one ever slipped past
+ * that check while holding a Data API grant, this registry would still demand a
+ * scope test for it rather than let the relkind decide who has to answer.
+ *
+ * The enum rather than a string is for the same reason as there — the column is
+ * a two-arm CASE with no ELSE, so an unrecognised relation class arrives NULL
+ * and fails the parse instead of being read as an ordinary view.
+ */
 const viewSurfaceRows = z.array(
   z.object({
     view_name: z.string(),
+    kind: z.enum(["view", "materialized view"]),
     security_invoker: z.boolean(),
     authenticated_select: z.boolean(),
     anon_select: z.boolean(),
@@ -494,6 +507,13 @@ describe("authorization spine (§3.4)", () => {
     // `anon` counts as exposure just as it does for a function: a view either
     // Data API role can read is a view the caller's RLS has to be the only
     // thing standing between them and its rows.
+    //
+    // Both flags are measured per column by `_list_views`, which is what makes
+    // this filter say what it means. `has_table_privilege` is false for a role
+    // holding only `GRANT SELECT(col) ON v` — a grant PostgREST will happily
+    // answer a read against — so measuring exposure that way would have let a
+    // column-granted view arrive with no entry here and no scope test, which is
+    // precisely the hole this registry exists to close.
     exposedViews = viewSurfaceRows
       .parse(views.data)
       .filter((view) => view.authenticated_select || view.anon_select);

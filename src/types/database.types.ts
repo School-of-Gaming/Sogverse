@@ -1656,6 +1656,7 @@ export type Database = {
         Returns: {
           anon_select: boolean
           authenticated_select: boolean
+          kind: string
           security_invoker: boolean
           view_name: string
         }[]

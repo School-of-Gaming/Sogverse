@@ -271,7 +271,23 @@ sweep), and the spine requires each exposed view to name a scope test proving tw
 different callers each get only what their own policies allow. Self-scoping is the only
 classification a view can hold — there is no body to gate, so "role-gated" does not
 apply. Write the flag in exactly that spelling: the check reads `reloptions` as stored
-text, so `security_invoker = on` is reported as an offender.
+text, so `security_invoker = on` is reported as an offender. Exposure is measured per
+*column*, so a view reachable only through a `GRANT SELECT(col)` still has to be
+classified — that is a grant PostgREST answers reads against, and measuring at table
+level would let one through unnamed.
+
+**Rule: materialized views are banned outright in `public`.** This is not the
+`security_invoker` rule applied to a second object class — it is a ban, because a matview
+has no safe form. The option is not valid on one (there is no query left to re-run as the
+caller), it cannot carry RLS, and its contents were computed under the role that
+refreshed it — which holds `BYPASSRLS`, so what is stored is already every row of
+everything it selected from, with no predicate left anywhere to narrow it. Granting one
+to `authenticated` therefore publishes the underlying tables wholesale through the Data
+API, and nothing the application does can walk that back. CI enforces it: the
+access-control test fails on any relation of kind `materialized view` in `public`, and so
+does the migration that widened the catalog helper to see them. If a rollup is genuinely
+too expensive to compute per read, the answer is an ordinary table maintained by triggers
+— RLS-capable, indexable, and cheap to reason about — not a matview with a grant on it.
 
 **Rule: RLS INSERT/UPDATE policies must authorize both the actor AND the target.**
 Checking only `column = auth.uid()` is insufficient — also verify the user is authorized
