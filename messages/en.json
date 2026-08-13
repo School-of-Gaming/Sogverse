@@ -694,7 +694,7 @@
     "users": {
       "title": "Users",
       "manageAccounts": "Manage user accounts and roles",
-      "searchPlaceholder": "Search by name, email, or username...",
+      "searchPlaceholder": "Search by name, email, phone or game username…",
       "searchAriaLabel": "Search users",
       "roleFilterLabel": "Role",
       "all": "All",

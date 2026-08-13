@@ -694,7 +694,7 @@
     "users": {
       "title": "Käyttäjät",
       "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
-      "searchPlaceholder": "Hae nimellä, sähköpostilla tai käyttäjänimellä...",
+      "searchPlaceholder": "Hae nimellä, sähköpostilla, puhelinnumerolla tai pelin käyttäjänimellä…",
       "searchAriaLabel": "Hae käyttäjiä",
       "roleFilterLabel": "Rooli",
       "all": "Kaikki",

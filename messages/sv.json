@@ -694,7 +694,7 @@
     "users": {
       "title": "Användare",
       "manageAccounts": "Hantera användarkonton och roller",
-      "searchPlaceholder": "Sök på namn, e-post eller användarnamn...",
+      "searchPlaceholder": "Sök på namn, e-post, telefon eller spelanvändarnamn…",
       "searchAriaLabel": "Sök användare",
       "roleFilterLabel": "Roll",
       "all": "Alla",

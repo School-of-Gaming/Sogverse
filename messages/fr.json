@@ -694,7 +694,7 @@
     "users": {
       "title": "Utilisateurs",
       "manageAccounts": "Gérer les comptes utilisateurs et les rôles",
-      "searchPlaceholder": "Rechercher par nom, e-mail ou nom d’utilisateur...",
+      "searchPlaceholder": "Rechercher par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
       "searchAriaLabel": "Rechercher des utilisateurs",
       "roleFilterLabel": "Rôle",
       "all": "Tous",
