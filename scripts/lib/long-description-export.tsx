@@ -117,7 +117,7 @@ export interface ConvertedRow {
 /**
  * A Postgres string literal. Doubling the quote is exact for newlines,
  * backslashes and non-ASCII under standard-conforming strings, which the
- * emitted file asserts at its head rather than assuming.
+ * emitted file sets transaction-locally rather than assuming.
  */
 export function sqlLiteral(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
@@ -125,9 +125,24 @@ export function sqlLiteral(value: string): string {
 
 /**
  * The restore: one UPDATE per row keyed on product_id and locale, in one
- * transaction that ends by asserting how many rows came out carrying a
- * description. A mismatch rolls the whole thing back rather than leaving half
+ * transaction that ends by asserting that **every exported row** came out
+ * carrying a description. A row the UPDATEs missed — deleted since the export,
+ * or its locale changed — rolls the whole thing back rather than leaving half
  * the catalogue restored.
+ *
+ * The assertion is keyed to the exported rows, not a whole-table count, so a
+ * description an admin writes between the migration and the restore does not
+ * abort the transaction (the staleness warning in the runbook still applies to
+ * rows that *were* exported). That also makes the file safe to run again: on
+ * failure nothing was committed, and after success the same UPDATEs write the
+ * same values.
+ *
+ * Both `SET LOCAL`s live inside the transaction on purpose. The runbook's psql
+ * command goes through the connection pooler in transaction mode, where a
+ * session-level `SET` issued before `BEGIN` is not guaranteed to reach the
+ * backend that serves the transaction — `SET LOCAL` after `BEGIN` is. The
+ * `client_encoding` one is what keeps non-ASCII copy (ä, ö, –) intact when
+ * psql's own default encoding came from a Windows console codepage.
  */
 export function restoreSql(
   rows: ConvertedRow[],
@@ -138,6 +153,11 @@ export function restoreSql(
     (row) =>
       `UPDATE public.product_translations\n   SET long_description = ${sqlLiteral(row.markdown)}\n WHERE product_id = ${sqlLiteral(row.product_id)}\n   AND locale = ${sqlLiteral(row.locale)};`,
   );
+  const keyList = rows
+    .map(
+      (row) => `      (${sqlLiteral(row.product_id)}, ${sqlLiteral(row.locale)})`,
+    )
+    .join(",\n");
   return [
     `-- Restores the product long descriptions, converted to markdown.`,
     `--`,
@@ -147,22 +167,28 @@ export function restoreSql(
     `--`,
     `-- ${rows.length} row(s).`,
     ``,
-    `SET standard_conforming_strings = on;`,
-    ``,
     `BEGIN;`,
+    ``,
+    `SET LOCAL client_encoding = 'UTF8';`,
+    `SET LOCAL standard_conforming_strings = on;`,
     ``,
     ...statements.flatMap((s) => [s, ``]),
     `DO $$`,
     `DECLARE`,
-    `  v_restored INTEGER;`,
+    `  v_missing INTEGER;`,
     `BEGIN`,
-    `  SELECT count(*) INTO v_restored`,
-    `    FROM public.product_translations`,
-    `   WHERE long_description IS NOT NULL;`,
-    `  IF v_restored <> ${rows.length} THEN`,
+    `  SELECT count(*) INTO v_missing`,
+    `    FROM (VALUES`,
+    keyList,
+    `    ) AS exported(product_id, locale)`,
+    `    LEFT JOIN public.product_translations t`,
+    `      ON t.product_id::text = exported.product_id`,
+    `     AND t.locale = exported.locale`,
+    `   WHERE t.long_description IS NULL;`,
+    `  IF v_missing <> 0 THEN`,
     `    RAISE EXCEPTION`,
-    `      'Restore expected % rows to carry a long description, found % — nothing has been written.',`,
-    `      ${rows.length}, v_restored;`,
+    `      'Restore left % of the ${rows.length} exported row(s) without a long description — nothing has been committed.',`,
+    `      v_missing;`,
     `  END IF;`,
     `END $$;`,
     ``,

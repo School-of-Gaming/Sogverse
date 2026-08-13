@@ -132,7 +132,23 @@ describe("the restore SQL quotes values exactly", () => {
       "   SET long_description = '# One\n\nIt''s here.'\n WHERE product_id = 'p1'\n   AND locale = 'en';",
     );
     expect(sql.match(/^UPDATE public\.product_translations$/gm)).toHaveLength(2);
-    // The count the transaction refuses to commit without.
-    expect(sql).toContain("IF v_restored <> 2 THEN");
+    // The assertion is keyed to the exported rows — an unrelated description
+    // written after the export must not abort the restore, but an exported row
+    // the UPDATEs missed must.
+    expect(sql).toContain("      ('p1', 'en'),\n      ('p2', 'fi')");
+    expect(sql).toContain("IF v_missing <> 0 THEN");
+    // Both SETs are transaction-local: the pooler's transaction mode does not
+    // guarantee a pre-BEGIN session SET reaches the transaction's backend, and
+    // the encoding one is what keeps ä/ö/– intact from a Windows psql.
+    const begin = sql.indexOf("BEGIN;");
+    expect(sql.indexOf("SET LOCAL client_encoding = 'UTF8';")).toBeGreaterThan(
+      begin,
+    );
+    expect(
+      sql.indexOf("SET LOCAL standard_conforming_strings = on;"),
+    ).toBeGreaterThan(begin);
+    expect(sql.indexOf("SET LOCAL client_encoding = 'UTF8';")).toBeLessThan(
+      sql.indexOf("UPDATE public.product_translations"),
+    );
   });
 });

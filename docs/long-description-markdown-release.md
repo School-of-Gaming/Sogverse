@@ -84,7 +84,7 @@ behave before pointing them at production.
 4. **Restore, once.**
 
    ```bash
-   PGPASSWORD='<SUPABASE_PROD_DB_PASSWORD>' psql \
+   PGCLIENTENCODING=UTF8 PGPASSWORD='<SUPABASE_PROD_DB_PASSWORD>' psql \
      -h aws-1-eu-north-1.pooler.supabase.com -p 6543 \
      -U postgres.<SUPABASE_PROD_PROJECT_REF> -d postgres \
      -v ON_ERROR_STOP=1 -f ~/work/sog-prod-desc/long-descriptions.restore.sql
@@ -92,11 +92,21 @@ behave before pointing them at production.
 
    The password and project ref are `SUPABASE_PROD_DB_PASSWORD` and
    `SUPABASE_PROD_PROJECT_REF` in `.env.local`. Read them into the command
-   rather than pasting the values anywhere they persist.
+   rather than pasting the values anywhere they persist. `PGCLIENTENCODING` is
+   belt and braces: the file also sets the encoding inside its own transaction,
+   because a Windows psql otherwise inherits the console codepage and non-ASCII
+   copy (ä, ö, –) would land as mojibake the row counts cannot see.
 
-   The file is one transaction and ends by asserting how many rows came out
-   carrying a description. A mismatch rolls the whole thing back rather than
-   leaving half the catalogue restored.
+   The file is one transaction and ends by asserting that **every exported row**
+   came out carrying a description. A row the file's UPDATEs missed — deleted
+   since the export, or its locale changed — rolls the whole thing back rather
+   than leaving half the catalogue restored; a description someone wrote on a
+   *different* product in the meantime does not trip it. That also makes a
+   retry safe: on failure nothing was committed and the same file can simply be
+   run again, and running it a second time after success rewrites the same
+   values. Losing the copy is not on the table either way — the snapshot file
+   keeps every original value outside the database until this step has
+   verifiably succeeded.
 
 5. **Verify.** Open two or three product pages that had a blurb and read them.
    Then check the shape of what landed:
@@ -111,13 +121,20 @@ behave before pointing them at production.
    value beside the markdown it became — compare those two before touching the
    database.
 
-## The two things that are easy to get wrong
+## The three things that are easy to get wrong
 
 **The export has to be taken immediately before the release, not reused from an
 earlier run.** It is a point-in-time copy. Any description an admin edits
 between the export and the restore is lost when the restore overwrites it with
 the older text — silently, because the restore has no way to know it is stale.
 If a release slips, take the export again.
+
+**Nobody edits product descriptions between the export and the restore.** Tell
+the admins before starting. An edit in that window is overwritten by the
+restore (the staleness above), and an edit made while the migration has landed
+but the old build is still live is worse: the old form writes its block array
+through the new column and the page renders the raw serialisation as text. The
+window is minutes long — the fix is coordination, not code.
 
 **Product pages show no long description between the migration landing and the
 restore completing. That is expected, not an incident.** Pages render correctly
@@ -142,7 +159,12 @@ Delete, in one change:
 - `scripts/export-long-descriptions.tsx`, `scripts/lib/long-description-export.tsx`
   and `tests/unit/scripts/long-description-export.test.tsx` — the export.
 - The block types and the helper that parses one, in `src/types/index.ts`, plus
-  any fixture still built from blocks rather than from markdown.
+  any fixture still built from blocks rather than from markdown. One of those
+  fixtures feeds the product long-description **preview scene**, so this line
+  carries a decision, not just a deletion: either inline the markdown the
+  fixture converts to as a literal and keep the scene, or retire the scene and
+  its registry entry with it. Decide before deleting rather than letting the
+  compiler put the question to whoever drew the cleanup.
 - This page.
 
 The compiler and the linter find the remainder: delete the list above, then run

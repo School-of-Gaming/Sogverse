@@ -142,14 +142,24 @@ async function readRows(target: Target): Promise<StoredRow[]> {
   const client = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { data, error } = await client
+  const { data, error, count } = await client
     .from("product_translations")
-    .select("product_id, locale, long_description")
+    .select("product_id, locale, long_description", { count: "exact" })
     .not("long_description", "is", null)
     .order("product_id", { ascending: true })
     .order("locale", { ascending: true });
   if (error) throw new Error(`Read failed: ${error.message}`);
-  return (data ?? []) as StoredRow[];
+  const rows = (data ?? []) as StoredRow[];
+  // PostgREST enforces its max_rows cap by truncating, not erroring, and a
+  // capped response is indistinguishable from a complete one. An export that
+  // silently missed rows would let the migration clear copy the restore never
+  // saw, so a short read is a refusal, not a warning.
+  if (count !== null && rows.length !== count) {
+    throw new Error(
+      `Read returned ${rows.length} of ${count} rows — the response was truncated. Nothing has been written.`,
+    );
+  }
+  return rows;
 }
 
 // ---------------------------------------------------------------------------
