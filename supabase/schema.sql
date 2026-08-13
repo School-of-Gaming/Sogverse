@@ -165,7 +165,12 @@ CREATE TYPE public.product_topic AS ENUM (
     'minecraft_bedrock',
     'fortnite',
     'roblox_studio',
-    'pokemon_go'
+    'pokemon_go',
+    'rocket_league',
+    'creator_studio',
+    'programming',
+    'ai',
+    'esports'
 );
 
 
