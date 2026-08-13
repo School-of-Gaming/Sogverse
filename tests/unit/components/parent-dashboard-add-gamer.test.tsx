@@ -6,7 +6,7 @@ import { ParentDashboardPageBody } from "@/components/parent/parent-dashboard-pa
 import { buildParentDashboardFixture } from "@/components/parent/mock-dashboard-fixtures";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
 import { NowProvider, TimezoneProvider } from "@/providers";
-import type { ParentDashboardGamer } from "@/components/parent/parent-dashboard-page-body";
+import type { ParentDashboardParticipant } from "@/components/parent/parent-dashboard-page-body";
 
 /**
  * **The add-a-child affordance stops being offered at the cap.**
@@ -32,7 +32,7 @@ const NOW = new Date("2026-02-11T20:00:00Z");
  *  regression behind a passing test. */
 const ADD_GAMER = messages.family.addGamer;
 
-function dashboardHtml(gamers: readonly ParentDashboardGamer[]): string {
+function dashboardHtml(gamers: readonly ParentDashboardParticipant[]): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
       <TimezoneProvider initialTimezone="Europe/Helsinki">
@@ -49,7 +49,7 @@ function dashboardHtml(gamers: readonly ParentDashboardGamer[]): string {
 }
 
 /** Real children out of the preview fixtures, so no shape is invented here. */
-function fixtureGamers(): ParentDashboardGamer[] {
+function fixtureGamers(): ParentDashboardParticipant[] {
   const { gamers } = buildParentDashboardFixture(
     NOW,
     "seven-gamers",

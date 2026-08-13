@@ -1,6 +1,5 @@
 "use client";
 
-import { formatInTimeZone } from "date-fns-tz";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,6 @@ import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
   END_DATE_MODE_VALUES,
-  FIXED_TIMEZONE,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
@@ -37,20 +35,16 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
   const showHolidayCalendars = config.hasHolidayCalendars;
 
   // Pre-prod UI locks, resolved through form-locks.ts like every other section
-  // — none of the three below lift for any product today, but reading the
+  // — neither of the two below lifts for any product today, but reading the
   // constant directly would put a second decision-maker next to the resolver.
-  // The start trigger is pinned to the type's default ("On a specific date")
-  // and the consumer-club start date is frozen — to today on a fresh form (set
-  // in initialState), to the saved date on edit/clone. Word the hint to match
-  // the actual value so an edit form doesn't claim "today" for a past date.
+  // The start trigger is pinned to the type's default ("On a specific date").
   const locks = formLocksFor(config);
   const lockStartMode = locks.startMode;
-  const lockStartDate =
-    locks.consumerClubStartDateToday && productType === "consumer_club";
-  const lockedToToday =
-    lockStartDate &&
-    state.startDate ===
-      formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd");
+  // A consumer club's first charge is deferred to its start date, so the date
+  // is now editable — with the warning that moving it later does NOT move the
+  // anchor on subscriptions that already exist (that correction is manual in
+  // Stripe; see the checkout route and TODO.md).
+  const startDateMovesBilling = productType === "consumer_club";
 
   return (
     <FormSection
@@ -120,10 +114,8 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
               }
               htmlFor="p-start-date"
               hint={
-                lockStartDate
-                  ? lockedToToday
-                    ? t("hints.startDateToday")
-                    : t("hints.startDateLocked")
+                startDateMovesBilling
+                  ? t("hints.startDateBillingAnchor")
                   : undefined
               }
             >
@@ -134,7 +126,6 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
                 onChange={(e) =>
                   setState({ ...state, startDate: e.target.value })
                 }
-                disabled={lockStartDate}
                 required
               />
             </Field>

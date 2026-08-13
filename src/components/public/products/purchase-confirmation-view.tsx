@@ -5,11 +5,14 @@ import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-banner";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
+import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
@@ -27,8 +30,18 @@ export type SignupOutcome = "enrolled" | "waitlisted";
 
 interface PurchaseConfirmationViewProps {
   product: ProductBrowseRow;
-  /** Gamer's first name (or username fallback); null → "Your child". */
-  gamerName: string | null;
+  /**
+   * The participant's first name — a child's, or the buyer's own on a self
+   * seat. Null falls back to "Your child" / "You" per `isSelfSeat`.
+   */
+  participantName: string | null;
+  /**
+   * True when the seat is the buyer's own (a for-parents product), which puts
+   * every sentence naming the participant into the second person. Resolved from
+   * the row (`participant_id = customer_id`) rather than from the viewer — see
+   * the service's `isSelfSeat`.
+   */
+  isSelfSeat?: boolean;
   /** `enrolled` (paid/free signup) or `waitlisted` (joined the waitlist). */
   outcome?: SignupOutcome;
   /**
@@ -36,22 +49,47 @@ interface PurchaseConfirmationViewProps {
    * (RLS miss / no longer waitlisted) → the position line is simply omitted.
    */
   waitlistPosition?: number | null;
+  /**
+   * When the first subscription charge falls, as a true instant (ISO), for a
+   * club bought before it started — the parent paid €0 at checkout and is owed
+   * the real date. Null on every other signup, and whenever the reader is not
+   * the payer (the `payments` policy is customer-only), in which case no billing
+   * line renders at all.
+   *
+   * An instant rather than a calendar date on purpose: it is the subscription's
+   * stored period end, and whether that instant is the club's own start or a
+   * clamped one is exactly the question that decides how it renders. The answer
+   * comes from the shared anchor helper, which the shop's signup panel asks the
+   * same way — a bare start date when unclamped, the viewer's own day when not.
+   */
+  firstChargeAt?: string | null;
 }
 
 export function PurchaseConfirmationView({
   product,
-  gamerName,
+  participantName,
+  isSelfSeat = false,
   outcome = "enrolled",
   waitlistPosition = null,
+  firstChargeAt = null,
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
+  const tSelf = useTranslations("purchaseConfirmation.self");
   const tProduct = useTranslations("productDetail");
   const locale = resolveLocale(useLocale());
+  const viewerTimezone = useTimezone();
 
   const isWaitlist = outcome === "waitlisted";
   const tr = resolveTranslation(product.product_translations, locale);
   const productName = tr?.name ?? "";
-  const gamer = gamerName ?? t("fallbackGamer");
+  // The summary row keeps naming the person even on a self seat — the reader's
+  // own first name is what they recognise beside "Enrolled", and it is the one
+  // place a name is a value rather than a subject. Only the *sentences* move
+  // into the second person, and each of those is a separate key rather than an
+  // interpolated pronoun, because a possessive that agrees with a name in
+  // English does not in Finnish or Swedish.
+  const participant =
+    participantName ?? (isSelfSeat ? tSelf("fallbackName") : t("fallbackGamer"));
 
   // Price is recomputed from the product's *current* prices, not stored as a
   // receipt of what was charged. For the fresh post-checkout view that's
@@ -85,11 +123,20 @@ export function PurchaseConfirmationView({
           </h1>
           <p className="mt-2 text-muted-foreground">
             {isWaitlist
-              ? t("waitlist.subheading", { gamer, product: productName })
-              : t(`subheading.${product.product_type}`, {
-                  gamer,
-                  product: productName,
-                })}
+              ? isSelfSeat
+                ? tSelf("waitlist.subheading", { product: productName })
+                : t("waitlist.subheading", {
+                    gamer: participant,
+                    product: productName,
+                  })
+              : isSelfSeat
+                ? tSelf(`subheading.${product.product_type}`, {
+                    product: productName,
+                  })
+                : t(`subheading.${product.product_type}`, {
+                    gamer: participant,
+                    product: productName,
+                  })}
           </p>
         </div>
 
@@ -98,12 +145,21 @@ export function PurchaseConfirmationView({
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
             </h2>
-            <div className="mt-4 flex items-start gap-4">
-              <ProductThumbnail
-                imagePath={product.image_path ?? ""}
-                alt={productName}
-                size="h-16 w-16"
-                className="shrink-0 rounded-lg [&>img]:h-full [&>img]:w-full [&>img]:rounded-lg [&>img]:object-cover"
+            {/* The picture, at the 3:2 crop the card and the detail hero paint
+                — the parent is looking at the same photograph they clicked and
+                then read a page of, so it must be the same crop of it.
+                Deliberately *not* a full-width banner on top of this card: at
+                this column's width that stands over 400px tall, and it would
+                push the facts this card exists to state — who the seat is for,
+                what it costs — off a phone screen. So the picture stays inline
+                and identifying, and keeps the row's existing 64px height (96px
+                wide at 3:2) rather than growing the summary. Centred against
+                the two text lines, which a wide short frame wants where a
+                square did not. */}
+            <div className="mt-4 flex items-center gap-4">
+              <ProductBanner
+                src={productImageSrc(product.image_path)}
+                className="w-24 shrink-0 rounded-lg"
               />
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -119,7 +175,7 @@ export function PurchaseConfirmationView({
                     ? t("waitlist.forLabel")
                     : t(`forLabel.${product.product_type}`)
                 }
-                value={gamer}
+                value={participant}
               />
               {/* "You're #N in line" — the reassuring number. Omitted if the
                   position couldn't be read (e.g. a stale revisit). */}
@@ -153,12 +209,51 @@ export function PurchaseConfirmationView({
               {isWaitlist ? (
                 <>
                   <li>{t("waitlist.next1")}</li>
-                  <li>{t("waitlist.next2", { gamer })}</li>
+                  {/* The one term-shaped line in the waitlist copy, so the one
+                      keyed by product type. A club (consumer or municipality)
+                      runs a term and keeps that wording; a camp and an event
+                      are each a single run and say so. Everything else in this
+                      block — the heading, the email promise, the My SOG
+                      pointer — is true of all four types and stays neutral.
+                      The type comes off the product row the page already
+                      passes in, so nothing extra had to be threaded here. */}
+                  <li>
+                    {isSelfSeat
+                      ? tSelf(`waitlist.next2.${product.product_type}`)
+                      : t(`waitlist.next2.${product.product_type}`, {
+                          gamer: participant,
+                        })}
+                  </li>
                   <li>{t("waitlist.next3")}</li>
                 </>
               ) : (
                 <>
-                  <li>{t("next.placement", { gamer })}</li>
+                  <li>
+                    {isSelfSeat
+                      ? tSelf("nextPlacement")
+                      : t("next.placement", { gamer: participant })}
+                  </li>
+                  {/* Before the general "you'll be billed monthly" line, and
+                      only when the first charge has genuinely been deferred:
+                      the parent has just seen €0 due on Stripe's page and is
+                      owed the real date in the same breath. Which date that is
+                      is the shared rule's call, not this component's — a charge
+                      landing on the club's own start renders as that bare
+                      calendar date (the same one shown further up this page), a
+                      clamped one as the day it hits the reader's statement. */}
+                  {firstChargeAt !== null && (
+                    <li>
+                      {t("next.firstCharge", {
+                        date: formatFirstChargeDate(
+                          firstChargeAt,
+                          product.start_date,
+                          product.timezone,
+                          locale,
+                          viewerTimezone,
+                        ),
+                      })}
+                    </li>
+                  )}
                   {pricingOption.kind === "subscription" && (
                     <li>{t("next.subscription")}</li>
                   )}
@@ -252,6 +347,11 @@ function priceText(
  * - `duplicatePayment` — the seat was already taken, so the payment was refused
  *   as a duplicate and no row will ever carry this session. Waiting is a dead
  *   end here by construction, not by bad luck.
+ *
+ * This component takes only which state it is — there is no row and therefore
+ * no participant to name — so its copy says "the person this was for" rather
+ * than "this child". A seat can be the buyer's own now, and a notice with no
+ * participant in reach must not guess which.
  */
 export type ConfirmationNoticeKind =
   | "finalizing"

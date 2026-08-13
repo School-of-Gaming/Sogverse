@@ -114,7 +114,7 @@ describe("v2 participations / payments / family subscriptions RLS", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_A,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       })
@@ -124,13 +124,13 @@ describe("v2 participations / payments / family subscriptions RLS", () => {
     customerParticipationId = partA.data.id;
 
     // CUSTOMER_2's participation on PRODUCT_B (different product so the
-    // partial unique index `(product_id, gamer_id) WHERE active` doesn't
+    // partial unique index `(product_id, participant_id) WHERE active` doesn't
     // conflict, even though both rows reference the same gamer).
     const partB = await admin
       .from("participations")
       .insert({
         product_id: PRODUCT_B,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER_2,
         status: "active",
       })
@@ -266,7 +266,7 @@ describe("v2 participations / payments / family subscriptions RLS", () => {
     it("customer cannot INSERT a participation directly", async () => {
       const { error } = await customerClient.from("participations").insert({
         product_id: PRODUCT_A,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       });

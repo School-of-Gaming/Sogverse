@@ -13,9 +13,10 @@ import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import { ProductBrowseResults } from "@/components/public/products/product-browse-results";
 
 // The per-municipality clubs page (`/schools/<slug>`). A shop browse page
-// narrowed to one municipality: same filter strip + card grid (via
+// narrowed to one municipality: same filters + card grid (via
 // <ProductBrowseResults>), minus the Clubs|Camps Type row — everything here is
-// a municipality club.
+// a municipality club. One unheaded section, so the grid reads as a plain grid
+// under this page's own h1 rather than repeating "Clubs" beneath it.
 //
 // The page only renders for a municipality that runs clubs — the route 404s
 // otherwise (see `[municipalityName]/page.tsx`) — so there's no bespoke empty
@@ -69,21 +70,30 @@ export function MunicipalityClubsBrowse({
     initialData: initialCounts,
   });
 
+  const sections = useMemo(
+    () => [{ id: "municipality-clubs", products: clubs }],
+    [clubs],
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
-      <header className="mx-auto max-w-3xl text-center">
+    <div className="py-8 sm:py-12">
+      {/* The heading stays a centred reading column while the results below
+          break out of it from `lg` up (see <ProductBrowseResults>). Both are
+          centred on the viewport and the heading is narrower than the cards'
+          64rem cap, so it reads as a title over the cards rather than as a
+          second, unrelated width — exactly aligned once the cards' gutters
+          equalise (~1616px), and up to ~128px left of the cards' centre below
+          that, the same tolerance the results grid accepts and documents. */}
+      <header className="mx-auto max-w-3xl px-4 text-center">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           {t("heading", { name: municipalityName })}
         </h1>
       </header>
 
-      <div className="mx-auto mt-8 max-w-6xl">
+      <div className="mt-8">
         <ProductBrowseResults
-          products={clubs}
+          sections={sections}
           counts={counts ?? []}
-          // Municipality clubs are recurring-weekly, so the Days filter applies
-          // (single source — also forwarded to the filter strip downstream).
-          supportsDays
           filters={{
             initialSpokenLanguages,
             showTypeFilter: false,

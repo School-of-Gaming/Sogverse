@@ -1,6 +1,6 @@
 import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { createPinResetToken } from "@/lib/pin-session";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
@@ -57,10 +57,14 @@ export const POST = defineRoute({
 
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
-      fromName: t("senderAuth"),
+      fromName: SENDER_NAME,
       toEmail: profile.email,
       subject: t("pinReset.subject"),
       htmlContent: buildPinResetEmail(t, resetLink, locale),
+      // A parent who replies to this is a parent who could not get past the
+      // PIN gate — exactly the person who needs a human, so replies go to the
+      // monitored support inbox rather than the unattended sending address.
+      replyToEmail: SUPPORT_EMAIL,
     });
 
     return { success: true };

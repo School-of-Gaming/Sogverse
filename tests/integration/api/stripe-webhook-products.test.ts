@@ -3,38 +3,17 @@ import { POST } from "@/app/api/webhooks/stripe/products/route";
 
 // --- Mocks ---
 
-const {
-  mockConstructEvent,
-  mockSubscriptionsRetrieve,
-  mockSubscriptionsCancel,
-} = vi.hoisted(() => ({
-  mockConstructEvent: vi.fn(),
-  mockSubscriptionsRetrieve: vi.fn(),
-  mockSubscriptionsCancel: vi.fn(),
+const { stripeMock } = await vi.hoisted(async () => ({
+  stripeMock: (await import("../../mocks/stripe")).createStripeMock(),
 }));
 
-vi.mock("stripe", () => {
-  // Object.assign produces the intersection type, so `errors` rides along
-  // without any cast. The route only ever does `new Stripe(...)` and uses
-  // the nested methods below.
-  const StripeMock = Object.assign(
-    vi.fn(function () {
-      return {
-        webhooks: { constructEvent: mockConstructEvent },
-        subscriptions: {
-          retrieve: mockSubscriptionsRetrieve,
-          cancel: mockSubscriptionsCancel,
-        },
-      };
-    }),
-    {
-      errors: {
-        StripeCardError: class StripeCardError extends Error {},
-      },
-    },
-  );
-  return { default: StripeMock };
-});
+vi.mock("stripe", async () =>
+  (await import("../../mocks/stripe")).stripeModuleMock(stripeMock),
+);
+
+const mockConstructEvent = stripeMock.webhooks.constructEvent;
+const mockSubscriptionsRetrieve = stripeMock.subscriptions.retrieve;
+const mockSubscriptionsCancel = stripeMock.subscriptions.cancel;
 
 const mockAdminFrom = vi.fn();
 const mockAdminRpc = vi.fn();
@@ -76,14 +55,28 @@ function createCompletedEvent(overrides: Partial<{
   purchaseShape: string;
   currency: string;
   customer: string;
+  /**
+   * Stripe's own `mode` on the session — the axis the €0 gate turns on, and
+   * therefore not derivable from our `purchaseShape` metadata for the purposes
+   * of a test that is *about* that gate. Defaults to whichever mode the route
+   * would really have created for the given shape.
+   */
+  mode: string;
+  paymentStatus: string;
 }> = {}) {
+  const purchaseShape = overrides.purchaseShape ?? "single_payment";
   return {
     id: overrides.id ?? "evt_completed_1",
     type: "checkout.session.completed",
     data: {
       object: {
         id: SESSION_ID,
-        payment_status: "paid",
+        mode:
+          overrides.mode ??
+          (purchaseShape.startsWith("subscription_")
+            ? "subscription"
+            : "payment"),
+        payment_status: overrides.paymentStatus ?? "paid",
         amount_total: overrides.amountTotal ?? 10000,
         payment_intent: overrides.paymentIntent ?? "pi_test_1",
         subscription: overrides.subscription ?? null,
@@ -91,9 +84,9 @@ function createCompletedEvent(overrides: Partial<{
         customer: overrides.customer ?? "cus_test_1",
         metadata: {
           productId: PRODUCT_ID,
-          gamerId: GAMER_ID,
+          participantId: GAMER_ID,
           customerId: CUSTOMER_ID,
-          purchaseShape: overrides.purchaseShape ?? "single_payment",
+          purchaseShape,
           currency: overrides.currency ?? "eur",
         },
       },
@@ -336,7 +329,7 @@ describe("POST /api/webhooks/stripe/products", () => {
 
       expect(mockAdminRpc).toHaveBeenCalledWith("confirm_paid_participation", {
         p_product_id: PRODUCT_ID,
-        p_gamer_id: GAMER_ID,
+        p_participant_id: GAMER_ID,
         p_customer_id: CUSTOMER_ID,
         p_checkout_session_id: SESSION_ID,
       });
@@ -348,6 +341,14 @@ describe("POST /api/webhooks/stripe/products", () => {
         currency: "eur",
         purpose: "single_payment",
         stripe_payment_intent_id: "pi_test_1",
+      });
+      // The ledger echo keeps the historical spelling on purpose — every
+      // payments row ever written carries `gamerId`, and forking the stored
+      // shape at the rename would buy nothing and cost every future reader.
+      expect(inserts.payments[0].metadata).toMatchObject({
+        gamerId: GAMER_ID,
+        productId: PRODUCT_ID,
+        participationId: PARTICIPATION_ID,
       });
     });
 
@@ -397,6 +398,140 @@ describe("POST /api/webhooks/stripe/products", () => {
         currency: "eur",
         status: "active",
       });
+    });
+  });
+
+  /**
+   * The €0 completion, which is what deferred billing produces.
+   *
+   * A club bought before it starts sets a billing anchor and disables
+   * prorations, so the Checkout Session totals zero and Stripe reports
+   * `payment_status: "no_payment_required"`. The handler used to require
+   * `"paid"` and returned 200 having created nothing — a silent failure that
+   * would have made the whole feature produce no participations at all. The
+   * widening is keyed on the session's **mode**, not on any deferral marker, so
+   * it also covers a 100%-off promotion code on a club starting today.
+   */
+  describe("checkout.session.completed — a €0 subscription still buys a seat", () => {
+    function zeroDueSubscription(mode: string, invoice: string | null = null) {
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          paymentStatus: "no_payment_required",
+          mode,
+          amountTotal: 0,
+          paymentIntent: null,
+          subscription: "sub_deferred_1",
+          invoice,
+          purchaseShape: "subscription_monthly",
+        }),
+      );
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "confirmed",
+          participation_id: PARTICIPATION_ID,
+          idempotent: false,
+        },
+        error: null,
+      });
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        id: "sub_deferred_1",
+        status: "active",
+        items: {
+          data: [
+            {
+              id: "si_1",
+              price: { id: "price_test_1" },
+              // The anchor: no invoice exists until this instant.
+              current_period_end: 1900000000,
+            },
+          ],
+        },
+      });
+    }
+
+    it("creates the participation and the subscription row", async () => {
+      zeroDueSubscription("subscription");
+      const inserts = mockAdmin();
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(mockAdminRpc).toHaveBeenCalledWith("confirm_paid_participation", {
+        p_product_id: PRODUCT_ID,
+        p_participant_id: GAMER_ID,
+        p_customer_id: CUSTOMER_ID,
+        p_checkout_session_id: SESSION_ID,
+      });
+      expect(inserts.family_subscriptions).toHaveLength(1);
+      expect(inserts.family_subscriptions[0]).toMatchObject({
+        participation_id: PARTICIPATION_ID,
+        stripe_subscription_id: "sub_deferred_1",
+        // `active` from purchase, not `trialing`: an anchored subscription is
+        // live, the seat is held, and the sessions show.
+        status: "active",
+      });
+    });
+
+    it("leaves the zero-amount payment row as the idempotency marker", async () => {
+      // Amount 0 and the ordinary `subscription_invoice` purpose. That exact
+      // shape is the accepted outcome: it is what stops a redelivery re-running
+      // the handler, and the real charge lands later through invoice.paid.
+      //
+      // The session here *does* name an invoice, because whether Stripe raises a
+      // €0 `subscription_create` invoice for an anchored subscription is not
+      // something this route depends on either way — what it must do is record
+      // whichever invoice the session names, so a marker row can be traced back.
+      // (A session naming none simply leaves the column null.)
+      zeroDueSubscription("subscription", "in_zero_1");
+      const inserts = mockAdmin();
+
+      await POST(createWebhookRequest());
+
+      expect(inserts.payments).toHaveLength(1);
+      expect(inserts.payments[0]).toMatchObject({
+        amount_cents: 0,
+        purpose: "subscription_invoice",
+        stripe_invoice_id: "in_zero_1",
+      });
+      expect(inserts.payments[0].metadata).toMatchObject({
+        participationId: PARTICIPATION_ID,
+      });
+    });
+
+    it("still ignores a payment-mode session that collected nothing", async () => {
+      // A camp or event is bought outright: a one-off that took no money bought
+      // nothing, so the widening deliberately stops at the mode boundary.
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          paymentStatus: "no_payment_required",
+          mode: "payment",
+          amountTotal: 0,
+          purchaseShape: "single_payment",
+        }),
+      );
+      const inserts = mockAdmin();
+
+      const res = await POST(createWebhookRequest());
+
+      expect(res.status).toBe(200);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(inserts.payments).toEqual([]);
+    });
+
+    it("still ignores an unpaid session in either mode", async () => {
+      for (const mode of ["subscription", "payment"]) {
+        vi.clearAllMocks();
+        mockConstructEvent.mockReturnValue(
+          createCompletedEvent({ paymentStatus: "unpaid", mode }),
+        );
+        const inserts = mockAdmin();
+
+        const res = await POST(createWebhookRequest());
+
+        expect(res.status).toBe(200);
+        expect(mockAdminRpc, mode).not.toHaveBeenCalled();
+        expect(inserts.payments, mode).toEqual([]);
+      }
     });
   });
 
@@ -479,7 +614,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       // thing naming who the seat is for, so a missing field has to stop the
       // handler rather than have it guess.
       (event.data.object as { metadata: Record<string, string | undefined> })
-        .metadata.gamerId = undefined;
+        .metadata.participantId = undefined;
       mockConstructEvent.mockReturnValue(event);
       mockAdmin();
 
@@ -541,7 +676,7 @@ describe("POST /api/webhooks/stripe/products", () => {
           existingParticipationId: EXISTING_PARTICIPATION_ID,
           eventId: "evt_completed_2",
           customerId: CUSTOMER_ID,
-          gamerId: GAMER_ID,
+          participantId: GAMER_ID,
           productId: PRODUCT_ID,
           paymentIntent: "pi_dup_1",
         }),
@@ -658,7 +793,7 @@ describe("POST /api/webhooks/stripe/products", () => {
             id: "cs_expired_1",
             metadata: {
               productId: PRODUCT_ID,
-              gamerId: GAMER_ID,
+              participantId: GAMER_ID,
               customerId: CUSTOMER_ID,
             },
           },
@@ -796,6 +931,38 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.payments).toHaveLength(0);
+    });
+
+    it("ignores a one-off invoice, which carries no subscription in either placement", async () => {
+      // One-off checkouts create invoices now — the thing that makes a credit
+      // note (and therefore a VAT-reversing refund) possible — so `invoice.paid`
+      // fires for purchases that have no subscription at all. That is a live
+      // path rather than a defensive one, and every other fixture here supplies
+      // a subscription id.
+      //
+      // The handler must return before it reads or writes anything: the sale
+      // was already recorded by checkout.session.completed, and a second
+      // payments row here would double-count it.
+      mockConstructEvent.mockReturnValue({
+        id: "evt_invoice_one_off",
+        type: "invoice.paid",
+        data: {
+          object: {
+            id: "in_one_off_1",
+            amount_paid: 15000,
+            currency: "eur",
+            billing_reason: "manual",
+          },
+        },
+      });
+      const inserts = mockAdmin({ famSubRow: null });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(0);
+      // Before any read — not merely before the write. The admin client is
+      // never touched, so a one-off invoice costs no database round trip.
+      expect(mockAdminFrom).not.toHaveBeenCalled();
     });
 
     it("writes nothing on a replay, where the event id is already recorded", async () => {

@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { filterProducts } from "@/components/public/products/filter-products";
-import type { ProductBrowseRow, ProductTopic } from "@/types";
+import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
+import type {
+  ProductBrowseRow,
+  ProductTag,
+  ProductTopic,
+  ProductType,
+} from "@/types";
 
 // Row factory — only the fields filterProducts() looks at are overridable;
 // every other ProductBrowseRow column carries an honest, fully-typed default
@@ -8,12 +14,19 @@ import type { ProductBrowseRow, ProductTopic } from "@/types";
 function row(overrides: {
   id: string;
   topic: ProductTopic;
+  productType?: ProductType;
   isRemote?: boolean;
   spokenLanguageCode?: string;
-  minAge?: number;
-  maxAge?: number;
-  // Weekdays (0=Mon..6=Sun) the product's recurring schedule touches. Each
-  // becomes a schedule_slot; only `weekday` matters for filterProducts().
+  // Null on both is the adults-only shape: a product with no gamer audience
+  // carries no age range at all.
+  minAge?: number | null;
+  maxAge?: number | null;
+  forGamers?: boolean;
+  forParents?: boolean;
+  // Null is untagged — the ordinary state, and the factory's default.
+  tag?: ProductTag | null;
+  // Weekdays (0=Mon..6=Sun) the product's schedule touches. Each becomes a
+  // schedule_slot; only `weekday` matters for filterProducts().
   weekdays?: number[];
 }): ProductBrowseRow {
   return {
@@ -27,9 +40,12 @@ function row(overrides: {
     is_remote: overrides.isRemote ?? false,
     is_visible: true,
     location_id: null,
-    min_age: overrides.minAge ?? 7,
-    max_age: overrides.maxAge ?? 17,
-    product_type: "consumer_club",
+    for_gamers: overrides.forGamers ?? true,
+    for_parents: overrides.forParents ?? false,
+    min_age: overrides.minAge === undefined ? 7 : overrides.minAge,
+    max_age: overrides.maxAge === undefined ? 17 : overrides.maxAge,
+    tag: overrides.tag ?? null,
+    product_type: overrides.productType ?? "consumer_club",
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
@@ -90,6 +106,8 @@ describe("filterProducts", () => {
         topics: [],
         format: null,
         languages: [],
+        audiences: [],
+        tags: [],
         age: null,
         days: [],
       }),
@@ -102,6 +120,8 @@ describe("filterProducts", () => {
         topics: ["minecraft_java"],
         format: null,
         languages: [],
+        audiences: [],
+        tags: [],
         age: null,
         days: [],
       }).map((p) => p.id),
@@ -113,6 +133,8 @@ describe("filterProducts", () => {
       topics: ["minecraft_java", "fortnite"],
       format: null,
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -126,6 +148,8 @@ describe("filterProducts", () => {
         topics: ["fortnite"],
         format: "online",
         languages: [],
+        audiences: [],
+        tags: [],
         age: null,
         days: [],
       }),
@@ -137,6 +161,8 @@ describe("filterProducts", () => {
       topics: [],
       format: "online",
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -149,6 +175,8 @@ describe("filterProducts", () => {
       topics: [],
       format: "in_person",
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -160,6 +188,8 @@ describe("filterProducts", () => {
       topics: ["minecraft_java", "fortnite"],
       format: "online",
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -172,6 +202,8 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: ["fi"],
+      audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -184,6 +216,8 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: ["en", "fi"],
+      audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -195,6 +229,8 @@ describe("filterProducts", () => {
       topics: ["minecraft_java", "fortnite"],
       format: null,
       languages: ["en"],
+      audiences: [],
+      tags: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -207,6 +243,8 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
+      tags: [],
       age: { min: 7, max: 9 },
       days: [],
     }).map((p) => p.id);
@@ -220,10 +258,47 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
+      tags: [],
       age: { min: 10, max: 12 },
       days: [],
     }).map((p) => p.id);
     expect(ids.sort()).toEqual(["b", "c"]);
+  });
+
+  it("drops a product with no age range from a band-filtered result", () => {
+    // A band expresses "shopping for a child of this age", so an adults-only
+    // product — no gamer audience, therefore no range — is not a near miss.
+    const adultsOnly = row({
+      id: "adults",
+      topic: "minecraft_java",
+      forGamers: false,
+      forParents: true,
+      minAge: null,
+      maxAge: null,
+    });
+    const base = {
+      topics: [] as string[],
+      format: null,
+      languages: [] as string[],
+      audiences: [],
+      tags: [],
+      days: [] as number[],
+    };
+
+    // Unfiltered it is present, so its absence below is the filter's doing.
+    expect(
+      filterProducts([...ALL, adultsOnly], { ...base, age: null }).map(
+        (p) => p.id,
+      ),
+    ).toContain("adults");
+
+    expect(
+      filterProducts([...ALL, adultsOnly], {
+        ...base,
+        age: { min: 7, max: 9 },
+      }).map((p) => p.id),
+    ).not.toContain("adults");
   });
 
   it("ANDs age with other filters", () => {
@@ -231,6 +306,8 @@ describe("filterProducts", () => {
       topics: [],
       format: "online",
       languages: [],
+      audiences: [],
+      tags: [],
       age: { min: 13, max: 16 },
       days: [],
     }).map((p) => p.id);
@@ -245,6 +322,8 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [2], // Wed
     }).map((p) => p.id);
@@ -256,6 +335,8 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [0, 4], // Mon or Fri
     }).map((p) => p.id);
@@ -268,6 +349,8 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [1, 3, 5], // Tue/Thu/Sat — nobody meets these
     }).map((p) => p.id);
@@ -279,10 +362,301 @@ describe("filterProducts", () => {
       topics: [],
       format: "online",
       languages: [],
+      audiences: [],
+      tags: [],
       age: null,
       days: [0], // Mon
     }).map((p) => p.id);
     // A meets Mon and is online; B meets Fri (wrong day); only A passes.
     expect(ids).toEqual(["a"]);
+  });
+
+  it("applies days to camps and events, not just clubs", () => {
+    // The day filter is universal: every product type's slots carry a weekday,
+    // and "which days is my child busy" is the same question for a camp day or
+    // a one-off event as it is for a weekly club.
+    const camp = row({
+      id: "camp",
+      topic: "minecraft_java",
+      productType: "camp",
+      weekdays: [1, 2], // Tue, Wed
+    });
+    const event = row({
+      id: "event",
+      topic: "fortnite",
+      productType: "event",
+      weekdays: [5], // Sat
+    });
+    const rows = [camp, event];
+
+    expect(
+      filterProducts(rows, {
+        topics: [],
+        format: null,
+        languages: [],
+        audiences: [],
+        tags: [],
+        age: null,
+        days: [1],
+      }).map((p) => p.id),
+    ).toEqual(["camp"]);
+    expect(
+      filterProducts(rows, {
+        topics: [],
+        format: null,
+        languages: [],
+        audiences: [],
+        tags: [],
+        age: null,
+        days: [5],
+      }).map((p) => p.id),
+    ).toEqual(["event"]);
+    expect(
+      filterProducts(rows, {
+        topics: [],
+        format: null,
+        languages: [],
+        audiences: [],
+        tags: [],
+        age: null,
+        days: [0], // Mon — neither meets then
+      }),
+    ).toEqual([]);
+  });
+
+  /**
+   * The audience row, and the one thing that makes it unlike the topic and
+   * language rows beside it: a chip is a *tag*, not a flag. "For parents"
+   * matches the parents-only shape and "For families" matches the both-flags
+   * shape, one chip per badge a card can wear — so gamers-only products, the
+   * assumed default that wears none, answer to no chip at all. Lighting every
+   * chip is therefore *narrower* than lighting none, which is the inversion
+   * these cases exist to pin.
+   */
+  describe("audience", () => {
+    const parentsOnly = row({
+      id: "parents",
+      topic: "minecraft_java",
+      forGamers: false,
+      forParents: true,
+      minAge: null,
+      maxAge: null,
+    });
+    const both = row({
+      id: "both",
+      topic: "minecraft_java",
+      forGamers: true,
+      forParents: true,
+    });
+    const rows = [...ALL, parentsOnly, both];
+    const base = {
+      topics: [] as string[],
+      format: null,
+      languages: [] as string[],
+      tags: [] as ProductTag[],
+      age: null,
+      days: [] as number[],
+    };
+
+    it("passes everything when nothing is selected", () => {
+      expect(
+        filterProducts(rows, { ...base, audiences: [] }).map((p) => p.id),
+      ).toEqual(rows.map((p) => p.id));
+    });
+
+    it("keeps only the parents-only product under the parents chip", () => {
+      // Not the mixed one: that product's badge says "For families", so it
+      // belongs to the other chip and to no part of this one.
+      expect(
+        filterProducts(rows, { ...base, audiences: ["parents"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["parents"]);
+    });
+
+    it("keeps only the mixed product under the families chip", () => {
+      expect(
+        filterProducts(rows, { ...base, audiences: ["families"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["both"]);
+    });
+
+    it("ORs the two chips — every badged product, and nothing else", () => {
+      // Both lit is a union of the two tags, not a return to the unfiltered
+      // grid: the three gamers-only products wear no badge and stay out.
+      expect(
+        filterProducts(rows, { ...base, audiences: ["parents", "families"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["both", "parents"]);
+    });
+
+    it("surfaces a gamers-only product under no chip at all", () => {
+      // The one asymmetry worth stating outright: the default audience is
+      // reachable only by clearing the row (or by any other filter), which is
+      // what makes a lit chip row narrower than an empty one.
+      for (const audiences of [
+        ["parents"] as const,
+        ["families"] as const,
+        ["parents", "families"] as const,
+      ]) {
+        expect(
+          filterProducts(rows, { ...base, audiences: [...audiences] }).map(
+            (p) => p.id,
+          ),
+        ).not.toContain("a");
+      }
+      // Every other row still reaches it: the audience row is the only one
+      // that treats gamers-only as unmatched.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: [],
+          topics: ["fortnite"],
+        }).map((p) => p.id),
+      ).toEqual(["b"]);
+    });
+
+    it("ANDs with the other rows", () => {
+      // The two badged rows are both in-person (the factory's default), so an
+      // online + families query keeps neither.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: ["families"],
+          format: "online",
+        }).map((p) => p.id),
+      ).toEqual([]);
+    });
+
+    it("drops a parents-only product from an age band, chip or no chip", () => {
+      // The two filters answer different questions and never stand in for each
+      // other: a band means "shopping for a child of this age", so a product
+      // with no gamer range drops out of it even with its own chip lit — and
+      // the families chip is the one that keeps the mixed product there.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: ["parents"],
+          age: { min: 7, max: 9 },
+        }).map((p) => p.id),
+      ).toEqual([]);
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: ["families"],
+          age: { min: 7, max: 9 },
+        }).map((p) => p.id),
+      ).toEqual(["both"]);
+    });
+  });
+
+  /**
+   * The design-tag row, which behaves like the audience row above and unlike
+   * the topic and language rows beside it: a chip is the chip the card wears,
+   * so it matches exactly the products carrying that tag, and an untagged
+   * product — the ordinary state, wearing no chip — answers only an empty row.
+   * Lighting every chip is therefore narrower than lighting none.
+   */
+  describe("tag", () => {
+    const neuro = row({
+      id: "neuro",
+      topic: "minecraft_java",
+      tag: "neuroinclusive",
+    });
+    const beginner = row({
+      id: "beginner",
+      topic: "minecraft_java",
+      tag: "beginner",
+      isRemote: true,
+    });
+    const advanced = row({
+      id: "advanced",
+      topic: "fortnite",
+      tag: "advanced",
+    });
+    const tagged = [neuro, beginner, advanced];
+    // ALL is three untagged products; the three above are one per tag value.
+    const rows = [...ALL, ...tagged];
+    const base = {
+      topics: [] as string[],
+      format: null,
+      languages: [] as string[],
+      audiences: [],
+      age: null,
+      days: [] as number[],
+    };
+
+    it("passes everything when nothing is selected", () => {
+      expect(
+        filterProducts(rows, { ...base, tags: [] }).map((p) => p.id),
+      ).toEqual(rows.map((p) => p.id));
+    });
+
+    it("keeps exactly the products wearing a chip's tag", () => {
+      // Chip-equals-tag, stated over the whole vocabulary rather than one
+      // value at a time: whatever the enum holds, a lone chip's result set is
+      // precisely the rows whose `tag` column is that value. A fourth tag added
+      // by migration is covered here the day it exists.
+      for (const tag of PRODUCT_TAG_VALUES) {
+        expect(
+          filterProducts(rows, { ...base, tags: [tag] }).map((p) => p.id),
+        ).toEqual(rows.filter((p) => p.tag === tag).map((p) => p.id));
+      }
+    });
+
+    it("ORs the chips — the union of their tags, and nothing else", () => {
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: ["neuroinclusive", "advanced"],
+        }).map((p) => p.id),
+      ).toEqual(["neuro", "advanced"]);
+    });
+
+    it("surfaces an untagged product under no chip at all", () => {
+      // The inversion worth pinning: every chip lit is every *tagged* product,
+      // which is narrower than the unfiltered grid — the untagged majority is
+      // reachable only by clearing the row.
+      expect(
+        filterProducts(rows, { ...base, tags: [...PRODUCT_TAG_VALUES] }).map(
+          (p) => p.id,
+        ),
+      ).toEqual(tagged.map((p) => p.id));
+      for (const tag of PRODUCT_TAG_VALUES) {
+        expect(
+          filterProducts(rows, { ...base, tags: [tag] }).map((p) => p.id),
+        ).not.toContain("a");
+      }
+      // Every other row still reaches the untagged products: the tag row is the
+      // only one that treats "no tag" as unmatched.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: [],
+          topics: ["roblox_studio"],
+        }).map((p) => p.id),
+      ).toEqual(["c"]);
+    });
+
+    it("ANDs with the other rows", () => {
+      // Beginner is the only remote tagged product, so an online + beginner
+      // query keeps it and an online + advanced query keeps nothing.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: ["beginner"],
+          format: "online",
+        }).map((p) => p.id),
+      ).toEqual(["beginner"]);
+      expect(
+        filterProducts(rows, {
+          ...base,
+          tags: ["advanced"],
+          format: "online",
+        }).map((p) => p.id),
+      ).toEqual([]);
+    });
   });
 });

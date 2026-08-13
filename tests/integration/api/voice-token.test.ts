@@ -70,15 +70,6 @@ function authAs(
   userId: string,
   profile: { role: string; first_name: string },
 ) {
-  if (profile.role === "customer") {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json(
-        { error: "You do not have permission to join voice rooms" },
-        { status: 403 },
-      ),
-    );
-    return;
-  }
   mockRequireRole.mockResolvedValue({
     user: { id: userId },
     profile,
@@ -88,7 +79,7 @@ function authAs(
 
 /**
  * Build the `from(...)` router used by the route. Three tables in order:
- * `product_groups`, `participations` (gamer-only), and
+ * `product_groups`, `participations` (seat-holders — gamer or customer), and
  * `gedu_group_assignments` (gedu-only) — the mock dispatches by table
  * name and returns the matching thenable shape.
  */
@@ -224,8 +215,17 @@ describe("POST /api/voice/token", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 403 for customer role", async () => {
-    authAs("customer-id", { role: "customer", first_name: "Parent" });
+  it("returns 403 when the role gate refuses (e.g. a PIN-locked parent)", async () => {
+    // Customers are admitted to this route, but `requireRole` still applies the
+    // parent-PIN gate to them. A locked parent session never reaches the
+    // handler — pinned here so the PIN interaction isn't lost when someone
+    // reads the roles list and assumes every customer gets in.
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json(
+        { error: "PIN verification required", code: "PIN_REQUIRED" },
+        { status: 403 },
+      ),
+    );
     const res = await POST(tokenRequest({ groupId: GROUP_ID }));
     expect(res.status).toBe(403);
   });
@@ -260,6 +260,31 @@ describe("POST /api/voice/token", () => {
       const data = await res.json();
       expect(res.status).toBe(403);
       expect(data.error).toBe("You are not enrolled in this group");
+    });
+
+    it("rejects a customer with no seat of their own on the group", async () => {
+      // A parent whose *child* holds the seat lands here too: the child's row
+      // is keyed to the child's id, so the participant-keyed query finds
+      // nothing for the parent and the room is refused. Their route to the
+      // child's room is the switch-to-gamer flow, not this one.
+      authAs("customer-id", { role: "customer", first_name: "Parent" });
+      mockTables({ group: {}, participation: null });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("You are not enrolled in this group");
+    });
+
+    it("admits a customer holding their own active seat, on the same participant-keyed query", async () => {
+      authAs("customer-id", { role: "customer", first_name: "Parent" });
+      mockTables({ group: {}, participation: { id: "participation-1" } });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      // The query is keyed on the caller's own id — a parent can only ever
+      // satisfy it with a seat they occupy themselves.
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "customer-id" }),
+      );
     });
 
     it("rejects a gedu not assigned to the product", async () => {
@@ -485,6 +510,36 @@ describe("POST /api/voice/token", () => {
       expect(res.status).toBe(200);
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({ isOwner: true }),
+      );
+    });
+
+    it("mints an owner token for an admin", async () => {
+      authAs("admin-id", { role: "admin", first_name: "Boss" });
+      mockTables({ group: {} });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: true }),
+      );
+    });
+
+    it("mints a NON-owner token for a customer, and carries `customer` in the role slot", async () => {
+      // The security half of admitting customers. `isOwner` is a positive
+      // gedu/admin allow-list, not "role !== gamer" — and because the Daily
+      // helper feeds that one flag to both `is_owner` and `enable_screenshare`,
+      // false here is also what withholds screen share (see the daily.ts unit
+      // test that pins the doubling over the real request body).
+      authAs("customer-id", { role: "customer", first_name: "Parent" });
+      mockTables({ group: {}, participation: { id: "participation-1" } });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      expect(data.role).toBe("customer");
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isOwner: false,
+          userName: "customer-id|customer|Parent||",
+        }),
       );
     });
 

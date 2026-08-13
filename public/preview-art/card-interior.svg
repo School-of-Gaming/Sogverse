@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" role="img" aria-label="A cosy lamplit workshop interior">
+  <!-- Preview-scene demo art: warm mid-tone, so the overlaid chips are judged
+       against something between the bright park and the night track. Never
+       rendered by the live app; hardcoded hex is fine in an image file. -->
+  <defs>
+    <radialGradient id="lamp" cx="0.72" cy="0.34" r="0.62">
+      <stop offset="0" stop-color="#ffd79a"/>
+      <stop offset="0.55" stop-color="#a9743f"/>
+      <stop offset="1" stop-color="#4a2f1d"/>
+    </radialGradient>
+  </defs>
+  <rect width="300" height="200" fill="url(#lamp)"/>
+  <!-- plank wall -->
+  <g stroke="#3b2517" stroke-opacity="0.45" stroke-width="2">
+    <path d="M0 22H300M0 56H300M0 90H300M0 124H300"/>
+  </g>
+  <!-- window with a night sky -->
+  <rect x="26" y="34" width="72" height="58" rx="3" fill="#1d2a4d"/>
+  <g fill="#cfe0ff" opacity="0.9">
+    <circle cx="46" cy="52" r="1.6"/><circle cx="74" cy="46" r="1.2"/>
+    <circle cx="62" cy="70" r="1.4"/><circle cx="86" cy="74" r="1"/>
+  </g>
+  <circle cx="80" cy="56" r="9" fill="#f3e6c0" opacity="0.9"/>
+  <g stroke="#5a3a22" stroke-width="5" fill="none">
+    <rect x="26" y="34" width="72" height="58" rx="3"/>
+    <path d="M62 34v58M26 63h72"/>
+  </g>
+  <!-- hanging lamp -->
+  <path d="M214 0v30" stroke="#3b2517" stroke-width="3"/>
+  <path d="M196 30h36l10 18h-56z" fill="#6d4426"/>
+  <circle cx="214" cy="56" r="9" fill="#ffe9b0"/>
+  <circle cx="214" cy="56" r="26" fill="#ffd486" opacity="0.22"/>
+  <!-- workbench -->
+  <rect x="0" y="132" width="300" height="16" fill="#7a4f2c"/>
+  <rect x="0" y="148" width="300" height="52" fill="#5b3a20"/>
+  <g fill="#4a2f1a">
+    <rect x="40" y="148" width="12" height="52"/>
+    <rect x="242" y="148" width="12" height="52"/>
+  </g>
+  <!-- things on the bench -->
+  <g>
+    <rect x="72" y="108" width="42" height="24" rx="3" fill="#2f3d55"/>
+    <rect x="76" y="112" width="34" height="16" rx="2" fill="#6fa8dc"/>
+    <rect x="66" y="132" width="54" height="4" rx="2" fill="#243044"/>
+  </g>
+  <g fill="#c96f4a">
+    <rect x="140" y="116" width="16" height="16" rx="2"/>
+    <rect x="158" y="122" width="16" height="10" rx="2"/>
+  </g>
+  <g>
+    <rect x="196" y="112" width="10" height="20" rx="2" fill="#8fbf6a"/>
+    <rect x="210" y="104" width="10" height="28" rx="2" fill="#d9b45a"/>
+    <rect x="224" y="118" width="10" height="14" rx="2" fill="#b8654f"/>
+  </g>
+  <!-- mug, steaming -->
+  <path d="M262 116h20v16h-20z" fill="#e8e2d4"/>
+  <path d="M282 120h6a5 5 0 0 1 0 8h-6" stroke="#e8e2d4" stroke-width="3" fill="none"/>
+  <path d="M268 108c4-4 0-8 4-12M276 108c4-4 0-8 4-12" stroke="#ffe9b0" stroke-width="2" fill="none" opacity="0.6"/>
+</svg>

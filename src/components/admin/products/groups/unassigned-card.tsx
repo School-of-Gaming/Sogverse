@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { GroupParticipationDetail } from "@/types";
-import { GamerChip } from "./gamer-chip";
+import { ParticipantChip } from "./participant-chip";
 
 interface UnassignedCardProps {
   participations: GroupParticipationDetail[];
@@ -54,17 +54,18 @@ export function UnassignedCard({
         ) : (
           <div className="flex flex-wrap gap-2">
             {participations.map((p) => (
-              <GamerChip
+              <ParticipantChip
                 key={p.id}
                 participationId={p.id}
-                gamerId={p.gamer_id}
-                firstName={p.gamer_first_name}
-                dateOfBirth={p.gamer_date_of_birth}
-                gender={p.gamer_gender}
-                parentFirstName={p.gamer_parent_first_name}
-                parentLastName={p.gamer_parent_last_name}
-                minecraftUsername={p.gamer_minecraft_username}
-                minecraftUuid={p.gamer_minecraft_uuid}
+                participantId={p.participant_id}
+                participantEmail={p.participant_email}
+                firstName={p.participant_first_name}
+                dateOfBirth={p.participant_date_of_birth}
+                gender={p.participant_gender}
+                parentFirstName={p.parent_first_name}
+                parentLastName={p.parent_last_name}
+                minecraftUsername={p.participant_minecraft_username}
+                minecraftUuid={p.participant_minecraft_uuid}
                 isPending={pendingChipIds.has(p.id)}
               />
             ))}

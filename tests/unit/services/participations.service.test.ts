@@ -53,7 +53,7 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
     const rows = [
       {
         id: "part-1",
-        gamer_id: "g1",
+        participant_id: "g1",
         status: "active",
         signed_up_at: "2026-01-01T00:00:00.000Z",
         product: {
@@ -71,7 +71,7 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const url = requestedUrl(fetchMock.mock.calls[0][0]);
     expect(url.pathname).toBe("/rest/v1/participations");
-    expect(url.searchParams.get("gamer_id")).toBe("in.(g1,g2)");
+    expect(url.searchParams.get("participant_id")).toBe("in.(g1,g2)");
     expect(result).toEqual(rows);
   });
 
@@ -114,10 +114,10 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     });
   }
 
-  function rawRow(id: string, gamerFirstName: string) {
+  function rawRow(id: string, participantFirstName: string) {
     return {
       id,
-      gamer_id: `gamer-${id}`,
+      participant_id: `gamer-${id}`,
       group_id: "group-1",
       product: {
         id: "prod-1",
@@ -130,13 +130,13 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
         schedule_slots: [],
         location: null,
       },
-      gamer: { first_name: gamerFirstName },
+      participant: { first_name: participantFirstName },
     };
   }
 
   /** The same row on an in-person product, with the venue the embed returns. */
-  function inPersonRawRow(id: string, gamerFirstName: string) {
-    const row = rawRow(id, gamerFirstName);
+  function inPersonRawRow(id: string, participantFirstName: string) {
+    const row = rawRow(id, participantFirstName);
     return {
       ...row,
       product: {
@@ -177,8 +177,8 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
       "eq.user-1",
     );
 
-    const alex = result.find((r) => r.gamer.firstName === "Alex");
-    const bobby = result.find((r) => r.gamer.firstName === "Bobby");
+    const alex = result.find((r) => r.participant.firstName === "Alex");
+    const bobby = result.find((r) => r.participant.firstName === "Bobby");
     expect(alex?.paymentProblem).toBe(true);
     expect(alex?.subscriptionEndsAt).toBeNull();
     expect(bobby?.paymentProblem).toBe(false);
@@ -300,10 +300,10 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
    * everything only a *seat* produces — no group, no subscription state, no
    * venue.
    */
-  function rawRow(id: string, gamerFirstName: string) {
+  function rawRow(id: string, participantFirstName: string) {
     return {
       id,
-      gamer_id: `gamer-${id}`,
+      participant_id: `gamer-${id}`,
       product: {
         product_type: "consumer_club",
         timezone: "Europe/Helsinki",
@@ -315,7 +315,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
           { weekday: 1, start_time: "17:00:00", duration_minutes: 90 },
         ],
       },
-      gamer: { first_name: gamerFirstName },
+      participant: { first_name: participantFirstName },
     };
   }
 
@@ -365,7 +365,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
     expect(result).toEqual([
       {
         participationId: "p1",
-        gamer: { id: "gamer-p1", firstName: "Alex" },
+        participant: { id: "gamer-p1", firstName: "Alex" },
         product: {
           ...productShell,
           translations: [{ locale: "en", name: "Club p1" }],
@@ -375,7 +375,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
       },
       {
         participationId: "p2",
-        gamer: { id: "gamer-p2", firstName: "Bobby" },
+        participant: { id: "gamer-p2", firstName: "Bobby" },
         product: {
           ...productShell,
           translations: [{ locale: "en", name: "Club p2" }],
@@ -386,7 +386,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
     ]);
   });
 
-  it("keys the select off gamer_id for the gamer audience", async () => {
+  it("keys the select off participant_id for the gamer audience", async () => {
     mockBackend([rawRow("p1", "Alex")], {
       rows: [{ participation_id: "p1", waitlist_position: 1 }],
     });
@@ -396,7 +396,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
     const selectUrl = fetchMock.mock.calls
       .map(([input]) => requestedUrl(input))
       .find((u) => u.pathname === "/rest/v1/participations");
-    expect(selectUrl?.searchParams.get("gamer_id")).toBe("eq.user-1");
+    expect(selectUrl?.searchParams.get("participant_id")).toBe("eq.user-1");
     expect(selectUrl?.searchParams.get("customer_id")).toBeNull();
   });
 
@@ -422,7 +422,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
   });
 
   it("falls back to a truncated gamer id when the first name is blank", async () => {
-    mockBackend([{ ...rawRow("p1", ""), gamer_id: "abcdefghijkl" }], {
+    mockBackend([{ ...rawRow("p1", ""), participant_id: "abcdefghijkl" }], {
       rows: [{ participation_id: "p1", waitlist_position: 2 }],
     });
 
@@ -430,7 +430,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
 
     // Same fallback the sessions adapter uses, so one gamer reads identically
     // on a waitlist card and a session card.
-    expect(result[0].gamer.firstName).toBe("abcdefgh");
+    expect(result[0].participant.firstName).toBe("abcdefgh");
   });
 
   it("returns [] without touching the database when there is no session", async () => {

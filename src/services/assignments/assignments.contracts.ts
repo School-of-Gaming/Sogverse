@@ -34,7 +34,7 @@ export const myAssignedProductRows = z.array(
     end_date: z.string().nullable(),
     group_id: z.string(),
     group_count: z.number(),
-    gamer_count: z.number(),
+    participant_count: z.number(),
     product_translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
   })
@@ -59,19 +59,27 @@ export const geduAssignedProduct = z.object({
       name: z.string(),
       created_at: z.string(),
       is_my_group: z.boolean(),
-      gamer_count: z.number(),
+      participant_count: z.number(),
       gedus: z.array(z.object({ id: z.string(), first_name: z.string() })),
       // Populated only on the caller's own group; null on sister groups.
       roster: z
         .array(
           z.object({
-            gamer_id: z.string(),
+            participant_id: z.string(),
             first_name: z.string(),
             date_of_birth: z.string().nullable(),
             minecraft_username: z.string().nullable(),
             minecraft_uuid: z.string().nullable(),
             gender: z.enum(Constants.public.Enums.gender_type).nullable(),
             parent_email: z.string().nullable(),
+            /**
+             * The seat-holder's own address, for an adult participant; null on
+             * a child row, where `parent_email` is the contact. Present here
+             * for parity with the gedu feed's roster, which is the copy every
+             * rendered roster actually comes from — one roster shape with two
+             * definitions is how the two drift.
+             */
+            participant_email: z.string().nullable(),
           })
         )
         .nullable(),

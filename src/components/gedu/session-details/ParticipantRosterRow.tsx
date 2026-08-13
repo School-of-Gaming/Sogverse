@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { Check, Copy, Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
@@ -13,9 +14,10 @@ import {
   type GameAccountStatus,
 } from "@/components/game-account";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import type { GamerSessionRow } from "./types";
+import { rosterContactEmail, type ParticipantSessionRow } from "./types";
 
 const GENDER_KEY = {
   boy: "genderBoy",
@@ -23,8 +25,8 @@ const GENDER_KEY = {
   non_binary: "genderNonBinary",
 } as const;
 
-interface GamerRosterRowProps {
-  gamer: GamerSessionRow;
+interface ParticipantRosterRowProps {
+  participant: ParticipantSessionRow;
   /**
    * Save a new Minecraft username for this child. **Omit it and the row is
    * read-only** — which is what the surfaces that only display a roster want,
@@ -36,9 +38,11 @@ interface GamerRosterRowProps {
    * **Awaited.** The inline editor greys out for the round trip and closes only
    * once the write has landed; a rejection leaves it open with the typed name
    * still in the box.
+   *
+   * Never reached on an adult row, which renders no Minecraft cell at all.
    */
   onSaveMinecraftUsername?: (
-    gamerId: string,
+    participantId: string,
     username: string,
   ) => void | Promise<void>;
   /**
@@ -54,49 +58,72 @@ interface GamerRosterRowProps {
 }
 
 /**
- * One child on the assigned-group roster.
+ * One person on the assigned-group roster — a child, or since 00173 an adult
+ * holding a seat of their own.
  *
  * **Two lines, and the split is the whole design.** Line one is identity —
- * identicon, first name, age/gender, Minecraft username. Line two is the parent
- * email on its own, because an email is the one field here with no useful upper
- * bound: `sofia.margareta.lindqvist-holmberg@kotiposti.example.com` sharing a
- * line with a name either wrapped into a ragged three-line block or squeezed the
- * name down to an ellipsis, and the rail this row lives in is a third of the
- * page. Given a line to itself it truncates from one end, predictably, and the
- * row keeps the same height whoever is in it.
+ * identicon, first name, age/gender, Minecraft username. Line two is the
+ * contact email on its own, because an email is the one field here with no
+ * useful upper bound: `sofia.margareta.lindqvist-holmberg@kotiposti.example.com`
+ * sharing a line with a name either wrapped into a ragged three-line block or
+ * squeezed the name down to an ellipsis, and the rail this row lives in is a
+ * third of the page. Given a line to itself it truncates from one end,
+ * predictably, and the row keeps the same height whoever is in it.
  *
  * The email is still the click-to-copy button it always was — the gedu's most
- * common action on this row is mailing a parent — and the "copy all" helper
- * above the list covers the whole group.
+ * common action on this row is mailing whoever is responsible for the seat —
+ * and the "copy all" helper above the list covers the whole group.
  *
- * **Minecraft usernames are editable here.** Children mistype them, change them,
- * or never got round to entering one, and the gedu is the person who finds out —
- * mid-session, when the name doesn't match anyone on the server. So the identity
- * line carries a pencil: quiet by default (muted, and only fully opaque on hover
- * or keyboard focus, so eight of them don't turn the rail into a toolbar), but
- * always present rather than revealed on hover, since an affordance that only
- * exists under the cursor doesn't exist on a touchscreen. Opening it swaps the
- * line for a small input *in place*, with Save and Cancel to its right; nothing
- * below moves, because the input is the same height as the line it replaced —
- * and the same is true of the check that follows the save, which lands in a slot
- * that was already holding its space. The one thing that does add height is the
- * line saying a save was refused, and that is a direct answer to the button the
- * gedu just pressed rather than something arriving on the data's own schedule.
+ * **The adult variant is an absence, not a set of blanks.** A parent has a
+ * `Parent` badge where a child has their age and gender, their own address in
+ * the contact cell (there is no linked parent to name), and *no Minecraft cell
+ * whatsoever* — game-account linking for parents does not exist, so a
+ * placeholder saying "none" beside a pencil that opens an editor for an account
+ * that cannot be created would be an affordance pointing at nothing. Rendering
+ * three empty child fields would read as a roster row that failed to load; the
+ * row is shorter instead, and shorter is the honest shape. Nothing here moves
+ * after paint, so the shorter row costs no layout stability: the discriminator
+ * arrives with the roster, in the same payload as the name.
+ *
+ * **Minecraft usernames are editable here** — on child rows. Children mistype
+ * them, change them, or never got round to entering one, and the gedu is the
+ * person who finds out mid-session, when the name doesn't match anyone on the
+ * server. So the identity line carries a pencil: quiet by default (muted, and
+ * only fully opaque on hover or keyboard focus, so eight of them don't turn the
+ * rail into a toolbar), but always present rather than revealed on hover, since
+ * an affordance that only exists under the cursor doesn't exist on a
+ * touchscreen. Opening it swaps the line for a small input *in place*, with Save
+ * and Cancel to its right; nothing below moves, because the input is the same
+ * height as the line it replaced — and the same is true of the check that
+ * follows the save, which lands in a slot that was already holding its space.
+ * The one thing that does add height is the line saying a save was refused, and
+ * that is a direct answer to the button the gedu just pressed rather than
+ * something arriving on the data's own schedule.
  */
-export function GamerRosterRow({
-  gamer,
+export function ParticipantRosterRow({
+  participant,
   onSaveMinecraftUsername,
   minecraftStatus,
-}: GamerRosterRowProps) {
+}: ParticipantRosterRowProps) {
   const t = useTranslations("gedu.sessionDetails");
+  const c = useTranslations("common");
   const timeZone = useTimezone();
 
+  // The one bit that decides the variant. The RPC emits `participant_email`
+  // only where participant = customer, so a non-null value *is* "this seat is
+  // held by an adult" — there is no second signal to reconcile it against and
+  // no role column on the roster row to disagree with it.
+  const isAdult = participant.participant_email !== null;
+  const contactEmail = rosterContactEmail(participant);
+
   const detailParts: string[] = [];
-  if (gamer.date_of_birth) {
-    detailParts.push(t("age", { age: computeAge(gamer.date_of_birth, timeZone) }));
+  if (participant.date_of_birth) {
+    detailParts.push(
+      t("age", { age: computeAge(participant.date_of_birth, timeZone) }),
+    );
   }
-  if (gamer.gender) {
-    detailParts.push(t(GENDER_KEY[gamer.gender]));
+  if (participant.gender) {
+    detailParts.push(t(GENDER_KEY[participant.gender]));
   }
   const detail = detailParts.join(" · ");
 
@@ -104,27 +131,45 @@ export function GamerRosterRow({
     <li className="space-y-1.5 rounded-md border border-border bg-card p-2.5">
       <div className="flex min-w-0 items-start gap-2.5">
         <Avatar className="h-8 w-8 shrink-0">
-          <Identicon id={gamer.gamer_id} size={32} />
+          <Identicon id={participant.participant_id} size={32} />
         </Avatar>
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-medium leading-tight">
-            <span className="truncate">{gamer.first_name}</span>
-            {detail && (
-              <span className="text-[11px] font-normal text-muted-foreground">
-                {detail}
-              </span>
+          {/* A div, not a p: the adult variant's Badge renders a div, and a
+              block element inside a p is invalid HTML — the browser closes the
+              p early and React fails hydration on the mismatch. */}
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-medium leading-tight">
+            <span className="truncate">{participant.first_name}</span>
+            {isAdult ? (
+              /* The same badge and the same word the admin surfaces use for a
+                 customer profile, read off the shared role constants rather
+                 than restated — a second spelling of "Parent" is a second
+                 thing to translate and a second thing to forget. */
+              <Badge
+                className={cn(
+                  ROLE_BADGE_STYLES.customer,
+                  "shrink-0 px-1.5 py-0 text-[10px] font-normal",
+                )}
+              >
+                {c(ROLE_LABEL_KEYS.customer)}
+              </Badge>
+            ) : (
+              detail && (
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  {detail}
+                </span>
+              )
             )}
-          </p>
-          <MinecraftIdentityCell
-            gamer={gamer}
-            status={minecraftStatus}
-            onSave={onSaveMinecraftUsername}
-          />
+          </div>
+          {!isAdult && (
+            <MinecraftIdentityCell
+              participant={participant}
+              status={minecraftStatus}
+              onSave={onSaveMinecraftUsername}
+            />
+          )}
         </div>
       </div>
-      {gamer.parent_email !== null && (
-        <ParentEmailCell email={gamer.parent_email} />
-      )}
+      {contactEmail !== null && <ContactEmailCell email={contactEmail} />}
     </li>
   );
 }
@@ -157,13 +202,13 @@ export function GamerRosterRow({
  * owns its verification — the two are different flows, not two spellings of one.
  */
 function MinecraftIdentityCell({
-  gamer,
+  participant,
   status,
   onSave,
 }: {
-  gamer: GamerSessionRow;
+  participant: ParticipantSessionRow;
   status?: GameAccountStatus;
-  onSave?: (gamerId: string, username: string) => void | Promise<void>;
+  onSave?: (participantId: string, username: string) => void | Promise<void>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const inputId = useId();
@@ -174,8 +219,8 @@ function MinecraftIdentityCell({
   const identity = (
     <GameUsernameRow
       platform="minecraft"
-      username={gamer.minecraft_username}
-      externalId={gamer.minecraft_uuid}
+      username={participant.minecraft_username}
+      externalId={participant.minecraft_uuid}
       status={status}
       className="min-w-0 flex-1"
     />
@@ -195,7 +240,7 @@ function MinecraftIdentityCell({
       setFailed(false);
       setCommitting(true);
       try {
-        await onSave(gamer.gamer_id, draft.trim());
+        await onSave(participant.participant_id, draft.trim());
       } catch {
         setCommitting(false);
         setFailed(true);
@@ -275,8 +320,8 @@ function MinecraftIdentityCell({
       {identity}
       <button
         type="button"
-        onClick={() => setDraft(gamer.minecraft_username ?? "")}
-        aria-label={t("editMinecraftUsername", { name: gamer.first_name })}
+        onClick={() => setDraft(participant.minecraft_username ?? "")}
+        aria-label={t("editMinecraftUsername", { name: participant.first_name })}
         className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/mc:opacity-100"
       >
         <Pencil className="h-3 w-3" aria-hidden />
@@ -286,14 +331,20 @@ function MinecraftIdentityCell({
 }
 
 /**
- * The parent's email as a click-to-copy button, filling the row's second line.
+ * The seat's contact address as a click-to-copy button, filling the row's
+ * second line — a child's linked parent, or an adult's own address.
  *
  * It is prefixed by nothing and labelled by its `aria-label`: the row is already
- * one child, and "Parent" in front of every address cost a third of the width
- * the address needed. Long addresses truncate rather than wrap — a wrapped email
+ * one person, and a word in front of every address cost a third of the width the
+ * address needed. Long addresses truncate rather than wrap — a wrapped email
  * makes each row a different height and turns a roster into a ragged column.
+ *
+ * The label deliberately does not say *whose* address it is. It said "parent"
+ * until adults could hold seats; saying it now would be wrong on the rows where
+ * it matters most, and saying "parent or participant" is a sentence nobody
+ * wants read to them by a screen reader eight times.
  */
-function ParentEmailCell({ email }: { email: string }) {
+function ContactEmailCell({ email }: { email: string }) {
   const t = useTranslations("gedu.sessionDetails");
   const { copied, copy } = useCopyToClipboard();
 
@@ -301,7 +352,7 @@ function ParentEmailCell({ email }: { email: string }) {
     <button
       type="button"
       onClick={() => void copy(email)}
-      aria-label={copied ? t("emailCopied") : t("copyParentEmail", { email })}
+      aria-label={copied ? t("emailCopied") : t("copyContactEmail", { email })}
       className={cn(
         "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-muted/40 px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         copied && "border-success/40 text-success",

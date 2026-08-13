@@ -1,43 +1,31 @@
 import { Card, CardContent } from "@/components/ui/card";
-import type { ProductLongDescription } from "@/types";
+import { Markdown } from "@/components/ui/markdown";
 
-// Renders a product's structured long description on the shop detail page: the
-// flat block array (see migration 00091) mapped top-to-bottom to semantic
-// headings and paragraphs. The whole card is omitted when there are no blocks
-// (the optional field is unset for this locale). This is the single render
-// path for long descriptions, so a future format change is localized here.
-//
-// `whitespace-pre-line` on paragraphs keeps any intentional line breaks the
-// admin typed inside a single block.
-//
-// Vertical rhythm is set per block (not via a container `space-y`, which would
-// fight these margins): paragraphs sit a tight `mt-2` apart, headings get a
-// roomier `mt-5` so each section stands clear of the one above. `first:mt-0`
-// drops the leading gap on whichever block opens the card.
-
-export function LongDescription({ blocks }: { blocks: ProductLongDescription }) {
-  if (blocks.length === 0) return null;
+/**
+ * **A product's marketing long description, on the shop detail page.**
+ *
+ * One authored markdown string: a heading carries a real level, a list is a
+ * list, and an admin can link out to the game's own store page or back to one
+ * of our policies. The card is omitted entirely when the field is blank, which
+ * is the ordinary state for most products.
+ *
+ * `marketing` is the field's variant, not the reader's: it is what makes links
+ * survive and gives headings a page-level scale, and every surface rendering
+ * this field passes the same one.
+ *
+ * The caller hands over markdown, never the raw column — the stored value is
+ * still `jsonb` and may be either shape, and the one place that decides is the
+ * normalisation in `src/lib/products/`.
+ */
+export function LongDescription({ markdown }: { markdown: string }) {
+  if (markdown.trim() === "") return null;
 
   return (
     <Card>
       <CardContent className="p-5 sm:p-6">
-        {blocks.map((block, i) =>
-          block.type === "heading" ? (
-            <h2
-              key={i}
-              className="mt-5 text-base font-semibold text-foreground first:mt-0"
-            >
-              {block.text}
-            </h2>
-          ) : (
-            <p
-              key={i}
-              className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted-foreground first:mt-0"
-            >
-              {block.text}
-            </p>
-          ),
-        )}
+        <Markdown variant="marketing" className="text-muted-foreground">
+          {markdown}
+        </Markdown>
       </CardContent>
     </Card>
   );

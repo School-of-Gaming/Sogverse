@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { UsersService } from "@/services/users/users.service";
+import {
+  searchedProfile,
+  SEARCHED_PROFILE_COLUMNS,
+} from "@/services/users/users.contracts";
 import type { Profile } from "@/types";
 import {
   createFetchStubbedClient,
@@ -46,6 +50,16 @@ function firstUrl(fetchMock: FetchMock): URL {
 function requestedCountPreference(fetchMock: FetchMock, call = 0): string {
   const init = fetchMock.mock.calls[call][1];
   return String(new Headers(init?.headers).get("prefer"));
+}
+
+/**
+ * The blob filters one search sent, in order.
+ *
+ * Repeated params are the point — PostgREST ANDs them, which is how a
+ * multi-word query narrows — so this reads them all rather than the first.
+ */
+function searchBlobFilters(fetchMock: FetchMock): string[] {
+  return firstUrl(fetchMock).searchParams.getAll("search_blob");
 }
 
 describe("UsersService walked reads", () => {
@@ -141,6 +155,19 @@ describe("UsersService.searchUsers", () => {
     expect(requestedCountPreference(fetchMock)).toContain("count=exact");
   });
 
+  // The view is what puts a phone number and a game handle in reach at all; a
+  // search that quietly went back to `profiles` would still pass every
+  // name-and-email case below while silently losing both.
+  it("searches the view, and does not put the blob on the wire", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("ada");
+
+    const url = firstUrl(fetchMock);
+    expect(url.pathname).toContain("user_search_index");
+    expect(url.searchParams.get("select")).toBe(SEARCHED_PROFILE_COLUMNS);
+  });
+
   it("returns the capped rows alongside the true match total", async () => {
     fetchMock.mockResolvedValue(postgrestPage(profileRows(20), { from: 0, total: 47 }));
 
@@ -157,5 +184,140 @@ describe("UsersService.searchUsers", () => {
 
     expect(result.results).toHaveLength(3);
     expect(result.total).toBe(3);
+  });
+
+  it("matches a single term against the blob", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("smith");
+
+    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%smith%"]);
+  });
+
+  // The bug this started as: a full name is a first name and a surname, so
+  // matching the whole typed string as one value finds nobody — even though
+  // either word alone finds them. One filter per word, ANDed by PostgREST.
+  it("requires every word of a full name to match", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("Jon Smith");
+
+    expect(searchBlobFilters(fetchMock)).toEqual([
+      "ilike.%Jon%",
+      "ilike.%Smith%",
+    ]);
+  });
+
+  // A comma is how a name gets typed surname-first. It no longer breaks the
+  // request (one filter, not an `or=(…)` whose branches it would split), but it
+  // still has to separate the two words rather than ride along inside one.
+  it("cuts terms on a comma as well as whitespace", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("Smith, Jon");
+
+    expect(searchBlobFilters(fetchMock)).toEqual([
+      "ilike.%Smith%",
+      "ilike.%Jon%",
+    ]);
+  });
+
+  // PostgREST reads `*` as a wildcard for ilike before the pattern reaches SQL,
+  // so a stray one left in the needle matches everybody rather than nobody.
+  it("does not let a wildcard through as a term", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("Jon*");
+
+    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%Jon%"]);
+  });
+
+  // SQL's own wildcards, which reach the pattern by a different route than `*`
+  // and are neutralised by a different mechanism — escaping rather than
+  // splitting. Unescaped, "100%" matches every profile the caller can read
+  // instead of none, and a wrong result set arrives with no error to notice.
+  it.each([
+    ["100%", "ilike.%100\\%%"],
+    ["a_b", "ilike.%a\\_b%"],
+  ])("escapes the SQL wildcard in %s", async (typed, expected) => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers(typed);
+
+    expect(searchBlobFilters(fetchMock)).toEqual([expected]);
+  });
+
+  // A number is one value typed with spaces inside it. Tokenized as words it
+  // would demand a profile matching "040" and "123" and "4567" separately,
+  // which is nobody — so it has to be recognised before the split.
+  it.each([
+    ["+358 40 123 4567", "international, spaced"],
+    ["040 123 4567", "national, spaced"],
+    ["0401234567", "national, run together"],
+    ["358401234567", "exactly as stored"],
+  ])("matches %s (%s) on its trailing digits", async (typed) => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers(typed);
+
+    // The stored value is `358401234567`; every form above shares this tail.
+    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%1234567%"]);
+  });
+
+  // The guard against treating any digits as a number: a game handle carrying
+  // a couple of digits is a name, and must stay one word rather than being
+  // reduced to its tail.
+  it("treats a handle with digits in it as a word, not a number", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("EnderDragon42");
+
+    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%EnderDragon42%"]);
+  });
+
+  // The digit floor, which the case above does not reach — that one is excluded
+  // by having letters in it, so a regression dropping PHONE_MIN_DIGITS to zero
+  // would leave it passing. An all-digit needle under the floor is a house
+  // number or a fragment, and must stay the literal term the user typed rather
+  // than being silently re-read as the tail of a phone number.
+  it("does not treat a short run of digits as a phone number", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
+
+    await service.searchUsers("42");
+
+    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%42%"]);
+  });
+
+  // Without the guard this reads the view with no filter at all and the twenty
+  // newest accounts come back looking like matches.
+  it("answers a query with no searchable term without asking the database", async () => {
+    const result = await service.searchUsers(" , ");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ results: [], total: 0 });
+  });
+
+  // PostgreSQL cannot carry NOT NULL through a view, so the generated row type
+  // is nullable on every column and the parse is the only thing putting the
+  // guarantee back. A view that stopped matching must fail loudly here rather
+  // than hand a half-null profile to the page.
+  it("refuses a row the view could not have produced", async () => {
+    const [row] = profileRows(1);
+    fetchMock.mockResolvedValue(
+      postgrestPage([{ ...row, email: null }], { from: 0, total: 1 }),
+    );
+
+    await expect(service.searchUsers("ada")).rejects.toThrow();
+  });
+});
+
+// The literal select string is what the Supabase client infers the response
+// shape from, so it cannot be derived from the schema — which leaves exactly
+// one way for the two to drift apart, and this is it.
+describe("the searched-profile column list", () => {
+  it("names precisely the columns the schema parses", () => {
+    expect(SEARCHED_PROFILE_COLUMNS.split(",")).toEqual(
+      Object.keys(searchedProfile.shape),
+    );
   });
 });

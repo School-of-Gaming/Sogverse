@@ -79,14 +79,26 @@ export function ImagePicker({ value, onChange, disabled }: ImagePickerProps) {
         )}
       >
         {previewUrl ? (
-          <div className="relative h-40 w-full overflow-hidden rounded-md border bg-muted">
+          // **The crop, not the file.** Every family-facing surface paints a
+          // product's picture in a 3:2 frame filled edge to edge, so previewing
+          // the whole file letterboxed would show the admin something no parent
+          // will ever see — and hide the two things they need to decide: what
+          // the frame cuts off, and whether the subject survives it. Same
+          // ratio and same `object-cover` as the card, so what is approved here
+          // is what ships.
+          //
+          // Fixed 240×160 rather than the form's full width, which at this
+          // column would stand the preview several hundred pixels tall, and
+          // deliberately the same height as the empty drop zone below so the
+          // control does not change size when a file is picked.
+          <div className="relative mx-auto h-40 w-60 overflow-hidden rounded-md border bg-muted">
             <Image
               src={previewUrl}
               alt={t("previewAlt")}
               fill
               loading="lazy"
               unoptimized
-              className="object-contain"
+              className="object-cover"
             />
           </div>
         ) : (

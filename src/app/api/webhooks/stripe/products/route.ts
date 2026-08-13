@@ -88,18 +88,34 @@ async function handleCheckoutCompleted(
   event: Stripe.CheckoutSessionCompletedEvent,
 ) {
   const session = event.data.object;
-  if (session.payment_status !== "paid") return;
+  // A completion is acted on when money arrived — OR when a subscription-mode
+  // session legitimately cost nothing today.
+  //
+  // Stripe reports a €0 total as `no_payment_required`, and two things produce
+  // one: a club whose first charge is deferred to a future start date
+  // (`billing_cycle_anchor` + `proration_behavior: "none"` — see the checkout
+  // route), and a 100%-off promotion code. Both create a live subscription that
+  // will bill later, so requiring `"paid"` here meant creating no participation
+  // at all for either — a silent failure, since the route still answered 200.
+  //
+  // The widening is per *mode*, not per deferral: payment-mode sessions
+  // (camps, events) still require `"paid"`, because a one-off purchase that
+  // collected nothing has bought nothing.
+  const isZeroDueSubscription =
+    session.mode === "subscription" &&
+    session.payment_status === "no_payment_required";
+  if (session.payment_status !== "paid" && !isZeroDueSubscription) return;
 
   const purchaseShape = session.metadata?.purchaseShape;
   const customerId = session.metadata?.customerId;
-  const gamerId = session.metadata?.gamerId;
+  const participantId = session.metadata?.participantId;
   const productId = session.metadata?.productId;
   // Our integration currency, always EUR. Safe to pair with `amount_total`
   // below: even with Adaptive Pricing on, `session.amount_total`/`currency`
   // report the EUR settlement amount we receive — the customer's local
   // currency lives in `session.presentment_details`, which we don't record.
   const currency = session.metadata?.currency;
-  if (!purchaseShape || !customerId || !gamerId || !productId || !currency) {
+  if (!purchaseShape || !customerId || !participantId || !productId || !currency) {
     return;
   }
 
@@ -124,13 +140,13 @@ async function handleCheckoutCompleted(
   //   'confirmed'         — a fresh active row, or the row this very session
   //                         already bought (the re-run case). Either way the
   //                         writes below are the right ones to make.
-  //   'duplicate_payment' — a different payment already put this gamer on this
-  //                         product. Handled below.
+  //   'duplicate_payment' — a different payment already put this participant on
+  //                         this product. Handled below.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
     "confirm_paid_participation",
     {
       p_product_id: productId,
-      p_gamer_id: gamerId,
+      p_participant_id: participantId,
       p_customer_id: customerId,
       p_checkout_session_id: session.id,
     },
@@ -163,7 +179,7 @@ async function handleCheckoutCompleted(
         existingParticipationId: confirmJson.existing_participation_id,
         eventId: event.id,
         customerId,
-        gamerId,
+        participantId,
         productId,
         paymentIntent: expandableId(session.payment_intent),
         subscription: expandableId(session.subscription),
@@ -207,8 +223,14 @@ async function handleCheckoutCompleted(
       purpose: "reservation_duplicate",
       stripePaymentIntentId: expandableId(session.payment_intent),
       stripeInvoiceId: expandableId(session.invoice),
+      // The ledger echo KEEPS the historical `gamerId` key. Every payments row
+      // ever written carries it, nothing reads the column programmatically
+      // (it is an admin's forensic breadcrumb when a family reports a double
+      // charge), and renaming it here would fork the stored shape into a
+      // before/after that any future reader has to know about. One spelling,
+      // for all of history.
       metadata: {
-        gamerId,
+        gamerId: participantId,
         productId,
         purchaseShape,
         existingParticipationId: confirmJson.existing_participation_id,
@@ -275,8 +297,9 @@ async function handleCheckoutCompleted(
     purpose: paymentPurposeFor(purchaseShape),
     stripePaymentIntentId: expandableId(session.payment_intent),
     stripeInvoiceId: expandableId(session.invoice),
+    // `gamerId` again, and deliberately — see the duplicate branch above.
     metadata: {
-      gamerId,
+      gamerId: participantId,
       productId,
       purchaseShape,
       participationId: confirmJson.participation_id,
@@ -331,7 +354,21 @@ function expandableId(
 async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
   const invoice = event.data.object;
   const subId = invoiceSubscriptionId(invoice);
-  // First-period invoices come in via checkout.session.completed.
+  // `subscription_create` is the invoice Stripe raises alongside the very
+  // Checkout Session that created the subscription; `checkout.session.completed`
+  // already recorded that purchase, so recording it again here would double it.
+  //
+  // Note what this does NOT skip. A club whose first charge was deferred to a
+  // future start date may or may not raise a €0 invoice at creation — and this
+  // gate means we do not have to know: any invoice belonging to that creation
+  // carries `billing_reason: "subscription_create"` and is skipped here either
+  // way, exactly as an ordinary immediate purchase's is. The first *real* charge
+  // arrives weeks later at the anchor with `billing_reason:
+  // "subscription_cycle"`, i.e. shaped exactly like a month-2 renewal, so the
+  // ordinary renewal path below is the right one to record it. No gate here
+  // needs widening for deferred billing: the €0 checkout leaves a zero-amount
+  // payment row (its idempotency marker) and this handler writes the real one
+  // when the money actually moves.
   if (!subId || invoice.billing_reason === "subscription_create") return;
   const { data: famSub } = await admin
     .from("family_subscriptions")

@@ -1,4 +1,5 @@
 import { useId } from "react";
+import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 
@@ -42,9 +43,17 @@ export interface FieldDescriptors {
  * `labelAction` renders a node on the right of the label row (e.g. a "Forgot
  * password?" link) — kept here so those fields stay inside the primitive
  * instead of regrowing a hand-rolled label.
+ *
+ * `icon` puts a glyph at the head of the label, decoratively: it is hidden from
+ * assistive technology, because a picture cannot say anything the label text
+ * does not already say. It is for a label that has become a *title* — one that
+ * carries a fact about the field beyond its name, such as who will end up
+ * reading what is typed into it — where the glyph is what makes that fact
+ * legible at a glance. A field whose label is only its name does not take one.
  */
 export function Field({
   label,
+  icon: Icon,
   htmlFor,
   optional = false,
   hint,
@@ -52,6 +61,7 @@ export function Field({
   children,
 }: {
   label: string;
+  icon?: LucideIcon;
   htmlFor?: string;
   optional?: boolean;
   hint?: string;
@@ -70,11 +80,18 @@ export function Field({
     // its top edge) doesn't crowd the label above it.
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-2">
-        <Label id={labelId} htmlFor={htmlFor}>
-          {label}
-          {optional && (
-            <span className="ml-1 font-normal text-muted-foreground">{c("optional")}</span>
-          )}
+        <Label
+          id={labelId}
+          htmlFor={htmlFor}
+          className={Icon ? "flex items-center gap-1.5" : undefined}
+        >
+          {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden />}
+          <span>
+            {label}
+            {optional && (
+              <span className="ml-1 font-normal text-muted-foreground">{c("optional")}</span>
+            )}
+          </span>
         </Label>
         {labelAction}
       </div>

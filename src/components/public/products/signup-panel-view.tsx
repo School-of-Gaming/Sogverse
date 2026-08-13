@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -15,40 +16,81 @@ import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
 import { PricingPanelView } from "./pricing-panel-view";
 import type { PricingOption } from "./pricing-options";
-import { SeatAvailabilityBar } from "./seat-availability-bar";
+import {
+  SeatAvailabilityBar,
+  type SeatAvailabilityBarProps,
+} from "./seat-availability-bar";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
 // state and emits intent callbacks. Renders the right banner + body
 // for the registration state, the pricing picker, and the form (or
 // the auth overlay).
 //
-// Important detail for the pre-open → open flip: the form-shaped panels
-// (closed_pre, open, full_waitlist) all reuse the same
-// `<SignupForm>` instance. That keeps the parent's selected gamer +
-// agreed checkbox + pricing pick stable across the countdown flip — so
-// when the clock hits zero, the parent really does have a one-tap
-// sign-up.
+// Two clocks drive this panel and they run at different speeds. The CTA's
+// pre-open → live flip rides a 1-second countdown *inside* the panel, so it
+// lands on the second. The registration *state* is re-derived from `useNow()`,
+// which ticks every 30 seconds — so for up to 29 seconds after registration
+// opens, the panel is still being handed `closed_pre` while its own button has
+// already gone live.
+//
+// That gap is why every signup-able state (closed_pre, pending_thr, open,
+// full_waitlist) renders through ONE component, `SignupBody`. React keeps the
+// same instance across a kind change, so the slower clock's swap reconciles in
+// place instead of unmounting a panel and mounting a different one. It has to
+// produce identical geometry as well as identical state: the seat bar is
+// rendered by every one of those kinds whenever the product has a cap, and the
+// countdown slot stays occupied for the rest of a mount that began during a
+// countdown. Nothing in the panel moves after the clock hits zero — the parent
+// hovering the button through the last five seconds is exactly who this is for.
+//
+// It also means the form-shaped variants genuinely reuse one `<SignupForm>`
+// instance, so the selected gamer, the agreed checkbox and the pricing pick
+// survive the flip and the sign-up really is one tap.
+
+/**
+ * One selectable row in the picker: a child, or — on a product sold to parents
+ * — the reader themselves.
+ *
+ * The panel is deliberately id-agnostic about which is which. Everything that
+ * makes a row work (selection, the identicon, the already-enrolled lockout) is
+ * keyed on the id alone, and the participation-counts read is filtered on the
+ * customer and keyed on the participant column, so a parent's own seat lands
+ * under their own id with no service change. `isSelf` exists only for the two
+ * places the *wording* has to change, never for the mechanics.
+ */
+export interface SignupParticipantChoice {
+  id: string;
+  name: string;
+  age: number | null;
+  /**
+   * When set, this participant already holds a seat (`active`) or a waitlist
+   * spot (`waitlisted`) on the product — the picker shows the row disabled and
+   * labels its state in place instead of offering a second signup.
+   */
+  signupState?: MyParticipationState | null;
+  /** True on the parent's own row. Selects the second-person copy, nothing else. */
+  isSelf?: boolean;
+}
 
 export type AuthState =
   | { kind: "unauthenticated"; signInHref: string; createAccountHref: string }
   | { kind: "non_customer" }
   | {
-      // A signed-in customer. `gamers` may be empty — the picker always renders
-      // an "Add a child" row, so the zero-gamer case needs no separate state;
-      // it's just a picker with no selectable rows yet.
+      // A signed-in customer. `participants` may be empty — on a product with a
+      // gamer audience the picker always renders an "Add a child" row, so the
+      // zero-gamer case needs no separate state; it's just a picker with no
+      // selectable rows yet.
       kind: "ready";
-      gamers: readonly {
-        id: string;
-        name: string;
-        age: number | null;
-        /**
-         * When set, this child already holds a seat (`active`) or a waitlist
-         * spot (`waitlisted`) on the product — the picker shows them disabled
-         * and labels their state in place instead of letting the parent sign
-         * them up a second time.
-         */
-        signupState?: MyParticipationState | null;
-      }[];
+      participants: readonly SignupParticipantChoice[];
+      /**
+       * How many children the account holds — the number the add-a-child cap is
+       * measured against, and deliberately NOT `participants.length`.
+       *
+       * On a for-parents product the parent's own row rides in the same array,
+       * and counting it would hide the add affordance one child early: a family
+       * at the cap minus one would be told they were full.
+       */
+      gamerCount: number;
     };
 
 /**
@@ -66,13 +108,29 @@ export type MyParticipationState = "waitlisted" | "active";
 
 export interface SignupPanelViewProps {
   productType: ProductType;
+  /**
+   * Whether the product is sold to children at all (`products.for_gamers`).
+   *
+   * False on a parents-only product, where two things follow: the add-a-child
+   * affordance is withdrawn (offering to create an account that could not be
+   * signed up here is a dead end), and the picker heading stops asking who is
+   * being signed up — there is one answer and it is already selected.
+   */
+  forGamers: boolean;
   state: RegistrationState;
   authState: AuthState;
   /** The single purchase option for this product (one per type). */
   pricingOption: PricingOption;
-  /** Resolved by the adapter; null while the user has no gamer selected. */
-  selectedGamerId: string | null;
-  onSelectGamer: (gamerId: string) => void;
+  /**
+   * Formatted date of the first charge, on a subscription whose billing is
+   * deferred to a start date still ahead — null on everything else. Resolved by
+   * `useSignupPanelFields` (which owns the projection); the panel only places
+   * it, under the price it qualifies.
+   */
+  firstChargeDate?: string | null;
+  /** Resolved by the adapter; null while nobody selectable is selected. */
+  selectedParticipantId: string | null;
+  onSelectParticipant: (participantId: string) => void;
   /** Opens the Add Gamer dialog (owned by the adapter). */
   onAddGamer: () => void;
   agreed: boolean;
@@ -88,20 +146,39 @@ export interface SignupPanelViewProps {
   locale: string;
 }
 
+// ---------- Why the panel is flat ----------
+//
+// The panel used to be a card, holding a card, holding a card per participant,
+// and each layer spent padding: in the detail page's 20rem rail that left a row
+// about 195px wide, which is not enough for a name, an age and "Already joined"
+// on one line.
+//
+// What has no box is decided by one rule — **a border means you can act on
+// it.** So the picker's outer box is gone (it is a grouping, not a control) and
+// the pricing section has none (it is a statement of the price, with no choice
+// attached), while the participant rows keep a border, because that border is
+// what says "you can pick this"; the consent toggle keeps one, because it is a
+// control; and the add-a-child affordance keeps one, because it is a button.
+//
+// This was an opt-in variant while the rail was being judged and is now the
+// only look, on single-column pages too. Nothing about what is rendered,
+// selectable, disabled or announced ever depended on it.
+
 export function SignupPanelView(props: SignupPanelViewProps) {
   switch (props.state.kind) {
     case "ended":
     case "running_late":
     case "full_closed":
       return <ClosedPanel productType={props.productType} />;
-    case "full_waitlist":
-      return <FullWaitlistPanel {...props} />;
-    case "pending_thr":
-      return <ThresholdPanel {...props} />;
+    // One component for every state with something to sign up on, so a state
+    // change between them reconciles in place — see the note above. Listed
+    // individually rather than as a `default` so a new kind has to be placed
+    // here deliberately.
     case "closed_pre":
-      return <PreOpenPanel {...props} />;
+    case "pending_thr":
     case "open":
-      return <OpenPanel {...props} />;
+    case "full_waitlist":
+      return <SignupBody {...props} />;
   }
 }
 
@@ -140,6 +217,14 @@ function PanelShell({
 // not worth spelling out: they collapse to one generic note, no actionable CTA.
 // (The RegistrationState kinds stay distinct — the card layer still needs them;
 // only the panel rendering merges.)
+//
+// This is the one swap that still changes the panel's shape: a product whose
+// last seat goes in the seconds between the drop and the state catching up
+// lands here, and there is nothing to preserve — the form, the CTA and the
+// countdown all cease to exist, because there is no longer anything to do. A
+// panel that held their geometry open would be reserving space for a control
+// that can never come back, which is the other way to get the layout rule
+// wrong. Something different is simply there now.
 function ClosedPanel({ productType }: { productType: ProductType }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
@@ -149,46 +234,44 @@ function ClosedPanel({ productType }: { productType: ProductType }) {
   );
 }
 
-// ---------- Variant: Full + waitlist ----------
+// ---------- Variant: everything with something to sign up on ----------
 
-function FullWaitlistPanel(props: SignupPanelViewProps) {
+/**
+ * What the seat bar shows for a state, or `null` when there is no bar to draw.
+ *
+ * Every capped state answers with a bar, which is the point: the bar's box is
+ * settled before registration opens, so the 30-second variant swap can't push
+ * the CTA down. A `full_waitlist` product reads "0 of N remaining" with the
+ * waitlist chip — the same capacity story, told at its end — and the "how the
+ * waitlist works" detail lives on the post-join summary instead ("what happens
+ * next").
+ *
+ * `seatsLeft ?? seatCount` is type narrowing only: the seat trio types
+ * `seatsLeft` as nullable, and it is null exactly when `seatCount` is — the
+ * branch above has already excluded that.
+ */
+function seatBarFor(state: RegistrationState): SeatAvailabilityBarProps | null {
+  switch (state.kind) {
+    case "closed_pre":
+    case "pending_thr":
+    case "open":
+      if (state.seatCount === null) return null;
+      return {
+        seatCount: state.seatCount,
+        seatsLeft: state.seatsLeft ?? state.seatCount,
+        waitlistEnabled: state.waitlistEnabled,
+      };
+    case "full_waitlist":
+      return { seatCount: state.seatCount, seatsLeft: 0, waitlistEnabled: true };
+    case "ended":
+    case "running_late":
+    case "full_closed":
+      return null;
+  }
+}
+
+function SignupBody(props: SignupPanelViewProps) {
   const t = useTranslations("productDetail.signupPanel");
-  if (props.state.kind !== "full_waitlist") return null;
-  return (
-    <PanelShell productType={props.productType}>
-      {/* Same seat bar as any capped product — full reads as "0 of N seats
-          remaining" with the waitlist chip, so the parent sees the capacity
-          story like everywhere else. The "how the waitlist works" detail moved
-          to the post-join summary (it's "what happens next"). */}
-      <SeatAvailabilityBar
-        seatCount={props.state.seatCount}
-        seatsLeft={0}
-        waitlistEnabled
-      />
-      <PricingPanelView
-        option={props.pricingOption}
-        currency={props.currency}
-        locale={props.locale}
-      />
-      <FormOrAuth
-        {...props}
-        // Full+waitlist branch dispatches to onJoinWaitlist instead of onSubmit.
-        onSubmit={props.onJoinWaitlist}
-        ctaLabelActive={t("ctaWaitlist")}
-        active
-        variant="secondary"
-      />
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Threshold-pending ----------
-
-// Threshold handling is deferred, so this state shows a plain sign-up panel —
-// the same banner / pricing / form as a non-urgent open product, with no seat
-// bar and no threshold meter. The product reads as if it has no seating
-// constraints (cf. the pre-open panel, which also renders no bar).
-function ThresholdPanel(props: SignupPanelViewProps) {
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -197,107 +280,62 @@ function ThresholdPanel(props: SignupPanelViewProps) {
     props.locale,
   );
 
-  if (props.state.kind !== "pending_thr") return null;
+  // Aliased so the narrowing survives: TypeScript follows a discriminant
+  // through a `const` local, not through a property of a parameter.
+  const state = props.state;
+  const isPreOpen = state.kind === "closed_pre";
+  const opensAtMs = isPreOpen ? new Date(state.opensAt).getTime() : null;
+
+  // Whether this mount started during a countdown, remembered for the life of
+  // the mount. Once the 30-second clock re-derives the state as `open`, the
+  // component is handed a state with no `opensAt` on it — but the four cells
+  // are on screen and must stay there, so the slot is held from here rather
+  // than from the current state. A page loaded when registration was already
+  // open has no cursor mid-hover and no cells to preserve, so it gets none.
+  const [countdownAtMount] = useState(opensAtMs);
+  const countdownDone = useCountdownDone(opensAtMs);
+
+  // The CTA goes live on the 1-second countdown, ahead of the state swap, and
+  // stays live after it. Every other signup-able state is live on arrival — so
+  // this one boolean is both "the button works" and "the clock has finished",
+  // which are the same fact read from either end.
+  const active = !isPreOpen || countdownDone;
+  const isWaitlist = state.kind === "full_waitlist";
+  const seatBar = seatBarFor(state);
 
   return (
     <PanelShell productType={props.productType}>
+      {seatBar !== null && <SeatAvailabilityBar {...seatBar} />}
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
-      />
-      <FormOrAuth {...props} ctaLabelActive={activeLabel} active />
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Pre-open ----------
-
-function PreOpenPanel(props: SignupPanelViewProps) {
-  // Hooks first so the linter can verify they always run in the same
-  // order across renders. The conditional early return is unreachable
-  // in practice (the parent dispatches by kind) but kept for type
-  // narrowing in the JSX below.
-  const opensAt =
-    props.state.kind === "closed_pre"
-      ? props.state.opensAt
-      : "2099-01-01T00:00:00Z";
-  const targetMs = new Date(opensAt).getTime();
-  const isOpen = useCountdownDone(targetMs);
-  const verb = useVerb(props.productType);
-  const activeLabel = useActiveCtaLabel(
-    verb,
-    props.pricingOption,
-    props.currency,
-    props.locale,
-  );
-
-  if (props.state.kind !== "closed_pre") return null;
-
-  return (
-    <PanelShell productType={props.productType}>
-      <PricingPanelView
-        option={props.pricingOption}
-        currency={props.currency}
-        locale={props.locale}
+        firstChargeDate={props.firstChargeDate ?? null}
       />
       <FormOrAuth
         {...props}
         // The prep checklist in SignupForm runs the same whether or not
         // registration is open yet, so a parent can finish every step during the
-        // countdown. `active={isOpen}` only gates the final leaf: until the clock
-        // hits zero a fully-prepped parent sees "Ready & waiting"; at zero it
-        // flips in place to the live action label (same as the open panel).
-        ctaLabelActive={activeLabel}
-        active={isOpen}
+        // countdown. `active` only gates the final leaf: until the clock hits
+        // zero a fully-prepped parent sees "Ready & waiting"; at zero it flips
+        // in place to the live action label.
+        onSubmit={isWaitlist ? props.onJoinWaitlist : props.onSubmit}
+        ctaLabelActive={isWaitlist ? t("ctaWaitlist") : activeLabel}
+        active={active}
+        variant={isWaitlist ? "secondary" : "default"}
       />
-      {/* Countdown stays mounted across the pre-open → open flip. When the
-          target instant arrives we set `done`, which keeps the four cells
-          in place but renders them as `--` placeholders. Unmounting the
-          clock would shrink the panel — and because the panel is sticky on
-          desktop and reflows on mobile, that shrink propagates outward
-          (page section height changes, sticky bottom anchor pulls content
-          up, etc.) and the Sign-up button shifts under the parent's
-          cursor. The whole point of the live countdown is the one-tap-buy
-          moment, so the slot is held constant. */}
-      <CountdownClock targetMs={targetMs} done={isOpen} />
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Open ----------
-
-function OpenPanel(props: SignupPanelViewProps) {
-  const verb = useVerb(props.productType);
-  const activeLabel = useActiveCtaLabel(
-    verb,
-    props.pricingOption,
-    props.currency,
-    props.locale,
-  );
-
-  if (props.state.kind !== "open") return null;
-
-  return (
-    <PanelShell productType={props.productType}>
-      {props.state.seatCount !== null && (
-        // seatsLeft is live now — deriveRegistrationState computes it from the
-        // real product_seat_counts row. The `?? seatCount` is only type
-        // narrowing: the open state types seatsLeft as `number | null`, but
-        // derive only returns null when seatCount is null (the branch we're
-        // already inside excludes that), so the fallback is unreachable.
-        <SeatAvailabilityBar
-          seatCount={props.state.seatCount}
-          seatsLeft={props.state.seatsLeft ?? props.state.seatCount}
-          waitlistEnabled={props.state.waitlistEnabled}
-        />
+      {/* The countdown outlives its own countdown. At the target instant it
+          switches to `done`, which keeps the four cells exactly where they are
+          and renders them as `--`; when the state swap arrives up to 29
+          seconds later, `countdownAtMount` keeps them rendered still.
+          Unmounting them at either moment would shrink the panel — and because
+          the panel is sticky on desktop and reflows on mobile, that shrink
+          propagates outward (page section height changes, the sticky bottom
+          anchor pulls content up) and the Sign-up button moves under the
+          parent's cursor at the exact second they meant to click it. */}
+      {countdownAtMount !== null && (
+        <CountdownClock targetMs={countdownAtMount} done={active} />
       )}
-      <PricingPanelView
-        option={props.pricingOption}
-        currency={props.currency}
-        locale={props.locale}
-      />
-      <FormOrAuth {...props} ctaLabelActive={activeLabel} active />
     </PanelShell>
   );
 }
@@ -327,11 +365,17 @@ function FormOrAuth(props: FormOrAuthProps) {
         />
       );
     case "non_customer":
-      return <NonCustomerOverlay />;
+      return <NonCustomerOverlay forGamers={props.forGamers} />;
     case "ready":
-      // selectedGamerId comes through `props` (it's a top-level View prop,
+      // selectedParticipantId comes through `props` (it's a top-level View prop,
       // not part of the AuthState union — see SignupPanelViewProps).
-      return <SignupForm {...props} gamers={props.authState.gamers} />;
+      return (
+        <SignupForm
+          {...props}
+          participants={props.authState.participants}
+          gamerCount={props.authState.gamerCount}
+        />
+      );
   }
 }
 
@@ -376,29 +420,42 @@ function UnauthenticatedOverlay({
   );
 }
 
-function NonCustomerOverlay() {
+// The signed-in-but-wrong-role note (a gamer or a gedu on a shop URL). The
+// gamers-only wording names what this page is for — registering a gamer — which
+// on a parents-only product would be describing the wrong product, so that case
+// says the same thing about the seat instead of about a child.
+function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
     <p className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-      {t("nonCustomerNote")}
+      {forGamers ? t("nonCustomerNote") : t("nonCustomerNoteParents")}
     </p>
   );
 }
 
 function SignupForm(
   props: FormOrAuthProps & {
-    gamers: Extract<AuthState, { kind: "ready" }>["gamers"];
+    participants: readonly SignupParticipantChoice[];
+    gamerCount: number;
   },
 ) {
   const t = useTranslations("productDetail.signupPanel");
   // The "Add Gamer" row reuses the family namespace's label so the wording
   // stays in lockstep with the family selector / My Gamers tile.
   const tFamily = useTranslations("family");
-  // Steven Brown Rule — hide the add affordance at the cap, same as the family
-  // selector / My Gamers grid. `gamers` is the parent's full roster (enrolled
-  // ones included), so its length is the right count to test.
-  const canAddGamer = props.gamers.length < MAX_GAMERS_PER_PARENT;
-  const formReady = props.selectedGamerId !== null && props.agreed;
+  // Two independent reasons to withhold the add affordance. Steven Brown Rule —
+  // hidden at the cap, same as the family selector / My Gamers grid; the count
+  // is the parent's full roster (enrolled children included) and comes in
+  // separately precisely because `participants` may carry the parent's own row,
+  // which is not a child and must not count against the cap. And a
+  // parents-only product has no gamer audience at all, so adding a child here
+  // would create an account that cannot be signed up on this page.
+  const canAddGamer =
+    props.forGamers && props.gamerCount < MAX_GAMERS_PER_PARENT;
+  const selectedIsSelf =
+    props.participants.find((p) => p.id === props.selectedParticipantId)
+      ?.isSelf === true;
+  const formReady = props.selectedParticipantId !== null && props.agreed;
   const clickable = formReady && props.active && !props.submitting;
 
   // The CTA doubles as the instruction for the parent's next step: while it's
@@ -408,13 +465,15 @@ function SignupForm(
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
-  // then. selectedGamerId is null only when no child is selectable: either
-  // there's still room to add one (canAddGamer → prompt to add a gamer), or
-  // every child is already on the product at the gamer cap (nothing left to do
-  // — the picker rows show each child's exact seat/waitlist status in place).
+  // then. selectedParticipantId is null only when nobody is selectable: there
+  // is still room to add a child (canAddGamer → prompt to add a gamer), every
+  // child is already on the product at the gamer cap, or — on a parents-only
+  // product — the reader already holds the one seat there is. The latter two
+  // both land on ctaAllSet; the picker rows show each person's exact
+  // seat/waitlist status in place.
   const ctaLabel = props.submitting
     ? t("ctaSubmitting")
-    : props.selectedGamerId === null
+    : props.selectedParticipantId === null
       ? canAddGamer
         ? t("ctaAddGamer")
         : t("ctaAllSet")
@@ -426,11 +485,20 @@ function SignupForm(
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-border bg-muted/30 p-4">
+      {/* No box around the picker — it is a grouping, not a control, and the
+          heading below marks the section without a container around it. See
+          the border-means-interactive note above. */}
+      <div>
         <h3 id="gamer-picker-label" className="text-sm font-semibold">
           {/* Per-type heading — matches the product's action verb
-              (enrol / register / sign up / join). */}
-          {t(`whoAreYouSigningUp.${props.productType}`)}
+              (enrol / register / sign up / join). A parents-only product has
+              exactly one answer and it is already selected, so the heading
+              states the seat rather than asking a question with no second
+              option; it stays type-neutral because the verb it would carry
+              belongs to the question it is no longer asking. */}
+          {props.forGamers
+            ? t(`whoAreYouSigningUp.${props.productType}`)
+            : t("seatIsFor")}
         </h3>
         <div className="mt-3 space-y-2">
           <div
@@ -438,12 +506,15 @@ function SignupForm(
             aria-labelledby="gamer-picker-label"
             className="space-y-2"
           >
-            {props.gamers.map((g) => {
-              // A child already holding a seat / waitlist spot can't be signed up
-              // again — the row is disabled and labels its state in place rather
-              // than offering itself for selection.
+            {props.participants.map((g) => {
+              // A participant already holding a seat / waitlist spot can't be
+              // signed up again — the row is disabled and labels its state in
+              // place rather than offering itself for selection. This covers the
+              // parent's own row for free: the counts read is filtered on the
+              // customer and keyed on the participant column, so a self seat
+              // arrives under the parent's own id like any other.
               const alreadyOn = g.signupState ?? null;
-              const selected = props.selectedGamerId === g.id;
+              const selected = props.selectedParticipantId === g.id;
               return (
                 <button
                   key={g.id}
@@ -451,13 +522,24 @@ function SignupForm(
                   role="radio"
                   aria-checked={selected}
                   disabled={alreadyOn !== null}
-                  onClick={() => props.onSelectGamer(g.id)}
+                  onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                    "flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2.5 text-sm transition-colors",
+                    // The border and the fills stay: this row is the one thing
+                    // in the picker you can act on, and the border is what says
+                    // so. With no box around the group the row spends a little
+                    // less on its own padding (22px of horizontal cost) and
+                    // gives the name/age/status line the room it needs at rail
+                    // width.
                     alreadyOn !== null
                       ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
                       : selected
-                        ? "border-primary bg-primary/10"
+                        ? // With no outer box to sit inside, a 1px primary
+                          // border against a 1px input border is a thin
+                          // distinction. An inset ring doubles the line without
+                          // changing the box, so selecting a row cannot nudge
+                          // its own text by a pixel.
+                          "border-primary bg-primary/10 ring-1 ring-inset ring-primary/50"
                         : "border-input hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
@@ -474,10 +556,20 @@ function SignupForm(
                       >
                         {g.name}
                       </span>
-                      {g.age !== null && (
+                      {/* The slot beside the name says who this row is: a
+                          child's age, or the word "Parent" on the reader's own
+                          row — same position, same weight, so the picker reads
+                          uniformly whoever is in it. */}
+                      {g.isSelf === true ? (
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {t("agePill", { age: g.age })}
+                          {t("parentPill")}
                         </span>
+                      ) : (
+                        g.age !== null && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {t("agePill", { age: g.age })}
+                          </span>
+                        )
                       )}
                     </span>
                   </span>
@@ -521,6 +613,7 @@ function SignupForm(
 
       <RulesCheckbox
         productType={props.productType}
+        selfSeat={selectedIsSelf}
         agreed={props.agreed}
         onAgreedChange={props.onAgreedChange}
       />
@@ -546,10 +639,18 @@ function SignupForm(
 
 function RulesCheckbox({
   productType,
+  selfSeat,
   agreed,
   onAgreedChange,
 }: {
   productType: ProductType;
+  /**
+   * True when the selected participant is the reader themselves. Chosen from
+   * the *selection*, not from the product's audience: on a mixed product the
+   * same panel ticks a consent about a child or about the reader depending on
+   * which row is lit, and the sentence has to follow the row.
+   */
+  selfSeat: boolean;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
 }) {
@@ -561,6 +662,16 @@ function RulesCheckbox({
   // outer box wraps a border-per-selectable-row — the rules section is a single
   // choice, so a box-in-a-box would just be visual noise.
   const tPanel = useTranslations("productDetail.signupPanel");
+  // Exactly one of the four rules third-persons a child: the municipality
+  // club's, which is a consent about "my child's seat" opening for the next
+  // family. The other three are about conduct and read identically whoever
+  // holds the seat, so the self variant is keyed on the one rule that needs it
+  // rather than duplicating three identical sentences into a parallel group
+  // that would then have to be kept in step in five locales.
+  const ruleText =
+    selfSeat && productType === "municipality_club"
+      ? t("municipality_club_self")
+      : t(productType);
   return (
     <label
       className={cn(
@@ -577,7 +688,7 @@ function RulesCheckbox({
           checked={agreed}
           onChange={(e) => onAgreedChange(e.target.checked)}
         />
-        <span className="text-muted-foreground">{t(productType)}</span>
+        <span className="text-muted-foreground">{ruleText}</span>
       </div>
     </label>
   );

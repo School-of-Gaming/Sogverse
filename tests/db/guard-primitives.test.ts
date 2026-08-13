@@ -6,8 +6,11 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
  * Behavioural cover for the §3.1 guard primitives (migration 00120).
  *
  * assert_role / assert_admin are granted to `authenticated` because
- * create_product and update_product are SECURITY INVOKER — their guard runs as
- * the caller. That grant is a new exposed surface, so it is tested directly
+ * create_product is SECURITY INVOKER — its guard runs as the caller. (Its
+ * cousin update_product ran the same way until 00171 made it SECURITY DEFINER
+ * so it could delete a switched-off product's waitlist; a definer's body checks
+ * EXECUTE as the definer, so it no longer needs the grant.) That grant is a
+ * still-live exposed surface, so it is tested directly
  * here rather than only through the eight RPCs that call it: the primitives
  * must refuse every role they don't name, pass the one they do, and — since
  * migration 00121 — refuse a caller who holds no role at all.

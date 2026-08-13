@@ -14,9 +14,11 @@ import {
 import { ROUTES } from "@/lib/constants";
 import {
   computeSinglePaymentAmount,
+  ensureStripeProductForProduct,
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
+import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { stripe } from "@/lib/stripe/client";
 import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { getOrigin } from "@/lib/url";
@@ -31,14 +33,18 @@ import { getOrigin } from "@/lib/url";
  *                        card — for the trust/safety moment. Each subscription
  *                        is its own Stripe sub (one per gamer x club), so there
  *                        is no inline add.
- *   free_confirmed     — free event; no Stripe involvement.
+ *   free_confirmed     — any product billed free (event, club, camp); no
+ *                        Stripe involvement. Keyed on billing_mode, never on
+ *                        product_type.
  *   external_confirmed — municipality club; invoiced off-platform, no Stripe.
  *   full               — seat gone; UI flips to the waitlist CTA.
  */
 export const POST = defineRoute({
   posture: "role-gated",
   roles: "customer",
-  forbiddenMessage: "Only customers can sign gamers up for products",
+  // "sign up for products", not "sign gamers up": the seat may be the caller's
+  // own on a for-parents product.
+  forbiddenMessage: "Only customers can sign up for products",
   // The body used to be read as a bag of optional strings and checked field by
   // field. The schema states the same rules once, and `purchaseShape` and
   // `currency` arrive as the supported enums rather than as strings the handler
@@ -62,32 +68,44 @@ export const POST = defineRoute({
     "create_participation's messages are the user-facing explanation of a refused signup, and the shop surface renders them as-is",
 
   handler: async ({ request, user, profile, body }) => {
-    const { productId, gamerId, purchaseShape } = body;
+    const { productId, participantId, purchaseShape } = body;
     const currency: SupportedCurrency = body.currency;
 
     const admin = createAdminClient();
 
+    // This one read is the single source for everything Stripe is told about
+    // the product: the Stripe Product's name, tax code and metadata, and the
+    // purchase metadata written onto the payment intent, the invoice and the
+    // subscription. Two reads could disagree; one cannot. It fails closed —
+    // a read error answers 404 rather than letting a defaulted product type
+    // pick the wrong tax code downstream.
     const { data: product, error: productErr } = await admin
       .from("products")
       .select(
-        "id, product_type, billing_mode, seat_count, timezone, product_translations(locale, name)",
+        "id, product_type, billing_mode, seat_count, timezone, spoken_language_code, start_date, end_date, product_translations(locale, name)",
       )
       .eq("id", productId)
+      // Embedded resources come back unordered, so a product without an English
+      // translation resolved its name from an arbitrary row. Alphabetical
+      // locale order is arbitrary too, but it is *stable*, which is all the
+      // fallback chain's last step needs. Ordering an embedded resource needs
+      // its table named — a bare `.order("locale")` would order `products` by a
+      // column it does not have.
+      .order("locale", { referencedTable: "product_translations" })
       .single();
     if (productErr) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Prefer the parent's locale for every customer-facing name we control on
-    // the Checkout page: the single-payment line item (inline price_data) and
-    // the subscription description both use this. The subscription line item
-    // itself is the one name we can't localize here — it's the cached Stripe
-    // Product's name, shared across all locales.
+    const locale = resolveLocale(profile.locale);
+
+    // Prefer the parent's locale for the one customer-facing name we still
+    // control on the Checkout page: the subscription description. Both line
+    // items now name the shared Stripe Product, whose name is resolved at the
+    // default locale and shared across every locale.
     const productName =
-      resolveTranslation(
-        product.product_translations,
-        resolveLocale(profile.locale),
-      )?.name ?? "School of Gaming product";
+      resolveTranslation(product.product_translations, locale)?.name ??
+      "School of Gaming product";
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid
     // shape family: free→'free', external_contract→'external', paid→
@@ -126,6 +144,11 @@ export const POST = defineRoute({
     const isSubscription = purchaseShape.startsWith("subscription_");
     const isSinglePayment = purchaseShape === "single_payment";
 
+    // The two type-keyed guards below are about *paid* shapes only, and the
+    // ordering above is what keeps them that way: a free club's shape resolves
+    // to `free`, which is neither of these, so both are unreachable on it. They
+    // are correct as written and must not be re-keyed to billing_mode — a paid
+    // club's seat requires a subscription, and only a club may be sold as one.
     if (isSinglePayment && product.product_type === "consumer_club") {
       return NextResponse.json(
         { error: "Consumer clubs use subscriptions, not single-payment" },
@@ -149,7 +172,7 @@ export const POST = defineRoute({
       "create_participation",
       {
         p_product_id: productId,
-        p_gamer_id: gamerId,
+        p_participant_id: participantId,
         p_customer_id: user.id,
         p_purchase_shape: purchaseShape,
         p_currency: currency,
@@ -223,14 +246,53 @@ export const POST = defineRoute({
 
       // The metadata IS the link between this session and the participation the
       // webhook will create. Nothing else carries it, so every field here is
-      // load-bearing rather than informational.
-      const metadata = {
+      // load-bearing rather than informational. The webhook and the
+      // confirmation page read `participantId` back by exactly this name.
+      const sessionMetadata = {
         customerId: user.id,
-        gamerId,
+        participantId,
         productId,
         purchaseShape,
         currency,
       };
+
+      // What finance reads. Stripe metadata does not propagate between objects
+      // — a session tells a charge, an invoice or a subscription nothing — so
+      // the same snapshot is attached to each object a report actually reads:
+      // the payment intent (a charge inherits its metadata), the invoice, and
+      // the subscription. It is a snapshot of what was true when the money
+      // moved, which is the copy an auditor should trust; the Stripe Product
+      // carries the same facts as the *current* catalogue entry.
+      //
+      // snake_case, matching the Stripe Product metadata convention. The
+      // session's own camelCase keys above are load-bearing — the webhook and
+      // the confirmation page read them — so the two sets stay separate rather
+      // than one being renamed into the other.
+      //
+      // `locale` (what the parent browses in) and `spoken_language_code` (what
+      // the product is delivered in) are different facts: a Finnish-speaking
+      // parent may buy an English-delivered camp.
+      const purchaseMetadata: Record<string, string> = {
+        product_id: productId,
+        // participant_id, not gamer_id: this finance snapshot was born inside
+        // the participant-rename window and has no history to preserve (unlike
+        // the payments ledger echo, which keeps gamerId deliberately), so on a
+        // self seat it names the payer's own id honestly. The finance report
+        // reads this key and a backfill corrects existing test- and live-mode
+        // objects — the two move together.
+        participant_id: participantId,
+        customer_id: user.id,
+        locale,
+        spoken_language_code: product.spoken_language_code,
+      };
+      // Delivery dates, for revenue recognition — a camp sold in April is
+      // delivered in August and Stripe cannot otherwise know. Bare `date`
+      // columns, already `YYYY-MM-DD`; they travel verbatim, never re-anchored
+      // to a viewer's zone. A null date omits its key entirely.
+      if (product.start_date) {
+        purchaseMetadata.delivery_start = product.start_date;
+      }
+      if (product.end_date) purchaseMetadata.delivery_end = product.end_date;
 
       // This no longer pins a reservation lifetime — nothing is held, and the
       // expiry event isn't even handled. It bounds a *stale tab*: the Session
@@ -264,7 +326,7 @@ export const POST = defineRoute({
         automatic_tax: { enabled: true },
         customer_update: { address: "auto" },
         expires_at: expiresAt,
-        metadata,
+        metadata: sessionMetadata,
         success_url: successUrl,
         cancel_url: cancelUrl,
         line_items: [],
@@ -279,17 +341,47 @@ export const POST = defineRoute({
         if (amount === null) {
           throw new ApiError(`Product is not sold in ${currency}`, 400);
         }
+        // Adds a Stripe product search to every one-off checkout, on the
+        // customer-blocking path. Acceptable at this volume, and far below
+        // Stripe's search rate limit.
+        const stripeProductId = await ensureStripeProductForProduct(product);
         sessionParams.mode = "payment";
         sessionParams.line_items = [
           {
             quantity: 1,
+            // The real Stripe Product, not an inline product name. It carries
+            // the tax code that decides the VAT rate — camps are reduced-rated
+            // and were being charged the account-wide standard rate — and it
+            // keeps the Stripe product list a usable index of what we sell.
+            // The price stays inline because the amount varies by currency and
+            // discount. Accepted cost: the line-item name on the Checkout page
+            // is the default-locale one, exactly as consumer clubs already are.
             price_data: {
               currency,
               unit_amount: amount,
-              product_data: { name: productName },
+              product: stripeProductId,
+              // Our prices are the full amount the customer pays, VAT inside.
+              // Unstated this resolves to the account default (inclusive
+              // today); stated, it survives that default changing.
+              tax_behavior: "inclusive",
             },
           },
         ];
+        sessionParams.payment_intent_data = { metadata: purchaseMetadata };
+        // A one-off session creates no invoice by default, which left an admin
+        // able to issue only a raw refund — and a Stripe Refund carries no tax
+        // and no discount fields at all, so refunded VAT was never reversed
+        // anywhere. An invoice is what makes a credit note possible, and a
+        // credit note is what reverses both.
+        //
+        // Stripe creates it asynchronously, so the session's invoice reference
+        // may still be null when `checkout.session.completed` arrives and the
+        // local payment row's invoice id stays null. Accepted: Stripe is the
+        // finance source of record here, not our tables.
+        sessionParams.invoice_creation = {
+          enabled: true,
+          invoice_data: { metadata: purchaseMetadata },
+        };
         // Offer to save the card for future purchases. Checked = saved with
         // `allow_redisplay: always`, so it's offered/prefilled on the customer's
         // next Checkout and manageable from the billing portal. Subscriptions
@@ -300,7 +392,7 @@ export const POST = defineRoute({
       } else {
         const priceRow = await getOrCreateSubscriptionPrice(
           admin,
-          productId,
+          product,
           currency,
         );
         if (!priceRow) {
@@ -310,15 +402,53 @@ export const POST = defineRoute({
         sessionParams.line_items = [
           { quantity: 1, price: priceRow.stripe_price_id },
         ];
-        // Describe the sub as "{Club} — {Child}". A family has one Stripe sub per
-        // gamer x club, all listed together in the hosted portal; without a
-        // per-sub description they'd be indistinguishable there (and two kids in
-        // the same club would show as two identical rows). This is the label the
-        // parent reads when deciding which one to cancel.
+        // Describe the sub as "{Club} — {Participant}". A family has one Stripe
+        // sub per participant x club, all listed together in the hosted portal;
+        // without a per-sub description they'd be indistinguishable there (and
+        // two kids in the same club would show as two identical rows). This is
+        // the label the parent reads when deciding which one to cancel — and
+        // since a parent can now hold a seat themselves, the participant may be
+        // the payer.
         sessionParams.subscription_data = {
-          metadata,
-          description: `${productName} — ${await pickGamerName(admin, gamerId)}`,
+          // The session's keys and the subscription's are two objects, not one
+          // shared reference: the session keeps exactly the camelCase set the
+          // webhook reads, and the subscription carries that set *plus* the
+          // finance snapshot, because nothing propagates from the session to it.
+          metadata: { ...sessionMetadata, ...purchaseMetadata },
+          description: `${productName} — ${await pickParticipantName(
+            admin,
+            participantId,
+            participantId === user.id,
+          )}`,
         };
+
+        // A club that has not started yet defers its first charge to its start
+        // date: the anchor is product-local midnight on `start_date`, clamped to
+        // what Stripe accepts, and prorations are off so the parent pays €0 at
+        // checkout rather than a part-month. The subscription is `active`
+        // immediately either way — the seat is held and sessions show — and no
+        // trial vocabulary appears anywhere on Stripe's page. A product with no
+        // start date, or one starting now or in the past, gets neither parameter
+        // and behaves exactly as it did before.
+        //
+        // **The anchor is stamped once, here, and never revisited.** An admin who
+        // later moves the product's start date does NOT move the first-charge
+        // date of subscriptions that already exist — that correction is manual in
+        // the Stripe dashboard for now (the sync is a recorded TODO.md
+        // follow-up). The admin start-date field carries a hint saying so; this
+        // comment is the other end of the same gap, at the site where the anchor
+        // is born.
+        const anchor = firstChargeAnchor(
+          product.start_date,
+          product.timezone,
+          new Date(),
+        );
+        if (anchor !== null) {
+          sessionParams.subscription_data.billing_cycle_anchor = Math.floor(
+            anchor.getTime() / 1000,
+          );
+          sessionParams.subscription_data.proration_behavior = "none";
+        }
       }
 
       const session = await stripe.checkout.sessions.create(sessionParams);
@@ -339,17 +469,30 @@ export const POST = defineRoute({
   },
 });
 
-// Resolve a short display name for the gamer, for the Stripe subscription
-// description (what the parent sees in the billing portal). Falls back to a
-// generic label so the description is never blank.
-async function pickGamerName(
+/**
+ * A short display name for whoever occupies the seat, for the Stripe
+ * subscription description (what the parent reads in the billing portal).
+ *
+ * The fallback is deliberately audience-aware. It lands in Stripe receipts and
+ * the hosted portal — outside `messages/`, so no locale sweep will ever reach
+ * it — and "Parents' Evening — your child" would be a plainly wrong label on a
+ * seat the payer holds themselves. A self seat therefore falls back to "you",
+ * which answers the same "who is this for" question the child names answer, in
+ * the same register as the child fallback beside it.
+ *
+ * `isSelfSeat` is passed in rather than re-derived here: the caller holds the
+ * session user, and the participant-equals-customer test is the same one the
+ * database's audience gate makes.
+ */
+async function pickParticipantName(
   admin: ReturnType<typeof createAdminClient>,
-  gamerId: string,
+  participantId: string,
+  isSelfSeat: boolean,
 ): Promise<string> {
   const { data } = await admin
     .from("profiles")
     .select("first_name")
-    .eq("id", gamerId)
+    .eq("id", participantId)
     .maybeSingle();
-  return data?.first_name || "your child";
+  return data?.first_name || (isSelfSeat ? "you" : "your child");
 }

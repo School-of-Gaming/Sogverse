@@ -138,28 +138,17 @@ interface EnrollmentCardCommonProps {
 }
 
 /**
- * The half of the card only a **parent's** dashboard may hand it.
+ * The half of the card only an **adult's** dashboard may hand it — the two
+ * parent-side arms share it, because both are the same person looking at the
+ * same page.
  *
- * Split out as its own union member rather than left optional on one flat
- * interface, so "the gamer body never receives parent-only props" is something
- * the compiler enforces instead of something a reviewer has to notice. Every
- * one of these is an adult's concern — money, a queue place worth money, and a
- * join that has to pass through an account switch — and a child's card must not
- * carry an action the child cannot or should not take.
+ * Split out of the gamer arm rather than left optional on one flat interface,
+ * so "the child's body never receives parent-only props" is something the
+ * compiler enforces instead of something a reviewer has to notice. Every one of
+ * these is an adult's concern — money, and a queue place worth money — and a
+ * child's card must not carry an action the child cannot or should not take.
  */
-interface EnrollmentCardParentProps {
-  audience: "customer";
-  /**
-   * The child this enrollment belongs to.
-   *
-   * **Never rendered on the card face** — the card deliberately carries no
-   * child's name, because it always sits under a heading that already does.
-   * It exists for the leave-waitlist dialog, which is an overlay above the
-   * whole page and therefore has no heading of its own to borrow: "Aino will
-   * lose their place in line" has to name her, or the parent of three children
-   * is being asked to confirm something irreversible about an unnamed one.
-   */
-  gamerFirstName: string;
+interface EnrollmentCardBillingProps {
   /**
    * Open Stripe's Customer Portal instead of the badge doing it itself. The
    * live parent dashboard passes nothing and gets the real portal session; a
@@ -167,20 +156,6 @@ interface EnrollmentCardParentProps {
    * POSTing.
    */
   onOpenPortal?: () => void;
-  /**
-   * Intercept the Join instead of letting it navigate.
-   *
-   * The parent is signed in as themselves and the voice room is gated on the
-   * *gamer's* enrollment, so a direct navigation would always be refused. The
-   * shell opens the switch-profile dialog, which POSTs the account switch and
-   * then does a full-page navigation to the room — the house auth rule, since
-   * cookies a server route changed never reach the browser client's singleton.
-   *
-   * Optional so the prop can exist before the shell that fills it: with nothing
-   * passed the button falls back to being a plain link, which is exactly what
-   * the gamer's own card does.
-   */
-  onJoinClick?: () => void;
   /**
    * Give up this place in line. Fires only after the parent confirms in the
    * dialog the card opens; the card owns the dialog, the shell owns the
@@ -199,28 +174,126 @@ interface EnrollmentCardParentProps {
 }
 
 /**
- * The child's own card: the enrollment, and nothing else. Everything the parent
- * variant adds is deliberately unavailable here rather than merely unused.
+ * A **child's** enrollment, on the parent's dashboard.
+ *
+ * The one thing this arm adds over the self seat below is the account switch: a
+ * parent joining their child's room has to become that child first, and the
+ * confirm dialog behind a waitlist place has to name which child is losing the
+ * place.
+ */
+interface EnrollmentCardParentProps extends EnrollmentCardBillingProps {
+  audience: "customer";
+  /**
+   * The child this enrollment belongs to.
+   *
+   * **Never rendered on the card face** — the card deliberately carries no
+   * child's name, because it always sits under a heading that already does.
+   * It exists for the leave-waitlist dialog, which is an overlay above the
+   * whole page and therefore has no heading of its own to borrow: "Aino will
+   * lose their place in line" has to name her, or the parent of three children
+   * is being asked to confirm something irreversible about an unnamed one.
+   */
+  gamerFirstName: string;
+  /**
+   * Intercept the Join instead of letting it navigate.
+   *
+   * The parent is signed in as themselves and the voice room is gated on the
+   * *gamer's* enrollment, so a direct navigation would always be refused. The
+   * shell opens the switch-profile dialog, which POSTs the account switch and
+   * then does a full-page navigation to the room — the house auth rule, since
+   * cookies a server route changed never reach the browser client's singleton.
+   *
+   * Optional so the prop can exist before the shell that fills it: with nothing
+   * passed the button falls back to being a plain link, which is exactly what
+   * the gamer's own card does.
+   */
+  onJoinClick?: () => void;
+}
+
+/**
+ * The **parent's own seat**, on the parent's dashboard.
+ *
+ * A product may be for parents, and then the person in the seat is the account
+ * holder. Everything an adult's card carries is still here — the payment
+ * corner badge, the won't-renew line, the leave-waitlist link — because it is
+ * still their money.
+ *
+ * **The Join is direct, and it is direct by omission.** There is no
+ * `onJoinClick` on this arm at all: the parent is already the person the room
+ * is gated on, so there is nobody to switch into, and the button falls back to
+ * the plain link it is on a child's own dashboard. Making that a missing
+ * property rather than an unpassed one is what stops a future shell wiring the
+ * switch dialog to a seat that has no second account behind it.
+ *
+ * There is no first name either. The one place the parent arm needs a name is
+ * the leave-waitlist dialog, which has to say *whose* place is being given up;
+ * here it is the reader's own, so the copy says so in the second person and has
+ * nobody to name.
+ */
+interface EnrollmentCardSelfProps extends EnrollmentCardBillingProps {
+  audience: "self";
+}
+
+/**
+ * The child's own card: the enrollment, and nothing else. Everything the two
+ * adult variants add is deliberately unavailable here rather than merely
+ * unused.
  */
 interface EnrollmentCardGamerProps {
   audience: "gamer";
 }
 
 /**
- * Whose dashboard this renders on. Billing never reaches the child's card —
- * the payment corner badge and the won't-renew line are parent-only — and the
- * waitlist footer speaks *to* the child on their own page, *about* them on the
- * parent's.
+ * Whose dashboard this renders on, and whose seat it is. Billing never reaches
+ * the child's card — the payment corner badge and the won't-renew line are
+ * adult-only — and the waitlist footer speaks *to* the reader on their own page
+ * and on the parent's own seat, *about* the child on a child's card.
  */
 export type EnrollmentCardProps = EnrollmentCardCommonProps &
-  (EnrollmentCardParentProps | EnrollmentCardGamerProps);
+  (
+    | EnrollmentCardParentProps
+    | EnrollmentCardSelfProps
+    | EnrollmentCardGamerProps
+  );
+
+/**
+ * The "a Gedu is being matched" sentence, per audience — third person about a
+ * child, second person to the child themselves, second person to a parent about
+ * their own seat.
+ *
+ * A lookup rather than a nested ternary because there are three of them now and
+ * a chain of `? :` reads as a hierarchy the audiences do not have.
+ */
+const AWAITING_KEY = {
+  customer: "awaitingCustomer",
+  self: "awaitingSelf",
+  gamer: "awaitingGamer",
+} as const;
+
+/**
+ * The place-in-line sentence, per audience. **The parent's own seat reuses the
+ * parent's string deliberately**: it already reads "we'll email you the moment
+ * a seat opens", which is true of a seat they hold themselves and names nobody.
+ * Only the child's copy differs, because there the mail goes to somebody else.
+ */
+const WAITLIST_FOOTER_KEY = {
+  customer: "footerReassuranceCustomer",
+  self: "footerReassuranceCustomer",
+  gamer: "footerReassuranceGamer",
+} as const;
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
   const { enrollment } = props;
-  // Narrowed once, so every parent-only branch below reads as one question
-  // ("is there a parent behind this card?") rather than repeating the audience
-  // check beside each of the four props it guards.
-  const parent = props.audience === "customer" ? props : null;
+  // Narrowed once, so every adult-only branch below reads as one question ("is
+  // there somebody paying behind this card?") rather than repeating the
+  // audience check beside each of the props it guards. Both parent arms answer
+  // it; only the child's does not.
+  const billing: EnrollmentCardBillingProps | null =
+    props.audience === "gamer" ? null : props;
+  // The narrower half: a *child's* seat on a parent's dashboard, which is the
+  // only shape with an account switch behind its Join and a name to put in the
+  // leave dialog.
+  const childSeat = props.audience === "customer" ? props : null;
   const audience = props.audience;
   const p = useTranslations("productType");
   const c = useTranslations("activityCard");
@@ -279,9 +352,9 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   // running enrollment with nothing on its schedule, since a badge that turns
   // on when a session starts needs a session to start.
   const canGoLive = running && hasNext;
-  const leaving = parent?.leavingWaitlist ?? false;
-  /** The one interactive element a waitlisted card has, and parents only. */
-  const onLeaveWaitlist = waitlisted ? parent?.onLeaveWaitlist : undefined;
+  const leaving = billing?.leavingWaitlist ?? false;
+  /** The one interactive element a waitlisted card has, and adults only. */
+  const onLeaveWaitlist = waitlisted ? billing?.onLeaveWaitlist : undefined;
   // Whether the footer has anything to say, asked before it is drawn. The five
   // branches below are exclusive by construction, and on the one card where
   // none of them lands — a running enrollment whose product has no slots yet —
@@ -428,7 +501,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               page shows. So the third branch states when access ends, which the
               subscription row knows outright. Strictly less information, all of
               it true. */}
-          {parent !== null && cancellation !== null && running && (
+          {billing !== null && cancellation !== null && running && (
             <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
               <RefreshCwOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span className="min-w-0">
@@ -499,12 +572,9 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
                     <Hourglass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                     <span className="min-w-0 tabular-nums">
-                      {w(
-                        audience === "gamer"
-                          ? "footerReassuranceGamer"
-                          : "footerReassuranceCustomer",
-                        { position: waitlistPosition },
-                      )}
+                      {w(WAITLIST_FOOTER_KEY[audience], {
+                        position: waitlistPosition,
+                      })}
                     </span>
                   </span>
                 )}
@@ -522,13 +592,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                       className="mt-0.5 h-4 w-4 shrink-0 text-info"
                       aria-hidden
                     />
-                    <span className="min-w-0">
-                      {f(
-                        audience === "gamer"
-                          ? "awaitingGamer"
-                          : "awaitingCustomer",
-                      )}
-                    </span>
+                    <span className="min-w-0">{f(AWAITING_KEY[audience])}</span>
                   </span>
                 )}
                 {running && hasVoiceRoom && hasNext && (
@@ -538,11 +602,13 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     <JoinVoiceButton
                       voiceIsOpen={voiceIsOpen}
                       voiceHref={voiceHref}
-                      // Present only on a parent's card, where joining means
-                      // switching account first; passing nothing (a child's own
-                      // card) leaves the button the plain link it has always
-                      // been.
-                      onJoinClick={parent?.onJoinClick}
+                      // Present only on a *child's* card seen by their parent,
+                      // where joining means switching account first. Passing
+                      // nothing leaves the button the plain link it has always
+                      // been — which is the child's own card, and equally the
+                      // parent's own seat, where the room is already gated on
+                      // the person clicking.
+                      onJoinClick={childSeat?.onJoinClick}
                       opensDate={formatDate(nextSessionStart, locale, {
                         weekday: "short",
                         month: "short",
@@ -570,10 +636,12 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   reading as an offer rather than a warning. No `z-10` needed,
                   because the card it appears on renders no stretched anchor for
                   it to sit above. */}
-              {onLeaveWaitlist !== undefined && parent !== null && (
+              {onLeaveWaitlist !== undefined && billing !== null && (
                 <LeaveWaitlistLink
                   productName={productName}
-                  gamerFirstName={parent.gamerFirstName}
+                  // `null` is the parent's own seat: nobody to name, so the
+                  // dialog says "you" instead.
+                  gamerFirstName={childSeat?.gamerFirstName ?? null}
                   leaving={leaving}
                   onConfirm={onLeaveWaitlist}
                 />
@@ -605,12 +673,15 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           the card body. The corner carries exactly one thing: an alarm the
           parent can act on. Information — the waitlist position, the
           won't-renew line — lives in the card body instead. */}
-      {parent !== null && paymentProblem && (
+      {billing !== null && paymentProblem && (
         <PaymentProblemBadge
           participationId={participationId}
+          // The badge's own audience is about who may open a portal, which is
+          // the account holder in both adult cases — a parent's own seat is
+          // billed to exactly the same Stripe customer as their child's.
           audience="customer"
           showAlert
-          onOpenPortal={parent.onOpenPortal}
+          onOpenPortal={billing.onOpenPortal}
         />
       )}
     </div>
@@ -629,8 +700,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
  * the same destructive callout the admin group panel uses.
  *
  * Private to the card because the card is the only thing that can draw it: the
- * copy names both the product and the child, and the placement is defined
- * relative to a footer sentence that exists nowhere else.
+ * copy names the product and, on a child's seat, the child; and the placement is
+ * defined relative to a footer sentence that exists nowhere else.
  */
 function LeaveWaitlistLink({
   productName,
@@ -639,7 +710,16 @@ function LeaveWaitlistLink({
   onConfirm,
 }: {
   productName: string;
-  gamerFirstName: string;
+  /**
+   * Whose place it is, or `null` when it is the reader's own.
+   *
+   * The dialog is an overlay above the whole page and has no heading of its own
+   * to borrow, so "Aino will lose their place in line" has to name her, or the
+   * parent of three children is being asked to confirm something irreversible
+   * about an unnamed one. On their own seat there is nobody to name and naming
+   * them anyway would have the page addressing the reader in the third person.
+   */
+  gamerFirstName: string | null;
   /** The leave is in flight — locks the link; the card carries the dimming. */
   leaving: boolean;
   onConfirm: () => void;
@@ -662,10 +742,14 @@ function LeaveWaitlistLink({
         open={open}
         onOpenChange={setOpen}
         title={t("confirmTitle")}
-        description={t("confirmDescription", {
-          name: gamerFirstName,
-          product: productName,
-        })}
+        description={
+          gamerFirstName === null
+            ? t("confirmDescriptionSelf", { product: productName })
+            : t("confirmDescription", {
+                name: gamerFirstName,
+                product: productName,
+              })
+        }
         confirmLabel={t("confirmCta")}
         onConfirm={onConfirm}
       >

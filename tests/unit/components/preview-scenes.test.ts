@@ -18,6 +18,10 @@ import {
   FAMILY_PRODUCT_SCENARIOS,
   buildFamilyProductPageFixture,
 } from "@/components/family/product-page/mock-fixtures";
+import {
+  PARENT_DASHBOARD_SCENARIOS,
+  buildParentDashboardFixture,
+} from "@/components/parent/mock-dashboard-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import {
   attendanceTally,
@@ -30,7 +34,23 @@ import { runEndedOn, runLiveness } from "@/lib/product-run";
 import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
+  SHOP_SCENE_AUDIENCES,
+  SHOP_SCENE_DEFAULT,
+  SHOP_SCENE_TAGGED_CATALOG,
+  buildBrowseFixture,
+  buildConfirmationFixture,
+  buildScenarioFixture,
+  scenarioFilledSeats,
+  type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
+import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
+import {
+  LONG_DESCRIPTION_BLOCKS,
+  LONG_DESCRIPTION_SCENARIOS,
+  buildLongDescriptionSceneFixture,
+  longDescriptionShowcaseMarkdown,
+} from "@/components/public/products/mock-long-description-fixtures";
+import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
@@ -126,6 +146,12 @@ describe("registry scenarios match their fixtures", () => {
     expect(slugsFor("gedu-product")).toEqual([...GEDU_PRODUCT_SCENARIOS]);
   });
 
+  it("parent dashboard", () => {
+    expect(slugsFor("parent-dashboard")).toEqual([
+      ...PARENT_DASHBOARD_SCENARIOS,
+    ]);
+  });
+
   it("family product page, both audiences", () => {
     // The parent's scene enumerates every scenario; the gamer's deliberately
     // carries one, because its variant is about attendance and voice rather
@@ -146,6 +172,463 @@ describe("registry scenarios match their fixtures", () => {
       ...CONFIRMATION_NOTICE_SCENARIOS.map((n) => n.slug),
     ]);
   });
+
+  it("shop browse", () => {
+    expect(slugsFor("shop")).toEqual([...SHOP_BROWSE_SCENARIOS]);
+  });
+
+  it("product long description", () => {
+    expect(slugsFor("product-long-description")).toEqual([
+      ...LONG_DESCRIPTION_SCENARIOS,
+    ]);
+  });
+});
+
+/**
+ * **The showcase page has to carry a real product's worth of copy, and has to
+ * show what the format is for.**
+ *
+ * The scene exists because most products have no long description at all, so
+ * the ordinary product scenes cannot answer how a full one sits on the page. It
+ * once carried four scenarios comparing heading levels; that question is
+ * settled, the comparison is gone, and what is left is one page whose whole
+ * value is the copy on it. A fixture edit that quietly shortened the blurb, or
+ * dropped the list and links, would take the point of the page away without
+ * failing anything else — so it is pinned here.
+ */
+describe("the long-description scene shows a full blurb", () => {
+  const fixture = buildLongDescriptionSceneFixture();
+  const markdown = longDescriptionShowcaseMarkdown();
+
+  it("puts the same blurb on every translation of one product", () => {
+    for (const translation of fixture.product.product_translations) {
+      expect(translation.long_description).toBe(markdown);
+    }
+  });
+
+  /**
+   * A page of marketing copy judged against two short paragraphs is judged
+   * against nothing: the sections need enough prose between them to read as
+   * sections.
+   */
+  it("carries a real product's worth of copy", () => {
+    const headings = LONG_DESCRIPTION_BLOCKS.filter(
+      (b) => b.type === "heading",
+    );
+    expect(headings.length).toBeGreaterThanOrEqual(4);
+    const prose = LONG_DESCRIPTION_BLOCKS.filter((b) => b.type === "paragraph")
+      .map((b) => b.text)
+      .join("");
+    expect(prose.length).toBeGreaterThan(2000);
+  });
+
+  /**
+   * The four converted sections are copy that already existed and say nothing
+   * about what changed. Without the closing section using a real list, emphasis
+   * and links, the page looks exactly like the one it replaced.
+   */
+  it("shows off the list and the links the format allows", () => {
+    expect(markdown).toMatch(/^- \S/m);
+    expect(markdown).toMatch(/\*\*[^*]+\*\*/);
+    const links = markdown.match(/\]\(([^)]+)\)/g) ?? [];
+    expect(links.length).toBeGreaterThan(1);
+    expect(markdown).toContain("](https://");
+  });
+
+  /** Every heading converts at the level the editor's Title button writes. */
+  it("converts every heading to a top-level hash", () => {
+    const levels = [...markdown.matchAll(/^(#+) \S/gm)].map((m) => m[1].length);
+    expect(levels.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(levels)).toEqual(new Set([1]));
+  });
+
+  /**
+   * The hand-typed dash list inside a paragraph block is the case the
+   * conversion is most likely to "improve": it is what an admin did when the
+   * format had no list, it rendered as plain lines, and it must still render as
+   * plain lines. Losing it from the fixture would take the regression off the
+   * page entirely.
+   *
+   * **Each of those lines stands as its own paragraph, and the scene is meant
+   * to show that.** An escaped line reached over a hard break loses its
+   * backslash the first time the field is saved in the rich-text editor, so the
+   * conversion gives it a paragraph start instead — a visible gap rather than a
+   * tight break. Pinning the shape rather than just the escape is what keeps
+   * somebody from "fixing" the spacing by putting the hard break back.
+   */
+  it("keeps a hand-typed list literal, each line its own paragraph", () => {
+    const typedList = LONG_DESCRIPTION_BLOCKS.filter(
+      (b) => b.type === "paragraph" && /\n- /.test(b.text),
+    );
+    expect(typedList.length).toBeGreaterThan(0);
+    expect(markdown).toContain("\n\n\\- a computer");
+    expect(markdown).not.toContain("\\\n\\- ");
+  });
+});
+
+/**
+ * The audience scenarios exist because **no for-parents product exists yet**:
+ * the admin checkbox that creates one lands last, so these fixtures are the
+ * only way anybody can look at the surfaces this step builds. Losing one would
+ * take a whole case off the previews without failing anything else, which is
+ * exactly the silence this file exists to break.
+ */
+describe("the audience scenarios cover all three cases", () => {
+  const fixtures = PREVIEW_SCENARIOS.map(({ slug }) => ({
+    slug,
+    ...buildScenarioFixture(slug),
+  }));
+
+  function pickerRows(slug: PreviewScenario) {
+    const { authState } = buildScenarioFixture(slug);
+    if (authState.kind !== "ready") throw new Error(`${slug} is not signed in`);
+    return authState;
+  }
+
+  it("carries a parents-only product, a mixed one, and everything else gamers-only", () => {
+    const parentsOnly = fixtures.filter(
+      (f) => f.product.for_parents && !f.product.for_gamers,
+    );
+    const mixed = fixtures.filter(
+      (f) => f.product.for_parents && f.product.for_gamers,
+    );
+    expect(parentsOnly.length).toBeGreaterThan(0);
+    expect(mixed.length).toBeGreaterThan(0);
+    // The regression case is the overwhelming majority and must stay so — the
+    // audience scenarios are additions, not a re-theming of the set.
+    expect(
+      fixtures.filter((f) => !f.product.for_parents).length,
+    ).toBeGreaterThan(parentsOnly.length + mixed.length);
+  });
+
+  it("gives every product at least one audience, as the CHECK requires", () => {
+    for (const { slug, product } of fixtures) {
+      expect(product.for_gamers || product.for_parents, slug).toBe(true);
+    }
+  });
+
+  it("ties the age range to the gamer audience, exactly as the schema does", () => {
+    // Null iff no gamer audience. This is also what drops a parents-only
+    // product out of every age band and takes the age line off its card — the
+    // audience label carries the whole meaning instead, and no "18+" appears
+    // anywhere.
+    for (const { slug, product } of fixtures) {
+      const hasRange = product.min_age !== null && product.max_age !== null;
+      expect(hasRange, slug).toBe(product.for_gamers);
+      expect(product.min_age === null, slug).toBe(product.max_age === null);
+    }
+  });
+
+  it("preselects nobody but the reader on a parents-only product", () => {
+    const { participants } = pickerRows("event-parents-only");
+    expect(participants).toHaveLength(1);
+    expect(participants[0].isSelf).toBe(true);
+    // Ages belong to the gamer audience and never to adults.
+    expect(participants[0].age).toBeNull();
+  });
+
+  it("puts the children first and the reader last on a mixed product", () => {
+    const { participants, gamerCount } = pickerRows("event-both-audiences");
+    expect(participants.length).toBeGreaterThan(1);
+    expect(participants.filter((p) => p.isSelf)).toHaveLength(1);
+    expect(participants[participants.length - 1].isSelf).toBe(true);
+    // The cap counts children, never picker rows — one fewer than the array.
+    expect(gamerCount).toBe(participants.length - 1);
+    // And one child is already on it, so the child lockout and a selectable
+    // parent row are visible in the same picker.
+    expect(participants.some((p) => !p.isSelf && p.signupState)).toBe(true);
+  });
+
+  it("shows the lockout on a seat the reader already holds", () => {
+    const { participants } = pickerRows("consumer-club-parents-only");
+    expect(participants).toHaveLength(1);
+    expect(participants[0].isSelf).toBe(true);
+    expect(participants[0].signupState).toBe("active");
+  });
+
+  it("keeps the reader out of every gamers-only picker", () => {
+    for (const { slug, product, authState } of fixtures) {
+      if (product.for_parents || authState.kind !== "ready") continue;
+      expect(authState.participants.some((p) => p.isSelf), slug).toBe(false);
+    }
+  });
+
+  it("uses a real UUID for the reader, whose row carries an identicon", () => {
+    for (const { slug, authState } of fixtures) {
+      if (authState.kind !== "ready") continue;
+      for (const participant of authState.participants) {
+        expect(participant.id, `${slug}/${participant.name}`).toMatch(UUID_V4);
+      }
+    }
+  });
+
+  it("words the confirmation in the second person only on a self seat", () => {
+    // The self-worded summary is otherwise unreachable — the confirmation scene
+    // reuses these scenarios, so a parents-only one is the only page that
+    // renders it.
+    const self = PREVIEW_SCENARIOS.map(({ slug }) =>
+      buildConfirmationFixture(slug),
+    ).filter((c) => c.isSelfSeat);
+    expect(self.length).toBeGreaterThan(0);
+    for (const confirmation of self) {
+      expect(confirmation.product.for_parents).toBe(true);
+      expect(confirmation.product.for_gamers).toBe(false);
+      expect(confirmation.participantName.trim()).not.toBe("");
+    }
+  });
+});
+
+/**
+ * The shop scene is a comparison, and a comparison needs the things being
+ * compared on the same page. Its audience scenario is the only grid where the
+ * badge's presence and its absence sit side by side, so a fixture edit that
+ * left it single-audience would take the whole point of the scene away without
+ * failing a thing.
+ */
+describe("the shop browse scene", () => {
+  // Any fixed instant works: the anchor only re-bases the fixture calendar,
+  // and these tests assert audience/type/name, none of which depend on it.
+  const anchor = new Date("2026-08-11T12:00:00Z");
+  const audienceOf = (product: { for_gamers: boolean; for_parents: boolean }) =>
+    !product.for_parents ? "gamers" : product.for_gamers ? "both" : "parents";
+
+  /**
+   * The showcase grid's rows, built the way the scene builds them — through its
+   * own copy overrides. Sweeping the *rendered* rows rather than the slug list
+   * is what makes those overrides covered: a name override colliding with
+   * another card's, or a description that swallowed a card's identity, is
+   * invisible to a slug-level check. It is also how the tag and the picture are
+   * read, since both are row fields now rather than scene-side maps.
+   */
+  const taggedCatalogRows = SHOP_SCENE_TAGGED_CATALOG.map((entry) => ({
+    slug: entry.slug,
+    product: buildBrowseFixture(entry.slug, anchor, {
+      name: entry.nameOverride,
+      description: entry.descriptionOverride,
+    }),
+  }));
+
+  /** Every grid the scene can render. */
+  const GRIDS = [
+    {
+      name: "default",
+      rows: SHOP_SCENE_DEFAULT.map((slug) => ({
+        slug,
+        product: buildBrowseFixture(slug, anchor),
+      })),
+    },
+    {
+      name: "audiences",
+      rows: SHOP_SCENE_AUDIENCES.map((slug) => ({
+        slug,
+        product: buildBrowseFixture(slug, anchor),
+      })),
+    },
+    { name: "tagged-catalog", rows: taggedCatalogRows },
+  ];
+
+  it("puts all three audiences on the audience grid", () => {
+    const audiences = new Set(
+      SHOP_SCENE_AUDIENCES.map((slug) =>
+        audienceOf(buildBrowseFixture(slug, anchor)),
+      ),
+    );
+    expect(audiences).toEqual(new Set(["gamers", "parents", "both"]));
+  });
+
+  it("keeps the default grid entirely gamers-only, so it stays the regression case", () => {
+    for (const slug of SHOP_SCENE_DEFAULT) {
+      expect(audienceOf(buildBrowseFixture(slug, anchor)), slug).toBe("gamers");
+    }
+  });
+
+  it("surfaces no municipality club on any grid", () => {
+    // The storefront discovers those location-first from /schools, so a shop
+    // scene carrying one would show a card the real page cannot produce.
+    for (const grid of GRIDS) {
+      for (const { slug, product } of grid.rows) {
+        expect(product.product_type, `${grid.name}/${slug}`).not.toBe(
+          "municipality_club",
+        );
+      }
+    }
+  });
+
+  it("gives every card on a grid a distinct name", () => {
+    // The per-type copy names every consumer club the same thing, which is fine
+    // on a detail page and unreadable on a grid of them. The two comparison
+    // grids suffix each name with its fixture's label for exactly this reason;
+    // the showcase grid instead overrides the name outright with something a
+    // real catalogue would carry — same obligation, different mechanism, and
+    // the override is the one that can collide by hand.
+    for (const grid of GRIDS) {
+      const names = grid.rows.map(
+        ({ product }) => product.product_translations[0].name,
+      );
+      expect(new Set(names).size, grid.name).toBe(names.length);
+      for (const name of names) expect(name.trim(), grid.name).not.toBe("");
+    }
+  });
+
+  it("re-bases the fixture calendar onto the anchor, so no card reads as ended", () => {
+    // The browse card derives its state from the row's dates against the live
+    // clock; the raw fixtures are anchored to a static January reference, so
+    // an un-rebased grid renders every card as months-over ("wrapped") — the
+    // bug this pins. A fixture authored as ended would legitimately fail this
+    // sweep, and should: no shop list carries one, which is also why the card's
+    // ended treatment cannot be looked at on any shop grid.
+    for (const grid of GRIDS) {
+      for (const { slug, product } of grid.rows) {
+        if (product.end_date === null) continue;
+        expect(
+          new Date(`${product.end_date}T23:59:59Z`).getTime(),
+          `${grid.name}/${slug}`,
+        ).toBeGreaterThan(anchor.getTime());
+      }
+    }
+  });
+
+  /**
+   * The showcase grid moved each card's identity out of its name and into its
+   * description, which is what lets the titles be realistic. That only works if
+   * the descriptions actually differ — ten cards whose names are plausible and
+   * whose descriptions are interchangeable is worse than the suffixes it
+   * replaced, and nothing else here would notice.
+   */
+  it("gives every showcase card its own description", () => {
+    const descriptions = SHOP_SCENE_TAGGED_CATALOG.map(
+      (e) => e.descriptionOverride,
+    );
+    expect(new Set(descriptions).size).toBe(descriptions.length);
+    for (const description of descriptions) {
+      expect(description.trim()).not.toBe("");
+    }
+  });
+
+  /**
+   * Exactly one card with no picture, and it carries a tag: the wordmark
+   * fallback has to be judged in the grid rather than alone, and a chip over
+   * that muted ground is the combination most likely to read badly. Two
+   * un-imaged cards would be a grid making a different point; none would take
+   * the banner off the previews entirely.
+   */
+  it("puts one un-imaged card on the showcase grid, and tags it", () => {
+    const unimaged = taggedCatalogRows.filter(
+      ({ product }) => product.image_path === null,
+    );
+    expect(unimaged).toHaveLength(1);
+    expect(unimaged[0].product.tag).not.toBeNull();
+  });
+
+  /**
+   * **The untagged case is a review case too**, and it is the fragile one: it
+   * is the *absence* of a chip, so nothing else fails if the grid quietly
+   * becomes all-tagged. Untagged is what most of the catalogue looks like, and
+   * the corner it leaves empty — no hole, no reserved slot — is exactly what
+   * the two-chips-in-two-corners arrangement claims.
+   *
+   * This replaces a draft-period invariant that pinned tags and demo art to
+   * this grid alone. Tags and pictures are row fields now, so every grid built
+   * from these scenarios inherits them; that is the honest storefront, and what
+   * still has to hold is only that the showcase keeps showing both states.
+   */
+  it("keeps the untagged case on the showcase grid", () => {
+    const untagged = taggedCatalogRows.filter(
+      ({ product }) => product.tag === null,
+    );
+    expect(untagged.length).toBeGreaterThan(0);
+  });
+
+  /**
+   * Every tag has to be on the grid, or a whole chip — icon, fill and the
+   * detail page's explanation of it — has no preview at all. The three are the
+   * vocabulary; a grid carrying two of them reviews two thirds of the design.
+   */
+  it("puts every tag on the showcase grid", () => {
+    const tags = new Set(
+      taggedCatalogRows
+        .map(({ product }) => product.tag)
+        .filter((tag) => tag !== null),
+    );
+    // Against the generated value list, not a literal — a fourth enum value
+    // must fail this test until a scenario carries it, which is the moment
+    // the invariant above matters most.
+    expect(tags).toEqual(new Set(PRODUCT_TAG_VALUES));
+  });
+
+  /**
+   * **A card and the page it opens are the same product**, and after the fold
+   * that is structural rather than asserted: the grid card and the detail scene
+   * are built from one row, so neither can carry a tag or a picture the other
+   * does not. What this pins instead is the fold itself — that the demo art
+   * still arrives as an ordinary `image_path` a card resolves like any other,
+   * rather than creeping back into a scene-side override.
+   */
+  it("carries its demo art as an ordinary row path", () => {
+    const imaged = taggedCatalogRows.filter(
+      ({ product }) => product.image_path !== null,
+    );
+    expect(imaged.length).toBeGreaterThan(0);
+    for (const { slug, product } of imaged) {
+      expect(product.image_path, slug).toMatch(/^\/preview-art\/.+\.svg$/);
+    }
+  });
+});
+
+/**
+ * The signup panel draws its seat bar in every state a product can be signed up
+ * on — pre-open included — so that the bar's box is settled before the CTA can
+ * ever go live. These scenarios are the only place that surface is looked at,
+ * and a fixture whose state disagreed with its own row would draw a bar for a
+ * capacity the page beside it does not have.
+ */
+describe("product scenarios tell one capacity story", () => {
+  it("gives every signup-able state the cap its own product row carries", () => {
+    for (const { slug } of PREVIEW_SCENARIOS) {
+      const { product, state } = buildScenarioFixture(slug);
+      if (
+        state.kind !== "closed_pre" &&
+        state.kind !== "pending_thr" &&
+        state.kind !== "open"
+      ) {
+        continue;
+      }
+      expect(state.seatCount, slug).toBe(product.seat_count);
+      expect(state.seatsLeft, slug).toBe(
+        product.seat_count === null
+          ? null
+          : product.seat_count - scenarioFilledSeats(slug),
+      );
+    }
+  });
+
+  it("keeps a capped countdown with every seat free, and one with seats already gone", () => {
+    // Both pre-open bars have to be reviewable. The full track is the ordinary
+    // drop; the short one is what an admin's comp enrolments do to it, and is
+    // the reason the bar shows real numbers pre-open instead of a placeholder.
+    const preOpen = PREVIEW_SCENARIOS.map(({ slug }) => ({
+      slug,
+      ...buildScenarioFixture(slug),
+    })).filter((s) => s.state.kind === "closed_pre");
+
+    expect(preOpen.length).toBeGreaterThan(0);
+    const capped = preOpen.filter((s) => s.product.seat_count !== null);
+    expect(capped.length).toBeGreaterThan(0);
+    expect(
+      capped.some((s) => scenarioFilledSeats(s.slug) === 0),
+    ).toBe(true);
+    expect(
+      capped.some((s) => scenarioFilledSeats(s.slug) > 0),
+    ).toBe(true);
+  });
+
+  it("caps the threshold-pending scenario, the only place that bar is visible", () => {
+    const threshold = PREVIEW_SCENARIOS.map(({ slug }) =>
+      buildScenarioFixture(slug),
+    ).filter((f) => f.state.kind === "pending_thr");
+    expect(threshold.length).toBeGreaterThan(0);
+    expect(threshold.some((f) => f.product.seat_count !== null)).toBe(true);
+  });
 });
 
 /**
@@ -157,6 +640,74 @@ describe("registry scenarios match their fixtures", () => {
  */
 const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/**
+ * The parent dashboard's own scenario set, and the two things about it that no
+ * other test would notice going wrong.
+ *
+ * The **pill's named limit** is arithmetic the body runs on first paint, and it
+ * counts the parent's chip alongside the children's — one cap over both kinds,
+ * not two. `busy-family` is the scenario that sits exactly on it, so a fixture
+ * edit that added a third child there would silently take the widest-named bar
+ * off the previews and replace it with a collapsed one that `seven-gamers`
+ * already shows.
+ *
+ * The **parent's own section** is conditional, so a fixture that quietly
+ * stopped producing one anywhere would leave the whole variant unreviewable
+ * without failing a thing.
+ */
+describe("the parent dashboard scenarios", () => {
+  const now = new Date("2026-02-11T20:00:00Z");
+
+  function fixture(scenario: (typeof PARENT_DASHBOARD_SCENARIOS)[number]) {
+    return buildParentDashboardFixture(now, scenario, "en", "Europe/Helsinki");
+  }
+
+  /** Mirrors `MAX_NAMED_PILL_ENTRIES` in the page body. */
+  const MAX_NAMED_PILL_ENTRIES = 3;
+
+  it("puts busy-family exactly on the pill's named limit", () => {
+    const { gamers, self } = fixture("busy-family");
+    expect(self).not.toBeNull();
+    expect(gamers.length + 1).toBe(MAX_NAMED_PILL_ENTRIES);
+  });
+
+  it("collapses seven-gamers while keeping the parent's chip named", () => {
+    const { gamers, self } = fixture("seven-gamers");
+    expect(self).not.toBeNull();
+    expect(gamers.length + 1).toBeGreaterThan(MAX_NAMED_PILL_ENTRIES);
+  });
+
+  it("gives the childless parent a section and no children at all", () => {
+    const { gamers, self } = fixture("parent-only");
+    expect(gamers).toEqual([]);
+    expect(self?.enrollments.length).toBeGreaterThan(0);
+  });
+
+  it("leaves the parent seatless everywhere the variant is not the point", () => {
+    for (const scenario of ["typical", "new-family", "no-enrollments"] as const) {
+      expect(fixture(scenario).self, scenario).toBeNull();
+    }
+  });
+
+  /**
+   * The two card states a self seat has that a child's does not — a Join with
+   * no account switch behind it, and a leave dialog that names nobody — are
+   * only visible if the parent's section actually holds one of each.
+   */
+  it("gives the parent's section a live seat and a place in line", () => {
+    const { self } = fixture("busy-family");
+    const enrollments = self?.enrollments ?? [];
+    expect(
+      enrollments.some((e) => e.waitlistPosition !== null),
+    ).toBe(true);
+    expect(
+      enrollments.some(
+        (e) => e.waitlistPosition === null && e.hasVoiceRoom && e.nextSessionStart !== null,
+      ),
+    ).toBe(true);
+  });
+});
 
 describe("identicon fixture ids are real UUIDs", () => {
   it("every child on the feed roster", () => {
@@ -175,12 +726,43 @@ describe("identicon fixture ids are real UUIDs", () => {
           expect(gedu.id, `${scenario}/${group.name}`).toMatch(UUID_V4);
         }
         for (const child of group.roster ?? []) {
-          expect(child.gamer_id, `${scenario}/${group.name}`).toMatch(UUID_V4);
+          expect(child.participant_id, `${scenario}/${group.name}`).toMatch(UUID_V4);
           if (child.minecraft_uuid !== null) {
             expect(child.minecraft_uuid).toMatch(UUID_V4);
           }
         }
       }
+    }
+  });
+
+  it("every section heading on every parent-dashboard scenario", () => {
+    // The parent's own heading is the newest of these and the easiest to get
+    // wrong: it is the one id in the file that is not a child's, so it is the
+    // one a readable stand-in would slip into unnoticed.
+    const now = new Date("2026-02-11T20:00:00Z");
+    for (const scenario of PARENT_DASHBOARD_SCENARIOS) {
+      const { gamers, self } = buildParentDashboardFixture(
+        now,
+        scenario,
+        "en",
+        "Europe/Helsinki",
+      );
+      for (const gamer of gamers) {
+        expect(gamer.id, `${scenario}/${gamer.firstName}`).toMatch(UUID_V4);
+      }
+      if (self !== null) expect(self.id, scenario).toMatch(UUID_V4);
+    }
+  });
+
+  it("the participant every family product-page scenario is about", () => {
+    const now = new Date("2026-02-11T09:00:00Z");
+    for (const scenario of FAMILY_PRODUCT_SCENARIOS) {
+      const { participant, gedus } = buildFamilyProductPageFixture(
+        now,
+        scenario,
+      );
+      expect(participant.id, scenario).toMatch(UUID_V4);
+      for (const gedu of gedus) expect(gedu.id, scenario).toMatch(UUID_V4);
     }
   });
 
@@ -226,27 +808,54 @@ describe("every scenario exercises the reference rail's other-groups card", () =
 });
 
 /**
- * The roster row renders a parent email unconditionally — there is no
+ * The roster row renders a contact email unconditionally — there is no
  * missing-email state left in the UI, because a gamer account is created by a
- * parent who signed up with one. A fixture that dropped an address would render
- * a row with a hole in it and nothing would fail.
+ * parent who signed up with one and an adult is their own contact. A fixture
+ * that dropped an address would render a row with a hole in it and nothing
+ * would fail.
+ *
+ * **Exactly one of the two fields, never both**, is the invariant the RPC
+ * enforces and the row's whole variant switch rests on: `participant_email`
+ * non-null *is* "this is an adult seat". A fixture carrying both would make the
+ * adult variant render for a child, which is a picture of a product state that
+ * cannot happen.
  *
  * The long address is pinned for the same reason the roster row was redesigned:
  * an email has no useful upper bound, and a fixture of tidy short ones is how a
  * wrapping bug reaches a gedu's screen.
  */
-describe("every roster row carries a parent email", () => {
+describe("every roster row carries exactly one contact email", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("gives every child in every scenario an address", () => {
+  it("gives everyone in every scenario an address, and only one kind", () => {
     for (const scenario of GEDU_PRODUCT_SCENARIOS) {
       const { data } = buildGeduProductPageFixture(now, scenario);
       for (const group of data.groups) {
-        for (const child of group.roster ?? []) {
-          expect(child.parent_email, `${scenario}/${child.first_name}`)
-            .toBeTruthy();
+        for (const row of group.roster ?? []) {
+          const where = `${scenario}/${row.first_name}`;
+          expect(row.parent_email ?? row.participant_email, where).toBeTruthy();
+          expect(
+            row.parent_email !== null && row.participant_email !== null,
+            where,
+          ).toBe(false);
         }
       }
+    }
+  });
+
+  it("includes an adult seat, with its child-shaped fields empty", () => {
+    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
+      const { data } = buildGeduProductPageFixture(now, scenario);
+      const roster = data.groups.find((g) => g.id === data.my_group_id)?.roster;
+      const adults = (roster ?? []).filter((r) => r.participant_email !== null);
+      expect(adults.length, scenario).toBe(1);
+      // The absence the adult variant renders. A fixture that gave the adult an
+      // age would make the badge and the age line coexist, which the row has no
+      // branch for and the product cannot produce.
+      expect(adults[0].date_of_birth).toBeNull();
+      expect(adults[0].gender).toBeNull();
+      expect(adults[0].minecraft_username).toBeNull();
+      expect(adults[0].minecraft_uuid).toBeNull();
     }
   });
 
@@ -254,7 +863,9 @@ describe("every roster row carries a parent email", () => {
     const { data } = buildGeduProductPageFixture(now, "club");
     const roster = data.groups.find((g) => g.id === data.my_group_id)?.roster;
     const longest = Math.max(
-      ...(roster ?? []).map((r) => (r.parent_email ?? "").length),
+      ...(roster ?? []).map(
+        (r) => (r.parent_email ?? r.participant_email ?? "").length,
+      ),
     );
     expect(longest).toBeGreaterThan(40);
   });
@@ -878,16 +1489,40 @@ describe("the family club page's billing states", () => {
   }));
 
   it("shows each of them somewhere, and never together", () => {
-    expect(fixtures.filter((f) => f.fixture.paymentProblem)).toHaveLength(1);
+    // paymentProblem appears on exactly two pages — worded in the third person
+    // about a child and in the second person on the parent's own seat — because
+    // the self scenario deliberately carries the longest self-worded string.
+    // cancellation stays on exactly one: no scenario has earned a second copy,
+    // and holding the count exact keeps a future scenario from acquiring one
+    // by accident. What must also stay exact is that no single page claims
+    // both — Stripe cannot be `past_due` and `canceling` at once, so a page
+    // showing both would be inventing a state.
+    expect(fixtures.filter((f) => f.fixture.paymentProblem).length).toBe(2);
     expect(
-      fixtures.filter((f) => f.fixture.cancellation !== null),
-    ).toHaveLength(1);
+      fixtures.filter((f) => f.fixture.cancellation !== null).length,
+    ).toBe(1);
     for (const { scenario, fixture } of fixtures) {
       expect(
         fixture.paymentProblem && fixture.cancellation !== null,
         scenario,
       ).toBe(false);
     }
+  });
+
+  /**
+   * The self variant is three strings' worth of second person, and every one of
+   * them is invisible on a page about somebody's child. So exactly one scenario
+   * has to be a self seat — none and the wording is never reviewed, more than
+   * one and the child case (which is the overwhelmingly common page) starts
+   * losing scenarios to it.
+   */
+  it("carries exactly one self seat, and it carries a billing notice", () => {
+    const selfSeats = fixtures.filter((f) => f.fixture.isSelfSeat);
+    expect(selfSeats).toHaveLength(1);
+    expect(
+      selfSeats[0].fixture.paymentProblem ||
+        selfSeats[0].fixture.cancellation !== null,
+    ).toBe(true);
   });
 
   it("names a last session the feed actually contains", () => {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
@@ -25,6 +26,19 @@ interface PageProps {
 // hand-crafted mismatch just shows the club with a back link to the slug's
 // listing, which is harmless. An unknown municipality slug 404s, mirroring the
 // listing page.
+
+/**
+ * Robots policy: **noindex, unconditionally** — the same owner decision as
+ * `/shop/[id]` (search engines and AI crawlers may discover only the `/shop`
+ * browse surface; the entire `/schools` tree is noindex), and it has to be
+ * applied here because this is a **second URL for the same product row** —
+ * without it the shop URL's tag would simply be side-stepped. One static rule,
+ * no per-product read.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default async function MunicipalityClubDetailPage({ params }: PageProps) {
   const { municipalityName, id } = await params;
   const locale = await getLocale();

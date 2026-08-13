@@ -24,6 +24,9 @@ import { TEST_CREDENTIALS } from "./constants";
  *      column, and the column-level write surface is confined to `profiles`.
  *   5. Completeness — every exposed function is in exactly one of the two
  *      classifications, and every self-scoping entry names a real scope test.
+ *      Views are held to the same requirement: a view has no body to guard, so
+ *      the only classification open to it is self-scoping, and the scope test is
+ *      the whole of its vetting.
  *
  * Checks 1, 2 and 5 interlock: 1 forces a guard to exist, 2 proves the guard
  * behaves as annotated, 5 guarantees nothing escapes both. They replace the
@@ -73,7 +76,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   set_gedu_verified: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
-  admin_enroll_gamer: { permittedRoles: ["admin"] },
+  admin_enroll_participant: { permittedRoles: ["admin"] },
   admin_remove_participation: { permittedRoles: ["admin"] },
 
   // --- customer-gated ------------------------------------------------------
@@ -148,9 +151,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   },
 
   // --- the guard primitives themselves -------------------------------------
-  // Exposed to `authenticated` because create_product / update_product are
-  // SECURITY INVOKER, so their guard runs as the caller (see migration 00120).
-  // They are role-gated by definition, so the matrix covers them like any other.
+  // Exposed to `authenticated` because create_product is SECURITY INVOKER, so
+  // its guard runs as the caller (see migration 00120; update_product was
+  // elevated to DEFINER by 00171 and no longer needs the grant, but its
+  // sibling still does). They are role-gated by definition, so the matrix
+  // covers them like any other.
   assert_admin: { permittedRoles: ["admin"] },
   // No role passes: the all-NULL convention hands it a NULL role name, which it
   // refuses outright rather than letting the comparison swallow it. That refusal
@@ -187,7 +192,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   can_read_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
-    why: "read predicate behind the product policies; anon-reachable on purpose, and its anon branch returns true only for published+visible products",
+    why: "read predicate behind the product policies; anon-reachable on purpose, and its anon branch returns true only for products in a published status (pending/running). Since 00168 it does not ask about is_visible — that column decides whether a product is LISTED on the browse pages, and an unlisted product is deliberately readable by direct link, so the public branch is bounded by status alone",
   },
   has_active_participation_on_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
@@ -219,7 +224,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   get_my_family_product_feed: {
     scopeTest: "tests/db/family-product-feed.test.ts",
-    why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's gamer, and any parent linked to that gamer — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, and the document's attendance field carries one answer — the named gamer's — rather than a roster map",
+    why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's participant, and any parent linked to them — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). Since 00173 that participant may be an adult holding a seat of their own, in which case the first arm of the same predicate matches directly and the parent-link fallback is never reached. A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, a child cannot read their own parent's seat in the group they share, and the document's attendance field carries one answer — the named participant's — rather than a roster map",
   },
   submit_my_feedback: {
     scopeTest: "tests/db/feedback-submission.test.ts",
@@ -281,6 +286,25 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
 };
 
 /**
+ * Views `authenticated` may select from, and why each is self-scoping.
+ *
+ * The same classification as SELF_SCOPING, one object class over. A view has no
+ * body to guard and no arguments to aim, so "role-gated" has no meaning for one —
+ * the only question it can be asked is whether the caller's own RLS decides its
+ * rows, which is `security_invoker` plus the policies on everything it selects
+ * from. access-control.test.ts pins the flag; that is the *intention*. This
+ * registry is what pins the *property*, because it forces every view to arrive
+ * named to a test that shows two callers getting the answers their own policies
+ * allow and nothing more.
+ */
+const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
+  user_search_index: {
+    scopeTest: "tests/db/user-search-index.test.ts",
+    why: "security_invoker = true over `profiles`, `minecraft_accounts` and `roblox_accounts`, so the caller's own RLS decides every row exactly as a direct select of those three tables would. It cannot answer with anything a plain read of them would not already return — the search_blob is assembled from columns the caller can see or from nothing at all, because a row filtered out of a join contributes NULL rather than a leak. It carries no arguments at all, so there is nothing for a caller to aim at another user: the needle is an ordinary filter applied to whatever set RLS already handed them. The scope test is where the interesting half lives: from the identical query, a customer reaches their own linked gamer by that child's game handle and cannot reach another customer at all, and a second customer with no relationship to the child cannot find them by the same handle",
+  },
+};
+
+/**
  * Functions `anon` may execute.
  *
  * `can_read_product` is the product read policies' own predicate — those
@@ -334,7 +358,7 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   // Enrollment state — a writable status is a free seat.
   ["participations", "status"],
   ["participations", "customer_id"],
-  ["participations", "gamer_id"],
+  ["participations", "participant_id"],
   ["participations", "group_id"],
   // The Checkout Session that paid for the seat: writable, it would let one
   // family point a seat at another family's payment — and it is what the paid
@@ -392,6 +416,30 @@ const functionSurfaceRows = z.array(
 
 type FunctionSurface = z.infer<typeof functionSurfaceRows>[number];
 
+/**
+ * `kind` is carried here even though the completeness checks below never branch
+ * on it: `_list_views` returns both plain and materialized views, and a matview
+ * is *more* in need of a classification than a view, not less. Whether the ban
+ * on them holds is access-control.test.ts's question; if one ever slipped past
+ * that check while holding a Data API grant, this registry would still demand a
+ * scope test for it rather than let the relkind decide who has to answer.
+ *
+ * The enum rather than a string is for the same reason as there — the column is
+ * a two-arm CASE with no ELSE, so an unrecognised relation class arrives NULL
+ * and fails the parse instead of being read as an ordinary view.
+ */
+const viewSurfaceRows = z.array(
+  z.object({
+    view_name: z.string(),
+    kind: z.enum(["view", "materialized view"]),
+    security_invoker: z.boolean(),
+    authenticated_select: z.boolean(),
+    anon_select: z.boolean(),
+  })
+);
+
+type ViewSurface = z.infer<typeof viewSurfaceRows>[number];
+
 const columnGrantRows = z.array(
   z.object({
     table_name: z.string(),
@@ -434,6 +482,7 @@ describe("authorization spine (§3.4)", () => {
   let admin: SupabaseClient<Database>;
   let surface: FunctionSurface[];
   let exposed: FunctionSurface[];
+  let exposedViews: ViewSurface[];
   const tokens = new Map<Role, string>();
 
   /** The signed-in access token for a role, seeded in beforeAll. */
@@ -452,6 +501,22 @@ describe("authorization spine (§3.4)", () => {
     expect(error).toBeNull();
     surface = functionSurfaceRows.parse(data);
     exposed = surface.filter((fn) => fn.authenticated_access);
+
+    const views = await admin.rpc("_list_views");
+    expect(views.error).toBeNull();
+    // `anon` counts as exposure just as it does for a function: a view either
+    // Data API role can read is a view the caller's RLS has to be the only
+    // thing standing between them and its rows.
+    //
+    // Both flags are measured per column by `_list_views`, which is what makes
+    // this filter say what it means. `has_table_privilege` is false for a role
+    // holding only `GRANT SELECT(col) ON v` — a grant PostgREST will happily
+    // answer a read against — so measuring exposure that way would have let a
+    // column-granted view arrive with no entry here and no scope test, which is
+    // precisely the hole this registry exists to close.
+    exposedViews = viewSurfaceRows
+      .parse(views.data)
+      .filter((view) => view.authenticated_select || view.anon_select);
 
     for (const role of ROLES) {
       tokens.set(
@@ -714,6 +779,63 @@ describe("authorization spine (§3.4)", () => {
       expect(
         offenders,
         "a self-scoping function is vetted by its scope test and nothing else"
+      ).toEqual([]);
+    });
+
+    // The same three questions asked of views. They are separate `it`s rather
+    // than extra branches inside the function trio because the two surfaces come
+    // from different catalogs and fail for different reasons — a view that lost
+    // its grant and a function that was dropped want to be told apart in the
+    // report, not summed.
+
+    it("every view exposed to authenticated is classified", () => {
+      const unclassified = exposedViews
+        .map((view) => view.view_name)
+        .filter((name) => !(name in SELF_SCOPING_VIEWS));
+
+      expect(
+        unclassified,
+        "a newly exposed view must be added to SELF_SCOPING_VIEWS with a scope " +
+          "test — `security_invoker` says the author meant the caller's RLS to " +
+          "decide the rows, and only a test shows that it does"
+      ).toEqual([]);
+    });
+
+    it("every classified view is actually exposed", () => {
+      // The reverse direction, and it is not bookkeeping: a view that was
+      // dropped or had its SELECT grant revoked leaves an entry behind that
+      // reads as coverage while covering nothing, so the next view added under
+      // that name inherits a vetting it never earned.
+      const exposedNames = new Set(exposedViews.map((view) => view.view_name));
+      const stale = Object.keys(SELF_SCOPING_VIEWS).filter(
+        (name) => !exposedNames.has(name)
+      );
+
+      expect(
+        stale,
+        "a classified view is gone or no longer readable by anon/authenticated"
+      ).toEqual([]);
+    });
+
+    it("every classified view names a scope test that exercises it", () => {
+      const offenders: string[] = [];
+
+      for (const [name, entry] of Object.entries(SELF_SCOPING_VIEWS)) {
+        const file = join(process.cwd(), entry.scopeTest);
+        // eslint-disable-next-line security/detect-non-literal-fs-filename -- the path is a repo-relative literal from the SELF_SCOPING_VIEWS table above, not input; reading it is the point of the check
+        if (!existsSync(file)) {
+          offenders.push(`${name}: ${entry.scopeTest} does not exist`);
+          continue;
+        }
+        // eslint-disable-next-line security/detect-non-literal-fs-filename -- same literal path, already proven to exist one line above
+        if (!readFileSync(file, "utf8").includes(name)) {
+          offenders.push(`${name}: ${entry.scopeTest} never mentions it`);
+        }
+      }
+
+      expect(
+        offenders,
+        "a view is vetted by its scope test and nothing else"
       ).toEqual([]);
     });
   });

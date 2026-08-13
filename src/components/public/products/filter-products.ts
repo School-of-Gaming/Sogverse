@@ -1,5 +1,10 @@
 import type { AgeBand } from "@/lib/constants/gamer-age";
-import type { ProductBrowseRow, ProductType } from "@/types";
+import type { ProductBrowseRow } from "@/types";
+import {
+  matchesAudienceFilter,
+  type AudienceFilterValue,
+} from "./product-audience";
+import type { ProductTag } from "./product-tag";
 
 // Topic + format + language filters as the parent navigates the catalog.
 //
@@ -13,19 +18,35 @@ import type { ProductBrowseRow, ProductType } from "@/types";
 // - `languages`: list of spoken-language codes (`fi`, `en`, `sv`).
 //   Single-valued on a product (`spoken_language_code`) — a product passes
 //   when its language is in the selected set. OR semantics across the set.
+// - `audiences`: list of audience values (`parents`, `families`) the parent
+//   has selected. A chip is the badge: each matches exactly the products
+//   wearing that label (`parents` = parents-only, `families` = the both-flags
+//   shape), so a mixed product answers the Families chip and only that one,
+//   and gamers-only — badged with nothing — answers neither; clearing the row
+//   is the only way back to everything. OR semantics across the set, and an
+//   empty set skips the filter. It is the tool for "shopping for me"; the age
+//   band below is the tool for "shopping for a child of age X", which is why
+//   the two never fold into one row.
+// - `tags`: list of design-tag values the parent has selected. A chip is the
+//   chip the card wears: each matches exactly the products carrying that tag,
+//   with OR semantics across the set, and an untagged product — the ordinary
+//   state, wearing nothing — answers only an empty row. So the row behaves like
+//   the audience one and unlike topic or language: lighting every chip is
+//   *narrower* than lighting none, and clearing the row is the only way back to
+//   the untagged majority.
 // - `age`: a selected age band ({min, max}), or null. A product passes when its
 //   [min_age, max_age] *overlaps* the band — i.e. it serves some age the band
 //   covers. Null means "any age" and skips the filter. The offered bands come
 //   from `PRODUCT_AGE_BANDS` in `@/lib/constants/gamer-age` (see
 //   `product-browse-filters.tsx`).
 // - `days`: list of weekdays (0=Mon..6=Sun, matching `schedule_slots.weekday`)
-//   the recurring schedule must touch. A product passes when any of its
-//   `schedule_slots` falls on a selected day. OR semantics across the set
-//   (a parent picking Mon AND Wed expects clubs meeting on either). Empty
-//   means "any day". This is a Clubs-only filter — the chip row is hidden for
-//   Camps and Events and the caller passes `[]` there (see
-//   `product-browse-page.tsx`), so a camp or event with weekday slots is never
-//   narrowed by it.
+//   the schedule must touch. A product passes when any of its `schedule_slots`
+//   falls on a selected day. OR semantics across the set (a parent picking Mon
+//   AND Wed expects to see either). Empty means "any day". It applies to every
+//   product type: a club's recurring slot, a camp's day and an event's date all
+//   carry a weekday, and "which days of the week is my child busy" is the same
+//   question in all three cases. A product with no slots at all (schedule TBD)
+//   therefore drops out of any day selection.
 //
 // Filters AND together: a product must pass every active filter.
 // Empty filter values are no-ops, so unset filters always pass.
@@ -40,6 +61,8 @@ export interface BrowseFilters {
   topics: string[];
   format: ProductFormat | null;
   languages: string[];
+  audiences: AudienceFilterValue[];
+  tags: ProductTag[];
   age: AgeBand | null;
   days: number[];
 }
@@ -48,20 +71,11 @@ export const EMPTY_FILTERS: BrowseFilters = {
   topics: [],
   format: null,
   languages: [],
+  audiences: [],
+  tags: [],
   age: null,
   days: [],
 };
-
-// Single source of truth for "does the day-of-week filter apply to this product
-// type". Only types with a recurring weekly schedule (clubs) qualify — camps
-// run over a date range and events happen once, so even though their slots
-// carry weekdays the filter is neither offered nor applied for them. Both the
-// filter-row visibility (`product-browse-filters.tsx`, via the category's
-// product type) and the filter application (`product-browse-page.tsx`, via the
-// browse type) gate on this, so the two can't drift.
-export function productTypeSupportsDayFilter(type: ProductType): boolean {
-  return type === "consumer_club" || type === "municipality_club";
-}
 
 export function filterProducts(
   products: readonly ProductBrowseRow[],
@@ -81,7 +95,19 @@ export function filterProducts(
         return false;
       }
     }
+    if (!matchesAudienceFilter(p, filters.audiences)) return false;
+    if (filters.tags.length > 0) {
+      // An untagged product carries no chip, so no chip carries it: the null
+      // test is the whole of "untagged answers only an empty row", and the
+      // membership test is chip-equals-tag with nothing between them.
+      if (p.tag === null || !filters.tags.includes(p.tag)) return false;
+    }
     if (filters.age !== null) {
+      // A band expresses "I am shopping for a child of this age", so a product
+      // with no age range at all — one with no gamer audience — is not a near
+      // miss, it is a different question. It drops out by construction rather
+      // than by a rule of its own.
+      if (p.min_age === null || p.max_age === null) return false;
       // Overlap: the product's [min_age, max_age] and the selected band share
       // at least one age.
       if (p.min_age > filters.age.max || p.max_age < filters.age.min) {

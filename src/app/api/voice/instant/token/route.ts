@@ -183,7 +183,12 @@ export async function POST(request: Request) {
 
   const token = await createMeetingToken({
     roomName: code,
-    isOwner: role !== "guest",
+    // Positive allow-list, same value as the old `role !== "guest"` on the
+    // current 3-member union — flipped so moderator rights never come from
+    // excluding a role (isOwner also feeds screen-share at the mint; see
+    // CreateTokenOptions). If the union grows, a new role starts as a guest
+    // until someone adds it here on purpose.
+    isOwner: role === "admin" || role === "gedu",
     userName: buildUserName({ userId, role, displayName }),
     startVideoOff: !cameraOn,
     startAudioOff: !micOn,

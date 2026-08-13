@@ -7,7 +7,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { buildFamilySessionFeed } from "@/lib/family-session-feed";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { useNow } from "@/providers";
+import { useAuth, useNow } from "@/providers";
 import { useFamilyProductFeed } from "@/services/family-product-feed";
 import {
   seedAge,
@@ -25,11 +25,11 @@ import { FamilyProductPageSkeleton } from "./FamilyProductPageSkeleton";
  *
  * **Two reads, and they answer different halves of the page.**
  *
- * The feed RPC answers everything about the club itself: the child, the product
- * shell and its schedule, the group and its note, the venue, the gedus, and the
- * group's whole stored history. It is self-scoping, so a participation that is
- * not this caller's and one with no group yet come back as `unavailable` rather
- * than as an error — both render the not-found card.
+ * The feed RPC answers everything about the club itself: whoever holds the
+ * seat, the product shell and its schedule, the group and its note, the venue,
+ * the gedus, and the group's whole stored history. It is self-scoping, so a
+ * participation that is not this caller's and one with no group yet come back
+ * as `unavailable` rather than as an error — both render the not-found card.
  *
  * The participation rows answer everything about **this family's place in it**:
  * whether the card behind the subscription is failing, and when paid access
@@ -76,6 +76,18 @@ export function FamilyProductPage({
   initialSessionRows: MyUpcomingSessionRow[] | null;
 }) {
   const { data: result, isPending } = useFamilyProductFeed(participationId);
+  /**
+   * Who is reading, so the page can tell "my child's club" from "my club".
+   *
+   * The URL cannot answer this — both live under `/parent` — and the feed
+   * document deliberately does not either: it names the participant and stops
+   * there, which is the shape the privacy line wants. Comparing that id with
+   * the signed-in user is the whole derivation, and `useAuth` is the right
+   * source for it because the id is **server-seeded**: the root layout hands
+   * `initialUser` down, so SSR and the first client render agree and nothing on
+   * the masthead re-words itself after hydration.
+   */
+  const { user } = useAuth();
   const rows = useMyUpcomingSessionRows(audience, {
     initialData: initialSessionRows ?? [],
     // A failed prefetch is seeded **stale**, so the client refetches on mount
@@ -160,8 +172,23 @@ export function FamilyProductPage({
   if (isPending) return <FamilyProductPageSkeleton audience={audience} />;
   if (feed === null) return <FamilyProductNotFound audience={audience} />;
 
-  const isParent = audience === "customer";
-  const gamer = { id: feed.gamer.id, firstName: feed.gamer.first_name };
+  const participant = {
+    id: feed.participant.id,
+    firstName: feed.participant.first_name,
+  };
+  /**
+   * The parent's own seat: a `/parent` page whose participant is the reader.
+   *
+   * Resolved here rather than passed down from the route, because the route
+   * prefix fixes the *role* and nothing more — a parent reaches their own club
+   * and their child's through the same six URLs. It is deliberately conjoined
+   * with the customer audience rather than derived from the id alone: on a
+   * `/gamer` route the reader **is** the participant by definition, and calling
+   * that a self seat would swap the child's own copy for the parent's.
+   */
+  const isSelfSeat = audience === "customer" && user?.id === participant.id;
+  /** Whether the Join has an account switch behind it — a child's seat only. */
+  const switchesAccount = audience === "customer" && !isSelfSeat;
   const productName =
     resolveTranslation(feed.product.translations, locale)?.name ?? "";
   const voiceHref = ROUTES.voice.groupSession(feed.group.id);
@@ -169,7 +196,7 @@ export function FamilyProductPage({
   return (
     <>
       <FamilyProductPageBody
-        audience={audience}
+        audience={isSelfSeat ? "self" : audience}
         productName={productName}
         schedule={{
           product_type: feed.product.product_type,
@@ -179,7 +206,7 @@ export function FamilyProductPage({
           schedule_slots: feed.product.schedule_slots,
         }}
         isRemote={feed.product.is_remote}
-        gamer={gamer}
+        participant={participant}
         groupName={feed.group.name}
         // Handed over on both audiences: the body is what decides that a child
         // never meets a billing notice, and withholding the props here would
@@ -203,19 +230,20 @@ export function FamilyProductPage({
               }
         }
         voiceHref={voiceHref}
-        // The parent is signed in as themselves and the room is gated by the
-        // child's enrollment, so their Join is intercepted: the dialog POSTs the
-        // account switch and then does the full-page navigation itself, per the
-        // house auth rule. A gamer is already the right person, so they get no
-        // handler and the button stays a plain link.
-        onJoinClick={isParent ? () => setSwitching(true) : undefined}
+        // A parent looking at their *child's* club is signed in as themselves
+        // while the room is gated by the child's enrollment, so their Join is
+        // intercepted: the dialog POSTs the account switch and then does the
+        // full-page navigation itself, per the house auth rule. A gamer is
+        // already the right person — and so is a parent on their own seat — so
+        // both get no handler and the button stays a plain link.
+        onJoinClick={switchesAccount ? () => setSwitching(true) : undefined}
         entries={entries}
         sourceTimeZone={feed.product.timezone}
       />
 
       {switching && (
         <JoinSwitchDialog
-          gamer={gamer}
+          gamer={participant}
           productName={productName}
           voiceHref={voiceHref}
           onClose={() => setSwitching(false)}

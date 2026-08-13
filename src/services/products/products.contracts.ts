@@ -18,15 +18,10 @@ const productTranslationInput = z.object({
   locale: z.enum(SUPPORTED_LOCALES),
   name: z.string(),
   short_description: z.string(),
-  // null = no long description for this locale (the RPC stores SQL NULL).
-  long_description: z
-    .array(
-      z.object({
-        type: z.enum(["heading", "paragraph"]),
-        text: z.string(),
-      })
-    )
-    .nullable(),
+  // The marketing blurb as authored markdown; null = this locale has none, and
+  // the RPC stores SQL NULL. The form folds a blank editor to null rather than
+  // sending "", which the column's CHECK refuses.
+  long_description: z.string().nullable(),
 });
 
 const scheduleSlotInput = z.object({
@@ -45,8 +40,31 @@ const productDataBase = z.object({
   billing_mode: z.enum(Constants.public.Enums.billing_mode),
   translations: z.array(productTranslationInput),
   topic: z.enum(Constants.public.Enums.product_topic),
-  min_age: z.number(),
-  max_age: z.number(),
+  // Who may occupy a seat. Mutually inclusive, and the DB CHECKs are what
+  // enforce the two rules that matter: at least one must be true, and the age
+  // range is present exactly when `for_gamers` is. Both are required on the
+  // wire because both RPC parameters are non-defaulted — an omitting caller
+  // must fail loudly rather than silently reset a product's audience.
+  for_gamers: z.boolean(),
+  for_parents: z.boolean(),
+  // Null when the product has no gamer audience: age is a property of the
+  // children a product serves and of nothing else, so an adults-only product
+  // carries no range rather than a sentinel one.
+  min_age: z.number().nullable(),
+  max_age: z.number().nullable(),
+  // Who the product was *designed* for — a different question from the audience
+  // above, which says who may hold a seat. One tag or none: null is untagged,
+  // the ordinary state, and it renders nothing anywhere.
+  //
+  // Required-nullable, on create and update alike, and the update half is the
+  // load-bearing one. The RPC parameter is `DEFAULT NULL` (it has to be: null is
+  // a legal tag, no CHECK backstops it, and codegen cannot express an explicit
+  // null for a non-defaulted argument), so an omitted field would reach a
+  // function that assigns every editable column and clear the tag without
+  // anybody asking. Demanding the field on the wire is what makes clearing a
+  // deliberate `null` rather than an accident of omission — the route then maps
+  // null → undefined → DEFAULT NULL → cleared.
+  tag: z.enum(Constants.public.Enums.product_tag).nullable(),
   spoken_language_code: z.string(),
   // Gedu/admin-only lesson-material link. It is a field of the product *form*
   // but not a column on `products` — the RPC files it under

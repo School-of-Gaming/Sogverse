@@ -7,13 +7,13 @@ import {
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { ParentDashboardGamer } from "./parent-dashboard-page-body";
+import type { ParentDashboardParticipant } from "./parent-dashboard-page-body";
 
 /**
  * Fixtures for the parent dashboard preview scene — a plausible week for a
  * family, computed from a `now` the caller supplies.
  *
- * The gamer ids are **real, generated UUIDs pasted in as literals**, and that is
+ * The participant ids are **real, generated UUIDs pasted in as literals**, and that is
  * load-bearing rather than fussy: the identicon beside each heading is a pattern
  * derived from the id's hex bytes, so a readable stand-in like
  * `"mock-gamer-aino"` renders a degenerate grid instead of a different face, and
@@ -24,13 +24,13 @@ import type { ParentDashboardGamer } from "./parent-dashboard-page-body";
  */
 
 /**
- * **Three scenarios — one per mutually exclusive page state.**
+ * **One scenario per mutually exclusive page state.**
  *
  * Card states are not page states: live, waitlisted, in-person, finished,
  * failing, winding down, and empty can all coexist on one page under different
- * children, so they share a scenario rather than each owning one. What cannot
- * coexist is the pill's two shapes and the common case's calm, so those are the
- * three.
+ * people, so they share a scenario rather than each owning one. What cannot
+ * coexist is the pill's two shapes, the presence of a parent's own section, and
+ * the common case's calm.
  *
  * `typical` is the family the product is actually built for: one child, one
  * club, nothing wrong. It is the page most parents open, and it is here so the
@@ -38,39 +38,60 @@ import type { ParentDashboardGamer } from "./parent-dashboard-page-body";
  * a dashboard that reads well with four cards and looks empty with one has
  * failed at its main job.
  *
- * `busy-family` is everything else at once, on exactly **three** children — the
- * most the pill will name one by one, so this is also the widest the bar ever
- * gets before the collapse. Across the three: a remote club live right now with
- * a failing card beside a waitlist place with no session to join; an in-person
- * camp naming its venue where the Join would be, beside a club winding down and
- * a finished camp sitting muted *below* them (the demotion has to read as
- * history without reading as broken, and that is only visible next to something
- * live); and a child signed up for nothing, which is where the empty-state card
- * is judged. One name is deliberately long, because a section heading and a nav
- * chip are the two places user content gets to decide the layout. Billing
- * carries two Stripe customers — the migrated-family shape, and the only one
- * where the card grows a button per account.
+ * `busy-family` is everything else at once, and it is also **the widest the
+ * pill ever gets before it collapses** — three named chips, which since
+ * for-parents products exist means *two children and the parent themselves*
+ * rather than three children. That is one cap over both kinds of chip, not two
+ * (see `MAX_NAMED_PILL_ENTRIES`), and this is the page it is judged on. Across
+ * the three sections: a remote club live right now with a failing card beside a
+ * waitlist place with no session to join and a seat nobody has been placed in;
+ * an in-person camp naming its venue where the Join would be, beside a club
+ * winding down and a finished camp sitting muted *below* them (the demotion has
+ * to read as history without reading as broken, and that is only visible next
+ * to something live); and the parent's own two cards — a club whose Join goes
+ * straight to the room with no account switch, and a queue place whose leave
+ * dialog is the one that names nobody. One child's name is deliberately long,
+ * because a section heading and a nav chip are the two places user content gets
+ * to decide the layout. Billing carries two Stripe customers — the
+ * migrated-family shape, and the only one where the card grows a button per
+ * account.
  *
- * `seven-gamers` is the pill past the limit. Above three children the nav stops
- * naming them one by one, so this is the scenario that shows the collapse and
- * the seven headings it collapses.
+ * **The child with nothing booked used to be here and is not any more**, and
+ * that is the one thing the parent chip cost this scenario: a third child would
+ * put the pill over its named limit and take away the state this page exists to
+ * show. The per-child empty card is judged in `no-enrollments` instead, where
+ * two of them sit side by side.
+ *
+ * `seven-gamers` is the pill past the limit. Above the cap the nav stops naming
+ * the children one by one, so this is the scenario that shows the collapse and
+ * the seven headings it collapses — **with a parent section as well**, because
+ * the interesting half of the collapse is that the parent's chip survives it:
+ * the bar reads Gamers · Marja · Billing · Help, which is one collapsed group,
+ * one name, and the two fixed entries.
  *
  * `new-family` is the account before the first child exists — the page a parent
- * meets minutes after registering. No sections, no add-tile-after-the-last:
+ * meets minutes after registering. No child sections, no add-tile-after-the-last:
  * one dashed card whose add button is the page's whole next step, with billing
  * in its ordinary single-button form and help beneath.
  *
- * `no-enrollments` is the step after that: children linked, nothing booked for
- * any of them. Every section renders its per-child empty card pointing at the
- * shop, and the page has to read as an invitation rather than a fault — this is
- * the state every real family passes through between adding their gamers and
- * their first purchase.
+ * `parent-only` is that same childless account **after** the parent has bought
+ * a seat for themselves, which is a real state the moment a parents' evening
+ * goes on sale. The add-a-child card is still there and is still a section, but
+ * it no longer owns the page: the parent's own section sits under it, and the
+ * pill names both.
+ *
+ * `no-enrollments` is the step after `new-family` for everybody else: children
+ * linked, nothing booked for any of them. Every section renders its per-child
+ * empty card pointing at the shop, and the page has to read as an invitation
+ * rather than a fault — this is the state every real family passes through
+ * between adding their gamers and their first purchase.
  */
 export const PARENT_DASHBOARD_SCENARIOS = [
   "typical",
   "busy-family",
   "seven-gamers",
   "new-family",
+  "parent-only",
   "no-enrollments",
 ] as const;
 
@@ -92,11 +113,16 @@ export function isParentDashboardScenario(
  */
 export interface FixtureBillingAccount {
   stripeCustomerId: string;
-  covers: { gamerFirstName: string; productName: string }[];
+  covers: { participantFirstName: string; productName: string }[];
 }
 
 export interface ParentDashboardFixture {
-  gamers: ParentDashboardGamer[];
+  gamers: ParentDashboardParticipant[];
+  /**
+   * The reader's own section, or `null` when they hold no seat of their own —
+   * which is every scenario but the two that exist to show it.
+   */
+  self: ParentDashboardParticipant | null;
   accounts: FixtureBillingAccount[];
 }
 
@@ -114,6 +140,17 @@ const GAMER_IDS = {
   linnea: "9c39bfb5-67de-4bed-832d-ecb629c5298f",
   otso: "13ab5d23-716f-4ecb-8958-67acbd3820e6",
   venla: "e7577673-7b51-4279-b1bd-beaa5be02295",
+} as const;
+
+/**
+ * The reader — the parent whose dashboard this is.
+ *
+ * A real UUID for the same reason every child's is: their section is headed by
+ * an identicon, and on this page it is the one face that is theirs.
+ */
+const PARENT = {
+  id: "808a4fd9-06db-4744-8947-d10575f2c35a",
+  firstName: "Marja",
 } as const;
 
 /**
@@ -149,11 +186,15 @@ export function buildParentDashboardFixture(
             },
           ]),
         ],
+        self: null,
         accounts: [
           {
             stripeCustomerId: "cus_mock_single",
             covers: [
-              { gamerFirstName: "Aino", productName: "Minecraft Explorers Club" },
+              {
+                participantFirstName: "Aino",
+                productName: "Minecraft Explorers Club",
+              },
             ],
           },
         ],
@@ -255,11 +296,10 @@ export function buildParentDashboardFixture(
               siteName: CAMP_SITE_NAME,
             },
           ]),
-          // The child signed up for nothing — the empty-state card's home, and
-          // a real thing in a family this size, where one has just finished a
-          // term and nothing has been booked yet.
-          gamer(clock, GAMER_IDS.otso, "Otso", []),
         ],
+        // The reader's own section — two children and one of these is exactly
+        // the pill's named limit, which is why this scenario stops at two.
+        self: parentsOwnSection(clock),
         // Two Stripe customers — the shape a family migrated from the old
         // platform ends up with, and the only one where the billing card grows
         // a button per account with an explanation above them.
@@ -267,14 +307,24 @@ export function buildParentDashboardFixture(
           {
             stripeCustomerId: "cus_mock_primary",
             covers: [
-              { gamerFirstName: "Aino", productName: "Minecraft Explorers Club" },
+              {
+                participantFirstName: "Aino",
+                productName: "Minecraft Explorers Club",
+              },
+              // The parent's own seat is billed to the same Stripe customer as
+              // their children's, so it is a line on the same account rather
+              // than a third one.
+              {
+                participantFirstName: PARENT.firstName,
+                productName: "Parents’ Minecraft Evening",
+              },
             ],
           },
           {
             stripeCustomerId: "cus_mock_migrated",
             covers: [
               {
-                gamerFirstName: "Aleksanteri-Johannes",
+                participantFirstName: "Aleksanteri-Johannes",
                 productName: "Rocket League Club",
               },
             ],
@@ -283,7 +333,27 @@ export function buildParentDashboardFixture(
       };
 
     case "new-family":
-      return { gamers: [], accounts: [] };
+      return { gamers: [], self: null, accounts: [] };
+
+    case "parent-only":
+      // No children and a seat of the parent's own. The add-a-child card is
+      // still the first thing on the page and is still a section — it just no
+      // longer *is* the page, which is the whole point of demoting it.
+      return {
+        gamers: [],
+        self: parentsOwnSection(clock),
+        accounts: [
+          {
+            stripeCustomerId: "cus_mock_single",
+            covers: [
+              {
+                participantFirstName: PARENT.firstName,
+                productName: "Parents’ Minecraft Evening",
+              },
+            ],
+          },
+        ],
+      };
 
     case "no-enrollments":
       // Two children so the repetition is visible — one empty section could
@@ -293,6 +363,7 @@ export function buildParentDashboardFixture(
           gamer(clock, GAMER_IDS.aino, "Aino", []),
           gamer(clock, GAMER_IDS.otso, "Otso", []),
         ],
+        self: null,
         accounts: [],
       };
 
@@ -323,24 +394,36 @@ export function buildParentDashboardFixture(
           gamer(clock, GAMER_IDS.linnea, "Linnea", [
             club(now, "mock-seven-linnea", "Stardew Valley Co-op Club", 4, "16:00"),
           ]),
-          // Signed up for nothing, like Otso in `busy-family` — kept empty here
-          // too because seven full sections would bury the thing this scenario
-          // exists to show, which is the nav above them.
+          // Signed up for nothing — the empty-child card's home is
+          // `no-enrollments`; kept empty here too because seven full sections
+          // would bury the thing this scenario exists to show, which is the
+          // nav above them.
           gamer(clock, GAMER_IDS.otso, "Otso", []),
           gamer(clock, GAMER_IDS.venla, "Venla", [
             club(now, "mock-seven-venla", "Terraria Builders Club", 6, "18:00"),
           ]),
         ],
+        // The half of the collapse worth looking at: seven children fold into
+        // one "Gamers" chip and the parent's own chip keeps its name beside it,
+        // because collapsing that one would have to fold a person into a label
+        // that says they are a gamer.
+        self: parentsOwnSection(clock),
         accounts: [
           {
             stripeCustomerId: "cus_mock_single",
             covers: [
-              { gamerFirstName: "Aino", productName: "Minecraft Explorers Club" },
               {
-                gamerFirstName: "Aleksanteri-Johannes",
+                participantFirstName: "Aino",
+                productName: "Minecraft Explorers Club",
+              },
+              {
+                participantFirstName: "Aleksanteri-Johannes",
                 productName: "Rocket League Club",
               },
-              { gamerFirstName: "Ilona", productName: "Roblox Studio Club" },
+              {
+                participantFirstName: "Ilona",
+                productName: "Roblox Studio Club",
+              },
             ],
           },
         ],
@@ -349,13 +432,61 @@ export function buildParentDashboardFixture(
   }
 }
 
-/** One child, with their enrollments run through the real ordering. */
+/**
+ * The parent's own section: a club they attend and a queue they are in.
+ *
+ * Two cards, chosen for the two things the self variant changes. The club is
+ * live, so its Join is lit — and on a self seat that Join is a plain link
+ * straight to the room rather than the switch-profile dialog a child's card
+ * opens. The waitlist place is what makes the leave dialog reachable, and that
+ * dialog is the one place on the page where the copy has to name *nobody*:
+ * "you'll lose your place", not "Marja will lose their place".
+ *
+ * No failing card and no cancellation here — Aino's card carries the first and
+ * Aleksanteri's the second, and putting a third alarm on the page would make
+ * the busy scenario a page of alarms rather than a page with alarms on it.
+ */
+function parentsOwnSection(clock: FixtureClock): ParentDashboardParticipant {
+  return gamer(clock, PARENT.id, PARENT.firstName, [
+    {
+      participationId: "mock-enrollment-parents-evening",
+      productName: "Parents’ Minecraft Evening",
+      productType: "consumer_club",
+      isRemote: true,
+      // Anchored to `now`, like Aino's: the one Join on this page that goes
+      // straight to a room should be the one that is lit while somebody is
+      // looking at it.
+      slots: [liveNowSlot(clock.now, 90, FIXTURE_TIMEZONE)],
+      startedDaysAgo: 42,
+      endsInDays: null,
+    },
+    {
+      participationId: "mock-enrollment-parents-pokemon-walk",
+      productName: "Family Pokémon GO Walk",
+      productType: "event",
+      isRemote: false,
+      slots: [futureSlot(clock.now, 6, "11:00", 120, FIXTURE_TIMEZONE)],
+      startedDaysAgo: 3,
+      endsInDays: 30,
+      siteName: CAMP_SITE_NAME,
+      waitlistPosition: 2,
+    },
+  ]);
+}
+
+/**
+ * One person's section, with their enrollments run through the real ordering.
+ *
+ * Named for the common case and used for the parent's own section too — the
+ * roll-up emits one shape for both, and a second builder here would only be a
+ * copy of this one with a different name on it.
+ */
 function gamer(
   clock: FixtureClock,
   id: string,
   firstName: string,
   specs: EnrollmentFixtureSpec[],
-): ParentDashboardGamer {
+): ParentDashboardParticipant {
   return {
     id,
     firstName,

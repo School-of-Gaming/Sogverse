@@ -2,7 +2,7 @@
 import { ImageResponse } from "next/og";
 import { BRAND, DARK_THEME, YTY_ELEMENT } from "@/lib/constants/colors";
 
-export const alt = "Sogverse - School of Gaming";
+export const alt = "School of Gaming – Sogverse";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

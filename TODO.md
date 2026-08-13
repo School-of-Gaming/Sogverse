@@ -16,7 +16,7 @@
 
 - [ ] **Per-participant volume slider — wiring removed; would be desktop-only if revived.** The discrete-zone redesign dropped the per-participant volume slider; the `element.volume`/`base` multiplier plumbing was then removed entirely when audio routing switched to a binary `element.muted` (zone in/out is the only control; see `src/lib/voice/audio-routing.ts`). **A volume slider can't work on iPhone:** iOS Safari ignores `element.volume` *and* the Web Audio `GainNode` path for WebRTC (volume is hardware-buttons-only), so a true per-participant volume would be desktop/iPad-only — reconsider whether it's worth a platform-split control before reviving it. To restore: bring back a per-remote multiplier (`isAudible` → a volume number on non-iOS), a `setParticipantVolume` action, and the slider; gate it off mobile.
 
-- [ ] **Restore per-action email notifications for group changes.** The apply route sends no emails (`src/app/api/admin/products/[id]/groups/apply/route.ts` has a comment saying so explicitly); the old groups flow notified affected gedus/gamers/parents. Now that each action auto-saves, wire notifications per action. This is the last parity gap with the old groups flow — a visible product with zero groups is fine (signups land in the Unassigned section, `participations.group_id` is nullable), so no zero-groups visibility warning or auto-hide is needed.
+- [ ] **The admin user-detail page shows nothing for a parent's own seat.** `src/app/(dashboard)/admin/users/[id]/page.tsx` was built when only gamers held group assignments: `assignedGamerIds` is `[userId]` for a gamer and `linkedGamers.map(...)` for a customer, never the customer's own id, and the "Assigned products" card is `isGamer`-gated. So an admin looking up a parent who holds a self seat (on a for-parents/family product) sees no trace of it, and a **childless** parent with a paid seat renders "No connected gamers" and nothing else — the same childless-parent case the comp-enroll picker and the parent dashboard were deliberately fixed for when parent seats shipped. This is the admin's support surface when a parent writes in about *their own* enrollment. The data is intact and visible from the product-side groups panel, so it is a lookup gap, not loss: include the customer's own id in the assignment read and render the products card for a customer with self seats (the row and RPC are already participant-keyed — no new query shape, just the id set and the render gate).
 - [ ] **Build the Minecraft join-check session-gating against the current product system.** `src/app/api/minecraft/join-check/route.ts` is a shell: it checks the API key, validates the uuid, and answers 501 to everything. Its original gating queried the now-dropped legacy product/groups tables, so it has not authorized anyone since; the dead lookup was removed rather than left limping, because it had no consumers and had to be rewritten anyway. The URL, its auth contract, and the public `/docs/minecraft-api` page are all still live, so this is a body to fill in, not a route to invent. Build it against the current schema: a gamer is allowed when they hold an active `participations` row on a product whose session window is open right now (and the participation covers it); a gedu is allowed via a `gedu_group_assignments` row on such a product. The window math lives in `@/lib/session-schedule` but is shaped for a single-slot product — a product has multiple `schedule_slots`, so that helper needs reworking too. **`/docs/minecraft-api` already documents the response contract** (`allowed`, `role`, `firstName`, `endTime`, `reason`) — treat it as the spec, and correct it if the rebuild lands somewhere else.
   - **Write it as an entitlement question, not an identity one — a Minecraft UUID does not name a single Sogverse user.** The `UNIQUE` on `minecraft_accounts.minecraft_uuid` was dropped so siblings can share one Minecraft account across two Sogverse accounts, which means a reverse lookup by UUID returns a **set of rows**, not one. The question to answer is *"does anyone holding this UUID have access to this server right now?"* — gather every linked user and allow if any of them qualifies; a single-row read breaks the moment a shared account appears. This is not a regression the drop introduced: no constraint could ever have told the server *which* sibling is at the keyboard. If a future feature genuinely needs the individual (per-gamer progress, attendance credit), it needs its own mechanism — an in-game selection, or matching against who currently holds an open session — not a database constraint.
 - [ ] **Pill clicks don't reflect the section in the URL — add a hash push (outbound only).** Both `src/components/layout/dashboard-section-pill.tsx` and `src/components/home/section-pill.tsx` intercept clicks with `e.preventDefault()` + `scrollIntoView({behavior:"smooth"})` and never push the hash, so the URL stays at `/parent` regardless of which pill is active and the position isn't shareable/bookmarkable.
@@ -49,10 +49,10 @@
   - **`AuthApiError: Invalid Refresh Token: Refresh Token Not Found`** from `serverless-middleware` (the proxy) on `/`, `/reset-password`, `/select-profile`. Routine `@supabase/ssr` dual-refresh: a visitor arrives with a stale/expired refresh-token cookie, the server refresh fails, they're treated as logged-out (responses are 200/307). Also its sibling `Too many concurrent token refresh requests` (409 conflict) — the browser/middleware refresh race. Drop both to `warn`/`info` where the proxy catches them.
   - **`generateLink error: User with this email not found`** on `/api/auth/forgot-password` — a reset requested for an unregistered email. The route correctly returns 200 (anti-enumeration); the log is the only noise. Drop to `info` or don't log.
 - [ ] **Consolidate hand-rolled badge pills onto the shared `<Badge>`.** ~11 places render a small status/label pill as a raw `<span>`/`<div>` (`rounded-full` + `px-` + `text-xs` + a bg tint) instead of `src/components/ui/badge.tsx`. **Root cause:** `<Badge>` only offers *solid* fills (`default/secondary/destructive/outline`) — no soft tints (`bg-primary/10`, `bg-destructive/20`) and no semantic `success`/`warning`/`info` tones, which is exactly what every hand-rolled one reaches for. So the high-leverage fix is **add soft/semantic variants to `<Badge>`** (e.g. a `tone` prop or `soft-*` variants, plus an `/admin/ui-components` demo), then fold the bespoke spans in. Strongest candidates, in order:
-  - **Product lifecycle status badge** — the `STATUS_STYLE` color map is duplicated *verbatim* across `src/components/admin/products/product-rows.tsx` (lines ~29-36, ~168) and `product-details-page.tsx` (lines ~49-56, ~238). Extract one map + a `<ProductStatusBadge>`. (Note: `product-details-page.tsx`'s visible/hidden pill was already migrated to `<Badge>` — the status pill sitting right next to it is the leftover.)
+  - **Product lifecycle status badge** — the `STATUS_STYLE` color map is duplicated *verbatim* between `src/components/admin/products/product-rows.tsx` and `product-details-page.tsx`, each with its own hand-rolled `<span>` rendering it. Extract one map + a `<ProductStatusBadge>`. (Note: `product-details-page.tsx`'s Listed/Unlisted pill was already migrated to `<Badge>` — the status pill sitting right next to it is the leftover.)
   - **Gedu person chip** (avatar + first name) — identical markup duplicated in `src/components/gedu/session-details/PeerGroupCard.tsx:67` and `AssignedGroupCard.tsx:78`. Embeds an `<Avatar>`, so it wants a shared composite, not a plain `<Badge>`.
   - **Soft-tint semantic pills** — `schools-browse.tsx` `StatusPill` (`:257`, `bg-primary/10`) and the HTTP status-code badges in `docs/minecraft-api/page.tsx` (~6 spans wanting success/warning/destructive tints). These unblock once `<Badge>` grows tinted variants.
-  - **Lower priority / bespoke** (icons or `text-[10px]`/uppercase sizing — case-by-case): `product-rows.tsx:176` hidden flag, `location-picker.tsx` type label on the selected-location card, `schools-browse.tsx` count pill, `voice/ZoneList.tsx:333` private-zone lock, `whatsapp/page.tsx:209` date divider. Also note a *good* existing pattern to consider folding into instead: `src/components/public/products/status-chip.tsx` (`StatusChip`, already has tones + sizes + optional icon). Own branch — bigger than a mechanical swap.
+  - **Lower priority / bespoke** (icons or `text-[10px]`/uppercase sizing — case-by-case): `product-rows.tsx`'s unlisted flag, `location-picker.tsx` type label on the selected-location card, `schools-browse.tsx` count pill, `voice/ZoneList.tsx:333` private-zone lock, `whatsapp/page.tsx:209` date divider. Also note a *good* existing pattern to consider folding into instead: `src/components/public/products/status-chip.tsx` (`StatusChip`, already has tones + sizes + optional icon). Own branch — bigger than a mechanical swap.
 - [ ] **Split subsystem-specific rules out of root `CLAUDE.md` into nested CLAUDE.md files.** Root CLAUDE.md is ~9k tokens and loaded on every turn. Claude Code lazily loads `CLAUDE.md` from any ancestor directory of a file being read/edited, so subsystem rules can live next to the code they govern — they cost zero tokens until that subtree is touched, and become *more* prominent (loaded alongside the code) when it is. Candidates, in rough ROI order:
 
   - **`src/components/voice/CLAUDE.md`** — done: the scheduled-room voice architecture now lives here (instant rooms in `src/components/voice/instant/CLAUDE.md`), with the Web Audio volume workaround folded in as a self-contained rule. The realtime-hook invalidation rule still lives at root under "Voice Chat". (Shipped via the docs→colocated-CLAUDE.md effort, which also moved layout, PIN, i18n, email, locations, whatsapp, and discord docs next to their code.)
@@ -67,6 +67,11 @@
   **Why this matters beyond token cost:** the bigger win is *relevance routing* — when I'm working on tokens code, the token rules load alongside the file and are the first thing I see; when I'm not, they're not in my way. Today every rule is mixed together at root and competes for attention. Estimated drop in always-on context: ~1.5–2k tokens.
 
   **How to verify after splitting:** open a file in each target subtree, check that `/context` shows the nested CLAUDE.md as loaded and the root file is correspondingly leaner. Confirm a sample rule (e.g., the `apply_group_changes` RPC rule) no longer appears in a fresh-session context dump until a `src/services/groups/*` file is touched.
+
+- [ ] **Minecraft Bedrock's Nintendo Switch link sends every user to the US store, and there is no single URL that fixes it.** The store row in `src/lib/products/topics.ts` points at `https://www.nintendo.com/store/products/minecraft-106679`, and the entry's own comment claims every link there "omits a locale and redirects by the visitor's region — correct from anywhere", naming only Amazon as the exception. That claim is false for Nintendo. **Verified from Finland, 2026-08-13**, in a browser and with curl, with and without a `fi-FI` `Accept-Language` header: it lands on `https://www.nintendo.com/us/store/products/minecraft-106679/` every time. Since every family this product serves is in Europe, the link is wrong for approximately all of them — and it fails *quietly*, returning 200 on a store the visitor cannot buy from, so no status-code check catches it.
+  - **Nintendo offers no geo-routing URL, and this is architecture rather than a URL nobody has found yet.** `nintendo.com/` does not redirect by location — it serves a manual `/region-selector/`. `nintendo.com/fi-fi/` 404s. Europe is *separate country domains* (`nintendo.fi`, `nintendo.se`), while the UK and France sit at `nintendo.com/en-gb/` and `nintendo.com/fr-fr/`, and the Americas at `nintendo.com/us/`. There are **three different URL grammars and three different product ids** across those regions — Nordic clean slugs, European `…-1386505.html`, US `minecraft-106679` — so there is no common identifier for any single link to route *to*. The four locale-matched pages all verified 200: `nintendo.fi/nintendo-switch-perhe/pelit/minecraft`, `nintendo.se/nintendo-switch-familjen/spel/minecraft`, `nintendo.com/en-gb/Games/Nintendo-Switch-games/Minecraft-1386505.html`, `nintendo.com/fr-fr/Jeux/Jeux-Nintendo-Switch/Minecraft-1386505.html`.
+  - **The obvious fix is wrong, which is why this is recorded rather than built: our locale is not the user's region.** Widening `GameStore` to carry a per-locale URL map looks like a clean answer and resolves cleanly against the locale the card already has — but locale is a *language preference* and Nintendo splits by *store region*. A Finnish family on holiday, an English-speaking parent living in Helsinki, a French speaker in Canada: each gets a confidently wrong store, and the error is invisible until someone cannot complete a purchase. A real fix needs an actual region signal, and we do not have one. The alternatives all cost something too: the region selector is correct for everyone and useful to nobody (it dumps a parent on a country list with no Minecraft on it), and hardcoding the Finnish page is right for most of the audience and silently wrong for the rest. **Rocket League already took the conservative route for this exact reason** — its per-platform list was dropped in favour of one link to the game's own global site, because a store row that 404s for half the audience is worse than a less specific link. Minecraft has no equivalent single page: `minecraft.net/get-minecraft` redirects to a *PC* product, so it cannot serve the Switch row.
+  - **Two smaller findings from the same investigation, so nobody re-derives them.** Apple's Bedrock link has a milder version of the same defect — its comment claims the id-only form is "correct from any country", and it lands on `/us/app/…` with dollar pricing; the practical harm is low because tapping an App Store link on a phone hands off to the App Store app, which uses the device's own storefront, but the written claim is false and should be corrected whenever this is touched. **Cleared, do not re-investigate:** PlayStation and `minecraft.net` are both fine. The PlayStation SKU is NA-prefixed (`UP4433-…`) and was suspected of the same regional split that broke Rocket League's, but it resolves on the Finnish store at `19.95` `EUR`. `minecraft.net` looked broken under curl and is not — it redirects on `Accept-Language`, exactly as its comment says, and a test that sends none is testing the wrong thing.
 
 ### Session calendar dropped from the product detail page — component preserved
 
@@ -106,32 +111,197 @@ Every supported country is seeded complete from GeoNames and admins never hand-t
 
 - [ ] **`/admin/users` needs real server-side pagination before the page gets heavy.** The *truncation* is fixed — every read the page depends on walks its pages now, and the capped search reports its true match count — so the page is correct at any table size. What it still does is fetch and render **every** profile client-side, building the parent↔gamer nesting maps in the browser. That is fine at prod's 482 profiles (2026-07-30) and merely wasteful in the low thousands; somewhere around ~5k it becomes real DOM weight and a payload nobody reads. The restructure was deliberately deferred rather than forgotten: paginate server-side, move search entirely to the server, and join each page's linked gamers and gedu verification per page instead of loading three whole tables to cross-reference them. Revisit when the profile count approaches ~5k, or sooner if the page starts feeling slow.
 
-### Deferred billing for future-start clubs
+### Admins can't see session notes, reports or attendance
 
-Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club signup is its own sub — see `docs/products-architecture.md`, "Billing"). Because every sub stands alone, a signup for a club whose `start_date` is in the future can defer its **first charge** to that date without affecting any of the family's other clubs — set `subscription_data.billing_cycle_anchor` (or `trial_end`) to the product's start moment on the Checkout Session in `src/app/api/checkout/products/create/route.ts`. €0 today, first full charge on the start date. This was impossible on the old shared family sub (one anchor for the whole family). Not built yet — deliberately deferred.
+Raised in the 2026-08-10 testing session. The admin product details page already
+carries everything about a product's *people* — the groups panel on it renders
+each group with its assigned gedus, its seated participants, the unassigned
+inbox and the waitlist. What no admin surface carries is what happened *in* the
+sessions: the session report families read, the gedu-only staff note, and the
+attendance sheet. Those exist only on the gedu session feed and — for the public
+report alone — on the family product page, neither of which an admin can reach.
 
-- [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. See the AskUserQuestion discussion that scoped this.
-- [ ] Parent-facing checkout copy must make "you won't be charged until {date}" explicit.
+Three reasons the gap bites:
 
-### Localize the subscription line-item name on the Stripe Checkout page
+- **Attendance doubles as pay confirmation**, so whoever signs off gedu invoices
+  cannot see the record the invoice is derived from.
+- A parent writing in about a session ("what did they actually do last Tuesday?")
+  is answerable only by asking the gedu.
+- Nothing tells an admin that a session ran and no report was ever written.
 
-**Core problem:** a parent should see their subscription named in the locale they expect, whenever the club has a translation for it. Today they don't — on the Stripe Checkout page for a *subscription*, the headline **line item** shows the cached Stripe Product's name, which `pickTranslationName` (`src/lib/stripe/participation-prices.ts`) resolves English-first (`en → fi → translations[0]`) with **no viewer step**. So a Finnish parent who saw "Minecraft-kerho" throughout the app — and now gets Finnish Checkout chrome and a Finnish subscription *description* (both shipped on `feat/checkout-locale`) — still sees the **line item** in English. Two languages for the same club, stacked on one page.
+- [ ] Decide where it hangs — another panel on the product details page, or its
+  own route — and build it as a third audience over the existing feed rows
+  rather than a second feed. The shared session-feed machinery already splits the
+  presentational feed from the role reading it, so the read is the work, not the
+  rendering.
+- [ ] Decide whether admins see the **gedu-only staff note**. They can read it in
+  the database either way; the question is whether the surface shows it, and
+  whether gedus are told it does — a note written under "families never see this"
+  is not the same promise as "nobody but gedus sees this".
 
-**Scope: subscriptions only.** Camps/events build their line item inline via `price_data.product_data.name` from the locale-aware `pickProductName`, so they already match the parent's locale. This seam exists *because* Stripe subscriptions must reference a persistent Price → Product, and we cache **one shared Stripe Product per club** (`ensureStripeProductForProduct`, found by `metadata.product_id`). That single Product carries one name, shared across all locales, frozen at first sub.
+### "Needs attention" — one admin surface for problems across the whole platform
+
+Raised in the 2026-08-10 testing session, where it surfaced from the family side
+first: gamers enrolled into a club nobody had assigned to a group, and no admin
+had any way to know. Its own project, not a panel someone adds in passing.
+
+Today every condition an admin must notice is discoverable only by opening the
+thing that has it. A club with unassigned gamers looks healthy in the products
+list — the only tell is opening its details page and finding the unassigned inbox
+non-empty. Same for a club with no gedu assigned, a session that ran without a
+report, a subscription in a payment-problem state, a gedu account waiting on
+verification. Each has a surface that shows it; none has a surface that
+*announces* it, so noticing is a matter of an admin happening to look.
+
+- [ ] **Decide the inventory of conditions before designing anything.** The value
+  is entirely in which checks exist, and each one is a judgement about whether it
+  is genuinely actionable or merely unusual — a list that cries wolf gets ignored
+  within a week and is worse than no list. Known candidates: unassigned
+  participants on a running product, a product with no gedu, a past session with
+  no report, an unverified gedu awaiting approval, a family subscription in a
+  payment-problem state, a waitlist with free seats above it.
+- [ ] **Decide where it lives and how it stays cheap.** A dashboard section is the
+  ask, but every condition is a query and the surface loads on every admin visit
+  — so it wants one aggregate read (a view or an RPC returning counts plus enough
+  identity to link through), not a fan-out of per-condition queries.
+- [ ] Each entry links straight to the thing that needs fixing, so the surface is
+  a work queue rather than a report.
+
+### Prod database backups — there are none today
+
+Investigated 2026-08-13. Both Supabase projects (prod `sogverse`, staging) are on the
+**free tier, which takes no automatic backups at all** — an accidental prod data loss
+today is unrecoverable except by reconstructing from secondary sources (Stripe has the
+billing side; profiles, participations and session reports live only in that one
+Postgres). The CLI's `backups list` showing `WALG: true` is just the infrastructure
+mode — PITR is off and both retention timestamps read 0. Deliberately deferred, not
+forgotten: the exposure is real but small (545 users), and the fix is cheap whenever
+it's picked up.
+
+Facts established, so they don't need re-deriving:
+
+- **Size is a non-issue.** Prod is 62 MB total, and over half is regenerable reference
+  data (`locations` 32 MB + `postal_codes` 7 MB); real user data is a few MB. A
+  compressed `pg_dump` lands around 5–15 MB, so even 90 days of daily dumps stays
+  under ~1.5 GB. Any dump must include the `auth` schema (users, identities) alongside
+  `public` — losing auth rows is the same disaster as losing profiles, and the
+  `postgres` role we connect with can read both.
+- **Supabase Pro** ($25/mo, org-based) buys daily backups with 7-day retention and
+  dashboard restore — but restore is all-or-nothing (whole DB, project down during),
+  physical backups aren't downloadable, and Storage-API objects aren't covered. Billing
+  wrinkle: all three projects (prod, staging, sandbox) share one org, and upgrading it
+  puts every project on paid compute (~$45/mo total). The standard dodge is **moving
+  prod to its own org** and upgrading only that ($25/mo flat, credits cover its Micro).
+  PITR (restore to the second) is a separate add-on at $100/mo per 7 days — overkill
+  at current scale.
+- **DIY option ($0): nightly GitHub Actions cron** running
+  `pg_dump | zstd | age -e -r <public key>`, uploading the *ciphertext* as a workflow
+  artifact (retention up to 90 days). The `age` private key stays offline with Kyle
+  (password manager), so GitHub only ever holds encrypted bytes — its US residency
+  stops mattering for GDPR. Unlike Supabase's physical backups, dumps are downloadable
+  and selective (restore one table / grep out three rows — what an "oops" recovery
+  actually needs). Alternatives if longer retention or GitHub-independence is ever
+  wanted: an S3 bucket in `eu-north-1` (same region, cents/month, lifecycle rules) or
+  a second dedicated Supabase project's Storage bucket — never the prod project itself.
+
+- [ ] Pick one (DIY dump job and Pro aren't redundant — the dump gives selective
+  restore and an offsite copy, Pro gives a zero-maintenance floor; the likely path is
+  the free dump job now, Pro when revenue justifies it) and build it. If the dump job:
+  workflow file, `age` keypair setup, DB password into GH secrets, and a **documented,
+  test-run restore procedure** — an untested backup is the other classic failure mode.
+
+### Deferred billing for future-start clubs — the follow-ups
+
+Deferred-start billing itself (a future-start consumer club's sub first-charges at `subscription_data.billing_cycle_anchor` + `proration_behavior: 'none'` on the Checkout Session — the anchor is the club's start instant, clamped to ~1 month out for early buyers) is decided work. Two pieces were deliberately kept out of it:
+
+- [ ] **Sync existing subscriptions when an admin edits a future-start club's `start_date`.** Until this is built, the correction is **manual in the Stripe dashboard** (the admin form and a comment at the anchor-setting code both say so), and a saved date change silently leaves every existing signup first-charging on the *old* date. The design was worked out in advance (2026-08-12, partly Stripe API-verified) so nothing needs re-deriving:
+  - **The Stripe call is `trial_end`, counter-intuitively.** `billing_cycle_anchor` on a subscription *update* only accepts `'now'`/`'unchanged'` — a future timestamp cannot be set after creation. The documented lever that can move the first charge of a live sub is `subscriptions.update(id, { trial_end: <new instant>, proration_behavior: 'none' })`: per the API reference it overwrites any trial and **moves `billing_cycle_anchor` to the `trial_end` value**, so the monthly charge day follows the new date. Cosmetic cost: the sub reads `trialing` until then (our webhook already maps that to local `active`). Cap: two years. **Verify the exact behaviour in test mode when building** — the anchor-move semantics are documented but were not probed.
+  - **Finding the subs needs a live Stripe read.** A waiting-for-anchor sub is locally indistinguishable from a billing one (both `active` with a future period end). The discriminator is on Stripe: with prorations disabled, **no invoice exists until the anchor**, so `latest_invoice === null` on retrieve means the first charge hasn't happened. Iterate the product's `family_subscriptions` rows, retrieve each, update only the never-invoiced ones. The live check is also the safety filter: an already-billed sub is never touched. Club seat counts make the loop small.
+  - **Risk profile:** idempotent (re-running converges), and the worst failure mode — a sub keeps the old date — is exactly the manual status quo. Report a tally to the admin ("4 updated, 1 failed — fix in Stripe") rather than failing the product save.
+  - **Edges decided in advance:** date moved to today/the past → `trial_end: 'now'` charges every family immediately, so that path needs an explicit admin confirm, never a silent side effect of saving. Date moved after billing started → untouched (refund territory; the edit is nonsensical anyway) — warn, don't touch. In-flight Checkout sessions created before the edit complete with the old anchor; the window is bounded by the session lifetime and a re-run covers it. The finance `delivery_start` metadata snapshot on existing subs/invoices goes stale — accepted, it is a snapshot by design. The clamp means early buyers' anchors aren't the start date anyway — the sync only needs to correct subs whose anchor *was* the old start date; clamped anchors are already unrelated to it (simplest rule: recompute each sub's anchor with the new date under the same clamp, using the original purchase moment is unnecessary — `min(new start instant, now + clamp)` from the sync moment is fine).
+- [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. Moot while the start-mode form lock pins every product to date-start. See the AskUserQuestion discussion that scoped this.
+
+### Family multi-select checkout — one flow for several family members
+
+Today one seat is one flow: a parent buying for themselves and two children goes through
+signup three times, exactly as buying for three children does. Now that a parent can hold a
+seat of their own (see `docs/products-architecture.md`, "Audience"), the case is a little
+commoner than it was — a family event where everybody goes is the shape that wants it — so
+it is recorded rather than dropped.
+
+**Deliberately deferred, and twice narrowed without getting tight enough to build.** The
+second narrowing was to the money-free variant only (free events, external-contract
+municipality clubs), where an atomic multi-insert avoids Stripe entirely and the whole
+thing is one RPC. Even that variant does not escape the product decision below, which is
+why it was kept out rather than shipped small.
+
+- [ ] **Decide the seat-shortfall behaviour — this is the blocker, not the plumbing.** One
+  seat left, two family members selected: is it all-or-nothing with an error that says so,
+  or does it place one and put the other on the waitlist? The first is predictable and
+  refuses a parent something they could have had; the second gets everyone a place of some
+  kind and silently splits the family across two states in a flow they asked to be one.
+  Both are defensible and neither is obviously right, which is exactly why nothing was
+  built.
+- [ ] Once decided, build the **free path first** — it is the natural follow-up shape, and
+  nothing in the shipped schema resists an atomic multi-insert RPC: seats are keyed by
+  participant, the uniqueness and the seat count are per row, and the product lock already
+  serializes the whole transaction. The paid path is a separate question (one Checkout
+  Session covering several seats, and what a partial failure means there).
+
+### Localize the line-item name on the Stripe Checkout page
+
+**Core problem:** a parent should see what they're buying named in the locale they expect, whenever the product has a translation for it. Today they don't — the headline **line item** on the Stripe Checkout page shows the cached Stripe Product's name, which is resolved at `DEFAULT_LOCALE` (`en`) rather than at the viewer's locale, so the fallback chain collapses to `en → first translation` with **no viewer step**. So a Finnish parent who saw "Minecraft-kerho" throughout the app — and now gets Finnish Checkout chrome and a Finnish subscription *description* — still sees the **line item** in English. Two languages for the same product, stacked on one page.
+
+**Scope: all paid products** (was "subscriptions only"). Camps and events used to escape this by building their line item inline via `price_data.product_data.name` at the parent's locale. That exemption is gone: they now reference the same shared Stripe Product as clubs, deliberately trading the localized name for a coherent product catalogue and a correct VAT tax code. Scope this work as all paid products, not just subscriptions.
+
+The seam exists *because* Stripe subscriptions must reference a persistent Price → Product, and we keep **one shared Stripe Product per product** (`ensureStripeProductForProduct`, found by `metadata.product_id`) — clubs, camps and events alike. That single Product carries one name, shared across all locales, set at first sale and thereafter reconciled to `DEFAULT_LOCALE` on later purchases (camps/events every purchase, clubs on first sale or price change).
 
 **Hard limitation that caps the value of any fix:** a live subscription's line item is bound to its Price → Product, which is **immutable**. So any fix only makes the name match **at signup**; if the parent later switches their app language, the existing sub's line item stays in the language they bought in. Stripe cannot retranslate a live sub.
 
 **Two ways to fix, if/when picked up:**
-- **A1 — per-locale cached Products/Prices.** Migrate `product_subscription_prices` PK `(product, currency)` → `(product, currency, locale)` (+ `locale` column, backfill `'en'`); thread the parent's resolved locale through `getOrCreateSubscriptionPrice` / `ensureStripeProductForProduct` (name via `pickTranslationName(translations, locale)`); route passes locale. Keeps **Stripe Product ≈ club**, so native Dashboard "revenue by Product" club reporting still works. Cost: a migration + Stripe objects multiply by `locale × currency` (lazy).
-- **A2 — inline `price_data` per checkout (no migration).** In the sub branch, replace `line_items: [{ price: cachedPriceId }]` with inline `price_data` (currency + `unit_amount` + `recurring: {interval:'month'}` + `product_data:{ name: localizedName }`), mirroring the single-payment branch. Stripe mints a fresh Product+Price per checkout, named in the parent's resolved locale. Contained to the route + tests. **Cost: every subscription becomes its own Stripe Product** (Products scale with subscribers, not clubs) — which *removes Stripe's native per-club Product reporting* (Dashboard "by Product" becomes one row per subscriber; club rollups would need Stripe Sigma grouping by metadata `productId`, or our own DB).
+- **A1 — per-locale cached Products/Prices.** Migrate `product_subscription_prices` PK `(product, currency)` → `(product, currency, locale)` (+ `locale` column, backfill `'en'`); thread the parent's resolved locale through `getOrCreateSubscriptionPrice` / `ensureStripeProductForProduct` (name via `resolveTranslation(translations, locale)`); route passes locale. Keeps **Stripe Product ≈ product**, so native Dashboard "revenue by Product" reporting still works, and every minted Product still carries its VAT tax code. Cost: a migration + Stripe objects multiply by `locale × currency` (lazy).
+- **A2 — inline `price_data` per checkout (no migration).** Replace `line_items: [{ price: cachedPriceId }]` with inline `price_data` (currency + `unit_amount` + `recurring: {interval:'month'}` + `product_data:{ name: localizedName }`). Stripe mints a fresh Product+Price per checkout, named in the parent's resolved locale. **Read the warning below before picking this.**
 
-**Stripe limits checked (not a blocker):** Stripe imposes **no cap** on the number of Products/Prices; only rate limits (25 req/s endpoint, 20/s Search — A2 actually *drops* the per-checkout `products.search` call) and a 20-items-**per-subscription** cap (irrelevant — our subs are single-item). So A2's object proliferation won't break anything; its only real cost is the reporting one above.
+  **Warning — A2 reverses a deliberate decision and can reintroduce a VAT bug.** The finance-data work moved *away* from inline products precisely so every product carries an explicit `tax_code`; without one, Stripe falls back to the account default and camps get billed at the standard 25.5% instead of the reduced 13.5% — which is the bug that shipped once already and cost real margin. If A2 is adopted, the inline product **must** set `product_data.tax_code` from the same mapping (verified to work: an inline product retains its tax code, its inclusive tax behaviour and its localized name). Two further costs: **every subscription becomes its own Stripe Product** (Products scale with subscribers, not products), which *removes Stripe's native per-product reporting* — club rollups would need Stripe Sigma grouping by metadata, or our own DB — and a product only exists once someone has bought it, which removes the pre-sale "is this camp categorised correctly?" check that finance relies on.
+
+**Stripe limits checked (not a blocker):** Stripe imposes **no cap** on the number of Products/Prices; only rate limits (25 req/s endpoint, 20/s Search) and a 20-items-**per-subscription** cap (irrelevant — our subs are single-item). So A2's object proliferation won't break anything; its real costs are the VAT and reporting ones above. Note the Search-call arithmetic: *every* paid checkout now performs a `products.search`, one-off and subscription alike, so A2 would drop that call rather than avoid adding one.
 
 **Reporting prerequisite for A2 (also a standalone bug):** subscription **renewal** payments (`handleInvoicePaid`) write metadata `{ stripeSubscriptionId, billingReason }` with **no `productId`** — club attribution relies on joining `stripe_subscription_id → family_subscriptions → participation_id → participations.product_id`, a chain that's **hard-deleted on cancellation**. So renewals of cancelled subs are already un-attributable to a club from our DB. A2 removes the Stripe-native fallback, so before adopting it we'd need to stamp `productId` (+ `gamerId`) onto renewal payment metadata. Worth doing regardless of the locale decision.
 
-**Deferred deliberately** — current customer base is small enough that the English line item is an acceptable edge for now. Recorded so the tradeoff (A1 keeps club-level reporting; A2 is less code but trades it away) is captured when someone revisits.
+**Deferred deliberately** — the customer base is small enough that the English line item is an acceptable edge for now. That judgement was made when this affected subscriptions only; it now affects camps and events too, so the surface is wider than when it was first accepted, and camps are the products families buy in a burst each spring. Recorded so the tradeoff (A1 keeps product-level reporting and the tax code; A2 is less code but trades reporting away and must carry the tax code by hand) is captured when someone revisits.
 
-### Re-enabling non-EUR currencies
+### Localized, page-specific SEO metadata (descriptions + OG text) for indexable pages
+
+Part of a larger future scope: SEO and AI discoverability. Becomes *visible* once
+locale-prefix routing lands (see `docs/plans/` while that work is open): today crawlers send
+no cookies and can only ever see English, so English metadata is invisible — but once
+`/fi/…` URLs exist with `hreflang` pointing at them, an English meta description or OG block
+on a Finnish URL is a user-visible inconsistency in search snippets and share cards, sitting
+right next to the localized OG image that ships with the routing work.
+
+State of the 33 `generateMetadata` files (audited 2026-08-10):
+
+- **Titles are already translated everywhere** (the `metadata.pages` namespace). No work there.
+- **The auth pages are the worst offenders and ARE indexable** — `/login` and `/register`
+  are in the sitemap, and e.g. the login page carries a fully hardcoded English
+  `description` + `openGraph` block.
+- **Public pages mostly have the opposite gap: no per-page description at all** — e.g. the
+  shop sets only a title and inherits the root layout's generic (already-translated) site
+  description. Their need is page-specific *copywriting*, not just translation.
+- **Login-gated pages (dashboards, voice) have scattered hardcoded English descriptions**
+  (`"Join a voice session"`), but crawlers never fetch them.
+
+The agreed shape when picked up:
+
+- **Indexable pages (public + auth)**: author a page-specific description (+ OG text where a
+  page earns it) through the `metadata` namespace, translated across all locales —
+  roughly 15 pages of real copy × 4 locales, guarded by the completeness CI.
+- **Login-gated pages**: keep the translated title, **delete** the hardcoded
+  `description`/`openGraph` fields rather than translating them — they inherit the root's
+  translated description and serve no crawler.
+- Natural companions in the same sweep: per-route OG images (deliberately left out of the
+  locale-routing scope), and whatever AI-crawler affordances we decide to care about
+  (e.g. `llms.txt`-style surfaces) — scope those when picked up.
 
 The platform is deliberately locked to EUR. Admins author prices in EUR, customers see EUR, and our records (`payments`, `family_subscriptions`) are in EUR. Stripe Checkout's **Adaptive Pricing** (enabled in `src/app/api/checkout/products/create/route.ts`) already presents each customer their local currency and settles us in EUR at the price we set — so "buy in another currency" works today without us modelling other currencies internally.
 
@@ -290,7 +460,7 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 ## Waitlist — the parent/gamer side
 
 A waitlisted seat is a state of the shared enrollment card on both dashboards, and
-its leave affordance has a backend. Two open questions remain:
+its leave affordance has a backend. One open question remains:
 
 - [ ] **The waitlist copy promises an email nobody sends.** The card's footer
   reassurance and the confirmation page's `next1` both say we'll email the moment a seat opens.
@@ -298,64 +468,3 @@ its leave affordance has a backend. Two open questions remain:
   notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
-- [ ] **Decide what promotion looks like to a parent.** `promote_from_waitlist`
-  flips the row to `active` with no payment step, and from the parent's side the card
-  silently changes state where it stands — into the running state if the promotion placed
-  the child in a group, or into the awaiting-placement state if it did not, which is a
-  second silent transition nobody has designed either. (The
-  "free seat on a paid product" hazard this could imply is unreachable today — caps are
-  muni-only and a muni club can't become paid; it's recorded as part of the cap unlock's
-  cost in the re-lock section below.) If the answer is ever "a seat opened — claim it by
-  {date}" rather than "you're in", that's a new card state (offer + expiry +
-  accept/decline) and it's much cheaper to design before the card hardens.
-
-## Event seat caps + waitlist: re-locked until the shop surface can express fullness
-
-The admin product form briefly unlocked the seat cap and the waitlist toggle for **free**
-events, then re-locked them (`src/components/admin/products/form-locks.ts`; events keep
-their `registrationTiming` unlock). The seat gate was never the blocker — a free signup
-validates the cap and writes its `active` row in one locked transaction, never touching
-Stripe Checkout, exactly like a municipality registration. The blocker is the
-**parent-facing shop**: nothing on the browse card or the pre-open panel can say a
-non-muni product is full, so an admin capping an event would publish a page that fills up
-and still reads as open. Unlocking again is a shop change first and a one-line form change
-second.
-
-- [ ] **A fullness affordance on the browse card for capped non-muni products.** Today the
-  seat bar is muni-only, and the `full_waitlist` state renders the same generic "View" CTA
-  an open product does — a full event with a waitlist is visually identical to one with
-  seats left. Whether that becomes the seat bar generalised, a state-aware CTA, or a
-  fullness pill is the open design question. **Constraint from the owner: the card must
-  *not* carry a "waitlist available" line for products that aren't capped** — the
-  affordance is for the full state, not an always-on advertisement of the waitlist.
-- [ ] **The card's seat hint shows capacity, not seats left.** "{count} seats" prints the
-  cap, so on a full product it prints a number that is exactly wrong. It has to be
-  seats-remaining (and say something else at zero).
-- [ ] **The pre-open → open panel swap mounts the seat bar above the CTA, late — and the
-  two halves flip on different clocks.** The countdown enables the button on its own
-  1-second tick, but the panel-variant swap that mounts the seat bar rides the 30-second
-  `useNow` tick — so the Join button goes live within a second of the drop and the seat
-  bar is then inserted *above* it up to 29s later, shoving it down under the cursor. That
-  is a data-schedule shift, which the layout rule in `CLAUDE.md` forbids outright — the
-  seat bar's box has to be settled before the button becomes clickable, not inserted
-  after it.
-- [ ] **Waitlist purchase-confirmation copy is club-shaped.** It tells the parent their
-  gamer is queued "for the whole term", which is nonsense for a single-date event. Key it
-  by product type like the panel's other action strings, in all five locales.
-- [ ] **No capped / full / waitlist event fixtures exist in the style guide**, so none of
-  the above can be signed off visually before it is wired. Add the states (capped with
-  seats left, full with a waitlist, full without one) to the card and panel demos.
-- [ ] **Optional hardening, raised in review, both cheap and both currently unreachable:**
-  a lifecycle/billing-mode guard on `join_waitlist` (a migration — nothing stops a row
-  joining the queue of a product that can no longer honour it), and a visible error on the
-  `'full'` race outcome (the signup path can lose the last seat between the gate and the
-  write, and the panel currently just re-enables the button saying nothing).
-- [ ] **The form-side change, once the above lands.** Give `formLocksFor` back its
-  free/paid parameter so the lock can track the money instead of the type, unlock
-  `seatCount`/`waitlist` for free events only, and restore the free→paid handler that
-  clears a cap the flip is about to lock away. Both were deleted in the re-lock rather than
-  left inert; their unit tests are in `tests/unit/components/products-form-locks.test.ts`
-  and git history has the originals. Also re-decide `promote_from_waitlist`'s missing
-  billing-mode guard at that point: with a cappable type whose billing mode can change
-  under a live queue, promoting a stranded row would grant an unpaid seat on a paid
-  product (see the seat-gate section of `docs/products-architecture.md`).

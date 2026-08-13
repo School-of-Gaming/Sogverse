@@ -21,13 +21,13 @@ import type {
   ProductAdminDetailRow,
   UpdateProductInput,
 } from "@/services/products";
-import { parseLongDescription } from "@/types";
 import type { ProductType } from "@/types";
 import { formLocksFor } from "./form-locks";
 import {
   effectivePricingShape,
   FIXED_TIMEZONE,
   locationPickerMode,
+  offersUncapped,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
@@ -48,6 +48,9 @@ export type ValidationKey =
   | "translationIncomplete"
   | "topicRequired"
   | "spokenLanguageRequired"
+  | "audienceRequired"
+  | "minAgeRequired"
+  | "maxAgeRequired"
   | "minAgeInvalid"
   | "maxAgeInvalid"
   | "municipalityRequired"
@@ -57,6 +60,7 @@ export type ValidationKey =
   | "startDateRequired"
   | "endDateRequired"
   | "thresholdInvalid"
+  | "seatCountRequired"
   | "seatCountInvalid"
   | "priceSessionMissing"
   | "priceSessionNegative"
@@ -141,12 +145,33 @@ export function validate(
   }
 
   if (!state.topic) return err("topicRequired");
-  if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
-  const minAge = Number(state.minAge);
-  const maxAge = Number(state.maxAge);
-  if (!Number.isInteger(minAge) || minAge < 0) return err("minAgeInvalid");
-  if (!Number.isInteger(maxAge) || maxAge < minAge) return err("maxAgeInvalid");
+  // A product with no audience at all is refused by a CHECK on `products`, and
+  // the Audience section makes the state unreachable by refusing to release the
+  // last remaining tick. This is the backstop, stated where every other rule
+  // about a submittable form is stated rather than living only in a `disabled`
+  // attribute one refactor away from disappearing.
+  if (!state.forGamers && !state.forParents) return err("audienceRequired");
+
+  // Ages are a property of the gamer audience and of nothing else, so they are
+  // required exactly when For gamers is ticked — and not looked at otherwise,
+  // since the fields are hidden then and the payload builder sends null whatever
+  // they still hold. Emptiness is checked before parsing: `Number("")` is 0, so
+  // a blank box would otherwise sail through as a perfectly valid age of zero.
+  // A blank field gets its own sentence for the same reason the seat count does
+  // — nothing was typed, so nothing is wrong with what was typed.
+  if (state.forGamers) {
+    if (state.minAge.trim() === "") return err("minAgeRequired");
+    if (state.maxAge.trim() === "") return err("maxAgeRequired");
+    const minAge = Number(state.minAge);
+    const maxAge = Number(state.maxAge);
+    if (!Number.isInteger(minAge) || minAge < 0) return err("minAgeInvalid");
+    if (!Number.isInteger(maxAge) || maxAge < minAge) {
+      return err("maxAgeInvalid");
+    }
+  }
+
+  if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
   const showLocationPicker =
     locationPickerMode(config, state.isRemote) !== null;
@@ -179,9 +204,15 @@ export function validate(
 
   const billingMode = effectiveBillingMode(config, state.paidMode);
 
-  // Any product type may be uncapped (seat_count = null); only validate the
-  // count when the admin chose a limited number of seats.
+  // A cap is optional everywhere but municipality clubs, so the count is only
+  // validated once the admin is capped — but *once capped it is required*, and
+  // a blank box gets its own message. "Seat count must be a positive integer"
+  // is the wrong sentence for an empty field: nothing was typed, so nothing is
+  // wrong with what was typed. Municipality clubs are always capped (their
+  // `uncapped` is pinned false on load), which is what makes a stored uncapped
+  // muni row demand a number on its next save.
   if (!state.uncapped) {
+    if (state.seatCount.trim() === "") return err("seatCountRequired");
     const seat = Number(state.seatCount);
     if (!Number.isInteger(seat) || seat < 1) return err("seatCountInvalid");
   }
@@ -243,6 +274,15 @@ export function validate(
   }
 
   return null;
+}
+
+/**
+ * A typed age as a number, or `null` for an empty box — never `Number("")`'s
+ * zero, which is a real age the DB would happily store.
+ */
+function ageOrNull(value: string): number | null {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : Number(trimmed);
 }
 
 /** A "fee" amount is valid only as a real positive number of cents. */
@@ -348,8 +388,23 @@ function buildSharedFields(
   const showPricing =
     billingMode === "paid" && config.pricingShape !== "external";
 
-  const minAge = Number(state.minAge);
-  const maxAge = Number(state.maxAge);
+  // Ages belong to the gamer audience: a product nobody's child can take a seat
+  // on carries no range at all rather than a sentinel adult one, and `null` here
+  // reaches the RPC as an *omitted* argument, whose DEFAULT NULL writes the SQL
+  // NULL the age CHECK demands of a parents-only product.
+  //
+  // Derived from the audience flag rather than cleared when the checkbox flips —
+  // the same shape the waitlist tick below uses, and for the same two reasons: a
+  // range the admin typed survives an accidental untick for as long as the form
+  // is open, and one gate on the write beats one on every path to it, including
+  // a stored row whose ages and audience disagree.
+  //
+  // `Number("")` is 0, so emptiness is answered before parsing, never after —
+  // otherwise a blank box submits as an age of zero. validate() already refuses
+  // a blank age on a for-gamers product, so that branch is unreachable from the
+  // form; it is written for the value it emits, not for the case it handles.
+  const minAge = state.forGamers ? ageOrNull(state.minAge) : null;
+  const maxAge = state.forGamers ? ageOrNull(state.maxAge) : null;
   // Uncapped (no seat limit) → null for any product type; otherwise the count.
   //
   // The waitlist is derived from the same answer rather than submitted as the
@@ -363,6 +418,14 @@ function buildSharedFields(
   // before this rule, or the column's own default) is corrected by the next
   // save of anything at all. The state flag is deliberately left alone, so an
   // admin toggling Unlimited and back finds their tick still there.
+  //
+  // What sending `false` here does, server-side: `update_product` DELETES every
+  // waitlisted participation on the product (00171), sparing only a row that
+  // carries a live subscription. Silently — no confirmation, no email — by
+  // owner decision, on the reasoning that the same edit opens seats, so a
+  // dropped family can sign up again through the front door. Both branches of
+  // this line reach it: unticking the box and choosing Unlimited are one wire
+  // shape by the time the RPC sees them.
   const seat = state.uncapped ? null : Number(state.seatCount);
   const waitlist = state.uncapped ? false : state.waitlistEnabled;
 
@@ -376,18 +439,17 @@ function buildSharedFields(
   for (const locale of SUPPORTED_LOCALES) {
     const v = state.translations[locale];
     if (!v) continue;
-    // Trim each block's text and drop any that end up empty — a half-typed
-    // block (heading added, text not filled) must neither block submit nor
-    // trip the DB's non-empty-text CHECK. An all-empty result becomes null
-    // ("no long description"), matching how the RPC folds it to SQL NULL.
-    const blocks = v.longDescription
-      .map((b) => ({ type: b.type, text: b.text.trim() }))
-      .filter((b) => b.text.length > 0);
+    // A cleared editor does not serialise to "" — an empty ProseMirror document
+    // still round-trips through the markdown serialiser as whitespace — so the
+    // blank check is on the trimmed value, and a blank one becomes null ("no
+    // long description"). Sending "" instead would trip the column's CHECK,
+    // which exists precisely so there is one spelling of empty.
+    const longDescription = v.longDescription.trim();
     translations.push({
       locale,
       name: v.name.trim(),
       short_description: v.shortDescription.trim(),
-      long_description: blocks.length > 0 ? blocks : null,
+      long_description: longDescription === "" ? null : longDescription,
     });
   }
 
@@ -402,8 +464,19 @@ function buildSharedFields(
     billing_mode: billingMode,
     translations,
     topic,
+    // Round-tripped from state, never defaulted here: on an edit these carry
+    // the product's own audience back to an RPC that assigns every editable
+    // column, so a hardcoded pair would silently rewrite it.
+    for_gamers: state.forGamers,
+    for_parents: state.forParents,
     min_age: minAge,
     max_age: maxAge,
+    // Round-tripped from state like the audience pair above, and for a sharper
+    // version of the same reason: the RPC parameter is DEFAULT NULL, so a tag
+    // left out of the payload does not preserve the stored one — it clears it.
+    // Sending state's answer on every save, including the `null` that means
+    // untagged, is what makes clearing something an admin chose.
+    tag: state.tag,
     spoken_language_code: state.spokenLanguageCode,
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
@@ -471,11 +544,14 @@ function buildSharedFields(
 /**
  * Build the request payload for /api/admin/products/create.
  *
- * The form always creates products as `pending` regardless of visibility.
- * `is_visible` is the sole knob the form exposes for "should parents see
- * this?". `draft` is reserved in the schema for a future "save incomplete
- * product" flow — it means *fields are missing*, not *hidden*. See
- * docs/products-architecture.md § "Status vs. visibility".
+ * The form always creates products as `pending` — the first state of the
+ * lifecycle, and the only one a product can be created in. `is_visible` is a
+ * separate axis and answers a narrower question than its name suggests: it
+ * decides whether the product is *listed* on the shop and schools pages, not
+ * whether anyone may see or buy it. An unlisted product is reachable, readable
+ * and purchasable by direct link, which is what makes it usable for a campaign
+ * or an unannounced cohort. See docs/products-architecture.md § "Lifecycle &
+ * listing".
  */
 export function buildCreateInput(
   state: FormState,
@@ -605,7 +681,7 @@ export function existingFormState(
       translations[t.locale] = {
         name: t.name,
         shortDescription: t.short_description,
-        longDescription: parseLongDescription(t.long_description),
+        longDescription: t.long_description ?? "",
       };
       translationLocales.push(t.locale);
     }
@@ -678,8 +754,16 @@ export function existingFormState(
     // product itself. No row at all is the ordinary "no lesson link" case.
     materialUrl: product.product_staff_details?.material_url ?? "",
     image: product.image_path ?? null,
-    minAge: String(product.min_age),
-    maxAge: String(product.max_age),
+    forGamers: product.for_gamers,
+    forParents: product.for_parents,
+    // `String(null)` is the string "null", which the payload builder would then
+    // parse back to NaN — so an absent age becomes the empty field it is,
+    // never a stringified null.
+    minAge: product.min_age == null ? "" : String(product.min_age),
+    maxAge: product.max_age == null ? "" : String(product.max_age),
+    // Straight through: the column is already `ProductTag | null` and the
+    // picker's "no tag" option *is* null, so there is nothing to translate.
+    tag: product.tag,
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,
@@ -700,7 +784,11 @@ export function existingFormState(
     paidMode,
     prices,
     seatCount: product.seat_count != null ? String(product.seat_count) : "",
-    uncapped: product.seat_count == null,
+    // Municipality clubs have no uncapped option, so a stored `seat_count null`
+    // on one loads as capped-with-a-blank-number rather than as a state the
+    // form cannot show. Validation then refuses the save until the contracted
+    // figure is typed — the heal-on-write the cap requirement is delivered by.
+    uncapped: offersUncapped(config) && product.seat_count == null,
     waitlistEnabled: product.waitlist_enabled,
     primaryGeduFee: primaryGeduFeeDraft(product.primary_gedu_fee_cents),
     assistantGeduFee: assistantGeduFeeDraft(product.assistant_gedu_fee_cents),

@@ -67,6 +67,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
         ]
       }
       family_subscriptions: {
@@ -118,6 +125,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "family_subscriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "family_subscriptions_participation_id_fkey"
             columns: ["participation_id"]
             isOneToOne: true
@@ -153,6 +167,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "feedback_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
         ]
       }
       gamer_profiles: {
@@ -177,6 +198,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
         ]
@@ -206,6 +234,13 @@ export type Database = {
             columns: ["gedu_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_assignments_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -249,6 +284,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "gedu_locations_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "gedu_locations_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
@@ -285,10 +327,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "gedu_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "gedu_profiles_verified_by_fkey"
             columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_profiles_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
         ]
@@ -342,6 +398,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "group_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "group_sessions_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
@@ -353,6 +416,13 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
         ]
@@ -461,6 +531,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "minecraft_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
         ]
       }
       parent_gamer: {
@@ -494,10 +571,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "parent_gamer_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "parent_gamer_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_gamer_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
         ]
@@ -506,9 +597,9 @@ export type Database = {
         Row: {
           created_at: string
           customer_id: string
-          gamer_id: string
           group_id: string | null
           id: string
+          participant_id: string
           product_id: string
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
@@ -519,9 +610,9 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_id: string
-          gamer_id: string
           group_id?: string | null
           id?: string
+          participant_id: string
           product_id: string
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
@@ -532,9 +623,9 @@ export type Database = {
         Update: {
           created_at?: string
           customer_id?: string
-          gamer_id?: string
           group_id?: string | null
           id?: string
+          participant_id?: string
           product_id?: string
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
@@ -551,10 +642,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "participations_gamer_id_fkey"
-            columns: ["gamer_id"]
+            foreignKeyName: "participations_customer_id_fkey"
+            columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -562,6 +653,20 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participations_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participations_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -616,6 +721,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
         ]
@@ -843,7 +955,7 @@ export type Database = {
         Row: {
           created_at: string
           locale: string
-          long_description: Json | null
+          long_description: string | null
           name: string
           product_id: string
           short_description: string
@@ -852,7 +964,7 @@ export type Database = {
         Insert: {
           created_at?: string
           locale: string
-          long_description?: Json | null
+          long_description?: string | null
           name: string
           product_id: string
           short_description: string
@@ -861,7 +973,7 @@ export type Database = {
         Update: {
           created_at?: string
           locale?: string
-          long_description?: Json | null
+          long_description?: string | null
           name?: string
           product_id?: string
           short_description?: string
@@ -884,13 +996,15 @@ export type Database = {
           created_at: string
           created_by: string
           end_date: string | null
+          for_gamers: boolean
+          for_parents: boolean
           id: string
           image_path: string | null
           is_remote: boolean
           is_visible: boolean
           location_id: string | null
-          max_age: number
-          min_age: number
+          max_age: number | null
+          min_age: number | null
           municipality_fee_cents: number | null
           primary_gedu_fee_cents: number | null
           product_type: Database["public"]["Enums"]["product_type"]
@@ -900,6 +1014,7 @@ export type Database = {
           spoken_language_code: string
           start_date: string | null
           status: Database["public"]["Enums"]["product_status"]
+          tag: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at: string
@@ -911,13 +1026,15 @@ export type Database = {
           created_at?: string
           created_by: string
           end_date?: string | null
+          for_gamers?: boolean
+          for_parents?: boolean
           id?: string
           image_path?: string | null
           is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
-          max_age: number
-          min_age: number
+          max_age?: number | null
+          min_age?: number | null
           municipality_fee_cents?: number | null
           primary_gedu_fee_cents?: number | null
           product_type: Database["public"]["Enums"]["product_type"]
@@ -927,6 +1044,7 @@ export type Database = {
           spoken_language_code: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
+          tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
@@ -938,13 +1056,15 @@ export type Database = {
           created_at?: string
           created_by?: string
           end_date?: string | null
+          for_gamers?: boolean
+          for_parents?: boolean
           id?: string
           image_path?: string | null
           is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
-          max_age?: number
-          min_age?: number
+          max_age?: number | null
+          min_age?: number | null
           municipality_fee_cents?: number | null
           primary_gedu_fee_cents?: number | null
           product_type?: Database["public"]["Enums"]["product_type"]
@@ -954,6 +1074,7 @@ export type Database = {
           spoken_language_code?: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
+          tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
@@ -965,6 +1086,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -1060,6 +1188,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "roblox_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
         ]
       }
       schedule_slots: {
@@ -1102,24 +1237,24 @@ export type Database = {
       }
       session_attendance: {
         Row: {
-          gamer_id: string
           id: string
+          participant_id: string
           recorded_at: string
           recorded_by: string | null
           session_id: string
           status: string
         }
         Insert: {
-          gamer_id: string
           id?: string
+          participant_id: string
           recorded_at?: string
           recorded_by?: string | null
           session_id: string
           status: string
         }
         Update: {
-          gamer_id?: string
           id?: string
+          participant_id?: string
           recorded_at?: string
           recorded_by?: string | null
           session_id?: string
@@ -1127,8 +1262,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "session_attendance_gamer_id_fkey"
-            columns: ["gamer_id"]
+            foreignKeyName: "session_attendance_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1137,7 +1286,7 @@ export type Database = {
             foreignKeyName: "session_attendance_recorded_by_fkey"
             columns: ["recorded_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -1269,10 +1418,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "voice_private_zone_occupants_placed_by_fkey"
+            columns: ["placed_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "voice_private_zone_occupants_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_private_zone_occupants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -1327,6 +1490,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_zones_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -1405,7 +1575,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_search_index: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          email: string | null
+          first_name: string | null
+          home_location_id: string | null
+          id: string | null
+          last_name: string | null
+          locale: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          search_blob: string | null
+          spoken_languages: string[] | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_home_location_id_fkey"
+            columns: ["home_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _list_column_grants: {
@@ -1456,8 +1651,18 @@ export type Database = {
           table_name: string
         }[]
       }
-      admin_enroll_gamer: {
-        Args: { p_gamer_id: string; p_product_id: string }
+      _list_views: {
+        Args: never
+        Returns: {
+          anon_select: boolean
+          authenticated_select: boolean
+          kind: string
+          security_invoker: boolean
+          view_name: string
+        }[]
+      }
+      admin_enroll_participant: {
+        Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
       }
       admin_remove_participation: {
@@ -1491,7 +1696,7 @@ export type Database = {
         Args: {
           p_checkout_session_id: string
           p_customer_id: string
-          p_gamer_id: string
+          p_participant_id: string
           p_product_id: string
         }
         Returns: Json
@@ -1516,7 +1721,7 @@ export type Database = {
         Args: {
           p_currency: string
           p_customer_id: string
-          p_gamer_id: string
+          p_participant_id: string
           p_product_id: string
           p_purchase_shape: string
         }
@@ -1527,14 +1732,16 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_for_gamers: boolean
+          p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
           p_image_path?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
           p_material_url?: string
-          p_max_age: number
-          p_min_age: number
+          p_max_age?: number
+          p_min_age?: number
           p_municipality_fee_cents?: number
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
@@ -1546,6 +1753,7 @@ export type Database = {
           p_spoken_language_code: string
           p_start_date?: string
           p_status?: Database["public"]["Enums"]["product_status"]
+          p_tag?: Database["public"]["Enums"]["product_tag"]
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
@@ -1579,10 +1787,10 @@ export type Database = {
         Args: never
         Returns: {
           end_date: string
-          gamer_count: number
           group_count: number
           group_id: string
           is_remote: boolean
+          participant_count: number
           product_id: string
           product_translations: Json
           product_type: Database["public"]["Enums"]["product_type"]
@@ -1693,13 +1901,13 @@ export type Database = {
         Returns: boolean
       }
       join_product_waitlist: {
-        Args: { p_gamer_id: string; p_product_id: string }
+        Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
       }
       join_waitlist: {
         Args: {
           p_customer_id: string
-          p_gamer_id: string
+          p_participant_id: string
           p_product_id: string
         }
         Returns: Json
@@ -1731,8 +1939,8 @@ export type Database = {
       }
       record_attendance: {
         Args: {
-          p_gamer_id: string
           p_group_id: string
+          p_participant_id: string
           p_session_date: string
           p_status: string
         }
@@ -1773,9 +1981,9 @@ export type Database = {
       }
       set_group_member_minecraft: {
         Args: {
-          p_gamer_id: string
           p_minecraft_username: string
           p_minecraft_uuid: string
+          p_participant_id: string
         }
         Returns: Json
       }
@@ -1815,6 +2023,8 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_for_gamers: boolean
+          p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
           p_id: string
           p_image_path?: string
@@ -1822,8 +2032,8 @@ export type Database = {
           p_is_visible?: boolean
           p_location_id?: string
           p_material_url?: string
-          p_max_age: number
-          p_min_age: number
+          p_max_age?: number
+          p_min_age?: number
           p_municipality_fee_cents?: number
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
@@ -1833,6 +2043,7 @@ export type Database = {
           p_signup_threshold?: number
           p_spoken_language_code: string
           p_start_date?: string
+          p_tag?: Database["public"]["Enums"]["product_tag"]
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
@@ -1845,7 +2056,6 @@ export type Database = {
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       effective_product_status:
-        | "draft"
         | "pending"
         | "running"
         | "completed"
@@ -1859,12 +2069,8 @@ export type Database = {
         | "subscription_invoice"
         | "single_payment"
         | "reservation_duplicate"
-      product_status:
-        | "draft"
-        | "pending"
-        | "running"
-        | "completed"
-        | "cancelled"
+      product_status: "pending" | "running" | "completed" | "cancelled"
+      product_tag: "neuroinclusive" | "beginner" | "advanced"
       product_topic:
         | "minecraft_java"
         | "minecraft_education"
@@ -1872,6 +2078,11 @@ export type Database = {
         | "fortnite"
         | "roblox_studio"
         | "pokemon_go"
+        | "rocket_league"
+        | "creator_studio"
+        | "programming"
+        | "ai"
+        | "esports"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
@@ -2003,7 +2214,6 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       effective_product_status: [
-        "draft",
         "pending",
         "running",
         "completed",
@@ -2019,7 +2229,8 @@ export const Constants = {
         "single_payment",
         "reservation_duplicate",
       ],
-      product_status: ["draft", "pending", "running", "completed", "cancelled"],
+      product_status: ["pending", "running", "completed", "cancelled"],
+      product_tag: ["neuroinclusive", "beginner", "advanced"],
       product_topic: [
         "minecraft_java",
         "minecraft_education",
@@ -2027,6 +2238,11 @@ export const Constants = {
         "fortnite",
         "roblox_studio",
         "pokemon_go",
+        "rocket_league",
+        "creator_studio",
+        "programming",
+        "ai",
+        "esports",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       user_role: ["admin", "customer", "gamer", "gedu"],

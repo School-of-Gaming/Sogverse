@@ -2,16 +2,20 @@
  * Shape of the **family product page** — the page a parent (or, in a lighter
  * variant, the gamer themselves) opens from their dashboard for one enrollment.
  *
- * **The page is gamer-scoped**: one page per (gamer × product), titled by the
- * product and attributed to the child. Attendance is per-child, and every
- * feature queued behind this one — planned absences, per-gamer notes, a line to
- * the gedu — is per-child too. A product-scoped page would have had to grow a
- * child selector the moment the second of those landed.
+ * **The page is participant-scoped**: one page per (participant × product),
+ * titled by the product and attributed to whoever holds the seat — a child on
+ * most of them, and the reader themselves on a for-parents product, where the
+ * attribution turns into the second person rather than naming them at
+ * themselves. Attendance is per-participant, and every feature queued behind
+ * this one — planned absences, per-participant notes, a line to the gedu — is
+ * per-participant too. A product-scoped page would have had to grow a person
+ * selector the moment the second of those landed.
  *
  * **These types are the privacy boundary, and that is their main job.** The
  * gedu's feed entry carries a staff note, the whole group's attendance map and
- * an `owed` flag; the family's carries a report, one child's mark, and nothing
- * else. Narrowing the *type* rather than filtering in a component is what makes
+ * an `owed` flag; the family's carries a report, one participant's mark, and
+ * nothing else. Narrowing the *type* rather than filtering in a component is
+ * what makes
  * "never render staff notes or another child's attendance on a family surface" a
  * compile-time fact instead of a rule somebody has to remember. Anything that
  * would have to be stripped on the way in has no field to be stripped from.
@@ -61,7 +65,8 @@ export interface FamilyFutureSessionEntry extends FamilySessionEntryBase {
 }
 
 /**
- * A session that has already happened, as this one child's family sees it.
+ * A session that has already happened, as this one participant's family sees
+ * it.
  *
  * **There is no `no_record` kind here, and its absence is deliberate.** The
  * gedu's feed distinguishes a pre-epoch occurrence from a recent unwritten one
@@ -76,7 +81,8 @@ export interface FamilyPastSessionEntry extends FamilySessionEntryBase {
   /** The gedu's write-up for the families, as markdown. `null` = unwritten. */
   report: string | null;
   /**
-   * What was recorded about **this child**, or `null` when nobody marked them.
+   * What was recorded about **this participant**, or `null` when nobody marked
+   * them.
    *
    * Three states, and only two of them render. `null` shows nothing at all: an
    * unmarked session is a gap in the gedu's paperwork, not information about a

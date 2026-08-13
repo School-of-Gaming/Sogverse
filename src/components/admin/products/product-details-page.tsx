@@ -12,6 +12,7 @@ import {
   Landmark,
   Pencil,
   Shapes,
+  Tag,
   Wallet,
   ExternalLink,
 } from "lucide-react";
@@ -21,20 +22,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import {
-  cn,
-  formatCurrencyFromCents,
-  formatDate,
-} from "@/lib/utils";
-import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { ProductBanner } from "@/components/ui/product-banner";
+import { productImageSrc } from "@/lib/images/product-image-url";
+import { productAudience } from "@/components/public/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
+import { productTagLabelKey } from "@/components/public/products/product-tag";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
 } from "@/services/products";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { effectiveStatus } from "@/lib/products/effective-status";
+import {
+  effectiveStatus,
+  type EffectiveProductStatus,
+} from "@/lib/products/effective-status";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import { GroupsPanel } from "./groups/groups-panel";
@@ -46,8 +49,10 @@ interface ProductDetailsPageProps {
   productId: string;
 }
 
-const STATUS_STYLE: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
+// Keyed by the effective status, exhaustively: the compiler is what guarantees
+// every member has a chip style, so there is no fallback to reach for and no
+// way to add a status without being asked what colour it wears.
+const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "bg-primary/20 text-primary",
   running: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
@@ -142,8 +147,8 @@ export function ProductDetailsPage({
         statusKey={status}
         statusLabel={t(`status.${status}`)}
         isVisible={product.is_visible}
-        visibleLabel={t("detailsPage.visible")}
-        hiddenLabel={t("detailsPage.hidden")}
+        listedLabel={t("detailsPage.listed")}
+        unlistedLabel={t("detailsPage.unlisted")}
         editHref={editHref}
         editLabel={c("edit")}
         cloneHref={cloneHref}
@@ -167,6 +172,8 @@ export function ProductDetailsPage({
       <GroupsPanel
         productId={productId}
         productType={productType}
+        billingMode={product.billing_mode}
+        audience={productAudience(product)}
         seatCount={product.seat_count}
         waitlistEnabled={product.waitlist_enabled}
         voiceAvailable={voiceAvailable}
@@ -191,8 +198,8 @@ function HeaderCard({
   statusKey,
   statusLabel,
   isVisible,
-  visibleLabel,
-  hiddenLabel,
+  listedLabel,
+  unlistedLabel,
   editHref,
   editLabel,
   cloneHref,
@@ -202,11 +209,11 @@ function HeaderCard({
   kicker: string;
   title: string;
   description: string | null;
-  statusKey: string;
+  statusKey: EffectiveProductStatus;
   statusLabel: string;
   isVisible: boolean;
-  visibleLabel: string;
-  hiddenLabel: string;
+  listedLabel: string;
+  unlistedLabel: string;
   editHref: string;
   editLabel: string;
   cloneHref: string;
@@ -215,14 +222,14 @@ function HeaderCard({
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
-        <ProductThumbnail
-          imagePath={imagePath ?? ""}
-          alt=""
-          size="h-28 w-28"
-          className={cn(
-            "rounded-md border bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
-            !imagePath && "[&>img]:hidden",
-          )}
+        {/* The project ratio here too (owner rule — one aspect ratio wherever
+            a product image shows), shaped the way the shop card shapes it —
+            rounded, borderless: this header is where an admin looks at a
+            product they manage, and it must show the same crop the family
+            surfaces paint. w-40 lands near the old square's 112px height. */}
+        <ProductBanner
+          src={productImageSrc(imagePath)}
+          className="w-40 shrink-0 rounded-md"
         />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -236,14 +243,12 @@ function HeaderCard({
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span
-              className={`rounded-full px-2 py-0.5 text-xs ${
-                STATUS_STYLE[statusKey] ?? STATUS_STYLE.draft
-              }`}
+              className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[statusKey]}`}
             >
               {statusLabel}
             </span>
             <Badge variant={isVisible ? "default" : "secondary"}>
-              {isVisible ? visibleLabel : hiddenLabel}
+              {isVisible ? listedLabel : unlistedLabel}
             </Badge>
           </div>
         </div>
@@ -287,6 +292,10 @@ function OperationalFacts({
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
   const isMuni = product.product_type === "municipality_club";
+  // The family-facing tag words, so this row and the shop card cannot disagree
+  // about what a tag is called. Plain text, no chip: this is the admin panel,
+  // and the chip treatment belongs to the surfaces families read.
+  const tTag = useTranslations("productTag");
 
   // Render a per-session fee from its stored cents. The state is derived from
   // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
@@ -392,6 +401,17 @@ function OperationalFacts({
 
         <Fact icon={Shapes} label={t("detailsPage.fields.topic")}>
           {topicName ?? <span className="text-muted-foreground">{c("notSet")}</span>}
+        </Fact>
+
+        {/* Untagged is the ordinary state rather than a gap in the setup, so it
+            says so in muted text — the same word the form's picker offers —
+            instead of the "not set" the topic above uses for a missing answer. */}
+        <Fact icon={Tag} label={t("detailsPage.fields.tag")}>
+          {product.tag === null ? (
+            <span className="text-muted-foreground">{t("tagOptions.none")}</span>
+          ) : (
+            tTag(productTagLabelKey(product.tag))
+          )}
         </Fact>
 
         {/* Staff-only, and it lives on its own embedded row for exactly that

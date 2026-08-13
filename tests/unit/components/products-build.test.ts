@@ -33,7 +33,7 @@ function validConsumerState(): FormState {
     en: {
       name: "Test Club",
       shortDescription: "A great club",
-      longDescription: [],
+      longDescription: "",
     },
   };
   s.activeLocale = "en";
@@ -49,8 +49,8 @@ function validConsumerState(): FormState {
   s.prices = {
     eur: { session: "10.00", month: "30.00" },
   };
-  // initialState now defaults uncapped=true (pre-prod seat lock), so the
-  // baseline "capped club" must opt back into a real seat count explicitly.
+  // A paid club defaults uncapped (soft caps are opt-in), so the baseline
+  // "capped club" opts back into a real seat count explicitly.
   s.uncapped = false;
   s.seatCount = "10";
   return s;
@@ -63,7 +63,7 @@ function validConsumerState(): FormState {
 function validMuniState(): FormState {
   const s = initialState(muniConfig, "en");
   s.translations = {
-    en: { name: "Muni Club", shortDescription: "A muni club", longDescription: [] },
+    en: { name: "Muni Club", shortDescription: "A muni club", longDescription: "" },
   };
   s.activeLocale = "en";
   s.topic = "minecraft_java";
@@ -84,7 +84,7 @@ describe("validate", () => {
     it("requires at least one filled locale", () => {
       const s = validConsumerState();
       s.translations = {
-        en: { name: "", shortDescription: "", longDescription: [] },
+        en: { name: "", shortDescription: "", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
@@ -97,7 +97,7 @@ describe("validate", () => {
       // still resolves for any viewer.
       const s = validConsumerState();
       s.translations = {
-        sv: { name: "Klubb", shortDescription: "En klubb", longDescription: [] },
+        sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toBeNull();
     });
@@ -108,9 +108,9 @@ describe("validate", () => {
         en: {
           name: "Test Club",
           shortDescription: "A great club",
-          longDescription: [],
+          longDescription: "",
         },
-        sv: { name: "Klubb", shortDescription: "", longDescription: [] },
+        sv: { name: "Klubb", shortDescription: "", longDescription: "" },
       };
       const result = validate(s, consumerConfig);
       // The locale *code*: the validator is pure, so the form resolves the
@@ -124,7 +124,7 @@ describe("validate", () => {
     it("accepts whitespace-only as empty (trims for emptiness check)", () => {
       const s = validConsumerState();
       s.translations = {
-        en: { name: "   ", shortDescription: "   ", longDescription: [] },
+        en: { name: "   ", shortDescription: "   ", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
@@ -215,6 +215,74 @@ describe("validate", () => {
       s.maxAge = "5";
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "maxAgeInvalid",
+      });
+    });
+
+    // The DB CHECK the form is standing in front of: a product nobody can take
+    // a seat on is not a product. The section makes the state unreachable by
+    // disabling the last remaining tick; this is the backstop behind it.
+    it("rejects a product with no audience at all", () => {
+      const s = validConsumerState();
+      s.forGamers = false;
+      s.forParents = false;
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "audienceRequired",
+      });
+    });
+
+    // `Number("")` is 0, a perfectly valid age — so emptiness has to be its own
+    // question, asked before the parse, and answered in its own words.
+    it("rejects a blank min age while For gamers is ticked", () => {
+      const s = validConsumerState();
+      s.minAge = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "minAgeRequired",
+      });
+    });
+
+    it("rejects a blank max age while For gamers is ticked", () => {
+      const s = validConsumerState();
+      s.maxAge = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "maxAgeRequired",
+      });
+    });
+
+    it("rejects whitespace-only ages while For gamers is ticked", () => {
+      const s = validConsumerState();
+      s.minAge = "  ";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "minAgeRequired",
+      });
+    });
+
+    it("accepts blank ages on a parents-only product", () => {
+      const s = validConsumerState();
+      s.forGamers = false;
+      s.forParents = true;
+      s.minAge = "";
+      s.maxAge = "";
+      expect(validate(s, consumerConfig)).toBeNull();
+    });
+
+    // Unticking For gamers hides the fields without emptying them, so whatever
+    // was typed is still sitting in state at submit. It must not be judged: the
+    // payload builder is going to drop it on the floor either way.
+    it("ignores a stale, self-contradicting range once For gamers is unticked", () => {
+      const s = validConsumerState();
+      s.forGamers = false;
+      s.forParents = true;
+      s.minAge = "10";
+      s.maxAge = "5";
+      expect(validate(s, consumerConfig)).toBeNull();
+    });
+
+    it("still requires a valid range on a both-audience product", () => {
+      const s = validConsumerState();
+      s.forParents = true; // forGamers stays ticked
+      s.minAge = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "minAgeRequired",
       });
     });
   });
@@ -338,6 +406,63 @@ describe("validate", () => {
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "seatCountInvalid",
       });
+    });
+
+    it("asks for a blank seat count in its own words", () => {
+      // Not "must be a positive integer" — nothing was typed, so there is
+      // nothing wrong with what was typed, and the number-shaped complaint
+      // sends the admin looking for a mistake they did not make.
+      const s = validConsumerState();
+      s.seatCount = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "seatCountRequired",
+      });
+    });
+
+    it("requires a cap on a municipality club", () => {
+      // The one type with no uncapped option: it is contracted for a specific
+      // number of places. A stored uncapped muni row loads as capped-and-blank
+      // (see existingFormState), so this is also the heal-on-write refusal.
+      const s = validMuniState();
+      s.seatCount = "";
+      expect(validate(s, muniConfig)).toEqual({
+        messageKey: "seatCountRequired",
+      });
+    });
+
+    it("heals a stored uncapped municipality club into a required cap", () => {
+      // The edit-path half of the rule above, which is why it belongs here and
+      // not among the payload builders: nothing is built. Muni has no uncapped
+      // option, so the row loads as capped-with-a-blank number and validation
+      // demands the contracted figure before any payload can be built at all.
+      const state = existingFormState(
+        mockDetailRow({
+          product_type: "municipality_club",
+          billing_mode: "external_contract",
+          seat_count: null,
+          // A muni club is bounded and anchors to its funding municipality;
+          // without these, validation stops before it reaches the seat count.
+          end_date: "2026-12-01",
+          location_id: "00000000-0000-0000-0000-0000000000aa",
+        }),
+        muniConfig,
+        "en",
+      );
+
+      expect(state.uncapped).toBe(false);
+      expect(state.seatCount).toBe("");
+      expect(validate(state, muniConfig)).toEqual({
+        messageKey: "seatCountRequired",
+      });
+    });
+
+    it("accepts a free consumer club", () => {
+      // Clubs became free-or-paid; a free one collects no price at all, so the
+      // blank price map the paid path would refuse is fine here.
+      const s = validConsumerState();
+      s.paidMode = "free";
+      s.prices = { eur: { session: "", month: "" } };
+      expect(validate(s, consumerConfig)).toBeNull();
     });
 
     it("does NOT require seat count when free event is uncapped", () => {
@@ -538,11 +663,12 @@ describe("buildCreateInput", () => {
     });
   });
 
-  describe("status / visibility independence", () => {
-    // `draft` is reserved for a future "save incomplete product" flow.
-    // The form only ever creates fully-validated products, so it always
-    // emits `status: "pending"` — visibility is its own knob.
-    it("visible product is created as pending", () => {
+  describe("status / listing independence", () => {
+    // The form only ever creates fully-validated products, so it always emits
+    // `status: "pending"` — the first state of the lifecycle. Listing is its
+    // own knob and says nothing about the lifecycle: an unlisted product is
+    // pending exactly like a listed one, and just as purchasable by link.
+    it("listed product is created as pending", () => {
       const s = validConsumerState();
       s.isVisible = true;
       const out = buildCreateInput(s, "consumer_club", consumerConfig);
@@ -550,7 +676,7 @@ describe("buildCreateInput", () => {
       expect(out.status).toBe("pending");
     });
 
-    it("hidden product is also created as pending (not draft)", () => {
+    it("unlisted product is also created as pending", () => {
       const s = validConsumerState();
       s.isVisible = false;
       const out = buildCreateInput(s, "consumer_club", consumerConfig);
@@ -592,7 +718,7 @@ describe("buildCreateInput", () => {
       en: {
         name: "  Padded Club  ",
         shortDescription: "  Padded desc  ",
-        longDescription: [],
+        longDescription: "",
       },
     };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
@@ -646,6 +772,21 @@ describe("buildCreateInput", () => {
     expect(out.billing_mode).toBe("paid");
   });
 
+  it("emits a free, hard-capped consumer club with no prices", () => {
+    // The free club: billing_mode free, so the cap the RPC validates before it
+    // writes the seat is a hard one, and no price rows are collected at all.
+    const s = validConsumerState();
+    s.paidMode = "free";
+    s.uncapped = false;
+    s.seatCount = "16";
+    s.waitlistEnabled = true;
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.billing_mode).toBe("free");
+    expect(out.seat_count).toBe(16);
+    expect(out.waitlist_enabled).toBe(true);
+    expect(out.prices).toEqual([]);
+  });
+
   it("only emits signup_threshold when the start mode uses one", () => {
     const s = validConsumerState();
     s.startMode = "date"; // no threshold
@@ -665,6 +806,151 @@ describe("buildCreateInput", () => {
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     expect(out.timezone).toBe("Europe/Helsinki");
   });
+});
+
+// The audience flags and the age range are one decision on the wire: ages are a
+// property of the gamer audience, so they are present exactly when `for_gamers`
+// is — enforced by a CHECK, which makes every shape below a save that either
+// works or is refused outright.
+describe("audience and ages on the wire", () => {
+  it("creates a for-gamers product with its range by default", () => {
+    // The create form's seeded audience, unread and unedited: children, with
+    // the default range. Every product the form could make before audiences
+    // existed had exactly this shape.
+    const s = initialState(consumerConfig, "en");
+    expect(s.forGamers).toBe(true);
+    expect(s.forParents).toBe(false);
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    expect(out.for_gamers).toBe(true);
+    expect(out.for_parents).toBe(false);
+    expect(out.min_age).toBe(7);
+    expect(out.max_age).toBe(12);
+  });
+
+  it("emits null ages for a parents-only product, not 0 and not \"null\"", () => {
+    const s = validConsumerState();
+    s.forGamers = false;
+    s.forParents = true;
+    s.minAge = "";
+    s.maxAge = "";
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+
+    expect(out.for_gamers).toBe(false);
+    expect(out.for_parents).toBe(true);
+    // The two ways this has gone wrong: `Number("")` is 0 (a real age the DB
+    // would store, and a CHECK violation on a product with no gamer audience),
+    // and `String(null)` is "null" (which parses back as NaN).
+    expect(out.min_age).toBeNull();
+    expect(out.max_age).toBeNull();
+    expect(out.min_age).not.toBe(0);
+    expect(out.max_age).not.toBe(0);
+  });
+
+  // Unticking For gamers hides the age fields without emptying them, so the
+  // typed range survives a mis-click for as long as the form is open. What must
+  // not survive is the range reaching the database — the flag decides, not the
+  // boxes.
+  it("drops a still-typed range once For gamers is unticked", () => {
+    const s = validConsumerState();
+    s.forGamers = false;
+    s.forParents = true;
+    s.minAge = "7";
+    s.maxAge = "12";
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.min_age).toBeNull();
+    expect(out.max_age).toBeNull();
+  });
+
+  it("keeps the range on a both-audience product", () => {
+    const s = validConsumerState();
+    s.forParents = true;
+    s.minAge = "9";
+    s.maxAge = "14";
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.for_gamers).toBe(true);
+    expect(out.for_parents).toBe(true);
+    expect(out.min_age).toBe(9);
+    expect(out.max_age).toBe(14);
+  });
+
+  // Every product type gets the checkboxes — the capability is deliberately not
+  // narrowed to events, which is only where it is expected to be used first.
+  it("carries the audience on every product type", () => {
+    const camp = validConsumerState();
+    camp.forGamers = false;
+    camp.forParents = true;
+    camp.minAge = "";
+    camp.maxAge = "";
+    camp.endDate = "2026-09-05";
+    camp.prices = { eur: { session: "120.00", month: "" } };
+    const out = buildCreateInput(camp, "camp", campConfig);
+    expect(out.for_gamers).toBe(false);
+    expect(out.for_parents).toBe(true);
+    expect(out.min_age).toBeNull();
+  });
+});
+
+// The design tag rides on the same payload as the audience above but answers a
+// different question — who the sessions were built for, not who may hold a seat
+// — so it gets its own block rather than being folded into the audience cases.
+describe("the design tag on the wire", () => {
+  it("creates an untagged product by default", () => {
+    const s = initialState(consumerConfig, "en");
+    expect(s.tag).toBeNull();
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    // Present and null, never absent. The wire schema requires the field and
+    // the RPC parameter is DEFAULT NULL, so a missing key is a 400 rather than
+    // a quietly untagged product.
+    expect(out).toHaveProperty("tag");
+    expect(out.tag).toBeNull();
+  });
+
+  it("carries a chosen tag through to the create payload", () => {
+    const s = validConsumerState();
+    s.tag = "neuroinclusive";
+    expect(buildCreateInput(s, "consumer_club", consumerConfig).tag).toBe(
+      "neuroinclusive",
+    );
+  });
+
+  it("carries a chosen tag through to the update payload", () => {
+    const s = validConsumerState();
+    s.tag = "advanced";
+    expect(buildUpdateInput(s, consumerConfig).tag).toBe("advanced");
+  });
+
+  // Clearing has to be expressible, and it has to travel as an explicit null:
+  // the update RPC assigns every editable column, so a field that went missing
+  // would make "leave the tag alone" and "clear the tag" the same wire shape.
+  it("emits an explicit null when a tagged product is untagged again", () => {
+    const s = validConsumerState();
+    s.tag = "beginner";
+    expect(buildUpdateInput(s, consumerConfig).tag).toBe("beginner");
+
+    s.tag = null;
+    const cleared = buildUpdateInput(s, consumerConfig);
+    expect(cleared).toHaveProperty("tag");
+    expect(cleared.tag).toBeNull();
+  });
+
+  it("carries the tag on every product type", () => {
+    const camp = validConsumerState();
+    camp.tag = "beginner";
+    camp.endDate = "2026-09-05";
+    camp.prices = { eur: { session: "120.00", month: "" } };
+    expect(buildCreateInput(camp, "camp", campConfig).tag).toBe("beginner");
+  });
+
 });
 
 describe("fees", () => {
@@ -906,8 +1192,11 @@ function mockDetailRow(
     is_remote: true,
     location_id: null,
     topic: "minecraft_java",
+    for_gamers: true,
+    for_parents: false,
     min_age: 8,
     max_age: 12,
+    tag: null,
     spoken_language_code: "en",
     // The lesson link rides on its own staff-only row, not on the product.
     product_staff_details: { material_url: "https://drive.sog.gg/x" },
@@ -973,12 +1262,12 @@ describe("cloneFormState", () => {
     expect(state.translations.en).toEqual({
       name: "Summer Club (Copy)",
       shortDescription: "A great club",
-      longDescription: [],
+      longDescription: "",
     });
     expect(state.translations.fi).toEqual({
       name: "Kesäkerho (Copy)",
       shortDescription: "Mahtava kerho",
-      longDescription: [],
+      longDescription: "",
     });
   });
 
@@ -997,6 +1286,22 @@ describe("cloneFormState", () => {
     // the `month` slot; the unused `session` slot stays blank.
     expect(state.prices.eur).toEqual({ session: "", month: "30.00" });
     expect(state.isVisible).toBe(true);
+  });
+
+  // A tag is data, not identity: nothing about it is bound to the one bucket
+  // file the way the image is, so a clone carries the source's tag like it
+  // carries the dates and the schedule.
+  it("copies the source's tag", () => {
+    const state = cloneFormState(
+      mockDetailRow({ tag: "neuroinclusive" }),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    expect(state.tag).toBe("neuroinclusive");
+    expect(
+      buildCreateInput(state, "consumer_club", consumerConfig).tag,
+    ).toBe("neuroinclusive");
   });
 
   it("preserves a hidden source's visibility (does not force-hide)", () => {
@@ -1025,5 +1330,70 @@ describe("cloneFormState", () => {
       short_description: "A great club",
       long_description: null,
     });
+  });
+});
+
+/**
+ * **The long description is markdown, and blank means the column holds NULL.**
+ *
+ * The field is optional and left empty far more often than it is filled, and
+ * the column's CHECK refuses an empty string — NULL is the single spelling of
+ * "this locale has no long description". So the case worth pinning is not the
+ * copy travelling intact, it is what a cleared editor produces: an empty
+ * ProseMirror document does not serialise to `""` but to whitespace, and
+ * sending that would fail the save on a field the admin never touched.
+ */
+describe("long description", () => {
+  function payloadFor(longDescription: string) {
+    const state = validConsumerState();
+    state.translations = {
+      en: {
+        name: "Test Club",
+        shortDescription: "A great club",
+        longDescription,
+      },
+    };
+    const out = buildCreateInput(state, "consumer_club", consumerConfig);
+    return out.translations.find((t) => t.locale === "en");
+  }
+
+  it("sends authored markdown through unchanged apart from its outer padding", () => {
+    const markdown =
+      "# What happens\n\nWe build **redstone** together.\n\n- a headset\n- a mouse";
+    expect(payloadFor(`\n${markdown}\n`)?.long_description).toBe(markdown);
+  });
+
+  it("folds a cleared editor to null rather than an empty string", () => {
+    for (const blank of ["", "   ", "\n", "\n\n  \n"]) {
+      expect(
+        payloadFor(blank)?.long_description,
+        JSON.stringify(blank),
+      ).toBeNull();
+    }
+  });
+
+  it("hydrates the form straight from the stored text, null as blank", () => {
+    const markdown = "# Stored\n\nCopy that is already markdown.";
+    const withCopy = existingFormState(
+      mockDetailRow({
+        product_translations: [
+          {
+            product_id: "prod-1",
+            locale: "en",
+            name: "Summer Club",
+            short_description: "A great club",
+            long_description: markdown,
+            created_at: "2026-01-01T00:00:00Z",
+            updated_at: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+      consumerConfig,
+      "en",
+    );
+    expect(withCopy.translations.en?.longDescription).toBe(markdown);
+
+    const withNone = existingFormState(mockDetailRow(), consumerConfig, "en");
+    expect(withNone.translations.en?.longDescription).toBe("");
   });
 });

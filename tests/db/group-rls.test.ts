@@ -73,7 +73,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
 
     await admin.from("participations").insert({
       product_id: PRODUCT_X,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
       group_id: groupX1,
@@ -263,7 +263,7 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_Z,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupZ,

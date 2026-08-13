@@ -257,7 +257,15 @@ describe("POST /api/auth/pin/forgot", () => {
     const res = await forgotPost(request("/api/auth/pin/forgot", {}));
     expect(res.status).toBe(200);
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
-    expect(mockSendEmail.mock.calls[0][0]).toMatchObject({ toEmail: "p@test.local" });
+    expect(mockSendEmail.mock.calls[0][0]).toMatchObject({
+      toEmail: "p@test.local",
+      // Same shared identity as every other mail, and a reply-to a person
+      // reads: someone stuck at the PIN gate replying here needs support, not
+      // the unattended sending address.
+      fromEmail: "sogverse@sog.gg",
+      fromName: "School of Gaming – Sogverse",
+      replyToEmail: "help@sog.gg",
+    });
   });
 
   it("succeeds silently when the account has no email on file", async () => {

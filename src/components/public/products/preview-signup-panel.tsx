@@ -26,7 +26,12 @@ import type { RegistrationState } from "./derive-registration-state";
 interface PreviewSignupPanelProps {
   product: Pick<
     ProductBrowseRow,
-    "product_type" | "billing_mode" | "product_prices"
+    | "product_type"
+    | "billing_mode"
+    | "product_prices"
+    | "for_gamers"
+    | "start_date"
+    | "timezone"
   >;
   state: RegistrationState;
   authState: AuthState;

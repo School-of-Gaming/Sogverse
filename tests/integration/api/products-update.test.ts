@@ -79,8 +79,11 @@ const validBody = {
     { locale: "en", name: "X", short_description: "Y", long_description: null },
   ],
   topic: "minecraft_java",
+  for_gamers: true,
+  for_parents: false,
   min_age: 7,
   max_age: 12,
+  tag: null,
   spoken_language_code: "en",
   material_url: null,
   location_id: null,
@@ -289,6 +292,83 @@ describe("POST /api/admin/products/[id]/update", () => {
       "update_product",
       expect.objectContaining({ p_id: PRODUCT_ID }),
     );
+  });
+
+  it("carries the product's own audience through an unrelated edit", async () => {
+    // The RPC assigns every editable column on every call, so an edit that
+    // never touched the audience still has to send it. The form loads these
+    // from the product; the route must not substitute a default for them.
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: {
+          ...validBody,
+          for_gamers: false,
+          for_parents: true,
+          min_age: null,
+          max_age: null,
+        },
+      }),
+      { params },
+    );
+
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({ p_for_gamers: false, p_for_parents: true }),
+    );
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_min_age).toBeUndefined();
+    expect(args.p_max_age).toBeUndefined();
+  });
+
+  it("returns 400 when the audience flags are missing", async () => {
+    mockAuthenticatedAdmin();
+    const {
+      for_gamers: _g,
+      for_parents: _p,
+      ...noAudience
+    } = validBody;
+
+    const response = await POST(updateRequest({ data: noAudience }), { params });
+
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("carries a tag through, and clears one by omitting the argument", async () => {
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({ data: { ...validBody, tag: "neuroinclusive" } }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({ p_tag: "neuroinclusive" }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    // A null tag is a deliberate clear: the route maps null to undefined,
+    // supabase-js JSON-serializes the arguments (dropping undefined keys), and
+    // the RPC's DEFAULT NULL turns the omission into the cleared column.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_tag).toBeUndefined();
+  });
+
+  it("returns 400 when the tag field is missing", async () => {
+    // The wire-level guard the defaulted parameter needs: an omitted field
+    // would reach an RPC that assigns every editable column, so "forgot to
+    // send it" and "clear it" would be the same request. The schema makes the
+    // first one impossible, leaving an explicit null as the only way to clear.
+    mockAuthenticatedAdmin();
+    const { tag: _tag, ...noTag } = validBody;
+
+    const response = await POST(updateRequest({ data: noTag }), { params });
+
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("uploads the new blob BEFORE the RPC, and commits its server-derived path", async () => {

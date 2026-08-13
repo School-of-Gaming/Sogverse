@@ -259,6 +259,18 @@ national-classification diff any more:
    applied, so the number is picked against *remote* migration history at the moment of
    pushing rather than guessed at the moment of emitting.
 4. Push it through the normal workflow.
+5. **Bump the published version date for whichever dataset you re-sourced**, in the same
+   change (see the rule below).
+
+**Rule: a data refresh moves the version date on the public attributions page, in the
+same change that lands the data.** Both licences behind this data oblige us to publish a
+credit, and one of them obliges that credit to state the date of the version in use. That
+date is a hardcoded literal per dataset on the public attributions page (under
+`src/app/(public)/`), so nothing moves it but the person doing the refresh: set it to the
+publication date printed on the file the new migration actually read — the geographic
+dumps for a tree refresh, France's postal file for a postal rebuild. A refresh that lands
+without it leaves the page stating a version we no longer ship, which is the one part of
+the credit the licence spells out.
 
 Three things about the differ that are decisions rather than implementation:
 
@@ -331,7 +343,8 @@ INSEE code, so it joins **zero** of ~34,900 communes — a structural mismatch t
 no amount of upstream healing repairs. La Poste's *Base officielle des codes
 postaux* keys on `code_commune_insee`, which is exactly what `external_code`
 holds. It is Licence Ouverte 2.0; the public attribution surface credits it
-alongside GeoNames' CC BY 4.0.
+alongside GeoNames' CC BY 4.0, and states the publication date of the file in
+use — which a rebuild has to move (see the refresh rule above).
 
 Two shapes are absorbed by config rather than by code:
 

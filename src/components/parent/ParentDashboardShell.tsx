@@ -14,6 +14,7 @@ import {
 import {
   ParentDashboardPageBody,
   type ParentEnrollmentAction,
+  type ParentGamerEnrollmentAction,
 } from "./parent-dashboard-page-body";
 
 /**
@@ -60,7 +61,7 @@ export function ParentDashboardShell({
   billingCard: React.ReactNode;
 }) {
   const t = useTranslations("parent");
-  const gamers = useFamilyEnrollments({
+  const { gamers, self } = useFamilyEnrollments({
     initialSessionRows,
     initialWaitlistRows,
     initialFamily,
@@ -125,7 +126,7 @@ export function ParentDashboardShell({
     });
   }
 
-  function handleJoinClick({ gamer, enrollment }: ParentEnrollmentAction) {
+  function handleJoinClick({ gamer, enrollment }: ParentGamerEnrollmentAction) {
     // `"#"` is what the roll-up emits when there is no room to reach — an
     // in-person product, or a seat nobody has been placed in yet. The card
     // renders no live Join in either case, so this is a guard against the
@@ -165,6 +166,10 @@ export function ParentDashboardShell({
     <>
       <ParentDashboardPageBody
         gamers={gamers}
+        // `null` on the overwhelmingly common account: the reader gets a
+        // section of their own only once they hold a seat themselves, which
+        // only a for-parents product can give them.
+        self={self}
         billingCard={billingCard}
         onAddGamer={() => setAddGamerOpen(true)}
         // No `onOpenPortal`: the payment badge opens the portal session for the

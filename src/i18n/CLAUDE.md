@@ -18,14 +18,22 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 ## Files in this directory
 
 - `request.ts` — next-intl request config (SSR/RSC). Resolves the per-request locale and loads its messages.
-- `messages.ts` — `Messages` type (derived from `en.json`) and `loadMessages(locale)`, a static import map of `messages/<code>.json`. Static imports so a moved/deleted message file fails the build, not runtime.
+- `messages.ts` — `Messages` type (derived from `en.json`) and `loadMessages(locale)`, a static import map of `messages/<code>.json`. Static imports so a moved/deleted message file fails the build, not runtime. The `tlh` entry is the one that merges — it is the English-fallback mechanism described under the legal-copy rule below.
 - `types.ts` — module augmentation that registers `Messages` as next-intl's `AppConfig["Messages"]`, giving compile-time key validation and autocomplete in `useTranslations()`/`getTranslations()`.
 
 ## Translation files
 
-Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `fr`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly.
+Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `fr`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly, with one deliberate hole in `tlh` (see the legal-copy rule below).
 
 **Rule: Every user-facing string must be translated for every locale file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected; Klingon (`tlh`) is an easter egg where fun takes are welcome and accuracy is not the goal.**
+
+**Rule: legal-page namespaces are served in English under `tlh` — the easter egg stops at the courtroom door.** A privacy policy, a set of terms, a safeguarding policy and their programme-specific siblings are binding text a family may be held to; an in-character rendering of one is a joke told at the reader's expense, and it is the one place where "accuracy is not the goal" is the wrong instruction. **The attributions page is in this set too**, for the adjacent reason: it is the credit two data licences oblige us to publish, and a licence condition discharged in Klingon is a licence condition not discharged. The same reach applies to those pages' `metadata.pages` titles and to any link label that names one of the documents — a footer link must call a page what the page calls itself. Everything else in `tlh` (nav, dashboards, marketing copy) stays in character.
+
+**The shape: `tlh` omits those keys entirely and they resolve to English at runtime.** They used to be `en`'s values copied in verbatim, which read as tidy — the catalog stayed structurally identical and every gate passed untouched — and was a drift hazard: nothing asserted the byte-equality, so the first English legal edit that nobody thought to mirror would have left Klingon serving *stale* binding text. Omission makes `en` the single source of truth by construction. Three pieces implement it, and a change to one wants a look at the other two:
+
+1. **The message loader lays the `tlh` catalog over the full `en` one** and returns the result as a complete catalog (next-intl 4.x ships no merge helper; its docs point at a general deep-merge package). Ours is spread by hand, subtree by subtree, rather than merged generically — deliberately. A generic deep merge has to assert its own return type, which this repo's lint bans outright, and it would absorb a *new* hole in silence; the hand-written merge is checked by the compiler, so the day a namespace starts omitting a key with no matching line in the loader, the build fails and names the key. **The merge is scoped to `tlh` alone.** Every other locale is loaded as-is and typed as a complete catalog, so a missing `fi`/`fr`/`sv` key stays a build failure rather than quietly becoming English.
+2. **The completeness script under `scripts/` carries a `tlh`-scoped exemption** naming exactly those namespaces and labels — a narrow list of subtree roots, not a blanket pass, so a *non*-legal Klingon key that goes missing still fails CI.
+3. **Unit tests pin both halves**: that the loader returns English for the omitted keys and Klingon for everything else (and merges no other locale), and that the namespaces are *absent* from `tlh` rather than merely equal to `en`. Absence is the assertion that matters — a partially re-introduced namespace is worse than the old convention it replaced, because it shadows English with a value nothing keeps in step, in the one place where stale text is a liability.
 
 **Rule: No emoji in `messages/` files** — untranslatable, unthemeable copy. When a string needs a glyph, render a `lucide-react` icon next to the translated text in the component.
 
@@ -39,14 +47,45 @@ Gates for a catalog change: the completeness script under `scripts/`, **plus** a
 
 French typography: U+2019 for apostrophes (never U+0027, outside code samples) and a no-break space only after `n°`. Copy pasted from a person or a spreadsheet always arrives with straight apostrophes; normalise on the way in.
 
+## The role name: `Gedu`, and what to call the role otherwise
+
+**Rule: `Gedu` is a product name — never translated, and never used cold.** It carries the
+signed-in product (dashboards, voice, admin, email), where the reader already knows the
+word, and appears in public prose only where the copy introduces it with a gloss ("a Gedu
+— a Game Educator"). A public string using it cold has leaked in-house vocabulary at the
+one moment the reader cannot decode it.
+
+**Rule: wherever `Gedu` is not the word, each locale has exactly one word for the role.**
+Chosen by native speakers, 2026-08-13:
+
+| locale | the role |
+|---|---|
+| `en` | **Game Educator** — capitalised, a defined term rather than a common noun |
+| `fi` | **pelikasvattaja** |
+| `sv` | **spelfostrare** |
+| `fr` | **animateur** / **animatrice** |
+
+**There is no register split**: one word covers marketing copy, product surfaces and legal
+text alike. Earlier catalogues drifted into a second, plainer word for legal pages in every
+locale (and French documented the split deliberately). That is retired — a legal page uses
+the same word as the home page.
+
+**There is no exception for the Roblox programme documents** (`robloxPrivacy`,
+`robloxSafeguarding`, `robloxTerms`), even though they are co-authored with Lynx Educate.
+They once named a generic legal *category* of person alongside staff, volunteers and
+contractors — `facilitator`, `ohjaaja`, `ledare` — and glossed it back to the house term in
+the same breath. Both now collapse into the house term plus a gloss to `Gedu`, because the
+gloss said the two sets were the same anyway, so nothing narrowed. Keep it that way: a
+policy that names the role differently from the product page is the confusion these
+documents can least afford.
+
 ## French register and glossary
 
 **Rule: French is a transcreation, not a literal mirror of `en.json`.** Public-page marketing copy — including the slogan, whose French imagery deliberately differs from the English — was rewritten by a native speaker rather than translated. CI enforces key parity and cannot see meaning, so a French string that says something other than its English counterpart on a public page is intentional and must not be "corrected" back.
 
 **The divergence is scoped to French alone.** `fi`, `sv` and `tlh` render the English positioning; French does not. Do not reconcile the two in either direction — neither by pulling French back toward the English source, nor by pushing the French imagery outward into the other locales. Diverging a second locale is a positioning decision for the owner, not a consistency fix.
 
-- **Role name splits by register.** `animateur` / `animatrice` on public and parent-facing surfaces; `éducateur de jeu` in formal copy — terms, privacy policy, discipline policy, the educator registration page, and staff back-office. `animateur` is the familiar word from French youth-club and summer-camp culture; `éducateur de jeu` reads as a calque but is the right register for legal and internal text.
-- **`Gedu` is a product name, never translated — but never used cold in general public prose.** Describe the adult as an `animateur` there. `Gedu` appears where the copy introduces it with a gloss, and throughout the signed-in product (dashboards, voice, admin, email), where the reader already knows the word.
+- **The role name is `animateur` / `animatrice` in every register** — see the glossary section above. French once split this by register, using `éducateur de jeu` in formal copy; that split is retired and the calque is no longer used anywhere.
 - **Municipality: the adjective is `municipal` / `municipaux`, the noun stays `commune`.** "Clubs municipaux", but "payé par votre commune". `municipal` maps to town-funded public services in French; `communal` is correct but less instinctive.
 - **`vous` to adults, `tu` in child-facing strings.**
 - **Never use the middle dot (`Prêt·e`) to dodge gender agreement — reframe instead.** It is visually awkward on screen and contested in France. Open child-facing prompts with a construction that takes no agreement, and where inserting a name would force a participle to inflect, state the event as a noun phrase (an enrolment is confirmed) rather than agreeing with the person.
@@ -170,8 +209,6 @@ It is a merge, not an overwrite.
 
 `profiles.locale` is a nullable `text` column; null means "auto-detect from browser." It's persisted via a PATCH endpoint using the admin client; existing profiles RLS covers it. Distinct from `profiles.spoken_languages` (see locale-vs-spoken-language above): `locale` controls the app translation and the language of Sogverse communications; `spoken_languages` is the user's preferred club/product languages for gamer↔gedu matching.
 
-## Future direction
+## Known gaps
 
-The current setup resolves locale from cookie/header with no locale signal in the URL. The intended next step is **locale-prefix routing with translated slugs** (next-intl's `defineRouting()` + `pathnames`, a `[locale]` segment): each language gets its own URL namespace (`/fi/tietoa`, `/sv/om-oss`), bare paths redirect by the same resolution order as today. This unlocks locale-specific OG images/metadata (OG crawlers send no cookies, so cookie-only resolution can't do this), `hreflang` tags, per-language sitemaps, and URLs that always match displayed content. The cookie/profile system would remain as the redirect hint and persistence layer; the URL becomes the source of truth per request.
-
-Other known gaps: client message payload is shipped whole per navigation rather than per-page scoped (could filter namespaces by role/page), and `description`/`openGraph` metadata fields are still hardcoded English on many pages.
+Client message payload is shipped whole per navigation rather than per-page scoped (could filter namespaces by role/page). Localizing per-page SEO metadata (descriptions, OG text) is tracked in `TODO.md`.

@@ -187,10 +187,18 @@ function Workspace({
     setEditingEntryId(entryId);
   };
 
+  // The attendance checklist takes only id + first name, so an adult on the
+  // roster loses the participant_email signal here and shows a bare name where
+  // the rail row beside it badges "Parent". Attendance itself is correct — the
+  // mark is participant-keyed and role-blind — so this is an identification
+  // asymmetry, not a marking bug: a gedu can tell the adult apart in the rail
+  // but not in the checklist. Accepted as a minor gap for now (carrying an
+  // isAdult flag into SessionFeedGamer + AttendanceRoster is the fix if it
+  // proves worth it); flagged so the lossy map is a choice, not an oversight.
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
-        id: member.gamer_id,
+        id: member.participant_id,
         firstName: member.first_name,
       })),
     [feed.roster],
@@ -222,7 +230,7 @@ function Workspace({
       ...product,
       groups: product.groups.map((group) =>
         group.id === product.my_group_id
-          ? { ...group, roster: feed.roster, gamer_count: feed.roster.length }
+          ? { ...group, roster: feed.roster, participant_count: feed.roster.length }
           : group,
       ),
     }),
@@ -292,7 +300,7 @@ function Workspace({
       changed.map((gamer) =>
         recordAttendance.mutateAsync({
           sessionDate,
-          gamerId: gamer.id,
+          participantId: gamer.id,
           status: draft.attendance[gamer.id] ?? null,
         }),
       ),

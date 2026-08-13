@@ -80,8 +80,9 @@ function publicProductHref(productId: string): string {
 /**
  * Public storefront browse URL for a product's type — the "back to listing"
  * target from a detail page. Lands on `/shop` with the matching category
- * pre-selected. The `category` query param name and values mirror
- * `use-shop-category.ts` (the parser) — keep the two in sync.
+ * pre-selected; the shop's Type filter is a multi-select, so this single value
+ * reads there as a selection of one. The `category` query param name and values
+ * mirror `shop-categories.ts` (the parser) — keep the two in sync.
  *
  * `municipality_club` is the one type the shop doesn't surface, so it falls back
  * to the bare `/shop`. A muni club opened from its `/schools/<slug>` listing
@@ -191,22 +192,54 @@ export const ROUTES = {
    * running in France. Placeholder content while the partnership is being
    * finalised: reachable by anyone who has the URL (so it can be shared with
    * partners) but deliberately undiscoverable — no nav link, excluded from the
-   * sitemap, disallowed in robots.txt, and noindex via its own metadata.
-   * Flip all four together when the content is ready to be found.
+   * sitemap, and noindex via its own metadata. NOT disallowed in robots.txt,
+   * on purpose: a disallowed URL is never crawled, so the noindex tag would
+   * never be read and the bare URL could still be indexed off an external
+   * link (the page's own metadata comment explains the same). Flip the nav,
+   * sitemap and noindex together when the content is ready to be found.
    */
   roblox: "/roblox",
+  /**
+   * The Programme's own privacy policy, supplementing the platform one at
+   * `/privacy`. Shares `/roblox`'s unpublished posture exactly — noindex, no
+   * sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxPrivacy: "/roblox/privacy",
+  /**
+   * The Programme's joint child safeguarding policy, held by Lynx Educate and
+   * School of Gaming together. Same posture as `robloxPrivacy` above — noindex,
+   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxSafeguarding: "/roblox/safeguarding",
+  /**
+   * The Programme's own terms, supplementing the platform ones at
+   * `/terms-and-conditions`. Same posture as `robloxPrivacy` above — noindex,
+   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxTerms: "/roblox/terms",
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",
+  /**
+   * Every credit the product owes — the data sources behind the location tree
+   * and the services that render game-account art. Linked from the footer's
+   * legal row and published like the pages beside it (indexed, in the sitemap):
+   * it is site-wide compliance, not part of any one programme.
+   */
+  attributions: "/attributions",
   settings: "/settings",
   /**
    * Voice rooms. Two shapes share the `/voice` prefix:
    * - `forCode(code)` → `/voice/<code>` — public on-the-fly instant rooms,
    *   share-via-link by design (see src/components/voice/instant/CLAUDE.md).
    * - `groupSession(groupId)` → `/voice/group/<id>` — authenticated group
-   *   voice room used by gamers (as participants) and gedus/admins (as
-   *   moderators); the page authorizes by role + product assignment via
-   *   `/api/voice/token`. The proxy gates this branch behind auth even
+   *   voice room used by seat-holders (a gamer, or a parent on their own
+   *   seat) as participants and gedus/admins as moderators; the page does no
+   *   authorization of its own — membership and moderator rights are decided
+   *   by `/api/voice/token`. The proxy gates this branch behind auth even
    *   though the rest of `/voice/*` is public — it imports
    *   `groupSessionPrefix` so the carve-out can't drift from the route.
    * `prefix` is the route base used for proxy matching.

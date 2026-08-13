@@ -4,6 +4,8 @@ Running log of performance findings, planned improvements, and shipped changes. 
 
 Findings (`F`) describe what we've observed and the root cause. Improvements (`I`) are proposals; they move to "Completed improvements" once shipped, with a pointer to the PR that delivered them.
 
+**Standing goal: a Claude-rated A+ verdict.** Each Speed Insights snapshot (see Real-user data) gets a letter-grade verdict with its reasoning recorded next to it, graded fresh from the numbers by whoever (or whatever) does the pull — the open findings are the path from the current grade to A+.
+
 ## Per-request server stack
 
 Every protected request — page load, API call, and every RSC prefetch — verifies the caller's identity at three layers:
@@ -15,6 +17,33 @@ Every protected request — page load, API call, and every RSC prefetch — veri
 Identity verification is **local crypto** at every layer (~0.7ms each), so repeating it per layer no longer costs network round-trips — the F1 waterfall is gone (see Completed improvements). The residual cost is the **`profiles.role` lookup**: the two layouts now share one fetch per render (`cache()`, I2 step 1), leaving one lookup **per request-context** — the proxy, the render, and each `requireRole` call. Quantified as **F3**; removing the rest is the authorization model + **I2** below.
 
 RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` workarounds were reverted). It's now a net positive — prefetches warm caches before clicks, and each one's auth is a local verify, so even a ~37-prefetch fan-out completes without saturation.
+
+## Real-user data (Speed Insights)
+
+Vercel Speed Insights collects Core Web Vitals (TTFB/FCP/LCP/INP/CLS plus a Real Experience Score) from real production visitors. There is **no official read API** (the documented Speed Insights API is intake-only) — `npm run perf:insights` (`scripts/speed-insights.mjs`) pulls the data through the internal endpoint the dashboard itself uses and prints overview percentiles plus per-route breakdowns with sample sizes. It authenticates with the local Vercel CLI login (any `school-of-gaming` team member's token works; `VERCEL_TOKEN` overrides). A Claude session cannot execute it itself — the permission classifier blocks access to the CLI token file — so ask the user to run it (`! npm run perf:insights`). If it starts 404ing, the internal API moved: re-capture the request URL from the dashboard's network tab and update the script's paths.
+
+How to read the numbers:
+
+- **p75 is the warm steady state** — what most visits get. **p90–p99 is the cold-start / heavy tail**, and the good/improvable/poor distribution says how many real pageviews land in it. This is the honest resolution of "cold starts pollute the test, warm caches make it too easy": the two conditions are separated by percentile, both are real, and the distribution gives their mix. Don't chase one synthetic number that blends them.
+- **Sample sizes are thin** (~300 DAU): most routes collect under 100 datapoints per month, so route-level p75s are directional only. Before/after regression testing stays with the controlled benchmark protocol (benchmark log under the F1 completed entry); Speed Insights is the ambient monitor — watch the overall p75 and the poor-bucket share over time.
+
+### Snapshot log
+
+Append-only, like the benchmark log. Format: `date · window · scope → headline numbers`, with the reading that matters.
+
+- **2026-08-13 · last 30 days · production, both devices** — datapoints: TTFB 1888 desktop / 588 mobile (desktop ≈ 3× mobile traffic; `/gamer` is the top route at n=643).
+
+  | p75 / p90 / p95 / p99 | Desktop | Mobile |
+  |---|---|---|
+  | TTFB | 397 / 1307 / 1968 / 5016 ms | 431 / 1137 / 1793 / 4299 ms |
+  | FCP | 1859 / 2964 / 3908 / 8364 ms | 1792 / 2920 / 3816 / 6204 ms |
+  | LCP | 2076 / 3372 / 4552 / 11624 ms | 2228 / 3325 / 4309 / 6304 ms |
+  | INP | 48 / 104 / 248 / 1504 ms | 104 / 160 / 328 / 2368 ms |
+  | CLS | 0.002 / 0.016 / 0.12 / 0.38 | 0 / 0.04 / 0.09 / 0.36 |
+
+  Reading: warm TTFB ~400ms with ~6% of pageviews in the poor (>1.8s) bucket — the cold/heavy tail is real but bounded. CLS is excellent (94–97% good, p75 ≈ 0): the layout-shift rules visibly hold in production. Route hotspots → F5; public-page numbers → F2.
+
+  **Verdict: B+.** Interaction quality is excellent (INP p75 48ms desktop, CLS near-perfect — the app *feels* fast once loaded) and the core family loop has good TTFB at real sample sizes. What holds the grade down: first paint is mediocre with no headroom (FCP 74–75% good, p75 sitting on the 1.8s threshold; LCP scrapes under 2.5s), and the worst experiences cluster on *entry* surfaces — `/schools` poor, the ~6% cold tail, the voice-room entry LCP — i.e. slowest exactly where first impressions form, while committed users get the fast path. Path to A+: F2 first (converts the worst numbers on the most impression-sensitive surface into edge-CDN hits), then the F5 hotspots, with Server-Timing instrumentation before diagnosing them so "slow" becomes "why".
 
 ## Incidents
 
@@ -63,6 +92,8 @@ Home and other `(public)` routes load with ~400–700ms TTFB on prod even on fas
 - *Small first win, no architecture change:* split layouts so `(public)/layout.tsx` doesn't call `getUserWithProfile()` — saves a Supabase round-trip (~50–150ms) per marketing hit without making anything static-eligible. Reversible.
 - *Full win:* execute locale-in-URL *and* scope auth/nonce/timezone to the dashboard layout in one PR. Home goes static, TTFB ~50ms globally, SEO/sharing land as a side effect. Beats the canonical F2 baseline (`download=660ms` on `/` warm — see the benchmark log).
 
+**RUM corroboration (2026-08-13 Speed Insights pull).** Home TTFB p75 627ms desktop / 331ms mobile — the dynamic-render tax measured on real visitors, matching the 660ms synthetic benchmark. `/schools` is the worst public route: TTFB p75 **1886ms, rated POOR** (n=33) — a low-traffic cold-entry page (families arriving from a school's message) pays a cold lambda on top of the dynamic render. Strongest real-user evidence yet for the full F2 fix.
+
 **Related — F2b, the first-device-login reload.** `LocaleProvider` reconciles a stale `locale` cookie against `profile.locale` on mount and calls `router.refresh()`, producing a visible second render on the first page after signing in on a new device. Root cause: next-intl's `getRequestConfig` runs before auth and can only read cookies/headers, so client-side reconciliation is the only option — "cookie as a cache of profile state," and new devices always miss the cache. This is a canary: any future pre-render preference (timezone, theme-critical CSS, feature flags) hits the same pattern. The locale-in-URL move (F2 full win) makes it **moot** (no cookie-as-cache dance when locale is in the path); until then, two narrower fixes — (a) write preference cookies server-side during the auth callback so SSR sees them next request (cheap per login, no per-render cost — the better default), or (b) thread the authenticated user through `getRequestConfig` to read the profile directly (per-request DB cost, no divergence). If the full win ships, F2b retires with it.
 
 ### F3 — Per-request role lookup is fanned out across request-contexts
@@ -76,6 +107,15 @@ The **same-render duplication is fixed** (I2 step 1, `9d6d429`): the two layouts
 An earlier version of this note claimed every hook pairing server-prefetched `initialData` with a client `useQuery` (`useVisibleProductsByTypes`, `useParticipationCounts`, `useSpokenLanguages`, plus `useFamily`, `useMyUpcomingSessionRows`, the assignments/pin hooks) inherits an app default of `staleTime: 0` and so refetches immediately on mount. **That was wrong.** The global default in `src/providers/query-provider.tsx:16` is `staleTime: 60 * 1000` (1 minute) — and has been since the initial commit — and no hook overrides it (it's the only `staleTime` in the codebase). React Query treats server-seeded `initialData` as fresh on mount, so within that minute there is **no** immediate refetch; the feared double-fetch doesn't happen.
 
 What does happen, by design: after a minute the data is stale, so a background refetch can fire on a later remount/window-focus. That's the intended freshness behavior (seat counts especially), invisible to the user, and not waste. No action needed.
+
+### F5 — Route hotspots from real-user data (2026-08-13 pull; causes not yet investigated)
+
+The first Speed Insights pull (see Real-user data) surfaced four routes worth a look. Numbers are 30-day p75s from production RUM; none has a confirmed root cause yet — a bullet graduates to its own finding when investigated.
+
+- **`/admin` TTFB 1307ms (improvable, n=95).** The admin dashboard does heavy server work per load. Cause uninvestigated.
+- **`/parent/unlock` TTFB 920ms desktop / 1065ms mobile — and the top mobile route by traffic (n=98).** The PIN unlock page is the most user-visible slow TTFB in the family flow.
+- **`/voice/group/[id]` LCP 4552ms desktop (POOR, n=81) — but INP excellent (72ms, n=403).** The room feels fine once loaded; the entry paint is the problem. Hypothesis: the video/participant tile arrives late and is the LCP element.
+- **`/shop/[id]` LCP ~3.2s on both devices (improvable).** Hypothesis: the product hero image (sizing/priority).
 
 ## Recommended improvements
 

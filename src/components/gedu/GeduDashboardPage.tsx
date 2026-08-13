@@ -122,7 +122,7 @@ function buildAssignmentCards(args: {
     return {
       ...row,
       groupName: summary?.group_name ?? null,
-      groupGamerCount: summary?.group_gamer_count ?? 0,
+      groupParticipantCount: summary?.group_participant_count ?? 0,
       // Null on anything remote, and the RPC has already applied that test
       // against `is_remote` rather than against the presence of a location — a
       // remote municipality club carries one and has no building.

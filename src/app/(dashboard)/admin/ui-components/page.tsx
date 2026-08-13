@@ -21,6 +21,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
+  Eye,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -65,12 +66,10 @@ import {
   type FixtureClock,
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
+import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
 import { useAuth, useNow, useTimezone } from "@/providers";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { computeGlowStyle } from "@/lib/voice/glow";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { ZoneList } from "@/components/voice/ZoneList";
@@ -87,22 +86,12 @@ import {
   type LocationSummary,
 } from "@/components/locations/location-picker-panel";
 import { HomeLocationField } from "@/components/locations/home-location-field";
-import {
-  ProductBrowseCardView,
-  type LocationLine,
-  type SeatBarValue,
-  type SeatsHint,
-} from "@/components/public/products/product-browse-card-view";
+import { ProductBrowseCardView } from "@/components/public/products/product-browse-card-view";
+import { useBrowseCardViewProps } from "@/components/public/products/product-browse-card";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
-import { formatProductLocation } from "@/components/public/products/format-product-location";
-import { formatProductPrice } from "@/components/public/products/format-product-price";
 import {
-  formatProductSchedule,
-  scheduleCardLines,
-} from "@/components/public/products/format-product-schedule";
-import {
+  buildBrowseCounts,
   buildScenarioFixture,
-  scenarioFilledSeats,
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
@@ -119,7 +108,7 @@ import {
   type GamePlatform,
 } from "@/components/game-account";
 import { useRobloxProfile } from "@/services/roblox";
-import { GamerChip } from "@/components/admin/products/groups/gamer-chip";
+import { ParticipantChip } from "@/components/admin/products/groups/participant-chip";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
 import { cn } from "@/lib/utils";
@@ -574,6 +563,24 @@ const DEMO_PARTICIPANTS = [
     audioOn: true,
     videoOn: false,
   },
+  {
+    // A parent on their own seat — the imported id IS the gedu roster
+    // fixtures' Marja, so she wears one face everywhere by construction
+    // rather than by a copied literal. Her identity slot carries the shared
+    // Parent badge where a child's row shows the Minecraft identity — the
+    // adult-variant grammar the rosters established, decided by the owner
+    // after judging the unbadged treatment in this very demo. No game
+    // identity: parents cannot link game accounts, by scope decision.
+    userId: SESSION_FEED_ADULT_ID,
+    userName: "Marja",
+    role: "customer",
+    minecraftUsername: null,
+    minecraftUuid: null,
+    isLocal: false,
+    isOwner: false,
+    audioOn: true,
+    videoOn: false,
+  },
 ] satisfies ParticipantRowData[];
 
 /** Simulate speaking glow on a ref using a sine wave. Different phase offsets
@@ -782,19 +789,24 @@ function ParticipantCardDemo() {
     "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47": { audio: true, video: false },
   });
 
-  // Refs for simulated speaking glow (one per participant)
+  // Refs for simulated speaking glow — one per participant, and the count is
+  // load-bearing: hooks can't loop, so a fixture row without its ref + glow
+  // call silently renders audio-on with no pulse (which is how the parent row
+  // shipped glow-less for a day).
   const ref0 = useRef<HTMLDivElement>(null);
   const ref1 = useRef<HTMLDivElement>(null);
   const ref2 = useRef<HTMLDivElement>(null);
   const ref3 = useRef<HTMLDivElement>(null);
   const ref4 = useRef<HTMLDivElement>(null);
-  const avatarRefs = [ref0, ref1, ref2, ref3, ref4];
+  const ref5 = useRef<HTMLDivElement>(null);
+  const avatarRefs = [ref0, ref1, ref2, ref3, ref4, ref5];
 
   useSimulatedGlow(ref0, DEMO_PARTICIPANTS[0].audioOn, 0);
   useSimulatedGlow(ref1, DEMO_PARTICIPANTS[1].audioOn, 2.1);
   useSimulatedGlow(ref2, DEMO_PARTICIPANTS[2].audioOn, 4.2);
   useSimulatedGlow(ref3, DEMO_PARTICIPANTS[3].audioOn, 6.3);
   useSimulatedGlow(ref4, DEMO_PARTICIPANTS[4].audioOn, 1.4);
+  useSimulatedGlow(ref5, DEMO_PARTICIPANTS[5].audioOn, 3.6);
 
   return (
     <Card>
@@ -839,6 +851,13 @@ function ParticipantCardDemo() {
  * it, and no page shows more than a few of its states at once. The two
  * dashboards' own scenes are still where it gets judged *in place* — this is
  * where the states get judged against each other.
+ *
+ * **Three audiences, and that is the second reason this section exists.** Two
+ * of the footers on this card have three wordings — a parent reading about
+ * their child, the child reading about themselves, and a parent reading about a
+ * seat of their own — and a page can only ever be one of the three. Stacked
+ * here they can be read one after another, which is the only way to tell
+ * whether the three actually say the same thing.
  *
  * The fixtures go through `buildEnrollmentFixture`, the same builder the two
  * dashboard scenes use, so the schedule sentence and the next session are the
@@ -1004,6 +1023,59 @@ function EnrollmentCardDemo() {
           </div>
         </div>
       </SubSection>
+
+      {/* The third audience, and the reason this section is worth having at all
+          rather than leaving the card to the dashboard scenes: these two
+          footers are the only strings in the product with three wordings, and
+          no single page can show more than one of them. Here they sit under the
+          other two. */}
+      <SubSection title="The parent's own seat — the card about the reader">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          A for-parents product puts the reader in the seat, so the two footers
+          move into the second person again &mdash; and the leave dialog behind
+          the waitlist card names nobody, because there is nobody but them to
+          name. Money stays, since it is still their card being charged. The
+          Join is the invisible difference: this arm has no{" "}
+          <code>onJoinClick</code> at all, so it falls back to a plain link
+          straight to the room rather than opening the switch-profile dialog a
+          child&rsquo;s card opens.
+        </p>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>Live — Join goes straight to the room</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.live}
+              audience="self"
+              onOpenPortal={inert}
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Awaiting placement</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.awaiting}
+              audience="self"
+              onOpenPortal={inert}
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Waitlisted — the dialog names nobody</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.waitlisted}
+              audience="self"
+              onOpenPortal={inert}
+              onLeaveWaitlist={inert}
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Failing card — corner badge, unchanged</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.badged}
+              audience="self"
+              onOpenPortal={inert}
+            />
+          </div>
+        </div>
+      </SubSection>
     </div>
   );
 }
@@ -1129,16 +1201,27 @@ function ProductsDemo() {
   );
 }
 
-// One demo card per scenario, rendered from that scenario's mocked product. It
-// feeds the *pure* `ProductBrowseCardView` directly, deriving the display props
-// from the same fixture row that drives the full-page preview (via the shared
-// schedule / price / location formatters) and passing the authored registration
-// `state` straight through as a prop. The production `deriveRegistrationState`
-// adapter is intentionally bypassed — the style guide authors the state it wants
-// to eyeball, the card never computes it. A card whose state opens takes its
-// whole surface to the matching full page at /preview/products/[slug]; a
-// dead-end state gets no href and stays inert, which is the same split the
-// shop makes.
+// One demo card per scenario, rendered from that scenario's mocked product
+// through the production adapter hook — the same row→props resolution the shop
+// runs, not a restatement of it. The one thing the style guide authors is the
+// registration `state`, overridden after the spread: `deriveRegistrationState`
+// is intentionally bypassed so each demo shows exactly the state it exists to
+// eyeball, and the counts fed to the hook are synthesized from that same
+// authored state (`buildBrowseCounts`) so the muni seat bar agrees with it.
+// A card whose state opens takes its whole surface to the matching full page
+// at /preview/products/[slug]; a dead-end state stays inert — the card's own
+// split, not the demo's.
+//
+// The tag and the picture are read off the row by the adapter, for the same
+// reason the state is not hand-picked per card: a hand-picked tag would let a
+// demo card disagree with that scenario's own detail scene, and the fixture
+// has already decided it. All three tags and the untagged case appear on this
+// grid because the scenarios carry them, not because this function chose them.
+//
+// `municipalityScoped` is true because muni clubs are only ever surfaced on
+// the per-municipality page, which renders them scoped — an online muni club
+// collapses its (redundant) city name to the generic "Online" label here
+// exactly as it does there. The flag is inert for every other product type.
 function ScenarioBrowseCard({
   slug,
   label,
@@ -1146,82 +1229,22 @@ function ScenarioBrowseCard({
   slug: PreviewScenario;
   label: string;
 }) {
-  const t = useTranslations("productBrowse.card");
-  const uiLocale = resolveLocale(useLocale());
-  const timeZone = useTimezone();
-  const now = useNow();
-  const topicLabel = useTopicLabel();
-
   const { product, state } = buildScenarioFixture(slug);
-  // Every scenario passes its href; the card decides whether to use it, from
-  // the state, exactly as it does in the shop. Withholding it here used to
-  // double as a way of saying "this one is inert", which was the style guide
-  // second-guessing the component about the one thing the component owns.
-  const detailHref = `/preview/products/${slug}`;
-  const tr = resolveTranslation(product.product_translations, uiLocale);
-  const isMuniClub = product.product_type === "municipality_club";
-
-  const scheduleLines = scheduleCardLines(
-    formatProductSchedule({ product, locale: uiLocale, timeZone, now }),
+  const viewProps = useBrowseCardViewProps(
+    product,
+    buildBrowseCounts(slug, product.id),
+    // Every scenario passes its href; the card decides whether to use it, from
+    // the state, exactly as it does in the shop. Withholding it here used to
+    // double as a way of saying "this one is inert", which was the style guide
+    // second-guessing the component about the one thing the component owns.
+    `/preview/products/${slug}`,
+    true,
   );
-  const price = formatProductPrice({
-    prices: product.product_prices,
-    billingMode: product.billing_mode,
-    productType: product.product_type,
-    currency: DEFAULT_CURRENCY,
-    locale: uiLocale,
-  });
-
-  // Muni clubs are only ever surfaced on the per-municipality page, which
-  // renders them `municipalityScoped` — so an online muni club collapses its
-  // (redundant) city name to the generic "Online" label, exactly as the
-  // production adapter does there. In-person muni clubs still show their school
-  // site. (The `online_muni` city-name branch never fires for muni clubs in the
-  // live app, so the demo doesn't reproduce it.)
-  const loc = formatProductLocation(product, uiLocale);
-  const locationLine: LocationLine = !loc
-    ? { kind: "online", label: t("online") }
-    : loc.kind === "site"
-      ? { kind: "in_person", label: loc.site }
-      : { kind: "online", label: t("online") };
-
-  // Same rule as the production adapter: muni clubs tell the seat story through
-  // the footer bar, so they suppress the capacity hint; everything else shows
-  // its capacity, and an uncapped product shows nothing.
-  const seatsHint: SeatsHint | null = isMuniClub
-    ? null
-    : product.seat_count !== null
-      ? { kind: "capacity", count: product.seat_count }
-      : null;
-
-  // Muni clubs swap the price for a seat-fill bar; the fill comes from the
-  // scenario's authored state so the bar and the card agree.
-  const seatBar: SeatBarValue | undefined = isMuniClub
-    ? {
-        filled: scenarioFilledSeats(slug),
-        total: product.seat_count,
-        waitlistEnabled: product.waitlist_enabled,
-      }
-    : undefined;
 
   return (
     <div className="flex flex-col gap-2">
       <DemoCaption>{label}</DemoCaption>
-      <ProductBrowseCardView
-        name={tr?.name ?? ""}
-        description={tr?.short_description ?? null}
-        imagePath={product.image_path}
-        topicLabel={topicLabel(product.topic)}
-        scheduleLines={scheduleLines}
-        ageLine={t("ages", { min: product.min_age, max: product.max_age })}
-        seatsHint={seatsHint}
-        locationLine={locationLine}
-        spokenLanguageCode={product.spoken_language_code}
-        price={price}
-        seatBar={seatBar}
-        state={state}
-        detailHref={detailHref}
-      />
+      <ProductBrowseCardView {...viewProps} state={state} />
     </div>
   );
 }
@@ -1412,6 +1435,21 @@ export default function AdminUIComponentsPage() {
               hint="Must be at least 8 characters."
             >
               <Input id="demo-field-hint" type="password" autoComplete="new-password" />
+            </Field>
+            {/*
+              The icon variant, for a label that has become a title — one
+              carrying a fact beyond the field's name, such as who ends up
+              reading what is typed in. The glyph is decorative and adds
+              nothing to the accessible name; the label text is what states
+              the fact.
+            */}
+            <Field
+              label="Visible to families"
+              htmlFor="demo-field-icon"
+              icon={Eye}
+              hint="Everyone enrolled here can read this."
+            >
+              <Input id="demo-field-icon" placeholder="Say hello…" autoComplete="off" />
             </Field>
           </form>
         </SubSection>
@@ -1938,6 +1976,19 @@ export default function AdminUIComponentsPage() {
           including one a parent reaches only by leaving a tab open past
           midnight.
         </p>
+        <p className="text-sm text-muted-foreground">
+          <strong>No card carries seat information</strong> except the
+          municipality seat-fill bar, which is the deliberate exception
+          (schools are the known-scarce case) and reads counts that are not
+          live. Caps and waitlists are legal on every type now, so the pairs to
+          read against each other are the capped non-muni ones: the free club
+          and the full-with-waitlist club both look like ordinary open cards,
+          and the full-no-waitlist camp is inert &mdash; whether the card opens
+          is the only difference a parent can see before clicking, and fullness
+          is stated properly on the detail page behind it. The muni countdown
+          scenarios are the only pre-open ones because registration timing is
+          still a municipality-only setting.
+        </p>
         <ProductsDemo />
       </Section>
 
@@ -2390,12 +2441,29 @@ const DEMO_MARKDOWN = `# Mob-proofing night
 We lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.`;
 
 /**
- * The writer, with its own serialised output beside it.
+ * The marketing variant's seed, which has to carry a link: the link control is
+ * the only part of this editor that opens a second row, and it is unreachable
+ * from the feed variant.
+ */
+const DEMO_MARKETING_MARKDOWN = `## Before the first session
+
+There is nothing to install beyond the game itself — the **Java edition** is the one you want.
+
+Our [privacy policy](/privacy) covers what we keep and for how long.`;
+
+/**
+ * The writer, in both variants, with its own serialised output beside each.
  *
  * Showing the stored markdown next to the editor is the one thing worth being
  * able to see at a glance: a writer never meets the syntax, so this is the only
  * place to confirm the round trip is honest. Type a heading, watch the `#`
  * appear in the serialised output.
+ *
+ * Both variants are here because the variant is the difference between two
+ * toolbars over one component, and the point of a style-guide section is
+ * exactly that — every state of a reused piece, side by side. It is also the
+ * only place the link control can be exercised at all until the admin form
+ * starts storing markdown.
  *
  * How stored markdown *renders* is deliberately not demoed here — a renderer is
  * only meaningful inside the surface that owns it, at that surface's width and
@@ -2403,14 +2471,17 @@ We lit the paths, walled the gaps and got through a whole session without losing
  */
 function RichTextEditorDemo() {
   const [markdown, setMarkdown] = useState(DEMO_MARKDOWN);
+  const [marketingMarkdown, setMarketingMarkdown] = useState(
+    DEMO_MARKETING_MARKDOWN,
+  );
 
   return (
     <div className="space-y-8">
-      <SubSection title="The editor, and what it stores">
+      <SubSection title="The feed variant, and what it stores">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2">
             <DemoCaption>
-              Rich editor — seven buttons, fixed toolbar height
+              Rich editor — seven buttons, fixed toolbar height, no link control
             </DemoCaption>
             <RichTextEditor
               initialValue={DEMO_MARKDOWN}
@@ -2425,6 +2496,40 @@ function RichTextEditorDemo() {
             </DemoCaption>
             <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
               {markdown}
+            </pre>
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="The marketing variant — the same editor, plus links">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>
+              An eighth button. Select some words and press it: the address row
+              opens between the toolbar and the text, seeded with the current
+              link&rsquo;s address when the caret is already inside one. Enter
+              applies, Escape closes, and the middle button unlinks. A bare
+              &ldquo;sog.gg/privacy&rdquo; is treated as an external address and
+              gets https:// rather than becoming a path under this page; an
+              address the reader&rsquo;s renderer would strip (tel:, ftp://)
+              keeps the row open and says so, instead of closing on nothing.
+              Headings are a page&rsquo;s scale here rather than a
+              card&rsquo;s.
+            </DemoCaption>
+            <RichTextEditor
+              variant="marketing"
+              initialValue={DEMO_MARKETING_MARKDOWN}
+              onChange={setMarketingMarkdown}
+              ariaLabel="Product long description"
+              placeholder="The expanded pitch under the hero."
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>
+              Serialised markdown — links included
+            </DemoCaption>
+            <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+              {marketingMarkdown}
             </pre>
           </div>
         </div>
@@ -2865,7 +2970,7 @@ function GameAccountDemo() {
           Same row, same four states, <code>figure=&quot;head&quot;</code>: 32px
           instead of 60px, for a dense list where the whole character crowds out
           what the list is about. Two surfaces use it &mdash; the voice
-          participant row and the gamer chip below. Everywhere else, including the
+          participant row and the participant chip below. Everywhere else, including the
           admin user detail page, keeps the whole figure. Both platforms are{" "}
           <em>identical</em> here
           &mdash; a Minecraft face render and a Roblox headshot are both square,
@@ -2905,55 +3010,63 @@ function GameAccountDemo() {
         <AddGamerDialogDemo />
       </SubSection>
 
-      <SubSection title="In the admin gamer chip">
+      <SubSection title="In the admin participant chip">
         <p className="text-sm text-muted-foreground">
           The chip is the draggable roster token in the product groups panel, and
           it appears in four places: the group columns, the waitlist card, the
-          unassigned card and the drag overlay. It stacks name, age/gender, parent
-          and the identity row inside a narrow rail, so it takes the compact
-          figure: the whole body was taller than the other three lines put
-          together. Drag is live &mdash; the chips below are real, and there is
-          nowhere to drop them.
+          unassigned card and the drag overlay. A child stacks name, age/gender,
+          parent and the identity row inside a narrow rail, so it takes the
+          compact figure: the whole body was taller than the other three lines
+          put together. An adult holding their own seat has none of those three
+          facts, so the chip drops them rather than drawing blanks, and carries
+          the one thing a child&rsquo;s chip has no room for &mdash; the address
+          &mdash; where the parent&rsquo;s name would be. Drag is live &mdash;
+          the chips below are real, and there is nowhere to drop them.
         </p>
-        <GamerChipDemo />
+        <ParticipantChipDemo />
       </SubSection>
     </div>
   );
 }
 
 /**
- * Chip fixtures. The ids are real generated UUIDv4s, hardcoded: an identicon is
- * hashed out of the id's hex bytes, so a readable stand-in renders a degenerate
- * square and a freshly generated one gives the same child a different face on
- * every reload.
+ * Chip fixtures. The ids are real generated UUIDv4s, hardcoded:
+ * an identicon is hashed out of the id's hex bytes, so a readable stand-in
+ * renders a degenerate square and a freshly generated one gives the same person
+ * a different face on every reload.
+ *
+ * `marja` is an adult holding a seat of her own. She has no date of birth, no
+ * gender and no game account on purpose — those live on `gamer_profiles` and
+ * `minecraft_accounts`, and an adult seat has neither row.
  */
-const CHIP_GAMERS = {
+const CHIP_PEOPLE = {
   aino: "3f5f2c9a-1d7e-4c8b-9a2f-6b1e0c4d8a37",
   joonas: "c81b47e2-9f30-4a15-8d6c-2e7b5a091f4d",
   petra: "7d2a6e13-5c84-4b09-a7f1-38e9c0b2d654",
+  marja: "37cbff02-0866-4259-9586-20d91010007a",
 } as const;
 
-function GamerChipDemo() {
+function ParticipantChipDemo() {
   return (
     // The chip is a dnd-kit draggable, so it needs the context its real parents
     // give it. There are no droppables here — picking one up and letting go puts
     // it back, which is all this demo needs.
     <DndContext>
-      <GamerChipRow />
+      <ParticipantChipRow />
     </DndContext>
   );
 }
 
-function GamerChipRow() {
+function ParticipantChipRow() {
   return (
     <div className="flex flex-wrap items-start gap-6">
       {/* The real rail width in the groups panel, so the chip is judged at the
           size it actually renders at rather than stretched across the page. */}
       <div className="w-64 space-y-2 rounded-lg border p-3">
         <DemoCaption>In a group column (w-64, the real rail)</DemoCaption>
-        <GamerChip
+        <ParticipantChip
           participationId="demo-1"
-          gamerId={CHIP_GAMERS.aino}
+          participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
           dateOfBirth="2014-03-11"
           gender="girl"
@@ -2961,10 +3074,11 @@ function GamerChipRow() {
           parentLastName="Virtanen"
           minecraftUsername="Notch"
           minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          participantEmail={null}
         />
-        <GamerChip
+        <ParticipantChip
           participationId="demo-2"
-          gamerId={CHIP_GAMERS.joonas}
+          participantId={CHIP_PEOPLE.joonas}
           firstName="Joonas"
           dateOfBirth="2012-09-02"
           gender="boy"
@@ -2972,10 +3086,11 @@ function GamerChipRow() {
           parentLastName="Nieminen"
           minecraftUsername="jeb_"
           minecraftUuid={null}
+          participantEmail={null}
         />
-        <GamerChip
+        <ParticipantChip
           participationId="demo-3"
-          gamerId={CHIP_GAMERS.petra}
+          participantId={CHIP_PEOPLE.petra}
           firstName="Petra"
           dateOfBirth={null}
           gender={null}
@@ -2983,14 +3098,32 @@ function GamerChipRow() {
           parentLastName={null}
           minecraftUsername={null}
           minecraftUuid={null}
+          participantEmail={null}
+        />
+        {/* The adult variant, deliberately last in the same column: the thing
+            worth seeing is how it sits against three child chips at the real
+            rail width, not how it looks alone. Three lines become one, the
+            badge carries the difference at a glance, and the address takes the
+            line the parent's name had. */}
+        <ParticipantChip
+          participationId="demo-5"
+          participantId={CHIP_PEOPLE.marja}
+          firstName="Marja"
+          dateOfBirth={null}
+          gender={null}
+          parentFirstName={null}
+          parentLastName={null}
+          minecraftUsername={null}
+          minecraftUuid={null}
+          participantEmail="marja.korhonen@example.com"
         />
       </div>
 
       <div className="w-64 space-y-2 rounded-lg border p-3">
         <DemoCaption>Mid-save — greyed and undraggable</DemoCaption>
-        <GamerChip
+        <ParticipantChip
           participationId="demo-4"
-          gamerId={CHIP_GAMERS.aino}
+          participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
           dateOfBirth="2014-03-11"
           gender="girl"
@@ -2998,6 +3131,7 @@ function GamerChipRow() {
           parentLastName="Virtanen"
           minecraftUsername="Notch"
           minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          participantEmail={null}
           isPending
         />
       </div>

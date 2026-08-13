@@ -225,7 +225,7 @@ describe("apply_group_changes", () => {
         .from("participations")
         .insert({
           product_id: PRODUCT_DELETE,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
           group_id: groupId,
@@ -372,7 +372,7 @@ describe("apply_group_changes", () => {
         .from("participations")
         .insert({
           product_id: PRODUCT_MOVES,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
           group_id: null,
@@ -580,14 +580,14 @@ describe("get_product_groups_with_details", () => {
     await admin.from("participations").insert([
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupA,
       },
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: null,
@@ -612,10 +612,23 @@ describe("get_product_groups_with_details", () => {
     expect(result.groups).toHaveLength(1);
     expect(result.groups[0].name).toBe("Alpha");
     expect(result.groups[0].gedus.map((g) => g.id)).toEqual([GEDU_A]);
-    expect(result.groups[0].participations.map((p) => p.gamer_id)).toEqual([
+    expect(result.groups[0].participations.map((p) => p.participant_id)).toEqual([
       TEST_IDS.GAMER,
     ]);
-    expect(result.unassigned.map((p) => p.gamer_id)).toEqual([TEST_IDS.GAMER_2]);
+    expect(result.unassigned.map((p) => p.participant_id)).toEqual([TEST_IDS.GAMER_2]);
+    // 00166's per-participation flag, on the two branches that actually read
+    // family_subscriptions. Neither seat has a subscription behind it, so both
+    // report false; the true case and the waitlist branch's constant false are
+    // pinned in waitlist-admin.test.ts.
+    expect(result.groups[0].participations[0].has_live_subscription).toBe(false);
+    expect(result.unassigned[0].has_live_subscription).toBe(false);
+    // 00167's payment marker, on the same two branches. These seats were
+    // written straight into the table with no Checkout Session behind them —
+    // the shape a free enrollment or a comp-enrollment produces — so no money
+    // ever arrived for them and the marker is false. The true case lives on the
+    // waitlist, in waitlist-admin.test.ts.
+    expect(result.groups[0].participations[0].has_payment_marker).toBe(false);
+    expect(result.unassigned[0].has_payment_marker).toBe(false);
 
     // Cleanup.
     await admin
@@ -636,7 +649,7 @@ describe("get_product_groups_with_details", () => {
     await admin.from("participations").insert([
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupA,
@@ -644,7 +657,7 @@ describe("get_product_groups_with_details", () => {
       },
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupA,
@@ -660,14 +673,14 @@ describe("get_product_groups_with_details", () => {
         groups: z.array(
           z.object({
             id: z.string(),
-            participations: z.array(z.object({ gamer_id: z.string() })),
+            participations: z.array(z.object({ participant_id: z.string() })),
           }),
         ),
       })
       .parse(data);
     // A prior test leaves its own group behind, so target the one we created.
     const alpha = result.groups.find((g) => g.id === groupA);
-    expect(alpha?.participations.map((p) => p.gamer_id)).toEqual([
+    expect(alpha?.participations.map((p) => p.participant_id)).toEqual([
       TEST_IDS.GAMER,
       TEST_IDS.GAMER_2,
     ]);

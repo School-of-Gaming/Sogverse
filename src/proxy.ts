@@ -30,12 +30,15 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // match also covers the per-municipality pages (/schools/[slug]).
 // ROUTES.roblox is the partnership landing page — public so it can be shared
 // with partners, but kept out of robots.txt and the sitemap rather than gated.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.roblox, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
-// the authenticated group voice room — gamers join as participants, gedus
-// and admins as moderators. The token endpoint enforces role + assignment,
-// but we still gate at the proxy so unauthenticated visitors get redirected
+// the authenticated group voice room — seat-holders (a gamer, or a parent on
+// their own seat) join as participants, gedus and admins as moderators. Every
+// signed-in role may load the page; the token endpoint enforces membership and
+// decides moderator rights. (A locked customer is still bounced to the PIN
+// unlock screen by the parent-PIN gate below, like anywhere else.) We still
+// gate at the proxy so unauthenticated visitors get redirected
 // to /login instead of landing on a page that can't mint a token. Pulled
 // from `ROUTES.voice.groupSessionPrefix` so a rename of the route helper
 // stays in sync with the proxy carve-out.

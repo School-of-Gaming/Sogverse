@@ -19,9 +19,9 @@ export type ScheduleShape =
 export type StartMode = "date" | "date_and_threshold" | "threshold";
 
 export type BillingOption =
-  | { mode: "paid"; required: true }                                    // consumer_club, camp
+  | { mode: "paid"; required: true }                                    // camp
   | { mode: "external_contract"; required: true }                       // municipality_club
-  | { mode: "free_or_paid" };                                           // event
+  | { mode: "free_or_paid" };                                           // consumer_club, event
 
 // Pricing shape — drives the Capacity & billing card. Each paid type collects
 // a single `price_cents`: consumer clubs charge it as a flat monthly
@@ -69,7 +69,11 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     i18nKey: "consumerClub",
     routeSlug: "consumer-clubs",
     scheduleShape: "weekly_ongoing",
-    billing: { mode: "paid", required: true },
+    // Free-or-paid, defaulting to paid. A free club enrols exactly like a free
+    // event — the enrollment path branches on billing_mode, never on type — so
+    // the only thing "free club" needs is this chooser. When paid, the monthly
+    // pricing shape below applies; when free, the pricing card doesn't render.
+    billing: { mode: "free_or_paid" },
     pricingShape: "monthly",
     allowsRemote: true,
     allowsInPerson: true,
@@ -114,7 +118,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     i18nKey: "event",
     routeSlug: "events",
     // Events default to free; switching to paid uses upfront_total. The
-    // pricing card only renders when billing_mode === "paid".
+    // pricing card only renders when the effective billing mode is "paid".
     pricingShape: "upfront_total",
     scheduleShape: "single_date",
     billing: { mode: "free_or_paid" },
@@ -130,11 +134,10 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
 
 // ===== The free/paid choice =====
 //
-// Lives here rather than with the form's other chooser tuples because it is
-// the one chooser that feeds a *derivation* the non-form layers need too: the
-// lock resolver reads it, and putting the resolver's dependency in the form
-// state module would make the two import each other. This module has no
-// dependencies of its own, so it can sit under both.
+// Lives here rather than with the form's other chooser tuples because it feeds
+// `effectiveBillingMode` below, which the form's capacity defaults and its
+// validation both read. This module has no dependencies of its own, so it can
+// sit under all of them.
 
 // Listed as a module-level constant so the lint rule against literal strings
 // (i18n) doesn't fire for these structural keys — same reason as the chooser
@@ -145,8 +148,8 @@ export type PaidMode = (typeof PAID_MODE_VALUES)[number];
 
 /**
  * Which billing mode is actually in force, given the type's billing option and
- * (for the one type that offers a choice) the admin's free/paid pick. Every
- * type but `event` pins its mode, so `paidMode` is ignored for them.
+ * (for the types that offer a choice) the admin's free/paid pick. Camps and
+ * municipality clubs pin their mode, so `paidMode` is ignored for them.
  */
 export function effectiveBillingMode(
   config: ProductTypeConfig,

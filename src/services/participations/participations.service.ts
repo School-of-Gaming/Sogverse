@@ -59,7 +59,12 @@ export interface MyUpcomingSessionRow {
    * several Stripe customers, and a portal session covers only one.
    */
   participationId: string;
-  gamer: {
+  /**
+   * Whoever holds the seat. A child on a parent's dashboard, or the parent
+   * themselves on a seat they bought for themselves — the read is keyed on the
+   * participant column, so a self seat lands here with no special case.
+   */
+  participant: {
     id: string;
     firstName: string;
   };
@@ -165,7 +170,8 @@ export interface MyUpcomingSessionRow {
 export interface MyWaitlistRow {
   /** The `participations.id`, and what the leave action names. */
   participationId: string;
-  gamer: {
+  /** Whoever holds the queued spot — a child, or the parent themselves. */
+  participant: {
     id: string;
     firstName: string;
   };
@@ -233,7 +239,7 @@ function buildGamerParticipationsQuery(
     .from("participations")
     .select(
       `
-        id, gamer_id, status, signed_up_at,
+        id, participant_id, status, signed_up_at,
         product:products!inner(
           id, product_type,
           product_translations(*)
@@ -241,8 +247,8 @@ function buildGamerParticipationsQuery(
         group:product_groups(name)
       `,
     )
-    .in("gamer_id", gamerIds)
-    .order("gamer_id", { ascending: true })
+    .in("participant_id", gamerIds)
+    .order("participant_id", { ascending: true })
     .order("signed_up_at", { ascending: false });
 }
 
@@ -268,7 +274,7 @@ export interface ParticipationCounts {
   waitlistCount: number;
   /**
    * Per-gamer signup state for the logged-in customer's children on this
-   * product, keyed by `gamer_id`. A gamer with no row is simply absent from
+   * product, keyed by `participant_id`. A gamer with no row is simply absent from
    * the map. The detail page's signup form uses this to disable each
    * already-signed-up child in the picker and label them in place.
    *
@@ -281,7 +287,7 @@ export interface ParticipationCounts {
 
 export type CreateParticipationInput = {
   productId: string;
-  gamerId: string;
+  participantId: string;
   purchaseShape: PurchaseShape;
   currency: SupportedCurrency;
 };
@@ -301,8 +307,23 @@ export interface ParticipationConfirmation {
   participationId: string;
   status: ParticipationStatus;
   productId: string;
-  /** Gamer's first name (or username fallback); null → page shows "Your child". */
-  gamerName: string | null;
+  /**
+   * The participant's first name — a child's, or the buyer's own on a self
+   * seat. Null → the page falls back to "Your child" / "You" depending on
+   * `isSelfSeat`.
+   */
+  participantName: string | null;
+  /**
+   * Whether the seat is the buyer's own, i.e. `participant_id = customer_id`.
+   *
+   * Read from the **row**, not from the viewer. That is the structural
+   * definition of a self seat and it answers identically for both readers RLS
+   * lets in here — a parent reading their own purchase, and a gamer who somehow
+   * has the `?p=` link to their own row. Comparing the participant against
+   * `auth.uid()` would call the second of those a self seat and put the whole
+   * confirmation into the second person about a child's own signup.
+   */
+  isSelfSeat: boolean;
 }
 
 export type {
@@ -313,7 +334,7 @@ export type {
 
 export type JoinWaitlistInput = {
   productId: string;
-  gamerId: string;
+  participantId: string;
 };
 
 export type LeaveWaitlistInput = {
@@ -371,7 +392,7 @@ export class ParticipationsService {
    * Audience selects which column the row is keyed off:
    *   - 'customer' → `customer_id = auth.uid()`: every participation the
    *     parent paid for, across all their kids.
-   *   - 'gamer' → `gamer_id = auth.uid()`: only the rows belonging to the
+   *   - 'gamer' → `participant_id = auth.uid()`: only the rows belonging to the
    *     logged-in gamer.
    * The matching RLS policy gates the other audience out either way; the
    * filter is here so the network call doesn't drag rows the policy would
@@ -385,7 +406,7 @@ export class ParticipationsService {
     if (!userId) return [];
 
     const audienceColumn =
-      audience === "customer" ? "customer_id" : "gamer_id";
+      audience === "customer" ? "customer_id" : "participant_id";
 
     // Fetch the sessions and the subscription-state signals concurrently. The
     // signals come from `get_my_participation_subscription_states` (00093)
@@ -474,7 +495,7 @@ export class ParticipationsService {
     if (!userId) return [];
 
     const audienceColumn =
-      audience === "customer" ? "customer_id" : "gamer_id";
+      audience === "customer" ? "customer_id" : "participant_id";
 
     const [{ data, error }, { data: positionRows, error: positionError }] =
       await Promise.all([
@@ -538,7 +559,7 @@ export class ParticipationsService {
     if (userId) {
       const { data: mine } = await this.supabase
         .from("participations")
-        .select("product_id, gamer_id, status")
+        .select("product_id, participant_id, status")
         .eq("customer_id", userId)
         .in("product_id", productIds);
       if (mine) {
@@ -546,10 +567,10 @@ export class ParticipationsService {
           const existing = countsByProduct.get(row.product_id);
           if (!existing) continue;
           const next = mergeGamerSignupState(
-            existing.myGamerStates[row.gamer_id],
+            existing.myGamerStates[row.participant_id],
             row.status,
           );
-          if (next) existing.myGamerStates[row.gamer_id] = next;
+          if (next) existing.myGamerStates[row.participant_id] = next;
         }
       }
     }
@@ -563,7 +584,7 @@ export class ParticipationsService {
    * `customer_select_own_participations` (`customer_id = auth.uid()`) is the
    * intended path — a parent reading their own purchase. Note RLS *also* lets a
    * gamer read their OWN row (`gamer_select_own_participations`,
-   * `gamer_id = auth.uid()`), so a logged-in child who somehow has the `?p=`
+   * `participant_id = auth.uid()`), so a logged-in child who somehow has the `?p=`
    * link can load their own confirmation. That's not the intended flow but it's
    * harmless: own data only (no IDOR), and the product detail is public anyway.
    * Returns null when the id matches nothing the caller may see (a stale or
@@ -581,8 +602,8 @@ export class ParticipationsService {
       .from("participations")
       .select(
         `
-          id, status, product_id,
-          gamer:profiles!participations_gamer_id_fkey(first_name)
+          id, status, product_id, participant_id, customer_id,
+          participant:profiles!participations_participant_id_fkey(first_name)
         `,
       )
       .eq("id", participationId)
@@ -595,7 +616,8 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
-      gamerName: data.gamer.first_name || null,
+      participantName: data.participant.first_name || null,
+      isSelfSeat: data.participant_id === data.customer_id,
     };
   }
 
@@ -622,8 +644,8 @@ export class ParticipationsService {
       .from("participations")
       .select(
         `
-          id, status, product_id,
-          gamer:profiles!participations_gamer_id_fkey(first_name)
+          id, status, product_id, participant_id, customer_id,
+          participant:profiles!participations_participant_id_fkey(first_name)
         `,
       )
       .eq("stripe_checkout_session_id", checkoutSessionId)
@@ -636,12 +658,110 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
-      gamerName: data.gamer.first_name || null,
+      participantName: data.participant.first_name || null,
+      isSelfSeat: data.participant_id === data.customer_id,
     };
   }
 
   /**
-   * Does this gamer already hold a spot on this product? Asked by the paid
+   * When the **first** subscription charge for this participation will happen —
+   * or `null` when there is no deferred first charge to state.
+   *
+   * A club bought before it starts completes Checkout at €0 and bills for the
+   * first time at the anchor, so the confirmation has to say when that is. One
+   * fact turns the line on and two guards turn it off, and none works alone:
+   *
+   *   - **The signal is the €0 subscription payment row** — the marker the
+   *     webhook writes for a completion that collected nothing. A future
+   *     `current_period_end` on its own is not a signal: an immediately-charged
+   *     subscription has one too (its renewal), and calling a renewal the "first
+   *     charge" is a lie about money.
+   *   - **The first guard is the absence of a positive-amount row** for this
+   *     subscription. The €0 marker is permanent, the deferral is not: once the
+   *     anchor fires, `current_period_end` advances to the *next* renewal, and a
+   *     parent revisiting their confirmation link — which they do — would be told
+   *     a renewal date under a "first charge" label.
+   *   - **The second guard is the clock.** The line only makes a claim about the
+   *     future, so an instant that is not in the future retires it whatever the
+   *     ledger says. That covers what the payment row cannot: an anchor charge
+   *     that *failed* (the subscription goes `past_due`, no positive payment row
+   *     is ever written, and `current_period_end` sits in the past), and an
+   *     `invoice.paid` delivery we never received.
+   *
+   * **What is still open, honestly.** The two guards do not close the
+   * webhook-ordering race: Stripe can deliver `customer.subscription.updated` for
+   * the anchor cycle before the matching `invoice.paid`, and in the window
+   * between them `current_period_end` has already advanced to the next renewal
+   * while no positive payment row exists yet — so a confirmation loaded in that
+   * window states a renewal date under the "first charge" label. The window is
+   * seconds to minutes, both events are near-simultaneous, and the clock guard
+   * does not help because the advanced value is in the future. Closing it (by
+   * recording the anchor at purchase and comparing against it, rather than
+   * inferring from the period end) is a decision deliberately still pending.
+   *
+   * The date itself is the subscription row's `current_period_end`, which for a
+   * deferred purchase *is* the anchor.
+   *
+   * Everything here is RLS-scoped: the `payments` SELECT policy is customer-only,
+   * so a gamer reading their own confirmation gets nothing and sees no billing
+   * line. That is the intended outcome — billing copy is for the payer.
+   */
+  async getDeferredFirstChargeAt(
+    participationId: string,
+  ): Promise<string | null> {
+    const { data: sub, error: subError } = await this.supabase
+      .from("family_subscriptions")
+      .select("stripe_subscription_id, current_period_end")
+      .eq("participation_id", participationId)
+      .maybeSingle();
+    if (subError) throw subError;
+    if (!sub?.current_period_end) return null;
+
+    // A first charge is a promise about the future; an instant already behind us
+    // is not one, whatever the ledger looks like. Checked before the payments
+    // read because it is free and settles the common stale cases on its own. An
+    // instant comparison, not a local-date one — nothing here is being formatted
+    // against anybody's calendar yet.
+    if (new Date(sub.current_period_end).getTime() <= Date.now()) return null;
+
+    // Filtered in JS rather than with a jsonb path filter: the two links live
+    // under different metadata keys (the checkout marker records the
+    // participation, a renewal records the subscription), and one typed read is
+    // simpler than two hand-written PostgREST json filters. Newest first with a
+    // bound, so the read cannot grow without limit as a family's ledger does —
+    // and the ordering is what makes the bound safe in the direction that
+    // matters: a real charge is always *newer* than the €0 marker it follows, so
+    // a window holding the marker holds its successor too. Falling off the end
+    // can only hide the line, never show a stale one.
+    const { data: payments, error: paymentsError } = await this.supabase
+      .from("payments")
+      .select("amount_cents, metadata")
+      .eq("purpose", "subscription_invoice")
+      .order("created_at", { ascending: false })
+      .limit(RECENT_SUBSCRIPTION_PAYMENTS);
+    if (paymentsError) throw paymentsError;
+
+    const deferredMarker = payments.some(
+      (row) =>
+        row.amount_cents === 0 &&
+        metadataString(row.metadata, "participationId") === participationId,
+    );
+    if (!deferredMarker) return null;
+
+    const firstChargeLanded = payments.some(
+      (row) =>
+        row.amount_cents > 0 &&
+        metadataString(row.metadata, "stripeSubscriptionId") ===
+          sub.stripe_subscription_id,
+    );
+    if (firstChargeLanded) return null;
+
+    return sub.current_period_end;
+  }
+
+  /**
+   * Does this participant — a child, or the buyer themselves on a for-parents
+   * product — already hold a spot on this product? Asked by the paid
    * confirmation page when the session it arrived with bought nothing, to tell
    * the two reasons for that apart: the webhook has not landed yet (wait), or
    * the payment was refused as a duplicate because the seat was already taken
@@ -652,12 +772,15 @@ export class ParticipationsService {
    * here — the caller has already been checked to be the session's purchaser, so
    * the row is theirs to see.
    */
-  async hasSeatOnProduct(productId: string, gamerId: string): Promise<boolean> {
+  async hasSeatOnProduct(
+    productId: string,
+    participantId: string,
+  ): Promise<boolean> {
     const { data, error } = await this.supabase
       .from("participations")
       .select("id")
       .eq("product_id", productId)
-      .eq("gamer_id", gamerId)
+      .eq("participant_id", participantId)
       .in("status", ["active", "waitlisted", "completed"])
       .maybeSingle();
 
@@ -673,7 +796,7 @@ export class ParticipationsService {
    * stamped-at-join value join_waitlist returns.
    *
    * Backed by the get_waitlist_position RPC: SECURITY DEFINER so it can count
-   * past the caller's RLS, but owner-authorized (customer_id OR gamer_id) and
+   * past the caller's RLS, but owner-authorized (customer_id OR participant_id) and
    * returns ONLY the integer. Null when the row is unknown, not waitlisted, or
    * not the caller's — the contract schema makes that nullability explicit
    * (codegen types the RPC as a bare number). Uses the injected RLS-scoped
@@ -754,15 +877,15 @@ export class ParticipationsService {
 
 /**
  * Builds the upcoming-sessions query for one audience. Both embeds use
- * `!inner` (`product_id` and `gamer_id` are NOT-NULL FKs, so an inner join
- * drops nothing), which lets the inferred row treat `product` and `gamer` as
+ * `!inner` (`product_id` and `participant_id` are NOT-NULL FKs, so an inner join
+ * drops nothing), which lets the inferred row treat `product` and `participant` as
  * non-null — no post-filter, no `!` assertions in the mapper. Standalone so
  * the row type can be inferred via `QueryData` with no hand-written shape and
  * no cast (select string and type stay in lockstep — drift is a compile error).
  */
 function buildMyUpcomingSessionsQuery(
   supabase: AppSupabaseClient,
-  audienceColumn: "customer_id" | "gamer_id",
+  audienceColumn: "customer_id" | "participant_id",
   userId: string,
 ) {
   return supabase
@@ -770,7 +893,7 @@ function buildMyUpcomingSessionsQuery(
     .select(
       `
         id,
-        gamer_id,
+        participant_id,
         group_id,
         product:products!inner(
           id, product_type, timezone, start_date, end_date, is_remote,
@@ -778,7 +901,7 @@ function buildMyUpcomingSessionsQuery(
           schedule_slots(weekday, start_time, duration_minutes),
           location:locations(name, name_i18n)
         ),
-        gamer:profiles!participations_gamer_id_fkey!inner(
+        participant:profiles!participations_participant_id_fkey!inner(
           first_name
         )
       `,
@@ -795,7 +918,7 @@ type RawMyUpcomingSessionRow = QueryData<
  * Builds the waitlist query for one audience — the `status='waitlisted'`
  * counterpart to the upcoming-sessions builder, and the same shape of thing:
  * `!inner` on both NOT-NULL-FK embeds so the inferred row treats `product` and
- * `gamer` as non-null, and standalone so `QueryData` can infer it.
+ * `participant` as non-null, and standalone so `QueryData` can infer it.
  *
  * The product shell it selects mirrors the sessions builder's minus the parts
  * only a seat produces — see `MyWaitlistRow` for why each half is where it is.
@@ -809,7 +932,7 @@ type RawMyUpcomingSessionRow = QueryData<
  */
 function buildMyWaitlistQuery(
   supabase: AppSupabaseClient,
-  audienceColumn: "customer_id" | "gamer_id",
+  audienceColumn: "customer_id" | "participant_id",
   userId: string,
 ) {
   return supabase
@@ -817,13 +940,13 @@ function buildMyWaitlistQuery(
     .select(
       `
         id,
-        gamer_id,
+        participant_id,
         product:products!inner(
           product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
         ),
-        gamer:profiles!participations_gamer_id_fkey!inner(
+        participant:profiles!participations_participant_id_fkey!inner(
           first_name
         )
       `,
@@ -842,14 +965,14 @@ function toMyUpcomingSessionRow(
   subscriptionEndsAt: Date | null,
 ): MyUpcomingSessionRow {
   // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
-  const { product, gamer } = row;
+  const { product, participant } = row;
   // Mirror the purchased-card fallback chain so a missing first_name still
-  // renders something readable. The seed comes from `gamer_id` regardless,
+  // renders something readable. The seed comes from `participant_id` regardless,
   // so the identicon stays stable across name edits.
-  const firstName = gamer.first_name || row.gamer_id.slice(0, 8);
+  const firstName = participant.first_name || row.participant_id.slice(0, 8);
   return {
     participationId: row.id,
-    gamer: { id: row.gamer_id, firstName },
+    participant: { id: row.participant_id, firstName },
     product: {
       id: product.id,
       type: product.product_type,
@@ -879,14 +1002,14 @@ function toMyWaitlistRow(
   position: number,
 ): MyWaitlistRow {
   // Both non-null via the `!inner` joins in buildMyWaitlistQuery. Same
-  // first-name fallback as the sessions adapter, so a gamer with no name set
-  // reads identically on a waitlist card and a session card.
-  const { product, gamer } = row;
+  // first-name fallback as the sessions adapter, so a participant with no name
+  // set reads identically on a waitlist card and a session card.
+  const { product, participant } = row;
   return {
     participationId: row.id,
-    gamer: {
-      id: row.gamer_id,
-      firstName: gamer.first_name || row.gamer_id.slice(0, 8),
+    participant: {
+      id: row.participant_id,
+      firstName: participant.first_name || row.participant_id.slice(0, 8),
     },
     product: {
       type: product.product_type,
@@ -903,6 +1026,22 @@ function toMyWaitlistRow(
     })),
     position,
   };
+}
+
+/**
+ * How far back the deferred-first-charge read looks through a family's
+ * subscription payments. Comfortably more rows than a family accumulates in the
+ * window that matters (the €0 marker and any charge that followed it), and small
+ * enough that the confirmation page never pulls a decade of ledger.
+ */
+const RECENT_SUBSCRIPTION_PAYMENTS = 100;
+
+/** A string value out of a `jsonb` metadata blob, or null if it isn't one. */
+function metadataString(metadata: Json, key: string): string | null {
+  if (typeof metadata !== "object" || metadata === null) return null;
+  if (Array.isArray(metadata)) return null;
+  const value = metadata[key];
+  return typeof value === "string" ? value : null;
 }
 
 type GamerSignupState = "active" | "waitlisted";

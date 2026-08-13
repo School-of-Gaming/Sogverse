@@ -12,11 +12,16 @@ import {
   Hourglass,
 } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
-import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { ProductBanner } from "@/components/ui/product-banner";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
-import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
+import { formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
+import {
+  effectiveStatus,
+  pendingHintKey,
+  type EffectiveProductStatus,
+} from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
   joinScheduleGroups,
@@ -26,8 +31,10 @@ import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
 
-const STATUS_STYLE: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
+// Keyed by the effective status, exhaustively: the compiler is what guarantees
+// every member has a chip style, so there is no fallback to reach for and no
+// way to add a status without being asked what colour it wears.
+const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "bg-primary/20 text-primary",
   running: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
@@ -151,14 +158,16 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
             className="group flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex min-w-0 flex-1 items-center gap-4">
-              <ProductThumbnail
-                imagePath={p.image_path ?? ""}
-                alt=""
-                size="h-14 w-14"
-                className={cn(
-                  "rounded-md border bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
-                  !p.image_path && "[&>img]:hidden",
-                )}
+              {/* The project ratio at row-thumb size (owner rule — one aspect
+                  ratio wherever a product image shows), shaped the way the
+                  shop card shapes it: the 3:2 crop with rounded corners and no
+                  border, sitting in the row's ordinary padding. An admin's
+                  mental picture of a product is formed here, and a thumb
+                  cropped differently from the shop has them approving a
+                  picture families never meet. */}
+              <ProductBanner
+                src={productImageSrc(p.image_path)}
+                className="w-24 shrink-0 rounded-md"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -166,15 +175,13 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                     {tr?.name ?? t("list.untitled")}
                   </span>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      STATUS_STYLE[status] ?? STATUS_STYLE.draft
-                    }`}
+                    className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[status]}`}
                   >
                     {t(`status.${status}`)}
                   </span>
-                  {!p.is_visible && status !== "draft" && (
+                  {!p.is_visible && (
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {t("list.hidden")}
+                      {t("list.unlisted")}
                     </span>
                   )}
                 </div>
@@ -182,13 +189,17 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   {tr?.short_description ?? ""}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    {t("list.ageRange", {
-                      min: p.min_age,
-                      max: p.max_age,
-                    })}
-                  </span>
+                  {/* A product with no gamer audience carries no age range;
+                      the chip goes rather than showing an invented one. */}
+                  {p.min_age !== null && p.max_age !== null && (
+                    <span className="inline-flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {t("list.ageRange", {
+                        min: p.min_age,
+                        max: p.max_age,
+                      })}
+                    </span>
+                  )}
                   {dateChip && (
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="h-3 w-3" />

@@ -42,9 +42,9 @@ function row(over: {
     },
     groupId: `${over.id}-group`,
     groupCount: 2,
-    gamerCount: 14,
+    participantCount: 14,
     groupName: `${over.name} A`,
-    groupGamerCount: 7,
+    groupParticipantCount: 7,
     siteName: over.siteName ?? null,
     slots:
       over.slots ??
@@ -87,7 +87,7 @@ describe("rollUpGeduAssignments", () => {
       groupId: "p1-group",
       productName: "Monday Club",
       groupName: "Monday Club A",
-      groupGamerCount: 7,
+      groupParticipantCount: 7,
     });
   });
 

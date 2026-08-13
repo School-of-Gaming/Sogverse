@@ -28,7 +28,15 @@ import type { RegistrationState } from "./derive-registration-state";
 interface SignupPanelProps {
   product: Pick<
     ProductBrowseRow,
-    "id" | "product_type" | "billing_mode" | "product_prices"
+    | "id"
+    | "product_type"
+    | "billing_mode"
+    | "product_prices"
+    | "for_gamers"
+    // The two the deferred-first-charge line is derived from — see
+    // `useSignupPanelFields`.
+    | "start_date"
+    | "timezone"
   >;
   state: RegistrationState;
   authState: AuthState;
@@ -71,12 +79,16 @@ export function SignupPanel({
   const purchaseShape = purchaseShapeFor(fields.pricingOption);
 
   const handleSubmit = () => {
-    if (!fields.selectedGamerId || !purchaseShape) return;
+    if (!fields.selectedParticipantId || !purchaseShape) return;
     setSubmitError(null);
     setCommitting(true);
     const input: CreateParticipationInput = {
       productId: product.id,
-      gamerId: fields.selectedGamerId,
+      // The parent's own id when they picked their own row. The route pins
+      // `p_customer_id` to the session user either way and the RPC's audience
+      // gate is what decides whether the pair is allowed — nothing here has to
+      // tell the two cases apart.
+      participantId: fields.selectedParticipantId,
       purchaseShape,
       currency: fields.currency,
     };
@@ -90,10 +102,13 @@ export function SignupPanel({
           response.status === "free_confirmed" ||
           response.status === "external_confirmed"
         ) {
-          // Free events and municipality clubs skip Stripe — the participation
-          // is already active. Send the parent to the same confirmation page
-          // the paid flow lands on. Keep `committing` set so the CTA stays
-          // disabled through the navigation (the panel unmounts on push).
+          // No-charge signups skip Stripe — the participation is already
+          // active. That is any product whose billing is free (a club as
+          // readily as an event; this branch has never read product_type) plus
+          // the externally-contracted municipality clubs. Send the parent to
+          // the same confirmation page the paid flow lands on. Keep
+          // `committing` set so the CTA stays disabled through the navigation
+          // (the panel unmounts on push).
           router.push(ROUTES.shopConfirmation(response.participationId));
           return;
         }
@@ -111,11 +126,11 @@ export function SignupPanel({
   };
 
   const handleJoinWaitlist = () => {
-    if (!fields.selectedGamerId) return;
+    if (!fields.selectedParticipantId) return;
     setSubmitError(null);
     setCommitting(true);
     waitlistMutation.mutate(
-      { productId: product.id, gamerId: fields.selectedGamerId },
+      { productId: product.id, participantId: fields.selectedParticipantId },
       {
         onSuccess: (response) => {
           // Mirror the free-signup branch: land the parent on the summary
@@ -153,7 +168,7 @@ export function SignupPanel({
       <AddGamerDialog
         open={addGamerOpen}
         onOpenChange={setAddGamerOpen}
-        onCreated={fields.onSelectGamer}
+        onCreated={fields.onSelectParticipant}
       />
     </>
   );

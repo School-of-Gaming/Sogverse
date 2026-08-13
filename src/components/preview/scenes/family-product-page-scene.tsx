@@ -10,8 +10,8 @@ import { useNow } from "@/providers";
 import type { SessionAudience } from "@/types";
 
 /**
- * The family product page over fixtures — the same presentational body for both
- * audiences, which is the point of the scene existing twice.
+ * The family product page over fixtures — the same presentational body for
+ * every audience, which is the point of the scene existing twice.
  *
  * Everything on the page that is pure UI works: revealing the future upward with
  * the viewport pinned, expanding a clamped report, and walking back through the
@@ -40,11 +40,18 @@ export function FamilyProductPageScene({
 
   return (
     <FamilyProductPageBody
-      audience={audience}
+      // The live shell resolves this by comparing the signed-in user with the
+      // feed's participant; the fixture states the same fact outright. The
+      // conjunction with the parent audience is the shell's rule too: on a
+      // `/gamer` route the reader is always the participant, and calling that a
+      // self seat would swap the child's copy for the parent's.
+      audience={
+        audience === "customer" && fixture.isSelfSeat ? "self" : audience
+      }
       productName={fixture.productName}
       schedule={fixture.schedule}
       isRemote={fixture.isRemote}
-      gamer={fixture.gamer}
+      participant={fixture.participant}
       groupName={fixture.groupName}
       // Passed on both audiences deliberately: the body is what decides a child
       // never sees a billing notice, and a scene that withheld the props would
@@ -59,6 +66,15 @@ export function FamilyProductPageScene({
       // link, so the lit state can be looked at without the click going
       // anywhere. It is also the real shape of the parent's live page, which
       // intercepts the click to switch accounts before joining.
+      //
+      // **The self seat is the one place this diverges from the live page**,
+      // deliberately: there the handler is absent and the Join is a plain link
+      // straight to the room, which is the whole point of the variant. A
+      // preview may not navigate anybody into a voice room, so the scene keeps
+      // the inert handler. The two render identically — the button and the link
+      // share every style — so nothing about the page's look is being faked;
+      // what is unavailable here is a click, which is unavailable on every
+      // other scenario too.
       onJoinClick={noop}
       entries={fixture.entries}
       sourceTimeZone={fixture.sourceTimeZone}

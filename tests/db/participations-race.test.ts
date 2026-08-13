@@ -30,12 +30,14 @@ import {
  */
 
 const PRODUCT_RACE_1SEAT  = "00000000-0000-0000-0000-0000000005b1";
+const PRODUCT_PAID_CAP    = "00000000-0000-0000-0000-0000000005b2";
 const PRODUCT_CONFIRM     = "00000000-0000-0000-0000-0000000005b3";
 const PRODUCT_WAITLIST    = "00000000-0000-0000-0000-0000000005b4";
 const PRODUCT_FREE_CAP    = "00000000-0000-0000-0000-0000000005b5";
 
 const ALL_TEST_PRODUCTS = [
   PRODUCT_RACE_1SEAT,
+  PRODUCT_PAID_CAP,
   PRODUCT_CONFIRM,
   PRODUCT_WAITLIST,
   PRODUCT_FREE_CAP,
@@ -99,13 +101,13 @@ describe("participations race + idempotency", () => {
         const [a, b] = await Promise.all([
           admin.rpc("confirm_paid_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
-            p_gamer_id: TEST_IDS.GAMER,
+            p_participant_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
             p_checkout_session_id: `cs_race_${i}_a`,
           }),
           admin.rpc("confirm_paid_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
-            p_gamer_id: TEST_IDS.GAMER,
+            p_participant_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
             p_checkout_session_id: `cs_race_${i}_b`,
           }),
@@ -143,7 +145,7 @@ describe("participations race + idempotency", () => {
       // abandoned checkout has to leave the product exactly as it was.
       const validated = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
@@ -165,14 +167,14 @@ describe("participations race + idempotency", () => {
     it("an active seat fills the product for everyone else", async () => {
       await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_fills_the_seat",
       });
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
@@ -192,7 +194,7 @@ describe("participations race + idempotency", () => {
         // needs a test rather than a bug report.
         const { error: seedErr } = await admin.from("participations").insert({
           product_id: PRODUCT_RACE_1SEAT,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status,
           waitlisted_at:
@@ -202,7 +204,7 @@ describe("participations race + idempotency", () => {
 
         const again = await admin.rpc("create_participation", {
           p_product_id: PRODUCT_RACE_1SEAT,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_customer_id: TEST_IDS.CUSTOMER,
           p_purchase_shape: "subscription_monthly",
           p_currency: "eur",
@@ -229,7 +231,7 @@ describe("participations race + idempotency", () => {
     it("creates an active row and records the session that bought it", async () => {
       const result = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_confirm_1",
       });
@@ -255,13 +257,13 @@ describe("participations race + idempotency", () => {
       // would cancel a paying customer's live subscription.
       const first = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_replay_1",
       });
       const second = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_replay_1",
       });
@@ -281,7 +283,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_CONFIRM)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
       expect(rows?.length).toBe(1);
     });
 
@@ -293,7 +295,7 @@ describe("participations race + idempotency", () => {
       // of looping on Stripe retries.
       const first = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_dup_first",
       });
@@ -301,7 +303,7 @@ describe("participations race + idempotency", () => {
 
       const second = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_dup_second",
       });
@@ -318,7 +320,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_CONFIRM)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
       expect(rows?.length).toBe(1);
     });
 
@@ -331,7 +333,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .insert({
           product_id: PRODUCT_CONFIRM,
-          gamer_id: TEST_IDS.GAMER_2,
+          participant_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER,
           status: "waitlisted",
           waitlisted_at: new Date().toISOString(),
@@ -341,7 +343,7 @@ describe("participations race + idempotency", () => {
 
       const result = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_waitlist_clash",
       });
@@ -355,7 +357,7 @@ describe("participations race + idempotency", () => {
     it("raises for a product that does not exist", async () => {
       const result = await admin.rpc("confirm_paid_participation", {
         p_product_id: "00000000-0000-0000-0000-000000000fff",
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_no_product",
       });
@@ -383,11 +385,11 @@ describe("participations race + idempotency", () => {
       const [a, b] = await Promise.all([
         customer.rpc("join_product_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
         }),
         customer.rpc("join_product_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
-          p_gamer_id: TEST_IDS.GAMER_2,
+          p_participant_id: TEST_IDS.GAMER_2,
         }),
       ]);
 
@@ -409,14 +411,14 @@ describe("participations race + idempotency", () => {
     it("repeat call for the same (product, gamer) returns the existing row", async () => {
       const first = await customer.rpc("join_product_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
       const firstId = getString(first.data, "participation_id");
       const firstPos = getNumber(first.data, "waitlist_position");
 
       const second = await customer.rpc("join_product_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
       expect(getString(second.data, "participation_id")).toBe(firstId);
       expect(getNumber(second.data, "waitlist_position")).toBe(firstPos);
@@ -426,7 +428,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_WAITLIST)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
       expect(rows?.length).toBe(1);
     });
   });
@@ -453,7 +455,7 @@ describe("participations race + idempotency", () => {
     it("first free signup activates; second returns 'full'", async () => {
       const first = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_FREE_CAP,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "free",
         p_currency: "eur",
@@ -463,7 +465,7 @@ describe("participations race + idempotency", () => {
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_FREE_CAP,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "free",
         p_currency: "eur",
@@ -477,6 +479,83 @@ describe("participations race + idempotency", () => {
         .select("id")
         .eq("product_id", PRODUCT_FREE_CAP);
       expect(rows?.length).toBe(1);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // The same cap is SOFT once money is involved
+  // ---------------------------------------------------------------------------
+  //
+  // The block above is the hard half: on a no-charge signup the gate and the
+  // write happen in one locked transaction, so the cap cannot be exceeded. This
+  // block is the executable statement of the other half — deliberate policy,
+  // not an oversight. `confirm_paid_participation` never re-checks the cap
+  // (00139's explicit design), because a refusal *after* the parent has paid is
+  // worse than one visible oversold seat: the alternative is an automated
+  // refund path the platform does not have. The window is a Stripe Checkout
+  // session that opened while a seat was still free and completed after it
+  // filled, and the overfill is left for an admin to see and resolve.
+  //
+  // Pinned here so nobody "fixes" it by adding a seat check to the webhook.
+
+  describe("seat caps are soft on paid products", () => {
+    beforeAll(async () => {
+      await createTestProduct(admin, {
+        id: PRODUCT_PAID_CAP,
+        billingMode: "paid",
+        seatCount: 1,
+      });
+    });
+
+    it("confirms an over-cap payment on a full product and writes the seat", async () => {
+      // The one seat, taken.
+      const filled = await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_PAID_CAP,
+        p_participant_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_soft_cap_first",
+      });
+      expect(confirmPaidParticipationRpcResult.parse(filled.data).kind).toBe(
+        "confirmed",
+      );
+
+      // The gate does its job: a NEW entrant is turned away before Stripe.
+      const gate = await admin.rpc("create_participation", {
+        p_product_id: PRODUCT_PAID_CAP,
+        p_participant_id: TEST_IDS.GAMER_2,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_purchase_shape: "subscription_monthly",
+        p_currency: "eur",
+      });
+      expect(createParticipationRpcResult.parse(gate.data).kind).toBe("full");
+
+      // But someone who passed that gate earlier and has now paid gets their
+      // seat regardless — this is the soft half, and it must stay true.
+      const overCap = await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_PAID_CAP,
+        p_participant_id: TEST_IDS.GAMER_2,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_soft_cap_over",
+      });
+      expect(overCap.error).toBeNull();
+      const parsed = confirmPaidParticipationRpcResult.parse(overCap.data);
+      expect(parsed.kind).toBe("confirmed");
+
+      const { data: row } = await admin
+        .from("participations")
+        .select("status")
+        .eq("id", parsed.kind === "confirmed" ? parsed.participation_id : "")
+        .single();
+      expect(row?.status).toBe("active");
+
+      // The overfill is real and visible in the rollup the admin panel reads —
+      // 2 seats taken against a cap of 1.
+      const { data: counts } = await admin
+        .from("product_seat_counts")
+        .select("active_count")
+        .eq("product_id", PRODUCT_PAID_CAP)
+        .single();
+      expect(counts?.active_count).toBe(2);
     });
   });
 });

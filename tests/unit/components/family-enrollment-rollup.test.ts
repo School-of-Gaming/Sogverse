@@ -235,7 +235,7 @@ function sessionRow(
   const { product, ...rest } = overrides;
   return {
     participationId: "participation-1",
-    gamer: { id: AINO, firstName: "Aino" },
+    participant: { id: AINO, firstName: "Aino" },
     product: {
       id: "product-1",
       type: "consumer_club",
@@ -263,7 +263,7 @@ function waitlistRow(
   const { product, ...rest } = overrides;
   return {
     participationId: "waitlist-1",
-    gamer: { id: AINO, firstName: "Aino" },
+    participant: { id: AINO, firstName: "Aino" },
     product: {
       type: "consumer_club",
       timezone: PRODUCT_TZ,
@@ -590,10 +590,14 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
     });
   }
 
-  // The family read hands back the reader as well as their children, and a
-  // parent is not a section on their own dashboard.
-  it("drops the parent's own profile and orders the children by first name", () => {
-    expect(rollUp({}).map((g) => g.firstName)).toEqual(["Aino", "Otso"]);
+  // The family read hands back the reader as well as their children. With
+  // nothing of their own booked they are not a section — the page is about the
+  // children, and a standing empty heading with the reader's face would say
+  // otherwise every week.
+  it("leaves a seatless parent out and orders the children by first name", () => {
+    const { gamers, self } = rollUp({});
+    expect(gamers.map((g) => g.firstName)).toEqual(["Aino", "Otso"]);
+    expect(self).toBeNull();
   });
 
   // The sections are the page's skeleton, and a Finnish family's Ämmi belongs
@@ -615,7 +619,7 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
         now: NOW,
         locale,
         timeZone: "UTC",
-      }).map((g) => g.firstName);
+      }).gamers.map((g) => g.firstName);
 
     expect(names("fi")).toEqual(["Bea", "Ämmi"]);
     expect(names("en")).toEqual(["Ämmi", "Bea"]);
@@ -635,7 +639,7 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
         now: NOW,
         locale: "en",
         timeZone: "UTC",
-      }).map((g) => g.id);
+      }).gamers.map((g) => g.id);
 
     const first: FamilyMember = { id: AINO, role: "gamer", first_name: "Aino" };
     const second: FamilyMember = { id: OTSO, role: "gamer", first_name: "Aino" };
@@ -646,8 +650,8 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
   });
 
   it("gives a child with nothing booked an empty section rather than none", () => {
-    const sections = rollUp({ sessionRows: [sessionRow()] });
-    expect(sections.map((g) => g.enrollments.length)).toEqual([1, 0]);
+    const { gamers } = rollUp({ sessionRows: [sessionRow()] });
+    expect(gamers.map((g) => g.enrollments.length)).toEqual([1, 0]);
   });
 
   // The unification: a seat and a place in line are one list, sorted together.
@@ -655,7 +659,7 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
     const [aino] = rollUp({
       waitlistRows: [waitlistRow()],
       sessionRows: [sessionRow()],
-    });
+    }).gamers;
     expect(aino.enrollments.map((e) => e.participationId)).toEqual([
       "participation-1",
       "waitlist-1",
@@ -663,21 +667,119 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
   });
 
   it("files each row under the child it belongs to", () => {
-    const sections = rollUp({
+    const { gamers } = rollUp({
       sessionRows: [
         sessionRow(),
         sessionRow({
           participationId: "participation-2",
-          gamer: { id: OTSO, firstName: "Otso" },
+          participant: { id: OTSO, firstName: "Otso" },
         }),
       ],
     });
-    expect(sections[0].enrollments.map((e) => e.participationId)).toEqual([
+    expect(gamers[0].enrollments.map((e) => e.participationId)).toEqual([
       "participation-1",
     ]);
-    expect(sections[1].enrollments.map((e) => e.participationId)).toEqual([
+    expect(gamers[1].enrollments.map((e) => e.participationId)).toEqual([
       "participation-2",
     ]);
+  });
+});
+
+/**
+ * **The silent drop.**
+ *
+ * A product can be sold to a parent, so a participation row can be bucketed
+ * under the reader's own id. The roll-up used to iterate only the family
+ * members whose role was `gamer`, so that bucket matched nobody and vanished —
+ * a seat the parent had paid for appeared on no surface at all, which is the
+ * bug this whole step exists to close.
+ *
+ * The pair of assertions is what makes each case mean something: the seat has
+ * to come back, and it has to come back **once**, in its own section rather
+ * than folded under a child.
+ */
+describe("rollUpFamilyEnrollments — the parent's own seat", () => {
+  const FAMILY: FamilyMember[] = [
+    { id: PARENT, role: "customer", first_name: "Sanna" },
+    { id: AINO, role: "gamer", first_name: "Aino" },
+  ];
+
+  function rollUp(rows: {
+    sessionRows?: MyUpcomingSessionRow[];
+    waitlistRows?: MyWaitlistRow[];
+  }) {
+    return rollUpFamilyEnrollments({
+      family: FAMILY,
+      sessionRows: rows.sessionRows ?? [],
+      waitlistRows: rows.waitlistRows ?? [],
+      now: NOW,
+      locale: "en",
+      timeZone: "UTC",
+    });
+  }
+
+  /** A row whose participant is the parent — the shape 00173 made possible. */
+  const selfSeat = sessionRow({
+    participationId: "parents-evening",
+    participant: { id: PARENT, firstName: "Sanna" },
+  });
+
+  it("keeps the seat rather than dropping it", () => {
+    const { self } = rollUp({ sessionRows: [selfSeat] });
+    expect(self?.id).toBe(PARENT);
+    expect(self?.firstName).toBe("Sanna");
+    expect(self?.enrollments.map((e) => e.participationId)).toEqual([
+      "parents-evening",
+    ]);
+  });
+
+  it("keeps it out of every child's section", () => {
+    const { gamers } = rollUp({ sessionRows: [selfSeat, sessionRow()] });
+    expect(gamers.map((g) => g.id)).toEqual([AINO]);
+    expect(gamers[0].enrollments.map((e) => e.participationId)).toEqual([
+      "participation-1",
+    ]);
+  });
+
+  it("sorts the parent's own cards by the same rules as a child's", () => {
+    const { self } = rollUp({
+      sessionRows: [selfSeat],
+      waitlistRows: [
+        waitlistRow({
+          participationId: "parents-queue",
+          participant: { id: PARENT, firstName: "Sanna" },
+        }),
+      ],
+    });
+    // A seat with a session ahead sorts above a place in line, exactly as it
+    // does under a child's heading.
+    expect(self?.enrollments.map((e) => e.participationId)).toEqual([
+      "parents-evening",
+      "parents-queue",
+    ]);
+  });
+
+  it("gives a waitlist place of their own a section too", () => {
+    // The queue is a seat's equal on this page, so a parent whose *only*
+    // enrollment is a place in line still gets a heading.
+    const { self } = rollUp({
+      waitlistRows: [
+        waitlistRow({
+          participationId: "parents-queue",
+          participant: { id: PARENT, firstName: "Sanna" },
+        }),
+      ],
+    });
+    expect(self?.enrollments.map((e) => e.participationId)).toEqual([
+      "parents-queue",
+    ]);
+  });
+
+  it("stays null for the parent of a family that only books for children", () => {
+    // The common case, and the reason the section is conditional: a heading
+    // with the reader's own face over nothing would tell them every week that
+    // they had signed up for something and then failed to.
+    expect(rollUp({ sessionRows: [sessionRow()] }).self).toBeNull();
   });
 });
 
@@ -689,7 +791,7 @@ describe("rollUpGamerEnrollments — one child's own page", () => {
         sessionRow(),
         sessionRow({
           participationId: "someone-elses",
-          gamer: { id: OTSO, firstName: "Otso" },
+          participant: { id: OTSO, firstName: "Otso" },
         }),
       ],
       waitlistRows: [waitlistRow()],

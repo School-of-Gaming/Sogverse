@@ -261,7 +261,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "adminEnrollGamerBody" },
+        body: { kind: "json", schema: "adminEnrollParticipantBody" },
         test: TESTS.productsParticipations,
       },
     },
@@ -805,7 +805,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       POST: {
         posture: {
           kind: "role-gated",
-          roles: ["gedu", "gamer", "admin"],
+          roles: ["gedu", "gamer", "admin", "customer"],
         },
         body: { kind: "json", schema: "inline: { groupId } (declared on the primitive)" },
         test: TESTS.voiceToken,

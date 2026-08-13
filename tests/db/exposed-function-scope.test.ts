@@ -25,18 +25,26 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * waitlist-admin.test.ts (get_waitlist_position), and
  * get-my-participation-subscription-states.test.ts.
  *
- * Product UUIDs 5a1, 5a2 (see the product-helpers allocation registry).
+ * Product UUIDs 5a1, 5a2, 5aa (see the product-helpers allocation registry).
  */
 
-/** Published + visible: readable by the whole world, including anon. */
+/** Published + listed: readable by the whole world, including anon. */
 const PUBLIC_PRODUCT = "00000000-0000-0000-0000-0000000005a1";
 /**
- * Draft + invisible, carrying the group fixtures. Nobody reaches it through the
- * public branch, so each remaining branch of can_read_product (admin, enrolled
- * gamer, purchasing parent, assigned gedu) is isolated on it.
+ * Cancelled, carrying the group fixtures. Status is what closes the public
+ * branch — since 00168 an unlisted product is publicly readable, so unlisting
+ * one would not isolate anything — and with that branch shut, each remaining
+ * branch of can_read_product (admin, enrolled gamer, purchasing parent,
+ * assigned gedu) is exercised alone on it.
  */
 const PRIVATE_PRODUCT = "00000000-0000-0000-0000-0000000005a2";
 const GROUP_ID = "00000000-0000-0000-0000-0000000005a3";
+/**
+ * Published but NOT listed: the shape 00168 exists for. Nobody is a party to
+ * it, so the only branch that can answer for it is the public one — which is
+ * the whole claim being pinned.
+ */
+const UNLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005aa";
 
 describe("self-scoping exposed functions", () => {
   let admin: SupabaseClient<Database>;
@@ -71,7 +79,11 @@ describe("self-scoping exposed functions", () => {
       TEST_CREDENTIALS.GAMER.password,
     );
 
-    await deleteTestProducts(admin, [PUBLIC_PRODUCT, PRIVATE_PRODUCT]);
+    await deleteTestProducts(admin, [
+      PUBLIC_PRODUCT,
+      PRIVATE_PRODUCT,
+      UNLISTED_PRODUCT,
+    ]);
 
     await createTestProduct(admin, {
       id: PUBLIC_PRODUCT,
@@ -81,10 +93,34 @@ describe("self-scoping exposed functions", () => {
     });
     await createTestProduct(admin, {
       id: PRIVATE_PRODUCT,
-      status: "draft",
+      status: "cancelled",
       isVisible: false,
       seatCount: null,
     });
+    await createTestProduct(admin, {
+      id: UNLISTED_PRODUCT,
+      status: "pending",
+      isVisible: false,
+      seatCount: null,
+    });
+    // A direct link needs more than the products row: the name and the price
+    // live in satellite tables whose SELECT policies are this same predicate.
+    // Seed one of each so the assertion can prove they follow it.
+    const unlistedTranslation = await admin
+      .from("product_translations")
+      .insert({
+        product_id: UNLISTED_PRODUCT,
+        locale: "en",
+        name: "Unlisted by design",
+        short_description: "Reachable by direct link, absent from the shop.",
+      });
+    if (unlistedTranslation.error) throw unlistedTranslation.error;
+    const unlistedPrice = await admin.from("product_prices").insert({
+      product_id: UNLISTED_PRODUCT,
+      currency: "eur",
+      price_cents: 1000,
+    });
+    if (unlistedPrice.error) throw unlistedPrice.error;
 
     await admin
       .from("product_groups")
@@ -97,14 +133,18 @@ describe("self-scoping exposed functions", () => {
     await admin.from("participations").insert({
       product_id: PRIVATE_PRODUCT,
       group_id: GROUP_ID,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
     });
   });
 
   afterAll(async () => {
-    await deleteTestProducts(admin, [PUBLIC_PRODUCT, PRIVATE_PRODUCT]);
+    await deleteTestProducts(admin, [
+      PUBLIC_PRODUCT,
+      PRIVATE_PRODUCT,
+      UNLISTED_PRODUCT,
+    ]);
   });
 
   describe("get_user_role", () => {
@@ -197,7 +237,7 @@ describe("self-scoping exposed functions", () => {
   });
 
   describe("can_read_product", () => {
-    it("is true for everyone, session or not, on a published visible product", async () => {
+    it("is true for everyone, session or not, on a published listed product", async () => {
       for (const client of [anon, customer2, gamer, gedu, adminAuth]) {
         const { data } = await client.rpc("can_read_product", {
           p_product_id: PUBLIC_PRODUCT,
@@ -206,7 +246,34 @@ describe("self-scoping exposed functions", () => {
       }
     });
 
-    it("is true on an unpublished product only for parties to it", async () => {
+    it("is true for everyone on a published product that is not listed", async () => {
+      // The 00168 decision, stated as a test: `is_visible` governs listing, not
+      // access. Nobody here is a party to this product, so a `true` can only
+      // have come from the public branch — and the row itself has to arrive
+      // too, along with the satellite tables whose policies defer to this same
+      // predicate, or a direct link would land on a page with no content.
+      for (const client of [anon, customer2, gamer, gedu, adminAuth]) {
+        const { data } = await client.rpc("can_read_product", {
+          p_product_id: UNLISTED_PRODUCT,
+        });
+        expect(data).toBe(true);
+      }
+
+      const row = await anon
+        .from("products")
+        .select("id, is_visible, product_translations(locale), product_prices(currency)")
+        .eq("id", UNLISTED_PRODUCT)
+        .maybeSingle();
+      expect(row.error).toBeNull();
+      expect(row.data?.id).toBe(UNLISTED_PRODUCT);
+      // Non-vacuity: the row really is the unlisted one, so the read above went
+      // through the relaxed public branch rather than a listed-product path.
+      expect(row.data?.is_visible).toBe(false);
+      expect(row.data?.product_translations.length).toBeGreaterThan(0);
+      expect(row.data?.product_prices.length).toBeGreaterThan(0);
+    });
+
+    it("is true on a product outside the published statuses only for parties to it", async () => {
       // admin (sees everything), the enrolled gamer, the purchasing parent, and
       // the assigned gedu — one branch of the predicate each.
       for (const client of [adminAuth, gamer, customer, gedu]) {
@@ -235,11 +302,11 @@ describe("self-scoping exposed functions", () => {
       });
       expect(asAnon.data).toBe(false);
 
-      const visible = await anon
+      const readable = await anon
         .from("products")
         .select("id")
         .eq("id", PRIVATE_PRODUCT);
-      expect(visible.data).toEqual([]);
+      expect(readable.data).toEqual([]);
     });
   });
 

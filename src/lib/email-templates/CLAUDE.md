@@ -10,7 +10,13 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 - **`registry.ts`** — `templateRegistry`: the single source of truth for templates that are exposed to the admin testing UI and the test-email API route. Each entry is built with `defineTemplate({...})`.
 - **Per-template builder files** (`password-reset.ts`, `pin-reset.ts`, `feedback.ts`, `enrollment-changes.ts`) — exported `build*Email(t, locale, ...)` functions that compose `utils` helpers inside `wrapInLayout`.
 
-Sender identity: every email is from the single verified sender address (`SENDER_EMAIL` in `src/lib/constants`). The display name is a per-locale translation chosen via a `fromNameKey` (`senderAuth` / `senderEnrollment` / `senderFeedback`) resolved against the `email` namespace — never a hardcoded name.
+## Sender identity
+
+**Rule: every email sent from this codebase is from the same address and the same display name — `SENDER_EMAIL` and `SENDER_NAME` in `src/lib/constants`, with no per-template or per-route override.** The name is one literal, deliberately *not* translated: it is the company's mark, and a recipient who has learned to recognise it in an inbox list should keep recognising it whatever language the body is in. Locales translate the copy around a brand name, not the name — the same reasoning that keeps "My SOG" untranslated. A template that wants its own sender is a template arguing the reader should not be sure who wrote to them.
+
+**"From this codebase" is a real limit, not a hedge** — but it is a narrow one. Stripe's receipts are the only mail a user receives that this repo does not render (see "Every email a user receives is ours" below), and Stripe's sender identity is dashboard configuration. Keeping it on the same name is a hand-done ops step and the one half of the invariant a grep will never verify.
+
+**Rule: Reply-To is set explicitly on every product send, and the default is the support inbox (`SUPPORT_EMAIL`).** Omitting it silently points replies at the sending address, which nobody reads — a family replying to ask for help would be writing into a void. The one exception is a mail we send *to ourselves* about a person: there the reply-to is that person, because replying is how a staff member answers them. State which of the two a send is, in a comment, at the call site. The admin harness's free-form mode is the sole send that may carry no Reply-To at all: it is a manual test tool for checking that the sending path works, never a way to write to a customer, so the admin composing the message picks its reply behaviour.
 
 ## Conventions
 
@@ -24,12 +30,12 @@ Sender identity: every email is from the single verified sender address (`SENDER
 
 ## Registry pattern (`defineTemplate`)
 
-When a template should be testable from `/admin/testing` and sendable via the test-email route, add it to `templateRegistry` with `defineTemplate({ label, fields, schema, build, subject, fromNameKey, resolveParams? })`:
+When a template should be testable from `/admin/testing` and sendable via the test-email route, add it to `templateRegistry` with `defineTemplate({ label, fields, schema, build, subject, replyTo?, resolveParams? })`:
 
 - `schema` — a zod schema whose **output type is the params type** passed to `build`/`subject`. This is what gives `build`/`subject` fully-typed params with no casts; `defineTemplate` parses raw params through `schema` inside the generated `render`, so a malformed payload throws a `ZodError` at the boundary. Derive enum fields from `Constants.public.Enums.*` so they track codegen.
 - `fields` — drives the testing-UI form (text inputs or `type: "select"`). Unfilled fields fall back to placeholders.
 - `resolveParams?` — optional transform from raw UI field values to API params (e.g. a single "Minecraft status" select expands into `minecraftUsername` + `minecraftUuid`).
-- `fromNameKey` — selects the per-locale sender display name.
+- `replyTo?` — a function of the validated params, for the rare template whose live route replies to a person rather than to support. Omit it and the render defaults to `SUPPORT_EMAIL`. It exists so a test send reproduces the real mail's reply behaviour; a template that lies about this teaches the wrong thing to whoever is testing it.
 
 Templates that are *not* exposed to the testing UI (currently the PIN-reset email) just export a builder and are sent directly from their API route — they don't need a registry entry.
 
@@ -42,9 +48,11 @@ Templates that are *not* exposed to the testing UI (currently the PIN-reset emai
 
 The `<meta color-scheme: dark>` tags tell clients the email is already dark-themed so they skip their own dark-mode color adjustment.
 
-## Auth emails outside this directory
+## Every email a user receives is ours
 
-Supabase Auth (signup confirmation, magic link) sends its own plain-HTML templates edited in the Supabase dashboard; those flow through Brevo's SMTP but are **not** code-owned here. Password reset and parent-PIN reset are the exceptions: they bypass Supabase's built-in templates and are rendered by builders in this directory, then sent via the Brevo API from their routes.
+**Supabase Auth sends no mail.** Confirmations are off, accounts are created with `email_confirm` set, and password reset takes only the `token_hash` from `generateLink` and renders our own builder — so nothing reaches a user through Supabase's dashboard-edited templates. Magic links and email verification are Sogverse's to build and send, not Supabase's to template. Treat "configure it in the Supabase dashboard" as the wrong answer to any email question, and add a builder here instead.
+
+Stripe is the one genuine exception: receipts, invoices and dunning notices are composed and sent by Stripe, and their sender identity is dashboard configuration this repo cannot reach.
 
 ## Tests
 

@@ -9,9 +9,15 @@
  * Callers import it from there directly, so this barrel stays the answer to one
  * question: what does staff-only look like. A family page reaching for a feed
  * primitive never has a path that could also hand it a gedu note.
+ *
+ * The two audience blocks both live here for that reason, and it is not a
+ * contradiction: neither is a thing a family renders. They are the banners a
+ * *gedu's editor* wears to say which of the two fields under it families will
+ * end up reading, and they are only legible as a pair.
  */
 
 export { CollapsibleRegion } from "./CollapsibleRegion";
+export { FamilyNoteBlock } from "./FamilyNoteBlock";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
 export { StaffNoteBlock } from "./StaffNoteBlock";

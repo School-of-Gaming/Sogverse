@@ -51,16 +51,57 @@ export const addParticipationResponse = z.object({
 
 export const groupParticipationDetail = z.object({
   id: z.string(),
-  gamer_id: z.string(),
-  gamer_first_name: z.string(),
-  gamer_date_of_birth: z.string().nullable(),
-  gamer_gender: z.enum(Constants.public.Enums.gender_type).nullable(),
-  gamer_minecraft_username: z.string().nullable(),
-  gamer_minecraft_uuid: z.string().nullable(),
-  gamer_parent_first_name: z.string().nullable(),
-  gamer_parent_last_name: z.string().nullable(),
+  participant_id: z.string(),
+  participant_first_name: z.string(),
+  /**
+   * The three child-shaped facts. Null together on an adult seat, which carries
+   * no gamer profile and no linked game account — the chip renders that absence
+   * deliberately rather than as a gap (parent game-account linking is out of
+   * scope; the slot is meant to be empty).
+   */
+  participant_date_of_birth: z.string().nullable(),
+  participant_gender: z.enum(Constants.public.Enums.gender_type).nullable(),
+  participant_minecraft_username: z.string().nullable(),
+  participant_minecraft_uuid: z.string().nullable(),
+  /**
+   * The contact standing behind a *child's* seat — not the participant, which
+   * is why these two lost the `gamer_` prefix in 00175 rather than gaining a
+   * `participant_` one. Null on an adult seat, which has no linked parent.
+   */
+  parent_first_name: z.string().nullable(),
+  parent_last_name: z.string().nullable(),
+  /**
+   * The seat-holder's own address, emitted only for an adult participant —
+   * who has no linked parent, so the two name fields above are null for them
+   * and this is the only contact the chip can show. Null on every child row,
+   * where a gamer profile's email is the synthetic
+   * `@gamer.sogverse.internal` handle rather than a mailbox.
+   *
+   * Exactly one of `parent_first_name`/`participant_email` is populated on any
+   * row, and which one it is decides the chip's variant.
+   */
+  participant_email: z.string().nullable(),
   status: z.enum(Constants.public.Enums.participation_status),
   signed_up_at: z.string(),
+  /**
+   * Whether this participation has a live Stripe subscription behind it —
+   * the condition `demote_to_waitlist` refuses on, resolved server-side so the
+   * panel's demote dialog can fire from the drag handler without a round trip
+   * per chip. Required on every participation object, including waitlisted
+   * ones, where it is a constant false: the RPC refuses to create a waitlisted
+   * row carrying a subscription, so there is nothing there to report.
+   */
+  has_live_subscription: z.boolean(),
+  /**
+   * Whether money ever arrived for this participation — the recorded Stripe
+   * Checkout Session id being non-null. It is a statement about the past, not
+   * about the seat being currently paid for: demotion to the waitlist
+   * preserves it, so a family that paid and was later demoted still reads
+   * true, while one that only ever joined the queue has no session id and
+   * reads false. That difference is the promote dialog's condition on a paid
+   * product.
+   */
+  has_payment_marker: z.boolean(),
 });
 
 export const groupGeduDetail = z.object({
@@ -88,7 +129,7 @@ export const productGroupsSnapshot = z.object({
   groups: z.array(productGroupWithDetails),
   unassigned: z.array(groupParticipationDetail),
   /**
-   * Waitlisted gamers in derived order (waitlisted_at, id) — same detail shape
+   * Waitlisted participants in derived order (waitlisted_at, id) — same detail shape
    * as a group/unassigned chip. Waitlist position is the array index + 1,
    * computed in the UI; it is never stored. See migration 00118.
    */

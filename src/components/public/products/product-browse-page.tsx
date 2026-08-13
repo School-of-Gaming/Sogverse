@@ -1,20 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ComponentProps } from "react";
 import { useTranslations } from "next-intl";
 import { useVisibleProductsByTypes } from "@/services/products";
 import {
   useParticipationCounts,
   type ParticipationCounts,
 } from "@/services/participations";
-import type { ProductType, ProductBrowseRow, SpokenLanguage } from "@/types";
-import { productTypeSupportsDayFilter } from "./filter-products";
-import { SHOP_PRODUCT_TYPES } from "./use-shop-category";
+import type { ProductBrowseRow, SpokenLanguage } from "@/types";
+import {
+  CATEGORY_TYPE,
+  SHOP_PRODUCT_TYPES,
+  type ShopCategory,
+} from "./shop-categories";
 import { ProductBrowseResults } from "./product-browse-results";
 
 interface ProductBrowsePageProps {
-  /** Single type rendered in the browse grid. */
-  browseType: ProductType;
+  /** Categories to render as sections, in display order — already expanded
+   *  from the URL selection by `<ShopBrowse>`, so an empty selection arrives
+   *  here as every category rather than as nothing. */
+  categories: readonly ShopCategory[];
   /** Server-prefetched product list (all shop types) — see `shop/page.tsx`. */
   initialProducts: ProductBrowseRow[];
   /** Server-prefetched seat counts keyed on the prefetched products' ids. */
@@ -23,44 +28,63 @@ interface ProductBrowsePageProps {
   initialSpokenLanguages: SpokenLanguage[];
 }
 
-// Heading copy lives under productBrowse.headings, keyed on the
-// browseType. We resolve to literal keys here (rather than
-// templating with the type name) so next-intl's typed t() call narrows
-// to a known message path. The shop browses consumer clubs, camps and events,
-// so those are the three heading keys; municipality_club never reaches a browse
-// grid (it is discovered from `/schools`) but must appear in the Record to keep
-// it total over ProductType — it maps to consumer-club copy and is never
-// looked up.
-type HeadingKey = "consumer_club" | "camp" | "event";
-const HEADING_KEYS: Record<ProductType, HeadingKey> = {
-  consumer_club: "consumer_club",
-  municipality_club: "consumer_club",
-  camp: "camp",
-  event: "event",
-};
-
-function headingFor(t: ReturnType<typeof useTranslations<"productBrowse">>, key: HeadingKey): string {
-  switch (key) {
-    case "consumer_club":
-      return t("headings.consumer_club");
-    case "camp":
-      return t("headings.camp");
-    case "event":
-      return t("headings.event");
+// Section heading copy lives under productBrowse.sections, keyed on the shop
+// category. We resolve to literal keys here (rather than templating with the
+// category name) so next-intl's typed t() call narrows to a known message path.
+//
+// Exported because the shop's preview scene builds the same sections from
+// fixtures and must head them with the same words — a scene that re-authored
+// its own headings would be a second copy of this mapping, free to drift.
+export function sectionHeading(
+  t: ReturnType<typeof useTranslations<"productBrowse">>,
+  category: ShopCategory,
+): string {
+  switch (category) {
+    case "clubs":
+      return t("sections.clubs");
+    case "camps":
+      return t("sections.camps");
+    case "events":
+      return t("sections.events");
   }
 }
 
+/**
+ * The storefront's presentational shell — the vertical rhythm wrapper and the
+ * invisible page title — over `<ProductBrowseResults>`, which owns the
+ * horizontal width budget for both browse surfaces (from `lg` up it breaks out
+ * of the centred container to put its rail in the gutter).
+ *
+ * One body, two shells: the live route's data shell below and the shop preview
+ * scene both render this, so the storefront's rhythm and title cannot fork.
+ * The storefront carries no *visible* title — the section headings say what
+ * each block is, and a banner above them would only repeat the nav item that
+ * got the reader here; the h1 stays in the document so the section h2s hang
+ * off something.
+ */
+export function ProductBrowseBody(
+  props: ComponentProps<typeof ProductBrowseResults>,
+) {
+  const t = useTranslations("productBrowse");
+  return (
+    <div className="py-8 sm:py-12">
+      <h1 className="sr-only">{t("pageTitle")}</h1>
+      <ProductBrowseResults {...props} />
+    </div>
+  );
+}
+
 export function ProductBrowsePage({
-  browseType,
+  categories,
   initialProducts,
   initialCounts,
   initialSpokenLanguages,
 }: ProductBrowsePageProps) {
   const t = useTranslations("productBrowse");
 
-  // Load every shop-surfaced type in one fetch; the selected browseType is
-  // applied client-side below, so switching the Type filter is instant (no
-  // refetch). Counts (keyed on these ids) likewise cover all types at once.
+  // Load every shop-surfaced type in one fetch; the selected categories are
+  // applied client-side below, so toggling a Type chip is instant (no refetch).
+  // Counts (keyed on these ids) likewise cover all types at once.
   // `initialProducts` is server-prefetched (shop/page.tsx), so `data` is
   // populated on the first frame and there's no loading state to gate on; the
   // hook still refetches on mount.
@@ -80,36 +104,30 @@ export function ProductBrowsePage({
     initialData: initialCounts,
   });
 
-  // The Type filter is just a client-side narrowing of the all-types fetch to
-  // the selected browseType. The chip filters apply on top inside
-  // <ProductBrowseResults>.
-  const typeProducts = useMemo(
-    () => (products ?? []).filter((p) => p.product_type === browseType),
-    [products, browseType],
+  // The Type filter is just a client-side narrowing of the all-types fetch into
+  // one section per visible category. The chip filters apply on top, across
+  // every section, inside <ProductBrowseResults>.
+  const sections = useMemo(
+    () =>
+      categories.map((category) => ({
+        id: category,
+        heading: sectionHeading(t, category),
+        products: (products ?? []).filter(
+          (p) => p.product_type === CATEGORY_TYPE[category],
+        ),
+      })),
+    [categories, products, t],
   );
 
-  // Days is a Clubs-only filter (recurring weekly schedule). Camps run over a
-  // date range and events happen once, so even though their slots carry
-  // weekdays we never narrow them by day.
-  const supportsDays = productTypeSupportsDayFilter(browseType);
-  const headingKey = HEADING_KEYS[browseType];
-
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
-      <header className="mx-auto max-w-3xl text-center">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {headingFor(t, headingKey)}
-        </h1>
-      </header>
-
-      <div className="mx-auto mt-8 max-w-6xl">
-        <ProductBrowseResults
-          products={typeProducts}
-          counts={counts ?? []}
-          supportsDays={supportsDays}
-          filters={{ initialSpokenLanguages }}
-        />
-      </div>
-    </div>
+    <ProductBrowseBody
+      sections={sections}
+      counts={counts ?? []}
+      filters={{ initialSpokenLanguages }}
+      // From the un-narrowed fetch: `sections` only cover the selected
+      // categories, and an empty catalog must not be conflated with a Type
+      // selection the catalog lacks.
+      scopeHasProducts={(products ?? []).length > 0}
+    />
   );
 }

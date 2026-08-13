@@ -66,7 +66,7 @@ function mockRpcSuccess(
 ) {
   mockRpc.mockResolvedValue({
     data: {
-      gamer_id: GAMER_ID,
+      participant_id: GAMER_ID,
       minecraft_username: username,
       minecraft_uuid: uuid,
     },
@@ -149,7 +149,7 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
 
     expect(response.status).toBe(200);
     expect(mockRpc).toHaveBeenCalledWith("set_group_member_minecraft", {
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
       p_minecraft_username: "Notch",
       p_minecraft_uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
     });
@@ -172,7 +172,7 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
     // Empty string rather than null: the generated RPC argument types make
     // every text parameter non-null, and the function maps '' back to NULL.
     expect(mockRpc).toHaveBeenCalledWith("set_group_member_minecraft", {
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
       p_minecraft_username: "unknown_player",
       p_minecraft_uuid: "",
     });
@@ -192,7 +192,7 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
     expect(response.status).toBe(200);
     expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
     expect(mockRpc).toHaveBeenCalledWith("set_group_member_minecraft", {
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
       p_minecraft_username: "",
       p_minecraft_uuid: "",
     });

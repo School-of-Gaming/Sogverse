@@ -4,31 +4,40 @@ import { useTranslations } from "next-intl";
 import { ExternalLink, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { PRODUCT_TOPICS } from "@/lib/products/topics";
-import type { TopicMeta } from "@/lib/products/topics";
+import { PRODUCT_TOPICS, topicHasInfoCard } from "@/lib/products/topics";
+import type { TopicMetaWithInfoCard } from "@/lib/products/topics";
 import type { ProductTopic } from "@/types";
 
 // "About {name}" card on the product detail page. Helps a non-gamer parent
 // understand what their child will be playing or building in, what (if
 // anything) they need to buy or install, and where to get it.
 //
-// The render condition is the topic's `info` block: present ⇒ the card
-// renders, absent ⇒ null. That presence — not any game/subject category — is
-// the whole contract, which is why the lookup is typed through `TopicMeta`
-// (the declared shape with `info` optional) rather than the const map's
-// literal entries. The heading interpolates the brand label ("About Minecraft
-// Java", "About Roblox Studio"); the PEGI badge only renders for topics that
-// carry a rating (Roblox Studio is a creation tool and has none). The label
-// and the info facts are literals from PRODUCT_TOPICS (never translated); the
-// description, needs/costs note and link label come from the
-// productDetail.topicInfo.topics.<topic> namespace.
+// The render condition is `topicHasInfoCard` — the topic's `info` block:
+// present ⇒ the card renders, absent ⇒ null. That presence, not any
+// game/subject category, is the whole contract. It is asked through the shared
+// predicate rather than off the map directly, because the product page decides
+// the same question one level up (whether to render this card's grid wrapper at
+// all, since an empty wrapper still costs a gap in the reading column) and the
+// two must not drift. The predicate narrows the topic as well as answering,
+// which is what lets the message keys below resolve: only card-bearing topics
+// have prose under productDetail.topicInfo.topics.
+//
+// The heading interpolates the brand label ("About Minecraft Java", "About
+// Roblox Studio"); the PEGI badge only renders for topics that carry a rating
+// (Roblox Studio is a creation tool and has none). The label and the info facts
+// are literals from PRODUCT_TOPICS (never translated); the description,
+// needs/costs note and link label come from the message catalog.
 
 export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
   const t = useTranslations("productDetail");
-  const meta: TopicMeta = PRODUCT_TOPICS[topic];
-  const { info } = meta;
 
-  if (!info) return null;
+  if (!topicHasInfoCard(topic)) return null;
+
+  // Widened from the const map's literal entry: `info` is known present now,
+  // but which of `url` / `stores` a given topic carries is not the card's
+  // business — it renders whichever is there.
+  const meta: TopicMetaWithInfoCard = PRODUCT_TOPICS[topic];
+  const { info } = meta;
 
   const p = (key: "description" | "note" | "linkLabel") =>
     t(`topicInfo.topics.${topic}.${key}`);

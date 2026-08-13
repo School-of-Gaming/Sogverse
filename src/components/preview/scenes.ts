@@ -2,6 +2,7 @@ import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
 } from "@/components/public/products/mock-detail-fixtures";
+import { LONG_DESCRIPTION_SCENARIOS } from "@/components/public/products/mock-long-description-fixtures";
 
 /**
  * The **full-page preview scene registry**.
@@ -83,20 +84,72 @@ const PRODUCT_SCENARIOS: readonly PreviewScenarioMeta[] = PREVIEW_SCENARIOS.map(
   ({ slug, label, group }) => ({ slug, label: `${group} — ${label}` }),
 );
 
+/**
+ * The long-description scene's one scenario, keyed off the fixture's own slug
+ * list so the registry cannot list a page the scene will not serve.
+ */
+const LONG_DESCRIPTION_SCENARIO_META: Record<
+  (typeof LONG_DESCRIPTION_SCENARIOS)[number],
+  { label: string }
+> = {
+  showcase: { label: "A product page with a full blurb on it" },
+};
+
+const LONG_DESCRIPTION_PREVIEW_SCENARIOS: readonly PreviewScenarioMeta[] =
+  LONG_DESCRIPTION_SCENARIOS.map((slug) => ({
+    slug,
+    ...LONG_DESCRIPTION_SCENARIO_META[slug],
+  }));
+
 export const PREVIEW_SCENES = [
+  {
+    surface: "shop",
+    title: "Shop browse",
+    description:
+      "The storefront grid a family lands on, over fixtures: the filter rail (a strip above the cards on a phone, a sticky rail beside them from `lg`), one headed section per shop category, and the cards themselves. The chips are live — they write the URL and the client-side predicate runs over these rows — so a filter can actually be toggled against a grid that answers, the “Designed for” row included: it sits directly under Audience, and like Audience each of its chips matches exactly the cards wearing that chip, so lighting all three still leaves out every untagged product. Municipality clubs are absent because the storefront does not carry them; every card opens the matching product-detail scene. All three scenarios render the one browse card and differ only in the rows under it: the first two are narrow comparisons whose card names carry their fixture's label so the grid reads as one, and the third is the wide showcase, with names a real catalogue would ship and the fixture's descriptor moved into the card's own description slot.",
+    chrome: "public",
+    scenarios: [
+      {
+        slug: "default",
+        label: "Ordinary storefront",
+        description:
+          "The audience regression case: every card gamers-only, so no audience badge anywhere, the age range in every card's top-right corner, and an Audience chip row that nothing here answers — a chip matches the products wearing its badge, and these wear none, so lighting either one empties the page onto its no-matches state. Clubs, camps and events all headed. “Ordinary” means an ordinary mix, not a blank one: these products carry whatever tag and picture they carry, exactly as a real storefront would.",
+      },
+      {
+        slug: "audiences",
+        label: "Mixed audiences",
+        description:
+          "The smallest grid that answers the audience question: a gamers-only club beside a parents-only one, and an events section holding one card of each of the three audiences. It is the only page where the badge's presence on two cards and its absence on the third can be compared in one pass — and the smallest grid to try the Audience chips on (the tagged catalog's audience scenarios answer them too), one chip per badge: “For parents” leaves the parents-only cards, “For families” the both-audience ones, and neither leaves a gamers-only card standing. The parents-only cards are also where the missing age line is visible: no range, no “18+”, the badge carrying the whole meaning — and the top-right corner is one slot, so a badged card never shows both.",
+      },
+      {
+        slug: "tagged-catalog",
+        label: "Tagged catalog — the showcase grid",
+        description:
+          "The widest grid, and the one to open when the question is about the card itself rather than about audiences: a full-width 3:2 image on top, the title on a row of its own beneath it, topic and language flag under that, then schedule and place, and the short description at three lines above the footer. Two chips sit on the image, in opposite corners, one fact each: the tag bottom-left (its own icon per tag — a brain, a sprout, a rocket) and, top-right, either the audience badge or the age range, never both. It is also the grid to open when the question is about the “Designed for” filter row rather than about a card: every tag value is on it and four cards are untagged, so a chip can be lit against products that answer it and against products that answer nothing. They are solid brand fills rather than the outline chips used elsewhere, because they sit on a photograph; the demo art is chosen to stress that, one card near-white exactly where the tag lands and two night scenes. Four cards are worth going to first: the long Finnish club name, the only title that should reach a second line; the un-imaged workshop, whose wordmark banner has to sit in the grid without reading as a broken card *and* whose tag chip is the one landing on muted grey rather than a photo; the family outing, the fullest card the design makes, with a chip in both corners; and the full camp, still inert below the rule. Each card's description says which fixture it is — the names are realistic on purpose, since a grid of “· scenario label” titles says nothing about how real ones sit. The ended card's desaturated state is not on this grid at all (no shop fixture is authored as finished); it lives on the camp-ended product scene.",
+      },
+    ],
+  },
   {
     surface: "products",
     title: "Product detail page",
     description:
-      "The public product page a parent lands on from the shop, with the registration signup panel in each of its states.",
+      "The public product page a parent lands on from the shop, with the registration signup panel in each of its states — and, at the end of each product type's run, the audience scenarios: the three shapes the picker takes once a product can be sold to parents. Those three are the only way to look at a for-parents product at all, since none exists yet. The page is three tracks and a band: the band spans the content columns with each element over the column it belongs to — back link right-aligned over the facts rail, h1 over the hero, type · topic eyebrow over the signup panel — and never over the gutters. Beneath it the reading column leads with a 3:2 hero at the browse card's treatment, wearing the same two chips in the same corners (tag bottom-left, audience-or-age top-right), so a family meets the same pill on the page a card sent them to; a product with no picture wears them on the wordmark banner instead. The short description follows, and on a tagged product the tag explained: what SOG actually does about that tag, in a quiet block at the reading column's full width, with the tag's icon and word but deliberately no second pill. An untagged product — most of them — shows neither chip nor block, with no hole where either would be. Under that, on a phone only, the jump button down to the signup panel: full width, text only, carrying the panel's own verb, since below `lg` the panel is the last thing in a long document. The panel itself sits in a sticky right rail from `lg`, its picker unboxed so a name, an age and “Already joined” fit one line at that width; from 2xl the overview card moves out again into a sticky left facts rail, label-over-value at rail width, leaving the reading column between them. The tag explanation copy is placeholder text written by an engineer and is being replaced wholesale by the product owner — read it for shape and length, not for wording.",
     chrome: "public",
     scenarios: PRODUCT_SCENARIOS,
+  },
+  {
+    surface: "product-long-description",
+    title: "Product long description",
+    description:
+      "The public product page with a full marketing long description on it — the field is authored markdown, written in the same rich editor gedus write session reports in, and with links allowed because this copy is written by an admin for our own shop pages rather than by a gedu for one family. Most products carry no blurb at all, so this is the page to open when the question is how a long one sits: four sections of realistic copy at full paragraph length beneath the hero and beside the signup rail, then a closing section carrying the three things the field gained — a real bulleted list, emphasis, and links out to the game's own store and back to our privacy policy. Two details are worth looking for. Headings render one step above the body, under the product's own name, which is what the editor's Title button produces. And the hand-typed dash list in the fourth section stays literal text rather than becoming bullets: it is copy that predates the format and was converted, and the conversion escapes anything that would otherwise start meaning something in markdown — copy that was plain must not silently acquire formatting nobody typed. Those converted lines each sit a paragraph apart rather than on a tight break, which is the conversion protecting the escape from the first save, not the page misrendering.",
+    chrome: "public",
+    scenarios: LONG_DESCRIPTION_PREVIEW_SCENARIOS,
   },
   {
     surface: "confirmation",
     title: "Purchase confirmation",
     description:
-      "The post-signup summary, reached in the preview by clicking the CTA on the matching product scene — plus the three paid states with no order to show, where the page arrived before (or instead of) the row the webhook writes.",
+      "The post-signup summary, reached in the preview by clicking the CTA on the matching product scene — plus the three paid states with no order to show, where the page arrived before (or instead of) the row the webhook writes. The summary card's first row carries the product's picture at the same 3:2 crop the browse card and the detail hero paint, so the parent is looking at the photograph they clicked and then read a page of. It stays inline beside the type and the name rather than becoming a banner across the card: at this column's width a banner stands over 400px tall and would push the facts this card exists to state — who the seat is for, what it costs — off a phone screen. A scenario whose product has no picture wears the wordmark in that same frame, which is the case worth opening the un-imaged scenarios for.",
     chrome: "public",
     scenarios: [
       ...PRODUCT_SCENARIOS,
@@ -111,7 +164,7 @@ export const PREVIEW_SCENES = [
     surface: "parent-dashboard",
     title: "Parent dashboard",
     description:
-      "The body `/parent` renders, over fixtures instead of the family's own rows. The page is organised around the children: a section per child, headed by their identicon, first name and a quiet Manage link to their identity page, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. The cards carry no child's name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the place in line and what happens when a seat opens on a waitlisted one, the fact that a Gedu is being matched on a seat nobody has placed yet, or the day a finished run ended. The two cards with nothing behind them yet — the queue place and the unplaced seat — are the ones that are not links, and the corner is reserved for genuine problems: leaving a waitlist is a quiet text link under its own footer sentence, not a badge. The child headings are also how a parent reaches a child, so adding one is a single quiet tile after the last section — which hides itself once the account holds as many children as it may. Every action that would reach a backend is inert; the confirm dialog in front of the leave is pure UI and works.",
+      "The body `/parent` renders, over fixtures instead of the family's own rows. The page is organised around the people in the family: a section per child, headed by their identicon, first name and a quiet Manage link to their identity page, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. Since products can be sold to parents, the reader gets a section of their own beneath the children whenever they hold a seat: their own name and face, no Manage link, no empty state, and cards whose Join goes straight to the room because there is nobody to switch into. The cards carry no name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the place in line and what happens when a seat opens on a waitlisted one, the fact that a Gedu is being matched on a seat nobody has placed yet, or the day a finished run ended. The two cards with nothing behind them yet — the queue place and the unplaced seat — are the ones that are not links, and the corner is reserved for genuine problems: leaving a waitlist is a quiet text link under its own footer sentence, not a badge. The child headings are also how a parent reaches a child, so adding one is a single quiet tile after the last child's section — which hides itself once the account holds as many children as it may. Every action that would reach a backend is inert; the confirm dialog in front of the leave is pure UI and works.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -122,21 +175,27 @@ export const PREVIEW_SCENES = [
       },
       {
         slug: "busy-family",
-        label: "Three children, every card state",
+        label: "Two children, a parent's own seat, every card state",
         description:
-          "Everything that is not mutually exclusive, on one page — and exactly three children, so the pill is also at its named-entry limit, the widest it ever gets before collapsing (four forced sideways scrolling on an iPhone-width viewport). Aino has a remote club running right now — lit gradient, Live badge, Join open — with a failing card on the corner over the top of it; a club bought yesterday that nobody has placed her in yet, wearing the blue awaiting tone with no Join, no chevron and no link; and a waitlisted club whose footer carries her place in line and a quiet “Leave waitlist” link beneath it, which opens the real confirm dialog. The last two are the page's only inert cards and they sit together deliberately: the one thing that has to be legible at a glance is that “your seat is being arranged” and “there is no seat” are not the same news. Her brother, whose name is long enough to test both the heading and the nav chip, has an in-person camp naming its venue where a Join would be, a club winding down with the quiet won’t-renew line under its schedule (information in the body, never an alarm on the corner), and last summer’s camp sitting muted below both — the demotion is only legible next to something live. Otso is signed up for nothing, which is where the quiet empty-state card appears. Two Stripe customers, so the billing card is in its split form with a button each.",
+          "Everything that is not mutually exclusive, on one page — and exactly three named chips, which is the pill at its limit and the widest it ever gets before collapsing (a fourth forced sideways scrolling on an iPhone-width viewport). Since a parent can hold a seat, those three are two children and the parent themselves: one cap over both kinds of chip, not two, which is the decision this page exists to check. Aino has a remote club running right now — lit gradient, Live badge, Join open — with a failing card on the corner over the top of it; a club bought yesterday that nobody has placed her in yet, wearing the blue awaiting tone with no Join, no chevron and no link; and a waitlisted club whose footer carries her place in line and a quiet “Leave waitlist” link beneath it, which opens the real confirm dialog. The last two are the page's only inert child cards and they sit together deliberately: the one thing that has to be legible at a glance is that “your seat is being arranged” and “there is no seat” are not the same news. Her brother, whose name is long enough to test both the heading and the nav chip, has an in-person camp naming its venue where a Join would be, a club winding down with the quiet won’t-renew line under its schedule (information in the body, never an alarm on the corner), and last summer’s camp sitting muted below both — the demotion is only legible next to something live. Under them both is Marja's own section: no Manage link beside her name, a parents' evening running right now whose Join is a plain link to the room rather than the switch-profile dialog a child's card opens, and a family event she is queued for, whose leave dialog is the one that names nobody. Two Stripe customers, so the billing card is in its split form with a button each.",
       },
       {
         slug: "seven-gamers",
-        label: "Seven children — pill collapsed",
+        label: "Seven children and a parent — pill collapsed",
         description:
-          "Past three children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where the collapse and the seven headings behind it can be judged together. Seven is also as many children as one account may hold, which makes this the one scenario with no add-a-child tile under the last section — withdrawn rather than disabled, since nothing is going to clear the condition.",
+          "Past the named limit the section pill stops naming the children one by one and collapses to a single “Gamers” chip aimed at the first of them, so this is where the collapse and the seven headings behind it can be judged together. The parent's own chip keeps its name beside it — collapsing that one would mean folding a parent into a label that says “Gamers” — so the bar reads Gamers · Marja · Billing · Help, which is the whole of the collapse rule on one line. Seven is also as many children as one account may hold, which makes this the one scenario with no add-a-child tile under the last child's section — withdrawn rather than disabled, since nothing is going to clear the condition.",
       },
       {
         slug: "new-family",
         label: "New account — no gamers yet",
         description:
-          "The dashboard minutes after registering: no children linked, so the child sections give way to one “My Gamers” section holding the dashed card whose full-strength add button is the page's whole next step. The pill reads Gamers · Billing · Help — the empty state is still a section the nav can point at, not a card floating above Billing — and the moment the first child is added, that heading becomes their name. Billing is in its ordinary single-button form, and nothing anywhere reads as an error.",
+          "The dashboard minutes after registering: no children linked and nothing bought, so the child sections give way to one “My Gamers” section holding the dashed card whose full-strength add button is the page's whole next step. The pill reads Gamers · Billing · Help — the empty state is still a section the nav can point at, not a card floating above Billing — and the moment the first child is added, that heading becomes their name. Billing is in its ordinary single-button form, and nothing anywhere reads as an error.",
+      },
+      {
+        slug: "parent-only",
+        label: "No children, a seat of the parent's own",
+        description:
+          "The state a parents' evening makes reachable the day it goes on sale: an account with nobody linked to it and a club the parent bought for themselves. The add-a-child card is still the first thing on the page and is still a section — but it is no longer the whole page, which is the point: Marja's own section sits beneath it with her two cards, and the pill reads Gamers · Marja · Billing · Help. This is the scenario to open if the question is whether the add-a-child prompt still reads as an invitation when it is not the only thing there.",
       },
       {
         slug: "no-enrollments",
@@ -198,7 +257,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-product",
     title: "Gedu product page",
     description:
-      "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state.",
+      "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state. Both scenarios carry a mixed roster: eight children and one adult holding a seat of her own, so the rail's adult row is judged where it actually sits — last in a column of child rows, a line shorter than all of them — and she appears on the attendance checklist alongside them, because a gedu marks a parent present exactly as they mark a child.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -219,7 +278,7 @@ export const PREVIEW_SCENES = [
     surface: "parent-club",
     title: "Family product page — parent",
     description:
-      "The page a parent opens from My SOG for one enrollment: gamer-scoped (“Minecraft Builders Club, for Aino”, with her group on the line beneath), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — a notice under it says so when the enrollment has a billing problem, the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this child's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
+      "The page a parent opens from My SOG for one enrollment: participant-scoped (“Minecraft Builders Club, for Aino”, with her group on the line beneath — or “for you” on a seat the parent holds themselves), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — a notice under it says so when the enrollment has a billing problem, the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this participant's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -245,6 +304,12 @@ export const PREVIEW_SCENES = [
         label: "Club — Join locked",
         description:
           "The page in its resting state: the Join locked and naming its open time, which is what a family sees all week outside the voice window — and the one Join state no other scenario can show, since active-club's room is deliberately live. Dressed as a brand-new club, so the empty past comes along incidentally; the button flips open on the shared clock when the window arrives, no reload.",
+      },
+      {
+        slug: "my-own-club",
+        label: "Club — the parent's own seat",
+        description:
+          "The same page about a seat the reader holds themselves, which a for-parents product makes reachable. Three things move into the second person and none of them can be seen on a page about somebody's child: the masthead reads “for you” over the reader's own identicon rather than naming them at themselves, the failing-card notice asks them to keep their own place, and the leave-waitlist dialog (on the dashboard, not here) names nobody. The Join is the fourth difference and the quiet one — it is lit, and on the live page it is a plain link straight to the room, because a parent joining their own club has nobody to switch into. Everything else is the ordinary page: reports render in full, an attendance mark renders (a gedu marks a parent present exactly as they mark a child), and the group note is the group's.",
       },
     ],
   },

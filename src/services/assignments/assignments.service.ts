@@ -54,7 +54,7 @@ export interface MyAssignedProductSessionRow {
   /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
-  gamerCount: number;
+  participantCount: number;
   slots: Array<{
     weekday: number;
     startTime: string;
@@ -118,7 +118,7 @@ function toMyAssignedProductSessionRow(
     },
     groupId: row.group_id,
     groupCount: row.group_count,
-    gamerCount: row.gamer_count,
+    participantCount: row.participant_count,
     slots: row.schedule_slots.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,

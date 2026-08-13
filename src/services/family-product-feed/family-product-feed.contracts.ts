@@ -4,11 +4,12 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
 
 /**
  * Wire contract for `get_my_family_product_feed` — everything a family
- * club/camp/event page renders for ONE (gamer x product) enrollment.
+ * club/camp/event page renders for ONE (participant x product) enrollment.
  *
  * The RPC returns a JSONB document, which the type generator can only see as
- * `Json`, so this schema — written from the function body in migration 00151 —
- * is the structure. A db test parses real Postgres output through it in CI, so
+ * `Json`, so this schema — written from the function body, most recently
+ * rewritten by migration 00174 — is the structure. A db test parses real
+ * Postgres output through it in CI, so
  * the two cannot drift apart quietly: a changed key fails the parse loudly
  * instead of arriving as `undefined` three components later.
  *
@@ -73,9 +74,9 @@ const scheduleSlotSummary = z
 /**
  * A person named to the family: an id and a first name, and nothing else.
  *
- * Used for both the child the page is about and the gedus who teach the group.
- * A family is being told who their child is with, which is a first name's worth
- * of information — no surname, no email, no verification state.
+ * Used for both whoever holds the seat and the gedus who teach the group. A
+ * family is being told who they are with, which is a first name's worth of
+ * information — no surname, no email, no verification state.
  *
  * `first_name` is non-null because the column is (`profiles.first_name NOT
  * NULL`, with a length CHECK on top).
@@ -92,8 +93,8 @@ export const familyFeedPerson = z
  *
  * The gedu twin of this shape carries `gedu_note`, the audit columns and a
  * sparse attendance map over the whole roster. This one carries the report and
- * ONE attendance answer — the named gamer's own — which is what makes another
- * child's mark structurally unreachable rather than merely unrendered.
+ * ONE attendance answer — the named participant's own — which is what makes
+ * another child's mark structurally unreachable rather than merely unrendered.
  *
  * **`attendance: null` is unmarked, and that is a third state, not "absent".**
  * Nobody answered for this child on this date. The enum cannot yet distinguish
@@ -143,11 +144,17 @@ export const familyFeedSite = z
 export const familyProductFeed = z
   .object({
     /**
-     * The child this page is about. The page is gamer-scoped and reachable by
-     * URL, so it cannot rely on having been opened from a dashboard card that
-     * already knew the name.
+     * Whoever holds the seat this page is about — a child, or the parent
+     * themselves on a for-parents product. The page is participant-scoped and
+     * reachable by URL, so it cannot rely on having been opened from a
+     * dashboard card that already knew the name.
+     *
+     * **Spelled for the participant since 00174**, when a parent first became
+     * able to occupy a seat: a key called `gamer` carrying a parent's own name
+     * would have been the wire telling every reader the wrong thing about who
+     * this page is for.
      */
-    gamer: familyFeedPerson,
+    participant: familyFeedPerson,
     product: z
       .object({
         id: z.string(),
@@ -182,7 +189,8 @@ export const familyProductFeed = z
     gedus: z.array(familyFeedPerson),
     /**
      * The group's FULL stored history, newest first — including sessions from
-     * before this child enrolled, and rows the schedule no longer projects.
+     * before this participant enrolled, and rows the schedule no longer
+     * projects.
      *
      * There is no paging and none should be added. The client projects past
      * occurrences from the schedule and merges these rows onto them, so a

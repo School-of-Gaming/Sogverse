@@ -261,7 +261,12 @@ describe("POST /api/feedback", () => {
 
   // -- Accept-Language locale detection --
 
-  it("should use Finnish sender name when Accept-Language has fi as best supported match", async () => {
+  // These assert on the subject line rather than the sender name: the sender is
+  // one constant in every locale now, so it can no longer witness which
+  // translation was chosen, and a test asserting it would pass whatever the
+  // locale resolution did.
+
+  it("should use Finnish copy when Accept-Language has fi as best supported match", async () => {
     mockAuthenticatedAs("customer");
     setupHappyPath();
 
@@ -272,12 +277,12 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        fromName: "Sogverse-palaute",
+        subject: expect.stringContaining("Palaute käyttäjältä"),
       })
     );
   });
 
-  it("should use English sender name when no Accept-Language language is supported", async () => {
+  it("should use English copy when no Accept-Language language is supported", async () => {
     mockAuthenticatedAs("customer");
     setupHappyPath();
 
@@ -289,7 +294,7 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        fromName: "Sogverse Feedback",
+        subject: expect.stringContaining("Feedback from"),
       })
     );
   });
@@ -305,7 +310,21 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        fromName: "Sogverse-palaute",
+        subject: expect.stringContaining("Palaute käyttäjältä"),
+      })
+    );
+  });
+
+  it("keeps one sender name whatever the locale", async () => {
+    mockAuthenticatedAs("customer", { locale: "fi" });
+    setupHappyPath();
+
+    await POST(createRequest(validBody));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromEmail: "sogverse@sog.gg",
+        fromName: "School of Gaming – Sogverse",
       })
     );
   });

@@ -98,9 +98,13 @@ export class GeduSessionsService {
   }
 
   /**
-   * Record — or clear — ONE child's mark for one session.
+   * Record — or clear — ONE participant's mark for one session.
    *
-   * One call per mark, never a whole map: two gedus marking different children
+   * The target is whoever holds the seat: session_attendance is participant-keyed
+   * and the RPC's roster check has no branch for a role, so a gedu marks an
+   * adult present exactly as they mark a child.
+   *
+   * One call per mark, never a whole map: two gedus marking different people
    * in the same session must not be able to overwrite each other, and a
    * whole-map write makes that unavoidable. `status: null` reverts to unmarked,
    * which deletes the row so "unmarked" stays the absence of a record.
@@ -108,13 +112,13 @@ export class GeduSessionsService {
   async recordAttendance(args: {
     groupId: string;
     sessionDate: string;
-    gamerId: string;
+    participantId: string;
     status: AttendanceStatus | null;
   }) {
     const { data, error } = await this.supabase.rpc("record_attendance", {
       p_group_id: args.groupId,
       p_session_date: args.sessionDate,
-      p_gamer_id: args.gamerId,
+      p_participant_id: args.participantId,
       // The empty string is how "unmarked" travels: generated RPC argument
       // types make every text parameter a non-null `string`, so there is no
       // SQL NULL to send from here. The function normalizes '' back to NULL —

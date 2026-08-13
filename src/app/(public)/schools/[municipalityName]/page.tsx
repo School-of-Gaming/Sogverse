@@ -95,10 +95,13 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { municipalityName } = await params;
   const locale = await getLocale();
+  // Owner decision (Aug 2026): search engines and AI crawlers may discover
+  // only the /shop browse surface — the entire /schools tree is noindex.
+  const robots: Metadata["robots"] = { index: false, follow: false };
   const data = await loadMunicipality(municipalityName, locale);
-  if (!data) return {};
+  if (!data) return { robots };
   const t = await getTranslations("schools.municipality");
-  return { title: t("heading", { name: data.municipality.name }) };
+  return { title: t("heading", { name: data.municipality.name }), robots };
 }
 
 export default async function MunicipalityClubsPage({ params }: PageProps) {

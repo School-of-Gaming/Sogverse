@@ -95,13 +95,16 @@ const validBody = {
     { locale: "en", name: "X", short_description: "Y", long_description: null },
   ],
   topic: "minecraft_java",
+  for_gamers: true,
+  for_parents: false,
   min_age: 7,
   max_age: 12,
+  tag: null,
   spoken_language_code: "en",
   material_url: null,
   location_id: null,
   is_remote: true,
-  status: "draft",
+  status: "pending",
   signup_threshold: null,
   start_date: null,
   end_date: null,
@@ -246,7 +249,77 @@ describe("POST /api/admin/products/create", () => {
     expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
+  it("returns 400 when the audience flags are missing", async () => {
+    // They are non-defaulted RPC parameters precisely so that an omission
+    // cannot be read as "gamers-only, presumably" — it has to fail, and it has
+    // to fail here rather than at the database.
+    mockAuthenticatedAdmin();
+    const {
+      for_gamers: _g,
+      for_parents: _p,
+      ...noAudience
+    } = validBody;
+    const response = await POST(createRequest({ data: noAudience }));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/for_gamers|for_parents/);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
   // RPC
+
+  it("passes the audience flags and ages through to the RPC", async () => {
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: {
+          ...validBody,
+          for_gamers: false,
+          for_parents: true,
+          min_age: null,
+          max_age: null,
+        },
+      }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_for_gamers: false, p_for_parents: true }),
+    );
+    // A null age is sent as an OMISSION, so the RPC's DEFAULT NULL writes it.
+    // Sending the key with an undefined value would be the same wire shape but
+    // a different claim, so assert the absence rather than the value.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_min_age).toBeUndefined();
+    expect(args.p_max_age).toBeUndefined();
+  });
+
+  it("passes a tag through, and sends an omission for an untagged product", async () => {
+    mockAuthenticatedAdmin();
+    await POST(createRequest({ data: { ...validBody, tag: "beginner" } }));
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_tag: "beginner" }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Same shape as a null age: the route maps null to undefined, supabase-js
+    // JSON-serializes the arguments (dropping undefined keys), and the RPC's
+    // DEFAULT NULL fills in the omission — untagged reaches the column.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_tag).toBeUndefined();
+  });
+
+  it("returns 400 when the tag field is missing", async () => {
+    // Required-nullable on the wire even though the RPC parameter is defaulted:
+    // the default means an omitted argument CLEARS the tag, so the one thing
+    // that must never happen is a caller forgetting the field.
+    mockAuthenticatedAdmin();
+    const { tag: _tag, ...noTag } = validBody;
+    const response = await POST(createRequest({ data: noTag }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
 
   it("surfaces RPC errors as 400 with the message", async () => {
     mockAuthenticatedAdmin();

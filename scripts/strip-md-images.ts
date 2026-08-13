@@ -1,6 +1,11 @@
 /**
  * Strips base64 image references from markdown files in src/data/gedu-docs/.
- * Run once: npx tsx scripts/strip-md-images.ts
+ *
+ * Recurring import step, not a one-off: the gedu docs are authored in Google
+ * Docs, and every export embeds images as base64 references that bloat the
+ * files. Run this after dropping an updated export into src/data/gedu-docs/:
+ *
+ *   npx tsx scripts/strip-md-images.ts
  */
 
 import fs from "fs";

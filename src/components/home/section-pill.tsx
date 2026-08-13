@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { cn } from "@/lib/utils";
 
 const SECTIONS = ["home", "about", "yty"] as const;
@@ -61,12 +62,10 @@ export function SectionPill() {
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: SectionId) => {
     e.preventDefault();
-    const el = document.getElementById(id);
-    if (!el) return;
-    // Native smooth scroll — browser walks ancestors, finds the <main> scroll
-    // container, and uses its tuned animation curve. Honors prefers-reduced-motion.
-    // scroll-margin-top on the section element controls the landing offset.
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Shared with the dashboard pill and the product page's jump-to-signup
+    // button — see the helper for why it is native `scrollIntoView` and why the
+    // landing offset stays in CSS (`scroll-mt-*` on the section).
+    scrollToAnchor(id);
   };
 
   return (

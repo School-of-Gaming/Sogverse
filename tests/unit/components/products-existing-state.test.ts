@@ -21,8 +21,11 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     product_type: "consumer_club",
     billing_mode: "paid",
     topic: "minecraft_java",
+    for_gamers: true,
+    for_parents: false,
     min_age: 7,
     max_age: 12,
+    tag: null,
     spoken_language_code: "en",
     image_path: "abc.png",
     // Staff-only, so it arrives on its own embedded row rather than as a column
@@ -81,7 +84,7 @@ describe("existingFormState", () => {
       en: {
         name: "Build Club",
         shortDescription: "Build castles together.",
-        longDescription: [],
+        longDescription: "",
       },
     });
     expect(state.activeLocale).toBe("en");
@@ -94,6 +97,40 @@ describe("existingFormState", () => {
     expect(state.signupThreshold).toBe("");
     expect(state.holidayCalendarIds).toEqual(new Set(["cal-1"]));
     expect(state.image).toBe("abc.png");
+    expect(state.forGamers).toBe(true);
+    expect(state.forParents).toBe(false);
+    // Untagged is the fixture's stored state and the picker's default, so the
+    // two agree here — the interesting direction is the one below.
+    expect(state.tag).toBeNull();
+  });
+
+  // The tag is freely editable for the product's whole life (no form lock), so
+  // the only thing the edit form has to get right is loading the stored value —
+  // and loading it as the enum member it is, never as a string the picker's
+  // equality check would miss.
+  it("seeds the picker from a tagged row", () => {
+    const product = syntheticConsumerProduct();
+    product.tag = "advanced";
+    expect(existingFormState(product, consumerConfig, "en").tag).toBe(
+      "advanced",
+    );
+  });
+
+  // A parents-only row carries no age range at all — never a sentinel adult
+  // one — so it has to load as the empty fields it is. `String(null)` would
+  // seed the literal "null", which the payload builder parses back as NaN.
+  it("loads a parents-only product's null ages as empty fields", () => {
+    const product = syntheticConsumerProduct();
+    product.for_gamers = false;
+    product.for_parents = true;
+    product.min_age = null;
+    product.max_age = null;
+    const state = existingFormState(product, consumerConfig, "en");
+
+    expect(state.forGamers).toBe(false);
+    expect(state.forParents).toBe(true);
+    expect(state.minAge).toBe("");
+    expect(state.maxAge).toBe("");
   });
 
   it("loads price_cents into the month slot for a monthly product", () => {
@@ -227,5 +264,82 @@ describe("buildUpdateInput round-trip", () => {
         long_description: null,
       },
     ]);
+  });
+
+  // The nulling trap, closed from the form's end: `update_product` assigns every
+  // editable column on every call, so a product's audience and ages survive an
+  // edit about something else only by being loaded into state and sent back out.
+  it("re-emits a gamers-only product's audience through an unrelated edit", () => {
+    const product = syntheticConsumerProduct();
+    const state = existingFormState(product, consumerConfig, "en");
+    state.translations = {
+      en: {
+        name: "Build Club Renamed",
+        shortDescription: "Build castles together.",
+        longDescription: "",
+      },
+    };
+    const input = buildUpdateInput(state, consumerConfig);
+
+    expect(input.for_gamers).toBe(true);
+    expect(input.for_parents).toBe(false);
+    expect(input.min_age).toBe(7);
+    expect(input.max_age).toBe(12);
+  });
+
+  it("round-trips a parents-only product's audience and null ages", () => {
+    const product = syntheticConsumerProduct();
+    product.for_gamers = false;
+    product.for_parents = true;
+    product.min_age = null;
+    product.max_age = null;
+    const state = existingFormState(product, consumerConfig, "en");
+    const input = buildUpdateInput(state, consumerConfig);
+
+    expect(input.for_gamers).toBe(false);
+    expect(input.for_parents).toBe(true);
+    // Null, not `Number("")`'s zero: the age CHECK refuses a range on a product
+    // with no gamer audience, and 0 is a range.
+    expect(input.min_age).toBeNull();
+    expect(input.max_age).toBeNull();
+  });
+
+  it("round-trips a both-audience product's flags with its range intact", () => {
+    const product = syntheticConsumerProduct();
+    product.for_parents = true; // for_gamers stays true
+    const state = existingFormState(product, consumerConfig, "en");
+    const input = buildUpdateInput(state, consumerConfig);
+
+    expect(input.for_gamers).toBe(true);
+    expect(input.for_parents).toBe(true);
+    expect(input.min_age).toBe(7);
+    expect(input.max_age).toBe(12);
+  });
+
+  // Same trap as the audience above, and a worse one: the tag's RPC parameter is
+  // DEFAULT NULL, so a stored tag that fails to make the round trip is not left
+  // alone — it is cleared, and the shop card silently loses its chip on the next
+  // edit of anything at all.
+  it("re-emits a stored tag through an unrelated edit", () => {
+    const product = syntheticConsumerProduct();
+    product.tag = "neuroinclusive";
+    const state = existingFormState(product, consumerConfig, "en");
+    state.translations = {
+      en: {
+        name: "Build Club Renamed",
+        shortDescription: "Build castles together.",
+        longDescription: "",
+      },
+    };
+    expect(buildUpdateInput(state, consumerConfig).tag).toBe("neuroinclusive");
+  });
+
+  it("round-trips an untagged product as an explicit null", () => {
+    const product = syntheticConsumerProduct(); // tag: null
+    const state = existingFormState(product, consumerConfig, "en");
+    const input = buildUpdateInput(state, consumerConfig);
+
+    expect(input).toHaveProperty("tag");
+    expect(input.tag).toBeNull();
   });
 });

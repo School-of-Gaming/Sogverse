@@ -6,22 +6,25 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
+import { productImageSrc } from "@/lib/images/product-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "./format-product-location";
+import { audienceLabelKey } from "./product-audience";
 import { formatProductPrice } from "./format-product-price";
 import {
   formatProductSchedule,
   scheduleCardLines,
 } from "./format-product-schedule";
 import {
-  ProductBrowseCardView,
   type LocationLine,
-  type SeatsHint,
+  type ProductBrowseCardViewProps,
   type SeatBarValue,
-} from "./product-browse-card-view";
+} from "./browse-card-shell";
+import { ProductBrowseCardView } from "./product-browse-card-view";
+import { productTagLabelKey } from "./product-tag";
 
 interface ProductBrowseCardProps {
   product: ProductBrowseRow;
@@ -48,16 +51,46 @@ interface ProductBrowseCardProps {
 
 // Adapter: resolves a `ProductBrowseRow` into the display props
 // `ProductBrowseCardView` consumes. All locale / currency / time /
-// participation lookups happen here so the View stays purely
-// presentational — that's what lets the UI Components page render every
-// state by hand without forging a full BrowseRow.
+// participation lookups happen here, and so do the two resolutions the row
+// cannot hand over as-is — the image path into a URL and the tag into a
+// value-plus-label pair — so the View stays purely presentational. That's
+// what lets the UI Components page render every state by hand without forging
+// a full BrowseRow, and it is why the View renders no message keys of its own.
 export function ProductBrowseCard({
   product,
   counts,
   detailHref,
   municipalityScoped = false,
 }: ProductBrowseCardProps) {
+  const viewProps = useBrowseCardViewProps(
+    product,
+    counts,
+    detailHref,
+    municipalityScoped,
+  );
+  return <ProductBrowseCardView {...viewProps} />;
+}
+
+/**
+ * The row→view-props resolution above, as a hook.
+ *
+ * Split out of the component so a surface that already holds a row can build
+ * the same props without going through the card — and so a component that is a
+ * hook call plus a view stays exactly that.
+ */
+export function useBrowseCardViewProps(
+  product: ProductBrowseRow,
+  counts: ParticipationCounts | null | undefined,
+  detailHref: string | undefined,
+  municipalityScoped: boolean,
+): ProductBrowseCardViewProps {
   const t = useTranslations("productBrowse.card");
+  // Shared with the filter chips and the detail page's overview card, so the
+  // words a parent filtered by are the words the card answers with.
+  const tAudience = useTranslations("productAudience");
+  // Same namespace the detail page's hero and tag note read, so one product
+  // wears one word wherever a family meets it.
+  const tTag = useTranslations("productTag");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   // `useNow()` is seeded server-side at request time, so SSR and the first
@@ -92,19 +125,15 @@ export function ProductBrowseCard({
 
   const isMuniClub = product.product_type === "municipality_club";
 
-  // Muni clubs tell the whole seat story through the footer bar ("11 / 15
-  // seats"), so the meta-row capacity hint would just repeat it — suppress it
-  // there. Other products show their capacity; an uncapped product shows
-  // nothing (waitlist availability is a detail-page concern).
-  const seatsHint: SeatsHint | null = isMuniClub
-    ? null
-    : product.seat_count !== null
-      ? { kind: "capacity", count: product.seat_count }
-      : null;
-
   // Muni clubs are externally funded — show a seat-fill bar in the footer
   // instead of a price. `total: null` (no seat count set yet) leaves the
   // footer-left empty; non-muni products get no bar and keep their price.
+  //
+  // This bar is the only seat information on any browse card. Nothing else here
+  // reads `seat_count`, deliberately: caps are legal on every product type now,
+  // and the meta row used to print the capacity of any capped non-muni product
+  // — a number that reads as availability and is at its most misleading on a
+  // product that is full. Fullness belongs to the details page.
   const seatBar: SeatBarValue | undefined = isMuniClub
     ? {
         filled: participationsCount,
@@ -113,6 +142,13 @@ export function ProductBrowseCard({
       }
     : undefined;
 
+  // The badge-or-nothing decision (gamers-only stays unbadged) lives in
+  // product-audience.ts with the rest of the audience vocabulary, so this
+  // card, the overview card and the style-guide grid cannot drift apart.
+  const audienceLabelMessageKey = audienceLabelKey(product);
+  const audienceLabel =
+    audienceLabelMessageKey === null ? null : tAudience(audienceLabelMessageKey);
+
   const locationLine = resolveLocationLine(
     product,
     t("online"),
@@ -120,23 +156,33 @@ export function ProductBrowseCard({
     municipalityScoped,
   );
 
-  return (
-    <ProductBrowseCardView
-      name={tr?.name ?? ""}
-      description={tr?.short_description ?? null}
-      imagePath={product.image_path}
-      topicLabel={topicLabel(product.topic)}
-      scheduleLines={scheduleLines}
-      ageLine={t("ages", { min: product.min_age, max: product.max_age })}
-      seatsHint={seatsHint}
-      locationLine={locationLine}
-      spokenLanguageCode={product.spoken_language_code}
-      price={price}
-      seatBar={seatBar}
-      state={state}
-      detailHref={detailHref ?? ROUTES.shopProduct(product.id)}
-    />
-  );
+  return {
+    name: tr?.name ?? "",
+    description: tr?.short_description ?? null,
+    // The shared row-level resolution owns the empty-string-means-no-image
+    // rule; null paints the wordmark banner.
+    imageSrc: productImageSrc(product.image_path),
+    // The value travels with the label because the view picks the chip's icon
+    // from it; two loose props could be handed a label belonging to a
+    // different tag. Null is untagged, which is most products.
+    tag:
+      product.tag === null
+        ? null
+        : { value: product.tag, label: tTag(productTagLabelKey(product.tag)) },
+    topicLabel: topicLabel(product.topic),
+    scheduleLines,
+    ageLine:
+      product.min_age !== null && product.max_age !== null
+        ? t("ages", { min: product.min_age, max: product.max_age })
+        : null,
+    audienceLabel,
+    locationLine,
+    spokenLanguageCode: product.spoken_language_code,
+    price,
+    seatBar,
+    state,
+    detailHref: detailHref ?? ROUTES.shopProduct(product.id),
+  };
 }
 
 // Card stays compact: site name only (no parent) for in-person, city

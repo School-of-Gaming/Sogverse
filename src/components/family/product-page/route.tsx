@@ -20,8 +20,9 @@ import { FamilyProductWorkspace } from "./FamilyProductWorkspace";
  * times.
  *
  * **The `[id]` is a PARTICIPATION id, not a product id.** The page is
- * gamer-scoped: two siblings in one club get two pages, and the participation
- * row is the only thing that names either of them.
+ * participant-scoped: two siblings in one club get two pages, a parent holding
+ * a seat of their own gets one more, and the participation row is the only
+ * thing that names any of them.
  *
  * **The proxy needs nothing for these.** It gates by role-prefix scan, so
  * `/parent/**` is already behind the customer's session *and* the parent-PIN

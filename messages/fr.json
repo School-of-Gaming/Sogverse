@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "Sogverse – School of Gaming",
+    "title": "School of Gaming – Sogverse",
     "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
     "shortDescription": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir",
     "pages": {
@@ -8,7 +8,7 @@
       "createAccount": "Créer un compte",
       "forgotPassword": "Mot de passe oublié",
       "resetPassword": "Réinitialiser le mot de passe",
-      "registerGedu": "Devenir éducateur de jeu",
+      "registerGedu": "Devenir animateur",
       "about": "À propos",
       "yty": "Yty – la Force du Sogverse",
       "minecraftApi": "API du serveur Minecraft",
@@ -20,7 +20,7 @@
       "familyProduct": "Séances et comptes rendus",
       "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
       "gamerDashboard": "Mon SOG",
-      "gamerDashboardDescription": "Vos clubs, camps et événements dans le Sogverse",
+      "gamerDashboardDescription": "Vos clubs, stages et événements dans le Sogverse",
       "gamerGroups": "Mes groupes",
       "gamerGroupDetails": "Détails du groupe",
       "voiceSession": "Session vocale",
@@ -33,7 +33,11 @@
       "privacy": "Politique de confidentialité",
       "terms": "Conditions générales",
       "antiBullying": "Lutte contre le harcèlement et discipline",
-      "roblox": "Programme de création de jeux Roblox"
+      "attributions": "Crédits et licences",
+      "roblox": "Programme de création de jeux Roblox",
+      "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
+      "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
+      "robloxTerms": "Conditions générales du Programme Roblox"
     }
   },
   "notFound": {
@@ -142,7 +146,7 @@
       "heading": "Comment fonctionnent nos clubs",
       "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour dans l’univers Minecraft, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
       "paragraph2": "Nos Gedus sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de construire son identité en ligne, de se lier d’amitié à travers un écran. Cette expérience, ils la mettent au service des enfants à chaque session.",
-      "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de camps, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
+      "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de stages, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
       "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie réelle. Les mêmes valeurs, partout."
     },
     "forParents": {
@@ -180,8 +184,8 @@
           "plural": "clubs municipaux"
         },
         "camp": {
-          "label": "camp",
-          "plural": "camps"
+          "label": "stage",
+          "plural": "stages"
         },
         "event": {
           "label": "événement",
@@ -194,7 +198,7 @@
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
-        "hidden": "masqué",
+        "unlisted": "hors catalogue",
         "untitled": "(sans titre)",
         "missingGeduFee": "Rémunération Gedu manquante",
         "missingMunicipalityFee": "Montant commune manquant",
@@ -221,8 +225,8 @@
         "notFound": "Produit introuvable.",
         "locationMissing": "—",
         "uncapped": "Aucune limite de places",
-        "visible": "Visible par les parents",
-        "hidden": "Masqué aux parents",
+        "listed": "Répertorié publiquement",
+        "unlisted": "Hors catalogue — lien direct uniquement",
         "waitlistOn": "liste d’attente activée",
         "minutes": "{count} min",
         "perMonth": "{amount} / mois",
@@ -248,6 +252,7 @@
           "assistantGeduFee": "Rémunération Gedu assistant / session",
           "municipalityFee": "Montant commune / session",
           "registrationOpensAt": "Ouverture des inscriptions",
+          "tag": "Conçu pour",
           "visibility": "Visibilité"
         }
       },
@@ -271,7 +276,7 @@
         "whereDescription": {
           "consumerClub": "En ligne ou en présentiel. Les clubs en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les clubs en présentiel se déroulent sur un site précis.",
           "municipalityClub": "Financé par une commune précise. Les clubs en ligne choisissent directement la commune ; les clubs en présentiel choisissent un site situé sur son territoire.",
-          "camp": "En ligne ou en présentiel. Les camps en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les camps en présentiel se déroulent sur un site précis.",
+          "camp": "En ligne ou en présentiel. Les stages en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les stages en présentiel se déroulent sur un site précis.",
           "event": "En ligne ou en présentiel. Les événements en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les événements en présentiel se déroulent sur un site précis."
         },
         "when": "Quand",
@@ -290,8 +295,8 @@
         },
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
-        "visibility": "Visibilité",
-        "visibilityDescription": "Décidez si les parents peuvent trouver et consulter ce produit. Toute personne déjà inscrite le conserve sur sa page Mon SOG — cela ne l’affecte jamais."
+        "visibility": "Catalogue",
+        "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
       "labels": {
         "name": "Nom",
@@ -299,6 +304,10 @@
         "longDescription": "Description longue",
         "topic": "Thème",
         "materialUrl": "URL du matériel pédagogique",
+        "seatAudience": "Qui peut occuper une place",
+        "tag": "Conçu pour",
+        "forGamers": "Pour les joueurs",
+        "forParents": "Pour les parents",
         "minAge": "Âge min.",
         "maxAge": "Âge max.",
         "deliveredIn": "Animé en",
@@ -325,7 +334,7 @@
         "seatCount": "Nombre de places",
         "waitlistToggle": "Activer la liste d’attente quand les places sont complètes",
         "signupThreshold": "Inscriptions nécessaires pour démarrer",
-        "makeVisible": "Rendre ce produit visible par les parents",
+        "makeVisible": "Répertorier ce produit sur les pages Boutique et Clubs municipaux",
         "seatLimit": "Limite de places"
       },
       "placeholders": {
@@ -335,7 +344,7 @@
         "name": {
           "consumerClub": "ex. Club Minecraft Redstone",
           "municipalityClub": "ex. Club Minecraft de Montreuil · Printemps 2026",
-          "camp": "ex. Camp de game design · Vacances d’automne",
+          "camp": "ex. Stage de game design · Vacances d’automne",
           "event": "ex. Balade communautaire Pokémon GO · Paris"
         },
         "description": {
@@ -346,16 +355,7 @@
         }
       },
       "longDescription": {
-        "empty": "Pas encore de description longue. Ajoutez un titre ou un paragraphe pour la construire.",
-        "headingLabel": "Titre",
-        "paragraphLabel": "Paragraphe",
-        "headingPlaceholder": "Titre de section",
-        "paragraphPlaceholder": "Rédigez un paragraphe…",
-        "addHeading": "Ajouter un titre",
-        "addParagraph": "Ajouter un paragraphe",
-        "moveUp": "Déplacer vers le haut",
-        "moveDown": "Déplacer vers le bas",
-        "remove": "Retirer"
+        "placeholder": "Rédigez la présentation complète de ce produit…"
       },
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
@@ -428,14 +428,21 @@
         "dated": "Définir une date de fin",
         "datedDescription": "Le club se déroule jusqu’à une date précise, puis se termine automatiquement."
       },
+      "tagOptions": {
+        "none": "Aucune étiquette"
+      },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
-        "longDescription": "Facultatif. Affiché uniquement sur la page de détail du produit. Construisez-le à partir de titres et de paragraphes.",
+        "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
         "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
+        "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
+        "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
+        "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
+        "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
-        "voiceRoomAuto": "Un salon vocal sera créé automatiquement pour ce produit.",
+        "voiceRoomAuto": "Une salle vocale sera créée automatiquement pour ce produit.",
         "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
         "siteHint": "Où les sessions se déroulent physiquement.",
         "eventSingleDay": "Les événements ont lieu à une seule date.",
@@ -443,24 +450,27 @@
         "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneFixedHelsinki": "Les horaires sont exprimés en heure Europe/Helsinki. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
         "holidayHint": "Aucune session n’aura lieu aux dates issues des calendriers sélectionnés. Modifiez un calendrier une fois et tous les produits qui l’utilisent se mettent à jour automatiquement.",
-        "billingHint": "Quel que soit le choix, les événements fonctionnent sans limite de places pour l’instant.",
+        "billingHint": "Les produits gratuits ont une limite de places par défaut ; les produits payants démarrent sans limite.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
         "paidDetail": "Paiement unique à l’inscription.",
         "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
         "pricingMonthly": "Prélevé chaque mois tant que l’abonnement est actif. Résiliable à tout moment.",
         "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
-        "seatHint": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
-        "visibleHint": "Décochez pendant que vous préparez encore le produit, ou pour arrêter les nouvelles inscriptions. Cela ne masque le produit qu’aux nouveaux parents — les parents et les joueurs déjà inscrits continuent de le voir, ainsi que leurs sessions, sur leur page Mon SOG.",
-        "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
+        "seatHintWaitlist": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
+        "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
+        "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
+        "seatLimitHint": "Plafonnez le nombre de participants, ou fonctionnez sans limite.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
-        "startDateToday": "Verrouillée sur la date du jour pour le moment.",
-        "startDateLocked": "La date de début est verrouillée pour le moment."
+        "startDateBillingAnchor": "La date de début du club, et celle du premier prélèvement pour les familles. La modifier ensuite ne déplace pas le premier prélèvement des familles déjà inscrites — corrigez ces abonnements dans Stripe."
       },
       "errors": {
         "translationRequired": "Au moins une langue avec un nom et une description est requise",
         "translationIncomplete": "Renseignez le nom et la description de l’onglet {locale}, ou retirez-le.",
         "topicRequired": "Le thème est obligatoire",
         "spokenLanguageRequired": "La langue parlée est obligatoire",
+        "audienceRequired": "Choisissez au moins un public — joueurs, parents ou les deux",
+        "minAgeRequired": "L’âge minimum est obligatoire",
+        "maxAgeRequired": "L’âge maximum est obligatoire",
         "minAgeInvalid": "L’âge minimum doit être un entier positif ou nul",
         "maxAgeInvalid": "L’âge maximum doit être supérieur ou égal à l’âge minimum",
         "municipalityRequired": "La commune est obligatoire pour les clubs municipaux en ligne",
@@ -469,6 +479,7 @@
         "materialUrlInvalid": "L’URL du matériel pédagogique doit être une URL valide",
         "startDateRequired": "La date de début est obligatoire",
         "endDateRequired": "La date de fin est obligatoire",
+        "seatCountRequired": "Le nombre de places est obligatoire",
         "seatCountInvalid": "Le nombre de places doit être un entier positif",
         "priceSessionMissing": "Saisissez un prix par session en {currency}",
         "priceSessionNegative": "Le prix par session en {currency} ne peut pas être négatif",
@@ -486,7 +497,6 @@
         "createLabel": "Créer un {label}"
       },
       "status": {
-        "draft": "Brouillon",
         "pending": "En attente de démarrage",
         "running": "En cours",
         "completed": "Terminé",
@@ -531,7 +541,7 @@
         "formats": "JPG, PNG, WebP, AVIF ou SVG.",
         "chooseFile": "Choisir un fichier",
         "remove": "Retirer",
-        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue."
+        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue. L'image est recadrée au format 3:2, et l'aperçu montre ce même recadrage."
       },
       "filters": {
         "day": "Jour",
@@ -557,12 +567,12 @@
         "alreadyAssigned": "Déjà affecté",
         "notVerified": "Non vérifié"
       },
-      "gamerPicker": {
-        "title": "Ajouter un joueur",
-        "description": "Ajoutez un joueur directement à ce produit, sans passer par le paiement.",
-        "searchPlaceholder": "Rechercher par nom de parent ou de joueur…",
+      "participantPicker": {
+        "title": "Ajouter un participant",
+        "description": "Ajoutez un enfant ou un parent directement à ce produit, sans passer par le paiement. Un parent ne peut prendre une place que sur un produit ouvert aux parents.",
+        "searchPlaceholder": "Rechercher un parent ou un joueur par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
         "searchHint": "Saisissez au moins 2 caractères pour lancer la recherche.",
-        "noParents": "Aucun parent n’a encore de joueur associé.",
+        "noParents": "Aucun parent pour l’instant.",
         "noSearchResults": "Aucun parent ni joueur ne correspond à votre recherche.",
         "unnamedParent": "Parent sans nom",
         "unnamedGamer": "Joueur sans nom",
@@ -570,11 +580,11 @@
         "adding": "Ajout…",
         "added": "Ajouté",
         "alreadyAdded": "Déjà ajouté",
-        "addFailed": "Échec de l’ajout du joueur."
+        "addFailed": "Échec de l’ajout du participant."
       },
       "groupsPanel": {
         "title": "Groupes",
-        "subtitle": "Faites glisser chaque joueur dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
+        "subtitle": "Faites glisser chaque participant dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
         "addGroup": "Ajouter un groupe",
         "loading": "Chargement…",
         "genderBoy": "garçon",
@@ -582,18 +592,19 @@
         "genderNonBinary": "non binaire",
         "chip": {
           "age": "{age} ans",
-          "parent": "Parent : {name}"
+          "parent": "Parent : {name}",
+          "participantEmail": "Contact : {email}"
         },
         "unassigned": {
           "title": "Sans groupe",
-          "subtitle": "Joueurs qui ont payé mais ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
+          "subtitle": "Personnes qui ont payé mais ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
           "empty": "Tout le monde a un groupe.",
-          "addGamer": "Ajouter un joueur",
-          "removeGamer": "Retirer le joueur"
+          "addParticipant": "Ajouter un participant",
+          "removeParticipant": "Retirer le participant"
         },
         "empty": {
           "title": "Pas encore de groupe",
-          "description": "Ajoutez un groupe quand vous êtes prêt à commencer à placer les joueurs.",
+          "description": "Ajoutez un groupe quand vous êtes prêt à commencer à placer les participants.",
           "addFirst": "Ajouter votre premier groupe"
         },
         "group": {
@@ -605,15 +616,15 @@
           "saveNameAria": "Enregistrer le nom",
           "cancelEditAria": "Annuler",
           "deleteAria": "Supprimer {name}",
-          "gamerCount": "{count, plural, =0 {Aucun joueur} =1 {1 joueur} other {# joueurs}}",
+          "participantCount": "{count, plural, =0 {Aucun participant} =1 {1 participant} other {# participants}}",
           "assignedGedus": "Gedus",
           "noGedus": "Pas encore de Gedu.",
           "addGedu": "Ajouter un Gedu",
-          "gamersLabel": "Joueurs",
-          "empty": "Pas encore de joueur ici — faites-en glisser un.",
+          "participantsLabel": "Participants",
+          "empty": "Personne ici pour l’instant — faites-en glisser un.",
           "deleteConfirmTitle": "Supprimer {name} ?",
           "deleteConfirmEmpty": "Personne n’est dans ce groupe : le supprimer efface simplement les affectations de Gedus.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {1 joueur est dans ce groupe} other {# joueurs sont dans ce groupe}}. Ils passeront dans Non attribués."
+          "deleteConfirmWithParticipants": "{count, plural, =1 {1 participant est dans ce groupe} other {# participants sont dans ce groupe}}. Ils passeront dans Non attribués."
         },
         "gedu": {
           "removeAria": "Retirer {name}"
@@ -622,16 +633,35 @@
           "addTitle": "Ajouter un Gedu à {name}",
           "addDescription": "Un Gedu ne peut animer qu’un seul groupe par produit. Les personnes déjà affectées apparaissent en grisé."
         },
-        "removeGamer": {
+        "removeParticipant": {
           "confirmTitle": "Retirer {name} de ce produit ?",
           "confirmDescription": "{name} sera désinscrit et perdra immédiatement l’accès.",
           "noRefundWarning": "Aucun remboursement n’est effectué. Si ce client a payé, il ne récupérera pas son argent.",
-          "confirmCta": "Retirer le joueur"
+          "confirmCta": "Retirer le participant"
         },
         "waitlist": {
           "title": "Liste d’attente",
-          "subtitle": "Joueurs en attente d’une place, numérotés dans leur ordre d’arrivée. Faites-en glisser un dans un groupe pour lui donner une place, ou déposez ici un joueur actif pour l’envoyer en fin de liste.",
+          "subtitle": "Personnes en attente d’une place, numérotées dans leur ordre d’arrivée. Faites-en glisser une dans un groupe pour lui donner une place, ou déposez ici un participant actif pour l’envoyer en fin de liste.",
           "empty": "Personne n’est sur la liste d’attente."
+        },
+        "seatsOverfilled": "{count} places sur {total} – {over} en trop",
+        "blockedMove": {
+          "acknowledge": "Compris",
+          "promoteUnpaid": {
+            "title": "Cette place nécessite un abonnement",
+            "description": "{name} est sur la liste d’attente sans abonnement, et une place dans ce club est facturée chaque mois. Lui donner une place maintenant l’inscrirait gratuitement.",
+            "nextStep": "Demandez plutôt à la famille de prendre la place elle-même : tant qu’une place est libre, le club s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte sur Mon SOG et passer en caisse — c’est là que l’abonnement est créé."
+          },
+          "demoteSubscribed": {
+            "title": "L’abonnement est toujours actif",
+            "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
+            "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
+          },
+          "removeSubscribed": {
+            "title": "L’abonnement est toujours actif",
+            "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
+            "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
+          }
         }
       },
       "seatLimitModes": {
@@ -639,12 +669,23 @@
         "limitedDescription": "Limitez le nombre de joueurs pouvant participer. Une fois complet, les nouvelles inscriptions peuvent aller en liste d’attente.",
         "unlimited": "Aucune limite de places",
         "unlimitedDescription": "Toute personne qui s’inscrit peut participer — il n’y a pas de plafond."
+      },
+      "vat": {
+        "headline": {
+          "reduced": "TVA à taux réduit — {rate}",
+          "standard": "TVA à taux normal — {rate}"
+        },
+        "reason": {
+          "reduced": "Les stages relèvent du taux réduit finlandais — une décision de la direction financière qui vaut pour tous les stages. Le taux découle du type de produit et ne se modifie pas ici.",
+          "standard": "Les clubs et les événements payants sont vendus au taux normal finlandais. Le taux découle du type de produit et ne se modifie pas ici."
+        },
+        "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
       }
     },
     "users": {
       "title": "Utilisateurs",
       "manageAccounts": "Gérer les comptes utilisateurs et les rôles",
-      "searchPlaceholder": "Rechercher par nom, e-mail ou nom d’utilisateur...",
+      "searchPlaceholder": "Rechercher par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
       "searchAriaLabel": "Rechercher des utilisateurs",
       "roleFilterLabel": "Rôle",
       "all": "Tous",
@@ -779,9 +820,6 @@
       "group": "Groupe",
       "groupNumber": "Groupe {number}",
       "groupDeleted": "{label} (supprimé)",
-      "hiddenNoGroups": "Ce produit est masqué et n’a aucun groupe. Ajoutez au moins un groupe et rendez-le visible pour que les parents puissent le voir.",
-      "hiddenWithGroups": "Ce produit est masqué. Les parents ne peuvent pas le voir dans le catalogue. Modifiez la visibilité depuis la carte Actions ci-dessus.",
-      "visibleNoGroups": "Ce produit est visible mais n’a aucun groupe. Les parents peuvent le voir mais ne peuvent pas s’y inscrire.",
       "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
       "genderBoy": "Garçon",
       "genderGirl": "Fille",
@@ -902,7 +940,7 @@
     "registerGedu": {
       "title": "Créez votre compte Gedu Sogverse",
       "verificationAlertTitle": "Votre compte doit être vérifié",
-      "verificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit vérifier votre compte avant que vous puissiez être affecté à un club ou à un camp.",
+      "verificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit vérifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
       "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez modifier votre sélection plus tard dans les paramètres de votre profil.",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
@@ -960,6 +998,25 @@
       "event": "L’inscription de {gamer} à {product} est confirmée."
     },
     "fallbackGamer": "Votre enfant",
+    "self": {
+      "subheading": {
+        "consumer_club": "Votre inscription à {product} est confirmée.",
+        "municipality_club": "Votre inscription à {product} est confirmée.",
+        "camp": "Votre inscription à {product} est confirmée.",
+        "event": "Votre inscription à {product} est confirmée."
+      },
+      "fallbackName": "Vous",
+      "nextPlacement": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+      "waitlist": {
+        "subheading": "Vous êtes sur la liste d’attente pour {product}. Nous vous préviendrons dès qu’une place se libère.",
+        "next2": {
+          "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
+          "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
+          "camp": "Vous conservez votre place dans la file pendant toute la durée du stage.",
+          "event": "Vous conservez votre place dans la file jusqu’à l’événement."
+        }
+      }
+    },
     "summaryTitle": "Votre commande",
     "forLabel": {
       "consumer_club": "Inscription",
@@ -977,7 +1034,8 @@
     "next": {
       "placement": "Nous placerons {gamer} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
-      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler."
+      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
+      "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
     },
     "goToDashboard": "Aller à Mon SOG",
     "keepBrowsing": "Continuer à explorer",
@@ -998,7 +1056,7 @@
     },
     "duplicatePayment": {
       "heading": "Déjà inscrit",
-      "subheading": "Cet enfant a déjà une place sur ce produit.",
+      "subheading": "La personne concernée a déjà une place sur ce produit.",
       "body": "Ce paiement n’a pas créé de seconde inscription. Contactez-nous : notre équipe examinera ce prélèvement supplémentaire avec vous."
     },
     "supportLine": "Besoin d’aide ? Écrivez-nous à <link>{email}</link>.",
@@ -1010,7 +1068,12 @@
       "positionLabel": "Votre position",
       "positionValue": "n° {position}",
       "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-      "next2": "{gamer} conserve sa place dans la file pendant toute la période.",
+      "next2": {
+        "consumer_club": "{gamer} conserve sa place dans la file pendant toute la période.",
+        "municipality_club": "{gamer} conserve sa place dans la file pendant toute la période.",
+        "camp": "{gamer} conserve sa place dans la file pendant toute la durée du stage.",
+        "event": "{gamer} conserve sa place dans la file jusqu’à l’événement."
+      },
       "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
     }
   },
@@ -1082,16 +1145,16 @@
     "myGamers": "Mes joueurs",
     "myGamersShort": "Joueurs",
     "clubs": "Clubs",
-    "camps": "Camps",
+    "camps": "Stages",
     "events": "Événements",
     "myGroupsEmptyStateGedu": "Dès qu’un groupe vous est attribué, il apparaîtra ici avec sa prochaine séance.",
     "billing": "Facturation",
     "help": "Aide",
     "yty": "Yty",
     "settings": "Paramètres",
-    "instantVoiceRoom": "Salon vocal instantané",
+    "instantVoiceRoom": "Salle vocale instantanée",
     "instantVoiceRoomShort": "Salle vocale",
-    "loadingAssignments": "Chargement de vos clubs, camps et événements."
+    "loadingAssignments": "Chargement de vos clubs, stages et événements."
   },
   "family": {
     "addGamer": "Ajouter un joueur",
@@ -1131,12 +1194,14 @@
     "wontRenewAccessEnds": "Non renouvelé — accès jusqu’au {date}",
     "awaitingCustomer": "Inscription confirmée — nous lui cherchons un Gedu et un groupe avant la première session.",
     "awaitingGamer": "Tu es inscrit·e — nous te cherchons un Gedu et un groupe avant ta première session.",
-    "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
-    "emptyStateCta": "Voir les clubs et les camps"
+    "awaitingSelf": "Vous êtes inscrit·e — nous vous cherchons un Gedu et un groupe avant votre première session.",
+    "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un stage.",
+    "emptyStateCta": "Voir les clubs et les stages"
   },
   "familyProduct": {
     "back": "Retour à Mon SOG",
     "forGamer": "pour {name}",
+    "forSelf": "pour vous",
     "scheduleLabel": "Quand",
     "venueLabel": "Où",
     "aboutHeading": "À propos du groupe",
@@ -1148,7 +1213,9 @@
     "emptyFeedCustomer": "Il n’y a pas encore de séances ici.",
     "emptyFeedGamer": "Rien ici pour l’instant. Chaque séance que tu joues apparaîtra ici ensuite.",
     "paymentProblemNotice": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver la place de {name}.",
+    "paymentProblemNoticeSelf": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver votre place.",
     "cancellationNotice": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {date}.",
+    "cancellationNoticeSelf": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. Votre dernière session est le {date}.",
     "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
     "loadingPage": "Chargement des séances de ce groupe.",
     "notFoundTitle": "Rien à afficher ici",
@@ -1158,7 +1225,6 @@
     "title": "Qui entre dans le Sogverse ?"
   },
   "footer": {
-    "tagline": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir.",
     "copyright": "© {year} School of Gaming. Tous droits réservés.",
     "contact": {
       "email": "E-mail : {email}"
@@ -1166,13 +1232,13 @@
     "privacy": "Politique de confidentialité",
     "terms": "Conditions générales",
     "antiBullying": "Lutte contre le harcèlement",
-    "attribution": "Données de localisation basées sur <geonames>GeoNames</geonames> (<cc>CC BY 4.0</cc>). Codes postaux français issus de <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
+    "attributions": "Crédits et licences"
   },
   "gamer": {
     "welcomeNamed": "Bienvenue, {name} !",
     "fallbackName": "joueur",
     "subtitle": "Envie de jouer et d’apprendre ?",
-    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les camps avec toi, et choisissez-en un ensemble."
+    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les stages avec toi, et choisissez-en un ensemble."
   },
   "gedu": {
     "coverage": {
@@ -1194,9 +1260,9 @@
       "noOtherGroups": "Aucun autre groupe dans cette session.",
       "railGroupHeading": "Mon groupe",
       "noGedus": "Aucun Gedu affecté.",
-      "gamersLabel": "Joueurs",
-      "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
-      "emptyRoster": "Aucun joueur inscrit dans ce groupe pour l’instant.",
+      "participantsLabel": "Participants",
+      "participantCount": "{count, plural, one {# participant} other {# participants}}",
+      "emptyRoster": "Personne n’est encore inscrit dans ce groupe.",
       "untitledGroup": "Groupe sans titre",
       "noAssignedGroup": "Vous n’avez pas de groupe attribué dans cette session.",
       "notAssignedTitle": "Ce n’est pas votre session",
@@ -1210,10 +1276,10 @@
       "minecraftUsernameSave": "Enregistrer",
       "minecraftUsernameCancel": "Annuler",
       "editMinecraftUsername": "Modifier le nom d’utilisateur Minecraft de {name}",
-      "copyParentEmail": "Copier l’e-mail du parent {email}",
+      "copyContactEmail": "Copier l’adresse de contact {email}",
       "emailCopied": "E-mail copié",
-      "copyAllParentEmails": "Copier tous les e-mails des parents ({count})",
-      "allEmailsCopied": "Tous les e-mails des parents ont été copiés",
+      "copyAllContactEmails": "Copier toutes les adresses de contact ({count})",
+      "allEmailsCopied": "Toutes les adresses de contact ont été copiées",
       "loadingWorkspace": "Chargement des séances de ce groupe.",
       "minecraftSaveFailed": "Ce nom d’utilisateur n’a pas été enregistré. Réessayez."
     },
@@ -1229,14 +1295,15 @@
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",
       "staffNoteLabel": "Gedus uniquement",
-      "staffNoteFieldLabel": "Note pour les Gedus",
+      "familyNoteLabel": "Visible par les familles",
+      "staffNoteTitle": "Note de séance — Gedus uniquement",
       "staffNoteHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
-      "staffNotePlaceholder": "Tout ce qu’un autre Gedu devrait savoir sur cette séance.",
+      "staffNotePlaceholder": "Tout ce qu’un autre Gedu devrait savoir — et tout ce que vous devez consigner en privé : un incident, du harcèlement, une inquiétude au sujet d’un gamer.",
       "attendanceLegend": "Présences",
       "attendanceRevertHint": "Choisissez de nouveau la même réponse pour effacer une marque. Vous pouvez enregistrer une partie de la liste et terminer plus tard.",
-      "reportLabel": "Compte rendu de séance",
-      "reportFormattingHint": "Les parents et les gamers de ce groupe le liront. Les titres, le gras et les listes en facilitent la lecture.",
-      "reportPlaceholder": "Ce que le groupe a construit, joué ou découvert pendant cette séance.",
+      "reportTitle": "Compte rendu de séance — visible par les parents et les joueurs",
+      "reportFormattingHint": "N’indiquez jamais d’informations privées ou sensibles concernant un gamer. Les titres, le gras et les listes en facilitent la lecture.",
+      "reportPlaceholder": "Commencez par un Titre, puis donnez le tableau complet : le thème de la séance, le travail du groupe, son déroulement, ainsi que les temps forts et les moments à retenir.",
       "save": "Enregistrer",
       "cancel": "Annuler",
       "alertBadge": "{count, plural, one {# séance à traiter} other {# séances à traiter}}",
@@ -1253,7 +1320,7 @@
       "save": "Enregistrer",
       "emptyHint": "Ajoutez une note de groupe — tout ce qui reste vrai d’une séance à l’autre.",
       "publicLabel": "Note pour les familles",
-      "publicHint": "Les parents et les gamers de ce groupe pourront le lire.",
+      "publicHint": "N’indiquez jamais d’informations privées ou sensibles concernant un gamer.",
       "publicPlaceholder": "Comment ce groupe fonctionne, ce qui se poursuit d’une séance à l’autre…",
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
@@ -1270,7 +1337,7 @@
       "save": "Enregistrer",
       "emptyHint": "Ajoutez une note sur le lieu — tout ce qui concerne les locaux eux-mêmes.",
       "publicLabel": "Note pour les familles",
-      "publicHint": "Les parents et les gamers qui viennent sur ce lieu pourront le lire.",
+      "publicHint": "N’indiquez jamais d’informations privées ou sensibles ici.",
       "publicPlaceholder": "Par quelle porte entrer, où attendre, quoi apporter…",
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
@@ -1281,7 +1348,7 @@
   "productType": {
     "consumer_club": "Club",
     "municipality_club": "Club",
-    "camp": "Camp",
+    "camp": "Stage",
     "event": "Événement"
   },
   "activityCard": {
@@ -1330,7 +1397,13 @@
     "heading": "Intertitre",
     "subheading": "Sous-titre",
     "bulletList": "Liste à puces",
-    "orderedList": "Liste numérotée"
+    "orderedList": "Liste numérotée",
+    "link": "Lien",
+    "linkUrl": "Adresse du lien",
+    "linkApply": "Appliquer le lien",
+    "linkRemove": "Supprimer le lien",
+    "linkCancel": "Annuler",
+    "linkInvalid": "Cette adresse ne peut pas servir de lien. Utilisez une adresse web, une adresse e-mail ou un chemin interne à ce site."
   },
   "header": {
     "nav": {
@@ -1355,11 +1428,11 @@
       "items": {
         "whatIsSogverse": {
           "q": "Qu’est-ce que Sogverse ?",
-          "a": "Sogverse — School of Gaming — anime des clubs Minecraft encadrés par des animateurs professionnels, pour que le temps d’écran devienne du temps qui fait grandir."
+          "a": "Sogverse est la plateforme de School of Gaming dédiée aux clubs Minecraft encadrés par des animateurs professionnels, où le temps d’écran devient du temps qui fait grandir."
         },
         "productTypes": {
-          "q": "Quelle est la différence entre les clubs, les camps et les événements ?",
-          "a": "Les clubs se retrouvent selon un rythme régulier. Les camps se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels."
+          "q": "Quelle est la différence entre les clubs, les stages et les événements ?",
+          "a": "Les clubs se retrouvent selon un rythme régulier. Les stages se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels."
         },
         "whoLeads": {
           "q": "Qui anime les sessions ?",
@@ -1405,15 +1478,18 @@
     }
   },
   "productBrowse": {
-    "headings": {
-      "consumer_club": "Nos clubs",
-      "camp": "Nos camps",
-      "event": "Nos événements"
+    "pageTitle": "Boutique",
+    "sections": {
+      "clubs": "Clubs",
+      "camps": "Stages",
+      "events": "Événements"
     },
     "filters": {
       "type": "Type",
+      "audience": "Public",
+      "designedFor": "Conçu pour",
       "typeClubs": "Clubs",
-      "typeCamps": "Camps",
+      "typeCamps": "Stages",
       "typeEvents": "Événements",
       "subject": "Univers",
       "format": "Format",
@@ -1432,7 +1508,6 @@
       "free": "Gratuit",
       "externalContract": "Financé par votre commune",
       "notAvailableInCurrency": "Pas en {currency}",
-      "seatsCapacity": "{count, plural, one {# place} other {# places}}",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
       "cardLink": "{action} — {name}",
@@ -1447,21 +1522,37 @@
       "noMatches": "Aucun résultat. Essayez d’effacer vos filtres."
     }
   },
+  "productAudience": {
+    "parents": "Pour les parents",
+    "families": "Pour les familles",
+    "familiesWithAges": "Pour les familles, {min}–{max} ans"
+  },
+  "productTag": {
+    "neuroinclusive": "Neuro-inclusif",
+    "beginner": "Débutant",
+    "advanced": "Avancé"
+  },
+  "productTagDetail": {
+    "neuroinclusive": "De petits groupes qui suivent une structure familière et prévisible. Nos animateurs ont l’expérience de l’accompagnement d’enfants neuroatypiques. Chacun peut être soi-même et participer à son propre rythme.",
+    "beginner": "Aucune expérience de jeu n’est requise. Nos animateurs accompagnent pas à pas quand il le faut et aident chacun à participer à son propre niveau. On peut se joindre au groupe même si le jeu est totalement nouveau.",
+    "advanced": "Pour les enfants qui maîtrisent déjà les bases du jeu et veulent aller plus loin. Des projets plus exigeants et un groupe capable de les suivre."
+  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",
     "waitlistAvailable": "Liste d’attente"
   },
   "productDetail": {
+    "jumpToSignup": "{verb} maintenant !",
     "back": {
       "consumer_club": "Tous les clubs",
       "municipality_club": "Tous les clubs municipaux",
-      "camp": "Tous les camps",
+      "camp": "Tous les stages",
       "event": "Tous les événements"
     },
     "typeLabel": {
       "consumer_club": "Club",
       "municipality_club": "Club municipal",
-      "camp": "Camp",
+      "camp": "Stage",
       "event": "Événement"
     },
     "sections": {
@@ -1483,7 +1574,7 @@
         },
         "minecraft_education": {
           "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour la classe : la même construction ouverte et bienveillante, avec des outils supplémentaires pour les enseignants, pensée pour des activités encadrées par un animateur plutôt que pour le jeu en solo.",
-          "note": "Cette édition est normalement fournie par un établissement scolaire ou via un compte Microsoft 365 Education plutôt qu’achetée en boutique. Si votre enfant a besoin d’un accès pour ce club, demandez-nous simplement — nous vous aiderons à régler cela.",
+          "note": "Il n’y a rien à acheter ni de compte scolaire à obtenir — School of Gaming fournit les comptes Minecraft Education que les participants utilisent pendant le club. Pour les clubs à distance, votre enfant doit en plus télécharger le jeu lui-même, gratuitement, depuis le Microsoft Store ou depuis le site de Minecraft Education.",
           "linkLabel": "À propos de Minecraft Education"
         },
         "fortnite": {
@@ -1500,6 +1591,11 @@
           "description": "Roblox Studio est l’outil gratuit avec lequel les vrais jeux Roblox sont créés. Dans nos clubs, les enfants construisent leurs propres mondes en 3D et écrivent de vrais programmes pour les faire fonctionner — leurs idées deviennent des jeux auxquels d’autres peuvent vraiment jouer. C’est la première étape pour la création de jeux vidéo.",
           "note": "Roblox Studio est entièrement gratuit, il n’y a rien à acheter. Il fonctionne uniquement sur PC Windows ou Mac — pas sur iPad, tablette, Chromebook, téléphone ou console. Votre enfant a donc besoin d’un ordinateur fixe ou portable pour participer. Un compte Roblox gratuit est aussi nécessaire ; les paramètres d’âge du compte permettent de gérer le chat et la confidentialité. Une fois leur jeu terminé, ils pourront le publier pour que d’autres joueurs le découvrent !",
           "linkLabel": "Obtenir Roblox Studio"
+        },
+        "rocket_league": {
+          "description": "Rocket League, c’est du football joué avec des voitures propulsées par fusée. Deux équipes s’affrontent dans une arène et poussent un ballon surdimensionné dans le but adverse, en matchs courts d’environ cinq minutes. L’univers est vif et façon dessin animé, sans aucune violence — c’est un sport, pas un jeu de tir — et cela se suit très facilement depuis le bord du terrain, même sans y avoir jamais joué. Presque chaque but naît du jeu d’équipe, ce qui en fait un jeu parfaitement adapté au club.",
+          "note": "Rocket League est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant a besoin d’un compte Epic Games gratuit. Le jeu fonctionne sur PC Windows, PlayStation, Xbox et Nintendo Switch, et les joueurs sur des appareils différents peuvent jouer ensemble : l’appareil de votre enfant n’a donc pas besoin d’être le même que celui des autres. Des achats facultatifs sont proposés dans le jeu (des décorations pour les voitures), que vous pouvez limiter avec le contrôle parental.",
+          "linkLabel": "Obtenir Rocket League"
         }
       }
     },
@@ -1509,6 +1605,7 @@
       "format": "Format",
       "ages": "{min}–{max} ans",
       "ageRange": "Tranche d’âge",
+      "audience": "Public",
       "language": "Langue",
       "online": "En ligne",
       "atVenue": "À {venue}",
@@ -1563,11 +1660,13 @@
       },
       "gamerAlreadyWaitlisted": "En liste d’attente",
       "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
+      "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
       "rulesHeading": "Les règles",
       "rules": {
         "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
         "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
+        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
         "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
         "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques."
       },
@@ -1577,8 +1676,10 @@
         "camp": "Qui inscrivez-vous ?",
         "event": "Qui participe ?"
       },
+      "seatIsFor": "À qui revient cette place",
       "selected": "Sélectionné",
-      "agePill": "{age} ans"
+      "agePill": "{age} ans",
+      "parentPill": "Parent"
     },
     "pricing": {
       "title": "Tarifs",
@@ -1589,7 +1690,8 @@
       "externalHint": "Aucun paiement nécessaire — votre commune prend en charge le coût.",
       "upfrontHint": "Paiement unique.",
       "notAvailable": "Les tarifs ne sont pas encore disponibles en {currency}.",
-      "cadenceMonth": "/ mois"
+      "cadenceMonth": "/ mois",
+      "firstChargeOn": "Premier paiement le {date} — rien à payer aujourd’hui."
     },
     "countdown": {
       "days": "j",
@@ -1623,7 +1725,7 @@
     "users": "Utilisateurs",
     "consumerClubs": "Clubs grand public",
     "municipalityClubs": "Clubs municipaux",
-    "camps": "Camps",
+    "camps": "Stages",
     "events": "Événements",
     "locations": "Lieux",
     "uiComponents": "Composants UI",
@@ -1734,6 +1836,7 @@
         "trigger": "Quitter la liste d’attente",
         "confirmTitle": "Quitter la liste d’attente ?",
         "confirmDescription": "{name} perdra sa place dans la file pour {product}.",
+        "confirmDescriptionSelf": "Vous perdrez votre place dans la file pour {product}.",
         "confirmCta": "Quitter la liste d’attente",
         "backOfLineWarning": "Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
       }
@@ -1741,12 +1844,12 @@
     "help": {
       "contact": {
         "heading": "Besoin d’un coup de main ?",
-        "body": "Nous sommes là pour vous aider, de l’arrivée à votre camp aux questions sur la plateforme. Écrivez-nous quand vous voulez — nous répondons généralement sous 24 heures.",
+        "body": "Nous sommes là pour vous aider, de l’arrivée à votre stage aux questions sur la plateforme. Écrivez-nous quand vous voulez — nous répondons généralement sous 24 heures.",
         "emailLabel": "Écrivez-nous à"
       },
       "minecraft": {
         "heading": "Préparez-vous pour Minecraft Java",
-        "intro": "Les camps et les clubs se déroulent sur le serveur Minecraft Java de SOG. Parcourez ces étapes avec votre enfant avant le début du camp pour qu’il puisse se connecter tout de suite.",
+        "intro": "Les stages et les clubs se déroulent sur le serveur Minecraft Java de SOG. Parcourez ces étapes avec votre enfant avant le début du stage pour qu’il puisse se connecter tout de suite.",
         "steps": {
           "install": {
             "title": "Installez Minecraft Java Edition",
@@ -1758,16 +1861,16 @@
           },
           "addServer": {
             "title": "Ajoutez le serveur SOG",
-            "body": "Dans Multijoueur → Ajouter un serveur, collez l’adresse correspondant à votre camp et enregistrez-la pour qu’elle soit prête le jour J :"
+            "body": "Dans Multijoueur → Ajouter un serveur, collez l’adresse correspondant à votre stage et enregistrez-la pour qu’elle soit prête le jour J :"
           },
           "joinAtCampTime": {
-            "title": "Connectez-vous au début du camp",
+            "title": "Connectez-vous au début du stage",
             "body": "Cliquez sur le serveur SOG dans la liste, puis sur Rejoindre. Le Gedu guidera tout le monde ensuite. Besoin d’aide ? Écrivez-nous à l’adresse ci-dessus."
           }
         },
         "servers": {
-          "fi": "Camps en finnois :",
-          "en": "Camps en anglais :"
+          "fi": "Stages en finnois :",
+          "en": "Stages en anglais :"
         }
       }
     },
@@ -1851,10 +1954,10 @@
     "unlockCamera": "Déverrouiller la caméra",
     "sharerScreen": "Écran de {name}",
     "stopSharing": "Arrêter le partage",
-    "voiceRoom": "Salon vocal",
+    "voiceRoom": "Salle vocale",
     "spatialDescription": "Faites glisser votre avatar pour changer de zone. Les participants d’une même zone s’entendent entre eux.",
     "leave": "Quitter",
-    "failedToJoinRoom": "Impossible de rejoindre le salon",
+    "failedToJoinRoom": "Impossible de rejoindre la salle",
     "sessionEnded": "La session est terminée",
     "disconnecting": "Déconnexion...",
     "connecting": "Connexion...",
@@ -1971,12 +2074,12 @@
       "empty": "Aucun message pour l’instant"
     },
     "instant": {
-      "joinFailed": "Impossible de rejoindre le salon. Veuillez réessayer.",
+      "joinFailed": "Impossible de rejoindre la salle. Veuillez réessayer.",
       "share": {
         "hint": "Cliquez sur le lien pour le copier.",
         "copied": "Copié !",
-        "roomCode": "Code du salon :",
-        "copyLink": "Copier le lien du salon {code}"
+        "roomCode": "Code de la salle :",
+        "copyLink": "Copier le lien de la salle {code}"
       },
       "lobby": {
         "title": "Envie de rejoindre l’aventure ?",
@@ -1988,42 +2091,42 @@
       },
       "end": {
         "guestTitle": "Quitter cet appel ?",
-        "guestDescription": "Vous pouvez revenir à tout moment avec le même lien, tant que le salon est ouvert.",
+        "guestDescription": "Vous pouvez revenir à tout moment avec le même lien, tant que la salle est ouverte.",
         "modTitle": "Vous quittez l’appel ?",
-        "modDescription": "Vous pouvez partir seul, ou mettre fin à l’appel pour tout le monde — cela déconnecte tous les participants et ferme le salon.",
+        "modDescription": "Vous pouvez partir seul, ou mettre fin à l’appel pour tout le monde — cela déconnecte tous les participants et ferme la salle.",
         "cancel": "Rester",
         "leave": "Quitter l’appel",
         "endForEveryone": "Terminer pour tout le monde"
       },
       "ended": {
         "title": "Appel terminé",
-        "body": "Le salon est fermé. Merci d’avoir participé."
+        "body": "La salle est fermée. Merci d’avoir participé."
       },
       "left": {
         "title": "Vous avez quitté l’appel",
-        "body": "Le salon est toujours ouvert — utilisez le lien pour revenir quand vous voulez."
+        "body": "La salle est toujours ouverte — utilisez le lien pour revenir quand vous voulez."
       },
       "notFound": {
-        "title": "Salon introuvable",
-        "body": "Nous n’avons trouvé aucun salon vocal avec ce code :",
+        "title": "Salle introuvable",
+        "body": "Nous n’avons trouvé aucune salle vocale avec ce code :",
         "hint": "Vérifiez le code : lettres et chiffres doivent correspondre exactement.",
-        "createNew": "Créer un nouveau salon vocal"
+        "createNew": "Créer une nouvelle salle vocale"
       },
       "createPage": {
-        "title": "Lancez un salon vocal en un clic",
-        "subtitle": "Un clic → un salon tout neuf et un lien à partager. Idéal pour des échanges en tête-à-tête improvisés, ou pour la coordination entre gedus en dehors de la session programmée ou en complément.",
-        "createButton": "Lancer un salon instantané",
+        "title": "Lancez une salle vocale en un clic",
+        "subtitle": "Un clic → une salle toute neuve et un lien à partager. Idéal pour des échanges en tête-à-tête improvisés, ou pour la coordination entre gedus en dehors de la session programmée ou en complément.",
+        "createButton": "Lancer une salle instantanée",
         "creating": "Création…",
-        "createFailed": "Impossible de créer un salon. Veuillez réessayer.",
-        "ready": "Votre salon est prêt",
+        "createFailed": "Impossible de créer une salle. Veuillez réessayer.",
+        "ready": "Votre salle est prête",
         "join": "Rejoindre",
         "unverifiedTitle": "En attente de vérification",
-        "unverifiedBody": "Un administrateur doit vérifier votre compte Gedu avant que vous puissiez créer des salons vocaux. Vous pourrez en lancer un ici dès que vous serez vérifié."
+        "unverifiedBody": "Un administrateur doit vérifier votre compte Gedu avant que vous puissiez créer des salles vocales. Vous pourrez en lancer une ici dès que vous serez vérifié."
       }
     }
   },
   "voiceButton": {
-    "joinVoice": "Rejoindre le salon vocal",
+    "joinVoice": "Rejoindre la salle vocale",
     "locked": "Ouvre le {date} à {time}",
     "awaitingMatch": "Mise en relation avec un Gedu"
   },
@@ -2063,7 +2166,7 @@
     },
     "earning": {
       "heading": "Comment les joueurs gagnent de l’Yty",
-      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, camps : tout compte.",
+      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
       "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau global et l’élément auquel il correspond.",
       "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty du Sogverse à travers les événements et les activités partagées."
     },
@@ -2073,9 +2176,6 @@
     }
   },
   "email": {
-    "senderAuth": "Équipe Sogverse",
-    "senderFeedback": "Retours Sogverse",
-    "senderEnrollment": "Inscriptions Sogverse",
     "footer": "© {year} Sogverse. Tous droits réservés.",
     "roleAdmin": "Administrateur",
     "roleParent": "Parent",
@@ -2104,24 +2204,28 @@
       "notProvided": "Non renseigné"
     },
     "enrollmentParent": {
-      "subject": "{gamerName} est maintenant inscrit à {productName}",
+      "subject": "{participantName} est maintenant inscrit à {productName}",
+      "subjectSelf": "Vous êtes maintenant inscrit à {productName}",
       "heading": "Inscription confirmée",
-      "body": "Bonjour {parentName}, {gamerName} est maintenant inscrit à {productName} avec le Gedu {geduName}."
+      "body": "Bonjour {parentName}, {participantName} est maintenant inscrit à {productName} avec le Gedu {geduName}.",
+      "bodySelf": "Bonjour {parentName}, vous êtes maintenant inscrit à {productName} avec le Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} a rejoint votre groupe – {productName}",
-      "heading": "Nouveau joueur dans votre groupe",
-      "body": "Bonjour {geduName}, {gamerName} a rejoint votre groupe pour {productName}."
+      "subject": "{participantName} a rejoint votre groupe – {productName}",
+      "heading": "Nouveau participant dans votre groupe",
+      "body": "Bonjour {geduName}, {participantName} a rejoint votre groupe pour {productName}."
     },
     "unenrollmentParent": {
-      "subject": "{gamerName} a été désinscrit de {productName}",
+      "subject": "{participantName} a été désinscrit de {productName}",
+      "subjectSelf": "Votre inscription à {productName} a été annulée",
       "heading": "Désinscription confirmée",
-      "body": "Bonjour {parentName}, {gamerName} a été désinscrit de {productName} (Gedu : {geduName})."
+      "body": "Bonjour {parentName}, {participantName} a été désinscrit de {productName} (Gedu : {geduName}).",
+      "bodySelf": "Bonjour {parentName}, votre inscription à {productName} a été annulée (Gedu : {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} a quitté votre groupe – {productName}",
-      "heading": "Un joueur a quitté votre groupe",
-      "body": "Bonjour {geduName}, {gamerName} a quitté votre groupe pour {productName}."
+      "subject": "{participantName} a quitté votre groupe – {productName}",
+      "heading": "Un participant a quitté votre groupe",
+      "body": "Bonjour {geduName}, {participantName} a quitté votre groupe pour {productName}."
     },
     "groupAdded": {
       "subject": "Vous avez été affecté à un nouveau groupe – {productName}",
@@ -2175,6 +2279,10 @@
       "gamerNote": "Ce retour provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
     }
   },
+  "legal": {
+    "draftNotice": "Brouillon — le contenu de cette page est en cours de finalisation et n’a pas encore été approuvé. Les détails peuvent changer.",
+    "pendingSection": "Cette section est encore en cours de rédaction et sera ajoutée avant le lancement du Programme."
+  },
   "privacy": {
     "title": "Politique de confidentialité",
     "lastUpdated": "Dernière mise à jour : {date}",
@@ -2182,7 +2290,7 @@
       "heading": "En bref",
       "paragraphs": [
         "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Protéger la vie privée de votre famille — et celle de votre enfant avant tout — compte beaucoup pour nous : nous avons donc rédigé ce document en langage clair plutôt qu’en jargon juridique.",
-        "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos camps et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à hello@sog.gg."
+        "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à {supportEmail}."
       ]
     },
     "sections": {
@@ -2195,7 +2303,7 @@
         "bullets": [
           "School of Gaming Galactic Oy (numéro d’entreprise 3110461-1)",
           "Isokatu 56, 90100 Oulu, Finlande",
-          "E-mail : hello@sog.gg"
+          "E-mail : {supportEmail}"
         ]
       },
       "infoWeCollect": {
@@ -2218,8 +2326,8 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l’un de nos éducateurs formés (nous les appelons les Gedus).",
-          "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à hello@sog.gg et nous nous en occuperons."
+          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l’un de nos animateurs formés (nous les appelons les Gedus).",
+          "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
       "howWeUse": {
@@ -2229,7 +2337,7 @@
         ],
         "bullets": [
           "Pour créer et gérer votre compte et celui de votre enfant.",
-          "Pour placer votre enfant dans le bon groupe de club, de camp ou d’événement et le mettre en relation avec un éducateur.",
+          "Pour placer votre enfant dans le bon groupe de club, de stage ou d’événement et le mettre en relation avec un animateur.",
           "Pour assurer les sessions audio et vidéo en direct.",
           "Pour encaisser les paiements et envoyer les reçus, rappels et informations importantes concernant vos clubs.",
           "Pour répondre à vos questions lorsque vous nous contactez.",
@@ -2273,7 +2381,7 @@
       "voice": {
         "heading": "Sessions audio et vidéo",
         "paragraphs": [
-          "Les clubs, camps et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos éducateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
+          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos animateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
         ]
       },
       "retention": {
@@ -2316,7 +2424,7 @@
       "contact": {
         "heading": "Nous contacter et votre droit de réclamation",
         "paragraphs": [
-          "Pour exercer l’un des droits ci-dessus, ou si vous avez une question sur votre vie privée ou sur les informations de votre enfant, écrivez simplement à hello@sog.gg. C’est gratuit, nous répondons toujours, et l’e-mail est le meilleur moyen de nous joindre.",
+          "Pour exercer l’un des droits ci-dessus, ou si vous avez une question sur votre vie privée ou sur les informations de votre enfant, écrivez simplement à {supportEmail}. C’est gratuit, nous répondons toujours, et l’e-mail est le meilleur moyen de nous joindre.",
           "Si vous n’êtes pas satisfait de la façon dont nous avons traité vos informations, vous avez le droit d’introduire une réclamation auprès du médiateur finlandais à la protection des données (Tietosuojavaltuutetun toimisto), sur tietosuoja.fi."
         ]
       }
@@ -2328,27 +2436,27 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, camps et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
-        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un éducateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à kanslia@sog.gg : une vraie personne vous répondra."
+        "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, stages et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
+        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un animateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
       ]
     },
     "sections": {
       "whoWeAre": {
         "heading": "Avec qui vous contractez",
         "paragraphs": [
-          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, camps ou événements.",
+          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, stages ou événements.",
           "Nos coordonnées officielles :"
         ],
         "bullets": [
           "School of Gaming Galactic Oy (numéro d’entreprise 3110461-1)",
           "Isokatu 56, 90100 Oulu, Finlande",
-          "E-mail : kanslia@sog.gg"
+          "E-mail : {supportEmail}"
         ]
       },
       "service": {
         "heading": "Comment fonctionnent nos clubs",
         "paragraphs": [
-          "Presque tout ce que nous faisons se passe en ligne — votre enfant rejoint son club, son camp ou son événement depuis la maison, via notre site. Si un produit fonctionne autrement (par exemple un événement en présentiel), nous l’indiquons toujours clairement sur sa page avant l’achat."
+          "Presque tout ce que nous faisons se passe en ligne — votre enfant rejoint son club, son stage ou son événement depuis la maison, via notre site. Si un produit fonctionne autrement (par exemple un événement en présentiel), nous l’indiquons toujours clairement sur sa page avant l’achat."
         ]
       },
       "games": {
@@ -2361,7 +2469,7 @@
       "online": {
         "heading": "La sécurité en ligne",
         "paragraphs": [
-          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l’un de nos éducateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
+          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l’un de nos animateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
         ]
       },
       "pricing": {
@@ -2378,28 +2486,28 @@
         ]
       },
       "campsCancellation": {
-        "heading": "Annuler un camp",
+        "heading": "Annuler un stage",
         "paragraphs": [
-          "Les camps sont réservés et payés en une seule fois : les conditions d’annulation sont donc un peu différentes. Si vous devez annuler un camp :"
+          "Les stages sont réservés et payés en une seule fois : les conditions d’annulation sont donc un peu différentes. Si vous devez annuler un stage :"
         ],
         "bullets": [
-          "14 jours ou plus avant le début du camp : vous êtes intégralement remboursé.",
+          "14 jours ou plus avant le début du stage : vous êtes intégralement remboursé.",
           "Entre 7 et 14 jours avant : nous vous remboursons, déduction faite de 50 € de frais de dossier.",
           "Moins de 7 jours avant : nous ne pouvons pas rembourser le paiement, car la place a été réservée et préparée pour votre enfant — sauf urgence médicale ou circonstance véritablement indépendante de votre volonté.",
-          "Si votre enfant ne peut pas participer pour cause de maladie, nous vous remboursons sur envoi d’un certificat médical à kanslia@sog.gg."
+          "Si votre enfant ne peut pas participer pour cause de maladie, nous vous remboursons sur envoi d’un certificat médical à {supportEmail}."
         ]
       },
       "conduct": {
         "heading": "Comportement et retrait d’un enfant d’un club",
         "paragraphs": [
-          "Nous voulons que chaque enfant se sente en sécurité et bienvenu : nous ne tolérons donc ni le harcèlement ni les comportements qui gâchent l’expérience des autres. Quand un problème survient, nous commençons toujours par accompagner l’enfant et l’aider à réparer les choses — notre démarche complète est décrite dans notre politique de lutte contre le harcèlement et de discipline.",
+          "Nous voulons que chaque enfant se sente en sécurité et bienvenu : nous ne tolérons donc ni le harcèlement ni les comportements qui gâchent l’expérience des autres. Quand un problème survient, nous commençons toujours par accompagner l’enfant et l’aider à réparer les choses — notre démarche complète est décrite dans notre <linkDiscipline>politique de lutte contre le harcèlement et de discipline</linkDiscipline>.",
           "Ce n’est qu’après ces étapes d’accompagnement, et en cas de comportement toxique ou perturbateur persistant ou de harcèlement, que nous pouvons mettre fin à la participation d’un enfant. Nous en discuterons toujours avec vous au préalable."
         ]
       },
       "privacy": {
         "heading": "La vie privée de votre famille",
         "paragraphs": [
-          "Nous prenons très au sérieux la vie privée de votre famille — et surtout celle de votre enfant — et nous traitons vos informations conformément au droit finlandais et européen de la protection des données. Notre politique de confidentialité explique exactement ce que nous collectons et pourquoi."
+          "Nous prenons très au sérieux la vie privée de votre famille — et surtout celle de votre enfant — et nous traitons vos informations conformément au droit finlandais et européen de la protection des données. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
         ]
       },
       "changes": {
@@ -2411,7 +2519,7 @@
       "contact": {
         "heading": "Nous contacter",
         "paragraphs": [
-          "Si quelque chose ici n’est pas clair, ou si vous souhaitez en discuter, écrivez simplement à kanslia@sog.gg. Une vraie personne vous répondra, et nous sommes toujours ravis d’aider."
+          "Si quelque chose ici n’est pas clair, ou si vous souhaitez en discuter, écrivez simplement à {supportEmail}. Une vraie personne vous répondra, et nous sommes toujours ravis d’aider."
         ]
       }
     }
@@ -2430,13 +2538,13 @@
       "commitment": {
         "heading": "Notre promesse à votre enfant",
         "paragraphs": [
-          "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos éducateurs et par les autres enfants."
+          "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos animateurs et par les autres enfants."
         ]
       },
       "approach": {
         "heading": "Comment nous traitons les problèmes",
         "paragraphs": [
-          "Quand un enfant se comporte d’une façon qui blesse ou perturbe les autres, nos éducateurs (nous les appelons les Gedus) réagissent avec calme et bienveillance, d’une manière adaptée à son âge. L’objectif est toujours d’aider l’enfant à comprendre l’effet de ce qu’il a fait et à le réparer — pas simplement de le punir.",
+          "Quand un enfant se comporte d’une façon qui blesse ou perturbe les autres, nos animateurs (nous les appelons les Gedus) réagissent avec calme et bienveillance, d’une manière adaptée à son âge. L’objectif est toujours d’aider l’enfant à comprendre l’effet de ce qu’il a fait et à le réparer — pas simplement de le punir.",
           "Nous réglons la plupart des situations en douceur, par un mot discret. Si le comportement se poursuit, nous passons à des mesures plus fermes, une étape à la fois. Les étapes ci-dessous constituent l’échelle que nous suivons, et vous serez tenu informé au fur et à mesure."
         ]
       },
@@ -2461,7 +2569,7 @@
       "step4": {
         "heading": "Étape 4 — Une pause pendant une session",
         "paragraphs": [
-          "Si les choses ne s’apaisent toujours pas, le Gedu peut demander à votre enfant de rester en retrait pour le reste de la session. Si une pause plus longue est nécessaire, nous vous prévenons à l’avance. Le Gedu en discute en privé avec votre enfant, nous vous envoyons un message à la maison, et notre bureau (kanslia@sog.gg) prend part à la conversation."
+          "Si les choses ne s’apaisent toujours pas, le Gedu peut demander à votre enfant de rester en retrait pour le reste de la session. Si une pause plus longue est nécessaire, nous vous prévenons à l’avance. Le Gedu en discute en privé avec votre enfant, nous vous envoyons un message à la maison, et notre bureau ({supportEmail}) prend part à la conversation."
         ]
       },
       "step5": {
@@ -2485,7 +2593,7 @@
       "contact": {
         "heading": "Nous contacter",
         "paragraphs": [
-          "Si vous avez des questions sur cette politique, ou si vous souhaitez parler de quelque chose qui s’est passé, écrivez à notre bureau à kanslia@sog.gg. Une vraie personne vous répondra, et nous sommes là pour vous aider."
+          "Si vous avez des questions sur cette politique, ou si vous souhaitez parler de quelque chose qui s’est passé, écrivez à notre bureau à {supportEmail}. Une vraie personne vous répondra, et nous sommes là pour vous aider."
         ]
       }
     }
@@ -2575,7 +2683,564 @@
     },
     "legal": {
       "roblox": "© 2024 Roblox Corporation. Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.",
-      "lynx": "Lynx Educate et le logo Lynx Educate sont des marques de Lynx Educate. Utilisées avec autorisation."
+      "lynx": "Lynx Educate et le logo Lynx Educate sont des marques de Lynx Educate. Utilisées avec autorisation.",
+      "privacy": "Politique de confidentialité du Programme Roblox",
+      "safeguarding": "Politique de protection de l’enfance du Programme Roblox",
+      "terms": "Conditions générales du Programme Roblox"
     }
+  },
+  "robloxPrivacy": {
+    "title": "Politique de confidentialité du Programme Roblox",
+    "subtitle": "À l’attention des familles qui inscrivent leur enfant au Programme de créativité numérique pour les jeunes en France, proposé par Lynx Educate et School of Gaming et parrainé par Roblox.",
+    "lastUpdated": "Dernière mise à jour : {date}",
+    "intro": {
+      "heading": "En bref — pour les parents et les jeunes",
+      "blocks": [
+        "Le Programme s’adresse aux jeunes de 8–17 ans résidant en France. L’inscription doit être effectuée par un parent ou un représentant légal.",
+        "Nous ne collectons que ce qui est nécessaire pour inscrire votre enfant, mener le Programme en toute sécurité et mesurer s’il atteint ses objectifs. Cela comprend les coordonnées du parent, un nombre limité d’informations sur l’enfant, le nom d’utilisateur ou l’identifiant Roblox de l’enfant, ainsi que des informations sur la présence, l’achèvement du parcours et la publication de jeux.",
+        "School of Gaming utilise ces informations pour faire fonctionner la plateforme d’inscription et d’apprentissage. Lynx Educate traite les informations du Programme dans la mesure nécessaire à sa gestion. Chaque organisation a des responsabilités différentes selon l’activité et selon la finalité pour laquelle les informations personnelles sont utilisées.",
+        [
+          "School of Gaming est responsable du traitement pour le fonctionnement de Sogverse et pour les informations personnelles qu’elle traite au titre de ses propres services de plateforme.",
+          "Pour l’étude d’impact limitée menée pour le compte de Roblox, Roblox est responsable du traitement, Lynx Educate agit en qualité de sous-traitant de Roblox et School of Gaming en qualité de sous-traitant ultérieur agréé de Lynx Educate.",
+          "Lorsque Lynx Educate traite des informations personnelles pour ses propres finalités, déterminées de manière indépendante (par exemple les e-mails facultatifs de Lynx), Lynx Educate est responsable de ce traitement."
+        ],
+        "Les choix suivants sont facultatifs et n’ont aucune incidence sur la place de votre enfant :",
+        [
+          "Les e-mails adressés au parent par Lynx Educate au sujet de futurs événements Roblox et de ressources sur le jeu vidéo.",
+          "Les photographies ou les tournages destinés au reporting privé du Programme auprès de Roblox.",
+          "L’utilisation publique de photographies ou de séquences vidéo par Lynx Educate, School of Gaming et Roblox."
+        ],
+        "Les sessions en ligne habituelles ne sont pas enregistrées. Aucun enfant ne sera photographié ni filmé si l’autorisation requise n’a pas été donnée ou si l’enfant ne souhaite pas y participer.",
+        "Lynx Educate et School of Gaming ne vendent pas les informations d’inscription au Programme et ne s’en servent pas pour faire de la publicité auprès des enfants.",
+        "Vous et votre enfant pouvez demander à consulter, corriger ou supprimer des informations, retirer un consentement facultatif ou vous opposer à certains usages en écrivant à support@lynxeducate.com ou à {supportEmail}."
+      ]
+    },
+    "sections": {
+      "applies": {
+        "heading": "À qui s’applique cette politique",
+        "blocks": [
+          "Cette politique s’applique aux parents, aux représentants légaux et aux jeunes qui s’inscrivent au Programme Roblox de créativité numérique pour les jeunes en France (le Programme).",
+          "Le Programme s’adresse aux jeunes de 8–17 ans. Un parent ou un représentant légal doit effectuer l’inscription et confirmer qu’il a bien qualité pour inscrire l’enfant.",
+          "Cette politique couvre l’inscription au Programme, son administration, les sessions d’apprentissage, les événements, l’assistance, la protection de l’enfance et l’évaluation d’impact. Elle complète la <linkPrivacy>politique de confidentialité générale</linkPrivacy> de School of Gaming. En cas de contradiction entre les deux textes concernant ce Programme, la présente politique spécifique au Programme prévaut.",
+          "L’utilisation, par l’enfant, d’un compte Roblox, de Roblox Studio ou d’un autre service Roblox relève de la politique de confidentialité et des conditions propres à Roblox.",
+          "Les <linkRobloxTerms>conditions du Programme</linkRobloxTerms> fixent la tranche d’âge de 8–17 ans, l’inscription par le parent et le partage de données propre au Programme."
+        ]
+      },
+      "responsible": {
+        "heading": "Qui est responsable des informations",
+        "blocks": []
+      },
+      "responsibleLynx": {
+        "heading": "Lynx Educate SAS",
+        "blocks": [
+          "Lynx Educate assure le recrutement des apprenants, l’administration du Programme, sa mise en œuvre opérationnelle, la communication avec les participants et le reporting.",
+          "Lynx Educate SAS",
+          "185 rue Ordener",
+          "75018 Paris, France",
+          "E-mail : support@lynxeducate.com"
+        ]
+      },
+      "responsibleSog": {
+        "heading": "School of Gaming Galactic Oy",
+        "blocks": [
+          "School of Gaming exploite Sogverse, gère l’environnement d’inscription et d’apprentissage, fournit le programme pédagogique et les animateurs, anime les sessions d’apprentissage et assure la supervision en matière de protection de l’enfance.",
+          "School of Gaming Galactic Oy",
+          "Numéro d’entreprise : 3110461-1",
+          "Isokatu 56",
+          "90100 Oulu, Finlande",
+          "E-mail : {supportEmail}"
+        ]
+      },
+      "responsibleRoblox": {
+        "heading": "Roblox Corporation",
+        "blocks": [
+          "Roblox parraine le Programme et exploite la plateforme Roblox.",
+          "Roblox est responsable du traitement, de manière distincte, pour :",
+          [
+            "Les informations traitées via le compte Roblox de l’enfant ou son utilisation de Roblox Studio.",
+            "Le jeu de données limité que Roblox reçoit pour son étude interne d’impact du Programme.",
+            "Les photographies, séquences vidéo ou éléments associés transmis à Roblox au titre d’une autorisation média facultative."
+          ]
+        ]
+      },
+      "collect": {
+        "heading": "Les informations que nous collectons",
+        "blocks": []
+      },
+      "collectParent": {
+        "heading": "Concernant le parent ou le représentant légal",
+        "blocks": [
+          "Nous pouvons collecter :",
+          [
+            "Le nom et l’adresse e-mail.",
+            "Le numéro de téléphone, lorsqu’il est communiqué.",
+            "La langue préférée et les préférences de communication.",
+            "Les informations de compte et de connexion Sogverse. Les mots de passe sont conservés sous forme hachée et ne peuvent être lus par le personnel.",
+            "La confirmation de l’acceptation des <linkRobloxTerms>conditions du Programme</linkRobloxTerms> et de la présente politique de confidentialité.",
+            "Les reconnaissances en matière de confidentialité et les choix de consentement facultatifs.",
+            "Les messages, demandes d’assistance, réclamations et échanges relatifs à la protection de l’enfance.",
+            "La participation aux sessions parents et les réponses facultatives aux enquêtes."
+          ],
+          "Le Programme est gratuit : aucune information de carte bancaire n’est requise pour y participer."
+        ]
+      },
+      "collectChild": {
+        "heading": "Concernant l’enfant",
+        "blocks": [
+          "Selon l’activité, nous pouvons collecter :",
+          [
+            "Un nom d’affichage et, lorsque cela est réellement nécessaire, un prénom.",
+            "L’âge, une tranche d’âge, ou le mois et l’année de naissance plutôt qu’une date de naissance complète.",
+            "Le nom d’utilisateur Roblox et l’identifiant Roblox.",
+            "Le cours, le club, le stage, l’événement ou le groupe fréquenté.",
+            "La présence, la participation, la progression et l’achèvement du parcours.",
+            "Le fait que l’enfant publie son premier jeu, sa première expérience ou son premier objet numérique Roblox.",
+            "Le nom ou le lien d’une expérience publiée, lorsque cela est nécessaire pour vérifier le résultat du Programme.",
+            "Les retours de l’apprenant et les réponses facultatives aux enquêtes.",
+            "Des informations limitées de modération, de comportement ou de protection de l’enfance, lorsqu’elles sont nécessaires à la sécurité des participants.",
+            "Des informations d’accessibilité, alimentaires ou de santé communiquées pour un événement précis, uniquement lorsque cela est nécessaire.",
+            "Des photographies, séquences vidéo, enregistrements audio ou éléments associés, lorsque l’autorisation facultative correspondante a été donnée."
+          ],
+          "Nous ne demandons jamais le mot de passe Roblox de l’enfant. L’enfant n’a pas besoin de fournir une adresse e-mail distincte pour Sogverse lorsque le compte est géré par le parent ou le représentant légal."
+        ]
+      },
+      "collectTechnical": {
+        "heading": "Informations techniques",
+        "blocks": [
+          "Sogverse peut traiter un nombre limité d’informations techniques nécessaires au fonctionnement et à la sécurité du service, notamment :",
+          [
+            "Les journaux de connexion et de sécurité.",
+            "Les informations sur le navigateur, l’appareil et le système d’exploitation.",
+            "L’adresse IP et les informations d’erreur.",
+            "Les cookies de session nécessaires.",
+            "Des statistiques de base d’utilisation du site."
+          ],
+          "Ces catégories reflètent la <linkPrivacy>politique de confidentialité générale</linkPrivacy> de SOG, l’architecture de Sogverse pensée d’abord pour la confidentialité, ainsi que les obligations de reporting du Programme en matière de présence, d’achèvement et de publication."
+        ]
+      },
+      "use": {
+        "heading": "Comment et pourquoi nous utilisons ces informations",
+        "blocks": []
+      },
+      "useDeliver": {
+        "heading": "Pour inscrire les participants et mener le Programme",
+        "blocks": [
+          "Nous utilisons les informations de compte, d’âge, d’inscription et de contact pour :",
+          [
+            "Vérifier l’éligibilité.",
+            "Créer et gérer le profil Sogverse de la famille.",
+            "Placer l’enfant dans un groupe adapté.",
+            "Planifier et animer des activités en ligne ou en présentiel.",
+            "Apporter un accompagnement pédagogique et transmettre les communications importantes du Programme.",
+            "Aider l’enfant à créer et à publier une expérience Roblox."
+          ],
+          "Ce traitement est nécessaire à la fourniture du Programme dans le cadre des conditions acceptées par le parent ou le représentant légal, ainsi qu’à nos intérêts légitimes à proposer un service éducatif sûr et efficace."
+        ]
+      },
+      "useSafety": {
+        "heading": "Pour protéger les enfants et le service",
+        "blocks": [
+          "Nous utilisons un nombre limité d’informations de compte, de session, de modération et d’incident pour :",
+          [
+            "Protéger les comptes et empêcher les accès non autorisés.",
+            "Superviser les sessions et réagir aux comportements inappropriés.",
+            "Instruire les réclamations et les signalements relatifs à la protection de l’enfance.",
+            "Communiquer avec un parent ou un représentant légal.",
+            "Contacter les services d’urgence ou les autorités compétentes lorsque cela est nécessaire.",
+            "Protéger les droits, la sécurité et le bien-être des participants, des animateurs et des autres personnes."
+          ],
+          "Nous nous fondons sur nos intérêts légitimes à assurer un Programme sûr, sur les obligations légales applicables et, en cas d’urgence, sur la sauvegarde des intérêts vitaux d’une personne."
+        ]
+      },
+      "useEvaluate": {
+        "heading": "Pour évaluer le Programme",
+        "blocks": [
+          "Nous utilisons les informations de présence, d’achèvement, de publication, de participation des parents et les réponses aux enquêtes afin de comprendre si le Programme atteint ses objectifs et de préparer les rapports du Programme.",
+          "Dans la mesure du possible, les rapports s’appuient sur des informations agrégées ou anonymisées qui n’identifient aucun enfant en particulier.",
+          "Ce traitement repose sur les intérêts légitimes des organisations qui participent à l’évaluation et à l’amélioration du Programme, mis en balance avec la protection renforcée due aux enfants."
+        ]
+      },
+      "useEmail": {
+        "heading": "Communications par e-mail facultatives",
+        "blocks": [
+          "Lynx Educate utilise l’adresse e-mail du parent pour envoyer des informations sur de futurs événements Roblox et des ressources sur le jeu vidéo uniquement lorsque le parent coche la case e-mail facultative.",
+          "Cet usage repose sur le consentement du parent. Il n’est pas nécessaire à la participation et peut être interrompu à tout moment via le lien de désabonnement présent dans chaque e-mail ou en écrivant à Lynx Educate.",
+          "School of Gaming et Roblox ne reçoivent pas l’adresse e-mail du parent au titre de cette case pour leurs propres actions marketing."
+        ]
+      },
+      "useMedia": {
+        "heading": "Photographies et tournages facultatifs",
+        "blocks": [
+          "Les photographies, les tournages et les communications publiques reposent sur des autorisations distinctes et facultatives. Refuser l’une ou l’autre de ces options média n’a aucune incidence sur l’inscription ni sur la participation.",
+          "Le consentement n’est pas la base légale des activités essentielles d’inscription, de mise en œuvre ou de protection de l’enfance décrites ci-dessus."
+        ]
+      },
+      "research": {
+        "heading": "Informations limitées partagées avec Roblox pour l’étude d’impact",
+        "blocks": [
+          "Aux termes de l’avenant de traitement des données actuellement en vigueur pour le Programme, les informations identifiantes susceptibles d’être transmises à Roblox pour son étude interne d’impact se limitent à :",
+          [
+            "Le nom d’utilisateur Roblox.",
+            "L’identifiant Roblox.",
+            "L’adresse e-mail associée au compte du Programme, qui peut être celle du parent ou du représentant légal.",
+            "Le service ou l’activité du Programme suivi."
+          ],
+          "Roblox utilise ce jeu de données pour ses recherches internes sur les bénéfices et l’impact du Programme. Il n’est pas transmis, dans le cadre du Programme, à des fins publicitaires ou de prospection directe.",
+          "Roblox peut également recevoir des données agrégées de présence, d’achèvement, de publication et de satisfaction, qui n’identifient aucune famille en particulier.",
+          "Les choix facultatifs en matière de photographie et de marketing ne régissent pas ce transfert limité à des fins de recherche. Ce transfert est expliqué dans la politique de confidentialité et reconnu au moyen de la case à cocher obligatoire lors de l’inscription.",
+          "Les parents et les participants peuvent s’opposer à ce traitement en écrivant à Lynx Educate ou à School of Gaming ; la demande sera transmise à Roblox pour examen."
+        ]
+      },
+      "marketing": {
+        "heading": "E-mails marketing de Lynx Educate",
+        "blocks": [
+          "Lorsque le parent coche la case e-mail facultative :",
+          [
+            "Seule l’adresse e-mail du parent est utilisée.",
+            "Les e-mails sont envoyés par Lynx Educate.",
+            "Ils portent sur de futurs événements éducatifs et sur des ressources liées au jeu vidéo.",
+            "Le parent peut se désabonner à tout moment.",
+            "Refuser ou retirer son consentement n’a aucune incidence sur la participation de l’enfant au Programme."
+          ],
+          "Lynx Educate conserve les coordonnées marketing jusqu’au désabonnement du parent ou, en l’absence d’interaction, pendant trois ans au maximum à compter du dernier contact. Un enregistrement minimal peut ensuite être conservé en liste d’exclusion afin que le parent ne soit pas réinscrit à la liste de diffusion."
+        ]
+      },
+      "media": {
+        "heading": "Photographies, tournages et usage public",
+        "blocks": [
+          "Les sessions en ligne habituelles ne sont pas enregistrées. Lorsqu’une prise de vue ou un tournage est prévu pour une session ou un événement donné, les familles en sont informées à l’avance.",
+          "Il existe deux choix facultatifs distincts."
+        ]
+      },
+      "mediaSponsor": {
+        "heading": "Reporting privé auprès du parrain",
+        "blocks": [
+          "Le premier choix média autorise la photographie ou le tournage de l’enfant pour le reporting privé du Programme auprès de Roblox, en sa qualité de parrain. Il peut s’agir de rapports d’impact internes, de points d’avancement ou de présentations au parrain.",
+          "Cette autorisation ne permet pas la publication sur des sites web, sur les réseaux sociaux ou dans la presse."
+        ]
+      },
+      "mediaPublic": {
+        "heading": "Communications publiques sur l’impact",
+        "blocks": [
+          "Le second choix média autorise Lynx Educate, School of Gaming et Roblox à utiliser publiquement des photographies ou des séquences vidéo pour montrer l’impact du Programme, notamment sur :",
+          [
+            "Leurs sites web.",
+            "Leurs réseaux sociaux.",
+            "Les supports de presse et de relations publiques.",
+            "Les communications relatives au Programme et à son impact."
+          ],
+          "Les contenus publics peuvent être accessibles dans le monde entier et être copiés ou repartagés par d’autres utilisateurs, sans que les organisations puissent le maîtriser."
+        ]
+      },
+      "mediaChildAgrees": {
+        "heading": "L’enfant doit également être d’accord",
+        "blocks": [
+          "Le parent est invité à discuter du choix média avec l’enfant avant de le cocher. Nous expliquons également à l’enfant, dans des termes adaptés à son âge, en quoi consistent la prise de vue ou le tournage.",
+          "Nous ne photographierons ni ne filmerons délibérément un enfant qui s’y oppose, même si un parent a coché une case média auparavant. L’équipe met en œuvre des mesures pratiques raisonnables pour que les enfants sans autorisation n’apparaissent pas de manière identifiable."
+        ]
+      },
+      "mediaCaseStudies": {
+        "heading": "Études de cas, noms et contenus créés par les participants",
+        "blocks": [
+          "Les deux cases média de l’inscription ne couvrent que les photographies et les séquences vidéo.",
+          "Une autorisation écrite distincte sera recueillie avant toute utilisation :",
+          [
+            "Du nom complet d’un enfant.",
+            "D’une étude de cas nominative ou détaillée.",
+            "D’un témoignage ou d’une citation.",
+            "D’un entretien audio.",
+            "De réponses identifiables à une enquête.",
+            "De captures d’écran de jeu associées à l’enfant.",
+            "De contenus créés par les participants ou de leur propriété intellectuelle."
+          ]
+        ]
+      },
+      "mediaChanging": {
+        "heading": "Modifier un choix média",
+        "blocks": [
+          "Un parent ou un enfant peut retirer une autorisation média en nous contactant ou en utilisant le réglage prévu à cet effet dans Sogverse.",
+          "Après le retrait, nous cessons tout nouvel usage et retirons les éléments des canaux que nous maîtrisons, dans la mesure du raisonnable. Le retrait ne peut pas rendre illicite un usage antérieur qui était licite, ni annuler la diffusion de supports imprimés déjà distribués, ni garantir la suppression des copies déjà partagées par des tiers."
+        ]
+      },
+      "childSafety": {
+        "heading": "Vie privée et sécurité des enfants",
+        "blocks": [
+          "Le Programme se déroule dans un environnement d’apprentissage privé et modéré.",
+          [
+            "Le profil de chaque enfant est rattaché à un compte parent ou représentant légal.",
+            "Les enfants utilisent un nom d’affichage plutôt que de publier leurs coordonnées.",
+            "Seuls les participants inscrits et les animateurs vérifiés peuvent rejoindre les sessions.",
+            "Les échanges se font en groupe et sous supervision.",
+            "Il n’existe pas de messagerie privée directe entre enfants.",
+            "Les sessions habituelles ne sont pas enregistrées.",
+            "Lynx Educate et School of Gaming n’utilisent pas les données d’inscription au Programme pour de la publicité comportementale destinée aux enfants."
+          ],
+          "Les signalements relatifs à la protection de l’enfance sont traités dans le cadre de la <linkRobloxSafeguarding>politique commune de protection de l’enfance</linkRobloxSafeguarding>. School of Gaming traite les situations courantes en première intention et transmet les affaires graves à Lynx Educate. Les services d’urgence sont contactés en priorité lorsqu’un enfant peut se trouver en danger immédiat.",
+          "Les enfants doivent également recevoir une explication adaptée à leur âge sur l’usage qui est fait de leurs informations. Le droit français exige que toute information adressée à un enfant soit claire et aisément compréhensible. Lorsqu’un traitement en ligne repose réellement sur le consentement et concerne un enfant de moins de 15 ans, le droit français exige le consentement conjoint de l’enfant et du ou des titulaires de l’autorité parentale."
+        ]
+      },
+      "helpers": {
+        "heading": "Qui d’autre nous aide à mener le Programme",
+        "blocks": [
+          "Les informations ne sont accessibles, et uniquement lorsque cela est nécessaire, qu’aux personnes et organismes suivants :",
+          [
+            "Le personnel habilité de Lynx Educate.",
+            "Le personnel habilité de School of Gaming et les animateurs formés.",
+            "Roblox, pour l’étude limitée et les usages média consentis décrits ci-dessus.",
+            "Les lieux d’accueil, les prestataires d’accessibilité ou les photographes qui ont besoin d’informations limitées pour une activité précise.",
+            "Les conseils professionnels, assureurs, services d’urgence, organismes de protection de l’enfance ou autorités publiques, lorsque cela est requis.",
+            "Les prestataires techniques qui font fonctionner Sogverse."
+          ],
+          "Les principaux prestataires techniques de School of Gaming sont actuellement :",
+          [
+            "Supabase, pour les informations de compte et du Programme.",
+            "Brevo, pour les e-mails opérationnels et les rappels.",
+            "Daily.co, pour les fonctionnalités audio et vidéo en direct.",
+            "Vercel, pour l’hébergement du site et des statistiques respectueuses de la vie privée.",
+            "Meta/WhatsApp, uniquement lorsqu’une famille choisit de communiquer par WhatsApp."
+          ],
+          "Ces prestataires ne peuvent traiter les informations que pour exécuter les services prévus au contrat et doivent les protéger de manière appropriée."
+        ]
+      },
+      "transfers": {
+        "heading": "Transferts internationaux",
+        "blocks": [
+          "Lynx Educate est établie en France et School of Gaming en Finlande.",
+          "Roblox est établie aux États-Unis, et certains prestataires techniques peuvent également traiter des informations en dehors de l’Espace économique européen.",
+          "Lorsque des informations sont transférées hors de l’EEE, l’organisation responsable recourt à un mécanisme de transfert approuvé, tel qu’une décision d’adéquation ou les clauses contractuelles types de la Commission européenne, assorti de mesures de sécurité appropriées.",
+          "L’avenant de traitement des données conclu entre Roblox et Lynx comprend les clauses contractuelles types ainsi que des exigences en matière de chiffrement, de pseudonymisation, de contrôle d’accès, de journalisation, de cloisonnement et de suppression sécurisée."
+        ]
+      },
+      "retention": {
+        "heading": "Combien de temps nous conservons les informations",
+        "blocks": [
+          "Toutes les catégories d’informations ne sont pas conservées pendant la même durée.",
+          [
+            "Informations de compte Sogverse : conservées tant que le compte de la famille est actif, puis supprimées ou anonymisées, sauf lorsqu’un enregistrement limité doit légalement être conservé.",
+            "Informations d’administration et de participation au Programme : conservées jusqu’à l’achèvement du Programme, du reporting final et du suivi raisonnable, puis supprimées ou anonymisées.",
+            "Jeu de données de recherche Roblox : restitué ou supprimé de manière sécurisée à la fin des services de traitement concernés, sauf si la loi applicable impose une conservation limitée.",
+            "Informations marketing : conservées jusqu’au désabonnement du parent.",
+            "Médias et autorisations média : conservés pour la finalité de reporting ou de publication autorisée et réexaminés périodiquement.",
+            "Dossiers de protection de l’enfance, d’incident et dossiers juridiques : peuvent être conservés plus longtemps lorsque cela est nécessaire pour protéger un enfant, instruire un signalement, respecter la loi ou constater, exercer ou défendre un droit en justice.",
+            "Journaux de sécurité : conservés uniquement pendant la durée raisonnablement nécessaire à la protection et à l’investigation du service."
+          ],
+          "La clôture d’un compte Sogverse n’entraîne pas automatiquement la clôture d’un compte Roblox distinct ni la suppression d’une expérience publiée sur Roblox."
+        ]
+      },
+      "rights": {
+        "heading": "Vos droits — et ceux de votre enfant",
+        "blocks": [
+          "Selon les circonstances, le parent et l’enfant peuvent nous demander de :",
+          [
+            "Donner accès aux informations personnelles détenues.",
+            "Corriger des informations inexactes ou incomplètes.",
+            "Supprimer des informations.",
+            "Limiter l’usage qui est fait des informations.",
+            "Fournir certaines informations dans un format portable.",
+            "S’opposer à un traitement fondé sur les intérêts légitimes, y compris l’étude d’impact du Programme portant sur des données identifiantes.",
+            "Retirer un consentement facultatif à tout moment."
+          ],
+          "Le retrait du consentement ne remet pas en cause la licéité du traitement effectué avant ce retrait.",
+          "Les enfants peuvent nous contacter directement au sujet de leurs propres informations. Les parents et représentants légaux peuvent également formuler une demande pour un enfant, sous réserve des droits propres de l’enfant, de son âge et de sa maturité.",
+          "Aucune décision fondée exclusivement sur un traitement automatisé et produisant des effets juridiques ou des effets significatifs comparables n’est prise à l’égard des participants.",
+          "Adressez vos demandes à support@lynxeducate.com ou à {supportEmail}. Les organisations coordonnent leur réponse et transmettent à Roblox les demandes qui le concernent.",
+          "Les familles ont également le droit d’introduire une réclamation auprès de la Commission nationale de l’informatique et des libertés — CNIL."
+        ]
+      },
+      "security": {
+        "heading": "La sécurité des informations",
+        "blocks": [
+          "Nous mettons en œuvre des mesures adaptées aux risques encourus, notamment :",
+          [
+            "Le chiffrement en transit et au repos.",
+            "Le hachage des mots de passe.",
+            "Des contrôles d’accès fondés sur les rôles.",
+            "La journalisation des accès et des événements de sécurité.",
+            "La pseudonymisation lorsque cela est pertinent.",
+            "Le cloisonnement logique des jeux de données.",
+            "Des sauvegardes et des procédures de réponse aux incidents.",
+            "Des obligations de confidentialité pour le personnel et les prestataires.",
+            "Des restrictions sur le téléchargement, la copie et la réutilisation des informations des participants."
+          ]
+        ]
+      },
+      "changes": {
+        "heading": "Modifications de cette politique",
+        "blocks": [
+          "Nous pouvons mettre à jour cette politique si le Programme, sa technologie ou les exigences légales évoluent.",
+          "Nous mettrons alors à jour la date figurant en haut de page. Lorsqu’une modification affecte substantiellement l’usage fait des informations, les familles inscrites en sont informées avant son entrée en vigueur et un nouveau consentement est demandé lorsque cela est nécessaire."
+        ]
+      },
+      "contact": {
+        "heading": "Contact",
+        "blocks": [
+          "Lynx Educate SAS",
+          "185 rue Ordener",
+          "75018 Paris, France",
+          "support@lynxeducate.com",
+          "School of Gaming Galactic Oy",
+          "Isokatu 56",
+          "90100 Oulu, Finlande",
+          "{supportEmail}"
+        ]
+      }
+    }
+  },
+  "robloxSafeguarding": {
+    "title": "Politique de protection de l’enfance du Programme Roblox",
+    "subtitle": "Ce document complète la <linkDiscipline>politique de lutte contre le harcèlement</linkDiscipline> de School of Gaming, qui continue de s’appliquer aux comportements du quotidien pendant les sessions. Il couvre les responsabilités plus larges de Lynx Educate et de School of Gaming en matière de protection de l’enfance dans le cadre du Programme, y compris lors des événements en présentiel.",
+    "lastUpdated": "Dernière révision : {date}",
+    "pendingContact": "Une adresse de contact School of Gaming pour les questions de protection de l’enfance est en cours de confirmation et sera ajoutée ici.",
+    "intro": {
+      "heading": "Notre engagement",
+      "blocks": [
+        "Chaque enfant qui participe à ce Programme a le droit de se sentir en sécurité, respecté et protégé — qu’il participe en ligne ou qu’il assiste à un événement en présentiel. Lynx Educate et School of Gaming prennent tous deux cette responsabilité au sérieux."
+      ]
+    },
+    "sections": {
+      "covers": {
+        "heading": "Qui est concerné",
+        "blocks": [
+          "Cette politique s’applique à l’ensemble du personnel de Lynx Educate et de School of Gaming, aux animateurs (les « Gedus »), aux bénévoles et à tout prestataire en contact avec des enfants dans le cadre de ce Programme."
+        ]
+      },
+      "vetting": {
+        "heading": "Avant de travailler auprès d’enfants",
+        "blocks": [
+          "Tous les animateurs (Gedus) doivent suivre le processus de vérification et de formation propre à School of Gaming avant de travailler auprès d’enfants sur Sogverse. Cela comprend :"
+        ]
+      },
+      "online": {
+        "heading": "Pendant les sessions en ligne",
+        "blocks": [
+          [
+            "Le compte de chaque Joueur est rattaché à un compte parent ; les enfants ne peuvent pas s’inscrire eux-mêmes.",
+            "Il n’existe pas de messagerie directe entre enfants — tous les échanges se font en groupe et sont activement supervisés par un animateur formé.",
+            "Seuls les Joueurs inscrits et les animateurs vérifiés peuvent participer — aucune invitation externe ni aucun contact extérieur.",
+            "Les sessions ne sont pas enregistrées."
+          ]
+        ]
+      },
+      "inPerson": {
+        "heading": "Pendant les événements en présentiel",
+        "blocks": []
+      },
+      "behaviour": {
+        "heading": "Comportement et discipline",
+        "blocks": [
+          "Les questions de comportement au quotidien pendant les sessions animées par SOG relèvent de la <linkDiscipline>politique de lutte contre le harcèlement et de discipline</linkDiscipline> de School of Gaming, qui privilégie une approche bienveillante et progressive avant tout retrait d’un enfant d’une session ou de la communauté."
+        ]
+      },
+      "escalation": {
+        "heading": "Procédure de remontée",
+        "blocks": [
+          "Les signalements sont traités en première intention par School of Gaming, qui est en contact quotidien avec les participants. Tout signalement relatif à la protection de l’enfance — maltraitance, harcèlement, automutilation ou blessure grave — est transmis à Lynx Educate dans les 24 heures, et Lynx en informe Roblox sans délai lorsque cela est requis. Lorsqu’un enfant peut se trouver en danger immédiat, nous contactons d’abord les services d’urgence, avant toute remontée interne."
+        ]
+      },
+      "concern": {
+        "heading": "Si vous avez une inquiétude",
+        "blocks": [
+          "Si vous ou votre enfant avez une inquiétude relative à la protection de l’enfance, veuillez écrire à support@lynxeducate.com."
+        ]
+      },
+      "data": {
+        "heading": "Données et photos",
+        "blocks": [
+          "Toute photographie, tout enregistrement vidéo et toute utilisation de l’image d’un enfant sont régis par les choix de consentement décrits dans la <linkRobloxPrivacy>Politique de confidentialité du Programme Roblox</linkRobloxPrivacy> — jamais présumés, toujours facultatifs, toujours modifiables."
+        ]
+      },
+      "review": {
+        "heading": "Révision de cette politique",
+        "blocks": [
+          "Nous révisons cette politique chaque année."
+        ]
+      }
+    }
+  },
+  "robloxTerms": {
+    "title": "Conditions générales du Programme Roblox",
+    "subtitle": "S’applique aux familles qui inscrivent leur enfant au programme Lynx Educate × School of Gaming × Roblox en France.",
+    "lastUpdated": "Mise à jour : {date}",
+    "pendingContact": "Une adresse de contact School of Gaming est en cours de confirmation et sera ajoutée ici.",
+    "intro": {
+      "heading": "En bref",
+      "blocks": [
+        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez au Programme Roblox. Il s’agit d’un programme commun à Lynx Educate et à School of Gaming, parrainé par Roblox. Si quelque chose n’est pas clair, écrivez à support@lynxeducate.com."
+      ]
+    },
+    "sections": {
+      "involved": {
+        "heading": "Qui intervient",
+        "blocks": [
+          [
+            "Lynx Educate SAS et School of Gaming Galactic Oy (« SOG ») conçoivent et déploient ce Programme ensemble — dans ce document, « nous » désigne les deux entités conjointement, sauf mention contraire.",
+            "Roblox Corporation (« Roblox ») parraine le Programme et fournit la plateforme sur laquelle votre enfant créera. Roblox n’est pas partie aux présentes Conditions."
+          ],
+          "L’inscription et les sessions se déroulent sur la plateforme de School of Gaming (« Sogverse »). En vous inscrivant, vous acceptez les présentes conditions propres au Programme, qui s’appliquent en complément des conditions générales habituelles de <linkTerms>School of Gaming</linkTerms> et de Lynx et qui prévalent sur celles-ci en cas de contradiction."
+        ]
+      },
+      "eligibility": {
+        "heading": "Qui peut participer",
+        "blocks": [
+          "Le Programme s’adresse aux jeunes de 8–17 ans résidant en France, inscrits par un parent ou un représentant légal. Un parent ou un représentant légal doit effectuer l’inscription et donner son consentement au nom de l’enfant."
+        ]
+      },
+      "whatsInvolved": {
+        "heading": "En quoi cela consiste",
+        "blocks": [
+          "Votre enfant participera à des sessions (en ligne et/ou en présentiel, selon ce à quoi vous l’avez inscrit) conçues pour enseigner la création de jeux sur la plateforme Roblox, jusqu’à la publication de son propre jeu ou de son propre objet. Les parents sont invités à des sessions distinctes consacrées à la sécurité en ligne et au contrôle parental."
+        ]
+      },
+      "cost": {
+        "heading": "Coût",
+        "blocks": [
+          "Le Programme est gratuit pour les familles inscrites."
+        ]
+      },
+      "safety": {
+        "heading": "Sécurité et encadrement",
+        "blocks": [
+          "Chaque session est encadrée par un animateur formé. Notre approche du comportement et de la protection de l’enfance est exposée dans notre <linkRobloxSafeguarding>Politique commune de protection de l’enfance</linkRobloxSafeguarding>, disponible sur demande."
+        ]
+      },
+      "information": {
+        "heading": "Vos informations",
+        "blocks": [
+          "La manière dont nous utilisons vos informations et celles de votre enfant est expliquée dans notre <linkRobloxPrivacy>Politique de confidentialité du Programme Roblox</linkRobloxPrivacy>. En vous inscrivant, vous confirmez en avoir pris connaissance et l’avoir comprise.",
+          "Lors de l’inscription à un programme Roblox, les informations associées à votre compte School of Gaming (y compris vos coordonnées et les informations du compte de votre enfant) seront également communiquées à Lynx Educate aux fins de la mise en œuvre du programme et à Roblox aux fins de la recherche sur l’impact du programme."
+        ]
+      },
+      "media": {
+        "heading": "Photos, vidéos et communication",
+        "blocks": [
+          "Le fait que votre enfant soit photographié ou filmé, et que ces contenus soient utilisés à des fins de communication, dépend entièrement des choix que vous faites lors de l’inscription. Ces choix sont facultatifs et vous pouvez revenir dessus à tout moment dans les paramètres de votre profil Sogverse."
+        ]
+      },
+      "concern": {
+        "heading": "Si vous avez une inquiétude",
+        "blocks": [
+          "Si l’expérience de votre enfant dans le Programme vous inquiète, écrivez à support@lynxeducate.com — nous veillerons à ce que votre message parvienne aux bonnes personnes."
+        ]
+      },
+      "changes": {
+        "heading": "Modifications des présentes conditions",
+        "blocks": [
+          "Nous pouvons mettre à jour ces conditions ; nous mettrons toujours à jour la date ci-dessus et vous informerons directement en cas de changement important."
+        ]
+      }
+    }
+  },
+  "attributions": {
+    "title": "Crédits et licences",
+    "intro": "Certaines parties du Sogverse s’appuient sur des données et des services que d’autres partagent librement. Cette page les recense, explique ce que chacun apporte et renvoie aux conditions dans lesquelles nous les utilisons.",
+    "sourceLabel": "Source :",
+    "licenceLabel": "Licence :",
+    "dataVersion": "Données publiées le {date}",
+    "entries": {
+      "geonames": "La liste des pays, des régions et des communes dans laquelle vous choisissez le lieu où vit votre famille — la même liste qui nous sert à trouver les clubs proches de chez vous. La nôtre s’appuie sur GeoNames sans en être une copie : nous écartons les lieux où nous n’intervenons pas, nous en regroupons certains autrement et nous en renommons d’autres sous la forme employée localement.",
+      "laPoste": "Les codes postaux français de cette même liste, pour qu’une famille en France puisse saisir son code plutôt que de chercher sa commune.",
+      "mcHeads": "Dessine le personnage Minecraft affiché à côté d’un compte Minecraft associé. Rien ne nous oblige à les citer : ils ne demandent rien en retour, et ce crédit est un remerciement."
+    },
+    "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
   }
 }
