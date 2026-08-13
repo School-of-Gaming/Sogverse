@@ -31,6 +31,7 @@ import {
   useRemoveGedu,
   useRenameGroup,
 } from "@/services/groups";
+import type { ProductAudience } from "@/components/public/products/product-audience";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
@@ -63,6 +64,12 @@ interface GroupsPanelProps {
    * is trusted.
    */
   billingMode: BillingMode;
+  /**
+   * Who the product may seat. Read for one thing only: the participant picker
+   * offers its Add button to the people this admits and to nobody else, so an
+   * admin is never handed an action the enrollment RPC is bound to refuse.
+   */
+  audience: ProductAudience;
   /** Capacity cap, or null for uncapped — drives the seat-availability bar. */
   seatCount: number | null;
   /** Whether the product opens a waitlist once full — drives the seat bar copy. */
@@ -173,6 +180,7 @@ export function GroupsPanel({
   productId,
   productType,
   billingMode,
+  audience,
   seatCount,
   waitlistEnabled,
   voiceAvailable,
@@ -483,6 +491,7 @@ export function GroupsPanel({
       <ParticipantPickerSheet
         open={participantPickerOpen}
         onOpenChange={setParticipantPickerOpen}
+        audience={audience}
         enrolledParticipantIds={enrolledParticipantIds}
         onAddParticipant={async (participantId) => {
           await addParticipant.mutateAsync(participantId);

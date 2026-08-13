@@ -1,4 +1,4 @@
-import type { ProductBrowseRow } from "@/types";
+import type { ProductBrowseRow, UserRole } from "@/types";
 
 // Who a product is sold to, collapsed from the two independent booleans the
 // database carries into the one value every family-facing surface actually
@@ -64,6 +64,38 @@ export function audienceLabelKey(
       return "parents";
     case "both":
       return "families";
+  }
+}
+
+/**
+ * Whether a person of this role may occupy a seat on a product with this
+ * audience. It is the browser's statement of the rule the enrollment RPCs
+ * enforce: a `gamer` needs `for_gamers`, and a `customer` — an adult taking a
+ * seat on their own account — needs `for_parents`. Staff hold no seats on any
+ * product, so `admin` and `gedu` are admitted nowhere; they are spelled out
+ * rather than defaulted so a new role has to be answered for here.
+ *
+ * Written over the collapsed audience rather than the two columns, which keeps
+ * this module the only place they are read together, and asked per role rather
+ * than per product because that is the question every caller has: a picker
+ * knows who a row is and wants to know whether to offer an action on them.
+ *
+ * A caller deciding this is choosing what to *offer*. The database refuses the
+ * same tuple on its own and remains the authority — nothing here is a
+ * substitute for that refusal.
+ */
+export function audienceAdmitsRole(
+  audience: ProductAudience,
+  role: UserRole,
+): boolean {
+  switch (role) {
+    case "gamer":
+      return audience === "gamers" || audience === "both";
+    case "customer":
+      return audience === "parents" || audience === "both";
+    case "admin":
+    case "gedu":
+      return false;
   }
 }
 

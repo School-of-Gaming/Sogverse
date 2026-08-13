@@ -16,6 +16,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  audienceAdmitsRole,
+  type ProductAudience,
+} from "@/components/public/products/product-audience";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useParentGamerLinks, useSearchUsers, useUsers } from "@/services/users";
@@ -24,6 +28,11 @@ import type { Profile } from "@/types";
 interface ParticipantPickerSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Who the product may seat. Decides which rows carry an Add button at all —
+   * see the note on the component below.
+   */
+  audience: ProductAudience;
   /** Profile ids already enrolled on the product — their Add button is disabled. */
   enrolledParticipantIds: Set<string>;
   /** Async add handler — sheet stays open while the mutation runs. */
@@ -47,16 +56,26 @@ interface FamilyBlock {
  * did until adults could hold seats) made those families unreachable from the
  * only surface that can comp a seat.
  *
- * **The product's audience is not consulted here, deliberately.** This sheet
- * does not know it, and the RPC behind the Add button refuses a wrong-audience
- * pick with a specific message that lands under the row that was clicked. One
- * authority for the rule, on the server, rather than a client copy that can
- * disagree with it — and the admin finds out by trying, which is one click, not
- * by the person they were looking for being invisible.
+ * **The product's audience withholds the Add button, and nothing else.**
+ * Someone the audience cannot seat still has their row — the family block, the
+ * parent header, every child under it — they are simply offered no action, so
+ * the sheet never hides the person an admin came here to find. Nothing says why
+ * in words: the shape states itself in aggregate, since parents and children
+ * both addable is a family product, children alone a gamers' one, and parents
+ * alone a product for adults.
+ *
+ * This is an affordance, not the enforcement. The RPC refuses a wrong-audience
+ * pick independently and remains the one authority on the rule; the per-row
+ * error below still carries every other refusal it can raise — already
+ * enrolled, seat rules, a race — and only the audience case stops arriving
+ * there. Deciding it in the browser as well is what the sibling gedu picker
+ * does with its verification gate, and is sound for the same reason: only
+ * admins open this sheet, and an admin is trusted to act through the admin UI.
  */
 export function ParticipantPickerSheet({
   open,
   onOpenChange,
+  audience,
   enrolledParticipantIds,
   onAddParticipant,
 }: ParticipantPickerSheetProps) {
@@ -265,6 +284,7 @@ export function ParticipantPickerSheet({
                       key={parent.id}
                       parent={parent}
                       gamers={gamers}
+                      audience={audience}
                       enrolledParticipantIds={enrolledParticipantIds}
                       addedIds={addedIds}
                       pendingIds={pendingIds}
@@ -290,6 +310,7 @@ export function ParticipantPickerSheet({
 interface FamilyBlockRowProps {
   parent: Profile;
   gamers: Profile[];
+  audience: ProductAudience;
   enrolledParticipantIds: Set<string>;
   addedIds: Set<string>;
   pendingIds: Set<string>;
@@ -305,10 +326,16 @@ interface FamilyBlockRowProps {
  * edge rather than a header that looks like a label and rows that look like
  * choices. The role badge stays where it was — it is what tells the two kinds
  * of row apart at a glance, and it was already there.
+ *
+ * Whether each button exists is asked of the row's own `role` rather than
+ * assumed from where it sits in the block: the header is the person the family
+ * is keyed on and the nested rows are their linked children, but nothing here
+ * has to trust that, and the seat rule is stated about roles.
  */
 function FamilyBlockRow({
   parent,
   gamers,
+  audience,
   enrolledParticipantIds,
   addedIds,
   pendingIds,
@@ -342,12 +369,14 @@ function FamilyBlockRow({
           <Badge className={cn(ROLE_BADGE_STYLES[parent.role], "shrink-0")}>
             {c(ROLE_LABEL_KEYS[parent.role])}
           </Badge>
-          <AddButton
-            isEnrolled={enrolledParticipantIds.has(parent.id)}
-            isAdded={addedIds.has(parent.id)}
-            isPending={pendingIds.has(parent.id)}
-            onAdd={() => onAdd(parent.id)}
-          />
+          {audienceAdmitsRole(audience, parent.role) && (
+            <AddButton
+              isEnrolled={enrolledParticipantIds.has(parent.id)}
+              isAdded={addedIds.has(parent.id)}
+              isPending={pendingIds.has(parent.id)}
+              onAdd={() => onAdd(parent.id)}
+            />
+          )}
         </div>
       </div>
 
@@ -357,6 +386,7 @@ function FamilyBlockRow({
             <GamerPickerRow
               key={gamer.id}
               gamer={gamer}
+              canAdd={audienceAdmitsRole(audience, gamer.role)}
               isEnrolled={enrolledParticipantIds.has(gamer.id)}
               isAdded={addedIds.has(gamer.id)}
               isPending={pendingIds.has(gamer.id)}
@@ -372,6 +402,8 @@ function FamilyBlockRow({
 
 interface GamerPickerRowProps {
   gamer: Profile;
+  /** False when the product's audience cannot seat them — no button renders. */
+  canAdd: boolean;
   isEnrolled: boolean;
   isAdded: boolean;
   isPending: boolean;
@@ -381,6 +413,7 @@ interface GamerPickerRowProps {
 
 function GamerPickerRow({
   gamer,
+  canAdd,
   isEnrolled,
   isAdded,
   isPending,
@@ -404,12 +437,14 @@ function GamerPickerRow({
           )}
         </div>
       </div>
-      <AddButton
-        isEnrolled={isEnrolled}
-        isAdded={isAdded}
-        isPending={isPending}
-        onAdd={onAdd}
-      />
+      {canAdd && (
+        <AddButton
+          isEnrolled={isEnrolled}
+          isAdded={isAdded}
+          isPending={isPending}
+          onAdd={onAdd}
+        />
+      )}
     </div>
   );
 }
