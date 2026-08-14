@@ -269,8 +269,13 @@ export default async function AdminUserDetailPage({
                   shown as an empty row, since the large majority of accounts
                   will never carry one. */}
               {showReferralCode && (
-                <span className="text-sm text-muted-foreground">
-                  {t('referralCode')} {profile.referral_code}
+                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {t('referralCode')}
+                  {/* Code-chip treatment matching the instant voice room's
+                      compact RoomLinkChip, so codes read as codes site-wide. */}
+                  <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold tracking-wider">
+                    {profile.referral_code}
+                  </span>
                 </span>
               )}
             </div>
