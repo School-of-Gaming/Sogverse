@@ -21,6 +21,22 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 
 **Rule: Reply-To is set explicitly on every product send, and the default is the support inbox (`SUPPORT_EMAIL`).** Omitting it silently points replies at the sending address, which nobody reads — a family replying to ask for help would be writing into a void. The one exception is a mail we send *to ourselves* about a person: there the reply-to is that person, because replying is how a staff member answers them. State which of the two a send is, in a comment, at the call site. The admin harness's free-form mode is the sole send that may carry no Reply-To at all: it is a manual test tool for checking that the sending path works, never a way to write to a customer, so the admin composing the message picks its reply behaviour.
 
+## A send that fails must not fail the thing it confirms
+
+**Rule: every product send is wrapped, logged and swallowed at its call site.** These
+mails follow something that already happened — an account created, a seat activated, a
+place in a queue taken — and by the time the send runs, that outcome is committed. A
+Brevo outage is therefore never a reason to answer the caller with an error, unwind a
+purchase, or hand a payment webhook a 5xx it will retry forever. The one shape that is
+different is a mail the user explicitly *asked* for (the resend button in settings):
+there the send is the outcome, so its failure is the answer.
+
+**Corollary: a send that must happen exactly once needs a signal that a replay can be
+told apart by**, and the signal has to come from whatever committed the outcome — not
+from the presence of the row, which a replay also sees. The paid-signup confirmation
+keys on the participation RPC reporting whether it *inserted* the row or recognised one
+its own Checkout Session had already bought.
+
 ## Conventions
 
 **Rule: Builders return HTML strings only — they never send.** A builder takes `(t, locale, params)`, composes `content`, and returns `wrapInLayout(...)`. Sending is the caller's job (an API route) via `sendTransactionalEmail()`. Keep network and DB access out of this directory.
@@ -63,4 +79,9 @@ Stripe is the one genuine exception: receipts, invoices and dunning notices are 
 
 ## Tests
 
-Builder output is covered by unit tests under `tests/unit/email-templates/`; the Brevo wrapper and the routes that send (test-email, feedback, forgot-password, PIN forgot) are covered under `tests/unit/lib/` and `tests/integration/`. When you add a template or change builder output, update the matching unit test; when you add a registry entry reachable from the test-email route, the send-test-email integration test exercises validation for both modes.
+Builder output is covered by unit tests under `tests/unit/email-templates/`; the Brevo wrapper and the routes that send are covered under `tests/unit/lib/` and `tests/integration/`. When you add a template or change builder output, update the matching unit test; when you add a registry entry reachable from the test-email route, the send-test-email integration test exercises validation for both modes.
+
+**A route that sends owes its integration test three cases**, and they are the ones that
+keep failing in production if nobody writes them: it sends on the outcome it is supposed
+to, it sends *nothing* on the outcomes it is not (a refusal, a replay, an unrelated
+branch), and the flow's own answer is unchanged when the send throws.

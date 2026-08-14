@@ -4,9 +4,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { lookupMinecraftUser } from "@/lib/mojang";
 import { lookupRobloxProfile } from "@/lib/roblox";
 import { toE164Digits } from "@/lib/utils";
-import { resolveLocale } from "@/lib/constants/locales";
+import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { registerGeduBody } from "@/services/gedu/gedu-registration.contracts";
 import { sanitiseReferralCode } from "@/lib/referral";
+import { sendTransactionalEmail } from "@/lib/brevo";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
+import { buildWelcomeGeduEmail } from "@/lib/email-templates/welcome";
+import { getEmailTranslator } from "@/lib/email-templates/translator";
+import { createEmailVerificationToken } from "@/lib/email-verification";
+import { getOrigin } from "@/lib/url";
 
 /**
  * POST /api/gedu/register
@@ -26,7 +33,7 @@ export const POST = defineRoute({
   // generically. Nothing here opts into disclosure, because an unauthenticated
   // caller is the last one who should be shown database text.
 
-  handler: async ({ body }) => {
+  handler: async ({ request, body }) => {
     const {
       email,
       password,
@@ -169,6 +176,53 @@ export const POST = defineRoute({
         { error: "Registration could not be completed. Please try again." },
         { status: 500 },
       );
+    }
+
+    // Step 3: the welcome mail, and the only step whose failure the educator
+    // never hears about. The account is the outcome they asked for and it now
+    // exists; a Brevo error must not undo it, and a fresh verification link is
+    // one button away in settings.
+    //
+    // The locale is the one the form was being read in, else the browser's,
+    // else English — one step longer than the chain the profile's own `locale`
+    // takes above, because a registrant who sent no preference still has a
+    // browser that stated one, and a mail is the one artefact that leaves
+    // before they can pick.
+    const mailLocale =
+      resolveLocale(
+        requestedLocale,
+        detectLocaleFromHeader(request.headers.get("Accept-Language")),
+      );
+    try {
+      // The TRUSTED origin, never the raw Host header: this mail carries a
+      // signed verification token, and a spoofed Host would make it a phishing
+      // link the recipient has every reason to trust.
+      const origin = getOrigin(request);
+      // Bound to the address Supabase actually stored — GoTrue normalises it on
+      // the way in, so a token minted against the typed string could never
+      // verify.
+      const storedEmail = authData.user.email ?? email;
+      const token = await createEmailVerificationToken(userId, storedEmail);
+      const t = await getEmailTranslator(mailLocale);
+
+      await sendTransactionalEmail({
+        fromEmail: SENDER_EMAIL,
+        fromName: SENDER_NAME,
+        toEmail: storedEmail,
+        subject: t("welcomeGedu.subject"),
+        htmlContent: buildWelcomeGeduEmail(t, mailLocale, {
+          firstName,
+          verificationUrl: `${origin}${ROUTES.verifyEmail}?token=${encodeURIComponent(token)}`,
+          dashboardUrl: `${origin}${ROUTES.gedu.dashboard}`,
+          settingsUrl: `${origin}${ROUTES.settings}`,
+        }),
+        // Product mail to a person: an educator replying to this is asking us
+        // something, so the reply goes to the monitored support inbox rather
+        // than the unattended sending address.
+        replyToEmail: SUPPORT_EMAIL,
+      });
+    } catch (error) {
+      console.error("[gedu/register] welcome email failed", error);
     }
 
     return { userId };

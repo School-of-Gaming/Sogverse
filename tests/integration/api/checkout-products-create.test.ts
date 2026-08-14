@@ -1,7 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fromZonedTime } from "date-fns-tz";
+
+// The confirmation mail's My SOG link comes from getOrigin(), which falls back
+// to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+
 import { POST } from "@/app/api/checkout/products/create/route";
 import { NextResponse } from "next/server";
+
+// --- Brevo mock ---
+//
+// The two no-charge outcomes confirm themselves by email; every paid one is
+// confirmed from the Stripe webhook instead, once the money has actually
+// arrived.
+
+const mockSendTransactionalEmail = vi.fn();
+vi.mock("@/lib/brevo", () => ({
+  sendTransactionalEmail: (...args: unknown[]) =>
+    mockSendTransactionalEmail(...args),
+}));
 
 // --- Stripe mock ---
 //
@@ -180,13 +197,33 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
       };
     }
     if (table === "profiles") {
-      // Subscription branch looks up the gamer's name for the Stripe sub
-      // description (what the parent sees in the billing portal).
       return {
         select: () => ({
+          // Subscription branch looks up the gamer's name for the Stripe sub
+          // description (what the parent sees in the billing portal).
           eq: () => ({
             maybeSingle: () => Promise.resolve({ data: gamer, error: null }),
           }),
+          // The confirmation mail reads the payer and the participant in one
+          // query — on a self seat they are the same row.
+          in: () =>
+            Promise.resolve({
+              data: [
+                {
+                  id: CUSTOMER_ID,
+                  first_name: "Marja",
+                  email: "parent@example.test",
+                  locale: "en",
+                },
+                {
+                  id: GAMER_ID,
+                  first_name: gamer.first_name ?? GAMER_FIRST_NAME,
+                  email: null,
+                  locale: null,
+                },
+              ],
+              error: null,
+            }),
         }),
       };
     }
@@ -260,6 +297,7 @@ describe("POST /api/checkout/products/create", () => {
     vi.clearAllMocks();
     mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
     mockEnsureStripeProductForProduct.mockResolvedValue(STRIPE_PRODUCT_ID);
+    mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
 
   // ── Auth ──────────────────────────────────────────────────────────
@@ -1521,5 +1559,185 @@ describe("POST /api/checkout/products/create", () => {
       PAID_CLUB,
       "eur",
     );
+  });
+
+  // ── The confirmation mail ─────────────────────────────────────────
+  //
+  // Only the two outcomes that activate a seat *here* send from this route. A
+  // paid signup writes nothing yet — the participation is created from the
+  // Stripe webhook once the money lands — so its confirmation is that webhook's
+  // to send, and a mail from here would be confirming a purchase that has not
+  // happened.
+
+  describe("no-charge signups confirm themselves by email", () => {
+    function freeSignupRequest() {
+      return createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+      });
+    }
+
+    it("mails the customer when a free signup activates", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(freeSignupRequest());
+
+      expect(res.status).toBe(200);
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+      const sent = mockSendTransactionalEmail.mock.calls[0][0];
+      // The payer's inbox, not the child's — a gamer account's address is the
+      // synthetic one nobody reads.
+      expect(sent.toEmail).toBe("parent@example.test");
+      expect(sent.replyToEmail).toBe("help@sog.gg");
+      expect(sent.subject).toContain(GAMER_FIRST_NAME);
+      expect(sent.htmlContent).toContain("Price: Free");
+      // The trusted origin — here the localhost the request really came from,
+      // which `getOrigin` accepts outside production.
+      expect(sent.htmlContent).toContain("http://localhost:3000/parent");
+    });
+
+    it("builds the My SOG link off the trusted origin, ignoring a spoofed Host", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      await POST(
+        createRequest(
+          {
+            productId: PRODUCT_ID,
+            participantId: GAMER_ID,
+            purchaseShape: "free",
+            currency: "eur",
+          },
+          { host: "evil.com", origin: "https://evil.com" },
+        ),
+      );
+
+      const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(htmlContent).toContain("https://test.sogverse.local/parent");
+      expect(htmlContent).not.toContain("evil.com");
+    });
+
+    // Owner decision: a municipality registration is invoiced to the school
+    // off-platform, so from the family's side it is the free case exactly, and
+    // it sends the free-mode mail rather than one of its own.
+    it("mails the same free-mode confirmation for a municipality registration", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: MUNI_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "external_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          participantId: GAMER_ID,
+          purchaseShape: "external",
+          currency: "eur",
+        }),
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+      const sent = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(sent.toEmail).toBe("parent@example.test");
+      expect(sent.htmlContent).toContain("Price: Free");
+    });
+
+    it("speaks in the second person when the parent took the seat themselves", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          // The seat is the payer's own — the same test the confirmation page
+          // makes on the row, made here from the ids.
+          participantId: CUSTOMER_ID,
+          purchaseShape: "free",
+          currency: "eur",
+        }),
+      );
+
+      expect(res.status).toBe(200);
+      const { subject } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(subject).toContain("You are");
+      expect(subject).not.toContain(GAMER_FIRST_NAME);
+    });
+
+    it("sends nothing when the product is full", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "full" },
+        error: null,
+      });
+
+      const res = await POST(freeSignupRequest());
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ status: "full" });
+      expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    });
+
+    it("sends nothing on a paid signup — the webhook confirms that one", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: PAID_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+        product_id: PRODUCT_ID,
+        currency: "eur",
+        stripe_price_id: STRIPE_PRICE_ID,
+        unit_amount_cents: 5000,
+      });
+      mockStripeSessionCreate.mockResolvedValue({
+        url: "https://checkout.stripe.com/c/test_sub",
+      });
+
+      const res = await POST(createRequest(VALID_BODY));
+
+      expect(res.status).toBe(200);
+      expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    });
+
+    it("still confirms the signup when the send throws", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+      mockSendTransactionalEmail.mockRejectedValue(new Error("Brevo 502"));
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const res = await POST(freeSignupRequest());
+
+      // The seat is the outcome the parent asked for and the RPC already
+      // committed it; a Brevo outage must not present as a failed signup.
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({
+        status: "free_confirmed",
+        participationId: PARTICIPATION_ID,
+      });
+      spy.mockRestore();
+    });
   });
 });

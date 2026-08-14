@@ -56,6 +56,44 @@ interface ProductConfirmationEmailOptions {
   dashboardUrl: string;
 }
 
+/**
+ * The subject line, from the same params the body is built from.
+ *
+ * It lives beside the builder rather than at either call site because there are
+ * two of them — the live sends and the admin testing harness — and a subject
+ * that disagrees with its body is the failure this prevents. All three axes of
+ * the body reach it: the waitlist/enrolled split, the self seat, and — like the
+ * confirmation page — the verb the product type calls for. A subject saying
+ * "Aino is signed up" over a body saying "you are on the waitlist" is two wrong
+ * answers in one line, and the inbox list is where the reader meets it first.
+ *
+ * Waitlist stays type-generic on purpose: waiting for a seat is the same
+ * sentence whichever kind of seat it is, and a per-type waitlist verb would be
+ * four ways of writing one fact.
+ */
+export function productConfirmationSubject(
+  t: EmailTranslator,
+  {
+    participantName,
+    isSelfSeat,
+    productName,
+    productType,
+    mode,
+  }: Pick<
+    ProductConfirmationEmailOptions,
+    "participantName" | "isSelfSeat" | "productName" | "productType" | "mode"
+  >,
+): string {
+  if (mode === "waitlist") {
+    return isSelfSeat
+      ? t("productConfirmation.waitlist.subjectSelf", { productName })
+      : t("productConfirmation.waitlist.subject", { participantName, productName });
+  }
+  return isSelfSeat
+    ? t(`productConfirmation.self.subject.${productType}`, { productName })
+    : t(`productConfirmation.subject.${productType}`, { participantName, productName });
+}
+
 export function buildProductConfirmationEmail(
   t: EmailTranslator,
   locale: string,

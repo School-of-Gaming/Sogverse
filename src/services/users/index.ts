@@ -20,3 +20,7 @@ export {
   type AdminGameAccountBody,
   type AdminGameAccountWriteResult,
 } from "./users.contracts";
+export {
+  registerParentBody,
+  type RegisterParentBody,
+} from "./parent-registration.contracts";

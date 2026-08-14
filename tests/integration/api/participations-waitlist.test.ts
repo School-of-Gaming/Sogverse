@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// The confirmation mail's My SOG link comes from getOrigin(), which falls back
+// to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+
 import { DELETE, POST } from "@/app/api/participations/waitlist/route";
 import { NextResponse } from "next/server";
 
@@ -9,10 +14,19 @@ vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
+const mockSendTransactionalEmail = vi.fn();
+vi.mock("@/lib/brevo", () => ({
+  sendTransactionalEmail: (...args: unknown[]) =>
+    mockSendTransactionalEmail(...args),
+}));
+
 // The route runs on the USER-bound client from `requireRole`, so the RPC mock
 // hangs off the `supabase` handed back by that mock rather than off the admin
-// client — which this route no longer touches at all.
+// client — which this route no longer touches at all. The confirmation mail
+// reads through the very same client, deliberately: everything behind it is a
+// read this parent may already make.
 const mockRpc = vi.fn();
+const mockFrom = vi.fn();
 
 // --- Fixtures ---
 
@@ -64,7 +78,7 @@ function mockForbidden(role: string) {
       return Promise.resolve({
         user: { id: CUSTOMER_ID },
         profile: { role },
-        supabase: { rpc: mockRpc },
+        supabase: { rpc: mockRpc, from: mockFrom },
       });
     },
   );
@@ -73,8 +87,69 @@ function mockForbidden(role: string) {
 function mockAuthenticatedCustomer() {
   mockRequireRole.mockResolvedValue({
     user: { id: CUSTOMER_ID },
-    profile: { role: "customer" },
-    supabase: { rpc: mockRpc },
+    profile: {
+      id: CUSTOMER_ID,
+      role: "customer",
+      email: "parent@example.test",
+      locale: "en",
+    },
+    supabase: { rpc: mockRpc, from: mockFrom },
+  });
+}
+
+/**
+ * The two reads behind the confirmation mail, on the caller's own client: the
+ * product with its translations, and both people in one query (on a self seat
+ * they are the same row).
+ */
+function mockReadsForConfirmationEmail(
+  { participantFirstName = "Aino" }: { participantFirstName?: string } = {},
+) {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === "products") {
+      return {
+        select: () => ({
+          eq: () => ({
+            order: () => ({
+              single: () =>
+                Promise.resolve({
+                  data: {
+                    product_type: "consumer_club",
+                    product_translations: [{ locale: "en", name: "Test Club" }],
+                  },
+                  error: null,
+                }),
+            }),
+          }),
+        }),
+      };
+    }
+    if (table === "profiles") {
+      return {
+        select: () => ({
+          in: () =>
+            Promise.resolve({
+              data: [
+                {
+                  id: CUSTOMER_ID,
+                  first_name: "Marja",
+                  email: "parent@example.test",
+                  locale: "en",
+                },
+                {
+                  id: GAMER_ID,
+                  first_name: participantFirstName,
+                  email: null,
+                  locale: null,
+                },
+              ],
+              error: null,
+            }),
+        }),
+      };
+    }
+    // A waitlist join states no price, so `product_prices` is never read.
+    throw new Error(`Unexpected table in the caller's client mock: ${table}`);
   });
 }
 
@@ -83,6 +158,8 @@ function mockAuthenticatedCustomer() {
 describe("POST /api/participations/waitlist", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
+    mockReadsForConfirmationEmail();
   });
 
   // -- Auth --
@@ -369,6 +446,93 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toContain("does not exist");
+  });
+
+  // -- The confirmation mail --
+
+  function joinsWaitlist() {
+    mockRpc.mockResolvedValue({
+      data: {
+        participation_id: PARTICIPATION_ID,
+        waitlist_position: 3,
+        status: "waitlisted",
+      },
+      error: null,
+    });
+  }
+
+  it("mails the customer when the spot is taken", async () => {
+    mockAuthenticatedCustomer();
+    joinsWaitlist();
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.toEmail).toBe("parent@example.test");
+    expect(sent.replyToEmail).toBe("help@sog.gg");
+    expect(sent.subject).toContain("waitlist");
+    expect(sent.subject).toContain("Aino");
+  });
+
+  // The card in My SOG reads the position live; a number frozen into an inbox
+  // goes stale the moment somebody ahead drops out, with no way for the reader
+  // to tell.
+  it("states no position and no price in the mail", async () => {
+    mockAuthenticatedCustomer();
+    joinsWaitlist();
+
+    await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).not.toContain("Price");
+    // It points at the live answer instead of freezing one.
+    expect(htmlContent).toContain("where you stand in My SOG");
+    // The request carries no trusted Host, so the link falls back to the
+    // canonical site URL rather than to anything the request could name.
+    expect(htmlContent).toContain("https://test.sogverse.local/parent");
+  });
+
+  it("sends nothing when the join is refused", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message: "waitlist is not enabled for this product",
+      },
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  it("still joins the waitlist when the send throws", async () => {
+    mockAuthenticatedCustomer();
+    joinsWaitlist();
+    mockSendTransactionalEmail.mockRejectedValue(new Error("Brevo 502"));
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      participationId: PARTICIPATION_ID,
+      waitlistPosition: 3,
+      status: "waitlisted",
+    });
+    spy.mockRestore();
   });
 });
 

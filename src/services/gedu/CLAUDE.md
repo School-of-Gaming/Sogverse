@@ -9,7 +9,7 @@ three DB objects.
 columns and identifiers were called `verified*` until 00187; the rename freed "verified"
 for `profiles.email_verified_at`, which is about an address rather than a person. The two
 can be true independently and neither implies the other, so a surface showing both gives
-them different marks — an award for the certified educator, a green check for the
+them different marks — a shield for the certified educator, a green check for the
 confirmed address — in a fixed order, and never one glyph standing for both.
 
 ## Data model
@@ -38,6 +38,11 @@ Public, unauthenticated `/register-gedu` page → `POST /api/gedu/register`:
    coverage, and Minecraft account.
 4. On RPC failure, delete the auth user (rollback) — no half-promoted debris. The only
    gap is process death between steps 2 and 3 (gotrue is HTTP, not SQL).
+5. Send the welcome mail, carrying a verification link. **Its failure is swallowed** —
+   the account is what the educator asked for and it already exists, and a fresh
+   verification link is one button away in settings. The token is bound to the address
+   *gotrue stored*, not the one that was typed, because gotrue normalises on the way in
+   and a token minted against the typed string would never verify.
 
 Then the **client** signs in with the password and does a full-page nav to `/gedu`
 (`admin.createUser` doesn't sign the browser in; full-page nav is required after any auth

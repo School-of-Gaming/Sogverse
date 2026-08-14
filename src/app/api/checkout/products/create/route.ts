@@ -11,6 +11,7 @@ import {
   createParticipationResponse,
   createParticipationRpcResult,
 } from "@/services/participations/participations.contracts";
+import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import { ROUTES } from "@/lib/constants";
 import {
   computeSinglePaymentAmount,
@@ -202,6 +203,27 @@ export const POST = defineRoute({
           500,
         );
       }
+      // The seat is live and nothing else in this request can fail it, so the
+      // confirmation mail goes out here. It cannot throw (the helper swallows
+      // its own failures): a Brevo outage must not turn a completed signup into
+      // an error the parent has to act on.
+      //
+      // **Both no-charge outcomes send the same mail.** A municipality
+      // registration is invoiced to the school off-platform, so from the
+      // family's side it is the free case exactly — nothing to pay, nothing to
+      // manage, a seat that is already theirs — and `free` is the mode that
+      // says so. Owner decision; a distinct `external` mode was considered and
+      // turned down as copy that would differ from this one only in ways a
+      // parent has no use for.
+      await sendProductConfirmationEmail({
+        client: admin,
+        request,
+        customerId: user.id,
+        participantId,
+        productId,
+        mode: "free",
+      });
+
       // Municipality clubs are invoiced off-platform, so like the free flow the
       // participation is already active and we never touch Stripe. Both land on
       // the same confirmation page.

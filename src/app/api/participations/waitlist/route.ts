@@ -7,6 +7,7 @@ import {
   leaveWaitlistResponse,
   leaveWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
+import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 
 /**
  * POST /api/participations/waitlist
@@ -37,7 +38,7 @@ export const POST = defineRoute({
   discloseErrorMessages:
     "the guarded RPC's messages are the user-facing explanation of a refused join",
 
-  handler: async ({ supabase, body }) => {
+  handler: async ({ request, supabase, profile, body }) => {
     const { data, error } = await supabase.rpc("join_product_waitlist", {
       p_product_id: body.productId,
       p_participant_id: body.participantId,
@@ -52,6 +53,24 @@ export const POST = defineRoute({
         500,
       );
     }
+
+    // The place in line is taken; confirm it by mail. On the CALLER'S own
+    // client, which is the point — the reads behind the mail (the product, the
+    // participant's name) are ones this parent may already make, so the send
+    // needs no privilege the join did not already have. It cannot throw; a
+    // failed send leaves the spot exactly as it is.
+    //
+    // The mail deliberately carries no position number. The card in My SOG
+    // reads it live, and a number frozen into an inbox goes stale the moment
+    // somebody ahead drops out — with no way for the reader to tell.
+    await sendProductConfirmationEmail({
+      client: supabase,
+      request,
+      customerId: profile.id,
+      participantId: body.participantId,
+      productId: body.productId,
+      mode: "waitlist",
+    });
 
     return {
       participationId: parsed.data.participation_id,

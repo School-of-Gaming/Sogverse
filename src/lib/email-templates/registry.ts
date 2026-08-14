@@ -10,6 +10,7 @@ import { buildPasswordResetEmail } from "./password-reset";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
 import {
   buildProductConfirmationEmail,
+  productConfirmationSubject,
   PRODUCT_CONFIRMATION_MODES,
 } from "./product-confirmation";
 import { buildVerifyEmailEmail } from "./verify-email";
@@ -429,23 +430,9 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     ],
     schema: productConfirmationParamsSchema,
     build: (p, t, locale) => buildProductConfirmationEmail(t, locale, p),
-    // All three axes of the body reach the subject: the waitlist/enrolled split,
-    // the self seat, and — like the confirmation page — the verb the product
-    // type calls for. A subject that says "Aino is signed up" over a body that
-    // says "you are on the waitlist" is two wrong answers in one line, and the
-    // inbox list is where the reader meets it first.
-    //
-    // Waitlist stays type-generic on purpose: waiting for a seat is the same
-    // sentence whichever kind of seat it is, and a per-type waitlist verb would
-    // be four ways of writing one fact.
-    subject: (p, t) =>
-      p.mode === "waitlist"
-        ? p.isSelfSeat
-          ? t("productConfirmation.waitlist.subjectSelf", { productName: p.productName })
-          : t("productConfirmation.waitlist.subject", { participantName: p.participantName, productName: p.productName })
-        : p.isSelfSeat
-          ? t(`productConfirmation.self.subject.${p.productType}`, { productName: p.productName })
-          : t(`productConfirmation.subject.${p.productType}`, { participantName: p.participantName, productName: p.productName }),
+    // Shared with the live sends rather than restated here — see the function's
+    // own note for what the subject has to agree with.
+    subject: (p, t) => productConfirmationSubject(t, p),
     resolveParams: resolveProductConfirmation,
   }),
   verifyEmail: defineTemplate({

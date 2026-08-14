@@ -111,11 +111,21 @@ export const createParticipationRpcResult = z.object({
  * that was already there — the parent paid twice for one (product, gamer), and
  * the route records the charge and cancels a live subscription rather than
  * writing a second seat.
+ *
+ * `idempotent` is the axis a replay is told apart on, and it is why it is
+ * modelled here rather than dropped as noise. Stripe redelivers, and both
+ * deliveries answer `confirmed` with the same participation id — the second one
+ * because this very Checkout Session already bought that row, not because a new
+ * one was written. Anything that must happen exactly once per seat (a
+ * confirmation email) keys on `idempotent === false`; anything that is naturally
+ * idempotent can ignore it.
  */
 export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("confirmed"),
     participation_id: z.string(),
+    /** False when this call created the row; true when it recognised its own. */
+    idempotent: z.boolean(),
   }),
   z.object({
     kind: z.literal("duplicate_payment"),

@@ -175,6 +175,7 @@ const TESTS = {
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
+  register: "tests/integration/auth/register.test.ts",
   adminUserGameAccount: "tests/integration/api/admin-user-game-account.test.ts",
   robloxAccount: "tests/integration/api/roblox-account.test.ts",
   robloxAvatars: "tests/integration/api/roblox-avatars.test.ts",
@@ -361,6 +362,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           schema: "inline: requestSchema (parsed in-handler)",
         },
         test: TESTS.forgotPassword,
+      },
+    },
+  },
+
+  "src/app/api/auth/register/route.ts": {
+    adminClient:
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "public",
+          reason:
+            "parents self-register, so no session can exist yet. It creates an account and mails a verification link to the address that account was created with — the same power, and the same exposure, as the educator registration route. The account it creates is never privileged: handle_new_user hardcodes the customer role, so no key in the body can influence what is granted",
+        },
+        body: { kind: "json", schema: "registerParentBody" },
+        test: TESTS.register,
       },
     },
   },
