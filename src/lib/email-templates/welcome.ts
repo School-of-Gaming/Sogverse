@@ -1,6 +1,6 @@
 import { wrapInLayout } from "./layout";
 import { heading, paragraph, styledName } from "./utils";
-import { ctaButton, inlineLink } from "./blocks";
+import { ctaButton, ctaButtonRow, inlineLink } from "./blocks";
 import type { EmailTranslator } from "./translator";
 
 /**
@@ -18,10 +18,16 @@ import type { EmailTranslator } from "./translator";
  * asks for it again reads as though we lost it. What is left is short by
  * design: a greeting, a sentence or two, and the places worth going next.
  *
- * Those places are buttons, and the first one is filled: verifying the address
- * is what this mail is asking for, so it leads and the rest are outlined. None
- * of them is a gate — a reader who ignores the verification can still get on
- * with the product, which is exactly what the copy promises.
+ * Those places are buttons, and how they sit is the only piece of layout either
+ * mail has. The shop and My SOG are alternatives to each other — two doors into
+ * the same product, neither one the answer — so in the parent's mail they share
+ * a row as equals, outlined and half the width each. Verification takes the row
+ * below on its own and the only fill: it is the single thing this mail is
+ * asking for, and a second filled button, or a rank above it in the same
+ * column, would say otherwise. None of them is a gate — a reader who ignores
+ * the verification can still get on with the product, which is exactly what the
+ * copy promises. The Gedu's mail has one place to go rather than two, so its
+ * buttons simply stack; there is no pair to balance.
  *
  * Settings is the exception, and deliberately not a button. The sentence that
  * says the verification can wait already has to name where to do it later, so
@@ -58,9 +64,11 @@ export function buildWelcomeParentEmail(
         settingsLink: inlineLink(settingsUrl, t("welcomeParent.settingsLinkLabel")),
       }),
     )}
+    ${ctaButtonRow(
+      { href: shopUrl, label: t("welcomeParent.shopButton"), variant: "secondary" },
+      { href: dashboardUrl, label: t("welcomeParent.dashboardButton"), variant: "secondary" },
+    )}
     ${ctaButton({ href: verificationUrl, label: t("welcomeParent.verifyButton") })}
-    ${ctaButton({ href: shopUrl, label: t("welcomeParent.shopButton"), variant: "secondary" })}
-    ${ctaButton({ href: dashboardUrl, label: t("welcomeParent.dashboardButton"), variant: "secondary" })}
   `;
   return wrapInLayout({ title: t("welcomeParent.heading"), content, locale, t });
 }

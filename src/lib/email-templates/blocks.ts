@@ -28,23 +28,48 @@ interface CtaButtonOptions {
 }
 
 /**
+ * How wide a button is allowed to be, which is the only thing that differs
+ * between a button standing alone and one sharing a row.
+ *
+ * - `auto` — a pill sized to its label and centred, the shape a button on its
+ *   own row has always had.
+ * - `half` — the button fills the cell it is handed, and the generous side
+ *   padding is pulled right in so that the *cell* decides the width. At 32px a
+ *   side, a half-width cell on a phone (see `ctaButtonRow`) has barely a word's
+ *   worth of room left for the label.
+ *
+ * Vertical padding does not vary: 12px is the tap target, and a button that is
+ * harder to hit because it shares a row would be a worse button, not a smaller
+ * one.
+ */
+type CtaWidth = "auto" | "half";
+
+/** The button's look, in one place, so a half-width one is the same button. */
+function buttonStyles(variant: CtaVariant, width: CtaWidth) {
+  const isPrimary = variant === "primary";
+  const isHalf = width === "half";
+  return {
+    surface: isPrimary
+      ? `background-color:${BRAND.primary};border-radius:8px;`
+      : `border:1px solid ${DARK_THEME.border};border-radius:8px;`,
+    label: `display:${isHalf ? "block" : "inline-block"};padding:12px ${isHalf ? "8px" : "32px"};font-size:14px;font-weight:bold;color:${isPrimary ? DARK_THEME.bg : DARK_THEME.foreground};text-decoration:none;`,
+  };
+}
+
+/**
  * A centred call-to-action button. Nested tables rather than a styled anchor,
  * because that is the shape Outlook renders as a button.
  */
 export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions): string {
-  const isPrimary = variant === "primary";
-  const cellStyle = isPrimary
-    ? `background-color:${BRAND.primary};border-radius:8px;`
-    : `border:1px solid ${DARK_THEME.border};border-radius:8px;`;
-  const labelColor = isPrimary ? DARK_THEME.bg : DARK_THEME.foreground;
+  const { surface, label: labelStyle } = buttonStyles(variant, "auto");
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px;">
       <tr>
         <td align="center">
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td align="center" style="${cellStyle}">
-                <a href="${href}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:14px;font-weight:bold;color:${labelColor};text-decoration:none;">
+              <td align="center" style="${surface}">
+                <a href="${href}" target="_blank" style="${labelStyle}">
                   ${label}
                 </a>
               </td>
@@ -53,6 +78,51 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
         </td>
       </tr>
     </table>`;
+}
+
+/**
+ * Two buttons side by side, each filling half the width.
+ *
+ * It is for the pair that are alternatives to each other rather than a first
+ * and a second choice — stacking those reads as a ranking the mail did not mean
+ * to give. Anything the reader is meant to do *before* the next thing stays a
+ * row of its own.
+ *
+ * **The split is a hardcoded 50/50 and has to survive a phone as it stands.**
+ * Email clients do not reflow table columns and media queries are not dependable
+ * across them, so there is no narrow-viewport arrangement to fall back on: these
+ * two cells are the layout at every width the shell is read at, and the narrow
+ * end is genuinely narrow — a 320px client leaves the card about 216px of
+ * content, so each half is around 96px. That is what sets the terms here:
+ *
+ * - The halves use the `half` width, so the label's padding is 8px a side and
+ *   the cell drives the width instead of the padding.
+ * - A label too long for one line **wraps**, and is expected to. There is no
+ *   width at which every locale's longest label fits on one line, so wrapping is
+ *   the designed behaviour rather than a failure of one.
+ * - The buttons are the row's own cells, not nested tables inside them, which is
+ *   what keeps a wrapped label from making one button taller than its
+ *   neighbour: cells in a table row are the height of the row, so the surface
+ *   paints to the same height on both sides and the labels sit centred in it.
+ * - `cellspacing` is the gutter, because it is the one gap Outlook has never
+ *   argued with.
+ */
+export function ctaButtonRow(left: CtaButtonOptions, right: CtaButtonOptions): string {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="8" width="100%" style="margin:0 0 16px;">
+      <tr>
+        ${halfButtonCell(left)}
+        ${halfButtonCell(right)}
+      </tr>
+    </table>`;
+}
+
+/** One half of a `ctaButtonRow`: the row's own cell, painted as the button. */
+function halfButtonCell({ href, label, variant = "primary" }: CtaButtonOptions): string {
+  const { surface, label: labelStyle } = buttonStyles(variant, "half");
+  return `<td width="50%" align="center" valign="middle" style="${surface}">
+          <a href="${href}" target="_blank" style="${labelStyle}">${label}</a>
+        </td>`;
 }
 
 /**

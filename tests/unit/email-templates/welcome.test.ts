@@ -53,11 +53,12 @@ describe("buildWelcomeParentEmail", () => {
   });
 
   /**
-   * Three destinations, one ask. Verification is the action the mail exists for,
-   * so it is the filled button and it comes first; the shop and My SOG follow as
-   * outlined ones, which is what the shop used to get as an inline list item.
+   * Three destinations, one ask. The shop and My SOG are alternatives to each
+   * other, so they sit side by side as outlined buttons; verification is the
+   * action the mail exists for, so it takes the row below on its own and is the
+   * only filled one.
    */
-  it("carries three buttons, verification first", () => {
+  it("carries three buttons", () => {
     const html = buildWelcomeParentEmail(t, "en", params);
     expect(html).toContain(`href="${VERIFICATION_URL}"`);
     expect(html).toContain(`href="${SHOP_URL}"`);
@@ -65,8 +66,23 @@ describe("buildWelcomeParentEmail", () => {
     expect(html).toContain("Verify your email address");
     expect(html).toContain("Browse the shop");
     expect(html).toContain("Go to My SOG");
-    expect(html.indexOf(VERIFICATION_URL)).toBeLessThan(html.indexOf(SHOP_URL));
-    expect(html.indexOf(SHOP_URL)).toBeLessThan(html.indexOf(DASHBOARD_URL));
+  });
+
+  /**
+   * The layout claim, asserted through the one bit of markup that carries it:
+   * a fixed two-cell split — email clients don't reflow columns, so the halves
+   * are hardcoded — with the shop in the left cell, My SOG in the right, and
+   * verification after both.
+   */
+  it("pairs the shop and My SOG in one two-column row, with verification below", () => {
+    const html = buildWelcomeParentEmail(t, "en", params);
+    const halfCells = [...html.matchAll(/width="50%"/g)].map((match) => match.index);
+    expect(halfCells).toHaveLength(2);
+    const [leftCell, rightCell] = halfCells;
+    expect(html.indexOf(SHOP_URL)).toBeGreaterThan(leftCell);
+    expect(html.indexOf(SHOP_URL)).toBeLessThan(rightCell);
+    expect(html.indexOf(DASHBOARD_URL)).toBeGreaterThan(rightCell);
+    expect(html.indexOf(VERIFICATION_URL)).toBeGreaterThan(html.indexOf(DASHBOARD_URL));
   });
 
   /**
@@ -154,6 +170,12 @@ describe("buildWelcomeGeduEmail", () => {
     expect(html).toContain('href="https://sogverse.sog.gg/gedu"');
     expect(html).toContain(`<a href="${SETTINGS_URL}"`);
     expect(html).toContain(">settings</a>");
+  });
+
+  /** Two buttons and no pair to balance, so they stack — no two-column row. */
+  it("stacks its buttons", () => {
+    const html = buildWelcomeGeduEmail(t, "en", params);
+    expect(html).not.toContain('width="50%"');
   });
 
   it("escapes HTML in the first name", () => {
