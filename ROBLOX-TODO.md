@@ -302,6 +302,12 @@ where the fix would change what we commit to rather than how it reads.
       is presentational and takes rows — wiring is a data shell fetching Roblox-topic
       products).
 
+      **When they are wired, they must become in-app `next/link` navigations, not
+      `<a href>` full page loads.** Referral attribution (`?ref=` on a partner's link)
+      is held in memory for the visit: a soft navigation keeps it alive, a hard load
+      destroys it silently, with no error and no visible symptom — the code is simply
+      absent at registration.
+
 ## Tone — where the programme documents don't sound like Sogverse
 
 The house standard (set by the existing `/privacy` and `/terms-and-conditions` copy):
