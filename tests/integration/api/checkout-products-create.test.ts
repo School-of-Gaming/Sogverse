@@ -3,6 +3,15 @@ import { fromZonedTime } from "date-fns-tz";
 import { POST } from "@/app/api/checkout/products/create/route";
 import { NextResponse } from "next/server";
 
+// The route builds every absolute URL it emits — the Stripe redirects and the
+// metadata links a Stripe Workflow drops into Slack — via getOrigin(), which
+// falls back to NEXT_PUBLIC_SITE_URL for an untrusted Host. A fake value keeps
+// the suite hermetic and gives the spoofed-Host test something to assert. The
+// default `localhost:3000` Host these mock requests carry is trusted in a
+// non-production build, so every other test still sees the localhost origin.
+const TRUSTED_ORIGIN = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = TRUSTED_ORIGIN;
+
 // --- Stripe mock ---
 //
 // The route's only direct Stripe call is `checkout.sessions.create` — every
@@ -689,10 +698,22 @@ describe("POST /api/checkout/products/create", () => {
     // because there is no row yet. Its camelCase keys are read by the webhook
     // and the confirmation page, so the finance keys added below are a separate
     // set on separate objects rather than a rename of these.
+    //
+    // `productName`, `productType` and the three URLs are read by nothing of
+    // ours: a Stripe Workflow builds the internal Slack notification from them.
+    // The URLs arrive finished because a Workflow cannot map a product type onto
+    // a URL shape — `/admin/camps/[id]` here, and the club case below asserts
+    // the *other* shape off the same code, which is what pins the mapping to
+    // `ROUTES.admin.product` rather than to a copy in the Dashboard.
     expect(params.metadata).toEqual({
       customerId: CUSTOMER_ID,
       participantId: GAMER_ID,
       productId: PRODUCT_ID,
+      productName: "Test Club",
+      productType: "camp",
+      adminProductUrl: `http://localhost:3000/admin/camps/${PRODUCT_ID}`,
+      adminUserUrl: `http://localhost:3000/admin/users/${CUSTOMER_ID}`,
+      shopProductUrl: `http://localhost:3000/shop/${PRODUCT_ID}`,
       purchaseShape: "single_payment",
       currency: "eur",
     });
@@ -879,10 +900,20 @@ describe("POST /api/checkout/products/create", () => {
     // the finance snapshot — because nothing propagates from a session to the
     // subscription it created. A per-sub description ("{Club} — {Child}") makes
     // each of a family's subs distinguishable in the hosted billing portal.
+    //
+    // The admin product URL is `/admin/consumer-clubs/[id]` here against the
+    // camp case's `/admin/camps/[id]` — same code path, two shapes, which is the
+    // assertion that the type→path mapping is still being read out of
+    // `ROUTES.admin.product` and not assembled from a template.
     expect(params.metadata).toEqual({
       customerId: CUSTOMER_ID,
       participantId: GAMER_ID,
       productId: PRODUCT_ID,
+      productName: "Test Club",
+      productType: "consumer_club",
+      adminProductUrl: `http://localhost:3000/admin/consumer-clubs/${PRODUCT_ID}`,
+      adminUserUrl: `http://localhost:3000/admin/users/${CUSTOMER_ID}`,
+      shopProductUrl: `http://localhost:3000/shop/${PRODUCT_ID}`,
       purchaseShape: "subscription_monthly",
       currency: "eur",
     });
@@ -891,6 +922,11 @@ describe("POST /api/checkout/products/create", () => {
         customerId: CUSTOMER_ID,
         participantId: GAMER_ID,
         productId: PRODUCT_ID,
+        productName: "Test Club",
+        productType: "consumer_club",
+        adminProductUrl: `http://localhost:3000/admin/consumer-clubs/${PRODUCT_ID}`,
+        adminUserUrl: `http://localhost:3000/admin/users/${CUSTOMER_ID}`,
+        shopProductUrl: `http://localhost:3000/shop/${PRODUCT_ID}`,
         purchaseShape: "subscription_monthly",
         currency: "eur",
         product_id: PRODUCT_ID,
@@ -961,6 +997,14 @@ describe("POST /api/checkout/products/create", () => {
     expect(params.subscription_data.description).toBe(
       `Testikerho — ${GAMER_FIRST_NAME}`,
     );
+    // …while the session's `productName` stays the **default-locale** name, for
+    // the same Finnish purchase. The two are resolved independently on purpose:
+    // the description is read by the parent who bought the seat, the metadata
+    // key by staff in one internal Slack channel, where the same product must
+    // arrive under the same heading whoever bought it. Asserting the pair is
+    // what proves they are independent — either value alone would still pass if
+    // the two resolves were collapsed back into one.
+    expect(params.metadata.productName).toBe("Test Club");
   });
 
   it("falls Stripe chrome back to 'auto' for a locale Stripe doesn't speak (Klingon)", async () => {
@@ -1272,6 +1316,62 @@ describe("POST /api/checkout/products/create", () => {
       "http://localhost:3000/shop/confirmation?session_id={CHECKOUT_SESSION_ID}",
     );
     expect(params.cancel_url).toBe(`http://localhost:3000/shop/${PRODUCT_ID}`);
+  });
+
+  // Regression: every absolute URL this route emits — the two Stripe redirects
+  // and the three metadata links a Stripe Workflow puts in an internal Slack
+  // message — must be built off the trusted origin and never off the
+  // attacker-controllable Host. The exact-shape metadata assertions above cannot
+  // see this: they run with `host: localhost:3000` on a `localhost:3000` request
+  // URL, where `getOrigin(request)` and `new URL(request.url).origin` agree, so
+  // a regression to either raw read would pass them unchanged. The stakes are
+  // highest on the Slack links, because staff click those in the channel they
+  // trust most.
+  it("builds the metadata URLs off the trusted origin, ignoring a spoofed Host", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CAMP });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "validated" },
+      error: null,
+    });
+    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
+    mockEnsureStripeProductForProduct.mockResolvedValue(STRIPE_PRODUCT_ID);
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/spoofed_host",
+    });
+
+    // Both the request URL and the Host header carry the attacker value, as a
+    // genuinely spoofed request would — `createRequest` can't express that,
+    // since it pins the URL to localhost.
+    const spoofed = new Request(
+      "https://evil.com/api/checkout/products/create",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", host: "evil.com" },
+        body: JSON.stringify({
+          ...VALID_BODY,
+          purchaseShape: "single_payment",
+        }),
+      },
+    );
+    const res = await POST(spoofed);
+    expect(res.status).toBe(200);
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    // The canonical origin from NEXT_PUBLIC_SITE_URL, not "evil.com".
+    expect(params.metadata.adminProductUrl).toBe(
+      `${TRUSTED_ORIGIN}/admin/camps/${PRODUCT_ID}`,
+    );
+    expect(params.metadata.adminUserUrl).toBe(
+      `${TRUSTED_ORIGIN}/admin/users/${CUSTOMER_ID}`,
+    );
+    expect(params.metadata.shopProductUrl).toBe(
+      `${TRUSTED_ORIGIN}/shop/${PRODUCT_ID}`,
+    );
+    expect(params.success_url).toBe(
+      `${TRUSTED_ORIGIN}/shop/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+    );
+    expect(params.cancel_url).toBe(`${TRUSTED_ORIGIN}/shop/${PRODUCT_ID}`);
   });
 
   // ── The participant may be the payer ──────────────────────────────
