@@ -18,7 +18,7 @@
  */
 
 import { useState } from "react";
-import { Award, ShieldAlert } from "lucide-react";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +66,7 @@ export function GeduCertificationCard({ geduId, initial }: GeduCertificationCard
               concept has one glyph across the admin surfaces — and pointedly not
               the green check, which now belongs to email verification. */}
           {certified ? (
-            <Award className="h-5 w-5 text-success" />
+            <ShieldCheck className="h-5 w-5 text-success" />
           ) : (
             <ShieldAlert className="h-5 w-5 text-warning" />
           )}

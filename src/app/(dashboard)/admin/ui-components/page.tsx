@@ -22,17 +22,6 @@ import {
   AlertTriangle,
   Info,
   Eye,
-  // TEMPORARY — the six Certified-icon candidates plus the email-verified check
-  // they are judged against. Delete with the comparison section below once the
-  // icon is chosen.
-  CheckCircle2,
-  GraduationCap,
-  Award,
-  Medal,
-  ShieldCheck,
-  Ribbon,
-  BookmarkCheck,
-  type LucideIcon,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -60,7 +49,6 @@ import {
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
 // TEMPORARY — used only by the Certified icon comparison below; remove with it.
-import { NavChevron } from "@/components/ui/nav-chevron";
 import { MaterialLink } from "@/components/ui/material-link";
 import {
   PersonChip,
@@ -1101,73 +1089,6 @@ function EnrollmentCardDemo() {
 // micro-label treatment as the topic chip inside the card so it reads
 // as meta information, not card content — keeps it from blending into
 // the title and looking like overlap.
-/* ---------------------------------------------------------------------------
- * TEMPORARY — Certified icon comparison
- *
- * Delete this component and the subsection that renders it once the Certified
- * icon is chosen. It exists so the choice can be made from the thing itself: a
- * gedu row carrying BOTH marks, because that pairing is the whole difficulty —
- * the certification icon has to read as a different kind of statement from the
- * green check beside it, at 16px, in a column of rows.
- *
- * The candidates are `GraduationCap`, `Award`, `Medal`, `ShieldCheck`, `Ribbon`
- * and `BookmarkCheck`; `Award` is what the live row ships with in the meantime.
- * ------------------------------------------------------------------------- */
-const CERTIFIED_ICON_CANDIDATES: readonly { name: string; icon: LucideIcon }[] = [
-  { name: "GraduationCap", icon: GraduationCap },
-  { name: "Award", icon: Award },
-  { name: "Medal", icon: Medal },
-  { name: "ShieldCheck", icon: ShieldCheck },
-  { name: "Ribbon", icon: Ribbon },
-  { name: "BookmarkCheck", icon: BookmarkCheck },
-];
-
-/**
- * One mock users-list row per candidate — same geometry, avatar, name/email
- * stack and role badge as the real `UserRow`, with the candidate standing where
- * the certification mark goes and the email-verified check next to it. A real
- * generated UUID feeds the identicon (see the fixture-id rule in CLAUDE.md);
- * one id across all six rows keeps the face constant so only the icon varies.
- */
-function CertifiedIconCandidatesDemo() {
-  return (
-    <div className="space-y-3">
-      {CERTIFIED_ICON_CANDIDATES.map(({ name, icon: Icon }) => (
-        <div key={name} className="space-y-1">
-          <p className="font-mono text-xs text-muted-foreground">{name}</p>
-          <div className="rounded-lg border">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-4">
-                <Avatar>
-                  <Identicon
-                    id="c7d9a4f2-6b18-4e35-9a70-1d8fbe25c093"
-                    size={40}
-                  />
-                </Avatar>
-                <div>
-                  <p className="font-medium">Sam Smith</p>
-                  <p className="text-sm text-muted-foreground">
-                    sam@example.com
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Icon className="h-4 w-4 text-success" aria-label="Certified" />
-                <CheckCircle2
-                  className="h-4 w-4 text-success"
-                  aria-label="Email verified"
-                />
-                <Badge className={ROLE_BADGE_STYLES.gedu}>Gedu</Badge>
-                <NavChevron />
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function DemoCaption({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1970,23 +1891,6 @@ export default function AdminUIComponentsPage() {
               user={{ id: "a1b2c3d4-0000-0000-0000-000000000003", first_name: "Otto", last_name: "Nieminen", email: "otto@example.com", email_verified_at: null, role: "customer" }}
             />
           </div>
-        </SubSection>
-
-        {/* ---------------------------------------------------------------- */}
-        {/* TEMPORARY — Certified icon comparison.                            */}
-        {/* Remove this subsection and CertifiedIconCandidatesDemo (plus its   */}
-        {/* lucide + NavChevron imports) once the Certified icon is chosen.    */}
-        {/* ---------------------------------------------------------------- */}
-        <SubSection title="Certified icon candidates (temporary)">
-          <p className="text-sm text-muted-foreground mb-3">
-            <strong>Temporary — for choosing one icon, then delete.</strong> Gedu
-            certification (an admin&rsquo;s judgement about a person) and email
-            verification (an address confirmed by whoever reads that inbox) are
-            separate facts that land on the same row, so each candidate is shown
-            beside the green check it has to be told apart from. The live row
-            ships <code>Award</code> until this is settled.
-          </p>
-          <CertifiedIconCandidatesDemo />
         </SubSection>
 
         {/* -- Stat Card (admin dashboard) -- */}

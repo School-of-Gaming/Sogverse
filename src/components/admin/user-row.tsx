@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Award, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +69,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users", uncerti
         </div>
         <div className="flex items-center gap-2">
           {user.role === "gedu" && !uncertified && (
-            <Award
+            <ShieldCheck
               className="h-4 w-4 text-success"
               aria-label={t('certification.certified')}
             />
