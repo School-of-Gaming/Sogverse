@@ -301,49 +301,49 @@ export type Database = {
       }
       gedu_profiles: {
         Row: {
+          certified: boolean
+          certified_at: string | null
+          certified_by: string | null
           user_id: string
-          verified: boolean
-          verified_at: string | null
-          verified_by: string | null
         }
         Insert: {
+          certified?: boolean
+          certified_at?: string | null
+          certified_by?: string | null
           user_id: string
-          verified?: boolean
-          verified_at?: string | null
-          verified_by?: string | null
         }
         Update: {
+          certified?: boolean
+          certified_at?: string | null
+          certified_by?: string | null
           user_id?: string
-          verified?: boolean
-          verified_at?: string | null
-          verified_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "gedu_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
+            foreignKeyName: "gedu_profiles_certified_by_fkey"
+            columns: ["certified_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
+            foreignKeyName: "gedu_profiles_certified_by_fkey"
+            columns: ["certified_by"]
+            isOneToOne: false
             referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_profiles_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
+            foreignKeyName: "gedu_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_profiles_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
+            foreignKeyName: "gedu_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
@@ -1116,6 +1116,7 @@ export type Database = {
           created_at: string
           currency: string | null
           email: string
+          email_verified_at: string | null
           first_name: string
           home_location_id: string | null
           id: string
@@ -1131,6 +1132,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           email: string
+          email_verified_at?: string | null
           first_name: string
           home_location_id?: string | null
           id: string
@@ -1146,6 +1148,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           email?: string
+          email_verified_at?: string | null
           first_name?: string
           home_location_id?: string | null
           id?: string
@@ -1583,6 +1586,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           email: string | null
+          email_verified_at: string | null
           first_name: string | null
           home_location_id: string | null
           id: string | null
@@ -1813,6 +1817,7 @@ export type Database = {
           created_at: string
           currency: string | null
           email: string
+          email_verified_at: string | null
           first_name: string
           home_location_id: string | null
           id: string
@@ -1841,6 +1846,7 @@ export type Database = {
           created_at: string
           currency: string | null
           email: string
+          email_verified_at: string | null
           first_name: string
           home_location_id: string | null
           id: string
@@ -1981,8 +1987,8 @@ export type Database = {
         }
         Returns: Json
       }
-      set_gedu_verified: {
-        Args: { p_gedu_id: string; p_verified: boolean }
+      set_gedu_certified: {
+        Args: { p_certified: boolean; p_gedu_id: string }
         Returns: undefined
       }
       set_group_member_minecraft: {

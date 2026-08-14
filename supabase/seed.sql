@@ -195,11 +195,12 @@ UPDATE profiles SET role = 'admin' WHERE id = '00000000-0000-0000-0000-000000000
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000001';
 
 -- Promote gedu: update role, swap extension tables. Seed the gedu_profiles row
--- as verified (mirrors the 00111 backfill that marked pre-existing gedus
--- trusted) — the migration backfill ran before this account was seeded.
+-- as certified (mirrors the 00111 backfill that marked pre-existing gedus
+-- trusted) — the migration backfill ran before this account was seeded. The
+-- columns were called verified* until 00187.
 UPDATE profiles SET role = 'gedu' WHERE id = '00000000-0000-0000-0000-000000000003';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000003';
-INSERT INTO gedu_profiles (user_id, verified, verified_at)
+INSERT INTO gedu_profiles (user_id, certified, certified_at)
 VALUES ('00000000-0000-0000-0000-000000000003', true, now());
 
 -- Promote gamer: set role, swap extension tables. Keep the synthetic email the

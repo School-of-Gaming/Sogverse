@@ -29,6 +29,7 @@ function profileRows(count: number, offset = 0): Profile[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `user-${offset + i}`,
     email: `user${offset + i}@example.test`,
+    email_verified_at: null,
     first_name: `User ${offset + i}`,
     last_name: "Test",
     role: "customer" as const,

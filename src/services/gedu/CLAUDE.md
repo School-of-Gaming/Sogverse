@@ -1,16 +1,22 @@
-# Gedu profiles, self-registration & verification
+# Gedu profiles, self-registration & certification
 
-Game educators ("gedu") self-register like parents and are **verified by an admin**
+Game educators ("gedu") self-register like parents and are **certified by an admin**
 before they can be assigned to work. This directory owns the gedu extension table
 service + the registration contract; the flow spans a public page, an API route, and
 three DB objects.
 
+**The word is "certified", and it is not the same thing as email verification.** These
+columns and identifiers were called `verified*` until 00187; the rename freed "verified"
+for `profiles.email_verified_at`, which is about an address rather than a person. The
+admin-facing *copy* and its `admin.users.verification.*` message keys still say
+verification — that half follows in its own change.
+
 ## Data model
 
 - **`gedu_profiles`** — the 1:1 extension table for gedus (the gedu analogue of
-  `customer_profiles`/`gamer_profiles`): `user_id` PK, `verified` (bool, default false),
-  `verified_at`, `verified_by` (FK → profiles, `ON DELETE SET NULL` so losing the
-  verifying admin never silently un-verifies a working gedu). RLS: admin reads all, a
+  `customer_profiles`/`gamer_profiles`): `user_id` PK, `certified` (bool, default false),
+  `certified_at`, `certified_by` (FK → profiles, `ON DELETE SET NULL` so losing the
+  certifying admin never silently de-certifies a working gedu). RLS: admin reads all, a
   gedu reads its own; **no table-level write grant** — writes go only through the RPC
   below so the audit columns can't be forged.
 - Other gedu data (name, phone, `spoken_languages`, `locale`) lives on `profiles`;
@@ -27,7 +33,7 @@ Public, unauthenticated `/register-gedu` page → `POST /api/gedu/register`:
 2. `admin.auth.admin.createUser` (`email_confirm: true` — email confirmation is disabled
    platform-wide). The new-user trigger seeds a `customer`-role profile.
 3. `register_gedu` RPC — one transaction: promote `customer`→`gedu`, swap
-   `customer_profiles` for a `gedu_profiles` row (unverified), write profile fields,
+   `customer_profiles` for a `gedu_profiles` row (uncertified), write profile fields,
    coverage, and Minecraft account.
 4. On RPC failure, delete the auth user (rollback) — no half-promoted debris. The only
    gap is process death between steps 2 and 3 (gotrue is HTTP, not SQL).
@@ -45,38 +51,38 @@ mutate an established account.
 arg types are non-null; the RPC `NULLIF`s empty text (so an empty phone stays NULL
 instead of tripping the `profiles.phone` CHECK).
 
-## Verification
+## Certification
 
-A new gedu starts **unverified but with broad platform access** — verification gates two
+A new gedu starts **uncertified but with broad platform access** — certification gates two
 things: **group assignment** and **instant-voice-room moderation**. Everything else is
-open to an unverified gedu.
+open to an uncertified gedu.
 
-- **`set_gedu_verified(gedu_id, verified)` RPC** — admin-only (`is_admin()` self-gate),
-  stamps `verified_at = now()` / `verified_by = auth.uid()` server-side. Granted to
+- **`set_gedu_certified(gedu_id, certified)` RPC** — admin-only (`is_admin()` self-gate),
+  stamps `certified_at = now()` / `certified_by = auth.uid()` server-side. Granted to
   `authenticated`; called from the admin user-detail page via the admin's own session.
-- **Assignment gate (UI-only, sufficient)**: the gedu picker disables unverified gedus and
-  shows a "Not verified" badge. **This is a UI-only gate by design.** Assignment runs
-  through `apply_group_changes`, which does *not* re-check `verified`; the invariant holds
+- **Assignment gate (UI-only, sufficient)**: the gedu picker disables uncertified gedus and
+  badges them. **This is a UI-only gate by design.** Assignment runs
+  through `apply_group_changes`, which does *not* re-check `certified`; the invariant holds
   because admins are always trusted and assignment is an admin-only action driven entirely
-  by this picker. If a non-admin assignment path is ever added, move the `verified` check
+  by this picker. If a non-admin assignment path is ever added, move the `certified` check
   into `apply_group_changes` — until then a DB-level check would be redundant.
 - **Instant-voice-room gate (server-side, required)**: unlike assignment, spinning up,
   ending, or moderating an instant voice room is *gedu-initiated*, so a UI gate is not
-  enough. An unverified gedu is treated as a non-moderator across all three of that
+  enough. An uncertified gedu is treated as a non-moderator across all three of that
   feature's surfaces: room create and end 403, and the public join-token endpoint demotes
   them to a guest (no owner power) — same as a parent/gamer. The shared check is
-  `isGeduVerified` in `gedu-profiles.service.ts`; the create/end routes opt in via
-  `requireRole(..., { requireVerifiedGedu: true })`, the public token route calls it
+  `isGeduCertified` in `gedu-profiles.service.ts`; the create/end routes opt in via
+  `requireRole(..., { requireCertifiedGedu: true })`, the public token route calls it
   directly and fails closed to guest on any lookup error. See
   `../../components/voice/instant/CLAUDE.md`.
-- **Surfaces**: an "Unverified" badge on the admin users list; a verify/un-verify card on
-  the admin user-detail page.
-- **Backfill**: every gedu that existed before this feature was marked verified
-  (`verified_by` NULL) — they were all admin-invited and already trusted.
+- **Surfaces**: an awaiting-approval badge on the admin users list; a certify/de-certify
+  card on the admin user-detail page.
+- **Backfill**: every gedu that existed before this feature was marked certified
+  (`certified_by` NULL) — they were all admin-invited and already trusted.
 
-Verification state is read via `useGeduProfiles` / `useGeduVerificationMap` (lists/picker)
-and `useGeduProfile` (detail, seeded with a server fetch). `useSetGeduVerified` invalidates
-the whole `gedu-profiles` key on success.
+Certification state is read via `useGeduProfiles` / `useGeduCertificationMap`
+(lists/picker) and `useGeduProfile` (detail, seeded with a server fetch).
+`useSetGeduCertified` invalidates the whole `gedu-profiles` key on success.
 
 ## Coverage field reuse
 

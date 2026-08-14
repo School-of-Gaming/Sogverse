@@ -51,7 +51,7 @@ describe("defineRoute", () => {
         roles: ["admin", "gedu"],
         forbiddenMessage: "nope",
         allowUnverified: true,
-        requireVerifiedGedu: true,
+        requireCertifiedGedu: true,
         handler: () => ({ ok: true }),
       });
 
@@ -60,7 +60,7 @@ describe("defineRoute", () => {
       expect(mockRequireRole).toHaveBeenCalledWith(["admin", "gedu"], {
         forbiddenMessage: "nope",
         allowUnverified: true,
-        requireVerifiedGedu: true,
+        requireCertifiedGedu: true,
       });
     });
 

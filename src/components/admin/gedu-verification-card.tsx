@@ -1,14 +1,18 @@
 "use client";
 
 /**
- * Admin control to verify / un-verify a gedu, shown on the gedu's
- * /admin/users/[id] page. A self-registered gedu starts unverified and can't be
- * assigned to a product group until an admin verifies them here (the assignment
- * picker greys out unverified gedus).
+ * Admin control to certify / de-certify a gedu, shown on the gedu's
+ * /admin/users/[id] page. A self-registered gedu starts uncertified and can't be
+ * assigned to a product group until an admin certifies them here (the assignment
+ * picker greys out uncertified gedus).
  *
  * Seeded with a server-fetched `initial` row so it paints complete on first
- * frame; the mutation invalidates the query so the stamped verified_at / admin
+ * frame; the mutation invalidates the query so the stamped certified_at / admin
  * refresh after a toggle.
+ *
+ * The component, its file and its `admin.users.verification.*` message keys still
+ * say "verification" — the DB and the data layer were renamed to "certified"
+ * first, and the user-facing copy follows in its own change.
  */
 
 import { useState } from "react";
@@ -17,13 +21,13 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGeduProfile, useSetGeduVerified, type GeduVerification } from "@/services/gedu";
+import { useGeduProfile, useSetGeduCertified, type GeduCertification } from "@/services/gedu";
 import { useTimezone } from "@/providers";
 import { formatDate } from "@/lib/utils";
 
 interface GeduVerificationCardProps {
   geduId: string;
-  initial: GeduVerification | null;
+  initial: GeduCertification | null;
 }
 
 export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardProps) {
@@ -31,12 +35,12 @@ export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardPr
   const locale = useLocale();
   const timeZone = useTimezone();
   const { data } = useGeduProfile(geduId, { initialData: initial });
-  const setVerified = useSetGeduVerified();
+  const setCertified = useSetGeduCertified();
   const [committing, setCommitting] = useState(false);
 
-  const verified = data?.verified ?? false;
-  const verifierName = data?.verifier
-    ? [data.verifier.first_name, data.verifier.last_name].filter(Boolean).join(" ")
+  const certified = data?.certified ?? false;
+  const certifierName = data?.certifier
+    ? [data.certifier.first_name, data.certifier.last_name].filter(Boolean).join(" ")
     : null;
 
   async function handleToggle() {
@@ -44,19 +48,19 @@ export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardPr
     // double-clicked while the mutation is in flight.
     setCommitting(true);
     try {
-      await setVerified.mutateAsync({ geduId, verified: !verified });
+      await setCertified.mutateAsync({ geduId, certified: !certified });
     } finally {
       setCommitting(false);
     }
   }
 
-  const busy = committing || setVerified.isPending;
+  const busy = committing || setCertified.isPending;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {verified ? (
+          {certified ? (
             <CheckCircle2 className="h-5 w-5 text-success" />
           ) : (
             <ShieldAlert className="h-5 w-5 text-warning" />
@@ -67,20 +71,20 @@ export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardPr
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
-            {verified ? (
+            {certified ? (
               <Badge className="bg-success text-success-foreground">{t("verified")}</Badge>
             ) : (
               <Badge variant="destructive">{t("unverified")}</Badge>
             )}
-            {verified && data?.verified_at ? (
+            {certified && data?.certified_at ? (
               <p className="text-sm text-muted-foreground">
-                {verifierName
+                {certifierName
                   ? t("verifiedByOn", {
-                      name: verifierName,
-                      date: formatDate(data.verified_at, locale, { dateStyle: "medium", timeZone }),
+                      name: certifierName,
+                      date: formatDate(data.certified_at, locale, { dateStyle: "medium", timeZone }),
                     })
                   : t("verifiedOn", {
-                      date: formatDate(data.verified_at, locale, { dateStyle: "medium", timeZone }),
+                      date: formatDate(data.certified_at, locale, { dateStyle: "medium", timeZone }),
                     })}
               </p>
             ) : (
@@ -88,16 +92,16 @@ export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardPr
             )}
           </div>
           <Button
-            variant={verified ? "outline" : "default"}
+            variant={certified ? "outline" : "default"}
             onClick={handleToggle}
             disabled={busy}
           >
-            {busy ? t("saving") : verified ? t("unverifyAction") : t("verifyAction")}
+            {busy ? t("saving") : certified ? t("unverifyAction") : t("verifyAction")}
           </Button>
         </div>
-        {setVerified.isError && (
+        {setCertified.isError && (
           <p className="text-sm text-destructive">
-            {setVerified.error instanceof Error ? setVerified.error.message : t("error")}
+            {setCertified.error instanceof Error ? setCertified.error.message : t("error")}
           </p>
         )}
       </CardContent>

@@ -72,8 +72,8 @@ type Posture =
       roles: readonly UserRole[];
       /** Skips the parent-PIN gate, for routes a locked customer must reach. */
       allowUnverified?: true;
-      /** Refuses an unverified educator, for gedu actions that are a boundary. */
-      requireVerifiedGedu?: true;
+      /** Refuses an uncertified educator, for gedu actions that are a boundary. */
+      requireCertifiedGedu?: true;
     }
   /** Any signed-in caller, no role check. */
   | { kind: "any-authenticated"; reason: string }
@@ -748,7 +748,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "role-gated",
           roles: ["admin", "gedu"],
-          requireVerifiedGedu: true,
+          requireCertifiedGedu: true,
         },
         body: { kind: "none" },
         test: TESTS.voiceInstantCreate,
@@ -762,7 +762,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "role-gated",
           roles: ["admin", "gedu"],
-          requireVerifiedGedu: true,
+          requireCertifiedGedu: true,
         },
         body: { kind: "json", schema: "inline: { code } (declared on the primitive)" },
         test: TESTS.voiceInstantEnd,

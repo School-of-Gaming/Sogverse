@@ -7,19 +7,19 @@ const mockGetUserWithProfile = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   getUserWithProfile: () => mockGetUserWithProfile(),
   // `instantRoomModerator` (the route's auth-detection helper) opens a fresh
-  // client only to read the gedu's verification row; `isGeduVerified` is mocked
+  // client only to read the gedu's certification row; `isGeduCertified` is mocked
   // below, so the client is just an opaque handle.
   createClient: vi.fn(async () => ({})),
 }));
 
-// Verification is the mod boundary: an unverified gedu must be demoted to the
+// Certification is the mod boundary: an uncertified gedu must be demoted to the
 // guest path. These mocks compose through the real `instantRoomModerator`
 // helper, so the route's owner-eligibility decision is exercised end-to-end.
-// Default verified=true so the existing mod-path tests still see a gedu as an
-// owner; the unverified cases override per-test.
-const mockIsGeduVerified = vi.fn();
+// Default certified=true so the existing mod-path tests still see a gedu as an
+// owner; the uncertified cases override per-test.
+const mockIsGeduCertified = vi.fn();
 vi.mock("@/services/gedu/gedu-profiles.service", () => ({
-  isGeduVerified: (...args: unknown[]) => mockIsGeduVerified(...args),
+  isGeduCertified: (...args: unknown[]) => mockIsGeduCertified(...args),
 }));
 
 const mockCreateMeetingToken = vi.fn();
@@ -68,7 +68,7 @@ describe("POST /api/voice/instant/token", () => {
     process.env.NEXT_PUBLIC_DAILY_DOMAIN = "testdomain";
     mockCreateMeetingToken.mockResolvedValue("mock-daily-token");
     mockGetDailyRoom.mockResolvedValue({ name: "K7P2" });
-    mockIsGeduVerified.mockResolvedValue(true);
+    mockIsGeduCertified.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -169,7 +169,7 @@ describe("POST /api/voice/instant/token", () => {
   });
 
   // Permission and identity are separate axes: a signed-in parent, gamer or
-  // unverified gedu joins as *themselves* (profile id + profile first name)
+  // uncertified gedu joins as *themselves* (profile id + profile first name)
   // while keeping guest permissions. The role slot staying "guest" is what
   // keeps every positive admin/gedu client gate dark for them.
   describe("signed-in non-moderator — own identity, guest permissions", () => {
@@ -301,14 +301,14 @@ describe("POST /api/voice/instant/token", () => {
     it("does not consult verification for an admin (admins are always trusted)", async () => {
       authenticated("admin", { id: "admin-1", firstName: "Admin User" });
       await POST(createTokenRequest({ code: "K7P2" }));
-      expect(mockIsGeduVerified).not.toHaveBeenCalled();
+      expect(mockIsGeduCertified).not.toHaveBeenCalled();
     });
   });
 
-  describe("unverified gedu — demoted to guest permissions", () => {
-    it("issues a non-owner token for an unverified gedu", async () => {
+  describe("uncertified gedu — demoted to guest permissions", () => {
+    it("issues a non-owner token for an uncertified gedu", async () => {
       authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
-      mockIsGeduVerified.mockResolvedValue(false);
+      mockIsGeduCertified.mockResolvedValue(false);
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
       );
@@ -324,9 +324,9 @@ describe("POST /api/voice/instant/token", () => {
       expect(data.displayName).toBe("Educator");
     });
 
-    it("needs no displayName from an unverified gedu (they are signed in)", async () => {
+    it("needs no displayName from an uncertified gedu (they are signed in)", async () => {
       authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
-      mockIsGeduVerified.mockResolvedValue(false);
+      mockIsGeduCertified.mockResolvedValue(false);
       const response = await POST(createTokenRequest({ code: "K7P2" }));
       expect(response.status).toBe(200);
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
@@ -337,9 +337,9 @@ describe("POST /api/voice/instant/token", () => {
       expect(data.displayName).toBe("Educator");
     });
 
-    it("fails closed to guest when the verification lookup throws", async () => {
+    it("fails closed to guest when the certification lookup throws", async () => {
       authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
-      mockIsGeduVerified.mockRejectedValue(new Error("db down"));
+      mockIsGeduCertified.mockRejectedValue(new Error("db down"));
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
       );

@@ -75,12 +75,12 @@ the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts 
 
 | Posture | Handlers | Notes |
 |---|---|---|
-| `role-gated` (`requireRole`) | 27 | Variants that must be captured: `allowUnverified` (6 — the PIN-locked-customer routes), `requireVerifiedGedu` (2), all-four-roles-as-any-authenticated (1) |
+| `role-gated` (`requireRole`) | 27 | Variants that must be captured: `allowUnverified` (6 — the PIN-locked-customer routes), `requireCertifiedGedu` (2), all-four-roles-as-any-authenticated (1) |
 | `any-authenticated`, hand-rolled | 1 | The locale route: inline session check + claims read, no `requireRole` — the one route that re-implements the primitive |
 | `public` | 4 | Mojang username lookup, instant-room existence check, gedu self-registration (unauthenticated account creation — the highest-value public route), forgot-password (always-200 enumeration defense) |
 | `session-mutating public` | 2 | OAuth callback (redirect-only, `resolveInternalPath` on `next`), signout (POST-only as the CSRF control, 303) |
 | `signed-token` | 1 | PIN reset: a signed token *is* the authorization; session-agnostic; deliberately admin-client |
-| `optional-auth` | 1 | Instant-room token: public, but silently elevates admin/verified-gedu to room owner; fails closed to guest. A `role-gated \| public` binary cannot express this route |
+| `optional-auth` | 1 | Instant-room token: public, but silently elevates admin/certified-gedu to room owner; fails closed to guest. A `role-gated \| public` binary cannot express this route |
 | `webhook` | 4 | Three verifier strategies (Stripe signature, Meta HMAC + timing-safe compare, Discord Ed25519) plus Meta's GET challenge (plain `===` compare — recorded wart). All POST verifiers consume the **raw text body** before any JSON parse. Divergent error contracts: Stripe wants 5xx for retry; Meta must never 5xx or the endpoint is disabled |
 | `api-key` | 1 | Minecraft join-check: Bearer + timing-safe compare, server-to-server. Its gating is unbuilt, so it authenticates, validates, and fails closed 501 — it reaches no data at all |
 
@@ -88,8 +88,8 @@ the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts 
 
 - **`requireRole(roles, options?)`** (`src/lib/auth.ts`) — verifies claims locally, loads
   the profile, narrows the role at type level, and enforces two extra gates: the parent
-  PIN gate (skipped via `allowUnverified`) and the verified-gedu gate (opt-in via
-  `requireVerifiedGedu`). Returns `{ user, profile, supabase }` (user-bound client) or a
+  PIN gate (skipped via `allowUnverified`) and the certified-gedu gate (opt-in via
+  `requireCertifiedGedu`). Returns `{ user, profile, supabase }` (user-bound client) or a
   ready `NextResponse` (401/403 with stable `code`s). Every gated route uses the
   `instanceof NextResponse` early-return convention.
 - **`parseJsonBody` / `parseBodyValue`** (`src/lib/api/json-body.server.ts`) — JSON →
@@ -147,7 +147,7 @@ One registry (colocated with the spine test that consumes it) mapping every rout
 its classification:
 
 - **Posture** — the §2 taxonomy as a tagged union: `role-gated` (roles +
-  `allowUnverified`/`requireVerifiedGedu` flags), `any-authenticated`, `public`,
+  `allowUnverified`/`requireCertifiedGedu` flags), `any-authenticated`, `public`,
   `session-mutating-public`, `signed-token`, `optional-auth`, `webhook` (which
   verifier), `api-key`. Every non-`role-gated` entry carries a mandatory `reason`
   string — the carve-out-with-reason shape the proxy test already uses.

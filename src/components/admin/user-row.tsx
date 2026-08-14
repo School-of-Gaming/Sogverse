@@ -21,11 +21,11 @@ interface UserRowProps {
   linkedGamers?: UserRowUser[];
   /** Base path for user detail links. Defaults to "/admin/users" */
   basePath?: string;
-  /** Gedu awaiting admin verification — shows an "Unverified" badge. */
-  unverified?: boolean;
+  /** Gedu awaiting admin certification — suppresses the certified tick. */
+  uncertified?: boolean;
 }
 
-export function UserRow({ user, linkedGamers, basePath = "/admin/users", unverified }: UserRowProps) {
+export function UserRow({ user, linkedGamers, basePath = "/admin/users", uncertified }: UserRowProps) {
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
   return (
@@ -50,7 +50,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users", unverif
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {user.role === "gedu" && !unverified && (
+          {user.role === "gedu" && !uncertified && (
             <CheckCircle2
               className="h-4 w-4 text-success"
               aria-label={t('verification.verified')}

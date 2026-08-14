@@ -103,14 +103,14 @@ describe("POST /api/voice/instant/end", () => {
     await POST(endRequest({ code: "K7P2" }));
     expect(mockRequireRole).toHaveBeenLastCalledWith(
       ["admin", "gedu"],
-      expect.objectContaining({ requireVerifiedGedu: true }),
+      expect.objectContaining({ requireCertifiedGedu: true }),
     );
   });
 
-  it("returns 403 when requireRole rejects an unverified gedu", async () => {
+  it("returns 403 when requireRole rejects an uncertified gedu", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
-        { error: "Your educator account is awaiting admin verification.", code: "GEDU_UNVERIFIED" },
+        { error: "Your educator account is awaiting admin certification.", code: "GEDU_UNCERTIFIED" },
         { status: 403 },
       ),
     );

@@ -52,14 +52,14 @@ import { UnverifiedVoiceNotice } from "./unverified-voice-notice";
  */
 export function GeduDashboardPageBody({
   assignments,
-  verified,
+  certified,
   instantRoomCard,
 }: {
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
-  /** Has an admin verified this gedu? Gates the instant-room panel. */
-  verified: boolean;
-  /** The instant-voice-room panel shown to a verified gedu. */
+  /** Has an admin certified this gedu? Gates the instant-room panel. */
+  certified: boolean;
+  /** The instant-voice-room panel shown to a certified gedu. */
   instantRoomCard: React.ReactNode;
 }) {
   const t = useTranslations("dashboardSections");
@@ -176,7 +176,7 @@ export function GeduDashboardPageBody({
             <h2 id="instant-voice-room-heading" className="text-3xl font-bold">
               {t("instantVoiceRoom")}
             </h2>
-            {verified ? instantRoomCard : <UnverifiedVoiceNotice />}
+            {certified ? instantRoomCard : <UnverifiedVoiceNotice />}
           </div>
         </section>
       </div>

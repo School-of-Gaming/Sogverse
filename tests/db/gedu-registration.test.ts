@@ -7,11 +7,11 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 /**
  * Coverage for the gedu self-registration RPCs (migration 00111):
  *   - register_gedu: atomic promotion of a freshly-created customer profile
- *     into a fully-populated, unverified gedu (service_role only).
- *   - set_gedu_verified: admin-only verify / un-verify, stamping the audit
+ *     into a fully-populated, uncertified gedu (service_role only).
+ *   - set_gedu_certified: admin-only certify / de-certify, stamping the audit
  *     columns server-side.
  */
-describe("gedu registration + verification RPCs", () => {
+describe("gedu registration + certification RPCs", () => {
   let admin: SupabaseClient<Database>;
   let adminClient: SupabaseClient<Database>;
   let geduClient: SupabaseClient<Database>;
@@ -29,12 +29,12 @@ describe("gedu registration + verification RPCs", () => {
   });
 
   afterAll(async () => {
-    // Restore the seeded gedu to its verified baseline in case a test flipped
+    // Restore the seeded gedu to its certified baseline in case a test flipped
     // it. Through the signed-in admin, not the service-role client: since 00121
     // the RPC's guard refuses a caller with no profiles row.
-    await adminClient.rpc("set_gedu_verified", {
+    await adminClient.rpc("set_gedu_certified", {
       p_gedu_id: TEST_IDS.GEDU,
-      p_verified: true,
+      p_certified: true,
     });
   });
 
@@ -51,7 +51,7 @@ describe("gedu registration + verification RPCs", () => {
       }
     });
 
-    it("atomically promotes a new customer profile into an unverified gedu", async () => {
+    it("atomically promotes a new customer profile into an uncertified gedu", async () => {
       const email = `gedu-reg-${Date.now()}@test.local`;
       const { data: created, error: createError } =
         await admin.auth.admin.createUser({
@@ -88,7 +88,7 @@ describe("gedu registration + verification RPCs", () => {
       expect(profile?.phone).toBeNull();
       expect(profile?.spoken_languages).toEqual(["en"]);
 
-      // customer extension swapped for gedu extension, unverified.
+      // customer extension swapped for gedu extension, uncertified.
       const { data: cust } = await admin
         .from("customer_profiles")
         .select("user_id")
@@ -98,12 +98,12 @@ describe("gedu registration + verification RPCs", () => {
 
       const { data: gedu } = await admin
         .from("gedu_profiles")
-        .select("verified, verified_at, verified_by")
+        .select("certified, certified_at, certified_by")
         .eq("user_id", createdUserId)
         .single();
-      expect(gedu?.verified).toBe(false);
-      expect(gedu?.verified_at).toBeNull();
-      expect(gedu?.verified_by).toBeNull();
+      expect(gedu?.certified).toBe(false);
+      expect(gedu?.certified_at).toBeNull();
+      expect(gedu?.certified_by).toBeNull();
 
       // Coverage rows inserted.
       const { data: locs } = await admin
@@ -204,46 +204,46 @@ describe("gedu registration + verification RPCs", () => {
     });
   });
 
-  describe("set_gedu_verified", () => {
-    it("admin can un-verify then re-verify a gedu, stamping the audit columns", async () => {
-      const { error: unverifyError } = await adminClient.rpc(
-        "set_gedu_verified",
-        { p_gedu_id: TEST_IDS.GEDU, p_verified: false },
+  describe("set_gedu_certified", () => {
+    it("admin can de-certify then re-certify a gedu, stamping the audit columns", async () => {
+      const { error: decertifyError } = await adminClient.rpc(
+        "set_gedu_certified",
+        { p_gedu_id: TEST_IDS.GEDU, p_certified: false },
       );
-      expect(unverifyError).toBeNull();
+      expect(decertifyError).toBeNull();
 
-      const { data: afterUnverify } = await admin
+      const { data: afterDecertify } = await admin
         .from("gedu_profiles")
-        .select("verified, verified_at, verified_by")
+        .select("certified, certified_at, certified_by")
         .eq("user_id", TEST_IDS.GEDU)
         .single();
-      expect(afterUnverify?.verified).toBe(false);
-      expect(afterUnverify?.verified_at).toBeNull();
-      expect(afterUnverify?.verified_by).toBeNull();
+      expect(afterDecertify?.certified).toBe(false);
+      expect(afterDecertify?.certified_at).toBeNull();
+      expect(afterDecertify?.certified_by).toBeNull();
 
-      const { error: verifyError } = await adminClient.rpc("set_gedu_verified", {
+      const { error: certifyError } = await adminClient.rpc("set_gedu_certified", {
         p_gedu_id: TEST_IDS.GEDU,
-        p_verified: true,
+        p_certified: true,
       });
-      expect(verifyError).toBeNull();
+      expect(certifyError).toBeNull();
 
-      const { data: afterVerify } = await admin
+      const { data: afterCertify } = await admin
         .from("gedu_profiles")
-        .select("verified, verified_at, verified_by")
+        .select("certified, certified_at, certified_by")
         .eq("user_id", TEST_IDS.GEDU)
         .single();
-      expect(afterVerify?.verified).toBe(true);
-      expect(afterVerify?.verified_at).not.toBeNull();
-      expect(afterVerify?.verified_by).toBe(TEST_IDS.ADMIN);
+      expect(afterCertify?.certified).toBe(true);
+      expect(afterCertify?.certified_at).not.toBeNull();
+      expect(afterCertify?.certified_by).toBe(TEST_IDS.ADMIN);
     });
 
     it("rejects a non-admin caller with the canonical 42501", async () => {
       // 00121 moved this RPC onto assert_admin(), so its refusal now carries the
       // same forbidden ERRCODE as every other role-gated RPC instead of a
       // generic raise. That is what let the role × RPC matrix pick it up.
-      const { error } = await geduClient.rpc("set_gedu_verified", {
+      const { error } = await geduClient.rpc("set_gedu_certified", {
         p_gedu_id: TEST_IDS.GEDU,
-        p_verified: false,
+        p_certified: false,
       });
       expect(error?.code).toBe("42501");
     });

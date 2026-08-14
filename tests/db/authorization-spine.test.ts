@@ -73,7 +73,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   get_product_groups_with_details: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
-  set_gedu_verified: { permittedRoles: ["admin"] },
+  set_gedu_certified: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
@@ -350,11 +350,15 @@ const GUARD_PRIMITIVE_EXEMPT = new Set(["assert_role"]);
 const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   // The canonical one: writable `role` is self-promotion to admin.
   ["profiles", "role"],
-  // Verification gates gedu group assignment and voice-room moderation; the
-  // audit columns are stamped server-side by set_gedu_verified.
-  ["gedu_profiles", "verified"],
-  ["gedu_profiles", "verified_at"],
-  ["gedu_profiles", "verified_by"],
+  // Proof that an address reaches its owner. A marker its own subject can set
+  // says only that they wanted it to say something, so the column is written
+  // exclusively by the service-role verify route (00186).
+  ["profiles", "email_verified_at"],
+  // Certification gates gedu group assignment and voice-room moderation; the
+  // audit columns are stamped server-side by set_gedu_certified.
+  ["gedu_profiles", "certified"],
+  ["gedu_profiles", "certified_at"],
+  ["gedu_profiles", "certified_by"],
   // Enrollment state — a writable status is a free seat.
   ["participations", "status"],
   ["participations", "customer_id"],

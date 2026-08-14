@@ -1,13 +1,13 @@
 export {
   useGeduProfiles,
   useGeduProfile,
-  useGeduVerificationMap,
-  useSetGeduVerified,
+  useGeduCertificationMap,
+  useSetGeduCertified,
   geduProfileKeys,
 } from "./gedu-profiles.queries";
 export {
   GeduProfilesService,
-  isGeduVerified,
-  type GeduVerification,
+  isGeduCertified,
+  type GeduCertification,
 } from "./gedu-profiles.service";
 export { registerGeduBody, type RegisterGeduBody } from "./gedu-registration.contracts";

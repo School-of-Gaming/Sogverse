@@ -22,7 +22,7 @@ import { MinecraftService } from "@/services/minecraft";
 import { RobloxService } from "@/services/roblox";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
-import { GeduProfilesService, type GeduVerification } from "@/services/gedu/gedu-profiles.service";
+import { GeduProfilesService, type GeduCertification } from "@/services/gedu/gedu-profiles.service";
 import type { ParticipationStatus, ProductType } from "@/types";
 
 /** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
@@ -143,7 +143,7 @@ export default async function AdminUserDetailPage({
     gamerProfile,
     minecraftAccount,
     robloxAccount,
-    geduVerification,
+    geduCertification,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -162,7 +162,7 @@ export default async function AdminUserDetailPage({
       : Promise.resolve(null),
     isGedu
       ? new GeduProfilesService(supabase).getOne(userId).catch(() => null)
-      : Promise.resolve<GeduVerification | null>(null),
+      : Promise.resolve<GeduCertification | null>(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -414,8 +414,8 @@ export default async function AdminUserDetailPage({
         />
       )}
 
-      {/* Gedu verification + coverage areas (substitute matching) */}
-      {isGedu && <GeduVerificationCard geduId={userId} initial={geduVerification} />}
+      {/* Gedu certification + coverage areas (substitute matching) */}
+      {isGedu && <GeduVerificationCard geduId={userId} initial={geduCertification} />}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
     </div>
   );
