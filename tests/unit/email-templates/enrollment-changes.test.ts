@@ -57,7 +57,11 @@ describe("enrollment-changes email templates", () => {
         isSelfSeat: false,
       });
       expect(html).toContain("<!DOCTYPE html>");
-      expect(html).toContain("SOG");
+      // The layout's header carries the full lockup — brand first, platform
+      // second, spaced en dash. The sender name is the brand alone because an
+      // inbox list truncates it; the header is where there is room for both.
+      expect(html).toContain("School of Gaming");
+      expect(html).toContain("– Sogverse");
     });
 
     it("shows verified minecraft status with skin image", () => {

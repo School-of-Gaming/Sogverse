@@ -20,9 +20,9 @@ interface CtaButtonOptions {
   /** Already-translated label. */
   label: string;
   /**
-   * `primary` fills the brand color; `secondary` is outlined. A mail with two
-   * buttons has one action it is actually asking for, and two filled buttons
-   * side by side say the opposite.
+   * `primary` fills the brand color; `secondary` is outlined. However many
+   * buttons a mail carries, exactly one of them is the action it is actually
+   * asking for — a second filled button says the opposite.
    */
   variant?: CtaVariant;
 }
@@ -55,7 +55,16 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
     </table>`;
 }
 
-/** An inline link. `href` is app-generated; `label` is translated copy. */
+/**
+ * An inline link. `href` is app-generated; `label` is translated copy.
+ *
+ * It exists for the destination that is worth naming but not worth a button:
+ * the sentence it sits in is already being read, so the link rides along inside
+ * it instead of adding another thing to weigh up at the bottom of the mail.
+ * Which word carries it is the translation's decision — the message file names a
+ * placeholder and the label is a key of its own, so a language that puts the
+ * case ending on the word ("asetuksissa") keeps it inside the link text.
+ */
 export function inlineLink(href: string, label: string): string {
   return `<a href="${href}" target="_blank" style="color:${BRAND.primary};text-decoration:underline;">${label}</a>`;
 }

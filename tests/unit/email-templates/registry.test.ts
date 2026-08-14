@@ -112,11 +112,12 @@ describe("templateRegistry render()", () => {
   });
 
   /**
-   * The signup mail branches on two things at once — enrolled vs waitlisted,
-   * and whose seat it is — and both reach the subject line. The pairing is what
-   * each case asserts: a subject reading "Aino is signed up" over a body that
-   * opens "you are on the waitlist" is two wrong answers in the one line the
-   * reader meets first, and each half looks fine on its own.
+   * The signup mail branches on three things at once — enrolled vs waitlisted,
+   * whose seat it is, and which verb the product type calls for — and all three
+   * reach the subject line. The pairing is what each case asserts: a subject
+   * reading "Aino is signed up" over a body that opens "you are on the waitlist"
+   * is two wrong answers in the one line the reader meets first, and each half
+   * looks fine on its own.
    */
   describe("productConfirmation", () => {
     const signup = {
@@ -135,9 +136,49 @@ describe("templateRegistry render()", () => {
         "en",
       );
 
-      expect(subject).toBe("Aino is signed up for Minecraft 101");
+      expect(subject).toBe("Aino is enrolled in Minecraft 101");
       expect(html).toContain("Aino");
       expect(html).toContain("is enrolled in");
+    });
+
+    /**
+     * The subject takes the same per-type verb the body does, because the two
+     * are read together: an inbox line saying "Aino is enrolled in" over a mail
+     * that opens "Aino is joining" is the kind of mismatch nobody notices until
+     * a parent asks which one it is. Each case pins the subject and the body of
+     * one type at once, which is the only way a drift between them fails.
+     */
+    it.each([
+      ["consumer_club", "Aino is enrolled in Minecraft 101", "is enrolled in"],
+      ["municipality_club", "Aino is registered for Minecraft 101", "is registered for"],
+      ["camp", "Aino is signed up for Minecraft 101", "is signed up for"],
+      ["event", "Aino is joining Minecraft 101", "is joining"],
+    ])("uses the %s verb in the subject as well as the body", (productType, expected, bodyVerb) => {
+      const { subject, html } = templateRegistry.productConfirmation.render(
+        { ...signup, productType, isSelfSeat: false },
+        t,
+        "en",
+      );
+
+      expect(subject).toBe(expected);
+      expect(html).toContain(bodyVerb);
+    });
+
+    it.each([
+      ["consumer_club", "You are enrolled in Minecraft 101", "You’re enrolled in"],
+      ["municipality_club", "You are registered for Minecraft 101", "You’re registered for"],
+      ["camp", "You are signed up for Minecraft 101", "You’re signed up for"],
+      ["event", "You are joining Minecraft 101", "You’re joining"],
+    ])("uses the %s verb on a self seat too", (productType, expected, bodyVerb) => {
+      const { subject, html } = templateRegistry.productConfirmation.render(
+        { ...signup, productType, participantName: "Marja", isSelfSeat: true },
+        t,
+        "en",
+      );
+
+      expect(subject).toBe(expected);
+      expect(subject).not.toContain("Marja");
+      expect(html).toContain(bodyVerb);
     });
 
     it("moves to the second person when the seat is the parent's own", () => {
@@ -147,7 +188,7 @@ describe("templateRegistry render()", () => {
         "en",
       );
 
-      expect(subject).toBe("You are signed up for Minecraft 101");
+      expect(subject).toBe("You are enrolled in Minecraft 101");
       expect(subject).not.toContain("Marja");
       expect(html).toContain("You’re enrolled in");
       expect(html).not.toContain("Marja");
@@ -227,9 +268,9 @@ describe("every template renders in every locale", () => {
   const TEMPLATE_PARAMS: Record<string, Record<string, string | boolean | null>> = {
     passwordReset: { resetLink: "https://sogverse.sog.gg/reset-password?code=abc123" },
     feedback: {
-      userName: "Jane Doe",
+      userName: "Marja Virtanen",
       userRole: "customer",
-      userEmail: "jane@example.com",
+      userEmail: "marja@example.com",
       message: "Great product!",
     },
     enrollmentParent: {
@@ -267,11 +308,13 @@ describe("every template renders in every locale", () => {
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
       dashboardUrl: "https://sogverse.sog.gg/parent",
       shopUrl: "https://sogverse.sog.gg/shop",
+      settingsUrl: "https://sogverse.sog.gg/settings",
     },
     welcomeGedu: {
       firstName: "Alice",
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
       dashboardUrl: "https://sogverse.sog.gg/gedu",
+      settingsUrl: "https://sogverse.sog.gg/settings",
     },
     productConfirmation: {
       participantName: "Aino",

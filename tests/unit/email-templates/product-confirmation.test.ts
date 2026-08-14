@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { buildProductConfirmationEmail } from "@/lib/email-templates/product-confirmation";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
 
@@ -41,6 +42,20 @@ describe("buildProductConfirmationEmail", () => {
     expect(club).toContain("is enrolled in");
     expect(event).toContain("is joining");
     expect(event).toContain("Event");
+  });
+
+  /**
+   * The product name is emphasised by weight, not by the brand secondary it used
+   * to carry: Gmail's dark-theme rewriting left that purple unreadable against
+   * the card, and weight is the emphasis every client renders the same way.
+   * Brand color survives only where the layout defends it — the header and the
+   * button fills — so a colored product name reaching the body is a regression.
+   */
+  it("emphasises the product name by weight, in the body's own color", () => {
+    const html = buildProductConfirmationEmail(t, "en", base);
+    expect(html).toContain(`<strong style="color:${DARK_THEME.foreground};">Minecraft 101</strong>`);
+    expect(html).not.toContain(BRAND.secondary);
+    expect(html).not.toContain("brand-secondary");
   });
 
   it("escapes HTML in every value it is handed", () => {

@@ -39,19 +39,16 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
       background-image: ${HERO_GRADIENT} !important;
     }
     .brand-primary { color: ${BRAND.primary} !important; }
-    .brand-secondary { color: ${BRAND.secondary} !important; }
     /* Gmail-only: color text via gradient + background-clip instead of the "color" property,
        because Gmail Android dark mode shifts "color" values but preserves gradient values.
        "u + .body" only matches Gmail's rendering wrapper. Outlook doesn't support
-       background-clip:text at all, so it must stay Gmail-targeted. */
+       background-clip:text at all, so it must stay Gmail-targeted.
+
+       Only the primary has a rule: the brand secondary was retired from inline text
+       because Gmail's rewriting left it unreadable, so no builder emits a secondary
+       brand class any more and a rule for one would be dead weight. */
     u + .body .brand-primary {
       background-image: linear-gradient(${BRAND.primary}, ${BRAND.primary}) !important;
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      color: transparent !important;
-    }
-    u + .body .brand-secondary {
-      background-image: linear-gradient(${BRAND.secondary}, ${BRAND.secondary}) !important;
       -webkit-background-clip: text !important;
       background-clip: text !important;
       color: transparent !important;
@@ -65,10 +62,14 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-          <!-- Logo -->
+          <!-- Lockup: brand first, platform second, spaced en dash between them.
+               "brand-primary" is what puts the brand half through the Gmail
+               background-clip rule above — this header is one of the two places
+               brand color still survives Gmail's dark-theme rewriting (the other
+               is a button fill), so it is the one place the full lockup is set. -->
           <tr>
             <td align="center" style="padding-bottom:24px;">
-              <span style="font-size:28px;font-weight:bold;color:${BRAND.primary};letter-spacing:1px;">SOG</span><span style="font-size:28px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:1px;">verse</span>
+              <span class="brand-primary" style="font-size:24px;font-weight:bold;color:${BRAND.primary};letter-spacing:0.5px;">School of Gaming</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;"> – Sogverse</span>
             </td>
           </tr>
           <!-- Card -->

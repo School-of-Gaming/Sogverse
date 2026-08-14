@@ -1,6 +1,6 @@
 import { wrapInLayout } from "./layout";
 import { heading, paragraph, styledName } from "./utils";
-import { bulletList, ctaButton, inlineLink, sectionLabel } from "./blocks";
+import { ctaButton, inlineLink } from "./blocks";
 import type { EmailTranslator } from "./translator";
 
 /**
@@ -12,11 +12,24 @@ import type { EmailTranslator } from "./translator";
  * welcome mail is the one place the relationship between the two names has to
  * be stated rather than assumed.
  *
- * Both carry two buttons, and the order is deliberate: verifying the address is
- * what this mail is asking for, so it is the filled one, and My SOG follows as
- * the outlined second. Neither is a dead end — a reader who ignores the
- * verification can still get on with the product, which is exactly what the
- * copy promises.
+ * **Neither mail repeats a step registration already walked the reader
+ * through.** Adding a gamer, choosing a parent PIN, filling in a Gedu profile —
+ * all of that happened minutes ago in the signup flow, and a welcome mail that
+ * asks for it again reads as though we lost it. What is left is short by
+ * design: a greeting, a sentence or two, and the places worth going next.
+ *
+ * Those places are buttons, and the first one is filled: verifying the address
+ * is what this mail is asking for, so it leads and the rest are outlined. None
+ * of them is a gate — a reader who ignores the verification can still get on
+ * with the product, which is exactly what the copy promises.
+ *
+ * Settings is the exception, and deliberately not a button. The sentence that
+ * says the verification can wait already has to name where to do it later, so
+ * the link rides on that word rather than becoming a fourth thing to choose
+ * between — a row of buttons is a decision, and this is a footnote. Which word
+ * carries the link is the translation's call: each locale's message file marks
+ * the spot with `{settingsLink}` and supplies the link's own label, so a
+ * language that inflects the word keeps the ending inside the link text.
  */
 
 interface WelcomeParentEmailOptions {
@@ -27,27 +40,26 @@ interface WelcomeParentEmailOptions {
   dashboardUrl: string;
   /** App-generated shop link. */
   shopUrl: string;
+  /** App-generated settings link. */
+  settingsUrl: string;
 }
 
 export function buildWelcomeParentEmail(
   t: EmailTranslator,
   locale: string,
-  { firstName, verificationUrl, dashboardUrl, shopUrl }: WelcomeParentEmailOptions,
+  { firstName, verificationUrl, dashboardUrl, shopUrl, settingsUrl }: WelcomeParentEmailOptions,
 ): string {
   const content = `
     ${heading(t("welcomeParent.heading"))}
     ${paragraph(t("welcomeParent.greeting", { firstName: styledName(firstName) }))}
     ${paragraph(t("welcomeParent.platform"))}
-    ${sectionLabel(t("welcomeParent.nextTitle"))}
-    ${bulletList([
-      t("welcomeParent.step1"),
-      // The shop step is the one that can be acted on from here, so it carries
-      // the link rather than adding a third button beside the two below.
-      inlineLink(shopUrl, t("welcomeParent.step2")),
-      t("welcomeParent.step3"),
-    ])}
-    ${paragraph(t("welcomeParent.verifyBody"))}
+    ${paragraph(
+      t("welcomeParent.verifyBody", {
+        settingsLink: inlineLink(settingsUrl, t("welcomeParent.settingsLinkLabel")),
+      }),
+    )}
     ${ctaButton({ href: verificationUrl, label: t("welcomeParent.verifyButton") })}
+    ${ctaButton({ href: shopUrl, label: t("welcomeParent.shopButton"), variant: "secondary" })}
     ${ctaButton({ href: dashboardUrl, label: t("welcomeParent.dashboardButton"), variant: "secondary" })}
   `;
   return wrapInLayout({ title: t("welcomeParent.heading"), content, locale, t });
@@ -59,27 +71,33 @@ interface WelcomeGeduEmailOptions {
   verificationUrl: string;
   /** App-generated My SOG link. */
   dashboardUrl: string;
+  /** App-generated settings link. */
+  settingsUrl: string;
 }
 
 /**
- * The certification line is the load-bearing sentence here. A new Gedu reading
- * "an admin will review your account" with nothing after it assumes they are
- * locked out until that happens, so the same sentence has to say what
- * certification actually gates — being assigned to a group — and that
- * everything else is open now.
+ * The certification line is the load-bearing sentence here, and what it must not
+ * do is enumerate. A new Gedu needs to know that an admin will review and
+ * certify the account and that some of the platform stays shut until then —
+ * *which* parts is a set that moves as features arrive, and a mail is the worst
+ * place to freeze a list that will be wrong within a release. So the sentence
+ * says both facts and names nothing, which is also the only version that stays
+ * true without anyone maintaining it.
  */
 export function buildWelcomeGeduEmail(
   t: EmailTranslator,
   locale: string,
-  { firstName, verificationUrl, dashboardUrl }: WelcomeGeduEmailOptions,
+  { firstName, verificationUrl, dashboardUrl, settingsUrl }: WelcomeGeduEmailOptions,
 ): string {
   const content = `
     ${heading(t("welcomeGedu.heading"))}
     ${paragraph(t("welcomeGedu.greeting", { firstName: styledName(firstName) }))}
     ${paragraph(t("welcomeGedu.certification"))}
-    ${sectionLabel(t("welcomeGedu.nextTitle"))}
-    ${bulletList([t("welcomeGedu.step1"), t("welcomeGedu.step2")])}
-    ${paragraph(t("welcomeGedu.verifyBody"))}
+    ${paragraph(
+      t("welcomeGedu.verifyBody", {
+        settingsLink: inlineLink(settingsUrl, t("welcomeGedu.settingsLinkLabel")),
+      }),
+    )}
     ${ctaButton({ href: verificationUrl, label: t("welcomeGedu.verifyButton") })}
     ${ctaButton({ href: dashboardUrl, label: t("welcomeGedu.dashboardButton"), variant: "secondary" })}
   `;

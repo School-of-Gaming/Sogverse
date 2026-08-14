@@ -44,12 +44,13 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
  * reasoning as "My SOG" — locales translate the copy around a brand name, not
  * the name.
  *
- * Brand first, platform second: "School of Gaming" is what a parent recognises,
- * "Sogverse" is what they log in to. An inbox list truncates, and the half worth
- * keeping is the half they already know. See the brand-vs-platform rule in the
- * root CLAUDE.md.
+ * The brand alone, not the `School of Gaming – Sogverse` lockup: an inbox list
+ * truncates the sender column hard, and a lockup cut mid-word is worse than the
+ * short name that always fits. The full lockup lives in the email's own header,
+ * where there is room for it — see the brand-vs-platform rule in the root
+ * CLAUDE.md.
  */
-export const SENDER_NAME = "School of Gaming – Sogverse";
+export const SENDER_NAME = "School of Gaming";
 
 /**
  * The one customer-facing address, and the source of truth for it.

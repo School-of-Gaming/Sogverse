@@ -2284,29 +2284,29 @@
       "heading": "Välkommen till School of Gaming",
       "greeting": "Hej {firstName}, och välkommen. Vi är glada att du är här.",
       "platform": "Sogverse är School of Gamings plattform, där du sköter familjens klubbar, läger och evenemang.",
-      "nextTitle": "Kom igång",
-      "step1": "Lägg till din spelare, så vet vi vem som spelar.",
-      "step2": "Bläddra bland klubbar och läger i vår butik.",
-      "step3": "Ange din förälder-PIN, som håller föräldrainställningarna bara för dig.",
-      "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om familjens klubbar. Du kan göra det nu, eller senare i dina inställningar.",
+      "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om familjens klubbar. Du kan göra det nu, eller senare i dina {settingsLink}.",
+      "settingsLinkLabel": "inställningar",
       "verifyButton": "Bekräfta din e-postadress",
+      "shopButton": "Utforska butiken",
       "dashboardButton": "Gå till Min SOG"
     },
     "welcomeGedu": {
       "subject": "Välkommen till School of Gaming – ditt Gedu-konto",
       "heading": "Välkommen till School of Gaming",
       "greeting": "Hej {firstName}, och tack för att du registrerat dig som Gedu.",
-      "certification": "En administratör går igenom ditt konto och certifierar det. Certifieringen avgör bara om du kan tilldelas en grupp — allt annat är öppet för dig direkt.",
-      "nextTitle": "Kom igång",
-      "step1": "Fyll i din profil — vilka språk du talar och vilka områden du kan täcka.",
-      "step2": "Koppla dina Minecraft- och Roblox-konton.",
-      "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om dina grupper och tillfällen. Du kan göra det nu, eller senare i dina inställningar.",
+      "certification": "En administratör går igenom ditt konto och certifierar det. Under tiden kan du komma igång i Min SOG, men vissa delar är låsta tills ditt konto är certifierat.",
+      "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om dina grupper och tillfällen. Du kan göra det nu, eller senare i dina {settingsLink}.",
+      "settingsLinkLabel": "inställningar",
       "verifyButton": "Bekräfta din e-postadress",
       "dashboardButton": "Gå till Min SOG"
     },
     "productConfirmation": {
-      "subject": "{participantName} är anmäld till {productName}",
-      "subjectSelf": "Du är anmäld till {productName}",
+      "subject": {
+        "consumer_club": "{participantName} är anmäld till {productName}",
+        "municipality_club": "{participantName} är registrerad för {productName}",
+        "camp": "{participantName} är anmäld till {productName}",
+        "event": "{participantName} har gått med i {productName}"
+      },
       "heading": "Allt klart!",
       "subheading": {
         "consumer_club": "{participantName} är anmäld till {productName}.",
@@ -2315,6 +2315,12 @@
         "event": "{participantName} har gått med i {productName}."
       },
       "self": {
+        "subject": {
+          "consumer_club": "Du är anmäld till {productName}",
+          "municipality_club": "Du är registrerad för {productName}",
+          "camp": "Du är anmäld till {productName}",
+          "event": "Du har gått med i {productName}"
+        },
         "subheading": {
           "consumer_club": "Du är anmäld till {productName}.",
           "municipality_club": "Du är registrerad för {productName}.",
@@ -2360,7 +2366,6 @@
       "heading": "Bekräfta din e-postadress",
       "body": "Hej {firstName}, du bad oss bekräfta e-postadressen på ditt School of Gaming-konto. Använd knappen nedan för att bekräfta den.",
       "button": "Bekräfta din e-postadress",
-      "expiry": "Länken är giltig i 7 dagar.",
       "ignore": "Om du inte bad om det här kan du bortse från mejlet. Ingenting ändras."
     }
   },

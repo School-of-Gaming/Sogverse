@@ -252,12 +252,14 @@ const welcomeParentParamsSchema = z.object({
   verificationUrl: z.string().url(),
   dashboardUrl: z.string().url(),
   shopUrl: z.string().url(),
+  settingsUrl: z.string().url(),
 });
 
 const welcomeGeduParamsSchema = z.object({
   firstName: z.string().min(1),
   verificationUrl: z.string().url(),
   dashboardUrl: z.string().url(),
+  settingsUrl: z.string().url(),
 });
 
 /**
@@ -298,7 +300,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   feedback: defineTemplate({
     label: "Feedback",
     fields: [
-      { key: "userName", label: "User Name", placeholder: "Jane Doe" },
+      { key: "userName", label: "User Name", placeholder: "Marja Virtanen" },
       {
         key: "userRole",
         label: "User Role",
@@ -310,7 +312,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
           { label: "Admin", value: "admin" },
         ],
       },
-      { key: "userEmail", label: "User Email", placeholder: "jane@example.com" },
+      { key: "userEmail", label: "User Email", placeholder: "marja@example.com" },
       { key: "message", label: "Message", placeholder: "Great product!" },
     ],
     schema: feedbackParamsSchema,
@@ -327,8 +329,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   enrollmentParent: defineTemplate({
     label: "Enrollment (Parent)",
     fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "parentName", label: "Parent Name", placeholder: "Marja" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
@@ -350,7 +352,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Enrollment (Gedu)",
     fields: [
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
     ],
@@ -362,8 +364,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   unenrollmentParent: defineTemplate({
     label: "Unenrollment (Parent)",
     fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "parentName", label: "Parent Name", placeholder: "Marja" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
@@ -380,7 +382,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Unenrollment (Gedu)",
     fields: [
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
     ],
@@ -396,6 +398,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
       { key: "shopUrl", label: "Shop URL", placeholder: "https://sogverse.sog.gg/shop" },
+      { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
     ],
     schema: welcomeParentParamsSchema,
     build: (p, t, locale) => buildWelcomeParentEmail(t, locale, p),
@@ -407,6 +410,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "firstName", label: "First Name", placeholder: "Alice" },
       { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/gedu" },
+      { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
     ],
     schema: welcomeGeduParamsSchema,
     build: (p, t, locale) => buildWelcomeGeduEmail(t, locale, p),
@@ -415,7 +419,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   productConfirmation: defineTemplate({
     label: "Product Confirmation",
     fields: [
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
@@ -425,18 +429,23 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     ],
     schema: productConfirmationParamsSchema,
     build: (p, t, locale) => buildProductConfirmationEmail(t, locale, p),
-    // Both axes of the body reach the subject: the waitlist/enrolled split and
-    // the self seat. A subject that says "Aino is signed up" over a body that
+    // All three axes of the body reach the subject: the waitlist/enrolled split,
+    // the self seat, and — like the confirmation page — the verb the product
+    // type calls for. A subject that says "Aino is signed up" over a body that
     // says "you are on the waitlist" is two wrong answers in one line, and the
     // inbox list is where the reader meets it first.
+    //
+    // Waitlist stays type-generic on purpose: waiting for a seat is the same
+    // sentence whichever kind of seat it is, and a per-type waitlist verb would
+    // be four ways of writing one fact.
     subject: (p, t) =>
       p.mode === "waitlist"
         ? p.isSelfSeat
           ? t("productConfirmation.waitlist.subjectSelf", { productName: p.productName })
           : t("productConfirmation.waitlist.subject", { participantName: p.participantName, productName: p.productName })
         : p.isSelfSeat
-          ? t("productConfirmation.subjectSelf", { productName: p.productName })
-          : t("productConfirmation.subject", { participantName: p.participantName, productName: p.productName }),
+          ? t(`productConfirmation.self.subject.${p.productType}`, { productName: p.productName })
+          : t(`productConfirmation.subject.${p.productType}`, { participantName: p.participantName, productName: p.productName }),
     resolveParams: resolveProductConfirmation,
   }),
   verifyEmail: defineTemplate({

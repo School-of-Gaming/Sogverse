@@ -2916,29 +2916,29 @@
       "heading": "Welcome to School of Gaming",
       "greeting": "Hi {firstName}, and welcome. We’re glad you’re here.",
       "platform": "Sogverse is School of Gaming’s platform, where you manage your family’s clubs, camps and events.",
-      "nextTitle": "Getting started",
-      "step1": "Add your gamer, so we know who is playing.",
-      "step2": "Browse the clubs and camps in our shop.",
-      "step3": "Set your parent PIN, which keeps the parent settings yours alone.",
-      "verifyBody": "Verifying your email address lets us reach you about your family’s clubs. You can do it now, or later from your settings.",
+      "verifyBody": "Verifying your email address lets us reach you about your family’s clubs. You can do it now, or later from your {settingsLink}.",
+      "settingsLinkLabel": "settings",
       "verifyButton": "Verify your email address",
+      "shopButton": "Browse the shop",
       "dashboardButton": "Go to My SOG"
     },
     "welcomeGedu": {
       "subject": "Welcome to School of Gaming – your Gedu account",
       "heading": "Welcome to School of Gaming",
       "greeting": "Hi {firstName}, and thank you for registering as a Gedu.",
-      "certification": "An admin will look over your account and certify it. Certification decides only whether you can be assigned to a group — everything else is open to you right away.",
-      "nextTitle": "Getting started",
-      "step1": "Complete your profile — the languages you speak and the areas you can cover.",
-      "step2": "Link your Minecraft and Roblox accounts.",
-      "verifyBody": "Verifying your email address lets us reach you about your groups and sessions. You can do it now, or later from your settings.",
+      "certification": "An admin will look over your account and certify it. You can get started in My SOG in the meantime, though some parts of the platform stay locked until your account is certified.",
+      "verifyBody": "Verifying your email address lets us reach you about your groups and sessions. You can do it now, or later from your {settingsLink}.",
+      "settingsLinkLabel": "settings",
       "verifyButton": "Verify your email address",
       "dashboardButton": "Go to My SOG"
     },
     "productConfirmation": {
-      "subject": "{participantName} is signed up for {productName}",
-      "subjectSelf": "You are signed up for {productName}",
+      "subject": {
+        "consumer_club": "{participantName} is enrolled in {productName}",
+        "municipality_club": "{participantName} is registered for {productName}",
+        "camp": "{participantName} is signed up for {productName}",
+        "event": "{participantName} is joining {productName}"
+      },
       "heading": "You’re all set!",
       "subheading": {
         "consumer_club": "{participantName} is enrolled in {productName}.",
@@ -2947,6 +2947,12 @@
         "event": "{participantName} is joining {productName}."
       },
       "self": {
+        "subject": {
+          "consumer_club": "You are enrolled in {productName}",
+          "municipality_club": "You are registered for {productName}",
+          "camp": "You are signed up for {productName}",
+          "event": "You are joining {productName}"
+        },
         "subheading": {
           "consumer_club": "You’re enrolled in {productName}.",
           "municipality_club": "You’re registered for {productName}.",
@@ -2992,7 +2998,6 @@
       "heading": "Verify your email address",
       "body": "Hi {firstName}, you asked us to verify the email address on your School of Gaming account. Use the button below to confirm it.",
       "button": "Verify your email address",
-      "expiry": "This link is valid for 7 days.",
       "ignore": "If you didn’t ask for this, you can safely ignore this email. Nothing will change."
     }
   },

@@ -2284,42 +2284,48 @@
       "heading": "Tervetuloa School of Gamingiin",
       "greeting": "Hei {firstName}, ja tervetuloa mukaan.",
       "platform": "Sogverse on School of Gamingin palvelu, jossa hallinnoit perheesi kerhoja, leirejä ja tapahtumia.",
-      "nextTitle": "Näin pääset alkuun",
-      "step1": "Lisää pelaajasi, niin tiedämme kuka pelaa.",
-      "step2": "Selaa kerhoja ja leirejä kaupassamme.",
-      "step3": "Aseta vanhemman PIN-koodi, joka pitää vanhemman asetukset vain sinun ulottuvillasi.",
-      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut perheesi kerhoja koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin asetuksissa.",
+      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut perheesi kerhoja koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin {settingsLink}.",
+      "settingsLinkLabel": "asetuksissa",
       "verifyButton": "Vahvista sähköpostiosoitteesi",
+      "shopButton": "Selaa kauppaa",
       "dashboardButton": "Siirry Oma SOG -sivulle"
     },
     "welcomeGedu": {
       "subject": "Tervetuloa School of Gamingiin – Gedu-tilisi",
       "heading": "Tervetuloa School of Gamingiin",
       "greeting": "Hei {firstName}, ja kiitos, että rekisteröidyit Geduksi.",
-      "certification": "Ylläpitäjä käy tilisi läpi ja sertifioi sen. Sertifiointi ratkaisee vain sen, voidaanko sinut nimetä ryhmään — kaikki muu on käytettävissäsi heti.",
-      "nextTitle": "Näin pääset alkuun",
-      "step1": "Täydennä profiilisi: puhumasi kielet ja alueet, joilla voit toimia.",
-      "step2": "Liitä Minecraft- ja Roblox-tilisi.",
-      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut ryhmiäsi ja tapaamisia koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin asetuksissa.",
+      "certification": "Ylläpitäjä käy tilisi läpi ja sertifioi sen. Voit sillä välin tutustua Oma SOG -sivuun, mutta osa toiminnoista avautuu vasta, kun tilisi on sertifioitu.",
+      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut ryhmiäsi ja tapaamisia koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin {settingsLink}.",
+      "settingsLinkLabel": "asetuksissa",
       "verifyButton": "Vahvista sähköpostiosoitteesi",
       "dashboardButton": "Siirry Oma SOG -sivulle"
     },
     "productConfirmation": {
-      "subject": "{participantName} on ilmoitettu toimintaan {productName}",
-      "subjectSelf": "Sinut on ilmoitettu toimintaan {productName}",
+      "subject": {
+        "consumer_club": "{participantName} on ilmoitettu kerhoon {productName}",
+        "municipality_club": "{participantName} on ilmoitettu kerhoon {productName}",
+        "camp": "{participantName} on ilmoitettu leirille {productName}",
+        "event": "{participantName} osallistuu tapahtumaan {productName}"
+      },
       "heading": "Valmista tuli!",
       "subheading": {
-        "consumer_club": "{participantName} on ilmoitettu toimintaan {productName}.",
-        "municipality_club": "{participantName} on ilmoitettu toimintaan {productName}.",
-        "camp": "{participantName} on ilmoitettu toimintaan {productName}.",
-        "event": "{participantName} on liittynyt toimintaan {productName}."
+        "consumer_club": "{participantName} on ilmoitettu kerhoon {productName}.",
+        "municipality_club": "{participantName} on ilmoitettu kerhoon {productName}.",
+        "camp": "{participantName} on ilmoitettu leirille {productName}.",
+        "event": "{participantName} osallistuu tapahtumaan {productName}."
       },
       "self": {
+        "subject": {
+          "consumer_club": "Sinut on ilmoitettu kerhoon {productName}",
+          "municipality_club": "Sinut on ilmoitettu kerhoon {productName}",
+          "camp": "Sinut on ilmoitettu leirille {productName}",
+          "event": "Osallistut tapahtumaan {productName}"
+        },
         "subheading": {
-          "consumer_club": "Sinut on ilmoitettu toimintaan {productName}.",
-          "municipality_club": "Sinut on ilmoitettu toimintaan {productName}.",
-          "camp": "Sinut on ilmoitettu toimintaan {productName}.",
-          "event": "Olet liittynyt toimintaan {productName}."
+          "consumer_club": "Sinut on ilmoitettu kerhoon {productName}.",
+          "municipality_club": "Sinut on ilmoitettu kerhoon {productName}.",
+          "camp": "Sinut on ilmoitettu leirille {productName}.",
+          "event": "Osallistut tapahtumaan {productName}."
         },
         "waitlist": {
           "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu."
@@ -2360,7 +2366,6 @@
       "heading": "Vahvista sähköpostiosoitteesi",
       "body": "Hei {firstName}, pyysit vahvistamaan School of Gaming -tilisi sähköpostiosoitteen. Vahvista se alla olevalla painikkeella.",
       "button": "Vahvista sähköpostiosoitteesi",
-      "expiry": "Linkki on voimassa seitsemän vuorokautta.",
       "ignore": "Jos et pyytänyt tätä, voit jättää viestin huomiotta. Mikään ei muutu."
     }
   },
