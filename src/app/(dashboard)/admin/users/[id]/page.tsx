@@ -132,6 +132,9 @@ export default async function AdminUserDetailPage({
   // is also what the write route refuses as a target.
   const showGameAccounts = isGamer || isGedu;
 
+  // Only the two roles that can carry a referral code have the row at all.
+  const showReferralCode = (isCustomer || isGedu) && Boolean(profile.referral_code);
+
   const [
     linkedGamers,
     linkedParents,
@@ -257,6 +260,19 @@ export default async function AdminUserDetailPage({
               <span className="text-sm text-muted-foreground">
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale, { dateStyle: "medium", timeZone }) : t('unknown')}
               </span>
+              {/* Where this account came from — the marketing link's `?ref=`
+                  code, captured once at registration. Read-only on purpose:
+                  the column has no UPDATE grant, so an admin cannot edit it
+                  through the app either (see src/lib/referral.ts). Shown for
+                  parents and educators only — gamer rows are NULL by
+                  construction, and the value is omitted entirely rather than
+                  shown as an empty row, since the large majority of accounts
+                  will never carry one. */}
+              {showReferralCode && (
+                <span className="text-sm text-muted-foreground">
+                  {t('referralCode')} {profile.referral_code}
+                </span>
+              )}
             </div>
           </div>
         </CardContent>

@@ -744,6 +744,7 @@
       "userNotFound": "lo’wI’ tu’be’lu’.",
       "joined": "muv",
       "unknown": "Sovbe’lu’",
+      "referralCode": "ghum ngoq",
       "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
       "gender": {
         "boy": "loDHom",
