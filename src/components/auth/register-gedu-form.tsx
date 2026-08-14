@@ -23,7 +23,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import { useAuth } from "@/providers";
+import { useAuth, useReferralCode } from "@/providers";
 import { useSpokenLanguages } from "@/services/users";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguage } from "@/types";
@@ -59,6 +59,9 @@ export function RegisterGeduForm({
   const locale = useLocale();
   const { navigateAfterAuth, status } = useAuthRedirect(redirect);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
+  // Educator capture is not for the Roblox programme — it is for knowing where
+  // educators come from when SOG runs a recruitment campaign.
+  const referralCode = useReferralCode();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -128,6 +131,11 @@ export function RegisterGeduForm({
           locationIds,
           minecraftUsername: minecraftUsername ?? undefined,
           robloxUsername: robloxUsername ?? undefined,
+          // The route cannot read `x-referral-code` off its own request: the
+          // proxy derives that header from the query string of the request it is
+          // handling, and this POST carries no `?ref=`. So it travels in the
+          // body.
+          referralCode: referralCode ?? undefined,
         }),
       });
 
