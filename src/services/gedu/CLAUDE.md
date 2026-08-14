@@ -58,7 +58,7 @@ A new gedu starts **uncertified but with broad platform access** — certificati
 things: **group assignment** and **instant-voice-room moderation**. Everything else is
 open to an uncertified gedu.
 
-- **`set_gedu_certified(gedu_id, certified)` RPC** — admin-only (`is_admin()` self-gate),
+- **`set_gedu_certified(gedu_id, certified)` RPC** — admin-only (guard-first `assert_admin()`),
   stamps `certified_at = now()` / `certified_by = auth.uid()` server-side. Granted to
   `authenticated`; called from the admin user-detail page via the admin's own session.
 - **Assignment gate (UI-only, sufficient)**: the gedu picker disables uncertified gedus and

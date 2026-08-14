@@ -187,13 +187,13 @@ export default function AdminUsersPage() {
                       linkedGamers={parentToGamers.get(user.id)}
                       // An absent entry means "not certified" only when the read
                       // succeeded. If it failed we know nothing about anyone, so
-                      // the badge is withheld rather than asserted — printing it
-                      // across every gedu is the precise wrong answer, not a
-                      // degraded one.
-                      uncertified={
-                        !certification.isError &&
-                        user.role === "gedu" &&
-                        !(certification.map.get(user.id)?.certified ?? false)
+                      // the answer is `null` and the badge is withheld rather
+                      // than asserted — printing it across every gedu is the
+                      // precise wrong answer, not a degraded one.
+                      certified={
+                        certification.isError
+                          ? null
+                          : certification.map.get(user.id)?.certified ?? false
                       }
                     />
                   ))}

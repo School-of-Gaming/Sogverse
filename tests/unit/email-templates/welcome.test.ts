@@ -13,6 +13,17 @@ const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
 const SHOP_URL = "https://sogverse.sog.gg/shop";
 const SETTINGS_URL = "https://sogverse.sog.gg/settings";
 
+/**
+ * The mail's html with every URL-bearing attribute value emptied, lowercased —
+ * what is left is the words a reader actually meets. A vocabulary rule ("never
+ * say dashboard") is a claim about those words and about nothing else; asserting
+ * it over the raw html silently makes it a claim about our own route names too,
+ * which would fail the day a My SOG path is spelled with the forbidden word.
+ */
+function renderedCopy(html: string): string {
+  return html.replace(/(href|src)="[^"]*"/gi, '$1=""').toLowerCase();
+}
+
 describe("buildWelcomeParentEmail", () => {
   const params = {
     firstName: "Marja",
@@ -97,10 +108,17 @@ describe("buildWelcomeParentEmail", () => {
     expect(html).toContain("or later from your");
   });
 
+  /**
+   * The rule is about *copy*: nothing the reader sees may call it a dashboard.
+   * Asserted against the html with every href value blanked, because the URLs
+   * are not copy — this fixture's My SOG link happens to be `/parent`, and a
+   * real one at `/dashboard` would otherwise fail this test for a reason that
+   * has nothing to do with what the mail says.
+   */
   it("calls the dashboard My SOG, never a dashboard", () => {
     const html = buildWelcomeParentEmail(t, "en", params);
     expect(html).toContain("My SOG");
-    expect(html.toLowerCase()).not.toContain("dashboard");
+    expect(renderedCopy(html)).not.toContain("dashboard");
   });
 
   it("escapes HTML in the first name", () => {

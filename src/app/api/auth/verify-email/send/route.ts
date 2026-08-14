@@ -57,6 +57,11 @@ export const POST = defineRoute({
     // client: `request_my_verification_email` writes a row for `auth.uid()` and
     // takes no parameter naming a user, so this handler cannot spend anyone
     // else's allowance — or exempt itself from its own.
+    //
+    // The allowance is spent BEFORE the Brevo call, so a send that fails burns
+    // one of six. Deliberate trade: charging after the send would reopen the
+    // concurrent-double-send window the advisory lock exists to close, and a
+    // Brevo outage long enough to burn all six self-heals within the hour.
     const { data: accepted, error: rpcError } = await supabase.rpc(
       "request_my_verification_email",
     );

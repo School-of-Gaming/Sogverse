@@ -23,14 +23,20 @@ interface UserRowProps {
   linkedGamers?: UserRowUser[];
   /** Base path for user detail links. Defaults to "/admin/users" */
   basePath?: string;
-  /** Gedu awaiting admin certification — suppresses the certification mark. */
-  uncertified?: boolean;
+  /**
+   * Whether an admin has certified this educator: `true` shows the mark, `false`
+   * withholds it, and `null` means the answer is unknown — the read failed, or
+   * this row is not a gedu and the question does not arise. Three states rather
+   * than two because "not certified" and "we could not find out" must not
+   * collapse into each other; only a positive answer may print the mark.
+   */
+  certified?: boolean | null;
 }
 
 /**
  * One admin users-list row.
  *
- * **Two marks that mean two different things, in a fixed order.** The award is
+ * **Two marks that mean two different things, in a fixed order.** The shield is
  * about a *person* — an admin has certified this educator — and the green check
  * is about an *address*, confirmed by whoever reads that inbox. A certified gedu
  * with a verified email carries both, so the order never varies with which of
@@ -41,8 +47,12 @@ interface UserRowProps {
  * A gamer gets neither. Their address is the synthetic
  * `@gamer.sogverse.internal` one their account was created with, so there is no
  * inbox to confirm it from and a check would be asserting something nobody did.
+ *
+ * **Both marks are printed only on a positive answer.** A mark is a claim
+ * somebody made, so the absence of an answer has to read the same as "no" — see
+ * `certified` for the three states that keeps honest.
  */
-export function UserRow({ user, linkedGamers, basePath = "/admin/users", uncertified }: UserRowProps) {
+export function UserRow({ user, linkedGamers, basePath = "/admin/users", certified }: UserRowProps) {
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
   const emailVerified = user.role !== "gamer" && user.email_verified_at !== null;
@@ -68,7 +78,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users", uncerti
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {user.role === "gedu" && !uncertified && (
+          {user.role === "gedu" && certified === true && (
             <ShieldCheck
               className="h-4 w-4 text-success"
               aria-label={t('certification.certified')}

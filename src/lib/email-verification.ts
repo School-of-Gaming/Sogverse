@@ -39,7 +39,18 @@
 // separation comes from the payload prefix (`email-verify:` vs `pin-reset:`),
 // which is what stops a token minted by one flow from ever validating in the
 // other; sharing an HMAC key across prefixed payloads is exactly the case
-// prefixing exists for.
+// prefixing exists for. One payload under this key carries NO prefix — the PIN
+// unlock cookie signs `${userId}:${sessionId}` bare — and it still cannot
+// collide: its verifier derives both components from the caller's own JWT
+// rather than the token, and a UUID can never begin with a prefix string. Any
+// FOURTH payload under this key must carry its own prefix; do not add another
+// bare one.
+//
+// The changed-address reset watches `profiles.email` (a DB trigger), which is
+// the only email this app ever changes. An auth-side change that bypassed
+// profiles (dashboard edit, a future auth.updateUser flow) would leave the
+// stamp and the binding pointing at the stale string — if an email-change flow
+// is ever built, it must write through profiles.email for the reset to hold.
 //
 // Web Crypto (not node:crypto) for the same reason as pin-session: this has to
 // keep working if the check ever moves to the Edge runtime.

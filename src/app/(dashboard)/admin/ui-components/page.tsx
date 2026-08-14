@@ -48,7 +48,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
-// TEMPORARY — used only by the Certified icon comparison below; remove with it.
 import { MaterialLink } from "@/components/ui/material-link";
 import {
   PersonChip,
@@ -1884,6 +1883,21 @@ export default function AdminUIComponentsPage() {
                 carries both marks, and the reason their order is fixed. */}
             <UserRow
               user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", first_name: "Sam", last_name: "Smith", email: "sam@example.com", email_verified_at: "2026-02-19T17:40:00.000Z", role: "gedu" }}
+              certified
+            />
+            {/* The same row with a known "no": an educator waiting on an admin,
+                shield withheld. */}
+            <UserRow
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000004", first_name: "Riikka", last_name: "Laine", email: "riikka@example.com", email_verified_at: "2026-05-02T08:05:00.000Z", role: "gedu" }}
+              certified={false}
+            />
+            {/* And the third state: the certification read failed, so nobody's
+                status is known. It has to look like the "no" above rather than
+                like the "yes" — a mark is a claim, and there is nobody here to
+                make it. */}
+            <UserRow
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000005", first_name: "Petri", last_name: "Koskinen", email: "petri@example.com", email_verified_at: null, role: "gedu" }}
+              certified={null}
             />
             {/* A parent who has never confirmed their address: no mark at all,
                 which is the ordinary state of a new account. */}
