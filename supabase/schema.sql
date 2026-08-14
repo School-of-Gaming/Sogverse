@@ -2146,9 +2146,11 @@ CREATE TABLE public.profiles (
     first_name text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
     home_location_id uuid,
+    referral_code text,
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
-    CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text))
+    CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
+    CONSTRAINT profiles_referral_code_format CHECK (((referral_code IS NULL) OR (referral_code ~ '^[a-z0-9_-]{1,64}$'::text)))
 );
 
 
@@ -2178,6 +2180,13 @@ COMMENT ON COLUMN public.profiles.locale IS 'BCP-47-style UI locale code (en, fi
 --
 
 COMMENT ON COLUMN public.profiles.home_location_id IS 'Optional municipality-level locations row: where this parent''s family lives. ON DELETE SET NULL by choice — a merged or retired reference row empties this reference rather than blocking its removal, at the cost of silently clearing the parent''s pick. Acceptable only because the field is optional and carries no entitlement.';
+
+
+--
+-- Name: COLUMN profiles.referral_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.referral_code IS 'Optional marketing provenance: the short code from the ?ref= param on the link this account arrived through, or NULL (the large majority). Written once by handle_new_user() from the signup metadata and never updatable — there is deliberately no UPDATE grant, at any level, for any role but service_role. Labels only: it grants nothing, is never used for profiling or to decide what anyone is shown or charged, and gamer rows always hold NULL.';
 
 
 --
@@ -2756,10 +2765,12 @@ COMMENT ON FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_ses
 CREATE FUNCTION public.handle_new_user() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
-    AS $$
+    AS $_$
 DECLARE
-  profile_first_name TEXT;
-  profile_last_name  TEXT;
+  profile_first_name   TEXT;
+  profile_last_name    TEXT;
+  profile_referral_raw TEXT;
+  profile_referral     TEXT;
 BEGIN
   profile_first_name := COALESCE(
     NULLIF(NEW.raw_user_meta_data->>'first_name', ''),
@@ -2771,14 +2782,24 @@ BEGIN
     ''
   );
 
-  INSERT INTO public.profiles (id, email, role, first_name, last_name)
-  VALUES (NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name);
+  -- Sanitise here, in the body, rather than letting the CHECK decide: a
+  -- malformed code must cost this family nothing at all, so it degrades to NULL
+  -- and the signup succeeds. Normalise first, then test the normalised value.
+  profile_referral_raw := NEW.raw_user_meta_data->>'referral_code';
+  profile_referral := CASE
+    WHEN lower(btrim(profile_referral_raw)) ~ '^[a-z0-9_-]{1,64}$'
+      THEN lower(btrim(profile_referral_raw))
+    ELSE NULL
+  END;
+
+  INSERT INTO public.profiles (id, email, role, first_name, last_name, referral_code)
+  VALUES (NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name, profile_referral);
 
   INSERT INTO public.customer_profiles (user_id) VALUES (NEW.id);
 
   RETURN NEW;
 END;
-$$;
+$_$;
 
 
 --
@@ -5219,6 +5240,7 @@ CREATE VIEW public.user_search_index WITH (security_invoker='true') AS
     p.phone,
     p.currency,
     p.home_location_id,
+    p.referral_code,
     p.locale,
     p.spoken_languages,
     p.created_at,
@@ -5240,7 +5262,7 @@ COMMENT ON VIEW public.user_search_index IS 'Profiles as the admin user search m
 -- Name: COLUMN user_search_index.search_blob; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.user_search_index.search_blob IS 'Every string a person can be found by — name, email, phone, and each game handle — space-joined. Derived, never written, and never selected: the search filters on it and reads the profile columns beside it, so it does not cross the wire. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
+COMMENT ON COLUMN public.user_search_index.search_blob IS 'Every string a person can be found by — name, email, phone, and each game handle — space-joined. Derived, never written, and never selected: the search filters on it and reads the profile columns beside it, so it does not cross the wire. referral_code is deliberately absent: it labels where a family came from and is not a name anyone should be findable by. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
 
 
 --
