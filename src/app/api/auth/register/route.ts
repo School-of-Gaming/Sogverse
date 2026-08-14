@@ -10,7 +10,10 @@ import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { sanitiseReferralCode } from "@/lib/referral";
 import { getOrigin } from "@/lib/url";
-import { registerParentBody } from "@/services/users/parent-registration.contracts";
+import {
+  REGISTER_WEAK_PASSWORD,
+  registerParentBody,
+} from "@/services/users/parent-registration.contracts";
 
 /**
  * POST /api/auth/register
@@ -20,6 +23,23 @@ import { registerParentBody } from "@/services/users/parent-registration.contrac
  * what lets the request that creates it also *send* something. A browser
  * `signUp()` returns to a page that has no verification token, no trusted
  * origin and no translator, so the welcome mail had nowhere to be sent from.
+ *
+ * WHERE IT DIFFERS FROM THE EDUCATOR ROUTE, WHICH IS NOT NOWHERE. Both create
+ * an unprivileged account from an unauthenticated request and mail the address
+ * they created it with — the same creation power. The exposure is not the same:
+ * this route answers a distinct 409 when the address already has an account,
+ * where `/api/gedu/register` collapses every refusal into one 400. So this one
+ * confirms account existence to anyone who asks, and that is a deliberate
+ * trade, not an oversight — a parent who mistypes their way into "that email
+ * could not be registered" has no way to tell a duplicate from a broken form,
+ * and the flow this replaced leaked the same fact client-side through the
+ * empty `identities` array `signUp()` returns for an existing address. What
+ * makes it acceptable here and not everywhere: forgot-password answers 200
+ * whatever it finds, because nobody needs to be told anything by it, so the
+ * enumeration would buy the user nothing at all. Registration cannot say
+ * nothing — the parent is stuck until they know which of the two problems they
+ * have — and an enumeration oracle that a sign-in form already provides is the
+ * lesser evil.
  *
  * The account it creates is an ordinary customer, which is the whole of its
  * privilege story: `handle_new_user` hardcodes the role, so nothing in this
@@ -36,7 +56,7 @@ import { registerParentBody } from "@/services/users/parent-registration.contrac
 export const POST = defineRoute({
   posture: "public",
   reason:
-    "parents self-register, so no session can exist yet. It creates an account and sends one email to the address that account was created with — the same shape, and the same exposure, as the educator registration route beside it",
+    "parents self-register, so no session can exist yet. It creates an account and sends one email to the address that account was created with — the same creation power as the educator registration route beside it. Its exposure is one step wider: a 409 for an address that already has an account, which confirms existence. Accepted deliberately, because registration has to tell the parent which problem they have, and the client-side flow this replaced leaked the same fact through signUp()'s empty identities array",
   body: registerParentBody,
 
   handler: async ({ request, body }) => {
@@ -99,6 +119,22 @@ export const POST = defineRoute({
         return NextResponse.json(
           { error: "That email is already registered. Sign in instead." },
           { status: 409 },
+        );
+      }
+      // The other refusal the registrant can act on, and the one the generic
+      // answer below actively misdirects: GoTrue rejected the password (too
+      // short for the project's policy, or found in a breach corpus). Nothing
+      // is conflicting, so it stays a 400; the code is what lets the form say
+      // "pick a different password" instead of "maybe you already have an
+      // account". The provider's own sentence is not echoed — it is raw English
+      // and sometimes names the check that fired.
+      if (isWeakPassword(authError)) {
+        return NextResponse.json(
+          {
+            error: "That password was refused as too weak.",
+            code: REGISTER_WEAK_PASSWORD,
+          },
+          { status: 400 },
         );
       }
       return NextResponse.json(
@@ -206,5 +242,27 @@ function isEmailAlreadyRegistered(error: unknown): boolean {
     "message" in error &&
     typeof error.message === "string" &&
     /already( been)? registered/i.test(error.message)
+  );
+}
+
+/**
+ * Whether GoTrue refused this signup because of the password itself.
+ *
+ * The code is the whole test, unlike the duplicate-email check above, and it is
+ * enough: `weak_password` is the one code the auth client attaches to a
+ * password refusal, and it attaches it on both paths — the modern response
+ * carries `error_code: "weak_password"`, and the legacy response with no code
+ * at all is recognised by its `weak_password.reasons` payload and re-thrown as
+ * an error whose `code` is set to the same string. There is no third spelling
+ * to fall back to a message for, and guessing at prose here would be worse than
+ * the generic answer: a message-sniffing rule that fires on the wrong refusal
+ * tells a parent to change a password that was never the problem.
+ */
+function isWeakPassword(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "weak_password"
   );
 }

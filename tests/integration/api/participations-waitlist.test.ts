@@ -254,6 +254,7 @@ describe("POST /api/participations/waitlist", () => {
         participation_id: PARTICIPATION_ID,
         waitlist_position: 3,
         status: "waitlisted",
+        idempotent: false,
       },
       error: null,
     });
@@ -284,6 +285,7 @@ describe("POST /api/participations/waitlist", () => {
         participation_id: PARTICIPATION_ID,
         waitlist_position: 1,
         status: "waitlisted",
+        idempotent: true,
       },
       error: null,
     });
@@ -295,6 +297,29 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(200);
     expect(data.waitlistPosition).toBe(1);
+  });
+
+  // The flag is required, not optional: a shape that lost it must fail loudly
+  // rather than fall through to "not idempotent" and mail a duplicate.
+  it("returns 500 when the RPC answers without the idempotent flag", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: {
+        participation_id: PARTICIPATION_ID,
+        waitlist_position: 1,
+        status: "waitlisted",
+      },
+      error: null,
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(500);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   // -- RPC error mapping --
@@ -368,6 +393,7 @@ describe("POST /api/participations/waitlist", () => {
         participation_id: PARTICIPATION_ID,
         waitlist_position: 2,
         status: "waitlisted",
+        idempotent: false,
       },
       error: null,
     });
@@ -450,12 +476,14 @@ describe("POST /api/participations/waitlist", () => {
 
   // -- The confirmation mail --
 
+  /** The only outcome that earns a mail: a row this call actually wrote. */
   function joinsWaitlist() {
     mockRpc.mockResolvedValue({
       data: {
         participation_id: PARTICIPATION_ID,
         waitlist_position: 3,
         status: "waitlisted",
+        idempotent: false,
       },
       error: null,
     });
@@ -496,6 +524,80 @@ describe("POST /api/participations/waitlist", () => {
     // The request carries no trusted Host, so the link falls back to the
     // canonical site URL rather than to anything the request could name.
     expect(htmlContent).toContain("https://test.sogverse.local/parent");
+  });
+
+  // A stale tab resubmitting, or a browser retrying: the RPC hands back the row
+  // that was already there, and the parent has already had this mail.
+  it("sends nothing on a replay of a join that already happened", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: {
+        participation_id: PARTICIPATION_ID,
+        waitlist_position: 3,
+        status: "waitlisted",
+        idempotent: true,
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      participationId: PARTICIPATION_ID,
+      waitlistPosition: 3,
+      status: "waitlisted",
+    });
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  // The second parent in a family, joining a gamer who already holds a seat.
+  // The RPC answers `active` with position 0 — "you're on the waitlist" would
+  // be untrue about a seat they already have.
+  it("sends nothing when the participant already holds a seat", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: {
+        participation_id: PARTICIPATION_ID,
+        waitlist_position: 0,
+        status: "active",
+        idempotent: true,
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).status).toBe("active");
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  // Same for a seat mid-purchase. Belt and braces with the flag above: neither
+  // condition is load-bearing alone, and a status guard that only worked on
+  // replays would miss a first-ever `reserving` answer.
+  it("sends nothing when the participant is mid-reservation", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: {
+        participation_id: PARTICIPATION_ID,
+        waitlist_position: 0,
+        status: "reserving",
+        idempotent: true,
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
   it("sends nothing when the join is refused", async () => {

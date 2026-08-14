@@ -58,6 +58,7 @@ vi.mock("@/lib/brevo", () => ({
 }));
 
 import { POST } from "@/app/api/auth/register/route";
+import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import { verifyEmailVerificationToken } from "@/lib/email-verification";
 import { asObject } from "../../helpers/json";
 
@@ -415,7 +416,12 @@ describe("POST /api/auth/register", () => {
     spy.mockRestore();
   });
 
-  it("answers 400 without echoing the auth provider's message on any other refusal", async () => {
+  // A rejected password is a 400 like any other refusal, but it carries a code,
+  // because the generic answer points the wrong way: it ends "if you already
+  // have an account, sign in instead", and no account exists — the fix is one
+  // field away. The form branches on the code to say so in the parent's
+  // language.
+  it("answers 400 with a distinguishable code when the password is refused", async () => {
     mockCreateUser.mockResolvedValue({
       data: null,
       error: { code: "weak_password", message: "Password is known to be leaked" },
@@ -426,7 +432,30 @@ describe("POST /api/auth/register", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
+    expect(data.code).toBe(REGISTER_WEAK_PASSWORD);
+    // Still not the provider's own sentence: it is raw English and sometimes
+    // names the check that fired.
     expect(data.error).not.toContain("leaked");
+    // And it must not send the parent looking for a sign-in they never made.
+    expect(data.error).not.toMatch(/sign in/i);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("answers 400 without echoing the auth provider's message on any other refusal", async () => {
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { code: "unexpected_failure", message: "database is on fire" },
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await POST(registerRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).not.toContain("fire");
+    // No code: nothing here is actionable, so the generic sentence stands.
+    expect(data.code).toBeUndefined();
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     spy.mockRestore();
   });

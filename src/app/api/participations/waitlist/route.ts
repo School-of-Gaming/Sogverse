@@ -63,14 +63,31 @@ export const POST = defineRoute({
     // The mail deliberately carries no position number. The card in My SOG
     // reads it live, and a number frozen into an inbox goes stale the moment
     // somebody ahead drops out — with no way for the reader to tell.
-    await sendProductConfirmationEmail({
-      client: supabase,
-      request,
-      customerId: profile.id,
-      participantId: body.participantId,
-      productId: body.productId,
-      mode: "waitlist",
-    });
+    //
+    // TWO CONDITIONS, GUARDING TWO DIFFERENT WRONG EMAILS.
+    //
+    // `!idempotent` — the RPC is idempotent by design and returns an existing
+    // row shape-identically to a fresh insert, so without this flag a stale tab
+    // resubmitting, or a browser retrying, mails a second "you're on the
+    // waitlist" for a place in line that was already taken and already
+    // confirmed. The flag is set inside the RPC, under the product gate lock, at
+    // the moment the INSERT either ran or did not; recomputing it out here would
+    // be a second query racing the first.
+    //
+    // `status === "waitlisted"` — the row that comes back is not always a place
+    // in line. A second parent in the family joining a gamer who already holds a
+    // seat gets `active` back (position 0), and mailing them "you're on the
+    // waitlist" would be flatly untrue about a seat they already have.
+    if (parsed.data.status === "waitlisted" && !parsed.data.idempotent) {
+      await sendProductConfirmationEmail({
+        client: supabase,
+        request,
+        customerId: profile.id,
+        participantId: body.participantId,
+        productId: body.productId,
+        mode: "waitlist",
+      });
+    }
 
     return {
       participationId: parsed.data.participation_id,

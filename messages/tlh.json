@@ -963,6 +963,7 @@
       "location": "Daq",
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
+      "weakPassword": "mu’ pegh nap yIlo’Qo’! mu’ pegh tIn yIchel, pagh latlhDaq Dalo’be’bogh wa’",
       "alreadyHaveAccount": "account DaHutlhpa’? <link>bI’el</link>"
     },
     "forgotPassword": {

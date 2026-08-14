@@ -915,6 +915,7 @@
       "location": "Location",
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
+      "weakPassword": "That password is too easy to guess — try a longer one, or one you don't use anywhere else",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
     },
     "forgotPassword": {

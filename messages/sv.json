@@ -915,6 +915,7 @@
       "location": "Plats",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
+      "weakPassword": "Det lösenordet är för lätt att gissa — prova ett längre, eller ett som du inte använder någon annanstans",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
     },
     "forgotPassword": {

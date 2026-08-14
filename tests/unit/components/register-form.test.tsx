@@ -20,7 +20,10 @@ import { mockSupabaseClient } from "../../setup";
  *  - the request carries the optional home location and the UI locale, which
  *    used to be a second client write and nothing at all respectively;
  *  - a 409 is the "you already have an account" case, and it gets the
- *    translated message rather than whatever the server wrote.
+ *    translated message rather than whatever the server wrote;
+ *  - a 400 carrying the weak-password code is the other refusal the parent can
+ *    act on, and it too gets its own translated message — the generic one tells
+ *    them to go and sign in, which is wrong when no account exists.
  *
  * The translations are stubbed to echo the key, so the assertions are about
  * which key the form reaches for, not about wording in `messages/`.
@@ -190,6 +193,29 @@ describe("RegisterForm", () => {
     // The status is what the form keys on — not the server's sentence, which is
     // in no particular language.
     expect(form.container.textContent).toContain("register.accountExists");
+    expect(form.button().disabled).toBe(false);
+    expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  // The status is a plain 400 — nothing is conflicting — so the code is the
+  // only thing separating this from the generic refusal, whose sentence would
+  // send the parent looking for a sign-in they never made.
+  it("shows the translated weak-password message when the route sends that code", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: "That password was refused as too weak.",
+          code: "WEAK_PASSWORD",
+        }),
+        { status: 400 },
+      ),
+    );
+    const form = renderForm();
+
+    await form.submit();
+
+    expect(form.container.textContent).toContain("register.weakPassword");
+    expect(form.container.textContent).not.toContain("refused as too weak");
     expect(form.button().disabled).toBe(false);
     expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled();
   });

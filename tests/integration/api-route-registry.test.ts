@@ -374,7 +374,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "public",
           reason:
-            "parents self-register, so no session can exist yet. It creates an account and mails a verification link to the address that account was created with — the same power, and the same exposure, as the educator registration route. The account it creates is never privileged: handle_new_user hardcodes the customer role, so no key in the body can influence what is granted",
+            "parents self-register, so no session can exist yet. It creates an account and mails a verification link to the address that account was created with — the same creation power as the educator registration route. The exposure is one step wider, on purpose: an address that already has an account gets a distinct 409, where the educator route collapses every refusal into one 400. That confirms account existence to anyone who asks, and it is accepted because registration has to tell the parent which of the two problems they have, and because the client-side flow this replaced leaked the same fact through the empty identities array signUp() returns. Unlike forgot-password, which answers 200 whatever it finds because nobody needs to be told anything by it. The account it creates is never privileged: handle_new_user hardcodes the customer role, so no key in the body can influence what is granted",
         },
         body: { kind: "json", schema: "registerParentBody" },
         test: TESTS.register,

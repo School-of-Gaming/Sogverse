@@ -49,3 +49,21 @@ export const registerParentBody = z.object({
 });
 
 export type RegisterParentBody = z.infer<typeof registerParentBody>;
+
+/**
+ * The machine-readable code `POST /api/auth/register` attaches to a refusal the
+ * registrant can fix in place: the auth provider rejected the *password* — too
+ * short for its policy, or found in a breach corpus.
+ *
+ * It exists because the generic refusal points the wrong way. Every other
+ * failure of this route ends "if you already have an account, sign in instead",
+ * which is unhelpful-but-harmless advice for most of them and actively wrong
+ * for this one: the account does not exist, the email is fine, and the parent
+ * needs to type a different password, not go looking for a sign-in they never
+ * made. The status stays 400 — nothing about the request is conflicting — and
+ * the code is what the form branches on to say so, in the parent's language.
+ *
+ * Same shape as the `PIN_REQUIRED` / `GEDU_UNCERTIFIED` codes the role gate
+ * attaches: a `code` beside the English `error`, which stays for the logs.
+ */
+export const REGISTER_WEAK_PASSWORD = "WEAK_PASSWORD";
