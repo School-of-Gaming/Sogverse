@@ -696,6 +696,7 @@
       "userNotFound": "Utilisateur introuvable.",
       "joined": "Inscrit le",
       "unknown": "Inconnu",
+      "referralCode": "Code de provenance",
       "ageYears": "{age, plural, one {# an} other {# ans}}",
       "gender": {
         "boy": "Garçon",

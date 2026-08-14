@@ -696,6 +696,7 @@
       "userNotFound": "Käyttäjää ei löytynyt.",
       "joined": "Liittynyt",
       "unknown": "Tuntematon",
+      "referralCode": "Viittauskoodi",
       "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
       "gender": {
         "boy": "Poika",

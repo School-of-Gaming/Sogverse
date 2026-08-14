@@ -17,7 +17,7 @@ import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useUpdateProfile } from "@/services/users";
-import { useAuth } from "@/providers";
+import { useAuth, useReferralCode } from "@/providers";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -41,6 +41,9 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const c = useTranslations('common');
   const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
+  // Where this visit came from, if a marketing link carried `?ref=`. Held in
+  // memory by the root provider since the landing page; never on this device.
+  const referralCode = useReferralCode();
   const updateProfile = useUpdateProfile();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,6 +88,17 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             // Composed for the Supabase Auth dashboard's display label.
             display_name: composedDisplayName,
             role: "customer",
+            // Marketing provenance, written by the handle_new_user trigger to
+            // profiles.referral_code and never updatable afterwards — which is
+            // why it travels in metadata rather than as a second client write
+            // like home_location_id below. A client write would need
+            // GRANT UPDATE(referral_code) TO authenticated, handing every user
+            // the permanent ability to rewrite their own attribution; the grant
+            // is the thing we are refusing, and the trigger is what lets us.
+            // The trigger re-sanitises whatever arrives, so a junk value costs
+            // this registration nothing. Omitted entirely when there is no code,
+            // so the column simply stays null.
+            ...(referralCode !== null ? { referral_code: referralCode } : {}),
           },
         },
       });

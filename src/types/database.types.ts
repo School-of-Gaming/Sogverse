@@ -1122,6 +1122,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
@@ -1136,6 +1137,7 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
@@ -1150,6 +1152,7 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
@@ -1586,6 +1589,7 @@ export type Database = {
           last_name: string | null
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           search_blob: string | null
           spoken_languages: string[] | null
@@ -1815,6 +1819,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
@@ -1842,6 +1847,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string

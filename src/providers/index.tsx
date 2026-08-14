@@ -7,6 +7,7 @@ import { AuthProvider } from "./auth-provider";
 import { LocaleProvider } from "./locale-provider";
 import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
+import { ReferralProvider } from "./referral-provider";
 import type { AuthenticatedUser, Profile } from "@/types";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
 
@@ -27,6 +28,13 @@ interface ProvidersProps {
    * client render matches SSR; the 30s tick takes over after mount.
    */
   initialNow: Date;
+  /**
+   * The sanitised `?ref=` code from this request's `x-referral-code` header, or
+   * null. Seeds `ReferralProvider` once and is never re-synced — the root layout
+   * re-runs mid-session (a locale change calls `router.refresh()`) against a URL
+   * that no longer carries the param. See `src/providers/referral-provider.tsx`.
+   */
+  initialReferralCode: string | null;
   messages: Record<string, unknown>;
 }
 
@@ -37,6 +45,7 @@ export function Providers({
   initialLocale,
   initialTimezone,
   initialNow,
+  initialReferralCode,
   messages,
 }: ProvidersProps) {
   return (
@@ -49,7 +58,9 @@ export function Providers({
           <LocaleProvider>
             <TimezoneProvider initialTimezone={initialTimezone}>
               <NowProvider initialNow={initialNow}>
-                {children}
+                <ReferralProvider initialReferralCode={initialReferralCode}>
+                  {children}
+                </ReferralProvider>
               </NowProvider>
             </TimezoneProvider>
           </LocaleProvider>
@@ -65,3 +76,4 @@ export { AuthProvider } from "./auth-provider";
 export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { TimezoneProvider, useTimezone } from "./timezone-provider";
 export { NowProvider, useNow } from "./now-provider";
+export { ReferralProvider, useReferralCode } from "./referral-provider";

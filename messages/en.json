@@ -696,6 +696,7 @@
       "userNotFound": "User not found.",
       "joined": "Joined",
       "unknown": "Unknown",
+      "referralCode": "Referral code",
       "ageYears": "{age, plural, one {# year old} other {# years old}}",
       "gender": {
         "boy": "Boy",

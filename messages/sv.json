@@ -696,6 +696,7 @@
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",
       "unknown": "Okänd",
+      "referralCode": "Hänvisningskod",
       "ageYears": "{age, plural, one {# år} other {# år}}",
       "gender": {
         "boy": "Pojke",

@@ -132,6 +132,11 @@ export default async function AdminUserDetailPage({
   // is also what the write route refuses as a target.
   const showGameAccounts = isGamer || isGedu;
 
+  // A display choice, not a data invariant: every account is born `customer`,
+  // so one promoted to admin after registering through a tagged link still
+  // carries its code — this page just doesn't surface it there.
+  const showReferralCode = (isCustomer || isGedu) && Boolean(profile.referral_code);
+
   const [
     linkedGamers,
     linkedParents,
@@ -257,6 +262,24 @@ export default async function AdminUserDetailPage({
               <span className="text-sm text-muted-foreground">
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale, { dateStyle: "medium", timeZone }) : t('unknown')}
               </span>
+              {/* Where this account came from — the marketing link's `?ref=`
+                  code, captured once at registration. Read-only on purpose:
+                  the column has no UPDATE grant, so an admin cannot edit it
+                  through the app either (see src/lib/referral.ts). Shown for
+                  parents and educators only — gamer rows are NULL by
+                  construction, and the value is omitted entirely rather than
+                  shown as an empty row, since the large majority of accounts
+                  will never carry one. */}
+              {showReferralCode && (
+                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {t('referralCode')}
+                  {/* Code-chip treatment matching the instant voice room's
+                      compact RoomLinkChip, so codes read as codes site-wide. */}
+                  <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold tracking-wider">
+                    {profile.referral_code}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
         </CardContent>

@@ -48,9 +48,15 @@ vi.mock("@supabase/ssr", () => ({
 
 // --- Helpers ---
 
-function createNextRequest(pathname: string, cookie?: string): NextRequest {
-  const headers = cookie ? { cookie } : undefined;
-  return new NextRequest(new URL(pathname, "http://localhost:3000"), { headers });
+function createNextRequest(
+  pathname: string,
+  cookie?: string,
+  extraHeaders?: Record<string, string>,
+): NextRequest {
+  const headers = { ...(cookie ? { cookie } : {}), ...extraHeaders };
+  return new NextRequest(new URL(pathname, "http://localhost:3000"), {
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
+  });
 }
 
 function mockUser(role: string) {
@@ -407,6 +413,82 @@ describe("proxy", () => {
       mockUser("gamer");
       const response = await proxy(createNextRequest("/shop"));
       expect(response.status).toBe(200);
+    });
+  });
+
+  // --- Referral attribution (?ref= → x-referral-code) ---
+  //
+  // The proxy mutates the request headers in place and hands the same request to
+  // NextResponse.next(), which is how the root layout sees them — so reading the
+  // header back off the request object after the call is reading exactly what
+  // the layout would get.
+
+  describe("referral code header", () => {
+    function referralHeaderAfter(request: NextRequest) {
+      return request.headers.get("x-referral-code");
+    }
+
+    it("emits the sanitised code for a ?ref= on the request", async () => {
+      mockNoUser();
+      const request = createNextRequest("/shop?ref=Paris-Nord");
+      await proxy(request);
+      expect(referralHeaderAfter(request)).toBe("paris-nord");
+    });
+
+    it("emits nothing when there is no ?ref= at all", async () => {
+      mockNoUser();
+      const request = createNextRequest("/shop");
+      await proxy(request);
+      expect(referralHeaderAfter(request)).toBeNull();
+    });
+
+    it("collapses a repeated ?ref= to absent rather than taking the first", async () => {
+      // `?ref=a&ref=b` is not a code. Reading it with `.get()` would silently
+      // store the first value, which is how `?ref=good&ref=<junk>` would become
+      // an attribution nobody authored.
+      mockNoUser();
+      const request = createNextRequest("/shop?ref=paris-nord&ref=lyon-sud");
+      await proxy(request);
+      expect(referralHeaderAfter(request)).toBeNull();
+    });
+
+    it("emits nothing for a malformed code", async () => {
+      mockNoUser();
+      const request = createNextRequest("/shop?ref=%3DSUM(A1)");
+      await proxy(request);
+      expect(referralHeaderAfter(request)).toBeNull();
+    });
+
+    it("deletes a browser-supplied x-referral-code header", async () => {
+      // The delete is unconditional and the set is conditional, so a header the
+      // client sent itself can never reach the layout unsanitised. Asserting the
+      // *deletion* rather than merely "we did not emit one" is the point: a
+      // conditional set alone would leave this value in place.
+      mockNoUser();
+      const request = createNextRequest("/shop", undefined, {
+        "x-referral-code": "forged-by-the-client",
+      });
+      await proxy(request);
+      expect(referralHeaderAfter(request)).toBeNull();
+    });
+
+    it("overwrites a browser-supplied header with the sanitised param", async () => {
+      mockNoUser();
+      const request = createNextRequest("/shop?ref=paris-nord", undefined, {
+        "x-referral-code": "forged-by-the-client",
+      });
+      await proxy(request);
+      expect(referralHeaderAfter(request)).toBe("paris-nord");
+    });
+
+    it("is set above every branch, so a redirecting request still carries it", async () => {
+      // The seed runs before the auth, PIN and role branches — including the
+      // ones that return early — so no path bypasses it.
+      mockUser("admin");
+      const request = createNextRequest("/parent?ref=paris-nord");
+      const response = await proxy(request);
+      expect(response.status).toBe(307);
+      expect(referralHeaderAfter(request)).toBe("paris-nord");
     });
   });
 

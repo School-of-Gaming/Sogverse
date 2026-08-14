@@ -80,13 +80,13 @@ Append-only, like the benchmark log. Format: `date · window · scope → headli
 Home and other `(public)` routes load with ~400–700ms TTFB on prod even on fast connections, because they're dynamically rendered per-request instead of served from the edge CDN. No single line is "wrong" — the chain from symptom to root cause:
 
 1. The home page is pure static content (translated copy + icons, no DB queries) — it *should* be edge-cacheable.
-2. But `src/app/layout.tsx:55-62` (root layout) calls `getUserWithProfile()`, `headers()`, `getLocale()`, and `cookies()`. Any one marks the whole subtree dynamic — Next can't pre-render output that depends on the request.
+2. But `src/app/layout.tsx:52-69` (root layout) calls `getUserWithProfile()`, `getLocale()`, `cookies()`, and `headers()` (the last reads the proxy-set referral-attribution header). Any one marks the whole subtree dynamic — Next can't pre-render output that depends on the request.
 3. So Vercel routes every visit through a serverless function: proxy + token refresh + Supabase auth round-trip + render + stream. ~400–700ms before first byte; the edge CDN never serves it from cache.
 4. The load-bearing dynamic read for *public* pages is `getLocale()` — the locale cookie tells next-intl which translation to emit, so the same URL returns different bodies per request, which Vercel won't cache. The auth call, CSP nonce, and timezone cookie are `(dashboard)` needs leaked into the root layout.
 
 **Architectural fix — locale-in-URL:** `/fi`, `/en`, `/sv` each get a statically pre-rendered home page; bare `/` does an edge redirect on `Accept-Language`. Detailed in the i18n CLAUDE.md (`src/i18n/`), which frames it as SEO/sharing — add the perf bullet when picked up: TTFB ~400–700ms → ~50ms globally, an edge CDN file.
 
-**What blocks a plain `export const dynamic = 'force-static'`:** even with locale solved you must (a) move `getUserWithProfile()` out of root layout into `(dashboard)/layout.tsx`, (b) skip CSP-nonce generation in `src/proxy.ts` for public paths (the per-request nonce makes every response unique HTML), and (c) scope the timezone cookie read similarly. None hard individually — the work is untangling four concerns currently mixed in the root layout.
+**What blocks a plain `export const dynamic = 'force-static'`:** even with locale solved you must (a) move `getUserWithProfile()` out of root layout into `(dashboard)/layout.tsx`, (b) skip CSP-nonce generation in `src/proxy.ts` for public paths (the per-request nonce makes every response unique HTML), (c) scope the timezone cookie read similarly, and (d) decide where the referral-attribution header read lives — it has to stay above every page, and it is a request header, so it cannot simply move to `(dashboard)`. None hard individually — the work is untangling five concerns currently mixed in the root layout.
 
 **Sequencing:**
 - *Small first win, no architecture change:* split layouts so `(public)/layout.tsx` doesn't call `getUserWithProfile()` — saves a Supabase round-trip (~50–150ms) per marketing hit without making anything static-eligible. Reversible.
