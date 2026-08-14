@@ -14,11 +14,20 @@ import {
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
 // sign-in/out flow; the rest are the gate itself, the profile chooser (where
-// they can drop to a gamer or choose to enter the PIN), and the email-reset
-// landing page.
+// they can drop to a gamer or choose to enter the PIN), and the two landing
+// pages an emailed link points at. `verifyEmail` is exempt for the same reason
+// `resetPin` is: the signed token in the URL is the authorization, the page
+// grants nothing a parent's session would have granted, and bouncing a parent
+// who opened their inbox on a locked device to the PIN pad would just lose the
+// link.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
   if (pathname.startsWith("/api/") || isAuthRoute) return true;
-  const exempt = [ROUTES.customer.unlock, ROUTES.selectProfile, ROUTES.resetPin];
+  const exempt = [
+    ROUTES.customer.unlock,
+    ROUTES.selectProfile,
+    ROUTES.resetPin,
+    ROUTES.verifyEmail,
+  ];
   return exempt.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
@@ -35,7 +44,11 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // match also covers the per-municipality pages (/schools/[slug]).
 // ROUTES.roblox is the partnership landing page — public so it can be shared
 // with partners, but kept out of robots.txt and the sitemap rather than gated.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.roblox, ROUTES.voice.prefix];
+// ROUTES.verifyEmail is public rather than an AUTH_ROUTE: an auth route bounces
+// a signed-in visitor to their dashboard, and the person clicking a
+// verification link is very often already signed in — that bounce would eat the
+// token before the page ever read it.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on

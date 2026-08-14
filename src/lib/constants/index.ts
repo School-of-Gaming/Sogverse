@@ -44,12 +44,43 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
  * reasoning as "My SOG" — locales translate the copy around a brand name, not
  * the name.
  *
- * Brand first, platform second: "School of Gaming" is what a parent recognises,
- * "Sogverse" is what they log in to. An inbox list truncates, and the half worth
- * keeping is the half they already know. See the brand-vs-platform rule in the
- * root CLAUDE.md.
+ * The brand alone, not the `School of Gaming – Sogverse` lockup: an inbox list
+ * truncates the sender column hard, and a lockup cut mid-word is worse than the
+ * short name that always fits. The full lockup lives in the email's own header,
+ * where there is room for it — see the brand-vs-platform rule in the root
+ * CLAUDE.md.
  */
-export const SENDER_NAME = "School of Gaming – Sogverse";
+export const SENDER_NAME = "School of Gaming";
+
+/**
+ * The half of the lockup that follows the brand: a SPACED EN DASH (U+2013 —
+ * never a hyphen `-`, never an em dash `—`) and then the platform name.
+ *
+ * It is split out for exactly one caller. The email layout's header sets the two
+ * names in different colours, so it cannot emit `BRAND_LOCKUP` as a single
+ * string — it composes the header from `SENDER_NAME` and this tail instead,
+ * which is what keeps every character of the lockup, the dash above all, in this
+ * module rather than in whatever markup happens to need it. A unit test asserts
+ * the composed header still equals `BRAND_LOCKUP` exactly.
+ */
+export const BRAND_LOCKUP_TAIL = " – Sogverse";
+
+/**
+ * Both names in one string, brand first and platform second — the form every
+ * string that has to carry both should use.
+ *
+ * Leading with the brand puts the name a stranger already recognises in the
+ * position that survives truncation, and leaves the word that needs explaining
+ * second. See the brand-vs-platform rule in the root CLAUDE.md for which of the
+ * two names a given string should reach for in the first place; this constant
+ * exists for the cases where the answer is "both".
+ *
+ * Naming the separator's codepoint (see `BRAND_LOCKUP_TAIL`) is half the point
+ * of having a constant at all: the character used to be left to whoever typed
+ * the string, which is how the codebase ended up with three different dashes in
+ * one lockup.
+ */
+export const BRAND_LOCKUP = `${SENDER_NAME}${BRAND_LOCKUP_TAIL}`;
 
 /**
  * The one customer-facing address, and the source of truth for it.

@@ -180,8 +180,8 @@ export function RegisterGeduForm({
           <Alert variant="info">
             <Info className="h-4 w-4 shrink-0" />
             <div>
-              <AlertTitle>{t("registerGedu.verificationAlertTitle")}</AlertTitle>
-              <AlertDescription>{t("registerGedu.verificationAlertDescription")}</AlertDescription>
+              <AlertTitle>{t("registerGedu.certificationAlertTitle")}</AlertTitle>
+              <AlertDescription>{t("registerGedu.certificationAlertDescription")}</AlertDescription>
             </div>
           </Alert>
           {error && (

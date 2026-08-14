@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { UserRow } from "@/components/admin/user-row";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
-import { useGeduVerificationMap } from "@/services/gedu";
+import { useGeduCertificationMap } from "@/services/gedu";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import type { Profile, UserRole } from "@/types";
 
@@ -19,7 +19,7 @@ export default function AdminUsersPage() {
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
   const { data: parentGamerLinks } = useParentGamerLinks();
-  const verification = useGeduVerificationMap();
+  const certification = useGeduCertificationMap();
 
   const ROLE_FILTERS: { value: UserRole; label: string }[] = [
     { value: "admin", label: c(ROLE_LABEL_KEYS.admin) },
@@ -185,15 +185,15 @@ export default function AdminUsersPage() {
                       key={user.id}
                       user={user}
                       linkedGamers={parentToGamers.get(user.id)}
-                      // An absent entry means "unverified" only when the read
+                      // An absent entry means "not certified" only when the read
                       // succeeded. If it failed we know nothing about anyone, so
-                      // the badge is withheld rather than asserted — printing
-                      // "Unverified" across every gedu is the precise wrong
-                      // answer, not a degraded one.
-                      unverified={
-                        !verification.isError &&
-                        user.role === "gedu" &&
-                        !(verification.map.get(user.id)?.verified ?? false)
+                      // the answer is `null` and the badge is withheld rather
+                      // than asserted — printing it across every gedu is the
+                      // precise wrong answer, not a degraded one.
+                      certified={
+                        certification.isError
+                          ? null
+                          : certification.map.get(user.id)?.certified ?? false
                       }
                     />
                   ))}

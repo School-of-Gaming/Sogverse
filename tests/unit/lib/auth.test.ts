@@ -159,37 +159,38 @@ describe("requireRole parent-PIN gate", () => {
   });
 });
 
-describe("requireRole verified-gedu gate", () => {
+describe("requireRole certified-gedu gate", () => {
   // The route handlers mock requireRole wholesale, so this is the only coverage
-  // of the unverified-gedu boundary's actual 403/500 logic. requireRole reads
-  // two rows for a gedu under the gate: the profile, then gedu_profiles.verified
-  // — both go through the same mocked from→select→eq→single chain, so the two
-  // `mockSingle` results are sequenced with mockResolvedValueOnce.
+  // of the uncertified-gedu boundary's actual 403/500 logic. requireRole reads
+  // two rows for a gedu under the gate: the profile, then
+  // gedu_profiles.certified — both go through the same mocked
+  // from→select→eq→single chain, so the two `mockSingle` results are sequenced
+  // with mockResolvedValueOnce.
   function gedu(sub = "ed1") {
     mockGetClaims.mockResolvedValue({ data: { claims: { sub } }, error: null });
   }
 
-  it("passes a verified gedu when requireVerifiedGedu is set", async () => {
+  it("passes a certified gedu when requireCertifiedGedu is set", async () => {
     gedu();
     mockSingle
       .mockResolvedValueOnce({ data: { id: "ed1", role: "gedu" }, error: null })
-      .mockResolvedValueOnce({ data: { verified: true }, error: null });
+      .mockResolvedValueOnce({ data: { certified: true }, error: null });
 
-    const res = await requireRole(["admin", "gedu"], { requireVerifiedGedu: true });
+    const res = await requireRole(["admin", "gedu"], { requireCertifiedGedu: true });
     expect(res).not.toBeInstanceOf(NextResponse);
     expect(mockFrom).toHaveBeenCalledWith("gedu_profiles");
     expect(mockEq).toHaveBeenCalledWith("user_id", "ed1");
   });
 
-  it("returns 403 GEDU_UNVERIFIED for an unverified gedu", async () => {
+  it("returns 403 GEDU_UNCERTIFIED for an uncertified gedu", async () => {
     gedu();
     mockSingle
       .mockResolvedValueOnce({ data: { id: "ed1", role: "gedu" }, error: null })
-      .mockResolvedValueOnce({ data: { verified: false }, error: null });
+      .mockResolvedValueOnce({ data: { certified: false }, error: null });
 
-    const res = await requireRole(["admin", "gedu"], { requireVerifiedGedu: true });
+    const res = await requireRole(["admin", "gedu"], { requireCertifiedGedu: true });
     expect(expectResponse(res).status).toBe(403);
-    expect(await expectResponse(res).json()).toMatchObject({ code: "GEDU_UNVERIFIED" });
+    expect(await expectResponse(res).json()).toMatchObject({ code: "GEDU_UNCERTIFIED" });
   });
 
   it("returns 500 when the gedu_profiles lookup errors", async () => {
@@ -198,11 +199,11 @@ describe("requireRole verified-gedu gate", () => {
       .mockResolvedValueOnce({ data: { id: "ed1", role: "gedu" }, error: null })
       .mockResolvedValueOnce({ data: null, error: new Error("db down") });
 
-    const res = await requireRole(["admin", "gedu"], { requireVerifiedGedu: true });
+    const res = await requireRole(["admin", "gedu"], { requireCertifiedGedu: true });
     expect(expectResponse(res).status).toBe(500);
   });
 
-  it("does not gate a gedu when requireVerifiedGedu is not set (no second lookup)", async () => {
+  it("does not gate a gedu when requireCertifiedGedu is not set (no second lookup)", async () => {
     gedu();
     mockSingle.mockResolvedValue({ data: { id: "ed1", role: "gedu" }, error: null });
 
@@ -211,11 +212,11 @@ describe("requireRole verified-gedu gate", () => {
     expect(mockFrom).not.toHaveBeenCalledWith("gedu_profiles");
   });
 
-  it("never gates an admin, even with requireVerifiedGedu set (no gedu lookup)", async () => {
+  it("never gates an admin, even with requireCertifiedGedu set (no gedu lookup)", async () => {
     mockGetClaims.mockResolvedValue({ data: { claims: { sub: "a1" } }, error: null });
     mockSingle.mockResolvedValue({ data: { id: "a1", role: "admin" }, error: null });
 
-    const res = await requireRole(["admin", "gedu"], { requireVerifiedGedu: true });
+    const res = await requireRole(["admin", "gedu"], { requireCertifiedGedu: true });
     expect(res).not.toBeInstanceOf(NextResponse);
     expect(mockFrom).not.toHaveBeenCalledWith("gedu_profiles");
   });

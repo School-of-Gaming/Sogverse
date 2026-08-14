@@ -47,6 +47,7 @@ function profile(id: string, firstName: string, role: UserRole): Profile {
     first_name: firstName,
     last_name: "Virtanen",
     email: `${firstName.toLowerCase()}@example.test`,
+    email_verified_at: null,
     role,
     phone: null,
     currency: null,

@@ -7,6 +7,13 @@ import {
   buildUnenrollmentGeduEmail,
 } from "./enrollment-changes";
 import { buildPasswordResetEmail } from "./password-reset";
+import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
+import {
+  buildProductConfirmationEmail,
+  productConfirmationSubject,
+  PRODUCT_CONFIRMATION_MODES,
+} from "./product-confirmation";
+import { buildVerifyEmailEmail } from "./verify-email";
 import type { EmailTranslator } from "./translator";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SUPPORT_EMAIL } from "@/lib/constants";
@@ -122,6 +129,23 @@ const SEAT_OPTIONS = [
 ];
 
 /**
+ * Both derived from their source tuples rather than hand-listed, so a new
+ * product type from codegen — or a new confirmation mode — shows up in the
+ * testing form without anyone remembering to add it. The labels are the raw
+ * values: this form is admin-only developer-facing tooling, and `consumer_club`
+ * is the name the person testing this actually works with.
+ */
+const PRODUCT_TYPE_OPTIONS = Constants.public.Enums.product_type.map((value) => ({
+  label: value,
+  value,
+}));
+
+const PRODUCT_CONFIRMATION_MODE_OPTIONS = PRODUCT_CONFIRMATION_MODES.map((value) => ({
+  label: value,
+  value,
+}));
+
+/**
  * Expand the seat select into the boolean the builders take, defaulting to the
  * child case — which is what an unfilled field in the testing UI means, and what
  * every seat was before for-parents products existed.
@@ -139,6 +163,22 @@ function resolveEnrollmentParent(params: Record<string, string>): TemplateParams
 function resolveUnenrollmentParent(params: Record<string, string>): TemplateParams {
   const { seat, ...rest } = params;
   return { ...rest, isSelfSeat: seat === "self" };
+}
+
+/**
+ * The product-confirmation form's two derived values. The seat select becomes
+ * the same boolean the enrollment mails take, and the price is cleared on the
+ * modes that state no amount — so a test render of a free signup or a waitlist
+ * join carries no price at all, which is what the live mail carries.
+ */
+function resolveProductConfirmation(params: Record<string, string>): TemplateParams {
+  const { seat, priceAmount, ...rest } = params;
+  const statesPrice = rest.mode === "subscription" || rest.mode === "upfront";
+  return {
+    ...rest,
+    isSelfSeat: seat === "self",
+    priceAmount: statesPrice ? priceAmount : null,
+  };
 }
 
 function resolveMinecraftStatus(params: Record<string, string>): Record<string, string | null> {
@@ -208,6 +248,44 @@ const unenrollmentGeduParamsSchema = z.object({
   minecraftUuid: z.string().nullable(),
 });
 
+const welcomeParentParamsSchema = z.object({
+  firstName: z.string().min(1),
+  verificationUrl: z.string().url(),
+  dashboardUrl: z.string().url(),
+  shopUrl: z.string().url(),
+  settingsUrl: z.string().url(),
+});
+
+const welcomeGeduParamsSchema = z.object({
+  firstName: z.string().min(1),
+  verificationUrl: z.string().url(),
+  dashboardUrl: z.string().url(),
+  settingsUrl: z.string().url(),
+});
+
+/**
+ * `priceAmount` is nullable rather than required-per-mode, and that is a
+ * deliberate flattening: a discriminated union would encode "subscription
+ * implies an amount" in the schema, at the cost of a params type the registry's
+ * single param-bag shape can no longer hold. The builder makes the same
+ * guarantee where it matters — a paid mode with no amount prints no price line
+ * rather than an empty one.
+ */
+const productConfirmationParamsSchema = z.object({
+  participantName: z.string().min(1),
+  isSelfSeat: z.boolean(),
+  productName: z.string().min(1),
+  productType: z.enum(Constants.public.Enums.product_type),
+  mode: z.enum(PRODUCT_CONFIRMATION_MODES),
+  priceAmount: z.string().nullable(),
+  dashboardUrl: z.string().url(),
+});
+
+const verifyEmailParamsSchema = z.object({
+  firstName: z.string().min(1),
+  verificationUrl: z.string().url(),
+});
+
 // --- Single source of truth for all email templates ---
 
 export const templateRegistry: Record<string, TemplateDefinition> = {
@@ -223,7 +301,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   feedback: defineTemplate({
     label: "Feedback",
     fields: [
-      { key: "userName", label: "User Name", placeholder: "Jane Doe" },
+      { key: "userName", label: "User Name", placeholder: "Marja Virtanen" },
       {
         key: "userRole",
         label: "User Role",
@@ -235,7 +313,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
           { label: "Admin", value: "admin" },
         ],
       },
-      { key: "userEmail", label: "User Email", placeholder: "jane@example.com" },
+      { key: "userEmail", label: "User Email", placeholder: "marja@example.com" },
       { key: "message", label: "Message", placeholder: "Great product!" },
     ],
     schema: feedbackParamsSchema,
@@ -252,8 +330,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   enrollmentParent: defineTemplate({
     label: "Enrollment (Parent)",
     fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "parentName", label: "Parent Name", placeholder: "Marja" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
@@ -275,7 +353,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Enrollment (Gedu)",
     fields: [
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
     ],
@@ -287,8 +365,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   unenrollmentParent: defineTemplate({
     label: "Unenrollment (Parent)",
     fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "parentName", label: "Parent Name", placeholder: "Marja" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
@@ -305,7 +383,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Unenrollment (Gedu)",
     fields: [
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
     ],
@@ -313,5 +391,58 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     build: (p, t, locale) => buildUnenrollmentGeduEmail(t, locale, p),
     subject: (p, t) => t("unenrollmentGedu.subject", { participantName: p.participantName, productName: p.productName }),
     resolveParams: resolveMinecraftStatus,
+  }),
+  welcomeParent: defineTemplate({
+    label: "Welcome (Parent)",
+    fields: [
+      { key: "firstName", label: "First Name", placeholder: "Jane" },
+      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+      { key: "shopUrl", label: "Shop URL", placeholder: "https://sogverse.sog.gg/shop" },
+      { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
+    ],
+    schema: welcomeParentParamsSchema,
+    build: (p, t, locale) => buildWelcomeParentEmail(t, locale, p),
+    subject: (_p, t) => t("welcomeParent.subject"),
+  }),
+  welcomeGedu: defineTemplate({
+    label: "Welcome (Gedu)",
+    fields: [
+      { key: "firstName", label: "First Name", placeholder: "Alice" },
+      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/gedu" },
+      { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
+    ],
+    schema: welcomeGeduParamsSchema,
+    build: (p, t, locale) => buildWelcomeGeduEmail(t, locale, p),
+    subject: (_p, t) => t("welcomeGedu.subject"),
+  }),
+  productConfirmation: defineTemplate({
+    label: "Product Confirmation",
+    fields: [
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
+      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
+      { key: "mode", label: "Outcome", type: "select", options: PRODUCT_CONFIRMATION_MODE_OPTIONS },
+      { key: "priceAmount", label: "Formatted Price", placeholder: "€40.00" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+    ],
+    schema: productConfirmationParamsSchema,
+    build: (p, t, locale) => buildProductConfirmationEmail(t, locale, p),
+    // Shared with the live sends rather than restated here — see the function's
+    // own note for what the subject has to agree with.
+    subject: (p, t) => productConfirmationSubject(t, p),
+    resolveParams: resolveProductConfirmation,
+  }),
+  verifyEmail: defineTemplate({
+    label: "Verify Email",
+    fields: [
+      { key: "firstName", label: "First Name", placeholder: "Jane" },
+      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+    ],
+    schema: verifyEmailParamsSchema,
+    build: (p, t, locale) => buildVerifyEmailEmail(t, locale, p),
+    subject: (_p, t) => t("verifyEmail.subject"),
   }),
 };

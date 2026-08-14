@@ -43,7 +43,7 @@ export function GeduDashboardScene({
 
   return (
     <GeduDashboardPageBody
-      verified={fixture.verified}
+      certified={fixture.certified}
       assignments={fixture.assignments}
       instantRoomCard={
         <CreateInstantRoomCardView

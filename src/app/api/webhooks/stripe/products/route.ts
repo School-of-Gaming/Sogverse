@@ -3,6 +3,8 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmPaidParticipationRpcResult } from "@/services/participations/participations.contracts";
+import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
+import { isSupportedCurrency } from "@/lib/constants/currency";
 import type { Json, PaymentPurpose } from "@/types";
 
 const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutCompleted(admin, event);
+        await handleCheckoutCompleted(admin, event, request);
         break;
 
       // No `checkout.session.expired` case on purpose: an abandoned session
@@ -86,6 +88,7 @@ type Admin = ReturnType<typeof createAdminClient>;
 async function handleCheckoutCompleted(
   admin: Admin,
   event: Stripe.CheckoutSessionCompletedEvent,
+  request: Request,
 ) {
   const session = event.data.object;
   // A completion is acted on when money arrived — OR when a subscription-mode
@@ -305,6 +308,46 @@ async function handleCheckoutCompleted(
       participationId: confirmJson.participation_id,
     },
   });
+
+  // The confirmation mail, and the ONE thing in this handler that is not
+  // naturally idempotent.
+  //
+  // **What guards it is `idempotent === false`, and nothing else can.** Stripe
+  // redelivers, and a redelivery that gets this far — because the first attempt
+  // died before writing its payment row, so the guard at the top of the handler
+  // did not short-circuit it — calls the RPC again and is answered `confirmed`
+  // with the same participation id. The two answers are indistinguishable
+  // except for this flag, which the function sets from whether it INSERTed or
+  // recognised the row this very Checkout Session had already bought. Keying on
+  // the id, or on the absence of a payment row, would send the mail twice.
+  //
+  // **Last, after every write.** The payment row is this handler's commit
+  // marker; putting a third-party round trip in front of it would add latency
+  // and a failure surface to the middle of a money path. The accepted cost is
+  // the narrow case where a delivery creates the participation and then fails a
+  // later write: its retry reports `idempotent`, so no mail is ever sent for
+  // that seat. The seat itself is intact and visible in My SOG, which is the
+  // outcome that matters.
+  if (!confirmJson.idempotent) {
+    await sendProductConfirmationEmail({
+      client: admin,
+      // Stripe's request, deliberately. `getOrigin` honours a Host only when it
+      // matches a trusted source, so this resolves either to our own deployment
+      // host or to the canonical NEXT_PUBLIC_SITE_URL — both correct, and
+      // neither reachable by anything Stripe sends.
+      request,
+      customerId,
+      participantId,
+      productId,
+      // The price shape, from the shape that was bought: a club is a monthly
+      // subscription, a camp or event is paid once.
+      mode: isSubscription ? "subscription" : "upfront",
+      // Our integration currency, written onto the session's metadata when it
+      // was built. Anything outside the supported set cannot be formatted, and
+      // the mail then states no price rather than a wrong one.
+      currency: isSupportedCurrency(currency) ? currency : undefined,
+    });
+  }
 }
 
 /**

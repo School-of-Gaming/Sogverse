@@ -168,6 +168,15 @@ export const ROUTES = {
   // `?token=` query param (NOT a Supabase recovery hash like resetPassword). The
   // token is single-use — bound to the current PIN hash; see pin-session.ts.
   resetPin: "/reset-pin",
+  /**
+   * Landing page for the email-verification link. Public and session-agnostic:
+   * the signed `?token=` carried from the recipient's inbox IS the
+   * authorization, so the page must render the same for a signed-in reader, a
+   * signed-out one, and a locked parent (it is PIN-exempt in the proxy for
+   * exactly that reason — a parent clicking the link on their phone would
+   * otherwise be bounced to the PIN pad and never verify).
+   */
+  verifyEmail: "/verify-email",
   selectProfile: "/select-profile",
   help: "/help",
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */

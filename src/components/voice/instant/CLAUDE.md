@@ -48,23 +48,23 @@ label, not identity, and every client gate is a positive `role === "admin" || ro
 signed-in non-mod would light up the cosmetic mod UI ("End for everyone") that the server
 then 403s. Identity is where "join as yourself" lives: `userId` + `displayName`.
 
-**Rule: An unverified gedu is not a moderator here.** A gedu self-registers with broad
-platform access but stays unverified until an admin approves them (see
+**Rule: An uncertified gedu is not a moderator here.** A gedu self-registers with broad
+platform access but stays uncertified until an admin approves them (see
 `../../../services/gedu/CLAUDE.md`), and moderating an instant room is gedu-initiated — so
 the gate is **server-side**, on all three mod surfaces: `create` and `end` 403 (via
-`requireVerifiedGedu` on `requireRole`), and the public `token` route gives an unverified
-gedu guest permissions (no `is_owner`), failing closed to guest on any verification-lookup
+`requireCertifiedGedu` on `requireRole`), and the public `token` route gives an uncertified
+gedu guest permissions (no `is_owner`), failing closed to guest on any certification-lookup
 error. What that error costs them is ownership, never their name — they are signed in, so
-they still join as themselves. The check is `isGeduVerified`
+they still join as themselves. The check is `isGeduCertified`
 (`../../../services/gedu/gedu-profiles.service.ts`).
 
 One UX surface mirrors the boundary (UX only — the server gates above are the real
-boundary): the `/gedu` dashboard hides the create card and shows an "awaiting verification"
+boundary): the `/gedu` dashboard hides the create card and shows an awaiting-approval
 notice. The join lobby no longer mirrors anything, because it no longer asks the question:
 its only conditional element is the name input, and that turns on *sign-in*, not on
 moderation.
 
-**One predicate, one consumer.** The owner-eligibility decision (admin or verified gedu →
+**One predicate, one consumer.** The owner-eligibility decision (admin or certified gedu →
 moderator identity, else guest) lives in a single `instantRoomModerator`
 (`../../../lib/voice/instant-room-moderator.ts`), and the token route is the only thing
 that reads it. The `/voice/[code]` page used to read it as well, so the lobby could show
@@ -103,7 +103,7 @@ The room is open by design; defenses target privilege escalation and bounding bl
   room-scoped pseudonymous id (an HMAC of profile id + room code) — at the cost of the
   same person wearing a different identicon per room and per surface.
 - **Signed-out guest UUIDs are server-generated** via `crypto.randomUUID()` so a guest can't choose a UUID that yields a targeted identicon. For them the lobby's preview identicon uses a throwaway client UUID and intentionally won't match the in-call one — identicons are abstract, not identity. A signed-in joiner has no such gap: their lobby preview and their in-call avatar are both their `profiles.id`.
-- **Create / end require admin or a verified gedu** (`requireRole(["admin","gedu"], { requireVerifiedGedu: true })`). End has no per-room ownership check — any mod with the code can end any room (mods are trusted; there's no room-ownership concept). End treats a Daily 404 as a no-op success.
+- **Create / end require admin or a certified gedu** (`requireRole(["admin","gedu"], { requireCertifiedGedu: true })`). End has no per-room ownership check — any mod with the code can end any room (mods are trusted; there's no room-ownership concept). End treats a Daily 404 as a no-op success.
 - **Code enumeration** is a real but bounded risk: brute-forcing ~1M codes finds active rooms, but a hit only joins as a guest and a mod can end the call. Per-IP rate limiting on the token endpoint is the mitigation (not yet built).
 - **CSRF on the public token endpoint** doesn't meaningfully apply: it's unauthenticated, mints only a public-room token, and SameSite=Lax keeps the admin session off cross-site POSTs. Accepted.
 
@@ -111,10 +111,10 @@ The room is open by design; defenses target privilege escalation and bounding bl
 
 | Route | Method | Auth | Notes |
 |---|---|---|---|
-| `create` | POST | admin / verified gedu | No body. Mints code, creates Daily room with `exp = now + INSTANT_ROOM_EXP_SECONDS`, retries on duplicate name. Returns `{ code }`. Unverified gedu → 403 `GEDU_UNVERIFIED`. |
+| `create` | POST | admin / certified gedu | No body. Mints code, creates Daily room with `exp = now + INSTANT_ROOM_EXP_SECONDS`, retries on duplicate name. Returns `{ code }`. Uncertified gedu → 403 `GEDU_UNCERTIFIED`. |
 | `token` | POST | **public** | Body `{ code, displayName, micOn, cameraOn }`. Validates code, detects auth, verifies the Daily room exists (404 → `{ error: "room_not_found", code }`), mints a token. `displayName` is read **only** when no session resolves to a profile — required and length-checked there, and ignored entirely for anyone signed in (moderator or not). Returns `{ token, roomUrl, role, userId, displayName }`. |
 | `exists` | GET | **public** | `?code=`. Cheap pre-flight so the not-found screen can render before burning the camera/mic prompt. **Returns 204 (not 200) on success, 404 when missing.** Clients must branch on `=== 404`, not `=== 200`. |
-| `end` | POST | admin / verified gedu | Body `{ code }`. `DELETE`s the Daily room (ejects all participants). Daily 404 → 204 no-op. Returns 204. |
+| `end` | POST | admin / certified gedu | Body `{ code }`. `DELETE`s the Daily room (ejects all participants). Daily 404 → 204 no-op. Returns 204. |
 
 `micOn`/`cameraOn` default to mic-on / camera-off when absent. Token `exp` matches `INSTANT_ROOM_EXP_SECONDS` from each participant's own join; the room's `eject_at_room_exp` lands first in practice, so the per-token cap is just a per-participant ceiling.
 

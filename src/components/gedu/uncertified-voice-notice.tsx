@@ -10,24 +10,24 @@ import {
 
 /**
  * Shown in place of the instant-room create card while a gedu is awaiting admin
- * verification. The real boundary is server-side (the create route 403s); this
- * just explains why the button isn't here, so an unverified gedu isn't left
+ * certification. The real boundary is server-side (the create route 403s); this
+ * just explains why the button isn't here, so an uncertified gedu isn't left
  * clicking a button that fails.
  *
  * It sits in its own module so the dashboard's draft body can render it without
  * importing the live body — which would pull the live body's query-bound
  * sections along with it.
  */
-export function UnverifiedVoiceNotice() {
+export function UncertifiedVoiceNotice() {
   const t = useTranslations("voice.instant.createPage");
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-          {t("unverifiedTitle")}
+          {t("uncertifiedTitle")}
         </CardTitle>
-        <CardDescription>{t("unverifiedBody")}</CardDescription>
+        <CardDescription>{t("uncertifiedBody")}</CardDescription>
       </CardHeader>
       <CardContent />
     </Card>

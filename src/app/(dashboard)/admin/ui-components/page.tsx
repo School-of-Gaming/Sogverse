@@ -1873,14 +1873,36 @@ export default function AdminUIComponentsPage() {
           </p>
           <div className="space-y-4">
             <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", first_name: "Jane", last_name: "Doe", email: "jane@example.com", role: "customer" }}
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", first_name: "Jane", last_name: "Doe", email: "jane@example.com", email_verified_at: "2026-03-04T09:12:00.000Z", role: "customer" }}
               linkedGamers={[
-                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", last_name: "Doe", email: null, role: "gamer" },
-                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", last_name: "Doe", email: null, role: "gamer" },
+                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
+                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
               ]}
             />
+            {/* A certified gedu whose address is confirmed too — the row that
+                carries both marks, and the reason their order is fixed. */}
             <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", first_name: "Sam", last_name: "Smith", email: "sam@example.com", role: "gedu" }}
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", first_name: "Sam", last_name: "Smith", email: "sam@example.com", email_verified_at: "2026-02-19T17:40:00.000Z", role: "gedu" }}
+              certified
+            />
+            {/* The same row with a known "no": an educator waiting on an admin,
+                shield withheld. */}
+            <UserRow
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000004", first_name: "Riikka", last_name: "Laine", email: "riikka@example.com", email_verified_at: "2026-05-02T08:05:00.000Z", role: "gedu" }}
+              certified={false}
+            />
+            {/* And the third state: the certification read failed, so nobody's
+                status is known. It has to look like the "no" above rather than
+                like the "yes" — a mark is a claim, and there is nobody here to
+                make it. */}
+            <UserRow
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000005", first_name: "Petri", last_name: "Koskinen", email: "petri@example.com", email_verified_at: null, role: "gedu" }}
+              certified={null}
+            />
+            {/* A parent who has never confirmed their address: no mark at all,
+                which is the ordinary state of a new account. */}
+            <UserRow
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000003", first_name: "Otto", last_name: "Nieminen", email: "otto@example.com", email_verified_at: null, role: "customer" }}
             />
           </div>
         </SubSection>

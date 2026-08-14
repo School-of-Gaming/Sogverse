@@ -7,9 +7,22 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // only after every rejectable precondition has been checked, a failed promotion
 // leaves no orphaned auth user behind, and no database text reaches the caller.
 
+// The welcome mail's verification token is an HMAC over PIN_COOKIE_SECRET, read
+// lazily at mint time — set before the route is imported. The links come from
+// getOrigin(), which falls back to NEXT_PUBLIC_SITE_URL when the request carries
+// no trusted Host (these mock requests don't).
+process.env.PIN_COOKIE_SECRET = "route-test-gedu-register-secret";
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
+}));
+
+const mockSendTransactionalEmail = vi.fn();
+vi.mock("@/lib/brevo", () => ({
+  sendTransactionalEmail: (...args: unknown[]) =>
+    mockSendTransactionalEmail(...args),
 }));
 
 const mockCreateUser = vi.fn();
@@ -50,6 +63,7 @@ vi.mock("@/lib/roblox", async (importOriginal) => {
 });
 
 import { POST } from "@/app/api/gedu/register/route";
+import { verifyEmailVerificationToken } from "@/lib/email-verification";
 import { asObject, getString } from "../../helpers/json";
 
 const NEW_USER_ID = "99999999-9999-4999-8999-999999999999";
@@ -87,12 +101,21 @@ describe("POST /api/gedu/register", () => {
       headshotUrl: null,
     });
     mockCreateUser.mockResolvedValue({
-      data: { user: { id: NEW_USER_ID } },
+      data: { user: { id: NEW_USER_ID, email: validBody.email } },
       error: null,
     });
     mockRpc.mockResolvedValue({ error: null });
     mockDeleteUser.mockResolvedValue({ error: null });
+    mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
+
+  /** The single link the welcome mail carries a signed token on. */
+  function sentVerificationUrl(): string {
+    const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+    const match = /https:\/\/[^"']*\/verify-email\?token=[^"'&]*/.exec(htmlContent);
+    expect(match, "no verification link in the sent mail").not.toBeNull();
+    return match![0];
+  }
 
   // -- Public posture --
 
@@ -318,6 +341,97 @@ describe("POST /api/gedu/register", () => {
 
     const args = asObject(mockRpc.mock.calls[0][1]);
     expect(Object.keys(args)).not.toContain("p_referral_code");
+  });
+
+  // -- The welcome mail --
+  //
+  // The last step, and the only one whose failure the educator never hears
+  // about: the account is what they asked for and it exists by this point.
+
+  it("mails a link whose token verifies against the address Supabase stored", async () => {
+    await POST(registerRequest(validBody));
+
+    const token =
+      new URL(sentVerificationUrl()).searchParams.get("token") ?? "";
+    await expect(
+      verifyEmailVerificationToken(token, validBody.email),
+    ).resolves.toBe(NEW_USER_ID);
+  });
+
+  it("sends under the shared sender identity, replying to the support inbox", async () => {
+    await POST(registerRequest(validBody));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toEmail: validBody.email,
+        fromEmail: "sogverse@sog.gg",
+        fromName: "School of Gaming",
+        replyToEmail: "help@sog.gg",
+      }),
+    );
+  });
+
+  it("points the educator at their own dashboard and settings", async () => {
+    await POST(registerRequest(validBody));
+
+    const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).toContain("https://test.sogverse.local/gedu");
+    expect(htmlContent).toContain("https://test.sogverse.local/settings");
+  });
+
+  it("renders the mail in the locale the form was being read in", async () => {
+    await POST(registerRequest(validBody));
+
+    // The fixture registers in Finnish, so an English subject would mean the
+    // body's locale never reached the translator.
+    const { subject } = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(subject).not.toBe(
+      "Welcome to School of Gaming – your Gedu account",
+    );
+  });
+
+  // Regression guard: the emailed link carries a signed token, so an origin
+  // taken from the attacker-controllable Host would turn it into a phishing URL
+  // the recipient has every reason to trust.
+  it("builds the links off the trusted origin, ignoring a spoofed Host", async () => {
+    await POST(
+      new Request("https://evil.com/api/gedu/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", host: "evil.com" },
+        body: JSON.stringify(validBody),
+      }),
+    );
+
+    const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).toContain(
+      "https://test.sogverse.local/verify-email?token=",
+    );
+    expect(htmlContent).not.toContain("evil.com");
+  });
+
+  it("succeeds when the send throws, and keeps the account", async () => {
+    mockSendTransactionalEmail.mockRejectedValue(new Error("Brevo 502"));
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ userId: NEW_USER_ID });
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("sends nothing when the promotion failed and the account was rolled back", async () => {
+    mockRpc.mockResolvedValue({
+      error: { code: "23514", message: "check constraint" },
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await POST(registerRequest(validBody));
+
+    expect(mockDeleteUser).toHaveBeenCalledWith(NEW_USER_ID);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   // -- Failure --

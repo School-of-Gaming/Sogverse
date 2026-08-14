@@ -263,7 +263,7 @@ describe("POST /api/auth/pin/forgot", () => {
       // reads: someone stuck at the PIN gate replying here needs support, not
       // the unattended sending address.
       fromEmail: "sogverse@sog.gg",
-      fromName: "School of Gaming – Sogverse",
+      fromName: "School of Gaming",
       replyToEmail: "help@sog.gg",
     });
   });

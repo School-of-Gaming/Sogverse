@@ -220,10 +220,10 @@ export const PREVIEW_SCENES = [
           "The single-noun composition most gedus actually have — one “Clubs” heading, one pill entry, camps and events absent rather than empty — and seven clubs in it, so how the cards tile and wrap is visible at both the two-column and three-column widths. Their next sessions are spread across the week, a couple carry a backlog, and one is live.",
       },
       {
-        slug: "unverified",
-        label: "Awaiting verification",
+        slug: "uncertified",
+        label: "Awaiting certification",
         description:
-          "A brand-new account an admin has not approved yet: the instant-room panel is replaced by the verification notice, and there are no cards at all, because verification is what gates group assignment. So this is also the empty state — a “Clubs” heading with its pill entry and one line saying a group will appear here once one is assigned, because a gedu with no assignments has no noun of their own and clubs is the default. Neither half can coexist with the default scenario.",
+          "A brand-new account an admin has not approved yet: the instant-room panel is replaced by the awaiting-approval notice, and there are no cards at all, because certification is what gates group assignment. So this is also the empty state — a “Clubs” heading with its pill entry and one line saying a group will appear here once one is assigned, because a gedu with no assignments has no noun of their own and clubs is the default. Neither half can coexist with the default scenario.",
       },
     ],
   },

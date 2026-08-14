@@ -18,8 +18,8 @@ export const POST = defineRoute({
   posture: "role-gated",
   roles: ["admin", "gedu"],
   forbiddenMessage: "Only admins and educators can end voice rooms",
-  // An unverified gedu is not a trusted moderator — same boundary as create.
-  requireVerifiedGedu: true,
+  // An uncertified gedu is not a trusted moderator — same boundary as create.
+  requireCertifiedGedu: true,
   body: z.object({ code: z.string() }),
 
   handler: async ({ body }) => {

@@ -6,6 +6,7 @@ import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { REFERRAL_CODE_HEADER } from "@/lib/referral";
+import { BRAND_LOCKUP } from "@/lib/constants";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { LayoutShiftTripwire } from "@/components/dev/layout-shift-tripwire";
@@ -19,7 +20,13 @@ const pressStart2P = Press_Start_2P({
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
-  const title = t("title");
+  // Both names, brand first — and not a translated string. It was one in every
+  // locale file and identical in all five, which is what a mark being copied
+  // rather than translated looks like; locales localise the copy around it. The
+  // sub-page template below and `og:site_name` still say Sogverse alone, which
+  // is an open information-architecture question rather than an oversight — see
+  // the brand-vs-platform rule in the root CLAUDE.md.
+  const title = BRAND_LOCKUP;
   const description = t("description");
 
   return {

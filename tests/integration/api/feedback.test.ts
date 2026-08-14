@@ -324,7 +324,7 @@ describe("POST /api/feedback", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         fromEmail: "sogverse@sog.gg",
-        fromName: "School of Gaming – Sogverse",
+        fromName: "School of Gaming",
       })
     );
   });

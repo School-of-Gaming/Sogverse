@@ -65,6 +65,14 @@ export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["In
 // feedback_submissions
 export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
 
+// verification_email_requests — the rate-limit ledger behind the
+// verification-email send, and the sibling of the table above in every respect
+// but one: a feedback row is the feedback, while these rows exist only to be
+// counted by `request_my_verification_email` (which prunes its own expired ones
+// on the way past). No application surface reads them; the alias is here
+// because the DB test asserts against the row shape.
+export type VerificationEmailRequest = Database["public"]["Tables"]["verification_email_requests"]["Row"];
+
 // spoken_languages (reference table — the human languages a person speaks /
 // a club is delivered in). Distinct from `locale` (UI translation), which
 // has no DB table and is constrained by SUPPORTED_LOCALES in code.

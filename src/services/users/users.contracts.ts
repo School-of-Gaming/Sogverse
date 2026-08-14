@@ -27,6 +27,7 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 export const searchedProfile = z.object({
   id: z.string(),
   email: z.string(),
+  email_verified_at: z.string().nullable(),
   first_name: z.string(),
   last_name: z.string(),
   role: z.enum(Constants.public.Enums.user_role),
@@ -59,7 +60,7 @@ export const searchedProfile = z.object({
  * are exactly the schema's keys.
  */
 export const SEARCHED_PROFILE_COLUMNS =
-  "id,email,first_name,last_name,role,phone,currency,home_location_id,referral_code,locale,spoken_languages,created_at,updated_at" as const;
+  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,referral_code,locale,spoken_languages,created_at,updated_at" as const;
 
 /**
  * Wire shapes for the admin's edit of somebody else's game identity

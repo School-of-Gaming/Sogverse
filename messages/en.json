@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "title": "School of Gaming – Sogverse",
     "description": "Where screen time becomes quality time through Minecraft clubs led by professional Game Educators.",
     "shortDescription": "School of Gaming – Where screen time becomes quality time",
     "pages": {
@@ -29,6 +28,7 @@
       "schools": "Municipality Clubs",
       "unlockPin": "Enter PIN",
       "resetPin": "Reset PIN",
+      "verifyEmail": "Verify Email",
       "changePin": "Change PIN",
       "privacy": "Privacy Policy",
       "terms": "Terms and Conditions",
@@ -565,7 +565,7 @@
         "noResults": "No Gedus match your search.",
         "current": "Current",
         "alreadyAssigned": "Already assigned",
-        "notVerified": "Not verified"
+        "notCertified": "Not certified"
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -723,17 +723,19 @@
         "reserving": "Awaiting payment",
         "completed": "Completed"
       },
-      "verification": {
-        "title": "Verification",
-        "verified": "Verified",
-        "unverified": "Not verified",
-        "unverifiedNote": "This Gedu hasn’t been verified yet. They can’t be assigned to a group until you verify them.",
-        "verifiedOn": "Verified on {date}",
-        "verifiedByOn": "Verified by {name} on {date}",
-        "verifyAction": "Verify",
-        "unverifyAction": "Un-verify",
+      "emailVerified": "Email verified",
+      "emailNotVerified": "Email not verified",
+      "certification": {
+        "title": "Certification",
+        "certified": "Certified",
+        "notCertified": "Not certified",
+        "notCertifiedNote": "This Gedu hasn’t been certified yet. They can’t be assigned to a group until you certify them.",
+        "certifiedOn": "Certified on {date}",
+        "certifiedByOn": "Certified by {name} on {date}",
+        "certifyAction": "Certify",
+        "uncertifyAction": "Remove certification",
         "saving": "Saving…",
-        "error": "Couldn’t update verification. Please try again."
+        "error": "Couldn’t update certification. Please try again."
       }
     },
     "locations": {
@@ -913,6 +915,7 @@
       "location": "Location",
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
+      "weakPassword": "That password is too easy to guess — try a longer one, or one you don't use anywhere else",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
     },
     "forgotPassword": {
@@ -940,8 +943,8 @@
     },
     "registerGedu": {
       "title": "Create your Sogverse Gedu account",
-      "verificationAlertTitle": "Your account needs to be verified",
-      "verificationAlertDescription": "You can sign in right away, but an admin needs to verify your account before you can be assigned to a club or camp.",
+      "certificationAlertTitle": "Your account needs to be certified",
+      "certificationAlertDescription": "You can sign in right away, but an admin needs to certify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you work?",
       "coverageNote": "Pick the areas where you can work on-site. If you can only work remotely, leave this field empty. You can edit your selection later in your profile settings.",
       "invalidPhone": "Please enter a valid phone number",
@@ -2573,7 +2576,21 @@
     "robloxDescription": "Link your Roblox account",
     "mcHeadsAttribution": "Skins rendered by <link>mc-heads.net</link>",
     "spokenLanguages": "Languages spoken",
-    "location": "Location"
+    "location": "Location",
+    "emailVerified": "Email verified",
+    "emailNotVerified": "Email not verified",
+    "sendVerificationEmail": "Send verification email",
+    "verificationEmailSent": "Verification email sent — check your inbox.",
+    "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
+    "verificationEmailFailed": "We couldn’t send the verification email. Please try again."
+  },
+  "verifyEmail": {
+    "successTitle": "Email verified",
+    "successDescription": "Thanks — we know this address reaches you now, so nothing important will get lost.",
+    "goToDashboard": "Go to My SOG",
+    "invalidTitle": "This link no longer works",
+    "invalidDescription": "A verification link stops working once the email address on the account changes. Open your settings and send yourself a fresh one.",
+    "goToSettings": "Go to settings"
   },
   "voice": {
     "participants": "Participants",
@@ -2753,8 +2770,8 @@
         "createFailed": "Couldn’t create a room. Please try again.",
         "ready": "Your room is ready",
         "join": "Join",
-        "unverifiedTitle": "Awaiting verification",
-        "unverifiedBody": "An admin needs to verify your Gedu account before you can create voice rooms. You’ll be able to start one here as soon as you’re verified."
+        "uncertifiedTitle": "Awaiting certification",
+        "uncertifiedBody": "An admin needs to certify your Gedu account before you can create voice rooms. You’ll be able to start one here as soon as you’re certified."
       }
     }
   },
@@ -2910,6 +2927,95 @@
       "sent": "Sent",
       "message": "Message",
       "gamerNote": "This feedback is from a gamer account. Replies will go to their parent ({parentEmail})."
+    },
+    "welcomeParent": {
+      "subject": "Welcome to School of Gaming",
+      "heading": "Welcome to School of Gaming",
+      "greeting": "Hi {firstName}, and welcome. We’re glad you’re here.",
+      "platform": "Sogverse is School of Gaming’s platform, where you manage your family’s clubs, camps and events.",
+      "verifyBody": "Verifying your email address lets us reach you about your family’s clubs. You can do it now, or later from your {settingsLink}.",
+      "settingsLinkLabel": "settings",
+      "verifyButton": "Verify your email address",
+      "shopButton": "Browse the shop",
+      "dashboardButton": "Go to My SOG"
+    },
+    "welcomeGedu": {
+      "subject": "Welcome to School of Gaming – your Gedu account",
+      "heading": "Welcome to School of Gaming",
+      "greeting": "Hi {firstName}, and thank you for registering as a Gedu.",
+      "certification": "An admin will look over your account and certify it. You can get started in My SOG in the meantime, though some parts of the platform stay locked until your account is certified.",
+      "verifyBody": "Verifying your email address lets us reach you about your groups and sessions. You can do it now, or later from your {settingsLink}.",
+      "settingsLinkLabel": "settings",
+      "verifyButton": "Verify your email address",
+      "dashboardButton": "Go to My SOG"
+    },
+    "productConfirmation": {
+      "subject": {
+        "consumer_club": "{participantName} is enrolled in {productName}",
+        "municipality_club": "{participantName} is registered for {productName}",
+        "camp": "{participantName} is signed up for {productName}",
+        "event": "{participantName} is joining {productName}"
+      },
+      "heading": "You’re all set!",
+      "subheading": {
+        "consumer_club": "{participantName} is enrolled in {productName}.",
+        "municipality_club": "{participantName} is registered for {productName}.",
+        "camp": "{participantName} is signed up for {productName}.",
+        "event": "{participantName} is joining {productName}."
+      },
+      "self": {
+        "subject": {
+          "consumer_club": "You are enrolled in {productName}",
+          "municipality_club": "You are registered for {productName}",
+          "camp": "You are signed up for {productName}",
+          "event": "You are joining {productName}"
+        },
+        "subheading": {
+          "consumer_club": "You’re enrolled in {productName}.",
+          "municipality_club": "You’re registered for {productName}.",
+          "camp": "You’re signed up for {productName}.",
+          "event": "You’re joining {productName}."
+        },
+        "waitlist": {
+          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "Club",
+        "municipality_club": "Municipality club",
+        "camp": "Camp",
+        "event": "Event"
+      },
+      "priceLabel": "Price",
+      "price": {
+        "subscription": "{amount} / month",
+        "upfront": "{amount} (one-time)",
+        "free": "Free"
+      },
+      "nextTitle": "What happens next",
+      "next": {
+        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear in My SOG.",
+        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear in My SOG.",
+        "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
+        "upfront": "This was a one-time payment — there’s nothing more to pay.",
+        "free": "There’s nothing to pay for this one."
+      },
+      "waitlist": {
+        "subject": "{participantName} is on the waitlist for {productName}",
+        "subjectSelf": "You are on the waitlist for {productName}",
+        "heading": "You’re on the waitlist",
+        "subheading": "{participantName} is on the waitlist for {productName}. We’ll let you know if a seat opens.",
+        "next1": "We’ll email you the moment a seat opens.",
+        "next2": "You can see where you stand in My SOG at any time."
+      },
+      "dashboardButton": "Go to My SOG"
+    },
+    "verifyEmail": {
+      "subject": "Verify your email address",
+      "heading": "Verify your email address",
+      "body": "Hi {firstName}, you asked us to verify the email address on your School of Gaming account. Use the button below to confirm it.",
+      "button": "Verify your email address",
+      "ignore": "If you didn’t ask for this, you can safely ignore this email. Nothing will change."
     }
   },
   "legal": {

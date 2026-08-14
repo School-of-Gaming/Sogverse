@@ -19,6 +19,7 @@ function gedu(overrides: Partial<Profile> = {}): Profile {
   return {
     id: "8f14e45f-ceea-467a-9575-1cbf0f0f2f43",
     email: "anna.virtanen@sog.gg",
+    email_verified_at: null,
     first_name: "Anna",
     last_name: "Virtanen",
     role: "gedu",

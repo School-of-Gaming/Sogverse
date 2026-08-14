@@ -56,7 +56,7 @@ import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
 export function GeduDashboardPage({
   initialRows,
   initialSummaries,
-  verified,
+  certified,
 }: {
   initialRows: MyAssignedProductSessionRow[];
   /**
@@ -66,7 +66,7 @@ export function GeduDashboardPage({
    * group names and badges it does not yet know.
    */
   initialSummaries: GeduAssignmentSummary[] | null;
-  verified: boolean;
+  certified: boolean;
 }) {
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
@@ -90,7 +90,7 @@ export function GeduDashboardPage({
   return (
     <GeduDashboardPageBody
       assignments={assignments}
-      verified={verified}
+      certified={certified}
       instantRoomCard={<CreateInstantRoomCard />}
     />
   );
