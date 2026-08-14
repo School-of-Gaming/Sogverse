@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
@@ -32,15 +33,40 @@ import { getOrigin } from "@/lib/url";
  * confirms what is already true instead of doing anything a second time; a
  * special-cased no-op would only teach the client to distinguish two outcomes
  * that are the same outcome.
+ *
+ * **Rate-limited in the database, exactly as feedback is.** Sending yourself
+ * mail reaches nobody else's data, but every send spends one message from the
+ * shared Brevo quota — the same quota password-reset mail draws on — so a
+ * caller leaning on the button degrades other people's ability to get back into
+ * their accounts. Six per hour, counted in Postgres rather than in this process,
+ * because an in-memory counter is per-instance, resets on deploy, and is not on
+ * the only path in.
  */
 export const POST = defineRoute({
   posture: "role-gated",
   roles: ["customer", "gedu", "admin"],
 
-  handler: async ({ request, profile }) => {
+  handler: async ({ request, supabase, profile }) => {
     // No address on file → nothing to verify and nowhere to send. Answering
-    // success keeps the client's one path; there is no state to report.
+    // success keeps the client's one path; there is no state to report. Ahead of
+    // the rate-limit check on purpose: no mail leaves, so nothing should be
+    // charged for it.
     if (!profile.email) return { success: true };
+
+    // Atomic rate-limit check + insert via a self-scoping RPC on the USER-bound
+    // client: `request_my_verification_email` writes a row for `auth.uid()` and
+    // takes no parameter naming a user, so this handler cannot spend anyone
+    // else's allowance — or exempt itself from its own.
+    const { data: accepted, error: rpcError } = await supabase.rpc(
+      "request_my_verification_email",
+    );
+    if (rpcError) throw rpcError;
+    if (!accepted) {
+      return NextResponse.json(
+        { error: "Too many verification emails requested. Please try again later." },
+        { status: 429 },
+      );
+    }
 
     // The TRUSTED origin, never the raw Host header. This link goes in an email
     // and carries a signed token, so a spoofed `Host: evil.com` would turn it

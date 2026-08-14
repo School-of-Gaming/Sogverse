@@ -1380,6 +1380,39 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_email_requests: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_email_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_email_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_private_zone_occupants: {
         Row: {
           created_at: string
@@ -1978,6 +2011,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      request_my_verification_email: { Args: never; Returns: boolean }
       search_locations: {
         Args: {
           p_country?: string

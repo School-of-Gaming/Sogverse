@@ -1,4 +1,8 @@
-export { UsersService, type UserSearchResult } from "./users.service";
+export {
+  UsersService,
+  type UserSearchResult,
+  type VerificationEmailSendOutcome,
+} from "./users.service";
 export {
   useProfile,
   useUsers,

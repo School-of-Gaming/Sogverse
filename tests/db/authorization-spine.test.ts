@@ -230,6 +230,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/feedback-submission.test.ts",
     why: "writes a feedback row for auth.uid(); no parameter names a user, and every role may send feedback",
   },
+  request_my_verification_email: {
+    scopeTest: "tests/db/verification-email-rate-limit.test.ts",
+    why: "the rate-limit gate on the verification-email send, and the same shape as submit_my_feedback one table over: it takes no argument at all, so the row it writes and the rows it counts are alike keyed to auth.uid() and a caller can neither spend nor clear anyone else's hourly allowance. No role gate by design — every role with a real inbox may ask for the mail, and the route is what excludes gamers, because the reason to exclude them is that nobody reads their synthetic address rather than anything about authority",
+  },
   get_waitlist_position: {
     scopeTest: "tests/db/waitlist-admin.test.ts",
     why: "owner-authorized: returns NULL rather than a position for a row the caller neither purchased nor is the gamer on",

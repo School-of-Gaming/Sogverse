@@ -1992,6 +1992,7 @@
     "emailNotVerified": "ngu’be’lu’ QIn Daq",
     "sendVerificationEmail": "ngu’meH QIn yIngeH",
     "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
+    "verificationEmailRateLimited": "law’qu’ Datlhobpu’! yIloS. tugh yInID je.",
     "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID."
   },
   "verifyEmail": {

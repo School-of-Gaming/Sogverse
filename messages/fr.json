@@ -1948,6 +1948,7 @@
     "emailNotVerified": "Adresse e-mail non vérifiée",
     "sendVerificationEmail": "Envoyer l’e-mail de vérification",
     "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
+    "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
     "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer."
   },
   "verifyEmail": {

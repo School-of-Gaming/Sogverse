@@ -2580,6 +2580,7 @@
     "emailNotVerified": "Email not verified",
     "sendVerificationEmail": "Send verification email",
     "verificationEmailSent": "Verification email sent — check your inbox.",
+    "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
     "verificationEmailFailed": "We couldn’t send the verification email. Please try again."
   },
   "verifyEmail": {

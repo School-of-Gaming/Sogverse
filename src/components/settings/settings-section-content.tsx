@@ -89,19 +89,25 @@ export function SettingsSectionContent({
   // button reads, because React Query's `isPending` flips false a render before
   // the outcome handlers run.
   const [sendingVerification, setSendingVerification] = useState(false);
+  // Three outcomes rather than two: `rate_limited` is the per-hour limit the
+  // send route enforces in the database, and it needs its own sentence because
+  // "try again" — the advice a generic failure gives — is exactly the wrong
+  // thing to tell someone who has already tried six times.
   const [verificationOutcome, setVerificationOutcome] = useState<
-    "sent" | "failed" | null
+    "sent" | "rate_limited" | "failed" | null
   >(null);
 
   const handleSendVerificationEmail = () => {
-    // Live before any render after the click. Both outcomes clear it, because
-    // the user stays on this page either way and a second send — after a mail
-    // that never arrived, or to a second device — is a legitimate thing to want.
+    // Live before any render after the click. Every outcome clears it, because
+    // the user stays on this page in all of them and a second send — after a
+    // mail that never arrived, or to a second device — is a legitimate thing to
+    // want. That includes the rate-limited one: the button has to come back for
+    // the next attempt an hour later to be possible at all.
     setSendingVerification(true);
     setVerificationOutcome(null);
     sendVerification.mutate(undefined, {
-      onSuccess: () => {
-        setVerificationOutcome("sent");
+      onSuccess: (outcome) => {
+        setVerificationOutcome(outcome);
         setSendingVerification(false);
       },
       onError: () => {
@@ -352,6 +358,14 @@ export function SettingsSectionContent({
                   {verificationOutcome === "sent" && (
                     <p className="text-sm text-success">
                       {t('verificationEmailSent')}
+                    </p>
+                  )}
+                  {/* Warning rather than destructive: nothing broke, and the
+                      wait is short — but no mail went out, so it cannot read as
+                      success either. */}
+                  {verificationOutcome === "rate_limited" && (
+                    <p className="text-sm text-warning">
+                      {t('verificationEmailRateLimited')}
                     </p>
                   )}
                   {verificationOutcome === "failed" && (

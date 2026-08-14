@@ -1948,6 +1948,7 @@
     "emailNotVerified": "Sähköpostia ei ole vahvistettu",
     "sendVerificationEmail": "Lähetä vahvistusviesti",
     "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
+    "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
     "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
   },
   "verifyEmail": {

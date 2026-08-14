@@ -37,6 +37,12 @@ function createRequest(headers?: Record<string, string>): Request {
   );
 }
 
+/**
+ * The caller's own client, which the route uses for exactly one thing: the
+ * self-scoping rate-limit RPC. `true` is "you are under the hourly limit".
+ */
+const mockRpc = vi.fn();
+
 /** The gate's success shape, for a caller with a real inbox. */
 function authAs(
   overrides: {
@@ -56,7 +62,7 @@ function authAs(
       locale: overrides.locale === undefined ? "en" : overrides.locale,
       email_verified_at: overrides.emailVerifiedAt ?? null,
     },
-    supabase: {},
+    supabase: { rpc: mockRpc },
   });
 }
 
@@ -71,6 +77,7 @@ function sentVerificationUrl(): string {
 beforeEach(() => {
   vi.clearAllMocks();
   mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
+  mockRpc.mockResolvedValue({ data: true, error: null });
 });
 
 // --- Tests ---
@@ -207,6 +214,55 @@ describe("POST /api/auth/verify-email/send", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    // And it costs nothing: no mail leaves, so nothing is charged against the
+    // hourly allowance.
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  // -- Rate limit --
+  //
+  // Sending yourself mail reaches nobody else's data, but every send spends one
+  // message from the shared Brevo quota — the same quota password-reset mail
+  // draws on — so the button is limited in the database rather than in this
+  // process.
+
+  it("spends the caller's own allowance through the self-scoping RPC", async () => {
+    authAs();
+
+    await POST(createRequest());
+
+    // On the USER-bound client, and with no argument naming a user: the row it
+    // writes is keyed to auth.uid(), so this handler cannot spend anyone else's
+    // allowance or exempt itself from its own.
+    expect(mockRpc).toHaveBeenCalledWith("request_my_verification_email");
+  });
+
+  it("answers 429 and sends nothing once the caller is over the limit", async () => {
+    authAs();
+    mockRpc.mockResolvedValue({ data: false, error: null });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({
+      error: expect.stringContaining("Too many"),
+    });
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  it("does not send when the rate-limit check itself fails", async () => {
+    authAs();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: "connection reset", code: "XX000" },
+    });
+
+    const response = await POST(createRequest());
+
+    // A limit we could not consult is not a limit that passed, so the send does
+    // not happen — the shared quota is exactly what an unchecked path spends.
+    expect(response.status).toBe(500);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 });

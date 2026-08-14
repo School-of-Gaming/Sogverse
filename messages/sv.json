@@ -1948,6 +1948,7 @@
     "emailNotVerified": "E-postadressen är inte verifierad",
     "sendVerificationEmail": "Skicka verifieringsmejl",
     "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
+    "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
     "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen."
   },
   "verifyEmail": {

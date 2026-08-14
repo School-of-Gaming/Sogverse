@@ -15,6 +15,19 @@ import {
 const USER_SEARCH_LIMIT = 20;
 
 /**
+ * What one verification-email send resolved to.
+ *
+ * `"rate_limited"` is a returned outcome rather than a thrown error because it
+ * is an ordinary result of pressing the button — the caller asked more than six
+ * times in an hour, and the database refused on behalf of the shared mail quota
+ * — whereas a 500, a dropped connection or a malformed body are genuinely
+ * exceptional and still throw. Discriminating on the HTTP status rather than on
+ * the error text is what keeps the wording client-side: the route's English
+ * sentence is a log line, never something a family reads.
+ */
+export type VerificationEmailSendOutcome = "sent" | "rate_limited";
+
+/**
  * How many digits of a phone number are matched, counting from the end.
  *
  * A Finnish number reaches us as `358401234567` (E.164 without the `+`) and
@@ -113,17 +126,27 @@ export class UsersService {
    * failure is thrown so the settings card can say so — unlike the enumeration-
    * defended password-reset path, there is nothing to hide here, because the
    * caller is asking us to write to an address they are already signed in as.
+   *
+   * The one non-failure that is also not a send is the per-hour limit, which
+   * comes back as an outcome rather than an exception — see the type above.
    */
-  async sendVerificationEmail(): Promise<void> {
+  async sendVerificationEmail(): Promise<VerificationEmailSendOutcome> {
     const response = await fetch("/api/auth/verify-email/send", {
       method: "POST",
     });
+
+    // Read before `response.ok`, because a 429 is not a failure to report — it
+    // is the limit doing its job, and the caller needs to be told a different
+    // thing about it.
+    if (response.status === 429) return "rate_limited";
 
     if (!response.ok) {
       throw new Error(
         await readErrorMessage(response, "Failed to send the verification email"),
       );
     }
+
+    return "sent";
   }
 
   /**
