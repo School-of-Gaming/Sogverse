@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // The confirmation mail's My SOG link comes from getOrigin(), which falls back
 // to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
@@ -19,6 +19,33 @@ vi.mock("@/lib/brevo", () => ({
   sendTransactionalEmail: (...args: unknown[]) =>
     mockSendTransactionalEmail(...args),
 }));
+
+// The spot is committed before the mail is even attempted, so the send is
+// handed to the platform's post-response hook rather than awaited inside the
+// answer — the parent's click never waits on Brevo. Capture the deferred work
+// instead of letting the hook run it, so these tests can assert the route
+// deferred and then settle the send deliberately.
+const deferred: unknown[] = [];
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return {
+    ...actual,
+    after: (work: unknown) => {
+      deferred.push(work);
+    },
+  };
+});
+
+/**
+ * Let the eagerly-started deferred send settle. `after()` receives an
+ * already-running promise, so anything it rejects with would otherwise surface
+ * as an unhandled rejection after the test had already passed — and a send left
+ * mid-flight would land its Brevo call in whichever test happens to be running
+ * when it resolves, which is why every test drains this in `afterEach`.
+ */
+async function settleDeferred(): Promise<void> {
+  await Promise.all(deferred);
+}
 
 // The route runs on the USER-bound client from `requireRole`, so the RPC mock
 // hangs off the `supabase` handed back by that mock rather than off the admin
@@ -158,9 +185,12 @@ function mockReadsForConfirmationEmail(
 describe("POST /api/participations/waitlist", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    deferred.length = 0;
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
     mockReadsForConfirmationEmail();
   });
+
+  afterEach(settleDeferred);
 
   // -- Auth --
 
@@ -318,6 +348,8 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(500);
+    // Nothing was even deferred, so no mail can arrive later either.
+    expect(deferred).toHaveLength(0);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     spy.mockRestore();
   });
@@ -498,6 +530,9 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(200);
+    // Handed to the post-response hook, not awaited inside the answer.
+    expect(deferred).toHaveLength(1);
+    await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     const sent = mockSendTransactionalEmail.mock.calls[0][0];
     expect(sent.toEmail).toBe("parent@example.test");
@@ -516,6 +551,7 @@ describe("POST /api/participations/waitlist", () => {
     await POST(
       createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
+    await settleDeferred();
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
     expect(htmlContent).not.toContain("Price");
@@ -550,6 +586,7 @@ describe("POST /api/participations/waitlist", () => {
       waitlistPosition: 3,
       status: "waitlisted",
     });
+    expect(deferred).toHaveLength(0);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
@@ -574,12 +611,14 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(200);
     expect((await res.json()).status).toBe("active");
+    expect(deferred).toHaveLength(0);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
-  // Same for a seat mid-purchase. Belt and braces with the flag above: neither
-  // condition is load-bearing alone, and a status guard that only worked on
-  // replays would miss a first-ever `reserving` answer.
+  // Same for a seat mid-purchase. Like every non-`waitlisted` shape the RPC has
+  // today it comes back `idempotent: true`, so the flag is what excludes it; the
+  // route's status check rides along as belt-and-braces against a future shape
+  // that pairs `idempotent: false` with something other than `waitlisted`.
   it("sends nothing when the participant is mid-reservation", async () => {
     mockAuthenticatedCustomer();
     mockRpc.mockResolvedValue({
@@ -597,6 +636,7 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(200);
+    expect(deferred).toHaveLength(0);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
@@ -615,6 +655,7 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(400);
+    expect(deferred).toHaveLength(0);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
@@ -634,6 +675,9 @@ describe("POST /api/participations/waitlist", () => {
       waitlistPosition: 3,
       status: "waitlisted",
     });
+    // The helper swallows its own failure, so the deferred work settles rather
+    // than rejecting — which is what makes it safe to hand to `after()` at all.
+    await expect(settleDeferred()).resolves.toBeUndefined();
     spy.mockRestore();
   });
 });
@@ -641,6 +685,7 @@ describe("POST /api/participations/waitlist", () => {
 describe("DELETE /api/participations/waitlist", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    deferred.length = 0;
   });
 
   // -- Auth --

@@ -70,14 +70,14 @@ the end of §5 — how bodies are parsed, how errors map, and what is tested.*
 
 ### The surface
 
-46 `route.ts` files, 49 handlers (three files export two methods). Auth postures found in
+47 `route.ts` files, 50 handlers (three files export two methods). Auth postures found in
 the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts it:
 
 | Posture | Handlers | Notes |
 |---|---|---|
 | `role-gated` (`requireRole`) | 32 | Variants that must be captured: `allowUnverified` (6 — the PIN-locked-customer routes), `requireCertifiedGedu` (2), all-four-roles-as-any-authenticated (2) |
 | `any-authenticated` | 2 | The locale route and the Roblox avatar proxy: every role is equally entitled, so the gate exists for the caller's identity rather than their role. Both go through the primitive — this posture stopped meaning "hand-rolled" when the sweep converted the locale route |
-| `public` | 6 | Mojang and Roblox username lookups, instant-room existence check, location search (the educator registration form asks before an account exists), gedu self-registration (unauthenticated account creation — the highest-value public route), forgot-password (always-200 enumeration defense) |
+| `public` | 7 | Mojang and Roblox username lookups, instant-room existence check, location search (the educator registration form asks before an account exists), gedu self-registration (unauthenticated account creation — the highest-value public route), parent self-registration (unauthenticated account creation, with a distinct 409 for an existing address — see the registry entry for the accepted enumeration trade), forgot-password (always-200 enumeration defense) |
 | `session-mutating public` | 2 | OAuth callback (redirect-only, `resolveInternalPath` on `next`), signout (POST-only as the CSRF control, 303) |
 | `signed-token` | 1 | PIN reset: a signed token *is* the authorization; session-agnostic; deliberately admin-client |
 | `optional-auth` | 1 | Instant-room token: public, but silently elevates admin/certified-gedu to room owner; fails closed to guest. A `role-gated \| public` binary cannot express this route |

@@ -81,8 +81,10 @@ open to an uncertified gedu.
   `requireRole(..., { requireCertifiedGedu: true })`, the public token route calls it
   directly and fails closed to guest on any lookup error. See
   `../../components/voice/instant/CLAUDE.md`.
-- **Surfaces**: an awaiting-approval badge on the admin users list; a certify/de-certify
-  card on the admin user-detail page.
+- **Surfaces**: a positive-only certification mark on the admin users list — a shield on a
+  gedu who is certified, and nothing at all otherwise, so an uncertified educator is
+  simply unmarked rather than badged; a certify/de-certify card on the admin user-detail
+  page.
 - **Backfill**: every gedu that existed before this feature was marked certified
   (`certified_by` NULL) — they were all admin-invited and already trusted.
 

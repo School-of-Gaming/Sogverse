@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import type Stripe from "stripe";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
@@ -204,9 +204,15 @@ export const POST = defineRoute({
         );
       }
       // The seat is live and nothing else in this request can fail it, so the
-      // confirmation mail goes out here. It cannot throw (the helper swallows
-      // its own failures): a Brevo outage must not turn a completed signup into
-      // an error the parent has to act on.
+      // confirmation mail goes out here — but AFTER the response, not inside
+      // it. The outcome the parent is waiting on is already committed, and the
+      // send is two or three reads plus a Brevo round trip; holding the
+      // response open for it makes the click slower and buys nothing, because
+      // the mail's success cannot change the answer. `after()` keeps the
+      // function alive for the send once the response has gone out — the same
+      // committed-outcome/follow-up-send shape the Discord webhook uses. Safe
+      // to fire and forget: the helper swallows its own failures and cannot
+      // throw, so a Brevo outage never surfaces as an unhandled rejection.
       //
       // **Both no-charge outcomes send the same mail.** A municipality
       // registration is invoiced to the school off-platform, so from the
@@ -215,14 +221,16 @@ export const POST = defineRoute({
       // says so. Owner decision; a distinct `external` mode was considered and
       // turned down as copy that would differ from this one only in ways a
       // parent has no use for.
-      await sendProductConfirmationEmail({
-        client: admin,
-        request,
-        customerId: user.id,
-        participantId,
-        productId,
-        mode: "free",
-      });
+      after(
+        sendProductConfirmationEmail({
+          client: admin,
+          request,
+          customerId: user.id,
+          participantId,
+          productId,
+          mode: "free",
+        }),
+      );
 
       // Municipality clubs are invoiced off-platform, so like the free flow the
       // participation is already active and we never touch Stripe. Both land on

@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "title": "School of Gaming – Sogverse",
     "description": "När skärmtid blir kvalitetstid – Minecraft-klubbar ledda av professionella spelfostrare.",
     "shortDescription": "School of Gaming – När skärmtid blir kvalitetstid",
     "pages": {
@@ -725,7 +724,7 @@
         "completed": "Avslutad"
       },
       "emailVerified": "E-postadress verifierad",
-      "emailNotVerified": "Inte verifierad",
+      "emailNotVerified": "E-postadressen är inte verifierad",
       "certification": {
         "title": "Certifiering",
         "certified": "Certifierad",

@@ -1,4 +1,5 @@
 import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
+import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -66,10 +67,17 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
                "brand-primary" is what puts the brand half through the Gmail
                background-clip rule above — this header is one of the two places
                brand color still survives Gmail's dark-theme rewriting (the other
-               is a button fill), so it is the one place the full lockup is set. -->
+               is a button fill), so it is the one place the full lockup is set.
+
+               The two halves are two spans because they are two colours, which
+               is why this is the one site that builds the lockup up from its
+               parts instead of emitting BRAND_LOCKUP whole. Both halves still
+               come from the constants module — no character of the lockup, and
+               above all not the en dash, is typed here — and a unit test
+               asserts the two spans still read as BRAND_LOCKUP exactly. -->
           <tr>
             <td align="center" style="padding-bottom:24px;">
-              <span class="brand-primary" style="font-size:24px;font-weight:bold;color:${BRAND.primary};letter-spacing:0.5px;">School of Gaming</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;"> – Sogverse</span>
+              <span class="brand-primary" style="font-size:24px;font-weight:bold;color:${BRAND.primary};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
             </td>
           </tr>
           <!-- Card -->

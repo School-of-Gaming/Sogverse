@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "title": "School of Gaming – Sogverse",
     "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
     "shortDescription": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir",
     "pages": {
@@ -725,7 +724,7 @@
         "completed": "Terminé"
       },
       "emailVerified": "Adresse e-mail vérifiée",
-      "emailNotVerified": "Non vérifiée",
+      "emailNotVerified": "Adresse e-mail non vérifiée",
       "certification": {
         "title": "Certification",
         "certified": "Certifié",

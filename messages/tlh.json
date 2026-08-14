@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "title": "noH Quj yejHaD – Sogverse",
     "description": "nuqDaq Qapla’ ’oH? Minecraft ghom’a’Daq. Gedu’pu’ Dun chaH — toy’wI’pu’ tIqhommoH, jIH mevbe’.",
     "shortDescription": "noH Quj yejHaD – DaH yIQam, batlh yIghoS",
     "pages": {
@@ -773,7 +772,7 @@
         "completed": "rInpu’"
       },
       "emailVerified": "ngu’lu’pu’ QIn Daq",
-      "emailNotVerified": "ngu’be’lu’",
+      "emailNotVerified": "ngu’be’lu’ QIn Daq",
       "certification": {
         "title": "patlh nobghach",
         "certified": "patlh ghajbej",

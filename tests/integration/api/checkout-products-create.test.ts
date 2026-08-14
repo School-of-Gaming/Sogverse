@@ -20,6 +20,35 @@ vi.mock("@/lib/brevo", () => ({
     mockSendTransactionalEmail(...args),
 }));
 
+// --- The post-response hook ---
+//
+// The seat is committed before the mail is attempted, so the send is handed to
+// the platform's post-response hook rather than awaited inside the answer — the
+// parent's click never waits on Brevo. Capture the deferred work instead of
+// letting the hook run it, so these tests can assert the route deferred and
+// then settle the send deliberately.
+const deferred: unknown[] = [];
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return {
+    ...actual,
+    after: (work: unknown) => {
+      deferred.push(work);
+    },
+  };
+});
+
+/**
+ * Let the eagerly-started deferred send settle. `after()` receives an
+ * already-running promise, so anything it rejects with would otherwise surface
+ * as an unhandled rejection after the test had already passed — and a send left
+ * mid-flight would land its Brevo call in whichever test happens to be running
+ * when it resolves, which is why every test drains this in `afterEach`.
+ */
+async function settleDeferred(): Promise<void> {
+  await Promise.all(deferred);
+}
+
 // --- Stripe mock ---
 //
 // The route's only direct Stripe call is `checkout.sessions.create` — every
@@ -295,10 +324,13 @@ const VALID_BODY = {
 describe("POST /api/checkout/products/create", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    deferred.length = 0;
     mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
     mockEnsureStripeProductForProduct.mockResolvedValue(STRIPE_PRODUCT_ID);
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
+
+  afterEach(settleDeferred);
 
   // ── Auth ──────────────────────────────────────────────────────────
 
@@ -1590,6 +1622,9 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(freeSignupRequest());
 
       expect(res.status).toBe(200);
+      // Handed to the post-response hook, not awaited inside the answer.
+      expect(deferred).toHaveLength(1);
+      await settleDeferred();
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
       // The payer's inbox, not the child's — a gamer account's address is the
@@ -1622,6 +1657,7 @@ describe("POST /api/checkout/products/create", () => {
           { host: "evil.com", origin: "https://evil.com" },
         ),
       );
+      await settleDeferred();
 
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
       expect(htmlContent).toContain("https://test.sogverse.local/parent");
@@ -1649,6 +1685,8 @@ describe("POST /api/checkout/products/create", () => {
       );
 
       expect(res.status).toBe(200);
+      expect(deferred).toHaveLength(1);
+      await settleDeferred();
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
       expect(sent.toEmail).toBe("parent@example.test");
@@ -1675,6 +1713,7 @@ describe("POST /api/checkout/products/create", () => {
       );
 
       expect(res.status).toBe(200);
+      await settleDeferred();
       const { subject } = mockSendTransactionalEmail.mock.calls[0][0];
       expect(subject).toContain("You are");
       expect(subject).not.toContain(GAMER_FIRST_NAME);
@@ -1692,6 +1731,8 @@ describe("POST /api/checkout/products/create", () => {
 
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ status: "full" });
+      // Nothing was even deferred, so no mail can arrive later either.
+      expect(deferred).toHaveLength(0);
       expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     });
 
@@ -1715,6 +1756,7 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(createRequest(VALID_BODY));
 
       expect(res.status).toBe(200);
+      expect(deferred).toHaveLength(0);
       expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     });
 
@@ -1737,6 +1779,9 @@ describe("POST /api/checkout/products/create", () => {
         status: "free_confirmed",
         participationId: PARTICIPATION_ID,
       });
+      // The helper swallows its own failure, so the deferred work settles rather
+      // than rejecting — which is what makes it safe to hand to `after()` at all.
+      await expect(settleDeferred()).resolves.toBeUndefined();
       spy.mockRestore();
     });
   });

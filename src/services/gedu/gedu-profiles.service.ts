@@ -50,11 +50,12 @@ export class GeduProfilesService {
   /**
    * Certification state for every gedu (admin-readable).
    *
-   * Walked rather than selected: the admin users list renders its
-   * awaiting-approval badge from the absence of a row here, so a read truncated
-   * at PostgREST's `max_rows` does not omit a badge — it prints a *wrong* one on
-   * every gedu that fell off the end. Ordered by the table's primary key, which
-   * is the total order the walk needs.
+   * Walked rather than selected: the admin users list marks a gedu as certified
+   * from the presence of a certified row here, so a read truncated at
+   * PostgREST's `max_rows` silently *drops* the mark from every certified gedu
+   * that fell off the end — they render identically to an educator nobody has
+   * approved, with nothing on screen to say the answer was cut short. Ordered by
+   * the table's primary key, which is the total order the walk needs.
    */
   async getAll(): Promise<GeduCertification[]> {
     return walkPages("getAllGeduProfiles", (from, to) =>
