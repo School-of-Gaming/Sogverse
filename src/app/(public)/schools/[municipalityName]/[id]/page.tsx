@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
+import { buildProductMetadata } from "@/lib/products/product-metadata";
 import { LocationsService } from "@/services/locations";
 import {
   buildMunicipalityEntries,
@@ -29,15 +30,28 @@ interface PageProps {
 
 /**
  * Robots policy: **noindex, unconditionally** — the same owner decision as
- * `/shop/[id]` (search engines and AI crawlers may discover only the `/shop`
- * browse surface; the entire `/schools` tree is noindex), and it has to be
- * applied here because this is a **second URL for the same product row** —
- * without it the shop URL's tag would simply be side-stepped. One static rule,
- * no per-product read.
+ * `/shop/[id]`, and the Open Graph card that route builds — both from the one
+ * shared builder.
+ *
+ * The reason is the same for both halves, and is why they are shared rather
+ * than restated: this is a **second URL for the same product row**. A robots
+ * rule only one of the two URLs carried could be side-stepped by sharing the
+ * other; a card only one of them built would leave a municipality club — the
+ * shape most likely to be pasted into a school's parent group — unfurling as
+ * the generic site-wide preview. Whatever one URL says about a product, both
+ * say.
+ *
+ * The municipality slug deliberately plays no part in it. It decides where the
+ * back link returns to, not which product this is, and two URLs onto one row
+ * must not describe that row differently.
  */
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(
+  { params }: PageProps,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const { id } = await params;
+  return buildProductMetadata(id, parent);
+}
 
 export default async function MunicipalityClubDetailPage({ params }: PageProps) {
   const { municipalityName, id } = await params;
