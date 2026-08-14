@@ -10,13 +10,15 @@
  * frame; the mutation invalidates the query so the stamped certified_at / admin
  * refresh after a toggle.
  *
- * The component, its file and its `admin.users.verification.*` message keys still
- * say "verification" — the DB and the data layer were renamed to "certified"
- * first, and the user-facing copy follows in its own change.
+ * **"Certified", never "verified".** The two words name different things on this
+ * platform: certification is an admin's judgement about a person, and
+ * verification is a claim about an email address that its own recipient
+ * confirmed. They can appear on the same account and mean nothing about each
+ * other.
  */
 
 import { useState } from "react";
-import { CheckCircle2, ShieldAlert } from "lucide-react";
+import { Award, ShieldAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,13 +27,13 @@ import { useGeduProfile, useSetGeduCertified, type GeduCertification } from "@/s
 import { useTimezone } from "@/providers";
 import { formatDate } from "@/lib/utils";
 
-interface GeduVerificationCardProps {
+interface GeduCertificationCardProps {
   geduId: string;
   initial: GeduCertification | null;
 }
 
-export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardProps) {
-  const t = useTranslations("admin.users.verification");
+export function GeduCertificationCard({ geduId, initial }: GeduCertificationCardProps) {
+  const t = useTranslations("admin.users.certification");
   const locale = useLocale();
   const timeZone = useTimezone();
   const { data } = useGeduProfile(geduId, { initialData: initial });
@@ -60,8 +62,11 @@ export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardPr
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
+          {/* The same mark the users list puts on a certified gedu, so one
+              concept has one glyph across the admin surfaces — and pointedly not
+              the green check, which now belongs to email verification. */}
           {certified ? (
-            <CheckCircle2 className="h-5 w-5 text-success" />
+            <Award className="h-5 w-5 text-success" />
           ) : (
             <ShieldAlert className="h-5 w-5 text-warning" />
           )}
@@ -72,23 +77,23 @@ export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardPr
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             {certified ? (
-              <Badge className="bg-success text-success-foreground">{t("verified")}</Badge>
+              <Badge className="bg-success text-success-foreground">{t("certified")}</Badge>
             ) : (
-              <Badge variant="destructive">{t("unverified")}</Badge>
+              <Badge variant="destructive">{t("notCertified")}</Badge>
             )}
             {certified && data?.certified_at ? (
               <p className="text-sm text-muted-foreground">
                 {certifierName
-                  ? t("verifiedByOn", {
+                  ? t("certifiedByOn", {
                       name: certifierName,
                       date: formatDate(data.certified_at, locale, { dateStyle: "medium", timeZone }),
                     })
-                  : t("verifiedOn", {
+                  : t("certifiedOn", {
                       date: formatDate(data.certified_at, locale, { dateStyle: "medium", timeZone }),
                     })}
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">{t("unverifiedNote")}</p>
+              <p className="text-sm text-muted-foreground">{t("notCertifiedNote")}</p>
             )}
           </div>
           <Button
@@ -96,7 +101,7 @@ export function GeduVerificationCard({ geduId, initial }: GeduVerificationCardPr
             onClick={handleToggle}
             disabled={busy}
           >
-            {busy ? t("saving") : certified ? t("unverifyAction") : t("verifyAction")}
+            {busy ? t("saving") : certified ? t("uncertifyAction") : t("certifyAction")}
           </Button>
         </div>
         {setCertified.isError && (

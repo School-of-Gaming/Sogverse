@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { GeduVerificationCard } from "@/components/admin/gedu-verification-card";
+import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { cn, computeAge, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -236,6 +236,16 @@ export default async function AdminUserDetailPage({
             {!isGamer && profile.email && (
               <div className="flex items-center gap-2">
                 <p className="text-muted-foreground">{profile.email}</p>
+                {/* Present only when confirmed. An unverified address is the
+                    ordinary state of a fresh account, so marking it would put a
+                    warning on most of the list and say nothing; the mark's whole
+                    value is that it is an assertion somebody made. */}
+                {profile.email_verified_at && (
+                  <CheckCircle2
+                    className="h-4 w-4 shrink-0 text-success"
+                    aria-label={t('emailVerified')}
+                  />
+                )}
               </div>
             )}
             {isGamer && gamerProfile && (
@@ -415,7 +425,7 @@ export default async function AdminUserDetailPage({
       )}
 
       {/* Gedu certification + coverage areas (substitute matching) */}
-      {isGedu && <GeduVerificationCard geduId={userId} initial={geduCertification} />}
+      {isGedu && <GeduCertificationCard geduId={userId} initial={geduCertification} />}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
     </div>
   );

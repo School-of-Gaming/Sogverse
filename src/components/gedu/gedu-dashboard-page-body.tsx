@@ -7,7 +7,7 @@ import {
   GeduAssignmentsSectionView,
   type GeduAssignmentCardData,
 } from "./GeduAssignmentsSectionView";
-import { UnverifiedVoiceNotice } from "./unverified-voice-notice";
+import { UncertifiedVoiceNotice } from "./uncertified-voice-notice";
 
 /**
  * The gedu dashboard's page body — everything below the route's data shell.
@@ -176,7 +176,7 @@ export function GeduDashboardPageBody({
             <h2 id="instant-voice-room-heading" className="text-3xl font-bold">
               {t("instantVoiceRoom")}
             </h2>
-            {certified ? instantRoomCard : <UnverifiedVoiceNotice />}
+            {certified ? instantRoomCard : <UncertifiedVoiceNotice />}
           </div>
         </section>
       </div>

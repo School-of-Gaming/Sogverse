@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { Award, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ interface UserRowUser {
   first_name: string;
   last_name: string;
   email: string | null;
+  /** When the address was confirmed from the recipient's own inbox, or null. */
+  email_verified_at: string | null;
   role: UserRole;
 }
 
@@ -21,13 +23,29 @@ interface UserRowProps {
   linkedGamers?: UserRowUser[];
   /** Base path for user detail links. Defaults to "/admin/users" */
   basePath?: string;
-  /** Gedu awaiting admin certification — suppresses the certified tick. */
+  /** Gedu awaiting admin certification — suppresses the certification mark. */
   uncertified?: boolean;
 }
 
+/**
+ * One admin users-list row.
+ *
+ * **Two marks that mean two different things, in a fixed order.** The award is
+ * about a *person* — an admin has certified this educator — and the green check
+ * is about an *address*, confirmed by whoever reads that inbox. A certified gedu
+ * with a verified email carries both, so the order never varies with which of
+ * them is present: certification first, verification second, then the role
+ * badge. Scanning a column of rows only works if a given mark is always in the
+ * same place.
+ *
+ * A gamer gets neither. Their address is the synthetic
+ * `@gamer.sogverse.internal` one their account was created with, so there is no
+ * inbox to confirm it from and a check would be asserting something nobody did.
+ */
 export function UserRow({ user, linkedGamers, basePath = "/admin/users", uncertified }: UserRowProps) {
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
+  const emailVerified = user.role !== "gamer" && user.email_verified_at !== null;
   return (
     <div className="rounded-lg border">
       <Link
@@ -51,9 +69,15 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users", uncerti
         </div>
         <div className="flex items-center gap-2">
           {user.role === "gedu" && !uncertified && (
+            <Award
+              className="h-4 w-4 text-success"
+              aria-label={t('certification.certified')}
+            />
+          )}
+          {emailVerified && (
             <CheckCircle2
               className="h-4 w-4 text-success"
-              aria-label={t('verification.verified')}
+              aria-label={t('emailVerified')}
             />
           )}
           <Badge className={ROLE_BADGE_STYLES[user.role]}>

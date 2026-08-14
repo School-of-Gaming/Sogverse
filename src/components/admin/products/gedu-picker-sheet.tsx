@@ -264,7 +264,7 @@ function GeduRow({
           )}
           {isUncertified && !isCurrent && !isAssigned && (
             <Badge variant="destructive" className="shrink-0">
-              {t("notVerified")}
+              {t("notCertified")}
             </Badge>
           )}
         </div>

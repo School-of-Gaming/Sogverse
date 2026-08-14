@@ -29,6 +29,7 @@
       "schools": "veng ghomHommey",
       "unlockPin": "PIN yIghItlh",
       "resetPin": "PIN yIchu’qa’",
+      "verifyEmail": "QIn Daq yIngu’",
       "changePin": "PIN yIchoH",
       "roblox": "Roblox qetlh chenmoHmeH ghojmoH"
     }
@@ -613,7 +614,7 @@
         "noResults": "Gedu lo’wI’ tu’be’lu’.",
         "current": "DaH",
         "alreadyAssigned": "ngu’lu’pu’",
-        "notVerified": "ngu’be’lu’"
+        "notCertified": "patlh ghajbe’"
       },
       "participantPicker": {
         "title": "ghom yIchel",
@@ -771,17 +772,18 @@
         "reserving": "DIl loStaH",
         "completed": "rInpu’"
       },
-      "verification": {
-        "title": "ngu’ghach",
-        "verified": "ngu’lu’pu’",
-        "unverified": "ngu’be’lu’",
-        "unverifiedNote": "DaH ngu’be’lu’ Geduvam. ngu’lu’pa’, ghob Daje’be’.",
-        "verifiedOn": "ngu’lu’pu’: {date}",
-        "verifiedByOn": "ngu’lu’pu’: {name}, {date}",
-        "verifyAction": "yIngu’",
-        "unverifyAction": "yIngu’Ha’",
+      "emailVerified": "ngu’lu’pu’ QIn Daq",
+      "certification": {
+        "title": "patlh nobghach",
+        "certified": "patlh ghajbej",
+        "notCertified": "patlh ghajbe’",
+        "notCertifiedNote": "DaH patlh ghajbe’ Geduvam. patlh Danobpa’, ghob Daje’be’.",
+        "certifiedOn": "patlh noblu’pu’: {date}",
+        "certifiedByOn": "patlh nobpu’ {name}: {date}",
+        "certifyAction": "patlh yInob",
+        "uncertifyAction": "patlh yIteq",
         "saving": "vISaH...",
-        "error": "ngu’ghach choHlu’be’pu’. yInID."
+        "error": "patlh choHlu’be’pu’. yInID."
       }
     },
     "locations": {
@@ -988,8 +990,8 @@
     },
     "registerGedu": {
       "title": "Sogverse Gedu account yIchenmoH",
-      "verificationAlertTitle": "account ngu’nIS",
-      "verificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ admin account ngu’nIS.",
+      "certificationAlertTitle": "patlh DaghajnIS",
+      "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
       "coverageNote": "Daqmey yIwIv DaqDaq bIvum laH. Hop pat neH DavumlaHchugh, naDev yIqonQo’. DaH yInaQ; poH wInaQ pat’a’ choHlaH.",
       "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel",
@@ -1985,7 +1987,20 @@
     "robloxDescription": "Roblox account jonmoH",
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
     "spokenLanguages": "Holmey jatlhlu’",
-    "location": "Daq"
+    "location": "Daq",
+    "emailVerified": "ngu’lu’pu’ QIn Daq",
+    "emailNotVerified": "ngu’be’lu’ QIn Daq",
+    "sendVerificationEmail": "ngu’meH QIn yIngeH",
+    "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
+    "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID."
+  },
+  "verifyEmail": {
+    "successTitle": "ngu’lu’pu’ QIn Daq",
+    "successDescription": "qatlho’ — DaH SoH lIngeHlaH ’e’ wISov, ’ej chIlbe’ QIn potlh.",
+    "goToDashboard": "My SOG yIghoS",
+    "invalidTitle": "Qapbe’ lInkvam",
+    "invalidDescription": "choHlu’DI’ QIn Daq, Qapbe’choH ngu’meH lInk. DuHmeylIj yIpoSmoH ’ej lInk chu’ yIngeH.",
+    "goToSettings": "DuHmey yIghoS"
   },
   "voice": {
     "participants": "toy’wI’pu’",
@@ -2165,8 +2180,8 @@
         "createFailed": "Daq chenmoH luchchugh. yItoH’egh!",
         "ready": "DaqlIj pIm",
         "join": "yImuv",
-        "unverifiedTitle": "tobtaHvIS ngoq",
-        "unverifiedBody": "Daq DachenmoH ’e’ DapoQ pa’, Gedu SoH ’e’ lutob qum. tobchugh, naDev tugh Daq yIchen ’e’ DalaH!"
+        "uncertifiedTitle": "patlh DaloStaH",
+        "uncertifiedBody": "Daq DachenmoH ’e’ DapoQ pa’, Gedu patlhlIj nob qum. patlh Daghajchugh, naDev tugh Daq yIchen ’e’ DalaH!"
       }
     }
   },

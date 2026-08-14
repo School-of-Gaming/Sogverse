@@ -7,6 +7,7 @@ export {
   useUpdateProfile,
   useUpdateUserGameAccount,
   useParentGamerLinks,
+  useSendVerificationEmail,
   useSpokenLanguages,
 } from "./users.queries";
 export {

@@ -29,6 +29,7 @@
       "voiceSession": "Ääni-istunto",
       "unlockPin": "Syötä PIN",
       "resetPin": "Nollaa PIN",
+      "verifyEmail": "Vahvista sähköposti",
       "changePin": "Vaihda PIN",
       "privacy": "Tietosuojaseloste",
       "terms": "Käyttöehdot",
@@ -565,7 +566,7 @@
         "noResults": "Hakuehdoilla ei löytynyt Geduja.",
         "current": "Nykyinen",
         "alreadyAssigned": "Jo nimetty",
-        "notVerified": "Ei vahvistettu"
+        "notCertified": "Ei sertifioitu"
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -723,17 +724,18 @@
         "reserving": "Odottaa maksua",
         "completed": "Päättynyt"
       },
-      "verification": {
-        "title": "Vahvistus",
-        "verified": "Vahvistettu",
-        "unverified": "Ei vahvistettu",
-        "unverifiedNote": "Tätä Gedua ei ole vielä vahvistettu. Häntä ei voi liittää ryhmään ennen vahvistusta.",
-        "verifiedOn": "Vahvistettu {date}",
-        "verifiedByOn": "Vahvistanut {name} {date}",
-        "verifyAction": "Vahvista",
-        "unverifyAction": "Peru vahvistus",
+      "emailVerified": "Sähköposti vahvistettu",
+      "certification": {
+        "title": "Sertifiointi",
+        "certified": "Sertifioitu",
+        "notCertified": "Ei sertifioitu",
+        "notCertifiedNote": "Tätä Gedua ei ole vielä sertifioitu. Häntä ei voi liittää ryhmään ennen sertifiointia.",
+        "certifiedOn": "Sertifioitu {date}",
+        "certifiedByOn": "Sertifioinut {name} {date}",
+        "certifyAction": "Sertifioi",
+        "uncertifyAction": "Poista sertifiointi",
         "saving": "Tallennetaan…",
-        "error": "Vahvistuksen päivitys epäonnistui. Yritä uudelleen."
+        "error": "Sertifioinnin päivitys epäonnistui. Yritä uudelleen."
       }
     },
     "locations": {
@@ -940,8 +942,8 @@
     },
     "registerGedu": {
       "title": "Luo Sogverse-pelikasvattajatilisi",
-      "verificationAlertTitle": "Tilisi on vahvistettava",
-      "verificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on vahvistettava tilisi ennen kuin sinut voidaan liittää kerhoon tai leirille.",
+      "certificationAlertTitle": "Tilisi on sertifioitava",
+      "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on sertifioitava tilisi ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
       "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Jos voit työskennellä vain etänä, jätä tämä kohta tyhjäksi. Voit muokata valintaasi myöhemmin profiilisi asetuksista.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
@@ -1941,7 +1943,20 @@
     "robloxDescription": "Linkitä Roblox-tilisi",
     "mcHeadsAttribution": "Ulkoasut renderöi <link>mc-heads.net</link>",
     "spokenLanguages": "Puhutut kielet",
-    "location": "Sijainti"
+    "location": "Sijainti",
+    "emailVerified": "Sähköposti vahvistettu",
+    "emailNotVerified": "Sähköpostia ei ole vahvistettu",
+    "sendVerificationEmail": "Lähetä vahvistusviesti",
+    "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
+    "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
+  },
+  "verifyEmail": {
+    "successTitle": "Sähköposti vahvistettu",
+    "successDescription": "Kiitos – nyt tiedämme, että tämä osoite tavoittaa sinut, eikä mikään tärkeä jää saamatta.",
+    "goToDashboard": "Siirry Oma SOG -sivulle",
+    "invalidTitle": "Tämä linkki ei enää toimi",
+    "invalidDescription": "Vahvistuslinkki lakkaa toimimasta, kun tilin sähköpostiosoite vaihtuu. Avaa asetukset ja lähetä itsellesi uusi linkki.",
+    "goToSettings": "Siirry asetuksiin"
   },
   "voice": {
     "participants": "Osallistujat",
@@ -2121,8 +2136,8 @@
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
         "join": "Liity",
-        "unverifiedTitle": "Odottaa vahvistusta",
-        "unverifiedBody": "Ylläpitäjän on vahvistettava Gedu-tilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on vahvistettu."
+        "uncertifiedTitle": "Odottaa sertifiointia",
+        "uncertifiedBody": "Ylläpitäjän on sertifioitava Gedu-tilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on sertifioitu."
       }
     }
   },

@@ -106,6 +106,27 @@ export class UsersService {
   }
 
   /**
+   * Mail the caller's own address a fresh verification link.
+   *
+   * Takes no argument and can name no recipient: the route reads the target off
+   * the session, which is what makes a button anyone can press harmless. A
+   * failure is thrown so the settings card can say so — unlike the enumeration-
+   * defended password-reset path, there is nothing to hide here, because the
+   * caller is asking us to write to an address they are already signed in as.
+   */
+  async sendVerificationEmail(): Promise<void> {
+    const response = await fetch("/api/auth/verify-email/send", {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to send the verification email"),
+      );
+    }
+  }
+
+  /**
    * Reference set of spoken (human) languages from the `spoken_languages`
    * table. Public reference data — used by the shop's language filter (anon-
    * readable). Distinct from the UI locale (see CLAUDE.md "Locale vs. Spoken

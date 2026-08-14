@@ -29,6 +29,7 @@
       "schools": "Municipality Clubs",
       "unlockPin": "Enter PIN",
       "resetPin": "Reset PIN",
+      "verifyEmail": "Verify Email",
       "changePin": "Change PIN",
       "privacy": "Privacy Policy",
       "terms": "Terms and Conditions",
@@ -565,7 +566,7 @@
         "noResults": "No Gedus match your search.",
         "current": "Current",
         "alreadyAssigned": "Already assigned",
-        "notVerified": "Not verified"
+        "notCertified": "Not certified"
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -723,17 +724,18 @@
         "reserving": "Awaiting payment",
         "completed": "Completed"
       },
-      "verification": {
-        "title": "Verification",
-        "verified": "Verified",
-        "unverified": "Not verified",
-        "unverifiedNote": "This Gedu hasn’t been verified yet. They can’t be assigned to a group until you verify them.",
-        "verifiedOn": "Verified on {date}",
-        "verifiedByOn": "Verified by {name} on {date}",
-        "verifyAction": "Verify",
-        "unverifyAction": "Un-verify",
+      "emailVerified": "Email verified",
+      "certification": {
+        "title": "Certification",
+        "certified": "Certified",
+        "notCertified": "Not certified",
+        "notCertifiedNote": "This Gedu hasn’t been certified yet. They can’t be assigned to a group until you certify them.",
+        "certifiedOn": "Certified on {date}",
+        "certifiedByOn": "Certified by {name} on {date}",
+        "certifyAction": "Certify",
+        "uncertifyAction": "Remove certification",
         "saving": "Saving…",
-        "error": "Couldn’t update verification. Please try again."
+        "error": "Couldn’t update certification. Please try again."
       }
     },
     "locations": {
@@ -940,8 +942,8 @@
     },
     "registerGedu": {
       "title": "Create your Sogverse Gedu account",
-      "verificationAlertTitle": "Your account needs to be verified",
-      "verificationAlertDescription": "You can sign in right away, but an admin needs to verify your account before you can be assigned to a club or camp.",
+      "certificationAlertTitle": "Your account needs to be certified",
+      "certificationAlertDescription": "You can sign in right away, but an admin needs to certify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you work?",
       "coverageNote": "Pick the areas where you can work on-site. If you can only work remotely, leave this field empty. You can edit your selection later in your profile settings.",
       "invalidPhone": "Please enter a valid phone number",
@@ -2573,7 +2575,20 @@
     "robloxDescription": "Link your Roblox account",
     "mcHeadsAttribution": "Skins rendered by <link>mc-heads.net</link>",
     "spokenLanguages": "Languages spoken",
-    "location": "Location"
+    "location": "Location",
+    "emailVerified": "Email verified",
+    "emailNotVerified": "Email not verified",
+    "sendVerificationEmail": "Send verification email",
+    "verificationEmailSent": "Verification email sent — check your inbox.",
+    "verificationEmailFailed": "We couldn’t send the verification email. Please try again."
+  },
+  "verifyEmail": {
+    "successTitle": "Email verified",
+    "successDescription": "Thanks — we know this address reaches you now, so nothing important will get lost.",
+    "goToDashboard": "Go to My SOG",
+    "invalidTitle": "This link no longer works",
+    "invalidDescription": "A verification link stops working once the email address on the account changes. Open your settings and send yourself a fresh one.",
+    "goToSettings": "Go to settings"
   },
   "voice": {
     "participants": "Participants",
@@ -2753,8 +2768,8 @@
         "createFailed": "Couldn’t create a room. Please try again.",
         "ready": "Your room is ready",
         "join": "Join",
-        "unverifiedTitle": "Awaiting verification",
-        "unverifiedBody": "An admin needs to verify your Gedu account before you can create voice rooms. You’ll be able to start one here as soon as you’re verified."
+        "uncertifiedTitle": "Awaiting certification",
+        "uncertifiedBody": "An admin needs to certify your Gedu account before you can create voice rooms. You’ll be able to start one here as soon as you’re certified."
       }
     }
   },

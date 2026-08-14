@@ -29,6 +29,7 @@
       "schools": "Kommunklubbar",
       "unlockPin": "Ange PIN",
       "resetPin": "Återställ PIN",
+      "verifyEmail": "Verifiera e-postadress",
       "changePin": "Byt PIN",
       "privacy": "Integritetspolicy",
       "terms": "Användarvillkor",
@@ -565,7 +566,7 @@
         "noResults": "Inga Geduer matchar din sökning.",
         "current": "Nuvarande",
         "alreadyAssigned": "Redan tilldelad",
-        "notVerified": "Inte verifierad"
+        "notCertified": "Inte certifierad"
       },
       "participantPicker": {
         "title": "Lägg till en deltagare",
@@ -723,17 +724,18 @@
         "reserving": "Inväntar betalning",
         "completed": "Avslutad"
       },
-      "verification": {
-        "title": "Verifiering",
-        "verified": "Verifierad",
-        "unverified": "Inte verifierad",
-        "unverifiedNote": "Den här Gedun har inte verifierats ännu. Hen kan inte tilldelas en grupp förrän du verifierar hen.",
-        "verifiedOn": "Verifierad {date}",
-        "verifiedByOn": "Verifierad av {name} {date}",
-        "verifyAction": "Verifiera",
-        "unverifyAction": "Ångra verifiering",
+      "emailVerified": "E-postadress verifierad",
+      "certification": {
+        "title": "Certifiering",
+        "certified": "Certifierad",
+        "notCertified": "Inte certifierad",
+        "notCertifiedNote": "Den här Gedun har inte certifierats ännu. Hen kan inte tilldelas en grupp förrän du certifierar hen.",
+        "certifiedOn": "Certifierad {date}",
+        "certifiedByOn": "Certifierad av {name} {date}",
+        "certifyAction": "Certifiera",
+        "uncertifyAction": "Ta bort certifiering",
         "saving": "Sparar…",
-        "error": "Det gick inte att uppdatera verifieringen. Försök igen."
+        "error": "Det gick inte att uppdatera certifieringen. Försök igen."
       }
     },
     "locations": {
@@ -940,8 +942,8 @@
     },
     "registerGedu": {
       "title": "Skapa ditt Sogverse-spelfostrarkonto",
-      "verificationAlertTitle": "Ditt konto måste verifieras",
-      "verificationAlertDescription": "Du kan logga in direkt, men en administratör måste verifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
+      "certificationAlertTitle": "Ditt konto måste certifieras",
+      "certificationAlertDescription": "Du kan logga in direkt, men en administratör måste certifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du arbeta?",
       "coverageNote": "Välj de områden där du kan arbeta på plats. Om du bara kan arbeta på distans, lämna detta fält tomt. Du kan ändra ditt val senare i dina profilinställningar.",
       "invalidPhone": "Ange ett giltigt telefonnummer",
@@ -1941,7 +1943,20 @@
     "robloxDescription": "Koppla ditt Roblox-konto",
     "mcHeadsAttribution": "Skins renderade av <link>mc-heads.net</link>",
     "spokenLanguages": "Talade språk",
-    "location": "Plats"
+    "location": "Plats",
+    "emailVerified": "E-postadress verifierad",
+    "emailNotVerified": "E-postadressen är inte verifierad",
+    "sendVerificationEmail": "Skicka verifieringsmejl",
+    "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
+    "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen."
+  },
+  "verifyEmail": {
+    "successTitle": "E-postadress verifierad",
+    "successDescription": "Tack – nu vet vi att den här adressen når dig, så inget viktigt går förlorat.",
+    "goToDashboard": "Gå till Min SOG",
+    "invalidTitle": "Den här länken fungerar inte längre",
+    "invalidDescription": "En verifieringslänk slutar fungera så snart kontots e-postadress ändras. Öppna dina inställningar och skicka en ny till dig själv.",
+    "goToSettings": "Gå till inställningar"
   },
   "voice": {
     "participants": "Deltagare",
@@ -2121,8 +2136,8 @@
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
         "join": "Gå med",
-        "unverifiedTitle": "Inväntar verifiering",
-        "unverifiedBody": "En administratör måste verifiera ditt Gedu-konto innan du kan skapa röstrum. Du kan starta ett här så snart du är verifierad."
+        "uncertifiedTitle": "Inväntar certifiering",
+        "uncertifiedBody": "En administratör måste certifiera ditt Gedu-konto innan du kan skapa röstrum. Du kan starta ett här så snart du är certifierad."
       }
     }
   },

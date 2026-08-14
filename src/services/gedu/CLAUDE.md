@@ -7,9 +7,10 @@ three DB objects.
 
 **The word is "certified", and it is not the same thing as email verification.** These
 columns and identifiers were called `verified*` until 00187; the rename freed "verified"
-for `profiles.email_verified_at`, which is about an address rather than a person. The
-admin-facing *copy* and its `admin.users.verification.*` message keys still say
-verification — that half follows in its own change.
+for `profiles.email_verified_at`, which is about an address rather than a person. The two
+can be true independently and neither implies the other, so a surface showing both gives
+them different marks — an award for the certified educator, a green check for the
+confirmed address — in a fixed order, and never one glyph standing for both.
 
 ## Data model
 
