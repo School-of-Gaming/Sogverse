@@ -52,6 +52,7 @@ function profile(id: string, firstName: string, role: UserRole): Profile {
     currency: null,
     locale: null,
     home_location_id: null,
+    referral_code: null,
     spoken_languages: [],
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",

@@ -25,6 +25,7 @@ function gedu(overrides: Partial<Profile> = {}): Profile {
     phone: null,
     currency: null,
     home_location_id: null,
+    referral_code: null,
     locale: "fi",
     spoken_languages: ["fi"],
     created_at: "2026-01-01T00:00:00.000Z",
