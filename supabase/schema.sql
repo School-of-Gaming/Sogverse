@@ -2147,6 +2147,7 @@ CREATE TABLE public.profiles (
     last_name text DEFAULT ''::text NOT NULL,
     home_location_id uuid,
     referral_code text,
+    email_verified_at timestamp with time zone,
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
@@ -2187,6 +2188,13 @@ COMMENT ON COLUMN public.profiles.home_location_id IS 'Optional municipality-lev
 --
 
 COMMENT ON COLUMN public.profiles.referral_code IS 'Optional marketing provenance: the short code from the ?ref= param on the link this account arrived through, or NULL (the large majority). Written once by handle_new_user() from the signup metadata and never updatable — there is deliberately no UPDATE grant, at any level, for any role but service_role. Labels only: it grants nothing, is never used for profiling or to decide what anyone is shown or charged, and gamer rows always hold NULL.';
+
+
+--
+-- Name: COLUMN profiles.email_verified_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.email_verified_at IS 'When the address in profiles.email was last proven to reach this account''s owner, or NULL for "not verified" — the resting state for gamer rows, whose synthetic <token>@gamer.sogverse.internal address no inbox answers. Written only by service_role (the route that validates a signed verification link); there is deliberately no UPDATE grant at any level for authenticated or anon, because a marker its own subject can set proves nothing. Reset to NULL by trg_reset_email_verification whenever profiles.email changes — the value is a claim about one address, not about the account.';
 
 
 --
@@ -3041,7 +3049,8 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- Idempotency: existing waitlisted/reserving/active row → return it as-is.
+  -- Idempotency: existing waitlisted/reserving/active row → return it as-is,
+  -- flagged so the caller can tell this apart from the INSERT below.
   SELECT id, waitlisted_at, status
     INTO v_existing_id, v_existing_ts, v_existing_status
     FROM public.participations
@@ -3063,7 +3072,8 @@ BEGIN
     RETURN jsonb_build_object(
       'participation_id', v_existing_id,
       'waitlist_position', v_position,
-      'status', v_existing_status::text
+      'status', v_existing_status::text,
+      'idempotent', TRUE
     );
   END IF;
 
@@ -3087,13 +3097,23 @@ BEGIN
       AND (waitlisted_at < v_now
            OR (waitlisted_at = v_now AND id <= v_participation_id));
 
+  -- The one call that wrote a row. Everything that must happen exactly once per
+  -- place in line keys on this.
   RETURN jsonb_build_object(
     'participation_id', v_participation_id,
     'waitlist_position', v_position,
-    'status', 'waitlisted'
+    'status', 'waitlisted',
+    'idempotent', FALSE
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid) IS 'Waitlist engine behind join_product_waitlist: gates the audience, refuses a product with the waitlist off, and either writes a waitlisted participation stamped with clock_timestamp() or returns the waitlisted/reserving/active row already there. Returns participation_id, waitlist_position (0 when the row already holds a seat rather than a place in line), status, and idempotent — false only on the call that ran the INSERT, true on a call that recognised an existing row. Anything that must happen exactly once per place in line (the confirmation email) keys on idempotent=false; the flag is the only way to tell a replay apart, since both answers are otherwise identical. No EXECUTE grant to anyone: the guarded wrapper is the only caller.';
 
 
 --
@@ -3534,6 +3554,84 @@ $$;
 
 
 --
+-- Name: request_my_verification_email(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.request_my_verification_email() RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_user_id uuid := (SELECT auth.uid());
+  v_count   integer;
+BEGIN
+  -- Not reachable through PostgREST as `authenticated` (that role's JWT always
+  -- carries a subject), but a request row attributed to nobody would count
+  -- against nobody, so this fails closed rather than inserting NULL.
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Advisory lock keyed to the caller: without it two concurrent requests both
+  -- read the same count and both pass, which is precisely the bypass a
+  -- database-side limit exists to close.
+  PERFORM pg_advisory_xact_lock(hashtext(v_user_id::text));
+
+  SELECT count(*) INTO v_count
+  FROM public.verification_email_requests
+  WHERE user_id = v_user_id
+    AND created_at > now() - interval '1 hour';
+
+  -- Returns false (not an error) when the per-hour rate limit is hit; the route
+  -- maps that to 429.
+  IF v_count >= 6 THEN
+    RETURN false;
+  END IF;
+
+  INSERT INTO public.verification_email_requests (user_id)
+  VALUES (v_user_id);
+
+  -- These rows are pure bookkeeping — nothing reads them but the count above,
+  -- and one older than the window can never change that count again — so the
+  -- RPC self-prunes instead of leaving a table to grow forever. Scoped to the
+  -- caller, under the lock already held.
+  DELETE FROM public.verification_email_requests
+  WHERE user_id = v_user_id
+    AND created_at <= now() - interval '1 hour';
+
+  RETURN true;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION request_my_verification_email(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.request_my_verification_email() IS 'Self-scoping rate-limit gate for the verification-email send: takes no argument and writes a verification_email_requests row for auth.uid(), refusing with false once the caller has six rows in the trailing hour. Prunes the caller''s expired rows on the way past, because nothing reads them but its own count. The route maps false to 429.';
+
+
+--
+-- Name: reset_email_verification_on_email_change(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.reset_email_verification_on_email_change() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  -- A no-op rewrite of the same address is not a change and must not cost the
+  -- family their verified state; only a different string does.
+  IF NEW.email IS DISTINCT FROM OLD.email THEN
+    NEW.email_verified_at := NULL;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: search_locations(text, public.location_type[], integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3701,10 +3799,10 @@ COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.locatio
 
 
 --
--- Name: set_gedu_verified(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
+-- Name: set_gedu_certified(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) RETURNS void
+CREATE FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified boolean) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -3714,16 +3812,23 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles WHERE id = p_gedu_id AND role = 'gedu'
   ) THEN
-    RAISE EXCEPTION 'set_gedu_verified: % is not a gedu', p_gedu_id;
+    RAISE EXCEPTION 'set_gedu_certified: % is not a gedu', p_gedu_id;
   END IF;
 
   UPDATE public.gedu_profiles
-  SET verified    = p_verified,
-      verified_at = CASE WHEN p_verified THEN now() ELSE NULL END,
-      verified_by = CASE WHEN p_verified THEN (SELECT auth.uid()) ELSE NULL END
+  SET certified    = p_certified,
+      certified_at = CASE WHEN p_certified THEN now() ELSE NULL END,
+      certified_by = CASE WHEN p_certified THEN (SELECT auth.uid()) ELSE NULL END
   WHERE user_id = p_gedu_id;
 END;
 $$;
+
+
+--
+-- Name: FUNCTION set_gedu_certified(p_gedu_id uuid, p_certified boolean); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified boolean) IS 'Certify or de-certify a game educator. Admin-only (guard-first on assert_admin), and it stamps certified_at / certified_by server-side so the audit trail cannot be forged — which is why gedu_profiles carries no write grant at all and this RPC is the only way in. Called from the admin user-detail page through the admin''s own session. Renamed from set_gedu_verified in 00187.';
 
 
 --
@@ -4669,10 +4774,24 @@ CREATE TABLE public.gedu_locations (
 
 CREATE TABLE public.gedu_profiles (
     user_id uuid NOT NULL,
-    verified boolean DEFAULT false NOT NULL,
-    verified_at timestamp with time zone,
-    verified_by uuid
+    certified boolean DEFAULT false NOT NULL,
+    certified_at timestamp with time zone,
+    certified_by uuid
 );
+
+
+--
+-- Name: COLUMN gedu_profiles.certified; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_profiles.certified IS 'Whether an admin has vouched for this educator. Gates two things and nothing else: group assignment (UI-only, because assignment is admin-driven) and instant-voice-room moderation (server-side, because it is gedu-initiated). An uncertified gedu still has broad platform access by design. Distinct from profiles.email_verified_at, which is about an address rather than a person; this column was called "verified" until 00187.';
+
+
+--
+-- Name: COLUMN gedu_profiles.certified_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_profiles.certified_by IS 'The admin whose call this was, or NULL — either because the gedu is not certified, or because they predate the feature and were backfilled as trusted. ON DELETE SET NULL: losing the certifying admin''s account must never silently de-certify a working educator.';
 
 
 --
@@ -5234,6 +5353,7 @@ CREATE TABLE public.spoken_languages (
 CREATE VIEW public.user_search_index WITH (security_invoker='true') AS
  SELECT p.id,
     p.email,
+    p.email_verified_at,
     p.first_name,
     p.last_name,
     p.role,
@@ -5262,7 +5382,25 @@ COMMENT ON VIEW public.user_search_index IS 'Profiles as the admin user search m
 -- Name: COLUMN user_search_index.search_blob; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.user_search_index.search_blob IS 'Every string a person can be found by — name, email, phone, and each game handle — space-joined. Derived, never written, and never selected: the search filters on it and reads the profile columns beside it, so it does not cross the wire. referral_code is deliberately absent: it labels where a family came from and is not a name anyone should be findable by. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
+COMMENT ON COLUMN public.user_search_index.search_blob IS 'Every string a person can be found by — name, email, phone, and each game handle — space-joined. Derived, never written, and never selected: the search filters on it and reads the profile columns beside it, so it does not cross the wire. referral_code and email_verified_at are deliberately absent: one labels where a family came from and the other is a date, and neither is a name anyone should be findable by. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
+
+
+--
+-- Name: verification_email_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.verification_email_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE verification_email_requests; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.verification_email_requests IS 'One row per verification-email send, written only by request_my_verification_email. The rows exist to be counted and nothing else: they protect the shared Brevo quota (whose exhaustion would degrade password-reset delivery) from a button any signed-in caller may press. The RPC prunes the caller''s rows older than an hour as it goes, so the table stays proportional to recent activity with no scheduled job behind it.';
 
 
 --
@@ -5662,6 +5800,14 @@ ALTER TABLE ONLY public.parent_gamer
 
 
 --
+-- Name: verification_email_requests verification_email_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verification_email_requests
+    ADD CONSTRAINT verification_email_requests_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: voice_private_zone_occupants voice_private_zone_occupants_group_id_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5968,6 +6114,13 @@ CREATE INDEX idx_schedule_slots_product ON public.schedule_slots USING btree (pr
 
 
 --
+-- Name: idx_verification_email_requests_user_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_verification_email_requests_user_created ON public.verification_email_requests USING btree (user_id, created_at DESC);
+
+
+--
 -- Name: idx_whatsapp_contacts_last_message; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6192,6 +6345,20 @@ CREATE TRIGGER trg_products_seed_seat_counts AFTER INSERT ON public.products FOR
 
 
 --
+-- Name: profiles trg_reset_email_verification; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_reset_email_verification BEFORE UPDATE OF email ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.reset_email_verification_on_email_change();
+
+
+--
+-- Name: TRIGGER trg_reset_email_verification ON profiles; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TRIGGER trg_reset_email_verification ON public.profiles IS 'Empties profiles.email_verified_at whenever profiles.email actually changes: the marker is a claim about one address, so it cannot be allowed to follow the account onto a new one. Fires on UPDATE OF email, which includes a SET that rewrites the same value, so the body tests IS DISTINCT FROM and leaves an unchanged address verified.';
+
+
+--
 -- Name: locations trg_set_location_depth; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -6350,19 +6517,19 @@ ALTER TABLE ONLY public.gedu_locations
 
 
 --
+-- Name: gedu_profiles gedu_profiles_certified_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_profiles
+    ADD CONSTRAINT gedu_profiles_certified_by_fkey FOREIGN KEY (certified_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
 -- Name: gedu_profiles gedu_profiles_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.gedu_profiles
     ADD CONSTRAINT gedu_profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
-
---
--- Name: gedu_profiles gedu_profiles_verified_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.gedu_profiles
-    ADD CONSTRAINT gedu_profiles_verified_by_fkey FOREIGN KEY (verified_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
 
 --
@@ -6627,6 +6794,14 @@ ALTER TABLE ONLY public.site_details
 
 ALTER TABLE ONLY public.site_staff_details
     ADD CONSTRAINT site_staff_details_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: verification_email_requests verification_email_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verification_email_requests
+    ADD CONSTRAINT verification_email_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 --
@@ -7410,6 +7585,12 @@ CREATE POLICY users_view_own_profile ON public.profiles FOR SELECT TO authentica
 
 
 --
+-- Name: verification_email_requests; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.verification_email_requests ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: voice_private_zone_occupants; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -8062,6 +8243,21 @@ GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_
 
 
 --
+-- Name: FUNCTION request_my_verification_email(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.request_my_verification_email() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.request_my_verification_email() TO authenticated;
+
+
+--
+-- Name: FUNCTION reset_email_verification_on_email_change(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.reset_email_verification_on_email_change() FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -8072,11 +8268,11 @@ GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.locat
 
 
 --
--- Name: FUNCTION set_gedu_verified(p_gedu_id uuid, p_verified boolean); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION set_gedu_certified(p_gedu_id uuid, p_certified boolean); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) TO authenticated;
+REVOKE ALL ON FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified boolean) TO authenticated;
 
 
 --
@@ -8513,6 +8709,13 @@ GRANT SELECT ON TABLE public.spoken_languages TO authenticated;
 
 GRANT SELECT ON TABLE public.user_search_index TO authenticated;
 GRANT SELECT ON TABLE public.user_search_index TO service_role;
+
+
+--
+-- Name: TABLE verification_email_requests; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.verification_email_requests TO service_role;
 
 
 --
