@@ -236,15 +236,20 @@ export default async function AdminUserDetailPage({
             {!isGamer && profile.email && (
               <div className="flex items-center gap-2">
                 <p className="text-muted-foreground">{profile.email}</p>
-                {/* Present only when confirmed. An unverified address is the
-                    ordinary state of a fresh account, so marking it would put a
-                    warning on most of the list and say nothing; the mark's whole
-                    value is that it is an assertion somebody made. */}
-                {profile.email_verified_at && (
+                {/* The list shows only the positive case (a check that means
+                    somebody confirmed the address); this detail page states the
+                    answer both ways, because an admin looking at ONE user is
+                    asking the question and deserves a definite answer rather
+                    than having to know that silence means no. */}
+                {profile.email_verified_at ? (
                   <CheckCircle2
                     className="h-4 w-4 shrink-0 text-success"
                     aria-label={t('emailVerified')}
                   />
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    {t('emailNotVerified')}
+                  </span>
                 )}
               </div>
             )}

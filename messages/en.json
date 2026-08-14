@@ -725,6 +725,7 @@
         "completed": "Completed"
       },
       "emailVerified": "Email verified",
+      "emailNotVerified": "Not verified",
       "certification": {
         "title": "Certification",
         "certified": "Certified",

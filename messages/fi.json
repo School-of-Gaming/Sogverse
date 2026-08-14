@@ -725,6 +725,7 @@
         "completed": "Päättynyt"
       },
       "emailVerified": "Sähköposti vahvistettu",
+      "emailNotVerified": "Ei vahvistettu",
       "certification": {
         "title": "Sertifiointi",
         "certified": "Sertifioitu",

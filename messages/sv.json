@@ -725,6 +725,7 @@
         "completed": "Avslutad"
       },
       "emailVerified": "E-postadress verifierad",
+      "emailNotVerified": "Inte verifierad",
       "certification": {
         "title": "Certifiering",
         "certified": "Certifierad",

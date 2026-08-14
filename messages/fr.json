@@ -725,6 +725,7 @@
         "completed": "Terminé"
       },
       "emailVerified": "Adresse e-mail vérifiée",
+      "emailNotVerified": "Non vérifiée",
       "certification": {
         "title": "Certification",
         "certified": "Certifié",
