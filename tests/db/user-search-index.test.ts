@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { searchedProfile } from "@/services/users/users.contracts";
+import {
+  searchedProfile,
+  SEARCHED_PROFILE_COLUMNS,
+} from "@/services/users/users.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
@@ -241,9 +244,10 @@ describe("user_search_index", () => {
   it("returns rows the searched-profile schema accepts", async () => {
     const { data, error } = await adminClient
       .from("user_search_index")
-      .select(
-        "id,email,first_name,last_name,role,phone,currency,home_location_id,locale,spoken_languages,created_at,updated_at",
-      )
+      // The service's own column list, not a copy — a copy here silently
+      // drifts the first time `profiles` gains a column, and the parse below
+      // then fails in CI only.
+      .select(SEARCHED_PROFILE_COLUMNS)
       .eq("id", TEST_IDS.GAMER)
       .single();
 

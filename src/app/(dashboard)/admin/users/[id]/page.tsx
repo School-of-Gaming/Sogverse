@@ -132,7 +132,9 @@ export default async function AdminUserDetailPage({
   // is also what the write route refuses as a target.
   const showGameAccounts = isGamer || isGedu;
 
-  // Only the two roles that can carry a referral code have the row at all.
+  // A display choice, not a data invariant: every account is born `customer`,
+  // so one promoted to admin after registering through a tagged link still
+  // carries its code — this page just doesn't surface it there.
   const showReferralCode = (isCustomer || isGedu) && Boolean(profile.referral_code);
 
   const [

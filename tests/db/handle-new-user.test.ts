@@ -162,6 +162,23 @@ describe("handle_new_user() role assignment", () => {
       expect((await getProfile(user.id)).referral_code).toBe("paris-nord");
     });
 
+    it("trims space padding rather than refusing it", async () => {
+      // The trigger's `btrim` strips spaces only — deliberately narrower than
+      // the TS sanitiser's full-whitespace trim (see src/lib/referral.ts) —
+      // so this is the case that documents which copy of the rules the
+      // database itself enforces.
+      const user = await createTestUser({
+        email: "referral-padded@test.local",
+        user_metadata: {
+          first_name: "Space",
+          last_name: "Padded",
+          referral_code: " paris-nord ",
+        },
+      });
+
+      expect((await getProfile(user.id)).referral_code).toBe("paris-nord");
+    });
+
     it("keeps hyphens, underscores and digits", async () => {
       const user = await createTestUser({
         email: "referral-charset@test.local",

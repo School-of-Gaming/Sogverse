@@ -77,7 +77,11 @@ const REFERRAL_CODE_PATTERN = /^[a-z0-9_-]{1,64}$/;
  * Trims, lowercases, then tests — in that order. Testing before normalising
  * would fail `Paris-Nord` against a lowercase-only pattern and throw away a real
  * code; trimming matters because a hand-authored flyer link or an email client
- * can add a trailing space.
+ * can add a trailing space. The trigger's SQL copy of these rules uses
+ * `btrim`, which strips spaces only — narrower than `String.trim()`'s full
+ * whitespace set, and deliberately left so: the divergence is fail-closed (a
+ * tab-padded value degrades to NULL there instead of being accepted), and no
+ * application path reaches the trigger un-trimmed.
  *
  * **Takes a scalar, never an array, and collapsing a repeated param is the
  * caller's job.** `URLSearchParams.getAll()` returns an array for the ordinary
