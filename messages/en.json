@@ -2910,6 +2910,90 @@
       "sent": "Sent",
       "message": "Message",
       "gamerNote": "This feedback is from a gamer account. Replies will go to their parent ({parentEmail})."
+    },
+    "welcomeParent": {
+      "subject": "Welcome to School of Gaming",
+      "heading": "Welcome to School of Gaming",
+      "greeting": "Hi {firstName}, and welcome. We’re glad you’re here.",
+      "platform": "Sogverse is School of Gaming’s platform, where you manage your family’s clubs, camps and events.",
+      "nextTitle": "Getting started",
+      "step1": "Add your gamer, so we know who is playing.",
+      "step2": "Browse the clubs and camps in our shop.",
+      "step3": "Set your parent PIN, which keeps the parent settings yours alone.",
+      "verifyBody": "Verifying your email address lets us reach you about your family’s clubs. You can do it now, or later from your settings.",
+      "verifyButton": "Verify your email address",
+      "dashboardButton": "Go to My SOG"
+    },
+    "welcomeGedu": {
+      "subject": "Welcome to School of Gaming – your Gedu account",
+      "heading": "Welcome to School of Gaming",
+      "greeting": "Hi {firstName}, and thank you for registering as a Gedu.",
+      "certification": "An admin will look over your account and certify it. Certification decides only whether you can be assigned to a group — everything else is open to you right away.",
+      "nextTitle": "Getting started",
+      "step1": "Complete your profile — the languages you speak and the areas you can cover.",
+      "step2": "Link your Minecraft and Roblox accounts.",
+      "verifyBody": "Verifying your email address lets us reach you about your groups and sessions. You can do it now, or later from your settings.",
+      "verifyButton": "Verify your email address",
+      "dashboardButton": "Go to My SOG"
+    },
+    "productConfirmation": {
+      "subject": "{participantName} is signed up for {productName}",
+      "subjectSelf": "You are signed up for {productName}",
+      "heading": "You’re all set!",
+      "subheading": {
+        "consumer_club": "{participantName} is enrolled in {productName}.",
+        "municipality_club": "{participantName} is registered for {productName}.",
+        "camp": "{participantName} is signed up for {productName}.",
+        "event": "{participantName} is joining {productName}."
+      },
+      "self": {
+        "subheading": {
+          "consumer_club": "You’re enrolled in {productName}.",
+          "municipality_club": "You’re registered for {productName}.",
+          "camp": "You’re signed up for {productName}.",
+          "event": "You’re joining {productName}."
+        },
+        "waitlist": {
+          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "Club",
+        "municipality_club": "Municipality club",
+        "camp": "Camp",
+        "event": "Event"
+      },
+      "priceLabel": "Price",
+      "price": {
+        "subscription": "{amount} / month",
+        "upfront": "{amount} (one-time)",
+        "free": "Free"
+      },
+      "nextTitle": "What happens next",
+      "next": {
+        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear in My SOG.",
+        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear in My SOG.",
+        "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
+        "upfront": "This was a one-time payment — there’s nothing more to pay.",
+        "free": "There’s nothing to pay for this one."
+      },
+      "waitlist": {
+        "subject": "{participantName} is on the waitlist for {productName}",
+        "subjectSelf": "You are on the waitlist for {productName}",
+        "heading": "You’re on the waitlist",
+        "subheading": "{participantName} is on the waitlist for {productName}. We’ll let you know if a seat opens.",
+        "next1": "We’ll email you the moment a seat opens.",
+        "next2": "You can see where you stand in My SOG at any time."
+      },
+      "dashboardButton": "Go to My SOG"
+    },
+    "verifyEmail": {
+      "subject": "Verify your email address",
+      "heading": "Verify your email address",
+      "body": "Hi {firstName}, you asked us to verify the email address on your School of Gaming account. Use the button below to confirm it.",
+      "button": "Verify your email address",
+      "expiry": "This link is valid for 7 days.",
+      "ignore": "If you didn’t ask for this, you can safely ignore this email. Nothing will change."
     }
   },
   "legal": {

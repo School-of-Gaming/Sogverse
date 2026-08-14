@@ -2278,6 +2278,90 @@
       "sent": "Envoyé",
       "message": "Message",
       "gamerNote": "Ce retour provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
+    },
+    "welcomeParent": {
+      "subject": "Bienvenue chez School of Gaming",
+      "heading": "Bienvenue chez School of Gaming",
+      "greeting": "Bonjour {firstName}, et bienvenue. Nous sommes ravis de vous compter parmi nous.",
+      "platform": "Sogverse est la plateforme de School of Gaming : c’est là que vous gérez les clubs, stages et événements de votre famille.",
+      "nextTitle": "Pour commencer",
+      "step1": "Ajoutez votre joueur ou joueuse, pour que nous sachions qui joue.",
+      "step2": "Parcourez les clubs et les stages de notre boutique.",
+      "step3": "Choisissez votre code PIN parent : lui seul donne accès aux réglages parents.",
+      "verifyBody": "Confirmer votre adresse e-mail nous permet de vous joindre au sujet des clubs de votre famille. Vous pouvez le faire maintenant, ou plus tard depuis vos réglages.",
+      "verifyButton": "Confirmer votre adresse e-mail",
+      "dashboardButton": "Aller à Mon SOG"
+    },
+    "welcomeGedu": {
+      "subject": "Bienvenue chez School of Gaming – votre compte Gedu",
+      "heading": "Bienvenue chez School of Gaming",
+      "greeting": "Bonjour {firstName}, et merci de votre inscription en tant que Gedu.",
+      "certification": "Un administrateur va examiner votre compte et le certifier. La certification conditionne uniquement l’affectation à un groupe — tout le reste vous est accessible dès maintenant.",
+      "nextTitle": "Pour commencer",
+      "step1": "Complétez votre profil : les langues que vous parlez et les secteurs que vous pouvez couvrir.",
+      "step2": "Reliez vos comptes Minecraft et Roblox.",
+      "verifyBody": "Confirmer votre adresse e-mail nous permet de vous joindre au sujet de vos groupes et de vos sessions. Vous pouvez le faire maintenant, ou plus tard depuis vos réglages.",
+      "verifyButton": "Confirmer votre adresse e-mail",
+      "dashboardButton": "Aller à Mon SOG"
+    },
+    "productConfirmation": {
+      "subject": "L’inscription de {participantName} à {productName} est confirmée",
+      "subjectSelf": "Votre inscription à {productName} est confirmée",
+      "heading": "C’est tout bon !",
+      "subheading": {
+        "consumer_club": "L’inscription de {participantName} à {productName} est confirmée.",
+        "municipality_club": "L’inscription de {participantName} à {productName} est confirmée.",
+        "camp": "L’inscription de {participantName} à {productName} est confirmée.",
+        "event": "La participation de {participantName} à {productName} est confirmée."
+      },
+      "self": {
+        "subheading": {
+          "consumer_club": "Votre inscription à {productName} est confirmée.",
+          "municipality_club": "Votre inscription à {productName} est confirmée.",
+          "camp": "Votre inscription à {productName} est confirmée.",
+          "event": "Votre participation à {productName} est confirmée."
+        },
+        "waitlist": {
+          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "Club",
+        "municipality_club": "Club municipal",
+        "camp": "Stage",
+        "event": "Événement"
+      },
+      "priceLabel": "Prix",
+      "price": {
+        "subscription": "{amount} / mois",
+        "upfront": "{amount} (paiement unique)",
+        "free": "Gratuit"
+      },
+      "nextTitle": "La suite",
+      "next": {
+        "placement": "Nous placerons {participantName} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+        "placementSelf": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+        "subscription": "Le prélèvement a lieu chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
+        "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
+        "free": "Il n’y a rien à régler pour cette inscription."
+      },
+      "waitlist": {
+        "subject": "{participantName} est sur la liste d’attente pour {productName}",
+        "subjectSelf": "Vous êtes sur la liste d’attente pour {productName}",
+        "heading": "Vous êtes sur la liste d’attente",
+        "subheading": "{participantName} est sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
+        "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
+        "next2": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
+      },
+      "dashboardButton": "Aller à Mon SOG"
+    },
+    "verifyEmail": {
+      "subject": "Confirmez votre adresse e-mail",
+      "heading": "Confirmez votre adresse e-mail",
+      "body": "Bonjour {firstName}, vous avez demandé à confirmer l’adresse e-mail de votre compte School of Gaming. Utilisez le bouton ci-dessous.",
+      "button": "Confirmer votre adresse e-mail",
+      "expiry": "Ce lien est valable 7 jours.",
+      "ignore": "Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer cet e-mail. Rien ne changera."
     }
   },
   "legal": {

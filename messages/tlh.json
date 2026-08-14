@@ -2322,6 +2322,90 @@
       "sent": "ngeHlu’",
       "message": "QIn",
       "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS."
+    },
+    "welcomeParent": {
+      "subject": "School of Gamingvo’ nuqneH!",
+      "heading": "School of Gamingvo’ nuqneH!",
+      "greeting": "nuqneH {firstName}! juHmajDaq yIjeS.",
+      "platform": "Sogverse ’oH School of Gaming pat’e’. naDev qorDu’lIj ghom’a’mey, raghmey, wanI’mey je DaSeH.",
+      "nextTitle": "yItaghmeH",
+      "step1": "toy’wI’lI’ yIchel — Quj ’Iv wISovmeH.",
+      "step2": "malja’majDaq ghom’a’mey raghmey je yIbej.",
+      "step3": "vav PIN yIwIv — vav Seh’a’ poSmoH neH ’oH.",
+      "verifyBody": "QIn DaqlIj yIchel: vaj qorDu’lIj ghom’a’mey wIja’laH. DaH ghap tugh Seh’a’Daq.",
+      "verifyButton": "QIn DaqlIj yIchel",
+      "dashboardButton": "My SOG yIghoS"
+    },
+    "welcomeGedu": {
+      "subject": "School of Gamingvo’ nuqneH – Gedu patlhlIj",
+      "heading": "School of Gamingvo’ nuqneH!",
+      "greeting": "nuqneH {firstName}! Gedu SoH — Qapla’.",
+      "certification": "patlhlIj bej ra’wI’ ’ej chel. ghom’a’Daq ngu’meH neH potlh chelvam — Hoch latlh DaH Dalo’laH.",
+      "nextTitle": "yItaghmeH",
+      "step1": "ghItlhlIj yIrIn: Hol Dajatlhbogh ’ej Daq DaqaDbogh.",
+      "step2": "Minecraft ’ej Roblox patlhlIj yIrar.",
+      "verifyBody": "QIn DaqlIj yIchel: vaj ghom’a’lIj Qu’mey je wIja’laH. DaH ghap tugh Seh’a’Daq.",
+      "verifyButton": "QIn DaqlIj yIchel",
+      "dashboardButton": "My SOG yIghoS"
+    },
+    "productConfirmation": {
+      "subject": "{productName} QujmeH ghItlhlu’pu’ {participantName}",
+      "subjectSelf": "{productName} QujmeH ghItlhlu’pu’ SoH",
+      "heading": "Qapla’! Doch Dalajpu’!",
+      "subheading": {
+        "consumer_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+        "municipality_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+        "camp": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+        "event": "{productName}Daq jeSpu’ {participantName}."
+      },
+      "self": {
+        "subheading": {
+          "consumer_club": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+          "municipality_club": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+          "camp": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+          "event": "{productName}Daq bIjeSpu’."
+        },
+        "waitlist": {
+          "subheading": "bIloS tetlhDaq: {productName}. quS poSDI’, SoH wIja’."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "ghom’a’",
+        "municipality_club": "veng ghom’a’",
+        "camp": "ragh",
+        "event": "wanI’"
+      },
+      "priceLabel": "wagh",
+      "price": {
+        "subscription": "{amount} / jar",
+        "upfront": "{amount} (wa’logh DIl)",
+        "free": "wagh Hutlh"
+      },
+      "nextTitle": "qaStaHvIS",
+      "next": {
+        "placement": "Gedu tlhej ghomDaq {participantName} wIlanpu’. My SOG-Daq Qu’mey legh.",
+        "placementSelf": "Gedu tlhej ghomDaq qalanpu’. My SOG-Daq Qu’mey Dalegh.",
+        "subscription": "Hoch jar DaDIlnIS. My SOG-Daq Dajondaq ghap Damevmeh laH.",
+        "upfront": "wa’logh neH DIl — latlh DIl Hutlh.",
+        "free": "pagh DaDIlnIS."
+      },
+      "waitlist": {
+        "subject": "{participantName} loS tetlhDaq: {productName}",
+        "subjectSelf": "bIloS tetlhDaq: {productName}",
+        "heading": "loS tetlhDaq SoH",
+        "subheading": "{participantName} loS tetlhDaq: {productName}. quS poSDI’, SoH wIja’.",
+        "next1": "quS poSDI’, QInHom wIngeH.",
+        "next2": "reH My SOG-Daq loS DaqlIj DaleghlaH."
+      },
+      "dashboardButton": "My SOG yIghoS"
+    },
+    "verifyEmail": {
+      "subject": "QIn DaqlIj yIchel",
+      "heading": "QIn DaqlIj yIchel",
+      "body": "nuqneH {firstName}! School of Gaming patlhlIjDaq QIn Daq chelmeH Datlhobpu’. ’uSDaq yIqIp.",
+      "button": "QIn DaqlIj yIchel",
+      "expiry": "ngeH Soch jaj Qav.",
+      "ignore": "Datlhobbe’chugh, QIn yIleghQo’. pagh choHlu’."
     }
   },
   "roblox": {

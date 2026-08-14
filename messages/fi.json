@@ -2278,6 +2278,90 @@
       "sent": "Lähetetty",
       "message": "Viesti",
       "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
+    },
+    "welcomeParent": {
+      "subject": "Tervetuloa School of Gamingiin",
+      "heading": "Tervetuloa School of Gamingiin",
+      "greeting": "Hei {firstName}, ja tervetuloa mukaan.",
+      "platform": "Sogverse on School of Gamingin palvelu, jossa hallinnoit perheesi kerhoja, leirejä ja tapahtumia.",
+      "nextTitle": "Näin pääset alkuun",
+      "step1": "Lisää pelaajasi, niin tiedämme kuka pelaa.",
+      "step2": "Selaa kerhoja ja leirejä kaupassamme.",
+      "step3": "Aseta vanhemman PIN-koodi, joka pitää vanhemman asetukset vain sinun ulottuvillasi.",
+      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut perheesi kerhoja koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin asetuksissa.",
+      "verifyButton": "Vahvista sähköpostiosoitteesi",
+      "dashboardButton": "Siirry Oma SOG -sivulle"
+    },
+    "welcomeGedu": {
+      "subject": "Tervetuloa School of Gamingiin – Gedu-tilisi",
+      "heading": "Tervetuloa School of Gamingiin",
+      "greeting": "Hei {firstName}, ja kiitos, että rekisteröidyit Geduksi.",
+      "certification": "Ylläpitäjä käy tilisi läpi ja sertifioi sen. Sertifiointi ratkaisee vain sen, voidaanko sinut nimetä ryhmään — kaikki muu on käytettävissäsi heti.",
+      "nextTitle": "Näin pääset alkuun",
+      "step1": "Täydennä profiilisi: puhumasi kielet ja alueet, joilla voit toimia.",
+      "step2": "Liitä Minecraft- ja Roblox-tilisi.",
+      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut ryhmiäsi ja tapaamisia koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin asetuksissa.",
+      "verifyButton": "Vahvista sähköpostiosoitteesi",
+      "dashboardButton": "Siirry Oma SOG -sivulle"
+    },
+    "productConfirmation": {
+      "subject": "{participantName} on ilmoitettu toimintaan {productName}",
+      "subjectSelf": "Sinut on ilmoitettu toimintaan {productName}",
+      "heading": "Valmista tuli!",
+      "subheading": {
+        "consumer_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "municipality_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "camp": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "event": "{participantName} on liittynyt toimintaan {productName}."
+      },
+      "self": {
+        "subheading": {
+          "consumer_club": "Sinut on ilmoitettu toimintaan {productName}.",
+          "municipality_club": "Sinut on ilmoitettu toimintaan {productName}.",
+          "camp": "Sinut on ilmoitettu toimintaan {productName}.",
+          "event": "Olet liittynyt toimintaan {productName}."
+        },
+        "waitlist": {
+          "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "Kerho",
+        "municipality_club": "Kuntakerho",
+        "camp": "Leiri",
+        "event": "Tapahtuma"
+      },
+      "priceLabel": "Hinta",
+      "price": {
+        "subscription": "{amount} / kk",
+        "upfront": "{amount} (kertamaksu)",
+        "free": "Ilmainen"
+      },
+      "nextTitle": "Mitä seuraavaksi tapahtuu",
+      "next": {
+        "placement": "{participantName} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "placementSelf": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
+        "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
+        "free": "Tästä ei veloiteta mitään."
+      },
+      "waitlist": {
+        "subject": "{participantName} on jonotuslistalla – {productName}",
+        "subjectSelf": "Olet jonotuslistalla – {productName}",
+        "heading": "Olet jonotuslistalla",
+        "subheading": "{participantName} on jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
+        "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
+        "next2": "Näet jonotustilanteesi milloin tahansa Oma SOG -sivulla."
+      },
+      "dashboardButton": "Siirry Oma SOG -sivulle"
+    },
+    "verifyEmail": {
+      "subject": "Vahvista sähköpostiosoitteesi",
+      "heading": "Vahvista sähköpostiosoitteesi",
+      "body": "Hei {firstName}, pyysit vahvistamaan School of Gaming -tilisi sähköpostiosoitteen. Vahvista se alla olevalla painikkeella.",
+      "button": "Vahvista sähköpostiosoitteesi",
+      "expiry": "Linkki on voimassa seitsemän vuorokautta.",
+      "ignore": "Jos et pyytänyt tätä, voit jättää viestin huomiotta. Mikään ei muutu."
     }
   },
   "legal": {

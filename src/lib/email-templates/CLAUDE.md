@@ -5,10 +5,11 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 ## Architecture
 
 - **`layout.ts`** — `wrapInLayout({ title, content, locale, t })`: the branded dark-theme HTML shell every email uses. Table-based, inline CSS. `content` is your inner HTML.
-- **`utils.ts`** — building blocks: `escapeHtml()`, `paragraph()`, `heading()`, `styledName()`, `styledProductName()`. Use these instead of hand-writing styled markup.
+- **`utils.ts`** — building blocks every template uses: `escapeHtml()`, `paragraph()`, `heading()`, `styledName()`, `styledProductName()`. Use these instead of hand-writing styled markup.
+- **`blocks.ts`** — the blocks only a mail that sends the reader somewhere needs: `ctaButton()` (primary/secondary), `inlineLink()`, `bulletList()`, `sectionLabel()`. Every `href` they take is embedded unescaped, so they take app-generated URLs and nothing else. A mail with two buttons has one action it is actually asking for — that one is primary, the other outlined.
 - **`translator.ts`** — `getEmailTranslator(locale)` returns an `EmailTranslator` (`t`) scoped to the `email` namespace in `messages/*.json`. Every builder takes `t` and `locale`; no user-facing string is hardcoded in a builder.
 - **`registry.ts`** — `templateRegistry`: the single source of truth for templates that are exposed to the admin testing UI and the test-email API route. Each entry is built with `defineTemplate({...})`.
-- **Per-template builder files** (`password-reset.ts`, `pin-reset.ts`, `feedback.ts`, `enrollment-changes.ts`) — exported `build*Email(t, locale, ...)` functions that compose `utils` helpers inside `wrapInLayout`.
+- **Per-template builder files** (`password-reset.ts`, `pin-reset.ts`, `feedback.ts`, `enrollment-changes.ts`, `welcome.ts`, `product-confirmation.ts`, `verify-email.ts`) — exported `build*Email(t, locale, ...)` functions that compose the `utils`/`blocks` helpers inside `wrapInLayout`.
 
 ## Sender identity
 
@@ -21,6 +22,8 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 ## Conventions
 
 **Rule: Builders return HTML strings only — they never send.** A builder takes `(t, locale, params)`, composes `content`, and returns `wrapInLayout(...)`. Sending is the caller's job (an API route) via `sendTransactionalEmail()`. Keep network and DB access out of this directory.
+
+**Rule: a value that needs locale-aware formatting arrives already formatted.** A price, a date, a duration — the caller has the currency config, the product row and the viewer's zone; the builder has a translator and a string template. Passing the formatted string in keeps the builder a pure composer and keeps one formatting rule per value instead of two.
 
 **Rule: All user-facing copy comes from `t(...)`, never string literals.** Add the key to *every* file in `messages/` (see the root CLAUDE.md i18n rules — best-effort translation for all locales, fun takes for `tlh`, no emoji). Compose translated copy with helpers, e.g. `t("x.body", { gamerName: styledName(name) })`.
 

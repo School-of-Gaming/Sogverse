@@ -2278,6 +2278,90 @@
       "sent": "Skickat",
       "message": "Meddelande",
       "gamerNote": "Denna feedback kommer från ett spelarkonto. Svar skickas till deras förälder ({parentEmail})."
+    },
+    "welcomeParent": {
+      "subject": "Välkommen till School of Gaming",
+      "heading": "Välkommen till School of Gaming",
+      "greeting": "Hej {firstName}, och välkommen. Vi är glada att du är här.",
+      "platform": "Sogverse är School of Gamings plattform, där du sköter familjens klubbar, läger och evenemang.",
+      "nextTitle": "Kom igång",
+      "step1": "Lägg till din spelare, så vet vi vem som spelar.",
+      "step2": "Bläddra bland klubbar och läger i vår butik.",
+      "step3": "Ange din förälder-PIN, som håller föräldrainställningarna bara för dig.",
+      "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om familjens klubbar. Du kan göra det nu, eller senare i dina inställningar.",
+      "verifyButton": "Bekräfta din e-postadress",
+      "dashboardButton": "Gå till Min SOG"
+    },
+    "welcomeGedu": {
+      "subject": "Välkommen till School of Gaming – ditt Gedu-konto",
+      "heading": "Välkommen till School of Gaming",
+      "greeting": "Hej {firstName}, och tack för att du registrerat dig som Gedu.",
+      "certification": "En administratör går igenom ditt konto och certifierar det. Certifieringen avgör bara om du kan tilldelas en grupp — allt annat är öppet för dig direkt.",
+      "nextTitle": "Kom igång",
+      "step1": "Fyll i din profil — vilka språk du talar och vilka områden du kan täcka.",
+      "step2": "Koppla dina Minecraft- och Roblox-konton.",
+      "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om dina grupper och tillfällen. Du kan göra det nu, eller senare i dina inställningar.",
+      "verifyButton": "Bekräfta din e-postadress",
+      "dashboardButton": "Gå till Min SOG"
+    },
+    "productConfirmation": {
+      "subject": "{participantName} är anmäld till {productName}",
+      "subjectSelf": "Du är anmäld till {productName}",
+      "heading": "Allt klart!",
+      "subheading": {
+        "consumer_club": "{participantName} är anmäld till {productName}.",
+        "municipality_club": "{participantName} är registrerad för {productName}.",
+        "camp": "{participantName} är anmäld till {productName}.",
+        "event": "{participantName} har gått med i {productName}."
+      },
+      "self": {
+        "subheading": {
+          "consumer_club": "Du är anmäld till {productName}.",
+          "municipality_club": "Du är registrerad för {productName}.",
+          "camp": "Du är anmäld till {productName}.",
+          "event": "Du har gått med i {productName}."
+        },
+        "waitlist": {
+          "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "Klubb",
+        "municipality_club": "Kommunklubb",
+        "camp": "Läger",
+        "event": "Evenemang"
+      },
+      "priceLabel": "Pris",
+      "price": {
+        "subscription": "{amount} / månad",
+        "upfront": "{amount} (engångsbetalning)",
+        "free": "Gratis"
+      },
+      "nextTitle": "Vad händer nu",
+      "next": {
+        "placement": "Vi placerar {participantName} i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
+        "placementSelf": "Vi placerar dig i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
+        "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
+        "upfront": "Detta var en engångsbetalning – det finns inget mer att betala.",
+        "free": "Det finns inget att betala för den här."
+      },
+      "waitlist": {
+        "subject": "{participantName} står på väntelistan för {productName}",
+        "subjectSelf": "Du står på väntelistan för {productName}",
+        "heading": "Du står på väntelistan",
+        "subheading": "{participantName} står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
+        "next1": "Vi mejlar så snart en plats blir ledig.",
+        "next2": "Du kan följa din plats i kön när som helst i Min SOG."
+      },
+      "dashboardButton": "Gå till Min SOG"
+    },
+    "verifyEmail": {
+      "subject": "Bekräfta din e-postadress",
+      "heading": "Bekräfta din e-postadress",
+      "body": "Hej {firstName}, du bad oss bekräfta e-postadressen på ditt School of Gaming-konto. Använd knappen nedan för att bekräfta den.",
+      "button": "Bekräfta din e-postadress",
+      "expiry": "Länken är giltig i 7 dagar.",
+      "ignore": "Om du inte bad om det här kan du bortse från mejlet. Ingenting ändras."
     }
   },
   "legal": {
