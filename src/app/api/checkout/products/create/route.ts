@@ -314,15 +314,11 @@ export const POST = defineRoute({
       // `productName`, `productType` and the three `*Url` keys are read by a
       // Stripe Workflow, not by us: it posts a Slack notification naming the
       // product and linking to it. The type no longer picks a link — the
-      // finished URLs above do — but it stays, because it labels the message
-      // ("camp", "consumer club") and can gate which purchases trigger a
-      // notification at all. camelCase, matching the object they join.
-      //
-      // The **default-locale** name here, deliberately — not the parent-locale
-      // one the subscription description uses a few lines down. That description
-      // is read by the parent who bought the seat, so it speaks their language;
-      // this key is read by staff in one internal channel, so it has to be the
-      // same string for every buyer of the same product.
+      // finished URLs above do — but it stays, because it can gate which
+      // purchases trigger a notification at all. It ships as the raw Postgres
+      // enum (`camp`, `consumer_club`, `municipality_club`, `event`), so a
+      // template wanting prose has to map it rather than interpolate it.
+      // camelCase, matching the object they join.
       const sessionMetadata = {
         customerId: user.id,
         participantId,

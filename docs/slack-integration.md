@@ -48,8 +48,8 @@ and repoint to the staff channel only once the message reads correctly. Two ways
 - A real test-mode checkout against a running build — slower, and the only test that proves the
   metadata keys the code actually writes match the names the template reads.
 
-Account limits: 50 active workflows, 50 total. Workflows have drafts, versioning, and
-per-run observability in the Dashboard — a failed run is diagnosable there.
+Account limit: 50 workflows in total, all of which may be active. Workflows have drafts,
+versioning, and per-run observability in the Dashboard — a failed run is diagnosable there.
 
 ### Why there is no raw Stripe → Slack webhook
 
@@ -64,14 +64,36 @@ per-run observability in the Dashboard — a failed run is diagnosable there.
 
 ### Trigger
 
-- **Use `checkout.session.completed`.** It fires once money has moved, and it covers both
-  subscription purchases (clubs) and one-off purchases (camps, events).
-- **Do not use `customer.subscription.created`.** It fires before payment is confirmed, and
-  one-off purchases create no subscription at all, so they would never appear.
-- **Filter to Sogverse with a trigger condition requiring `metadata.productId` to be
-  present.** The Stripe account also carries subscriptions from a legacy billing migration,
-  hand-created subscriptions, and an older storefront; an account-level trigger fires for
-  all of them. That metadata key is what marks a purchase as ours.
+- **Use `checkout.session.completed`.** It covers both subscription purchases (clubs) and
+  one-off purchases (camps, events). Be precise about what it means, though: it fires when
+  *Checkout* completes, **not** when payment settles. The two coincide for a card, but the
+  checkout route pins no payment methods, so which ones Checkout offers is a Dashboard
+  setting — enable an asynchronous method (SEPA Direct Debit, Klarna, Bacs) and a completed
+  session arrives with `payment_status: "unpaid"`, confirmed minutes or days later by a
+  different event.
+- **Do not use `customer.subscription.created` even so.** The point above weakens the case
+  for session completion without overturning it: subscription creation is no better on
+  settlement, and it is worse on a count session completion has no trouble with at all —
+  one-off purchases create no subscription, so they would never appear. Session completion
+  is the only trigger that sees every purchase; the settlement gap is closed by the
+  condition below, not by choosing a different event.
+- **Condition the trigger on two things: that the purchase is ours, and that it settled.**
+  - `metadata.productId` is present. The Stripe account also carries subscriptions from a
+    legacy billing migration, hand-created subscriptions, and an older storefront; an
+    account-level trigger fires for all of them. That metadata key is what marks a purchase
+    as ours.
+  - `payment_status` is `paid` — **or** the session is in `subscription` mode and its
+    `payment_status` is `no_payment_required`. This mirrors the rule our own purchase
+    webhook applies before it creates a participation, and the two have to agree. The
+    widening is per *mode*, not per reason: a club whose first charge is deferred to its
+    start date and a full-discount promotion code both legitimately collect nothing today
+    while creating a live subscription that bills later, whereas a one-off purchase that
+    collected nothing has bought nothing.
+
+  This matters because **the channel should announce exactly what the database did.**
+  Without the payment condition the workflow announces purchases that produced no
+  participation — an asynchronous payment still unpaid, or a zero-collecting one-off
+  session — and staff have no way to tell those messages from real signups.
 
 ### What a Stripe event payload can and cannot tell you
 
@@ -101,7 +123,7 @@ design**:
 | Key | Contents |
 |---|---|
 | `productName` | The product's name, resolved at the **default locale** |
-| `productType` | Labels the message; can also drive trigger conditions |
+| `productType` | The raw enum — `consumer_club`, `municipality_club`, `camp`, `event`. A template wanting prose must map it. Can also gate trigger conditions |
 | `adminProductUrl` | Complete absolute URL to the product in the admin dashboard |
 | `adminUserUrl` | Complete absolute URL to the purchasing customer in the admin dashboard |
 | `shopProductUrl` | Complete absolute URL to the product's public shop page |
@@ -141,6 +163,11 @@ Two mechanics are **unverified** — confirm them in a sandbox before relying on
 
 ### Operational cautions
 
+- **The channel is not a complete signup feed — only paid Stripe checkouts appear.** A free
+  product, a municipality (externally-contracted) club and a waitlist join all confirm their
+  registration without a Checkout Session ever being created, so no Stripe event exists for
+  the workflow to trigger on and none of them can ever post. Staff watching the channel
+  would otherwise read silence as "nobody signed up".
 - **A duplicate payment posts an ordinary-looking success message.** When a family completes
   two checkouts for the same seat, our webhook cancels the duplicate subscription and
   records it for a manual refund — but the workflow triggers on session completion and posts
