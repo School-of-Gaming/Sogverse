@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, CheckCircle2, Package, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, MailCheck, MailX, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
@@ -242,14 +242,15 @@ export default async function AdminUserDetailPage({
                     asking the question and deserves a definite answer rather
                     than having to know that silence means no. */}
                 {profile.email_verified_at ? (
-                  <CheckCircle2
+                  <MailCheck
                     className="h-4 w-4 shrink-0 text-success"
                     aria-label={t('emailVerified')}
                   />
                 ) : (
-                  <span className="text-xs text-muted-foreground">
-                    {t('emailNotVerified')}
-                  </span>
+                  <MailX
+                    className="h-4 w-4 shrink-0 text-warning"
+                    aria-label={t('emailNotVerified')}
+                  />
                 )}
               </div>
             )}

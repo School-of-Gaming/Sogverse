@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, LogOut, CheckCircle2 } from "lucide-react";
+import { User, Lock, LogOut, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -335,7 +335,7 @@ export function SettingsSectionContent({
               />
               {isEmailVerified ? (
                 <p className="flex items-center gap-1.5 text-sm text-success">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
+                  <MailCheck className="h-4 w-4 shrink-0" aria-hidden />
                   {t('emailVerified')}
                 </p>
               ) : (
