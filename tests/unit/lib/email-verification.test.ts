@@ -14,90 +14,65 @@ const EMAIL = "parent@example.test";
 const OTHER_EMAIL = "someone-else@example.test";
 
 describe("email-verification token", () => {
-  const NOW = 1_700_000_000_000;
-  const TTL = 7 * 24 * 60 * 60 * 1000;
-
-  it("round-trips and returns the userId before expiry", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    expect(await verifyEmailVerificationToken(token, EMAIL, NOW)).toBe(USER);
-    expect(await verifyEmailVerificationToken(token, EMAIL, NOW + TTL - 1)).toBe(USER);
+  it("round-trips and returns the userId", async () => {
+    const token = await createEmailVerificationToken(USER, EMAIL);
+    expect(await verifyEmailVerificationToken(token, EMAIL)).toBe(USER);
   });
 
-  it("rejects once expired", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    expect(await verifyEmailVerificationToken(token, EMAIL, NOW + TTL + 1)).toBeNull();
-  });
-
-  // Verifying is idempotent on purpose: the second click writes the state the
-  // first one already wrote, so a parent re-opening the link from their inbox
-  // must see the same success rather than an error they cannot act on.
+  // There is deliberately no expiry: the token's only power is to write a
+  // purely informational flag, so a link works however late it is opened.
+  // The module header records the contract that makes this safe — and the
+  // prefix bump that revokes everything if that contract ever changes.
   it("is idempotent: the same token keeps validating", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    expect(await verifyEmailVerificationToken(token, EMAIL, NOW)).toBe(USER);
-    expect(await verifyEmailVerificationToken(token, EMAIL, NOW + 1000)).toBe(USER);
+    const token = await createEmailVerificationToken(USER, EMAIL);
+    expect(await verifyEmailVerificationToken(token, EMAIL)).toBe(USER);
+    expect(await verifyEmailVerificationToken(token, EMAIL)).toBe(USER);
   });
 
-  // The binding that makes revocation unnecessary: the signature is over the
-  // address the link was minted for, so changing it kills every outstanding
-  // link — and a link minted for an old address can never verify a new one.
+  // The binding that makes revocation (and expiry) unnecessary: the signature
+  // is over the address the link was minted for, so changing it kills every
+  // outstanding link — and a link minted for an old address can never verify
+  // a new one.
   it("stops validating once the account's email changes", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    expect(await verifyEmailVerificationToken(token, OTHER_EMAIL, NOW)).toBeNull();
+    const token = await createEmailVerificationToken(USER, EMAIL);
+    expect(await verifyEmailVerificationToken(token, OTHER_EMAIL)).toBeNull();
   });
 
   it("rejects a tampered userId", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    const [, exp, sig] = token.split(".");
-    const forged = `33333333-3333-3333-3333-333333333333.${exp}.${sig}`;
-    expect(await verifyEmailVerificationToken(forged, EMAIL, NOW)).toBeNull();
-  });
-
-  it("rejects a tampered expiry (extending the window)", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    const [userId, exp, sig] = token.split(".");
-    const forged = `${userId}.${Number(exp) + TTL}.${sig}`;
-    expect(await verifyEmailVerificationToken(forged, EMAIL, NOW)).toBeNull();
+    const token = await createEmailVerificationToken(USER, EMAIL);
+    const [, sig] = token.split(".");
+    const forged = `33333333-3333-3333-3333-333333333333.${sig}`;
+    expect(await verifyEmailVerificationToken(forged, EMAIL)).toBeNull();
   });
 
   it("rejects a tampered signature", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    const [userId, exp] = token.split(".");
+    const token = await createEmailVerificationToken(USER, EMAIL);
+    const [userId] = token.split(".");
     expect(
-      await verifyEmailVerificationToken(`${userId}.${exp}.deadbeef`, EMAIL, NOW),
+      await verifyEmailVerificationToken(`${userId}.deadbeef`, EMAIL),
     ).toBeNull();
   });
 
   it("rejects a malformed token", async () => {
-    expect(await verifyEmailVerificationToken("only.two", EMAIL, NOW)).toBeNull();
-    expect(await verifyEmailVerificationToken("", EMAIL, NOW)).toBeNull();
-    expect(
-      await verifyEmailVerificationToken("a.b.c.d", EMAIL, NOW),
-    ).toBeNull();
-  });
-
-  it("rejects an expiry that is not an integer", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
-    const [userId, , sig] = token.split(".");
-    expect(
-      await verifyEmailVerificationToken(`${userId}.not-a-number.${sig}`, EMAIL, NOW),
-    ).toBeNull();
+    expect(await verifyEmailVerificationToken("no-dot-at-all", EMAIL)).toBeNull();
+    expect(await verifyEmailVerificationToken("", EMAIL)).toBeNull();
+    expect(await verifyEmailVerificationToken("a.b.c", EMAIL)).toBeNull();
   });
 
   it("parseEmailVerificationTokenUserId extracts the userId without verifying", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
+    const token = await createEmailVerificationToken(USER, EMAIL);
     expect(parseEmailVerificationTokenUserId(token)).toBe(USER);
-    expect(parseEmailVerificationTokenUserId("only.two")).toBeNull();
+    expect(parseEmailVerificationTokenUserId("no-dot-at-all")).toBeNull();
     expect(parseEmailVerificationTokenUserId("")).toBeNull();
   });
 
   // Domain separation: the payload prefix is the only thing standing between
   // this flow and the PIN-reset flow, which shares the HMAC key.
-  it("produces a hex signature and a three-part token", async () => {
-    const token = await createEmailVerificationToken(USER, EMAIL, NOW);
+  it("produces a hex signature and a two-part token", async () => {
+    const token = await createEmailVerificationToken(USER, EMAIL);
     const parts = token.split(".");
-    expect(parts).toHaveLength(3);
+    expect(parts).toHaveLength(2);
     expect(parts[0]).toBe(USER);
-    expect(Number(parts[1])).toBe(NOW + TTL);
-    expect(parts[2]).toMatch(/^[0-9a-f]{64}$/);
+    expect(parts[1]).toMatch(/^[0-9a-f]{64}$/);
   });
 });
