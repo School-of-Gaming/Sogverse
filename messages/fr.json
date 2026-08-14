@@ -2319,7 +2319,8 @@
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
           "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement.",
           "Facultativement, le nom d’utilisateur Minecraft de votre enfant — pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
-          "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous)."
+          "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous).",
+          "Si vous êtes arrivé par un lien partagé par une école, un club ou une organisation partenaire, un code court indiquant lequel — pour que nous sachions quelles actions touchent réellement les familles, et que nous puissions dire à nos partenaires si la leur a fonctionné."
         ]
       },
       "childrensPrivacy": {
@@ -2354,7 +2355,8 @@
           "Pour vous fournir ce que vous avez souscrit — les clubs et services que vous nous avez achetés (notre contrat avec vous).",
           "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
-          "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée."
+          "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée.",
+          "Pour notre intérêt légitime à savoir lesquelles de nos actions touchent les familles — toujours mis en balance avec votre vie privée, et vous pouvez nous demander d’arrêter à tout moment."
         ]
       },
       "providers": {

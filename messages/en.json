@@ -2951,7 +2951,8 @@
           "Payment details are handled directly in Stripe. We never see or store your full card number.",
           "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly.",
           "Optionally, your child’s Minecraft username — so they can connect to our Minecraft server during sessions.",
-          "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below)."
+          "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below).",
+          "If you came to us through a link shared by a school, club or partner organisation, a short code telling us which one — so we know which outreach actually reaches families, and can tell our partners whether theirs worked."
         ]
       },
       "childrensPrivacy": {
@@ -2986,7 +2987,8 @@
           "To deliver what you signed up for — the clubs and services you’ve bought from us (our contract with you).",
           "Because a parent has given permission on their child’s behalf (consent).",
           "To meet our legal duties, such as keeping accounting records for payments.",
-          "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy."
+          "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy.",
+          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time."
         ]
       },
       "providers": {

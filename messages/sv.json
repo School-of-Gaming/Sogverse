@@ -2319,7 +2319,8 @@
           "Betaluppgifter hanteras direkt i Stripe. Vi ser eller lagrar aldrig hela ditt kortnummer.",
           "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt.",
           "Eventuellt barnets Minecraft-användarnamn – så att barnet kan ansluta till vår Minecraft-server under träffarna.",
-          "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan)."
+          "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan).",
+          "En kort kod som visar vilken skola, klubb eller samarbetspartner som delade länken du kom hit via – så att vi vet vilken information som faktiskt når familjer, och kan berätta för våra partner om deras länk fungerade."
         ]
       },
       "childrensPrivacy": {
@@ -2354,7 +2355,8 @@
           "För att leverera det du anmält dig till – de klubbar och tjänster du köpt av oss (vårt avtal med dig).",
           "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
           "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
-          "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet."
+          "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
+          "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta."
         ]
       },
       "providers": {
