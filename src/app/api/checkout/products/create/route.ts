@@ -4,7 +4,11 @@ import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import { resolveLocale, stripeLocaleOrAuto } from "@/lib/constants/locales";
+import {
+  DEFAULT_LOCALE,
+  resolveLocale,
+  stripeLocaleOrAuto,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   createCheckoutBody,
@@ -99,12 +103,29 @@ export const POST = defineRoute({
 
     const locale = resolveLocale(profile.locale);
 
+    // The same field resolved twice, for two audiences that want different
+    // answers. Both names come out of the one `product_translations` array
+    // already read above — two resolves, no second query. The variables are
+    // named for their locale rather than one being the bare `productName`,
+    // because "the product's name" is now a question with two right answers and
+    // a later reader must be made to pick.
+    //
     // Prefer the parent's locale for the one customer-facing name we still
     // control on the Checkout page: the subscription description. Both line
     // items now name the shared Stripe Product, whose name is resolved at the
     // default locale and shared across every locale.
-    const productName =
+    const parentLocaleProductName =
       resolveTranslation(product.product_translations, locale)?.name ??
+      "School of Gaming product";
+    // The default-locale name, for the session metadata a Stripe Workflow turns
+    // into an internal Slack notification. Its audience is staff in one channel,
+    // where one stable name per product is the whole point — resolving it in the
+    // buyer's locale would file the same club under a different heading
+    // depending on who happened to buy it. Same convention as the shared Stripe
+    // Product's name above, and the same fallback chain and last resort as the
+    // parent-locale name beside it.
+    const defaultLocaleProductName =
+      resolveTranslation(product.product_translations, DEFAULT_LOCALE)?.name ??
       "School of Gaming product";
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid
@@ -248,10 +269,25 @@ export const POST = defineRoute({
       // webhook will create. Nothing else carries it, so every field here is
       // load-bearing rather than informational. The webhook and the
       // confirmation page read `participantId` back by exactly this name.
+      //
+      // `productName` and `productType` are read by a Stripe Workflow, not by
+      // us: it posts a Slack notification naming the product and linking to its
+      // admin page. That URL is type-split (`/admin/consumer-clubs/[id]`,
+      // `/admin/camps/[id]`, …) with no `/admin/products/[id]` to fall back on,
+      // which is why the type has to travel with the purchase rather than being
+      // looked up. camelCase, matching the object they join.
+      //
+      // The **default-locale** name here, deliberately — not the parent-locale
+      // one the subscription description uses a few lines down. That description
+      // is read by the parent who bought the seat, so it speaks their language;
+      // this key is read by staff in one internal channel, so it has to be the
+      // same string for every buyer of the same product.
       const sessionMetadata = {
         customerId: user.id,
         participantId,
         productId,
+        productName: defaultLocaleProductName,
+        productType: product.product_type,
         purchaseShape,
         currency,
       };
@@ -415,7 +451,7 @@ export const POST = defineRoute({
           // webhook reads, and the subscription carries that set *plus* the
           // finance snapshot, because nothing propagates from the session to it.
           metadata: { ...sessionMetadata, ...purchaseMetadata },
-          description: `${productName} — ${await pickParticipantName(
+          description: `${parentLocaleProductName} — ${await pickParticipantName(
             admin,
             participantId,
             participantId === user.id,

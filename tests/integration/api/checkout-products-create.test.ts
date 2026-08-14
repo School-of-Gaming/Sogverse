@@ -689,10 +689,17 @@ describe("POST /api/checkout/products/create", () => {
     // because there is no row yet. Its camelCase keys are read by the webhook
     // and the confirmation page, so the finance keys added below are a separate
     // set on separate objects rather than a rename of these.
+    //
+    // `productName`/`productType` are read by nothing of ours: a Stripe Workflow
+    // builds the internal Slack notification from them, and the admin product
+    // URL is type-split (no `/admin/products/[id]`), so the type has to travel
+    // with the purchase. This one is a camp, which is where that matters.
     expect(params.metadata).toEqual({
       customerId: CUSTOMER_ID,
       participantId: GAMER_ID,
       productId: PRODUCT_ID,
+      productName: "Test Club",
+      productType: "camp",
       purchaseShape: "single_payment",
       currency: "eur",
     });
@@ -883,6 +890,8 @@ describe("POST /api/checkout/products/create", () => {
       customerId: CUSTOMER_ID,
       participantId: GAMER_ID,
       productId: PRODUCT_ID,
+      productName: "Test Club",
+      productType: "consumer_club",
       purchaseShape: "subscription_monthly",
       currency: "eur",
     });
@@ -891,6 +900,8 @@ describe("POST /api/checkout/products/create", () => {
         customerId: CUSTOMER_ID,
         participantId: GAMER_ID,
         productId: PRODUCT_ID,
+        productName: "Test Club",
+        productType: "consumer_club",
         purchaseShape: "subscription_monthly",
         currency: "eur",
         product_id: PRODUCT_ID,
@@ -961,6 +972,14 @@ describe("POST /api/checkout/products/create", () => {
     expect(params.subscription_data.description).toBe(
       `Testikerho — ${GAMER_FIRST_NAME}`,
     );
+    // …while the session's `productName` stays the **default-locale** name, for
+    // the same Finnish purchase. The two are resolved independently on purpose:
+    // the description is read by the parent who bought the seat, the metadata
+    // key by staff in one internal Slack channel, where the same product must
+    // arrive under the same heading whoever bought it. Asserting the pair is
+    // what proves they are independent — either value alone would still pass if
+    // the two resolves were collapsed back into one.
+    expect(params.metadata.productName).toBe("Test Club");
   });
 
   it("falls Stripe chrome back to 'auto' for a locale Stripe doesn't speak (Klingon)", async () => {
