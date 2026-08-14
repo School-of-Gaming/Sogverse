@@ -103,6 +103,14 @@ export const POST = defineRoute({
 
     const locale = resolveLocale(profile.locale);
 
+    // The last resort of both name resolves below, named once so that "the two
+    // chains end in the same string" is structural rather than a claim a reader
+    // has to verify by comparing two literals ten lines apart. It reaches Stripe
+    // — a receipt, the hosted portal, an internal Slack message — never
+    // `messages/`, so no locale sweep will ever translate it, and the brand name
+    // is the right shape for a string in that position.
+    const fallbackProductName = "School of Gaming product";
+
     // The same field resolved twice, for two audiences that want different
     // answers. Both names come out of the one `product_translations` array
     // already read above — two resolves, no second query. The variables are
@@ -116,17 +124,16 @@ export const POST = defineRoute({
     // default locale and shared across every locale.
     const parentLocaleProductName =
       resolveTranslation(product.product_translations, locale)?.name ??
-      "School of Gaming product";
+      fallbackProductName;
     // The default-locale name, for the session metadata a Stripe Workflow turns
     // into an internal Slack notification. Its audience is staff in one channel,
     // where one stable name per product is the whole point — resolving it in the
     // buyer's locale would file the same club under a different heading
     // depending on who happened to buy it. Same convention as the shared Stripe
-    // Product's name above, and the same fallback chain and last resort as the
-    // parent-locale name beside it.
+    // Product's name above.
     const defaultLocaleProductName =
       resolveTranslation(product.product_translations, DEFAULT_LOCALE)?.name ??
-      "School of Gaming product";
+      fallbackProductName;
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid
     // shape family: free→'free', external_contract→'external', paid→
@@ -265,17 +272,51 @@ export const POST = defineRoute({
       // retry. Nothing to undo — no row was written.
       const cancelUrl = `${origin}${ROUTES.shopProduct(productId)}`;
 
+      // The three links the Slack notification offers its reader: the product's
+      // admin page, the paying customer's admin page, and the public shop page.
+      // Finished URLs, assembled here, because a Stripe Workflow can substitute
+      // a variable into a message but cannot map an enum onto a URL shape. A
+      // Workflow building `/admin/{productType}/{productId}` would be a second,
+      // hand-maintained copy of the type→path mapping, living in the Dashboard
+      // outside this repo where no compiler sees it and a new product type
+      // produces a 404 nobody is warned about. `ROUTES.admin.product` is an
+      // exhaustive `switch` with no `default`, so it is the one place that
+      // mapping can be wrong *and be caught* — keeping it the only place is the
+      // entire reason these are built here instead of over there.
+      //
+      // Absolute, because a Slack message has no origin to resolve against, and
+      // off the `origin` above — `getOrigin(request)`, never the raw `Host` —
+      // which matters more here than for the redirects: staff click these, in
+      // the channel they trust most, so a spoofed `Host` would turn our own
+      // purchase alert into a phishing link aimed at our own team.
+      //
+      // Accepted trade: each URL freezes at purchase time. Restructuring an
+      // admin route later leaves this code correct while the links in Slack
+      // messages already sent go stale — acceptable because those messages are
+      // read within minutes of the purchase and never revisited, but the next
+      // person moving an admin route should meet that deliberately here rather
+      // than discover it from a dead link.
+      const adminProductUrl = `${origin}${ROUTES.admin.product(product.product_type, productId)}`;
+      const adminUserUrl = `${origin}${ROUTES.admin.user(user.id)}`;
+      // Textually identical to `cancelUrl` above, and deliberately duplicated
+      // rather than shared. `cancelUrl` is where an abandoned checkout bounces
+      // the parent back to; this is where a Slack reader goes to see what was
+      // bought. Two independent reasons that happen to name the same page today,
+      // so folding them into one variable would silently drag one along the next
+      // time the other has to move.
+      const shopProductUrl = `${origin}${ROUTES.shopProduct(productId)}`;
+
       // The metadata IS the link between this session and the participation the
       // webhook will create. Nothing else carries it, so every field here is
       // load-bearing rather than informational. The webhook and the
       // confirmation page read `participantId` back by exactly this name.
       //
-      // `productName` and `productType` are read by a Stripe Workflow, not by
-      // us: it posts a Slack notification naming the product and linking to its
-      // admin page. That URL is type-split (`/admin/consumer-clubs/[id]`,
-      // `/admin/camps/[id]`, …) with no `/admin/products/[id]` to fall back on,
-      // which is why the type has to travel with the purchase rather than being
-      // looked up. camelCase, matching the object they join.
+      // `productName`, `productType` and the three `*Url` keys are read by a
+      // Stripe Workflow, not by us: it posts a Slack notification naming the
+      // product and linking to it. The type no longer picks a link — the
+      // finished URLs above do — but it stays, because it labels the message
+      // ("camp", "consumer club") and can gate which purchases trigger a
+      // notification at all. camelCase, matching the object they join.
       //
       // The **default-locale** name here, deliberately — not the parent-locale
       // one the subscription description uses a few lines down. That description
@@ -288,6 +329,9 @@ export const POST = defineRoute({
         productId,
         productName: defaultLocaleProductName,
         productType: product.product_type,
+        adminProductUrl,
+        adminUserUrl,
+        shopProductUrl,
         purchaseShape,
         currency,
       };
