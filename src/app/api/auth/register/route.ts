@@ -162,27 +162,37 @@ export const POST = defineRoute({
     // it to read a caller-supplied foreign key is real surface added to the most
     // sensitive object here, to save one statement.
     //
-    // NEVER FATAL. The account exists, the field is optional, and it is
-    // re-pickable from settings — deleting a working account over it, or
+    // NEVER FATAL. The account exists, both fields are optional, and both are
+    // re-pickable from settings — deleting a working account over either, or
     // stranding the parent on the registration form, would both be strictly
     // worse than losing the value.
-    if (homeLocationId) {
-      const { error: locationError } = await admin
+    //
+    // The locale is persisted, not just used for the mail below: it is the
+    // language the parent registered in, and the profile is the only source a
+    // browserless sender can consult — the Stripe webhook's confirmation mail
+    // resolves profile.locale first and would otherwise fall through
+    // Accept-Language on STRIPE'S request to English. (`register_gedu` already
+    // persists the educator's locale; this is the parent half of the same
+    // decision.)
+    const profileExtras: { home_location_id?: string; locale?: string } = {};
+    if (homeLocationId) profileExtras.home_location_id = homeLocationId;
+    if (requestedLocale) profileExtras.locale = requestedLocale;
+    if (Object.keys(profileExtras).length > 0) {
+      const { error: extrasError } = await admin
         .from("profiles")
-        .update({ home_location_id: homeLocationId })
+        .update(profileExtras)
         .eq("id", userId);
-      if (locationError) {
+      if (extrasError) {
         console.error(
-          "[auth/register] could not save the home location",
-          locationError,
+          "[auth/register] could not save the profile extras",
+          extrasError,
         );
       }
     }
 
     // Locale for the mail: what the form was being read in, else what the
-    // browser asked for, else English. There is no stored preference to consult
-    // — the profile was created a moment ago and `handle_new_user` writes no
-    // locale — which is precisely why the form sends the one it is rendering in.
+    // browser asked for, else English. The stored preference written above is
+    // the same value, so consulting it would be a read-after-write for nothing.
     const locale =
       requestedLocale ??
       detectLocaleFromHeader(request.headers.get("Accept-Language"));

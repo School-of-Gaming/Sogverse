@@ -219,16 +219,10 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(200);
     expect(mockProfileUpdate).toHaveBeenCalledWith({
-      row: { home_location_id: LOCATION_ID },
+      row: { home_location_id: LOCATION_ID, locale: "en" },
       column: "id",
       value: NEW_USER_ID,
     });
-  });
-
-  it("writes nothing when no home location was given", async () => {
-    await POST(registerRequest(validBody));
-
-    expect(mockProfileUpdate).not.toHaveBeenCalled();
   });
 
   // The one place this route deliberately has NO rollback. The account is the
@@ -323,6 +317,28 @@ describe("POST /api/auth/register", () => {
     expect(htmlContent).toContain("https://test.sogverse.local/shop");
     expect(htmlContent).toContain("https://test.sogverse.local/parent");
     expect(htmlContent).toContain("https://test.sogverse.local/settings");
+  });
+
+  // The persisted locale is what a browserless sender consults later: without
+  // it, the Stripe webhook's confirmation mail for this parent falls through
+  // Accept-Language on Stripe's own request and lands on English.
+  it("persists the registration locale onto the profile", async () => {
+    const response = await POST(registerRequest({ ...validBody, locale: "fi" }));
+
+    expect(response.status).toBe(200);
+    expect(mockProfileUpdate).toHaveBeenCalledWith({
+      row: { locale: "fi" },
+      column: "id",
+      value: NEW_USER_ID,
+    });
+  });
+
+  it("writes no profile extras when neither locale nor location was sent", async () => {
+    const { locale: _omitted, ...noLocale } = validBody;
+    const response = await POST(registerRequest(noLocale));
+
+    expect(response.status).toBe(200);
+    expect(mockProfileUpdate).not.toHaveBeenCalled();
   });
 
   it("renders the mail in the locale the form was being read in", async () => {
