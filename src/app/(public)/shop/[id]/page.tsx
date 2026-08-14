@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -64,15 +64,14 @@ const ROBOTS_ONLY: Metadata = {
  * robots-only metadata unchanged — exactly what this route served before the
  * card existed.
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: { params: Promise<{ id: string }> },
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: product } = await supabase
+  const { data: product, error } = await supabase
     .from("products")
     .select("image_path, product_translations(locale, name, short_description)")
     // Embedded resources come back unordered, so `resolveTranslation`'s last
@@ -84,6 +83,14 @@ export async function generateMetadata({
     .order("locale", { referencedTable: "product_translations" })
     .eq("id", id)
     .maybeSingle();
+
+  // Logged, not thrown, and only for a real read failure — an absent product is
+  // the ordinary case (a stale link, a draft) and says nothing. Without this, a
+  // PostgREST timeout or an RLS regression degrades *every* card to the
+  // site-wide default with no signal, and is indistinguishable from a bad id.
+  if (error) {
+    console.error("[shop/[id]] metadata product read failed", error);
+  }
 
   const translation = resolveTranslation(
     product?.product_translations,
@@ -102,13 +109,27 @@ export async function generateMetadata({
   // one omits the key rather than emitting a blank description.
   const description = translation.short_description || undefined;
   const image = productImageSrc(product.image_path);
-  // 3:2, the aspect every product image is stored at. Declaring the true
-  // dimensions is what lets a platform crop deliberately to its own frame
-  // instead of guessing; a product with no image omits `images` entirely so the
-  // root branded card (src/app/opengraph-image.tsx) is inherited.
+  // **No `width`/`height`.** 3:2 is a *rendering* convention — `ProductBanner`
+  // paints every picture in an `aspect-[3/2]` frame with `object-cover` — and
+  // nothing enforces it on the stored bytes: the upload path takes an arbitrary
+  // file and puts it in the bucket verbatim, and real products are square
+  // today. Declaring dimensions the file may not have is worse than declaring
+  // none, because the consumers that trust them reserve the frame before
+  // fetching and then letterbox or mis-crop what actually arrives. Omitted,
+  // they fetch and measure, which is slower and right.
+  //
+  // **A product with no picture falls back to the parent's resolved images —
+  // the root branded card — and this cannot be done by omission.** Two separate
+  // mechanics in Next's metadata resolution both defeat the obvious spelling:
+  // `mergeMetadata` *assigns* `openGraph` rather than merging it, so declaring
+  // the block at all discards the root's images; and the file-based
+  // `opengraph-image` convention is only merged in when the child's `openGraph`
+  // has no own `images` property — and `{ images: undefined }` has one. So an
+  // imageless product would emit no `og:image` whatsoever, which is strictly
+  // worse than the site-wide card it used to inherit.
   const images = image
-    ? [{ url: image, width: 1200, height: 800, alt: translation.name }]
-    : undefined;
+    ? [{ url: image, alt: translation.name }]
+    : (await parent).openGraph?.images;
 
   return {
     ...ROBOTS_ONLY,
