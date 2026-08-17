@@ -2,19 +2,30 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Info, MapPin, Search } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import {
+  LOCATION_SEARCH_MIN_QUERY,
+  useLocationSearch,
+} from "@/services/locations";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
+  buildMunicipalityEntry,
   groupByRegion,
+  SCHOOLS_COUNTRY_CODE,
   type MunicipalityEntry,
   type RegionGroup,
 } from "@/lib/schools/municipalities";
+import type { LocationType } from "@/types";
+
+/** The long-tail arm asks the index for municipalities, in Finland, and nothing else. */
+const FALLBACK_TYPES: readonly LocationType[] = ["municipality"];
 
 /**
  * Public entry point for parents discovering municipality clubs. Two states
@@ -22,25 +33,71 @@ import {
  *  - empty query → the curated default: the regions where we run clubs, each an
  *    expandable section that reveals its municipalities on click (collapsed by
  *    default to keep the list compact);
- *  - non-empty query → search over those same municipalities, each row carrying
- *    its region sub-line and its status.
+ *  - non-empty query → search, each row carrying its region sub-line and its
+ *    status.
  *
  * `entries` is every municipality that runs a club, and nothing else — the page
  * is bounded by the club count rather than by Finland, so this is a small list
  * both to ship and to search. It is computed server-side, so the first frame is
- * complete: search only ever filters in place, and the region sections start
- * collapsed so expanding is always user-initiated (CLAUDE.md layout-stability
- * rule).
+ * complete: the default view never waits on anything, and the region sections
+ * start collapsed so expanding is always user-initiated (CLAUDE.md
+ * layout-stability rule).
+ *
+ * **Search is a union of two arms, not a cascade.** The local arm narrows those
+ * club-bearing entries in memory and renders instantly. Every debounced query
+ * of at least the route's minimum length *also* asks the indexed search route,
+ * and its hits — deduped against what the local arm just rendered — append
+ * below. The fallback is not conditional on the local arm coming up empty,
+ * because 32 Finnish municipality names sit inside another municipality's name
+ * (Lahti inside Vesilahti, Pori inside Raasepori): a parent typing their whole
+ * town would otherwise see only the towns that contain it, and *which* towns
+ * those are would shift silently as clubs open and close.
  */
 export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   const t = useTranslations("schools");
   const c = useTranslations("common");
+  const locale = useLocale();
   const [query, setQuery] = useState("");
 
-  // Slugify the query so search is diacritic-insensitive ("jarvi" finds
+  // Slugify the query so the local arm is diacritic-insensitive ("jarvi" finds
   // "Järvenpää") and matches the same normalisation as the slugs themselves.
+  // This fold narrows the small club-bearing set only; the fallback arm folds
+  // nothing and asks the database's own index instead.
   const normalizedQuery = municipalitySlug(query);
   const searching = normalizedQuery.length > 0;
+
+  const debouncedQuery = useDebouncedValue(query);
+  /** Has the debounce caught up with what is in the box right now? */
+  const settled = debouncedQuery === query;
+
+  /**
+   * Whether the *current* input warrants a fallback at all. The local arm has
+   * no minimum length, so a one-character query narrows locally and never
+   * reaches the index — and, having no request in flight, has nothing for the
+   * empty state to wait on. Input that folds to nothing is the default view,
+   * which must fire no request either.
+   */
+  const fallbackExpected =
+    searching && query.trim().length >= LOCATION_SEARCH_MIN_QUERY;
+
+  /**
+   * Mid-debounce the hook's key still names the *previous* needle, so feeding
+   * it an empty needle until the debounce catches up is what keeps the previous
+   * query's hits from rendering underneath fresh local ones as answers to a
+   * query they do not match.
+   */
+  const fallback = useLocationSearch(
+    fallbackExpected && settled ? debouncedQuery : "",
+    {
+      types: FALLBACK_TYPES,
+      country: SCHOOLS_COUNTRY_CODE,
+      // Same reason, one layer down: the hook's default keeps the previous
+      // needle's hits on screen while the next request flies, which is right
+      // for a panel made only of them and wrong beside a local arm that has
+      // already moved on.
+      keepPreviousResults: false,
+    },
+  );
 
   const activeGroups = useMemo(() => groupByRegion(entries), [entries]);
 
@@ -53,6 +110,46 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
         : [],
     [entries, normalizedQuery, searching],
   );
+
+  const entriesById = useMemo(
+    () => new Map(entries.map((e) => [e.id, e])),
+    [entries],
+  );
+
+  /**
+   * The fallback's contribution, in the index's own rank order.
+   *
+   * Deduped against **what the local arm rendered for this query**, never
+   * against the club-bearing set: a fallback hit can legitimately be
+   * club-bearing and still be one no local slug match could reach — typing a
+   * postcode is the case the postal arm exists for — and dropping it would
+   * remove exactly the row worth surfacing. Such a hit renders as a normal
+   * link, reusing the entry the page already holds so its slug and region come
+   * from the same place every other link's do; anything else is a real
+   * municipality we run nothing in, and renders in the clubless state.
+   */
+  const fallbackRows = useMemo(() => {
+    const rendered = new Set(results.map((e) => e.id));
+    return (fallback.data?.results ?? [])
+      .filter((hit) => !rendered.has(hit.id))
+      .map((hit) => {
+        const known = entriesById.get(hit.id);
+        return known
+          ? { entry: known, hasClubs: true }
+          : { entry: buildMunicipalityEntry(hit, locale), hasClubs: false };
+      });
+  }, [fallback.data, results, entriesById, locale]);
+
+  /**
+   * The empty state is withheld only while the fallback for the *current* input
+   * has not resolved — otherwise the page asserts "no municipality matches
+   * this" and then contradicts itself a round trip later. Both halves are
+   * load-bearing: during the debounce window the hook is not fetching yet and
+   * its state still describes the previous needle, so the query state alone
+   * would flash the card mid-typing.
+   */
+  const fallbackPending =
+    fallbackExpected && (!settled || fallback.isPending);
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -84,7 +181,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
 
       <div className="mt-10">
         {searching ? (
-          results.length > 0 ? (
+          results.length + fallbackRows.length > 0 ? (
             <ul className="space-y-2">
               {results.map((m) => (
                 <MunicipalityRow
@@ -95,8 +192,17 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
                   searchView
                 />
               ))}
+              {fallbackRows.map((row) => (
+                <MunicipalityRow
+                  key={row.entry.id}
+                  entry={row.entry}
+                  t={t}
+                  hasClubs={row.hasClubs}
+                  searchView
+                />
+              ))}
             </ul>
-          ) : (
+          ) : fallbackPending ? null : (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
                 {t("search.noMatches", { query })}

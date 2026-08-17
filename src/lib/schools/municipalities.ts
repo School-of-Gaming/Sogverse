@@ -1,4 +1,3 @@
-import type { LocationChainNode } from "@/services/locations";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
   municipalityOf,
@@ -9,7 +8,7 @@ import {
   localizedLocationName,
   localizedNameAlternates,
 } from "@/lib/locations/localized-name";
-import type { Json } from "@/types";
+import type { Json, LocationType } from "@/types";
 
 // Pure logic behind the public /schools pages: turn the municipalities that
 // actually run clubs into a sorted list of rows a parent can browse or search.
@@ -50,7 +49,22 @@ export interface MunicipalitySource {
   name: string;
   name_i18n: Json | null;
   /** Ancestor chain, nearest first — `ancestors[0]` is the region. */
-  ancestors?: readonly LocationChainNode[];
+  ancestors?: readonly MunicipalityAncestor[];
+}
+
+/**
+ * The minimum an ancestor has to carry to become a region header: enough to
+ * tell a region from a country and to render its name in the viewer's locale.
+ *
+ * Deliberately narrower than the chain node the keyed read returns, because a
+ * search hit's chain is narrower still — the search RPC carries only what a
+ * path needs — and both have to feed this builder.
+ */
+export interface MunicipalityAncestor {
+  id: string;
+  name: string;
+  name_i18n: Json | null;
+  type: LocationType;
 }
 
 /** One municipality row for the /schools list. */
@@ -124,25 +138,39 @@ export function buildMunicipalityEntries(
   locale: string,
 ): MunicipalityEntry[] {
   return municipalities
-    .map((m) => {
-      // `.at()` rather than `[0]`: a municipality whose parent row is missing
-      // really has an empty chain, and index access would type that away.
-      const region = m.ancestors?.at(0);
-      const isRegion = region?.type === "region";
-      const displayName = localizedLocationName(m, locale);
-      return {
-        id: m.id,
-        name: displayName,
-        slug: municipalitySlug(displayName),
-        searchSlugs: [
-          municipalitySlug(m.name),
-          ...localizedNameAlternates(m).map(municipalitySlug),
-        ],
-        regionId: isRegion ? region.id : null,
-        regionName: isRegion ? localizedLocationName(region, locale) : null,
-      };
-    })
+    .map((m) => buildMunicipalityEntry(m, locale))
     .sort((a, b) => a.name.localeCompare(b.name, locale));
+}
+
+/**
+ * One municipality as a row, with no ordering imposed.
+ *
+ * The list above is sorted by name because it is browsed. A caller that already
+ * holds an order it must not lose — the search index's ranking, which puts an
+ * exact match above a prefix above an infix — builds its rows one at a time
+ * through here instead, so the slug and search-slug derivation still happens in
+ * exactly one place.
+ */
+export function buildMunicipalityEntry(
+  municipality: MunicipalitySource,
+  locale: string,
+): MunicipalityEntry {
+  // `.at()` rather than `[0]`: a municipality whose parent row is missing
+  // really has an empty chain, and index access would type that away.
+  const region = municipality.ancestors?.at(0);
+  const isRegion = region?.type === "region";
+  const displayName = localizedLocationName(municipality, locale);
+  return {
+    id: municipality.id,
+    name: displayName,
+    slug: municipalitySlug(displayName),
+    searchSlugs: [
+      municipalitySlug(municipality.name),
+      ...localizedNameAlternates(municipality).map(municipalitySlug),
+    ],
+    regionId: isRegion ? region.id : null,
+    regionName: isRegion ? localizedLocationName(region, locale) : null,
+  };
 }
 
 /**

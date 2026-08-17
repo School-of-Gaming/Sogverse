@@ -129,6 +129,14 @@ export function useLocationChildren(parentId: string | null) {
  * minimum needle length the query never runs, which is what keeps a
  * keystroke-driven box from firing a request per letter before it could match
  * anything meaningful.
+ *
+ * `keepPreviousResults` is on by default and is right for a panel whose whole
+ * result area is these hits: the list a user is reading is replaced rather than
+ * emptied. It is wrong — and has to be turned off — wherever these hits are
+ * *interleaved* with results the caller computed itself, because those update
+ * on the keystroke while these lag a debounce behind: the previous needle's
+ * hits would then sit under fresh local ones, reading as answers to a query
+ * they do not match.
  */
 export function useLocationSearch(
   query: string,
@@ -136,6 +144,7 @@ export function useLocationSearch(
     types?: readonly LocationType[];
     limit?: number;
     country?: string;
+    keepPreviousResults?: boolean;
   },
 ) {
   const supabase = getClient();
@@ -143,6 +152,7 @@ export function useLocationSearch(
   const needle = query.trim();
   const types = options?.types;
   const country = options?.country;
+  const keepPreviousResults = options?.keepPreviousResults ?? true;
 
   return useQuery({
     queryKey: locationKeys.searchFor(needle, types, country),
@@ -156,7 +166,7 @@ export function useLocationSearch(
     staleTime: REFERENCE_DATA_STALE_MS,
     // The previous needle's hits stay on screen while the next one is in
     // flight, so a list the user is reading is replaced rather than emptied.
-    placeholderData: (previous) => previous,
+    placeholderData: keepPreviousResults ? (previous) => previous : undefined,
   });
 }
 
