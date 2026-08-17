@@ -9,7 +9,15 @@ import type { PreviewChromeKind } from "./scenes";
  * gets the same components the corresponding route group composes. `"public"`
  * mirrors the `(public)` layout (header, flexible main, footer); `"dashboard"`
  * mirrors the `(dashboard)` layout as every non-admin role sees it — header
- * plus the dashboard layout with no sidebar.
+ * plus the dashboard layout with no sidebar; `"admin"` is that same layout as
+ * the **admin** meets it, sidebar included.
+ *
+ * Admin is its own kind rather than a flag on `"dashboard"` because the sidebar
+ * is not a decoration on an admin page — it is a third of the horizontal room,
+ * and a wide two-column dashboard judged without it would be judged at a width
+ * that does not exist. The sidebar renders itself from the viewer's own profile,
+ * and only `/preview/*`'s admin gate can get anybody here at all, so it is the
+ * real component reading the real role rather than a mock of one.
  */
 export function PreviewChrome({
   chrome,
@@ -18,11 +26,13 @@ export function PreviewChrome({
   chrome: PreviewChromeKind;
   children: React.ReactNode;
 }) {
-  if (chrome === "dashboard") {
+  if (chrome === "dashboard" || chrome === "admin") {
     return (
       <>
         <Header />
-        <DashboardLayout showSidebar={false}>{children}</DashboardLayout>
+        <DashboardLayout showSidebar={chrome === "admin"}>
+          {children}
+        </DashboardLayout>
       </>
     );
   }

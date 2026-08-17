@@ -42,8 +42,15 @@ import {
  * scene *renders* is user-facing-shaped and goes through next-intl as usual.
  */
 
-/** Which real page chrome a scene composes around its body. */
-export type PreviewChromeKind = "public" | "dashboard";
+/**
+ * Which real page chrome a scene composes around its body.
+ *
+ * `"dashboard"` is the shell every non-admin role meets — header plus the
+ * dashboard layout, no sidebar. `"admin"` is the same layout with the sidebar
+ * the admin role actually gets, and it is a separate kind because that sidebar
+ * takes a third of the width on a surface designed to use width.
+ */
+export type PreviewChromeKind = "public" | "dashboard" | "admin";
 
 export interface PreviewScenarioMeta {
   /** URL segment — `/preview/{surface}/{slug}`. */
@@ -299,6 +306,27 @@ export const PREVIEW_SCENES = [
         label: "Club — remote, session in progress",
         description:
           "Deliberately the one scenario. The variant is about voice and attendance, not about the shapes a product can be in, and both are visible here — the venue, the finished run and the empty past all behave identically to the parent's copy beside it.",
+      },
+    ],
+  },
+  {
+    surface: "admin-dashboard",
+    title: "Admin dashboard (draft redesign)",
+    description:
+      "The redesign of `/admin`, which today is a placeholder: four tiles reading 0, 0, $0 and 0%, and a Recent Activity card with nothing in it. Three full-width bands. **Users** opens the page: a slim strip of four tiles, one per role, each with the sub-stat that role actually has — gamers carry a total and no verified count, because their addresses are synthetic and “0 verified” would report a problem that cannot exist. It leads not because it is urgent but because it is a pulse of what the platform *is*, and because one row of tiles is small enough to cost the queue behind it almost nothing of the fold. **Needs attention** is that queue, and it is organised the way an admin thinks — *which product needs me → what in it → who that concerns* — so it is a grid of product cards, each carrying that product's problems in priority order (“3 unassigned gamers”, “Group Tiistai A has no gedu”, “Gedu fee not set”), never truncating a product's name and never folding a row behind a “show all”: an admin who does not see a row does not do the work, and the goal of the panel is an empty one. Below the grid, the gedus waiting on a certification decision, with **Certify** working on the page. **Schedule** is the reference at the bottom: the week as seven stacked weekday rows, then a dated coming-up feed. A product's **type** is one mark wherever it appears — the admin sidebar's own glyph for that type, tinted with that type's chart colour — on a product card, a schedule chip, a filter chip and a coming-up line alike, and a slim sticky **key** rail beside the whole page is where that grammar is explained once. It is the page's only key, and it explains only the colours: the other mark a chip can wear — the alert triangle saying this product is in the queue above — is the same red triangle the family surfaces use to tell a parent something is wrong with an enrollment, so it reads on sight and carries its own words in a tooltip rather than needing a line in a legend. Two things are deliberately *not* anywhere on it. **Status** is gone: the four product statuses collapse, for an admin reading a schedule, into coming / happening / over, and the schedule already says all three by where a thing appears. And a chip carries **no seat figure** — a row of twenty chips each wearing a healthy “12/16” is twenty numbers the eye reads and discards on the way to the name it came for, so the counts live in the chip's tooltip instead. Revenue and growth are deliberately gone — money lives in Stripe, which owns the reporting an accountant uses, and a growth percentage at this size is noise with a decimal point; a dashboard carrying a number nobody trusts teaches its reader to skim. The whole scene is pinned to a fixed Monday (17 August 2026, Helsinki) rather than the real clock, because a calendar page's cases — a holiday week, a term boundary landing on one date, a today row — are arithmetic against a known date. Every filter chip, week step, expander and certification action works against local state; every link leaves the preview for the real admin route.",
+    chrome: "admin",
+    scenarios: [
+      {
+        slug: "busy",
+        label: "Busy platform",
+        description:
+          "Sixty products under real load, twenty-one of them needing something, five gedus awaiting certification — the page as it will most often be met. The product grid is deliberately uneven: three cards carry a stack of three problems, most carry one, and two carry two group lines each, because a grid whose every card is one line says nothing about how a card with several reads. Certify a gedu row and it leaves with a counted receipt above the list — the receipt exists because a row that simply vanishes is indistinguishable from one that was never there. The schedule is seven **rows** rather than seven columns, which is the change worth judging: a seventh of the page truncated almost every real club name, and a full-width row lets a chip take exactly the width its own name needs. A heavy Wednesday is now a row three lines deep beside a Monday that is one, which reads as “busy” at a glance the way a tall column did. Step to the week of 12 October and four school clubs vanish for syysloma with a line naming them, because a club absent for a holiday and a club absent because somebody deleted it look identical otherwise. It is also the densest place to judge the type glyph: twenty tinted marks on one row, four types among them, and the key rail on the right to check any of them against without leaving the page. Below that, **Coming up**: the two dates worth seeing are 7 September, where five school clubs starting together collapse to one counted line beside a camp and a club listed individually, and 27 November, where the whole school term ends on one Friday — twenty rows folded into one, which is the pile-up that killed both of the “Coming months” designs this replaced.",
+      },
+      {
+        slug: "quiet",
+        label: "Quiet platform — all clear",
+        description:
+          "The other end: six products, nothing wrong anywhere, nobody awaiting certification. It is the only way to see the all-clear state, which is deliberately one icon and two lines rather than a banner — a success message every morning is a message nobody reads by Wednesday. Worth opening for the schedule too: seven rows holding four sessions between them have to read as a small platform rather than as a page that failed to load, and the coming-up feed with four dated lines is where a mostly-empty feed either looks calm or looks broken.",
       },
     ],
   },

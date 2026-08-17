@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
 import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
@@ -11,6 +12,7 @@ import {
 } from "@/components/public/products/mock-detail-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
 import type { PreviewSurface } from "./scenes";
+import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
@@ -81,6 +83,10 @@ const SCENE_RENDERERS: Record<
   "gamer-club": (scenario) => {
     if (!isFamilyProductScenario(scenario)) notFound();
     return <FamilyProductPageScene audience="gamer" scenario={scenario} />;
+  },
+  "admin-dashboard": (scenario) => {
+    if (!isAdminDashboardScenario(scenario)) notFound();
+    return <AdminDashboardScene scenario={scenario} />;
   },
 };
 
