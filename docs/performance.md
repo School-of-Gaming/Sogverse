@@ -168,12 +168,12 @@ Supersedes the earlier "move role into JWT everywhere" framing. Ordered by value
 
 ### `/schools` reads bounded by clubs, not by Finland — closes F6 (branch `feat/schools-fetch-bounded-by-clubs`, 2026-08-17)
 
-**⚠ The "after" column's cold numbers are projections, not measurements.** The change had
-not reached production when this entry was written. A same-day two-deployment A/B on
-staging (under *Before / after*) has since **measured** the warm TTFB and the payloads;
-the cold path could not be measured that way — a fresh deployment resets the lambdas but
-not the database's caches — so the cold column stays owed to the post-release probe under
-*Verification still owed*. Everything under *Why* is measured.
+**All headline numbers are now measured.** Warm TTFB and payloads came from a same-day
+two-deployment staging A/B; the cold path was measured the same day on a **private**
+staging deployment after a genuine 27-minute idle, control-first — the control's 2.2 s of
+cold init is the proof the run was clean. Production re-measurement after the next
+release is a cheap confirmation, no longer load-bearing. Everything under *Why* was
+measured before the change.
 
 **What shipped.** Four changes across the three public `/schools` routes:
 
@@ -219,13 +219,13 @@ Of the 1170 ms: ~40 ms network, ~107 ms lambda init, ~145 ms warm server work, *
 
 **Before / after.**
 
-| | before (measured 2026-08-17) | after (**projected**, not yet measured) |
+| | before (measured 2026-08-17) | after (measured 2026-08-17, staging) |
 |---|---|---|
-| `/schools` cold TTFB | 1170 ms | ~350–450 ms |
-| `/schools` warm TTFB | ~185 ms | ~120–150 ms |
-| server fetch per request | 238,285 bytes | ~5 KB |
-| client RSC payload | ~60 KB | ~2 KB |
-| `/schools/[municipalityName]/[id]` cold TTFB | 1102 ms | ~295 ms (its own `/shop/[id]` control) |
+| `/schools` cold TTFB | 1170 ms | **391 ms** (projection was 350–450) |
+| `/schools` warm TTFB | ~185 ms | **~190 ms** staging steady state (180 ms in the A/B) |
+| server fetch per request | 238,285 bytes | ~5 KB (bounded by construction; not separately metered) |
+| client RSC payload | ~60 KB | page bytes −65 KB measured; the entry list is now tens of rows |
+| `/schools/[municipalityName]/[id]` cold TTFB | 1102 ms | not separately probed — the route now *is* its control's shape (`/shop/[id]`, zero page reads) |
 
 The projections are inference by analogy with `/shop/[id]` — the same "no heavy fetch" shape, measured at ~295 ms cold and ~100 ms warm — not measurements of this branch. The ~5 KB server-fetch figure depends on the narrowed `/schools` club read; without it the club rows dominate and the target is unreachable. **A floor of roughly 300 ms cold is expected and acceptable**, because ~107–195 ms of it is Vercel lambda init these routes cannot avoid without going static (F2).
 
@@ -248,8 +248,20 @@ hit came in *below its own control*, meaning the control had already warmed the 
 function bundle and earlier warm passes had warmed the staging database — see the method
 note below.
 
-**Verification still owed.** The staging A/B above banked the warm-TTFB and payload
-halves; what remains owed is the cold path. Run the controlled probe post-release, in the same order that produced the before numbers so the two are directly comparable: (1) leave the routes untouched for 25 minutes so lambda and database caches go cold; (2) request a route that does **no** locations read — any `/shop/[id]` — first, as that run's lambda-init baseline, since it warms nothing being measured; (3) request `/schools` — that is the number; (4) then warm repeats for the steady state. Measure the client payload by fetching the page and counting bytes. Lambda init has been observed at ~107 ms and ~195 ms on two runs, so treat a single run's decomposition as indicative. **Measure `/shop` (the listing, never measured) while in there** — the narrowed browse select is the change most likely to show up on it. Fill the projected column in with real numbers, and mark it measured. A burst test — many concurrent cold requests, to check the launch knee — deliberately loads production and must be agreed with the owner first.
+**Verification — the cold probe, run 2026-08-17.** Staging traffic cannot be controlled,
+so the probe ran against a **private deployment**: the staging alias was moved to a fresh
+redeploy of the same build (live browsing hits that), leaving the previous deployment
+reachable only by its unique URL; it idled 27 minutes (long enough for Vercel to recycle
+any previously warm functions), then control-first: `/shop/[id]` **2214 ms** (cold init +
+baseline — the proof of a clean run), `/schools` **391 ms**, `/shop` **386 ms** (the
+listing's first cold-ish reading), warm repeats 341 → 191 ms. The telling shape: before,
+`/schools` cost its control *plus* ~875 ms of municipality work; now it lands *under* its
+own control and ~200 ms above warm steady state. Caveat: the staging database is shared
+and was being browsed during the idle, so its caches were not fully cold — the new code's
+small DB-cold sensitivity is the design goal, and the number landing on-projection
+supports it. Re-run the same probe on production after the next release as confirmation.
+A burst test — many concurrent cold requests, to check the launch knee — deliberately
+loads production and must be agreed with the owner first.
 
 **The method is the reusable part.** The question that mattered was whether the cold cost was lambda init — which no application change can fix — or work the app was doing. Warm requests cannot answer it, and neither can a slow route measured alone. What answered it was a **near-identical sibling route as a control**: `/shop/[id]` renders the same component with the same client-side fetches and differs only by the lookup, so its cold TTFB *is* lambda init plus baseline, and everything above that is attributable work. Ordering the probe to hit the control first, after a genuine idle, is what keeps the reading clean. Where such a sibling exists this beats instrumentation for a first cut; where one does not, Server-Timing is still the way in.
 
