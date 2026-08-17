@@ -2129,6 +2129,7 @@ export type Database = {
         | "programming"
         | "ai"
         | "esports"
+        | "game_studio"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
@@ -2289,6 +2290,7 @@ export const Constants = {
         "programming",
         "ai",
         "esports",
+        "game_studio",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       user_role: ["admin", "customer", "gamer", "gedu"],
