@@ -57,8 +57,8 @@ Two consequences:
 
 ## The decision
 
-**Two changes. The first is contained and obviously right; the second is the one that
-actually makes `/schools` fast.**
+**Three changes. The first is contained and obviously right; the second and third are
+what actually make `/schools` fast.**
 
 ### 1. Reverse the data flow on both routes — clubs first, geography second
 
@@ -146,15 +146,27 @@ Change 1 alone does **not** fix `/schools`, because the search-any-municipality 
 still wants all 308 rows. That feature is therefore the whole remaining problem.
 
 - Ship only the **club-bearing** municipalities to the browser and search them **in
-  memory, instantly** — this covers every *successful* search, so the common path is
-  unchanged from today.
-- When a query matches nothing locally, fall back to the **existing cached, indexed
-  location search route**, scoped to Finland and to the municipality level, to answer the
-  long tail (a real municipality where we run no clubs). Flag each such hit "nothing here
-  yet" by testing its id against the club-bearing id set the page already holds.
+  memory, instantly** — every club-bearing hit renders with zero network wait, exactly as
+  today.
+- **The two arms are a union, not a cascade: the fallback fires for every debounced query
+  of two or more characters, not only when the local arm comes up empty.** It asks the
+  existing cached, indexed location search route, scoped to Finland and to the
+  municipality level; hits already in the club-bearing id set the page holds are dropped
+  (the local arm already rendered them), and the rest append below the local hits in the
+  existing "no clubs here" state.
 
-This keeps the instant path for every query that succeeds and pays a network round trip
-only on queries that were going to end in disappointment.
+The union shape is deliberate, decided by the owner, and replaces an earlier
+fire-only-on-zero-local-matches cascade. The cascade looked cheaper (a request only when
+local matching failed) but, verified against the real municipality data, it silently
+hides whole municipalities: 32 pairs exist where one municipality's complete name is an
+infix of another's (Lahti inside Vesilahti, Kontiolahti, Ruokolahti…; Pori inside
+Raasepori; Kemi, Salo, Hamina, Ii; Åbo inside Uleåborg, Karleby inside Uusikaarlepyy) —
+so a parent in clubless Lahti typing their whole town's name would see only the
+club-bearing "-lahti" towns, with no "no clubs here" row for Lahti, and *which* pairs
+are live would shift silently as clubs open and close. The requirement is: **when a
+parent stops typing, they see every municipality that matches what they typed.** Under
+the union the successful path is still instant — local hits never wait on the network;
+the fallback is additive.
 
 **It does not remove the TypeScript fold, and nothing in this plan should claim it does.**
 The local arm still folds the query to match pre-computed slugs, so a second
@@ -162,6 +174,20 @@ implementation of the matching rule survives — it is merely confined to the sm
 club-bearing set instead of ranging over the whole country. What the hybrid buys is that
 the *long tail* is answered by the database's own index rather than by that fold. See the
 Constraints entry before rewriting any documentation about it.
+
+### 3. Narrow the `/schools` club read
+
+`/schools` also fetches every visible municipality club's **full row** — translations
+(including the long markdown description, in five locales), prices and schedule slots —
+and uses exactly one field of the result: the club's embedded location. After changes 1
+and 2 that read is the largest fetch left on the landing page, and the server-fetch
+target below is unreachable without it. Give `/schools` a dedicated narrow select: the
+embedded location chain plus only the columns the visibility filter needs (status and
+dates; `is_visible` is already applied inside the query). No behaviour change. Two
+boundaries: `/schools/[municipalityName]` keeps the full rows — they seed the client's
+React Query cache — and visibility filtering must keep working identically, so the
+narrow read shares the same query shape and effective-status path rather than forking
+the rule.
 
 ## Rejected alternatives
 
@@ -191,7 +217,10 @@ Each of these was considered and turned down **after** measurement. Do not rebui
 - **Fully server-side search** (every keystroke hits the search route). This was the
   first recommendation, made while the page was believed to be low-traffic. On a
   high-traffic landing page whose primary interaction is "find my town", making every
-  keystroke networked is a real downgrade — hence the hybrid.
+  keystroke networked is a real downgrade — hence the hybrid. The union hybrid still
+  sends one debounced, CDN-cached request per query, but differs where it matters: the
+  club-bearing hits — the successful path — render locally and instantly, and the
+  network is additive rather than load-bearing.
 - **Static generation / ISR for these routes.** The root layout reads the session on
   every request, so these routes are dynamic regardless of what the page itself does.
   Making them static means restructuring root-layout auth, which is a much larger piece
@@ -258,10 +287,21 @@ Each of these was considered and turned down **after** measurement. Do not rebui
   debounce is a client-side concern that the existing picker solves with a shared hook.
   Also note the local arm has no minimum length, so a one-character query narrows locally
   and never reaches the fallback — which is intended.
-- **A fallback hit can legitimately be club-bearing**, so testing each hit's id against the
-  club-bearing set is not a no-op. The search function has a postal-code arm: typing a
-  postcode finds its municipality, which no local slug match can reach. Such a hit must
-  render as a normal link, reusing the slug from the entry the page already holds.
+- **A fallback hit can legitimately be club-bearing**, so the dedupe against the
+  club-bearing id set is load-bearing in both directions: an already-rendered hit must
+  not appear twice, and the search function's postal-code arm can surface a club-bearing
+  municipality no local slug match can reach (typing a postcode finds its municipality).
+  A club-bearing hit the local arm did *not* render must appear as a normal link, reusing
+  the slug from the entry the page already holds.
+- **The fallback's 20-hit cap stays invisible — verified against the real data, decided
+  by the owner.** The route reports the true total next to the capped page, but no
+  "showing N of M" line is rendered here. Probed exhaustively against the seeded
+  municipality set: for every prefix of every Finnish municipality's every name variant,
+  exactly one query ever pushes a municipality out of the top 20 — the two-character
+  query "ka" (57 matches) briefly crowds out Kaustinen and Kokkola-as-Karleby, and the
+  third character surfaces both. No full name or 3+-character prefix is ever hidden, so
+  a cap line would answer a situation a parent cannot reach. (The picker's existing
+  "showing some" copy is there if this is ever revisited.)
 - **No new message keys are needed.** The existing "no clubs here" status and "no matches"
   empty state already cover both new states; "nothing here yet" in this plan is prose, not
   a copy request. Do not open a translation sweep for this.
@@ -299,13 +339,19 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    here" style — so the distinction leaves the entry type but survives in the view model
    (a local-entry / fallback-hit union or an explicit prop; implementer's choice). Confirm
    the region grouping and default rendering are unchanged, and that the RSC payload drops.
-4. **Add the search fallback arm.** Local instant match over the club-bearing entries; on
-   no local match, query the indexed search route scoped to Finland and municipalities,
-   with a client-side debounce. Render nothing in the results area until it resolves (see
-   Constraints). A hit already in the club-bearing set renders as a normal link reusing
-   that entry's slug; anything else renders in the existing "no clubs here" state. A failed
-   or empty fallback shows the existing empty state, never an error.
-5. **Delete the whole-country municipality read**, which now has no callers. Note this is
+4. **Narrow the `/schools` club read** (see decision 3): a dedicated select carrying the
+   embedded location chain and the columns visibility filtering needs, applied on
+   `/schools` only. Verify the rendered page is unchanged and the server fetch drops.
+5. **Add the search fallback arm as a union.** The local instant match over the
+   club-bearing entries always renders immediately; every debounced query of two or more
+   characters also asks the indexed search route scoped to Finland and municipalities,
+   and its hits — deduped against the club-bearing id set — append below the local hits
+   in the existing "no clubs here" state (a club-bearing hit the local arm didn't render
+   appears as a normal link reusing that entry's slug). While a fallback is pending and
+   the local arm is empty, render nothing in the results area (see Constraints). A failed
+   or empty fallback leaves the local results standing and shows the existing empty state
+   when there are none — never an error.
+6. **Delete the whole-country municipality read**, which now has no callers. Note this is
    larger than one method: it also removes its unit tests, its entry in the reads
    column-discipline registry, and two DB tests. (One of the two is retired-row directory
    coverage rather than paging coverage; its intent survives via the child-listing and
@@ -321,14 +367,14 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    walked reads will rely on as their tables grow.) The paging primitive itself stays;
    other services use it. Separately, there is a second, already-dead slug-resolution helper (the one taking
    raw location rows, referenced by nothing but its own test) — delete that too while here.
-6. **Rewrite `src/services/locations/CLAUDE.md`.** This is the doc the work invalidates and
+7. **Rewrite `src/services/locations/CLAUDE.md`.** This is the doc the work invalidates and
    it is a larger change than the code: it asserts the whole-country municipality read as
    an architectural invariant in roughly seven places — the bounded-lists invariant, the
    retired offer/keyed split's list of offering reads, the "whole-list reads… those two and
    no others" section, the public-directory references, the two-embed-depths rationale, and
    the loading section. Also correct its false claim that the TypeScript fold is already
    gone.
-7. **Update the performance log.** The finding covering these routes already carries the
+8. **Update the performance log.** The finding covering these routes already carries the
    measurements, the two facts and the rejected alternatives — **move it from Active
    findings to Completed** with before/after numbers rather than rewriting it. Update the
    "what's left" paragraph of the earlier completed entry, which points at it.
@@ -345,6 +391,11 @@ Each of these was considered and turned down **after** measurement. Do not rebui
 - Searching a real Finnish municipality with no clubs still finds it and still shows the
   "no clubs here" state; searching a postcode that reaches a club-bearing municipality
   renders it as a working link.
+- Typing the complete name of a clubless municipality whose name sits inside a
+  club-bearing municipality's name (the Lahti/Vesilahti shape) still surfaces it in the
+  "no clubs here" state — the union arm exists for exactly this.
+- The `/schools` club read carries no translations, prices or slots — only the embedded
+  location chain and the columns visibility filtering needs.
 - The `/schools` RSC payload is bounded by the club count, not by Finland.
 - A one-character query with no local match still shows the empty state immediately.
 - The long-tail search arm folds nothing itself — it asks the index. (The slug helper
@@ -374,7 +425,9 @@ fetching the page and counting bytes. Note that lambda init has been observed to
 
 **Targets** (projected by analogy with `/shop/[id]`, the same "no heavy fetch" shape,
 which measures ~295 ms cold and ~100 ms warm — these are inference, not measurement):
-cold TTFB ~350–450 ms, warm ~120–150 ms, server fetch ~5 KB, client payload ~2 KB.
+cold TTFB ~350–450 ms, warm ~120–150 ms, server fetch ~5 KB, client payload ~2 KB. The
+~5 KB server-fetch figure assumes the narrowed club read of decision 3; without it the
+club rows dominate and the target is unreachable.
 
 A burst test — many concurrent cold requests, to check the launch knee — requires
 deliberately loading production and must be agreed with the owner first.
