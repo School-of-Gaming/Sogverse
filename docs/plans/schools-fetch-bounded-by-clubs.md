@@ -127,14 +127,18 @@ name, exactly as the listing routes do.
 **The back link keeps its municipality name. Do not replace it with a generic label** — an
 earlier attempt did, on the mistaken belief that keeping the name required keeping the
 read. It does not, and the generic label was reverted rather than shipped, so no new
-translation key is needed for this. Fall back to the existing generic sibling label only
-where a product has no resolvable municipality.
+translation key is needed for this. Where a product has no resolvable municipality, fall
+back to the component's existing no-municipality branch **wholesale** — its generic
+sibling label *and* that branch's own sibling destination together. The label and the
+href are one decision in that component today; do not invent a mixed pairing (a sibling
+label pointing at a `/schools` listing) that exists nowhere now.
 
 There is no latency cost to deriving it client-side: the back link lives inside a body
 that does not render until that same product query resolves, so a server-resolved name
 could never have painted any earlier either.
 
-Two consequences to keep: the link's **href** is built from the URL slug and is unaffected;
+Two consequences to keep: in the resolved case the link's **href** is built from the URL
+slug and is unaffected;
 and with the read gone, an unknown municipality slug no longer 404s — it renders the
 product with a back link to a listing that will itself 404. That is acceptable on the same
 grounds as the other accepted divergences: the route is `noindex`, and the slug never
@@ -151,9 +155,9 @@ still wants all 308 rows. That feature is therefore the whole remaining problem.
 - **The two arms are a union, not a cascade: the fallback fires for every debounced query
   of two or more characters, not only when the local arm comes up empty.** It asks the
   existing cached, indexed location search route, scoped to Finland and to the
-  municipality level; hits already in the club-bearing id set the page holds are dropped
-  (the local arm already rendered them), and the rest append below the local hits in the
-  existing "no clubs here" state.
+  municipality level; hits the local arm **already rendered for this query** are dropped,
+  and the rest append below the local hits — club-bearing ones (the postal-code path) as
+  normal links, clubless ones in the existing "no clubs here" state.
 
 The union shape is deliberate, decided by the owner, and replaces an earlier
 fire-only-on-zero-local-matches cascade. The cascade looked cheaper (a request only when
@@ -183,7 +187,9 @@ and uses exactly one field of the result: the club's embedded location. After ch
 and 2 that read is the largest fetch left on the landing page, and the server-fetch
 target below is unreachable without it. Give `/schools` a dedicated narrow select: the
 embedded location chain plus only the columns the visibility filter needs (status and
-dates; `is_visible` is already applied inside the query). No behaviour change. Two
+dates — concretely, everything the effective-status input type requires: status, start
+and end dates, signup threshold and timezone; `is_visible` is already applied inside the
+query). No behaviour change. Two
 boundaries: `/schools/[municipalityName]` keeps the full rows — they seed the client's
 React Query cache — and visibility filtering must keep working identically, so the
 narrow read shares the same query shape and effective-status path rather than forking
@@ -260,9 +266,16 @@ Each of these was considered and turned down **after** measurement. Do not rebui
   search hook's default placeholder behaviour — keeping the previous needle's hits while
   the next request flies — must be **disabled at this call site**: interleaved with a
   local arm that just returned zero, the previous query's hits would render as answers to
-  a query they don't match. The blank window this leaves is a frame or two against a
-  cached, indexed route.
-  **Withhold the empty state only while a fallback is actually pending.** The local arm has
+  a query they don't match. The hook hardcodes that behaviour today, so it gains an
+  explicit opt-out parameter; the picker keeps the placeholder on and its behaviour is
+  unchanged. The blank window this leaves is a frame or two against a cached, indexed
+  route.
+  **Withhold the empty state only while a fallback is actually pending — and "pending"
+  means the fallback for the *current input* has not resolved.** With a debounce in front
+  of the query hook, the hook is not yet fetching during the debounce window and its
+  state still describes the previous needle, so gate on the debounced value trailing the
+  live input as well as on the query state; a check on the query state alone flashes the
+  empty state mid-debounce and then contradicts it. The local arm has
   no minimum length but the fallback is gated at two characters, so a one-character query
   with no local match has no request in flight and nothing to wait for — it must show the
   empty state immediately, exactly as today. Withholding it there would leave the results
@@ -286,13 +299,16 @@ Each of these was considered and turned down **after** measurement. Do not rebui
   length and the result cap are enforced by the route and the database function; the
   debounce is a client-side concern that the existing picker solves with a shared hook.
   Also note the local arm has no minimum length, so a one-character query narrows locally
-  and never reaches the fallback — which is intended.
-- **A fallback hit can legitimately be club-bearing**, so the dedupe against the
-  club-bearing id set is load-bearing in both directions: an already-rendered hit must
-  not appear twice, and the search function's postal-code arm can surface a club-bearing
-  municipality no local slug match can reach (typing a postcode finds its municipality).
-  A club-bearing hit the local arm did *not* render must appear as a normal link, reusing
-  the slug from the entry the page already holds.
+  and never reaches the fallback — which is intended. The fallback's two-character
+  minimum is measured on the raw query, and the fallback additionally fires only while
+  the page is in its searching state (the folded query is non-empty) — input that folds
+  to nothing shows the default view and must fire no request.
+- **A fallback hit can legitimately be club-bearing**, so the dedupe key is **the set of
+  hits the local arm rendered for this query** — never the club-bearing id set itself,
+  which would drop exactly the hit the postal-code arm exists to surface (typing a
+  postcode finds a municipality no local slug match can reach). An already-rendered hit
+  must not appear twice; a club-bearing hit the local arm did *not* render must appear as
+  a normal link, reusing the slug from the entry the page already holds.
 - **The fallback's 20-hit cap stays invisible — verified against the real data, decided
   by the owner.** The route reports the true total next to the capped page, but no
   "showing N of M" line is rendered here. Probed exhaustively against the seeded
@@ -345,7 +361,8 @@ Each of these was considered and turned down **after** measurement. Do not rebui
 5. **Add the search fallback arm as a union.** The local instant match over the
    club-bearing entries always renders immediately; every debounced query of two or more
    characters also asks the indexed search route scoped to Finland and municipalities,
-   and its hits — deduped against the club-bearing id set — append below the local hits
+   and its hits — deduped against **what the local arm actually rendered for this
+   query**, never against the club-bearing id set itself — append below the local hits
    in the existing "no clubs here" state (a club-bearing hit the local arm didn't render
    appears as a normal link reusing that entry's slug). While a fallback is pending and
    the local arm is empty, render nothing in the results area (see Constraints). A failed
@@ -353,9 +370,11 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    when there are none — never an error.
 6. **Delete the whole-country municipality read**, which now has no callers. Note this is
    larger than one method: it also removes its unit tests, its entry in the reads
-   column-discipline registry, and two DB tests. (One of the two is retired-row directory
-   coverage rather than paging coverage; its intent survives via the child-listing and
-   search cases in the same suite, so it needs no replacement.) **The other is the only
+   column-discipline registry, and its DB coverage — a four-case describe block plus a
+   retired-row directory case in the geonames groundwork suite. (The retired-row case's
+   intent survives via the child-listing and search cases in its own suite, and the
+   chain-shape cases are duplicated by the keyed-read coverage, so those need no
+   replacement.) **One case is the only
    coverage anywhere that walks past PostgREST's 1000-row response cap** — the sole proof
    that the paged walk terminates correctly on a large read against a real PostgREST. It
    cannot simply be moved: France's ~34,900 communes are the only over-cap dataset in CI,
@@ -365,8 +384,10 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    tested. (The unit test over a fake transport already covers the walk's logic; what needs
    preserving is the proof that PostgREST truncates the way the walk assumes, which other
    walked reads will rely on as their tables grow.) The paging primitive itself stays;
-   other services use it. Separately, there is a second, already-dead slug-resolution helper (the one taking
-   raw location rows, referenced by nothing but its own test) — delete that too while here.
+   other services use it. Separately, there is a second, already-dead slug-resolution helper — the one taking
+   raw location rows in `src/lib/locations/municipality-slug.ts`, referenced by nothing
+   but its own test, NOT the same-named live helper in `src/lib/schools/municipalities.ts`
+   — delete the dead one too while here.
 7. **Rewrite `src/services/locations/CLAUDE.md`.** This is the doc the work invalidates and
    it is a larger change than the code: it asserts the whole-country municipality read as
    an architectural invariant in roughly seven places — the bounded-lists invariant, the
@@ -376,8 +397,11 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    gone.
 8. **Update the performance log.** The finding covering these routes already carries the
    measurements, the two facts and the rejected alternatives — **move it from Active
-   findings to Completed** with before/after numbers rather than rewriting it. Update the
-   "what's left" paragraph of the earlier completed entry, which points at it.
+   findings to Completed** with before/after numbers rather than rewriting it. The log
+   has no completed entry pointing at it (an earlier draft of this step claimed one; it
+   does not exist) — instead, annotate the other places that cite `/schools` as currently
+   slow, the RUM pull in the F2 section and the report-card verdict, as pre-fix numbers
+   this work addresses.
 
 ## Acceptance criteria
 
@@ -403,10 +427,13 @@ Each of these was considered and turned down **after** measurement. Do not rebui
 - A DB test still proves the paged walk terminates correctly against a real PostgREST on an
   over-cap read, seeding its own rows rather than depending on France's communes.
 - Lint, type-check, unit and integration suites, and the translations check all pass. The
-  slug helper keeps its existing unit coverage untouched; the entry-building helper's
-  coverage is *updated alongside its signature* — under change 1 the municipality route
-  feeds it embedded location nodes rather than rows-with-chains, so its fixtures change
-  shape rather than surviving verbatim.
+  slug helper keeps its existing unit coverage untouched; the entry-building coverage is
+  *updated alongside the reshaping* — `/schools` still feeds rows-with-chains from the
+  keyed read while the municipality route now works from embedded location nodes, two
+  different input shapes, and whether one helper turns structurally polymorphic or the
+  municipality route gets a smaller sibling helper is the implementer's choice. The
+  slug-derivation rule stays in exactly one place either way, and fixtures change shape
+  rather than surviving verbatim.
 
 ## Verification
 
