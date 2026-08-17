@@ -65,6 +65,14 @@ export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["In
 // feedback_submissions
 export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
 
+// verification_email_requests — the rate-limit ledger behind the
+// verification-email send, and the sibling of the table above in every respect
+// but one: a feedback row is the feedback, while these rows exist only to be
+// counted by `request_my_verification_email` (which prunes its own expired ones
+// on the way past). No application surface reads them; the alias is here
+// because the DB test asserts against the row shape.
+export type VerificationEmailRequest = Database["public"]["Tables"]["verification_email_requests"]["Row"];
+
 // spoken_languages (reference table — the human languages a person speaks /
 // a club is delivered in). Distinct from `locale` (UI translation), which
 // has no DB table and is constrained by SUPPORTED_LOCALES in code.
@@ -167,46 +175,6 @@ export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"][
 // long description", and the page renders no card at all for either.
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
 export type ProductTranslationInsert = Database["public"]["Tables"]["product_translations"]["Insert"];
-
-/**
- * **The shape `long_description` held before it became markdown**, and the
- * narrowing that reads one safely.
- *
- * A flat, ordered array of heading/paragraph blocks holding plain text — no
- * marks, no links, no lists, and a heading carried no level, because there was
- * only ever one kind. Nothing in the running app produces or consumes it: the
- * column is `text`, the editor writes markdown, and the page renders markdown.
- *
- * **It survives for exactly one purpose.** The migration that changed the
- * column's type cleared its contents, and the copy is restored afterwards from
- * an audited dump of the old values — read into these blocks and converted by
- * `longDescriptionToMarkdown` in `src/lib/products/`, which is the audited,
- * heavily-tested conversion and the only thing allowed to perform it. This pair
- * is that path's input side. When the restore is done, all three go together.
- *
- * `parseLongDescription` drops anything that is not a well-formed
- * `{ type, text }` block, so a dump with a stray element converts what is
- * genuinely there rather than throwing or inventing copy.
- */
-export type ProductLongDescriptionBlock = {
-  type: "heading" | "paragraph";
-  text: string;
-};
-export type ProductLongDescription = ProductLongDescriptionBlock[];
-
-export function parseLongDescription(
-  value: Json | null | undefined,
-): ProductLongDescription {
-  if (!Array.isArray(value)) return [];
-  return value.filter(
-    (block): block is ProductLongDescriptionBlock =>
-      typeof block === "object" &&
-      block !== null &&
-      !Array.isArray(block) &&
-      (block.type === "heading" || block.type === "paragraph") &&
-      typeof block.text === "string",
-  );
-}
 
 // product_prices
 export type ProductPrice = Database["public"]["Tables"]["product_prices"]["Row"];
@@ -385,6 +353,21 @@ export type {
   ProductGroupWithDetails,
   ProductGroupsSnapshot,
 } from "@/services/groups/groups.contracts";
+
+// get_admin_dashboard — the single JSONB document behind the admin dashboard,
+// generated as `Json` for the same reason. Same arrangement as above: the
+// structured shape is derived from the adminDashboardSnapshot zod contract that
+// the service and the db test both parse through.
+export type {
+  AdminDashboardAttentionProduct,
+  AdminDashboardCertificationCandidate,
+  AdminDashboardGroupWithoutGedu,
+  AdminDashboardScheduleProduct,
+  AdminDashboardScheduleSlot,
+  AdminDashboardSnapshot,
+  AdminDashboardUserStat,
+  AdminDashboardWaitlistPressure,
+} from "@/services/admin-dashboard/admin-dashboard.contracts";
 
 // get_gedu_assigned_product — the JSONB document that backs the gedu's
 // session-details page (entered from a dashboard session card, but

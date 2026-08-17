@@ -1,8 +1,9 @@
 /* eslint-disable i18next/no-literal-string -- OG image is rendered to a PNG by next/og at build time; the text is baked into the image, not a runtime UI string */
 import { ImageResponse } from "next/og";
 import { BRAND, DARK_THEME, YTY_ELEMENT } from "@/lib/constants/colors";
+import { BRAND_LOCKUP } from "@/lib/constants";
 
-export const alt = "School of Gaming – Sogverse";
+export const alt = BRAND_LOCKUP;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

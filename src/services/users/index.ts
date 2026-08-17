@@ -1,4 +1,8 @@
-export { UsersService, type UserSearchResult } from "./users.service";
+export {
+  UsersService,
+  type UserSearchResult,
+  type VerificationEmailSendOutcome,
+} from "./users.service";
 export {
   useProfile,
   useUsers,
@@ -7,6 +11,7 @@ export {
   useUpdateProfile,
   useUpdateUserGameAccount,
   useParentGamerLinks,
+  useSendVerificationEmail,
   useSpokenLanguages,
 } from "./users.queries";
 export {
@@ -15,3 +20,7 @@ export {
   type AdminGameAccountBody,
   type AdminGameAccountWriteResult,
 } from "./users.contracts";
+export {
+  registerParentBody,
+  type RegisterParentBody,
+} from "./parent-registration.contracts";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, MailCheck, MailX, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { GeduVerificationCard } from "@/components/admin/gedu-verification-card";
+import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { cn, computeAge, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +22,7 @@ import { MinecraftService } from "@/services/minecraft";
 import { RobloxService } from "@/services/roblox";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
-import { GeduProfilesService, type GeduVerification } from "@/services/gedu/gedu-profiles.service";
+import { GeduProfilesService, type GeduCertification } from "@/services/gedu/gedu-profiles.service";
 import type { ParticipationStatus, ProductType } from "@/types";
 
 /** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
@@ -132,13 +132,18 @@ export default async function AdminUserDetailPage({
   // is also what the write route refuses as a target.
   const showGameAccounts = isGamer || isGedu;
 
+  // A display choice, not a data invariant: every account is born `customer`,
+  // so one promoted to admin after registering through a tagged link still
+  // carries its code — this page just doesn't surface it there.
+  const showReferralCode = (isCustomer || isGedu) && Boolean(profile.referral_code);
+
   const [
     linkedGamers,
     linkedParents,
     gamerProfile,
     minecraftAccount,
     robloxAccount,
-    geduVerification,
+    geduCertification,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -157,7 +162,7 @@ export default async function AdminUserDetailPage({
       : Promise.resolve(null),
     isGedu
       ? new GeduProfilesService(supabase).getOne(userId).catch(() => null)
-      : Promise.resolve<GeduVerification | null>(null),
+      : Promise.resolve<GeduCertification | null>(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -231,6 +236,22 @@ export default async function AdminUserDetailPage({
             {!isGamer && profile.email && (
               <div className="flex items-center gap-2">
                 <p className="text-muted-foreground">{profile.email}</p>
+                {/* The list shows only the positive case (a check that means
+                    somebody confirmed the address); this detail page states the
+                    answer both ways, because an admin looking at ONE user is
+                    asking the question and deserves a definite answer rather
+                    than having to know that silence means no. */}
+                {profile.email_verified_at ? (
+                  <MailCheck
+                    className="h-4 w-4 shrink-0 text-success"
+                    aria-label={t('emailVerified')}
+                  />
+                ) : (
+                  <MailX
+                    className="h-4 w-4 shrink-0 text-warning"
+                    aria-label={t('emailNotVerified')}
+                  />
+                )}
               </div>
             )}
             {isGamer && gamerProfile && (
@@ -257,6 +278,24 @@ export default async function AdminUserDetailPage({
               <span className="text-sm text-muted-foreground">
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale, { dateStyle: "medium", timeZone }) : t('unknown')}
               </span>
+              {/* Where this account came from — the marketing link's `?ref=`
+                  code, captured once at registration. Read-only on purpose:
+                  the column has no UPDATE grant, so an admin cannot edit it
+                  through the app either (see src/lib/referral.ts). Shown for
+                  parents and educators only — gamer rows are NULL by
+                  construction, and the value is omitted entirely rather than
+                  shown as an empty row, since the large majority of accounts
+                  will never carry one. */}
+              {showReferralCode && (
+                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {t('referralCode')}
+                  {/* Code-chip treatment matching the instant voice room's
+                      compact RoomLinkChip, so codes read as codes site-wide. */}
+                  <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold tracking-wider">
+                    {profile.referral_code}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
         </CardContent>
@@ -391,8 +430,8 @@ export default async function AdminUserDetailPage({
         />
       )}
 
-      {/* Gedu verification + coverage areas (substitute matching) */}
-      {isGedu && <GeduVerificationCard geduId={userId} initial={geduVerification} />}
+      {/* Gedu certification + coverage areas (substitute matching) */}
+      {isGedu && <GeduCertificationCard geduId={userId} initial={geduCertification} />}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
     </div>
   );

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { UsersService } from "@/services/users/users.service";
 import {
   searchedProfile,
@@ -29,12 +29,14 @@ function profileRows(count: number, offset = 0): Profile[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `user-${offset + i}`,
     email: `user${offset + i}@example.test`,
+    email_verified_at: null,
     first_name: `User ${offset + i}`,
     last_name: "Test",
     role: "customer" as const,
     phone: null,
     currency: null,
     home_location_id: null,
+    referral_code: null,
     locale: "en",
     spoken_languages: [],
     created_at: "2026-01-01T00:00:00.000Z",
@@ -308,6 +310,61 @@ describe("UsersService.searchUsers", () => {
     );
 
     await expect(service.searchUsers("ada")).rejects.toThrow();
+  });
+});
+
+/**
+ * The one place the send route's 429 becomes something the settings card can
+ * word for itself. Nothing else in the stack distinguishes "you asked too often"
+ * from "it broke": the route answers both with `{ error }`, and the message is a
+ * log line rather than copy, so the status is the whole of the signal.
+ */
+describe("UsersService.sendVerificationEmail", () => {
+  let fetchMock: FetchMock;
+  let service: UsersService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+    service = new UsersService(createFetchStubbedClient(vi.fn<typeof fetch>()));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("posts to the send route and reports a send", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ success: true }), { status: 200 }),
+    );
+
+    await expect(service.sendVerificationEmail()).resolves.toBe("sent");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/auth/verify-email/send");
+    expect(init?.method).toBe("POST");
+  });
+
+  it("reports the hourly limit as an outcome rather than throwing", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "Too many verification emails requested." }), {
+        status: 429,
+      }),
+    );
+
+    await expect(service.sendVerificationEmail()).resolves.toBe("rate_limited");
+  });
+
+  it("still throws on a genuine failure", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "Internal server error" }), {
+        status: 500,
+      }),
+    );
+
+    await expect(service.sendVerificationEmail()).rejects.toThrow(
+      "Internal server error",
+    );
   });
 });
 

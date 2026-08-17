@@ -1,5 +1,5 @@
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
-import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
+import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 
 /** The resolved session shape `getUserWithProfile` produces. */
 type SessionWithProfile = Awaited<ReturnType<typeof getUserWithProfile>>;
@@ -26,11 +26,11 @@ export interface InstantRoomModerator {
  * input turns on sign-in rather than on moderator status, so there is no second
  * surface left to drift from this one.
  *
- * The rule: admin → moderator; gedu → moderator **only if** admin-verified;
+ * The rule: admin → moderator; gedu → moderator **only if** admin-certified;
  * everyone else (signed-out, parent, gamer) → guest. **Fails closed to `null`
- * (guest)** on any verification-lookup error, consistent with the token route's
+ * (guest)** on any certification-lookup error, consistent with the token route's
  * "ambiguous auth never grants ownership" invariant. Admins never trigger the
- * verification lookup.
+ * certification lookup.
  *
  * Takes the already-resolved session rather than reading it itself: the caller
  * reads `getUserWithProfile()` once and hands the same snapshot to both the
@@ -49,8 +49,8 @@ export async function instantRoomModerator(
 
   if (profile.role === "gedu") {
     try {
-      const verified = await isGeduVerified(await createClient(), session.user.id);
-      if (!verified) return null;
+      const certified = await isGeduCertified(await createClient(), session.user.id);
+      if (!certified) return null;
     } catch {
       return null;
     }

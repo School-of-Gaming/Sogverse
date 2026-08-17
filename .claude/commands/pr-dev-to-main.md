@@ -90,7 +90,9 @@ Draft the title and summary from the release commits (the whole dev set on the s
   git checkout dev && git fetch origin && git reset --hard origin/main && git push --force-with-lease origin dev
   ```
 
-Show the user the drafted title + body before opening the PR. Let them edit. Then open with `gh pr create --base main --head <dev | release/YYYY-MM-DD>`.
+**Open the PR without asking** — `gh pr create --base main --head <dev | release/YYYY-MM-DD>`. Running this command *is* the instruction to open it, and a PR is cheap to edit or close, so a confirmation step here buys nothing and costs a round trip. Show the drafted title + body alongside the returned URL rather than ahead of it; the user edits on GitHub, or tells you what to change and you push the edit with `gh pr edit`.
+
+The one thing that earns a pause is a finding that would change the user's mind about opening it at all — and every such finding already has its own stop earlier in this command: a dirty tree (Step 1), history predating the last release or a shortstat that doesn't match (Step 2), a conflict from the merge probe (Step 3A), a cherry-pick conflict or a failing type-check (Step 3B). Those stop and surface, as written. Anything the checks pass is a clean release: draft it and open it. If something *else* surprises you — a check that passes but reads wrong — say so in the same message as the URL rather than holding the PR hostage to it.
 
 If a prior open dev → main PR exists (e.g. someone pushed `dev` directly), close it with a comment pointing at the new PR.
 

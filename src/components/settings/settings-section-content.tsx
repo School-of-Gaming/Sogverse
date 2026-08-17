@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, LogOut } from "lucide-react";
+import { User, Lock, LogOut, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,11 @@ import type { LocationPick } from "@/components/locations/location-picker-panel"
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
+import {
+  useUpdateProfile,
+  useSendVerificationEmail,
+  useSpokenLanguages,
+} from "@/services/users";
 import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
@@ -67,6 +71,51 @@ export function SettingsSectionContent({
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // ---------------------------------------------------------------------
+  // Email verification
+  //
+  // The profile is seeded server-side in the root layout, so the verified /
+  // unverified line is decided before the first paint and never arrives late —
+  // nothing under it moves once the page is up. Gamers have no line at all:
+  // their address is the synthetic `@gamer.sogverse.internal` one their account
+  // was created with, which is why the whole Email field is already
+  // non-gamer-only.
+  // ---------------------------------------------------------------------
+  const isEmailVerified = profile?.email_verified_at !== null && profile?.email_verified_at !== undefined;
+  const sendVerification = useSendVerificationEmail();
+  // Local, and deliberately not a shared hook (see the loading-state rule in
+  // CLAUDE.md — the extraction was tried and rejected). `sending` is what the
+  // button reads, because React Query's `isPending` flips false a render before
+  // the outcome handlers run.
+  const [sendingVerification, setSendingVerification] = useState(false);
+  // Three outcomes rather than two: `rate_limited` is the per-hour limit the
+  // send route enforces in the database, and it needs its own sentence because
+  // "try again" — the advice a generic failure gives — is exactly the wrong
+  // thing to tell someone who has already tried six times.
+  const [verificationOutcome, setVerificationOutcome] = useState<
+    "sent" | "rate_limited" | "failed" | null
+  >(null);
+
+  const handleSendVerificationEmail = () => {
+    // Live before any render after the click. Every outcome clears it, because
+    // the user stays on this page in all of them and a second send — after a
+    // mail that never arrived, or to a second device — is a legitimate thing to
+    // want. That includes the rate-limited one: the button has to come back for
+    // the next attempt an hour later to be possible at all.
+    setSendingVerification(true);
+    setVerificationOutcome(null);
+    sendVerification.mutate(undefined, {
+      onSuccess: (outcome) => {
+        setVerificationOutcome(outcome);
+        setSendingVerification(false);
+      },
+      onError: () => {
+        setVerificationOutcome("failed");
+        setSendingVerification(false);
+      },
+    });
+  };
 
   // ---------------------------------------------------------------------
   // The parent's own location
@@ -284,6 +333,48 @@ export function SettingsSectionContent({
                 disabled
                 className="bg-muted"
               />
+              {isEmailVerified ? (
+                <p className="flex items-center gap-1.5 text-sm text-success">
+                  <MailCheck className="h-4 w-4 shrink-0" aria-hidden />
+                  {t('emailVerified')}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      {t('emailNotVerified')}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSendVerificationEmail}
+                      disabled={sendingVerification}
+                    >
+                      {sendingVerification
+                        ? c('sending')
+                        : t('sendVerificationEmail')}
+                    </Button>
+                  </div>
+                  {verificationOutcome === "sent" && (
+                    <p className="text-sm text-success">
+                      {t('verificationEmailSent')}
+                    </p>
+                  )}
+                  {/* Warning rather than destructive: nothing broke, and the
+                      wait is short — but no mail went out, so it cannot read as
+                      success either. */}
+                  {verificationOutcome === "rate_limited" && (
+                    <p className="text-sm text-warning">
+                      {t('verificationEmailRateLimited')}
+                    </p>
+                  )}
+                  {verificationOutcome === "failed" && (
+                    <p className="text-sm text-destructive">
+                      {t('verificationEmailFailed')}
+                    </p>
+                  )}
+                </div>
+              )}
             </Field>
           )}
 

@@ -74,10 +74,10 @@ import {
  * visible. Their next sessions are spread across the week and a couple carry a
  * backlog, so the grid is not a row of identical tiles either.
  *
- * `unverified` is the account an admin has not approved yet, which swaps the
+ * `uncertified` is the account an admin has not approved yet, which swaps the
  * instant-room panel for a notice and cannot be true at the same time as the
  * panel being usable. It carries **no assignments at all**, because that is the
- * page the account it describes actually meets: verification is what gates group
+ * page the account it describes actually meets: certification is what gates group
  * assignment, so a gedu waiting on it has nothing to be assigned to yet. It
  * therefore doubles as the empty-state scenario — the unheaded section with the
  * "when you're assigned to a group" line, which no other scenario can show.
@@ -85,7 +85,7 @@ import {
 export const GEDU_DASHBOARD_SCENARIOS = [
   "default",
   "clubs-only",
-  "unverified",
+  "uncertified",
 ] as const;
 
 export type GeduDashboardScenario = (typeof GEDU_DASHBOARD_SCENARIOS)[number];
@@ -97,7 +97,7 @@ export function isGeduDashboardScenario(s: string): s is GeduDashboardScenario {
 export interface GeduDashboardFixture {
   /** One roll-up card per assignment, soonest next session first. */
   assignments: GeduAssignmentCardData[];
-  verified: boolean;
+  certified: boolean;
 }
 
 const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
@@ -350,11 +350,11 @@ export function buildGeduDashboardFixture(
     }),
   ];
 
-  // An unverified gedu has nothing assigned — verification is the gate on group
-  // assignment — so the scenario that shows the verification notice is also the
-  // one that shows the empty state, and no card is built for it.
+  // An uncertified gedu has nothing assigned — certification is the gate on
+  // group assignment — so the scenario that shows the awaiting-approval notice
+  // is also the one that shows the empty state, and no card is built for it.
   const rows =
-    scenario === "unverified"
+    scenario === "uncertified"
       ? []
       : scenario === "clubs-only"
         ? [...clubRows, ...extraClubRows]
@@ -407,7 +407,7 @@ export function buildGeduDashboardFixture(
               ),
       };
     }),
-    verified: scenario !== "unverified",
+    certified: scenario !== "uncertified",
   };
 }
 

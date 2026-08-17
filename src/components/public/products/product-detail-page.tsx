@@ -18,10 +18,7 @@ import {
   deriveRegistrationState,
   registrationCtaKind,
 } from "./derive-registration-state";
-import {
-  ProductDetailPageBody,
-  type MunicipalityBackLink,
-} from "./product-detail-page-body";
+import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "./product-audience";
 import { SignupPanel } from "./signup-panel";
 import type { AuthState } from "./signup-panel-view";
@@ -35,16 +32,23 @@ import type { AuthState } from "./signup-panel-view";
 interface ProductDetailPageProps {
   productId: string;
   /**
-   * Present when this detail page was opened from a `/schools/<slug>` listing
-   * (the `/schools/<slug>/[id]` route). Redirects the back link to that
-   * municipality instead of the storefront. Omitted on `/shop/[id]`.
+   * The `/schools/<slug>` listing this detail page was opened from (the
+   * `/schools/<slug>/[id]` route), as the slug that appeared in the URL.
+   * Redirects the back link to that municipality instead of the storefront.
+   * Omitted on `/shop/[id]`.
+   *
+   * The **slug only** — the label's municipality name is resolved from the
+   * product row downstream, so nothing has to look the slug up. The URL's slug
+   * is what builds the href, deliberately: a viewer who followed
+   * `/schools/helsingfors` stays in that namespace rather than being bounced to
+   * the canonical `helsinki`.
    */
-  municipality?: MunicipalityBackLink;
+  municipalitySlug?: string;
 }
 
 export function ProductDetailPage({
   productId,
-  municipality,
+  municipalitySlug,
 }: ProductDetailPageProps) {
   const pathname = usePathname();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
@@ -183,7 +187,7 @@ export function ProductDetailPage({
   return (
     <ProductDetailPageBody
       product={product}
-      municipality={municipality}
+      municipalitySlug={municipalitySlug}
       signupPanel={
         <SignupPanel product={product} state={state} authState={authState} />
       }
@@ -205,9 +209,10 @@ export function ProductDetailPage({
  * **Nothing here is real chrome, and that is a property of this route rather
  * than a shortcut.** The band's three elements — back link, eyebrow, title —
  * all derive from the product row, so none of them is route-static on
- * `/shop/[id]` and none can be rendered before the row lands. (Only the
- * municipality route knows its own back destination, which is not enough to
- * split a skeleton over.) So what can be honest is the *shape*: the same
+ * `/shop/[id]` and none can be rendered before the row lands. The municipality
+ * route is no exception: it knows from its URL *where* back goes, but the
+ * municipality's name that labels the link comes off the product row like
+ * everything else here. So what can be honest is the *shape*: the same
  * container, the same three tracks, the same band, the same 3:2 hero and the
  * same two rails, with ghosts where the content goes.
  *

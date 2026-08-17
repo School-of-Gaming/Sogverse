@@ -156,28 +156,28 @@ describe("POST /api/voice/instant/create", () => {
     );
   });
 
-  it("requires a verified gedu (the unverified-gedu boundary is enforced server-side)", async () => {
-    // The unverified-gedu 403 itself lives in requireRole (covered in
+  it("requires a certified gedu (the uncertified-gedu boundary is enforced server-side)", async () => {
+    // The uncertified-gedu 403 itself lives in requireRole (covered in
     // tests/unit/lib/auth.test.ts); here we pin that the route opts into that
-    // gate via `requireVerifiedGedu`, so the boundary can't be lost in a refactor.
+    // gate via `requireCertifiedGedu`, so the boundary can't be lost in a refactor.
     authenticated("admin");
     await POST(createRequest());
     expect(mockRequireRole).toHaveBeenLastCalledWith(
       ["admin", "gedu"],
-      expect.objectContaining({ requireVerifiedGedu: true }),
+      expect.objectContaining({ requireCertifiedGedu: true }),
     );
   });
 
-  it("returns 403 when requireRole rejects an unverified gedu", async () => {
+  it("returns 403 when requireRole rejects an uncertified gedu", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
-        { error: "Your educator account is awaiting admin verification.", code: "GEDU_UNVERIFIED" },
+        { error: "Your educator account is awaiting admin certification.", code: "GEDU_UNCERTIFIED" },
         { status: 403 },
       ),
     );
     const response = await POST(createRequest());
     expect(response.status).toBe(403);
-    expect((await response.json()).code).toBe("GEDU_UNVERIFIED");
+    expect((await response.json()).code).toBe("GEDU_UNCERTIFIED");
     expect(mockCreateDailyRoom).not.toHaveBeenCalled();
   });
 });

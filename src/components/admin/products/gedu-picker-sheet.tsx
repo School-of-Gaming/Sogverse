@@ -16,7 +16,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useUsersByRole, useSpokenLanguages } from "@/services/users";
-import { useGeduVerificationMap } from "@/services/gedu";
+import { useGeduCertificationMap } from "@/services/gedu";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { cn, matchesAllTerms, searchTerms } from "@/lib/utils";
 import type { Profile } from "@/types";
@@ -80,7 +80,7 @@ export function GeduPickerSheet({
 
   const { data: gedus } = useUsersByRole("gedu");
   const { data: spokenLanguages } = useSpokenLanguages();
-  const verification = useGeduVerificationMap();
+  const certification = useGeduCertificationMap();
   const languageName = useLanguageNames();
 
   useEffect(() => {
@@ -178,13 +178,13 @@ export function GeduPickerSheet({
             {filtered.map((g) => {
               const isCurrent = g.id === highlightId;
               const isAssigned = excludeIds?.includes(g.id) ?? false;
-              // Unverified gedus can't be assigned until an admin approves them
+              // Uncertified gedus can't be assigned until an admin approves them
               // (a UI-only gate — sufficient because only trusted admins assign;
               // see src/services/gedu/CLAUDE.md). This one keeps failing closed
-              // when the verification read errors: withholding an assignment we
+              // when the certification read errors: withholding an assignment we
               // cannot justify is the safe direction for a gate.
-              const isUnverified = !(verification.map.get(g.id)?.verified ?? false);
-              const isDisabled = isCurrent || isAssigned || isUnverified;
+              const isUncertified = !(certification.map.get(g.id)?.certified ?? false);
+              const isDisabled = isCurrent || isAssigned || isUncertified;
               return (
                 <GeduRow
                   key={g.id}
@@ -192,7 +192,7 @@ export function GeduPickerSheet({
                   spokenLanguages={spokenLanguages ?? []}
                   isCurrent={isCurrent}
                   isAssigned={isAssigned}
-                  isUnverified={isUnverified}
+                  isUncertified={isUncertified}
                   isDisabled={isDisabled}
                   onClick={() => {
                     if (isDisabled) return;
@@ -219,7 +219,7 @@ interface GeduRowProps {
   spokenLanguages: { code: string; name: string }[];
   isCurrent: boolean;
   isAssigned: boolean;
-  isUnverified: boolean;
+  isUncertified: boolean;
   isDisabled: boolean;
   onClick: () => void;
 }
@@ -229,7 +229,7 @@ function GeduRow({
   spokenLanguages,
   isCurrent,
   isAssigned,
-  isUnverified,
+  isUncertified,
   isDisabled,
   onClick,
 }: GeduRowProps) {
@@ -262,9 +262,9 @@ function GeduRow({
               {t("alreadyAssigned")}
             </Badge>
           )}
-          {isUnverified && !isCurrent && !isAssigned && (
+          {isUncertified && !isCurrent && !isAssigned && (
             <Badge variant="destructive" className="shrink-0">
-              {t("notVerified")}
+              {t("notCertified")}
             </Badge>
           )}
         </div>

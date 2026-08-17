@@ -28,9 +28,9 @@ export const POST = defineRoute({
   posture: "role-gated",
   roles: ["admin", "gedu"],
   forbiddenMessage: "Only admins and educators can create voice rooms",
-  // An unverified gedu is not a trusted moderator: block room creation until
-  // an admin verifies them (the token route likewise denies them owner power).
-  requireVerifiedGedu: true,
+  // An uncertified gedu is not a trusted moderator: block room creation until
+  // an admin certifies them (the token route likewise denies them owner power).
+  requireCertifiedGedu: true,
   response: createInstantRoomResponse,
 
   handler: async () => {

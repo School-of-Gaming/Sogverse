@@ -10,7 +10,7 @@
  * `code` is currently carried but unused at both ends, and it is worth knowing
  * why before relying on it. No route passes one, so the wrapper's forwarding of
  * it never fires; the codes a client actually receives (`PIN_REQUIRED`,
- * `GEDU_UNVERIFIED`, `PIN_LOCKED`) are attached to hand-built responses by the
+ * `GEDU_UNCERTIFIED`, `PIN_LOCKED`) are attached to hand-built responses by the
  * role gate and the PIN route, and reach this class only where a service copies
  * `code` off the response body. Nothing branches on the result — the one client
  * that did was mapping a Minecraft already-linked conflict that no longer

@@ -6,6 +6,12 @@ import {
   buildUnenrollmentGeduEmail,
 } from "@/lib/email-templates/enrollment-changes";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import { BRAND_LOCKUP } from "@/lib/constants";
+
+/** The rendered text, with the markup that carries it taken back out. */
+function stripTags(html: string): string {
+  return html.replace(/<[^>]*>/g, "");
+}
 
 let t: EmailTranslator;
 
@@ -57,7 +63,16 @@ describe("enrollment-changes email templates", () => {
         isSelfSeat: false,
       });
       expect(html).toContain("<!DOCTYPE html>");
-      expect(html).toContain("SOG");
+      // The layout's header carries the full lockup — brand first, platform
+      // second, spaced en dash. The sender name is the brand alone because an
+      // inbox list truncates it; the header is where there is room for both.
+      //
+      // It reaches the markup as two spans because the two halves are two
+      // colours, so this is the one site that composes the lockup rather than
+      // emitting BRAND_LOCKUP whole. What the reader sees is still one string,
+      // and it has to be exactly the lockup, en dash included — so strip the
+      // tags and check the text the composition actually produces.
+      expect(stripTags(html)).toContain(BRAND_LOCKUP);
     });
 
     it("shows verified minecraft status with skin image", () => {

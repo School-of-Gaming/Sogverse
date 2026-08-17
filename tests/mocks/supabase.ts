@@ -5,6 +5,7 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
   return {
     id: "test-user-id",
     email: "test@example.com",
+    email_verified_at: null,
     role: "customer" as UserRole,
     first_name: "Test",
     last_name: "User",
@@ -13,6 +14,7 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
     phone: null,
     spoken_languages: [],
     home_location_id: null,
+    referral_code: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -25,6 +27,8 @@ export function createMockGamerProfile(
   return {
     id: "test-gamer-id",
     email: "testgamer@gamer.sogverse.internal",
+    // Gamers carry a synthetic address no inbox answers, so this stays null.
+    email_verified_at: null,
     role: "gamer" as UserRole,
     first_name: "Test",
     last_name: "Gamer",
@@ -33,6 +37,7 @@ export function createMockGamerProfile(
     phone: null,
     spoken_languages: [],
     home_location_id: null,
+    referral_code: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,

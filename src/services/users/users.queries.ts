@@ -110,6 +110,29 @@ export function useUpdateUserGameAccount() {
   });
 }
 
+/**
+ * Send the signed-in user a verification link for their own address.
+ *
+ * **Nothing is invalidated on success, and that is not an omission.** Sending
+ * the mail changes no state this client has read: `email_verified_at` is stamped
+ * later, when somebody opens their inbox and follows the link, on a page load
+ * that rebuilds the cache from scratch. Refetching the profile here would only
+ * confirm what is already on screen.
+ *
+ * The mutation resolves to a `VerificationEmailSendOutcome`, so `onSuccess`
+ * still has to read which of the two happened: being turned away by the per-hour
+ * limit is a success as far as the request went, and a different sentence as far
+ * as the person is concerned.
+ */
+export function useSendVerificationEmail() {
+  const supabase = getClient();
+  const service = new UsersService(supabase);
+
+  return useMutation({
+    mutationFn: () => service.sendVerificationEmail(),
+  });
+}
+
 export function useParentGamerLinks() {
   const supabase = getClient();
   const service = new UsersService(supabase);

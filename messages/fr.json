@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "title": "School of Gaming – Sogverse",
     "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
     "shortDescription": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir",
     "pages": {
@@ -29,6 +28,7 @@
       "schools": "Clubs municipaux",
       "unlockPin": "Saisir le code PIN",
       "resetPin": "Réinitialiser le code PIN",
+      "verifyEmail": "Vérifier l’adresse e-mail",
       "changePin": "Modifier le code PIN",
       "privacy": "Politique de confidentialité",
       "terms": "Conditions générales",
@@ -161,17 +161,93 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Tableau de bord admin",
-      "description": "Bienvenue dans le panneau d’administration Sogverse. Gérez les utilisateurs, les produits et les paramètres du système.",
-      "totalUsers": "Utilisateurs au total",
-      "activeAccounts": "Comptes actifs",
-      "products": "Produits",
-      "activeProducts": "Produits actifs",
-      "revenue": "Chiffre d’affaires",
-      "thisMonth": "Ce mois-ci",
-      "growth": "Croissance",
-      "fromLastMonth": "Par rapport au mois dernier",
-      "latestEvents": "Derniers événements sur la plateforme"
+      "title": "Tableau de bord",
+      "description": "Ce qui demande l’intervention d’un administrateur aujourd’hui, qui est sur la plateforme et ce qui tourne.",
+      "loadError": "Impossible de charger le tableau de bord. Actualisez la page pour réessayer.",
+      "loadErrorWithReason": "Impossible de charger le tableau de bord – {reason}. Actualisez la page pour réessayer.",
+      "users": {
+        "label": "Utilisateurs",
+        "roles": {
+          "customer": "Parents",
+          "gamer": "Joueurs",
+          "gedu": "Gedus",
+          "admin": "Administrateurs"
+        },
+        "verified": "{count} vérifiés",
+        "certified": "{count} certifiés"
+      },
+      "attention": {
+        "title": "À traiter",
+        "allClearTitle": "Tout est en ordre",
+        "allClearBody": "Chaque joueur est placé, chaque groupe a un Gedu, aucun produit n’attend une rémunération ou un montant, et personne n’attend une décision de certification.",
+        "productsLabel": "Produits à traiter",
+        "productsHeading": "Produits",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# joueur non placé} other {# joueurs non placés}}",
+          "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
+          "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
+          "missingGeduFee": "Rémunération Gedu manquante",
+          "missingMunicipalityFee": "Montant commune manquant"
+        }
+      },
+      "certification": {
+        "label": "Gedus en attente de certification",
+        "heading": "En attente de certification",
+        "justNow": "{count} certifiés à l’instant",
+        "empty": "Personne n’attend une décision de certification.",
+        "unnamed": "Gedu sans nom",
+        "registered": "inscrit {when}",
+        "certify": "Certifier",
+        "certifying": "Certification…",
+        "failed": "La certification a échoué – réessayez."
+      },
+      "schedule": {
+        "title": "Planning",
+        "thisWeekLabel": "Cette semaine",
+        "previousWeek": "Semaine précédente",
+        "nextWeek": "Semaine suivante",
+        "today": "Aujourd’hui",
+        "sessionCount": "{count, plural, one {# session} other {# sessions}}",
+        "timesIn": "horaires en {zone}",
+        "nothingOn": "Rien de prévu",
+        "paused": "En pause cette semaine :",
+        "needsAttention": "À traiter – ce produit figure dans la file en haut de la page",
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "À venir",
+        "heading": "À venir",
+        "empty": "Rien ne commence ni ne se termine dans les mois qui viennent.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# club grand public commence} other {# clubs grand public commencent}}",
+            "municipalityClub": "{count, plural, one {# club municipal commence} other {# clubs municipaux commencent}}",
+            "camp": "{count, plural, one {# stage commence} other {# stages commencent}}",
+            "event": "{count, plural, one {# événement commence} other {# événements commencent}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# club grand public a lieu} other {# clubs grand public ont lieu}}",
+            "municipalityClub": "{count, plural, one {# club municipal a lieu} other {# clubs municipaux ont lieu}}",
+            "camp": "{count, plural, one {# stage a lieu} other {# stages ont lieu}}",
+            "event": "{count, plural, one {# événement a lieu} other {# événements ont lieu}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# club grand public se termine} other {# clubs grand public se terminent}}",
+            "municipalityClub": "{count, plural, one {# club municipal se termine} other {# clubs municipaux se terminent}}",
+            "camp": "{count, plural, one {# stage se termine} other {# stages se terminent}}",
+            "event": "{count, plural, one {# événement se termine} other {# événements se terminent}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "commence",
+          "runs": "a lieu",
+          "ends": "se termine"
+        }
+      },
+      "productTypeKey": {
+        "label": "Légende des types de produit",
+        "heading": "Types de produit"
+      }
     },
     "products": {
       "types": {
@@ -565,7 +641,7 @@
         "noResults": "Aucun Gedu ne correspond à votre recherche.",
         "current": "Actuel",
         "alreadyAssigned": "Déjà affecté",
-        "notVerified": "Non vérifié"
+        "notCertified": "Non certifié"
       },
       "participantPicker": {
         "title": "Ajouter un participant",
@@ -696,6 +772,7 @@
       "userNotFound": "Utilisateur introuvable.",
       "joined": "Inscrit le",
       "unknown": "Inconnu",
+      "referralCode": "Code de provenance",
       "ageYears": "{age, plural, one {# an} other {# ans}}",
       "gender": {
         "boy": "Garçon",
@@ -722,17 +799,19 @@
         "reserving": "En attente de paiement",
         "completed": "Terminé"
       },
-      "verification": {
-        "title": "Vérification",
-        "verified": "Vérifié",
-        "unverified": "Non vérifié",
-        "unverifiedNote": "Ce Gedu n’a pas encore été vérifié. Il ne peut pas être affecté à un groupe tant que vous ne l’avez pas vérifié.",
-        "verifiedOn": "Vérifié le {date}",
-        "verifiedByOn": "Vérifié par {name} le {date}",
-        "verifyAction": "Vérifier",
-        "unverifyAction": "Annuler la vérification",
+      "emailVerified": "Adresse e-mail vérifiée",
+      "emailNotVerified": "Adresse e-mail non vérifiée",
+      "certification": {
+        "title": "Certification",
+        "certified": "Certifié",
+        "notCertified": "Non certifié",
+        "notCertifiedNote": "Ce Gedu n’a pas encore été certifié. Il ne peut pas être affecté à un groupe tant que vous ne l’avez pas certifié.",
+        "certifiedOn": "Certifié le {date}",
+        "certifiedByOn": "Certifié par {name} le {date}",
+        "certifyAction": "Certifier",
+        "uncertifyAction": "Retirer la certification",
         "saving": "Enregistrement…",
-        "error": "Impossible de mettre à jour la vérification. Veuillez réessayer."
+        "error": "Impossible de mettre à jour la certification. Veuillez réessayer."
       }
     },
     "locations": {
@@ -912,6 +991,7 @@
       "location": "Localisation",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
+      "weakPassword": "Ce mot de passe est trop facile à deviner — essayez-en un plus long, ou un que vous n'utilisez nulle part ailleurs",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
     },
     "forgotPassword": {
@@ -939,8 +1019,8 @@
     },
     "registerGedu": {
       "title": "Créez votre compte Gedu Sogverse",
-      "verificationAlertTitle": "Votre compte doit être vérifié",
-      "verificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit vérifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
+      "certificationAlertTitle": "Votre compte doit être certifié",
+      "certificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit certifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
       "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez modifier votre sélection plus tard dans les paramètres de votre profil.",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
@@ -1940,7 +2020,21 @@
     "robloxDescription": "Associez votre compte Roblox",
     "mcHeadsAttribution": "Skins rendus par <link>mc-heads.net</link>",
     "spokenLanguages": "Langues parlées à la maison",
-    "location": "Localisation"
+    "location": "Localisation",
+    "emailVerified": "Adresse e-mail vérifiée",
+    "emailNotVerified": "Adresse e-mail non vérifiée",
+    "sendVerificationEmail": "Envoyer l’e-mail de vérification",
+    "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
+    "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
+    "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer."
+  },
+  "verifyEmail": {
+    "successTitle": "Adresse e-mail vérifiée",
+    "successDescription": "Merci — nous savons désormais que cette adresse vous joint, et rien d’important ne se perdra.",
+    "goToDashboard": "Aller à Mon SOG",
+    "invalidTitle": "Ce lien ne fonctionne plus",
+    "invalidDescription": "Un lien de vérification cesse de fonctionner dès que l’adresse e-mail du compte change. Ouvrez vos paramètres et envoyez-vous-en un nouveau.",
+    "goToSettings": "Aller aux paramètres"
   },
   "voice": {
     "participants": "Participants",
@@ -2120,8 +2214,8 @@
         "createFailed": "Impossible de créer une salle. Veuillez réessayer.",
         "ready": "Votre salle est prête",
         "join": "Rejoindre",
-        "unverifiedTitle": "En attente de vérification",
-        "unverifiedBody": "Un administrateur doit vérifier votre compte Gedu avant que vous puissiez créer des salles vocales. Vous pourrez en lancer une ici dès que vous serez vérifié."
+        "uncertifiedTitle": "En attente de certification",
+        "uncertifiedBody": "Un administrateur doit certifier votre compte Gedu avant que vous puissiez créer des salles vocales. Vous pourrez en lancer une ici dès que vous serez certifié."
       }
     }
   },
@@ -2277,6 +2371,95 @@
       "sent": "Envoyé",
       "message": "Message",
       "gamerNote": "Ce retour provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
+    },
+    "welcomeParent": {
+      "subject": "Bienvenue chez School of Gaming",
+      "heading": "Bienvenue chez School of Gaming",
+      "greeting": "Bonjour {firstName}, et bienvenue. Nous sommes ravis de vous compter parmi nous.",
+      "platform": "Sogverse est la plateforme de School of Gaming : c’est là que vous gérez les clubs, stages et événements de votre famille.",
+      "verifyBody": "Confirmer votre adresse e-mail nous permet de vous joindre au sujet des clubs de votre famille. Vous pouvez le faire maintenant, ou plus tard depuis vos {settingsLink}.",
+      "settingsLinkLabel": "réglages",
+      "verifyButton": "Confirmer votre adresse e-mail",
+      "shopButton": "Parcourir la boutique",
+      "dashboardButton": "Aller à Mon SOG"
+    },
+    "welcomeGedu": {
+      "subject": "Bienvenue chez School of Gaming – votre compte Gedu",
+      "heading": "Bienvenue chez School of Gaming",
+      "greeting": "Bonjour {firstName}, et merci de votre inscription en tant que Gedu.",
+      "certification": "Un administrateur va examiner votre compte et le certifier. Vous pouvez commencer à découvrir Mon SOG en attendant, mais certaines parties restent verrouillées jusqu’à la certification de votre compte.",
+      "verifyBody": "Confirmer votre adresse e-mail nous permet de vous joindre au sujet de vos groupes et de vos sessions. Vous pouvez le faire maintenant, ou plus tard depuis vos {settingsLink}.",
+      "settingsLinkLabel": "réglages",
+      "verifyButton": "Confirmer votre adresse e-mail",
+      "dashboardButton": "Aller à Mon SOG"
+    },
+    "productConfirmation": {
+      "subject": {
+        "consumer_club": "L’inscription de {participantName} à {productName} est confirmée",
+        "municipality_club": "L’inscription de {participantName} à {productName} est confirmée",
+        "camp": "L’inscription de {participantName} à {productName} est confirmée",
+        "event": "La participation de {participantName} à {productName} est confirmée"
+      },
+      "heading": "C’est tout bon !",
+      "subheading": {
+        "consumer_club": "L’inscription de {participantName} à {productName} est confirmée.",
+        "municipality_club": "L’inscription de {participantName} à {productName} est confirmée.",
+        "camp": "L’inscription de {participantName} à {productName} est confirmée.",
+        "event": "La participation de {participantName} à {productName} est confirmée."
+      },
+      "self": {
+        "subject": {
+          "consumer_club": "Votre inscription à {productName} est confirmée",
+          "municipality_club": "Votre inscription à {productName} est confirmée",
+          "camp": "Votre inscription à {productName} est confirmée",
+          "event": "Votre participation à {productName} est confirmée"
+        },
+        "subheading": {
+          "consumer_club": "Votre inscription à {productName} est confirmée.",
+          "municipality_club": "Votre inscription à {productName} est confirmée.",
+          "camp": "Votre inscription à {productName} est confirmée.",
+          "event": "Votre participation à {productName} est confirmée."
+        },
+        "waitlist": {
+          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "Club",
+        "municipality_club": "Club municipal",
+        "camp": "Stage",
+        "event": "Événement"
+      },
+      "priceLabel": "Prix",
+      "price": {
+        "subscription": "{amount} / mois",
+        "upfront": "{amount} (paiement unique)",
+        "free": "Gratuit"
+      },
+      "nextTitle": "La suite",
+      "next": {
+        "placement": "Nous placerons {participantName} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+        "placementSelf": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+        "subscription": "Le prélèvement a lieu chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
+        "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
+        "free": "Il n’y a rien à régler pour cette inscription."
+      },
+      "waitlist": {
+        "subject": "{participantName} est sur la liste d’attente pour {productName}",
+        "subjectSelf": "Vous êtes sur la liste d’attente pour {productName}",
+        "heading": "Vous êtes sur la liste d’attente",
+        "subheading": "{participantName} est sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
+        "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
+        "next2": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
+      },
+      "dashboardButton": "Aller à Mon SOG"
+    },
+    "verifyEmail": {
+      "subject": "Confirmez votre adresse e-mail",
+      "heading": "Confirmez votre adresse e-mail",
+      "body": "Bonjour {firstName}, vous avez demandé à confirmer l’adresse e-mail de votre compte School of Gaming. Utilisez le bouton ci-dessous.",
+      "button": "Confirmer votre adresse e-mail",
+      "ignore": "Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer cet e-mail. Rien ne changera."
     }
   },
   "legal": {
@@ -2318,7 +2501,8 @@
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
           "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement.",
           "Facultativement, le nom d’utilisateur Minecraft de votre enfant — pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
-          "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous)."
+          "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous).",
+          "Si vous êtes arrivé par un lien partagé par une école, un club ou une organisation partenaire, un code court indiquant lequel — pour que nous sachions quelles actions touchent réellement les familles, et que nous puissions dire à nos partenaires si la leur a fonctionné."
         ]
       },
       "childrensPrivacy": {
@@ -2353,7 +2537,8 @@
           "Pour vous fournir ce que vous avez souscrit — les clubs et services que vous nous avez achetés (notre contrat avec vous).",
           "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
-          "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée."
+          "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée.",
+          "Pour notre intérêt légitime à savoir lesquelles de nos actions touchent les familles — toujours mis en balance avec votre vie privée, et vous pouvez nous demander d’arrêter à tout moment."
         ]
       },
       "providers": {

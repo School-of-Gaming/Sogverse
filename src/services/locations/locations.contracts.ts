@@ -117,6 +117,18 @@ export const POSTAL_CODE_COLUMNS = "location_id, locations!inner(id)";
  */
 export const LOCATION_SEARCH_MIN_QUERY = 2;
 
+/**
+ * How long a needle may be before the route refuses it outright.
+ *
+ * A place name is nowhere near this long, so the ceiling is not a validation
+ * rule anybody types into — it is what stops a pasted document from becoming a
+ * cache key and a trigram probe. Exported because a search box has to carry it
+ * as its own `maxLength`: without it a paste sails past the schema and the
+ * request comes back 400, which is a dead results area rather than the "no
+ * matches" the page would otherwise show.
+ */
+export const LOCATION_SEARCH_MAX_QUERY = 120;
+
 /** How many hits one search renders. The true match count comes back regardless. */
 export const LOCATION_SEARCH_LIMIT = 20;
 
@@ -167,7 +179,7 @@ export const locationSearchResult = z.object({
  * The only caller that sends it holds a constant.
  */
 export const searchLocationsQuery = z.object({
-  q: z.string().min(LOCATION_SEARCH_MIN_QUERY).max(120),
+  q: z.string().min(LOCATION_SEARCH_MIN_QUERY).max(LOCATION_SEARCH_MAX_QUERY),
   types: z
     .string()
     .transform((value) => value.split(",").filter(Boolean))

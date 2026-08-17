@@ -1,16 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import type Stripe from "stripe";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import { resolveLocale, stripeLocaleOrAuto } from "@/lib/constants/locales";
+import {
+  DEFAULT_LOCALE,
+  resolveLocale,
+  stripeLocaleOrAuto,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   createCheckoutBody,
   createParticipationResponse,
   createParticipationRpcResult,
 } from "@/services/participations/participations.contracts";
+import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import { ROUTES } from "@/lib/constants";
 import {
   computeSinglePaymentAmount,
@@ -99,13 +104,37 @@ export const POST = defineRoute({
 
     const locale = resolveLocale(profile.locale);
 
+    // The last resort of both name resolves below, named once so that "the two
+    // chains end in the same string" is structural rather than a claim a reader
+    // has to verify by comparing two literals ten lines apart. It reaches Stripe
+    // — a receipt, the hosted portal, an internal Slack message — never
+    // `messages/`, so no locale sweep will ever translate it, and the brand name
+    // is the right shape for a string in that position.
+    const fallbackProductName = "School of Gaming product";
+
+    // The same field resolved twice, for two audiences that want different
+    // answers. Both names come out of the one `product_translations` array
+    // already read above — two resolves, no second query. The variables are
+    // named for their locale rather than one being the bare `productName`,
+    // because "the product's name" is now a question with two right answers and
+    // a later reader must be made to pick.
+    //
     // Prefer the parent's locale for the one customer-facing name we still
     // control on the Checkout page: the subscription description. Both line
     // items now name the shared Stripe Product, whose name is resolved at the
     // default locale and shared across every locale.
-    const productName =
+    const parentLocaleProductName =
       resolveTranslation(product.product_translations, locale)?.name ??
-      "School of Gaming product";
+      fallbackProductName;
+    // The default-locale name, for the session metadata a Stripe Workflow turns
+    // into an internal Slack notification. Its audience is staff in one channel,
+    // where one stable name per product is the whole point — resolving it in the
+    // buyer's locale would file the same club under a different heading
+    // depending on who happened to buy it. Same convention as the shared Stripe
+    // Product's name above.
+    const defaultLocaleProductName =
+      resolveTranslation(product.product_translations, DEFAULT_LOCALE)?.name ??
+      fallbackProductName;
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid
     // shape family: free→'free', external_contract→'external', paid→
@@ -202,6 +231,35 @@ export const POST = defineRoute({
           500,
         );
       }
+      // The seat is live and nothing else in this request can fail it, so the
+      // confirmation mail goes out here — but AFTER the response, not inside
+      // it. The outcome the parent is waiting on is already committed, and the
+      // send is two or three reads plus a Brevo round trip; holding the
+      // response open for it makes the click slower and buys nothing, because
+      // the mail's success cannot change the answer. `after()` keeps the
+      // function alive for the send once the response has gone out — the same
+      // committed-outcome/follow-up-send shape the Discord webhook uses. Safe
+      // to fire and forget: the helper swallows its own failures and cannot
+      // throw, so a Brevo outage never surfaces as an unhandled rejection.
+      //
+      // **Both no-charge outcomes send the same mail.** A municipality
+      // registration is invoiced to the school off-platform, so from the
+      // family's side it is the free case exactly — nothing to pay, nothing to
+      // manage, a seat that is already theirs — and `free` is the mode that
+      // says so. Owner decision; a distinct `external` mode was considered and
+      // turned down as copy that would differ from this one only in ways a
+      // parent has no use for.
+      after(
+        sendProductConfirmationEmail({
+          client: admin,
+          request,
+          customerId: user.id,
+          participantId,
+          productId,
+          mode: "free",
+        }),
+      );
+
       // Municipality clubs are invoiced off-platform, so like the free flow the
       // participation is already active and we never touch Stripe. Both land on
       // the same confirmation page.
@@ -244,14 +302,62 @@ export const POST = defineRoute({
       // retry. Nothing to undo — no row was written.
       const cancelUrl = `${origin}${ROUTES.shopProduct(productId)}`;
 
+      // The three links the Slack notification offers its reader: the product's
+      // admin page, the paying customer's admin page, and the public shop page.
+      // Finished URLs, assembled here, because a Stripe Workflow can substitute
+      // a variable into a message but cannot map an enum onto a URL shape. A
+      // Workflow building `/admin/{productType}/{productId}` would be a second,
+      // hand-maintained copy of the type→path mapping, living in the Dashboard
+      // outside this repo where no compiler sees it and a new product type
+      // produces a 404 nobody is warned about. `ROUTES.admin.product` is an
+      // exhaustive `switch` with no `default`, so it is the one place that
+      // mapping can be wrong *and be caught* — keeping it the only place is the
+      // entire reason these are built here instead of over there.
+      //
+      // Absolute, because a Slack message has no origin to resolve against, and
+      // off the `origin` above — `getOrigin(request)`, never the raw `Host` —
+      // which matters more here than for the redirects: staff click these, in
+      // the channel they trust most, so a spoofed `Host` would turn our own
+      // purchase alert into a phishing link aimed at our own team.
+      //
+      // Accepted trade: each URL freezes at purchase time. Restructuring an
+      // admin route later leaves this code correct while the links in Slack
+      // messages already sent go stale — acceptable because those messages are
+      // read within minutes of the purchase and never revisited, but the next
+      // person moving an admin route should meet that deliberately here rather
+      // than discover it from a dead link.
+      const adminProductUrl = `${origin}${ROUTES.admin.product(product.product_type, productId)}`;
+      const adminUserUrl = `${origin}${ROUTES.admin.user(user.id)}`;
+      // Textually identical to `cancelUrl` above, and deliberately duplicated
+      // rather than shared. `cancelUrl` is where an abandoned checkout bounces
+      // the parent back to; this is where a Slack reader goes to see what was
+      // bought. Two independent reasons that happen to name the same page today,
+      // so folding them into one variable would silently drag one along the next
+      // time the other has to move.
+      const shopProductUrl = `${origin}${ROUTES.shopProduct(productId)}`;
+
       // The metadata IS the link between this session and the participation the
       // webhook will create. Nothing else carries it, so every field here is
       // load-bearing rather than informational. The webhook and the
       // confirmation page read `participantId` back by exactly this name.
+      //
+      // `productName`, `productType` and the three `*Url` keys are read by a
+      // Stripe Workflow, not by us: it posts a Slack notification naming the
+      // product and linking to it. The type no longer picks a link — the
+      // finished URLs above do — but it stays, because it can gate which
+      // purchases trigger a notification at all. It ships as the raw Postgres
+      // enum (`camp`, `consumer_club`, `municipality_club`, `event`), so a
+      // template wanting prose has to map it rather than interpolate it.
+      // camelCase, matching the object they join.
       const sessionMetadata = {
         customerId: user.id,
         participantId,
         productId,
+        productName: defaultLocaleProductName,
+        productType: product.product_type,
+        adminProductUrl,
+        adminUserUrl,
+        shopProductUrl,
         purchaseShape,
         currency,
       };
@@ -415,7 +521,7 @@ export const POST = defineRoute({
           // webhook reads, and the subscription carries that set *plus* the
           // finance snapshot, because nothing propagates from the session to it.
           metadata: { ...sessionMetadata, ...purchaseMetadata },
-          description: `${productName} — ${await pickParticipantName(
+          description: `${parentLocaleProductName} — ${await pickParticipantName(
             admin,
             participantId,
             participantId === user.id,

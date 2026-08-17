@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
 import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
@@ -9,16 +10,15 @@ import {
   isPreviewScenario,
   isShopBrowseScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import { isLongDescriptionScenario } from "@/components/public/products/mock-long-description-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
 import type { PreviewSurface } from "./scenes";
+import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
-import { ProductLongDescriptionScene } from "./scenes/product-long-description-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 
@@ -46,10 +46,6 @@ const SCENE_RENDERERS: Record<
   products: (scenario) => {
     if (!isPreviewScenario(scenario)) notFound();
     return <ProductDetailScene scenario={scenario} />;
-  },
-  "product-long-description": (scenario) => {
-    if (!isLongDescriptionScenario(scenario)) notFound();
-    return <ProductLongDescriptionScene />;
   },
   confirmation: (scenario) => {
     // The paid no-order states need no fixture — the notice component takes
@@ -87,6 +83,10 @@ const SCENE_RENDERERS: Record<
   "gamer-club": (scenario) => {
     if (!isFamilyProductScenario(scenario)) notFound();
     return <FamilyProductPageScene audience="gamer" scenario={scenario} />;
+  },
+  "admin-dashboard": (scenario) => {
+    if (!isAdminDashboardScenario(scenario)) notFound();
+    return <AdminDashboardScene scenario={scenario} />;
   },
 };
 

@@ -1,7 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// The confirmation mail's My SOG link comes from getOrigin(), which falls back
+// to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host — which is
+// what a Stripe delivery looks like here.
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+
 import { POST } from "@/app/api/webhooks/stripe/products/route";
 
 // --- Mocks ---
+
+const mockSendTransactionalEmail = vi.fn();
+vi.mock("@/lib/brevo", () => ({
+  sendTransactionalEmail: (...args: unknown[]) =>
+    mockSendTransactionalEmail(...args),
+}));
 
 const { stripeMock } = await vi.hoisted(async () => ({
   stripeMock: (await import("../../mocks/stripe")).createStripeMock(),
@@ -212,6 +224,12 @@ type AdminMockOptions = {
    * value), and it must reach the caller as a 500 rather than being dropped.
    */
   famSubUpdateError?: { code: string; message: string } | null;
+  /**
+   * The catalogue price row the confirmation mail states, or null for "this
+   * product is not sold in that currency" — which the mail renders as no price
+   * line at all rather than a blank one.
+   */
+  productPrice?: { price_cents: number } | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}) {
@@ -276,6 +294,71 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         }),
       };
     }
+    // The three the confirmation mail reads, and nothing else touches. They
+    // answer the shapes the send helper asks for: the product with its
+    // translations, both people in one `.in()` query, and the catalogue price.
+    if (table === "products") {
+      return {
+        select: () => ({
+          eq: () => ({
+            order: () => ({
+              single: () =>
+                Promise.resolve({
+                  data: {
+                    product_type: "consumer_club",
+                    product_translations: [
+                      { locale: "en", name: "Test Club" },
+                    ],
+                  },
+                  error: null,
+                }),
+            }),
+          }),
+        }),
+      };
+    }
+    if (table === "profiles") {
+      return {
+        select: () => ({
+          in: () =>
+            Promise.resolve({
+              data: [
+                {
+                  id: CUSTOMER_ID,
+                  first_name: "Marja",
+                  email: "parent@example.test",
+                  locale: "en",
+                },
+                {
+                  id: GAMER_ID,
+                  first_name: "Aino",
+                  email: null,
+                  locale: null,
+                },
+              ],
+              error: null,
+            }),
+        }),
+      };
+    }
+    if (table === "product_prices") {
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              maybeSingle: () =>
+                Promise.resolve({
+                  data:
+                    opts.productPrice === undefined
+                      ? { price_cents: 4000 }
+                      : opts.productPrice,
+                  error: null,
+                }),
+            }),
+          }),
+        }),
+      };
+    }
     // `participations` deliberately has no entry: the handler reaches that
     // table only through confirm_paid_participation, never with a direct write.
     // A table appearing here that shouldn't should fail loudly.
@@ -290,6 +373,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
 describe("POST /api/webhooks/stripe/products", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
 
   describe("signature validation", () => {
@@ -1267,6 +1351,193 @@ describe("POST /api/webhooks/stripe/products", () => {
         }),
       );
       errorSpy.mockRestore();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // The confirmation mail
+  // -------------------------------------------------------------------------
+  //
+  // The ONE thing this handler does that is not naturally idempotent, on an
+  // endpoint whose defining property is that deliveries repeat. Every case here
+  // is really the same question asked from a different angle: did exactly one
+  // mail leave per seat that came into existence?
+
+  describe("checkout.session.completed — the confirmation mail", () => {
+    /** A fresh confirm: the RPC INSERTed the row on this very call. */
+    function confirmFresh() {
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "confirmed",
+          participation_id: PARTICIPATION_ID,
+          idempotent: false,
+        },
+        error: null,
+      });
+    }
+
+    it("mails the customer — never the participant — when the seat is created", async () => {
+      mockConstructEvent.mockReturnValue(createCompletedEvent());
+      mockAdmin();
+      confirmFresh();
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          // The payer's inbox. The gamer's profile in the fixture carries no
+          // address at all, which is the ordinary case for a child account.
+          toEmail: "parent@example.test",
+          fromEmail: "sogverse@sog.gg",
+          fromName: "School of Gaming",
+          replyToEmail: "help@sog.gg",
+        }),
+      );
+    });
+
+    it("speaks in the third person about a child's seat, and names the product", async () => {
+      mockConstructEvent.mockReturnValue(createCompletedEvent());
+      mockAdmin();
+      confirmFresh();
+
+      await POST(createWebhookRequest());
+
+      const { subject, htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(subject).toContain("Aino");
+      expect(subject).toContain("Test Club");
+      expect(htmlContent).toContain("https://test.sogverse.local/parent");
+    });
+
+    it("prices a camp as a one-time payment", async () => {
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({ purchaseShape: "single_payment" }),
+      );
+      mockAdmin();
+      confirmFresh();
+
+      await POST(createWebhookRequest());
+
+      const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(htmlContent).toContain("Price: €40.00 (one-time)");
+      expect(htmlContent).not.toContain("/ month");
+    });
+
+    // The catalogue price, not `amount_total`: a club bought before it starts
+    // completes Checkout at €0 and bills the real amount later, so the money
+    // that moved today is not the price the parent is agreeing to.
+    it("prices a club from the catalogue, per month", async () => {
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          purchaseShape: "subscription_monthly",
+          subscription: SUB_ID,
+          amountTotal: 0,
+          paymentStatus: "no_payment_required",
+        }),
+      );
+      mockAdmin({ productPrice: { price_cents: 4000 } });
+      confirmFresh();
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        id: SUB_ID,
+        status: "active",
+        cancel_at_period_end: false,
+        items: { data: [{ id: "si_1", price: { id: "price_1" }, current_period_end: 1900000000 }] },
+      });
+
+      await POST(createWebhookRequest());
+
+      const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(htmlContent).toContain("/ month");
+      expect(htmlContent).toContain("40.00");
+    });
+
+    it("states no price when the product is not sold in the session's currency", async () => {
+      mockConstructEvent.mockReturnValue(createCompletedEvent());
+      mockAdmin({ productPrice: null });
+      confirmFresh();
+
+      await POST(createWebhookRequest());
+
+      // A blank figure beside a product name reads as "free", so the whole
+      // price line is omitted rather than left empty — and the mail still goes.
+      const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(htmlContent).not.toContain("Price:");
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    });
+
+    // The guard that matters. A redelivery whose first attempt died before
+    // writing the payment row gets past the dedup check at the top of the
+    // handler and calls the RPC again — which answers `confirmed` with the same
+    // participation id, distinguishable from the first answer only by this flag.
+    it("sends nothing when the RPC reports it recognised its own earlier row", async () => {
+      mockConstructEvent.mockReturnValue(createCompletedEvent());
+      mockAdmin();
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "confirmed",
+          participation_id: PARTICIPATION_ID,
+          idempotent: true,
+        },
+        error: null,
+      });
+
+      const res = await POST(createWebhookRequest());
+
+      expect(res.status).toBe(200);
+      // The rest of the handler still runs — the payment row is written — so
+      // this is the mail alone being held back, not the delivery being skipped.
+      expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    });
+
+    it("sends nothing on a delivery the payments dedup guard short-circuits", async () => {
+      mockConstructEvent.mockReturnValue(createCompletedEvent());
+      mockAdmin({ existingPayment: { id: PAYMENT_ROW_ID } });
+      confirmFresh();
+
+      const res = await POST(createWebhookRequest());
+
+      expect(res.status).toBe(200);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    });
+
+    it("sends nothing when the payment was refused as a duplicate", async () => {
+      mockConstructEvent.mockReturnValue(createCompletedEvent());
+      mockAdmin();
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "duplicate_payment",
+          existing_participation_id: PARTICIPATION_ID,
+        },
+        error: null,
+      });
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const res = await POST(createWebhookRequest());
+
+      // No seat came into existence, so there is nothing to confirm — and the
+      // parent is owed a refund, not a congratulation.
+      expect(res.status).toBe(200);
+      expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it("answers 200 when the send throws — Stripe must not retry over a mail", async () => {
+      mockConstructEvent.mockReturnValue(createCompletedEvent());
+      const inserts = mockAdmin();
+      confirmFresh();
+      mockSendTransactionalEmail.mockRejectedValue(new Error("Brevo 502"));
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const res = await POST(createWebhookRequest());
+
+      // A 500 here would win a redelivery that re-ran a money path to fix an
+      // email — and the payment row is already written, so the redelivery would
+      // do nothing but log.
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(1);
+      spy.mockRestore();
     });
   });
 });

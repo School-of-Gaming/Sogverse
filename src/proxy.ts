@@ -5,15 +5,29 @@ import type { Database } from "@/types/database.types";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+import {
+  REFERRAL_CODE_HEADER,
+  REFERRAL_QUERY_PARAM,
+  sanitiseReferralCode,
+} from "@/lib/referral";
 
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
 // sign-in/out flow; the rest are the gate itself, the profile chooser (where
-// they can drop to a gamer or choose to enter the PIN), and the email-reset
-// landing page.
+// they can drop to a gamer or choose to enter the PIN), and the two landing
+// pages an emailed link points at. `verifyEmail` is exempt for the same reason
+// `resetPin` is: the signed token in the URL is the authorization, the page
+// grants nothing a parent's session would have granted, and bouncing a parent
+// who opened their inbox on a locked device to the PIN pad would just lose the
+// link.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
   if (pathname.startsWith("/api/") || isAuthRoute) return true;
-  const exempt = [ROUTES.customer.unlock, ROUTES.selectProfile, ROUTES.resetPin];
+  const exempt = [
+    ROUTES.customer.unlock,
+    ROUTES.selectProfile,
+    ROUTES.resetPin,
+    ROUTES.verifyEmail,
+  ];
   return exempt.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
@@ -30,7 +44,11 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // match also covers the per-municipality pages (/schools/[slug]).
 // ROUTES.roblox is the partnership landing page — public so it can be shared
 // with partners, but kept out of robots.txt and the sitemap rather than gated.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.roblox, ROUTES.voice.prefix];
+// ROUTES.verifyEmail is public rather than an AUTH_ROUTE: an auth route bounces
+// a signed-in visitor to their dashboard, and the person clicking a
+// verification link is very often already signed in — that bounce would eat the
+// token before the page ever read it.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on
@@ -102,6 +120,34 @@ export async function proxy(request: NextRequest) {
 
   request.headers.set("x-nonce", nonce);
   request.headers.set("Content-Security-Policy", cspHeader);
+
+  // Referral attribution: `?ref=<code>` on the landing URL, sanitised here and
+  // handed to the root layout, which seeds it into a client context provider so
+  // it survives the whole visit as client-side navigation. See src/lib/referral.ts
+  // for the constraints this feature is built to — the value never reaches the
+  // user's device, at any point.
+  //
+  // **Delete unconditionally, then set conditionally.** A browser can send its
+  // own `x-referral-code:` header, and an incoming request header reaches the
+  // layout untouched on any request the proxy does not overwrite it on — so a
+  // bare conditional `set` would leave a forgeable path. The harm is small
+  // (anyone can type `?ref=` themselves, and the profile-creation trigger
+  // re-sanitises regardless), but this is the difference between "the value
+  // always came through our own sanitiser" being true and merely being intended.
+  //
+  // This runs above every branch and early return, like the two sets above, so
+  // no path bypasses it. `.getAll()` rather than `.get()`: a repeated
+  // `?ref=a&ref=b` is not a code and must resolve to absent, and `.get()` would
+  // silently hand back the first value. (A `typeof x === "string"` check — the
+  // idiom the register *page* uses on its `searchParams` — is dead code here:
+  // `URLSearchParams.get()` can never return an array.)
+  request.headers.delete(REFERRAL_CODE_HEADER);
+  const referralValues = request.nextUrl.searchParams.getAll(REFERRAL_QUERY_PARAM);
+  const referralCode =
+    referralValues.length === 1 ? sanitiseReferralCode(referralValues[0]) : null;
+  if (referralCode !== null) {
+    request.headers.set(REFERRAL_CODE_HEADER, referralCode);
+  }
 
   const { pathname } = request.nextUrl;
 

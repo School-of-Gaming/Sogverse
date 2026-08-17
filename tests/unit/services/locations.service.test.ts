@@ -47,80 +47,6 @@ function requestedRanges(fetchMock: FetchMock): string[] {
 
 // The scoped reads that replace fetching the whole table.
 
-describe("LocationsService.getMunicipalitiesByCountry", () => {
-  let fetchMock: FetchMock;
-  let service: LocationsService;
-
-  beforeEach(() => {
-    fetchMock = vi.fn<typeof fetch>();
-    service = new LocationsService(createFetchStubbedClient(fetchMock));
-  });
-
-  it("asks only for that country's municipalities, in a total order", async () => {
-    fetchMock.mockResolvedValue(
-      postgrestPage(locationRows(308), { from: 0, total: 308 }),
-    );
-
-    await service.getMunicipalitiesByCountry("FI");
-
-    const url = requestedUrl(fetchMock.mock.calls[0][0]);
-    expect(url.searchParams.get("country_code")).toBe("eq.FI");
-    expect(url.searchParams.get("type")).toBe("eq.municipality");
-    expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
-  });
-
-  // A directory read *offers* places, so it drops the ones a refresh retired.
-  // Keyed reads deliberately do not — see the column discipline block below and
-  // the service's own note.
-  it("leaves retired municipalities out of the directory", async () => {
-    fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
-
-    await service.getMunicipalitiesByCountry("FI");
-
-    const url = requestedUrl(fetchMock.mock.calls[0][0]);
-    expect(url.searchParams.get("retired_at")).toBe("is.null");
-  });
-
-  // One level shallower than the keyed read, and that is the point: this one
-  // runs over some 34,900 rows for France, so it asks for the depth a municipality
-  // actually has (département -> région -> pays) and no more.
-  it("embeds three ancestor levels, not the keyed read's four", async () => {
-    fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
-
-    await service.getMunicipalitiesByCountry("FR");
-
-    const select =
-      requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("select") ?? "";
-    expect(select.split("parent:parent_id(")).toHaveLength(4);
-  });
-
-  it("flattens the embedded parent nest into a nearest-first chain", async () => {
-    fetchMock.mockResolvedValue(
-      postgrestPage(
-        [
-          {
-            ...locationRows(1)[0],
-            parent: {
-              id: "region",
-              name: "Uusimaa",
-              parent: { id: "country", name: "Finland", parent: null },
-            },
-          },
-        ],
-        { from: 0, total: 1 },
-      ),
-    );
-
-    const [municipality] = await service.getMunicipalitiesByCountry("FI");
-
-    expect(municipality.ancestors.map((node) => node.name)).toEqual([
-      "Uusimaa",
-      "Finland",
-    ]);
-    expect(municipality.ancestors[0]).not.toHaveProperty("parent");
-  });
-});
-
 describe("LocationsService.getSitesByParent", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
@@ -576,7 +502,6 @@ const READS: [string, (service: LocationsService) => Promise<unknown>][] = [
   ["getChildren (root)", (s) => s.getChildren(null)],
   ["getChildren (node)", (s) => s.getChildren("loc-0")],
   ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
-  ["getMunicipalitiesByCountry", (s) => s.getMunicipalitiesByCountry("FI")],
   ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],
   [
     "getMunicipalitiesByPostalCode",

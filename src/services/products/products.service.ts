@@ -9,7 +9,10 @@ import type {
 import type { QueryData } from "@supabase/supabase-js";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { effectiveStatus } from "@/lib/products/effective-status";
+import {
+  effectiveStatus,
+  type LifecycleInputs,
+} from "@/lib/products/effective-status";
 import {
   parseJsonResponse,
   readErrorMessage,
@@ -36,30 +39,116 @@ import { productIdResponse } from "./products.contracts";
 // dropping this filter would publish products that were deliberately kept off
 // the grid, and adding the same filter to a single-product read would break the
 // direct link the unlisted state exists for.
-function buildVisibleProductsQuery(
+//
+// The filters live in one place and the *select* is the parameter, because two
+// surfaces ask this same question of different amounts of the row (see
+// `LOCATION_ONLY_SELECT` below). Forking the query would fork the visibility
+// rule with it, and a visibility rule that exists twice is one that will
+// eventually disagree with itself. The select is a generic literal so each
+// caller's row type is still inferred from its own string.
+function buildVisibleProductsQuery<Select extends string>(
   supabase: AppSupabaseClient,
   types: ProductType[],
+  select: Select,
 ) {
   return supabase
     .from("products")
-    .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
-    )
+    .select(select)
     .in("product_type", types)
     .eq("is_visible", true)
     .in("status", ["pending", "running"])
     .order("created_at", { ascending: false });
 }
 
+/**
+ * Everything a browse card renders, in one round trip — and nothing else.
+ *
+ * Spelled out column by column rather than as `*`, because this listing is the
+ * anon-readable one: it is what an unauthenticated `/shop` visitor is handed,
+ * so every column here is a column we have decided to publish. `*` published
+ * the three per-session operating fees and `created_by` to the open web purely
+ * because they happened to sit on the same table, and it shipped the authored
+ * long description — markdown, once per locale — to a grid of cards that render
+ * a one-line summary. Roughly 40% of each row was reaching browsers that had no
+ * use for it.
+ *
+ * The list is therefore a promise about *reads*, not just a size optimisation:
+ * a browse surface that needs a new column adds it here deliberately, and the
+ * compiler stops it at the call site until someone does. The long description
+ * in particular belongs to the detail page alone, which asks its own query
+ * (`buildProductDetailQuery`) and keeps `product_translations(*)`.
+ */
+const BROWSE_SELECT =
+  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, status, start_date, end_date, timezone, signup_threshold, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+
+/**
+ * The same listing read by a caller that wants only *where* each product is:
+ * the location embed, plus the five lifecycle columns `effectiveStatus()` needs
+ * to finish the visibility filter in JS. None of the twenty columns a card
+ * paints: no translations, no prices, no schedule slots.
+ *
+ * `/schools` is that caller — it groups municipality clubs by municipality and
+ * reads nothing else off the row — and it is a landing page, so the difference
+ * between this and the full row is most of its server fetch.
+ */
+const LOCATION_ONLY_SELECT =
+  "status, start_date, end_date, signup_threshold, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+
+function buildBrowseQuery(supabase: AppSupabaseClient, types: ProductType[]) {
+  return buildVisibleProductsQuery(supabase, types, BROWSE_SELECT);
+}
+
+function buildVisibleLocationsQuery(
+  supabase: AppSupabaseClient,
+  types: ProductType[],
+) {
+  return buildVisibleProductsQuery(supabase, types, LOCATION_ONLY_SELECT);
+}
+
+// The half of the visibility rule the database cannot answer, shared by every
+// caller of the listing above so the two selects can never disagree about what
+// is on sale.
+//
+// The stored-status filter in the query keeps cancelled/completed rows out, but
+// it can't catch a row stored as `running` whose `end_date` has already passed
+// — that product has finished and must not appear in the storefront. There is
+// no cron flipping stored status, so the call is made here in JS:
+// `effectiveStatus()` downgrades such a row to `completed` (or `expired`) and
+// we drop it. The comparison is date-only against the product's *own* timezone
+// (a finished-yesterday camp in Helsinki must not linger for a UTC viewer —
+// CLAUDE.md "Date & Time"); `effectiveStatus()` already projects `now` into
+// `product.timezone`. The active-participation count is irrelevant to the ended
+// decision (only `end_date` drives completed/expired), so 0 is safe to pass.
+function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
+  const now = new Date();
+  return rows.filter((row) => {
+    const status = effectiveStatus(row, now, 0);
+    return status !== "completed" && status !== "expired";
+  });
+}
+
 // Joined shape consumed by the parent-facing browse pages
 // (src/components/public/products/product-browse-page.tsx) and re-exported
 // from `@/types` so consumers import it there. The card renderer expects
 // everything it needs in one row — the topic enum (label resolved via
-// PRODUCT_TOPICS), all translations, prices per currency, weekly schedule
-// slots, and the joined location for in-person products. (`topic` is a column
-// on Product, so no join is needed.)
+// PRODUCT_TOPICS), the card's translated name and summary per locale, prices
+// per currency, weekly schedule slots, and the joined location for in-person
+// products. (`topic` is a column on Product, so no join is needed.)
+//
+// It is narrower than the products table on purpose (see `BROWSE_SELECT`), so
+// it is not the type to reach for when a surface needs a whole product row —
+// the detail and admin rows below are.
 export type ProductBrowseRow = QueryData<
-  ReturnType<typeof buildVisibleProductsQuery>
+  ReturnType<typeof buildBrowseQuery>
+>[number];
+
+/**
+ * The narrow half of the same listing: a visible product's location embed and
+ * nothing a card would render. Consumed by `/schools`, which turns each club
+ * into the municipality it belongs to and never opens the row any further.
+ */
+export type ProductLocationRow = QueryData<
+  ReturnType<typeof buildVisibleLocationsQuery>
 >[number];
 
 function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
@@ -126,12 +215,21 @@ export type ProductWithDetails = QueryData<
   ReturnType<typeof buildProductsByTypeQuery>
 >[number];
 
-// Parent-facing single-product detail. Shares the browse row's joins and adds
-// a flattened `holidays` array — every (date, reason) pair pulled from the
-// product's linked holiday calendars. The reason falls back to the calendar's
-// `name` if the admin didn't set a per-date one. Consumed by the detail page
-// calendar widget; the signup panel also reads `product_prices` off this row.
-export type ProductDetailRow = ProductBrowseRow & {
+// Parent-facing single-product detail, inferred from its own query rather than
+// from the browse row: one page reading one product can afford the whole row,
+// and it renders things a card never does — the authored long description above
+// all. Deriving it from the browse row is what used to force `BROWSE_SELECT` to
+// stay wide, so the two are deliberately independent now.
+//
+// The junction embed is dropped from the public shape because the service
+// flattens it: `holidays` is every (date, reason) pair pulled from the linked
+// calendars, with the calendar's own `name` standing in where the admin set no
+// per-date reason. Consumed by the detail page calendar widget; the signup panel
+// also reads `product_prices` off this row.
+export type ProductDetailRow = Omit<
+  NonNullable<QueryData<ReturnType<typeof buildProductDetailQuery>>>,
+  "product_holiday_calendars"
+> & {
   holidays: { date: string; reason: string }[];
 };
 
@@ -290,35 +388,35 @@ export class ProductsService {
 
   // Parent-facing list: only visible products in a parent-relevant lifecycle
   // state. RLS already restricts anon/customer reads to the same predicate
-  // (per redesign §5.8) — the explicit filters here are defensive and let
-  // admins (who can see everything) call this same hook from the public
-  // pages without seeing cancelled rows. Joins everything the browse
-  // card needs in one round trip.
-  //
-  // The stored-status filter below keeps cancelled/completed rows out,
-  // but it can't catch a row stored as `running` whose `end_date` has already
-  // passed — that product has finished and must not appear in the storefront.
-  // There is no cron flipping stored status, so we make the call here in JS:
-  // `effectiveStatus()` downgrades such a row to `completed` (or `expired`)
-  // and we drop it. The comparison is date-only against the product's *own*
-  // timezone (a finished-yesterday camp in Helsinki must not linger for a UTC
-  // viewer — CLAUDE.md "Date & Time"); `effectiveStatus()` already projects
-  // `now` into `product.timezone`. The active-participation count is irrelevant
-  // to the ended decision (only `end_date` drives completed/expired), so 0 is
-  // safe to pass.
+  // (per redesign §5.8) — the explicit filters in the query are defensive and
+  // let admins (who can see everything) call this same hook from the public
+  // pages without seeing cancelled rows. Joins everything the browse card
+  // needs in one round trip.
   async listVisibleByTypes(types: ProductType[]): Promise<ProductBrowseRow[]> {
-    const { data, error } = await buildVisibleProductsQuery(
+    const { data, error } = await buildBrowseQuery(this.supabase, types);
+
+    if (error) throw error;
+    return dropEndedProducts(data);
+  }
+
+  // The same listing, narrowed to each product's location. `/schools` groups
+  // municipality clubs by municipality and reads nothing else off the row, so
+  // it pays for the location embed and the lifecycle columns and for nothing
+  // else — see `LOCATION_ONLY_SELECT`.
+  //
+  // Same query shape and same effective-status pass as the full read above, on
+  // purpose: what is visible must not depend on how much of the row a caller
+  // asked for.
+  async listVisibleLocationsByTypes(
+    types: ProductType[],
+  ): Promise<ProductLocationRow[]> {
+    const { data, error } = await buildVisibleLocationsQuery(
       this.supabase,
       types,
     );
 
     if (error) throw error;
-
-    const now = new Date();
-    return data.filter((row) => {
-      const status = effectiveStatus(row, now, 0);
-      return status !== "completed" && status !== "expired";
-    });
+    return dropEndedProducts(data);
   }
 
   // Single-product detail fetch for the parent-facing detail page

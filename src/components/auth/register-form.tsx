@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -13,22 +13,24 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import { getClient } from "@/lib/supabase/client";
+import { readErrorMessage } from "@/lib/api/json-response";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
+import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import { useUpdateProfile } from "@/services/users";
-import { useAuth } from "@/providers";
+import { useAuth, useReferralCode } from "@/providers";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
   // `.trim()` before the length checks, so they measure the name rather than
-  // the whitespace around it — " A" is not a two-character first name. This is
-  // also the only thing standing between a stray trailing space and the
-  // profiles row: sign-up writes the name into the auth user's metadata, which
-  // the handle_new_user trigger copies verbatim, so there is no route or
-  // contract further down the path positioned to clean it up.
+  // the whitespace around it — " A" is not a two-character first name. The
+  // route's own contract (`registerParentBody`) trims again for the same
+  // reason: it is the one that has to hold, because the name goes from there
+  // into the auth user's metadata and the handle_new_user trigger copies it
+  // verbatim into the profile. This copy exists so the message a parent reads
+  // is this form's, in their language, before a round trip.
   firstName: z.string().trim().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
   lastName: z.string().trim().min(DISPLAY_NAME_MIN, `Last name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -36,12 +38,52 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
+/** Just the machine-readable half of a refusal; the message is read separately. */
+const refusalCode = z.object({ code: z.string().optional() });
+
+/**
+ * Which sentence a refused registration shows.
+ *
+ * Two refusals are ours to word, because the parent can act on both and the
+ * route's `error` strings are raw English written for a log. A 409 is the
+ * address already having an account. A `WEAK_PASSWORD` code is the password
+ * being the problem — the case that most needs its own answer, because the
+ * generic one ends "if you already have an account, sign in instead", and going
+ * to look for a sign-in is precisely the wrong move when no account exists and
+ * the fix is one field away. Everything else keeps the route's own message,
+ * which is the honest thing to show for a refusal nobody predicted.
+ *
+ * The code is read off a clone so `readErrorMessage` can still read the
+ * original: a Response body is consumed once, and both readers want it.
+ */
+async function refusalMessage(
+  response: Response,
+  messages: { accountExists: string; weakPassword: string; unexpected: string },
+): Promise<string> {
+  if (response.status === 409) return messages.accountExists;
+
+  const parsed = refusalCode.safeParse(
+    await response
+      .clone()
+      .json()
+      .catch(() => null),
+  );
+  if (parsed.success && parsed.data.code === REGISTER_WEAK_PASSWORD) {
+    return messages.weakPassword;
+  }
+
+  return readErrorMessage(response, messages.unexpected);
+}
+
 export function RegisterForm({ redirect: redirectParam }: { redirect: string | null }) {
   const t = useTranslations('auth');
   const c = useTranslations('common');
+  const locale = useLocale();
   const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
-  const updateProfile = useUpdateProfile();
+  // Where this visit came from, if a marketing link carried `?ref=`. Held in
+  // memory by the root provider since the landing page; never on this device.
+  const referralCode = useReferralCode();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -67,94 +109,74 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
         lastName,
       });
 
-      const composedDisplayName = `${validatedData.firstName} ${validatedData.lastName}`;
-
-      // Freeze auth state updates *before* signUp — Supabase fires SIGNED_IN
-      // synchronously inside the call when auto-confirm is on, so freezing
-      // afterward would be too late to stop the Header from flashing
-      // signed-in chrome. See the matching comment in login-form.tsx.
-      freezeUntilNavigation();
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: validatedData.email,
-        password: validatedData.password,
-        options: {
-          data: {
-            first_name: validatedData.firstName,
-            last_name: validatedData.lastName,
-            // Composed for the Supabase Auth dashboard's display label.
-            display_name: composedDisplayName,
-            role: "customer",
-          },
-        },
+      // Registration happens server-side, on the route that can also send the
+      // welcome mail: it needs a verification token, a trusted origin and a
+      // translator, none of which a browser signUp() returns to. The optional
+      // home location goes with it in the same request rather than becoming a
+      // second, client-side write against a session that has not been
+      // established yet.
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: validatedData.email,
+          password: validatedData.password,
+          firstName: validatedData.firstName,
+          lastName: validatedData.lastName,
+          homeLocationId: homeLocation?.location.id,
+          // Which language to write the welcome mail in. The profile has no
+          // stored preference yet — it is created by this very request — so the
+          // locale the form is being read in is the best answer anyone has.
+          locale,
+          // Marketing provenance, written by the handle_new_user trigger to
+          // profiles.referral_code and never updatable afterwards. It travels
+          // in the body (and from there into signup metadata) rather than as a
+          // later profile write, because a client write would need
+          // GRANT UPDATE(referral_code) TO authenticated, handing every user the
+          // permanent ability to rewrite their own attribution; the grant is the
+          // thing we are refusing, and the trigger is what lets us.
+          referralCode: referralCode ?? undefined,
+        }),
       });
 
-      if (signUpError) {
-        unfreezeAuthState();
-        setError(signUpError.message);
+      if (!response.ok) {
+        setError(
+          await refusalMessage(response, {
+            accountExists: t('register.accountExists'),
+            weakPassword: t('register.weakPassword'),
+            unexpected: c('unexpectedError'),
+          }),
+        );
         setIsLoading(false);
         return;
       }
 
-      if (data.user) {
-        // Check if email confirmation is required
-        if (data.user.identities?.length === 0) {
-          unfreezeAuthState();
-          setError(t('register.accountExists'));
-          setIsLoading(false);
-          return;
-        }
-
-        // The optional home location, persisted as a second write rather than
-        // through sign-up metadata.
-        //
-        // WHY NOT METADATA. The profile row is created by the handle_new_user
-        // trigger from raw_user_meta_data, so the alternative was to pass the
-        // id there and have the trigger resolve it. That trigger is the one
-        // function in the schema that assigns roles, it runs SECURITY DEFINER
-        // (so it writes past RLS entirely), and it has a test suite whose whole
-        // subject is that client-supplied metadata cannot influence what it
-        // grants. Teaching it to read one more caller-supplied key — a foreign
-        // key, which it would then have to resolve-not-assert so a stale id
-        // degraded to null instead of aborting the account — is real surface
-        // added to the most sensitive object here, to save one request.
-        //
-        // Writing it from the client instead reuses the authorization path the
-        // settings page already uses and the DB suite already covers: a
-        // column-level UPDATE grant on profiles.home_location_id, plus an RLS
-        // policy where actor and target are the same row. Nothing new is
-        // trusted.
-        //
-        // WHAT IT COSTS. This needs a session the moment signUp returns, which
-        // is true under auto-confirm and false if email confirmation is ever
-        // switched on. Both Supabase projects run mailer_autoconfirm today, and
-        // the flow below already depends on that far harder than this does —
-        // navigateAfterAuth sends a brand-new parent to an authenticated route.
-        // So the session check is explicit rather than assumed: no session
-        // means the location is skipped, not lost to a request that 401s.
-        if (homeLocation && data.session) {
-          try {
-            await updateProfile.mutateAsync({
-              userId: data.user.id,
-              updates: { home_location_id: homeLocation.location.id },
-            });
-          } catch (locationError) {
-            // Never fatal. The account exists, the field is optional, and it is
-            // re-pickable from settings — stranding someone on the registration
-            // form over it would be strictly worse than losing it.
-            console.error(
-              "[register] could not save the home location",
-              locationError,
-            );
-          }
-        }
-
-        // New parent accounts have no gamers yet, but we still send them
-        // through /select-profile so the "Add Gamer" tile is the first thing
-        // they see. A safe ?redirect= still wins via navigateAfterAuth.
-        navigateAfterAuth(ROUTES.selectProfile);
+      // The account exists but this browser is not signed in — the route used
+      // the admin client, so no session was ever issued here. Sign in now.
+      // Freeze auth state *before* the call: Supabase fires SIGNED_IN
+      // synchronously inside it, and freezing afterwards would be too late to
+      // stop the Header flashing signed-in chrome. Same shape as the educator
+      // registration form, and the matching comment in login-form.tsx.
+      freezeUntilNavigation();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: validatedData.email,
+        password: validatedData.password,
+      });
+      if (signInError) {
+        unfreezeAuthState();
+        setError(signInError.message);
+        setIsLoading(false);
         return;
       }
+
+      // New parent accounts have no gamers yet, but we still send them
+      // through /select-profile so the "Add Gamer" tile is the first thing
+      // they see. A safe ?redirect= still wins via navigateAfterAuth, and the
+      // navigation is a full page load — the browser client's session singleton
+      // is seeded from cookies at construction, so only a document unload
+      // rebuilds it. The document is unloading: leave isLoading set.
+      navigateAfterAuth(ROUTES.selectProfile);
+      return;
     } catch (err) {
       unfreezeAuthState();
       if (err instanceof z.ZodError) {

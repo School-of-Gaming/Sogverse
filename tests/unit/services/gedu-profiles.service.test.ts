@@ -11,7 +11,7 @@ import {
 // tests/mocks/postgrest-fetch.ts).
 //
 // This read carries a sharper consequence than most: the admin users list
-// derives an "Unverified" badge from the *absence* of a row here, so a
+// derives its awaiting-approval badge from the *absence* of a row here, so a
 // truncated read does not omit a badge — it prints a wrong one on every gedu
 // past the cap. That is why it walks, and why the count and the total order are
 // asserted here rather than assumed.
@@ -21,10 +21,10 @@ const PAGE_SIZE = 1000;
 function geduRows(count: number, offset = 0) {
   return Array.from({ length: count }, (_, i) => ({
     user_id: `gedu-${offset + i}`,
-    verified: true,
-    verified_at: "2026-01-01T00:00:00.000Z",
-    verified_by: "admin-1",
-    verifier: { first_name: "Admin", last_name: "One" },
+    certified: true,
+    certified_at: "2026-01-01T00:00:00.000Z",
+    certified_by: "admin-1",
+    certifier: { first_name: "Admin", last_name: "One" },
   }));
 }
 
@@ -51,15 +51,15 @@ describe("GeduProfilesService.getAll", () => {
     );
   });
 
-  it("still embeds the verifier it is walked for", async () => {
+  it("still embeds the certifier it is walked for", async () => {
     fetchMock.mockResolvedValue(postgrestPage(geduRows(1), { from: 0, total: 1 }));
 
     const [row] = await service.getAll();
 
     const select =
       requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("select") ?? "";
-    expect(select).toContain("verified_by");
-    expect(row.verifier).toEqual({ first_name: "Admin", last_name: "One" });
+    expect(select).toContain("certified_by");
+    expect(row.certifier).toEqual({ first_name: "Admin", last_name: "One" });
   });
 
   it("walks past the first page and concatenates in order", async () => {

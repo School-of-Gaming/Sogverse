@@ -50,6 +50,19 @@ export const registerGeduBody = z.object({
   locationIds: z.array(z.string().uuid()).default([]),
   minecraftUsername: optionalGameHandle(minecraftUsernameValue),
   robloxUsername: optionalGameHandle(robloxUsernameValue),
+  /**
+   * Marketing provenance: the `?ref=` code this visit arrived with, if any.
+   *
+   * **A plain optional string on purpose — no `.regex()` here.** This is a
+   * deliberate exception to this contract's usual "the body schema is the
+   * validation" discipline, and it exists because of who supplies the value: not
+   * the educator filling in the form, who never typed it and cannot see it, but
+   * whoever authored the link they clicked. A format rule on the schema would
+   * turn a malformed marketing param into a 400 that blocks a legitimate
+   * registration. The handler runs it through the shared sanitiser instead,
+   * where a bad value becomes NULL and the registration succeeds.
+   */
+  referralCode: z.string().optional(),
 });
 
 export type RegisterGeduBody = z.infer<typeof registerGeduBody>;

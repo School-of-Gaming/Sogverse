@@ -301,49 +301,49 @@ export type Database = {
       }
       gedu_profiles: {
         Row: {
+          certified: boolean
+          certified_at: string | null
+          certified_by: string | null
           user_id: string
-          verified: boolean
-          verified_at: string | null
-          verified_by: string | null
         }
         Insert: {
+          certified?: boolean
+          certified_at?: string | null
+          certified_by?: string | null
           user_id: string
-          verified?: boolean
-          verified_at?: string | null
-          verified_by?: string | null
         }
         Update: {
+          certified?: boolean
+          certified_at?: string | null
+          certified_by?: string | null
           user_id?: string
-          verified?: boolean
-          verified_at?: string | null
-          verified_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "gedu_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
+            foreignKeyName: "gedu_profiles_certified_by_fkey"
+            columns: ["certified_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
+            foreignKeyName: "gedu_profiles_certified_by_fkey"
+            columns: ["certified_by"]
+            isOneToOne: false
             referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_profiles_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
+            foreignKeyName: "gedu_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_profiles_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
+            foreignKeyName: "gedu_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
@@ -1116,12 +1116,14 @@ export type Database = {
           created_at: string
           currency: string | null
           email: string
+          email_verified_at: string | null
           first_name: string
           home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
@@ -1130,12 +1132,14 @@ export type Database = {
           created_at?: string
           currency?: string | null
           email: string
+          email_verified_at?: string | null
           first_name: string
           home_location_id?: string | null
           id: string
           last_name?: string
           locale?: string | null
           phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
@@ -1144,12 +1148,14 @@ export type Database = {
           created_at?: string
           currency?: string | null
           email?: string
+          email_verified_at?: string | null
           first_name?: string
           home_location_id?: string | null
           id?: string
           last_name?: string
           locale?: string | null
           phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
@@ -1374,6 +1380,39 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_email_requests: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_email_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_email_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_private_zone_occupants: {
         Row: {
           created_at: string
@@ -1580,12 +1619,14 @@ export type Database = {
           created_at: string | null
           currency: string | null
           email: string | null
+          email_verified_at: string | null
           first_name: string | null
           home_location_id: string | null
           id: string | null
           last_name: string | null
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           search_blob: string | null
           spoken_languages: string[] | null
@@ -1778,6 +1819,7 @@ export type Database = {
         Returns: string
       }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
+      get_admin_dashboard: { Args: never; Returns: Json }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json
@@ -1809,12 +1851,14 @@ export type Database = {
           created_at: string
           currency: string | null
           email: string
+          email_verified_at: string | null
           first_name: string
           home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
@@ -1836,12 +1880,14 @@ export type Database = {
           created_at: string
           currency: string | null
           email: string
+          email_verified_at: string | null
           first_name: string
           home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
@@ -1966,6 +2012,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      request_my_verification_email: { Args: never; Returns: boolean }
       search_locations: {
         Args: {
           p_country?: string
@@ -1975,8 +2022,8 @@ export type Database = {
         }
         Returns: Json
       }
-      set_gedu_verified: {
-        Args: { p_gedu_id: string; p_verified: boolean }
+      set_gedu_certified: {
+        Args: { p_certified: boolean; p_gedu_id: string }
         Returns: undefined
       }
       set_group_member_minecraft: {
@@ -2083,6 +2130,7 @@ export type Database = {
         | "programming"
         | "ai"
         | "esports"
+        | "game_studio"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
@@ -2243,6 +2291,7 @@ export const Constants = {
         "programming",
         "ai",
         "esports",
+        "game_studio",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       user_role: ["admin", "customer", "gamer", "gedu"],

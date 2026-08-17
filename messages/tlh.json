@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "title": "noH Quj yejHaD – Sogverse",
     "description": "nuqDaq Qapla’ ’oH? Minecraft ghom’a’Daq. Gedu’pu’ Dun chaH — toy’wI’pu’ tIqhommoH, jIH mevbe’.",
     "shortDescription": "noH Quj yejHaD – DaH yIQam, batlh yIghoS",
     "pages": {
@@ -29,6 +28,7 @@
       "schools": "veng ghomHommey",
       "unlockPin": "PIN yIghItlh",
       "resetPin": "PIN yIchu’qa’",
+      "verifyEmail": "QIn Daq yIngu’",
       "changePin": "PIN yIchoH",
       "roblox": "Roblox qetlh chenmoHmeH ghojmoH"
     }
@@ -209,17 +209,93 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Admin QaD",
-      "description": "Sogverse admin Daq yIghoS. lo’wI’pu’, De’mey, je ngoQmey tI’ang.",
-      "totalUsers": "Hoch lo’wI’pu’",
-      "activeAccounts": "HaqwI’ accountmey",
-      "products": "De’mey",
-      "activeProducts": "HaqwI’ De’mey",
-      "revenue": "Huch",
-      "thisMonth": "DISvam jar",
-      "growth": "boqHa’",
-      "fromLastMonth": "qunDaq japmey",
-      "latestEvents": "Hoch wanI’ reHHa’"
+      "title": "QaD",
+      "description": "DaHjaj nuq poQ la’, ’Iv tu’lu’ Daq, je nuq qaSlI’.",
+      "loadError": "QaD laDlaHbe’. yIchu’qa’ ’ej yInID.",
+      "loadErrorWithReason": "QaD laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID.",
+      "users": {
+        "label": "lo’wI’pu’",
+        "roles": {
+          "customer": "vav/SoSpu’",
+          "gamer": "toy’wI’pu’",
+          "gedu": "Gedupu’",
+          "admin": "Adminpu’"
+        },
+        "verified": "{count} ngu’lu’pu’",
+        "certified": "{count} patlh ghaj"
+      },
+      "attention": {
+        "title": "poQ Qu’",
+        "allClearTitle": "Hoch QaQ",
+        "allClearBody": "Hoch toy’wI’ ghomDaq tu’lu’, Hoch ghom ghajbej Gedu, Hoch De’ ghaj Huch, ’ej patlh loSwI’ tu’be’lu’.",
+        "productsLabel": "poQwI’ De’mey",
+        "productsHeading": "De’mey",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# toy’wI’ ghomHa’} other {# toy’wI’pu’ ghomHa’}}",
+          "groupWithoutGedu": "ghom {group} Gedu ghajbe’",
+          "waitlistOpenSeats": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH",
+          "missingGeduFee": "Gedu Huch Hutlh",
+          "missingMunicipalityFee": "veng Huch Hutlh"
+        }
+      },
+      "certification": {
+        "label": "patlh loSbogh Gedupu’",
+        "heading": "patlh loSlI’",
+        "justNow": "DaH patlh nobta’: {count}",
+        "empty": "patlh loSwI’ tu’be’lu’.",
+        "unnamed": "pong Hutlh Gedu",
+        "registered": "ghItlhta’ {when}",
+        "certify": "patlh yInob",
+        "certifying": "patlh noblI’…",
+        "failed": "patlh nobbe’lu’ – yInID."
+      },
+      "schedule": {
+        "title": "poH ngoQ",
+        "thisWeekLabel": "Hoghvam",
+        "previousWeek": "Hogh wa’Hu’",
+        "nextWeek": "Hogh veb",
+        "today": "DaHjaj",
+        "sessionCount": "{count, plural, one {# poH} other {# poHmey}}",
+        "timesIn": "poHmey: {zone}",
+        "nothingOn": "pagh",
+        "paused": "Hoghvam leSlI’:",
+        "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "ghoS",
+        "heading": "ghoS",
+        "empty": "jarmeyDaq pagh taghlu’ pagh je van.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# ghomHom tlhIngan tagh} other {# ghomHom tlhIngan tagh}}",
+            "municipalityClub": "{count, plural, one {# ghomHom veng tagh} other {# ghomHom veng tagh}}",
+            "camp": "{count, plural, one {# pa’ Qugh tagh} other {# pa’ Qugh tagh}}",
+            "event": "{count, plural, one {# Qu’ tagh} other {# Qu’mey tagh}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# ghomHom tlhIngan qaS} other {# ghomHom tlhIngan qaS}}",
+            "municipalityClub": "{count, plural, one {# ghomHom veng qaS} other {# ghomHom veng qaS}}",
+            "camp": "{count, plural, one {# pa’ Qugh qaS} other {# pa’ Qugh qaS}}",
+            "event": "{count, plural, one {# Qu’ qaS} other {# Qu’mey qaS}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# ghomHom tlhIngan van} other {# ghomHom tlhIngan van}}",
+            "municipalityClub": "{count, plural, one {# ghomHom veng van} other {# ghomHom veng van}}",
+            "camp": "{count, plural, one {# pa’ Qugh van} other {# pa’ Qugh van}}",
+            "event": "{count, plural, one {# Qu’ van} other {# Qu’mey van}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "tagh",
+          "runs": "qaS",
+          "ends": "van"
+        }
+      },
+      "productTypeKey": {
+        "label": "De’ Segh ngoq",
+        "heading": "De’ Seghmey"
+      }
     },
     "products": {
       "types": {
@@ -613,7 +689,7 @@
         "noResults": "Gedu lo’wI’ tu’be’lu’.",
         "current": "DaH",
         "alreadyAssigned": "ngu’lu’pu’",
-        "notVerified": "ngu’be’lu’"
+        "notCertified": "patlh ghajbe’"
       },
       "participantPicker": {
         "title": "ghom yIchel",
@@ -744,6 +820,7 @@
       "userNotFound": "lo’wI’ tu’be’lu’.",
       "joined": "muv",
       "unknown": "Sovbe’lu’",
+      "referralCode": "ghum ngoq",
       "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
       "gender": {
         "boy": "loDHom",
@@ -770,17 +847,19 @@
         "reserving": "DIl loStaH",
         "completed": "rInpu’"
       },
-      "verification": {
-        "title": "ngu’ghach",
-        "verified": "ngu’lu’pu’",
-        "unverified": "ngu’be’lu’",
-        "unverifiedNote": "DaH ngu’be’lu’ Geduvam. ngu’lu’pa’, ghob Daje’be’.",
-        "verifiedOn": "ngu’lu’pu’: {date}",
-        "verifiedByOn": "ngu’lu’pu’: {name}, {date}",
-        "verifyAction": "yIngu’",
-        "unverifyAction": "yIngu’Ha’",
+      "emailVerified": "ngu’lu’pu’ QIn Daq",
+      "emailNotVerified": "ngu’be’lu’ QIn Daq",
+      "certification": {
+        "title": "patlh nobghach",
+        "certified": "patlh ghajbej",
+        "notCertified": "patlh ghajbe’",
+        "notCertifiedNote": "DaH patlh ghajbe’ Geduvam. patlh Danobpa’, ghob Daje’be’.",
+        "certifiedOn": "patlh noblu’pu’: {date}",
+        "certifiedByOn": "patlh nobpu’ {name}: {date}",
+        "certifyAction": "patlh yInob",
+        "uncertifyAction": "patlh yIteq",
         "saving": "vISaH...",
-        "error": "ngu’ghach choHlu’be’pu’. yInID."
+        "error": "patlh choHlu’be’pu’. yInID."
       }
     },
     "locations": {
@@ -960,6 +1039,7 @@
       "location": "Daq",
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
+      "weakPassword": "mu’ pegh nap yIlo’Qo’! mu’ pegh tIn yIchel, pagh latlhDaq Dalo’be’bogh wa’",
       "alreadyHaveAccount": "account DaHutlhpa’? <link>bI’el</link>"
     },
     "forgotPassword": {
@@ -987,8 +1067,8 @@
     },
     "registerGedu": {
       "title": "Sogverse Gedu account yIchenmoH",
-      "verificationAlertTitle": "account ngu’nIS",
-      "verificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ admin account ngu’nIS.",
+      "certificationAlertTitle": "patlh DaghajnIS",
+      "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
       "coverageNote": "Daqmey yIwIv DaqDaq bIvum laH. Hop pat neH DavumlaHchugh, naDev yIqonQo’. DaH yInaQ; poH wInaQ pat’a’ choHlaH.",
       "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel",
@@ -1984,7 +2064,21 @@
     "robloxDescription": "Roblox account jonmoH",
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
     "spokenLanguages": "Holmey jatlhlu’",
-    "location": "Daq"
+    "location": "Daq",
+    "emailVerified": "ngu’lu’pu’ QIn Daq",
+    "emailNotVerified": "ngu’be’lu’ QIn Daq",
+    "sendVerificationEmail": "ngu’meH QIn yIngeH",
+    "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
+    "verificationEmailRateLimited": "law’qu’ Datlhobpu’! yIloS. tugh yInID je.",
+    "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID."
+  },
+  "verifyEmail": {
+    "successTitle": "ngu’lu’pu’ QIn Daq",
+    "successDescription": "qatlho’ — DaH SoH lIngeHlaH ’e’ wISov, ’ej chIlbe’ QIn potlh.",
+    "goToDashboard": "My SOG yIghoS",
+    "invalidTitle": "Qapbe’ lInkvam",
+    "invalidDescription": "choHlu’DI’ QIn Daq, Qapbe’choH ngu’meH lInk. DuHmeylIj yIpoSmoH ’ej lInk chu’ yIngeH.",
+    "goToSettings": "DuHmey yIghoS"
   },
   "voice": {
     "participants": "toy’wI’pu’",
@@ -2164,8 +2258,8 @@
         "createFailed": "Daq chenmoH luchchugh. yItoH’egh!",
         "ready": "DaqlIj pIm",
         "join": "yImuv",
-        "unverifiedTitle": "tobtaHvIS ngoq",
-        "unverifiedBody": "Daq DachenmoH ’e’ DapoQ pa’, Gedu SoH ’e’ lutob qum. tobchugh, naDev tugh Daq yIchen ’e’ DalaH!"
+        "uncertifiedTitle": "patlh DaloStaH",
+        "uncertifiedBody": "Daq DachenmoH ’e’ DapoQ pa’, Gedu patlhlIj nob qum. patlh Daghajchugh, naDev tugh Daq yIchen ’e’ DalaH!"
       }
     }
   },
@@ -2321,6 +2415,95 @@
       "sent": "ngeHlu’",
       "message": "QIn",
       "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS."
+    },
+    "welcomeParent": {
+      "subject": "School of Gamingvo’ nuqneH!",
+      "heading": "School of Gamingvo’ nuqneH!",
+      "greeting": "nuqneH {firstName}! juHmajDaq yIjeS.",
+      "platform": "Sogverse ’oH School of Gaming pat’e’. naDev qorDu’lIj ghom’a’mey, raghmey, wanI’mey je DaSeH.",
+      "verifyBody": "QIn DaqlIj yIchel: vaj qorDu’lIj ghom’a’mey wIja’laH. DaH ghap tugh {settingsLink}.",
+      "settingsLinkLabel": "Seh’a’Daq",
+      "verifyButton": "QIn DaqlIj yIchel",
+      "shopButton": "malja’ yIbej",
+      "dashboardButton": "My SOG yIghoS"
+    },
+    "welcomeGedu": {
+      "subject": "School of Gamingvo’ nuqneH – Gedu patlhlIj",
+      "heading": "School of Gamingvo’ nuqneH!",
+      "greeting": "nuqneH {firstName}! Gedu SoH — Qapla’.",
+      "certification": "patlhlIj bej ra’wI’ ’ej chel. DaH My SOG yIghoS — ’ach chellu’pa’, ngaQ vay’.",
+      "verifyBody": "QIn DaqlIj yIchel: vaj ghom’a’lIj Qu’mey je wIja’laH. DaH ghap tugh {settingsLink}.",
+      "settingsLinkLabel": "Seh’a’Daq",
+      "verifyButton": "QIn DaqlIj yIchel",
+      "dashboardButton": "My SOG yIghoS"
+    },
+    "productConfirmation": {
+      "subject": {
+        "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ {participantName}",
+        "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ {participantName}",
+        "camp": "{productName} raghDaq ghItlhlu’pu’ {participantName}",
+        "event": "{productName}Daq jeSpu’ {participantName}"
+      },
+      "heading": "Qapla’! Doch Dalajpu’!",
+      "subheading": {
+        "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ {participantName}.",
+        "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ {participantName}.",
+        "camp": "{productName} raghDaq ghItlhlu’pu’ {participantName}.",
+        "event": "{productName}Daq jeSpu’ {participantName}."
+      },
+      "self": {
+        "subject": {
+          "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ SoH",
+          "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ SoH",
+          "camp": "{productName} raghDaq ghItlhlu’pu’ SoH",
+          "event": "{productName}Daq bIjeSpu’"
+        },
+        "subheading": {
+          "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ SoH.",
+          "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ SoH.",
+          "camp": "{productName} raghDaq ghItlhlu’pu’ SoH.",
+          "event": "{productName}Daq bIjeSpu’."
+        },
+        "waitlist": {
+          "subheading": "bIloS tetlhDaq: {productName}. quS poSDI’, SoH wIja’."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "ghom’a’",
+        "municipality_club": "veng ghom’a’",
+        "camp": "ragh",
+        "event": "wanI’"
+      },
+      "priceLabel": "wagh",
+      "price": {
+        "subscription": "{amount} / jar",
+        "upfront": "{amount} (wa’logh DIl)",
+        "free": "wagh Hutlh"
+      },
+      "nextTitle": "qaStaHvIS",
+      "next": {
+        "placement": "Gedu tlhej ghomDaq {participantName} wIlanpu’. My SOG-Daq Qu’mey legh.",
+        "placementSelf": "Gedu tlhej ghomDaq qalanpu’. My SOG-Daq Qu’mey Dalegh.",
+        "subscription": "Hoch jar DaDIlnIS. My SOG-Daq Dajondaq ghap Damevmeh laH.",
+        "upfront": "wa’logh neH DIl — latlh DIl Hutlh.",
+        "free": "pagh DaDIlnIS."
+      },
+      "waitlist": {
+        "subject": "{participantName} loS tetlhDaq: {productName}",
+        "subjectSelf": "bIloS tetlhDaq: {productName}",
+        "heading": "loS tetlhDaq SoH",
+        "subheading": "{participantName} loS tetlhDaq: {productName}. quS poSDI’, SoH wIja’.",
+        "next1": "quS poSDI’, QInHom wIngeH.",
+        "next2": "reH My SOG-Daq loS DaqlIj DaleghlaH."
+      },
+      "dashboardButton": "My SOG yIghoS"
+    },
+    "verifyEmail": {
+      "subject": "QIn DaqlIj yIchel",
+      "heading": "QIn DaqlIj yIchel",
+      "body": "nuqneH {firstName}! School of Gaming patlhlIjDaq QIn Daq chelmeH Datlhobpu’. ’uSDaq yIqIp.",
+      "button": "QIn DaqlIj yIchel",
+      "ignore": "Datlhobbe’chugh, QIn yIleghQo’. pagh choHlu’."
     }
   },
   "roblox": {

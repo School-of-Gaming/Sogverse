@@ -1,6 +1,7 @@
 export { ProductsService } from "./products.service";
 export type {
   ProductWithDetails,
+  ProductLocationRow,
   ProductDetailRow,
   ProductAdminDetailRow,
   ProductTranslationInput,

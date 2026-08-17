@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "title": "School of Gaming – Sogverse",
     "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattitaitoisten pelikasvattajien johdolla.",
     "shortDescription": "School of Gaming – Kun ruutuajasta tulee laatuaikaa",
     "pages": {
@@ -29,6 +28,7 @@
       "voiceSession": "Ääni-istunto",
       "unlockPin": "Syötä PIN",
       "resetPin": "Nollaa PIN",
+      "verifyEmail": "Vahvista sähköposti",
       "changePin": "Vaihda PIN",
       "privacy": "Tietosuojaseloste",
       "terms": "Käyttöehdot",
@@ -161,17 +161,93 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Ylläpidon hallintapaneeli",
-      "description": "Tervetuloa Sogverse-ylläpitopaneeliin. Hallitse käyttäjiä, tuotteita ja järjestelmäasetuksia.",
-      "totalUsers": "Käyttäjiä yhteensä",
-      "activeAccounts": "Aktiiviset tilit",
-      "products": "Tuotteet",
-      "activeProducts": "Aktiiviset tuotteet",
-      "revenue": "Tuotto",
-      "thisMonth": "Tässä kuussa",
-      "growth": "Kasvu",
-      "fromLastMonth": "Viime kuusta",
-      "latestEvents": "Viimeisimmät tapahtumat alustalla"
+      "title": "Hallintapaneeli",
+      "description": "Mikä vaatii ylläpitäjää tänään, keitä alustalla on ja mitä on käynnissä.",
+      "loadError": "Hallintapaneelin lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
+      "loadErrorWithReason": "Hallintapaneelin lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
+      "users": {
+        "label": "Käyttäjät",
+        "roles": {
+          "customer": "Vanhemmat",
+          "gamer": "Pelaajat",
+          "gedu": "Gedut",
+          "admin": "Ylläpitäjät"
+        },
+        "verified": "{count} vahvistettua",
+        "certified": "{count} hyväksyttyä"
+      },
+      "attention": {
+        "title": "Vaatii huomiota",
+        "allClearTitle": "Kaikki kunnossa",
+        "allClearBody": "Jokainen pelaaja on sijoitettu, jokaisella ryhmällä on Gedu, mistään tuotteesta ei puutu palkkiota tai maksua, eikä kukaan odota hyväksyntäpäätöstä.",
+        "productsLabel": "Huomiota vaativat tuotteet",
+        "productsHeading": "Tuotteet",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# sijoittamaton pelaaja} other {# sijoittamatonta pelaajaa}}",
+          "groupWithoutGedu": "Ryhmällä {group} ei ole Gedua",
+          "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
+          "missingGeduFee": "Gedun palkkio puuttuu",
+          "missingMunicipalityFee": "Kunnan maksu puuttuu"
+        }
+      },
+      "certification": {
+        "label": "Hyväksyntää odottavat Gedut",
+        "heading": "Odottaa hyväksyntää",
+        "justNow": "Hyväksytty juuri nyt: {count}",
+        "empty": "Kukaan ei odota hyväksyntäpäätöstä.",
+        "unnamed": "Nimetön Gedu",
+        "registered": "rekisteröitynyt {when}",
+        "certify": "Hyväksy",
+        "certifying": "Hyväksytään…",
+        "failed": "Hyväksyntä epäonnistui – yritä uudelleen."
+      },
+      "schedule": {
+        "title": "Aikataulu",
+        "thisWeekLabel": "Tämä viikko",
+        "previousWeek": "Edellinen viikko",
+        "nextWeek": "Seuraava viikko",
+        "today": "Tänään",
+        "sessionCount": "{count, plural, one {# kerta} other {# kertaa}}",
+        "timesIn": "ajat aikavyöhykkeellä {zone}",
+        "nothingOn": "Ei mitään",
+        "paused": "Tauolla tällä viikolla:",
+        "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
+        "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "Tulossa",
+        "heading": "Tulossa",
+        "empty": "Mikään ei ala eikä pääty tulevien kuukausien aikana.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# kuluttajakerho alkaa} other {# kuluttajakerhoa alkaa}}",
+            "municipalityClub": "{count, plural, one {# kuntakerho alkaa} other {# kuntakerhoa alkaa}}",
+            "camp": "{count, plural, one {# leiri alkaa} other {# leiriä alkaa}}",
+            "event": "{count, plural, one {# tapahtuma alkaa} other {# tapahtumaa alkaa}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# kuluttajakerho järjestetään} other {# kuluttajakerhoa järjestetään}}",
+            "municipalityClub": "{count, plural, one {# kuntakerho järjestetään} other {# kuntakerhoa järjestetään}}",
+            "camp": "{count, plural, one {# leiri järjestetään} other {# leiriä järjestetään}}",
+            "event": "{count, plural, one {# tapahtuma järjestetään} other {# tapahtumaa järjestetään}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# kuluttajakerho päättyy} other {# kuluttajakerhoa päättyy}}",
+            "municipalityClub": "{count, plural, one {# kuntakerho päättyy} other {# kuntakerhoa päättyy}}",
+            "camp": "{count, plural, one {# leiri päättyy} other {# leiriä päättyy}}",
+            "event": "{count, plural, one {# tapahtuma päättyy} other {# tapahtumaa päättyy}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "alkaa",
+          "runs": "järjestetään",
+          "ends": "päättyy"
+        }
+      },
+      "productTypeKey": {
+        "label": "Tuotetyyppien selite",
+        "heading": "Tuotetyypit"
+      }
     },
     "products": {
       "types": {
@@ -565,7 +641,7 @@
         "noResults": "Hakuehdoilla ei löytynyt Geduja.",
         "current": "Nykyinen",
         "alreadyAssigned": "Jo nimetty",
-        "notVerified": "Ei vahvistettu"
+        "notCertified": "Ei hyväksytty"
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -696,6 +772,7 @@
       "userNotFound": "Käyttäjää ei löytynyt.",
       "joined": "Liittynyt",
       "unknown": "Tuntematon",
+      "referralCode": "Viittauskoodi",
       "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
       "gender": {
         "boy": "Poika",
@@ -722,17 +799,19 @@
         "reserving": "Odottaa maksua",
         "completed": "Päättynyt"
       },
-      "verification": {
-        "title": "Vahvistus",
-        "verified": "Vahvistettu",
-        "unverified": "Ei vahvistettu",
-        "unverifiedNote": "Tätä Gedua ei ole vielä vahvistettu. Häntä ei voi liittää ryhmään ennen vahvistusta.",
-        "verifiedOn": "Vahvistettu {date}",
-        "verifiedByOn": "Vahvistanut {name} {date}",
-        "verifyAction": "Vahvista",
-        "unverifyAction": "Peru vahvistus",
+      "emailVerified": "Sähköposti vahvistettu",
+      "emailNotVerified": "Sähköpostia ei ole vahvistettu",
+      "certification": {
+        "title": "Hyväksyntä",
+        "certified": "Hyväksytty",
+        "notCertified": "Ei hyväksytty",
+        "notCertifiedNote": "Tätä Gedua ei ole vielä hyväksytty. Häntä ei voi liittää ryhmään ennen hyväksyntää.",
+        "certifiedOn": "Hyväksytty {date}",
+        "certifiedByOn": "Hyväksynyt {name} {date}",
+        "certifyAction": "Hyväksy",
+        "uncertifyAction": "Poista hyväksyntä",
         "saving": "Tallennetaan…",
-        "error": "Vahvistuksen päivitys epäonnistui. Yritä uudelleen."
+        "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
       }
     },
     "locations": {
@@ -912,6 +991,7 @@
       "location": "Sijainti",
       "creatingAccount": "Luodaan tiliä...",
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
+      "weakPassword": "Salasana on liian helppo arvata — kokeile pidempää tai sellaista, jota et käytä muualla",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
     },
     "forgotPassword": {
@@ -939,8 +1019,8 @@
     },
     "registerGedu": {
       "title": "Luo Sogverse-pelikasvattajatilisi",
-      "verificationAlertTitle": "Tilisi on vahvistettava",
-      "verificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on vahvistettava tilisi ennen kuin sinut voidaan liittää kerhoon tai leirille.",
+      "certificationAlertTitle": "Tilisi on hyväksyttävä",
+      "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
       "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Jos voit työskennellä vain etänä, jätä tämä kohta tyhjäksi. Voit muokata valintaasi myöhemmin profiilisi asetuksista.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
@@ -1940,7 +2020,21 @@
     "robloxDescription": "Linkitä Roblox-tilisi",
     "mcHeadsAttribution": "Ulkoasut renderöi <link>mc-heads.net</link>",
     "spokenLanguages": "Puhutut kielet",
-    "location": "Sijainti"
+    "location": "Sijainti",
+    "emailVerified": "Sähköposti vahvistettu",
+    "emailNotVerified": "Sähköpostia ei ole vahvistettu",
+    "sendVerificationEmail": "Lähetä vahvistusviesti",
+    "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
+    "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
+    "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
+  },
+  "verifyEmail": {
+    "successTitle": "Sähköposti vahvistettu",
+    "successDescription": "Kiitos – nyt tiedämme, että tämä osoite tavoittaa sinut, eikä mikään tärkeä jää saamatta.",
+    "goToDashboard": "Siirry Oma SOG -sivulle",
+    "invalidTitle": "Tämä linkki ei enää toimi",
+    "invalidDescription": "Vahvistuslinkki lakkaa toimimasta, kun tilin sähköpostiosoite vaihtuu. Avaa asetukset ja lähetä itsellesi uusi linkki.",
+    "goToSettings": "Siirry asetuksiin"
   },
   "voice": {
     "participants": "Osallistujat",
@@ -2120,8 +2214,8 @@
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
         "join": "Liity",
-        "unverifiedTitle": "Odottaa vahvistusta",
-        "unverifiedBody": "Ylläpitäjän on vahvistettava Gedu-tilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on vahvistettu."
+        "uncertifiedTitle": "Odottaa hyväksyntää",
+        "uncertifiedBody": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on hyväksytty."
       }
     }
   },
@@ -2277,6 +2371,95 @@
       "sent": "Lähetetty",
       "message": "Viesti",
       "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
+    },
+    "welcomeParent": {
+      "subject": "Tervetuloa School of Gamingiin",
+      "heading": "Tervetuloa School of Gamingiin",
+      "greeting": "Hei {firstName}, ja tervetuloa mukaan.",
+      "platform": "Sogverse on School of Gamingin palvelu, jossa hoidat helposti perheesi kerhoihin, leireihin ja tapahtumiin liittyvät asiat.",
+      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut perheesi kerhoja koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin {settingsLink}.",
+      "settingsLinkLabel": "asetuksissa",
+      "verifyButton": "Vahvista sähköpostiosoitteesi",
+      "shopButton": "Selaa kauppaa",
+      "dashboardButton": "Siirry Oma SOG -sivulle"
+    },
+    "welcomeGedu": {
+      "subject": "Tervetuloa School of Gamingiin – Gedu-tilisi",
+      "heading": "Tervetuloa School of Gamingiin",
+      "greeting": "Hei {firstName}, ja kiitos, että rekisteröidyit Geduksi.",
+      "certification": "Ylläpitäjä tarkistaa ja hyväksyy tilisi. Voit sillä välin tutustua Oma SOG -sivuun, mutta osa toiminnoista avautuu vasta, kun tilisi on hyväksytty.",
+      "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut ryhmiäsi ja tapaamisia koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin {settingsLink}.",
+      "settingsLinkLabel": "asetuksissa",
+      "verifyButton": "Vahvista sähköpostiosoitteesi",
+      "dashboardButton": "Siirry Oma SOG -sivulle"
+    },
+    "productConfirmation": {
+      "subject": {
+        "consumer_club": "{participantName} on ilmoitettu kerhoon {productName}",
+        "municipality_club": "{participantName} on ilmoitettu kerhoon {productName}",
+        "camp": "{participantName} on ilmoitettu leirille {productName}",
+        "event": "{participantName} osallistuu tapahtumaan {productName}"
+      },
+      "heading": "Valmista tuli!",
+      "subheading": {
+        "consumer_club": "{participantName} on ilmoitettu kerhoon {productName}.",
+        "municipality_club": "{participantName} on ilmoitettu kerhoon {productName}.",
+        "camp": "{participantName} on ilmoitettu leirille {productName}.",
+        "event": "{participantName} osallistuu tapahtumaan {productName}."
+      },
+      "self": {
+        "subject": {
+          "consumer_club": "Sinut on ilmoitettu kerhoon {productName}",
+          "municipality_club": "Sinut on ilmoitettu kerhoon {productName}",
+          "camp": "Sinut on ilmoitettu leirille {productName}",
+          "event": "Osallistut tapahtumaan {productName}"
+        },
+        "subheading": {
+          "consumer_club": "Sinut on ilmoitettu kerhoon {productName}.",
+          "municipality_club": "Sinut on ilmoitettu kerhoon {productName}.",
+          "camp": "Sinut on ilmoitettu leirille {productName}.",
+          "event": "Osallistut tapahtumaan {productName}."
+        },
+        "waitlist": {
+          "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu."
+        }
+      },
+      "typeLabel": {
+        "consumer_club": "Kerho",
+        "municipality_club": "Kuntakerho",
+        "camp": "Leiri",
+        "event": "Tapahtuma"
+      },
+      "priceLabel": "Hinta",
+      "price": {
+        "subscription": "{amount} / kk",
+        "upfront": "{amount} (kertamaksu)",
+        "free": "Ilmainen"
+      },
+      "nextTitle": "Mitä seuraavaksi tapahtuu",
+      "next": {
+        "placement": "{participantName} liitetään Gedun ohjaamaan ryhmään. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "placementSelf": "Sinut liitetään Gedun ohjaamaan ryhmään. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
+        "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
+        "free": "Tästä ei veloiteta mitään."
+      },
+      "waitlist": {
+        "subject": "{participantName} on jonotuslistalla – {productName}",
+        "subjectSelf": "Olet jonotuslistalla – {productName}",
+        "heading": "Olet jonotuslistalla",
+        "subheading": "{participantName} on jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
+        "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
+        "next2": "Näet jonotustilanteesi milloin tahansa Oma SOG -sivulla."
+      },
+      "dashboardButton": "Siirry Oma SOG -sivulle"
+    },
+    "verifyEmail": {
+      "subject": "Vahvista sähköpostiosoitteesi",
+      "heading": "Vahvista sähköpostiosoitteesi",
+      "body": "Hei {firstName}, vahvista School of Gaming -tilisi sähköpostiosoite alla olevalla painikkeella.",
+      "button": "Vahvista sähköpostiosoitteesi",
+      "ignore": "Jos et pyytänyt tätä viestiä, voit jättää sen huomiotta. Tiliisi ei tehdä muutoksia."
     }
   },
   "legal": {
@@ -2318,7 +2501,8 @@
           "Maksutiedot käsitellään suoraan Stripessä. Emme koskaan näe emmekä tallenna koko korttinumeroasi.",
           "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein.",
           "Halutessasi lapsesi Minecraft-käyttäjätunnuksen – jotta hän voi yhdistää Minecraft-palvelimellemme tapaamisten aikana.",
-          "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä)."
+          "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä).",
+          "Lyhyen koodin, joka kertoo, minkä koulun, kerhon tai kumppanin jakaman linkin kautta tulit sivustollemme – jotta tiedämme, mikä viestintä tavoittaa perheitä, ja voimme kertoa kumppaneillemme, toimiko heidän linkkinsä."
         ]
       },
       "childrensPrivacy": {
@@ -2353,7 +2537,8 @@
           "Toimittaaksemme sen, mihin ilmoittauduit – ostamasi kerhot ja palvelut (sopimuksemme kanssasi).",
           "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
           "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
-          "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna."
+          "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
+          "Oikeutetun etumme perusteella, kun selvitämme, mikä viestintämme tavoittaa perheitä – aina yksityisyytesi kanssa tasapainotettuna, ja voit milloin tahansa pyytää meitä lopettamaan."
         ]
       },
       "providers": {

@@ -72,8 +72,8 @@ type Posture =
       roles: readonly UserRole[];
       /** Skips the parent-PIN gate, for routes a locked customer must reach. */
       allowUnverified?: true;
-      /** Refuses an unverified educator, for gedu actions that are a boundary. */
-      requireVerifiedGedu?: true;
+      /** Refuses an uncertified educator, for gedu actions that are a boundary. */
+      requireCertifiedGedu?: true;
     }
   /** Any signed-in caller, no role check. */
   | { kind: "any-authenticated"; reason: string }
@@ -175,6 +175,7 @@ const TESTS = {
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
+  register: "tests/integration/auth/register.test.ts",
   adminUserGameAccount: "tests/integration/api/admin-user-game-account.test.ts",
   robloxAccount: "tests/integration/api/roblox-account.test.ts",
   robloxAvatars: "tests/integration/api/roblox-avatars.test.ts",
@@ -184,6 +185,7 @@ const TESTS = {
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
   switchAccount: "tests/integration/auth/switch-account.test.ts",
   userLocale: "tests/integration/api/user-locale.test.ts",
+  verifyEmailSend: "tests/integration/auth/verify-email-send.test.ts",
   voiceInstantCreate: "tests/integration/api/voice-instant-create.test.ts",
   voiceInstantEnd: "tests/integration/api/voice-instant-end.test.ts",
   voiceInstantExists: "tests/integration/api/voice-instant-exists.test.ts",
@@ -364,6 +366,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  "src/app/api/auth/register/route.ts": {
+    adminClient:
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "public",
+          reason:
+            "parents self-register, so no session can exist yet. It creates an account and mails a verification link to the address that account was created with — the same creation power as the educator registration route. The exposure is one step wider, on purpose: an address that already has an account gets a distinct 409, where the educator route collapses every refusal into one 400. That confirms account existence to anyone who asks, and it is accepted because registration has to tell the parent which of the two problems they have, and because the client-side flow this replaced leaked the same fact through the empty identities array signUp() returns. Unlike forgot-password, which answers 200 whatever it finds because nobody needs to be told anything by it. The account it creates is never privileged: handle_new_user hardcodes the customer role, so no key in the body can influence what is granted",
+        },
+        body: { kind: "json", schema: "registerParentBody" },
+        test: TESTS.register,
+      },
+    },
+  },
+
   "src/app/api/auth/pin/forgot/route.ts": {
     handlers: {
       POST: {
@@ -432,6 +450,23 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "pinBody" },
         test: TESTS.pin,
+      },
+    },
+  },
+
+  "src/app/api/auth/verify-email/send/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          // Every role with a real inbox. `gamer` is excluded deliberately: a
+          // gamer's address is the synthetic `@gamer.sogverse.internal` one the
+          // account was created with, so there is nobody to write to and
+          // nothing a stamp on it would mean.
+          roles: ["customer", "gedu", "admin"],
+        },
+        body: { kind: "none" },
+        test: TESTS.verifyEmailSend,
       },
     },
   },
@@ -748,7 +783,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "role-gated",
           roles: ["admin", "gedu"],
-          requireVerifiedGedu: true,
+          requireCertifiedGedu: true,
         },
         body: { kind: "none" },
         test: TESTS.voiceInstantCreate,
@@ -762,7 +797,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "role-gated",
           roles: ["admin", "gedu"],
-          requireVerifiedGedu: true,
+          requireCertifiedGedu: true,
         },
         body: { kind: "json", schema: "inline: { code } (declared on the primitive)" },
         test: TESTS.voiceInstantEnd,
@@ -873,6 +908,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
   "src/lib/supabase/admin.ts": "the client factory itself",
   "src/lib/pin-session-server.ts":
     "resolves a PIN-reset token to a user id with no session in hand; shared by the reset page and the reset route",
+  "src/lib/email-verification.server.ts":
+    "redeems an emailed verification token, which authorizes itself — the reader may hold no session or somebody else's, and `email_verified_at` has no write grant outside the service role",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/select-profile/page.tsx":

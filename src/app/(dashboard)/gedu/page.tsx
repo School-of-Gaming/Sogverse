@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { GeduDashboardPage } from "@/components/gedu/GeduDashboardPage";
 import { createClient } from "@/lib/supabase/server";
-import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
+import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 import {
   AssignmentsService,
   type MyAssignedProductSessionRow,
@@ -63,37 +63,37 @@ async function getInitialAssignmentSummaries(): Promise<
 }
 
 /**
- * Has an admin verified this gedu? Creating an instant voice room is gated on
- * it server-side (the create route 403s an unverified gedu); we mirror that gate
- * in the UI so the user sees a clear "awaiting verification" notice instead of a
+ * Has an admin certified this gedu? Creating an instant voice room is gated on
+ * it server-side (the create route 403s an uncertified gedu); we mirror that gate
+ * in the UI so the user sees a clear "awaiting approval" notice instead of a
  * button that fails. Fail-closed: any lookup error hides the card (the worst
- * case is a verified gedu briefly not seeing it, which a refresh fixes — better
+ * case is a certified gedu briefly not seeing it, which a refresh fixes — better
  * than showing a button that 403s).
  */
-async function getIsVerified(): Promise<boolean> {
+async function getIsCertified(): Promise<boolean> {
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
     const userId = data?.claims.sub;
     if (!userId) return false;
-    return await isGeduVerified(supabase, userId);
+    return await isGeduCertified(supabase, userId);
   } catch {
     return false;
   }
 }
 
 export default async function GeduDashboardRoute() {
-  const [initialRows, initialSummaries, verified] = await Promise.all([
+  const [initialRows, initialSummaries, certified] = await Promise.all([
     getInitialAssignmentRows(),
     getInitialAssignmentSummaries(),
-    getIsVerified(),
+    getIsCertified(),
   ]);
 
   return (
     <GeduDashboardPage
       initialRows={initialRows}
       initialSummaries={initialSummaries}
-      verified={verified}
+      certified={certified}
     />
   );
 }

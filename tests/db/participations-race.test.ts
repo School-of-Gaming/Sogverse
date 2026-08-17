@@ -431,6 +431,33 @@ describe("participations race + idempotency", () => {
         .eq("participant_id", TEST_IDS.GAMER);
       expect(rows?.length).toBe(1);
     });
+
+    // The idempotent flag is the ONLY thing that tells the two calls above
+    // apart — same id, same position, same status — and the waitlist route
+    // sends its confirmation email on it. So the false case and the true case
+    // are both produced here, against the real RPC, parsed through the contract
+    // the route parses with.
+    it("reports idempotent=false only for the call that wrote the row", async () => {
+      // afterEach wipes participations, so this join is the first one on this
+      // product in this test.
+      const fresh = await customer.rpc("join_product_waitlist", {
+        p_product_id: PRODUCT_WAITLIST,
+        p_participant_id: TEST_IDS.GAMER,
+      });
+      expect(fresh.error).toBeNull();
+      const parsedFresh = joinWaitlistRpcResult.parse(fresh.data);
+      expect(parsedFresh.idempotent).toBe(false);
+      expect(parsedFresh.status).toBe("waitlisted");
+
+      const replay = await customer.rpc("join_product_waitlist", {
+        p_product_id: PRODUCT_WAITLIST,
+        p_participant_id: TEST_IDS.GAMER,
+      });
+      expect(replay.error).toBeNull();
+      const parsedReplay = joinWaitlistRpcResult.parse(replay.data);
+      expect(parsedReplay.idempotent).toBe(true);
+      expect(parsedReplay.participation_id).toBe(parsedFresh.participation_id);
+    });
   });
 
   // ---------------------------------------------------------------------------
