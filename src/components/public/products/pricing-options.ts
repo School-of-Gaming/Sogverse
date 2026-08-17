@@ -27,7 +27,8 @@ export type PricingOption =
   | { kind: "upfront"; totalCents: number };
 
 export interface BuildPricingOptionArgs {
-  prices: readonly ProductPrice[];
+  /** An amount and the currency it is in — see `formatProductPrice`. */
+  prices: readonly Pick<ProductPrice, "currency" | "price_cents">[];
   billingMode: BillingMode;
   productType: ProductType;
   currency: SupportedCurrency;

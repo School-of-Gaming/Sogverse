@@ -60,15 +60,32 @@ function buildVisibleProductsQuery<Select extends string>(
     .order("created_at", { ascending: false });
 }
 
-/** Everything a browse card renders, in one round trip. */
+/**
+ * Everything a browse card renders, in one round trip — and nothing else.
+ *
+ * Spelled out column by column rather than as `*`, because this listing is the
+ * anon-readable one: it is what an unauthenticated `/shop` visitor is handed,
+ * so every column here is a column we have decided to publish. `*` published
+ * the three per-session operating fees and `created_by` to the open web purely
+ * because they happened to sit on the same table, and it shipped the authored
+ * long description — markdown, once per locale — to a grid of cards that render
+ * a one-line summary. Roughly 40% of each row was reaching browsers that had no
+ * use for it.
+ *
+ * The list is therefore a promise about *reads*, not just a size optimisation:
+ * a browse surface that needs a new column adds it here deliberately, and the
+ * compiler stops it at the call site until someone does. The long description
+ * in particular belongs to the detail page alone, which asks its own query
+ * (`buildProductDetailQuery`) and keeps `product_translations(*)`.
+ */
 const BROWSE_SELECT =
-  "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, status, start_date, end_date, timezone, signup_threshold, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 /**
  * The same listing read by a caller that wants only *where* each product is:
  * the location embed, plus the five lifecycle columns `effectiveStatus()` needs
- * to finish the visibility filter in JS. No translations (five locales of
- * markdown description each), no prices, no schedule slots.
+ * to finish the visibility filter in JS. None of the twenty columns a card
+ * paints: no translations, no prices, no schedule slots.
  *
  * `/schools` is that caller — it groups municipality clubs by municipality and
  * reads nothing else off the row — and it is a landing page, so the difference
@@ -114,9 +131,13 @@ function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
 // (src/components/public/products/product-browse-page.tsx) and re-exported
 // from `@/types` so consumers import it there. The card renderer expects
 // everything it needs in one row — the topic enum (label resolved via
-// PRODUCT_TOPICS), all translations, prices per currency, weekly schedule
-// slots, and the joined location for in-person products. (`topic` is a column
-// on Product, so no join is needed.)
+// PRODUCT_TOPICS), the card's translated name and summary per locale, prices
+// per currency, weekly schedule slots, and the joined location for in-person
+// products. (`topic` is a column on Product, so no join is needed.)
+//
+// It is narrower than the products table on purpose (see `BROWSE_SELECT`), so
+// it is not the type to reach for when a surface needs a whole product row —
+// the detail and admin rows below are.
 export type ProductBrowseRow = QueryData<
   ReturnType<typeof buildBrowseQuery>
 >[number];
@@ -194,12 +215,21 @@ export type ProductWithDetails = QueryData<
   ReturnType<typeof buildProductsByTypeQuery>
 >[number];
 
-// Parent-facing single-product detail. Shares the browse row's joins and adds
-// a flattened `holidays` array — every (date, reason) pair pulled from the
-// product's linked holiday calendars. The reason falls back to the calendar's
-// `name` if the admin didn't set a per-date one. Consumed by the detail page
-// calendar widget; the signup panel also reads `product_prices` off this row.
-export type ProductDetailRow = ProductBrowseRow & {
+// Parent-facing single-product detail, inferred from its own query rather than
+// from the browse row: one page reading one product can afford the whole row,
+// and it renders things a card never does — the authored long description above
+// all. Deriving it from the browse row is what used to force `BROWSE_SELECT` to
+// stay wide, so the two are deliberately independent now.
+//
+// The junction embed is dropped from the public shape because the service
+// flattens it: `holidays` is every (date, reason) pair pulled from the linked
+// calendars, with the calendar's own `name` standing in where the admin set no
+// per-date reason. Consumed by the detail page calendar widget; the signup panel
+// also reads `product_prices` off this row.
+export type ProductDetailRow = Omit<
+  NonNullable<QueryData<ReturnType<typeof buildProductDetailQuery>>>,
+  "product_holiday_calendars"
+> & {
   holidays: { date: string; reason: string }[];
 };
 

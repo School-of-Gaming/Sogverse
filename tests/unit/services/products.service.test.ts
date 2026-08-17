@@ -136,6 +136,42 @@ describe("ProductsService.listVisibleByTypes", () => {
     ).rejects.toThrow();
   });
 
+  // The browse listing is the anon-readable one — an unauthenticated `/shop`
+  // visitor is handed exactly what it selects — so what it does *not* ask for
+  // is worth pinning. `*` used to publish the per-session operating fees and
+  // the creating admin's id to the open web, and `product_translations(*)`
+  // shipped the authored long description (markdown, once per locale) to a
+  // grid of one-line cards. The compiler catches a browse surface reading a
+  // column that is gone; only this catches the select quietly widening again.
+  it("asks for no column a browse card does not render", async () => {
+    fetchMock.mockResolvedValue(postgrestJson([]));
+
+    await service.listVisibleByTypes(["consumer_club"]);
+
+    const select =
+      requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("select") ?? "";
+
+    expect(select).not.toContain("*");
+    for (const column of [
+      "primary_gedu_fee_cents",
+      "assistant_gedu_fee_cents",
+      "municipality_fee_cents",
+      "created_by",
+      "long_description",
+    ]) {
+      expect(select).not.toContain(column);
+    }
+    // And it still carries what the card actually paints.
+    for (const fragment of [
+      "product_translations(locale,name,short_description)",
+      "product_prices(currency,price_cents)",
+      "schedule_slots(",
+      "locations(",
+    ]) {
+      expect(select).toContain(fragment);
+    }
+  });
+
   // The narrow half of the same listing, for a caller that wants only where
   // each product is. Two claims worth pinning: it asks for none of the payload
   // a card renders, and it answers the visibility question identically —

@@ -15,7 +15,8 @@ import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { topicHasInfoCard } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import type { ProductBrowseRow, ProductType } from "@/types";
+import type { ProductDetailRow } from "@/services/products";
+import type { ProductType } from "@/types";
 import { LongDescription } from "./long-description";
 import { audienceLabelKey } from "./product-audience";
 import { ProductMediaChips } from "./product-chips";
@@ -53,7 +54,12 @@ export interface MunicipalityBackLink {
 const SIGNUP_PANEL_ANCHOR_ID = "product-signup";
 
 export interface ProductDetailPageBodyProps {
-  product: ProductBrowseRow & {
+  /**
+   * The detail row, not the browse row: this page renders the authored long
+   * description, which the browse listing deliberately does not fetch. Holidays
+   * stay optional — a caller that has no calendar to draw simply omits them.
+   */
+  product: Omit<ProductDetailRow, "holidays"> & {
     holidays?: { date: string; reason: string }[];
   };
   /** The signup panel, injected so the body stays panel-agnostic. Prod passes

@@ -109,16 +109,20 @@ c. **Chunk the two keyed reads whose key array is the whole visible catalog** (b
    keys per request, the shape the locations service uses; if a shared chunked-keyed-read
    helper doesn't exist yet, extract one beside the paging primitive rather than
    hand-rolling per service.
-d. **Scope the per-municipality page server-side and slim the select.** Today the page
-   deliberately prefetches *all* visible clubs so `initialProducts` seeds the shared
-   all-clubs query cache (flicker-free refetch); measured 2026-07-30: 50 clubs = 92.6 KB
-   of JSON inside a 249 KB page, ~1.85 KB/club — and that is a floor, because the
-   translations embed pulls `long_description` for every locale while no browse card
-   renders it (only 3 of 130 translations have one today; real marketing copy across five
-   locales inflates severalfold). Decided: scope the fetch to the one municipality
+d. **Scope the per-municipality page server-side.** Today the page deliberately
+   prefetches *all* visible clubs so `initialProducts` seeds the shared all-clubs query
+   cache (flicker-free refetch); measured 2026-07-30: 50 clubs = 92.6 KB of JSON inside a
+   249 KB page, ~1.85 KB/club. Decided: scope the fetch to the one municipality
    server-side — it then needs its own query key, keyed by municipality, accepting the
-   loss of the shared-cache seeding — and stop selecting `long_description` in browse
-   reads.
+   loss of the shared-cache seeding.
+
+   **The select-slimming half of this item is already done** — `feat/schools-fetch-bounded-by-clubs`
+   replaced the shared browse select's `*, product_translations(*), product_prices(*)`
+   with an explicit list of the columns browse surfaces actually render, so no browse read
+   selects `long_description` (or the per-session operating fees, or `created_by`) any
+   more. The per-club figure above is therefore a pre-fix number, and the row it measures
+   no longer grows with the length of an admin's marketing copy. What remains here is the
+   row *count*: the page still fetches every visible club to render one municipality's.
 
 ### 4. Small hardenings — same pattern, minutes each
 
@@ -190,8 +194,9 @@ discipline the route registry uses).
 
 - Every read named in workstreams 1–4 walks or chunks, with unit tests pinning its total
   order and exact count (the users/gedu-profiles service tests are the template).
-- The `/schools` fetch excludes ended clubs in SQL, the per-municipality page fetches one
-  municipality under its own query key, and no browse read selects `long_description`.
+- The `/schools` fetch excludes ended clubs in SQL, and the per-municipality page fetches
+  one municipality under its own query key. (The third clause of this criterion — no
+  browse read selects `long_description` — is already met; see 3d.)
 - The ratchet test exists, passes with a registry whose every entry carries a reason, and
   fails on a new unregistered unbounded read (verify by temporarily adding one).
 - `npm run lint`, `npm run type-check`, and `npx vitest run` green; no schema migrations

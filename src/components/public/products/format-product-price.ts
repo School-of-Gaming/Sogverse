@@ -22,7 +22,10 @@ export type ProductPriceLine =
   | { kind: "unavailable"; currency: string };
 
 export interface FormatPriceArgs {
-  prices: readonly ProductPrice[];
+  /** An amount and the currency it is in — the two columns this reads. Asking
+   *  for the whole `product_prices` row would make every caller's read carry
+   *  timestamps and a foreign key nothing here looks at. */
+  prices: readonly Pick<ProductPrice, "currency" | "price_cents">[];
   billingMode: BillingMode;
   productType: ProductType;
   currency: SupportedCurrency;
