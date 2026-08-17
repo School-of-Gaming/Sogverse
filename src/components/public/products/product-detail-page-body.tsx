@@ -11,6 +11,8 @@ import { productImageSrc } from "@/lib/images/product-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { municipalityOf } from "@/lib/locations/embedded-chain";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import { topicHasInfoCard } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import type { ProductBrowseRow, ProductType } from "@/types";
@@ -28,10 +30,15 @@ import { TopicInfoCard } from "./topic-info-card";
 // the preview scene passes a navigating one. Both render this directly.
 
 /**
- * Identifies the `/schools/<slug>` listing a detail page was opened from, so
- * the back link can return there (labelled with the municipality) instead of
- * the storefront. Threaded unchanged through `ProductDetailPage` → this body →
- * `BackLink`; single source of truth for that shape.
+ * The `/schools/<slug>` listing a detail page returns to: where the link goes
+ * and what it reads. Single source of truth for that shape, consumed by
+ * `BackLink`.
+ *
+ * The two halves come from different places on purpose. The **slug** is the one
+ * that appeared in the URL, so the link stays in the namespace the viewer
+ * arrived through (`helsingfors` never becomes `helsinki` under them). The
+ * **name** is resolved from the product's own embedded location, in the
+ * viewer's locale — which is why this page needs no locations read at all.
  */
 export interface MunicipalityBackLink {
   slug: string;
@@ -63,9 +70,11 @@ export interface ProductDetailPageBodyProps {
    *  as it is withdrawn at `lg` where the panel is already on screen.
    *  Required, so a caller cannot forget to decide. */
   signupActionable: boolean;
-  /** When opened from a `/schools/<slug>` listing, sends the back link there
-   *  (labelled with the municipality) instead of the storefront. */
-  municipality?: MunicipalityBackLink;
+  /** When opened from a `/schools/<slug>` listing, the slug out of that URL —
+   *  sends the back link there (labelled with the municipality) instead of the
+   *  storefront. The slug alone: the label's name is read off `product` below,
+   *  so no caller has to resolve it. */
+  municipalitySlug?: string;
 }
 
 /**
@@ -97,7 +106,7 @@ export function ProductDetailPageBody({
   product,
   signupPanel,
   signupActionable,
-  municipality,
+  municipalitySlug,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
   const t = useTranslations("productDetail");
@@ -153,6 +162,35 @@ export function ProductDetailPageBody({
       : product.min_age !== null && product.max_age !== null
         ? tCardChip("ages", { min: product.min_age, max: product.max_age })
         : null;
+
+  // **The back link's municipality, read off the product rather than looked
+  // up.** The row already embeds its location plus one level of parent, and a
+  // municipality club sits at exactly one of those two depths — the
+  // municipality itself when online, a site inside it when in person — so the
+  // name the link is labelled with is derivable from data already in flight.
+  // That is why the `/schools/<slug>/[id]` route makes no locations read at
+  // all, and it costs nothing in latency: this body does not render until the
+  // product query resolves, so a server-resolved name could not have painted
+  // any sooner.
+  //
+  // Resolved, never compared: an in-person club's `locations` is the school
+  // site, and matching its id against a municipality would keep only the online
+  // half.
+  //
+  // `null` is a real answer — a club anchored to a region or a country (legacy
+  // rows the DB trigger still permits) has no municipality — and the whole
+  // back link falls back to the type's sibling listing there, label *and*
+  // destination. A "{name} Clubs" heading with no name is not an option, and
+  // neither is the generic label pointed at one municipality's listing, which
+  // would name a destination it does not go to.
+  const municipalityNode = municipalityOf(product.locations);
+  const municipality =
+    municipalitySlug !== undefined && municipalityNode !== null
+      ? {
+          slug: municipalitySlug,
+          name: localizedLocationName(municipalityNode, uiLocale),
+        }
+      : undefined;
 
   return (
     // ---- The width budget ----
