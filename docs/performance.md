@@ -26,6 +26,7 @@ How to read the numbers:
 
 - **p75 is the warm steady state** — what most visits get. **p90–p99 is the cold-start / heavy tail**, and the good/improvable/poor distribution says how many real pageviews land in it. This is the honest resolution of "cold starts pollute the test, warm caches make it too easy": the two conditions are separated by percentile, both are real, and the distribution gives their mix. Don't chase one synthetic number that blends them.
 - **Sample sizes are thin** (~300 DAU): most routes collect under 100 datapoints per month, so route-level p75s are directional only. Before/after regression testing stays with the controlled benchmark protocol (benchmark log under the F1 completed entry); Speed Insights is the ambient monitor — watch the overall p75 and the poor-bucket share over time.
+- **On a thin enough route, p75 *is* the cold number, and the bullet above stops applying.** The warm/cold-by-percentile split assumes visits arrive close enough together that something stays warm between them. Below roughly one visit per cache lifetime that assumption inverts: nothing the route touches is ever resident, so there is no warm population to occupy p75 and the percentile split no longer separates two conditions, because only one of them happens. `/schools/[municipalityName]/[id]` at ~1 visit/day measured ~1100ms cold against a ~170ms warm steady state — the warm figure is what a developer clicking twice sees and what almost no real visitor ever gets. **Read a route's `n` before reading its p75 as steady state**; under ~100/30d, treat it as the cold number.
 
 ### Snapshot log
 
@@ -116,6 +117,37 @@ The first Speed Insights pull (see Real-user data) surfaced four routes worth a 
 - **`/parent/unlock` TTFB 920ms desktop / 1065ms mobile — and the top mobile route by traffic (n=98).** The PIN unlock page is the most user-visible slow TTFB in the family flow.
 - **`/voice/group/[id]` LCP 4552ms desktop (POOR, n=81) — but INP excellent (72ms, n=403).** The room feels fine once loaded; the entry paint is the problem. Hypothesis: the video/participant tile arrives late and is the LCP element.
 - **`/shop/[id]` LCP ~3.2s on both devices (improvable).** Hypothesis: the product hero image (sizing/priority).
+
+### F6 — All three `/schools` routes fetch a set bounded by Finland to render one bounded by clubs
+
+`/schools` and `/schools/[municipalityName]` both read every Finnish municipality — 308 rows, each carrying a 3-level ancestor embed — then slugify and collator-sort the whole list, on every request. `/schools` additionally serialises all 308 entries into the RSC payload, so they ship to every visitor's browser.
+
+Measured 2026-08-17 against production, first request after a 25-minute idle with nothing warmed before it:
+
+| `/schools` cold TTFB | 1170 ms |
+|---|---|
+| warm TTFB | ~185 ms |
+| server fetch | 238,285 bytes |
+| client RSC payload | ~60 KB (estimated from row count) |
+
+Of the 1170 ms: ~40 ms network, ~107 ms lambda init, ~145 ms warm server work, **~878 ms (75%) the municipality read against cold caches.**
+
+**The read is not merely expensive, it is bounded by the wrong variable** — and this corrects an earlier version of this finding, which claimed both routes had a genuine need for the whole country. They do not:
+
+- `/schools` filters its entries to club-bearing ones *before* rendering its default view. The only consumer of the other ~290 is the client-side search box.
+- `/schools/[municipalityName]` 404s for a real municipality that has no clubs, by an explicit guard, exactly as it does for a nonsense slug. So the set of slugs that can produce a page is precisely the club-bearing ones, and resolving against all of Finland to then discard every clubless hit is O(M) work for an O(C) answer.
+
+The fix is therefore a data-flow reversal — read the clubs, derive their municipalities, read those rows by key — with no schema change and no behaviour change, plus a hybrid search box so the whole-country set stops reaching the browser. **Superseded by this: the cross-request cache this finding previously recommended**, which can amortise the server fetch but cannot touch a per-visitor client payload; also a generated slug column (the O(M) lookup disappears rather than needing an index) and trimming the ancestor embed (measured at 31–82% payload savings, all irrelevant to a query that should stop running).
+
+**Urgency is traffic, not depth.** `/schools` is the product's main landing page and is expected to become the highest-traffic page on the site within a month. Speed Insights cannot be used to justify or verify the fix: at ~1 visit/day it reports nothing, and by the time it reports anything the affected visitors have already had the bad experience. This is the case the "read `n` before reading p75" note above is about, seen from the other side — a route can also be *too new* to measure.
+
+**The product detail route has the same fault, one route further down.** `/schools/[municipalityName]/[id]` runs the identical whole-country read to produce **one string** — the municipality's display name, for the back link's label. Measured cold: **1102 ms**, against ~295 ms for `/shop/[id]`, which is the same page without that read. And the name was never worth fetching: the product row the page already requests client-side embeds its location with `name` and `name_i18n`, so the label was derivable for free from data already in flight, and could not have painted any earlier anyway — the back link lives in a body that waits for that same product query.
+
+**The method is the reusable part.** The question that mattered was whether the cold cost was lambda init — which no application change can fix — or work the app was doing. Warm requests cannot answer it, and neither can a slow route measured alone. What answered it was a **near-identical sibling route as a control**: `/shop/[id]` renders the same component with the same client-side fetches and differs only by the lookup, so its cold TTFB *is* lambda init plus baseline, and everything above that is attributable work. Ordering the probe to hit the control first, after a genuine idle, is what keeps the reading clean. Where such a sibling exists this beats instrumentation for a first cut; where one does not, Server-Timing is still the way in.
+
+**The counter-intuitive part, recorded because it will recur.** The initial hypothesis — reasonable, and wrong — was that a route at ~1 visit/day is dominated by cold starts and therefore beyond the reach of application work. Init turned out to be ~9–18% of it. The routes were cold in a different sense: not the machine, but everything the request touched (unresident Postgres pages, un-JITed per-row work). That distinction decides the whole remedy, because a cold machine is fixed only by a warmer or by removing the lambda, while cold work is ordinary engineering. **Do not infer the layer from the symptom** — both present as "slow first hit, fast second".
+
+**Not attributed:** how the 878 ms divides between cold Postgres pages, `JSON.parse` of 238 KB in a cold V8, and the slugify-plus-collator work. The reversal removes most of all three, so the split was not chased.
 
 ## Recommended improvements
 
