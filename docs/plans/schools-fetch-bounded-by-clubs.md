@@ -2,7 +2,11 @@
 
 ## Problem
 
-Both public municipality-club listing routes — `/schools` and
+All three public municipality-club routes — `/schools`,
+`/schools/[municipalityName]` and `/schools/[municipalityName]/[id]` — run the same
+whole-country read. The detail route is the starkest case and is covered in full below;
+the two listing routes are the ones that matter most, because `/schools` is the landing
+page. Stated for the two listing routes first — `/schools` and
 `/schools/[municipalityName]` — read **every Finnish municipality** (308 rows, each
 carrying a 3-level ancestor embed) on every request, and then narrow that set down to
 something bounded by the number of clubs (tens). `/schools` additionally serialises all
@@ -101,6 +105,35 @@ routes can no longer treat them identically:
   old whole-country read rather than a rule anyone stated. The picker only ever offers
   Finnish municipalities, so this is reachable today only through legacy rows the database
   trigger still permits.
+
+### 1b. The detail route: drop the read, keep the named back link
+
+`/schools/[municipalityName]/[id]` runs the same whole-country read to produce **one
+string** — the municipality's display name for the back link's label. Measured cold at
+**1102 ms**, against ~295 ms for `/shop/[id]`, which is the identical page without that
+read.
+
+**Remove the read, and take the name from the product instead.** The product row this page
+already fetches client-side embeds its location with `name` and `name_i18n`, at both the
+municipality and the parent level — so the display name is derivable from data already in
+flight, at no cost. Resolve the product's location up to its municipality and localise the
+name, exactly as the listing routes do.
+
+**The back link keeps its municipality name. Do not replace it with a generic label** — an
+earlier attempt did, on the mistaken belief that keeping the name required keeping the
+read. It does not, and the generic label was reverted rather than shipped, so no new
+translation key is needed for this. Fall back to the existing generic sibling label only
+where a product has no resolvable municipality.
+
+There is no latency cost to deriving it client-side: the back link lives inside a body
+that does not render until that same product query resolves, so a server-resolved name
+could never have painted any earlier either.
+
+Two consequences to keep: the link's **href** is built from the URL slug and is unaffected;
+and with the read gone, an unknown municipality slug no longer 404s — it renders the
+product with a back link to a listing that will itself 404. That is acceptable on the same
+grounds as the other accepted divergences: the route is `noindex`, and the slug never
+gated the product.
 
 ### 2. Hybrid search on `/schools`
 
@@ -235,19 +268,26 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    club-bearing municipality (renders). Move the spoken-languages read into the first
    parallel group while here — it depends on nothing before it and currently waits for no
    reason.
-2. **Reverse `/schools`.** Clubs first, derive the club-bearing municipality ids, keyed
+2. **Strip the read from `/schools/[municipalityName]/[id]`** and derive the back link's
+   municipality name from the product's embedded location instead (see 1b). The page
+   component then does no server data access; its `generateMetadata` still reads the
+   product row, which is unchanged and correct. Verify the back link still reads with the
+   municipality's name, in a non-default locale as well, and that a product with no
+   resolvable municipality falls back to the generic sibling label rather than rendering
+   an empty one.
+3. **Reverse `/schools`.** Clubs first, derive the club-bearing municipality ids, keyed
    read for their rows-with-chains, filter in memory to Finnish municipality rows, then
    feed the existing entry-building helper. Every entry is now club-bearing, so the
    `hasClubs` flag and the default view's filter over it both become vestigial — remove
    the plumbing rather than leaving a field that is always true. Confirm the region
    grouping and default rendering are unchanged, and that the RSC payload drops.
-3. **Add the search fallback arm.** Local instant match over the club-bearing entries; on
+4. **Add the search fallback arm.** Local instant match over the club-bearing entries; on
    no local match, query the indexed search route scoped to Finland and municipalities,
    with a client-side debounce. Render nothing in the results area until it resolves (see
    Constraints). A hit already in the club-bearing set renders as a normal link reusing
    that entry's slug; anything else renders in the existing "no clubs here" state. A failed
    or empty fallback shows the existing empty state, never an error.
-4. **Delete the whole-country municipality read**, which now has no callers. Note this is
+5. **Delete the whole-country municipality read**, which now has no callers. Note this is
    larger than one method: it also removes its unit tests, its entry in the reads
    column-discipline registry, and two DB tests. **One of those DB tests is the only
    coverage anywhere that walks past PostgREST's 1000-row response cap** — the sole proof
@@ -261,22 +301,24 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    walked reads will rely on as their tables grow.) The paging primitive itself stays;
    other services use it. Separately, there is a second, already-dead slug-resolution helper (the one taking
    raw location rows, referenced by nothing but its own test) — delete that too while here.
-5. **Rewrite `src/services/locations/CLAUDE.md`.** This is the doc the work invalidates and
+6. **Rewrite `src/services/locations/CLAUDE.md`.** This is the doc the work invalidates and
    it is a larger change than the code: it asserts the whole-country municipality read as
    an architectural invariant in roughly seven places — the bounded-lists invariant, the
    retired offer/keyed split's list of offering reads, the "whole-list reads… those two and
    no others" section, the public-directory references, the two-embed-depths rationale, and
    the loading section. Also correct its false claim that the TypeScript fold is already
    gone.
-6. **Update the performance log.** The finding covering these routes already carries the
+7. **Update the performance log.** The finding covering these routes already carries the
    measurements, the two facts and the rejected alternatives — **move it from Active
    findings to Completed** with before/after numbers rather than rewriting it. Update the
    "what's left" paragraph of the earlier completed entry, which points at it.
 
 ## Acceptance criteria
 
-- `/schools` and `/schools/[municipalityName]` issue no whole-country municipality read;
-  every location read they make is bounded by the number of clubs.
+- None of the three `/schools` routes issues a whole-country municipality read; every
+  location read they make is bounded by the number of clubs.
+- The detail route's back link still carries the municipality's name, resolved in the
+  viewer's locale, with no server read behind it.
 - Rendered output of both routes is unchanged for every case in step 1, plus: the default
   `/schools` view lists the same regions and municipalities as before, and searching a
   club-bearing municipality returns the same instant result as before.

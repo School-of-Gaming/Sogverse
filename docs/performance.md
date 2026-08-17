@@ -118,7 +118,7 @@ The first Speed Insights pull (see Real-user data) surfaced four routes worth a 
 - **`/voice/group/[id]` LCP 4552ms desktop (POOR, n=81) — but INP excellent (72ms, n=403).** The room feels fine once loaded; the entry paint is the problem. Hypothesis: the video/participant tile arrives late and is the LCP element.
 - **`/shop/[id]` LCP ~3.2s on both devices (improvable).** Hypothesis: the product hero image (sizing/priority).
 
-### F6 — The `/schools` listing routes fetch a set bounded by Finland to render one bounded by clubs
+### F6 — All three `/schools` routes fetch a set bounded by Finland to render one bounded by clubs
 
 `/schools` and `/schools/[municipalityName]` both read every Finnish municipality — 308 rows, each carrying a 3-level ancestor embed — then slugify and collator-sort the whole list, on every request. `/schools` additionally serialises all 308 entries into the RSC payload, so they ship to every visitor's browser.
 
@@ -140,6 +140,12 @@ Of the 1170 ms: ~40 ms network, ~107 ms lambda init, ~145 ms warm server work, *
 The fix is therefore a data-flow reversal — read the clubs, derive their municipalities, read those rows by key — with no schema change and no behaviour change, plus a hybrid search box so the whole-country set stops reaching the browser. **Superseded by this: the cross-request cache this finding previously recommended**, which can amortise the server fetch but cannot touch a per-visitor client payload; also a generated slug column (the O(M) lookup disappears rather than needing an index) and trimming the ancestor embed (measured at 31–82% payload savings, all irrelevant to a query that should stop running).
 
 **Urgency is traffic, not depth.** `/schools` is the product's main landing page and is expected to become the highest-traffic page on the site within a month. Speed Insights cannot be used to justify or verify the fix: at ~1 visit/day it reports nothing, and by the time it reports anything the affected visitors have already had the bad experience. This is the case the "read `n` before reading p75" note above is about, seen from the other side — a route can also be *too new* to measure.
+
+**The product detail route has the same fault, one route further down.** `/schools/[municipalityName]/[id]` runs the identical whole-country read to produce **one string** — the municipality's display name, for the back link's label. Measured cold: **1102 ms**, against ~295 ms for `/shop/[id]`, which is the same page without that read. And the name was never worth fetching: the product row the page already requests client-side embeds its location with `name` and `name_i18n`, so the label was derivable for free from data already in flight, and could not have painted any earlier anyway — the back link lives in a body that waits for that same product query.
+
+**The method is the reusable part.** The question that mattered was whether the cold cost was lambda init — which no application change can fix — or work the app was doing. Warm requests cannot answer it, and neither can a slow route measured alone. What answered it was a **near-identical sibling route as a control**: `/shop/[id]` renders the same component with the same client-side fetches and differs only by the lookup, so its cold TTFB *is* lambda init plus baseline, and everything above that is attributable work. Ordering the probe to hit the control first, after a genuine idle, is what keeps the reading clean. Where such a sibling exists this beats instrumentation for a first cut; where one does not, Server-Timing is still the way in.
+
+**The counter-intuitive part, recorded because it will recur.** The initial hypothesis — reasonable, and wrong — was that a route at ~1 visit/day is dominated by cold starts and therefore beyond the reach of application work. Init turned out to be ~9–18% of it. The routes were cold in a different sense: not the machine, but everything the request touched (unresident Postgres pages, un-JITed per-row work). That distinction decides the whole remedy, because a cold machine is fixed only by a warmer or by removing the lambda, while cold work is ordinary engineering. **Do not infer the layer from the symptom** — both present as "slow first hit, fast second".
 
 **Not attributed:** how the 878 ms divides between cold Postgres pages, `JSON.parse` of 238 KB in a cold V8, and the slugify-plus-collator work. The reversal removes most of all three, so the split was not chased.
 
@@ -186,27 +192,6 @@ Supersedes the earlier "move role into JWT everywhere" framing. Ordered by value
 **Related cleanup:** retiring `is_admin()` for inline `get_user_role() = 'admin'` touches the same RLS files — do it alongside this if either is picked up.
 
 ## Completed improvements
-
-### Municipality club detail route — removed the per-request municipality walk (branch `feat/muni-club-back-link-no-lookup`, 2026-08-17)
-
-**What.** `/schools/[municipalityName]/[id]` no longer performs any server-side data access at all. It previously read all ~308 Finnish municipalities with a 3-level ancestor embed, slugified every name and collator-sorted the list, to produce one string: the municipality's display name, used as the back link's *label*. The link's **href** was always built from the slug straight off the URL, so the destination survived the removal untouched; only the label changed, to a generic destination-named key alongside its siblings.
-
-**Measured, production, first hit after a 25-minute idle:**
-
-| | cold | warm steady state |
-|---|---|---|
-| `/schools/[municipalityName]/[id]` before | ~1100 ms | ~170 ms |
-| `/shop/[id]` — the same page without the lookup | ~295 ms | ~100 ms |
-
-So the lookup was **~800 ms, about 73% of a cold request**, against ~195 ms of Vercel lambda init and ~100 ms of everything else.
-
-**The method is the part worth reusing.** The question that mattered was whether the cold cost was lambda init — which no application change can fix — or work the app was doing. Warm requests cannot answer it, and neither can a slow route measured alone. What answered it was a **near-identical sibling route as a control**: `/shop/[id]` renders the same component with the same client-side fetches and differs only by this lookup, so its cold TTFB *is* lambda init plus baseline, and everything above that on the `/schools` route is attributable work. Ordering the probe to hit the control first, after a genuine idle, is what keeps the reading clean. Where such a sibling exists, this beats instrumentation for a first cut; where one doesn't, Server-Timing is still the way in.
-
-**The counter-intuitive part, recorded because it will recur.** The initial hypothesis — reasonable, and wrong — was that a route at ~1 visit/day is dominated by cold starts and therefore beyond the reach of application work. Init turned out to be ~18% of it. The route was cold in a different sense: not the machine, but everything the request touched (unresident Postgres pages, un-JITed per-row work). That distinction decides the whole remedy, because a cold machine is fixed only by a warmer or by removing the lambda, while cold work is ordinary engineering. **Do not infer the layer from the symptom** — both look like "slow first hit, fast second".
-
-**Trade-off (accepted).** An unknown municipality slug no longer 404s; it renders the product with a back link to a listing that will itself 404 when followed. The route is `noindex`, and the file already documented a mismatched slug as harmless — this widens that from "back goes to the wrong municipality" to "back goes to no municipality". The slug never gated the product.
-
-**What's left.** The two `/schools` listing routes still run the same whole-country read. It looked at the time as though they genuinely needed it; they do not, and the reason they do not is **F6**.
 
 ### `AppSupabaseClient` — structural `getUser` guard + survivor conversion — closes I3 (branch `perf/auth-getclaims-guard`, 2026-05-31)
 
