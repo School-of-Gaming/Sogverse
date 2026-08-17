@@ -1,7 +1,6 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { AdminDashboardData } from "./admin-dashboard-data";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
 import { ProductTypeKeyRail } from "./product-type-key-rail";
@@ -47,23 +46,34 @@ import { UsersStrip } from "./users-strip";
  * for.
  *
  * The body is presentational end to end: every count, join and resolution
- * arrives in `data`, and nothing here queries, mutates or reads a clock. That is
- * what lets the preview scene render it over fixtures and the future route
- * render it over service reads without either owning a layout. It takes no
- * loading states for the same reason the scene needs none — a shell that has the
- * data renders it, and a shell that does not is the shell's problem to show.
+ * arrives in `data`, and nothing here queries, mutates or reads a clock. The one
+ * action on the page arrives the same way — as a callback the caller owns — so
+ * the preview scene can render the identical body with a callback that writes
+ * nothing. That is what lets the scene render it over fixtures and the route
+ * render it over a live snapshot without either owning a layout. It takes no
+ * loading state, and there is none above it either: the route awaits the
+ * snapshot before this renders at all, so the first paint is the finished page,
+ * and a read that never landed is answered by the route with a failure band in
+ * place of this body.
  */
-export function AdminDashboardPageBody({ data }: { data: AdminDashboardData }) {
+export function AdminDashboardPageBody({
+  data,
+  onCertifyGedu,
+}: {
+  data: AdminDashboardData;
+  /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
+  onCertifyGedu: (geduId: string) => Promise<void>;
+}) {
+  const t = useTranslations("admin.dashboard");
+
   return (
     <div className="space-y-6 pb-12">
       <div>
         {/* "Dashboard", not "My SOG": the admin surface is genuinely an admin
             panel and is called one, which is the single exception to the
             product-wide naming rule. */}
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          What needs an admin today, who is on the platform, and what is running.
-        </p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
       {/* The key is a page-level rail, not a section's legend, because the
@@ -86,6 +96,7 @@ export function AdminDashboardPageBody({ data }: { data: AdminDashboardData }) {
           <NeedsAttentionPanel
             products={data.products}
             uncertifiedGedus={data.uncertifiedGedus}
+            onCertifyGedu={onCertifyGedu}
           />
 
           <SchedulePanel
@@ -94,6 +105,7 @@ export function AdminDashboardPageBody({ data }: { data: AdminDashboardData }) {
             comingUp={data.comingUp}
             now={data.now}
             timeZone={data.timeZone}
+            timeZoneAbbrev={data.timeZoneAbbrev}
           />
         </div>
 

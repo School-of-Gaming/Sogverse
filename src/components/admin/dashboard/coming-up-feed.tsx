@@ -1,17 +1,16 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDateOnly } from "@/lib/utils";
 import type {
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
 } from "./admin-dashboard-data";
-import { formatDayMonth, formatMonth, weekdayOf, WEEKDAY_LABELS } from "./calendar";
+import { formatDayMonth } from "./calendar";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
 /**
@@ -43,23 +42,28 @@ import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 const COHORT_COLLAPSE_AT = 3;
 
 export function ComingUpFeed({ days }: { days: readonly ComingUpDay[] }) {
+  const t = useTranslations("admin.dashboard.comingUp");
+  const locale = useLocale();
+
   if (days.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Nothing starts or ends over the coming months.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
   }
 
   // Derived up front rather than accumulated while mapping: a variable
   // reassigned inside a render's callback is state the compiler cannot reason
   // about, and comparing against the previous element says the same thing
-  // without any.
+  // without any. The comparison is on the bare `YYYY-MM` rather than on the
+  // rendered heading, so it does not depend on how a locale words a month.
   const rows = days.map((day, index) => ({
     day,
-    month: formatMonth(day.date),
+    // A month name is date formatting, so it comes from `Intl` in the reader's
+    // locale rather than out of a label array.
+    month: formatDateOnly(day.date, locale, {
+      month: "long",
+      year: "numeric",
+    }),
     startsMonth:
-      index === 0 || formatMonth(days[index - 1].date) !== formatMonth(day.date),
+      index === 0 || days[index - 1].date.slice(0, 7) !== day.date.slice(0, 7),
   }));
 
   return (
@@ -82,10 +86,13 @@ export function ComingUpFeed({ days }: { days: readonly ComingUpDay[] }) {
 }
 
 function DayRow({ day }: { day: ComingUpDay }) {
+  const locale = useLocale();
+
   return (
     <div className="flex flex-col gap-1 py-1 sm:flex-row sm:gap-3">
       <p className="shrink-0 text-xs font-medium tabular-nums sm:w-24">
-        {WEEKDAY_LABELS[weekdayOf(day.date)]} {formatDayMonth(day.date)}
+        {formatDateOnly(day.date, locale, { weekday: "short" })}{" "}
+        {formatDayMonth(day.date, locale)}
       </p>
       <ul className="min-w-0 flex-1 space-y-1">
         {day.cohorts.map((cohort) => (
@@ -99,42 +106,42 @@ function DayRow({ day }: { day: ComingUpDay }) {
 }
 
 /**
- * Plural verb for a counted cohort line, singular for a row about one product.
+ * The counted cohort line — "five municipality clubs start" — is **one message
+ * per kind and product type**, not a count plus a noun plus a verb assembled
+ * here.
  *
- * No icon: the kind is a *word* here, and the only glyph on these rows is the
- * type glyph. An icon per kind was tried and one of the three was `CalendarDays`
- * — which is the event type's own mark — so a single-date event line wore the
- * same glyph twice meaning two different things.
+ * Assembling it is what English makes look free: everywhere else the noun's form
+ * depends on the count *and* on the verb it governs (Finnish counts things in
+ * the partitive, and the verb then stays singular), so three interchangeable
+ * pieces produce a sentence no reviewer would sign off. Twelve whole sentences
+ * cost twelve keys and are twelve things a translator can actually read.
+ *
+ * No icon per kind: the kind is a *word* here, and the only glyph on these rows
+ * is the type glyph. An icon per kind was tried and one of the three was
+ * `CalendarDays` — which is the event type's own mark — so a single-date event
+ * line wore the same glyph twice meaning two different things.
  */
-const KIND_VERBS: Record<
-  ComingUpCohort["kind"],
-  { plural: string; singular: string }
-> = {
-  starts: { plural: "start", singular: "starts" },
-  runs: { plural: "run", singular: "runs" },
-  ends: { plural: "end", singular: "ends" },
-};
-
 function Cohort({ cohort }: { cohort: ComingUpCohort }) {
+  const t = useTranslations("admin.dashboard.comingUp");
   const [open, setOpen] = useState(false);
   const presentation = PRODUCT_TYPE_PRESENTATION[cohort.productType];
   const Icon = presentation.icon;
-  const verbs = KIND_VERBS[cohort.kind];
 
   if (cohort.items.length < COHORT_COLLAPSE_AT) {
     return (
       <ul className="space-y-1">
         {cohort.items.map((item) => (
           <li key={item.id}>
-            <ItemRow item={item} cohort={cohort} verb={verbs.singular} />
+            <ItemRow
+              item={item}
+              cohort={cohort}
+              verb={t(`itemVerb.${cohort.kind}`)}
+            />
           </li>
         ))}
       </ul>
     );
   }
-
-  const noun =
-    cohort.items.length === 1 ? presentation.label : presentation.plural;
 
   return (
     <div className="space-y-1">
@@ -154,7 +161,9 @@ function Cohort({ cohort }: { cohort: ComingUpCohort }) {
           aria-hidden
         />
         <span className="font-medium">
-          {cohort.items.length} {noun.toLowerCase()} {verbs.plural}
+          {t(`cohort.${cohort.kind}.${presentation.i18nKey}`, {
+            count: cohort.items.length,
+          })}
         </span>
       </button>
       {open && (
@@ -181,13 +190,15 @@ function ItemRow({
   cohort: ComingUpCohort;
   verb: string | null;
 }) {
+  const tType = useTranslations("admin.products.types");
   const presentation = PRODUCT_TYPE_PRESENTATION[cohort.productType];
   const Icon = presentation.icon;
+  const title = `${tType(`${presentation.i18nKey}.label`)} · ${item.name}`;
 
   return (
     <Link
       href={item.href}
-      title={`${presentation.label} · ${item.name}`}
+      title={title}
       className="flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-accent"
     >
       <Icon

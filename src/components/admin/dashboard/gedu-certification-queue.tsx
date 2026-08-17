@@ -1,9 +1,8 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { BadgeCheck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PersonChip } from "@/components/ui/person-chip";
@@ -29,22 +28,42 @@ import type { UncertifiedGedu } from "./admin-dashboard-data";
  * about, that is the moment to design for it, against the real shape of the
  * problem rather than a guess at it.
  *
- * In the preview the action is pure local state — nothing is written, and a
- * reload restores every row.
+ * **The write is the shell's, the receipt is the panel's, and the ordering is
+ * this section's.** `onCertify` resolves when the row has actually been
+ * certified; only then is `onCertified` called, the row leaves the list and the
+ * counted line above it moves. That ordering is what lets a failure be shown *on
+ * the row that failed* — a queue that removed the row optimistically would have
+ * nowhere left to put the error, and the admin would be told nothing at all. In
+ * the preview the callback resolves immediately and writes nothing, so a reload
+ * restores every row.
+ *
+ * The certified set is a *prop* rather than state here because this section is
+ * mortal: it is unmounted the moment the queue it renders runs out of rows,
+ * which is precisely when the receipt matters most. The panel above owns the
+ * set and keeps this section mounted while it is non-empty.
  */
 export function GeduCertificationQueue({
   gedus,
+  certified,
+  onCertify,
+  onCertified,
 }: {
   gedus: readonly UncertifiedGedu[];
+  /** Who has been certified in this sitting — owned by the panel above. */
+  certified: ReadonlySet<string>;
+  /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
+  onCertify: (geduId: string) => Promise<void>;
+  /** Called once a certification has actually landed. */
+  onCertified: (geduId: string) => void;
 }) {
-  const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
+  const t = useTranslations("admin.dashboard.certification");
 
   const waiting = gedus.filter((gedu) => !certified.has(gedu.id));
 
   return (
-    <section aria-label="Gedus awaiting certification" className="space-y-3">
+    <section aria-label={t("label")} className="space-y-3">
       <h3 className="flex items-baseline gap-2 text-sm font-semibold">
-        Awaiting certification
+        {t("heading")}
         <span className="text-xs font-normal text-muted-foreground">
           {waiting.length}
         </span>
@@ -56,14 +75,12 @@ export function GeduCertificationQueue({
       {certified.size > 0 && (
         <p className="flex items-center gap-1.5 text-xs text-success">
           <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-          {certified.size} certified just now
+          {t("justNow", { count: certified.size })}
         </p>
       )}
 
       {waiting.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Nobody is waiting on a certification decision.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <ul className="space-y-1">
           {waiting.map((gedu) => (
@@ -71,7 +88,9 @@ export function GeduCertificationQueue({
               <GeduRow
                 gedu={gedu}
                 onCertify={() =>
-                  setCertified((current) => new Set(current).add(gedu.id))
+                  onCertify(gedu.id).then(() => {
+                    onCertified(gedu.id);
+                  })
                 }
               />
             </li>
@@ -86,28 +105,65 @@ export function GeduCertificationQueue({
  * One row. The person is a link to their admin page; the button beside them is
  * not, which is why the row is not itself a link — a row-wide link with a
  * control inside it is a click nobody can predict the result of.
+ *
+ * **`committing` is set synchronously before the write starts and is never
+ * cleared on success**, because on success this row is about to disappear: the
+ * queue drops it the moment the promise resolves, and the refetch behind it
+ * drops it again from the source list. Clearing the flag first would re-enable
+ * the button for the frame between the write landing and the row unmounting,
+ * which is exactly long enough for a second click to certify somebody twice. It
+ * is cleared only where the admin has something left to do — a failed write,
+ * where the row stays and has to be retried.
  */
 function GeduRow({
   gedu,
   onCertify,
 }: {
   gedu: UncertifiedGedu;
-  onCertify: () => void;
+  onCertify: () => Promise<void>;
 }) {
+  const t = useTranslations("admin.dashboard.certification");
+  const [committing, setCommitting] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  function handleCertify() {
+    setCommitting(true);
+    setFailed(false);
+    void onCertify().catch(() => {
+      setCommitting(false);
+      setFailed(true);
+    });
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border px-3 py-2">
       <Link
         href={ROUTES.admin.user(gedu.id)}
         className="flex min-w-0 flex-1 items-center gap-2 rounded-md transition-opacity hover:opacity-80"
       >
-        <PersonChip id={gedu.id} name={gedu.name} />
+        <PersonChip id={gedu.id} name={gedu.name ?? t("unnamed")} />
         <span className="truncate text-xs text-muted-foreground">
           <Clock className="mr-1 inline h-3 w-3 align-[-1px]" aria-hidden />
-          {gedu.registered}
+          {t("registered", { when: gedu.registeredAgo })}
         </span>
       </Link>
-      <Button type="button" size="sm" onClick={onCertify}>
-        Certify
+      {/* Only rendered once a write has failed, and it takes the full row width
+          so it lands under the button rather than squeezing the name beside it.
+          Nothing reserves space for it: before the first failure there is
+          nothing here to move, and the row it appears in is one the admin just
+          acted on. */}
+      {failed && (
+        <p className="order-last w-full text-xs text-destructive">
+          {t("failed")}
+        </p>
+      )}
+      <Button
+        type="button"
+        size="sm"
+        onClick={handleCertify}
+        disabled={committing}
+      >
+        {committing ? t("certifying") : t("certify")}
       </Button>
     </div>
   );

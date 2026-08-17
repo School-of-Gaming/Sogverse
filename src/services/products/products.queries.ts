@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import type { ProductType, ProductBrowseRow } from "@/types";
 import {
   ProductsService,
@@ -79,6 +80,13 @@ export function useProductAdmin(id: string | undefined) {
   });
 }
 
+// Both writers below also invalidate the admin dashboard, which is a separate
+// cache entry built from these very rows: whether a product is live at all, its
+// schedule and term dates, its seat cap, and whether its gedu/municipality fees
+// are set — the last of which the dashboard's ops queue flags by name. Setting
+// the fee the queue asked for and returning to a page that still asks for it is
+// how a reader learns to stop trusting the queue. Only admins write products and
+// only an admin's cache holds that entry, so this is the browser where it lands.
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   const supabase = getClient();
@@ -88,6 +96,7 @@ export function useCreateProduct() {
     mutationFn: (input: CreateProductInput) => service.createProduct(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
     },
   });
 }
@@ -103,6 +112,7 @@ export function useUpdateProduct(id: string) {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: productKeys.adminDetail(id) });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
     },
   });
 }

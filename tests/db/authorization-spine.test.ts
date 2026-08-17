@@ -71,6 +71,10 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   create_product: { permittedRoles: ["admin"] },
   update_product: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
+  // Takes no arguments at all, so the all-NULL convention hands it an empty
+  // argument object and a permitted admin gets the whole document back — the
+  // positive half of the matrix is assertable here without a fixture.
+  get_admin_dashboard: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },

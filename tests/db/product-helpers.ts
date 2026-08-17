@@ -49,6 +49,10 @@ import { TEST_IDS } from "./constants";
  *                  groups 60a-60b)
  *   610-616        product-audience.test.ts (three products 610-612, one group
  *                  613, and 614-616 for the roster-shape fixtures)
+ *   620-628        admin-dashboard.test.ts (six products — 620, 621, 623, 624,
+ *                  625, 628 — plus two groups 622/627 and a holiday calendar
+ *                  626; one product per dashboard issue so a fixture built for
+ *                  one cannot accidentally raise another)
  *   6ff            family-product-feed.test.ts's must-NOT-exist participation
  *                  id, backing the case that a nonexistent id is refused with
  *                  exactly the message someone else's id gets. Declared here

@@ -161,17 +161,93 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Tableau de bord admin",
-      "description": "Bienvenue dans le panneau d’administration Sogverse. Gérez les utilisateurs, les produits et les paramètres du système.",
-      "totalUsers": "Utilisateurs au total",
-      "activeAccounts": "Comptes actifs",
-      "products": "Produits",
-      "activeProducts": "Produits actifs",
-      "revenue": "Chiffre d’affaires",
-      "thisMonth": "Ce mois-ci",
-      "growth": "Croissance",
-      "fromLastMonth": "Par rapport au mois dernier",
-      "latestEvents": "Derniers événements sur la plateforme"
+      "title": "Tableau de bord",
+      "description": "Ce qui demande l’intervention d’un administrateur aujourd’hui, qui est sur la plateforme et ce qui tourne.",
+      "loadError": "Impossible de charger le tableau de bord. Actualisez la page pour réessayer.",
+      "loadErrorWithReason": "Impossible de charger le tableau de bord – {reason}. Actualisez la page pour réessayer.",
+      "users": {
+        "label": "Utilisateurs",
+        "roles": {
+          "customer": "Parents",
+          "gamer": "Joueurs",
+          "gedu": "Gedus",
+          "admin": "Administrateurs"
+        },
+        "verified": "{count} vérifiés",
+        "certified": "{count} certifiés"
+      },
+      "attention": {
+        "title": "À traiter",
+        "allClearTitle": "Tout est en ordre",
+        "allClearBody": "Chaque joueur est placé, chaque groupe a un Gedu, aucun produit n’attend une rémunération ou un montant, et personne n’attend une décision de certification.",
+        "productsLabel": "Produits à traiter",
+        "productsHeading": "Produits",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# joueur non placé} other {# joueurs non placés}}",
+          "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
+          "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
+          "missingGeduFee": "Rémunération Gedu manquante",
+          "missingMunicipalityFee": "Montant commune manquant"
+        }
+      },
+      "certification": {
+        "label": "Gedus en attente de certification",
+        "heading": "En attente de certification",
+        "justNow": "{count} certifiés à l’instant",
+        "empty": "Personne n’attend une décision de certification.",
+        "unnamed": "Gedu sans nom",
+        "registered": "inscrit {when}",
+        "certify": "Certifier",
+        "certifying": "Certification…",
+        "failed": "La certification a échoué – réessayez."
+      },
+      "schedule": {
+        "title": "Planning",
+        "thisWeekLabel": "Cette semaine",
+        "previousWeek": "Semaine précédente",
+        "nextWeek": "Semaine suivante",
+        "today": "Aujourd’hui",
+        "sessionCount": "{count, plural, one {# session} other {# sessions}}",
+        "timesIn": "horaires en {zone}",
+        "nothingOn": "Rien de prévu",
+        "paused": "En pause cette semaine :",
+        "needsAttention": "À traiter – ce produit figure dans la file en haut de la page",
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "À venir",
+        "heading": "À venir",
+        "empty": "Rien ne commence ni ne se termine dans les mois qui viennent.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# club grand public commence} other {# clubs grand public commencent}}",
+            "municipalityClub": "{count, plural, one {# club municipal commence} other {# clubs municipaux commencent}}",
+            "camp": "{count, plural, one {# stage commence} other {# stages commencent}}",
+            "event": "{count, plural, one {# événement commence} other {# événements commencent}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# club grand public a lieu} other {# clubs grand public ont lieu}}",
+            "municipalityClub": "{count, plural, one {# club municipal a lieu} other {# clubs municipaux ont lieu}}",
+            "camp": "{count, plural, one {# stage a lieu} other {# stages ont lieu}}",
+            "event": "{count, plural, one {# événement a lieu} other {# événements ont lieu}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# club grand public se termine} other {# clubs grand public se terminent}}",
+            "municipalityClub": "{count, plural, one {# club municipal se termine} other {# clubs municipaux se terminent}}",
+            "camp": "{count, plural, one {# stage se termine} other {# stages se terminent}}",
+            "event": "{count, plural, one {# événement se termine} other {# événements se terminent}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "commence",
+          "runs": "a lieu",
+          "ends": "se termine"
+        }
+      },
+      "productTypeKey": {
+        "label": "Légende des types de produit",
+        "heading": "Types de produit"
+      }
     },
     "products": {
       "types": {

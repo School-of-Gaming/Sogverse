@@ -161,17 +161,93 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Admin Dashboard",
-      "description": "Welcome to the Sogverse admin panel. Manage users, products, and system settings.",
-      "totalUsers": "Total Users",
-      "activeAccounts": "Active accounts",
-      "products": "Products",
-      "activeProducts": "Active products",
-      "revenue": "Revenue",
-      "thisMonth": "This month",
-      "growth": "Growth",
-      "fromLastMonth": "From last month",
-      "latestEvents": "Latest events across the platform"
+      "title": "Dashboard",
+      "description": "What needs an admin today, who is on the platform, and what is running.",
+      "loadError": "Could not load the dashboard. Refresh to try again.",
+      "loadErrorWithReason": "Could not load the dashboard — {reason}. Refresh to try again.",
+      "users": {
+        "label": "Users",
+        "roles": {
+          "customer": "Parents",
+          "gamer": "Gamers",
+          "gedu": "Gedus",
+          "admin": "Admins"
+        },
+        "verified": "{count} verified",
+        "certified": "{count} certified"
+      },
+      "attention": {
+        "title": "Needs attention",
+        "allClearTitle": "All clear",
+        "allClearBody": "Every gamer is placed, every group has a Gedu, no product is missing a fee, and nobody is waiting on a certification decision.",
+        "productsLabel": "Products needing attention",
+        "productsHeading": "Products",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# unassigned gamer} other {# unassigned gamers}}",
+          "groupWithoutGedu": "Group {group} has no Gedu",
+          "waitlistOpenSeats": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open",
+          "missingGeduFee": "Gedu fee not set",
+          "missingMunicipalityFee": "Municipality fee not set"
+        }
+      },
+      "certification": {
+        "label": "Gedus awaiting certification",
+        "heading": "Awaiting certification",
+        "justNow": "{count} certified just now",
+        "empty": "Nobody is waiting on a certification decision.",
+        "unnamed": "Unnamed Gedu",
+        "registered": "registered {when}",
+        "certify": "Certify",
+        "certifying": "Certifying…",
+        "failed": "Could not certify — try again."
+      },
+      "schedule": {
+        "title": "Schedule",
+        "thisWeekLabel": "This week",
+        "previousWeek": "Previous week",
+        "nextWeek": "Next week",
+        "today": "Today",
+        "sessionCount": "{count, plural, one {# session} other {# sessions}}",
+        "timesIn": "times in {zone}",
+        "nothingOn": "Nothing on",
+        "paused": "Paused this week:",
+        "needsAttention": "Needs attention — this product is in the queue at the top of the page",
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "Coming up",
+        "heading": "Coming up",
+        "empty": "Nothing starts or ends over the coming months.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# consumer club starts} other {# consumer clubs start}}",
+            "municipalityClub": "{count, plural, one {# municipality club starts} other {# municipality clubs start}}",
+            "camp": "{count, plural, one {# camp starts} other {# camps start}}",
+            "event": "{count, plural, one {# event starts} other {# events start}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# consumer club runs} other {# consumer clubs run}}",
+            "municipalityClub": "{count, plural, one {# municipality club runs} other {# municipality clubs run}}",
+            "camp": "{count, plural, one {# camp runs} other {# camps run}}",
+            "event": "{count, plural, one {# event runs} other {# events run}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# consumer club ends} other {# consumer clubs end}}",
+            "municipalityClub": "{count, plural, one {# municipality club ends} other {# municipality clubs end}}",
+            "camp": "{count, plural, one {# camp ends} other {# camps end}}",
+            "event": "{count, plural, one {# event ends} other {# events end}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "starts",
+          "runs": "runs",
+          "ends": "ends"
+        }
+      },
+      "productTypeKey": {
+        "label": "Product type key",
+        "heading": "Product types"
+      }
     },
     "products": {
       "types": {

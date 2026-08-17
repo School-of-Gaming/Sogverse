@@ -43,19 +43,27 @@ export const PRODUCT_ISSUE_KINDS = [
 
 export type ProductIssueKind = (typeof PRODUCT_ISSUE_KINDS)[number];
 
-/** One thing wrong with one product. */
-export interface ProductIssue {
-  /** Stable React key — a product can carry two group issues at once. */
-  id: string;
-  kind: ProductIssueKind;
-  /**
-   * The line as the admin reads it, already worded and already counted:
-   * "3 unassigned gamers", "Group Alpha has no gedu", "4 waitlisted · 2 seats
-   * open". The count lives in the string because the count *is* the fact — a
-   * separate numeric field would only ever be re-templated into this sentence.
-   */
-  label: string;
-}
+/**
+ * One thing wrong with one product, as a **structural** fact rather than a
+ * sentence.
+ *
+ * `kind` is both the ranking and the message key, and whatever the message
+ * interpolates travels beside it: whoever feeds the page counts and names, and
+ * the card maps the pair through `t()`. Wording it upstream would mean a pure
+ * module reaching for a locale it has no business knowing, and a count baked
+ * into a string cannot take a plural rule with it — one English sentence covers
+ * "1 unassigned gamer" and "3 unassigned gamers" only because English is nearly
+ * caseless.
+ */
+export type ProductIssueFact =
+  | { kind: "unassigned-gamers"; values: { count: number } }
+  | { kind: "group-without-gedu"; values: { group: string } }
+  | { kind: "waitlist-open-seats"; values: { waiting: number; open: number } }
+  | { kind: "missing-gedu-fee" }
+  | { kind: "missing-municipality-fee" };
+
+/** One issue, keyed for React — a product can carry two group lines at once. */
+export type ProductIssue = { id: string } & ProductIssueFact;
 
 /** One product that needs an admin, with everything wrong with it. */
 export interface ProductAttention {
@@ -80,9 +88,18 @@ export interface UncertifiedGedu {
    * degenerate face rather than a different one.
    */
   id: string;
-  name: string;
-  /** How long they have been waiting — "registered 12 days ago". */
-  registered: string;
+  /**
+   * `null` where the account carries no name at all. The queue still has to be
+   * actionable for one — the identicon is keyed to the id either way — so the
+   * stand-in is copy the card owns, not a sentence invented out here.
+   */
+  name: string | null;
+  /**
+   * How long they have been waiting — "12 days ago", already locale-formatted
+   * by `Intl.RelativeTimeFormat`. The sentence around it ("registered …") is the
+   * card's, because that half is translated copy and this half is not.
+   */
+  registeredAgo: string;
 }
 
 /**
@@ -119,9 +136,15 @@ export interface ScheduleChip {
   productId: string;
   productName: string;
   productType: ProductType;
-  /** 0 = Monday … 6 = Sunday, matching `schedule_slots.weekday`. */
+  /**
+   * 0 = Monday … 6 = Sunday, matching `schedule_slots.weekday` — but the
+   * weekday the session lands on **for the viewer**, which is not always the
+   * one the slot was authored on. A Helsinki club meeting at 09:00 on a Monday
+   * is a Sunday evening for a reader in Los Angeles, and a row that filed it
+   * under Monday would be describing somebody else's week.
+   */
   weekday: number;
-  /** `HH:MM` in the product's own zone. */
+  /** `HH:MM` in the viewer's zone. */
   startTime: string;
   /** How long the session runs — carried in the chip's `title`. */
   durationMinutes: number;
@@ -151,7 +174,7 @@ export interface ScheduleChip {
  * about terms and breaks at all.
  */
 export interface ScheduleWeek {
-  /** The Monday, as a bare `YYYY-MM-DD` calendar date in the product zone. */
+  /** The Monday, as a bare `YYYY-MM-DD` calendar date in the viewer's zone. */
   weekStart: string;
   chips: readonly ScheduleChip[];
   /** Products paused this week, named so the page can say why they are absent. */
@@ -199,8 +222,27 @@ export interface ComingUpDay {
 export interface AdminDashboardData {
   /** The instant the page is "now" for — the highlighted weekday row. */
   now: Date;
-  /** The zone the schedule is authored in; every calendar date here is in it. */
+  /**
+   * The **viewer's** zone. Every calendar date and every clock face on this page
+   * has already been resolved into it, so the body never converts anything.
+   *
+   * A session is a date *plus a clock face*, so it converts — products are
+   * authored in their own zone (Helsinki, in practice) and an admin reading the
+   * schedule from anywhere else is shown their own wall clock, re-grouped onto
+   * the weekday it actually lands on for them.
+   */
   timeZone: string;
+  /**
+   * The viewer's short zone abbreviation, or `null` when it matches every
+   * scheduled product's own zone.
+   *
+   * It exists so the adjustment above is visible rather than silent: when the
+   * schedule was authored in one zone and is being read in another, the page
+   * says which one the times are in. `null` is the ordinary case — a Helsinki
+   * admin reading Helsinki products has nothing to be told. The string comes out
+   * of `Intl` already locale-formatted, so it is not translated copy.
+   */
+  timeZoneAbbrev: string | null;
   /** Products needing an admin. Empty means nothing is wrong with any of them. */
   products: readonly ProductAttention[];
   /** Gedu accounts waiting on a certification decision. */

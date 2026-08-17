@@ -1,5 +1,6 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
+"use client";
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   PRODUCT_TYPE_ORDER,
@@ -40,14 +41,17 @@ import {
  * the single thing that genuinely cannot be inferred, which is what a colour is.
  */
 export function ProductTypeKeyRail() {
+  const t = useTranslations("admin.dashboard.productTypeKey");
+  const tType = useTranslations("admin.products.types");
+
   return (
     <aside
-      aria-label="Product type key"
+      aria-label={t("label")}
       className="mt-6 xl:mt-0 xl:sticky xl:top-[calc(var(--header-height)+1.5rem)] xl:max-h-[calc(100vh-var(--header-height)-3rem)] xl:self-start xl:overflow-y-auto"
     >
       <div className="rounded-lg border border-border bg-card p-3">
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Product types
+          {t("heading")}
         </h2>
 
         <ul className="flex flex-wrap gap-x-4 gap-y-2 xl:flex-col xl:gap-2">
@@ -74,7 +78,9 @@ export function ProductTypeKeyRail() {
                     aria-hidden
                   />
                 </span>
-                <span className="min-w-0">{presentation.plural}</span>
+                <span className="min-w-0">
+                  {tType(`${presentation.i18nKey}.plural`)}
+                </span>
               </li>
             );
           })}

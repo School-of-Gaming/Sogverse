@@ -354,6 +354,21 @@ export type {
   ProductGroupsSnapshot,
 } from "@/services/groups/groups.contracts";
 
+// get_admin_dashboard — the single JSONB document behind the admin dashboard,
+// generated as `Json` for the same reason. Same arrangement as above: the
+// structured shape is derived from the adminDashboardSnapshot zod contract that
+// the service and the db test both parse through.
+export type {
+  AdminDashboardAttentionProduct,
+  AdminDashboardCertificationCandidate,
+  AdminDashboardGroupWithoutGedu,
+  AdminDashboardScheduleProduct,
+  AdminDashboardScheduleSlot,
+  AdminDashboardSnapshot,
+  AdminDashboardUserStat,
+  AdminDashboardWaitlistPressure,
+} from "@/services/admin-dashboard/admin-dashboard.contracts";
+
 // get_gedu_assigned_product — the JSONB document that backs the gedu's
 // session-details page (entered from a dashboard session card, but
 // product-scoped). Lives at /gedu/clubs/[id], /gedu/camps/[id], or

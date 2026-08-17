@@ -9,33 +9,16 @@
  * planet. Nothing in this module ever sees a clock face; the one time-of-day the
  * grid renders (a chip's `17:00`) is carried through as the string the schedule
  * slot stores.
+ *
+ * **It names no day and no month.** A weekday heading and a month divider are
+ * date *formatting*, so they come out of `Intl` in the reader's locale at the
+ * point of render (`formatDateOnly`, which is UTC-pinned for exactly the reason
+ * above) rather than out of a label array here — an array would be seven English
+ * words this module has no locale to translate. The one formatter that does live
+ * here takes the reader's locale as an argument for the same reason.
  */
 
-/** Weekday column headings, Monday-first, matching `weekday` 0…6. */
-export const WEEKDAY_LABELS = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-  "Sun",
-] as const;
-
-const MONTH_LABELS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
+import { formatDateOnly } from "@/lib/utils";
 
 /** A bare `YYYY-MM-DD` read as an instant at UTC midnight. */
 export function parseCalendarDate(iso: string): Date {
@@ -67,6 +50,31 @@ export function addCalendarDays(iso: string, days: number): string {
   );
 }
 
+/**
+ * `iso` moved `count` calendar months forward, clamped like Postgres.
+ *
+ * The schedule window the snapshot covers is authored as
+ * `date + INTERVAL '4 months'`, and Postgres clamps that to the last day of the
+ * target month — 31 October plus four months is 28 February. `Date.UTC` would
+ * overflow into 3 March instead and hand the page a week the data does not
+ * cover, so the day is clamped before the date is built.
+ */
+export function addCalendarMonths(iso: string, count: number): string {
+  const year = Number(iso.slice(0, 4));
+  const month = Number(iso.slice(5, 7));
+  const day = Number(iso.slice(8, 10));
+  const firstOfTarget = new Date(Date.UTC(year, month - 1 + count, 1));
+  const targetYear = firstOfTarget.getUTCFullYear();
+  const targetMonth = firstOfTarget.getUTCMonth();
+  // Day 0 of the following month is the last day of this one.
+  const lastDay = new Date(
+    Date.UTC(targetYear, targetMonth + 1, 0),
+  ).getUTCDate();
+  return toCalendarDate(
+    new Date(Date.UTC(targetYear, targetMonth, Math.min(day, lastDay))),
+  );
+}
+
 /** 0 = Monday … 6 = Sunday, the convention `schedule_slots.weekday` uses. */
 export function weekdayOf(iso: string): number {
   return (parseCalendarDate(iso).getUTCDay() + 6) % 7;
@@ -77,14 +85,19 @@ export function mondayOf(iso: string): string {
   return addCalendarDays(iso, -weekdayOf(iso));
 }
 
-/** `17.8.` — the Finnish short form, and short enough for a row heading. */
-export function formatDayMonth(iso: string): string {
-  return `${Number(iso.slice(8, 10))}.${Number(iso.slice(5, 7))}.`;
-}
-
-/** `August 2026` — the coming-up feed's month divider. */
-export function formatMonth(iso: string): string {
-  return `${MONTH_LABELS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+/**
+ * `17.8.` in Finnish, `8/17` in en-US — day and month as bare numerals, short
+ * enough for a row heading.
+ *
+ * It carries no *words*, which is not the same as carrying no locale: the order
+ * of the two numerals and the separator between them are both a reader's
+ * convention, and a hardcoded `d.M.` reads back-to-front for anyone whose
+ * calendar puts the month first. So it is `Intl` like every other date on this
+ * page, UTC-pinned through `formatDateOnly` because these are bare calendar
+ * dates, and the locale is threaded in from whoever is rendering it.
+ */
+export function formatDayMonth(iso: string, locale: string): string {
+  return formatDateOnly(iso, locale, { day: "numeric", month: "numeric" });
 }
 
 /**
