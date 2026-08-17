@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  municipalitySlug,
-  findMunicipalityBySlug,
-} from "@/lib/locations/municipality-slug";
-import type { Location } from "@/types";
+import { municipalitySlug } from "@/lib/locations/municipality-slug";
 
 describe("municipalitySlug", () => {
   it("lowercases and strips Finnish/Swedish diacritics", () => {
@@ -62,58 +58,3 @@ describe("municipalitySlug", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 });
-
-describe("findMunicipalityBySlug", () => {
-  const locations: Location[] = [
-    loc("h", "Helsinki", "municipality", { sv: "Helsingfors" }),
-    loc("y", "Ylöjärvi", "municipality"),
-    loc("r", "Uusimaa", "region"),
-  ];
-
-  it("resolves a slug back to its municipality", () => {
-    expect(findMunicipalityBySlug(locations, "helsinki")?.id).toBe("h");
-    expect(findMunicipalityBySlug(locations, "ylojarvi")?.id).toBe("y");
-  });
-
-  it("resolves the alternate-locale (Swedish) slug to the same row", () => {
-    expect(findMunicipalityBySlug(locations, "helsingfors")?.id).toBe("h");
-  });
-
-  it("prefers the canonical slug over an exonym match", () => {
-    // A row whose native name slugifies to the query wins over any row that
-    // only matches via an alternate name.
-    const withClash: Location[] = [
-      ...locations,
-      loc("clash", "Helsingfors", "municipality"), // native name == the sv slug
-    ];
-    // The canonical "helsinki" still maps to h; the exonym "helsingfors" now has
-    // a native match (clash) which takes priority over h's alternate.
-    expect(findMunicipalityBySlug(withClash, "helsingfors")?.id).toBe("clash");
-  });
-
-  it("ignores non-municipality rows and returns null on miss", () => {
-    // "uusimaa" would slugify-match the region row, but only municipalities
-    // are considered.
-    expect(findMunicipalityBySlug(locations, "uusimaa")).toBeNull();
-    expect(findMunicipalityBySlug(locations, "nope")).toBeNull();
-  });
-});
-
-function loc(
-  id: string,
-  name: string,
-  type: Location["type"],
-  name_i18n: Location["name_i18n"] = null,
-): Location {
-  return {
-    id,
-    name,
-    name_i18n,
-    type,
-    parent_id: null,
-    country_code: "FI",
-    external_code: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: "2026-01-01T00:00:00.000Z",
-  };
-}

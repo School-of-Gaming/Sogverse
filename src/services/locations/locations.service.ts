@@ -34,8 +34,8 @@ const KEY_LOOKUP_CHUNK_SIZE = 100;
  *
  * The sibling of `walkPages` (`src/lib/supabase/paging.ts`), and it exists for
  * the opposite reason: the walk
- * is for reads whose *whole* result a surface needs (one country's
- * municipalities to group, one municipality's venues to list), and this is for
+ * is for reads whose *whole* result a surface needs (one municipality's venues
+ * to list), and this is for
  * browsing, where the payload has to stay proportional to what is on screen no matter how
  * many children a node has. Both share the same two disciplines — `count:
  * "exact"` so the caller learns the true size, and a total order on the query so
@@ -105,10 +105,10 @@ const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, exter
 // `retired_at` instead, and the split between reads is the whole point of the
 // column:
 //
-//   * **Reads that OFFER a place** — browsing a level, one country's
-//     municipalities for the directory, the municipalities a postal code
-//     reaches — filter retired rows out. Nobody should be able to newly pick a
-//     place that no longer exists, whichever way they reached for it.
+//   * **Reads that OFFER a place** — browsing a level, the municipalities a
+//     postal code reaches — filter retired rows out. Nobody should be able to
+//     newly pick a place that no longer exists, whichever way they reached for
+//     it.
 //   * **Keyed reads deliberately do not.** A stored pick must keep resolving:
 //     the three-state guard in front of every picker distinguishes "the read
 //     has not landed" from "this id resolves to nothing", and a retired row is
@@ -143,34 +143,6 @@ const SITE_CHAIN_EMBED =
   `parent:parent_id(${CHAIN_COLUMNS}, ` +
   `parent:parent_id(${CHAIN_COLUMNS}))))`;
 
-/**
- * One level shallower, because a municipality *is* the level below a site: a
- * French commune sits under département → région → France, a Finnish kunta
- * under maakunta → Suomi. Each embedded level is an indexed lookup per row, and
- * this query runs over some 34,900 rows for France — so it asks for the depth it
- * needs and no more.
- */
-const MUNICIPALITY_CHAIN_EMBED =
-  `parent:parent_id(${CHAIN_COLUMNS}, ` +
-  `parent:parent_id(${CHAIN_COLUMNS}, ` +
-  `parent:parent_id(${CHAIN_COLUMNS})))`;
-
-function buildMunicipalitiesQuery(
-  supabase: AppSupabaseClient,
-  countryCode: string,
-) {
-  return supabase
-    .from("locations")
-    .select(`${LOCATION_COLUMNS}, ${MUNICIPALITY_CHAIN_EMBED}`, {
-      count: "exact",
-    })
-    .eq("country_code", countryCode)
-    .eq("type", "municipality")
-    .is("retired_at", null)
-    .order("name")
-    .order("id");
-}
-
 /** One ancestor, carrying the columns a breadcrumb or a grouping header needs. */
 export interface LocationChainNode {
   id: string;
@@ -190,9 +162,9 @@ export interface LocationChainNode {
  * as non-nullable, even though `locations.parent_id` is nullable and a country
  * row really does come back with `parent: null`. A consumer trusting that would
  * skip the check and read a property off null. This declaration only widens —
- * so the `walkPages<RawSiteRow>` call below still fails to compile if the
- * select string stops producing these columns, which is the protection the
- * inferred type was there for.
+ * so the keyed read below still fails to compile if its select string stops
+ * producing these columns, which is the protection the inferred type was there
+ * for.
  */
 interface EmbeddedAncestor extends LocationChainNode {
   parent?: EmbeddedAncestor | null;
@@ -239,24 +211,6 @@ export class LocationsService {
 
     if (error) throw error;
     return data;
-  }
-
-  /**
-   * Every municipality of one country, each carrying its ancestor chain.
-   * Drives the `/schools` list, Finland-only today (308 rows) — but the same
-   * call for France is some 34,900, so this is a paged walk, not a select. The
-   * chain is what lets the surface show (and group by) the region without a
-   * second read.
-   */
-  async getMunicipalitiesByCountry(
-    countryCode: string,
-  ): Promise<LocationWithChain[]> {
-    const rows = await walkPages<RawChainRow>(
-      "getMunicipalitiesByCountry",
-      (from, to) =>
-        buildMunicipalitiesQuery(this.supabase, countryCode).range(from, to),
-    );
-    return rows.map(flattenChain);
   }
 
   /**

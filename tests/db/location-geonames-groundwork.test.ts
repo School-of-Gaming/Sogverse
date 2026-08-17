@@ -399,15 +399,6 @@ describe("locations GeoNames groundwork", () => {
       expect(page.total).toBe(1);
     });
 
-    it("is gone from the municipality directory", async () => {
-      const rows = await service.getMunicipalitiesByCountry("ZZ");
-
-      expect(rows.map((row) => row.name).sort()).toEqual([
-        "Zzgwmuni",
-        "Zzgwundead",
-      ]);
-    });
-
     it("is gone from search, and out of the total as well as the page", async () => {
       // The filter lives in the match CTE rather than in the page, because a
       // "showing N of M" whose M counts rows the panel will never offer is

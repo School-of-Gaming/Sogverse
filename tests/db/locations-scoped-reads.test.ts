@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
@@ -15,9 +15,9 @@ import { TEST_IDS } from "./constants";
  * transport: that proves the service builds the request it means to and handles
  * the pages it gets back, but it cannot prove PostgREST *accepts* the request.
  * Two things here are only knowable against a live server — whether a deep
- * self-referential embed resolves, and whether the paged walk really clears
- * `max_rows` on a country of ~35,000 communes — and both are load-bearing for
- * the "nothing fetches the whole table" design.
+ * self-referential embed resolves, and whether a read really is truncated at
+ * `max_rows` in the silent way the paged walk assumes — and both are
+ * load-bearing for the "nothing fetches the whole table" design.
  *
  * The France commune tree is asserted here too, for the same reason the seed's
  * own assertion block exists: a partial seed is a hole in the tree an admin
@@ -330,55 +330,6 @@ describe("locations scoped reads", () => {
     });
   });
 
-  describe("getMunicipalitiesByCountry", () => {
-    // One walk each, shared by every assertion below: the France walk is 35
-    // sequential pages with a three-level embed and an exact count per page —
-    // doing it twice inside one 15s test timeout is how this file flakes.
-    let frRows: Awaited<ReturnType<typeof service.getMunicipalitiesByCountry>>;
-    let fiRows: Awaited<ReturnType<typeof service.getMunicipalitiesByCountry>>;
-
-    beforeAll(async () => {
-      frRows = await service.getMunicipalitiesByCountry("FR");
-      fiRows = await service.getMunicipalitiesByCountry("FI");
-    }, 120_000);
-
-    // ~35,000 rows is 35 pages at PostgREST's max_rows — the case an unpaged
-    // select would silently truncate to the first 1000.
-    it("walks past max_rows for a country the size of France", () => {
-      expect(frRows).toHaveLength(FR_COMMUNES);
-      expect(new Set(frRows.map((row) => row.id)).size).toBe(FR_COMMUNES);
-    });
-
-    it("returns Finland's municipalities and nothing else", () => {
-      expect(fiRows.length).toBeGreaterThanOrEqual(308);
-      expect(fiRows.every((row) => row.country_code === "FI")).toBe(true);
-      expect(fiRows.every((row) => row.type === "municipality")).toBe(true);
-    });
-
-    // The chain is what lets /schools group by region and the club picker show
-    // one, without a second read or a lookup table.
-    it("carries each municipality's chain, nearest first", () => {
-      const helsinki = fiRows.find((row) => row.external_code === "091");
-
-      expect(helsinki?.ancestors.map((node) => node.name)).toEqual([
-        "Uusimaa",
-        "Suomi",
-      ]);
-    });
-
-    // France needs one more level than Finland: a commune sits under a
-    // département, which is the level Finland skips entirely.
-    it("reaches the région through France's extra département level", () => {
-      const lille = frRows.find((row) => row.external_code === "59350");
-
-      expect(lille?.ancestors.map((node) => node.type)).toEqual([
-        "district",
-        "region",
-        "country",
-      ]);
-    });
-  });
-
   describe("getChildren", () => {
     // The whole of browsing, and the one filter that is easy to get wrong: a
     // country is a row with no parent, and `eq` against NULL matches nothing.
@@ -501,5 +452,156 @@ describe("locations scoped reads", () => {
         "country",
       ]);
     });
+  });
+
+  /**
+   * The one thing in the codebase that proves PostgREST truncates the way
+   * `walkPages` assumes — and the reason it seeds its own rows.
+   *
+   * The cap is enforced by returning a *short response*, not an error, so an
+   * over-cap select is byte-for-byte indistinguishable from a complete one.
+   * Every guarantee the paging primitive offers rests on that being true of the
+   * real server, and no amount of unit testing over a fake transport can say so:
+   * the fake answers however the test told it to.
+   *
+   * This used to ride on the whole-country municipality read over France's
+   * ~34,900 communes, which is gone — `/schools` is bounded by its clubs now.
+   * Every walked read that remains runs over fixture-sized data, so rather than
+   * keep a production read alive purely to be tested, the case builds its own
+   * over-cap set: a throwaway country with one municipality and
+   * {@link OVER_CAP_SITES} venues under it, read back through a real walked
+   * read.
+   *
+   * Sites are the right vehicle because they are leaves: nothing can be
+   * parented under one, so teardown never meets `parent_id`'s ON DELETE
+   * RESTRICT. The tree lives in a country code no seed uses, so the whole-table
+   * sweeps elsewhere in this suite (which scope themselves to the seeded
+   * countries) cannot see it even if a failed run leaves it behind — and the
+   * block deletes before it inserts, so a leftover cannot compound.
+   */
+  describe("the paged walk over PostgREST's response cap", () => {
+    /**
+     * `max_rows` from `supabase/config.toml`, which is what CI's stack boots
+     * with — so this is a repo-controlled number here rather than a hosting
+     * setting, and it is the value `PAGE_SIZE` in `src/lib/supabase/paging.ts`
+     * mirrors. If the two ever drift apart, the first assertion below is where
+     * it should be seen.
+     */
+    const RESPONSE_CAP = 1000;
+
+    /**
+     * Comfortably over the cap and no further: this is a real insert on every
+     * CI run, so the fixture buys the second page and stops. One page plus a
+     * short one is the whole shape the walk's termination depends on.
+     */
+    const OVER_CAP_SITES = 1050;
+
+    /** Rows per insert — enough to keep the seeding to three requests. */
+    const INSERT_BATCH = 350;
+
+    /** Fixture ids, outside every range seed.sql and the other suites use. */
+    const WALK = {
+      COUNTRY: "00000000-0000-4000-8000-000000000000",
+      MUNICIPALITY: "00000000-0000-4000-8000-000000000001",
+    } as const;
+
+    /** A country code no seed carries, so nothing else's sweep can see these. */
+    const WALK_COUNTRY_CODE = "ZY";
+
+    const siteId = (index: number) =>
+      `00000000-0000-4000-8000-1${String(index).padStart(11, "0")}`;
+
+    /** Zero-padded so `name` sorts the same way in the fixture and the answer. */
+    const siteName = (index: number) =>
+      `Zywalk venue ${String(index).padStart(5, "0")}`;
+
+    async function deleteFixture() {
+      // Bottom-up: `parent_id` is ON DELETE RESTRICT. The sites go by their
+      // parent rather than by an id list, so a partly-inserted batch from a
+      // failed run is cleared just as completely as a whole one.
+      const steps = [
+        () => admin.from("locations").delete().eq("parent_id", WALK.MUNICIPALITY),
+        () => admin.from("locations").delete().eq("id", WALK.MUNICIPALITY),
+        () => admin.from("locations").delete().eq("id", WALK.COUNTRY),
+      ];
+      for (const step of steps) {
+        const { error } = await step();
+        if (error) throw error;
+      }
+    }
+
+    beforeAll(async () => {
+      await deleteFixture();
+
+      // `depth` and `country_code` on the sites are what the whole-table
+      // invariants in the groundwork suite check, so the tree is built to
+      // satisfy them: the trigger computes depth, and every site carries its
+      // parent's country code.
+      const { error: treeError } = await admin.from("locations").insert([
+        {
+          id: WALK.COUNTRY,
+          name: "Zywalkland",
+          type: "country",
+          parent_id: null,
+          country_code: WALK_COUNTRY_CODE,
+        },
+        {
+          id: WALK.MUNICIPALITY,
+          name: "Zywalkmuni",
+          type: "municipality",
+          parent_id: WALK.COUNTRY,
+          country_code: WALK_COUNTRY_CODE,
+        },
+      ]);
+      if (treeError) throw treeError;
+
+      for (let from = 0; from < OVER_CAP_SITES; from += INSERT_BATCH) {
+        const size = Math.min(INSERT_BATCH, OVER_CAP_SITES - from);
+        const { error } = await admin.from("locations").insert(
+          Array.from({ length: size }, (_, offset) => ({
+            id: siteId(from + offset),
+            name: siteName(from + offset),
+            type: "site" as const,
+            parent_id: WALK.MUNICIPALITY,
+            country_code: WALK_COUNTRY_CODE,
+          })),
+        );
+        if (error) throw error;
+      }
+    }, 120_000);
+
+    afterAll(async () => {
+      await deleteFixture();
+    }, 120_000);
+
+    // The failure the primitive exists for, reproduced against the real server:
+    // the response comes back 200, with no flag saying it is a prefix, and the
+    // only thing that gives it away is the count the read had to ask for.
+    it("truncates an unranged read at the cap, without an error to say so", async () => {
+      const { data, error, count } = await admin
+        .from("locations")
+        .select("id", { count: "exact" })
+        .eq("parent_id", WALK.MUNICIPALITY);
+
+      expect(error).toBeNull();
+      expect(count).toBe(OVER_CAP_SITES);
+      expect(data).toHaveLength(RESPONSE_CAP);
+    });
+
+    // And the walked read, over the same rows, comes back whole. Distinctness
+    // is asserted as well as length: a walk that re-read a page would hit the
+    // count reconciliation, but one that returned the same row twice while
+    // dropping another would not.
+    it("walks the whole of an over-cap read, once per row", async () => {
+      const rows = await service.getSitesByParent(WALK.MUNICIPALITY);
+
+      expect(rows).toHaveLength(OVER_CAP_SITES);
+      expect(new Set(rows.map((row) => row.id)).size).toBe(OVER_CAP_SITES);
+      // The total order the walk needs, seen from the other end: the pages join
+      // up into one ascending sequence rather than interleaving at the seam.
+      expect(rows.map((row) => row.name)).toEqual(
+        Array.from({ length: OVER_CAP_SITES }, (_, i) => siteName(i)),
+      );
+    }, 60_000);
   });
 });
