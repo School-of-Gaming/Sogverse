@@ -23,6 +23,8 @@ Measured against production (first request after a 25-minute idle, so all caches
 
 Decomposition of the 1170 ms: ~40 ms network, ~107 ms Vercel lambda init, ~145 ms warm
 server work, and **~878 ms (75%) is the municipality read running against cold caches.**
+The 238,285-byte figure is the municipality read alone (~774 bytes × 308 rows accounts
+for it); the clubs read the page also makes sits on top of it and was not measured.
 
 The read is not merely large, it is bounded by the wrong variable. Two facts, both
 verified in the code, make the whole-country read unnecessary:
@@ -84,8 +86,11 @@ No schema change. The clubless-municipality 404 surface is unchanged, because cl
 unknown slugs already 404 together.
 
 **One deliberate behaviour change, decided by the owner:** the keyed read does not filter
-retired rows (the offer/keyed split in the locations architecture forbids it, and no
-application read may select the column at all). So a club anchored to a *retired*
+retired rows. The binding reason is the keyed-read discipline itself — a stored pick must
+keep resolving, so the keyed read may never narrow by retirement. It is *not* merely that
+no read may select the column: the postal-code lookup shows a sanctioned way to apply a
+retired filter server-side without selecting it (an inner join over the relation), so do
+not "fix" the keyed read that way either. So a club anchored to a *retired*
 municipality, today hidden from `/schools` and 404ing at its own URL, will now appear.
 **This is accepted.** The club is real and already visible in `/shop`, so hiding it means a
 family cannot find a club they may be enrolled in; retirement only happens through rare
@@ -220,16 +225,26 @@ Each of these was considered and turned down **after** measurement. Do not rebui
   fallback resolves.** The consequence is accepted — the "no matches" card, which appears
   instantly today, will now appear after a round trip. The alternative (show "no matches"
   immediately, then replace it with fallback hits) resizes the results container on data's
-  own schedule, which the layout rule forbids. Only the very first fallback query is blank
-  in practice, because the search hook keeps previous results as placeholder data.
+  own schedule — but the binding objection is honesty, not layout: the page would assert
+  "no municipality matches this" and then contradict itself, and results changing in
+  response to typing are user-initiated either way (see the layout entry below). The
+  search hook's default placeholder behaviour — keeping the previous needle's hits while
+  the next request flies — must be **disabled at this call site**: interleaved with a
+  local arm that just returned zero, the previous query's hits would render as answers to
+  a query they don't match. The blank window this leaves is a frame or two against a
+  cached, indexed route.
   **Withhold the empty state only while a fallback is actually pending.** The local arm has
   no minimum length but the fallback is gated at two characters, so a one-character query
   with no local match has no request in flight and nothing to wait for — it must show the
   empty state immediately, exactly as today. Withholding it there would leave the results
   area permanently blank.
 - **Layout stability:** search results changing in response to typing is user-initiated
-  and therefore permitted, but the results container must not resize the page around it
-  as the two arms swap.
+  and therefore permitted — and that carve-out covers the debounced fallback resolving
+  too: causal distance doesn't matter, it is still the direct result of the typed query.
+  So the arm swap needs no reserved height (holding a slot open for results that may
+  never come is the dead-space defect the layout rule itself names). What remains
+  forbidden here is only the contradicted empty state above; soften any remaining reflow
+  rather than trying to prevent it.
 - **The slug helper is not the "second fold" to remove, and cannot be removed.** It builds
   every `/schools/<slug>` URL and is what slug resolution matches against; it has its own
   unit test and a DB uniqueness test. What must not exist is a *second matcher*: the
@@ -279,8 +294,11 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    read for their rows-with-chains, filter in memory to Finnish municipality rows, then
    feed the existing entry-building helper. Every entry is now club-bearing, so the
    `hasClubs` flag and the default view's filter over it both become vestigial — remove
-   the plumbing rather than leaving a field that is always true. Confirm the region
-   grouping and default rendering are unchanged, and that the RSC payload drops.
+   the plumbing rather than leaving a field that is always true. Note the *row rendering*
+   still needs a clubless state — the search view renders fallback hits in the "no clubs
+   here" style — so the distinction leaves the entry type but survives in the view model
+   (a local-entry / fallback-hit union or an explicit prop; implementer's choice). Confirm
+   the region grouping and default rendering are unchanged, and that the RSC payload drops.
 4. **Add the search fallback arm.** Local instant match over the club-bearing entries; on
    no local match, query the indexed search route scoped to Finland and municipalities,
    with a client-side debounce. Render nothing in the results area until it resolves (see
@@ -289,7 +307,9 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    or empty fallback shows the existing empty state, never an error.
 5. **Delete the whole-country municipality read**, which now has no callers. Note this is
    larger than one method: it also removes its unit tests, its entry in the reads
-   column-discipline registry, and two DB tests. **One of those DB tests is the only
+   column-discipline registry, and two DB tests. (One of the two is retired-row directory
+   coverage rather than paging coverage; its intent survives via the child-listing and
+   search cases in the same suite, so it needs no replacement.) **The other is the only
    coverage anywhere that walks past PostgREST's 1000-row response cap** — the sole proof
    that the paged walk terminates correctly on a large read against a real PostgREST. It
    cannot simply be moved: France's ~34,900 communes are the only over-cap dataset in CI,
@@ -332,7 +352,10 @@ Each of these was considered and turned down **after** measurement. Do not rebui
 - A DB test still proves the paged walk terminates correctly against a real PostgREST on an
   over-cap read, seeding its own rows rather than depending on France's communes.
 - Lint, type-check, unit and integration suites, and the translations check all pass. The
-  pure entry-building and slug-resolution helpers keep their existing unit coverage.
+  slug helper keeps its existing unit coverage untouched; the entry-building helper's
+  coverage is *updated alongside its signature* — under change 1 the municipality route
+  feeds it embedded location nodes rather than rows-with-chains, so its fixtures change
+  shape rather than surviving verbatim.
 
 ## Verification
 
