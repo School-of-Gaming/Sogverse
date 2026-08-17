@@ -135,4 +135,83 @@ describe("ProductsService.listVisibleByTypes", () => {
       service.listVisibleByTypes(["consumer_club"]),
     ).rejects.toThrow();
   });
+
+  // The narrow half of the same listing, for a caller that wants only where
+  // each product is. Two claims worth pinning: it asks for none of the payload
+  // a card renders, and it answers the visibility question identically —
+  // "which products are on sale" must not depend on how much of the row was
+  // requested.
+  describe("listVisibleLocationsByTypes", () => {
+    function selectOf(call: number) {
+      return (
+        requestedUrl(fetchMock.mock.calls[call][0]).searchParams.get("select") ??
+        ""
+      );
+    }
+
+    it("selects the location chain and the lifecycle columns, nothing else", async () => {
+      fetchMock.mockResolvedValue(postgrestJson([]));
+
+      await service.listVisibleLocationsByTypes(["municipality_club"]);
+
+      const select = selectOf(0);
+      expect(select).toContain("locations(");
+      expect(select).toContain("parent:parent_id(");
+      for (const column of [
+        "status",
+        "start_date",
+        "end_date",
+        "signup_threshold",
+        "timezone",
+      ]) {
+        expect(select).toContain(column);
+      }
+      // The payload the landing page was paying for and never opened.
+      expect(select).not.toContain("*");
+      expect(select).not.toContain("product_translations");
+      expect(select).not.toContain("product_prices");
+      expect(select).not.toContain("schedule_slots");
+    });
+
+    it("applies the same visibility filters as the full listing", async () => {
+      // A fresh Response per call: both reads consume a body, and a single
+      // canned one has its body read once.
+      fetchMock.mockImplementation(() => Promise.resolve(postgrestJson([])));
+
+      await service.listVisibleByTypes(["municipality_club"]);
+      await service.listVisibleLocationsByTypes(["municipality_club"]);
+
+      const full = requestedUrl(fetchMock.mock.calls[0][0]);
+      const narrow = requestedUrl(fetchMock.mock.calls[1][0]);
+      for (const param of ["product_type", "is_visible", "status", "order"]) {
+        expect(narrow.searchParams.get(param)).toBe(
+          full.searchParams.get(param),
+        );
+      }
+    });
+
+    it("drops ended products exactly as the full listing does", async () => {
+      const rows = [
+        row({ id: "past", status: "running", end_date: "2026-06-03" }),
+        row({ id: "future", status: "running", end_date: "2026-12-31" }),
+      ];
+      fetchMock.mockResolvedValue(postgrestJson(rows));
+
+      const result = await service.listVisibleLocationsByTypes([
+        "municipality_club",
+      ]);
+
+      // `id` isn't in the narrow select, so the surviving row is named by the
+      // lifecycle column the filter actually turned on.
+      expect(result.map((r) => r.end_date)).toEqual(["2026-12-31"]);
+    });
+
+    it("throws when the query errors", async () => {
+      fetchMock.mockResolvedValue(postgrestError("boom"));
+
+      await expect(
+        service.listVisibleLocationsByTypes(["municipality_club"]),
+      ).rejects.toThrow();
+    });
+  });
 });

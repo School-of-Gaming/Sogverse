@@ -1,30 +1,57 @@
-import type { LocationWithChain } from "@/services/locations";
+import type { LocationChainNode } from "@/services/locations";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
   municipalityOf,
   type EmbeddedLocation,
+  type EmbeddedLocationNode,
 } from "@/lib/locations/embedded-chain";
 import {
   localizedLocationName,
   localizedNameAlternates,
 } from "@/lib/locations/localized-name";
+import type { Json } from "@/types";
 
-// Pure logic behind the public /schools page: turn Finland's municipality rows
-// plus the locations of the visible municipality clubs into a sorted list of
-// municipalities, each flagged with whether a club is currently available
-// there. Kept React/Supabase-free so it unit-tests directly.
+// Pure logic behind the public /schools pages: turn the municipalities that
+// actually run clubs into a sorted list of rows a parent can browse or search.
+// Kept React/Supabase-free so it unit-tests directly.
 //
-// Both inputs are scoped reads that carry their own chain — the municipalities
-// come with their ancestors, the clubs with their location and its parent — so
-// nothing here needs the whole locations table to resolve a region name or to
-// walk a site up to its municipality.
+// Both routes start from the clubs and derive the geography from what those
+// clubs point at, so every read either page makes is bounded by the club count
+// rather than by the size of a country. Which shape feeds the entry builder
+// differs, and that is the whole difference between the two pages:
+//
+//   * `/schools/<slug>` feeds it the municipality node off each club's own
+//     product embed — no locations read at all, because the page renders a name
+//     and matches a slug and never mentions the region.
+//   * `/schools` feeds it the keyed read's rows-with-chains, because its region
+//     grouping is only reachable through the ancestor chain (an in-person club's
+//     embed stops at the municipality).
 
 /**
- * /schools is Finland-only, and this is the country whose municipality rows it
- * lists. Scoping now happens in the query rather than in a filter here, so the
- * page never reads a row it will not show.
+ * /schools is Finland-only. The club-bearing municipality ids are read by key,
+ * and a keyed read is deliberately unfiltered, so this is what the /schools
+ * list narrows its rows to in memory — the keyed read returns `country_code`
+ * and `type`, so no forbidden column is involved.
  */
 export const SCHOOLS_COUNTRY_CODE = "FI";
+
+/**
+ * The minimum a municipality has to carry to become an entry.
+ *
+ * Two callers feed it deliberately different shapes: a row from the keyed
+ * locations read (which carries its ancestor chain, so the region resolves) and
+ * a municipality node lifted straight off a product's location embed (which
+ * carries no chain and needs none). An entry built from an embed therefore has
+ * no region — that is correct rather than missing, because the only surface
+ * that builds entries that way is the one that never renders a region.
+ */
+export interface MunicipalitySource {
+  id: string;
+  name: string;
+  name_i18n: Json | null;
+  /** Ancestor chain, nearest first — `ancestors[0]` is the region. */
+  ancestors?: readonly LocationChainNode[];
+}
 
 /** One municipality row for the /schools list. */
 export interface MunicipalityEntry {
@@ -32,11 +59,10 @@ export interface MunicipalityEntry {
   /** Display name in the viewer's locale (Swedish name for `sv`, else `name`). */
   name: string;
   /**
-   * URL slug for the (future) `/schools/<slug>` page, derived from the
-   * viewer-locale display name — a Swedish viewer links to `helsingfors`, a
-   * Finnish viewer to `helsinki`. Both resolve to the same row via
-   * `findMunicipalityBySlug`, which accepts the canonical and every alternate
-   * slug.
+   * URL slug for the `/schools/<slug>` page, derived from the viewer-locale
+   * display name — a Swedish viewer links to `helsingfors`, a Finnish viewer to
+   * `helsinki`. Both resolve to the same row via `findMunicipalityBySlug`,
+   * which accepts the canonical and every alternate slug.
    */
   slug: string;
   /**
@@ -48,8 +74,6 @@ export interface MunicipalityEntry {
   regionId: string | null;
   /** Region display name in the viewer's locale. */
   regionName: string | null;
-  /** True when >=1 visible municipality club resolves to this municipality. */
-  hasClubs: boolean;
 }
 
 /** Municipalities grouped under their region, for the default browse view. */
@@ -60,30 +84,50 @@ export interface RegionGroup {
 }
 
 /**
- * Build the full sorted list of Finnish municipalities, each flagged with
- * whether a visible club is available there.
+ * The distinct municipalities a set of clubs sits in, each as the node the
+ * club's own embed carried, in first-seen order.
  *
- * @param municipalities  Finland's municipality rows, each with its ancestor
- *                        chain (nearest first, so `ancestors[0]` is the region)
- * @param clubLocations   the embedded location of each visible municipality
- *                        club (null entries are ignored)
+ * Membership is *resolved* rather than compared: a municipality club's location
+ * is the municipality row itself when online and a site inside it when
+ * in-person, so stepping up to the nearest municipality is what puts both
+ * shapes in the same bucket. A club that resolves to no municipality (legacy
+ * data anchored at a region or a country) contributes nothing — availability is
+ * municipality-exact, with no cascade.
+ *
+ * Typed structurally, so any row carrying its location embed works.
+ */
+export function municipalitiesOfClubs<
+  T extends { locations: EmbeddedLocation | null },
+>(clubs: readonly T[]): EmbeddedLocationNode[] {
+  const byId = new Map<string, EmbeddedLocationNode>();
+  for (const club of clubs) {
+    const municipality = municipalityOf(club.locations);
+    if (municipality && !byId.has(municipality.id)) {
+      byId.set(municipality.id, municipality);
+    }
+  }
+  return [...byId.values()];
+}
+
+/**
+ * Build the sorted list of municipality entries.
+ *
+ * Every municipality handed in is one a club resolved to, so there is no
+ * "available here?" flag to carry — the list *is* the club-bearing set.
+ *
+ * @param municipalities  the club-bearing municipalities, either as rows with
+ *                        their ancestor chain (nearest first) or as embedded
+ *                        location nodes with no chain
  */
 export function buildMunicipalityEntries(
-  municipalities: LocationWithChain[],
-  clubLocations: (EmbeddedLocation | null)[],
+  municipalities: readonly MunicipalitySource[],
   locale: string,
 ): MunicipalityEntry[] {
-  const activeMunicipalityIds = new Set<string>();
-  for (const location of clubLocations) {
-    const municipality = municipalityOf(location);
-    if (municipality) activeMunicipalityIds.add(municipality.id);
-  }
-
   return municipalities
     .map((m) => {
       // `.at()` rather than `[0]`: a municipality whose parent row is missing
       // really has an empty chain, and index access would type that away.
-      const region = m.ancestors.at(0);
+      const region = m.ancestors?.at(0);
       const isRegion = region?.type === "region";
       const displayName = localizedLocationName(m, locale);
       return {
@@ -96,7 +140,6 @@ export function buildMunicipalityEntries(
         ],
         regionId: isRegion ? region.id : null,
         regionName: isRegion ? localizedLocationName(region, locale) : null,
-        hasClubs: activeMunicipalityIds.has(m.id),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, locale));
@@ -104,7 +147,7 @@ export function buildMunicipalityEntries(
 
 /**
  * The clubs that belong to one municipality, by *resolved* membership — the same
- * rule that decides whether a municipality is listed as having clubs at all.
+ * rule that decides which municipalities are listed at all.
  *
  * A municipality club always carries a location, in one of two shapes: the
  * municipality row itself (online) or a site inside it (in-person). Comparing a
@@ -132,6 +175,10 @@ export function selectClubsInMunicipality<
  * `helsingfors` land on the same row regardless of the viewer's locale — the
  * URL rests on whatever was linked/bookmarked, and switching locale never
  * rewrites it. Returns `undefined` for an unknown slug (the page 404s on that).
+ *
+ * The entries are the club-bearing municipalities and nothing else, so a slug
+ * naming a real municipality that runs no clubs misses here exactly as a
+ * nonsense slug does — which is the 404 that page has always served.
  */
 export function findMunicipalityBySlug(
   slug: string,
@@ -145,7 +192,7 @@ export function findMunicipalityBySlug(
 /**
  * Group municipalities under their region, regions sorted by name and
  * municipalities sorted within each (Finnish collation). Used for the default
- * view, which passes only the municipalities that `hasClubs`.
+ * view.
  */
 export function groupByRegion(entries: MunicipalityEntry[]): RegionGroup[] {
   const groups = new Map<string, RegionGroup>();

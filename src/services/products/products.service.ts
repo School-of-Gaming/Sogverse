@@ -9,7 +9,10 @@ import type {
 import type { QueryData } from "@supabase/supabase-js";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { effectiveStatus } from "@/lib/products/effective-status";
+import {
+  effectiveStatus,
+  type LifecycleInputs,
+} from "@/lib/products/effective-status";
 import {
   parseJsonResponse,
   readErrorMessage,
@@ -36,19 +39,75 @@ import { productIdResponse } from "./products.contracts";
 // dropping this filter would publish products that were deliberately kept off
 // the grid, and adding the same filter to a single-product read would break the
 // direct link the unlisted state exists for.
-function buildVisibleProductsQuery(
+//
+// The filters live in one place and the *select* is the parameter, because two
+// surfaces ask this same question of different amounts of the row (see
+// `LOCATION_ONLY_SELECT` below). Forking the query would fork the visibility
+// rule with it, and a visibility rule that exists twice is one that will
+// eventually disagree with itself. The select is a generic literal so each
+// caller's row type is still inferred from its own string.
+function buildVisibleProductsQuery<Select extends string>(
   supabase: AppSupabaseClient,
   types: ProductType[],
+  select: Select,
 ) {
   return supabase
     .from("products")
-    .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
-    )
+    .select(select)
     .in("product_type", types)
     .eq("is_visible", true)
     .in("status", ["pending", "running"])
     .order("created_at", { ascending: false });
+}
+
+/** Everything a browse card renders, in one round trip. */
+const BROWSE_SELECT =
+  "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+
+/**
+ * The same listing read by a caller that wants only *where* each product is:
+ * the location embed, plus the five lifecycle columns `effectiveStatus()` needs
+ * to finish the visibility filter in JS. No translations (five locales of
+ * markdown description each), no prices, no schedule slots.
+ *
+ * `/schools` is that caller — it groups municipality clubs by municipality and
+ * reads nothing else off the row — and it is a landing page, so the difference
+ * between this and the full row is most of its server fetch.
+ */
+const LOCATION_ONLY_SELECT =
+  "status, start_date, end_date, signup_threshold, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+
+function buildBrowseQuery(supabase: AppSupabaseClient, types: ProductType[]) {
+  return buildVisibleProductsQuery(supabase, types, BROWSE_SELECT);
+}
+
+function buildVisibleLocationsQuery(
+  supabase: AppSupabaseClient,
+  types: ProductType[],
+) {
+  return buildVisibleProductsQuery(supabase, types, LOCATION_ONLY_SELECT);
+}
+
+// The half of the visibility rule the database cannot answer, shared by every
+// caller of the listing above so the two selects can never disagree about what
+// is on sale.
+//
+// The stored-status filter in the query keeps cancelled/completed rows out, but
+// it can't catch a row stored as `running` whose `end_date` has already passed
+// — that product has finished and must not appear in the storefront. There is
+// no cron flipping stored status, so the call is made here in JS:
+// `effectiveStatus()` downgrades such a row to `completed` (or `expired`) and
+// we drop it. The comparison is date-only against the product's *own* timezone
+// (a finished-yesterday camp in Helsinki must not linger for a UTC viewer —
+// CLAUDE.md "Date & Time"); `effectiveStatus()` already projects `now` into
+// `product.timezone`. The active-participation count is irrelevant to the ended
+// decision (only `end_date` drives completed/expired), so 0 is safe to pass.
+function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
+  const now = new Date();
+  return rows.filter((row) => {
+    const status = effectiveStatus(row, now, 0);
+    return status !== "completed" && status !== "expired";
+  });
 }
 
 // Joined shape consumed by the parent-facing browse pages
@@ -59,7 +118,16 @@ function buildVisibleProductsQuery(
 // slots, and the joined location for in-person products. (`topic` is a column
 // on Product, so no join is needed.)
 export type ProductBrowseRow = QueryData<
-  ReturnType<typeof buildVisibleProductsQuery>
+  ReturnType<typeof buildBrowseQuery>
+>[number];
+
+/**
+ * The narrow half of the same listing: a visible product's location embed and
+ * nothing a card would render. Consumed by `/schools`, which turns each club
+ * into the municipality it belongs to and never opens the row any further.
+ */
+export type ProductLocationRow = QueryData<
+  ReturnType<typeof buildVisibleLocationsQuery>
 >[number];
 
 function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
@@ -290,35 +358,35 @@ export class ProductsService {
 
   // Parent-facing list: only visible products in a parent-relevant lifecycle
   // state. RLS already restricts anon/customer reads to the same predicate
-  // (per redesign §5.8) — the explicit filters here are defensive and let
-  // admins (who can see everything) call this same hook from the public
-  // pages without seeing cancelled rows. Joins everything the browse
-  // card needs in one round trip.
-  //
-  // The stored-status filter below keeps cancelled/completed rows out,
-  // but it can't catch a row stored as `running` whose `end_date` has already
-  // passed — that product has finished and must not appear in the storefront.
-  // There is no cron flipping stored status, so we make the call here in JS:
-  // `effectiveStatus()` downgrades such a row to `completed` (or `expired`)
-  // and we drop it. The comparison is date-only against the product's *own*
-  // timezone (a finished-yesterday camp in Helsinki must not linger for a UTC
-  // viewer — CLAUDE.md "Date & Time"); `effectiveStatus()` already projects
-  // `now` into `product.timezone`. The active-participation count is irrelevant
-  // to the ended decision (only `end_date` drives completed/expired), so 0 is
-  // safe to pass.
+  // (per redesign §5.8) — the explicit filters in the query are defensive and
+  // let admins (who can see everything) call this same hook from the public
+  // pages without seeing cancelled rows. Joins everything the browse card
+  // needs in one round trip.
   async listVisibleByTypes(types: ProductType[]): Promise<ProductBrowseRow[]> {
-    const { data, error } = await buildVisibleProductsQuery(
+    const { data, error } = await buildBrowseQuery(this.supabase, types);
+
+    if (error) throw error;
+    return dropEndedProducts(data);
+  }
+
+  // The same listing, narrowed to each product's location. `/schools` groups
+  // municipality clubs by municipality and reads nothing else off the row, so
+  // it pays for the location embed and the lifecycle columns and for nothing
+  // else — see `LOCATION_ONLY_SELECT`.
+  //
+  // Same query shape and same effective-status pass as the full read above, on
+  // purpose: what is visible must not depend on how much of the row a caller
+  // asked for.
+  async listVisibleLocationsByTypes(
+    types: ProductType[],
+  ): Promise<ProductLocationRow[]> {
+    const { data, error } = await buildVisibleLocationsQuery(
       this.supabase,
       types,
     );
 
     if (error) throw error;
-
-    const now = new Date();
-    return data.filter((row) => {
-      const status = effectiveStatus(row, now, 0);
-      return status !== "completed" && status !== "expired";
-    });
+    return dropEndedProducts(data);
   }
 
   // Single-product detail fetch for the parent-facing detail page

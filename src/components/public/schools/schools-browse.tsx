@@ -20,15 +20,17 @@ import {
  * Public entry point for parents discovering municipality clubs. Two states
  * driven by the search box:
  *  - empty query → the curated default: the regions where we run clubs, each an
- *    expandable section that reveals its available municipalities on click
- *    (collapsed by default to keep the list compact);
- *  - non-empty query → search across *every* Finnish municipality, each row
- *    flagged "clubs available" or "nothing here yet" so a parent anywhere can
- *    find their town and see its status.
+ *    expandable section that reveals its municipalities on click (collapsed by
+ *    default to keep the list compact);
+ *  - non-empty query → search over those same municipalities, each row carrying
+ *    its region sub-line and its status.
  *
- * `entries` is computed server-side, so the first frame is complete — search
- * only ever filters in place, and the region sections start collapsed so
- * expanding is always user-initiated (CLAUDE.md layout-stability rule).
+ * `entries` is every municipality that runs a club, and nothing else — the page
+ * is bounded by the club count rather than by Finland, so this is a small list
+ * both to ship and to search. It is computed server-side, so the first frame is
+ * complete: search only ever filters in place, and the region sections start
+ * collapsed so expanding is always user-initiated (CLAUDE.md layout-stability
+ * rule).
  */
 export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   const t = useTranslations("schools");
@@ -40,10 +42,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   const normalizedQuery = municipalitySlug(query);
   const searching = normalizedQuery.length > 0;
 
-  const activeGroups = useMemo(
-    () => groupByRegion(entries.filter((e) => e.hasClubs)),
-    [entries],
-  );
+  const activeGroups = useMemo(() => groupByRegion(entries), [entries]);
 
   const results = useMemo(
     () =>
@@ -88,7 +87,13 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
           results.length > 0 ? (
             <ul className="space-y-2">
               {results.map((m) => (
-                <MunicipalityRow key={m.id} entry={m} t={t} searchView />
+                <MunicipalityRow
+                  key={m.id}
+                  entry={m}
+                  t={t}
+                  hasClubs
+                  searchView
+                />
               ))}
             </ul>
           ) : (
@@ -190,7 +195,7 @@ function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
       {open && (
         <ul className="mt-2 space-y-2 pl-4">
           {group.municipalities.map((m) => (
-            <MunicipalityRow key={m.id} entry={m} t={t} />
+            <MunicipalityRow key={m.id} entry={m} t={t} hasClubs />
           ))}
         </ul>
       )}
@@ -198,17 +203,26 @@ function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
   );
 }
 
+/**
+ * Whether this row's municipality runs clubs is a property of *where the row
+ * came from*, not of the entry — every entry the page holds is club-bearing by
+ * construction, and a clubless municipality can only reach the list as a search
+ * hit from outside that set. So it rides as a prop rather than as a field on
+ * `MunicipalityEntry`, which would be a flag that is always true.
+ */
 function MunicipalityRow({
   entry,
   t,
+  hasClubs,
   searchView = false,
 }: {
   entry: MunicipalityEntry;
   t: Translate;
-  // Search results span every municipality and aren't region-grouped, so they
-  // show the region sub-line and the available/coming-soon status. The default
-  // view is already region-grouped and lists only active municipalities, so
-  // both would be redundant noise there.
+  hasClubs: boolean;
+  // Search results aren't region-grouped, so they show the region sub-line and
+  // the available/nothing-here status. The default view is already
+  // region-grouped and lists only club-bearing municipalities, so both would be
+  // redundant noise there.
   searchView?: boolean;
 }) {
   const inner = (
@@ -224,15 +238,14 @@ function MunicipalityRow({
           )}
         </span>
       </span>
-      {searchView && <StatusPill hasClubs={entry.hasClubs} t={t} />}
+      {searchView && <StatusPill hasClubs={hasClubs} t={t} />}
     </>
   );
 
-  // A municipality with no clubs has nothing to browse — its page would only
-  // show the empty state — so the row isn't a link. Muted and non-interactive;
-  // the status pill carries the "nothing here" meaning. (Only reachable in the
-  // search view; the default view lists active municipalities only.)
-  if (!entry.hasClubs) {
+  // A municipality with no clubs has nothing to browse — its URL 404s — so the
+  // row isn't a link. Muted and non-interactive; the status pill carries the
+  // "nothing here" meaning.
+  if (!hasClubs) {
     return (
       <li>
         <div className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 text-muted-foreground">
