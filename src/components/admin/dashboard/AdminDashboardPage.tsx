@@ -16,6 +16,7 @@ import { AdminDashboardPageBody } from "./admin-dashboard-page-body";
 import {
   buildAdminDashboardData,
   buildCertificationQueue,
+  viewerZoneAbbrev,
 } from "./build-admin-dashboard-data";
 
 /**
@@ -28,9 +29,10 @@ import {
  * answers all of it at one moment; this shell turns that document into the
  * shapes the body renders and owns the one action on the page.
  *
- * **The read arrives already answered.** The route awaits the RPC and hands the
- * snapshot in as `initialSnapshot`, which seeds React Query on the same key the
- * certify action invalidates. So the query starts with data rather than pending,
+ * **The read arrives already answered.** The route awaits the RPC, hydrates it
+ * into React Query on the same key the certify action invalidates, and hands the
+ * same document in as `initialSnapshot` so the query's `data` is not optional.
+ * So the query starts with data rather than pending,
  * this component has no loading branch and no failure branch — a read that never
  * landed is the route's problem and never gets this far — and React Query is
  * still the owner from that point on: invalidating `adminDashboardKeys.all`
@@ -44,6 +46,17 @@ import {
  * does not shift under anyone a frame after hydration. The zone is the
  * *viewer's* — a session carries a clock face, so it converts — and the mapping
  * re-groups every occurrence onto the weekday it lands on there.
+ *
+ * **The one exception is a first-ever visit with no timezone cookie, and it is
+ * accepted.** `TimezoneProvider` is cookie-seeded on the server and corrects
+ * itself post-mount from `Intl.DateTimeFormat().resolvedOptions()`, so an admin
+ * arriving without that cookie is served the Helsinki fallback and then, one
+ * effect later, their real zone. The grid re-groups once when that lands. It is
+ * a genuine shift and it is not gated on, for two reasons: gating would mean a
+ * loading state on a page whose entire design is that it has none, and the
+ * correction fires only on the visit *before* the cookie exists — never again
+ * on that device, and never at all for the Helsinki majority whose fallback was
+ * already right.
  */
 export function AdminDashboardPage({
   initialSnapshot,
@@ -93,23 +106,41 @@ export function AdminDashboardPage({
   );
 
   /**
-   * The one part that genuinely wants the ticking clock: "registered 3 minutes
-   * ago" has to become "an hour ago" while the page sits open. It is a map over
-   * a queue of a handful of rows, so it is re-run per tick and laid over the
-   * day-granular half, rather than dragging the schedule's arithmetic along
-   * behind it.
+   * The two parts that genuinely want the ticking clock, laid over the
+   * day-granular half rather than dragging the schedule's arithmetic along
+   * behind them. Both are cheap — a map over a queue of a handful of rows, and
+   * one `Intl` format — and neither is a midnight fact:
+   *
+   * - "registered 3 minutes ago" has to become "an hour ago" while the page
+   *   sits open.
+   * - a zone's abbreviation turns over *inside* a day. Helsinki becomes EEST at
+   *   03:00 on the last Sunday in March, and a schedule sampled at midnight
+   *   would go on saying EET beside times it had already moved.
    */
   const data = useMemo(
     () => ({
       ...dayData,
       now,
+      timeZoneAbbrev: viewerZoneAbbrev(
+        snapshot.schedule_products,
+        timeZone,
+        locale,
+        now,
+      ),
       uncertifiedGedus: buildCertificationQueue(
         snapshot.certification_queue,
         locale,
         now,
       ),
     }),
-    [dayData, snapshot.certification_queue, locale, now],
+    [
+      dayData,
+      snapshot.schedule_products,
+      snapshot.certification_queue,
+      locale,
+      timeZone,
+      now,
+    ],
   );
 
   /**

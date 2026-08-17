@@ -44,7 +44,29 @@ export function NeedsAttentionPanel({
   onCertifyGedu: (geduId: string) => Promise<void>;
 }) {
   const t = useTranslations("admin.dashboard.attention");
-  const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
+  const [certifiedIds, setCertifiedIds] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+
+  /**
+   * The receipt, minus anybody the queue is offering again.
+   *
+   * A row enters the set only once its write has landed *and* the refetch behind
+   * it has returned, so an id in both places is not a race — it is the queue
+   * saying this account is uncertified now, which happens when somebody
+   * un-certifies them from the users list while this page is open. Left
+   * unpruned, that row would be filtered out of the list by a receipt for a fact
+   * that is no longer true, and still counted in the line above it: an admin
+   * told "1 certified" about somebody who is not, with no row to act on. So the
+   * queue wins, the receipt gives up the id, and the row comes back.
+   *
+   * Everything else about the receipt is unchanged: an id the queue has stopped
+   * offering stays in it for the rest of the sitting, which is what keeps the
+   * section mounted after the last certification.
+   */
+  const waitingIds = new Set(uncertifiedGedus.map((gedu) => gedu.id));
+  const certified = withoutWaiting(certifiedIds, waitingIds);
+  if (certified !== certifiedIds) setCertifiedIds(certified);
 
   /** Outstanding work, which is what the badge counts — a receipt is not work. */
   const total = products.length + uncertifiedGedus.length;
@@ -74,7 +96,7 @@ export function NeedsAttentionPanel({
                 certified={certified}
                 onCertify={onCertifyGedu}
                 onCertified={(geduId) =>
-                  setCertified((current) => new Set(current).add(geduId))
+                  setCertifiedIds((current) => new Set(current).add(geduId))
                 }
               />
             )}
@@ -83,6 +105,19 @@ export function NeedsAttentionPanel({
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * `certified` less every id in `waiting`, returning the original set unchanged
+ * when there is nothing to drop — identity is what stops the state adjustment
+ * above from looping.
+ */
+function withoutWaiting(
+  certified: ReadonlySet<string>,
+  waiting: ReadonlySet<string>,
+): ReadonlySet<string> {
+  const kept = [...certified].filter((id) => !waiting.has(id));
+  return kept.length === certified.size ? certified : new Set(kept);
 }
 
 function AllClear() {

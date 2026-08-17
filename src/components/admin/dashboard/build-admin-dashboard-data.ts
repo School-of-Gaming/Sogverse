@@ -109,12 +109,29 @@ const COMING_UP_MONTHS = 4;
  */
 const ROLE_ORDER: readonly UserRole[] = ["customer", "gamer", "gedu", "admin"];
 
+/**
+ * The half of the page that only changes at midnight.
+ *
+ * Two fields of `AdminDashboardData` are missing because neither is a
+ * day-granular fact: a gedu's wait has to age while the page sits open, and the
+ * viewer's zone abbreviation turns over on a DST transition *inside* a day
+ * (EET → EEST at 03:00 local, not at the following midnight). Both are cheap
+ * maps over a handful of rows, so the shell re-runs them against the live clock
+ * and lays them over this. Leaving them out of the shape rather than computing
+ * values the shell would overwrite is what keeps each derivation to one live
+ * call site.
+ */
+export type AdminDashboardDayData = Omit<
+  AdminDashboardData,
+  "timeZoneAbbrev" | "uncertifiedGedus"
+>;
+
 export function buildAdminDashboardData({
   snapshot,
   locale,
   viewerTimeZone,
   now,
-}: BuildAdminDashboardDataArgs): AdminDashboardData {
+}: BuildAdminDashboardDataArgs): AdminDashboardDayData {
   const today = formatInTimeZone(now, viewerTimeZone, "yyyy-MM-dd");
 
   // The dot on a schedule chip and the cards in the queue are the same fact, so
@@ -135,19 +152,8 @@ export function buildAdminDashboardData({
   return {
     now,
     timeZone: viewerTimeZone,
-    timeZoneAbbrev: viewerZoneAbbrev(
-      snapshot.schedule_products,
-      viewerTimeZone,
-      locale,
-      now,
-    ),
     products: snapshot.attention_products.map((product) =>
       toProductAttention(product, locale),
-    ),
-    uncertifiedGedus: buildCertificationQueue(
-      snapshot.certification_queue,
-      locale,
-      now,
     ),
     users: orderUsers(snapshot.users),
     weeks,
@@ -465,17 +471,29 @@ function resolveWeeks({
  * at each end covers the largest gap the two calendars can open (a day) and
  * costs at most one week of navigation at each extreme, which is a range nobody
  * is reading anyway.
+ *
+ * **The day comes off `today`, not off the far edge**, and the two are not the
+ * same date. Adding four months clamps to the end of the target month, so a
+ * subtraction on the far side is a subtraction from an already-clamped answer:
+ * from 1 March, `+ 4 months − 1 day` is 30 June, while the product a calendar
+ * date behind walked to `28 February + 4 months` = 28 June. Three days of window
+ * the data does not cover, and the week of 22 June offered on the strength of
+ * it. Taking the day off first asks the clamp the same question the product
+ * asked it, which is the only way the two edges can agree. Day arithmetic
+ * commutes, so the near edge is unaffected — it is written the same way for the
+ * symmetry rather than because it had to change.
  */
 function windowWeekStarts(today: string): string[] {
-  // A day in from each edge of the window the snapshot itself covers.
+  // A day in from each edge of the window the snapshot itself covers — and the
+  // day comes off *today*, before the offsets are applied, on both edges.
   const windowStart = addCalendarDays(
-    addCalendarDays(today, -WINDOW_DAYS_BEFORE),
-    1,
+    addCalendarDays(today, 1),
+    -WINDOW_DAYS_BEFORE,
   );
   /** Exclusive, a day inside the RPC's own `< window_end`. */
-  const windowEnd = addCalendarDays(
-    addCalendarMonths(today, WINDOW_MONTHS_AFTER),
-    -1,
+  const windowEnd = addCalendarMonths(
+    addCalendarDays(today, -1),
+    WINDOW_MONTHS_AFTER,
   );
 
   let first = mondayOf(windowStart);
@@ -575,8 +593,15 @@ function viewerPlacement(
  * nothing, and the moment one product is authored somewhere else the whole
  * schedule says which clock it is on. Resolved at `now` so the abbreviation is
  * the one currently in force (EET in winter, EEST in summer).
+ *
+ * **Exported because it is one of the two things on this page the ticking clock
+ * genuinely moves.** A zone changes its abbreviation *inside* a day — Helsinki
+ * at 03:00 on the last Sunday in March — so resolving it alongside the week
+ * arithmetic, which is sampled once per calendar day, would leave the page
+ * claiming EET for the rest of a day it had already spent in EEST. It is one
+ * `Intl` format over a `some()`, so the shell re-runs it per tick.
  */
-function viewerZoneAbbrev(
+export function viewerZoneAbbrev(
   products: readonly AdminDashboardScheduleProduct[],
   viewerTimeZone: string,
   locale: string,

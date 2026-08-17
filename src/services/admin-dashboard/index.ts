@@ -1,5 +1,6 @@
 export { AdminDashboardService } from "./admin-dashboard.service";
-export { adminDashboardKeys, useAdminDashboard } from "./admin-dashboard.queries";
+export { adminDashboardKeys } from "./admin-dashboard.keys";
+export { useAdminDashboard } from "./admin-dashboard.queries";
 export {
   adminDashboardSnapshot,
   type AdminDashboardAttentionProduct,

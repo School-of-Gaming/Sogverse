@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { buildAdminDashboardData } from "@/components/admin/dashboard/build-admin-dashboard-data";
+import {
+  buildAdminDashboardData,
+  buildCertificationQueue,
+  viewerZoneAbbrev,
+} from "@/components/admin/dashboard/build-admin-dashboard-data";
 import type {
   AdminDashboardAttentionProduct,
   AdminDashboardScheduleProduct,
@@ -159,6 +163,36 @@ describe("the week window", () => {
     expect(data.weeks[0].weekStart).toBe("2026-07-27");
     // And the first week that *is* offered is fully covered.
     expect(week(data, "2026-07-27").chips).toHaveLength(1);
+  });
+
+  it("takes the far edge's day off before the months, not after the clamp", () => {
+    // 01:00 on 1 March in Helsinki is still 15:00 on 28 February in Los
+    // Angeles, so a product authored there walks to `2026-02-28 + 4 months` =
+    // 28 June (exclusive) — the month clamp landing on the short month's last
+    // day. Shrinking the viewer's edge *after* its own `+ 4 months` asks the
+    // clamp a different question (1 July, less a day, is 30 June) and offers
+    // the week of 22 June, whose 28th the data does not cover. Taking the day
+    // off `today` first makes both sides ask 28 February.
+    const now = new Date("2026-03-01T01:00:00+02:00");
+    const data = build(
+      snapshot({
+        schedule_products: [
+          scheduleProduct({
+            id: "club",
+            timezone: LOS_ANGELES,
+            start_date: "2026-01-05",
+            end_date: "2026-12-14",
+          }),
+        ],
+      }),
+      HELSINKI,
+      now,
+    );
+
+    expect(data.weeks.some((entry) => entry.weekStart === "2026-06-22")).toBe(
+      false,
+    );
+    expect(data.weeks[data.weeks.length - 1].weekStart).toBe("2026-06-15");
   });
 });
 
@@ -350,11 +384,35 @@ describe("re-grouping into the viewer's week", () => {
   });
 
   it("names the viewer's zone only when something actually converted", () => {
-    const helsinkiOnly = snapshot({
-      schedule_products: [scheduleProduct({ id: "club" })],
-    });
-    expect(build(helsinkiOnly, HELSINKI).timeZoneAbbrev).toBeNull();
-    expect(build(helsinkiOnly, NEW_YORK).timeZoneAbbrev).not.toBeNull();
+    // Resolved against the live clock rather than the day-granular half, so a
+    // DST transition is reflected the moment it happens rather than at the
+    // following midnight — which is why it is asked for separately here too.
+    const products = [scheduleProduct({ id: "club" })];
+    expect(viewerZoneAbbrev(products, HELSINKI, "en", NOW)).toBeNull();
+    expect(viewerZoneAbbrev(products, NEW_YORK, "en", NOW)).not.toBeNull();
+  });
+
+  it("follows the viewer's own DST transition within the day it happens", () => {
+    // Helsinki goes to EEST at 03:00 on 29 March 2026. Both instants are the
+    // same calendar day for the viewer, so a day-sampled clock would have given
+    // one answer for both.
+    const products = [scheduleProduct({ id: "club", timezone: NEW_YORK })];
+    expect(
+      viewerZoneAbbrev(
+        products,
+        HELSINKI,
+        "en",
+        new Date("2026-03-29T00:30:00+02:00"),
+      ),
+    ).toBe("GMT+2");
+    expect(
+      viewerZoneAbbrev(
+        products,
+        HELSINKI,
+        "en",
+        new Date("2026-03-29T12:00:00+03:00"),
+      ),
+    ).toBe("GMT+3");
   });
 });
 
@@ -556,51 +614,56 @@ describe("the attention queue", () => {
   });
 });
 
+/**
+ * Built against the *ticking* clock rather than the day-granular half — a wait
+ * has to age while the page sits open — so it is asked for on its own here,
+ * exactly as the shell asks for it.
+ */
 describe("the certification queue", () => {
   it("names the wait relative to the page's own clock, and only the wait", () => {
-    const data = build(
-      snapshot({
-        certification_queue: [
-          {
-            id: "38763617-b031-49af-9fd4-3320e7509019",
-            first_name: "Venla",
-            last_name: "Salminen",
-            created_at: "2026-08-15T09:20:00+03:00",
-          },
-          {
-            id: "4889fea4-0602-438f-adfe-2cef72d485ff",
-            first_name: "Helmi",
-            last_name: "Koskinen",
-            created_at: "2026-06-17T09:20:00+03:00",
-          },
-        ],
-      }),
+    const queue = buildCertificationQueue(
+      [
+        {
+          id: "38763617-b031-49af-9fd4-3320e7509019",
+          first_name: "Venla",
+          last_name: "Salminen",
+          created_at: "2026-08-15T09:20:00+03:00",
+        },
+        {
+          id: "4889fea4-0602-438f-adfe-2cef72d485ff",
+          first_name: "Helmi",
+          last_name: "Koskinen",
+          created_at: "2026-06-17T09:20:00+03:00",
+        },
+      ],
+      "en",
+      NOW,
     );
 
     // The relative phrase and nothing else: `Intl` formats it per locale, and
     // the sentence around it ("registered …") is the card's translated copy.
-    expect(data.uncertifiedGedus[0]).toMatchObject({
+    expect(queue[0]).toMatchObject({
       name: "Venla Salminen",
       registeredAgo: "2 days ago",
     });
-    expect(data.uncertifiedGedus[1].registeredAgo).toBe("2 months ago");
+    expect(queue[1].registeredAgo).toBe("2 months ago");
   });
 
   it("leaves an unnamed account's name null rather than inventing a stand-in", () => {
-    const data = build(
-      snapshot({
-        certification_queue: [
-          {
-            id: "e979b9eb-39a2-4b71-9aa1-3d991969dadc",
-            first_name: "",
-            last_name: "   ",
-            created_at: "2026-08-15T09:20:00+03:00",
-          },
-        ],
-      }),
+    const queue = buildCertificationQueue(
+      [
+        {
+          id: "e979b9eb-39a2-4b71-9aa1-3d991969dadc",
+          first_name: "",
+          last_name: "   ",
+          created_at: "2026-08-15T09:20:00+03:00",
+        },
+      ],
+      "en",
+      NOW,
     );
 
-    expect(data.uncertifiedGedus[0].name).toBeNull();
+    expect(queue[0].name).toBeNull();
   });
 });
 
@@ -609,7 +672,7 @@ describe("an empty platform", () => {
     const data = build(snapshot());
 
     expect(data.products).toEqual([]);
-    expect(data.uncertifiedGedus).toEqual([]);
+    expect(buildCertificationQueue([], "en", NOW)).toEqual([]);
     expect(data.comingUp).toEqual([]);
     expect(data.weeks.length).toBeGreaterThan(0);
     expect(data.weeks.every((entry) => entry.chips.length === 0)).toBe(true);

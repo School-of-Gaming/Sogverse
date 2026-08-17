@@ -2,26 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { adminDashboardKeys } from "./admin-dashboard.keys";
 import type { AdminDashboardSnapshot } from "./admin-dashboard.contracts";
 import { AdminDashboardService } from "./admin-dashboard.service";
-
-/**
- * One key, because there is one query. The hierarchy is still written out so a
- * mutation elsewhere that changes what the dashboard says can invalidate
- * `adminDashboardKeys.all` and have this read follow — and four of them do:
- * certifying a gedu (the shell that owns the action, since the gedu mutation is
- * a general one), every action in the admin group panel including waitlist
- * promote/demote (the groups feature invalidates both keys together), and
- * creating or updating a product.
- *
- * They are all *admin* writes, which is the line: this entry only ever exists in
- * an admin's own cache, so a customer-side write has nothing here to invalidate
- * and reaches the dashboard through its own next read instead.
- */
-export const adminDashboardKeys = {
-  all: ["admin-dashboard"] as const,
-  snapshot: () => [...adminDashboardKeys.all, "snapshot"] as const,
-};
 
 /**
  * The whole admin dashboard in one read, **seeded from the server render**.
@@ -33,11 +16,24 @@ export const adminDashboardKeys = {
  * server-side and hands the document in here, so the first paint is the finished
  * dashboard and there is no loading state on this page at all.
  *
- * `initialData` is **required**, not optional: a caller with nothing to seed has
- * no business rendering this page, and the route renders an error band instead
- * of the shell when its own read failed. That is also why there is no
- * `initialDataUpdatedAt` — the seed is an answer fetched moments ago, never a
- * stand-in for one, so the default 60-second `staleTime` should apply to it
+ * **The seed reaches the cache through the route's `HydrationBoundary`, not
+ * through `initialData`, and the difference is a whole second aggregate.**
+ * `initialData` is consulted only when the key holds nothing: it seeds a cold
+ * cache and is ignored by every later mount. So a soft navigation back to
+ * `/admin` — where the route has just run the RPC again — would throw that
+ * answer away, render whatever the cache still held, and (the entry being
+ * older than the 60-second `staleTime` by then) immediately refetch the same
+ * platform-wide aggregate the server had already finished. Hydration writes the
+ * incoming snapshot into the entry instead, and does it by recency rather than
+ * on every render, so a refetch that landed after the server's read is never
+ * overwritten by a replayed RSC payload.
+ *
+ * `initialData` stays, and is **required**, for what it is actually good at:
+ * making `data` non-optional. That is what lets the shell have no loading branch
+ * as a compile-time fact rather than an assumption — and it is honest, because a
+ * caller with nothing to seed has no business rendering this page. There is
+ * deliberately no `initialDataUpdatedAt`: the seed is an answer fetched moments
+ * ago, never a stand-in for one, so the default `staleTime` applies to it
  * exactly as it would to a client fetch.
  *
  * React Query stays the owner from there: this is the same key the certify

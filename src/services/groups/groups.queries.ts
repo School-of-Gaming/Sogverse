@@ -9,7 +9,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.queries";
+import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { GroupsService } from "./groups.service";
 import type {
   GroupGeduDetail,

@@ -112,11 +112,13 @@ function ThisWeek({
   // selects every chip in it, because a chip in a week *is* something running.
   const [types, setTypes] = useState<ReadonlySet<ProductType>>(new Set());
 
-  // Resolved against the list as it is *now*, so a week that stopped being
-  // offered falls back to the current one instead of pointing somewhere else.
-  const offered = weeks.findIndex((entry) => entry.weekStart === pinnedWeekStart);
-  const weekIndex = offered === -1 ? currentWeekIndex : offered;
+  // `windowWeekStarts` always returns at least one week, so this is a module
+  // boundary rather than a state the page can reach — but everything below
+  // indexes into the list, and a band that renders nothing is a better answer
+  // than one that reads `undefined.weekStart`.
+  if (weeks.length === 0) return null;
 
+  const weekIndex = resolveWeekIndex(weeks, pinnedWeekStart, currentWeekIndex);
   const week = weeks[weekIndex];
   const todayIso = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
   const weekEnd = addCalendarDays(week.weekStart, 6);
@@ -236,6 +238,41 @@ function ThisWeek({
       />
     </section>
   );
+}
+
+/**
+ * Which week is on screen: the pinned one if it is still offered, otherwise the
+ * nearest week to it that is.
+ *
+ * **A vanished pin clamps, it does not jump.** The list is recomputed from the
+ * page's clock, so crossing a midnight drops one week from each end — and the
+ * admin who had stepped out to the far edge of the window was reading the week
+ * that just fell off. Snapping them back to *today* would move them four months
+ * for a change they did not make and cannot see the cause of; landing them on
+ * the week next to the one they were reading is the same navigation they would
+ * have done themselves. Weeks are contiguous Mondays and a pin is always one of
+ * them, so "no longer offered" means past one end or the other, and the clamp is
+ * exactly the two ends.
+ *
+ * `null` — the resting state, and what the Today button restores — is not a
+ * vanished pin: it means *whichever* week is current, and follows the clock.
+ */
+function resolveWeekIndex(
+  weeks: readonly ScheduleWeek[],
+  pinnedWeekStart: string | null,
+  currentWeekIndex: number,
+): number {
+  // Clamped for the same reason the caller guards an empty list: the index
+  // arrives from whoever fed the page, and both nav buttons read their disabled
+  // state off it. Callers give a real index; this is the module boundary.
+  if (pinnedWeekStart === null) {
+    return Math.min(Math.max(currentWeekIndex, 0), weeks.length - 1);
+  }
+  const offered = weeks.findIndex(
+    (entry) => entry.weekStart === pinnedWeekStart,
+  );
+  if (offered !== -1) return offered;
+  return pinnedWeekStart < weeks[0].weekStart ? 0 : weeks.length - 1;
 }
 
 function toggled<T>(set: ReadonlySet<T>, value: T): ReadonlySet<T> {
