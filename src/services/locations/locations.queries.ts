@@ -137,6 +137,14 @@ export function useLocationChildren(parentId: string | null) {
  * on the keystroke while these lag a debounce behind: the previous needle's
  * hits would then sit under fresh local ones, reading as answers to a query
  * they do not match.
+ *
+ * `retry` is left at React Query's default here and named by a caller that
+ * cannot afford it. Three retries with backoff is the right answer for a panel
+ * that has nothing else to show and every reason to keep trying — but it is
+ * roughly seven seconds, and a caller whose results area renders *nothing*
+ * while this arm is unresolved would spend all of it blank before falling back
+ * to its own empty state. How long a failure may take is a property of what the
+ * call site does with the wait, so the call site is where it is decided.
  */
 export function useLocationSearch(
   query: string,
@@ -145,6 +153,7 @@ export function useLocationSearch(
     limit?: number;
     country?: string;
     keepPreviousResults?: boolean;
+    retry?: number | boolean;
   },
 ) {
   const supabase = getClient();
@@ -164,6 +173,9 @@ export function useLocationSearch(
       }),
     enabled: needle.length >= LOCATION_SEARCH_MIN_QUERY,
     staleTime: REFERENCE_DATA_STALE_MS,
+    // Undefined leaves React Query's own default in place, so only a caller
+    // that has thought about the blank window pays a different one.
+    retry: options?.retry,
     // The previous needle's hits stay on screen while the next one is in
     // flight, so a list the user is reading is replaced rather than emptied.
     placeholderData: keepPreviousResults ? (previous) => previous : undefined,

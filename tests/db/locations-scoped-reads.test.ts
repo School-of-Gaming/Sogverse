@@ -474,10 +474,21 @@ describe("locations scoped reads", () => {
    *
    * Sites are the right vehicle because they are leaves: nothing can be
    * parented under one, so teardown never meets `parent_id`'s ON DELETE
-   * RESTRICT. The tree lives in a country code no seed uses, so the whole-table
-   * sweeps elsewhere in this suite (which scope themselves to the seeded
-   * countries) cannot see it even if a failed run leaves it behind — and the
-   * block deletes before it inserts, so a leftover cannot compound.
+   * RESTRICT.
+   *
+   * **What keeps 1050 extra rows out of everyone else's way is the teardown,
+   * not the country code.** The block deletes before it inserts as well as
+   * after, and DB test files run sequentially (`fileParallelism: false`), so on
+   * any normal run the fixture does not exist while another file is looking —
+   * and a leftover from a crashed run is cleared by the next one before it
+   * inserts, so it cannot compound. The `ZY` scoping buys something narrower:
+   * it keeps *this* file's country-scoped sweeps off the fixture. It cannot
+   * protect a sweep that does not scope by country, and one such sweep is real
+   * — the geonames groundwork suite reads every `type = 'site'` row in the
+   * table, unpaged, so a surviving fixture would silently truncate it at
+   * PostgREST's cap, which is the very failure this block exists to
+   * demonstrate. Anything added here that outlives its `afterAll` is therefore
+   * a problem for other files, whatever country code it wears.
    */
   describe("the paged walk over PostgREST's response cap", () => {
     /**
@@ -505,7 +516,11 @@ describe("locations scoped reads", () => {
       MUNICIPALITY: "00000000-0000-4000-8000-000000000001",
     } as const;
 
-    /** A country code no seed carries, so nothing else's sweep can see these. */
+    /**
+     * A country code no seed carries, so this file's own country-scoped sweeps
+     * cannot see these rows. A sweep that scopes by nothing still can — see the
+     * block comment above.
+     */
     const WALK_COUNTRY_CODE = "ZY";
 
     const siteId = (index: number) =>

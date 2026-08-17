@@ -1078,13 +1078,38 @@ spinner, no skeleton and no delay — but while it is in flight and the instant 
 matched nothing, the results area renders **nothing at all, the empty state included**.
 Saying "no municipality matches this" and then contradicting it a round trip later is a
 claim the page cannot yet make; a blank frame or two against a cached, indexed route is
-not. Two scopes keep that from becoming dead air: input too short for the index has no
-request coming and shows the empty state immediately, and a debounce still catching up
-counts as pending — gate on the query state alone and the empty state flashes mid-typing
-and is contradicted anyway. Nothing here reserves a height for the arm that may not
-arrive: results changing in response to typing is user-initiated, so the reflow is
-permitted, and a slot held open for hits that never come is the dead-space defect the
-layout rule itself names. What is forbidden is only the contradicted claim.
+not. Three scopes keep that from becoming dead air: input too short for the index has no
+request coming and shows the empty state immediately; a debounce still catching up counts
+as pending — gate on the query state alone and the empty state flashes mid-typing and is
+contradicted anyway; and the retry budget is cut at this call site, because a results area
+that renders nothing turns React Query's default three-attempt backoff into seven seconds
+of blank page rather than the brief gap the affordance is chosen for. Nothing here reserves
+a height for the arm that may not arrive: results changing in response to typing is
+user-initiated, so the reflow is permitted, and a slot held open for hits that never come
+is the dead-space defect the layout rule itself names. What is forbidden is only the
+contradicted claim.
+
+**"Renders nothing" is scoped to the *first* answer, and nothing blinks out once one has
+arrived.** The two arms move at different speeds — the local one on the keystroke, the
+index one a debounce behind — so a rule of "clear the appended block whenever a fallback
+is in flight" would empty and refill it on every character typed, which is a far worse
+thing to watch than the blank frame it was protecting. So the last resolved response is
+held with the needle it answered, and it keeps rendering while the next one flies **as
+long as the two needles contain one another**, in either direction: typing forward and
+backspacing are the two ways a parent walks a query, and both leave a block that is still
+plausibly about what is on screen. The fresh response replaces it whole when it lands.
+Two boundaries make that honest rather than merely comfortable:
+
+- **A held block is never re-matched against the newer query text.** It narrows when the
+  index says so and not before. Filtering it locally would widen the one in-browser
+  narrowing this feature tolerates into a standing second implementation of the match rule
+  — the thing the fold rule under Search exists to refuse. Ids are still compared, to
+  decide which arm owns a row, which is not a matcher.
+- **A query that is *not* containment-related to the held needle drops it at once** — a
+  paste, a rewrite — and so does a fallback that fails or falls under the index's minimum
+  length, because in those cases nothing is coming to replace what is on screen. The
+  results area is blank until the new answer resolves, which is the original rule doing
+  its job.
 
 The root `CLAUDE.md` states the general rule all of this is an instance of; a skeleton
 reappearing in this directory means a read has changed shape, and that is the thing to
@@ -1178,9 +1203,14 @@ carries no `sv` key.
 
 **Corollary: widening the alternate set widens the slug space, and that is the invariant
 to re-check.** `/schools/<slug>` has no disambiguation suffix because Finland's
-municipality names are 1:1 with their slugs, and slug resolution accepts every alternate
-after the canonical ones — first match wins, so a collision introduced by an exonym would
-be *silent*, one municipality's page answering for another's link. A DB test re-checks
+municipality names are 1:1 with their slugs. Resolution is one pass over the
+municipalities the page holds, asking each in turn whether the slug is its canonical slug
+*or* any of its alternates, and the first to answer wins — so canonical-before-alternate
+holds only *within* a single municipality, and an earlier municipality's exonym beats a
+later one's native slug. Which of two colliding municipalities that is depends on the
+order the page happens to hold them in, so treat the winner as **unspecified**: a
+collision introduced by an exonym would be *silent*, one municipality's page answering for
+another's link, and no ordering rule saves it. A DB test re-checks
 uniqueness across canonical names plus every ingested alternate, and it is the check to
 re-run whenever a locale is added to a country's `alternateLocales`. The set a URL is
 resolved against is now the club-bearing municipalities rather than the whole country,
@@ -1192,8 +1222,9 @@ the day both have one.
 index alongside the canonical name, so "Helsingfors" and "Helsinki" both find the row
 wherever the search runs. The `/schools/<slug>` link is built from the **viewer-locale**
 display name (a Swedish viewer links to `helsingfors`), and slug resolution accepts the
-canonical *and* every alternate slug — canonical first, so an exonym can never shadow
-another municipality's native slug.
+canonical *and* every alternate slug, on the terms the corollary above states: which of
+two colliding municipalities answers is unspecified, and the uniqueness check is what
+makes the question not arise.
 
 Adding another locale (or another country's alternates) is a config field and a
 reconciliation migration; no schema change, since the column is locale-agnostic jsonb

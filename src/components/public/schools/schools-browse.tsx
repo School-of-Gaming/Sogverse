@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
+  LOCATION_SEARCH_MAX_QUERY,
   LOCATION_SEARCH_MIN_QUERY,
   useLocationSearch,
 } from "@/services/locations";
@@ -26,6 +27,46 @@ import type { LocationType } from "@/types";
 
 /** The long-tail arm asks the index for municipalities, in Finland, and nothing else. */
 const FALLBACK_TYPES: readonly LocationType[] = ["municipality"];
+
+/**
+ * How many times a failing fallback is retried before the arm gives up.
+ *
+ * React Query's default of three, with backoff, is roughly seven seconds — and
+ * this results area renders *nothing* while a fallback for the current input is
+ * unresolved, so every one of those seconds is a blank page under a query the
+ * parent can see they typed. One retry covers the flaky hop this arm actually
+ * meets (a cached, indexed route) and reaches the ordinary empty state fast
+ * enough that the page stops looking broken.
+ */
+const FALLBACK_RETRIES = 1;
+
+/** The hits one fallback response carries, as the hook itself types them. */
+type FallbackHits = NonNullable<
+  ReturnType<typeof useLocationSearch>["data"]
+>["results"];
+
+/** One stable empty answer, so the memo below is not recomputed per keystroke. */
+const NO_HITS: FallbackHits = [];
+
+/** The last fallback response that resolved, and the needle it answers. */
+interface HeldBlock {
+  needle: string;
+  hits: FallbackHits;
+}
+
+/**
+ * Whether two needles are close enough that one's answer may stand in for the
+ * other's while the latter is still coming: one contains the other, ignoring
+ * case. That covers typing forward ("lah" → "lahti") and backspacing
+ * ("lahti" → "lah") — the two ways a parent walks a query — and excludes a
+ * paste or a rewrite, where the block on screen would be answering a question
+ * nobody is asking any more.
+ */
+function containmentRelated(a: string, b: string): boolean {
+  const x = a.toLowerCase();
+  const y = b.toLowerCase();
+  return x.includes(y) || y.includes(x);
+}
 
 /**
  * Public entry point for parents discovering municipality clubs. Two states
@@ -52,6 +93,18 @@ const FALLBACK_TYPES: readonly LocationType[] = ["municipality"];
  * (Lahti inside Vesilahti, Pori inside Raasepori): a parent typing their whole
  * town would otherwise see only the towns that contain it, and *which* towns
  * those are would shift silently as clubs open and close.
+ *
+ * **The fallback block persists across related keystrokes.** The two arms run
+ * at different speeds — local on the keystroke, the index a debounce behind —
+ * so clearing the appended block whenever a new fallback is in flight makes it
+ * vanish and repopulate on every character typed. Instead the last resolved
+ * response is held with the needle it answers, and it keeps rendering while the
+ * next one flies as long as the two needles contain one another; the fresh
+ * response replaces it wholesale when it lands. It is *never* re-matched
+ * against the newer query text: the block narrows when the index says so and
+ * not before, so nothing here becomes a second implementation of what counts as
+ * a match. A paste or a rewrite is the one case where the held block goes at
+ * once — its rows would be answers to a question that is no longer on screen.
  */
 export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   const t = useTranslations("schools");
@@ -65,6 +118,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   // nothing and asks the database's own index instead.
   const normalizedQuery = municipalitySlug(query);
   const searching = normalizedQuery.length > 0;
+  const trimmedQuery = query.trim();
 
   const debouncedQuery = useDebouncedValue(query);
   /** Has the debounce caught up with what is in the box right now? */
@@ -78,26 +132,53 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
    * which must fire no request either.
    */
   const fallbackExpected =
-    searching && query.trim().length >= LOCATION_SEARCH_MIN_QUERY;
+    searching && trimmedQuery.length >= LOCATION_SEARCH_MIN_QUERY;
 
   /**
-   * Mid-debounce the hook's key still names the *previous* needle, so feeding
-   * it an empty needle until the debounce catches up is what keeps the previous
-   * query's hits from rendering underneath fresh local ones as answers to a
-   * query they do not match.
+   * The needle actually in front of the hook, and the identity of whatever it
+   * answers with. Mid-debounce the hook's key would still name the *previous*
+   * needle, so it is withheld until the debounce catches up: everything the
+   * hook returns then belongs to this needle and to no other, which is what
+   * lets the held block below be bookkept by needle at all.
    */
-  const fallback = useLocationSearch(
-    fallbackExpected && settled ? debouncedQuery : "",
-    {
-      types: FALLBACK_TYPES,
-      country: SCHOOLS_COUNTRY_CODE,
-      // Same reason, one layer down: the hook's default keeps the previous
-      // needle's hits on screen while the next request flies, which is right
-      // for a panel made only of them and wrong beside a local arm that has
-      // already moved on.
-      keepPreviousResults: false,
-    },
-  );
+  const needle = fallbackExpected && settled ? debouncedQuery.trim() : "";
+
+  const fallback = useLocationSearch(needle, {
+    types: FALLBACK_TYPES,
+    country: SCHOOLS_COUNTRY_CODE,
+    // Same reason, one layer down: the hook's default would carry the previous
+    // needle's hits into this needle's result, which is right for a panel made
+    // only of them and wrong here — holding the previous block is this
+    // component's own decision, made against needles the hook cannot see (a
+    // debounce window is invisible to it, and so is a paste).
+    keepPreviousResults: false,
+    retry: FALLBACK_RETRIES,
+  });
+
+  /**
+   * The last fallback response that resolved, kept so the appended block
+   * survives the next keystroke instead of blinking out and back.
+   *
+   * Adjusted during render rather than in an effect, deliberately: an effect
+   * runs *after* the paint, so a fresh response would show one frame of the
+   * previous needle's rows before being replaced — the exact flicker this
+   * exists to remove, moved rather than fixed. Both branches settle in one
+   * extra render and cannot loop, because each writes the value its own
+   * condition then reads as satisfied.
+   */
+  const [held, setHeld] = useState<HeldBlock | null>(null);
+  const resolvedHits = needle ? fallback.data?.results : undefined;
+  if (resolvedHits) {
+    // Needle *and* identity: two needles can answer with deep-equal hits, which
+    // React Query's structural sharing hands back as the same array, and a
+    // refetch of one needle can answer with different ones.
+    if (held?.needle !== needle || held.hits !== resolvedHits) {
+      setHeld({ needle, hits: resolvedHits });
+    }
+  } else if (held && !containmentRelated(held.needle, trimmedQuery)) {
+    // A paste or a rewrite: nothing on screen may claim to answer it.
+    setHeld(null);
+  }
 
   const activeGroups = useMemo(() => groupByRegion(entries), [entries]);
 
@@ -117,6 +198,34 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   );
 
   /**
+   * The empty state is withheld only while the fallback for the *current* input
+   * has not resolved — otherwise the page asserts "no municipality matches
+   * this" and then contradicts itself a round trip later. Both halves are
+   * load-bearing: during the debounce window the hook is not fetching yet and
+   * its state still describes the previous needle, so the query state alone
+   * would flash the card mid-typing.
+   */
+  const fallbackPending = fallbackExpected && (!settled || fallback.isPending);
+
+  /**
+   * Which resolved response the fallback arm is showing: this needle's own, or
+   * — while this needle's is still coming — the related one it is replacing.
+   *
+   * Anything else shows nothing, and each case is a decision rather than a
+   * leftover. A held block whose needle is unrelated to what is typed now would
+   * be answering a question nobody asked. A fallback that *failed* leaves
+   * `fallbackPending` false with no response of its own, so the previous
+   * block goes too: nothing is coming to replace it, and holding it would make
+   * a dead arm look like a live one.
+   */
+  const shownHits =
+    held &&
+    (held.needle === needle ||
+      (fallbackPending && containmentRelated(held.needle, trimmedQuery)))
+      ? held.hits
+      : NO_HITS;
+
+  /**
    * The fallback's contribution, in the index's own rank order.
    *
    * Deduped against **what the local arm rendered for this query**, never
@@ -127,10 +236,17 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
    * link, reusing the entry the page already holds so its slug and region come
    * from the same place every other link's do; anything else is a real
    * municipality we run nothing in, and renders in the clubless state.
+   *
+   * Comparing ids is the *only* thing done to a held block against the newer
+   * query — it settles which arm owns a row, not whether the row matches. Held
+   * hits are deliberately never re-matched against the typed text: the second
+   * fold this page already carries narrows the set the server shipped, and
+   * widening it to narrow the index's answers as well is how one becomes a
+   * standing reimplementation of the other.
    */
   const fallbackRows = useMemo(() => {
     const rendered = new Set(results.map((e) => e.id));
-    return (fallback.data?.results ?? [])
+    return shownHits
       .filter((hit) => !rendered.has(hit.id))
       .map((hit) => {
         const known = entriesById.get(hit.id);
@@ -138,18 +254,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
           ? { entry: known, hasClubs: true }
           : { entry: buildMunicipalityEntry(hit, locale), hasClubs: false };
       });
-  }, [fallback.data, results, entriesById, locale]);
-
-  /**
-   * The empty state is withheld only while the fallback for the *current* input
-   * has not resolved — otherwise the page asserts "no municipality matches
-   * this" and then contradicts itself a round trip later. Both halves are
-   * load-bearing: during the debounce window the hook is not fetching yet and
-   * its state still describes the previous needle, so the query state alone
-   * would flash the card mid-typing.
-   */
-  const fallbackPending =
-    fallbackExpected && (!settled || fallback.isPending);
+  }, [shownHits, results, entriesById, locale]);
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -176,6 +281,11 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
           placeholder={t("search.placeholder")}
           className="pl-9"
           autoComplete="off"
+          // The route refuses a longer needle outright, and a 400 here is a
+          // results area that stays blank rather than the "no matches" a parent
+          // would otherwise read. No place name comes close, so the only input
+          // this stops is a paste of something that was never a search.
+          maxLength={LOCATION_SEARCH_MAX_QUERY}
         />
       </div>
 
