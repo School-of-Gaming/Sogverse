@@ -47,13 +47,22 @@ import { UsersStrip } from "./users-strip";
  * for.
  *
  * The body is presentational end to end: every count, join and resolution
- * arrives in `data`, and nothing here queries, mutates or reads a clock. That is
- * what lets the preview scene render it over fixtures and the future route
- * render it over service reads without either owning a layout. It takes no
+ * arrives in `data`, and nothing here queries, mutates or reads a clock. The one
+ * action on the page arrives the same way — as a callback the caller owns — so
+ * the preview scene can render the identical body with a callback that writes
+ * nothing. That is what lets the scene render it over fixtures and the route
+ * render it over a live snapshot without either owning a layout. It takes no
  * loading states for the same reason the scene needs none — a shell that has the
  * data renders it, and a shell that does not is the shell's problem to show.
  */
-export function AdminDashboardPageBody({ data }: { data: AdminDashboardData }) {
+export function AdminDashboardPageBody({
+  data,
+  onCertifyGedu,
+}: {
+  data: AdminDashboardData;
+  /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
+  onCertifyGedu: (geduId: string) => Promise<void>;
+}) {
   return (
     <div className="space-y-6 pb-12">
       <div>
@@ -86,6 +95,7 @@ export function AdminDashboardPageBody({ data }: { data: AdminDashboardData }) {
           <NeedsAttentionPanel
             products={data.products}
             uncertifiedGedus={data.uncertifiedGedus}
+            onCertifyGedu={onCertifyGedu}
           />
 
           <SchedulePanel
@@ -94,6 +104,7 @@ export function AdminDashboardPageBody({ data }: { data: AdminDashboardData }) {
             comingUp={data.comingUp}
             now={data.now}
             timeZone={data.timeZone}
+            timeZoneAbbrev={data.timeZoneAbbrev}
           />
         </div>
 

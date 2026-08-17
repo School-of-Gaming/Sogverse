@@ -29,13 +29,21 @@ import type { UncertifiedGedu } from "./admin-dashboard-data";
  * about, that is the moment to design for it, against the real shape of the
  * problem rather than a guess at it.
  *
- * In the preview the action is pure local state — nothing is written, and a
- * reload restores every row.
+ * **The write is the shell's, and the receipt is this section's.** `onCertify`
+ * resolves when the row has actually been certified; only then does the row
+ * leave the list and the counted line above it move. That ordering is what lets
+ * a failure be shown *on the row that failed* — a queue that removed the row
+ * optimistically would have nowhere left to put the error, and the admin would
+ * be told nothing at all. In the preview the callback resolves immediately and
+ * writes nothing, so a reload restores every row.
  */
 export function GeduCertificationQueue({
   gedus,
+  onCertify,
 }: {
   gedus: readonly UncertifiedGedu[];
+  /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
+  onCertify: (geduId: string) => Promise<void>;
 }) {
   const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
 
@@ -71,7 +79,9 @@ export function GeduCertificationQueue({
               <GeduRow
                 gedu={gedu}
                 onCertify={() =>
-                  setCertified((current) => new Set(current).add(gedu.id))
+                  onCertify(gedu.id).then(() => {
+                    setCertified((current) => new Set(current).add(gedu.id));
+                  })
                 }
               />
             </li>
@@ -86,14 +96,35 @@ export function GeduCertificationQueue({
  * One row. The person is a link to their admin page; the button beside them is
  * not, which is why the row is not itself a link — a row-wide link with a
  * control inside it is a click nobody can predict the result of.
+ *
+ * **`committing` is set synchronously before the write starts and is never
+ * cleared on success**, because on success this row is about to disappear: the
+ * queue drops it the moment the promise resolves, and the refetch behind it
+ * drops it again from the source list. Clearing the flag first would re-enable
+ * the button for the frame between the write landing and the row unmounting,
+ * which is exactly long enough for a second click to certify somebody twice. It
+ * is cleared only where the admin has something left to do — a failed write,
+ * where the row stays and has to be retried.
  */
 function GeduRow({
   gedu,
   onCertify,
 }: {
   gedu: UncertifiedGedu;
-  onCertify: () => void;
+  onCertify: () => Promise<void>;
 }) {
+  const [committing, setCommitting] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  function handleCertify() {
+    setCommitting(true);
+    setFailed(false);
+    void onCertify().catch(() => {
+      setCommitting(false);
+      setFailed(true);
+    });
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border px-3 py-2">
       <Link
@@ -106,8 +137,23 @@ function GeduRow({
           {gedu.registered}
         </span>
       </Link>
-      <Button type="button" size="sm" onClick={onCertify}>
-        Certify
+      {/* Only rendered once a write has failed, and it takes the full row width
+          so it lands under the button rather than squeezing the name beside it.
+          Nothing reserves space for it: before the first failure there is
+          nothing here to move, and the row it appears in is one the admin just
+          acted on. */}
+      {failed && (
+        <p className="order-last w-full text-xs text-destructive">
+          Could not certify — try again.
+        </p>
+      )}
+      <Button
+        type="button"
+        size="sm"
+        onClick={handleCertify}
+        disabled={committing}
+      >
+        {committing ? "Certifying…" : "Certify"}
       </Button>
     </div>
   );

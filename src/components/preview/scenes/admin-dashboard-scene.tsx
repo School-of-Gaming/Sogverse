@@ -8,14 +8,19 @@ import {
 } from "@/components/admin/dashboard/mock-dashboard-fixtures";
 
 /**
- * The redesigned `/admin` landing page, over fixtures.
+ * The `/admin` landing page, over fixtures.
  *
- * It renders the **draft** body — the one that will replace the placeholder page
- * when this design is signed off — with a fixture set standing in for the reads
- * that will feed it. Nothing here queries, mutates or writes: every row link
- * points at the real admin surface it would open, and clicking one leaves the
- * preview, which is the honest behaviour for a link whose whole purpose is to be
- * the way out of the queue.
+ * It renders the **same body the live route renders**, with a fixture set
+ * standing in for the read that feeds it — a showcase that cannot drift, because
+ * there is only one body and the scene is one of its two shells. Nothing here
+ * queries, mutates or writes: every row link points at the real admin surface it
+ * would open, and clicking one leaves the preview, which is the honest behaviour
+ * for a link whose whole purpose is to be the way out of the queue.
+ *
+ * The certify action resolves immediately and writes nothing. The queue's own
+ * behaviour is unchanged by that — the row leaves the list, the counted receipt
+ * appears — which is the point of the action being a callback: the preview and
+ * the live page differ only in what happens at the far end of it.
  *
  * The fixture is built once and held in state rather than rebuilt per render.
  * Nothing in it depends on a live clock — the whole scene is pinned to a fixed
@@ -31,5 +36,10 @@ export function AdminDashboardScene({
 }) {
   const [data] = useState(() => buildAdminDashboardFixture(scenario));
 
-  return <AdminDashboardPageBody data={data} />;
+  return (
+    <AdminDashboardPageBody
+      data={data}
+      onCertifyGedu={() => Promise.resolve()}
+    />
+  );
 }

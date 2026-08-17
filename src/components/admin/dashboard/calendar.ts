@@ -67,6 +67,31 @@ export function addCalendarDays(iso: string, days: number): string {
   );
 }
 
+/**
+ * `iso` moved `count` calendar months forward, clamped like Postgres.
+ *
+ * The schedule window the snapshot covers is authored as
+ * `date + INTERVAL '4 months'`, and Postgres clamps that to the last day of the
+ * target month — 31 October plus four months is 28 February. `Date.UTC` would
+ * overflow into 3 March instead and hand the page a week the data does not
+ * cover, so the day is clamped before the date is built.
+ */
+export function addCalendarMonths(iso: string, count: number): string {
+  const year = Number(iso.slice(0, 4));
+  const month = Number(iso.slice(5, 7));
+  const day = Number(iso.slice(8, 10));
+  const firstOfTarget = new Date(Date.UTC(year, month - 1 + count, 1));
+  const targetYear = firstOfTarget.getUTCFullYear();
+  const targetMonth = firstOfTarget.getUTCMonth();
+  // Day 0 of the following month is the last day of this one.
+  const lastDay = new Date(
+    Date.UTC(targetYear, targetMonth + 1, 0),
+  ).getUTCDate();
+  return toCalendarDate(
+    new Date(Date.UTC(targetYear, targetMonth, Math.min(day, lastDay))),
+  );
+}
+
 /** 0 = Monday … 6 = Sunday, the convention `schedule_slots.weekday` uses. */
 export function weekdayOf(iso: string): number {
   return (parseCalendarDate(iso).getUTCDay() + 6) % 7;

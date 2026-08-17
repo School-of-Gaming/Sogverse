@@ -37,12 +37,14 @@ export function SchedulePanel({
   comingUp,
   now,
   timeZone,
+  timeZoneAbbrev,
 }: {
   weeks: readonly ScheduleWeek[];
   currentWeekIndex: number;
   comingUp: readonly ComingUpDay[];
   now: Date;
   timeZone: string;
+  timeZoneAbbrev: string | null;
 }) {
   return (
     <Card>
@@ -50,7 +52,13 @@ export function SchedulePanel({
         <CardTitle className="text-xl">Schedule</CardTitle>
       </CardHeader>
       <CardContent className="space-y-8">
-        <ThisWeek weeks={weeks} currentWeekIndex={currentWeekIndex} now={now} timeZone={timeZone} />
+        <ThisWeek
+          weeks={weeks}
+          currentWeekIndex={currentWeekIndex}
+          now={now}
+          timeZone={timeZone}
+          timeZoneAbbrev={timeZoneAbbrev}
+        />
 
         <section aria-label="Coming up" className="space-y-3 border-t border-border pt-6">
           <h3 className="text-sm font-semibold">Coming up</h3>
@@ -66,11 +74,13 @@ function ThisWeek({
   currentWeekIndex,
   now,
   timeZone,
+  timeZoneAbbrev,
 }: {
   weeks: readonly ScheduleWeek[];
   currentWeekIndex: number;
   now: Date;
   timeZone: string;
+  timeZoneAbbrev: string | null;
 }) {
   const [weekIndex, setWeekIndex] = useState(currentWeekIndex);
   // Off means "not filtering by this axis", so the resting page shows
@@ -131,6 +141,17 @@ function ThisWeek({
           <span className="ml-2 text-xs text-muted-foreground">
             {filtered.chips.length} sessions
           </span>
+          {/* Only when the schedule was authored somewhere other than where it
+              is being read. Every time on this page has already been converted
+              into the viewer's zone, and saying which zone that is turns a
+              silent adjustment into a visible one. Nothing is reserved for it:
+              a Helsinki admin reading Helsinki products never has one, and a
+              hole held open for a note that cannot appear is dead space. */}
+          {timeZoneAbbrev !== null && (
+            <span className="ml-2 text-xs text-muted-foreground">
+              times in {timeZoneAbbrev}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">

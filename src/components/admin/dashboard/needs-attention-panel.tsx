@@ -25,9 +25,12 @@ import { ProductAttentionGrid } from "./product-attention-grid";
 export function NeedsAttentionPanel({
   products,
   uncertifiedGedus,
+  onCertifyGedu,
 }: {
   products: readonly ProductAttention[];
   uncertifiedGedus: readonly UncertifiedGedu[];
+  /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
+  onCertifyGedu: (geduId: string) => Promise<void>;
 }) {
   const total = products.length + uncertifiedGedus.length;
 
@@ -50,7 +53,10 @@ export function NeedsAttentionPanel({
               <ProductAttentionGrid products={products} />
             )}
             {uncertifiedGedus.length > 0 && (
-              <GeduCertificationQueue gedus={uncertifiedGedus} />
+              <GeduCertificationQueue
+                gedus={uncertifiedGedus}
+                onCertify={onCertifyGedu}
+              />
             )}
           </div>
         )}

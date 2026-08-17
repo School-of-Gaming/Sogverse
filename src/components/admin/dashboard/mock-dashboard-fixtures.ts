@@ -12,8 +12,8 @@ import type {
   ScheduleWeek,
   UncertifiedGedu,
 } from "./admin-dashboard-data";
+import { compareComingUpCohorts } from "./build-admin-dashboard-data";
 import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
-import { PRODUCT_TYPE_ORDER } from "./product-type-presentation";
 
 /**
  * Fixtures for the admin dashboard preview scene: a plausible autumn term for a
@@ -56,13 +56,17 @@ export function isAdminDashboardScenario(
 }
 
 /**
- * The zone every product in this fixture is authored in.
+ * The zone every product in this fixture is authored in — **and** the zone the
+ * fixture is read in, which is what makes its rows so simple.
  *
- * Products are written in Helsinki time and their schedule slots are wall clocks
- * there, so the weekday rows are Helsinki rows: a session at 17:00 sits at 17:00
- * whoever is reading. That is the admin surface's deliberate choice — an admin is
- * checking a schedule they authored, not attending a session — and it is why
- * nothing on this page converts to a viewer zone.
+ * On the live page a session converts: it is a date plus a clock face, so it is
+ * resolved to an instant in the product's zone and re-read in the viewer's,
+ * landing on whatever weekday it falls on for them. Here the two zones are the
+ * same by construction, so the conversion is the identity and a 17:00 Helsinki
+ * slot sits at 17:00 on its own weekday. The scene is pinned that way on purpose
+ * — the cases it exists to show are a holiday week and a term boundary, and
+ * running it through a reader's own zone would make those land on a different
+ * day depending on who opened it.
  */
 export const ADMIN_DASHBOARD_TIMEZONE = "Europe/Helsinki";
 
@@ -889,13 +893,6 @@ function weekdaysBetween(start: string, end: string): number[] {
   return weekdays;
 }
 
-/** Order the cohorts on one day take: what begins, what happens, what ends. */
-const COMING_UP_KIND_ORDER: readonly ComingUpCohort["kind"][] = [
-  "starts",
-  "runs",
-  "ends",
-];
-
 /**
  * Build the coming-up feed: one entry per milestone, grouped by date and then by
  * kind and product type.
@@ -959,18 +956,8 @@ function buildComingUp(specs: readonly ProductSpec[]): ComingUpDay[] {
     .sort(([a], [b]) => (a < b ? -1 : 1))
     .map(([date, cohorts]) => ({
       date,
-      cohorts: [...cohorts.values()].sort(compareCohorts),
+      cohorts: [...cohorts.values()].sort(compareComingUpCohorts),
     }));
-}
-
-function compareCohorts(a: ComingUpCohort, b: ComingUpCohort): number {
-  const kindDelta =
-    COMING_UP_KIND_ORDER.indexOf(a.kind) - COMING_UP_KIND_ORDER.indexOf(b.kind);
-  if (kindDelta !== 0) return kindDelta;
-  return (
-    PRODUCT_TYPE_ORDER.indexOf(a.productType) -
-    PRODUCT_TYPE_ORDER.indexOf(b.productType)
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -998,6 +985,10 @@ export function buildAdminDashboardFixture(
   return {
     now: ADMIN_DASHBOARD_NOW,
     timeZone: ADMIN_DASHBOARD_TIMEZONE,
+    // The whole fixture is authored in the zone it is read in — every product
+    // is Helsinki and so is the pinned clock — so nothing converted and there is
+    // no adjustment to disclose. The live page decides this per snapshot.
+    timeZoneAbbrev: null,
     products,
     uncertifiedGedus: quiet ? [] : UNCERTIFIED_GEDUS,
     users: quiet ? QUIET_USER_STATS : BUSY_USER_STATS,
