@@ -144,7 +144,7 @@ describe("product topics", () => {
     expect(withoutCard.length).toBeGreaterThan(0);
 
     // Which topics land on the no-card side is a product decision, not an
-    // oversight: none of these four is one piece of software a family installs,
+    // oversight: none of these five is one piece of software a family installs,
     // so what they need is written into that product's own description by an
     // admin instead. Giving one of them an info block is a decision to revisit,
     // and naming them here is what makes it a deliberate move rather than a
@@ -153,6 +153,7 @@ describe("product topics", () => {
       "ai",
       "creator_studio",
       "esports",
+      "game_studio",
       "programming",
     ]);
   });

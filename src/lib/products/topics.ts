@@ -11,8 +11,9 @@ import type { ProductTopic } from "@/types";
 // Two rules replace it:
 //   - Labels are literals and are never translated. Most topics are proper
 //     nouns and settle that on their own — Minecraft, Rocket League, Roblox
-//     Studio, and Creator Studio, which is School of Gaming's own brand word
-//     for that programme rather than a description of what happens in it.
+//     Studio, and Creator Studio and Game Studio, which are School of Gaming's
+//     own brand words for those programmes rather than descriptions of what
+//     happens in them.
 //     Three are ordinary common nouns: Programming, AI and Esports. Those were
 //     looked at deliberately and left in English anyway, which is a decision
 //     that has been taken rather than one still open — a parent browsing in
@@ -30,11 +31,13 @@ import type { ProductTopic } from "@/types";
 //     needs/costs note, the link/heading label — lives in the
 //     productDetail.topicInfo message namespace, keyed by topic.
 //
-// Four topics are label-only and render no card at all: creator_studio,
-// programming, ai and esports. That is the design, not an omission waiting to
-// be filled. None of them is one piece of software a family installs — three
-// name subject matter, and Creator Studio names a programme of ours — so there
-// is nothing single to rate, price or link to. What a family needs for an
+// Five topics are label-only and render no card at all: creator_studio,
+// game_studio, programming, ai and esports. That is the design, not an omission
+// waiting to be filled. None of them is one piece of software a family installs
+// — three name subject matter, and Creator Studio and Game Studio name
+// programmes of ours — so there is nothing single to rate, price or link to. A
+// Game Studio group builds its own game, and which engine that takes belongs to
+// the product rather than to the topic. What a family needs for an
 // Esports club is a fact about *that* club, and an admin writes it into that
 // product's own description, where it can differ between two products sharing
 // the topic. A generic card would be the wrong altitude and would push the
@@ -212,11 +215,14 @@ export const PRODUCT_TOPICS = {
     },
   },
   // Label-only, for the reason in the header note: each names subject matter,
-  // and the software (if any) varies by product. Creator Studio is our own
-  // programme name, so it is a proper noun like the game brands above even
-  // though the three below it are common nouns.
+  // and the software (if any) varies by product. Creator Studio and Game Studio
+  // are our own programme names, so they are proper nouns like the game brands
+  // above even though the two below them are common nouns.
   creator_studio: {
     label: "Creator Studio",
+  },
+  game_studio: {
+    label: "Game Studio",
   },
   programming: {
     label: "Programming",
@@ -286,6 +292,7 @@ export const PRODUCT_TOPIC_VALUES = [
   "esports",
   "roblox_studio",
   "creator_studio",
+  "game_studio",
   "programming",
   "ai",
 ] as const satisfies readonly ProductTopic[];
