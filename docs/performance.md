@@ -118,15 +118,30 @@ The first Speed Insights pull (see Real-user data) surfaced four routes worth a 
 - **`/voice/group/[id]` LCP 4552ms desktop (POOR, n=81) — but INP excellent (72ms, n=403).** The room feels fine once loaded; the entry paint is the problem. Hypothesis: the video/participant tile arrives late and is the LCP element.
 - **`/shop/[id]` LCP ~3.2s on both devices (improvable).** Hypothesis: the product hero image (sizing/priority).
 
-### F6 — The `/schools` listing routes still walk all of Finland per request
+### F6 — The `/schools` listing routes fetch a set bounded by Finland to render one bounded by clubs
 
-`/schools` and `/schools/[municipalityName]` both call `getMunicipalitiesByCountry("FI")` — a ~308-row read carrying a 3-level ancestor embed, followed by a slugify pass and a collator sort over the whole list — on every request. Unlike the detail route (see Completed), both have a genuine use for the full set: the listing groups every municipality under its region and flags which ones have clubs, and the municipality page resolves club membership across the collection. **The read is legitimate; paying for it uncached on routes this thin is what is not.**
+`/schools` and `/schools/[municipalityName]` both read every Finnish municipality — 308 rows, each carrying a 3-level ancestor embed — then slugify and collator-sort the whole list, on every request. `/schools` additionally serialises all 308 entries into the RSC payload, so they ship to every visitor's browser.
 
-Measured 2026-08-17 against production, first hit after a 25-minute idle: `/schools` ~540ms and `/schools/[municipalityName]` ~770ms, against warm steady states of ~240ms and ~200ms. Both sit upstream of the detail page in the same funnel, so a family arriving from a school's message pays the cold price three times on the way in.
+Measured 2026-08-17 against production, first request after a 25-minute idle with nothing warmed before it:
 
-The fix that fits is a cross-request cache of the **built** `MunicipalityEntry[]`, not of the raw rows — the slugify and collator work sits on the same critical path, and a row-level cache would leave it there. It also has to be a persistent store rather than a module-level memo: at this traffic essentially every request lands on a fresh instance, so an in-memory cache would hit approximately never while measuring perfectly on a second local click. Seeded geography changes only when a hand-run reconciliation migration lands, so a long TTL is safe.
+| `/schools` cold TTFB | 1170 ms |
+|---|---|
+| warm TTFB | ~185 ms |
+| server fetch | 238,285 bytes |
+| client RSC payload | ~60 KB (estimated from row count) |
 
-**Not attributed:** how the cold cost divides between Postgres buffer cache and cold-JIT execution of the per-row work. Caching the built result removes both, which is why the split was not chased — it would only matter if that fix were rejected.
+Of the 1170 ms: ~40 ms network, ~107 ms lambda init, ~145 ms warm server work, **~878 ms (75%) the municipality read against cold caches.**
+
+**The read is not merely expensive, it is bounded by the wrong variable** — and this corrects an earlier version of this finding, which claimed both routes had a genuine need for the whole country. They do not:
+
+- `/schools` filters its entries to club-bearing ones *before* rendering its default view. The only consumer of the other ~290 is the client-side search box.
+- `/schools/[municipalityName]` 404s for a real municipality that has no clubs, by an explicit guard, exactly as it does for a nonsense slug. So the set of slugs that can produce a page is precisely the club-bearing ones, and resolving against all of Finland to then discard every clubless hit is O(M) work for an O(C) answer.
+
+The fix is therefore a data-flow reversal — read the clubs, derive their municipalities, read those rows by key — with no schema change and no behaviour change, plus a hybrid search box so the whole-country set stops reaching the browser. **Superseded by this: the cross-request cache this finding previously recommended**, which can amortise the server fetch but cannot touch a per-visitor client payload; also a generated slug column (the O(M) lookup disappears rather than needing an index) and trimming the ancestor embed (measured at 31–82% payload savings, all irrelevant to a query that should stop running).
+
+**Urgency is traffic, not depth.** `/schools` is the product's main landing page and is expected to become the highest-traffic page on the site within a month. Speed Insights cannot be used to justify or verify the fix: at ~1 visit/day it reports nothing, and by the time it reports anything the affected visitors have already had the bad experience. This is the case the "read `n` before reading p75" note above is about, seen from the other side — a route can also be *too new* to measure.
+
+**Not attributed:** how the 878 ms divides between cold Postgres pages, `JSON.parse` of 238 KB in a cold V8, and the slugify-plus-collator work. The reversal removes most of all three, so the split was not chased.
 
 ## Recommended improvements
 
@@ -191,7 +206,7 @@ So the lookup was **~800 ms, about 73% of a cold request**, against ~195 ms of V
 
 **Trade-off (accepted).** An unknown municipality slug no longer 404s; it renders the product with a back link to a listing that will itself 404 when followed. The route is `noindex`, and the file already documented a mismatched slug as harmless — this widens that from "back goes to the wrong municipality" to "back goes to no municipality". The slug never gated the product.
 
-**What's left.** The two `/schools` listing routes still run the same walk and have a real need for the whole list — **F6**.
+**What's left.** The two `/schools` listing routes still run the same whole-country read. It looked at the time as though they genuinely needed it; they do not, and the reason they do not is **F6**.
 
 ### `AppSupabaseClient` — structural `getUser` guard + survivor conversion — closes I3 (branch `perf/auth-getclaims-guard`, 2026-05-31)
 
