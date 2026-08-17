@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatDateOnly } from "@/lib/utils";
 import type { ProductType } from "@/types";
 import type { ComingUpDay, ScheduleWeek } from "./admin-dashboard-data";
 import { addCalendarDays, formatDayMonth } from "./calendar";
@@ -89,7 +89,20 @@ function ThisWeek({
 }) {
   const t = useTranslations("admin.dashboard.schedule");
   const tType = useTranslations("admin.products.types");
-  const [weekIndex, setWeekIndex] = useState(currentWeekIndex);
+  const locale = useLocale();
+  /**
+   * Which week is on screen, held as **the week itself** rather than as its
+   * position in the list.
+   *
+   * The list is recomputed from the page's clock, so its length and its
+   * alignment are not constants: cross a midnight and every offered week shifts
+   * by one, and a stored index would silently start pointing at the week after
+   * the one the admin was reading — or, at the end of the list, at nothing at
+   * all. A `weekStart` names a week absolutely, so the worst a recomputation can
+   * do is stop offering it, and `null` is the resting state that follows
+   * whichever week is current.
+   */
+  const [pinnedWeekStart, setPinnedWeekStart] = useState<string | null>(null);
   // Off means "not filtering by this axis", so the resting page shows
   // everything. An empty set reading as "all" rather than "none" is the only
   // behaviour that lets a chip row start with nothing lit.
@@ -99,13 +112,27 @@ function ThisWeek({
   // selects every chip in it, because a chip in a week *is* something running.
   const [types, setTypes] = useState<ReadonlySet<ProductType>>(new Set());
 
+  // Resolved against the list as it is *now*, so a week that stopped being
+  // offered falls back to the current one instead of pointing somewhere else.
+  const offered = weeks.findIndex((entry) => entry.weekStart === pinnedWeekStart);
+  const weekIndex = offered === -1 ? currentWeekIndex : offered;
+
   const week = weeks[weekIndex];
   const todayIso = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
   const weekEnd = addCalendarDays(week.weekStart, 6);
-  // `17.8. – 23.8.2026`: two bare numeric dates around an en dash, with the year
-  // carried once at the end. Assembled here rather than in the JSX because it
-  // holds no words in any locale — the separator is the only literal in it.
-  const weekRange = `${formatDayMonth(week.weekStart)} – ${formatDayMonth(weekEnd)}${week.weekStart.slice(0, 4)}`;
+  // `17.8. – 23.8.2026`: two numeric dates around an en dash, with the year
+  // carried once, on the end date. On the end date because that is the one it is
+  // true of — the week of 28 December 2026 finishes on 3 January 2027, and a
+  // year lifted off the *start* labelled that week 2026 in full. It is the end
+  // date's own `Intl` render rather than four digits glued on, because where the
+  // year sits inside a numeric date is the reader's convention too. Assembled
+  // here rather than in the JSX because it holds no words in any locale — the
+  // separator is the only literal in it.
+  const weekRange = `${formatDayMonth(week.weekStart, locale)} – ${formatDateOnly(
+    weekEnd,
+    locale,
+    { day: "numeric", month: "numeric", year: "numeric" },
+  )}`;
 
   const filtered: ScheduleWeek = {
     ...week,
@@ -120,16 +147,20 @@ function ThisWeek({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setWeekIndex(Math.max(weekIndex - 1, 0))}
+            onClick={() =>
+              setPinnedWeekStart(weeks[Math.max(weekIndex - 1, 0)].weekStart)
+            }
             disabled={weekIndex === 0}
             aria-label={t("previousWeek")}
             className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
           </button>
+          {/* Back to *whichever* week is current, not to a week remembered from
+              whenever this was last rendered — which is what `null` means. */}
           <button
             type="button"
-            onClick={() => setWeekIndex(currentWeekIndex)}
+            onClick={() => setPinnedWeekStart(null)}
             className="rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
           >
             {t("today")}
@@ -137,7 +168,9 @@ function ThisWeek({
           <button
             type="button"
             onClick={() =>
-              setWeekIndex(Math.min(weekIndex + 1, weeks.length - 1))
+              setPinnedWeekStart(
+                weeks[Math.min(weekIndex + 1, weeks.length - 1)].weekStart,
+              )
             }
             disabled={weekIndex === weeks.length - 1}
             aria-label={t("nextWeek")}

@@ -28,24 +28,35 @@ import type { UncertifiedGedu } from "./admin-dashboard-data";
  * about, that is the moment to design for it, against the real shape of the
  * problem rather than a guess at it.
  *
- * **The write is the shell's, and the receipt is this section's.** `onCertify`
- * resolves when the row has actually been certified; only then does the row
- * leave the list and the counted line above it move. That ordering is what lets
- * a failure be shown *on the row that failed* — a queue that removed the row
- * optimistically would have nowhere left to put the error, and the admin would
- * be told nothing at all. In the preview the callback resolves immediately and
- * writes nothing, so a reload restores every row.
+ * **The write is the shell's, the receipt is the panel's, and the ordering is
+ * this section's.** `onCertify` resolves when the row has actually been
+ * certified; only then is `onCertified` called, the row leaves the list and the
+ * counted line above it moves. That ordering is what lets a failure be shown *on
+ * the row that failed* — a queue that removed the row optimistically would have
+ * nowhere left to put the error, and the admin would be told nothing at all. In
+ * the preview the callback resolves immediately and writes nothing, so a reload
+ * restores every row.
+ *
+ * The certified set is a *prop* rather than state here because this section is
+ * mortal: it is unmounted the moment the queue it renders runs out of rows,
+ * which is precisely when the receipt matters most. The panel above owns the
+ * set and keeps this section mounted while it is non-empty.
  */
 export function GeduCertificationQueue({
   gedus,
+  certified,
   onCertify,
+  onCertified,
 }: {
   gedus: readonly UncertifiedGedu[];
+  /** Who has been certified in this sitting — owned by the panel above. */
+  certified: ReadonlySet<string>;
   /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
   onCertify: (geduId: string) => Promise<void>;
+  /** Called once a certification has actually landed. */
+  onCertified: (geduId: string) => void;
 }) {
   const t = useTranslations("admin.dashboard.certification");
-  const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
 
   const waiting = gedus.filter((gedu) => !certified.has(gedu.id));
 
@@ -78,7 +89,7 @@ export function GeduCertificationQueue({
                 gedu={gedu}
                 onCertify={() =>
                   onCertify(gedu.id).then(() => {
-                    setCertified((current) => new Set(current).add(gedu.id));
+                    onCertified(gedu.id);
                   })
                 }
               />

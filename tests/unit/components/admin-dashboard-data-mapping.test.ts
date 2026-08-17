@@ -119,9 +119,9 @@ describe("the week window", () => {
   });
 
   it("offers only weeks lying wholly inside the snapshot's own window", () => {
-    // The RPC sends [today - 30 days, today + 4 months); the holidays it sends
-    // are bounded the same way, so a half-covered week would render a break as
-    // a session.
+    // The RPC sends [today - 30 days, today + 4 months), less a day at each end
+    // (see the straddle case below); the holidays it sends are bounded the same
+    // way, so a half-covered week would render a break as a session.
     expect(data.weeks[0].weekStart).toBe("2026-07-20");
     expect(data.weeks[data.weeks.length - 1].weekStart).toBe("2026-12-07");
   });
@@ -132,6 +132,33 @@ describe("the week window", () => {
       const current = new Date(`${data.weeks[index].weekStart}T00:00:00Z`);
       expect(current.getTime() - previous.getTime()).toBe(7 * 86_400_000);
     }
+  });
+
+  it("drops a boundary week the viewer's calendar reaches and the product's does not", () => {
+    // 00:30 on Thursday the 20th in Helsinki is still 14:30 on Wednesday the
+    // 19th in Los Angeles. The offered window is measured from the viewer's
+    // Wednesday and so opens on Monday 20 July — but every product window is
+    // measured from today in the *product's* zone, exactly as the RPC measures
+    // it, so this club's own window opens on Tuesday 21 July and its Monday
+    // session was never sent. Offering that week would show an empty Monday for
+    // a club that met.
+    const now = new Date("2026-08-20T00:30:00+03:00");
+    const data = build(
+      snapshot({
+        schedule_products: [
+          scheduleProduct({ id: "club", start_date: "2026-06-01" }),
+        ],
+      }),
+      LOS_ANGELES,
+      now,
+    );
+
+    expect(data.weeks.some((entry) => entry.weekStart === "2026-07-20")).toBe(
+      false,
+    );
+    expect(data.weeks[0].weekStart).toBe("2026-07-27");
+    // And the first week that *is* offered is fully covered.
+    expect(week(data, "2026-07-27").chips).toHaveLength(1);
   });
 });
 

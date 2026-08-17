@@ -163,7 +163,6 @@
     "dashboard": {
       "title": "Hallintapaneeli",
       "description": "Mikä vaatii ylläpitäjää tänään, keitä alustalla on ja mitä on käynnissä.",
-      "loading": "Ladataan hallintapaneelia",
       "loadError": "Hallintapaneelin lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
       "loadErrorWithReason": "Hallintapaneelin lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
       "users": {

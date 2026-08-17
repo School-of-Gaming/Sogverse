@@ -163,7 +163,6 @@
     "dashboard": {
       "title": "Dashboard",
       "description": "What needs an admin today, who is on the platform, and what is running.",
-      "loading": "Loading the dashboard",
       "loadError": "Could not load the dashboard. Refresh to try again.",
       "loadErrorWithReason": "Could not load the dashboard — {reason}. Refresh to try again.",
       "users": {

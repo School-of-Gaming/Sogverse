@@ -9,6 +9,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.queries";
 import { GroupsService } from "./groups.service";
 import type {
   GroupGeduDetail,
@@ -51,6 +52,35 @@ export function useProductGroups(productId: string) {
 /** Distinct namespace so mutation keys don't collide with the query key. */
 const groupMutationBase = (productId: string) =>
   [...groupsKeys.byProduct(productId), "mutation"] as const;
+
+/**
+ * What every action in this panel invalidates: the product's own snapshot, and
+ * the admin dashboard.
+ *
+ * The dashboard's ops queue is built out of exactly these facts — seats sitting
+ * in no group, a group with members and no educator, people queueing while seats
+ * stand open, how full a product is — and it is a *separate* cache entry with a
+ * sixty-second staleness. Without this, an admin who fixes the thing the
+ * dashboard sent them here to fix goes back to a page still telling them to fix
+ * it, which is the failure mode that teaches a reader to stop believing the
+ * queue. Every action here is uniformly included rather than picked over: each
+ * one moves at least one of those facts, and a per-hook judgment is a list that
+ * goes stale the first time somebody adds a hook.
+ *
+ * It is scoped to *admin* mutations deliberately. The dashboard query only ever
+ * exists in an admin's own cache, so a customer-side write (joining a waitlist,
+ * enrolling) has nothing to invalidate in the browser it happens in — its effect
+ * reaches the dashboard through that page's own next read.
+ */
+function invalidateGroupChange(
+  queryClient: QueryClient,
+  key: QueryKey,
+): Promise<void> {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: key }),
+    queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all }),
+  ]).then(() => undefined);
+}
 
 // Display order is owned by the server: get_product_groups_with_details orders
 // participations by updated_at and group Gedus by their assignment time, so the
@@ -206,7 +236,7 @@ export function useMoveParticipation(productId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      invalidateGroupChange(queryClient, key);
     },
   });
 }
@@ -237,7 +267,7 @@ export function useRenameGroup(productId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      invalidateGroupChange(queryClient, key);
     },
   });
 }
@@ -275,7 +305,7 @@ export function useCreateGroup(productId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      invalidateGroupChange(queryClient, key);
     },
   });
 }
@@ -315,7 +345,7 @@ export function useAddGedu(productId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      invalidateGroupChange(queryClient, key);
     },
   });
 }
@@ -339,12 +369,12 @@ function destructiveSettle<TVars>(
   return {
     mutationFn: async (vars: TVars) => {
       await run(vars);
-      await queryClient.invalidateQueries({ queryKey: key });
+      await invalidateGroupChange(queryClient, key);
     },
     // Removal failed — the element is still in the snapshot. Reconcile with
     // server truth; it un-greys as the mutation leaves pending.
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      invalidateGroupChange(queryClient, key);
     },
   };
 }
@@ -401,9 +431,7 @@ export function useAdminAddParticipantToProduct(productId: string) {
     mutationFn: (participantId: string) =>
       service.addParticipantToProduct(productId, participantId),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: groupsKeys.byProduct(productId),
-      });
+      invalidateGroupChange(queryClient, groupsKeys.byProduct(productId));
     },
   });
 }
@@ -473,7 +501,7 @@ export function usePromoteFromWaitlist(productId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      invalidateGroupChange(queryClient, key);
     },
   });
 }
@@ -513,7 +541,7 @@ export function useDemoteToWaitlist(productId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      invalidateGroupChange(queryClient, key);
     },
   });
 }

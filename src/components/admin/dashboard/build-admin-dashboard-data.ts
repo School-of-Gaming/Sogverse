@@ -69,8 +69,13 @@ export interface BuildAdminDashboardDataArgs {
 }
 
 /**
- * How far back and forward the snapshot's schedule set reaches, mirroring the
- * RPC exactly (`(now AT TIME ZONE p.timezone)::date - 30` to `+ 4 months`).
+ * How far back and forward the snapshot's schedule set reaches
+ * (`(now AT TIME ZONE p.timezone)::date - 30` to `+ 4 months` in the RPC).
+ *
+ * The occurrence walk below applies these in each **product's** zone, which is
+ * where the RPC applies them; the offered week window applies them in the
+ * **viewer's** and then shrinks by a day at each end, because the two anchors
+ * straddle a midnight for part of every day — see `windowWeekStarts`.
  *
  * The page must not offer a week the data cannot fill: the holiday dates are
  * bounded to this same window, so a week beyond it would render a break as a
@@ -90,7 +95,18 @@ const WINDOW_MONTHS_AFTER = 4;
  */
 const COMING_UP_MONTHS = 4;
 
-/** The order the users strip reads in: the platform's own hierarchy. */
+/**
+ * The order the users strip reads in: the platform's own hierarchy.
+ *
+ * **A role added to `user_role` does not arrive on this page by itself.** The
+ * RPC drives its tiles off `enum_range`, so a new role is counted and sent the
+ * moment the enum has it — but the page still has to be told twice where it
+ * goes: here, and in the strip's glyph map. The glyph map is a
+ * `Record<UserRole, …>` and so fails to compile until somebody chooses an icon;
+ * this list is a plain array and would silently *drop* the tile instead, which
+ * is why it is worth saying out loud rather than trusting the type system to
+ * catch both halves.
+ */
 const ROLE_ORDER: readonly UserRole[] = ["customer", "gamer", "gedu", "admin"];
 
 export function buildAdminDashboardData({
@@ -128,8 +144,10 @@ export function buildAdminDashboardData({
     products: snapshot.attention_products.map((product) =>
       toProductAttention(product, locale),
     ),
-    uncertifiedGedus: snapshot.certification_queue.map((candidate) =>
-      toUncertifiedGedu(candidate, locale, now),
+    uncertifiedGedus: buildCertificationQueue(
+      snapshot.certification_queue,
+      locale,
+      now,
     ),
     users: orderUsers(snapshot.users),
     weeks,
@@ -231,6 +249,26 @@ function toProductAttention(
 // ---------------------------------------------------------------------------
 // The certification queue
 // ---------------------------------------------------------------------------
+
+/**
+ * The queue, aged against a clock — and the **only** part of this module that
+ * wants a ticking one.
+ *
+ * Everything else here is day-granular: which weeks exist, which occurrence
+ * lands on which weekday, what is coming up. A wait is not — "3 minutes ago"
+ * has to become "an hour ago" while the page sits open — so it is exported
+ * separately, and the shell re-runs this cheap map against the live clock while
+ * the expensive half is memoised on the calendar day.
+ */
+export function buildCertificationQueue(
+  candidates: readonly AdminDashboardCertificationCandidate[],
+  locale: SupportedLocale,
+  now: Date,
+): UncertifiedGedu[] {
+  return candidates.map((candidate) =>
+    toUncertifiedGedu(candidate, locale, now),
+  );
+}
 
 function toUncertifiedGedu(
   candidate: AdminDashboardCertificationCandidate,
@@ -407,18 +445,38 @@ function resolveWeeks({
 
 /**
  * The Mondays the week view can step through: every week lying **wholly** inside
- * the snapshot's window.
+ * the window, with a day's margin at each end.
  *
  * Bounding on whole weeks rather than on the window's own edges is what makes
  * the navigation honest at its ends. A half-covered week would render as a
  * quiet one — some of its products simply absent — which is indistinguishable
  * from a week where nothing was scheduled, and there is nothing on the page that
  * could tell the reader which they were looking at.
+ *
+ * **The day at each end is the price of two calendars.** This window is measured
+ * from the *viewer's* today, while every product's own occurrence window is
+ * measured from today in the *product's* zone — the RPC bounds its holidays that
+ * way, and the walk above mirrors it. The two agree for most of the day and
+ * disagree across whichever midnight comes first: an LA admin reading a Helsinki
+ * club is a calendar date behind it for seven hours out of every twenty-four.
+ * On those hours a boundary week can be offered whose first or last day lies
+ * outside the product's window, so its sessions are simply missing — the exact
+ * half-covered week the whole-weeks bound exists to refuse. Shrinking by one day
+ * at each end covers the largest gap the two calendars can open (a day) and
+ * costs at most one week of navigation at each extreme, which is a range nobody
+ * is reading anyway.
  */
 function windowWeekStarts(today: string): string[] {
-  const windowStart = addCalendarDays(today, -WINDOW_DAYS_BEFORE);
-  /** Exclusive, exactly as the RPC's `< window_end` is. */
-  const windowEnd = addCalendarMonths(today, WINDOW_MONTHS_AFTER);
+  // A day in from each edge of the window the snapshot itself covers.
+  const windowStart = addCalendarDays(
+    addCalendarDays(today, -WINDOW_DAYS_BEFORE),
+    1,
+  );
+  /** Exclusive, a day inside the RPC's own `< window_end`. */
+  const windowEnd = addCalendarDays(
+    addCalendarMonths(today, WINDOW_MONTHS_AFTER),
+    -1,
+  );
 
   let first = mondayOf(windowStart);
   if (first < windowStart) first = addCalendarDays(first, 7);

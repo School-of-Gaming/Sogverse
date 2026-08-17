@@ -163,7 +163,6 @@
     "dashboard": {
       "title": "Tableau de bord",
       "description": "Ce qui demande l’intervention d’un administrateur aujourd’hui, qui est sur la plateforme et ce qui tourne.",
-      "loading": "Chargement du tableau de bord",
       "loadError": "Impossible de charger le tableau de bord. Actualisez la page pour réessayer.",
       "loadErrorWithReason": "Impossible de charger le tableau de bord – {reason}. Actualisez la page pour réessayer.",
       "users": {

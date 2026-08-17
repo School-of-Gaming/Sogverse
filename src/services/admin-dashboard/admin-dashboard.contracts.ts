@@ -114,8 +114,10 @@ export const adminDashboardScheduleSlot = z.object({
  *
  * The set is every product effectively pending or running, plus a tail: a run
  * whose end date fell in the last thirty days still has occurrences in the weeks
- * of history the view can step back through. Cancelled and completed products
- * are absent — they are history, whatever their slots still say.
+ * of history the view can step back through — thirty days is three or four whole
+ * back-weeks depending on which weekday today is, not a fixed count. Cancelled
+ * and completed products are absent — they are history, whatever their slots
+ * still say.
  */
 export const adminDashboardScheduleProduct = z.object({
   id: z.string(),

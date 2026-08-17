@@ -92,7 +92,7 @@ function DayRow({ day }: { day: ComingUpDay }) {
     <div className="flex flex-col gap-1 py-1 sm:flex-row sm:gap-3">
       <p className="shrink-0 text-xs font-medium tabular-nums sm:w-24">
         {formatDateOnly(day.date, locale, { weekday: "short" })}{" "}
-        {formatDayMonth(day.date)}
+        {formatDayMonth(day.date, locale)}
       </p>
       <ul className="min-w-0 flex-1 space-y-1">
         {day.cohorts.map((cohort) => (

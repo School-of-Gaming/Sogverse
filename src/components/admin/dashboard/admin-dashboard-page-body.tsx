@@ -51,8 +51,10 @@ import { UsersStrip } from "./users-strip";
  * the preview scene can render the identical body with a callback that writes
  * nothing. That is what lets the scene render it over fixtures and the route
  * render it over a live snapshot without either owning a layout. It takes no
- * loading states for the same reason the scene needs none — a shell that has the
- * data renders it, and a shell that does not is the shell's problem to show.
+ * loading state, and there is none above it either: the route awaits the
+ * snapshot before this renders at all, so the first paint is the finished page,
+ * and a read that never landed is answered by the route with a failure band in
+ * place of this body.
  */
 export function AdminDashboardPageBody({
   data,

@@ -84,7 +84,7 @@ export function WeekRows({
                 {row.label}
               </span>
               <span className="text-xs tabular-nums text-muted-foreground">
-                {formatDayMonth(row.date)}
+                {formatDayMonth(row.date, locale)}
               </span>
             </div>
 

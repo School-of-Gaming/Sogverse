@@ -48,6 +48,11 @@ import type { AdminUserRoleStat } from "./admin-dashboard-data";
  * The glyph each role wears. The *name* is not here: it is
  * `admin.dashboard.users.roles.<role>`, keyed by the database's own role
  * identifier so a tile cannot be labelled by anything but the role it counts.
+ *
+ * A `Record` over the enum rather than a lookup with a fallback, so a role added
+ * to `user_role` stops the build here and makes somebody choose its icon. The
+ * RPC will already be counting it — it enumerates the enum — but the page's own
+ * two lists (this, and the order the strip reads in) are hand-maintained.
  */
 const ROLE_ICON: Record<UserRole, LucideIcon> = {
   customer: Users,

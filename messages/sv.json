@@ -163,7 +163,6 @@
     "dashboard": {
       "title": "Instrumentpanel",
       "description": "Vad som behöver en administratör i dag, vilka som finns på plattformen och vad som pågår.",
-      "loading": "Läser in instrumentpanelen",
       "loadError": "Det gick inte att läsa in instrumentpanelen. Uppdatera sidan och försök igen.",
       "loadErrorWithReason": "Det gick inte att läsa in instrumentpanelen – {reason}. Uppdatera sidan och försök igen.",
       "users": {

@@ -14,8 +14,11 @@
  * date *formatting*, so they come out of `Intl` in the reader's locale at the
  * point of render (`formatDateOnly`, which is UTC-pinned for exactly the reason
  * above) rather than out of a label array here — an array would be seven English
- * words this module has no locale to translate.
+ * words this module has no locale to translate. The one formatter that does live
+ * here takes the reader's locale as an argument for the same reason.
  */
+
+import { formatDateOnly } from "@/lib/utils";
 
 /** A bare `YYYY-MM-DD` read as an instant at UTC midnight. */
 export function parseCalendarDate(iso: string): Date {
@@ -83,13 +86,18 @@ export function mondayOf(iso: string): string {
 }
 
 /**
- * `17.8.` — day and month as bare numerals, short enough for a row heading.
+ * `17.8.` in Finnish, `8/17` in en-US — day and month as bare numerals, short
+ * enough for a row heading.
  *
- * Deliberately not `Intl`: it carries no words in any locale, and a row heading
- * beside a weekday name has room for a date only while it stays this short.
+ * It carries no *words*, which is not the same as carrying no locale: the order
+ * of the two numerals and the separator between them are both a reader's
+ * convention, and a hardcoded `d.M.` reads back-to-front for anyone whose
+ * calendar puts the month first. So it is `Intl` like every other date on this
+ * page, UTC-pinned through `formatDateOnly` because these are bare calendar
+ * dates, and the locale is threaded in from whoever is rendering it.
  */
-export function formatDayMonth(iso: string): string {
-  return `${Number(iso.slice(8, 10))}.${Number(iso.slice(5, 7))}.`;
+export function formatDayMonth(iso: string, locale: string): string {
+  return formatDateOnly(iso, locale, { day: "numeric", month: "numeric" });
 }
 
 /**

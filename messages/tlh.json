@@ -211,7 +211,6 @@
     "dashboard": {
       "title": "QaD",
       "description": "DaHjaj nuq poQ la’, ’Iv tu’lu’ Daq, je nuq qaSlI’.",
-      "loading": "QaD laDlu’taH",
       "loadError": "QaD laDlaHbe’. yIchu’qa’ ’ej yInID.",
       "loadErrorWithReason": "QaD laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID.",
       "users": {

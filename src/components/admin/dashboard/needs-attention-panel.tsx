@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CircleCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,15 @@ import { ProductAttentionGrid } from "./product-attention-grid";
  * When both are empty the whole thing collapses to a single all-clear line. That
  * is the only place on the page that says "nothing to do", and it is deliberately
  * quiet: a success banner every morning is a banner nobody reads by Wednesday.
+ *
+ * **Who has been certified this sitting is remembered here, not in the queue.**
+ * It is the receipt for the one write on this page, and the queue is exactly the
+ * thing that stops existing when that write succeeds for the last time: certify
+ * the final gedu and the list empties, the section it lived in unmounts, and the
+ * panel collapses to the all-clear — taking the confirmation with it at the one
+ * moment there is most to confirm. Holding the set a level up lets the section
+ * outlive its own rows, so the last certification is acknowledged the same way
+ * the first was.
  */
 export function NeedsAttentionPanel({
   products,
@@ -34,7 +44,11 @@ export function NeedsAttentionPanel({
   onCertifyGedu: (geduId: string) => Promise<void>;
 }) {
   const t = useTranslations("admin.dashboard.attention");
+  const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
+
+  /** Outstanding work, which is what the badge counts — a receipt is not work. */
   const total = products.length + uncertifiedGedus.length;
+  const showCertification = uncertifiedGedus.length > 0 || certified.size > 0;
 
   return (
     <Card>
@@ -47,17 +61,21 @@ export function NeedsAttentionPanel({
         )}
       </CardHeader>
       <CardContent>
-        {total === 0 ? (
+        {total === 0 && !showCertification ? (
           <AllClear />
         ) : (
           <div className="space-y-8">
             {products.length > 0 && (
               <ProductAttentionGrid products={products} />
             )}
-            {uncertifiedGedus.length > 0 && (
+            {showCertification && (
               <GeduCertificationQueue
                 gedus={uncertifiedGedus}
+                certified={certified}
                 onCertify={onCertifyGedu}
+                onCertified={(geduId) =>
+                  setCertified((current) => new Set(current).add(geduId))
+                }
               />
             )}
           </div>
