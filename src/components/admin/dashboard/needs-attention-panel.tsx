@@ -1,5 +1,6 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
+"use client";
+
+import { useTranslations } from "next-intl";
 import { CircleCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type {
@@ -32,12 +33,13 @@ export function NeedsAttentionPanel({
   /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
   onCertifyGedu: (geduId: string) => Promise<void>;
 }) {
+  const t = useTranslations("admin.dashboard.attention");
   const total = products.length + uncertifiedGedus.length;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-xl">Needs attention</CardTitle>
+        <CardTitle className="text-xl">{t("title")}</CardTitle>
         {total > 0 && (
           <span className="rounded-full bg-warning/15 px-3 py-1 text-sm font-semibold text-warning">
             {total}
@@ -66,13 +68,14 @@ export function NeedsAttentionPanel({
 }
 
 function AllClear() {
+  const t = useTranslations("admin.dashboard.attention");
+
   return (
     <div className="flex flex-col items-center gap-3 py-10 text-center">
       <CircleCheck className="h-10 w-10 text-success" aria-hidden />
-      <p className="text-lg font-medium">All clear</p>
+      <p className="text-lg font-medium">{t("allClearTitle")}</p>
       <p className="max-w-md text-sm text-muted-foreground">
-        Every gamer is placed, every group has a gedu, no product is missing a
-        fee, and nobody is waiting on a certification decision.
+        {t("allClearBody")}
       </p>
     </div>
   );

@@ -1,11 +1,15 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
+"use client";
+
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, PauseCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDateOnly } from "@/lib/utils";
 import type { ScheduleChip, ScheduleWeek } from "./admin-dashboard-data";
-import { addCalendarDays, formatDayMonth, WEEKDAY_LABELS } from "./calendar";
+import { addCalendarDays, formatDayMonth } from "./calendar";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
+
+/** The seven rows, Monday first — the order, not the names. */
+const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 /**
  * The week as seven stacked rows, Monday first.
@@ -39,11 +43,16 @@ export function WeekRows({
    */
   todayIso: string | null;
 }) {
-  const rows = WEEKDAY_LABELS.map((label, weekday) => {
+  const t = useTranslations("admin.dashboard.schedule");
+  const locale = useLocale();
+
+  const rows = WEEKDAYS.map((weekday) => {
     const date = addCalendarDays(week.weekStart, weekday);
     return {
       weekday,
-      label,
+      // The weekday name is date *formatting*, not copy: `Intl` in the reader's
+      // locale, off the row's own UTC-pinned calendar date.
+      label: formatDateOnly(date, locale, { weekday: "short" }),
       date,
       isToday: date === todayIso,
       chips: week.chips
@@ -83,7 +92,9 @@ export function WeekRows({
               // No placeholder and no reserved height: an empty Sunday is a fact
               // about the week, and a ghost chip there would read as something
               // that failed to load.
-              <p className="px-1 text-xs text-muted-foreground">Nothing on</p>
+              <p className="px-1 text-xs text-muted-foreground">
+                {t("nothingOn")}
+              </p>
             ) : (
               <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                 {row.chips.map((chip) => (
@@ -104,7 +115,7 @@ export function WeekRows({
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
           <PauseCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           <span>
-            <span className="font-medium">Paused this week:</span>{" "}
+            <span className="font-medium">{t("paused")}</span>{" "}
             {week.onBreak.join(", ")}
           </span>
         </p>
@@ -132,13 +143,28 @@ export function WeekRows({
  * along on every chip in the row.
  */
 function SessionChip({ chip }: { chip: ScheduleChip }) {
+  const t = useTranslations("admin.dashboard.schedule");
+  const tType = useTranslations("admin.products.types");
   const presentation = PRODUCT_TYPE_PRESENTATION[chip.productType];
   const Icon = presentation.icon;
+
+  const title = t("chipTitle", {
+    type: tType(`${presentation.i18nKey}.label`),
+    name: chip.productName,
+    time: chip.startTime,
+    minutes: chip.durationMinutes,
+    // `9` for an uncapped product, `9/12` for a capped one — two numerals and a
+    // slash, so it reads the same in every locale and stays out of the catalog.
+    counts:
+      chip.seatCount === null
+        ? String(chip.activeCount)
+        : `${chip.activeCount}/${chip.seatCount}`,
+  });
 
   return (
     <Link
       href={chip.href}
-      title={`${presentation.label} · ${chip.productName} · ${chip.startTime}, ${chip.durationMinutes} min · ${chip.activeCount}${chip.seatCount === null ? "" : `/${chip.seatCount}`}`}
+      title={title}
       className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:border-foreground/30 hover:bg-accent"
     >
       <Icon
@@ -178,20 +204,20 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
  * would have produced a tooltip that silently never appeared.
  */
 function AttentionMark() {
+  const t = useTranslations("admin.dashboard.schedule");
+  const label = t("needsAttention");
+
   return (
     <span
       role="img"
-      aria-label={ATTENTION_LABEL}
-      title={ATTENTION_LABEL}
+      aria-label={label}
+      title={label}
       className="inline-flex shrink-0"
     >
       <AlertTriangle className="h-3.5 w-3.5 text-destructive" aria-hidden />
     </span>
   );
 }
-
-const ATTENTION_LABEL =
-  "Needs attention — this product is in the queue at the top of the page";
 
 function byStartTimeThenName(a: ScheduleChip, b: ScheduleChip): number {
   if (a.startTime !== b.startTime) return a.startTime < b.startTime ? -1 : 1;

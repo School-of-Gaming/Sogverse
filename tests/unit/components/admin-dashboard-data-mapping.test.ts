@@ -449,7 +449,7 @@ describe("the coming-up feed", () => {
 });
 
 describe("the attention queue", () => {
-  it("words each fact as the line an admin reads, and drops the ones that are fine", () => {
+  it("carries each fact structurally, in priority order, dropping the ones that are fine", () => {
     const data = build(
       snapshot({
         attention_products: [
@@ -473,12 +473,17 @@ describe("the attention queue", () => {
       name: "Minecraft-klubi Espoo",
       href: "/admin/consumer-clubs/club",
     });
-    expect(data.products[0].issues.map((issue) => issue.label)).toEqual([
-      "1 unassigned gamer",
-      "Group Tiistai A has no gedu",
-      "Group Tiistai B has no gedu",
-      "3 waitlisted · 1 seat open",
-      "Gedu fee not set",
+    // Nothing is worded here: the mapping is pure, so an issue leaves as the
+    // message key its `kind` names plus the values that key interpolates. The
+    // sentences live in `messages/` and the cards do the joining.
+    expect(
+      data.products[0].issues.map(({ id: _id, ...issue }) => issue),
+    ).toEqual([
+      { kind: "unassigned-gamers", values: { count: 1 } },
+      { kind: "group-without-gedu", values: { group: "Tiistai A" } },
+      { kind: "group-without-gedu", values: { group: "Tiistai B" } },
+      { kind: "waitlist-open-seats", values: { waiting: 3, open: 1 } },
+      { kind: "missing-gedu-fee" },
     ]);
     // Two group lines on one card need two keys.
     expect(new Set(data.products[0].issues.map((issue) => issue.id)).size).toBe(
@@ -525,7 +530,7 @@ describe("the attention queue", () => {
 });
 
 describe("the certification queue", () => {
-  it("names the wait relative to the page's own clock", () => {
+  it("names the wait relative to the page's own clock, and only the wait", () => {
     const data = build(
       snapshot({
         certification_queue: [
@@ -545,11 +550,30 @@ describe("the certification queue", () => {
       }),
     );
 
+    // The relative phrase and nothing else: `Intl` formats it per locale, and
+    // the sentence around it ("registered …") is the card's translated copy.
     expect(data.uncertifiedGedus[0]).toMatchObject({
       name: "Venla Salminen",
-      registered: "registered 2 days ago",
+      registeredAgo: "2 days ago",
     });
-    expect(data.uncertifiedGedus[1].registered).toBe("registered 2 months ago");
+    expect(data.uncertifiedGedus[1].registeredAgo).toBe("2 months ago");
+  });
+
+  it("leaves an unnamed account's name null rather than inventing a stand-in", () => {
+    const data = build(
+      snapshot({
+        certification_queue: [
+          {
+            id: "e979b9eb-39a2-4b71-9aa1-3d991969dadc",
+            first_name: "",
+            last_name: "   ",
+            created_at: "2026-08-15T09:20:00+03:00",
+          },
+        ],
+      }),
+    );
+
+    expect(data.uncertifiedGedus[0].name).toBeNull();
   });
 });
 

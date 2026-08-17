@@ -1,9 +1,8 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { BadgeCheck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PersonChip } from "@/components/ui/person-chip";
@@ -45,14 +44,15 @@ export function GeduCertificationQueue({
   /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
   onCertify: (geduId: string) => Promise<void>;
 }) {
+  const t = useTranslations("admin.dashboard.certification");
   const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
 
   const waiting = gedus.filter((gedu) => !certified.has(gedu.id));
 
   return (
-    <section aria-label="Gedus awaiting certification" className="space-y-3">
+    <section aria-label={t("label")} className="space-y-3">
       <h3 className="flex items-baseline gap-2 text-sm font-semibold">
-        Awaiting certification
+        {t("heading")}
         <span className="text-xs font-normal text-muted-foreground">
           {waiting.length}
         </span>
@@ -64,14 +64,12 @@ export function GeduCertificationQueue({
       {certified.size > 0 && (
         <p className="flex items-center gap-1.5 text-xs text-success">
           <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-          {certified.size} certified just now
+          {t("justNow", { count: certified.size })}
         </p>
       )}
 
       {waiting.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Nobody is waiting on a certification decision.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <ul className="space-y-1">
           {waiting.map((gedu) => (
@@ -113,6 +111,7 @@ function GeduRow({
   gedu: UncertifiedGedu;
   onCertify: () => Promise<void>;
 }) {
+  const t = useTranslations("admin.dashboard.certification");
   const [committing, setCommitting] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -131,10 +130,10 @@ function GeduRow({
         href={ROUTES.admin.user(gedu.id)}
         className="flex min-w-0 flex-1 items-center gap-2 rounded-md transition-opacity hover:opacity-80"
       >
-        <PersonChip id={gedu.id} name={gedu.name} />
+        <PersonChip id={gedu.id} name={gedu.name ?? t("unnamed")} />
         <span className="truncate text-xs text-muted-foreground">
           <Clock className="mr-1 inline h-3 w-3 align-[-1px]" aria-hidden />
-          {gedu.registered}
+          {t("registered", { when: gedu.registeredAgo })}
         </span>
       </Link>
       {/* Only rendered once a write has failed, and it takes the full row width
@@ -144,7 +143,7 @@ function GeduRow({
           acted on. */}
       {failed && (
         <p className="order-last w-full text-xs text-destructive">
-          Could not certify — try again.
+          {t("failed")}
         </p>
       )}
       <Button
@@ -153,7 +152,7 @@ function GeduRow({
         onClick={handleCertify}
         disabled={committing}
       >
-        {committing ? "Certifying…" : "Certify"}
+        {committing ? t("certifying") : t("certify")}
       </Button>
     </div>
   );

@@ -48,11 +48,23 @@ import type { ProductType } from "@/types";
  * at all — the map has to hold the literal strings even though that makes it
  * repetitive.
  */
+/**
+ * The message-catalog name of a product type, under `admin.products.types`.
+ *
+ * The nouns themselves are **not** redeclared here: the admin product surfaces
+ * already carry a translated `label`/`plural` pair per type, and a second copy
+ * would be a second place to translate "Municipality club" — free to drift into
+ * saying something else on this page than on the page the card links to.
+ */
+export type ProductTypeMessageKey =
+  | "consumerClub"
+  | "municipalityClub"
+  | "camp"
+  | "event";
+
 export interface ProductTypePresentation {
-  /** Singular noun, for a chip or a row. */
-  label: string;
-  /** Plural, for a section heading and the key. */
-  plural: string;
+  /** Which `admin.products.types` entry names this type. */
+  i18nKey: ProductTypeMessageKey;
   /** The glyph, borrowed from the admin sidebar's existing nav grammar. */
   icon: LucideIcon;
   /** The hue as a foreground colour — how the glyph is tinted. */
@@ -66,29 +78,25 @@ export const PRODUCT_TYPE_PRESENTATION: Record<
   ProductTypePresentation
 > = {
   consumer_club: {
-    label: "Consumer club",
-    plural: "Consumer clubs",
+    i18nKey: "consumerClub",
     icon: Joystick,
     text: "text-chart-2",
     tint: "bg-chart-2/15",
   },
   municipality_club: {
-    label: "Municipality club",
-    plural: "Municipality clubs",
+    i18nKey: "municipalityClub",
     icon: School,
     text: "text-chart-4",
     tint: "bg-chart-4/15",
   },
   camp: {
-    label: "Camp",
-    plural: "Camps",
+    i18nKey: "camp",
     icon: Tent,
     text: "text-chart-3",
     tint: "bg-chart-3/15",
   },
   event: {
-    label: "Event",
-    plural: "Events",
+    i18nKey: "event",
     icon: CalendarDays,
     text: "text-chart-5",
     tint: "bg-chart-5/15",

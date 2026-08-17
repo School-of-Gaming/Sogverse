@@ -1,10 +1,8 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
 "use client";
 
 import { useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import { adminDashboardKeys, useAdminDashboard } from "@/services/admin-dashboard";
@@ -30,6 +28,7 @@ import { buildAdminDashboardData } from "./build-admin-dashboard-data";
  * the mapping re-groups every occurrence onto the weekday it lands on there.
  */
 export function AdminDashboardPage() {
+  const t = useTranslations("admin.dashboard");
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -71,25 +70,26 @@ export function AdminDashboardPage() {
   );
 
   if (isError) {
+    // The reason is a message off the wire, never translated copy — it is
+    // spliced into a sentence that is, which is why there are two of them
+    // rather than one with an optionally-empty argument.
+    const reason =
+      error instanceof Error && error.message.length > 0 ? error.message : null;
+
     return (
       <div className="space-y-6 pb-12">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            What needs an admin today, who is on the platform, and what is
-            running.
-          </p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("description")}</p>
         </div>
         {/* No partial page behind it. Every band on this dashboard comes out of
             the same read, so a failure is a failure of all of them — rendering
             an empty queue and an empty schedule would say the platform is fine
             when what happened is that nobody asked it. */}
         <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-          Could not load the dashboard
-          {error instanceof Error && error.message.length > 0
-            ? ` — ${error.message}`
-            : ""}
-          . Refresh to try again.
+          {reason === null
+            ? t("loadError")
+            : t("loadErrorWithReason", { reason })}
         </p>
       </div>
     );

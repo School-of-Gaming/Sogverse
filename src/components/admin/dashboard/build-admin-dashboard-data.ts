@@ -38,13 +38,17 @@ import { PRODUCT_TYPE_ORDER } from "./product-type-presentation";
  * This is the promotion twin of `mock-dashboard-fixtures.ts`: the fixtures build
  * the same shapes from a hand-written catalogue, this builds them from real
  * rows, and the body cannot tell the two apart. Both do the *same* work — count,
- * word, resolve, sort — because the split the shapes were drawn around is that
+ * resolve, sort — because the split the shapes were drawn around is that
  * aggregation belongs to whoever is feeding the page and never to the page.
  *
  * It is a pure function of its four arguments: no clock, no query, no locale
  * hook. That is what makes a week's resolution, a cohort's collapse and a
  * cross-zone regrouping testable without a browser, and it is why the shell
- * above it does nothing but read the snapshot and hand it over.
+ * above it does nothing but read the snapshot and hand it over. **Nothing here
+ * is worded**: an issue leaves as a `kind` plus the numbers that go in it, and
+ * the components map the pair through `t()`. `locale` is used for the two things
+ * that are not copy — picking a product's own name out of its translations, and
+ * the `Intl` formatters that turn a gap into "2 days ago".
  *
  * **The schedule half converts; the coming-up half does not**, and the rule
  * behind that split is the repo's own: a value with a clock face converts, a
@@ -160,12 +164,15 @@ function orderUsers(
 // ---------------------------------------------------------------------------
 
 /**
- * One product's card: its name, and every one of its problems worded.
+ * One product's card: its name, and every one of its problems as a fact.
  *
  * The wire carries facts (`unassigned_count`, a list of group names, a
- * waitlist pair, two booleans) and the page carries sentences, because the
- * wording is copy and the count *is* the fact — the label is where the two meet.
- * The card's own ordering is the grid's business; it sorts by severity itself.
+ * waitlist pair, two booleans) and this keeps them facts: a `kind` naming the
+ * message and the numbers or names that message interpolates. **Nothing here is
+ * worded**, because this module is pure — no locale hook, no `t()` — and a count
+ * folded into an English string could not have carried its plural rule into
+ * Finnish anyway. The card's own ordering is the grid's business; it sorts by
+ * severity itself.
  */
 function toProductAttention(
   product: AdminDashboardAttentionProduct,
@@ -177,7 +184,7 @@ function toProductAttention(
     issues.push({
       id: `${product.id}-unassigned-gamers`,
       kind: "unassigned-gamers",
-      label: `${product.unassigned_count} unassigned ${plural(product.unassigned_count, "gamer")}`,
+      values: { count: product.unassigned_count },
     });
   }
 
@@ -185,7 +192,7 @@ function toProductAttention(
     issues.push({
       id: `${product.id}-group-without-gedu-${group.id}`,
       kind: "group-without-gedu",
-      label: `Group ${group.name} has no gedu`,
+      values: { group: group.name },
     });
   }
 
@@ -194,7 +201,7 @@ function toProductAttention(
     issues.push({
       id: `${product.id}-waitlist-open-seats`,
       kind: "waitlist-open-seats",
-      label: `${waiting} waitlisted · ${open} ${plural(open, "seat")} open`,
+      values: { waiting, open },
     });
   }
 
@@ -202,7 +209,6 @@ function toProductAttention(
     issues.push({
       id: `${product.id}-missing-gedu-fee`,
       kind: "missing-gedu-fee",
-      label: "Gedu fee not set",
     });
   }
 
@@ -210,7 +216,6 @@ function toProductAttention(
     issues.push({
       id: `${product.id}-missing-municipality-fee`,
       kind: "missing-municipality-fee",
-      label: "Municipality fee not set",
     });
   }
 
@@ -239,9 +244,10 @@ function toUncertifiedGedu(
   return {
     id: candidate.id,
     // The account is real and the name may not be; an unnamed row still has to
-    // be actionable, and its identicon is keyed to the id either way.
-    name: name.length > 0 ? name : "Unnamed gedu",
-    registered: `registered ${relativeWait(candidate.created_at, now, locale)}`,
+    // be actionable, and its identicon is keyed to the id either way. The
+    // stand-in wording belongs to the card, so the absence travels as `null`.
+    name: name.length > 0 ? name : null,
+    registeredAgo: relativeWait(candidate.created_at, now, locale),
   };
 }
 
@@ -253,8 +259,17 @@ function toUncertifiedGedu(
  * clock for this is the page's, and `Intl.RelativeTimeFormat` is what turns the
  * gap into words: it is locale-formatted by the platform, so nothing here is
  * translated copy that could drift from the number beside it.
+ *
+ * Exported for the fixtures, which age their pinned registrations against their
+ * pinned clock through this same function — a preview whose waits were English
+ * literals would be the one part of the scene that did not follow the reader's
+ * locale.
  */
-function relativeWait(createdAt: string, now: Date, locale: string): string {
+export function relativeWait(
+  createdAt: string,
+  now: Date,
+  locale: string,
+): string {
   const elapsedMs = now.getTime() - new Date(createdAt).getTime();
   const format = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
@@ -641,9 +656,4 @@ function productName(
   locale: SupportedLocale,
 ): string {
   return resolveTranslation(translations, locale)?.name ?? "";
-}
-
-/** Bare English plural, for a counted label. Piece C replaces this with ICU. */
-function plural(count: number, noun: string): string {
-  return count === 1 ? noun : `${noun}s`;
 }

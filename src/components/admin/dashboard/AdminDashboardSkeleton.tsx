@@ -1,5 +1,6 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
+"use client";
+
+import { useTranslations } from "next-intl";
 
 /**
  * The admin dashboard while its one read is still in the air.
@@ -25,17 +26,17 @@
  * the key rail beside them at its eleven-rem width.
  */
 export function AdminDashboardSkeleton() {
+  const t = useTranslations("admin.dashboard");
+
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          What needs an admin today, who is on the platform, and what is running.
-        </p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
       <p role="status" className="sr-only">
-        Loading the dashboard
+        {t("loading")}
       </p>
 
       <div

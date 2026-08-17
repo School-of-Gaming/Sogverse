@@ -9,33 +9,13 @@
  * planet. Nothing in this module ever sees a clock face; the one time-of-day the
  * grid renders (a chip's `17:00`) is carried through as the string the schedule
  * slot stores.
+ *
+ * **It names no day and no month.** A weekday heading and a month divider are
+ * date *formatting*, so they come out of `Intl` in the reader's locale at the
+ * point of render (`formatDateOnly`, which is UTC-pinned for exactly the reason
+ * above) rather than out of a label array here — an array would be seven English
+ * words this module has no locale to translate.
  */
-
-/** Weekday column headings, Monday-first, matching `weekday` 0…6. */
-export const WEEKDAY_LABELS = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-  "Sun",
-] as const;
-
-const MONTH_LABELS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
 
 /** A bare `YYYY-MM-DD` read as an instant at UTC midnight. */
 export function parseCalendarDate(iso: string): Date {
@@ -102,14 +82,14 @@ export function mondayOf(iso: string): string {
   return addCalendarDays(iso, -weekdayOf(iso));
 }
 
-/** `17.8.` — the Finnish short form, and short enough for a row heading. */
+/**
+ * `17.8.` — day and month as bare numerals, short enough for a row heading.
+ *
+ * Deliberately not `Intl`: it carries no words in any locale, and a row heading
+ * beside a weekday name has room for a date only while it stays this short.
+ */
 export function formatDayMonth(iso: string): string {
   return `${Number(iso.slice(8, 10))}.${Number(iso.slice(5, 7))}.`;
-}
-
-/** `August 2026` — the coming-up feed's month divider. */
-export function formatMonth(iso: string): string {
-  return `${MONTH_LABELS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 }
 
 /**

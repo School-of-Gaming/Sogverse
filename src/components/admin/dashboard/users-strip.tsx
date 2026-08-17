@@ -1,6 +1,7 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   BadgeCheck,
   Gamepad2,
@@ -43,21 +44,26 @@ import type { AdminUserRoleStat } from "./admin-dashboard-data";
  * survives the difference for a hole to matter to.
  */
 
-interface RolePresentation {
-  label: string;
-  icon: LucideIcon;
-}
-
-const ROLE_PRESENTATION: Record<UserRole, RolePresentation> = {
-  customer: { label: "Parents", icon: Users },
-  gamer: { label: "Gamers", icon: Gamepad2 },
-  gedu: { label: "Gedus", icon: GraduationCap },
-  admin: { label: "Admins", icon: ShieldCheck },
+/**
+ * The glyph each role wears. The *name* is not here: it is
+ * `admin.dashboard.users.roles.<role>`, keyed by the database's own role
+ * identifier so a tile cannot be labelled by anything but the role it counts.
+ */
+const ROLE_ICON: Record<UserRole, LucideIcon> = {
+  customer: Users,
+  gamer: Gamepad2,
+  gedu: GraduationCap,
+  admin: ShieldCheck,
 };
 
 export function UsersStrip({ stats }: { stats: readonly AdminUserRoleStat[] }) {
+  const t = useTranslations("admin.dashboard.users");
+
   return (
-    <section aria-label="Users" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <section
+      aria-label={t("label")}
+      className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+    >
       {stats.map((stat) => (
         <UserRoleTile key={stat.role} stat={stat} />
       ))}
@@ -66,8 +72,8 @@ export function UsersStrip({ stats }: { stats: readonly AdminUserRoleStat[] }) {
 }
 
 function UserRoleTile({ stat }: { stat: AdminUserRoleStat }) {
-  const presentation = ROLE_PRESENTATION[stat.role];
-  const Icon = presentation.icon;
+  const t = useTranslations("admin.dashboard.users");
+  const Icon = ROLE_ICON[stat.role];
 
   return (
     <Link
@@ -76,19 +82,21 @@ function UserRoleTile({ stat }: { stat: AdminUserRoleStat }) {
     >
       <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">{presentation.label}</span>
+        <span className="block text-sm font-medium">
+          {t(`roles.${stat.role}`)}
+        </span>
         {(stat.verified !== null || stat.certified !== null) && (
           <span className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
             {stat.verified !== null && (
               <span className="inline-flex items-center gap-1">
                 <MailCheck className="h-3 w-3" aria-hidden />
-                {stat.verified} verified
+                {t("verified", { count: stat.verified })}
               </span>
             )}
             {stat.certified !== null && (
               <span className="inline-flex items-center gap-1">
                 <BadgeCheck className="h-3 w-3" aria-hidden />
-                {stat.certified} certified
+                {t("certified", { count: stat.certified })}
               </span>
             )}
           </span>

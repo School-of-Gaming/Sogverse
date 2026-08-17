@@ -161,17 +161,94 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Ylläpidon hallintapaneeli",
-      "description": "Tervetuloa Sogverse-ylläpitopaneeliin. Hallitse käyttäjiä, tuotteita ja järjestelmäasetuksia.",
-      "totalUsers": "Käyttäjiä yhteensä",
-      "activeAccounts": "Aktiiviset tilit",
-      "products": "Tuotteet",
-      "activeProducts": "Aktiiviset tuotteet",
-      "revenue": "Tuotto",
-      "thisMonth": "Tässä kuussa",
-      "growth": "Kasvu",
-      "fromLastMonth": "Viime kuusta",
-      "latestEvents": "Viimeisimmät tapahtumat alustalla"
+      "title": "Hallintapaneeli",
+      "description": "Mikä vaatii ylläpitäjää tänään, keitä alustalla on ja mitä on käynnissä.",
+      "loading": "Ladataan hallintapaneelia",
+      "loadError": "Hallintapaneelin lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
+      "loadErrorWithReason": "Hallintapaneelin lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
+      "users": {
+        "label": "Käyttäjät",
+        "roles": {
+          "customer": "Vanhemmat",
+          "gamer": "Pelaajat",
+          "gedu": "Gedut",
+          "admin": "Ylläpitäjät"
+        },
+        "verified": "{count} vahvistettua",
+        "certified": "{count} hyväksyttyä"
+      },
+      "attention": {
+        "title": "Vaatii huomiota",
+        "allClearTitle": "Kaikki kunnossa",
+        "allClearBody": "Jokainen pelaaja on sijoitettu, jokaisella ryhmällä on Gedu, mistään tuotteesta ei puutu palkkiota tai maksua, eikä kukaan odota hyväksyntäpäätöstä.",
+        "productsLabel": "Huomiota vaativat tuotteet",
+        "productsHeading": "Tuotteet",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# sijoittamaton pelaaja} other {# sijoittamatonta pelaajaa}}",
+          "groupWithoutGedu": "Ryhmällä {group} ei ole Gedua",
+          "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
+          "missingGeduFee": "Gedun palkkio puuttuu",
+          "missingMunicipalityFee": "Kunnan maksu puuttuu"
+        }
+      },
+      "certification": {
+        "label": "Hyväksyntää odottavat Gedut",
+        "heading": "Odottaa hyväksyntää",
+        "justNow": "Hyväksytty juuri nyt: {count}",
+        "empty": "Kukaan ei odota hyväksyntäpäätöstä.",
+        "unnamed": "Nimetön Gedu",
+        "registered": "rekisteröitynyt {when}",
+        "certify": "Hyväksy",
+        "certifying": "Hyväksytään…",
+        "failed": "Hyväksyntä epäonnistui – yritä uudelleen."
+      },
+      "schedule": {
+        "title": "Aikataulu",
+        "thisWeekLabel": "Tämä viikko",
+        "previousWeek": "Edellinen viikko",
+        "nextWeek": "Seuraava viikko",
+        "today": "Tänään",
+        "sessionCount": "{count, plural, one {# kerta} other {# kertaa}}",
+        "timesIn": "ajat aikavyöhykkeellä {zone}",
+        "nothingOn": "Ei mitään",
+        "paused": "Tauolla tällä viikolla:",
+        "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
+        "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "Tulossa",
+        "heading": "Tulossa",
+        "empty": "Mikään ei ala eikä pääty tulevien kuukausien aikana.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# kuluttajakerho alkaa} other {# kuluttajakerhoa alkaa}}",
+            "municipalityClub": "{count, plural, one {# kuntakerho alkaa} other {# kuntakerhoa alkaa}}",
+            "camp": "{count, plural, one {# leiri alkaa} other {# leiriä alkaa}}",
+            "event": "{count, plural, one {# tapahtuma alkaa} other {# tapahtumaa alkaa}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# kuluttajakerho järjestetään} other {# kuluttajakerhoa järjestetään}}",
+            "municipalityClub": "{count, plural, one {# kuntakerho järjestetään} other {# kuntakerhoa järjestetään}}",
+            "camp": "{count, plural, one {# leiri järjestetään} other {# leiriä järjestetään}}",
+            "event": "{count, plural, one {# tapahtuma järjestetään} other {# tapahtumaa järjestetään}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# kuluttajakerho päättyy} other {# kuluttajakerhoa päättyy}}",
+            "municipalityClub": "{count, plural, one {# kuntakerho päättyy} other {# kuntakerhoa päättyy}}",
+            "camp": "{count, plural, one {# leiri päättyy} other {# leiriä päättyy}}",
+            "event": "{count, plural, one {# tapahtuma päättyy} other {# tapahtumaa päättyy}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "alkaa",
+          "runs": "järjestetään",
+          "ends": "päättyy"
+        }
+      },
+      "productTypeKey": {
+        "label": "Tuotetyyppien selite",
+        "heading": "Tuotetyypit"
+      }
     },
     "products": {
       "types": {

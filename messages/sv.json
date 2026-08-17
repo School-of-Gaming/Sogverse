@@ -161,17 +161,94 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Adminöversikt",
-      "description": "Välkommen till Sogverse adminpanel. Hantera användare, produkter och systeminställningar.",
-      "totalUsers": "Totalt antal användare",
-      "activeAccounts": "Aktiva konton",
-      "products": "Produkter",
-      "activeProducts": "Aktiva produkter",
-      "revenue": "Intäkter",
-      "thisMonth": "Denna månad",
-      "growth": "Tillväxt",
-      "fromLastMonth": "Från förra månaden",
-      "latestEvents": "Senaste händelserna på plattformen"
+      "title": "Instrumentpanel",
+      "description": "Vad som behöver en administratör i dag, vilka som finns på plattformen och vad som pågår.",
+      "loading": "Läser in instrumentpanelen",
+      "loadError": "Det gick inte att läsa in instrumentpanelen. Uppdatera sidan och försök igen.",
+      "loadErrorWithReason": "Det gick inte att läsa in instrumentpanelen – {reason}. Uppdatera sidan och försök igen.",
+      "users": {
+        "label": "Användare",
+        "roles": {
+          "customer": "Föräldrar",
+          "gamer": "Spelare",
+          "gedu": "Geduer",
+          "admin": "Administratörer"
+        },
+        "verified": "{count} verifierade",
+        "certified": "{count} certifierade"
+      },
+      "attention": {
+        "title": "Behöver åtgärd",
+        "allClearTitle": "Allt är klart",
+        "allClearBody": "Alla spelare är placerade, varje grupp har en Gedu, ingen produkt saknar arvode eller avgift och ingen väntar på ett certifieringsbeslut.",
+        "productsLabel": "Produkter som behöver åtgärd",
+        "productsHeading": "Produkter",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# oplacerad spelare} other {# oplacerade spelare}}",
+          "groupWithoutGedu": "Gruppen {group} har ingen Gedu",
+          "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
+          "missingGeduFee": "Gedu-arvode saknas",
+          "missingMunicipalityFee": "Kommunavgift saknas"
+        }
+      },
+      "certification": {
+        "label": "Geduer som väntar på certifiering",
+        "heading": "Väntar på certifiering",
+        "justNow": "{count} certifierade nyss",
+        "empty": "Ingen väntar på ett certifieringsbeslut.",
+        "unnamed": "Namnlös Gedu",
+        "registered": "registrerades {when}",
+        "certify": "Certifiera",
+        "certifying": "Certifierar…",
+        "failed": "Certifieringen misslyckades – försök igen."
+      },
+      "schedule": {
+        "title": "Schema",
+        "thisWeekLabel": "Den här veckan",
+        "previousWeek": "Föregående vecka",
+        "nextWeek": "Nästa vecka",
+        "today": "I dag",
+        "sessionCount": "{count, plural, one {# tillfälle} other {# tillfällen}}",
+        "timesIn": "tider i {zone}",
+        "nothingOn": "Inget inplanerat",
+        "paused": "Pausade den här veckan:",
+        "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "På gång",
+        "heading": "På gång",
+        "empty": "Inget startar eller slutar under de kommande månaderna.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# konsumentklubb startar} other {# konsumentklubbar startar}}",
+            "municipalityClub": "{count, plural, one {# kommunklubb startar} other {# kommunklubbar startar}}",
+            "camp": "{count, plural, one {# läger startar} other {# läger startar}}",
+            "event": "{count, plural, one {# evenemang startar} other {# evenemang startar}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# konsumentklubb hålls} other {# konsumentklubbar hålls}}",
+            "municipalityClub": "{count, plural, one {# kommunklubb hålls} other {# kommunklubbar hålls}}",
+            "camp": "{count, plural, one {# läger hålls} other {# läger hålls}}",
+            "event": "{count, plural, one {# evenemang hålls} other {# evenemang hålls}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# konsumentklubb slutar} other {# konsumentklubbar slutar}}",
+            "municipalityClub": "{count, plural, one {# kommunklubb slutar} other {# kommunklubbar slutar}}",
+            "camp": "{count, plural, one {# läger slutar} other {# läger slutar}}",
+            "event": "{count, plural, one {# evenemang slutar} other {# evenemang slutar}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "startar",
+          "runs": "hålls",
+          "ends": "slutar"
+        }
+      },
+      "productTypeKey": {
+        "label": "Förklaring av produkttyper",
+        "heading": "Produkttyper"
+      }
     },
     "products": {
       "types": {

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
+import { useLocale } from "next-intl";
 import { AdminDashboardPageBody } from "@/components/admin/dashboard/admin-dashboard-page-body";
 import {
   buildAdminDashboardFixture,
   type AdminDashboardScenario,
 } from "@/components/admin/dashboard/mock-dashboard-fixtures";
+import { resolveLocale } from "@/lib/constants/locales";
 
 /**
  * The `/admin` landing page, over fixtures.
@@ -22,19 +24,25 @@ import {
  * appears — which is the point of the action being a callback: the preview and
  * the live page differ only in what happens at the far end of it.
  *
- * The fixture is built once and held in state rather than rebuilt per render.
- * Nothing in it depends on a live clock — the whole scene is pinned to a fixed
- * Monday morning, because a calendar page's cases (a holiday week, a term
- * straddling the window, a today column) are arithmetic against a known date —
- * so this is about work, not about drift: sixteen weeks resolved over sixty
- * products is not something to redo every time a tab is switched.
+ * The fixture is memoised rather than rebuilt per render. Nothing in it depends
+ * on a live clock — the whole scene is pinned to a fixed Monday morning, because
+ * a calendar page's cases (a holiday week, a term straddling the window, a today
+ * column) are arithmetic against a known date — so this is about work, not about
+ * drift: sixteen weeks resolved over sixty products is not something to redo
+ * every time a tab is switched. It depends on the *locale* rather than being
+ * built once and kept, because the one `Intl`-formatted string inside it (how
+ * long a gedu has waited) has to follow a previewer who switches language.
  */
 export function AdminDashboardScene({
   scenario,
 }: {
   scenario: AdminDashboardScenario;
 }) {
-  const [data] = useState(() => buildAdminDashboardFixture(scenario));
+  const locale = resolveLocale(useLocale());
+  const data = useMemo(
+    () => buildAdminDashboardFixture(scenario, locale),
+    [scenario, locale],
+  );
 
   return (
     <AdminDashboardPageBody

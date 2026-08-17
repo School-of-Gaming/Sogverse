@@ -1,10 +1,7 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase: this body is
-   still being judged as a layout, and its copy is deliberately literal English
-   so the wording can be argued with in place. Every string here moves into
-   `messages/` when the body is promoted onto `/admin`, which is the change that
-   settles the wording; keys written now would be keys rewritten then, in five
-   locales. */
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Coins,
   Building2,
@@ -86,15 +83,16 @@ export function ProductAttentionGrid({
 }: {
   products: readonly ProductAttention[];
 }) {
+  const t = useTranslations("admin.dashboard.attention");
   // Sorted here rather than trusted from the feed: the ranking is a property of
   // the design, so a shell handing the products over in a different order would
   // silently change what the page means.
   const ordered = [...products].sort(compareProducts);
 
   return (
-    <section aria-label="Products needing attention" className="space-y-3">
+    <section aria-label={t("productsLabel")} className="space-y-3">
       <h3 className="flex items-baseline gap-2 text-sm font-semibold">
-        Products
+        {t("productsHeading")}
         <span className="text-xs font-normal text-muted-foreground">
           {ordered.length}
         </span>
@@ -111,16 +109,20 @@ export function ProductAttentionGrid({
 }
 
 function ProductCard({ product }: { product: ProductAttention }) {
+  const tType = useTranslations("admin.products.types");
   const presentation = PRODUCT_TYPE_PRESENTATION[product.productType];
   const Icon = presentation.icon;
   const issues = [...product.issues].sort(
     (a, b) => severityOf(a.kind) - severityOf(b.kind),
   );
+  // Built outside the JSX: it is two translated values joined by a separator,
+  // and the separator is the only literal in it.
+  const title = `${tType(`${presentation.i18nKey}.label`)} · ${product.name}`;
 
   return (
     <Link
       href={product.href}
-      title={`${presentation.label} · ${product.name}`}
+      title={title}
       className="flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/30 hover:bg-accent"
     >
       <span className="flex items-start gap-2">
@@ -151,9 +153,39 @@ function ProductCard({ product }: { product: ProductAttention }) {
   );
 }
 
+/**
+ * One issue's sentence, chosen by its `kind`.
+ *
+ * A `switch` rather than a key built by string surgery: the kinds are kebab-case
+ * on the wire and camelCase in the catalog, and each carries a different set of
+ * values, so this is the one place where the two vocabularies are matched up and
+ * the compiler checks every arm of it. Adding a kind fails here until it is
+ * given a message.
+ */
+function useIssueText(issue: ProductIssue): string {
+  const t = useTranslations("admin.dashboard.attention.issues");
+
+  switch (issue.kind) {
+    case "unassigned-gamers":
+      return t("unassignedGamers", { count: issue.values.count });
+    case "group-without-gedu":
+      return t("groupWithoutGedu", { group: issue.values.group });
+    case "waitlist-open-seats":
+      return t("waitlistOpenSeats", {
+        waiting: issue.values.waiting,
+        open: issue.values.open,
+      });
+    case "missing-gedu-fee":
+      return t("missingGeduFee");
+    case "missing-municipality-fee":
+      return t("missingMunicipalityFee");
+  }
+}
+
 function IssueLine({ issue }: { issue: ProductIssue }) {
   const presentation = ISSUE_PRESENTATION[issue.kind];
   const Icon = presentation.icon;
+  const text = useIssueText(issue);
 
   return (
     <span className="flex items-start gap-1.5 text-xs leading-snug">
@@ -173,7 +205,7 @@ function IssueLine({ issue }: { issue: ProductIssue }) {
             : "text-muted-foreground"
         }
       >
-        {issue.label}
+        {text}
       </span>
     </span>
   );

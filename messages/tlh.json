@@ -209,17 +209,94 @@
   },
   "admin": {
     "dashboard": {
-      "title": "Admin QaD",
-      "description": "Sogverse admin Daq yIghoS. lo’wI’pu’, De’mey, je ngoQmey tI’ang.",
-      "totalUsers": "Hoch lo’wI’pu’",
-      "activeAccounts": "HaqwI’ accountmey",
-      "products": "De’mey",
-      "activeProducts": "HaqwI’ De’mey",
-      "revenue": "Huch",
-      "thisMonth": "DISvam jar",
-      "growth": "boqHa’",
-      "fromLastMonth": "qunDaq japmey",
-      "latestEvents": "Hoch wanI’ reHHa’"
+      "title": "QaD",
+      "description": "DaHjaj nuq poQ la’, ’Iv tu’lu’ Daq, je nuq qaSlI’.",
+      "loading": "QaD laDlu’taH",
+      "loadError": "QaD laDlaHbe’. yIchu’qa’ ’ej yInID.",
+      "loadErrorWithReason": "QaD laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID.",
+      "users": {
+        "label": "lo’wI’pu’",
+        "roles": {
+          "customer": "vav/SoSpu’",
+          "gamer": "toy’wI’pu’",
+          "gedu": "Gedupu’",
+          "admin": "Adminpu’"
+        },
+        "verified": "{count} ngu’lu’pu’",
+        "certified": "{count} patlh ghaj"
+      },
+      "attention": {
+        "title": "poQ Qu’",
+        "allClearTitle": "Hoch QaQ",
+        "allClearBody": "Hoch toy’wI’ ghomDaq tu’lu’, Hoch ghom ghajbej Gedu, Hoch De’ ghaj Huch, ’ej patlh loSwI’ tu’be’lu’.",
+        "productsLabel": "poQwI’ De’mey",
+        "productsHeading": "De’mey",
+        "issues": {
+          "unassignedGamers": "{count, plural, one {# toy’wI’ ghomHa’} other {# toy’wI’pu’ ghomHa’}}",
+          "groupWithoutGedu": "ghom {group} Gedu ghajbe’",
+          "waitlistOpenSeats": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH",
+          "missingGeduFee": "Gedu Huch Hutlh",
+          "missingMunicipalityFee": "veng Huch Hutlh"
+        }
+      },
+      "certification": {
+        "label": "patlh loSbogh Gedupu’",
+        "heading": "patlh loSlI’",
+        "justNow": "DaH patlh nobta’: {count}",
+        "empty": "patlh loSwI’ tu’be’lu’.",
+        "unnamed": "pong Hutlh Gedu",
+        "registered": "ghItlhta’ {when}",
+        "certify": "patlh yInob",
+        "certifying": "patlh noblI’…",
+        "failed": "patlh nobbe’lu’ – yInID."
+      },
+      "schedule": {
+        "title": "poH ngoQ",
+        "thisWeekLabel": "Hoghvam",
+        "previousWeek": "Hogh wa’Hu’",
+        "nextWeek": "Hogh veb",
+        "today": "DaHjaj",
+        "sessionCount": "{count, plural, one {# poH} other {# poHmey}}",
+        "timesIn": "poHmey: {zone}",
+        "nothingOn": "pagh",
+        "paused": "Hoghvam leSlI’:",
+        "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+      },
+      "comingUp": {
+        "label": "ghoS",
+        "heading": "ghoS",
+        "empty": "jarmeyDaq pagh taghlu’ pagh je van.",
+        "cohort": {
+          "starts": {
+            "consumerClub": "{count, plural, one {# ghomHom tlhIngan tagh} other {# ghomHom tlhIngan tagh}}",
+            "municipalityClub": "{count, plural, one {# ghomHom veng tagh} other {# ghomHom veng tagh}}",
+            "camp": "{count, plural, one {# pa’ Qugh tagh} other {# pa’ Qugh tagh}}",
+            "event": "{count, plural, one {# Qu’ tagh} other {# Qu’mey tagh}}"
+          },
+          "runs": {
+            "consumerClub": "{count, plural, one {# ghomHom tlhIngan qaS} other {# ghomHom tlhIngan qaS}}",
+            "municipalityClub": "{count, plural, one {# ghomHom veng qaS} other {# ghomHom veng qaS}}",
+            "camp": "{count, plural, one {# pa’ Qugh qaS} other {# pa’ Qugh qaS}}",
+            "event": "{count, plural, one {# Qu’ qaS} other {# Qu’mey qaS}}"
+          },
+          "ends": {
+            "consumerClub": "{count, plural, one {# ghomHom tlhIngan van} other {# ghomHom tlhIngan van}}",
+            "municipalityClub": "{count, plural, one {# ghomHom veng van} other {# ghomHom veng van}}",
+            "camp": "{count, plural, one {# pa’ Qugh van} other {# pa’ Qugh van}}",
+            "event": "{count, plural, one {# Qu’ van} other {# Qu’mey van}}"
+          }
+        },
+        "itemVerb": {
+          "starts": "tagh",
+          "runs": "qaS",
+          "ends": "van"
+        }
+      },
+      "productTypeKey": {
+        "label": "De’ Segh ngoq",
+        "heading": "De’ Seghmey"
+      }
     },
     "products": {
       "types": {

@@ -1,4 +1,5 @@
 import { ROUTES } from "@/lib/constants";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductStatus, ProductType } from "@/types";
 import type {
   AdminDashboardData,
@@ -7,12 +8,15 @@ import type {
   ComingUpItem,
   ProductAttention,
   ProductIssue,
-  ProductIssueKind,
+  ProductIssueFact,
   ScheduleChip,
   ScheduleWeek,
   UncertifiedGedu,
 } from "./admin-dashboard-data";
-import { compareComingUpCohorts } from "./build-admin-dashboard-data";
+import {
+  compareComingUpCohorts,
+  relativeWait,
+} from "./build-admin-dashboard-data";
 import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
 
 /**
@@ -621,132 +625,128 @@ function quietCatalogue(): ProductSpec[] {
 /**
  * What is wrong with each product that needs an admin.
  *
- * Authored as `(product, issue kinds)` pairs so the queue reads the way an admin
+ * Authored as `(product, issue facts)` pairs so the queue reads the way an admin
  * thinks — *this product, these problems* — rather than as ten category lists a
  * reader has to reassemble a product from. Twenty-one products across five kinds
  * of problem, deliberately uneven: three carry a stack of three, most carry one,
  * and two carry two group lines each, because a card whose only shape is "one
  * line" says nothing about how a card with several reads.
+ *
+ * **The facts are structural here for the same reason they are on the wire.** A
+ * fixture holding pre-worded English would render the preview scene through a
+ * different path than the live page — the one place a scene must not differ —
+ * and would quietly stop exercising the plural rules the cards depend on.
  */
 const PRODUCT_ISSUE_SPECS: readonly {
   productId: string;
-  issues: readonly { kind: ProductIssueKind; label: string }[];
+  issues: readonly ProductIssueFact[];
 }[] = [
   {
     productId: "consumer-club-1",
     issues: [
-      { kind: "unassigned-gamers", label: "4 unassigned gamers" },
-      { kind: "group-without-gedu", label: "Group Tiistai A has no gedu" },
-      { kind: "missing-gedu-fee", label: "Gedu fee not set" },
+      { kind: "unassigned-gamers", values: { count: 4 } },
+      { kind: "group-without-gedu", values: { group: "Tiistai A" } },
+      { kind: "missing-gedu-fee" },
     ],
   },
   {
     productId: "consumer-club-4",
-    issues: [{ kind: "unassigned-gamers", label: "3 unassigned gamers" }],
+    issues: [{ kind: "unassigned-gamers", values: { count: 3 } }],
   },
   {
     productId: "municipality-club-2",
     issues: [
-      { kind: "unassigned-gamers", label: "3 unassigned gamers" },
-      { kind: "group-without-gedu", label: "Group Kerho 1 has no gedu" },
+      { kind: "unassigned-gamers", values: { count: 3 } },
+      { kind: "group-without-gedu", values: { group: "Kerho 1" } },
     ],
   },
   {
     productId: "consumer-club-11",
     issues: [
-      { kind: "unassigned-gamers", label: "2 unassigned gamers" },
-      { kind: "waitlist-open-seats", label: "3 waitlisted · 8 seats open" },
+      { kind: "unassigned-gamers", values: { count: 2 } },
+      { kind: "waitlist-open-seats", values: { waiting: 3, open: 8 } },
     ],
   },
   {
     productId: "municipality-club-9",
-    issues: [{ kind: "unassigned-gamers", label: "2 unassigned gamers" }],
+    issues: [{ kind: "unassigned-gamers", values: { count: 2 } }],
   },
   {
     productId: "camp-2",
     issues: [
-      { kind: "unassigned-gamers", label: "2 unassigned gamers" },
-      { kind: "group-without-gedu", label: "Group Builders red has no gedu" },
+      { kind: "unassigned-gamers", values: { count: 2 } },
+      { kind: "group-without-gedu", values: { group: "Builders red" } },
     ],
   },
   {
+    // The one single-gamer card in the fixture: the plural rules are only
+    // visibly exercised if some card is on the other side of them.
     productId: "consumer-club-19",
-    issues: [{ kind: "unassigned-gamers", label: "1 unassigned gamer" }],
+    issues: [{ kind: "unassigned-gamers", values: { count: 1 } }],
   },
   {
     productId: "consumer-club-7",
     issues: [
-      { kind: "group-without-gedu", label: "Group Keskiviikko B has no gedu" },
-      { kind: "group-without-gedu", label: "Group Keskiviikko C has no gedu" },
+      { kind: "group-without-gedu", values: { group: "Keskiviikko B" } },
+      { kind: "group-without-gedu", values: { group: "Keskiviikko C" } },
     ],
   },
   {
     productId: "municipality-club-5",
-    issues: [{ kind: "group-without-gedu", label: "Group Kerho 1 has no gedu" }],
+    issues: [{ kind: "group-without-gedu", values: { group: "Kerho 1" } }],
   },
   {
     productId: "camp-5",
     issues: [
-      { kind: "group-without-gedu", label: "Group Builders sininen has no gedu" },
-      { kind: "missing-gedu-fee", label: "Gedu fee not set" },
+      { kind: "group-without-gedu", values: { group: "Builders sininen" } },
+      { kind: "missing-gedu-fee" },
     ],
   },
   {
     productId: "consumer-club-3",
-    issues: [
-      { kind: "waitlist-open-seats", label: "3 waitlisted · 4 seats open" },
-    ],
+    issues: [{ kind: "waitlist-open-seats", values: { waiting: 3, open: 4 } }],
   },
   {
+    // One open seat, so the counted half of the waitlist line is seen in its
+    // singular form somewhere in the scene.
     productId: "municipality-club-4",
-    issues: [
-      { kind: "waitlist-open-seats", label: "4 waitlisted · 4 seats open" },
-    ],
+    issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1 } }],
   },
   {
     productId: "consumer-club-6",
-    issues: [{ kind: "missing-gedu-fee", label: "Gedu fee not set" }],
+    issues: [{ kind: "missing-gedu-fee" }],
   },
   {
     productId: "consumer-club-14",
-    issues: [{ kind: "missing-gedu-fee", label: "Gedu fee not set" }],
+    issues: [{ kind: "missing-gedu-fee" }],
   },
   {
     productId: "consumer-club-21",
-    issues: [{ kind: "missing-gedu-fee", label: "Gedu fee not set" }],
+    issues: [{ kind: "missing-gedu-fee" }],
   },
   {
     productId: "municipality-club-8",
-    issues: [
-      { kind: "missing-gedu-fee", label: "Gedu fee not set" },
-      { kind: "missing-municipality-fee", label: "Municipality fee not set" },
-    ],
+    issues: [{ kind: "missing-gedu-fee" }, { kind: "missing-municipality-fee" }],
   },
   {
     productId: "camp-4",
-    issues: [{ kind: "missing-gedu-fee", label: "Gedu fee not set" }],
+    issues: [{ kind: "missing-gedu-fee" }],
   },
   {
     productId: "event-3",
-    issues: [{ kind: "missing-gedu-fee", label: "Gedu fee not set" }],
+    issues: [{ kind: "missing-gedu-fee" }],
   },
   {
     productId: "municipality-club-13",
-    issues: [
-      { kind: "missing-municipality-fee", label: "Municipality fee not set" },
-    ],
+    issues: [{ kind: "missing-municipality-fee" }],
   },
   {
     productId: "municipality-club-16",
-    issues: [
-      { kind: "missing-municipality-fee", label: "Municipality fee not set" },
-    ],
+    issues: [{ kind: "missing-municipality-fee" }],
   },
   {
     productId: "municipality-club-19",
-    issues: [
-      { kind: "missing-municipality-fee", label: "Municipality fee not set" },
-    ],
+    issues: [{ kind: "missing-municipality-fee" }],
   },
 ];
 
@@ -758,33 +758,49 @@ const PRODUCT_ISSUE_SPECS: readonly {
  * waited the same length would say nothing about whether the design makes a
  * two-month-old registration stand out from this morning's.
  */
-const UNCERTIFIED_GEDUS: readonly UncertifiedGedu[] = [
+const UNCERTIFIED_GEDU_SPECS: readonly {
+  id: string;
+  name: string;
+  /** When they registered — aged against the pinned clock, never pre-worded. */
+  registeredAt: string;
+}[] = [
   {
     id: PERSON_IDS.venlaSalminen,
     name: "Venla Salminen",
-    registered: "registered 2 days ago",
+    registeredAt: "2026-08-15T09:20:00+03:00",
   },
   {
     id: PERSON_IDS.topiasJarvinen,
     name: "Topias Järvinen",
-    registered: "registered 5 days ago",
+    registeredAt: "2026-08-12T09:20:00+03:00",
   },
   {
     id: PERSON_IDS.iidaLehtonen,
     name: "Iida Lehtonen",
-    registered: "registered 9 days ago",
+    registeredAt: "2026-08-08T09:20:00+03:00",
   },
   {
     id: PERSON_IDS.onniRantanen,
     name: "Onni Rantanen",
-    registered: "registered 3 weeks ago",
+    registeredAt: "2026-07-27T09:20:00+03:00",
   },
   {
     id: PERSON_IDS.helmiKoskinen,
     name: "Helmi Koskinen",
-    registered: "registered 2 months ago",
+    registeredAt: "2026-06-17T09:20:00+03:00",
   },
 ];
+
+function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
+  return UNCERTIFIED_GEDU_SPECS.map((spec) => ({
+    id: spec.id,
+    name: spec.name,
+    // The same `Intl.RelativeTimeFormat` walk the live mapping runs, against
+    // the same pinned instant — so the wait reads in the previewer's own
+    // language rather than in whatever language the fixture was typed in.
+    registeredAgo: relativeWait(spec.registeredAt, ADMIN_DASHBOARD_NOW, locale),
+  }));
+}
 
 function buildProductAttention(
   byId: ReadonlyMap<string, ProductSpec>,
@@ -805,8 +821,7 @@ function buildProductAttention(
       issues: issues.map(
         (issue, index): ProductIssue => ({
           id: `${spec.id}-${issue.kind}-${index}`,
-          kind: issue.kind,
-          label: issue.label,
+          ...issue,
         }),
       ),
     };
@@ -966,6 +981,14 @@ function buildComingUp(specs: readonly ProductSpec[]): ComingUpDay[] {
 
 export function buildAdminDashboardFixture(
   scenario: AdminDashboardScenario,
+  /**
+   * The previewer's locale. Nothing in the catalogue is translated — product
+   * names are what they are — but the two `Intl`-formatted values on the page
+   * (a gedu's wait here, weekday and month names at the point of render) follow
+   * the reader, and a fixture that pinned them to English would make the scene
+   * a false picture of the page for four of the five locales.
+   */
+  locale: SupportedLocale,
 ): AdminDashboardData {
   const quiet = scenario === "quiet";
 
@@ -990,7 +1013,7 @@ export function buildAdminDashboardFixture(
     // no adjustment to disclose. The live page decides this per snapshot.
     timeZoneAbbrev: null,
     products,
-    uncertifiedGedus: quiet ? [] : UNCERTIFIED_GEDUS,
+    uncertifiedGedus: quiet ? [] : uncertifiedGedus(locale),
     users: quiet ? QUIET_USER_STATS : BUSY_USER_STATS,
     weeks,
     currentWeekIndex,

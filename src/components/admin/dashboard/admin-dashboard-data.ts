@@ -43,19 +43,27 @@ export const PRODUCT_ISSUE_KINDS = [
 
 export type ProductIssueKind = (typeof PRODUCT_ISSUE_KINDS)[number];
 
-/** One thing wrong with one product. */
-export interface ProductIssue {
-  /** Stable React key — a product can carry two group issues at once. */
-  id: string;
-  kind: ProductIssueKind;
-  /**
-   * The line as the admin reads it, already worded and already counted:
-   * "3 unassigned gamers", "Group Alpha has no gedu", "4 waitlisted · 2 seats
-   * open". The count lives in the string because the count *is* the fact — a
-   * separate numeric field would only ever be re-templated into this sentence.
-   */
-  label: string;
-}
+/**
+ * One thing wrong with one product, as a **structural** fact rather than a
+ * sentence.
+ *
+ * `kind` is both the ranking and the message key, and whatever the message
+ * interpolates travels beside it: whoever feeds the page counts and names, and
+ * the card maps the pair through `t()`. Wording it upstream would mean a pure
+ * module reaching for a locale it has no business knowing, and a count baked
+ * into a string cannot take a plural rule with it — one English sentence covers
+ * "1 unassigned gamer" and "3 unassigned gamers" only because English is nearly
+ * caseless.
+ */
+export type ProductIssueFact =
+  | { kind: "unassigned-gamers"; values: { count: number } }
+  | { kind: "group-without-gedu"; values: { group: string } }
+  | { kind: "waitlist-open-seats"; values: { waiting: number; open: number } }
+  | { kind: "missing-gedu-fee" }
+  | { kind: "missing-municipality-fee" };
+
+/** One issue, keyed for React — a product can carry two group lines at once. */
+export type ProductIssue = { id: string } & ProductIssueFact;
 
 /** One product that needs an admin, with everything wrong with it. */
 export interface ProductAttention {
@@ -80,9 +88,18 @@ export interface UncertifiedGedu {
    * degenerate face rather than a different one.
    */
   id: string;
-  name: string;
-  /** How long they have been waiting — "registered 12 days ago". */
-  registered: string;
+  /**
+   * `null` where the account carries no name at all. The queue still has to be
+   * actionable for one — the identicon is keyed to the id either way — so the
+   * stand-in is copy the card owns, not a sentence invented out here.
+   */
+  name: string | null;
+  /**
+   * How long they have been waiting — "12 days ago", already locale-formatted
+   * by `Intl.RelativeTimeFormat`. The sentence around it ("registered …") is the
+   * card's, because that half is translated copy and this half is not.
+   */
+  registeredAgo: string;
 }
 
 /**

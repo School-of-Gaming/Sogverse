@@ -1,7 +1,6 @@
-/* eslint-disable i18next/no-literal-string -- design-mock phase; see the note on
-   `product-attention-grid.tsx`. */
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { AdminDashboardData } from "./admin-dashboard-data";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
 import { ProductTypeKeyRail } from "./product-type-key-rail";
@@ -63,16 +62,16 @@ export function AdminDashboardPageBody({
   /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
   onCertifyGedu: (geduId: string) => Promise<void>;
 }) {
+  const t = useTranslations("admin.dashboard");
+
   return (
     <div className="space-y-6 pb-12">
       <div>
         {/* "Dashboard", not "My SOG": the admin surface is genuinely an admin
             panel and is called one, which is the single exception to the
             product-wide naming rule. */}
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          What needs an admin today, who is on the platform, and what is running.
-        </p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
       {/* The key is a page-level rail, not a section's legend, because the
