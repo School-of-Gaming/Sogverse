@@ -168,7 +168,12 @@ Supersedes the earlier "move role into JWT everywhere" framing. Ordered by value
 
 ### `/schools` reads bounded by clubs, not by Finland — closes F6 (branch `feat/schools-fetch-bounded-by-clubs`, 2026-08-17)
 
-**⚠ The "after" numbers below are projections, not measurements.** The change had not reached production when this entry was written, and the controlled probe that produced the "before" numbers has to be re-run post-release to fill them in — see *Verification still owed*. Everything under *Why* is measured.
+**⚠ The "after" column's cold numbers are projections, not measurements.** The change had
+not reached production when this entry was written. A same-day two-deployment A/B on
+staging (under *Before / after*) has since **measured** the warm TTFB and the payloads;
+the cold path could not be measured that way — a fresh deployment resets the lambdas but
+not the database's caches — so the cold column stays owed to the post-release probe under
+*Verification still owed*. Everything under *Why* is measured.
 
 **What shipped.** Four changes across the three public `/schools` routes:
 
@@ -224,9 +229,35 @@ Of the 1170 ms: ~40 ms network, ~107 ms lambda init, ~145 ms warm server work, *
 
 The projections are inference by analogy with `/shop/[id]` — the same "no heavy fetch" shape, measured at ~295 ms cold and ~100 ms warm — not measurements of this branch. The ~5 KB server-fetch figure depends on the narrowed `/schools` club read; without it the club rows dominate and the target is unreachable. **A floor of roughly 300 ms cold is expected and acceptable**, because ~107–195 ms of it is Vercel lambda init these routes cannot avoid without going static (F2).
 
-**Verification still owed.** Run the controlled probe post-release, in the same order that produced the before numbers so the two are directly comparable: (1) leave the routes untouched for 25 minutes so lambda and database caches go cold; (2) request a route that does **no** locations read — any `/shop/[id]` — first, as that run's lambda-init baseline, since it warms nothing being measured; (3) request `/schools` — that is the number; (4) then warm repeats for the steady state. Measure the client payload by fetching the page and counting bytes. Lambda init has been observed at ~107 ms and ~195 ms on two runs, so treat a single run's decomposition as indicative. **Measure `/shop` (the listing, never measured) while in there** — the narrowed browse select is the change most likely to show up on it. Fill the projected column in with real numbers, and mark it measured. A burst test — many concurrent cold requests, to check the launch knee — deliberately loads production and must be agreed with the owner first.
+**Measured — same-day staging A/B (2026-08-17).** Both codebases as fresh Vercel preview
+deployments of the same project against the same staging database — old (`dev`) and this
+branch — probed control-first:
+
+| | old code | new code |
+|---|---|---|
+| `/shop/[id]` control, cold lambda | 1.22 s | 1.01 s |
+| `/schools` warm TTFB | 0.38–0.80 s | **0.18 s** |
+| `/schools` page bytes | 262,458 | **197,304** (−65 KB) |
+| `/shop` listing page bytes | 388,827 | **340,107** (−49 KB — the narrowed browse select) |
+
+The controls confirm equal cold-start baselines (preview-infra lambdas are heavier than
+prod's, which is why both controls sit near a second). The warm gap is the reversal
+itself — same infra, same data, ~2–4×, and the old code's warm numbers were visibly
+noisier. The cold `/schools` reading was not obtainable this way: the old code's first
+hit came in *below its own control*, meaning the control had already warmed the shared
+function bundle and earlier warm passes had warmed the staging database — see the method
+note below.
+
+**Verification still owed.** The staging A/B above banked the warm-TTFB and payload
+halves; what remains owed is the cold path. Run the controlled probe post-release, in the same order that produced the before numbers so the two are directly comparable: (1) leave the routes untouched for 25 minutes so lambda and database caches go cold; (2) request a route that does **no** locations read — any `/shop/[id]` — first, as that run's lambda-init baseline, since it warms nothing being measured; (3) request `/schools` — that is the number; (4) then warm repeats for the steady state. Measure the client payload by fetching the page and counting bytes. Lambda init has been observed at ~107 ms and ~195 ms on two runs, so treat a single run's decomposition as indicative. **Measure `/shop` (the listing, never measured) while in there** — the narrowed browse select is the change most likely to show up on it. Fill the projected column in with real numbers, and mark it measured. A burst test — many concurrent cold requests, to check the launch knee — deliberately loads production and must be agreed with the owner first.
 
 **The method is the reusable part.** The question that mattered was whether the cold cost was lambda init — which no application change can fix — or work the app was doing. Warm requests cannot answer it, and neither can a slow route measured alone. What answered it was a **near-identical sibling route as a control**: `/shop/[id]` renders the same component with the same client-side fetches and differs only by the lookup, so its cold TTFB *is* lambda init plus baseline, and everything above that is attributable work. Ordering the probe to hit the control first, after a genuine idle, is what keeps the reading clean. Where such a sibling exists this beats instrumentation for a first cut; where one does not, Server-Timing is still the way in.
+
+A second method lesson, from the A/B: **a fresh deployment is not a cold system.**
+Redeploying resets the lambdas but neither the database's caches nor the pooler, and on a
+single-bundle Next.js deployment the first request to *any* route warms the function every
+route shares — so a redeploy A/B can measure cold init and warm steady state, never the
+cold data path. Only genuine idle produces that.
 
 **The counter-intuitive part, recorded because it will recur.** The initial hypothesis — reasonable, and wrong — was that a route at ~1 visit/day is dominated by cold starts and therefore beyond the reach of application work. Init turned out to be ~9–18% of it. The routes were cold in a different sense: not the machine, but everything the request touched (unresident Postgres pages, un-JITed per-row work). That distinction decides the whole remedy, because a cold machine is fixed only by a warmer or by removing the lambda, while cold work is ordinary engineering. **Do not infer the layer from the symptom** — both present as "slow first hit, fast second".
 
