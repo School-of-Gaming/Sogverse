@@ -3,17 +3,22 @@ import {
   buildMunicipalityEntries,
   findMunicipalityBySlug,
   groupByRegion,
+  municipalitiesOfClubs,
   selectClubsInMunicipality,
 } from "@/lib/schools/municipalities";
 import type { LocationWithChain } from "@/services/locations";
 import type { EmbeddedLocation } from "@/lib/locations/embedded-chain";
 import type { Json, Location } from "@/types";
 
-// The inputs are the two scoped reads the /schools pages make: Finland's
-// municipality rows with their ancestor chain, and the location each visible
-// club points at with one level of parent. Neither carries a country filter or
-// a lookup table any more — the query scopes the first, and the second is
-// resolved off the row itself.
+// Both /schools routes start from the clubs and derive the geography from what
+// those clubs point at, so the entry builder is fed two deliberately different
+// shapes and has to answer the same way about the parts they share:
+//
+//   * rows-with-chains from the keyed locations read (/schools, which groups by
+//     region and so needs the chain);
+//   * the municipality node lifted off a club's own product embed
+//     (/schools/<slug>, which reads no locations at all and never renders a
+//     region).
 //
 // Uusimaa -> {Helsinki -> School A, Espoo}; Pirkanmaa -> Tampere.
 // Helsinki + Uusimaa carry a Swedish name; Tampere/Espoo don't (they fall back).
@@ -45,7 +50,7 @@ const HELSINKI_SITE_CLUB: EmbeddedLocation = {
   parent: {
     id: "helsinki",
     name: "Helsinki",
-    name_i18n: null,
+    name_i18n: { sv: "Helsingfors" },
     type: "municipality",
   },
 };
@@ -59,16 +64,68 @@ const REGION_CLUB: EmbeddedLocation = {
   parent: null,
 };
 
+describe("municipalitiesOfClubs", () => {
+  it("resolves an online club to the municipality it is anchored at", () => {
+    expect(
+      municipalitiesOfClubs([club("online-espoo", ESPOO_CLUB)]).map((m) => m.id),
+    ).toEqual(["espoo"]);
+  });
+
+  it("resolves an in-person club up to the municipality above its site", () => {
+    // The whole reason membership is resolved rather than compared: an id
+    // equality test against the municipality would keep only the online half.
+    expect(
+      municipalitiesOfClubs([club("in-person", HELSINKI_SITE_CLUB)]).map(
+        (m) => m.id,
+      ),
+    ).toEqual(["helsinki"]);
+  });
+
+  it("returns each municipality once however many clubs it runs", () => {
+    const clubs = [
+      club("a", ESPOO_CLUB),
+      club("b", HELSINKI_SITE_CLUB),
+      club("c", ESPOO_CLUB),
+    ];
+    expect(municipalitiesOfClubs(clubs).map((m) => m.id)).toEqual([
+      "espoo",
+      "helsinki",
+    ]);
+  });
+
+  it("drops a club that resolves to no municipality", () => {
+    // A region-anchored club (legacy shape) lights up nothing — availability is
+    // municipality-exact, with no cascade down to the municipalities under it —
+    // and a club with no location embed at all contributes nothing either.
+    expect(
+      municipalitiesOfClubs([
+        club("regional", REGION_CLUB),
+        club("nowhere", null),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("carries the embed's own name fields through, so a slug can be built", () => {
+    const [helsinki] = municipalitiesOfClubs([
+      club("in-person", HELSINKI_SITE_CLUB),
+    ]);
+    expect(helsinki).toMatchObject({
+      id: "helsinki",
+      name: "Helsinki",
+      name_i18n: { sv: "Helsingfors" },
+    });
+  });
+});
+
 describe("buildMunicipalityEntries", () => {
   it("lists municipalities sorted, with slugs and region", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
+    const entries = buildMunicipalityEntries(MUNICIPALITIES, "fi");
 
     expect(entries.map((e) => e.name)).toEqual(["Espoo", "Helsinki", "Tampere"]);
     expect(entries.find((e) => e.id === "helsinki")).toMatchObject({
       slug: "helsinki",
       regionId: "uusimaa",
       regionName: "Uusimaa",
-      hasClubs: false,
     });
     expect(entries.find((e) => e.id === "tampere")?.regionName).toBe(
       "Pirkanmaa",
@@ -76,7 +133,7 @@ describe("buildMunicipalityEntries", () => {
   });
 
   it("renders Swedish names for the sv locale, falling back to `name`", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "sv");
+    const entries = buildMunicipalityEntries(MUNICIPALITIES, "sv");
     const helsinki = entries.find((e) => e.id === "helsinki");
     expect(helsinki?.name).toBe("Helsingfors");
     expect(helsinki?.regionName).toBe("Nyland");
@@ -85,8 +142,8 @@ describe("buildMunicipalityEntries", () => {
   });
 
   it("builds the URL slug from the viewer-locale display name", () => {
-    const fi = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
-    const sv = buildMunicipalityEntries(MUNICIPALITIES, [], "sv");
+    const fi = buildMunicipalityEntries(MUNICIPALITIES, "fi");
+    const sv = buildMunicipalityEntries(MUNICIPALITIES, "sv");
     expect(fi.find((e) => e.id === "helsinki")?.slug).toBe("helsinki");
     expect(sv.find((e) => e.id === "helsinki")?.slug).toBe("helsingfors");
     // No Swedish override → same slug in both locales.
@@ -95,48 +152,55 @@ describe("buildMunicipalityEntries", () => {
   });
 
   it("indexes both the canonical and alternate names for search", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
+    const entries = buildMunicipalityEntries(MUNICIPALITIES, "fi");
     const helsinki = entries.find((e) => e.id === "helsinki");
     expect(helsinki?.searchSlugs).toEqual(
       expect.arrayContaining(["helsinki", "helsingfors"]),
     );
   });
 
-  it("flags a municipality with an online club (location_id = municipality)", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [ESPOO_CLUB], "fi");
-    expect(entries.find((e) => e.id === "espoo")?.hasClubs).toBe(true);
-    expect(entries.find((e) => e.id === "helsinki")?.hasClubs).toBe(false);
+  it("builds the same name and slugs from a chainless embedded node", () => {
+    // What /schools/<slug> feeds it: the municipality node off a club's product
+    // embed. Everything that page needs — display name, canonical slug, every
+    // alternate slug — has to come out identical to the row-fed version.
+    const fromRows = buildMunicipalityEntries(MUNICIPALITIES, "fi").find(
+      (e) => e.id === "helsinki",
+    );
+    const fromEmbed = buildMunicipalityEntries(
+      municipalitiesOfClubs([club("in-person", HELSINKI_SITE_CLUB)]),
+      "fi",
+    )[0];
+
+    expect(fromEmbed.name).toBe(fromRows?.name);
+    expect(fromEmbed.slug).toBe(fromRows?.slug);
+    expect(fromEmbed.searchSlugs).toEqual(fromRows?.searchSlugs);
   });
 
-  it("flags a municipality with an in-person club (location_id = site under it)", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [HELSINKI_SITE_CLUB], "fi");
-    expect(entries.find((e) => e.id === "helsinki")?.hasClubs).toBe(true);
-  });
-
-  it("does NOT cascade region/country-scoped locations to municipalities", () => {
-    // A club anchored to a region (legacy data) lights up nothing — availability
-    // is municipality-exact.
-    const entries = buildMunicipalityEntries(
-      MUNICIPALITIES,
-      [REGION_CLUB],
+  it("leaves the region null when the source carries no chain", () => {
+    // Not a gap: the only page that builds entries this way never renders a
+    // region, which is exactly why it can skip the locations read.
+    const [entry] = buildMunicipalityEntries(
+      municipalitiesOfClubs([club("in-person", HELSINKI_SITE_CLUB)]),
       "fi",
     );
-    expect(entries.every((e) => e.hasClubs === false)).toBe(true);
+    expect(entry.regionId).toBeNull();
+    expect(entry.regionName).toBeNull();
   });
 
-  it("ignores null location ids", () => {
-    const entries = buildMunicipalityEntries(
-      MUNICIPALITIES,
-      [null, ESPOO_CLUB, null],
-      "fi",
-    );
-    expect(entries.find((e) => e.id === "espoo")?.hasClubs).toBe(true);
+  it("leaves the region null when the nearest ancestor isn't a region", () => {
+    const orphan: LocationWithChain = {
+      ...municipality("kokkola", "Kokkola", PIRKANMAA),
+      ancestors: [],
+    };
+    const [entry] = buildMunicipalityEntries([orphan], "fi");
+    expect(entry.regionId).toBeNull();
+    expect(entry.regionName).toBeNull();
   });
 });
 
 describe("selectClubsInMunicipality", () => {
   // The narrowing the /schools/<slug> page does. Membership is resolved, not an
-  // id comparison, so it must agree with the list's `hasClubs` above — the two
+  // id comparison, so it must agree with `municipalitiesOfClubs` above — the two
   // ends of one feature answering "which municipality is this club in?".
   const ONLINE_ESPOO = club("online-espoo", ESPOO_CLUB);
   const IN_PERSON_HELSINKI = club("in-person-helsinki", HELSINKI_SITE_CLUB);
@@ -195,7 +259,7 @@ describe("selectClubsInMunicipality", () => {
 
 describe("findMunicipalityBySlug", () => {
   it("resolves the canonical viewer-locale slug", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
+    const entries = buildMunicipalityEntries(MUNICIPALITIES, "fi");
     expect(findMunicipalityBySlug("helsinki", entries)?.id).toBe("helsinki");
     expect(findMunicipalityBySlug("espoo", entries)?.id).toBe("espoo");
   });
@@ -203,16 +267,38 @@ describe("findMunicipalityBySlug", () => {
   it("resolves an alternate-locale slug to the same row", () => {
     // Built for `fi` (slug = "helsinki"), but a Swedish speaker's
     // "/schools/helsingfors" link must still land here via the search slugs.
-    const fi = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
+    const fi = buildMunicipalityEntries(MUNICIPALITIES, "fi");
     expect(findMunicipalityBySlug("helsingfors", fi)?.id).toBe("helsinki");
     // And the reverse: built for `sv` (slug = "helsingfors"), the Finnish
     // "/schools/helsinki" link resolves too.
-    const sv = buildMunicipalityEntries(MUNICIPALITIES, [], "sv");
+    const sv = buildMunicipalityEntries(MUNICIPALITIES, "sv");
     expect(findMunicipalityBySlug("helsinki", sv)?.id).toBe("helsinki");
   });
 
+  it("resolves both slugs of a club-bearing municipality built from an embed", () => {
+    // The /schools/<slug> route's whole resolution path, with no locations read
+    // behind it: a Swedish alternate slug still lands on the municipality.
+    const entries = buildMunicipalityEntries(
+      municipalitiesOfClubs([club("in-person", HELSINKI_SITE_CLUB)]),
+      "fi",
+    );
+    expect(findMunicipalityBySlug("helsinki", entries)?.id).toBe("helsinki");
+    expect(findMunicipalityBySlug("helsingfors", entries)?.id).toBe("helsinki");
+  });
+
+  it("misses a real municipality that runs no clubs, exactly as it misses nonsense", () => {
+    // The list is the club-bearing set, so the clubless 404 and the unknown-slug
+    // 404 are now one condition rather than two.
+    const entries = buildMunicipalityEntries(
+      municipalitiesOfClubs([club("online-espoo", ESPOO_CLUB)]),
+      "fi",
+    );
+    expect(findMunicipalityBySlug("helsinki", entries)).toBeUndefined();
+    expect(findMunicipalityBySlug("nope", entries)).toBeUndefined();
+  });
+
   it("returns undefined for an unknown slug", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
+    const entries = buildMunicipalityEntries(MUNICIPALITIES, "fi");
     expect(findMunicipalityBySlug("stockholm", entries)).toBeUndefined();
     expect(findMunicipalityBySlug("nope", entries)).toBeUndefined();
   });
@@ -220,7 +306,7 @@ describe("findMunicipalityBySlug", () => {
 
 describe("groupByRegion", () => {
   it("groups municipalities under their region, both sorted", () => {
-    const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
+    const entries = buildMunicipalityEntries(MUNICIPALITIES, "fi");
     const groups = groupByRegion(entries);
 
     expect(groups.map((g) => g.regionName)).toEqual(["Pirkanmaa", "Uusimaa"]);
@@ -231,11 +317,13 @@ describe("groupByRegion", () => {
     ]);
   });
 
-  it("groups only the entries passed in (e.g. the active subset)", () => {
-    const active = buildMunicipalityEntries(MUNICIPALITIES, [ESPOO_CLUB], "fi").filter(
-      (e) => e.hasClubs,
+  it("groups only the entries passed in", () => {
+    const groups = groupByRegion(
+      buildMunicipalityEntries(
+        MUNICIPALITIES.filter((m) => m.id === "espoo"),
+        "fi",
+      ),
     );
-    const groups = groupByRegion(active);
     expect(groups).toHaveLength(1);
     expect(groups[0].regionName).toBe("Uusimaa");
     expect(groups[0].municipalities.map((m) => m.name)).toEqual(["Espoo"]);
@@ -244,7 +332,7 @@ describe("groupByRegion", () => {
 
 /**
  * A club row as the narrowing sees it: an id plus the location embed. Typed
- * structurally on purpose — the helper takes any row carrying its location, so
+ * structurally on purpose — the helpers take any row carrying its location, so
  * the fixture doesn't have to fake a whole product row.
  */
 function club(id: string, locations: EmbeddedLocation | null) {
@@ -268,7 +356,7 @@ function chainNode(
   };
 }
 
-/** A municipality row as the scoped read returns it: chain nearest first. */
+/** A municipality row as the keyed read returns it: chain nearest first. */
 function municipality(
   id: string,
   name: string,

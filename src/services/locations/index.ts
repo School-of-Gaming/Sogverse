@@ -7,6 +7,7 @@ export type {
 export {
   LOCATION_SEARCH_LIMIT,
   LOCATION_SEARCH_MAX_LIMIT,
+  LOCATION_SEARCH_MAX_QUERY,
   LOCATION_SEARCH_MIN_QUERY,
   locationSearchResult,
   searchLocationsQuery,

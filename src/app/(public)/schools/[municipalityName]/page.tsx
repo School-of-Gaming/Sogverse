@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
-import { LocationsService } from "@/services/locations";
 import { ProductsService } from "@/services/products";
 import {
   ParticipationsService,
@@ -13,8 +12,8 @@ import { UsersService } from "@/services/users";
 import {
   buildMunicipalityEntries,
   findMunicipalityBySlug,
+  municipalitiesOfClubs,
   selectClubsInMunicipality,
-  SCHOOLS_COUNTRY_CODE,
   type MunicipalityEntry,
 } from "@/lib/schools/municipalities";
 import { MunicipalityClubsBrowse } from "@/components/public/schools/municipality-clubs-browse";
@@ -36,55 +35,66 @@ interface MunicipalityPageData {
 
 /**
  * Resolve the `/schools/<slug>` URL to its municipality and prefetch the page's
- * first frame, using the viewer's RLS-scoped client (locations + published
- * municipality clubs are both anon-readable). We fetch the same two scoped sets
- * the /schools list does, resolve the slug against every locale's name (so both
- * `helsinki` and `helsingfors` land here), and narrow the clubs + their seat
- * counts to this municipality.
+ * first frame, using the viewer's RLS-scoped client (published municipality
+ * clubs are anon-readable).
  *
- * The narrowing goes through the same resolved-membership rule that decides
- * which municipalities the /schools list links, so both delivery modes land
+ * **This page reads no locations at all.** Every club's product row already
+ * embeds the location it points at plus one level of parent, and the schema
+ * allows exactly two shapes for a municipality club — the municipality itself
+ * (online) or a site directly under it (in-person) — so the municipality node,
+ * carrying its `id`, `name` and `name_i18n`, is always in flight already. That
+ * node is everything this page needs: the display name, the canonical slug and
+ * every alternate slug (so both `helsinki` and `helsingfors` land here). It
+ * never renders the region, which is the one thing the embed cannot answer.
+ *
+ * The clubs and the seat counts are narrowed through the same
+ * resolved-membership rule the /schools list uses, so both delivery modes land
  * here: an online club anchored at the municipality itself and an in-person one
  * anchored at a site inside it. Format is filtered separately, downstream.
  *
- * Returns `null` — the page 404s — when the slug matches no real Finnish
- * municipality *or* when that municipality runs no clubs. The /schools list
- * only links municipalities that have clubs, so a clubless municipality page is
- * reachable only by a hand-typed URL; we'd rather 404 than serve an empty
- * shell. A genuine fetch error is deliberately *not* swallowed (unlike the
- * /schools list's empty fallback): turning a transient DB error into a 404
- * would mislead, so we let it surface to the error boundary instead.
+ * Returns `null` — the page 404s — when the slug matches none of the
+ * club-bearing municipalities. That is one condition where there used to be
+ * two: the entries are derived from the clubs, so a real municipality with no
+ * clubs simply is not among them and misses exactly as a nonsense slug does.
+ * The 404 surface is unchanged. A genuine fetch error is deliberately *not*
+ * swallowed (unlike the /schools list's empty fallback): turning a transient DB
+ * error into a 404 would mislead, so we let it surface to the error boundary.
  *
- * `cache()` dedupes the two Supabase round-trips across `generateMetadata` and
- * the page render within a single request.
+ * One accepted consequence of reading no locations: the club's country cannot
+ * be checked, because the embed carries no `country_code`. A club anchored to a
+ * non-Finnish municipality would therefore render here while staying absent
+ * from /schools. On a detail route the club's existence is the authority — if a
+ * club is running there, its page should render — and the picker only ever
+ * offers Finnish municipalities, so this is reachable today only through legacy
+ * rows the database trigger still permits.
+ *
+ * `cache()` dedupes the Supabase round-trips across `generateMetadata` and the
+ * page render within a single request.
  */
 const loadMunicipality = cache(
   async (slug: string, locale: string): Promise<MunicipalityPageData | null> => {
     const supabase = await createClient();
-    const [municipalities, allClubs] = await Promise.all([
-      new LocationsService(supabase).getMunicipalitiesByCountry(
-        SCHOOLS_COUNTRY_CODE,
-      ),
+    // The spoken languages ride in this group rather than the next one: the
+    // filter strip's language options depend on nothing the slug resolves to,
+    // so waiting for the clubs would be a round trip spent on nothing.
+    const [allClubs, spokenLanguages] = await Promise.all([
       new ProductsService(supabase).listVisibleByTypes(["municipality_club"]),
+      new UsersService(supabase).getSpokenLanguages(),
     ]);
 
     const entries = buildMunicipalityEntries(
-      municipalities,
-      allClubs.map((c) => c.locations),
+      municipalitiesOfClubs(allClubs),
       locale,
     );
     const municipality = findMunicipalityBySlug(slug, entries);
     if (!municipality) return null;
 
+    // At least one club resolved to this municipality — that is how the entry
+    // came to exist — so this can never come back empty.
     const muniClubs = selectClubsInMunicipality(allClubs, municipality.id);
-    if (muniClubs.length === 0) return null;
-
-    const [counts, spokenLanguages] = await Promise.all([
-      new ParticipationsService(supabase).getParticipationCounts(
-        muniClubs.map((c) => c.id),
-      ),
-      new UsersService(supabase).getSpokenLanguages(),
-    ]);
+    const counts = await new ParticipationsService(
+      supabase,
+    ).getParticipationCounts(muniClubs.map((c) => c.id));
 
     return { municipality, allClubs, counts, spokenLanguages };
   },
