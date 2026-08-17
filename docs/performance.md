@@ -26,7 +26,7 @@ How to read the numbers:
 
 - **p75 is the warm steady state** — what most visits get. **p90–p99 is the cold-start / heavy tail**, and the good/improvable/poor distribution says how many real pageviews land in it. This is the honest resolution of "cold starts pollute the test, warm caches make it too easy": the two conditions are separated by percentile, both are real, and the distribution gives their mix. Don't chase one synthetic number that blends them.
 - **Sample sizes are thin** (~300 DAU): most routes collect under 100 datapoints per month, so route-level p75s are directional only. Before/after regression testing stays with the controlled benchmark protocol (benchmark log under the F1 completed entry); Speed Insights is the ambient monitor — watch the overall p75 and the poor-bucket share over time.
-- **On a thin enough route, p75 *is* the cold number, and the bullet above stops applying.** The warm/cold-by-percentile split assumes visits arrive close enough together that something stays warm between them. Below roughly one visit per cache lifetime that assumption inverts: nothing the route touches is ever resident, so there is no warm population to occupy p75 and the percentile split no longer separates two conditions, because only one of them happens. `/schools/[municipalityName]/[id]` at ~1 visit/day measured ~1100ms cold against a ~170ms warm steady state — the warm figure is what a developer clicking twice sees and what almost no real visitor ever gets. **Read a route's `n` before reading its p75 as steady state**; under ~100/30d, treat it as the cold number.
+- **On a thin enough route, p75 *is* the cold number, and the bullet above stops applying.** The warm/cold-by-percentile split assumes visits arrive close enough together that something stays warm between them. Below roughly one visit per cache lifetime that assumption inverts: nothing the route touches is ever resident, so there is no warm population to occupy p75 and the percentile split no longer separates two conditions, because only one of them happens. `/schools/[municipalityName]/[id]` at ~1 visit/day measured ~1100ms cold against a ~170ms warm steady state — the warm figure is what a developer clicking twice sees and what almost no real visitor ever gets. (Those are pre-fix numbers, kept because the *gap* between them is the lesson; that route's cold cost was mostly one read, since removed — see the F6 entry under Completed.) **Read a route's `n` before reading its p75 as steady state**; under ~100/30d, treat it as the cold number.
 
 ### Snapshot log
 
@@ -45,6 +45,8 @@ Append-only, like the benchmark log. Format: `date · window · scope → headli
   Reading: warm TTFB ~400ms with ~6% of pageviews in the poor (>1.8s) bucket — the cold/heavy tail is real but bounded. CLS is excellent (94–97% good, p75 ≈ 0): the layout-shift rules visibly hold in production. Route hotspots → F5; public-page numbers → F2.
 
   **Verdict: B+.** Interaction quality is excellent (INP p75 48ms desktop, CLS near-perfect — the app *feels* fast once loaded) and the core family loop has good TTFB at real sample sizes. What holds the grade down: first paint is mediocre with no headroom (FCP 74–75% good, p75 sitting on the 1.8s threshold; LCP scrapes under 2.5s), and the worst experiences cluster on *entry* surfaces — `/schools` poor, the ~6% cold tail, the voice-room entry LCP — i.e. slowest exactly where first impressions form, while committed users get the fast path. Path to A+: F2 first (converts the worst numbers on the most impression-sensitive surface into edge-CDN hits), then the F5 hotspots, with Server-Timing instrumentation before diagnosing them so "slow" becomes "why".
+
+  > **Annotation (2026-08-17): the `/schools` half of this verdict is pre-fix.** It was graded before F6 was diagnosed, so it reads the worst entry-surface number as F2's dynamic-render tax; the probe since attributed ~75% of that route's cold path to a whole-country municipality read, now removed (see Completed). The verdict itself stands as written — it is a point-in-time grade of a point-in-time pull, and the next pull gets its own. What changes is the path to A+: the biggest single `/schools` number is addressed, and the *rest* of that route, plus every other public page, is still F2.
 
 ## Incidents
 
@@ -95,6 +97,8 @@ Home and other `(public)` routes load with ~400–700ms TTFB on prod even on fas
 
 **RUM corroboration (2026-08-13 Speed Insights pull).** Home TTFB p75 627ms desktop / 331ms mobile — the dynamic-render tax measured on real visitors, matching the 660ms synthetic benchmark. `/schools` is the worst public route: TTFB p75 **1886ms, rated POOR** (n=33) — a low-traffic cold-entry page (families arriving from a school's message) pays a cold lambda on top of the dynamic render. Strongest real-user evidence yet for the full F2 fix.
 
+> **Pre-fix number — most of that 1886ms was F6, not F2.** The `/schools` figure was pulled while all three `/schools` routes ran a whole-country municipality read; the controlled probe four days later attributed ~75% of the cold path to that read, which the F6 work (see Completed) removed. Expect this route's number to fall toward the lambda-init + dynamic-render floor rather than to zero — **the dynamic-render tax F2 is about is untouched**, and this bullet's home-page numbers are unaffected by that work and remain the clean F2 evidence. The historical figures stay as recorded; re-pull before reading them as current.
+
 **Related — F2b, the first-device-login reload.** `LocaleProvider` reconciles a stale `locale` cookie against `profile.locale` on mount and calls `router.refresh()`, producing a visible second render on the first page after signing in on a new device. Root cause: next-intl's `getRequestConfig` runs before auth and can only read cookies/headers, so client-side reconciliation is the only option — "cookie as a cache of profile state," and new devices always miss the cache. This is a canary: any future pre-render preference (timezone, theme-critical CSS, feature flags) hits the same pattern. The locale-in-URL move (F2 full win) makes it **moot** (no cookie-as-cache dance when locale is in the path); until then, two narrower fixes — (a) write preference cookies server-side during the auth callback so SSR sees them next request (cheap per login, no per-render cost — the better default), or (b) thread the authenticated user through `getRequestConfig` to read the profile directly (per-request DB cost, no divergence). If the full win ships, F2b retires with it.
 
 ### F3 — Per-request role lookup is fanned out across request-contexts
@@ -117,37 +121,6 @@ The first Speed Insights pull (see Real-user data) surfaced four routes worth a 
 - **`/parent/unlock` TTFB 920ms desktop / 1065ms mobile — and the top mobile route by traffic (n=98).** The PIN unlock page is the most user-visible slow TTFB in the family flow.
 - **`/voice/group/[id]` LCP 4552ms desktop (POOR, n=81) — but INP excellent (72ms, n=403).** The room feels fine once loaded; the entry paint is the problem. Hypothesis: the video/participant tile arrives late and is the LCP element.
 - **`/shop/[id]` LCP ~3.2s on both devices (improvable).** Hypothesis: the product hero image (sizing/priority).
-
-### F6 — All three `/schools` routes fetch a set bounded by Finland to render one bounded by clubs
-
-`/schools` and `/schools/[municipalityName]` both read every Finnish municipality — 308 rows, each carrying a 3-level ancestor embed — then slugify and collator-sort the whole list, on every request. `/schools` additionally serialises all 308 entries into the RSC payload, so they ship to every visitor's browser.
-
-Measured 2026-08-17 against production, first request after a 25-minute idle with nothing warmed before it:
-
-| `/schools` cold TTFB | 1170 ms |
-|---|---|
-| warm TTFB | ~185 ms |
-| server fetch | 238,285 bytes |
-| client RSC payload | ~60 KB (estimated from row count) |
-
-Of the 1170 ms: ~40 ms network, ~107 ms lambda init, ~145 ms warm server work, **~878 ms (75%) the municipality read against cold caches.**
-
-**The read is not merely expensive, it is bounded by the wrong variable** — and this corrects an earlier version of this finding, which claimed both routes had a genuine need for the whole country. They do not:
-
-- `/schools` filters its entries to club-bearing ones *before* rendering its default view. The only consumer of the other ~290 is the client-side search box.
-- `/schools/[municipalityName]` 404s for a real municipality that has no clubs, by an explicit guard, exactly as it does for a nonsense slug. So the set of slugs that can produce a page is precisely the club-bearing ones, and resolving against all of Finland to then discard every clubless hit is O(M) work for an O(C) answer.
-
-The fix is therefore a data-flow reversal — read the clubs, derive their municipalities, read those rows by key — with no schema change and no behaviour change, plus a hybrid search box so the whole-country set stops reaching the browser. **Superseded by this: the cross-request cache this finding previously recommended**, which can amortise the server fetch but cannot touch a per-visitor client payload; also a generated slug column (the O(M) lookup disappears rather than needing an index) and trimming the ancestor embed (measured at 31–82% payload savings, all irrelevant to a query that should stop running).
-
-**Urgency is traffic, not depth.** `/schools` is the product's main landing page and is expected to become the highest-traffic page on the site within a month. Speed Insights cannot be used to justify or verify the fix: at ~1 visit/day it reports nothing, and by the time it reports anything the affected visitors have already had the bad experience. This is the case the "read `n` before reading p75" note above is about, seen from the other side — a route can also be *too new* to measure.
-
-**The product detail route has the same fault, one route further down.** `/schools/[municipalityName]/[id]` runs the identical whole-country read to produce **one string** — the municipality's display name, for the back link's label. Measured cold: **1102 ms**, against ~295 ms for `/shop/[id]`, which is the same page without that read. And the name was never worth fetching: the product row the page already requests client-side embeds its location with `name` and `name_i18n`, so the label was derivable for free from data already in flight, and could not have painted any earlier anyway — the back link lives in a body that waits for that same product query.
-
-**The method is the reusable part.** The question that mattered was whether the cold cost was lambda init — which no application change can fix — or work the app was doing. Warm requests cannot answer it, and neither can a slow route measured alone. What answered it was a **near-identical sibling route as a control**: `/shop/[id]` renders the same component with the same client-side fetches and differs only by the lookup, so its cold TTFB *is* lambda init plus baseline, and everything above that is attributable work. Ordering the probe to hit the control first, after a genuine idle, is what keeps the reading clean. Where such a sibling exists this beats instrumentation for a first cut; where one does not, Server-Timing is still the way in.
-
-**The counter-intuitive part, recorded because it will recur.** The initial hypothesis — reasonable, and wrong — was that a route at ~1 visit/day is dominated by cold starts and therefore beyond the reach of application work. Init turned out to be ~9–18% of it. The routes were cold in a different sense: not the machine, but everything the request touched (unresident Postgres pages, un-JITed per-row work). That distinction decides the whole remedy, because a cold machine is fixed only by a warmer or by removing the lambda, while cold work is ordinary engineering. **Do not infer the layer from the symptom** — both present as "slow first hit, fast second".
-
-**Not attributed:** how the 878 ms divides between cold Postgres pages, `JSON.parse` of 238 KB in a cold V8, and the slugify-plus-collator work. The reversal removes most of all three, so the split was not chased.
 
 ## Recommended improvements
 
@@ -192,6 +165,74 @@ Supersedes the earlier "move role into JWT everywhere" framing. Ordered by value
 **Related cleanup:** retiring `is_admin()` for inline `get_user_role() = 'admin'` touches the same RLS files — do it alongside this if either is picked up.
 
 ## Completed improvements
+
+### `/schools` reads bounded by clubs, not by Finland — closes F6 (branch `feat/schools-fetch-bounded-by-clubs`, 2026-08-17)
+
+**⚠ The "after" numbers below are projections, not measurements.** The change had not reached production when this entry was written, and the controlled probe that produced the "before" numbers has to be re-run post-release to fill them in — see *Verification still owed*. Everything under *Why* is measured.
+
+**What shipped.** Four changes across the three public `/schools` routes:
+
+1. **The data flow reversed on both listing routes — clubs first, geography second.** Both already read the clubs; they now derive the geography from what those clubs point at, resolving each club's location *up to its nearest municipality* through the shared resolver (never an id comparison, which keeps only the online half and silently drops every in-person club). `/schools/[municipalityName]` needs **no locations read at all** — the product embed carries the municipality's id, name and name alternates, which is the display name, the canonical slug and every alternate slug. `/schools` still needs the region, which only the ancestor chain carries, so it reads exactly the club-bearing municipality ids through the keyed read (chunked under the response cap, bounded by construction) and narrows to Finnish municipality rows in memory.
+2. **The detail route's read is gone entirely.** `/schools/[municipalityName]/[id]` ran the whole-country read to produce one string; the back link's municipality name now comes from the product row the page already fetches. The link keeps the name — an earlier attempt replaced it with a generic label on the mistaken belief that keeping the name required keeping the read, and was reverted rather than shipped.
+3. **Hybrid search on `/schools` — a union, not a cascade.** Only the club-bearing municipalities ship to the browser and are searched in memory, instantly. Every debounced query of two or more characters *also* asks the existing cached, indexed location-search route (scoped to Finland and to the municipality level, by the database); its hits are deduped against what the local arm actually rendered for this query and appended below. The union shape replaced a fire-only-on-zero-local-matches cascade, which was verified against the real data to hide whole municipalities: 32 Finnish municipality names sit inside another's (Lahti inside Vesilahti/Kontiolahti/Ruokolahti, Pori inside Raasepori, …), so a parent in clubless Lahti typing their whole town would have seen only the "-lahti" towns — and *which* pairs were live would shift silently as clubs open and close.
+4. **The shared browse select narrowed** (beyond the finding, owner-approved while in here). The visible-products browse read went from select-everything to an explicit column list — eight `products` columns dropped (including three internal fee columns previously shipped to anonymous `/shop` visitors), translations narrowed to locale/name/short description, prices to currency/cents. Roughly 40% of every browse row was columns nothing rendered, twice over, since the rows ship again in the RSC payload. `/schools` additionally takes a dedicated select of its own: the embedded location chain plus only the columns visibility filtering needs. `/schools/[municipalityName]` keeps the full rows — they seed the client's React Query cache.
+
+**Why (was F6).** `/schools` and `/schools/[municipalityName]` both read every Finnish municipality — 308 rows, each carrying a 3-level ancestor embed — then slugified and collator-sorted the whole list, on every request. `/schools` additionally serialised all 308 entries into the RSC payload, so they shipped to every visitor's browser.
+
+Measured 2026-08-17 against production, first request after a 25-minute idle with nothing warmed before it:
+
+| `/schools` cold TTFB | 1170 ms |
+|---|---|
+| warm TTFB | ~185 ms |
+| server fetch | 238,285 bytes |
+| client RSC payload | ~60 KB (estimated from row count) |
+
+Of the 1170 ms: ~40 ms network, ~107 ms lambda init, ~145 ms warm server work, **~878 ms (75%) the municipality read against cold caches.** The 238,285 bytes are the municipality read alone (~774 bytes × 308 rows accounts for it); the clubs read on top of it was never measured.
+
+**The read was not merely expensive, it was bounded by the wrong variable** — which corrects an earlier version of this finding that claimed both routes genuinely needed the whole country. Two facts, both verified in the code, made it unnecessary:
+
+- `/schools` filtered its entries to club-bearing ones *before* rendering its default view. The only consumer of the other ~290 was the client-side search box.
+- `/schools/[municipalityName]` 404s for a real municipality with no clubs, by an explicit guard, exactly as it does for a nonsense slug. So the set of slugs that can produce a page is precisely the club-bearing ones, and resolving against all of Finland to then discard every clubless hit is O(M) work for an O(C) answer.
+
+**The product detail route had the same fault, one route further down.** `/schools/[municipalityName]/[id]` ran the identical whole-country read to produce **one string** — the municipality's display name, for the back link's label. Measured cold: **1102 ms**, against ~295 ms for `/shop/[id]`, the same page without that read. The name was never worth fetching: the product row the page already requests client-side embeds its location with `name` and `name_i18n`, so the label was derivable for free from data already in flight — and could not have painted any earlier anyway, since the back link lives in a body that waits for that same product query.
+
+**Urgency was traffic, not depth.** `/schools` is the product's main landing page and is expected to become the highest-traffic page on the site within a month, driven by a marketing push; today it sees roughly one visit per day. Speed Insights could neither justify nor verify the fix — at that traffic it reports nothing useful, and by the time it reports anything the affected visitors have already had the bad experience. This is the case the "read `n` before reading p75" note above is about, seen from the other side: a route can also be *too new* to measure. The cold path is also what a traffic ramp actually gets — many concurrent cold invocations each pulling 238 KB against a cold database, and this log records two prior incidents where per-request work that was fine at low volume crossed a nonlinear knee under concurrency.
+
+**Rejected alternatives (each turned down *after* measurement — do not rebuild them).**
+
+- **Cross-request caching of the built entry list**, which this finding originally recommended. It amortises the server fetch but cannot touch the per-visitor client payload, the larger problem on a landing page, and its staleness window interacts badly with the layout-stability rule (cached HTML showing a just-unpublished club that a client refetch then removes is a shift on data's own schedule). Revisit only if a burst test shows the *remaining* server work is a problem.
+- **A generated, indexed `slug` column on locations.** The O(M) slug→row scan disappears with the reversal rather than needing an index, and the column is harder than it looks: a slug must invert from the canonical name *and* every alternate, per locale, so it is an array column or side table plus a per-locale collision invariant.
+- **Trimming the ancestor embed, or fetching the ~19 regions separately.** Measured: one embed level saves 31% of the payload, dropping it and reading regions separately 61%, also dropping unread columns 82%. All real, all irrelevant — they optimise a query that should no longer run.
+- **Fully server-side search** (every keystroke hits the route). The first recommendation, made while the page was believed to be low-traffic; on a landing page whose primary interaction is "find my town", making every keystroke networked is a real downgrade. The union hybrid still sends one debounced, CDN-cached request per query but differs where it matters: the successful path renders locally and instantly, and the network is additive.
+- **Static generation / ISR.** The root layout reads the session on every request, so these routes are dynamic whatever the page does. That is F2's territory and stays open.
+
+**Accepted behaviour changes** (all decided by the owner, none a regression to "fix" by restoring a whole-country read):
+
+- The keyed read never filters retired rows — a stored pick must keep resolving — so a club anchored to a *retired* municipality now appears on `/schools` and at its own URL, where it used to be hidden. The club is real and already visible in `/shop`; hiding it means a family cannot find a club they may be enrolled in.
+- `/schools/[municipalityName]` can no longer check the country (the product embed carries none), so a club anchored to a non-Finnish municipality would render at its own URL while staying absent from `/schools`. Reachable today only through legacy rows the DB trigger still permits — the picker only offers Finnish municipalities.
+- With the detail route's read gone, an unknown municipality slug no longer 404s there: it renders the product with a back link to a listing that will itself 404. The route is `noindex` and the slug never gated the product.
+
+**Before / after.**
+
+| | before (measured 2026-08-17) | after (**projected**, not yet measured) |
+|---|---|---|
+| `/schools` cold TTFB | 1170 ms | ~350–450 ms |
+| `/schools` warm TTFB | ~185 ms | ~120–150 ms |
+| server fetch per request | 238,285 bytes | ~5 KB |
+| client RSC payload | ~60 KB | ~2 KB |
+| `/schools/[municipalityName]/[id]` cold TTFB | 1102 ms | ~295 ms (its own `/shop/[id]` control) |
+
+The projections are inference by analogy with `/shop/[id]` — the same "no heavy fetch" shape, measured at ~295 ms cold and ~100 ms warm — not measurements of this branch. The ~5 KB server-fetch figure depends on the narrowed `/schools` club read; without it the club rows dominate and the target is unreachable. **A floor of roughly 300 ms cold is expected and acceptable**, because ~107–195 ms of it is Vercel lambda init these routes cannot avoid without going static (F2).
+
+**Verification still owed.** Run the controlled probe post-release, in the same order that produced the before numbers so the two are directly comparable: (1) leave the routes untouched for 25 minutes so lambda and database caches go cold; (2) request a route that does **no** locations read — any `/shop/[id]` — first, as that run's lambda-init baseline, since it warms nothing being measured; (3) request `/schools` — that is the number; (4) then warm repeats for the steady state. Measure the client payload by fetching the page and counting bytes. Lambda init has been observed at ~107 ms and ~195 ms on two runs, so treat a single run's decomposition as indicative. **Measure `/shop` (the listing, never measured) while in there** — the narrowed browse select is the change most likely to show up on it. Fill the projected column in with real numbers, and mark it measured. A burst test — many concurrent cold requests, to check the launch knee — deliberately loads production and must be agreed with the owner first.
+
+**The method is the reusable part.** The question that mattered was whether the cold cost was lambda init — which no application change can fix — or work the app was doing. Warm requests cannot answer it, and neither can a slow route measured alone. What answered it was a **near-identical sibling route as a control**: `/shop/[id]` renders the same component with the same client-side fetches and differs only by the lookup, so its cold TTFB *is* lambda init plus baseline, and everything above that is attributable work. Ordering the probe to hit the control first, after a genuine idle, is what keeps the reading clean. Where such a sibling exists this beats instrumentation for a first cut; where one does not, Server-Timing is still the way in.
+
+**The counter-intuitive part, recorded because it will recur.** The initial hypothesis — reasonable, and wrong — was that a route at ~1 visit/day is dominated by cold starts and therefore beyond the reach of application work. Init turned out to be ~9–18% of it. The routes were cold in a different sense: not the machine, but everything the request touched (unresident Postgres pages, un-JITed per-row work). That distinction decides the whole remedy, because a cold machine is fixed only by a warmer or by removing the lambda, while cold work is ordinary engineering. **Do not infer the layer from the symptom** — both present as "slow first hit, fast second".
+
+**Not attributed:** how the 878 ms divided between cold Postgres pages, `JSON.parse` of 238 KB in a cold V8, and the slugify-plus-collator work. The reversal removes most of all three, so the split was not chased.
+
+**Tested.** Unit coverage for the entry building and slug resolution was reshaped rather than dropped — `/schools` feeds keyed rows-with-chains while the municipality route works from embedded location nodes, two input shapes through one slug-derivation rule; a select-shape regression test pins the negative property the compiler cannot (the browse select must not silently widen again); and the whole-country read's deletion took its unit tests, its column-discipline registry entry and its DB coverage with it, with one guarantee deliberately preserved — a new DB test seeds its own >1000 rows and walks them, keeping the only proof anywhere that PostgREST truncates the way the paged walk assumes. Behaviour was verified case by case on the listing routes (club-bearing slug renders, clubless municipality 404s, nonsense slug 404s, Swedish alternate slug renders) and on the detail route's back link, in a non-default locale as well.
 
 ### `AppSupabaseClient` — structural `getUser` guard + survivor conversion — closes I3 (branch `perf/auth-getclaims-guard`, 2026-05-31)
 

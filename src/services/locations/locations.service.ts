@@ -371,9 +371,9 @@ export class LocationsService {
    *
    * **A retired municipality is not offered.** Typing a code is a way of
    * *reaching* a place to pick, so this sits on the offering side of the split
-   * `retired_at` exists to create, exactly as browsing a level and the
-   * municipality directory do — a code that still routes mail to a merged-away
-   * kunta must not put it back in front of someone choosing where they live.
+   * `retired_at` exists to create, exactly as browsing a level and searching
+   * do — a code that still routes mail to a merged-away kunta must not put it
+   * back in front of someone choosing where they live.
    * The filter rides on the first read, through an inner join over the
    * relation, so it is applied by the database and no application row ever
    * selects the column. The keyed read that follows stays unfiltered, as every

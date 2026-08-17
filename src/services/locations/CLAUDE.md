@@ -22,20 +22,26 @@ is not caching the table but never asking for more of it than a screen shows:
 - **Searching the hierarchy** is a ranked, capped, server-side query returning a top-N
   plus the true match count, over names, official codes and postal codes at once. Nothing
   that could match the whole table is filtered in the browser.
-- **The bounded lists** a surface genuinely needs in full — one country's municipalities,
-  one municipality's venues — are read whole and listed client-side. What makes such a
-  list legitimate is that something *outside the geography* bounds it: a municipality club
-  is funded by one Finnish kunta and by nothing else, and a venue list is the children of
-  one confirmed row. Both stay in the hundreds however many countries are added. A list
-  bounded by nothing but "this is all anyone has created so far" is the shape to be
+- **The one bounded list** a surface still needs in full — one municipality's venues — is
+  read whole and listed client-side. What makes such a list legitimate is that something
+  *outside the geography* bounds it: the venues are the children of one confirmed row. A
+  list bounded by nothing but "this is all anyone has created so far" is the shape to be
   suspicious of — the venue picker was one, and is a tree dialog now.
 
-  **Being bounded earns a list the right to be read whole; it does not make it the right
-  way to *pick* from.** Both bounded lists above are read by pages that render the whole
-  collection as their content — a directory, a venue list inside a confirmed place — and
-  no picker fetches one any more. Finland's 308 kuntaa were the last that did, and the
-  tree dialog reaches any of them in three keystrokes against an index that also covers
-  the ~34,900 French communes it never held.
+  **Rule: being bounded is not enough — a read has to be bounded by the same thing the
+  screen is.** One country's municipalities were read whole on exactly the argument above,
+  and the argument was true: a municipality club is funded by one Finnish kunta and by
+  nothing else, so the set is a few hundred rows however many countries are added. It was
+  still the wrong read, because the pages doing it rendered a set bounded by *clubs* — tens
+  of rows — and discarded the rest, cold, on every request. Those pages start from the
+  clubs now and read only the municipalities the clubs resolve to. Ask what the screen
+  shows, not what the table can be argued down to: a bound one variable too loose costs the
+  whole difference between the two, on every request, forever.
+
+  **Being bounded also does not make a list the right thing to *pick* from.** No picker
+  fetches a collection any more. Finland's 308 kuntaa were the last that did, and the tree
+  dialog reaches any of them in three keystrokes against an index that also covers the
+  ~34,900 French communes it never held.
 
 The payload is therefore O(what is rendered) and constant as countries are added.
 
@@ -80,7 +86,7 @@ three, alongside `search_blob`.
   it creates between reads is the point of it. `gedu_locations.location_id` is
   `ON DELETE CASCADE`, so deleting a superseded place silently erases a gedu's coverage;
   nothing on a refresh path may delete. **Reads that *offer* a place filter retired rows
-  out** — browsing a level, the municipality directory, the postal lookup (on its
+  out** — browsing a level, the postal lookup (on its
   `postal_codes` read, through the relation, so no application row selects the column),
   the search function (in its match
   set, so the reported total drops them too). What puts a read on this side is what it is
@@ -92,6 +98,17 @@ three, alongside `search_blob`.
   deleted one. The ancestor walk climbs **through** retired rows as well, because a chain
   has to render whole — retirement hides a place from being *chosen*, never from being
   *named*. Nothing retires a `site`.
+
+  **A surface that derives its rows from live references therefore sees retired ones, and
+  that is accepted rather than patched.** The public municipality directory reads exactly
+  the municipalities its clubs resolve to, by key — so a club anchored to a municipality
+  that a later reconciliation retired is listed, where the old whole-country read hid it.
+  The club is real and already on sale elsewhere; hiding it would keep a family from
+  finding a club they may be enrolled in, and retirement only happens through rare
+  reconciliation migrations. **Do not restore the old behaviour by narrowing the keyed
+  read** — not with a column filter, and not with the inner-join-over-the-relation trick
+  the postal lookup uses, which is sanctioned there precisely because that read *offers* a
+  place and this one resolves a reference.
 - **`depth`** is the row's distance from the root: 0 for a country, parent + 1 below,
   maintained by a `BEFORE INSERT/UPDATE` trigger and never written by hand. It is what
   lets search rank broadest-first for any hierarchy shape. Its one limit is written into
@@ -470,15 +487,30 @@ query time — which is the good outcome, but only if you recognise it.
 **Rule: LIKE metacharacters in a needle are escaped, not stripped.** A user typing `%`
 should find nothing, not everything.
 
-**Rule: the fold exists once, in SQL, and nothing outside the database folds anything.**
-The same expression computes the stored side and the needle, so both halves of a match
-come out of one place and cannot drift apart. There was a second fold in TypeScript, for
-sets narrowed in the browser, and it went with the last surface that narrowed one — which
-is the shape to keep in mind if a client-side filter is ever proposed again: two
-implementations of one rule agree only by habit, and the failure is silent and
-asymmetric, one surface quietly ceasing to match "Nîmes" while the other still does. A
-surface that wants to filter places asks the search index, which is a request against a
-capped, ranked, indexed query rather than a second definition of what a match is.
+**Rule: the fold over the geography exists once, in SQL — a surface that wants to filter
+*places* asks the index and folds nothing itself.** The same expression computes the
+stored side and the needle, so both halves of a match come out of one place and cannot
+drift apart. Two implementations of one rule agree only by habit, and the failure is
+silent and asymmetric: one surface quietly ceases to match "Nîmes" while the other still
+does. Asking the index is a request against a capped, ranked, indexed query rather than a
+second definition of what a match is.
+
+**One in-browser narrowing survives, deliberately, and where the line falls is worth
+stating exactly rather than claiming the second fold is gone.** The public municipality
+directory holds a small set of entries — bounded by the clubs on the page, never by a
+country — and narrows it as a parent types, by folding the typed query the same way the
+entries' slugs were folded when the page was built. That *is* a second implementation of
+what counts as a match, and two things are what make it tolerable: it can only ever hide
+rows the page already shipped, and the same box asks the index in parallel for everything
+outside that set, which is what makes a municipality with no clubs findable at all. It
+also cannot simply be deleted, because the same fold is what builds every
+`/schools/<slug>` URL and what slug resolution matches against.
+
+The move to refuse is widening such a narrowing until it stands in for the index — matching
+against a set read out of the table rather than one the page was given, or dropping the
+index arm because local matching "usually" suffices. Usually is the failure mode: a name
+that is an infix of another name matches locally while the municipality the parent actually
+typed never appears, and *which* names those are shifts as clubs open and close.
 
 What the SQL fold must produce is pinned by a table of **literal** input/output pairs the
 DB suite asserts against — literals precisely because an expectation recomputed by a
@@ -610,8 +642,10 @@ have.
 ### The abuse surface, and what bounds it
 
 The educator registration page is **public and unauthenticated**, and it types into this
-box before an account exists. A public catalogue page will do the same. Four bounds, at
-three layers, and each one is load-bearing on its own:
+box before an account exists. The public municipality directory is the second such caller
+and reaches the route without the panel at all — its own box asks for Finnish
+municipalities as a parent types. Four bounds, at three layers, and each one is
+load-bearing on its own:
 
 - **A minimum needle length, enforced in the database as well as the client.** Under it
   the function returns an empty result without reading the table at all. The client stops
@@ -653,14 +687,20 @@ The reads come in three shapes.
 so the caller knows whether to offer another page. Pages accumulate rather than replace,
 so "load more" appends under rows the user is already reading.
 
-**Whole-list reads** — one country's municipalities; one municipality's venues. Those two
-and no others. A surface needs these in full because something outside the table bounds
-them, and it lists whatever it gets. Both are read by pages that *render* the collection
-rather than by pickers choosing from it: the public municipality directory, and the venue
-list inside a confirmed municipality. The municipality read is server-side only — the
-directory pages that need it are server components, and there is deliberately no browser
-hook over it, because a read of a whole country is not something a client surface should
-be able to reach for casually.
+**Whole-list reads** — one municipality's venues. That one and no others, and the count is
+the point: a surface needs this in full because the row the caller already confirmed bounds
+it, and it lists whatever it gets. It is read by the page that *renders* the venues inside
+a confirmed municipality, never by a picker choosing from them.
+
+**Rule: no read here is bounded by a country.** One was — every municipality of one
+country, each with its chain, walked past the response cap — and it is deleted rather than
+left sitting available. Its callers were public pages that turned a set bounded by Finland
+into a set bounded by the clubs running in it; they start from the clubs now and ask the
+keyed read for exactly the municipalities those resolve to. A surface reaching for a whole
+country wants one of three things it already has a shape for: the keyed read when it holds
+ids, the search index when it holds a needle, a browse level when it holds a parent. If it
+genuinely wants every row of a country on one screen, the screen is the thing to question
+first.
 
 **Paged reads here follow the shared discipline documented in `src/lib/supabase/`** —
 which reads must walk, the exact-count requirement (enforced by the primitive itself), the
@@ -686,22 +726,25 @@ browsing come back identical.
 
 ### Rows with their chains
 
-The municipality list and the keyed reads embed the ancestor chain via the FK on `parent_id` (the per-municipality venue list needs no chain — its rows all share the parent the caller asked for) and flatten it
+The keyed reads embed the ancestor chain via the FK on `parent_id` — the per-municipality
+venue list needs no chain, since its rows all share the parent the caller asked for, and a
+browse level is that same shape — and flatten it
 to a row plus `ancestors`, **nearest first**. Nearest-first is the point: `ancestors[0]` is
 the level immediately above whatever the country, which France's extra `district` level
 would otherwise make position-dependent. Reverse it for a root-first breadcrumb. The
 search RPC returns the same shape, so a place found by searching and a place found by
 browsing are one thing to every consumer.
 
-Two embed depths exist because they answer different questions. The **keyed** read asks
-for four levels, the deepest chain any supported country has (commune → département →
-région → country), because a key set is whatever a caller stored and a stored pick can be
-a site — the deepest row in the tree. The **municipality list** read asks for three, which
-is all a municipality has. Each embedded level is an indexed lookup per row and that list
-query runs over ~34,900 rows for France, so it asks for the depth it needs and no more. The
-depths are spelled out as literal select strings rather than built at runtime — the client
-infers the response shape from the literal, and a computed string collapses it to
-`string`.
+**One embed depth, and it is the deepest chain any supported country has** — four levels
+(commune → département → région → country) — because a key set is whatever a caller stored
+and a stored pick can be a `site`, the deepest row in the tree. A shallower three-level
+variant lived beside it while a read returned a whole country's municipalities: each
+embedded level is an indexed lookup per row, and over ~34,900 French rows the level a
+municipality cannot have was worth not asking for. It went with that read, and a second
+depth reappearing is worth reading as a signal that a country-shaped read is reappearing
+with it. The depth is spelled out as a literal select string rather than built at runtime —
+the client infers the response shape from the literal, and a computed string collapses it
+to `string`.
 
 **Rule: the parent embed is written in the `parent:parent_id(…)` column-name form.** The
 `locations!parent_id` form looks equivalent and resolves to the *children* instead,
@@ -779,14 +822,17 @@ kunta faster than a scroll through a grouped list of all of them, and the same i
 covers the ~34,900 communes the list could never hold. What the set scope cost while it
 lived is the shape of the argument: a whole branch of the panel, a grouping module, a flat
 read of every venue there was, and a second in-memory fold that had to be pinned to the
-database's by a shared fixture. All of it is deleted — the fold included, so the database
-is now the only thing in the system that knows how a place name folds.
+database's by a shared fixture. All of it is deleted, that panel's fold included. What does
+*not* follow is that nothing outside the database folds a name: one public page still
+narrows a small set it was handed, against slugs it computed itself — see the fold rule
+under Search for where that line falls and what keeps it honest.
 
 **Rule: a collection can be worth reading whole and still not be worth a picker.** A
-municipality's venues, and the public municipality directory, are both read in full and
-rendered in full — that is a page showing its content, not a control choosing from it. If
-a picker ever needs a set-shaped panel again, the way back is to build it against that
-caller rather than to keep an unused one warm.
+municipality's venues are read in full and rendered in full — that is a page showing its
+content, not a control choosing from it. (The public municipality directory used to be the
+second example here and is no longer read that way at all: it reads only the municipalities
+its clubs point at.) If a picker ever needs a set-shaped panel again, the way back is to
+build it against that caller rather than to keep an unused one warm.
 
 The panel is presentational and fixture-driven in the `/admin/ui-components` style guide:
 it holds no business logic, so data and handlers are injected.
@@ -1007,8 +1053,8 @@ country alongside the accepted levels rather than as a second function.
 
 **Every read in this feature is a small indexed lookup, so none of them gets a loading
 affordance.** One level of children by `parent_id`, a capped top-N from the search index,
-one municipality's venues, one row by primary key, one country's municipalities for a
-directory page — each lands in a frame or two. Every box has its final height from the
+one municipality's venues, one row by primary key, a page's own club-bearing
+municipalities by key — each lands in a frame or two. Every box has its final height from the
 first frame and fills in: no skeleton, no spinner and no delay anywhere here. The chosen-
 place card is the shape to copy: the stored id is known synchronously, so the card and its
 "change" affordance are on screen and usable from the first frame while the name and the
@@ -1023,6 +1069,22 @@ note explaining that a municipality club has no physical venue is written to dep
 in exchange it is on screen from the first frame at its final height. Interpolating the
 municipality's name into it would have been nicer to read and would have made the card's
 height a function of a network response, with the rest of the form underneath it.
+
+**One surface decides what *not* to render while a read of this feature flies, and it looks
+like a violation of the rule above without being one.** The public municipality directory's
+search box answers instantly from the entries it already holds and asks the index in
+parallel for everything outside them. The index arm is a capped top-N, so it gets no
+spinner, no skeleton and no delay — but while it is in flight and the instant arm has
+matched nothing, the results area renders **nothing at all, the empty state included**.
+Saying "no municipality matches this" and then contradicting it a round trip later is a
+claim the page cannot yet make; a blank frame or two against a cached, indexed route is
+not. Two scopes keep that from becoming dead air: input too short for the index has no
+request coming and shows the empty state immediately, and a debounce still catching up
+counts as pending — gate on the query state alone and the empty state flashes mid-typing
+and is contradicted anyway. Nothing here reserves a height for the arm that may not
+arrive: results changing in response to typing is user-initiated, so the reflow is
+permitted, and a slot held open for hits that never come is the dead-space defect the
+layout rule itself names. What is forbidden is only the contradicted claim.
 
 The root `CLAUDE.md` states the general rule all of this is an instance of; a skeleton
 reappearing in this directory means a read has changed shape, and that is the thing to
@@ -1120,7 +1182,11 @@ municipality names are 1:1 with their slugs, and slug resolution accepts every a
 after the canonical ones — first match wins, so a collision introduced by an exonym would
 be *silent*, one municipality's page answering for another's link. A DB test re-checks
 uniqueness across canonical names plus every ingested alternate, and it is the check to
-re-run whenever a locale is added to a country's `alternateLocales`.
+re-run whenever a locale is added to a country's `alternateLocales`. The set a URL is
+resolved against is now the club-bearing municipalities rather than the whole country,
+which narrows the collision surface without removing it and is not a reason to relax the
+check — clubs open where they open, and a pair that collides is a pair that will collide
+the day both have one.
 
 **Search and slugs follow the same data.** Every alternate is folded into the search
 index alongside the canonical name, so "Helsingfors" and "Helsinki" both find the row
@@ -1198,8 +1264,16 @@ municipality shows both modes by default and offers online/in-person as its own 
 the two dimensions never collapse into each other.
 
 Product queries embed a product's location plus one level of parent, which is exactly the
-depth those two shapes need. Surfaces that group clubs by municipality read that embed and
-never touch the locations table.
+depth those two shapes need. A surface that names, filters or scopes clubs by municipality
+reads that embed and touches the locations table not at all — the municipality node it
+resolves to carries the id and the names, which is everything such a page renders.
+
+**What the embed cannot answer is the region above the municipality**, because the chain
+stops at the municipality for an in-person club. A surface that *groups by region* therefore
+makes exactly one locations read: the resolved municipality ids, by key, with their chains.
+That read is bounded by the clubs the page already holds, which is the shape any future
+club-scoped geography read should take — resolve first, then key, never scan a country and
+narrow.
 
 ## Gedu coverage
 
