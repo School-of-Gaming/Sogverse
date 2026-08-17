@@ -86,9 +86,21 @@ municipality, today hidden from `/schools` and 404ing at its own URL, will now a
 **This is accepted.** The club is real and already visible in `/shop`, so hiding it means a
 family cannot find a club they may be enrolled in; retirement only happens through rare
 reconciliation migrations. Do **not** reintroduce a filtered whole-country read to restore
-the old behaviour. Non-Finnish and non-municipality rows are a different matter and *are*
-still excluded — filter the keyed read's results on type and country in memory, which needs
-no forbidden column.
+the old behaviour. Non-Finnish and non-municipality rows are a different matter, and the two
+routes can no longer treat them identically:
+
+- **On `/schools`**, both are still excluded — the keyed read returns rows carrying `type`
+  and `country_code`, so filter its results in memory, which needs no forbidden column.
+- **On `/schools/[municipalityName]`, the country cannot be checked at all**, because the
+  product's embedded location carries only id, name, name alternates and type. Type is
+  handled by the resolver; country has nothing to check against. So a club anchored to a
+  non-Finnish municipality would render at its own URL while remaining absent from
+  `/schools`. **This is accepted, for the same reason as the retired case and one of its
+  own:** on a detail route the club's existence is the authority — if a club is running
+  there, its page should render — and the country check was an incidental property of the
+  old whole-country read rather than a rule anyone stated. The picker only ever offers
+  Finnish municipalities, so this is reachable today only through legacy rows the database
+  trigger still permits.
 
 ### 2. Hybrid search on `/schools`
 
@@ -103,9 +115,15 @@ still wants all 308 rows. That feature is therefore the whole remaining problem.
   long tail (a real municipality where we run no clubs). Flag each such hit "nothing here
   yet" by testing its id against the club-bearing id set the page already holds.
 
-This keeps the instant path for every query that succeeds, pays a network round trip only
-on queries that were going to end in disappointment, and removes the duplicated
-name-folding implementation from the main path (see Constraints).
+This keeps the instant path for every query that succeeds and pays a network round trip
+only on queries that were going to end in disappointment.
+
+**It does not remove the TypeScript fold, and nothing in this plan should claim it does.**
+The local arm still folds the query to match pre-computed slugs, so a second
+implementation of the matching rule survives — it is merely confined to the small
+club-bearing set instead of ranging over the whole country. What the hybrid buys is that
+the *long tail* is answered by the database's own index rather than by that fold. See the
+Constraints entry before rewriting any documentation about it.
 
 ## Rejected alternatives
 
@@ -171,6 +189,11 @@ Each of these was considered and turned down **after** measurement. Do not rebui
   immediately, then replace it with fallback hits) resizes the results container on data's
   own schedule, which the layout rule forbids. Only the very first fallback query is blank
   in practice, because the search hook keeps previous results as placeholder data.
+  **Withhold the empty state only while a fallback is actually pending.** The local arm has
+  no minimum length but the fallback is gated at two characters, so a one-character query
+  with no local match has no request in flight and nothing to wait for — it must show the
+  empty state immediately, exactly as today. Withholding it there would leave the results
+  area permanently blank.
 - **Layout stability:** search results changing in response to typing is user-initiated
   and therefore permitted, but the results container must not resize the page around it
   as the two arms swap.
@@ -228,9 +251,15 @@ Each of these was considered and turned down **after** measurement. Do not rebui
    larger than one method: it also removes its unit tests, its entry in the reads
    column-discipline registry, and two DB tests. **One of those DB tests is the only
    coverage anywhere that walks past PostgREST's 1000-row response cap** — the sole proof
-   that the paged walk terminates correctly on a large read. Re-home that case onto another
-   walked read rather than losing it. The paging primitive itself stays; other services use
-   it. Separately, there is a second, already-dead slug-resolution helper (the one taking
+   that the paged walk terminates correctly on a large read against a real PostgREST. It
+   cannot simply be moved: France's ~34,900 communes are the only over-cap dataset in CI,
+   and this is the only walked read that touches them — every other walked read runs over
+   fixture-sized data. **So write a small DB test that seeds its own >1000 rows and walks
+   them.** That keeps the guarantee without keeping a production read alive purely to be
+   tested. (The unit test over a fake transport already covers the walk's logic; what needs
+   preserving is the proof that PostgREST truncates the way the walk assumes, which other
+   walked reads will rely on as their tables grow.) The paging primitive itself stays;
+   other services use it. Separately, there is a second, already-dead slug-resolution helper (the one taking
    raw location rows, referenced by nothing but its own test) — delete that too while here.
 5. **Rewrite `src/services/locations/CLAUDE.md`.** This is the doc the work invalidates and
    it is a larger change than the code: it asserts the whole-country municipality read as
@@ -255,10 +284,11 @@ Each of these was considered and turned down **after** measurement. Do not rebui
   "no clubs here" state; searching a postcode that reaches a club-bearing municipality
   renders it as a working link.
 - The `/schools` RSC payload is bounded by the club count, not by Finland.
+- A one-character query with no local match still shows the empty state immediately.
 - The long-tail search arm folds nothing itself — it asks the index. (The slug helper
-  stays; it builds URLs. See Constraints.)
-- The max-rows paged-walk DB coverage still exists somewhere, having been re-homed rather
-  than deleted with the read that used to carry it.
+  stays; it builds URLs, and the local arm still folds the query. See Constraints.)
+- A DB test still proves the paged walk terminates correctly against a real PostgREST on an
+  over-cap read, seeding its own rows rather than depending on France's communes.
 - Lint, type-check, unit and integration suites, and the translations check all pass. The
   pure entry-building and slug-resolution helpers keep their existing unit coverage.
 
