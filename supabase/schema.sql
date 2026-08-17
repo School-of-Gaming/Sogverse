@@ -170,7 +170,8 @@ CREATE TYPE public.product_topic AS ENUM (
     'creator_studio',
     'programming',
     'ai',
-    'esports'
+    'esports',
+    'game_studio'
 );
 
 
