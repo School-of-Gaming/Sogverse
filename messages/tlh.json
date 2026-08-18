@@ -148,10 +148,6 @@
       "paragraph1": "vav/SoS toy’a’ ghojmoHghach nIvbe’ — ghom’a’mey rur. maH vav/SoSmey HoS boq wImuS — batlh puq toy’a’ghach bIghoH.",
       "paragraph2": "SoH QaD — ngoQmey, qo’mey, je Huch — puq batlh Daq Gedu’pu’ QaQ DaH ghoH."
     },
-    "cta": {
-      "heading": "DIvI’ yImuv",
-      "subheading": "SoHvaD puq QaQ Daq toy’a’, ghojmoH, je jupwI’ Suq — Gedu’ tIqqu’ tI’ang."
-    },
     "easterEgg": {
       "heading": "You found the Klingon translation!",
       "intro": "This interface has been translated into tlhIngan Hol as a tribute to Star Trek and its fans. Here are some of our favourite translations:",
@@ -870,9 +866,6 @@
       }
     },
     "locations": {
-      "title": "Dapmey",
-      "description": "volchanmey, veng, je Dapmey tI’ang",
-      "searchPlaceholder": "Dapmey yInej...",
       "editName": "{name} yIchoH",
       "addChildUnder": "{type} {parent}Daq yIchel",
       "location": "Dap",
@@ -881,16 +874,7 @@
       "enterTypeName": "{type} pong yIchel",
       "enterName": "pong yIchel",
       "adding": "vIchel...",
-      "addType": "{type} yIchel",
-      "noLocationsYet": "Dapmey tu’be’lu’. volchan yIchel.",
-      "noLocationsMatchSearch": "Dapmey DanejboHpu’ tu’be’lu’."
-    },
-    "productLocation": {
-      "locationLabel": "Daq",
-      "remote": "Hop",
-      "inPerson": "Sum",
-      "selectLevel": "{type} yIwIv...",
-      "selectSiteHint": "Daq motlh yIwIv."
+      "addType": "{type} yIchel"
     },
     "testing": {
       "title": "Qu’ nI’moH",
@@ -929,89 +913,6 @@
       "notDelivered": "ngeHbe’lu’",
       "today": "DaHjaj",
       "yesterday": "wa’leS"
-    },
-    "groups": {
-      "pendingChanges": "{count, plural, one {# choH vImev} other {# choHmey vImev}}",
-      "discard": "yIHoH",
-      "commitChanges": "choHmey yISaH",
-      "confirmGroupChanges": "ghom’a’ choHmey yIchel",
-      "changesWillBeApplied": "choHmey bIH ghoS:",
-      "saving": "vISaH...",
-      "applyingChanges": "choHmey vIchel",
-      "errorOccurred": "Qagh wanI’ ’oH.",
-      "allChangesApplied": "Hoch choHmey chellu’. Qapla’!",
-      "savingAndNotifying": "choHmey vISaH je QInmey vIngeH...",
-      "working": "vIvum...",
-      "serverError": "Server Qagh ({status})",
-      "noResponseStream": "Server vo’ jang tu’be’lu’",
-      "failedToSaveChanges": "choHmey Sah Dabe’lu’",
-      "operationFailed": "Qu’ Dabe’lu’",
-      "networkError": "network Qagh",
-      "geduGroups": "Gedu ghom’a’mey",
-      "addGroup": "ghom’a’ yIchel",
-      "noGroups": "Gedu ghom’a’mey tu’be’lu’. Gedu Suq.",
-      "selectGeduForGroup": "Gedu yIwIv — ghom’a’ chu’ yIchenmoH.",
-      "group": "ghom’a’",
-      "groupNumber": "ghom’a’ {number}",
-      "groupDeleted": "{label} (HoHlu’)",
-      "gamerCount": "{count, plural, one {# toy’wI’} other {# toy’wI’pu’}}",
-      "genderBoy": "loD",
-      "genderGirl": "be’",
-      "genderNonBinary": "latlh",
-      "boyCount": "{count, plural, one {# loD} other {# loDpu’}}",
-      "girlCount": "{count, plural, one {# be’} other {# be’pu’}}",
-      "nonBinaryCount": "{count, plural, one {# latlh} other {# latlhmey}}",
-      "ageRangeLabel": "DIS tIq {range}",
-      "reassignGedu": "Gedu yIchoH",
-      "moveGamersFirst": "toy’wI’pu’ Hoch yIteq wa’DIch",
-      "deleteGroup": "ghom’a’ yIHoH",
-      "markedForDeletion": "HoH DelmoHlu’",
-      "noGamersEnrolled": "toy’wI’pu’ tu’be’lu’. naDev yIbej.",
-      "new": "chu’",
-      "deleteGroupConfirmTitle": "{label} DaHoH’a’?",
-      "deleteGroupConfirmDescription": "ghom’a’ je Gedu Qu’ teqlu’. choH naSlu’pa’ DaSaHbe’.",
-      "reassignGeduFor": "{label} Gedu yIchoH",
-      "selectDifferentGedu": "ghom’a’vam Gedu chu’ yIwIv.",
-      "searchByNameOrEmail": "pong qoj QIn yInej…",
-      "noGedusMatchSearch": "Gedu’pu’ DanejboHpu’ tu’be’lu’."
-    },
-    "forms": {
-      "nameLabel": "pong",
-      "namePlaceholder": "De’ pong",
-      "descriptionLabel": "Del",
-      "descriptionPlaceholder": "De’vam yIDel",
-      "approxPerSession": "≈ {amount} wa’ poHDaq",
-      "imageLabel": "mIl’oD",
-      "preview": "yIlegh",
-      "imagePickerHint": "naDev mIl’oD yI’el, pagh De’ yIwIv",
-      "imageChooseFile": "De’ yIwIv",
-      "imageRemove": "yItlhap",
-      "imageRequired": "mIl’oD poQlu’",
-      "gameLabel": "toy’a’",
-      "newGameName": "toy’a’ pong chu’",
-      "addButton": "yIchel",
-      "selectGame": "toy’a’ yIwIv...",
-      "addNewGame": "toy’a’ chu’ yIchel",
-      "dayOfWeekLabel": "jaj",
-      "startTimeLabel": "taH tup",
-      "startTimeHint": "Finland tup yIchel (Europe/Helsinki). vav/SoSmey chaH Daq tup legh.",
-      "durationLabel": "poH (tupmey)",
-      "minAgeLabel": "DIS mach",
-      "maxAgeLabel": "DIS tIn",
-      "nameRequired": "De’ pong nIS",
-      "nameMaxLength": "De’ pong 100 mu’mey law’ Hutlh nIS",
-      "descriptionRequired": "Del nIS",
-      "validUrl": "URL nIvbe’ nIS",
-      "gameRequired": "toy’a’ nIS",
-      "validTime": "tup nIvbe’ nIS",
-      "durationMin": "poH 1 tup law’ nIS",
-      "minAgeMin": "DIS mach 0 law’ nIS",
-      "maxAgeMin": "DIS tIn 0 law’ nIS",
-      "maxAgeGte": "DIS tIn DIS mach law’ nIS",
-      "failedToCreateGame": "toy’a’ chenmoH Dabe’lu’",
-      "spokenLanguageLabel": "ghojmoqtaH Hol",
-      "spokenLanguageRequired": "ghojmoqtaH Hol yIwIv",
-      "locationRequired": "Daq yIwIv, pagh Hop ’oH yIghItlh"
     }
   },
   "auth": {
@@ -1119,10 +1020,6 @@
       "successDescription": "vav PIN choHlu’.",
       "backToSettings": "DuHmeyDaq yIchegh"
     }
-  },
-  "checkout": {
-    "redirecting": "checkout ghoS...",
-    "error": "checkout Dabe’lu’. <link>peghegh</link> je boq."
   },
   "purchaseConfirmation": {
     "heading": "Qapla’! Doch Dalajpu’!",
@@ -1286,7 +1183,6 @@
     "billing": "Huch DIl",
     "help": "boQ",
     "yty": "Yty",
-    "settings": "tlhInganpu’ chu’",
     "tools": "janmey",
     "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
   },
@@ -1381,8 +1277,7 @@
       "chooseAreas": "Daqmey yIwIv",
       "loading": "Daqmey Huqtaw...",
       "save": "yIpol",
-      "saving": "polchoH...",
-      "saveError": "pol Qapbe’"
+      "saving": "polchoH..."
     },
     "sessionDetails": {
       "back": "jIH SOGDaq yIchegh",
@@ -1497,29 +1392,9 @@
     "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}"
   },
   "groups": {
-    "title": "ghom’a’mey",
-    "backToGroups": "ghom’a’mey yIchegh",
-    "groupNotFound": "ghom’a’ tu’be’lu’.",
-    "live": "HaqwI’",
-    "gamerCount": "{count, plural, one {# toy’wI’} other {# toy’wI’pu’}}",
-    "noGamersEnrolled": "toy’wI’pu’ tu’be’lu’.",
-    "age": "DIS {age}",
-    "unenrollGamer": "{name} yIqoHHa’moH",
-    "noGroupsYet": "ghom’a’mey tu’be’lu’",
-    "nextSession": "pIq: {date}",
-    "startsIn": "(SoQ {countdown}Daq)",
-    "sessionInProgress": "poH ghoStaH",
-    "everyDay": "reH {day}",
-    "join": "yImuv",
-    "alwaysOpen": "reH SoQbe’",
     "material": "ghojmeH De’",
     "materialAction": "ghojmeH De’",
-    "materialStaffOnly": "Gedupu’ neH — ngaqvam luleghbe’ not qorDu’",
-    "myGroupsHeading": "jIH ghom’a’mey",
-    "myGroupsSubheading": "SoH ghom’a’mey je pIq jatlh poHmey.",
-    "myGroupsEmpty": "DaH ghom’a’mey tu’be’lu’.",
-    "currentGedu": "DaH",
-    "assignedGedu": "ngeHlu’"
+    "materialStaffOnly": "Gedupu’ neH — ngaqvam luleghbe’ not qorDu’"
   },
   "richText": {
     "bold": "ngutlh tIn",
@@ -1739,7 +1614,6 @@
       "audience": "ghotpu’",
       "language": "Hol",
       "online": "QumDaq",
-      "atVenue": "{venue}Daq",
       "tbd": "Sov pagh"
     },
     "calendar": {
@@ -1825,7 +1699,6 @@
       }
     },
     "pricing": {
-      "title": "Huch",
       "subscriptionHint": "jar Hoch Huch lo’ · DaH yIqIl ’e’ DaneHchugh, yIqIl.",
       "free": "Huch pagh",
       "freeHint": "Huch poQbe’.",
@@ -1842,25 +1715,10 @@
       "minutes": "tup",
       "seconds": "lup"
     },
-    "loading": "loS...",
     "notFound": {
       "title": "tu’be’lu’",
       "description": "luchHa’lu’pu’ joq link motlhHa’. bIH tu’lu’bogh yIleng.",
       "cta": "leng yIchegh"
-    },
-    "geduGroups": {
-      "heading": "ghomHommey",
-      "yourGroupBadge": "ghomHomlIj",
-      "educatorsLabel": "ghojmoHwI’pu’",
-      "noEducators": "ghojmoHwI’ tu’lu’be’.",
-      "gamersLabel": "QujwI’pu’",
-      "gamerCount": "{count, plural, =0 {pagh QujwI’} one {# QujwI’} other {# QujwI’pu’}}",
-      "emptyNoGamers": "ghomHomvamDaq QujwI’ tu’lu’be’.",
-      "emptyNoGroups": "ngoptaHvaD ghomHom chenmoHlu’be’.",
-      "age": "ben {age}",
-      "genderBoy": "loDHom",
-      "genderGirl": "be’Hom",
-      "genderNonBinary": "Hutlh’a’"
     }
   },
   "sidebar": {
@@ -1870,7 +1728,6 @@
     "municipalityClubs": "ghomHom veng",
     "camps": "pa’ Qugh",
     "events": "Qu’mey",
-    "locations": "Dapmey",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",
     "whatsapp": "WhatsApp",
@@ -1969,9 +1826,6 @@
     "saveFailed": "{platform} lo’wI’ pong choH Dabe’lu’."
   },
   "parent": {
-    "placeholders": {
-      "myGamersHint": "QunwI’Daj qelmeH toy’wI’ yIwIv."
-    },
     "waitlist": {
       "footerReassuranceCustomer": "tlheghDaq {position}DIch SoH — quS poSDI’, QInHom wIngeH.",
       "footerReassuranceGamer": "tlheghDaq {position}DIch SoH — quS poSDI’, SoSlI’ vavlI’ je wIja’.",
@@ -2142,7 +1996,6 @@
     "sharerScreen": "{name} Daq leghlu’",
     "stopSharing": "yImev",
     "voiceRoom": "jatlh Daq",
-    "spatialDescription": "SoH mIl’oD yIqet — Daq yIwIv. wa’ Daq toy’wI’pu’ tlhIH jatlh.",
     "leave": "yIvoQ",
     "failedToJoinRoom": "Daq muv Dabe’lu’",
     "sessionEnded": "poH mevlu’",
@@ -2163,7 +2016,6 @@
     "joinZone": "{zone} yIghoS",
     "zonesDescription": "Daq DaghoSmeH yI’uy pagh DaqDaq SoH yIluH. Daqlijdaq Hoch Daqoy.",
     "privateZone": "pegh",
-    "privateZoneHint": "pegh Daq ’ej Hung Daq ’oH.",
     "newZone": "Daq chu’",
     "editZone": "Daq yIchoH",
     "createZone": "Daq yIchenmoH",
@@ -2354,10 +2206,6 @@
       "paragraph1": "Yty HSDu’mey muv vo’ Suq. Hoch Hogh ghom’a’ poH muv, Qu’mey tIvmoH, jupwI’ batlh, DIvI’ wanI’ je qo’ — Hoch toy’wI’ Yty boq.",
       "paragraph2": "HSDu’mey Hoch Duj chen — ghom’a’, Qav, je Qajma’. Hoch HSDu’ Yty jer je Duj boq.",
       "paragraph3": "toy’wI’pu’ neH Dabe’. Gedu’pu’, vav/SoSmey, je Hoch DIvI’ Sogverse Yty boq — wanI’ je Qu’ Hoch."
-    },
-    "cta": {
-      "heading": "qo’ yIqet",
-      "subheading": "Sogverse yImuv — Yty yISuq. Hoch poH, Hoch jupwI’, Hoch batlh — qo’ choH."
     }
   },
   "email": {

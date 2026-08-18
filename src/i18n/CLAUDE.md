@@ -39,6 +39,16 @@ Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `f
 
 A CI script (under `scripts/`) validates translation completeness on every push — missing keys, empty values, and stale keys. It picks up new locale files automatically.
 
+## Dead copy: the orphan check
+
+A second CI script finds keys **nothing can reach** and fails the build until they are deleted. It exists because the compiler already guards the opposite direction — a key that is *used but missing* fails `type-check`, including one composed at a call site (`` t(`startModes.${option}`) ``), because next-intl types a translator's key parameter as the union of its namespace — so the only way a catalog rots is by keeping copy nobody reads. Roughly a hundred keys had built up before anything looked, every one left behind by a removal that swept its code and not its copy.
+
+**It is deliberately asymmetric: what it reports is certainly dead, but it does not claim to find everything.** It gates CI, so a false positive would delete live copy and break a page in production, while a false negative just leaves a key for the next sweep. Every ambiguous case therefore resolves by keeping the key, and anything it cannot account for fails the run rather than quietly shrinking what it checked. Three things make it keep a whole namespace: `t.raw()` (typed `string`, so the compiler validates nothing — this is how the legal pages read their bodies), a namespace assembled at runtime, and a translator **passed to another function**, where the receiver names keys the analysis cannot follow back.
+
+The consequence worth knowing when you write code: **passing `t` to a helper costs that whole namespace its coverage.** That is not a reason to stop — the pattern is fine and used — just the reason a key inside such a namespace will never be reported.
+
+Two limits are real. Keys reached from outside type-checked source (a `.mjs` script, or a key stored in the database) are invisible to it; nothing does that today, and anything that starts to needs an entry in the script's `ALWAYS_KEEP` saying which consumer needs it. And `t.raw()` is the one place a *missing* key is not a build failure either — it fails at runtime instead, on the legal pages, which is why nothing there is ever reported as an orphan.
+
 ## Editing a message catalog
 
 **Rule: for any change touching more than a handful of keys, edit a catalog with a script that round-trips the file — not a hand merge.** Every `messages/*.json` round-trips byte-identically through `JSON.stringify(parsed, null, 2) + "\n"`, so a scripted set-by-path merge cannot reformat the file or reorder keys. Assert each target path already exists, so a mistyped key fails loudly instead of silently adding one the other locales don't have.

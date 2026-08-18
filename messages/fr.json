@@ -154,10 +154,6 @@
       "heading": "Pour les parents",
       "paragraph1": "Accompagner son enfant dans le jeu vidéo, ça s’apprend aussi. Le monde du gaming évolue vite, et personne ne peut tout suivre. On est là pour ça : vous tenir au courant, vous expliquer ce qui se passe, et faire en sorte que vous vous sentiez à l’aise avec ce que vit votre enfant.",
       "paragraph2": "Côté pratique, vous gardez la main sur tout : comptes, inscriptions, dépenses. Votre enfant joue dans un environnement sécurisé, encadré par des professionnels qui s’investissent vraiment."
-    },
-    "cta": {
-      "heading": "Rejoignez notre communauté",
-      "subheading": "Offrez à votre enfant un espace amusant et sécurisé pour jouer, apprendre et se faire de vrais amis, encadré par un animateur professionnel."
     }
   },
   "admin": {
@@ -822,9 +818,6 @@
       }
     },
     "locations": {
-      "title": "Lieux",
-      "description": "Gérer les pays, les villes et les sites",
-      "searchPlaceholder": "Rechercher des lieux...",
       "editName": "Modifier {name}",
       "addChildUnder": "Ajouter {type} sous {parent}",
       "location": "Lieu",
@@ -833,16 +826,7 @@
       "enterTypeName": "Saisissez le nom du {type}",
       "enterName": "Saisissez un nom",
       "adding": "Ajout...",
-      "addType": "Ajouter {type}",
-      "noLocationsYet": "Aucun lieu pour l’instant. Ajoutez un pays pour commencer.",
-      "noLocationsMatchSearch": "Aucun lieu ne correspond à votre recherche."
-    },
-    "productLocation": {
-      "locationLabel": "Lieu",
-      "remote": "À distance",
-      "inPerson": "En présentiel",
-      "selectLevel": "Sélectionner {type}...",
-      "selectSiteHint": "Descendez jusqu’à un site précis pour terminer."
+      "addType": "Ajouter {type}"
     },
     "testing": {
       "title": "Tests",
@@ -881,89 +865,6 @@
       "notDelivered": "Non remis",
       "today": "Aujourd’hui",
       "yesterday": "Hier"
-    },
-    "groups": {
-      "pendingChanges": "{count, plural, one {# modification en attente} other {# modifications en attente}}",
-      "discard": "Abandonner",
-      "commitChanges": "Valider les modifications",
-      "confirmGroupChanges": "Confirmer les modifications de groupes",
-      "changesWillBeApplied": "Les modifications suivantes seront appliquées :",
-      "saving": "Enregistrement...",
-      "applyingChanges": "Application des modifications",
-      "errorOccurred": "Une erreur s’est produite pendant l’opération.",
-      "allChangesApplied": "Toutes les modifications ont été appliquées avec succès.",
-      "savingAndNotifying": "Enregistrement des modifications et envoi des notifications...",
-      "working": "Traitement...",
-      "serverError": "Erreur serveur ({status})",
-      "noResponseStream": "Aucun flux de réponse du serveur",
-      "failedToSaveChanges": "Échec de l’enregistrement des modifications",
-      "operationFailed": "L’opération a échoué",
-      "networkError": "Erreur réseau",
-      "geduGroups": "Groupes de Gedus",
-      "addGroup": "Ajouter un groupe",
-      "noGroups": "Aucun groupe de Gedu pour l’instant. Ajoutez un groupe pour y affecter un Gedu.",
-      "selectGeduForGroup": "Sélectionnez un gedu pour créer un nouveau groupe.",
-      "group": "Groupe",
-      "groupNumber": "Groupe {number}",
-      "groupDeleted": "{label} (supprimé)",
-      "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
-      "genderBoy": "Garçon",
-      "genderGirl": "Fille",
-      "genderNonBinary": "Non binaire",
-      "boyCount": "{count, plural, one {# garçon} other {# garçons}}",
-      "girlCount": "{count, plural, one {# fille} other {# filles}}",
-      "nonBinaryCount": "{count, plural, one {# non binaire} other {# non binaires}}",
-      "ageRangeLabel": "tranche d’âge {range}",
-      "reassignGedu": "Réaffecter le gedu",
-      "moveGamersFirst": "Déplacez d’abord tous les joueurs",
-      "deleteGroup": "Supprimer le groupe",
-      "markedForDeletion": "Marqué pour suppression",
-      "noGamersEnrolled": "Aucun joueur inscrit. Faites glisser des joueurs ici.",
-      "new": "Nouveau",
-      "deleteGroupConfirmTitle": "Supprimer {label} ?",
-      "deleteGroupConfirmDescription": "Cela supprimera le groupe et l’affectation de son gedu. Cette modification ne prendra effet qu’après validation.",
-      "reassignGeduFor": "Réaffecter le Gedu de {label}",
-      "selectDifferentGedu": "Sélectionnez un autre gedu pour ce groupe.",
-      "searchByNameOrEmail": "Rechercher par nom ou e-mail…",
-      "noGedusMatchSearch": "Aucun gedu ne correspond à votre recherche."
-    },
-    "forms": {
-      "nameLabel": "Nom",
-      "namePlaceholder": "Nom du produit",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Décrivez votre produit",
-      "approxPerSession": "≈ {amount} par session",
-      "imageLabel": "Image",
-      "preview": "Aperçu",
-      "imagePickerHint": "Faites glisser une image ici, ou choisissez un fichier",
-      "imageChooseFile": "Choisir un fichier",
-      "imageRemove": "Retirer",
-      "imageRequired": "L’image du produit est obligatoire",
-      "gameLabel": "Jeu",
-      "newGameName": "Nom du nouveau jeu",
-      "addButton": "Ajouter",
-      "selectGame": "Sélectionnez un jeu...",
-      "addNewGame": "Ajouter un nouveau jeu",
-      "dayOfWeekLabel": "Jour de la semaine",
-      "startTimeLabel": "Heure de début",
-      "startTimeHint": "Saisissez l’heure en heure finlandaise (Europe/Helsinki). Les parents la verront dans leur fuseau horaire.",
-      "durationLabel": "Durée (minutes)",
-      "minAgeLabel": "Âge minimum",
-      "maxAgeLabel": "Âge maximum",
-      "nameRequired": "Le nom du produit est obligatoire",
-      "nameMaxLength": "Le nom du produit ne doit pas dépasser 100 caractères",
-      "descriptionRequired": "La description est obligatoire",
-      "validUrl": "Doit être une URL valide",
-      "gameRequired": "Le jeu est obligatoire",
-      "validTime": "Doit être une heure valide",
-      "durationMin": "La durée doit être d’au moins 1 minute",
-      "minAgeMin": "L’âge minimum doit être supérieur ou égal à 0",
-      "maxAgeMin": "L’âge maximum doit être supérieur ou égal à 0",
-      "maxAgeGte": "L’âge maximum doit être supérieur ou égal à l’âge minimum",
-      "failedToCreateGame": "Échec de la création du jeu",
-      "spokenLanguageLabel": "Langue d’animation",
-      "spokenLanguageRequired": "Veuillez choisir la langue dans laquelle le club est animé",
-      "locationRequired": "Veuillez choisir un lieu ou indiquer que le club se déroule à distance"
     }
   },
   "auth": {
@@ -1071,10 +972,6 @@
       "successDescription": "Votre code PIN parent a bien été modifié.",
       "backToSettings": "Retour aux paramètres"
     }
-  },
-  "checkout": {
-    "redirecting": "Redirection vers le paiement...",
-    "error": "Un problème est survenu au lancement du paiement. Veuillez <link>revenir en arrière</link> et réessayer."
   },
   "purchaseConfirmation": {
     "heading": "C’est tout bon !",
@@ -1238,7 +1135,6 @@
     "billing": "Facturation",
     "help": "Aide",
     "yty": "Yty",
-    "settings": "Paramètres",
     "tools": "Outils",
     "loadingAssignments": "Chargement de vos clubs, stages et événements."
   },
@@ -1337,8 +1233,7 @@
       "chooseAreas": "Choisir des zones",
       "loading": "Chargement des lieux...",
       "save": "Enregistrer",
-      "saving": "Enregistrement...",
-      "saveError": "Échec de l’enregistrement des zones d’intervention"
+      "saving": "Enregistrement..."
     },
     "sessionDetails": {
       "back": "Retour à Mon SOG",
@@ -1453,29 +1348,9 @@
     "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}"
   },
   "groups": {
-    "title": "Groupes",
-    "backToGroups": "Retour aux groupes",
-    "groupNotFound": "Groupe introuvable.",
-    "live": "En direct",
-    "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
-    "noGamersEnrolled": "Aucun joueur inscrit pour l’instant.",
-    "age": "{age} ans",
-    "unenrollGamer": "Désinscrire {name}",
-    "noGroupsYet": "Pas encore de groupe",
-    "nextSession": "Prochaine : {date}",
-    "startsIn": "(commence dans {countdown})",
-    "sessionInProgress": "Session en cours",
-    "everyDay": "Chaque {day}",
-    "join": "Rejoindre",
-    "alwaysOpen": "Toujours ouvert",
     "material": "Supports",
     "materialAction": "Supports pédagogiques",
-    "materialStaffOnly": "Gedus uniquement — les familles ne voient jamais ce lien",
-    "myGroupsHeading": "Mes groupes",
-    "myGroupsSubheading": "Vos groupes d’inscription et vos prochaines sessions vocales.",
-    "myGroupsEmpty": "Vous n’êtes encore inscrit dans aucun groupe.",
-    "currentGedu": "Actuel",
-    "assignedGedu": "Affecté"
+    "materialStaffOnly": "Gedus uniquement — les familles ne voient jamais ce lien"
   },
   "richText": {
     "bold": "Gras",
@@ -1695,7 +1570,6 @@
       "audience": "Public",
       "language": "Langue",
       "online": "En ligne",
-      "atVenue": "À {venue}",
       "tbd": "À confirmer"
     },
     "calendar": {
@@ -1781,7 +1655,6 @@
       }
     },
     "pricing": {
-      "title": "Tarifs",
       "subscriptionHint": "Facturé mensuellement · résiliable à tout moment.",
       "free": "Gratuit",
       "freeHint": "Aucun paiement nécessaire.",
@@ -1798,25 +1671,10 @@
       "minutes": "min",
       "seconds": "s"
     },
-    "loading": "Chargement…",
     "notFound": {
       "title": "On n’a pas trouvé ça",
       "description": "Elle a peut-être été supprimée ou le lien est erroné. Parcourez l’offre disponible ci-dessous.",
       "cta": "Retour au catalogue"
-    },
-    "geduGroups": {
-      "heading": "Groupes",
-      "yourGroupBadge": "Votre groupe",
-      "educatorsLabel": "Animateurs",
-      "noEducators": "Aucun animateur affecté pour l’instant.",
-      "gamersLabel": "Joueurs",
-      "gamerCount": "{count, plural, =0 {0 joueur} one {# joueur} other {# joueurs}}",
-      "emptyNoGamers": "Aucun joueur dans ce groupe pour l’instant.",
-      "emptyNoGroups": "Aucun groupe n’a encore été créé pour ce produit.",
-      "age": "{age} ans",
-      "genderBoy": "Garçon",
-      "genderGirl": "Fille",
-      "genderNonBinary": "Non binaire"
     }
   },
   "sidebar": {
@@ -1826,7 +1684,6 @@
     "municipalityClubs": "Clubs municipaux",
     "camps": "Stages",
     "events": "Événements",
-    "locations": "Lieux",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
     "whatsapp": "WhatsApp",
@@ -1925,9 +1782,6 @@
     "saveFailed": "Échec de la mise à jour du nom d’utilisateur {platform}."
   },
   "parent": {
-    "placeholders": {
-      "myGamersHint": "Sélectionnez un joueur pour gérer son compte."
-    },
     "waitlist": {
       "footerReassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
       "footerReassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
@@ -2098,7 +1952,6 @@
     "sharerScreen": "Écran de {name}",
     "stopSharing": "Arrêter le partage",
     "voiceRoom": "Salle vocale",
-    "spatialDescription": "Faites glisser votre avatar pour changer de zone. Les participants d’une même zone s’entendent entre eux.",
     "leave": "Quitter",
     "failedToJoinRoom": "Impossible de rejoindre la salle",
     "sessionEnded": "La session est terminée",
@@ -2119,7 +1972,6 @@
     "joinZone": "Rejoindre {zone}",
     "zonesDescription": "Touchez une zone ou faites-vous glisser dessus pour y entrer. Vous entendez tout le monde dans la même zone.",
     "privateZone": "Privée",
-    "privateZoneHint": "Cette zone est privée et sécurisée.",
     "newZone": "Nouvelle zone",
     "editZone": "Modifier la zone",
     "createZone": "Créer une zone",
@@ -2310,10 +2162,6 @@
       "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
       "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau global et l’élément auquel il correspond.",
       "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty du Sogverse à travers les événements et les activités partagées."
-    },
-    "cta": {
-      "heading": "Commencez votre aventure",
-      "subheading": "Rejoignez le Sogverse et commencez à gagner de l’Yty. Chaque session, chaque amitié, chaque geste de gentillesse fait la différence."
     }
   },
   "email": {
