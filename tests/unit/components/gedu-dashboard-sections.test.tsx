@@ -15,8 +15,8 @@ import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSe
  * or events exist. A gedu with *nothing* has no noun of their own, so the page
  * falls back to the default one: an empty dashboard is headed "Clubs" and
  * carries the same pill entry a populated one would, because an unheaded
- * paragraph floating above the voice room reads as a page that failed to render
- * rather than as a page with nothing in it yet.
+ * paragraph floating above the Tools section reads as a page that failed to
+ * render rather than as a page with nothing in it yet.
  *
  * Both halves are pinned here because they pull against each other: the obvious
  * way to give the empty page a heading is to stop dropping the empty nouns, and
@@ -86,7 +86,14 @@ describe("the gedu dashboard's empty state", () => {
 
   it("gives that section a pill entry, so the nav is not a single chip", () => {
     expect(html).toContain('href="#clubs"');
-    expect(html).toContain('href="#instant-voice-room"');
+    expect(html).toContain('href="#tools"');
+  });
+
+  it("names Tools once and last, with no section of its own for the room", () => {
+    expect(html).not.toContain('href="#instant-voice-room"');
+    expect(html.indexOf('href="#tools"')).toBeGreaterThan(
+      html.indexOf('href="#clubs"'),
+    );
   });
 
   it("invents no camps or events to sit empty beside it", () => {

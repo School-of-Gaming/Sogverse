@@ -1288,8 +1288,6 @@
     "yty": "Yty",
     "settings": "tlhInganpu’ chu’",
     "tools": "janmey",
-    "instantVoiceRoom": "tugh Daq",
-    "instantVoiceRoomShort": "QIch Daq",
     "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
   },
   "family": {
@@ -1878,7 +1876,6 @@
     "whatsapp": "WhatsApp",
     "testing": "Qu’ nI’moH",
     "settings": "ngoQmey",
-    "voice": "jatlh",
     "tools": "janmey",
     "expandSidebar": "HeDmey ’an",
     "collapseSidebar": "HeDmey SoQmoH"
@@ -2097,17 +2094,17 @@
   "tools": {
     "uncertified": {
       "title": "patlh DaloStaH",
-      "body": "janmeyvam Dalo’ ’e’ DapoQ pa’, Gedu patlhlIj nob qum. patlh Daghajchugh, naDev janmey tu’lu’!"
+      "body": "tugh Daq DachenmoH ’ej mu’ peghmey DachoH ’e’ DapoQ pa’, Gedu patlhlIj nob qum. patlh Daghajchugh, naDev cha’ janmey tu’lu’!"
     },
     "minecraftPasswordReset": {
       "title": "Minecraft Education mu’ peghmey",
       "description": "ghommey mu’ pegh chu’ yIchenmoH ’ej HaStaDaq yIlaD. mu’ pegh Sovbe’ jagh!",
-      "inputLabel": "pongmey",
-      "inputPlaceholder": "builder07, redstone12, creeper03",
-      "inputHint": "wa’ ghap law’ – pongmey yIchev.",
+      "inputLabel": "pongmey ghap Se’mey",
+      "inputPlaceholder": "builder07, redstone12@gamer.sog.gg, creeper03",
+      "inputHint": "wa’ ghap law’ – pongmey yIchev. pong mob luq, {domains} Se’ naQ je luq.",
       "submit": "{count, plural, =0 {mu’ peghmey yIchu’} one {wa’ mu’ pegh yIchu’} other {# mu’ peghmey yIchu’}}",
       "submitting": "chu’lu’…",
-      "emailEntries": "{count, plural, one {pong neH yIqon, Se’ naQ ghobe’: {entries}} other {pongmey neH yIqon, Se’mey naQ ghobe’: {entries}}}",
+      "unsupportedDomainEntries": "{count, plural, one {Minecraft Education Se’ ghobe’, vaj ngeHbe’lu’: {entries}. pong mob ghap {domains} Se’ yIlo’!} other {Minecraft Education Se’mey ghobe’, vaj ngeHbe’lu’: {entries}. pongmey mob ghap {domains} Se’mey yIlo’!}}",
       "tooMany": "{count} pongmey tu’lu’ – {max} puS yIchu’.",
       "requestFailed": "Qagh qaS. yInID!",
       "resultsHeading": "mu’ peghmey chu’",
@@ -2116,7 +2113,8 @@
       "copyPasswordFor": "{upn} mu’ pegh chu’ yIvel",
       "mustChangeOnFirstSignIn": "wa’DIch bImuvDI’ yIchu’",
       "errors": {
-        "invalidUsername": "pong qab. pong neH yIqon, juH pong ghobe’.",
+        "invalidUsername": "pong qab. pong mob ghap Minecraft Education Se’ naQ yIqon.",
+        "unsupportedDomain": "{domains} De’wI’mey neH DachoHlaH.",
         "notFound": "{domains}Daq De’wI’ tu’be’lu’.",
         "azureAuth": "Microsoft yISuchlaHbe’. Azure ngoq ral’a’? qumvaD yIja’!",
         "graphError": "Microsoft lajQo’ ({status} Qagh). yInID!"
@@ -2308,9 +2306,7 @@
         "creating": "chenmoHlu’…",
         "createFailed": "Daq chenmoH luchchugh. yItoH’egh!",
         "ready": "DaqlIj pIm",
-        "join": "yImuv",
-        "uncertifiedTitle": "patlh DaloStaH",
-        "uncertifiedBody": "Daq DachenmoH ’e’ DapoQ pa’, Gedu patlhlIj nob qum. patlh Daghajchugh, naDev tugh Daq yIchen ’e’ DalaH!"
+        "join": "yImuv"
       }
     }
   },

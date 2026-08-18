@@ -101,6 +101,12 @@ function discordFailureSentence(
   switch (outcome.code) {
     case "invalid_username":
       return "Invalid username. Provide just the username, not the full email.";
+    // The one sentence here with no history behind it: the code is newer than
+    // the command, so this is its wording rather than a preserved one.
+    case "unsupported_domain":
+      return `Only ${outcome.domains
+        .map((domain) => `@${domain}`)
+        .join(" and ")} accounts can be reset.`;
     case "azure_auth":
       return "Failed to authenticate with Azure. Check bot configuration.";
     case "graph_error":

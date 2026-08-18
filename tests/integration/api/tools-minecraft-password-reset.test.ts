@@ -104,13 +104,41 @@ describe("POST /api/tools/minecraft-password-reset", () => {
     expect(mockResetPasswords).not.toHaveBeenCalled();
   });
 
-  it("rejects a username carrying an @ or a space", async () => {
+  it("rejects an entry with a space, or on a domain the tool does not reset", async () => {
+    // The domain half is the security gate, not tidying: the Graph credentials
+    // can reset any account in the tenant, so an address outside the two class
+    // domains must not reach them however it arrived. The card filters these
+    // out before submitting; this is the boundary that does not take its word.
     authenticated("admin");
-    for (const bad of ["alice@gamer.sog.gg", "al ice", "   "]) {
+    for (const bad of [
+      "al ice",
+      "   ",
+      "principal@sog.gg",
+      "someone@example.com",
+      "alice@gamer.sog.gg@evil.com",
+      "@gamer.sog.gg",
+    ]) {
       const response = await POST(createRequest({ usernames: [bad] }));
       expect(response.status, bad).toBe(400);
     }
     expect(mockResetPasswords).not.toHaveBeenCalled();
+  });
+
+  it("accepts a bare name and an allowed-domain address in one batch", async () => {
+    authenticated("admin");
+    mockResetPasswords.mockResolvedValue([
+      { ok: true, upn: "alice@gamer.sog.gg", password: "Sogverse01", forceChange: false },
+      { ok: true, upn: "sanna@gedu.sog.gg", password: "Sogverse02", forceChange: true },
+      { ok: true, upn: "bob@gamer.sog.gg", password: "Sogverse03", forceChange: false },
+    ]);
+
+    const usernames = ["alice", "sanna@GEDU.SOG.GG", "bob@gamer.sog.gg"];
+    const response = await POST(createRequest({ usernames }));
+
+    expect(response.status).toBe(200);
+    // Passed through as written — sanitizing is the module's job, and the row
+    // is labelled with what the reader typed.
+    expect(mockResetPasswords).toHaveBeenCalledWith(usernames);
   });
 
   it("rejects a batch over the cap", async () => {
@@ -221,6 +249,36 @@ describe("POST /api/tools/minecraft-password-reset", () => {
     ]);
   });
 
+  it("carries the unsupported-domain refusal to the wire as a code", async () => {
+    // Unreachable through this route's own schema, which 400s such a batch —
+    // the code exists for the callers that do not come through it (the Discord
+    // command) and as the answer if the schema ever loosens. Pinning the
+    // mapping is what stops it travelling as a payload the card has no message
+    // for.
+    authenticated("admin");
+    mockResetPasswords.mockResolvedValue([
+      {
+        ok: false,
+        code: "unsupported_domain",
+        domains: ["gamer.sog.gg", "gedu.sog.gg"],
+      },
+    ]);
+
+    const response = await POST(createRequest({ usernames: ["alice"] }));
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).results).toEqual([
+      {
+        username: "alice",
+        ok: false,
+        error: {
+          code: "unsupported_domain",
+          domains: ["gamer.sog.gg", "gedu.sog.gg"],
+        },
+      },
+    ]);
+  });
+
   it("never puts a password in the log line", async () => {
     authenticated("admin");
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -235,6 +293,37 @@ describe("POST /api/tools/minecraft-password-reset", () => {
     expect(line).toContain("admin-user-id");
     expect(line).toContain("alice@gamer.sog.gg");
     expect(line).not.toContain("Sogverse42");
+    log.mockRestore();
+  });
+
+  it("logs one line per reset when a batch names one account twice", async () => {
+    // A bare name and its own address are two entries and one mailbox; the
+    // module resets it once and answers both rows identically, so a second log
+    // line here would record a reset that never happened.
+    authenticated("admin");
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const reset = {
+      ok: true,
+      upn: "alice@gamer.sog.gg",
+      password: "Sogverse42",
+      forceChange: false,
+    };
+    mockResetPasswords.mockResolvedValue([reset, reset]);
+
+    const response = await POST(
+      createRequest({ usernames: ["alice", "alice@gamer.sog.gg"] }),
+    );
+
+    // Two rows on screen, both carrying the password that actually works.
+    const { results } = await response.json();
+    expect(results).toHaveLength(2);
+    expect(results[0].password).toBe(results[1].password);
+    expect(results.map((r: { username: string }) => r.username)).toEqual([
+      "alice",
+      "alice@gamer.sog.gg",
+    ]);
+
+    expect(log).toHaveBeenCalledTimes(1);
     log.mockRestore();
   });
 });

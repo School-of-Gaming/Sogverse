@@ -16,11 +16,11 @@ import { useNow, useTimezone } from "@/providers";
  * The gedu dashboard as a gedu meets it, rolled up to one card per assignment
  * with each card's needs-attention badge counted out of the feed it links to.
  *
- * Every section is the real presentational component over fixtures. The two
- * action panels — tools and the instant room — render their idle states with
- * the backend action inert: each has to be *there*, looking like itself, or the
- * page stops reading as the real dashboard; what they must not do is create a
- * room or reset an account.
+ * Every section is the real presentational component over fixtures. Both panels
+ * in the Tools section — the instant room and the password reset — render their
+ * idle states with the backend action inert: each has to be *there*, looking
+ * like itself, or the page stops reading as the real dashboard; what they must
+ * not do is create a room or reset an account.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state, the same way the product-page scene holds its own. Rebuilding it on

@@ -287,6 +287,22 @@ describe("POST /api/discord/interactions", () => {
     );
   });
 
+  it("has a sentence for the one failure code newer than the command", async () => {
+    // Every other sentence above is pinned because it is the wording the
+    // command has always sent; this code postdates the command, so what is
+    // pinned here is only that it has a sentence at all — an unhandled code
+    // would not compile, but an empty one would ship.
+    mockResetPassword.mockResolvedValueOnce({
+      ok: false,
+      code: "unsupported_domain",
+      domains: ["gamer.sog.gg", "gedu.sog.gg"],
+    });
+
+    expect(await patchedContent("principal@sog.gg")).toBe(
+      "❌ **principal@sog.gg** — Only @gamer.sog.gg and @gedu.sog.gg accounts can be reset.",
+    );
+  });
+
   it("falls back to a harmless PONG when the command carries no argument", async () => {
     const response = await POST(
       interactionRequest({

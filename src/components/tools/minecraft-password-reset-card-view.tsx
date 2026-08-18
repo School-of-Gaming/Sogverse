@@ -14,6 +14,7 @@ import {
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { MINECRAFT_EDUCATION_DOMAINS } from "@/lib/constants/minecraft-education";
 import { cn } from "@/lib/utils";
 import {
   MINECRAFT_PASSWORD_RESET_MAX_USERNAMES,
@@ -40,9 +41,9 @@ export interface MinecraftPasswordResetCardViewProps {
  * Presentational core of the Minecraft Education password-reset tool, rendered
  * unchanged on the gedu dashboard and the admin tools page.
  *
- * It owns the textarea and what can be decided from it — duplicates, entries
- * that are really email addresses, the batch cap — and nothing else: no fetch,
- * no mutation, no router. That is what lets the style guide drive it from
+ * It owns the textarea and what can be decided from it — duplicates, addresses
+ * on a domain this tool does not reset, the batch cap — and nothing else: no
+ * fetch, no mutation, no router. That is what lets the style guide drive it from
  * fixture results with the action inert, and it is why the two surfaces are
  * looking at the same component rather than at two copies of one.
  *
@@ -61,7 +62,11 @@ export function MinecraftPasswordResetCardView({
   const t = useTranslations("tools.minecraftPasswordReset");
   const [raw, setRaw] = useState("");
 
-  const { usernames, emailLike } = parseUsernameInput(raw);
+  const { usernames, unsupportedDomain } = parseUsernameInput(raw);
+  // The domains are named in the copy rather than baked into it: the hint and
+  // the warning both have to stay true if the tenant ever gains a third, and a
+  // list hardcoded in five locales would not.
+  const domains = MINECRAFT_EDUCATION_DOMAINS.map((d) => `@${d}`).join(", ");
   const tooMany = usernames.length > MINECRAFT_PASSWORD_RESET_MAX_USERNAMES;
   const canSubmit = usernames.length > 0 && !tooMany && !submitting;
 
@@ -93,7 +98,7 @@ export function MinecraftPasswordResetCardView({
           <Field
             label={t("inputLabel")}
             htmlFor="minecraft-password-reset-usernames"
-            hint={t("inputHint")}
+            hint={t("inputHint", { domains })}
           >
             {({ hintId }) => (
               <Textarea
@@ -110,13 +115,14 @@ export function MinecraftPasswordResetCardView({
             )}
           </Field>
 
-          {emailLike.length > 0 && (
+          {unsupportedDomain.length > 0 && (
             <p className="flex items-start gap-2 text-sm text-warning">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span>
-                {t("emailEntries", {
-                  count: emailLike.length,
-                  entries: emailLike.join(", "),
+                {t("unsupportedDomainEntries", {
+                  count: unsupportedDomain.length,
+                  entries: unsupportedDomain.join(", "),
+                  domains,
                 })}
               </span>
             </p>
@@ -283,6 +289,14 @@ function FailureMessage({
   switch (failure.code) {
     case "invalid_username":
       return <>{t("invalidUsername")}</>;
+    case "unsupported_domain":
+      return (
+        <>
+          {t("unsupportedDomain", {
+            domains: failure.domains.map((domain) => `@${domain}`).join(", "),
+          })}
+        </>
+      );
     case "not_found":
       return (
         <>

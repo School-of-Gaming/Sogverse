@@ -4,7 +4,8 @@ import { parseUsernameInput } from "@/components/tools/parse-username-input";
 /**
  * The password-reset field is built for pasting a class list, so what it
  * accepts is the whole point: whatever separator the list happened to arrive
- * with, and whatever a hurried paste left behind.
+ * with, whatever a hurried paste left behind, and whichever of the two ways an
+ * account can be written the exporting system chose.
  */
 describe("parseUsernameInput", () => {
   it("accepts spaces, commas and new lines as separators, together", () => {
@@ -31,24 +32,52 @@ describe("parseUsernameInput", () => {
     );
   });
 
-  it("separates out anything carrying an @ instead of submitting it", () => {
-    const { usernames, emailLike } = parseUsernameInput(
-      "alice alice@gamer.sog.gg bob",
+  it("submits an address on either Minecraft Education domain", () => {
+    const { usernames, unsupportedDomain } = parseUsernameInput(
+      "alice@gamer.sog.gg bob@GEDU.SOG.GG carol",
     );
-    expect(usernames).toEqual(["alice", "bob"]);
-    expect(emailLike).toEqual(["alice@gamer.sog.gg"]);
+    // The domain is matched case-insensitively — a spreadsheet export is under
+    // no obligation to agree with us about capitals.
+    expect(usernames).toEqual(["alice@gamer.sog.gg", "bob@GEDU.SOG.GG", "carol"]);
+    expect(unsupportedDomain).toEqual([]);
   });
 
-  it("lists each email-like entry once, however many times it was pasted", () => {
+  it("keeps a bare name and its own address apart", () => {
+    // They are one account and cannot be known to be until Graph resolves the
+    // bare one, so both are submitted and the batch reset behind the route is
+    // what stops the second reset.
+    expect(parseUsernameInput("alice alice@gamer.sog.gg").usernames).toEqual([
+      "alice",
+      "alice@gamer.sog.gg",
+    ]);
+  });
+
+  it("separates out an address on any other domain instead of submitting it", () => {
+    const { usernames, unsupportedDomain } = parseUsernameInput(
+      "alice principal@sog.gg bob@example.com carol",
+    );
+    expect(usernames).toEqual(["alice", "carol"]);
+    expect(unsupportedDomain).toEqual(["principal@sog.gg", "bob@example.com"]);
+  });
+
+  it("refuses a malformed address rather than reading past its second @", () => {
     expect(
-      parseUsernameInput("a@b.c a@b.c d@e.f").emailLike,
-    ).toEqual(["a@b.c", "d@e.f"]);
+      parseUsernameInput("alice@gamer.sog.gg@evil.com @gamer.sog.gg")
+        .unsupportedDomain,
+    ).toEqual(["alice@gamer.sog.gg@evil.com", "@gamer.sog.gg"]);
+  });
+
+  it("lists each rejected entry once, however many times it was pasted", () => {
+    expect(parseUsernameInput("a@b.c a@b.c d@e.f").unsupportedDomain).toEqual([
+      "a@b.c",
+      "d@e.f",
+    ]);
   });
 
   it("answers two empty lists for an empty field", () => {
     expect(parseUsernameInput("   \n  ")).toEqual({
       usernames: [],
-      emailLike: [],
+      unsupportedDomain: [],
     });
   });
 });

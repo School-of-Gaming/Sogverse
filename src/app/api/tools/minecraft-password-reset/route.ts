@@ -22,6 +22,8 @@ function toWireFailure(
   switch (outcome.code) {
     case "invalid_username":
       return { code: "invalid_username" };
+    case "unsupported_domain":
+      return { code: "unsupported_domain", domains: [...outcome.domains] };
     case "not_found":
       return {
         code: "not_found",
@@ -103,9 +105,19 @@ export const POST = defineRoute({
     // The audit record, until the accounts are per-gamer (see above). Target and
     // outcome only — a password in a log is a password in every log sink it is
     // shipped to, which is exactly the disclosure the reset was meant to avoid.
+    //
+    // One line per *reset*, not per row: a batch naming one account twice (a
+    // bare name and its own address are two entries and one mailbox) is reset
+    // once by the module's per-batch memo, and both rows carry that one
+    // password — so a second line here would record a reset that never happened.
+    const logged = new Set<string>();
     for (const result of results) {
       const target = result.ok ? result.upn : result.username;
       const outcome = result.ok ? "ok" : result.error.code;
+      if (result.ok) {
+        if (logged.has(result.upn)) continue;
+        logged.add(result.upn);
+      }
       console.log(
         `[minecraft-password-reset] actor=${user.id} target=${target} outcome=${outcome}`,
       );

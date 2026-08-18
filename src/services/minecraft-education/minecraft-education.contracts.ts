@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseMinecraftEducationEntry } from "@/lib/constants/minecraft-education";
 
 /**
  * Wire shapes for `POST /api/tools/minecraft-password-reset`, shared by the
@@ -22,21 +23,34 @@ import { z } from "zod";
 export const MINECRAFT_PASSWORD_RESET_MAX_USERNAMES = 50;
 
 /**
- * A bare Minecraft Education username — no `@`, no whitespace.
+ * One entry to reset: a bare Minecraft Education username, or an address on one
+ * of the two domains this tool may touch.
  *
- * The same three tests the Graph module applies before it will spend a Graph
- * call, restated here so a malformed entry is refused at the boundary with a
- * 400 instead of travelling the whole way to Azure to come back as a failure
- * row. The module keeps its own copy because it has callers that never come
- * through this route (the Discord command).
+ * **The domain half is a security gate, not input tidying.** The Graph
+ * credentials behind the route can reset any account in the tenant, so an entry
+ * naming another domain would reset a staff or admin mailbox and hand the new
+ * password to whoever typed it. The card filters those out before submitting,
+ * and this refuses to take the route's word for that.
+ *
+ * The rule itself lives in one place and is deferred to here, so the textarea,
+ * this schema and the Graph module cannot come to disagree about what an entry
+ * is. Restating it at this boundary is what turns a malformed batch into a 400
+ * rather than a trip to Azure that comes back as a page of failure rows.
  */
 const username = z
   .string()
   .trim()
   .min(1)
-  .refine((value) => !value.includes("@") && !/\s/.test(value), {
-    message: "Enter the bare username, not the full email address",
-  });
+  .refine(
+    (value) => {
+      const kind = parseMinecraftEducationEntry(value).kind;
+      return kind === "bare" || kind === "addressed";
+    },
+    {
+      message:
+        "A username, or an address on a Minecraft Education domain, with no spaces in it",
+    },
+  );
 
 export const minecraftPasswordResetBody = z.object({
   usernames: z
@@ -57,9 +71,21 @@ export type MinecraftPasswordResetBody = z.infer<
 const resetFailure = z.discriminatedUnion("code", [
   z.object({ code: z.literal("invalid_username") }),
   z.object({
+    code: z.literal("unsupported_domain"),
+    /** The domains that *are* resettable — what the message names. */
+    domains: z.array(z.string()),
+  }),
+  z.object({
     code: z.literal("not_found"),
-    /** The sanitized username — the name the account would have had. */
+    /**
+     * The sanitized entry — the bare name the account would have had, or the
+     * address as submitted when the entry carried one.
+     */
     username: z.string(),
+    /**
+     * The domains actually looked on: both of them for a bare name, and the
+     * single domain of the address for an entry that named one.
+     */
     domains: z.array(z.string()),
   }),
   z.object({ code: z.literal("azure_auth") }),

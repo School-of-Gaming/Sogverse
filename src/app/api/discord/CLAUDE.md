@@ -39,7 +39,7 @@ This is a **bulk `PUT`** — the script's command list becomes the complete comm
 
 Resets passwords for shared Minecraft Education accounts in the sog.gg Azure AD tenant (logic in `src/lib/microsoft-graph.ts`).
 
-- For each username the bot tries `username@gamer.sog.gg`, then `username@gedu.sog.gg` — only these two domains are allowed.
+- A bare username is tried as `username@gamer.sog.gg`, then `username@gedu.sog.gg`. An entry written as a whole address on one of those two domains skips the probe and resets exactly that account; an address on **any other domain is refused before a Graph call is made**. That domain list is a security boundary, not input tidying — the service principal can reset any account in the tenant, so it is what keeps the tool to shared class logins rather than staff mailboxes. It lives in `src/lib/constants/minecraft-education.ts`, which the textarea, the request schema and the Graph module all read.
 - New password is `Sogverse` + a random 2-digit number; each account gets a different one.
 - `@gamer.sog.gg` accounts keep the new password; `@gedu.sog.gg` accounts must change it on first sign-in (reported via a `forceChange` flag in the result line).
 

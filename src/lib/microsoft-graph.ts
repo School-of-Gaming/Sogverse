@@ -1,17 +1,13 @@
+import {
+  FORCE_CHANGE_DOMAIN,
+  MINECRAFT_EDUCATION_DOMAINS,
+  parseMinecraftEducationEntry,
+  type MinecraftEducationEntry,
+} from "@/lib/constants/minecraft-education";
+
 const AZURE_TENANT_ID = process.env.AZURE_TENANT_ID!;
 const AZURE_CLIENT_ID = process.env.AZURE_CLIENT_ID!;
 const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET!;
-
-/**
- * The two Minecraft Education domains in the sog.gg Azure AD tenant, tried in
- * this order. `@gamer.sog.gg` first because it is the overwhelmingly common
- * case, and it is also the one that keeps the password it is given — a
- * `@gedu.sog.gg` account must change it on first sign-in.
- */
-export const MINECRAFT_EDUCATION_DOMAINS = [
-  "gamer.sog.gg",
-  "gedu.sog.gg",
-] as const;
 
 /**
  * The outcome of one reset attempt, as **data**.
@@ -26,11 +22,18 @@ export const MINECRAFT_EDUCATION_DOMAINS = [
  */
 export type PasswordResetOutcome =
   | { ok: true; upn: string; password: string; forceChange: boolean }
-  /** The input was not a bare username — empty, or carrying an `@` or a space. */
+  /** The input was not a username at all — empty, or carrying whitespace. */
   | { ok: false; code: "invalid_username" }
   /**
-   * No account on any allowed domain. Carries the **sanitized** username,
-   * because that — not the raw input — is the name the account would have had.
+   * The entry named a domain outside the two this tool resets. Refused before
+   * any Graph call: the credentials behind this module can reset any account in
+   * the tenant, so the domain is the boundary that keeps it to class logins.
+   */
+  | { ok: false; code: "unsupported_domain"; domains: readonly string[] }
+  /**
+   * No account on the domains looked at — both of them for a bare name, the one
+   * that was named for an address. Carries the **sanitized** username, because
+   * that — not the raw input — is the name the account would have had.
    */
   | { ok: false; code: "not_found"; username: string; domains: readonly string[] }
   /** The client-credentials grant failed: expired secret, revoked consent. */
@@ -65,20 +68,42 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+/** Every UPN one entry could name, in the order they are tried. */
+function candidateDomains(
+  entry: Extract<MinecraftEducationEntry, { kind: "bare" | "addressed" }>,
+): readonly string[] {
+  return entry.kind === "addressed"
+    ? [entry.domain]
+    : MINECRAFT_EDUCATION_DOMAINS;
+}
+
 /**
- * Reset one already-sanitized username, trying each allowed domain in turn.
- * The token is passed in rather than fetched here so a batch pays for it once.
+ * Reset one parsed entry, trying each domain it could live on in turn — both of
+ * them for a bare name, and only the one it named for an address. The token is
+ * passed in rather than fetched here so a batch pays for it once.
+ *
+ * `alreadyReset` is the batch's memo, keyed by UPN. A batch can name one account
+ * twice without repeating itself — `alice` and `alice@gamer.sog.gg` are two
+ * entries and one mailbox — and resetting it twice would put two passwords on
+ * screen of which only the second still works, with nothing saying which. So a
+ * candidate already reset in this batch answers with that reset, and the second
+ * row carries the same live password as the first.
  */
-async function resetSanitized(
-  sanitized: string,
+async function resetEntry(
+  entry: Extract<MinecraftEducationEntry, { kind: "bare" | "addressed" }>,
   token: string,
+  alreadyReset: Map<string, Extract<PasswordResetOutcome, { ok: true }>>,
 ): Promise<PasswordResetOutcome> {
   const password = generatePassword();
 
-  for (const domain of MINECRAFT_EDUCATION_DOMAINS) {
-    const upn = `${sanitized}@${domain}`;
+  for (const domain of candidateDomains(entry)) {
+    const upn = `${entry.username}@${domain}`;
+
+    const memoized = alreadyReset.get(upn);
+    if (memoized !== undefined) return memoized;
+
     const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(upn)}`;
-    const forceChange = domain !== "gamer.sog.gg";
+    const forceChange = domain === FORCE_CHANGE_DOMAIN;
 
     const response = await fetch(url, {
       method: "PATCH",
@@ -95,10 +120,13 @@ async function resetSanitized(
     });
 
     if (response.ok || response.status === 204) {
-      return { ok: true, upn, password, forceChange };
+      const outcome = { ok: true as const, upn, password, forceChange };
+      alreadyReset.set(upn, outcome);
+      return outcome;
     }
 
-    // 404 = user not found on this domain, try the next one
+    // 404 = user not found on this domain, try the next one (an addressed entry
+    // has no next one, so its 404 falls straight through to not_found)
     if (response.status === 404) continue;
 
     // Any other error is unexpected — report it
@@ -110,8 +138,8 @@ async function resetSanitized(
   return {
     ok: false,
     code: "not_found",
-    username: sanitized,
-    domains: MINECRAFT_EDUCATION_DOMAINS,
+    username: entry.kind === "addressed" ? entry.upn : entry.username,
+    domains: candidateDomains(entry),
   };
 }
 
@@ -127,6 +155,9 @@ async function resetSanitized(
  *
  * Sequential rather than concurrent: this is a handful of accounts typed by a
  * person, and Graph is a shared tenant-wide budget we would rather not spike.
+ * It is also what lets the batch keep a memo of the accounts it has already
+ * reset, so one account named twice in one paste is reset once and both rows
+ * carry the password that actually works.
  */
 export async function resetPasswords(
   usernames: readonly string[],
@@ -138,12 +169,27 @@ export async function resetPasswords(
   let bearer: string | null = null;
   let grantFailed = false;
   const outcomes: PasswordResetOutcome[] = [];
+  const alreadyReset = new Map<
+    string,
+    Extract<PasswordResetOutcome, { ok: true }>
+  >();
 
   for (const username of usernames) {
-    const sanitized = username.trim().toLowerCase();
+    const entry = parseMinecraftEducationEntry(username);
 
-    if (!sanitized || sanitized.includes("@") || sanitized.includes(" ")) {
+    if (entry.kind === "invalid") {
       outcomes.push({ ok: false, code: "invalid_username" });
+      continue;
+    }
+
+    // Refused before the token is even fetched, so an entry naming somebody
+    // else's domain costs nothing and reaches no Graph call at all.
+    if (entry.kind === "unsupported-domain") {
+      outcomes.push({
+        ok: false,
+        code: "unsupported_domain",
+        domains: MINECRAFT_EDUCATION_DOMAINS,
+      });
       continue;
     }
 
@@ -163,7 +209,7 @@ export async function resetPasswords(
       }
     }
 
-    outcomes.push(await resetSanitized(sanitized, bearer));
+    outcomes.push(await resetEntry(entry, bearer, alreadyReset));
   }
 
   return outcomes;

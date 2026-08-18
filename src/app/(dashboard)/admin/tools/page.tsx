@@ -1,32 +1,38 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { MinecraftPasswordResetCard } from "@/components/tools/minecraft-password-reset-card";
+import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantRoomCard";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return {
     title: t("adminTools"),
-    description: "Platform operations tools",
+    description: "Instant voice rooms and Minecraft Education password resets",
   };
 }
 
 /**
  * Admin tools — the platform-operations jobs that belong to no one product.
  *
- * One card today: the Minecraft Education password reset, the same component
- * the gedu dashboard's Tools section renders. Admins reach it here because
- * they have a sidebar to reach it from; a gedu has one on their dashboard
- * because they do not.
+ * Two cards, the same two the gedu dashboard's Tools section renders and in the
+ * same order: the instant voice room, then the Minecraft Education password
+ * reset. The room comes first because it is the one reached for routinely. The
+ * voice card had a sidebar entry and a page of its own until the second tool
+ * arrived; keeping them apart would have meant a sidebar that grows an entry
+ * per button, so they share one. Admins reach these from the sidebar; a gedu
+ * gets them on their dashboard because they have no sidebar to reach them with.
  *
  * The container is `max-w-3xl` rather than the full width an admin surface may
- * use: this page is a form over a textarea and a list of one-line results, and
- * a line of text stretched across a 16:10 monitor is harder to read, not
- * easier. Width is there to be used by content that has width — tables,
- * columns, a reference rail — and a second column here would be an empty one.
+ * use: both cards are a control over a stack of one-line results, and a line of
+ * text stretched across a 16:10 monitor is harder to read, not easier. Width is
+ * there to be used by content that has width — tables, columns, a reference
+ * rail — and a second column here would be an empty one. One cap for both, so
+ * the two cards' edges line up rather than stepping in and out down the page.
  */
 export default function AdminToolsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <CreateInstantRoomCard />
       <MinecraftPasswordResetCard />
     </div>
   );
