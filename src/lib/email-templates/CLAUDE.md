@@ -9,7 +9,7 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 - **`blocks.ts`** — the blocks only a mail that sends the reader somewhere needs: `ctaButton()` (primary/secondary), `ctaButtonRow()` (two secondaries side by side in a fixed 50/50 split, compact padding so both fit a mobile-width cell), `inlineLink()`, `bulletList()`, `sectionLabel()`. Every `href` they take is embedded unescaped, so they take app-generated URLs and nothing else. A mail with two buttons has one action it is actually asking for — that one is primary, the other outlined.
 - **`translator.ts`** — `getEmailTranslator(locale)` returns an `EmailTranslator` (`t`) scoped to the `email` namespace in `messages/*.json`. Every builder takes `t` and `locale`; no user-facing string is hardcoded in a builder.
 - **`registry.ts`** — `templateRegistry`: the single source of truth for templates that are exposed to the admin testing UI and the test-email API route. Each entry is built with `defineTemplate({...})`.
-- **Per-template builder files** (`password-reset.ts`, `pin-reset.ts`, `feedback.ts`, `enrollment-changes.ts`, `welcome.ts`, `product-confirmation.ts`, `verify-email.ts`) — exported `build*Email(t, locale, ...)` functions that compose the `utils`/`blocks` helpers inside `wrapInLayout`.
+- **Per-template builder files** (`password-reset.ts`, `pin-reset.ts`, `feedback.ts`, `welcome.ts`, `product-confirmation.ts`, `verify-email.ts`) — exported `build*Email(t, locale, ...)` functions that compose the `utils`/`blocks` helpers inside `wrapInLayout`.
 
 ## Sender identity
 
@@ -57,7 +57,7 @@ When a template should be testable from `/admin/testing` and sendable via the te
 
 - `schema` — a zod schema whose **output type is the params type** passed to `build`/`subject`. This is what gives `build`/`subject` fully-typed params with no casts; `defineTemplate` parses raw params through `schema` inside the generated `render`, so a malformed payload throws a `ZodError` at the boundary. Derive enum fields from `Constants.public.Enums.*` so they track codegen.
 - `fields` — drives the testing-UI form (text inputs or `type: "select"`). Unfilled fields fall back to placeholders.
-- `resolveParams?` — optional transform from raw UI field values to API params (e.g. a single "Minecraft status" select expands into `minecraftUsername` + `minecraftUuid`).
+- `resolveParams?` — optional transform from raw UI field values to API params (e.g. a "Whose seat" select expands into the `isSelfSeat` boolean the builder takes).
 - `replyTo?` — a function of the validated params, for the rare template whose live route replies to a person rather than to support. Omit it and the render defaults to `SUPPORT_EMAIL`. It exists so a test send reproduces the real mail's reply behaviour; a template that lies about this teaches the wrong thing to whoever is testing it.
 
 Templates that are *not* exposed to the testing UI (currently the PIN-reset email) just export a builder and are sent directly from their API route — they don't need a registry entry.

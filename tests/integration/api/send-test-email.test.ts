@@ -352,39 +352,39 @@ describe("POST /api/admin/send-test-email", () => {
 
   /**
    * The wire schema and the registry's own param schema are declared in two
-   * places, and `isSelfSeat` is the first param that is not a string: a wire
+   * places, and `isSelfSeat` is the only param that is not a string: a wire
    * schema still typed `Record<string, string | null>` rejects the whole body
-   * before the template ever sees it, so both parent templates become
-   * unsendable from the testing page while every other template keeps working.
-   * Both boolean values are posted because `false` is the one a
+   * before the template ever sees it, so the one template carrying a boolean
+   * becomes unsendable from the testing page while every other one keeps
+   * working. Both boolean values are posted because `false` is the one a
    * "truthy values only" narrowing would still let through.
    */
-  const parentTemplateBody = (isSelfSeat: boolean) => ({
+  const confirmationTemplateBody = (isSelfSeat: boolean) => ({
     mode: "template",
     toEmail: "test@example.com",
-    template: "enrollmentParent",
+    template: "productConfirmation",
     params: {
-      parentName: "Marja",
       participantName: "Marja",
-      geduName: "Alice",
-      productName: "Parents' Minecraft Evening",
-      minecraftUsername: null,
-      minecraftUuid: null,
       isSelfSeat,
+      productName: "Parents' Minecraft Evening",
+      productType: "consumer_club",
+      mode: "subscription",
+      priceAmount: "€40.00",
+      dashboardUrl: "https://sogverse.sog.gg/parent",
     },
   });
 
   it("should accept the boolean isSelfSeat param on the self seat", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest(parentTemplateBody(true)));
+    const response = await POST(createRequest(confirmationTemplateBody(true)));
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.messageId).toBe("msg-123");
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: "You are now enrolled in Parents' Minecraft Evening",
+        subject: "You are enrolled in Parents' Minecraft Evening",
       }),
     );
   });
@@ -392,12 +392,12 @@ describe("POST /api/admin/send-test-email", () => {
   it("should accept the boolean isSelfSeat param on a child's seat", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest(parentTemplateBody(false)));
+    const response = await POST(createRequest(confirmationTemplateBody(false)));
 
     expect(response.status).toBe(200);
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: "Marja is now enrolled in Parents' Minecraft Evening",
+        subject: "Marja is enrolled in Parents' Minecraft Evening",
       }),
     );
   });
