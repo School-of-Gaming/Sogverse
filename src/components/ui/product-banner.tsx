@@ -1,3 +1,5 @@
+import Image from "next/image";
+import { isOptimizableImageSrc } from "@/lib/images/product-image-url";
 import { cn } from "@/lib/utils";
 
 /** The one frame every product picture is painted in. */
@@ -32,26 +34,45 @@ const BANNER_FRAME = "aspect-[3/2] w-full";
  * so alt text would announce the same name twice to a screen reader for no
  * added meaning.
  *
- * Plain <img>, because product images bypass next/image's optimizer.
+ * **Through `next/image`'s optimizer, which is the point of this being one
+ * component.** The stored file is an admin-uploaded original — a 2–4 MB PNG is
+ * ordinary — and every browser used to be handed it whole, at every viewport,
+ * straight out of the Supabase bucket. Routing it through the optimizer buys
+ * three things at once: a per-viewport `srcset`, so a 96px admin row thumb
+ * fetches a 96px-class file instead of the 4 MB master; AVIF/WebP negotiated
+ * from the request's `Accept`, which is most of the remaining bytes; and the
+ * bytes served from our own edge cache rather than metered Supabase egress.
+ * Because there is exactly one frame, that switch is one change here instead
+ * of five at the call sites.
  *
- * **Lazy by default, eager by request.** These are admin-uploaded photos with
- * no optimizer in front of them, and a storefront section trio can put dozens
- * of banners on one page — fetching them all on first paint costs the pages
- * that can least afford it (family surfaces are mobile-first). So the banner
- * defaults to `loading="lazy" decoding="async"` and the one caller whose
- * banner is reliably above the fold — the detail page's hero — opts into
- * `eager`. Lazy or eager, the frame's size is fixed by `aspect-[3/2]`, so
- * loading order never moves layout.
+ * **`sizes` is a required decision, not a detail.** With `fill`, a missing
+ * `sizes` makes the browser assume the image is the full viewport width and
+ * pick the largest candidate — which hands back most of what the optimizer
+ * just saved. Every caller states the CSS width its frame actually resolves
+ * to; the `100vw` default is the safe-but-wasteful fallback, and a call site
+ * relying on it is a call site that has not been measured yet.
+ *
+ * **Lazy by default, eager by request.** A storefront section trio can put
+ * dozens of banners on one page, and fetching them all on first paint costs
+ * the pages that can least afford it (family surfaces are mobile-first). So
+ * the banner lazy-loads by default and the one caller whose banner is reliably
+ * above the fold — the detail page's hero — opts into `eager`, which becomes
+ * `priority` (preloaded, not lazy). Lazy or eager, the frame's size is fixed
+ * by `aspect-[3/2]`, so loading order never moves layout.
  */
 export function ProductBanner({
   src,
   className,
+  sizes = "100vw",
   eager = false,
 }: {
   /** Resolved image URL, or `null` for a product with no picture. */
   src: string | null;
   /** Width, corners and borders for the frame — never its aspect ratio. */
   className?: string;
+  /** The CSS width this frame resolves to, per breakpoint, for the browser's
+   *  `srcset` pick. Default `100vw` over-fetches — state the real width. */
+  sizes?: string;
   /** Fetch on first paint. For banners reliably above the fold (the detail
    *  hero); everything else lazy-loads as it scrolls into reach. */
   eager?: boolean;
@@ -60,14 +81,21 @@ export function ProductBanner({
     return <SogFallback className={cn(BANNER_FRAME, className)} />;
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- product images bypass next/image; see the component doc above
-    <img
-      src={src}
-      alt=""
-      loading={eager ? "eager" : "lazy"}
-      decoding="async"
-      className={cn(BANNER_FRAME, "object-cover", className)}
-    />
+    // `fill` needs a positioned ancestor, so the frame moves off the image and
+    // onto a wrapper — which is also what now carries the caller's corners, and
+    // why the wrapper clips: an absolutely-positioned child ignores its
+    // parent's border radius unless the parent hides its overflow.
+    <div className={cn(BANNER_FRAME, "relative overflow-hidden", className)}>
+      <Image
+        src={src}
+        alt=""
+        fill
+        sizes={sizes}
+        priority={eager}
+        unoptimized={!isOptimizableImageSrc(src)}
+        className="object-cover"
+      />
+    </div>
   );
 }
 

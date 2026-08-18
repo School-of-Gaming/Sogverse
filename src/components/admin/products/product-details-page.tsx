@@ -233,6 +233,9 @@ function HeaderCard({
         <ProductBanner
           src={productImageSrc(imagePath)}
           className="w-40 shrink-0 rounded-md"
+          // `w-40` in both arrangements — the card stacks below `sm` but the
+          // width is fixed, not fluid, so one length covers every breakpoint.
+          sizes="160px"
         />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

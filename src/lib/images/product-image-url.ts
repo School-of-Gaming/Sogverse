@@ -24,6 +24,28 @@ export function productImageUrl(path: string): string {
 }
 
 /**
+ * **Whether `next/image` can optimize this src, or has to serve it as-is.**
+ * The optimizer fetches the URL server-side, so it can only work on an
+ * absolute `http(s)` URL — which here means a bucket object. The two things
+ * that are not:
+ *
+ * - **A root-relative path**, which `productImageUrl` forwards verbatim. That
+ *   is the preview scenes' demo art, and it is SVG: the optimizer refuses SVG
+ *   without `dangerouslyAllowSVG`, a flag not worth setting on an endpoint any
+ *   visitor can call. Those files are small and already on our own CDN, so
+ *   there is nothing to win on them.
+ * - **An object URL** (`blob:`), which the admin image picker mints for a file
+ *   the admin has only just chosen. It exists solely in that browser's memory
+ *   and no server can fetch it.
+ *
+ * Both cases pass through `unoptimized`, which is what the caller does with
+ * this answer.
+ */
+export function isOptimizableImageSrc(src: string): boolean {
+  return /^https?:\/\//.test(src);
+}
+
+/**
  * The row-level resolution: `products.image_path` into a servable URL, or null
  * for "no image". **Truthiness, not a null check, on purpose** — `image_path`
  * is a plain text column and an empty string is representable in it, meaning

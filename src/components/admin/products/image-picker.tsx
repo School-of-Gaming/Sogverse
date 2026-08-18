@@ -6,7 +6,10 @@ import { useTranslations } from "next-intl";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { productImageUrl } from "@/lib/images/product-image-url";
+import {
+  isOptimizableImageSrc,
+  productImageUrl,
+} from "@/lib/images/product-image-url";
 import { cn } from "@/lib/utils";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/svg+xml";
@@ -92,12 +95,20 @@ export function ImagePicker({ value, onChange, disabled }: ImagePickerProps) {
           // deliberately the same height as the empty drop zone below so the
           // control does not change size when a file is picked.
           <div className="relative mx-auto h-40 w-60 overflow-hidden rounded-md border bg-muted">
+            {/* Two src kinds, two answers. An existing product's picture is a
+                bucket URL and goes through the optimizer like every other
+                surface — this preview is 240px wide and the stored original is
+                multiple megabytes. A just-picked File is an object URL that
+                lives only in this browser's memory, so no server can fetch it
+                to resize: it renders as-is, which costs nothing since the bytes
+                are already local. */}
             <Image
               src={previewUrl}
               alt={t("previewAlt")}
               fill
+              sizes="240px"
               loading="lazy"
-              unoptimized
+              unoptimized={!isOptimizableImageSrc(previewUrl)}
               className="object-cover"
             />
           </div>

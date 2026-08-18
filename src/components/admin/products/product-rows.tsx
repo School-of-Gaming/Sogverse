@@ -168,6 +168,10 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
               <ProductBanner
                 src={productImageSrc(p.image_path)}
                 className="w-24 shrink-0 rounded-md"
+                // `w-24`, fixed at every breakpoint. This is the biggest single
+                // win of the optimizer: a list of thirty products used to pull
+                // thirty multi-megabyte originals to paint thirty 96px thumbs.
+                sizes="96px"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

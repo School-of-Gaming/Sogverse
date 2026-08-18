@@ -140,6 +140,12 @@ export const POST = defineRoute({
         .upload(uploadMeta.path, file, {
           contentType: uploadMeta.contentType,
           upsert: false,
+          // A year — safe precisely because this route never writes over a
+          // path: it uploads a fresh UUID and deletes the superseded object
+          // once the RPC commits, so a URL's bytes never change. Storage
+          // defaults to an hour, which would make the image optimizer re-fetch
+          // the origin hourly for content that cannot have moved.
+          cacheControl: "31536000",
         });
       if (uploadError) {
         console.error("[products/update] image upload failed", uploadError);

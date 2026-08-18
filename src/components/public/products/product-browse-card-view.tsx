@@ -96,7 +96,18 @@ export function ProductBrowseCardView({
             cards; the picture is decorative here (the card's accessible name
             and the title beneath already say the product's name), which is why
             the component carries no alt. */}
-        <ProductBanner src={imageSrc} />
+        {/* The card's own width, breakpoint by breakpoint, so the browser
+            fetches a card-sized file rather than a viewport-sized one. Read
+            off the grid in `product-browse-results.tsx`: one column in a
+            `px-4` container below `sm`; two columns from `sm` inside the
+            640/768 container caps (296px, then 360px); two columns from `lg`
+            in the ~688–944px cards track (336–464px); three from `xl`
+            (~304–330px, so 352 covers it). Rounded up, never down — an
+            under-claimed width is a blurry card. */}
+        <ProductBanner
+          src={imageSrc}
+          sizes="(min-width: 1280px) 352px, (min-width: 1024px) 464px, (min-width: 768px) 360px, (min-width: 640px) 296px, calc(100vw - 2rem)"
+        />
 
         {/* Opposite corners, one fact each, so neither chip has to reserve room
             for the other and a card wearing only one of them has no hole where

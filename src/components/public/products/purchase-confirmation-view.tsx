@@ -160,6 +160,9 @@ export function PurchaseConfirmationView({
               <ProductBanner
                 src={productImageSrc(product.image_path)}
                 className="w-24 shrink-0 rounded-lg"
+                // `w-24` at every breakpoint — a fixed inline thumb, so one
+                // length with no media conditions.
+                sizes="96px"
               />
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

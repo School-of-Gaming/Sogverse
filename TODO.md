@@ -351,14 +351,6 @@ Several files define inline `selectClassName` strings that duplicate `<Input>` s
 - [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
 - [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the add-gamer dialog, plus any other occurrences
 
-### Optimize Product Images via `next/image`
-
-Product images currently render with `unoptimized` everywhere, so the original bucket file is served at every viewport. If the catalogue grows or pages get heavier, switching to the Next image optimizer would give us automatic WebP/AVIF conversion, viewport-appropriate resizing, and CDN caching. The cost is a bit of complexity per call site (`sizes` attribute) and a one-line `images.remotePatterns` entry in `next.config.ts`.
-
-- [ ] Add the Supabase Storage host to `next.config.ts` `images.remotePatterns`
-- [ ] Drop `unoptimized` from product image `<Image>` components and add a `sizes` prop matching each layout
-- [ ] Skipped during the PR 2 self-hosted images migration to keep the change minimal
-
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
 Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.

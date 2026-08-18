@@ -53,9 +53,14 @@ describe("purchase confirmation product picture", () => {
     const { container } = renderConfirmation("/preview-art/card-terrain.svg");
     const img = container.querySelector("img");
     expect(img).not.toBeNull();
+    // The ratio lives on the wrapper rather than the image: the banner fills
+    // its frame (`next/image`'s `fill`, which needs a positioned ancestor), so
+    // the frame is the parent and the image is what covers it. Root-relative
+    // fixture art is passed through untouched — the optimizer refuses SVG, so
+    // the rendered src is still the stored value.
     expect(img?.getAttribute("src")).toBe("/preview-art/card-terrain.svg");
-    expect(img?.className).toContain("aspect-[3/2]");
     expect(img?.className).toContain("object-cover");
+    expect(img?.parentElement?.className).toContain("aspect-[3/2]");
   });
 
   it.each([

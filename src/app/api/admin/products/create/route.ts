@@ -187,6 +187,13 @@ export const POST = defineRoute({
         .upload(uploadMeta.path, file, {
           contentType: uploadMeta.contentType,
           upsert: false,
+          // A year, because the path is a fresh UUID per upload and
+          // `upsert: false` above is what guarantees it: these bytes are
+          // immutable, and replacing the picture mints a different path.
+          // Storage defaults to an hour, which would have the image optimizer
+          // re-fetching the origin hourly — the Supabase egress the optimizer
+          // exists to avoid.
+          cacheControl: "31536000",
         });
 
       if (uploadError) {
