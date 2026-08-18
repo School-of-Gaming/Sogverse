@@ -449,6 +449,68 @@ We keep circling back to wanting an automated dead-code check (unused exports/fi
 
 If we ever specifically want it *inside* ESLint for editor feedback: `import/no-unused-modules` set to `warn`, **exclude `src/app/**`**, never auto-delete from its output (barrel blind spot), ratchet the same way. Weaker, but single-toolchain.
 
+### Leaving a group voice room — always return to the product page?
+
+**Undecided, and the undecidedness is the point: this is a UX judgment, not a
+defect.** Today the Leave button returns you to wherever you launched from (the
+voice route reads a `?back=` query the shared Join button fills in with the
+current pathname, falling back to the role dashboard). The proposal is to make
+the destination a property of the *room and the viewer* instead: a gamer or
+parent always lands on their family product page, a gedu always lands on the
+group's workspace, however they got in.
+
+**The case for.** The product page is where the work *after* a session lives —
+families read session reports there, gedus take attendance and write notes.
+Someone who joined from a dashboard is dropped back on a tile grid and has to
+navigate to the page they now actually need.
+
+**The case against.** "Back" that doesn't go back is disorienting, and it breaks
+the one expectation the affordance sets. A parent who dipped into a room from
+their dashboard to check on a child may want the dashboard, not a page about one
+enrollment. We have no evidence either way, which is why this is parked rather
+than built.
+
+**If we pick it up, the investigation is already done — don't redo it.** The
+approach that works keeps the `backHref` prop and changes what callers pass; no
+database work is needed, because every call site already holds the participation
+id and product type that the destination is built from. Three of the five
+in-scope call sites are already correct (both product-page bodies pass or
+default to their own page; the gedu dashboard card already passes the
+workspace), so the change is essentially one prop on the family enrollment card
+plus the two items below. The alternative — deriving the destination server-side
+in the voice route — was rejected: it needs a group-to-product lookup on a page
+that does no database work today, and the family product page is keyed by
+participation id rather than product id, so it needs a second query on top.
+
+- [ ] Pass the family product page as `backHref` from the enrollment card on the
+      parent and gamer dashboards (the card already carries the href it links to)
+- [ ] **The switch-to-gamer path emits no `?back=` at all.** A parent joining
+      their *child's* room goes through the profile-switch dialog, which
+      redirects to a bare voice URL — so that child always falls back to the
+      gamer dashboard on leave, whatever we decide here. The fix can't reuse the
+      card's own href (that one points into the parent's root); it has to be the
+      gamer's copy of the same participation
+- [ ] Consider making `backHref` required and deleting the current-pathname
+      default, so the rule is enforced by the type system rather than by each
+      call site happening to pass the right thing. Without this the change is a
+      behavior swap, not a simplification — the two product-page bodies are
+      correct today only because they happen to sit on the page they'd send you
+      to. Cost is that the remaining callers (both product-page bodies, plus the
+      admin group card, which is outside this rule) must name a destination
+      explicitly
+- [ ] Guard the `"#"` sentinel. An awaiting or unplaced seat carries `"#"` as its
+      open href, and `"#"` survives the internal-path safety check and resolves
+      to `"/"` — the public marketing home page. Unreachable today (the awaiting
+      arm of the Join button renders a disabled button before the link branch),
+      but it stops being a coincidence the moment `backHref` becomes the
+      load-bearing value rather than a fallback
+- [ ] Admin is deliberately out of scope. The admin group card passes nothing and
+      the pathname default already lands on the admin product page, so it needs a
+      decision only if the default is deleted
+
+**Delete this item if we decide against the change** — a `[ ]` here means the
+question is still open, not that the work is owed.
+
 ### Multi-Parent Gamer Linking
 
 Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
