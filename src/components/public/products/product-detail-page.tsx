@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
+import { resolveLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useNow } from "@/providers";
 import { useAuth } from "@/providers/auth-provider";
@@ -61,7 +62,13 @@ export function ProductDetailPage({
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
   // The viewer's own locale, for the one string on this page built from a
   // database row rather than a message file: the home location's name.
-  const locale = useLocale();
+  //
+  // Through `resolveLocale`, because the other half of that name's precedence
+  // rule already is: the name of a place confirmed in the panel's dialog is
+  // resolved against the panel's own locale, which is a resolved one. Two
+  // spellings of the same location, differing only in which side answered
+  // first, is the bug a raw locale here would produce.
+  const locale = resolveLocale(useLocale());
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
@@ -104,11 +111,53 @@ export function ProductDetailPage({
   const {
     data: homeLocationRows,
     isLoading: homeLocationLoading,
-    isError: homeLocationError,
+    failureCount: homeLocationFailures,
   } = useLocationsByIds(homeLocationId ? [homeLocationId] : []);
   const [confirmedLocation, setConfirmedLocation] = useState<
     ConfirmedHomeLocation | undefined
   >(undefined);
+
+  // ---------------------------------------------------------------------
+  // **The fail-open is latched, not sampled.**
+  //
+  // The gate fails open when that read cannot answer — but "cannot answer" has
+  // to be a fact about this *mount*, not about this render. Sampled per render
+  // it is neither: React Query retries a failure for several seconds and
+  // refetches on window focus, so the honest sequence is "read fails → panel
+  // paints the whole form → parent picks a child and ticks the rules → a focus
+  // refetch succeeds → the gate flips to wrong_country and the form they were
+  // filling in is replaced by a refusal". That is a panel swap on data's own
+  // schedule, which the layout rules forbid outright, and it destroys work the
+  // reader had already done.
+  //
+  // So the first failed attempt is remembered for the life of the mount. Once
+  // this page has resolved the gate *without* the read, a late answer cannot
+  // rewrite it; the parent gets one panel and keeps it. A reload is what
+  // re-asks the question, which is the right granularity — it is also a fresh
+  // panel with nothing half-filled in it.
+  //
+  // `failureCount` rather than `isError`: `isError` waits for the last retry,
+  // and this page has already stopped waiting at the first failure (see the
+  // skeleton gate below). The two have to agree, or the page paints a form on
+  // the strength of a read it then keeps listening to.
+  //
+  // State rather than a ref, because this *is* rendering input — it decides
+  // which panel the reader gets. The live failure is OR-ed in beside it so the
+  // very render that first sees one already fails open; the state exists only
+  // to keep that answer once `failureCount` resets under a later success.
+  // ---------------------------------------------------------------------
+  const [homeLocationEverFailed, setHomeLocationEverFailed] = useState(false);
+  const homeLocationReadFailed =
+    homeLocationEverFailed || homeLocationFailures > 0;
+  if (homeLocationReadFailed && !homeLocationEverFailed) {
+    // React's own "adjusting state during render" shape, not an effect: the
+    // latch is a fact about a value this render already holds, and React
+    // discards this pass and re-renders before painting, so nothing is ever
+    // shown on the un-latched value. An effect would set it a paint later,
+    // which is a cascading render for no gain — the OR above has already made
+    // this render correct.
+    setHomeLocationEverFailed(true);
+  }
 
   // Live seat-count updates for this single product. Browse pages don't
   // subscribe per-card (a 30-card grid is too many channels) — detail page
@@ -134,9 +183,17 @@ export function ProductDetailPage({
   // all are all already decided. Nor does the wait return once the page is up —
   // a parent confirming a place in the panel's dialog hands the country
   // straight to `confirmedLocation`, so the read that follows has nothing left
-  // to tell us. And a *failed* read does not hold the page either: React Query
-  // retries a failure for several seconds, which would trade the whole page for
-  // a check the gate below has already given up on.
+  // to tell us.
+  //
+  // **And the wait ends at the first failed attempt, not at the last retry.**
+  // `isLoading` is `isPending && isFetching`, which stays true across React
+  // Query's whole retry window, and `isError` only turns over once the last
+  // retry is spent — so gating on `isError` holds the entire page in skeleton
+  // for the several seconds the gate was never going to wait for anyway. One
+  // failure is enough to know this read is not going to answer in time:
+  // `failureCount` turns over immediately, the page paints, and the gate takes
+  // its fail-open branch — which the latch above then makes permanent, so
+  // nothing arrives later to contradict what the parent is looking at.
   if (
     productLoading ||
     authLoading ||
@@ -146,7 +203,7 @@ export function ProductDetailPage({
       product?.region_lock_country != null &&
       homeLocationId !== null &&
       confirmedLocation === undefined &&
-      !homeLocationError &&
+      !homeLocationReadFailed &&
       homeLocationLoading)
   ) {
     return <DetailLoadingSkeleton />;
@@ -257,7 +314,7 @@ export function ProductDetailPage({
       ? resolveRegionGate({
           regionLockCountry: product.region_lock_country,
           confirmedCountry: confirmedLocation?.countryCode,
-          homeLocationReadFailed: homeLocationError,
+          homeLocationReadFailed,
           homeLocationCountry:
             homeLocationRow === null ? undefined : homeLocationRow.country_code,
         })
@@ -306,8 +363,9 @@ export function ProductDetailPage({
  * family's home location, waited on only where it can change what the signup
  * panel says — a region-locked product, a signed-in parent, a location stored
  * to resolve, and no pick confirmed in the panel's own dialog yet. It drops out
- * again the moment that read errors, since the gate fails open rather than
- * holding the page over a retry.
+ * again on that read's **first failed attempt**, not on its last retry: the
+ * gate fails open rather than holding the page over a retry window, and the
+ * page's wait ends where the gate's patience does.
  *
  * **Nothing here is real chrome, and that is a property of this route rather
  * than a shortcut.** The band's three elements — back link, eyebrow, title —

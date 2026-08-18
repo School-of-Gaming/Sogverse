@@ -30,7 +30,7 @@ import { productAudience } from "@/components/public/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
-import { getCountryConfig } from "@/lib/constants/location-hierarchies";
+import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -301,23 +301,17 @@ function OperationalFacts({
   // Country names in the admin's own language, the config's English `name` as
   // the fallback, and the raw stored code as the last resort — the last one
   // covers a code no longer in the config at all, which must still be visible
-  // rather than silently reading as unlocked.
-  const regionLockName = (() => {
-    const code = product.region_lock_country;
-    if (code === null) return null;
-    try {
-      return (
-        new Intl.DisplayNames([uiLocale, "en"], {
-          type: "region",
-          fallback: "none",
-        }).of(code) ??
-        getCountryConfig(code)?.name ??
-        code
-      );
-    } catch {
-      return getCountryConfig(code)?.name ?? code;
-    }
-  })();
+  // rather than silently reading as unlocked. That whole chain lives in
+  // `countryDisplayName`, shared with the shop panel: it is the same four links
+  // in the same order, and it is where the two load-bearing details of the
+  // `Intl` call are written down — `"en"` named as the second language so the
+  // answer is the same on the server and on every visitor's machine (a bare
+  // `[locale]` falls back to the *runtime* default and hydrates differently),
+  // and `fallback: "none"` so the fallbacks below it are reachable at all.
+  const regionLockName =
+    product.region_lock_country === null
+      ? null
+      : countryDisplayName(product.region_lock_country, uiLocale);
   // The family-facing tag words, so this row and the shop card cannot disagree
   // about what a tag is called. Plain text, no chip: this is the admin panel,
   // and the chip treatment belongs to the surfaces families read.

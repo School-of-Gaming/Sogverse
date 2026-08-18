@@ -45,13 +45,20 @@ export interface RegionLockScenarioMeta {
  */
 export const REGION_LOCK_BASE_SCENARIO: PreviewScenario = "consumer-club";
 
-/** The country the fixture product is locked to. */
-const LOCK = "FI";
+/**
+ * The country the fixture product is locked to.
+ *
+ * France rather than Finland, deliberately: nearly every other fixture on this
+ * platform is Finnish, so a Finnish lock is invisible — a reviewer cannot tell
+ * a country the panel *read* from the country everything here happens to be in.
+ * A French lock makes the comparison the panel is doing legible on sight.
+ */
+const LOCK = "FR";
 /** Where the family is, in the wrong-country scenario. */
-const ELSEWHERE = "SE";
+const ELSEWHERE = "FI";
 
-/** Where the family lives, in the eligible scenario. */
-const HOME = "Helsinki";
+/** Where the family lives, in the eligible scenario — a French commune. */
+const HOME = "Lyon";
 
 export const REGION_LOCK_SCENARIOS: readonly RegionLockScenarioMeta[] = [
   {

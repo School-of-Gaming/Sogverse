@@ -22,11 +22,30 @@ import {
  * Translations are stubbed to echo their keys, so nothing here depends on
  * English wording. The interpolated country still comes through, which is how
  * the refusal's one variable is checked.
+ *
+ * `rich` echoes the same way and then hands the result to whatever tag
+ * functions the call passed, so a chunk wrapper is actually *invoked* rather
+ * than skipped — which is what lets the refusal's "the country carries weight"
+ * assertion be about the rendered element instead of about the source.
  */
-vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
-    values ? `${key}:${JSON.stringify(values)}` : key,
-}));
+vi.mock("next-intl", () => {
+  type TagFn = (chunks: unknown) => unknown;
+  type PlainValue = string | number;
+  const echo = (key: string, values?: Record<string, PlainValue>) =>
+    values ? `${key}:${JSON.stringify(values)}` : key;
+  const t = (key: string, values?: Record<string, PlainValue>) =>
+    echo(key, values);
+  t.rich = (key: string, values?: Record<string, PlainValue | TagFn>) => {
+    const plain: Record<string, PlainValue> = {};
+    const tags: TagFn[] = [];
+    for (const [name, value] of Object.entries(values ?? {})) {
+      if (typeof value === "function") tags.push(value);
+      else plain[name] = value;
+    }
+    return tags.reduce<unknown>((chunks, tag) => tag(chunks), echo(key, plain));
+  };
+  return { useTranslations: () => t };
+});
 
 // A real UUID, hardcoded: the picker row carries an identicon, and a readable
 // stand-in renders a degenerate one. Never generated at test time.
@@ -125,6 +144,25 @@ describe("wrong country", () => {
     );
     expect(container.textContent).toContain("regionLock.wrongCountry");
     expect(container.textContent).toContain("Finland");
+  });
+
+  it("states it as information, with the country weighted", () => {
+    // The treatment is the point of this state, not decoration: a parent who
+    // came to buy meets an inert panel, so the one thing left on it has to
+    // read as an answer rather than as a page that failed to load. Info tint
+    // (nothing is wrong and nothing is theirs to fix), and the country — the
+    // single fact they are scanning for — goes through a weighted wrapper.
+    //
+    // The panel's own type header is weighted too, so the assertion is which
+    // weighted element the country landed in rather than that one exists.
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: wrongCountry })} />,
+    );
+    expect(container.innerHTML).toContain("bg-info/10");
+    const weighted = [...container.querySelectorAll(".font-semibold")].filter(
+      (el) => el.textContent.includes("Finland"),
+    );
+    expect(weighted).toHaveLength(1);
   });
 
   it("still shows the panel's own header and price", () => {

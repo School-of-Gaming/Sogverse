@@ -1,4 +1,4 @@
-import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
+import { getCountryConfig } from "@/lib/constants/location-hierarchies";
 
 /**
  * **The region lock, as the shop panel has to reason about it.**
@@ -30,9 +30,12 @@ import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
  * - `eligible` — the product is locked and this family is inside it. The signup
  *   form stays whole and gains a section stating where the product is offered
  *   and where the family lives. It carries no action: the statement is worth
- *   making to the people it is true for — it is the same sentence the blocked
- *   reader gets, and here it explains why the location on file matters — but
- *   changing a location mid-purchase is settings' business, not the panel's.
+ *   making to the people it is true for — it explains why the location on file
+ *   matters — but changing a location mid-purchase is settings' business, not
+ *   the panel's. Its sentence is the refusal's *converse*, not its twin: the
+ *   blocked reader is told the product is only offered somewhere else, and this
+ *   reader is told it is available to them because of where they live. Two
+ *   speech acts, two message keys, deliberately not one.
  * - `no_location` — the product is locked and we do not know where the family
  *   is. This is a *missing input*, not a refusal, and the parent can clear it
  *   themselves in one step, so the signup form stays and gains a section asking
@@ -87,9 +90,19 @@ export interface RegionGateInputs {
    * one is; it outranks the read for as long as both are in play, because the
    * picker handed us the row the profile now points at and the keyed read of it
    * is merely catching up.
+   *
+   * `null` is a *confirmed* pick whose row carries no country — the same three
+   * values the read below has, and for the same reason: "they picked a place
+   * with no code" and "they have picked nothing" are different facts and are
+   * answered differently.
    */
-  confirmedCountry: string | undefined;
-  /** The keyed read of the family's home location errored. */
+  confirmedCountry: string | null | undefined;
+  /**
+   * The keyed read of the family's home location errored — and, in the live
+   * page, *has errored at any point during this mount*. It is latched there
+   * rather than sampled per render, because a late success flipping this back
+   * to false would rewrite a panel the parent is already filling in.
+   */
   homeLocationReadFailed: boolean;
   /**
    * The country on the resolved home-location row. Three distinct values:
@@ -107,18 +120,23 @@ export interface RegionGateInputs {
  * than in the page because the two ways of not knowing are a *rule*, not
  * plumbing — and a rule stated in a component is one nothing can test.
  *
- * **Both of them fail open.** The block is a soft UI signal with nothing behind
- * it, so the two errors are not symmetric: refusing an honest buyer — or
+ * **All three of them fail open.** The block is a soft UI signal with nothing
+ * behind it, so the two errors are not symmetric: refusing an honest buyer — or
  * standing them in front of a question they have already answered — costs a
  * sale over a fault of ours, while letting one family past a lock the server
  * never enforced costs nothing the design was relying on.
  *
- * - **The read failed.** No country now, and none on this render however long
- *   React Query keeps retrying.
+ * - **The read failed.** No country now, and none for the rest of this mount:
+ *   the caller latches the failure, so a retry landing later cannot take the
+ *   form back off a parent who is already filling it in.
  * - **The row resolved and carries no country at all.** Deliberately not
  *   `no_location`: their location *is* set, this read is the authority on it,
  *   and offering the dialog would ask them to overwrite a stored value to
  *   answer a question about data we are missing.
+ * - **The place they just confirmed carries no country.** The same fact as
+ *   above, learned a different way, so it gets the same answer — and it has to,
+ *   or the one path that was supposed to clear the question would end by asking
+ *   it again, with the panel wedged on an answer no pick can give.
  */
 export function resolveRegionGate({
   regionLockCountry,
@@ -127,6 +145,7 @@ export function resolveRegionGate({
   homeLocationCountry,
 }: RegionGateInputs): RegionGate {
   if (confirmedCountry !== undefined) {
+    if (confirmedCountry === null) return { kind: "unlocked" };
     return deriveRegionGate(regionLockCountry, confirmedCountry);
   }
   if (homeLocationReadFailed) return { kind: "unlocked" };
@@ -136,6 +155,12 @@ export function resolveRegionGate({
 
 /**
  * A country code as a reader's own language spells it.
+ *
+ * **The one home for this chain**, and every surface that has to name a locked
+ * country calls it — the shop panel's three sentences and the admin details
+ * row alike. Two copies of a four-link fallback chain drift silently: they had
+ * already grown different guards and different config lookups before this was
+ * folded back together.
  *
  * `Intl.DisplayNames` rather than the `name` on the country config, and the
  * reason is the sentence this lands in: "only offered to families in {country}"
@@ -164,8 +189,7 @@ export function resolveRegionGate({
  *   and quietly print "families in FI" where the config knows the word.
  */
 export function countryDisplayName(code: string, locale: string): string {
-  const fallback =
-    SUPPORTED_COUNTRIES.find((country) => country.code === code)?.name ?? code;
+  const fallback = getCountryConfig(code)?.name ?? code;
   // `Intl.DisplayNames.of` throws a RangeError on anything that is not a
   // well-formed region subtag, so the shape is checked rather than caught: a
   // malformed code is a data problem, and a try/catch here would swallow it.

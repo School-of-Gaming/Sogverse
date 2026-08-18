@@ -8,8 +8,9 @@ import {
   buildScenarioFixture,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import { deriveRegionGate } from "@/components/public/products/region-lock/region-gate";
+import { resolveRegionGate } from "@/components/public/products/region-lock/region-gate";
 import type { RegionLockScenarioMeta } from "@/components/public/products/region-lock/region-lock-scenarios";
+import type { ConfirmedHomeLocation } from "@/components/public/products/signup-panel-view";
 import { previewSceneHref } from "../href";
 
 /**
@@ -30,9 +31,10 @@ import { previewSceneHref } from "../href";
  * written onto its row, and a viewer the lock has something to say to. They
  * name the fixture they render, so nothing here decides which product a region
  * scenario is about. This component stands where the live route's data shell
- * stands, so it does what that shell does — derive the gate and hold the
- * country the parent picks — while the panel below owns the dialog, exactly as
- * in production.
+ * stands, so it does what that shell does — resolve the gate through the same
+ * shared function, with the scenario's seeded location standing in for the
+ * keyed read, and hold the place the parent picks — while the panel below owns
+ * the dialog, exactly as in production.
  */
 export function ProductDetailScene({
   scenario,
@@ -41,19 +43,16 @@ export function ProductDetailScene({
   scenario: PreviewScenario;
   regionLock?: RegionLockScenarioMeta;
 }) {
-  // Where the family lives, country and name both. The scenario seeds it;
-  // confirming a place in the panel's dialog replaces it, so the gate re-derives
-  // against the pick and a reviewer can walk from "no location" into either
-  // outcome — the confirmation in place, or the overlay — without opening a
-  // second page. The write behind it is inert, as every backend-touching action
-  // in a scene is: there is no profile row here.
-  const [viewerLocation, setViewerLocation] = useState<{
-    country: string | null;
-    name: string | null;
-  }>({
-    country: regionLock?.viewerCountry ?? null,
-    name: regionLock?.viewerLocationName ?? null,
-  });
+  // A place confirmed in the panel's dialog, held exactly where the live
+  // route's data shell holds it — so the pick outranks the scenario's seeded
+  // location the same way it outranks a keyed read in production, and a
+  // reviewer can walk from "no location" into either outcome (the confirmation
+  // in place, or the overlay) without opening a second page. The write behind
+  // it is inert, as every backend-touching action in a scene is: there is no
+  // profile row here.
+  const [confirmed, setConfirmed] = useState<ConfirmedHomeLocation | undefined>(
+    undefined,
+  );
 
   const fixture = buildScenarioFixture(scenario);
   const summaryHref = previewSceneHref("confirmation", scenario);
@@ -73,14 +72,19 @@ export function ProductDetailScene({
           state={fixture.state}
           authState={fixture.authState}
           summaryHref={summaryHref}
-          regionGate={deriveRegionGate(
-            product.region_lock_country,
-            viewerLocation.country,
-          )}
-          homeLocationName={viewerLocation.name}
-          onLocationPicked={({ countryCode, name }) =>
-            setViewerLocation({ country: countryCode, name })
+          // The shell's own call, verbatim: a scenario's seeded country stands
+          // in for the keyed read, the dialog's pick outranks it, and a
+          // codeless pick fails open here for the same reason it does live.
+          regionGate={resolveRegionGate({
+            regionLockCountry: product.region_lock_country,
+            confirmedCountry: confirmed?.countryCode,
+            homeLocationReadFailed: false,
+            homeLocationCountry: regionLock?.viewerCountry ?? undefined,
+          })}
+          homeLocationName={
+            confirmed?.name ?? regionLock?.viewerLocationName ?? null
           }
+          onLocationPicked={setConfirmed}
         />
       }
       // Read from the registration state exactly as the live route reads it,

@@ -207,16 +207,18 @@ export function SignupPanel({
       userId: user.id,
       updates: { home_location_id: pick.location.id },
     });
-    // A row with no country tells the gate nothing, so nothing is handed up and
-    // the keyed read of the row we just pointed at stays the authority. Setting
-    // a null here would pin the gate to "we do not know" for the life of the
-    // page — a wedge, on the one path that was supposed to clear it.
-    if (pick.location.country_code !== null) {
-      onLocationConfirmed({
-        countryCode: pick.location.country_code,
-        name: localizedLocationName(pick.location, fields.locale),
-      });
-    }
+    // The pick goes up whatever it carries, **including a row with no country
+    // at all**. That is not nothing: it is the same fact the gate already fails
+    // open on when it reads a codeless row for itself, and it deserves the same
+    // answer from whichever direction it arrives. Withholding it instead —
+    // leaving the keyed read as the authority — is what wedges the panel: the
+    // gate stays on "we do not know where you live" after the parent has just
+    // said, the CTA stays dead, and the question is re-asked on the one path
+    // that exists to clear it.
+    onLocationConfirmed({
+      countryCode: pick.location.country_code,
+      name: localizedLocationName(pick.location, fields.locale),
+    });
     void refreshProfile().catch(() => {
       // Nothing to say and nobody to say it to: the write landed, the panel is
       // already showing its outcome, and the next navigation rebuilds the

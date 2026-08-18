@@ -95,14 +95,13 @@ export function PreviewSignupPanel({
    */
   const saveLocation = async (pick: LocationPick) => {
     await new Promise((resolve) => setTimeout(resolve, FAKE_COMMIT_MS));
-    // The same fall-through the live adapter makes: a row with no country tells
-    // the gate nothing, so nothing is reported and the scene keeps what it had.
-    if (pick.location.country_code !== null) {
-      onLocationPicked?.({
-        countryCode: pick.location.country_code,
-        name: localizedLocationName(pick.location, fields.locale),
-      });
-    }
+    // Reported whatever it carries, exactly as the live adapter reports it — a
+    // row with no country included, since the gate fails that open rather than
+    // re-asking a question the parent has just answered.
+    onLocationPicked?.({
+      countryCode: pick.location.country_code,
+      name: localizedLocationName(pick.location, fields.locale),
+    });
   };
 
   return (

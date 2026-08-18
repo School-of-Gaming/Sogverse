@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   countryDisplayName,
   deriveRegionGate,
@@ -99,6 +99,26 @@ describe("resolveRegionGate", () => {
     ).toEqual({ kind: "unlocked" });
   });
 
+  it("fails open on a place the parent confirmed that carries no country", () => {
+    // The same fact as the codeless row below, learned from the other
+    // direction, so it has to get the same answer. Handing back `no_location`
+    // here would re-ask the question on the one path that exists to clear it:
+    // the parent answers, the panel asks again, and no pick they can make ever
+    // moves it. Fail open instead, exactly as a codeless read does.
+    expect(
+      resolveRegionGate({ ...base, confirmedCountry: null }),
+    ).toEqual({ kind: "unlocked" });
+    // And it still outranks the read underneath it, like any confirmed pick —
+    // including a read that had a perfectly good country a moment ago.
+    expect(
+      resolveRegionGate({
+        ...base,
+        confirmedCountry: null,
+        homeLocationCountry: "SE",
+      }),
+    ).toEqual({ kind: "unlocked" });
+  });
+
   it("fails open on a resolved row that carries no country", () => {
     // Emphatically not `no_location`: their location IS set, so offering the
     // dialog would invite them to overwrite a stored value — and the keyed read
@@ -120,7 +140,37 @@ describe("resolveRegionGate", () => {
   });
 });
 
+/**
+ * A runtime whose ICU data cannot name a single region.
+ *
+ * Every environment this suite actually runs in — Node with full ICU, and every
+ * browser — names all of `SUPPORTED_COUNTRIES` outright, so the two fallbacks
+ * beneath the `Intl` call are unreachable *by observation*: a test that merely
+ * checks the answer is not the bare code passes without the fallback ever
+ * running, and would go on passing if the fallback were deleted. Blinding the
+ * call is what makes those links testable at all, and it is also the honest
+ * picture of the case they exist for — a small-ICU build.
+ */
+function blindIntlDisplayNames() {
+  vi.spyOn(Intl, "DisplayNames").mockImplementation(
+    () =>
+      ({
+        of: () => undefined,
+        resolvedOptions: () => ({
+          locale: "en",
+          style: "long",
+          type: "region",
+          fallback: "none",
+        }),
+      }) as Intl.DisplayNames,
+  );
+}
+
 describe("countryDisplayName", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("names a country in the reader's own language", () => {
     expect(countryDisplayName("FI", "en")).toBe("Finland");
     expect(countryDisplayName("FI", "fi")).toBe("Suomi");
@@ -150,10 +200,35 @@ describe("countryDisplayName", () => {
   });
 
   it("prefers the catalogued English name over the bare code", () => {
-    // The middle link of the chain: a code we deliberately support is named
-    // even on a runtime whose ICU data has nothing for it.
+    // The middle link of the chain, genuinely executed. **Asserted in Finnish
+    // on purpose**: the catalogue's English names happen to be character-for-
+    // character what ICU returns for `en`, so an English sweep would pass
+    // whether the fallback ran or not — and would go on passing if the
+    // blinding below silently stopped working. In `fi` the two disagree on
+    // every country ("Suomi", "Ranska", "Ruotsi"), so a pass here is proof
+    // that Intl answered nothing and the config answered instead.
+    blindIntlDisplayNames();
+    expect(countryDisplayName("FI", "fi")).toBe("Finland");
     for (const country of SUPPORTED_COUNTRIES) {
-      expect(countryDisplayName(country.code, "en")).not.toBe(country.code);
+      expect(countryDisplayName(country.code, "fi")).toBe(country.name);
+    }
+    // And only a code in no catalogue at all reaches the last resort.
+    expect(countryDisplayName("QQ", "fi")).toBe("QQ");
+  });
+
+  it("takes ICU's word for it wherever ICU has one", () => {
+    // The normal path, stated as agreement rather than as inequality: on a
+    // full-ICU runtime every supported code resolves through `Intl`, and the
+    // catalogue is only consulted where `Intl` returns nothing. Comparing
+    // against the same call the function makes is what keeps this honest on a
+    // runtime with less data, where it degrades to the assertion above rather
+    // than to a false pass.
+    for (const country of SUPPORTED_COUNTRIES) {
+      const icu = new Intl.DisplayNames(["en", "en"], {
+        type: "region",
+        fallback: "none",
+      }).of(country.code);
+      expect(countryDisplayName(country.code, "en")).toBe(icu ?? country.name);
     }
   });
 });

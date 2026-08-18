@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { MapPin, MapPinCheck, Plus } from "lucide-react";
+import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -151,11 +151,17 @@ export interface SignupRegionGate {
  *
  * Both halves are what the panel's host needs and cannot get from the write it
  * just made: the country re-derives the gate before the keyed read of the row
- * lands, and the name is what the confirmation variant says back. A pick whose
- * row carries no country never becomes one of these — see the adapter.
+ * lands, and the name is what the confirmation variant says back.
+ *
+ * **A pick whose row carries no country is still one of these**, with a null
+ * code. The alternative — reporting nothing and letting the keyed read stay the
+ * authority — leaves the gate saying "we do not know where you live" after the
+ * parent has just told us, on the one path that exists to clear that question.
+ * A confirmed null is a fact, and the gate fails it open exactly as it fails
+ * open on a codeless row it read for itself.
  */
 export interface ConfirmedHomeLocation {
-  countryCode: string;
+  countryCode: string | null;
   /** Already resolved for the viewer's locale. */
   name: string;
 }
@@ -539,18 +545,33 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
 /**
  * The product is not sold where this family lives.
  *
- * Deliberately the wrong-role note's exact treatment: a muted, bordered
- * statement where the form was. The two say different things and mean the same
- * one — there is nothing here for you — and a reader who has met either
- * recognises the second. Nothing louder is warranted: no error, no destructive
- * red, nothing has gone wrong.
+ * **Louder than the wrong-role note beside it, and on purpose.** The two look
+ * like the same thing — a statement where the form was — but they are met by
+ * different readers. A gedu or a gamer on a shop URL already knows they are not
+ * the audience; the note only confirms it, so a muted line is right. A parent
+ * who came to buy does not know, and an inert panel with a small grey line
+ * under it reads as a page that failed to load. This is the whole answer they
+ * get, so it is sized like one.
  *
- * The country is named, in the reader's own language. A refusal that will not
- * say what it is refusing on leaves them with nothing to understand — and the
- * lock is not a secret, it is where the product is sold. What the sentence
- * pointedly does not do is mention that a location is a settings field they
- * could change: the block is a statement about who the product is offered to,
- * not a puzzle with a published solution.
+ * **Info, not warning and not error.** Nothing has gone wrong and nothing is
+ * their fault: the product is sold somewhere else, which is a fact about the
+ * product. So the tint is the `info` semantic pair, never `destructive` or
+ * `warning` (which would tell them to fix something) and never `primary`
+ * (which is the panel's *act on this* colour, and there is nothing to act on).
+ * The `Globe` anchors it — the same subject the section's `MapPin` marks, one
+ * scale up because this block is the panel's entire content.
+ *
+ * The country is named, in the reader's own language and in the sentence's only
+ * weighted words: it is the one fact the reader needs and the one they will
+ * scan for. A refusal that will not say what it is refusing on leaves them with
+ * nothing to understand — and the lock is not a secret, it is where the product
+ * is sold. What the sentence pointedly does not do is mention that a location
+ * is a settings field they could change: the block is a statement about who the
+ * product is offered to, not a puzzle with a published solution.
+ *
+ * It keeps the panel's container geometry — one block in the slot the form
+ * occupied, no wider and no taller than its own content — so the rail around it
+ * is the rail every other state draws.
  */
 function WrongCountryOverlay({
   requiredCountry,
@@ -561,11 +582,15 @@ function WrongCountryOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <p className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-      {t("regionLock.wrongCountry", {
-        country: countryDisplayName(requiredCountry, locale),
-      })}
-    </p>
+    <div className="flex items-start gap-3 rounded-md border border-info/30 bg-info/10 p-4">
+      <Globe className="mt-0.5 h-5 w-5 shrink-0 text-info" />
+      <p className="text-sm text-foreground">
+        {t.rich("regionLock.wrongCountry", {
+          country: countryDisplayName(requiredCountry, locale),
+          name: (chunks) => <span className="font-semibold">{chunks}</span>,
+        })}
+      </p>
+    </div>
   );
 }
 
@@ -615,10 +640,13 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
  * transform is the direct result of the confirm they just made, so the reflow
  * below it is one the reader is braced for.
  *
- * **It says something worth saying to the people it is true for.** The
- * refused reader is told the product is only offered in one country; so is the
- * permitted one, and for them it is the sentence that explains why the location
- * on file matters at all. What it does not do is invite an edit: there is no
+ * **It says something worth saying to the people it is true for, in their own
+ * direction.** The refusal says the product is only offered somewhere else;
+ * this says it is available to you because of where you live. Same fact, two
+ * speech acts — and the conditional wording that is exactly right for the
+ * excluded reader ("only offered to families in …") reads as a hedge to the
+ * one who is already in, which is why they are two message keys rather than one
+ * shared string. What it does not do is invite an edit: there is no
  * change-location control, because a parent halfway through a purchase should
  * not be nudged into rewriting a profile field, and settings is where a location
  * is changed. That absence is also what keeps this out of the CTA's checklist —
@@ -851,10 +879,12 @@ function SignupForm(
 
       {/* One slot between the picker and the rules, which is where the CTA's
           checklist names it, and which both locked-and-signed-in states share.
-          It is present from the panel's first paint — the gate is resolved
-          before the page renders — so nothing below it is ever pushed down by
-          its arrival; the only later change is the question becoming its own
-          answer in place, which is a confirm the reader just made. */}
+          It is present from the panel's first paint and stays whatever it was:
+          the page either waits for the country before painting, or resolves the
+          gate without it and *latches* that — so a read landing late cannot
+          push this slot into existence, or out of it, under a reader who is
+          part-way through the form. The only later change is the question
+          becoming its own answer in place, which is a confirm they just made. */}
       {needsLocation && props.regionGate !== undefined && (
         <RegionLocationSection onSetLocation={props.regionGate.onSetLocation} />
       )}

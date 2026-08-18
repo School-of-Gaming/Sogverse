@@ -34,6 +34,18 @@ interface DialogProps {
  * the most recently registered, since that is the one that arrived over the
  * other.
  *
+ * **Depth is not the same thing as paint order, and this is the one place that
+ * could show.** Both portals mount at `z-50` into `document.body`, so what
+ * paints on top is DOM insertion order — which for a *nested* pair agrees with
+ * depth, because the inner dialog can only exist once the outer one has. Every
+ * pair this app opens is nested, so the two orderings never disagree today. A
+ * root-level dialog opened *over* an already-open nested one would be the
+ * exception: it would paint on top and still not take Escape, because it is
+ * shallower. That is latent rather than broken — no such stacking exists — and
+ * it is deliberately not solved here, since comparing portal positions to
+ * decide a keypress is real machinery for a case with no caller. If such a
+ * stacking ever appears, this is the paragraph to come back to.
+ *
  * A single dialog is unaffected: it is the only entry, so it is always the top.
  */
 const DialogDepthContext = React.createContext(0);
