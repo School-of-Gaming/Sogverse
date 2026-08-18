@@ -1,12 +1,16 @@
+import type { GameAccountExternalId } from "@/components/game-account";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
   BillingMode,
+  GroupParticipationDetail,
   ProductGroupsSnapshot,
   ProductType,
 } from "@/types";
 
 /**
  * The Groups panel's pure rules: how a drag/drop payload is read, what a drop
- * resolves to, and whether the panel may comp-enroll onto this product.
+ * resolves to, whether the panel may comp-enroll onto this product, and which
+ * game identity — if any — its chips are about.
  *
  * They live outside the panel component so each one can be exercised directly —
  * the interesting cases (a never-paid waitlister promoted onto a subscription-
@@ -253,4 +257,121 @@ export function canCompEnroll(
   billingMode: BillingMode,
 ): boolean {
   return !isSubscriptionShaped(productType, billingMode);
+}
+
+// ---------------------------------------------------------------------------
+// The chip's game identity
+// ---------------------------------------------------------------------------
+
+/**
+ * The render URLs one batched Roblox lookup resolved, keyed by the account id
+ * as a string — the record `useRobloxRenders` hands back, and the only form an
+ * answer may be read in: **by the id the response names, never by position.**
+ *
+ * `undefined` is the whole map before the one call lands (or after it failed),
+ * and a missing or `null` entry is an account Roblox has no render for. All
+ * three draw the silhouette, so they collapse to one value here — the chip's
+ * figure box is a fixed square either way, and nothing moves when the pictures
+ * arrive.
+ */
+export type RobloxRenderMap = Partial<Record<string, string | null>>;
+
+/**
+ * A chip's identity props, as the panel resolves them. Flat rather than an
+ * object the chip destructures, because the chip's content is memoized against
+ * dnd-kit re-rendering the wrapper on every pointer move, and a freshly built
+ * object would defeat that comparison on every frame of a drag.
+ *
+ * `gameAvatarUrl` carries the row's three-meaning `avatarUrl` unchanged:
+ * `undefined` lets the platform derive one from the name (which is what a
+ * Minecraft row wants and the only platform that can), and an explicit `null`
+ * is the drawn placeholder.
+ */
+export interface ChipGameIdentity {
+  /** `null` for a topic about no single game account — the chip draws no row. */
+  gamePlatform: GamePlatform | null;
+  gameUsername: string | null;
+  gameExternalId: GameAccountExternalId | null;
+  gameAvatarUrl: string | null | undefined;
+}
+
+/** The topic is about no game account: every chip drops its identity row. */
+const NO_GAME_IDENTITY: ChipGameIdentity = {
+  gamePlatform: null,
+  gameUsername: null,
+  gameExternalId: null,
+  gameAvatarUrl: null,
+};
+
+/**
+ * Which identity one chip draws, decided by the product's platform rather than
+ * by what the participation happens to carry. A child may hold both handles;
+ * the chip shows the one the product is about, and nothing at all when the
+ * product is about neither.
+ *
+ * Minecraft leaves `gameAvatarUrl` off, because its skin host is addressable by
+ * username and the row can find the face itself. Roblox cannot — a render only
+ * exists once something resolved it server-side by account id — so this hands
+ * over whatever the batch found, and the placeholder in every other case: an
+ * unverified handle has no id to ask about, and resolving the *name* would draw
+ * whichever stranger owns it beside a child's.
+ */
+export function chipGameIdentity(
+  participation: GroupParticipationDetail,
+  platform: GamePlatform | null,
+  renders: RobloxRenderMap | undefined,
+): ChipGameIdentity {
+  if (platform === null) return NO_GAME_IDENTITY;
+
+  if (platform === "minecraft") {
+    return {
+      gamePlatform: "minecraft",
+      gameUsername: participation.participant_minecraft_username,
+      gameExternalId: participation.participant_minecraft_uuid,
+      // Omitted on purpose — see the type's note.
+      gameAvatarUrl: undefined,
+    };
+  }
+
+  const robloxUserId = participation.participant_roblox_user_id;
+  return {
+    gamePlatform: "roblox",
+    gameUsername: participation.participant_roblox_username,
+    gameExternalId: robloxUserId,
+    gameAvatarUrl:
+      robloxUserId === null ? null : (renders?.[String(robloxUserId)] ?? null),
+  };
+}
+
+/**
+ * Every Roblox account id on the panel, in one pass over the snapshot — the
+ * list the single batched lookup is made from.
+ *
+ * **One request for the whole page, never one per chip.** The upstream cost is
+ * per request against a per-IP budget the entire serverless fleet shares, and
+ * this panel is the fifty-plus-chip surface that would drain it. Ids repeat
+ * freely here (siblings may share one game account); the hook normalizes the
+ * list into its cache key, so a duplicate costs nothing.
+ *
+ * Empty for any other platform, which disables the query outright — a Minecraft
+ * or topic-less product asks Roblox nothing.
+ */
+export function robloxIdsFrom(
+  snapshot: ProductGroupsSnapshot | undefined,
+  platform: GamePlatform | null,
+): number[] {
+  if (platform !== "roblox" || !snapshot) return [];
+
+  const ids: number[] = [];
+  const add = (p: GroupParticipationDetail) => {
+    if (p.participant_roblox_user_id !== null) {
+      ids.push(p.participant_roblox_user_id);
+    }
+  };
+
+  for (const group of snapshot.groups) group.participations.forEach(add);
+  snapshot.unassigned.forEach(add);
+  snapshot.waitlist.forEach(add);
+
+  return ids;
 }

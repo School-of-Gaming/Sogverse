@@ -12,6 +12,7 @@ import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { computeAge, cn } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
+import type { ChipGameIdentity } from "./panel-rules";
 
 // `satisfies` keeps the record exhaustive over GenderType while the values
 // keep their literal types, so t(GENDER_KEY[gender]) typechecks unasserted.
@@ -21,15 +22,20 @@ const GENDER_KEY = {
   non_binary: "genderNonBinary",
 } as const satisfies Record<GenderType, string>;
 
-interface ContentProps {
+/**
+ * The chip is dumb about game identities: which platform a product is about,
+ * which columns feed the row and where a Roblox render came from are all the
+ * panel's business (see `chipGameIdentity` in ./panel-rules). What arrives here
+ * is one platform's worth of identity, or `gamePlatform: null` for a product
+ * about no game account at all — and then the chip simply has no identity row.
+ */
+interface ContentProps extends ChipGameIdentity {
   participantId: string;
   firstName: string;
   dateOfBirth: string | null;
   gender: GenderType | null;
   parentFirstName: string | null;
   parentLastName: string | null;
-  minecraftUsername: string | null;
-  minecraftUuid: string | null;
   /**
    * The seat-holder's own address, on an adult seat only — and the chip's whole
    * discriminator. The RPC emits it where participant = customer and nowhere
@@ -47,8 +53,10 @@ const ChipContent = memo(function ChipContent({
   gender,
   parentFirstName,
   parentLastName,
-  minecraftUsername,
-  minecraftUuid,
+  gamePlatform,
+  gameUsername,
+  gameExternalId,
+  gameAvatarUrl,
   participantEmail,
 }: ContentProps) {
   const t = useTranslations("admin.products.groupsPanel");
@@ -125,21 +133,36 @@ const ChipContent = memo(function ChipContent({
                 <span className="truncate">{parentName}</span>
               </p>
             )}
-            <GameUsernameRow
-              platform="minecraft"
-              username={minecraftUsername}
-              externalId={minecraftUuid}
-              // The compact figure. The chip is a stack of four short lines in a
-              // 16rem rail, and the whole body was taller than the other three put
-              // together — the face carries the same identity at roughly the height
-              // of the text beside it.
-              figure="head"
-              // A picture butting straight against the parent's name reads as
-              // cramped. The gap is the call site's, not the row's: only this chip
-              // and the admin user page want it, so the component stays unpadded and
-              // every other surface keeps its tight rhythm.
-              className="mt-2"
-            />
+            {/* No platform, no row — the same call the adult variant above
+                makes. A product about Programming or Esports is about no single
+                account a child holds, so there is nothing to draw and nothing
+                that could later appear in that slot; a reserved empty line
+                beside content that can never sit next to it would read as a
+                chip that failed to load. The chip is simply shorter. */}
+            {gamePlatform !== null && (
+              <GameUsernameRow
+                platform={gamePlatform}
+                username={gameUsername}
+                externalId={gameExternalId}
+                // Three meanings, and the panel picked one: omitted lets a
+                // Minecraft row derive the face from the name, a string is the
+                // Roblox render the panel's one batched lookup resolved, and
+                // null is the placeholder — what an unverified handle, an
+                // in-flight batch and a fixture all pass.
+                avatarUrl={gameAvatarUrl}
+                // The compact figure. The chip is a stack of four short lines in a
+                // 16rem rail, and the whole body was taller than the other three put
+                // together — the face carries the same identity at roughly the height
+                // of the text beside it. Square on both platforms, so the chip's
+                // geometry is identical whichever one the product is about.
+                figure="head"
+                // A picture butting straight against the parent's name reads as
+                // cramped. The gap is the call site's, not the row's: only this chip
+                // and the admin user page want it, so the component stays unpadded and
+                // every other surface keeps its tight rhythm.
+                className="mt-2"
+              />
+            )}
           </>
         )}
       </div>
@@ -162,8 +185,10 @@ export function ParticipantChip({
   gender,
   parentFirstName,
   parentLastName,
-  minecraftUsername,
-  minecraftUuid,
+  gamePlatform,
+  gameUsername,
+  gameExternalId,
+  gameAvatarUrl,
   participantEmail,
   isPending,
 }: ParticipantChipProps) {
@@ -198,8 +223,10 @@ export function ParticipantChip({
         gender={gender}
         parentFirstName={parentFirstName}
         parentLastName={parentLastName}
-        minecraftUsername={minecraftUsername}
-        minecraftUuid={minecraftUuid}
+        gamePlatform={gamePlatform}
+        gameUsername={gameUsername}
+        gameExternalId={gameExternalId}
+        gameAvatarUrl={gameAvatarUrl}
         participantEmail={participantEmail}
       />
     </div>

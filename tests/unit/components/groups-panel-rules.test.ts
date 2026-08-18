@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   canCompEnroll,
+  chipGameIdentity,
   dragSubjectsFrom,
   isSubscriptionShaped,
   readDropData,
   readChipDragData,
   resolveDrop,
+  robloxIdsFrom,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
-import type { ProductGroupsSnapshot } from "@/types";
+import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
 
 // resolveDrop's third argument, named at the call sites so the boolean reads.
 // It answers one question: can this product's active seat exist without a
@@ -360,6 +362,165 @@ describe("dragSubjectsFrom", () => {
         SUBSCRIPTION_CLUB,
       ),
     ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+  });
+});
+
+describe("chipGameIdentity", () => {
+  // A child who holds both handles, so every case below is decided by the
+  // product's platform rather than by which column happens to be filled in.
+  function child(
+    overrides: Partial<GroupParticipationDetail> = {},
+  ): GroupParticipationDetail {
+    return {
+      id: "p-1",
+      participant_id: "gamer-1",
+      participant_first_name: "Aino",
+      participant_date_of_birth: null,
+      participant_gender: null,
+      participant_minecraft_username: "Notch",
+      participant_minecraft_uuid: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+      participant_roblox_username: "AinoBuilds",
+      participant_roblox_user_id: 261,
+      parent_first_name: null,
+      parent_last_name: null,
+      participant_email: null,
+      status: "active",
+      signed_up_at: "2026-01-01T00:00:00Z",
+      has_live_subscription: false,
+      has_payment_marker: false,
+      ...overrides,
+    };
+  }
+
+  it("draws the Minecraft columns on a Minecraft product", () => {
+    expect(chipGameIdentity(child(), "minecraft", undefined)).toEqual({
+      gamePlatform: "minecraft",
+      gameUsername: "Notch",
+      gameExternalId: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+      gameAvatarUrl: undefined,
+    });
+  });
+
+  it("leaves a Minecraft row to find its own face", () => {
+    // Not null — omitted. The skin host is addressable by username, so the row
+    // derives the render itself; an explicit null would be the placeholder and
+    // would silently strip every Minecraft face on the panel.
+    expect(chipGameIdentity(child(), "minecraft", {}).gameAvatarUrl).toBe(
+      undefined,
+    );
+  });
+
+  it("draws the Roblox columns on a Roblox product, never the Minecraft ones", () => {
+    const identity = chipGameIdentity(child(), "roblox", {
+      "261": "https://tr.rbxcdn.com/aino-headshot",
+    });
+    expect(identity.gamePlatform).toBe("roblox");
+    expect(identity.gameUsername).toBe("AinoBuilds");
+    expect(identity.gameExternalId).toBe(261);
+    expect(identity.gameAvatarUrl).toBe("https://tr.rbxcdn.com/aino-headshot");
+  });
+
+  it("takes the render the response named, not one it was handed by position", () => {
+    // The single failure worse than no picture: one child wearing another's
+    // face. The map is read by this participation's own id and nothing else.
+    const renders = {
+      "99": "https://tr.rbxcdn.com/somebody-else",
+      "261": "https://tr.rbxcdn.com/aino-headshot",
+    };
+    expect(chipGameIdentity(child(), "roblox", renders).gameAvatarUrl).toBe(
+      "https://tr.rbxcdn.com/aino-headshot",
+    );
+  });
+
+  it("falls back to the placeholder for every way a render can be absent", () => {
+    // In flight (or failed — renders are never retried): no map at all.
+    expect(chipGameIdentity(child(), "roblox", undefined).gameAvatarUrl).toBe(
+      null,
+    );
+    // Answered, and Roblox has no render for this account.
+    expect(
+      chipGameIdentity(child(), "roblox", { "261": null }).gameAvatarUrl,
+    ).toBe(null);
+    // The response somehow omitted an id we asked about.
+    expect(chipGameIdentity(child(), "roblox", {}).gameAvatarUrl).toBe(null);
+  });
+
+  it("keeps an unverified Roblox handle on the silhouette", () => {
+    // No id to ask about, and resolving the *name* would draw whichever
+    // stranger happens to own it beside a child's. The name still shows.
+    const identity = chipGameIdentity(
+      child({ participant_roblox_user_id: null }),
+      "roblox",
+      { "261": "https://tr.rbxcdn.com/aino-headshot" },
+    );
+    expect(identity.gameUsername).toBe("AinoBuilds");
+    expect(identity.gameExternalId).toBe(null);
+    expect(identity.gameAvatarUrl).toBe(null);
+  });
+
+  it("draws no identity at all for a topic about no game account", () => {
+    // Both handles are on the row and neither is the product's business.
+    expect(chipGameIdentity(child(), null, undefined)).toEqual({
+      gamePlatform: null,
+      gameUsername: null,
+      gameExternalId: null,
+      gameAvatarUrl: null,
+    });
+  });
+});
+
+describe("robloxIdsFrom", () => {
+  function queued(id: string, robloxUserId: number | null) {
+    return {
+      id,
+      participant_id: `gamer-of-${id}`,
+      participant_first_name: "Aino",
+      participant_date_of_birth: null,
+      participant_gender: null,
+      participant_minecraft_username: null,
+      participant_minecraft_uuid: null,
+      participant_roblox_username: robloxUserId === null ? "typed_only" : "Aino",
+      participant_roblox_user_id: robloxUserId,
+      parent_first_name: null,
+      parent_last_name: null,
+      participant_email: null,
+      status: "active" as const,
+      signed_up_at: "2026-01-01T00:00:00Z",
+      has_live_subscription: false,
+      has_payment_marker: false,
+    };
+  }
+
+  const snapshot: ProductGroupsSnapshot = {
+    product_id: "product-1",
+    groups: [
+      {
+        id: "group-1",
+        name: "Group A",
+        created_at: "2026-01-01T00:00:00Z",
+        gedus: [],
+        participations: [queued("p-grouped", 261), queued("p-typed", null)],
+      },
+    ],
+    unassigned: [queued("p-inbox", 12)],
+    waitlist: [queued("p-queued", 7)],
+  };
+
+  it("collects every verified id on the panel, in one list", () => {
+    // Groups, inbox and waitlist together: the whole page is one request, and
+    // a section left out would leave its chips permanently on the silhouette.
+    // Duplicates are fine here — the hook normalizes the list into its key.
+    expect([...robloxIdsFrom(snapshot, "roblox")].sort((a, b) => a - b)).toEqual(
+      [7, 12, 261],
+    );
+  });
+
+  it("asks Roblox nothing on any other product", () => {
+    // An empty list disables the query outright, so a Minecraft or topic-less
+    // product spends none of the shared per-IP budget.
+    expect(robloxIdsFrom(snapshot, "minecraft")).toEqual([]);
+    expect(robloxIdsFrom(snapshot, null)).toEqual([]);
+    expect(robloxIdsFrom(undefined, "roblox")).toEqual([]);
   });
 });
 

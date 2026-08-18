@@ -6,18 +6,26 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
 import { ParticipantChip } from "./participant-chip";
+import { chipGameIdentity, type RobloxRenderMap } from "./panel-rules";
 
 interface UnassignedCardProps {
   participations: GroupParticipationDetail[];
   /** participation ids with an in-flight move or removal (greyed/undraggable). */
   pendingChipIds: Set<string>;
+  /** Which identity this product's chips draw, or null for a topic with none. */
+  gamePlatform: GamePlatform | null;
+  /** The panel's one batched Roblox lookup; undefined until it lands. */
+  robloxRenders: RobloxRenderMap | undefined;
 }
 
 export function UnassignedCard({
   participations,
   pendingChipIds,
+  gamePlatform,
+  robloxRenders,
 }: UnassignedCardProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { setNodeRef, isOver } = useDroppable({
@@ -64,8 +72,7 @@ export function UnassignedCard({
                 gender={p.participant_gender}
                 parentFirstName={p.parent_first_name}
                 parentLastName={p.parent_last_name}
-                minecraftUsername={p.participant_minecraft_username}
-                minecraftUuid={p.participant_minecraft_uuid}
+                {...chipGameIdentity(p, gamePlatform, robloxRenders)}
                 isPending={pendingChipIds.has(p.id)}
               />
             ))}

@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { GroupsPanel } from "@/components/admin/products/groups/groups-panel";
+import { TimezoneProvider } from "@/providers";
 import type {
   BillingMode,
   ProductGroupsSnapshot,
+  ProductTopic,
   ProductType,
 } from "@/types";
 
@@ -12,7 +14,7 @@ import type {
  * The wiring the rules suite cannot see.
  *
  * `panel-rules` is pure and exhaustively tested on its own, so this file
- * deliberately does not re-test the decision table. What it pins is the two
+ * deliberately does not re-test the decision table. What it pins is the three
  * things that live only in the panel and that no amount of rule testing would
  * catch:
  *
@@ -24,6 +26,10 @@ import type {
  *  2. **A blocked outcome writes nothing.** The refusal is only worth anything
  *     if the drag handler stops before the mutation — a dialog rendered *after*
  *     a promote had already fired would look identical on screen.
+ *  3. **The topic decides which identity every chip draws, and the whole page
+ *     is resolved in one Roblox call.** Both are panel-level: `chipGameIdentity`
+ *     is pure and cannot tell whether the panel ever asked it, and a per-chip
+ *     lookup would render identically while draining a shared per-IP budget.
  *
  * Everything a drag needs to know is read off the snapshot, so the drag itself
  * is delivered by calling the handler dnd-kit would call. Simulating pointer
@@ -77,11 +83,14 @@ vi.mock("next-intl", () => ({
 // The presentational children are not what is under test, and stubbing them
 // keeps this file about the drag handler. The refusal dialog is deliberately
 // NOT stubbed: "the dialog opened" is half the claim.
+//
+// The unassigned card is the one exception, and also deliberate: it is the
+// cheapest place to see a real chip, and which identity a chip draws is a panel
+// decision that only the rendered chip can prove. Every drag case below uses a
+// grouped or waitlisted participation, so the real card changes nothing for
+// them.
 vi.mock("@/components/admin/products/groups/group-column", () => ({
   GroupColumn: () => <div data-testid="group-column" />,
-}));
-vi.mock("@/components/admin/products/groups/unassigned-card", () => ({
-  UnassignedCard: () => <div data-testid="unassigned-card" />,
 }));
 vi.mock("@/components/admin/products/groups/waitlist-card", () => ({
   WaitlistCard: () => <div data-testid="waitlist-card" />,
@@ -108,6 +117,22 @@ const mutations = vi.hoisted(() => ({
   other: vi.fn(),
 }));
 
+// The batched render lookup, stubbed at the hook the way every other service
+// call in this file is: the real one is a React Query read behind a fetch to
+// our own avatar route, and what this file is about is *what the panel asked
+// for* and what it did with the answer.
+const roblox = vi.hoisted(() => ({
+  renders: vi.fn(),
+  data: undefined as Record<string, string | null> | undefined,
+}));
+
+vi.mock("@/services/roblox", () => ({
+  useRobloxRenders: (ids: readonly number[], figure: string) => {
+    roblox.renders(ids, figure);
+    return { data: roblox.data };
+  },
+}));
+
 vi.mock("@/services/groups", () => {
   const stub = (pick: () => () => void) => () => ({
     mutate: pick(),
@@ -115,7 +140,10 @@ vi.mock("@/services/groups", () => {
     isPending: false,
   });
   return {
-    useProductGroups: () => ({ data: snapshot, isLoading: false }),
+    useProductGroups: () => ({
+      data: snapshotOverride ?? snapshot,
+      isLoading: false,
+    }),
     useGroupPending: () => ({
       moves: new Set<string>(),
       removes: new Set<string>(),
@@ -198,22 +226,37 @@ const snapshot: ProductGroupsSnapshot = {
   ],
 };
 
-function renderPanel(productType: ProductType, billingMode: BillingMode) {
+// The snapshot a single test wants instead — the identity cases need a chip in
+// the unassigned inbox (the one card rendered for real). Reset per test.
+let snapshotOverride: ProductGroupsSnapshot | null = null;
+
+function renderPanel(
+  productType: ProductType,
+  billingMode: BillingMode,
+  // Minecraft unless a case is about the topic: every drag case here predates
+  // the identity row and is decided without it.
+  topic: ProductTopic = "minecraft_java",
+) {
   render(
-    <GroupsPanel
-      productId="product-1"
-      productType={productType}
-      billingMode={billingMode}
-      // Irrelevant to every case here: the audience is read by the participant
-      // picker alone (stubbed above), never by the drag rules under test.
-      audience="gamers"
-      seatCount={null}
-      waitlistEnabled
-      voiceAvailable={false}
-      voiceIsOpen={false}
-      opensDate=""
-      opensTime=""
-    />,
+    // The chip prints an age in the viewer's zone, so a real chip needs the
+    // real provider. Nothing else in this file reads it.
+    <TimezoneProvider initialTimezone="Europe/Helsinki">
+      <GroupsPanel
+        productId="product-1"
+        productType={productType}
+        billingMode={billingMode}
+        topic={topic}
+        // Irrelevant to every case here: the audience is read by the participant
+        // picker alone (stubbed above), never by the drag rules under test.
+        audience="gamers"
+        seatCount={null}
+        waitlistEnabled
+        voiceAvailable={false}
+        voiceIsOpen={false}
+        opensDate=""
+        opensTime=""
+      />
+    </TimezoneProvider>,
   );
 }
 
@@ -235,6 +278,9 @@ function noMutationFired() {
 
 beforeEach(() => {
   dnd.onDragEnd = null;
+  snapshotOverride = null;
+  roblox.renders.mockReset();
+  roblox.data = undefined;
   for (const fn of Object.values(mutations)) fn.mockReset();
 });
 
@@ -317,5 +363,84 @@ describe("GroupsPanel — a blocked drop writes nothing", () => {
     expect(
       screen.getByText("admin.products.groupsPanel.removeParticipant.confirmCta"),
     ).toBeTruthy();
+  });
+});
+
+describe("GroupsPanel — the topic decides which identity a chip draws", () => {
+  // One child holding both handles, sitting in the inbox — so every case below
+  // differs only in the topic the panel was rendered with.
+  const ROBLOX_USER_ID = 261;
+  const RENDER_URL = "https://tr.rbxcdn.com/aino-headshot";
+
+  function seatOneChild() {
+    snapshotOverride = {
+      ...snapshot,
+      unassigned: [
+        participation("6ff4a1c1-5b0a-4a58-9d2f-1e0a7c9b3d51", {
+          participant_minecraft_username: "Notch",
+          participant_minecraft_uuid: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+          participant_roblox_username: "AinoBuilds",
+          participant_roblox_user_id: ROBLOX_USER_ID,
+        }),
+      ],
+    };
+  }
+
+  it("draws the Minecraft handle on a Minecraft product, and asks Roblox nothing", () => {
+    seatOneChild();
+    renderPanel("consumer_club", "free", "minecraft_java");
+
+    expect(screen.getByText("Notch")).toBeTruthy();
+    expect(screen.queryByText("AinoBuilds")).toBeNull();
+    // The face is derived from the name by the skin host — no lookup at all,
+    // which is why the Roblox batch is called with an empty (disabled) list.
+    expect(document.querySelector("img")?.getAttribute("src")).toContain(
+      "Notch",
+    );
+    expect(roblox.renders).toHaveBeenCalledWith([], "head");
+  });
+
+  it("draws the Roblox handle on a Roblox product, and never the Minecraft one", () => {
+    seatOneChild();
+    roblox.data = { [String(ROBLOX_USER_ID)]: RENDER_URL };
+    renderPanel("consumer_club", "free", "roblox_studio");
+
+    expect(screen.getByText("AinoBuilds")).toBeTruthy();
+    expect(screen.queryByText("Notch")).toBeNull();
+  });
+
+  it("resolves the whole page's renders in one batched call, keyed by id", () => {
+    seatOneChild();
+    roblox.data = { [String(ROBLOX_USER_ID)]: RENDER_URL };
+    renderPanel("consumer_club", "free", "roblox_studio");
+
+    // One call for the panel — never one per chip — for the head figure the
+    // chip actually draws, and the answer reaches the chip by the id the
+    // response named rather than by position.
+    expect(roblox.renders).toHaveBeenCalledWith([ROBLOX_USER_ID], "head");
+    expect(document.querySelector("img")?.getAttribute("src")).toBe(RENDER_URL);
+  });
+
+  it("keeps the silhouette while the batch is in flight", () => {
+    // `data` undefined is both "in flight" and "the lookup failed" — renders are
+    // never retried — and both draw the placeholder rather than an empty box.
+    // The name is on screen from the first frame either way.
+    seatOneChild();
+    renderPanel("consumer_club", "free", "roblox_studio");
+
+    expect(screen.getByText("AinoBuilds")).toBeTruthy();
+    expect(document.querySelector("img")).toBeNull();
+  });
+
+  it("draws no identity row at all on a topic about no game account", () => {
+    seatOneChild();
+    renderPanel("consumer_club", "free", "programming");
+
+    expect(screen.queryByText("Notch")).toBeNull();
+    expect(screen.queryByText("AinoBuilds")).toBeNull();
+    // Not an empty row either: a chip with no platform is shorter by exactly
+    // the row it does not draw, so the "(none)" label is absent too.
+    expect(screen.queryByText("gameAccount.none")).toBeNull();
+    expect(roblox.renders).toHaveBeenCalledWith([], "head");
   });
 });
