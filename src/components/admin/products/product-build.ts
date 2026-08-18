@@ -524,14 +524,21 @@ function buildSharedFields(
     prices: showPricing
       ? SUPPORTED_CURRENCIES.map((currency) => {
           const row = state.prices[currency];
-          // `validate()` blocks submit when the relevant field is
-          // blank/invalid, so the null fallback is unreachable in practice.
           // Consumer clubs charge the monthly price; camps/events the upfront
-          // total. Either way it's the single `price_cents`.
-          const priceCents =
-            pricingShape === "monthly"
-              ? (decimalToCents(row.month) ?? 0)
-              : (decimalToCents(row.session) ?? 0);
+          // total. Either way it's the single `price_cents`, and it is always
+          // strictly positive — a paid product costing nothing is the free
+          // billing mode, not a price. validate() rejects exactly that, and
+          // build only runs after it passes, so a blank or non-positive amount
+          // here is a broken invariant. We assert it rather than coercing to 0:
+          // a wrong price should never be invented from an invalid draft.
+          const priceCents = decimalToCents(
+            pricingShape === "monthly" ? row.month : row.session,
+          );
+          if (priceCents == null || priceCents <= 0) {
+            throw new Error(
+              `buildSharedFields called before validate(): ${currency} price is not a positive amount`,
+            );
+          }
           return {
             currency,
             price_cents: priceCents,

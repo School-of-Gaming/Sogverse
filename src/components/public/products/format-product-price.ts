@@ -10,9 +10,8 @@ import type { BillingMode, ProductPrice, ProductType } from "@/types";
 // matching `productBrowse.card.*` i18n key.
 //
 // Authoritative source for amounts is the per-currency row in
-// `product_prices` × the platform-wide constants in
-// src/lib/constants/pricing.ts. The client never sends a price during
-// checkout — Stripe Checkout creation recomputes from the same constants.
+// `product_prices`. The client never sends a price during checkout — the
+// server recomputes from the same row.
 
 export type ProductPriceLine =
   | { kind: "free" }
@@ -55,7 +54,7 @@ export function formatProductPrice({
     };
   }
 
-  // camp / event upfront — the single product price.
+  // paid camp / paid event upfront — the single product price.
   return {
     kind: "upfront",
     total: formatCurrencyFromCents(row.price_cents, currency, locale),

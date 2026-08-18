@@ -1,8 +1,39 @@
 import { describe, it, expect } from "vitest";
 import {
+  buildPricingOption,
   purchaseShapeFor,
   type PricingOption,
 } from "@/components/public/products/pricing-options";
+
+// buildPricingOption computes the one option a product offers; the FREE branch
+// keys on billing_mode alone, so a free camp is free and a paid one priced at
+// nothing is still a checkout — the mirror of the browse card's decision.
+
+describe("buildPricingOption", () => {
+  it("returns kind=free for a free camp", () => {
+    expect(
+      buildPricingOption({
+        prices: [],
+        billingMode: "free",
+        productType: "camp",
+        currency: "eur",
+        currencyLabel: "EUR",
+      }),
+    ).toEqual({ kind: "free" });
+  });
+
+  it("keeps a paid camp with a 0-cent row on the upfront path", () => {
+    expect(
+      buildPricingOption({
+        prices: [{ currency: "eur", price_cents: 0 }],
+        billingMode: "paid",
+        productType: "camp",
+        currency: "eur",
+        currencyLabel: "EUR",
+      }),
+    ).toEqual({ kind: "upfront", totalCents: 0 });
+  });
+});
 
 // purchaseShapeFor maps the one pricing option a product offers to the purchase
 // shape the create-participation route expects. The `external` case is the
