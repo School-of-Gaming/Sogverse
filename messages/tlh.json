@@ -1487,6 +1487,7 @@
   "sessionFeed": {
     "readMore": "latlh yIlaD",
     "showLess": "puS yIcha’",
+    "lastEditedBy": "choHwI’ Qav: {name}",
     "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}"
   },
   "groups": {

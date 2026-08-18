@@ -240,10 +240,28 @@ const SORTERS_PLAN =
  * "no record" spec, because a family has no way to tell that state apart from
  * the epoch-exempt one the gedu's feed distinguishes, and inventing the
  * difference here would be inventing it on the page.
+ *
+ * **`lastEditedBy` is written per spec rather than derived.** The chip on a card
+ * names the gedu who last touched that session, so it is a fact about the
+ * individual week and not a rotation anything could compute. A spec carrying a
+ * report names one of its scenario's own gedus; a spec with no report needs
+ * none, because the chip renders only where there is a write-up to sign.
+ *
+ * The mix is deliberate on the two-gedu scenarios: one gedu writes most weeks
+ * and the other appears on a handful, which is what a group with a regular and a
+ * stand-in actually looks like — and it means a scroll through the term shows
+ * two faces rather than one repeated or two alternating like a pattern. The
+ * single-gedu scenarios name their one gedu throughout, which is the commoner
+ * shape and the one that proves a signed feed does not need variety to read.
  */
 type FamilyEntrySpec =
-  | { kind: "future"; report?: string }
-  | { kind: "past"; report?: string; attendance?: AttendanceMark };
+  | { kind: "future"; report?: string; lastEditedBy?: FamilyProductGedu }
+  | {
+      kind: "past";
+      report?: string;
+      attendance?: AttendanceMark;
+      lastEditedBy?: FamilyProductGedu;
+    };
 
 /**
  * The active club's run: seven sessions ahead (so the divider reads "6 upcoming
@@ -266,27 +284,82 @@ const ACTIVE_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "future" },
   { kind: "future" },
   { kind: "future" },
-  { kind: "future", report: SORTERS_PLAN },
+  { kind: "future", report: SORTERS_PLAN, lastEditedBy: SANNA },
   { kind: "future" },
   { kind: "future" },
-  { kind: "future", report: LIGHTHOUSE_PLAN },
+  { kind: "future", report: LIGHTHOUSE_PLAN, lastEditedBy: SANNA },
 
-  { kind: "past", report: CASTLE_RECAP, attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[0], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[1], attendance: "absent" },
-  { kind: "past", report: NETHER_TRIP, attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[2] },
+  { kind: "past", report: CASTLE_RECAP, attendance: "present", lastEditedBy: SANNA },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[0],
+    attendance: "present",
+    lastEditedBy: SANNA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[1],
+    attendance: "absent",
+    lastEditedBy: PETRA,
+  },
+  { kind: "past", report: NETHER_TRIP, attendance: "present", lastEditedBy: SANNA },
+  { kind: "past", report: SHORT_REPORTS[2], lastEditedBy: SANNA },
   { kind: "past" },
-  { kind: "past", report: SHORT_REPORTS[3], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[4], attendance: "present" },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[3],
+    attendance: "present",
+    lastEditedBy: PETRA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[4],
+    attendance: "present",
+    lastEditedBy: SANNA,
+  },
   { kind: "past", attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[5], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[6], attendance: "absent" },
-  { kind: "past", report: SHORT_REPORTS[7], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[0], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[1], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[2], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[3], attendance: "present" },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[5],
+    attendance: "present",
+    lastEditedBy: SANNA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[6],
+    attendance: "absent",
+    lastEditedBy: SANNA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[7],
+    attendance: "present",
+    lastEditedBy: PETRA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[0],
+    attendance: "present",
+    lastEditedBy: SANNA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[1],
+    attendance: "present",
+    lastEditedBy: SANNA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[2],
+    attendance: "present",
+    lastEditedBy: SANNA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[3],
+    attendance: "present",
+    lastEditedBy: SANNA,
+  },
 ];
 
 /** The in-person club: shorter run, same grammar, no live room anywhere. */
@@ -295,13 +368,33 @@ const IN_PERSON_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "future" },
   { kind: "future" },
   { kind: "future" },
-  { kind: "past", report: SHORT_REPORTS[4], attendance: "present" },
-  { kind: "past", report: SHORT_REPORTS[5], attendance: "present" },
-  { kind: "past", report: NETHER_TRIP, attendance: "absent" },
-  { kind: "past", report: SHORT_REPORTS[6] },
-  { kind: "past", report: SHORT_REPORTS[7], attendance: "present" },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[4],
+    attendance: "present",
+    lastEditedBy: PETRA,
+  },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[5],
+    attendance: "present",
+    lastEditedBy: PETRA,
+  },
+  { kind: "past", report: NETHER_TRIP, attendance: "absent", lastEditedBy: JOONAS },
+  { kind: "past", report: SHORT_REPORTS[6], lastEditedBy: PETRA },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[7],
+    attendance: "present",
+    lastEditedBy: PETRA,
+  },
   { kind: "past" },
-  { kind: "past", report: SHORT_REPORTS[0], attendance: "present" },
+  {
+    kind: "past",
+    report: SHORT_REPORTS[0],
+    attendance: "present",
+    lastEditedBy: JOONAS,
+  },
 ];
 
 /**
@@ -316,6 +409,7 @@ const CAMP_SPECS: readonly FamilyEntrySpec[] = [
   {
     kind: "past",
     attendance: "present",
+    lastEditedBy: SANNA,
     report: `# Day five: the showcase
 
 Every team demoed their finished course, and then we all took turns failing at each other's.
@@ -329,24 +423,28 @@ Thank you for a very good week — they were tired by Wednesday and still turned
   {
     kind: "past",
     attendance: "present",
+    lastEditedBy: SANNA,
     report:
       "# Day four: sound and lighting\n\nNeon needs neon, so the afternoon went on emissive parts and a soundtrack that loops without anyone noticing the seam.\n\nThere is now a very loud sound on the finish line, which was not my idea and is staying.",
   },
   {
     kind: "past",
     attendance: "present",
+    lastEditedBy: JOONAS,
     report:
       "# Day three: our first scripts\n\nWe wrote our first Lua today — a checkpoint that saves where you got to — and then broke it on purpose to find out what the error messages actually mean.\n\nThe useful part was the breaking. A script that says it cannot find something is not being rude, it is telling you the thing is not there.",
   },
   {
     kind: "past",
     attendance: "absent",
+    lastEditedBy: SANNA,
     report:
       "# Day two: building the course\n\nTeams of two, one obstacle each, all snapped together into a single course by the end of the afternoon.\n\nIt is unfair and much too long, which everyone considers to be the point.",
   },
   {
     kind: "past",
     attendance: "present",
+    lastEditedBy: SANNA,
     report:
       "# Day one: getting started\n\nEveryone got a Roblox Studio account working, made a baseplate and pushed a block off it.\n\nA quiet start on purpose. Tomorrow we pick a theme and start building for real.",
   },
@@ -371,6 +469,7 @@ const PARENTS_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "future" },
   {
     kind: "future",
+    lastEditedBy: JOONAS,
     report:
       "# Next week: the parental controls tour\n\nWe are going through the console and launcher settings together — screen time, purchases, and who can message whom.\n\n**Bring** the device your family actually argues about. Nothing needs installing beforehand.",
   },
@@ -378,6 +477,7 @@ const PARENTS_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   {
     kind: "past",
     attendance: "present",
+    lastEditedBy: JOONAS,
     report: `# What our kids are actually building
 
 A slower session than usual, and a better one for it.
@@ -391,17 +491,19 @@ We finished on screen time. No consensus, which was expected, but the agreement 
   {
     kind: "past",
     attendance: "present",
+    lastEditedBy: JOONAS,
     report:
       "# Servers, whitelists and who can join\n\nWe walked through how a private world differs from a public one, and why the club's own world is neither.\n\nThe practical takeaway: a whitelist is a list of names, somebody has to keep it, and that somebody is us.",
   },
   { kind: "past", attendance: "absent" },
   {
     kind: "past",
+    lastEditedBy: JOONAS,
     report:
       "# The first evening\n\nIntroductions, what each of us was hoping to get out of this, and a very quick tour of the game most of our children spend their week in.\n\nNobody was expected to have played before, and most had not.",
     attendance: "present",
   },
-  { kind: "past", report: SHORT_REPORTS[5] },
+  { kind: "past", report: SHORT_REPORTS[5], lastEditedBy: JOONAS },
   { kind: "past", attendance: "present" },
 ];
 
@@ -423,6 +525,7 @@ const NEW_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "future" },
   {
     kind: "future",
+    lastEditedBy: SANNA,
     report:
       "# First session\n\nWe start with names, ground rules and one baseplate each. Nothing to bring and nothing to install — everything happens in the room we join from here.",
   },
@@ -768,8 +871,20 @@ function toEntry(
   startsAt: Date,
   endsAt: Date,
 ): FamilySessionEntry {
+  // A spec naming nobody is a session nothing has stamped — which is what an
+  // occurrence with no stored row behind it looks like, and the state the chip
+  // renders nothing for.
+  const lastEditedBy = spec.lastEditedBy ?? null;
+
   if (spec.kind === "future") {
-    return { kind: "future", id, startsAt, endsAt, report: spec.report ?? null };
+    return {
+      kind: "future",
+      id,
+      startsAt,
+      endsAt,
+      report: spec.report ?? null,
+      lastEditedBy,
+    };
   }
   return {
     kind: "past",
@@ -778,6 +893,7 @@ function toEntry(
     endsAt,
     report: spec.report ?? null,
     attendance: spec.attendance ?? null,
+    lastEditedBy,
   };
 }
 

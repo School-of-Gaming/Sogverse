@@ -112,6 +112,25 @@ export const geduFeedSession = z.object({
   updated_at: z.string(),
   created_by: z.string().nullable(),
   updated_by: z.string().nullable(),
+  /**
+   * The first name behind `updated_by`, so a card can sign itself without a
+   * second lookup. Null when nothing has stamped the row, and null with
+   * `updated_by` set only if the profile has gone (the FK is ON DELETE SET
+   * NULL, so that pairing is unreachable today) — a consumer wants BOTH halves
+   * before it names anybody.
+   *
+   * **This is the session's last editor, not the report's author, and the
+   * imprecision is accepted rather than overlooked.** `updated_by` is stamped
+   * by every recorded touch: materializing the row, saving either written
+   * field, and each attendance mark or unmark. So a gedu who only corrected a
+   * tick, or edited the private staff note, is named on a write-up somebody
+   * else typed. In practice the gedu who touches one part of a session touches
+   * all of it, and a dedicated per-field author column was judged not worth the
+   * schema for that edge — so the chip claims "last edited by", which is
+   * exactly what this answers. Do not close the gap by quietly adding a
+   * report-author column.
+   */
+  updated_by_first_name: z.string().nullable(),
   attendance: z.record(z.string(), attendanceStatus),
 });
 

@@ -1205,4 +1205,169 @@ describe("gedu session feed", () => {
       expect(row?.notes).toBe("First note at this building.");
     });
   });
+
+  // -------------------------------------------------------------------------
+  // 10. The last editor, by id and by first name
+  // -------------------------------------------------------------------------
+  //
+  // The feed has always carried `updated_by`; 00194 put the first name beside
+  // it so a card can sign itself without a second lookup. What this block
+  // settles is the SEMANTIC, because it is the part a reader is most likely to
+  // guess wrong: the pair names whoever last touched the session in any
+  // recorded way, which is not necessarily whoever wrote the report.
+
+  describe("the session's last editor", () => {
+    /** A second gedu on the SAME group — the whole point of this block. */
+    let marker: SupabaseClient<Database>;
+    let markerId = "";
+    let markerFirstName = "";
+    let writerFirstName = "";
+
+    beforeAll(async () => {
+      // Unique per run: CI's database carries the seed fixtures AND whatever a
+      // previous run left behind, so a fixed address is a collision waiting to
+      // happen.
+      const email = `feed-marker-${Date.now()}@test.local`;
+      const { data, error } = await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Ruut", last_name: "Marker" },
+      });
+      expect(error).toBeNull();
+      markerId = data.user!.id;
+
+      // handle_new_user lands every signup as a customer; the gedu role and the
+      // extension row are an admin's doing, exactly as in the real flow.
+      await admin.from("profiles").update({ role: "gedu" }).eq("id", markerId);
+      await admin.from("customer_profiles").delete().eq("user_id", markerId);
+      await admin
+        .from("gedu_profiles")
+        .insert({ user_id: markerId, certified: true });
+
+      await admin.from("gedu_group_assignments").insert({
+        group_id: GROUP_MINE,
+        gedu_id: markerId,
+        product_id: PRODUCT_MINE,
+      });
+
+      marker = await createAuthenticatedClient(email, "testpassword123");
+
+      // Read both names from the database rather than restating them here: the
+      // assertion is "the feed hands back THIS person's first name", and a
+      // hardcoded copy would pass just as happily against the wrong person.
+      const { data: names } = await admin
+        .from("profiles")
+        .select("id, first_name")
+        .in("id", [TEST_IDS.GEDU, markerId]);
+      writerFirstName =
+        names?.find((p) => p.id === TEST_IDS.GEDU)?.first_name ?? "";
+      markerFirstName =
+        names?.find((p) => p.id === markerId)?.first_name ?? "";
+      expect(writerFirstName).toBeTruthy();
+      expect(markerFirstName).toBe("Ruut");
+    });
+
+    afterAll(async () => {
+      // The assignment FK onto profiles is ON DELETE RESTRICT, so the row has
+      // to go before the account does.
+      await admin
+        .from("gedu_group_assignments")
+        .delete()
+        .eq("gedu_id", markerId);
+      await admin.auth.admin.deleteUser(markerId);
+      // The rows this block materialized, mirroring the family suite's cleanup.
+      // A blanket delete over the group is safe here: the file-level beforeEach
+      // wipes these three groups before every test, so nothing downstream reads
+      // a session list this could shorten.
+      await admin.from("group_sessions").delete().eq("group_id", GROUP_MINE);
+    });
+
+    /** GROUP_MINE's session on `date`, straight off the feed. */
+    async function sessionOn(client: SupabaseClient<Database>, date: string) {
+      const { data, error } = await client.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(error).toBeNull();
+      return geduGroupFeed
+        .parse(data)
+        .sessions.find((s) => s.session_date === date);
+    }
+
+    it("leaves both halves null on a row no RPC stamped", async () => {
+      // Seeded straight through the service-role client, so nothing set
+      // `updated_by`. Null is the honest answer and the card renders no chip —
+      // which is why the contract wants BOTH halves before it names anyone.
+      // Asserted, not fired and forgotten: (group, date) is unique, so a row
+      // left behind by an earlier run would turn this into a silent no-op and
+      // the expectations below would be reading somebody else's leftovers.
+      const { error: seedError } = await admin.from("group_sessions").insert({
+        group_id: GROUP_MINE,
+        session_date: YESTERDAY,
+        starts_at: `${YESTERDAY}T23:00:00.000Z`,
+        ends_at: `${TODAY}T00:00:00.000Z`,
+        report: "Written by nobody in particular.",
+      });
+      expect(seedError).toBeNull();
+
+      const session = await sessionOn(geduAuth, YESTERDAY);
+      expect(session?.updated_by).toBeNull();
+      expect(session?.updated_by_first_name).toBeNull();
+    });
+
+    it("names the gedu who saved the report", async () => {
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the castle wall.",
+        p_gedu_note: "",
+      });
+
+      const session = await sessionOn(geduAuth, YESTERDAY);
+      expect(session?.updated_by).toBe(TEST_IDS.GEDU);
+      expect(session?.updated_by_first_name).toBe(writerFirstName);
+    });
+
+    /**
+     * **The documented semantic, asserted rather than assumed: this is the last
+     * TOUCHER of the session, not the author of the report.**
+     *
+     * One gedu writes the family-facing report; a different gedu then corrects
+     * a single attendance tick and nothing else. The pair now names the second
+     * gedu — on a write-up they did not type.
+     *
+     * That is accepted behaviour and not a bug to fix here. `updated_by` is
+     * stamped by every recorded touch (materialization, either written field,
+     * and each mark or unmark), and in practice the gedu who touches one part
+     * of a session touches all of it; a per-field author column was judged not
+     * worth the schema for this edge. The chip claims "last edited by", which
+     * is exactly what this test pins. If someone later makes this expectation
+     * fail by introducing a report-author column, that is a product decision
+     * being reversed, not a regression being repaired.
+     */
+    it("hands the attendance marker, not the report's writer, once someone else touches it", async () => {
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the castle wall.",
+        p_gedu_note: "",
+      });
+
+      const { error } = await marker.rpc("record_attendance", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.GAMER,
+        p_status: "present",
+      });
+      expect(error).toBeNull();
+
+      const session = await sessionOn(geduAuth, YESTERDAY);
+      // The report is untouched — only the register moved — and the last
+      // editor moved with it anyway.
+      expect(session?.report).toBe("We finished the castle wall.");
+      expect(session?.updated_by).toBe(markerId);
+      expect(session?.updated_by_first_name).toBe(markerFirstName);
+      expect(session?.updated_by).not.toBe(TEST_IDS.GEDU);
+    });
+  });
 });

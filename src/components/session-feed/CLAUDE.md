@@ -70,6 +70,60 @@ family module reaching into the gedu tree.
 string under `gedu.*` means a copy edit for the workspace silently rewrites what a parent
 reads — that bug shipped once; the namespaces are the fix.
 
+## The attribution chip
+
+**Rule: a card carrying a write-up is signed, in its bottom-right corner, on both feeds.**
+The chip is one shared component in this module rather than a copy per surface: a report is
+attributed the same way wherever it is read, and a chip that sat somewhere else — or said
+something else — on the staff side would be inventing a distinction neither surface has. It
+renders only where there is both a write-up (the shared trimmed test, so a report of one
+newline signs nothing) and somebody to name. The corner is chosen for what it is far from:
+both cards spend their header's right-hand side on a status, so the top corner would stack
+against whichever status is up, and the bottom one is empty on every card in both feeds. Its
+label comes from the shared `sessionFeed` namespace, and the positioned wrapper carries that
+label as the accessible name for the whole chip — a bare first name read out on its own says
+nothing about why it is there.
+
+**Rule: the relative wrapper around a card is unconditional, on both feeds.** It is there to
+give the absolutely-positioned chip a positioning context of *exactly one card* — without it
+the offsets resolve against whatever ancestor happens to be positioned, the list or the page.
+(It is not about clipping: the card primitive sets no overflow, so a chip rendered inside one
+would not be cut in half either.) What makes it unconditional is a different concern
+entirely: **the card's subtree identity has to survive every state flip**, and a wrapper that
+came and went with the chip meant an entry toggling its editor was returning a structurally
+different tree. React discarded the whole card mid-flush, which took the Edit button the feed
+refocuses on close and the report's expanded Read-more state with it. So the wrapper is
+present on every carded entry and only the chip inside it is conditional. The quiet dashed
+rows are not cards and keep their own shape.
+
+**Rule: a signed card reserves bottom padding for the chip, computed from the chip's own
+geometry.** The chip stands 30px tall plus its ring and hangs 10px below the card's border
+box, so ~22px of it rises *above* that border — past the card's ordinary 16/20px padding and
+across whatever the last block of content is (the staff-note box's border on the gedu feed, a
+report line's descenders on a narrow viewport). The reservation is decided at render from
+data the card already has, so it is stable and shifts nothing; it is the same on both feeds
+and at both breakpoints, because the chip's size does not change with the viewport. Move the
+chip's height or its offset and the padding is re-derived in the same change.
+
+**Rule: the chip names the session's LAST EDITOR, not the report's author, and that
+imprecision is a settled product decision.** The stored row's audit column is stamped by
+every recorded touch — materializing the row, saving either written field, and each
+attendance mark or unmark — so a gedu who only corrected a tick is named beside a write-up
+somebody else typed. In practice the gedu who touches one part of a session touches all of
+it, and a per-field author column was judged not worth the schema for that edge. **Do not
+close the gap by adding a report-author column**; that is a new product decision, not a
+refactor, and the field is named *last edited by* rather than *author* precisely so the
+claim on screen stays true. Both halves of the pair — the id that seeds the identicon and
+the first name — are required before anybody is named; either half missing is nobody.
+
+**Rule: the staff feed hides the chip while that entry's editor is open.** Save and Cancel
+sit in the bottom-right corner of the expanded card, exactly where the chip hangs, and a
+chip floating over an unsaved draft would be claiming authorship of text that is not stored
+yet. It returns when the editor closes, over whatever was actually saved. Folding a saved
+draft into an entry locally carries the existing editor through rather than rewriting it,
+for the same reason: the stamp belongs to the database, and the authoritative answer arrives
+with the refetched row.
+
 ## Contracts the shell holds (and why they are load-bearing)
 
 - **One keyed list, one boundary.** Future entries, month labels, the now-divider and the

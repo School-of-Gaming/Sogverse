@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   ATTENDANCE_TONE,
+  SessionAttributionChip,
   SessionReport,
   hasReport,
   type AttendanceMark,
@@ -66,6 +67,13 @@ interface FamilySessionFeedItemProps {
  * report and no mark means there is genuinely nothing to say about that evening;
  * a full card holding one apologetic sentence would give an absence of
  * paperwork the same weight on the page as an actual write-up.
+ *
+ * **A card with a write-up on it is signed**, with the chip straddling its
+ * bottom-right corner — and it is signed identically for a parent and for the
+ * child. Attendance is the parent-only signal on this row because it is a fact
+ * about the child that the adult paying for the club needs; who wrote the
+ * write-up is a fact about the write-up, and a child reading their own club's
+ * page has the same reason to know whose voice it is.
  */
 export function FamilySessionFeedItem({
   entry,
@@ -101,10 +109,24 @@ export function FamilySessionFeedItem({
     );
   }
 
-  return (
+  // Signed only where there is something to sign. Both halves have to hold: a
+  // card with no write-up has nothing to attribute, and a row nothing has
+  // stamped (or whose editor's profile has gone) has nobody to name.
+  const editor = written ? entry.lastEditedBy : null;
+
+  const card = (
     <Card
       className={cn(
         "p-4 sm:p-5",
+        // Room for the chip, derived from its geometry and not from taste: it
+        // stands 30px tall plus a 2px ring and hangs 10px below the card, so
+        // 22px of it rises above the card's bottom border — past a 16/20px pad
+        // and over the last block of content. 32px at BOTH breakpoints (the
+        // chip's size does not change with the viewport) leaves ~11px between
+        // the content's bottom edge and the top of the chip. Re-derive this if
+        // the chip's height or its `-bottom-*` offset ever moves. The gedu row
+        // reserves the same space from the same numbers.
+        editor !== null && "pb-8 sm:pb-8",
         entry.kind === "future" && prominent && "border-info/50",
       )}
     >
@@ -162,6 +184,21 @@ export function FamilySessionFeedItem({
         />
       )}
     </Card>
+  );
+
+  // The wrapper gives the chip a positioning context of **exactly one card**,
+  // so its offsets resolve against this row rather than against whatever
+  // ancestor happens to be positioned. It is **unconditional** — every carded
+  // entry gets it, signed or not — so the card's subtree identity does not
+  // change when the chip appears or disappears, and both feeds return the same
+  // shape for a card. The row still renders exactly one element either way.
+  return (
+    <div className="relative">
+      {card}
+      {editor !== null && (
+        <SessionAttributionChip id={editor.id} firstName={editor.firstName} />
+      )}
+    </div>
   );
 }
 

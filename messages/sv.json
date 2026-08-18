@@ -1443,6 +1443,7 @@
   "sessionFeed": {
     "readMore": "Läs mer",
     "showLess": "Visa mindre",
+    "lastEditedBy": "Av {name}",
     "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}"
   },
   "groups": {

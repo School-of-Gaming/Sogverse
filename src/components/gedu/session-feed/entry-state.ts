@@ -388,6 +388,14 @@ export function draftFromEditorState(
  *
  * Empty text collapses back to `null` so a cleared note stops rendering its
  * block.
+ *
+ * **The last editor is carried through rather than rewritten**, because this
+ * function does not know who is saving and must not guess. The stamp is the
+ * database's — every recorded touch writes it server-side — so the authoritative
+ * answer arrives with the refetched row; folding a draft in locally is about the
+ * entry's *contents*, and inventing an editor here would put a name on the card
+ * that the next read could contradict. A gap saved into therefore stays unsigned
+ * until the row comes back, which is the honest state: nothing is stored yet.
  */
 export function applyDraftToEntry(
   entry: SessionFeedEntry,
@@ -398,6 +406,7 @@ export function applyDraftToEntry(
     report: draft.report.length > 0 ? draft.report : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
     attendance: draft.attendance,
+    lastEditedBy: entry.kind === "no_record" ? null : entry.lastEditedBy,
   };
 
   if (entry.kind === "future") {
