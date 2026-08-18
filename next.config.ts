@@ -48,12 +48,19 @@ function productImagePattern() {
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [productImagePattern()],
-    // AVIF ahead of WebP. Both are negotiated per request from `Accept`, and
-    // the encode is paid once per (url, width, quality) and then cached — so
-    // the extra encode cost is one-off while the ~20–30% saving over WebP is
-    // paid back on every fetch. Egress is the whole reason this optimizer is
-    // here.
-    formats: ["image/avif", "image/webp"],
+    // WebP only — AVIF was weighed and rejected (owner decision, 2026-08-18).
+    // AVIF saves a further ~20–30% over WebP but its encode is far slower, and
+    // the encode is paid synchronously by the FIRST visitor to each
+    // (image, width) — in front of the detail hero, the page's LCP element.
+    // At this site's traffic (~300 DAU; product pages see a visit or two a
+    // day) that first-encounter tail is a large share of all real visits, and
+    // on thin routes those slow hits land in the p75 Speed Insights grades
+    // (docs/performance.md: "on a thin enough route, p75 IS the cold number"),
+    // while AVIF's byte saving amortizes to nothing at the same traffic.
+    // Costs concentrate where we are measured; benefits don't. This is
+    // traffic-dependent — revisit if the site grows busy enough that first
+    // encounters become statistical noise.
+    formats: ["image/webp"],
     // One year, and this value alone decides it: the optimizer caches an entry
     // for `max(minimumCacheTTL, the upstream's own Cache-Control max-age)`, so
     // the config is a floor rather than something the stored header can
