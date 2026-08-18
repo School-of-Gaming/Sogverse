@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isSupportedCurrency } from "@/lib/constants";
 import {
   isSupportedLocale,
   LOCALE_CONFIG,
   resolveLocale,
 } from "@/lib/constants/locales";
+import { formatCurrencyFromCents } from "@/lib/utils";
 import { useLocale } from "next-intl";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { AudienceSection } from "./sections/audience-section";
@@ -19,7 +21,7 @@ import { RegistrationSection } from "./sections/registration-section";
 import { VisibilitySection } from "./sections/visibility-section";
 import { WhenSection } from "./sections/when-section";
 import { WhereSection } from "./sections/where-section";
-import { validate } from "./product-build";
+import { validate, type ValidationFailure } from "./product-build";
 import { type FormState } from "./product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -65,28 +67,59 @@ export function ProductFormShell({
   const [committing, setCommitting] = useState(false);
   const languageName = useLanguageNames();
 
+  /**
+   * Turn a validation failure's interpolation values into the ones the message
+   * actually renders. `validate()` is pure and locale-free, so anything that
+   * needs the viewer's locale travels as a raw machine value and is resolved
+   * here — two cases, and they are the same shape:
+   *
+   *   - a locale *code*, swapped for the language name in the viewer's language
+   *     (the i18n language-name rule).
+   *   - a `minimum` in *cents*, formatted into the viewer's money string. The
+   *     currency to format it in round-trips through the `currency` value the
+   *     validator sends alongside (its uppercase label, which lowercases back to
+   *     the code exactly).
+   *
+   * Both branches key on the **data** rather than on a list of message keys:
+   * whichever failure carries a numeric `minimum` gets it formatted, so a key
+   * added later cannot render raw cents ("must be at least 50" — a plausible
+   * sentence that is off by a factor of a hundred) by forgetting to join a
+   * hand-maintained list. A value the pair cannot be made sense of — a
+   * non-numeric minimum, an unsupported currency — falls through untouched.
+   */
+  function displayValues(failure: ValidationFailure) {
+    const values = failure.values;
+    if (!values) return undefined;
+
+    if (failure.messageKey === "translationIncomplete") {
+      const code = values.locale;
+      if (!isSupportedLocale(code)) return values;
+      return {
+        ...values,
+        locale: languageName(code, LOCALE_CONFIG[code].label),
+      };
+    }
+
+    const minimum = values.minimum;
+    if (typeof minimum === "number") {
+      const currency = String(values.currency).toLowerCase();
+      if (!isSupportedCurrency(currency)) return values;
+      return {
+        ...values,
+        minimum: formatCurrencyFromCents(minimum, currency, uiLocale),
+      };
+    }
+
+    return values;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     const failure = validate(state, config);
     if (failure) {
-      // translationIncomplete carries a locale *code* — the validator is pure
-      // and cannot resolve display names, so the viewer-locale language name
-      // is substituted here, per the i18n language-name rule.
-      const failureLocale = failure.values?.locale;
-      const values =
-        failure.messageKey === "translationIncomplete" &&
-        isSupportedLocale(failureLocale)
-          ? {
-              ...failure.values,
-              locale: languageName(
-                failureLocale,
-                LOCALE_CONFIG[failureLocale].label,
-              ),
-            }
-          : failure.values;
-      setError(t(`errors.${failure.messageKey}`, values));
+      setError(t(`errors.${failure.messageKey}`, displayValues(failure)));
       return;
     }
 

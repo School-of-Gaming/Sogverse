@@ -31,6 +31,17 @@ describe("formatProductPrice", () => {
     expect(line.kind).toBe("free");
   });
 
+  it("returns kind=free for free camps", () => {
+    const line = formatProductPrice({
+      prices: [],
+      billingMode: "free",
+      productType: "camp",
+      currency: "eur",
+      locale: "en",
+    });
+    expect(line.kind).toBe("free");
+  });
+
   it("returns kind=external for municipality clubs", () => {
     const line = formatProductPrice({
       prices: [],
@@ -98,6 +109,30 @@ describe("formatProductPrice", () => {
     expect(line.kind).toBe("upfront");
     if (line.kind === "upfront") {
       expect(line.total).toMatch(/15/);
+      expect(line.total).toMatch(/€|EUR/);
+    }
+  });
+
+  it("a paid product with a 0-cent row stays kind=upfront, never masked as free", () => {
+    // The FREE label keys on billing_mode alone, deliberately: a paid product
+    // priced at nothing is a broken row, and showing it as free would hide
+    // that. The admin form refuses to write one (a price must be > 0); this
+    // pins what the shop does with a legacy one.
+    const line = formatProductPrice({
+      prices: [
+        priceRow({
+          currency: "eur",
+          price_cents: 0,
+        }),
+      ],
+      billingMode: "paid",
+      productType: "camp",
+      currency: "eur",
+      locale: "en",
+    });
+    expect(line.kind).toBe("upfront");
+    if (line.kind === "upfront") {
+      expect(line.total).toMatch(/0[.,]00/);
       expect(line.total).toMatch(/€|EUR/);
     }
   });

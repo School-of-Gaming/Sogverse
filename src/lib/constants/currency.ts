@@ -17,9 +17,24 @@ export const DEFAULT_CURRENCY: SupportedCurrency = "eur";
 
 export const CURRENCY_CONFIG: Record<
   SupportedCurrency,
-  { symbol: string; label: string }
+  {
+    symbol: string;
+    label: string;
+    /**
+     * Stripe's documented minimum charge in this currency, in cents (€0.50 for
+     * EUR). The smallest amount a paid product may be priced at.
+     *
+     * It lives here because it is a fact about the currency at our payment
+     * processor, not a policy we chose: Stripe refuses any charge below it with
+     * `amount_too_small`. Refusing only a price of zero is therefore not
+     * enough — €0.01 to €0.49 are amounts an admin can save and no family can
+     * ever buy, because the failure lands at checkout on the customer rather
+     * than at validation on the person who typed it.
+     */
+    minimumChargeCents: number;
+  }
 > = {
-  eur: { symbol: "€", label: "EUR" },
+  eur: { symbol: "€", label: "EUR", minimumChargeCents: 50 },
 };
 
 export function isSupportedCurrency(value: unknown): value is SupportedCurrency {
