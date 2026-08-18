@@ -24,6 +24,8 @@ import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { FamilyProductBackLink } from "./BackLink";
 import { FamilySessionFeed } from "./FamilySessionFeed";
+// TEMP(report-attribution): preview-only import.
+import type { ReportAttributionVariant } from "./FamilySessionFeedItem";
 import type {
   FamilyProductGedu,
   FamilyProductVenue,
@@ -184,6 +186,9 @@ export interface FamilyProductPageBodyProps {
   entries: readonly FamilySessionEntry[];
   /** The zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
+  // TEMP(report-attribution): preview-only. Remove before the real
+  // implementation.
+  attributionVariant?: ReportAttributionVariant;
 }
 
 /**
@@ -265,6 +270,7 @@ export function FamilyProductPageBody({
   onJoinClick,
   entries,
   sourceTimeZone,
+  attributionVariant = "none",
 }: FamilyProductPageBodyProps) {
   const t = useTranslations("familyProduct");
   const p = useTranslations("productType");
@@ -503,6 +509,7 @@ export function FamilyProductPageBody({
           sourceTimeZone={sourceTimeZone}
           showAttendance={isParent}
           audience={routeAudience(audience)}
+          attributionVariant={attributionVariant}
         />
       </section>
     </div>

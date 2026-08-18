@@ -12,7 +12,16 @@ import {
   type SessionLabels,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
+import { PersonChip } from "@/components/ui/person-chip";
 import type { FamilySessionEntry } from "./types";
+
+// TEMP(report-attribution): preview-only variant switch for UI alignment.
+// Remove before the real implementation.
+export type ReportAttributionVariant =
+  | "none"
+  | "corner"
+  | "byline"
+  | "signature";
 
 interface FamilySessionFeedItemProps {
   entry: FamilySessionEntry;
@@ -43,6 +52,9 @@ interface FamilySessionFeedItemProps {
    * what differs, so this is a rendering decision rather than a data one.
    */
   showAttendance: boolean;
+  // TEMP(report-attribution): preview-only. Remove before the real
+  // implementation.
+  attributionVariant?: ReportAttributionVariant;
 }
 
 /**
@@ -73,9 +85,14 @@ export function FamilySessionFeedItem({
   prominent,
   live,
   showAttendance,
+  attributionVariant = "none",
 }: FamilySessionFeedItemProps) {
   const t = useTranslations("familyProduct");
   const b = useTranslations("sessionBadge");
+
+  // TEMP(report-attribution): preview-only.
+  const author =
+    attributionVariant !== "none" ? (entry.reportAuthor ?? null) : null;
 
   const attendance =
     entry.kind === "past" && showAttendance ? entry.attendance : null;
@@ -101,7 +118,9 @@ export function FamilySessionFeedItem({
     );
   }
 
-  return (
+  // TEMP(report-attribution): the card is wrapped in a relative shell so the
+  // corner variant's chip can straddle the corner without being clipped.
+  const card = (
     <Card
       className={cn(
         "p-4 sm:p-5",
@@ -154,15 +173,51 @@ export function FamilySessionFeedItem({
         {attendance !== null && <AttendanceMarkChip mark={attendance} />}
       </div>
 
+      {/* TEMP(report-attribution): byline variant — chip above the report. */}
+      {written && author !== null && attributionVariant === "byline" && (
+        <div className="pt-3">
+          <PersonChip id={author.id} name={author.firstName} size="compact" />
+        </div>
+      )}
+
       {written && (
         <SessionReport
           markdown={entry.report ?? ""}
           clamped={false}
-          className="pt-3"
+          className={
+            attributionVariant === "byline" && author !== null ? "pt-2" : "pt-3"
+          }
         />
+      )}
+
+      {/* TEMP(report-attribution): signature variant — chip below the report. */}
+      {written && author !== null && attributionVariant === "signature" && (
+        <div className="pt-2">
+          <PersonChip id={author.id} name={author.firstName} size="compact" />
+        </div>
       )}
     </Card>
   );
+
+  // TEMP(report-attribution): corner variant — chip straddling the top-right
+  // corner, borrowing the card-corner-badge geometry (ring cut-out, half off
+  // the edge). Rendered as the card's sibling inside a relative shell so the
+  // card's own overflow cannot clip it.
+  if (attributionVariant === "corner" && written && author !== null) {
+    return (
+      <div className="relative">
+        {card}
+        <PersonChip
+          id={author.id}
+          name={author.firstName}
+          size="compact"
+          className="absolute -right-2 -top-2 z-10 bg-card shadow-sm ring-2 ring-background"
+        />
+      </div>
+    );
+  }
+
+  return card;
 }
 
 /**

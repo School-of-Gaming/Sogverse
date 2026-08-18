@@ -45,6 +45,9 @@ interface FamilySessionEntryBase {
   startsAt: Date;
   /** Absolute instant the session ends; rendered in the viewer's zone. */
   endsAt: Date;
+  // TEMP(report-attribution): preview-only field for UI alignment — the gedu
+  // who wrote this entry's report. Remove before the real implementation.
+  reportAuthor?: FamilyProductGedu | null;
 }
 
 /**

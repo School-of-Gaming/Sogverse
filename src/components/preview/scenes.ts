@@ -262,6 +262,26 @@ export const PREVIEW_SCENES = [
       "The page a parent opens from My SOG for one enrollment: participant-scoped (“Minecraft Builders Club, for Aino”, with her group on the line beneath — or “for you” on a seat the parent holds themselves), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — a notice under it says so when the enrollment has a billing problem, the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this participant's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
     chrome: "dashboard",
     scenarios: [
+      // TEMP(report-attribution): three comparison scenarios for the
+      // report-author UI alignment. Same active-club fixture, three
+      // placements. Remove after the decision is made.
+      {
+        slug: "attribution-corner",
+        label: "TEMP — report author: corner chip",
+        description:
+          "Author chip straddling the card's top-right corner (the card-corner-badge geometry). Alternating Sanna/Petra so the multi-gedu case is visible.",
+      },
+      {
+        slug: "attribution-byline",
+        label: "TEMP — report author: byline above",
+        description:
+          "Author chip as the first line of the report block, above the text.",
+      },
+      {
+        slug: "attribution-signature",
+        label: "TEMP — report author: signature below",
+        description: "Author chip under the report text, like a sign-off.",
+      },
       {
         slug: "active-club",
         label: "Club — remote, session in progress",

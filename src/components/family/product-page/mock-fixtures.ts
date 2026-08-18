@@ -690,7 +690,14 @@ export function buildFamilyProductPageFixture(
     const endsAt = new Date(startsAt.getTime() + durationMs);
     // Index-keyed rather than date-keyed, so an entry keeps its identity across
     // the `useNow()` tick and React never re-creates a row mid-scroll.
-    return toEntry(spec, `mock-family-session-${index}`, startsAt, endsAt);
+    const entry = toEntry(spec, `mock-family-session-${index}`, startsAt, endsAt);
+    // TEMP(report-attribution): attribute each written report to one of the
+    // group's gedus, alternating so a two-gedu group shows both faces in the
+    // feed. Preview-only; remove before the real implementation.
+    if (entry.report !== null) {
+      entry.reportAuthor = config.gedus[index % config.gedus.length] ?? null;
+    }
+    return entry;
   });
 
   const oldest = starts[starts.length - 1];

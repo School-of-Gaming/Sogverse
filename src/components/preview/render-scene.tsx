@@ -77,6 +77,21 @@ const SCENE_RENDERERS: Record<
   // opening both in adjacent tabs is how you check that the gamer's copy is the
   // parent's minus attendance and nothing else has quietly drifted.
   "parent-club": (scenario) => {
+    // TEMP(report-attribution): comparison scenarios for the report-author
+    // UI alignment — same active-club fixture, three attribution placements.
+    // Remove with the rest of the TEMP(report-attribution) code.
+    const attribution = scenario.match(/^attribution-(corner|byline|signature)$/);
+    if (attribution) {
+      return (
+        <FamilyProductPageScene
+          audience="customer"
+          scenario="active-club"
+          attributionVariant={
+            attribution[1] as "corner" | "byline" | "signature"
+          }
+        />
+      );
+    }
     if (!isFamilyProductScenario(scenario)) notFound();
     return <FamilyProductPageScene audience="customer" scenario={scenario} />;
   },
