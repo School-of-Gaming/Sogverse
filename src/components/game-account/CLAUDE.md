@@ -131,10 +131,33 @@ for a lookup a caller is running itself.
 
 ## Platform descriptors
 
-Everything a platform does differently lives in one descriptor: its username rule
-(imported from the module that also runs the lookup, so the field and the server
-agree by construction), its figure's width and drawn placeholder, and its verify
-adapter. Components are generic and render from it.
+Everything a platform does differently lives in one descriptor: its brand name,
+an example handle for the input's placeholder, its figure's width and drawn
+placeholder, and its verify adapter. Components are generic and render from it.
+
+**Rule: a platform is the only authority on which of its own names exist, and we
+hold no opinion about their shape.** There was a username rule on each
+descriptor, shared with the wire schemas so the field and the server agreed by
+construction — and they did agree, on something false. Both platforms issued
+accounts long before they had signup validators, so live handles carry spaces,
+run shorter than the modern minimum, and use characters the current rules refuse;
+a check written from those rules told real children their own handle could not
+exist, without ever asking. Agreeing by construction is worth nothing when what
+both ends agree on is wrong.
+
+**So the whole path is: trim, bound the length, send it, let the platform
+answer.** A name that resolves lands verified with the account key beside it; a
+name that does not is stored unverified with the "couldn't find" sentence — which
+is also where a lookup during an outage lands, and where a name we would once
+have refused outright now lands too. **The length bound is the only rule left,
+and it is a rule about our own request** rather than about names: a cap generous
+enough that no real handle meets it, existing so an unbounded string cannot be
+put into a URL, a JSON body and a text column. It is one number, shared by both
+platforms, because it is a statement about us. Over it is the single refusal on
+this path.
+
+The editor has no format branch either, for the same reason: every committed name
+goes to the lookup, and a miss lands exactly where a miss has always landed.
 
 **The figure is the only thing that says which platform a row is about.** There
 is no platform glyph beside the name — there was one, and once every row carried

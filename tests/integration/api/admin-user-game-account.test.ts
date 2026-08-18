@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/users/[id]/game-account/route";
 import { NextResponse } from "next/server";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 
 /**
  * The admin's edit of somebody else's game username.
@@ -134,24 +135,51 @@ describe("PATCH /api/admin/users/[id]/game-account", () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("applies each platform's OWN format rule, not a shared one", async () => {
-    mockAdmin();
+  /**
+   * **The decision, on the admin's edit: neither branch judges the shape of a
+   * name.** A handle with two underscores was refused on the Roblox branch here
+   * once, on the strength of that platform's current signup validator — a rule
+   * younger than the accounts it judges. Both branches now carry the same wire
+   * rule (a trim and a length bound), because it is a rule about our request
+   * rather than about either platform's names.
+   */
+  it.each(["minecraft", "roblox"])(
+    "sends a %s name our old format rule called impossible on to the target check",
+    async (platform) => {
+      mockAdmin();
+      mockLookupMinecraftUser.mockResolvedValue(null);
+      mockLookupRobloxProfile.mockResolvedValue(null);
+      const { upsert } = mockTarget("gamer");
 
-    // Two underscores: legal on Minecraft, refused by Roblox. A single shared
-    // username rule would have let this through, which is the whole reason the
-    // body is a discriminated union.
-    const mc = await PATCH(
-      ...createRequest(TARGET, { platform: "minecraft", username: "a_b_c" }),
-    );
-    const roblox = await PATCH(
-      ...createRequest(TARGET, { platform: "roblox", username: "a_b_c" }),
-    );
+      const response = await PATCH(
+        ...createRequest(TARGET, { platform, username: "Old Timer" }),
+      );
 
-    expect(roblox.status).toBe(400);
-    // Minecraft's own rule accepts it, so it gets past the schema and on to the
-    // target check (which this test has not mocked a profile for).
-    expect(mc.status).not.toBe(400);
-  });
+      expect(response.status).toBe(200);
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: TARGET }),
+        { onConflict: "user_id" },
+      );
+    },
+  );
+
+  // The one refusal left, and it holds on both branches.
+  it.each(["minecraft", "roblox"])(
+    "returns 400 for a %s username past the length bound",
+    async (platform) => {
+      mockAdmin();
+
+      const response = await PATCH(
+        ...createRequest(TARGET, {
+          platform,
+          username: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(mockFrom).not.toHaveBeenCalled();
+    },
+  );
 
   it("returns 400 for a non-uuid user id", async () => {
     mockAdmin();

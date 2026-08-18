@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/roblox/account/route";
 import { NextResponse } from "next/server";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 
 // --- Mocks ---
 
@@ -9,9 +10,9 @@ vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
-// Only the network hop is replaced. `isValidRobloxUsername` is a pure regex that
-// the body schema imports, and mocking it would mean the format rule this route
-// really enforces is never exercised here.
+// Only the network hop is replaced. The rest of the module is real, including
+// the batch cap the wire schema reads — and there is no format rule left to
+// stand in for: Roblox alone decides whether a handle resolves.
 const mockLookupRobloxProfile = vi.fn();
 vi.mock("@/lib/roblox", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/roblox")>();
@@ -110,15 +111,78 @@ describe("PATCH /api/roblox/account", () => {
     expect(response.status).toBe(200);
   });
 
-  it("should return 400 for an invalid roblox username", async () => {
+  /**
+   * **The decision, on the wire: we do not judge the shape of a Roblox handle.**
+   * A space, or two underscores, was a 400 here once — and Roblox has live
+   * accounts holding both, because its signup validator arrived long after its
+   * accounts did. Now the handle travels, Roblox is asked, and its answer is
+   * what decides.
+   */
+  it.each([
+    ["a space", "Old Timer"],
+    ["two underscores", "a_b_c"],
+    ["a leading underscore", "_builder"],
+  ])(
+    "accepts a handle with %s and asks Roblox about it",
+    async (_label, username) => {
+      mockAuthenticated("gamer-123");
+      mockLookupRobloxProfile.mockResolvedValue({
+        ...robloxProfile(4242),
+        username,
+      });
+      const { upsertMock } = mockUpsertSuccess();
+
+      const response = await PATCH(createRequest({ robloxUsername: username }));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(mockLookupRobloxProfile).toHaveBeenCalledWith(username);
+      expect(data.roblox_username).toBe(username);
+      expect(data.roblox_user_id).toBe(4242);
+      expect(upsertMock).toHaveBeenCalledWith(
+        {
+          user_id: "gamer-123",
+          roblox_username: username,
+          roblox_user_id: 4242,
+        },
+        { onConflict: "user_id" },
+      );
+    },
+  );
+
+  // The one refusal left, and it is about our own request rather than about
+  // names: an unbounded string must not reach Roblox or a text column.
+  it("should return 400 for a handle past the length bound", async () => {
     mockAuthenticated();
 
-    // Two underscores; Roblox permits at most one, and never at either end.
-    const response = await PATCH(createRequest({ robloxUsername: "a_b_c" }));
-    const data = await response.json();
+    const response = await PATCH(
+      createRequest({
+        robloxUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+      }),
+    );
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("Invalid Roblox username");
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+  });
+
+  // A field cleared to whitespace is a clear, exactly as an explicit null is.
+  it("treats a trimmed-empty handle as a clear", async () => {
+    mockAuthenticated();
+    const { upsertMock } = mockUpsertSuccess();
+
+    const response = await PATCH(createRequest({ robloxUsername: "  " }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.roblox_username).toBeNull();
+    expect(upsertMock).toHaveBeenCalledWith(
+      {
+        user_id: "gamer-123",
+        roblox_username: null,
+        roblox_user_id: null,
+      },
+      { onConflict: "user_id" },
+    );
     expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
   });
 

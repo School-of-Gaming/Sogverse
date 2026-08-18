@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  GAME_PLATFORMS,
-  type GameAccountStatus,
-} from "@/components/game-account";
+import type { GameAccountStatus } from "@/components/game-account";
 import { platformForTopic } from "@/lib/products/topics";
 import {
   applyDraftToEntry,
@@ -185,13 +182,18 @@ export function GeduProductPageScene({
    * the scene rehearses it — on either platform, since the interaction is the one
    * thing the two share exactly.
    *
-   * Validity stands in for the account lookup with the platform's **own** format
-   * rule, read off the shared descriptor, which is also the gate the real route
-   * applies before it ever calls out. On Minecraft `Steve_99` lands valid; on
-   * Roblox `Builder_Man` does and `_builder` does not. It is the cheapest way to
-   * see the failed state without inventing a fake account database, and taking
-   * the rule from the descriptor rather than restating it here is what stops the
-   * scene from rehearsing a gate the product no longer has.
+   * **A fixture list of handles stands in for the platform's account database**,
+   * and it has to, because there is no rule left to stand in for one. The
+   * product asks the platform about every name it is given and takes the
+   * platform's word; nothing on our side decides in advance which names could
+   * exist. A scene that answered from a format check would be rehearsing a gate
+   * the product does not have, and would call a real, live handle impossible for
+   * the same reason the removed gate did.
+   *
+   * So the names below are known and everything else misses — which is also what
+   * lets a reviewer see both outcomes on purpose rather than by typing something
+   * malformed. One of them carries a space, which no format rule of ours ever
+   * allowed and which both platforms have live accounts holding.
    *
    * The write is scoped the way the real one is — only the gedu's own group —
    * and it clears the account key **while the check is in flight**, because a
@@ -224,7 +226,7 @@ export function GeduProductPageScene({
 
     setGameStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
     const timer = window.setTimeout(() => {
-      const verified = GAME_PLATFORMS[platform].isValidUsername(value);
+      const verified = SIMULATED_KNOWN_HANDLES.has(value.toLowerCase());
       setGameStatuses((prev) => ({
         ...prev,
         [gamerId]: verified ? "verified" : "unverified",
@@ -293,3 +295,27 @@ const SIMULATED_CHECK_MS = 800;
  */
 const SIMULATED_CHECK_UUID = "0f0f7f2c-1a5b-4a2a-9d0f-6a2f2b6f4b1e";
 const SIMULATED_CHECK_ROBLOX_ID = 2748301956;
+
+/**
+ * The handles this scene's stand-in platform knows about, lower-cased because
+ * both real lookups are case-insensitive.
+ *
+ * **A list, not a rule.** Every handle the roster already carries is here, so
+ * re-saving a child's own name lands verified rather than reading as a
+ * regression; anything else misses and shows the unverified row with its
+ * sentence. `Old Timer` is the one that is not on the roster and is the point of
+ * the list: a name with a space in it, which our own format checks used to call
+ * impossible and which both platforms have been issuing accounts under for
+ * longer than they have had signup validators.
+ */
+const SIMULATED_KNOWN_HANDLES: ReadonlySet<string> = new Set([
+  "ainobuilds",
+  "vainothebold",
+  "eliasredstone",
+  "elias_builds",
+  "hildahollow",
+  "linnealoops",
+  "oskarore",
+  "siirisky",
+  "old timer",
+]);

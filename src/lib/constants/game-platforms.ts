@@ -27,3 +27,26 @@ export const SUPPORTED_GAME_FIGURES = ["full", "head"] as const;
 
 /** One figure. Derived, so it cannot disagree with the tuple above. */
 export type GameFigure = (typeof SUPPORTED_GAME_FIGURES)[number];
+
+/**
+ * The longest a game username may be **on our own wire**.
+ *
+ * **This is the only rule we keep about the shape of a game username, and it is
+ * not a rule about names at all** — it is a bound on a request we are going to
+ * make. Each platform is the sole authority on which handles exist on it, and
+ * both of them have issued names our own format checks called impossible:
+ * Roblox accounts predating its current validator carry spaces, and Mojang names
+ * from before the modern rules are shorter than three characters or carry
+ * characters no regex of ours allowed. A check that refuses a real account is
+ * not protecting anybody.
+ *
+ * So the length stands alone, deliberately generous — far past anything either
+ * platform issues — because its job is to stop an unbounded string being put in
+ * a URL, a JSON body and a text column, not to guess at a naming rule. Anything
+ * within it is sent to the platform, and the platform's answer decides whether
+ * the name lands verified or is stored unverified.
+ *
+ * Shared by both platforms because it is a statement about *us*, and the two
+ * lookups and the two wire schemas all measure against this one number.
+ */
+export const GAME_USERNAME_MAX_LENGTH = 100;

@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { isValidRobloxUsername, ROBLOX_THUMBNAIL_BATCH_MAX } from "@/lib/roblox";
+import { ROBLOX_THUMBNAIL_BATCH_MAX } from "@/lib/roblox";
 import {
+  GAME_USERNAME_MAX_LENGTH,
   SUPPORTED_GAME_FIGURES,
   type GameFigure,
 } from "@/lib/constants/game-platforms";
@@ -17,20 +18,36 @@ function isSupportedGameFigure(value: string): value is GameFigure {
  * same schema. Neither end restates the other's shape.
  */
 
-const INVALID_USERNAME_MESSAGE =
-  "Invalid Roblox username. Must be 3-20 characters: letters, numbers, and at " +
-  "most one underscore, not at either end.";
-
 /**
- * A Roblox username as it travels on the wire, or `null` to unlink. The format
- * rule is the shared Roblox one, so a value that parses can be handed straight
- * to the lookup. Every surface that accepts a Roblox username imports this
- * rather than restating the character rules.
+ * A Roblox username as it travels on the wire, or `null` to unlink.
+ *
+ * **There is no format rule here, and that is the decision rather than an
+ * omission.** Roblox is the only authority on which handles exist on Roblox,
+ * and its own signup validator arrived long after its accounts did — so real,
+ * live handles carry characters that validator would refuse today, and a copy of
+ * it here refused those accounts on Roblox's behalf and got it wrong. A name is
+ * trimmed, bounded at a length that is a statement about our own request, and
+ * handed to the lookup; what comes back decides between verified and stored
+ * unverified.
+ *
+ * A trimmed-empty string is a clear, exactly as `null` is: there is no name left
+ * in the field, and the two spellings of that must not mean different things
+ * depending on which surface sent them.
+ *
+ * Every surface that accepts a Roblox username imports this rather than
+ * restating the bound.
  */
 export const robloxUsernameValue = z
   .string()
-  .refine(isValidRobloxUsername, { message: INVALID_USERNAME_MESSAGE })
-  .nullable();
+  .trim()
+  .max(
+    GAME_USERNAME_MAX_LENGTH,
+    `Roblox username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+  )
+  .nullable()
+  .transform((username) =>
+    username === null || username === "" ? null : username,
+  );
 
 /** Request body of PATCH /api/roblox/account — link or unlink one's own. */
 export const updateRobloxAccountBody = z.object({
@@ -89,11 +106,22 @@ export const robloxAccountWriteResult = z.object({
   roblox_user_id: z.number().int().positive().nullable(),
 });
 
-/** Query string of GET /api/roblox/verify — the public Roblox lookup. */
+/**
+ * Query string of GET /api/roblox/verify — the public Roblox lookup.
+ *
+ * The same reasoning as the value schema above, minus the unlink: there is
+ * nothing to clear on a read, so an empty name is a query with no question in it
+ * and is refused. Everything else goes to Roblox.
+ */
 export const verifyRobloxQuery = z.object({
   username: z
     .string()
-    .refine(isValidRobloxUsername, { message: INVALID_USERNAME_MESSAGE }),
+    .trim()
+    .min(1, "A username is required")
+    .max(
+      GAME_USERNAME_MAX_LENGTH,
+      `Username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+    ),
 });
 
 /**

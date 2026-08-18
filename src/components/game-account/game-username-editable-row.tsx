@@ -245,15 +245,13 @@ export function GameUsernameEditableRow({
       displayName: null,
     };
 
-    // Nothing shaped like this can exist on the platform, so there is nothing to
-    // look up. Saved anyway — an unverified name is still the child's answer —
-    // and the reason is said out loud rather than swallowed.
-    if (!descriptor.isValidUsername(committed)) {
-      setError(t("notFound", { platform: descriptor.name }));
-      await report(unverifiedResult);
-      return;
-    }
-
+    // **Every committed name goes to the platform.** There was a branch here
+    // that answered for it — a format check that skipped the lookup for anything
+    // it called impossible — and it was wrong about real accounts, so a child
+    // holding one was told their own handle did not exist without anyone ever
+    // asking. The platform is the only authority on its own names, and a miss it
+    // reports lands in exactly the same place: saved, unverified, with the
+    // "couldn't find" sentence underneath.
     setChecking(true);
 
     try {

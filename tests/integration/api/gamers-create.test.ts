@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { z } from "zod";
 import { POST } from "@/app/api/gamers/create/route";
 import { NextResponse } from "next/server";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 
 // --- Mocks ---
 
@@ -27,16 +28,14 @@ vi.mock("@/lib/supabase/admin", () => ({
   })),
 }));
 
+// Only the network hop is replaced. Neither platform module carries a format
+// rule any more — the wire schema is a trim and a length bound, and the platform
+// alone decides whether a name resolves.
 const mockLookupMinecraftUser = vi.fn();
-const mockIsValidMinecraftUsername = vi.fn();
 vi.mock("@/lib/mojang", () => ({
   lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
-  isValidMinecraftUsername: (...args: unknown[]) => mockIsValidMinecraftUsername(...args),
 }));
 
-// Only the network hop is replaced. `isValidRobloxUsername` is a pure regex the
-// body schema imports, and a mocked validator would mean the format rule this
-// route actually enforces is never exercised here.
 const mockLookupRobloxProfile = vi.fn();
 vi.mock("@/lib/roblox", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/roblox")>();
@@ -180,9 +179,6 @@ describe("POST /api/gamers/create — DOB validation", () => {
 describe("POST /api/gamers/create — Minecraft linking", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsValidMinecraftUsername.mockImplementation(
-      (u: string) => /^[a-zA-Z0-9_]{3,16}$/.test(u),
-    );
     mockAuthenticated();
     mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
     mockCreateUser.mockResolvedValue({
@@ -253,9 +249,6 @@ describe("POST /api/gamers/create — Minecraft linking", () => {
 describe("POST /api/gamers/create — Roblox linking", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsValidMinecraftUsername.mockImplementation(
-      (u: string) => /^[a-zA-Z0-9_]{3,16}$/.test(u),
-    );
     mockAuthenticated();
     mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
     mockCreateUser.mockResolvedValue({
@@ -319,17 +312,50 @@ describe("POST /api/gamers/create — Roblox linking", () => {
     );
   });
 
-  it("rejects a handle the Roblox format rule refuses, before any account exists", async () => {
-    // Two underscores — `auth.roblox.com` allows at most one, and the shared
-    // validator the body schema imports is the same rule the lookup uses.
+  /**
+   * **The decision, on gamer creation: no handle is refused for its shape.** Two
+   * underscores was a 400 here once, on the strength of a copy of Roblox's
+   * *current* signup validator — a rule younger than the accounts it judges. A
+   * parent typing their child's real handle could not create the account at all,
+   * on a form whose subject is a name and a birthday.
+   */
+  it.each([
+    ["two underscores", "a_b_c"],
+    ["a space", "Old Timer"],
+  ])(
+    "creates the gamer with a handle carrying %s, unresolved",
+    async (_label, username) => {
+      mockLookupRobloxProfile.mockResolvedValue(null);
+
+      const response = await POST(
+        createRequest({ ...validBody, robloxUsername: username }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockLookupRobloxProfile).toHaveBeenCalledWith(username);
+      expect(mockRpc).toHaveBeenCalledWith(
+        "create_gamer",
+        expect.objectContaining({
+          p_roblox_username: username,
+          p_roblox_user_id: undefined,
+        }),
+      );
+    },
+  );
+
+  // The one refusal left, and it still lands before `createUser` burns the email
+  // irreversibly.
+  it("rejects a handle past the length bound, before any account exists", async () => {
     const response = await POST(
-      createRequest({ ...validBody, robloxUsername: "a_b_c" }),
+      createRequest({
+        ...validBody,
+        robloxUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+      }),
     );
-    const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("Roblox");
     expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
   });
 
   it("carries both platforms through in one call", async () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { PATCH } from "@/app/api/gedu/gamers/[gamerId]/roblox/route";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/roblox — a gedu fixing a group member's
@@ -34,13 +35,6 @@ vi.mock("@/lib/auth", () => ({
 const mockLookupRobloxUser = vi.fn();
 vi.mock("@/lib/roblox", () => ({
   lookupRobloxUser: (...args: unknown[]) => mockLookupRobloxUser(...args),
-  // The route's body schema imports the format rule from the same module, so
-  // the mock has to carry it too — and it carries the real rule rather than a
-  // permissive stub, or the malformed-username case below would prove nothing.
-  isValidRobloxUsername: (username: string) =>
-    username.length >= 3 &&
-    username.length <= 20 &&
-    /^(?:[a-zA-Z0-9]+|[a-zA-Z0-9]+_[a-zA-Z0-9]+)$/.test(username),
   // The contracts module the route imports its schemas from also reads this
   // constant off the same module, for a query schema this route never touches.
   // Mocking the module wholesale takes it out with everything else, so it is
@@ -117,17 +111,49 @@ describe("PATCH /api/gedu/gamers/[gamerId]/roblox", () => {
     expect(mockRequireRole).toHaveBeenCalledWith("gedu", expect.any(Object));
   });
 
-  it("rejects a malformed Roblox username", async () => {
+  /**
+   * **The decision, on a gedu's edit: no handle is refused for its shape.** Two
+   * underscores, or a space, was a 400 here once — on the strength of Roblox's
+   * *current* signup validator, which is younger than the accounts it judges. A
+   * gedu correcting a child's real handle was told it could not exist. Now it
+   * goes to Roblox, and a miss is stored unverified.
+   */
+  it.each([
+    ["two underscores", "a_b_c"],
+    ["a space", "Old Timer"],
+  ])("stores a handle with %s, unverified", async (_label, username) => {
+    mockAuthenticatedGedu();
+    mockLookupRobloxUser.mockResolvedValue(null);
+    mockRpcSuccess(username, null);
+
+    const response = await PATCH(
+      createRequest({ robloxUsername: username }),
+      routeContext(),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxUser).toHaveBeenCalledWith(username);
+    expect(mockRpc).toHaveBeenCalledWith("set_group_member_roblox", {
+      p_participant_id: GAMER_ID,
+      p_roblox_username: username,
+    });
+    expect(data.roblox_username).toBe(username);
+    expect(data.roblox_user_id).toBeNull();
+  });
+
+  // The one refusal left: a bound on our own request, not a claim about handles.
+  it("rejects a Roblox username past the length bound", async () => {
     mockAuthenticatedGedu();
 
-    // Two underscores: Roblox allows at most one, and never at an end.
     const response = await PATCH(
-      createRequest({ robloxUsername: "a_b_c" }),
+      createRequest({ robloxUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1) }),
       routeContext(),
     );
 
     expect(response.status).toBe(400);
     expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockLookupRobloxUser).not.toHaveBeenCalled();
   });
 
   it("rejects a gamer id that is not a uuid", async () => {

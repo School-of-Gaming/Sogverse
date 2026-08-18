@@ -1,11 +1,9 @@
 import { z } from "zod";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 
 const MOJANG_API = "https://api.mojang.com/users/profiles/minecraft";
 
 const mojangResponse = z.object({ name: z.string(), id: z.string() });
-
-// Minecraft usernames: 3-16 chars, alphanumeric + underscore
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,16}$/;
 
 export interface MojangProfile {
   username: string; // Correctly-cased name from Mojang
@@ -21,6 +19,14 @@ function formatUuid(hex: string): string {
  * Look up a Minecraft Java account by username via the Mojang API.
  * Returns the correctly-cased username + dashed UUID, or null if not found.
  *
+ * **Mojang decides what a Minecraft name is; this function only asks.** There
+ * was a format check here once that answered "not found" without ever calling
+ * out, and it was wrong about real accounts — names issued before the modern
+ * rules are shorter than the check's minimum or carry characters it forbade, and
+ * every one of those was reported as nonexistent by us rather than by Mojang.
+ * The only thing refused now is a length no request should carry; the name is
+ * URL-encoded on the way out, so nothing else here needs a shape.
+ *
  * **Never throws.** Every caller treats the answer as optional — a name Mojang
  * cannot resolve is still stored, with a null uuid, because it is the child's
  * answer either way. A rejected fetch (DNS failure, connection reset, Mojang
@@ -32,7 +38,12 @@ function formatUuid(hex: string): string {
 export async function lookupMinecraftUser(
   username: string,
 ): Promise<MojangProfile | null> {
-  if (!USERNAME_RE.test(username)) return null;
+  // The same bound the wire schemas apply, restated for the callers that reach
+  // this directly. An empty name has nothing to ask about, and a name past the
+  // bound is a request we would not have accepted in the first place.
+  if (username.length === 0 || username.length > GAME_USERNAME_MAX_LENGTH) {
+    return null;
+  }
 
   const res = await fetch(`${MOJANG_API}/${encodeURIComponent(username)}`).catch(
     () => null,
@@ -50,10 +61,6 @@ export async function lookupMinecraftUser(
     username: parsed.data.name,
     uuid: formatUuid(parsed.data.id),
   };
-}
-
-export function isValidMinecraftUsername(username: string): boolean {
-  return USERNAME_RE.test(username);
 }
 
 /**

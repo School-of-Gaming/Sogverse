@@ -4,24 +4,6 @@ import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 
 /**
- * An optional game handle on a form that also uses `''` to mean "not given".
- *
- * **The sentinel is expressed here, in the schema, rather than checked in the
- * route.** This body used to declare both handles as bare `z.string()` and leave
- * the format rules to hand-written `if` blocks in the handler, each carrying its
- * own copy of the platform's error message — three places to keep in step, and
- * the copies had already drifted from the shared ones in wording. Composing the
- * real value schema with the sentinel says the same thing once: `''` is absent,
- * anything else has to be a name that platform could actually issue.
- *
- * The empty literal comes first because a union tries its members in order, and
- * `''` would otherwise be tested against a format rule it is defined to bypass.
- */
-function optionalGameHandle(username: z.ZodType<string | null>) {
-  return z.union([z.literal(""), username]).optional();
-}
-
-/**
  * Request body for public gedu self-registration (`POST /api/gedu/register`).
  * Shared by the route (which validates with it) and the register-gedu form.
  *
@@ -48,8 +30,15 @@ export const registerGeduBody = z.object({
   spokenLanguages: z.array(z.string()).default([]),
   locale: z.string().optional(),
   locationIds: z.array(z.string().uuid()).default([]),
-  minecraftUsername: optionalGameHandle(minecraftUsernameValue),
-  robloxUsername: optionalGameHandle(robloxUsernameValue),
+  /**
+   * Both game handles are optional, and the shared value schemas already read
+   * `''` as "no handle" — they trim and collapse an empty field to `null`, which
+   * is the same "there is no name here" every other write path sends. This form
+   * posts `''` for a field nobody filled in, so that collapse is exactly the
+   * sentinel this body used to spell out with a union of its own.
+   */
+  minecraftUsername: minecraftUsernameValue.optional(),
+  robloxUsername: robloxUsernameValue.optional(),
   /**
    * Marketing provenance: the `?ref=` code this visit arrived with, if any.
    *
