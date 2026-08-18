@@ -1,6 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LanguageFlag } from "@/components/ui/language-flag";
@@ -13,9 +14,18 @@ import {
   PRODUCT_TAG_VALUES,
   productTagLabelKey,
 } from "@/components/public/products/product-tag";
+import { SEEDED_COUNTRIES } from "@/lib/constants/location-hierarchies";
+import { resolveLocale } from "@/lib/constants/locales";
 import type { ProductTag } from "@/types";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
+import type { ProductTypeConfig } from "../product-type-config";
+
+// The "not region locked" option's value. A native <select> only carries
+// strings, so the null the state actually holds needs a sentinel on the wire
+// between the DOM and the handler — and the empty string is the one value no
+// country code can collide with (every code is exactly two letters).
+const NO_REGION_LOCK = "";
 
 // The design-tag choices, in the order the admin reads them: "no tag" first
 // because it is the default and by far the commonest answer, then the tag
@@ -34,10 +44,34 @@ const TAG_OPTIONS: readonly (ProductTag | null)[] = [
 interface AudienceSectionProps {
   state: FormState;
   setState: React.Dispatch<React.SetStateAction<FormState>>;
+  config: ProductTypeConfig;
 }
 
-export function AudienceSection({ state, setState }: AudienceSectionProps) {
+export function AudienceSection({
+  state,
+  setState,
+  config,
+}: AudienceSectionProps) {
   const t = useTranslations("admin.products");
+  const uiLocale = resolveLocale(useLocale());
+  // Country names in the admin's own language, the same way language names are
+  // resolved: Intl already knows every region code in every locale, where a
+  // hand-maintained map would silently fall back to English for anything new.
+  // The config's own English `name` is the fallback for a locale Intl has no
+  // data for (Klingon) or a code it refuses. "en" is listed second for the same
+  // determinism reason as the language hook: a bare [uiLocale] would fall back
+  // to the *runtime* default locale, which differs between the server and each
+  // visitor's machine and is therefore a hydration mismatch.
+  const countryNames = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([uiLocale, "en"], {
+        type: "region",
+        fallback: "none",
+      });
+    } catch {
+      return null;
+    }
+  }, [uiLocale]);
   // The family-facing tag words, so the admin picks from the same vocabulary the
   // parent will read on the card. Resolved through the tag module's key map, not
   // by spelling the message key from the enum value.
@@ -154,6 +188,51 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
             />
           </Field>
         </div>
+      )}
+
+      {/* Region lock — the geographic half of "who may hold a seat", so it sits
+          with the audience pair rather than in "Where": that section says where
+          the product RUNS, and a fully remote club is as lockable as an
+          in-person one. Rendered only for types whose config allows it, which
+          excludes municipality clubs — their country is already settled by the
+          separate `countryBound` mechanism, and offering both would be two
+          controls for one fact. The flag is fixed for the whole life of a form,
+          so nothing appears or disappears under the admin's cursor.
+
+          It takes no part in the form locks: a lock is editable on a running
+          product, because it gates future enrolments and is never re-run
+          against a seat somebody already holds. And it is enforced by the shop
+          UI alone — a family's location is self-attested — which the hint says
+          out loud, because an admin who thinks this is a hard gate would be
+          wrong about the one thing that matters. */}
+      {config.regionLockable && (
+        <Field
+          label={t("labels.regionLock")}
+          htmlFor="p-region-lock"
+          hint={t("hints.regionLockHint")}
+        >
+          <select
+            id="p-region-lock"
+            value={state.regionLockCountry ?? NO_REGION_LOCK}
+            onChange={(e) => {
+              const picked = SEEDED_COUNTRIES.find(
+                (country) => country.code === e.target.value,
+              );
+              setState({
+                ...state,
+                regionLockCountry: picked ? picked.code : null,
+              });
+            }}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value={NO_REGION_LOCK}>{t("regionLock.none")}</option>
+            {SEEDED_COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {countryNames?.of(country.code) ?? country.name}
+              </option>
+            ))}
+          </select>
+        </Field>
       )}
 
       {/* Sits with the audience pair because it answers the neighbouring half of

@@ -133,6 +133,11 @@ export const POST = defineRoute({
       // DEFAULT NULL writes the null. What keeps the omission deliberate is the
       // contract schema, which requires the field and admits an explicit null.
       p_tag: body.tag ?? undefined,
+      // Unlocked is an omission for the same reason untagged is. The contract
+      // both requires the field and narrows it to a seeded country, so this is
+      // also the last place the code is checked — nothing downstream of here
+      // re-reads it, because the lock is enforced in the shop's UI alone.
+      p_region_lock_country: body.region_lock_country ?? undefined,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

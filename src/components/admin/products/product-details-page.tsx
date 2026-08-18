@@ -10,6 +10,7 @@ import {
   Copy,
   Globe2,
   Landmark,
+  MapPin,
   Pencil,
   Shapes,
   Tag,
@@ -29,6 +30,7 @@ import { productAudience } from "@/components/public/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
+import { getCountryConfig } from "@/lib/constants/location-hierarchies";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -292,6 +294,30 @@ function OperationalFacts({
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
   const isMuni = product.product_type === "municipality_club";
+  // Same flag the form reads, so a type with no region-lock control has no
+  // region-lock row here either — an empty "Not region locked" line on a
+  // municipality club would advertise a setting that does not exist for it.
+  const { regionLockable } = PRODUCT_TYPE_CONFIG[product.product_type];
+  // Country names in the admin's own language, the config's English `name` as
+  // the fallback, and the raw stored code as the last resort — the last one
+  // covers a code no longer in the config at all, which must still be visible
+  // rather than silently reading as unlocked.
+  const regionLockName = (() => {
+    const code = product.region_lock_country;
+    if (code === null) return null;
+    try {
+      return (
+        new Intl.DisplayNames([uiLocale, "en"], {
+          type: "region",
+          fallback: "none",
+        }).of(code) ??
+        getCountryConfig(code)?.name ??
+        code
+      );
+    } catch {
+      return getCountryConfig(code)?.name ?? code;
+    }
+  })();
   // The family-facing tag words, so this row and the shop card cannot disagree
   // about what a tag is called. Plain text, no chip: this is the admin panel,
   // and the chip treatment belongs to the surfaces families read.
@@ -413,6 +439,22 @@ function OperationalFacts({
             tTag(productTagLabelKey(product.tag))
           )}
         </Fact>
+
+        {/* Not region locked is the ordinary state rather than a gap, so it says
+            so in muted text — the same words the form's picker offers — the way
+            the untagged row above does. The hint about UI-only enforcement is
+            not repeated here: it belongs where the setting is made. */}
+        {regionLockable && (
+          <Fact icon={MapPin} label={t("detailsPage.fields.regionLock")}>
+            {regionLockName === null ? (
+              <span className="text-muted-foreground">
+                {t("regionLock.none")}
+              </span>
+            ) : (
+              regionLockName
+            )}
+          </Fact>
+        )}
 
         {/* Staff-only, and it lives on its own embedded row for exactly that
             reason — `products` is anon-readable by column selection, so the

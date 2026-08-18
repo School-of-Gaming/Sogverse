@@ -10,6 +10,7 @@
 
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { isSupportedCurrency, SUPPORTED_CURRENCIES } from "@/lib/constants";
+import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
   SUPPORTED_LOCALES,
@@ -477,6 +478,12 @@ function buildSharedFields(
     // Sending state's answer on every save, including the `null` that means
     // untagged, is what makes clearing something an admin chose.
     tag: state.tag,
+    // Same shape as the tag above — a `DEFAULT NULL` parameter that the RPC
+    // assigns on every call, so the answer has to travel on every save, `null`
+    // included. Forced to null for a type that offers no lock, so a draft
+    // carried across a type change (or a row locked before the flag existed)
+    // cannot leave a lock behind a field nobody can see.
+    region_lock_country: config.regionLockable ? state.regionLockCountry : null,
     spoken_language_code: state.spokenLanguageCode,
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
@@ -764,6 +771,20 @@ export function existingFormState(
     // Straight through: the column is already `ProductTag | null` and the
     // picker's "no tag" option *is* null, so there is nothing to translate.
     tag: product.tag,
+    // Nearly straight through — the column is already `string | null` and the
+    // picker's "not region locked" option *is* null. The one filter is a stored
+    // code the picker cannot offer (a country un-seeded since the lock was set,
+    // or one written before this field existed): it loads as *unlocked* rather
+    // than as a value with no matching option, because a select whose value
+    // matches nothing shows the admin the first option while state holds
+    // something else, and the write contract — which only admits seeded
+    // countries — would then refuse every save of the product with an error
+    // about a field they were never shown. Loading it as null is the same
+    // heal-on-write shape the uncapped-muni and locked-registration cases use:
+    // the next save of anything at all normalises the row, visibly.
+    regionLockCountry: isSeededCountry(product.region_lock_country)
+      ? product.region_lock_country
+      : null,
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,

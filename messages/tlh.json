@@ -377,6 +377,7 @@
           "municipalityFee": "veng Huch / qaStaHvIS",
           "registrationOpensAt": "ghIH poSchoH",
           "tag": "’Iv chenmoHlu’pu’",
+          "regionLock": "Sep ngaQmoH",
           "visibility": "leghlu"
         }
       },
@@ -430,6 +431,7 @@
         "materialUrl": "ghojmoHmeH De’ URL",
         "seatAudience": "quS Suq ’Iv",
         "tag": "’Iv chenmoHlu’pu’",
+        "regionLock": "Sep ngaQmoH",
         "forGamers": "toy’wI’pu’vaD",
         "forParents": "vavpu’vaD",
         "minAge": "DIS mach",
@@ -555,6 +557,9 @@
       "tagOptions": {
         "none": "per pagh"
       },
+      "regionLock": {
+        "none": "Sep ngaQbe’ — Hoch qo’vaD"
+      },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
         "longDescription": "vItlhutlh. QIn naQ, Doch ’aqroSDaq neH cha’lu’. nargh, tetlh, ’ej ghomHa’ ghItlh lo’laH.",
@@ -564,6 +569,7 @@
         "forGamersHint": "toy’wI’ chel vav, ’ej quS Suq toy’wI’. DIS mach DIS tIn je poQ.",
         "forParentsHint": "quS Suq vav ’ej lop ghaH. DIS poQbe’ — puqpu’ DIS qel, loDpu’ DISbe’.",
         "tagHint": "poQbe’lu’. per legh qorDu’pu’ — tetlh HaSta ’ej Doch HaSta. ’Iv chenmoHlu’pu’ ja’ per; quS Suqbogh nuv ja’be’.",
+        "regionLockHint": "poQbe’lu’. wIvbogh SepDaq qorDu’pu’ neH ghIH. ’ach Daqchaj ja’ qorDu’ ’e’ Sov: malja’Daq De’wI’ per ’oH, veH tIn ’oHbe’. quS Suqbogh nuv chIlbe’ quSDaj, Sep chu’Daq jaHchugh je.",
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
         "onlineNoLocation": "rurmey — Daq poQbe’. Hoch vavmey nej Hoch lulegh, qo’Daq pagh.",
         "voiceRoomAuto": "voice room chenmoHlu’.",

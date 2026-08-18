@@ -329,6 +329,7 @@
           "municipalityFee": "Municipality fee / session",
           "registrationOpensAt": "Registration opens",
           "tag": "Designed for",
+          "regionLock": "Region lock",
           "visibility": "Visibility"
         }
       },
@@ -382,6 +383,7 @@
         "materialUrl": "Lesson material URL",
         "seatAudience": "Who can take a seat",
         "tag": "Designed for",
+        "regionLock": "Region lock",
         "forGamers": "For gamers",
         "forParents": "For parents",
         "minAge": "Min age",
@@ -507,6 +509,9 @@
       "tagOptions": {
         "none": "No tag"
       },
+      "regionLock": {
+        "none": "Not region locked"
+      },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
@@ -516,6 +521,7 @@
         "forGamersHint": "A parent signs their gamer up and the gamer takes the seat. Needs an age range.",
         "forParentsHint": "A parent takes a seat for themselves and attends it. No age range — age describes children, not adults.",
         "tagHint": "Optional. Families see it as a badge on the shop card and product page. It says who the sessions were built for, not who may take a seat.",
+        "regionLockHint": "Optional. Only families in the chosen country can sign up. Their location is the one they told us themselves, so this is a signpost in the shop rather than a hard block — and anyone already enrolled keeps their place if they move.",
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",

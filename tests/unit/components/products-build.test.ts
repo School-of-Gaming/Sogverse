@@ -953,6 +953,65 @@ describe("the design tag on the wire", () => {
 
 });
 
+// The region lock is a third dimension again: the audience says who may hold a
+// seat, the tag says who the sessions were built for, and this says where those
+// people have to live. Its wire discipline is the tag's — required-nullable,
+// with an explicit null meaning "unlocked" — plus one rule of its own: a type
+// that offers no lock never sends one.
+describe("the region lock on the wire", () => {
+  it("creates an unlocked product by default", () => {
+    const s = initialState(consumerConfig, "en");
+    expect(s.regionLockCountry).toBeNull();
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    // Present and null, never absent — same reason as the tag: the RPC
+    // parameter is DEFAULT NULL, so a missing key would unlock silently.
+    expect(out).toHaveProperty("region_lock_country");
+    expect(out.region_lock_country).toBeNull();
+  });
+
+  it("carries a chosen country through create and update alike", () => {
+    const s = validConsumerState();
+    s.regionLockCountry = "FI";
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig).region_lock_country,
+    ).toBe("FI");
+    expect(buildUpdateInput(s, consumerConfig).region_lock_country).toBe("FI");
+  });
+
+  it("emits an explicit null when a locked product is unlocked again", () => {
+    const s = validConsumerState();
+    s.regionLockCountry = "SE";
+    expect(buildUpdateInput(s, consumerConfig).region_lock_country).toBe("SE");
+
+    s.regionLockCountry = null;
+    const cleared = buildUpdateInput(s, consumerConfig);
+    expect(cleared).toHaveProperty("region_lock_country");
+    expect(cleared.region_lock_country).toBeNull();
+  });
+
+  it("forces null for a type that offers no lock", () => {
+    // Municipality clubs are the one non-lockable type — their country is
+    // settled by the separate countryBound mechanism — and the form hides the
+    // control for them. A draft can still be *carrying* a code (a state object
+    // built for another type, or a row locked before the flag existed), so the
+    // payload builder is where the type's answer is imposed: one gate on the
+    // write rather than one on every path to it.
+    const s = validConsumerState();
+    s.regionLockCountry = "FI";
+    s.endDate = "2027-05-31";
+    s.uncapped = false;
+    s.seatCount = "12";
+    expect(buildUpdateInput(s, muniConfig).region_lock_country).toBeNull();
+    // And the lockable types are unaffected by that rule.
+    expect(buildUpdateInput(s, campConfig).region_lock_country).toBe("FI");
+  });
+});
+
 describe("fees", () => {
   it("maps fee drafts to cents: fee→cents, volunteer→0, unknown/none→null", () => {
     const s = validConsumerState();
@@ -1197,6 +1256,7 @@ function mockDetailRow(
     min_age: 8,
     max_age: 12,
     tag: null,
+    region_lock_country: null,
     spoken_language_code: "en",
     // The lesson link rides on its own staff-only row, not on the product.
     product_staff_details: { material_url: "https://drive.sog.gg/x" },

@@ -183,6 +183,11 @@ export const POST = defineRoute({
       // write "untagged". That is safe only because the contract schema demands
       // the field: a caller that forgot it never reaches this line.
       p_tag: body.tag ?? undefined,
+      // Unlocking IS an omission here, exactly as clearing a tag is — the RPC
+      // assigns `region_lock_country` on every call and its parameter defaults
+      // to NULL. Safe only because the contract demands the field: a caller
+      // that forgot it never reaches this line.
+      p_region_lock_country: body.region_lock_country ?? undefined,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

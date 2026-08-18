@@ -296,6 +296,20 @@ export type CreateProductInput = {
    * to state the answer.
    */
   tag: ProductTag | null;
+  /**
+   * The one country whose families may enrol, as an ISO 3166-1 alpha-2 code —
+   * `null`, the ordinary state, means no lock. Required and nullable for the
+   * same reason `tag` is: the RPC parameter is `DEFAULT NULL`, so an omitted
+   * field would clear a lock rather than leave it alone.
+   *
+   * **Enforced in the UI alone, by design.** The shop's signup panel refuses to
+   * open for a parent whose self-attested location is elsewhere, and nothing
+   * behind it re-checks: a location the blocked party can rewrite in their own
+   * settings is not something a server-side gate could actually guarantee. A
+   * family already enrolled keeps its seat if it later moves. Known and
+   * accepted — see the column comment in migration 00193.
+   */
+  region_lock_country: string | null;
   spoken_language_code: string;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
@@ -349,6 +363,10 @@ export type UpdateProductInput = {
    *  half too, and that is the load-bearing one: the RPC assigns every editable
    *  column, so an omitted tag clears the stored one. */
   tag: ProductTag | null;
+  /** Region lock — see CreateProductInput. Required and nullable on the update
+   *  half too, and that is the load-bearing one: the RPC assigns every editable
+   *  column, so an omitted code unlocks the product. */
+  region_lock_country: string | null;
   spoken_language_code: string;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a

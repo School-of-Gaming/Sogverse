@@ -107,7 +107,7 @@ export function ProductFormShell({
         config={config}
         uiLocale={uiLocale}
       />
-      <AudienceSection state={state} setState={setState} />
+      <AudienceSection state={state} setState={setState} config={config} />
       <WhereSection state={state} setState={setState} config={config} />
       <WhenSection state={state} setState={setState} config={config} />
       <BillingSection state={state} setState={setState} config={config} />

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
+import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 
 /**
  * Contracts for the admin product create/update routes.
@@ -65,6 +66,35 @@ const productDataBase = z.object({
   // deliberate `null` rather than an accident of omission — the route then maps
   // null → undefined → DEFAULT NULL → cleared.
   tag: z.enum(Constants.public.Enums.product_tag).nullable(),
+  // The one country whose families may enrol, or null for no lock — a third
+  // dimension again, independent of both the audience above and the spoken
+  // language below (a club delivered in English is not a club for one country).
+  //
+  // Required-nullable for exactly the reason `tag` is, and the update half is
+  // again the load-bearing one: the RPC parameter is `DEFAULT NULL` because
+  // codegen cannot express an explicit null for a non-defaulted argument, so an
+  // omitted field would reach a function that assigns every editable column and
+  // silently unlock the product. Demanding the field is what makes unlocking a
+  // deliberate `null`; the route then maps null → undefined → DEFAULT NULL.
+  //
+  // Constrained to the SEEDED countries rather than to the CHECK's alpha-2
+  // shape, because this is the boundary that can see the location config. A lock
+  // pointing at a country whose municipalities were never seeded is one no
+  // family's stored location could satisfy — an unpassable gate that looks from
+  // the admin form exactly like a working one. The database deliberately holds
+  // only the shape invariant: which countries are seeded changes as rows land,
+  // so an enum or FK there would need a migration per country and would turn an
+  // already-stored lock into a violation the day one is un-seeded.
+  //
+  // `refine` rather than `z.enum` because `CountryConfig.code` is typed
+  // `string`, so a tuple built from it narrows to nothing a literal union could
+  // be made of — the enum would buy an error message and no type at all.
+  region_lock_country: z
+    .string()
+    .refine(isSeededCountry, {
+      message: "Not a country products can be locked to",
+    })
+    .nullable(),
   spoken_language_code: z.string(),
   // Gedu/admin-only lesson-material link. It is a field of the product *form*
   // but not a column on `products` — the RPC files it under
