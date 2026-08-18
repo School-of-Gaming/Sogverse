@@ -56,7 +56,10 @@ function row(
     created_at: `${sessionDate}T16:05:00.000Z`,
     updated_at: `${sessionDate}T16:05:00.000Z`,
     created_by: null,
+    // The last-editor pair. Null together by default: this builder is about the
+    // calendar math, and every case here is indifferent to who touched the row.
     updated_by: null,
+    updated_by_first_name: null,
     attendance: {},
     ...fields,
   };

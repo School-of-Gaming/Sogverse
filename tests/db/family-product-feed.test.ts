@@ -616,4 +616,170 @@ describe("family product feed", () => {
       expect(data).toBeNull();
     });
   });
+
+  // -------------------------------------------------------------------------
+  // 5. The last editor, by id and by first name
+  // -------------------------------------------------------------------------
+  //
+  // 00194 gave the family document `updated_by` and the first name behind it,
+  // so a report card can say who wrote it. That is a deliberate widening of a
+  // document whose omissions are otherwise its privacy contract: the page
+  // already names every assigned gedu by id and first name, and this is the
+  // same quantum of information about the same kind of person. The name
+  // travels per session rather than being resolved against `gedus`, because a
+  // past session's editor may have left the group since.
+  //
+  // Everything here runs against GROUP_SITE, which no other block in this file
+  // asserts a session list for — so the history expectations above stay about
+  // the three rows they were written for.
+
+  describe("the session's last editor", () => {
+    /** A second gedu on the same group — the whole point of this block. */
+    let marker: SupabaseClient<Database>;
+    let markerId = "";
+    let markerFirstName = "";
+    let writerFirstName = "";
+
+    beforeAll(async () => {
+      // Unique per run: CI's database carries the seed fixtures AND whatever a
+      // previous run left behind, so a fixed address is a collision waiting to
+      // happen.
+      const email = `family-marker-${Date.now()}@test.local`;
+      const { data, error } = await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Ruut", last_name: "Marker" },
+      });
+      expect(error).toBeNull();
+      markerId = data.user!.id;
+
+      // handle_new_user lands every signup as a customer; the gedu role and the
+      // extension row are an admin's doing, exactly as in the real flow.
+      await admin.from("profiles").update({ role: "gedu" }).eq("id", markerId);
+      await admin.from("customer_profiles").delete().eq("user_id", markerId);
+      await admin
+        .from("gedu_profiles")
+        .insert({ user_id: markerId, certified: true });
+
+      await admin.from("gedu_group_assignments").insert({
+        group_id: GROUP_SITE,
+        gedu_id: markerId,
+        product_id: PRODUCT_SITE,
+      });
+
+      marker = await createAuthenticatedClient(email, "testpassword123");
+
+      // Read both names from the database rather than restating them here: the
+      // assertion is "the feed hands back THIS person's first name", and a
+      // hardcoded copy would pass just as happily against the wrong person.
+      const { data: names } = await admin
+        .from("profiles")
+        .select("id, first_name")
+        .in("id", [TEST_IDS.GEDU, markerId]);
+      writerFirstName =
+        names?.find((p) => p.id === TEST_IDS.GEDU)?.first_name ?? "";
+      markerFirstName = names?.find((p) => p.id === markerId)?.first_name ?? "";
+      expect(writerFirstName).toBeTruthy();
+      expect(markerFirstName).toBe("Ruut");
+    });
+
+    afterAll(async () => {
+      // The assignment FK onto profiles is ON DELETE RESTRICT, so the row has
+      // to go before the account does.
+      await admin
+        .from("gedu_group_assignments")
+        .delete()
+        .eq("gedu_id", markerId);
+      await admin.auth.admin.deleteUser(markerId);
+      await admin.from("group_sessions").delete().eq("group_id", GROUP_SITE);
+    });
+
+    /** The in-person group's session on `date`, off the family document. */
+    async function sessionOn(date: string) {
+      const { data, error } = await customerAuth.rpc(
+        "get_my_family_product_feed",
+        { p_participation_id: sitePlaced },
+      );
+      expect(error).toBeNull();
+      return familyProductFeed
+        .parse(data)
+        .sessions.find((s) => s.session_date === date);
+    }
+
+    it("names the gedu who saved the report", async () => {
+      const { error } = await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_SITE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the castle wall.",
+        p_gedu_note: "",
+      });
+      expect(error).toBeNull();
+
+      const session = await sessionOn(YESTERDAY);
+      expect(session?.report).toBe("We finished the castle wall.");
+      expect(session?.updated_by).toBe(TEST_IDS.GEDU);
+      expect(session?.updated_by_first_name).toBe(writerFirstName);
+    });
+
+    /**
+     * **The documented semantic, asserted rather than assumed: this is the last
+     * TOUCHER of the session, not the author of the report.**
+     *
+     * One gedu writes the family-facing report; a different gedu then records a
+     * single attendance mark and nothing else. The pair now names the second
+     * gedu — on a write-up they did not type, in front of a parent.
+     *
+     * That is accepted behaviour and not a bug to fix here. `updated_by` is
+     * stamped by every recorded touch (materialization, either written field,
+     * and each mark or unmark), and in practice the gedu who touches one part
+     * of a session touches all of it; a per-field author column was judged not
+     * worth the schema for this edge. The chip claims "last edited by", which
+     * is exactly what this test pins. If someone later makes this expectation
+     * fail by introducing a report-author column, that is a product decision
+     * being reversed, not a regression being repaired.
+     */
+    it("hands the attendance marker, not the report's writer, once someone else touches it", async () => {
+      // Re-saved rather than leaned on from the case above, so the two orders
+      // of "who wrote, who marked" are established by this test alone.
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_SITE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the castle wall.",
+        p_gedu_note: "",
+      });
+
+      const { error } = await marker.rpc("record_attendance", {
+        p_group_id: GROUP_SITE,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.GAMER,
+        p_status: "present",
+      });
+      expect(error).toBeNull();
+
+      const session = await sessionOn(YESTERDAY);
+      // The report is untouched — only the register moved — and the last
+      // editor moved with it anyway.
+      expect(session?.report).toBe("We finished the castle wall.");
+      expect(session?.updated_by).toBe(markerId);
+      expect(session?.updated_by_first_name).toBe(markerFirstName);
+      expect(session?.updated_by).not.toBe(TEST_IDS.GEDU);
+    });
+
+    it("leaves both halves null on a row no RPC stamped", async () => {
+      // The three GROUP_MINE fixtures were seeded straight through the
+      // service-role client, so nothing set `updated_by`. Null is the honest
+      // answer and the card renders no chip — which is why a consumer wants
+      // BOTH halves before it names anyone.
+      const { data } = await customerAuth.rpc("get_my_family_product_feed", {
+        p_participation_id: minePlaced,
+      });
+      const feed = familyProductFeed.parse(data);
+
+      for (const session of feed.sessions) {
+        expect(session.updated_by).toBeNull();
+        expect(session.updated_by_first_name).toBeNull();
+      }
+    });
+  });
 });

@@ -116,6 +116,32 @@ export const familyFeedSession = z
     ends_at: z.string(),
     /** The family-facing write-up (markdown). `null` when none was written. */
     report: z.string().nullable(),
+    /**
+     * Who last edited this session, and their first name — the pair behind the
+     * author chip on a report card. Null together when nothing has stamped the
+     * row; a consumer wants BOTH halves before it renders an author.
+     *
+     * **This is the session's last editor, not the report's author, and the
+     * imprecision is accepted rather than overlooked.** `updated_by` is stamped
+     * by every recorded touch of the session: materializing the row, saving
+     * either written field, and each attendance mark or unmark. So a gedu who
+     * only corrected a tick is named on a write-up somebody else typed. In
+     * practice the gedu who touches one part of a session touches all of it,
+     * and a dedicated per-field author column was judged not worth the schema
+     * for that edge — the chip claims "last edited by", which is what this
+     * answers. Do not close the gap by quietly adding a report-author column.
+     *
+     * **A family may read this, and that is a decision rather than a leak.**
+     * The document already names every gedu assigned to the group by id and
+     * first name; this is the same quantum of information about the same kind
+     * of person. It travels per session instead of being resolved against
+     * `gedus` below because the two sets genuinely differ — a session's editor
+     * may have left the group since — which would leave the oldest reports
+     * unsigned. Nothing else of the staff row comes with it: no `created_by`,
+     * no `gedu_note`, and `.strict()` above is what keeps that true.
+     */
+    updated_by: z.string().nullable(),
+    updated_by_first_name: z.string().nullable(),
     attendance: attendanceStatus.nullable(),
   })
   .strict();
