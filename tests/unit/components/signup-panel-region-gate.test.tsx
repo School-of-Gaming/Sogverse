@@ -106,6 +106,29 @@ const setLocationButton = (c: HTMLElement) =>
     (b) => b.textContent.includes("regionLock.setLocation") && b !== cta(c),
   );
 
+/**
+ * The tinted blocks the region-lock surfaces render inside.
+ *
+ * Matched on the class attribute by substring rather than as a CSS class,
+ * because a Tailwind opacity modifier carries a `/` that a class selector would
+ * have to escape — and the escaping, not the assertion, is what would break
+ * first.
+ */
+const infoBlocks = (c: HTMLElement) => [
+  ...c.querySelectorAll<HTMLElement>('[class*="bg-info/10"]'),
+];
+
+/** Every lucide glyph inside `el` that wears the info family's own colour. */
+const infoGlyphs = (el: HTMLElement) => [
+  ...el.querySelectorAll('svg[class*="text-info"]'),
+];
+
+/** The innermost element whose own text is `text` — the node carrying its classes. */
+const lineOf = (c: HTMLElement, text: string) =>
+  [...c.querySelectorAll<HTMLElement>("*")]
+    .filter((el) => el.textContent.includes(text))
+    .at(-1) ?? null;
+
 describe("unlocked", () => {
   it("leaves the panel exactly as it was, with or without a gate", () => {
     for (const regionGate of [
@@ -337,5 +360,104 @@ describe("eligible", () => {
     expect(cta(container).disabled).toBe(false);
     fireEvent.click(cta(container));
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * **The three surfaces are one visual family, and that is a claim worth
+ * pinning.**
+ *
+ * The refusal, the question and the confirmation are one subject told at three
+ * moments — this product is a bit different, it wants your attention, nothing
+ * is wrong. A parent who meets two of them in one visit (asked for a location,
+ * then told it fits) should recognise the second as the same voice as the
+ * first, so all three wear the `info` surface, its hairline border and an
+ * `info`-coloured glyph. The eligible line in particular used to carry the
+ * panel's *action* colour, which said "you can act on this" about the one state
+ * that offers nothing to act on.
+ *
+ * Asserted on the semantic tokens rather than on any literal colour: the point
+ * is that the three agree, and that they agree on `info` rather than on
+ * `primary`, `warning` or `destructive`.
+ */
+describe("the info family", () => {
+  const surfaces = [
+    {
+      name: "the refusal",
+      regionGate: {
+        gate: { kind: "wrong_country" as const, requiredCountry: "FI" },
+        onSetLocation: () => {},
+      },
+      says: "regionLock.wrongCountry",
+    },
+    {
+      name: "the question",
+      regionGate: {
+        gate: { kind: "no_location" as const },
+        onSetLocation: () => {},
+      },
+      says: "regionLock.note",
+    },
+    { name: "the confirmation", regionGate: eligible, says: "regionLock.eligible" },
+  ];
+
+  for (const { name, regionGate, says } of surfaces) {
+    it(`tints ${name} as information, with an info-coloured glyph`, () => {
+      const { container } = render(
+        <SignupPanelView {...panel({ regionGate })} />,
+      );
+      const blocks = infoBlocks(container);
+      // Exactly one: a state says its piece in a single block, and a second
+      // tinted box in the same panel would be two voices where there is one.
+      expect(blocks).toHaveLength(1);
+      const block = blocks[0];
+      expect(block.textContent).toContain(says);
+      expect(block.className).toContain("border-info/30");
+      expect(infoGlyphs(block)).toHaveLength(1);
+      // Never the action colour, never an alarm colour — nothing here has gone
+      // wrong and nothing here is a control.
+      expect(block.innerHTML).not.toContain("text-primary");
+      expect(block.innerHTML).not.toContain("text-destructive");
+      expect(block.innerHTML).not.toContain("text-warning");
+    });
+  }
+
+  it("agrees on the same surface tokens across all three", () => {
+    const shared = surfaces.map(({ regionGate }) => {
+      const { container } = render(
+        <SignupPanelView {...panel({ regionGate })} />,
+      );
+      const block = infoBlocks(container)[0];
+      return new Set(block.className.split(/\s+/));
+    });
+    for (const token of ["rounded-md", "border", "border-info/30", "bg-info/10", "p-4"]) {
+      for (const tokens of shared) expect(tokens).toContain(token);
+    }
+  });
+
+  it("puts the question's own words at full weight, not in the margin", () => {
+    // The note is the message, not a footnote to it: a grey line inside a
+    // tinted block reads as something the panel is mumbling.
+    const { container } = render(
+      <SignupPanelView
+        {...panel({
+          regionGate: { gate: { kind: "no_location" }, onSetLocation: () => {} },
+        })}
+      />,
+    );
+    const note = lineOf(container, "regionLock.note");
+    expect(note?.className).toContain("text-foreground");
+    expect(note?.className).not.toContain("text-muted-foreground");
+  });
+
+  it("leaves the confirmation's receipt line quiet beneath it", () => {
+    // The sentence is the statement; the place name under it is a receipt, and
+    // a receipt that competes with what it is receipting has the weights the
+    // wrong way round.
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: eligible })} />,
+    );
+    const receipt = lineOf(container, "regionLock.eligibleLocation");
+    expect(receipt?.className).toContain("text-muted-foreground");
   });
 });

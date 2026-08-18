@@ -558,8 +558,18 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
  * product. So the tint is the `info` semantic pair, never `destructive` or
  * `warning` (which would tell them to fix something) and never `primary`
  * (which is the panel's *act on this* colour, and there is nothing to act on).
- * The `Globe` anchors it — the same subject the section's `MapPin` marks, one
- * scale up because this block is the panel's entire content.
+ * The `Globe` anchors it — the same subject the sections' `MapPin` /
+ * `MapPinCheck` mark, one scale up because this block is the panel's entire
+ * content.
+ *
+ * **All three region-lock surfaces wear this same tint, and that is the point.**
+ * The refusal, the question and the confirmation are one subject told at three
+ * moments, so a parent who meets two of them in one visit — asked for a
+ * location, then told it fits — should recognise the second as the same voice
+ * as the first. The shared treatment is the tinted `info` surface, its hairline
+ * border, an `info`-coloured lucide anchor and body text at full foreground
+ * weight; what still differs is scale and geometry, because only this one
+ * replaces the whole panel.
  *
  * The country is named, in the reader's own language and in the sentence's only
  * weighted words: it is the one fact the reader needs and the one they will
@@ -609,21 +619,30 @@ function WrongCountryOverlay({
  * the panel needs the same grammar: a bordered, full-width, secondary-weight
  * button that opens a dialog, sitting inside the section it is about rather
  * than in the CTA.
+ *
+ * **It is toned like the refusal, because it is about the same thing.** The
+ * `info` surface says "this product is a bit different and wants your
+ * attention" without ever saying anything is wrong — which is exactly the
+ * question being asked. The tint is the whole change: the heading, the note and
+ * the button sit where they always sat, in the order they always sat in, so the
+ * section still reads as one step of the form rather than as an interruption of
+ * it. The `MapPin` stays on the button (it labels the action, not the section)
+ * and takes the family's `info` colour there.
  */
 function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div>
-      <h3 className="text-sm font-semibold">{t("regionLock.heading")}</h3>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {t("regionLock.note")}
-      </p>
+    <div className="rounded-md border border-info/30 bg-info/10 p-4">
+      <h3 className="text-sm font-semibold text-foreground">
+        {t("regionLock.heading")}
+      </h3>
+      <p className="mt-1 text-xs text-foreground">{t("regionLock.note")}</p>
       <button
         type="button"
         onClick={onSetLocation}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
       >
-        <MapPin className="h-4 w-4" />
+        <MapPin className="h-4 w-4 text-info" />
         {t("regionLock.setLocation")}
       </button>
     </div>
@@ -642,18 +661,28 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
  *
  * **It says something worth saying to the people it is true for, in their own
  * direction.** The refusal says the product is only offered somewhere else;
- * this says it is available to you because of where you live. Same fact, two
- * speech acts — and the conditional wording that is exactly right for the
- * excluded reader ("only offered to families in …") reads as a hedge to the
- * one who is already in, which is why they are two message keys rather than one
- * shared string. What it does not do is invite an edit: there is no
- * change-location control, because a parent halfway through a purchase should
- * not be nudged into rewriting a profile field, and settings is where a location
- * is changed. That absence is also what keeps this out of the CTA's checklist —
- * an eligible family has nothing left to do here, so the button is untouched.
+ * this leads with the special-ness and lands on belonging — just for families
+ * here, and you are one. Same fact, two speech acts — and the conditional
+ * wording that is exactly right for the excluded reader ("only offered to
+ * families in …") reads as a hedge to the one who is already in, which is why
+ * they are two message keys rather than one shared string. The receipt line
+ * beneath does the "that's you" work in the reader's own place name, which is
+ * what lets the sentence above it stay a short, warm fragment. What it does not
+ * do is invite an edit: there is no change-location control, because a parent
+ * halfway through a purchase should not be nudged into rewriting a profile
+ * field, and settings is where a location is changed. That absence is also what
+ * keeps this out of the CTA's checklist — an eligible family has nothing left to
+ * do here, so the button is untouched.
  *
- * No border: it is a statement, and in this panel a border means you can act on
- * what it surrounds.
+ * **It carries the region-lock family's `info` surface, which is the one place
+ * this panel's "a border means you can act on it" rule is deliberately spent.**
+ * The rule is about telling controls from statements, and it is bought back
+ * here by the tint: nothing in the info family is actionable, so a reader who
+ * has learned the tint has learned that, and a bordered statement in the slot a
+ * bordered *question* occupied a moment ago is the point rather than a cost —
+ * the question becoming its own answer in place is the whole transform. A
+ * borderless confirmation next to a bordered refusal and a bordered ask would
+ * have read as a third kind of thing.
  */
 function RegionEligibleSection({
   requiredCountry,
@@ -666,9 +695,9 @@ function RegionEligibleSection({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div>
+    <div className="rounded-md border border-info/30 bg-info/10 p-4">
       <p className="flex items-start gap-2 text-sm text-foreground">
-        <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <span>
           {t("regionLock.eligible", {
             country: countryDisplayName(requiredCountry, locale),
