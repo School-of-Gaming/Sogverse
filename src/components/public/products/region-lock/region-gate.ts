@@ -163,11 +163,19 @@ export function resolveRegionGate({
  * folded back together.
  *
  * `Intl.DisplayNames` rather than the `name` on the country config, and the
- * reason is the sentence this lands in: "only offered to families in {country}"
- * is rendered in the viewer's locale, and the config's names are English
+ * reason is the sentence this lands in: the panel's refusal and confirmation
+ * are rendered in the viewer's locale, and the config's names are English
  * literals ("Finland", "United Kingdom") that would sit untranslated inside a
  * Finnish or French sentence. `Intl` already carries every locale's own form
  * ("Suomi", "Finlande") and is not a string anybody has to maintain.
+ *
+ * The copy meets this output in **label position** — after a colon, at the end
+ * of the sentence — in every locale, and that is a constraint on the copy
+ * rather than on this function. A country name inflected into a sentence needs
+ * an article in English ("families in *the* United Kingdom") and a case ending
+ * in Finnish, neither of which `Intl` supplies; a bare display name is
+ * grammatical as a label for every country there is. So the strings ask their
+ * question and then name the country, and never try to conjugate it.
  *
  * The config is the fallback, not the source: it covers a runtime whose ICU
  * data does not know the region, and it is the only place a code we have

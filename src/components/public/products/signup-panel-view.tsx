@@ -221,6 +221,10 @@ export interface SignupPanelViewProps {
 // attached), while the participant rows keep a border, because that border is
 // what says "you can pick this"; the consent toggle keeps one, because it is a
 // control; and the add-a-child affordance keeps one, because it is a button.
+// The one deliberate exception is the region-lock family, whose three surfaces
+// are bordered in the `info` hue whether or not they hold a control — that hue
+// marks the subject speaking rather than the ability to act, and the full
+// reasoning for spending the rule there lives on `RegionEligibleSection`.
 //
 // This was an opt-in variant while the rail was being judged and is now the
 // only look, on single-column pages too. Nothing about what is rendered,
@@ -562,14 +566,17 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
  * `MapPinCheck` mark, one scale up because this block is the panel's entire
  * content.
  *
- * **All three region-lock surfaces wear this same tint, and that is the point.**
+ * **All three region-lock surfaces speak in the `info` hue, at two volumes.**
  * The refusal, the question and the confirmation are one subject told at three
  * moments, so a parent who meets two of them in one visit — asked for a
  * location, then told it fits — should recognise the second as the same voice
- * as the first. The shared treatment is the tinted `info` surface, its hairline
- * border, an `info`-coloured lucide anchor and body text at full foreground
- * weight; what still differs is scale and geometry, because only this one
- * replaces the whole panel.
+ * as the first. The shared voice is the `info` border, an `info`-coloured
+ * lucide anchor and body text at full foreground weight. Volume follows
+ * stakes: this refusal replaces the form and is the one thing on the panel, so
+ * it alone fills its surface with the tint; the two in-form sections sit
+ * inside a form the parent is actively using, so they carry the hue on the
+ * border alone (the same quiet-info tier the enrollment card's "awaiting"
+ * state established) and leave the form the loudest thing on its own panel.
  *
  * The country is named, in the reader's own language and in the sentence's only
  * weighted words: it is the one fact the reader needs and the one they will
@@ -620,29 +627,43 @@ function WrongCountryOverlay({
  * button that opens a dialog, sitting inside the section it is about rather
  * than in the CTA.
  *
- * **It is toned like the refusal, because it is about the same thing.** The
- * `info` surface says "this product is a bit different and wants your
- * attention" without ever saying anything is wrong — which is exactly the
- * question being asked. The tint is the whole change: the heading, the note and
- * the button sit where they always sat, in the order they always sat in, so the
- * section still reads as one step of the form rather than as an interruption of
- * it. The `MapPin` stays on the button (it labels the action, not the section)
- * and takes the family's `info` colour there.
+ * **It speaks in the refusal's hue at the quiet volume, because it is about
+ * the same thing.** The `info` border says "this product is a bit different
+ * and wants your attention" without ever saying anything is wrong — which is
+ * exactly the question being asked — while the default background keeps a
+ * section inside a working form from shouting over the form itself. The
+ * border is the whole change: the heading, the note and the button sit where
+ * they always sat, in the order they always sat in, so the section still
+ * reads as one step of the form rather than as an interruption of it.
+ *
+ * **The block's `MapPin` anchors the section, and the button's does not.** The
+ * heading carries an `info`-coloured pin, the way the refusal's `Globe` and the
+ * confirmation's `MapPinCheck` anchor theirs — that glyph is what makes the
+ * three read as one voice, and it belongs on the thing that is speaking. The
+ * pin inside the button is a second thing: it labels an action, so it inherits
+ * `currentColor` and rides the button's own muted→foreground hover with the
+ * label beside it. Leaving the family's hue on it would have painted the one
+ * actionable element in the section the colour that means "this is the region
+ * lock talking", and left the block itself unmarked.
  */
 function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/30 bg-info/10 p-4">
-      <h3 className="text-sm font-semibold text-foreground">
+    <div className="rounded-md border border-info/40 p-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <MapPin className="h-4 w-4 shrink-0 text-info" />
         {t("regionLock.heading")}
       </h3>
-      <p className="mt-1 text-xs text-foreground">{t("regionLock.note")}</p>
+      {/* Indented to the heading's text, not its glyph: gap-2 (0.5rem) plus a
+          1rem icon is exactly pl-6, the same alignment the confirmation's
+          receipt line uses. */}
+      <p className="mt-1 pl-6 text-xs text-foreground">{t("regionLock.note")}</p>
       <button
         type="button"
         onClick={onSetLocation}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
       >
-        <MapPin className="h-4 w-4 text-info" />
+        <MapPin className="h-4 w-4" />
         {t("regionLock.setLocation")}
       </button>
     </div>
@@ -662,10 +683,13 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
  * **It says something worth saying to the people it is true for, in their own
  * direction.** The refusal says the product is only offered somewhere else;
  * this leads with the special-ness and lands on belonging — just for families
- * here, and you are one. Same fact, two speech acts — and the conditional
- * wording that is exactly right for the excluded reader ("only offered to
- * families in …") reads as a hedge to the one who is already in, which is why
- * they are two message keys rather than one shared string. The receipt line
+ * in your country, and you are one. Same fact, two speech acts — and the
+ * exclusionary wording that is exactly right for the blocked reader reads as a
+ * hedge to the one who is already in, which is why they are two message keys
+ * rather than one shared string. Both name the country in *label* position,
+ * after a colon, because a display name inflected into a sentence would need an
+ * article in English and a case ending in Finnish that `Intl` does not supply.
+ * The receipt line
  * beneath does the "that's you" work in the reader's own place name, which is
  * what lets the sentence above it stay a short, warm fragment. What it does not
  * do is invite an edit: there is no change-location control, because a parent
@@ -676,13 +700,20 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
  *
  * **It carries the region-lock family's `info` surface, which is the one place
  * this panel's "a border means you can act on it" rule is deliberately spent.**
- * The rule is about telling controls from statements, and it is bought back
- * here by the tint: nothing in the info family is actionable, so a reader who
- * has learned the tint has learned that, and a bordered statement in the slot a
- * bordered *question* occupied a moment ago is the point rather than a cost —
- * the question becoming its own answer in place is the whole transform. A
- * borderless confirmation next to a bordered refusal and a bordered ask would
- * have read as a third kind of thing.
+ * What is bought with it is not inactionability — the ask section wears the
+ * same border and holds a button — but *subject*: the info hue says "the region
+ * lock is speaking", and it says that about all three surfaces regardless of
+ * whether there is anything to do on them. Controls keep announcing themselves
+ * the way they do everywhere else on the panel, from inside the block: the ask
+ * section's affordance is a bordered, full-width button that looks exactly like
+ * the picker's add-a-gamer row, and its absence here is what tells a reader this
+ * block is a statement. So the two are told apart by what is *in* the block, not
+ * by whether the block has an edge — which is the trade this exception makes,
+ * and the reason a bordered statement in the slot a bordered *question*
+ * occupied a moment ago is the point rather than a cost: the question becoming
+ * its own answer in place is the whole transform. A borderless confirmation next
+ * to a bordered refusal and a bordered ask would have read as a third kind of
+ * thing.
  */
 function RegionEligibleSection({
   requiredCountry,
@@ -695,7 +726,7 @@ function RegionEligibleSection({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/30 bg-info/10 p-4">
+    <div className="rounded-md border border-info/40 p-4">
       <p className="flex items-start gap-2 text-sm text-foreground">
         <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <span>

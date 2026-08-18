@@ -177,12 +177,21 @@ export function AudienceSection({
           out loud, because an admin who thinks this is a hard gate would be
           wrong about the one thing that matters. */}
       {config.regionLockable && (
-        <Field label={t("labels.regionLock")} hint={t("hints.regionLockHint")}>
-          {/* Function children so the card grid is a real group: the label
-              names it and the hint — which is where the optionality and the
-              self-attested/soft-block caveat are actually stated — describes
-              it. Neither is announced as loose text beside a bare grid, and the
-              hint is the one thing an admin must not miss here. */}
+        <Field
+          label={t("labels.regionLock")}
+          optional
+          hint={t("hints.regionLockHint")}
+        >
+          {/* `optional` because it genuinely is — NULL is the default and by
+              far the commonest state. The form's convention marks the
+              exceptions rather than the norm, so the marker belongs on the
+              label and the hint no longer opens by saying "Optional.": the
+              hint's job is the self-attested/soft-block caveat, which is the
+              one thing an admin must not miss here.
+
+              Function children so the card grid is a real group: the label
+              names it and the hint describes it. Neither is announced as loose
+              text beside a bare grid. */}
           {({ hintId, labelId }) => (
             <RegionLockRadios
               value={state.regionLockCountry}
@@ -271,8 +280,10 @@ export function AudienceSection({
           The label is "Spoken language" rather than "Delivered in": the field
           is the `spoken_language_code` column, and the house split between
           *locale* and *spoken language* is what the label should say out loud.
-          The hint names no product type, because this section renders for
-          clubs, camps and events alike. */}
+          The hint names neither a product type nor an audience — this section
+          renders for clubs, camps and events alike, and for parent-only
+          products, which have no gamers to speak anything. It says "main"
+          because the column is one code while a session may mix languages. */}
       <Field
         label={t("labels.spokenLanguage")}
         hint={t("hints.spokenLanguageHint")}

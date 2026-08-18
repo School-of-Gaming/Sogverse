@@ -77,7 +77,12 @@ export function SpokenLanguageRadios({
               required
               onChange={() => onChange(lang.code)}
             />
-            <LanguageFlag code={lang.code} showCode={false} title={displayName} />
+            {/* Decorative, exactly as the region-lock card's glyph slot is:
+                every pill's language is already written next to it in words,
+                so a titled flag would announce the same name twice. */}
+            <span aria-hidden className="flex shrink-0 items-center">
+              <LanguageFlag code={lang.code} showCode={false} />
+            </span>
             <span className="font-medium">{displayName}</span>
           </label>
         );

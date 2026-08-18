@@ -115,19 +115,49 @@ const setLocationButton = (c: HTMLElement) =>
  * first.
  */
 const infoBlocks = (c: HTMLElement) => [
-  ...c.querySelectorAll<HTMLElement>('[class*="bg-info/10"]'),
+  ...c.querySelectorAll<HTMLElement>('[class*="border-info/"]'),
 ];
 
-/** Every lucide glyph inside `el` that wears the info family's own colour. */
-const infoGlyphs = (el: HTMLElement) => [
-  ...el.querySelectorAll('svg[class*="text-info"]'),
-];
+/**
+ * The info-coloured lucide glyph *anchoring* `block` — the family's shared voice.
+ *
+ * Position, not presence. An anchor marks the block, so it is a direct child of
+ * the block itself (the refusal, whose glyph and sentence are siblings) or of
+ * the block's first row (the question's heading, the confirmation's statement
+ * line). A `text-info` icon anywhere deeper is something else — and that
+ * distinction is the whole point of this helper: a plain subtree count passed on
+ * the question while the question had no anchor at all, because it was counting
+ * the set-location button's pin.
+ */
+const anchorGlyphs = (block: HTMLElement) => {
+  const rows: Element[] = [block];
+  if (block.firstElementChild) rows.push(block.firstElementChild);
+  return rows.flatMap((row) =>
+    [...row.children].filter(
+      (el) =>
+        el.tagName === "svg" &&
+        (el.getAttribute("class") ?? "").includes("text-info"),
+    ),
+  );
+};
 
-/** The innermost element whose own text is `text` — the node carrying its classes. */
-const lineOf = (c: HTMLElement, text: string) =>
-  [...c.querySelectorAll<HTMLElement>("*")]
-    .filter((el) => el.textContent.includes(text))
-    .at(-1) ?? null;
+/**
+ * Every class token on `el` and on everything inside it, as a set.
+ *
+ * Tokens rather than a substring search of the markup: `text-primary` is a
+ * prefix of `text-primary-foreground`, so `innerHTML.not.toContain` reported a
+ * violation for a class that is not the one being forbidden — and it could not
+ * see the block's own classes at all.
+ */
+const classTokens = (el: HTMLElement) => {
+  const tokens = new Set<string>();
+  for (const node of [el, ...el.querySelectorAll("*")]) {
+    for (const token of (node.getAttribute("class") ?? "").split(/\s+/)) {
+      if (token) tokens.add(token);
+    }
+  }
+  return tokens;
+};
 
 describe("unlocked", () => {
   it("leaves the panel exactly as it was, with or without a gate", () => {
@@ -372,9 +402,15 @@ describe("eligible", () => {
  * is wrong. A parent who meets two of them in one visit (asked for a location,
  * then told it fits) should recognise the second as the same voice as the
  * first, so all three wear the `info` surface, its hairline border and an
- * `info`-coloured glyph. The eligible line in particular used to carry the
- * panel's *action* colour, which said "you can act on this" about the one state
- * that offers nothing to act on.
+ * `info`-coloured glyph anchoring the block. The eligible line in particular
+ * used to carry the panel's *action* colour, which said "you can act on this"
+ * about the one state that offers nothing to act on.
+ *
+ * The hue marks the *subject*, not inactionability — the question's block holds
+ * a button and wears the same border — so what is pinned per surface is that
+ * the anchor sits in anchor position, and that the action colour appears
+ * nowhere in the block. A control inside one keeps announcing itself the way
+ * every other control on the panel does, from its own affordance.
  *
  * Asserted on the semantic tokens rather than on any literal colour: the point
  * is that the three agree, and that they agree on `info` rather than on
@@ -389,6 +425,10 @@ describe("the info family", () => {
         onSetLocation: () => {},
       },
       says: "regionLock.wrongCountry",
+      // The loud tier: the refusal replaces the form and is the one thing on
+      // the panel, so it carries the full tinted surface.
+      border: "border-info/30",
+      tinted: true,
     },
     {
       name: "the question",
@@ -397,32 +437,54 @@ describe("the info family", () => {
         onSetLocation: () => {},
       },
       says: "regionLock.note",
+      // The quiet tier: a section inside a working form carries the family's
+      // hue on its border alone (the EnrollmentCard "awaiting" opacity), so
+      // the form stays the loudest thing on its own panel.
+      border: "border-info/40",
+      tinted: false,
     },
-    { name: "the confirmation", regionGate: eligible, says: "regionLock.eligible" },
+    {
+      name: "the confirmation",
+      regionGate: eligible,
+      says: "regionLock.eligible",
+      border: "border-info/40",
+      tinted: false,
+    },
   ];
 
-  for (const { name, regionGate, says } of surfaces) {
-    it(`tints ${name} as information, with an info-coloured glyph`, () => {
+  for (const { name, regionGate, says, border, tinted } of surfaces) {
+    it(`marks ${name} as information, anchored by an info-coloured glyph`, () => {
       const { container } = render(
         <SignupPanelView {...panel({ regionGate })} />,
       );
       const blocks = infoBlocks(container);
       // Exactly one: a state says its piece in a single block, and a second
-      // tinted box in the same panel would be two voices where there is one.
+      // info-marked box in the same panel would be two voices where there is
+      // one.
       expect(blocks).toHaveLength(1);
       const block = blocks[0];
       expect(block.textContent).toContain(says);
-      expect(block.className).toContain("border-info/30");
-      expect(infoGlyphs(block)).toHaveLength(1);
-      // Never the action colour, never an alarm colour — nothing here has gone
-      // wrong and nothing here is a control.
-      expect(block.innerHTML).not.toContain("text-primary");
-      expect(block.innerHTML).not.toContain("text-destructive");
-      expect(block.innerHTML).not.toContain("text-warning");
+      expect(block.className).toContain(border);
+      // Volume follows stakes: only the refusal fills its surface.
+      expect(block.className.includes("bg-info/")).toBe(tinted);
+      // One anchor, and in anchor position — see `anchorGlyphs`.
+      expect(anchorGlyphs(block)).toHaveLength(1);
+      // Never the action colour, never an alarm colour: nothing here has gone
+      // wrong, and the hue marks the subject rather than a control. Asserted as
+      // exact class tokens, so a `text-primary-foreground` on a control inside
+      // the block is not mistaken for the action colour on the block.
+      const tokens = classTokens(block);
+      for (const forbidden of [
+        "text-primary",
+        "text-destructive",
+        "text-warning",
+      ]) {
+        expect(tokens).not.toContain(forbidden);
+      }
     });
   }
 
-  it("agrees on the same surface tokens across all three", () => {
+  it("agrees on the family's shared tokens across all three", () => {
     const shared = surfaces.map(({ regionGate }) => {
       const { container } = render(
         <SignupPanelView {...panel({ regionGate })} />,
@@ -430,8 +492,15 @@ describe("the info family", () => {
       const block = infoBlocks(container)[0];
       return new Set(block.className.split(/\s+/));
     });
-    for (const token of ["rounded-md", "border", "border-info/30", "bg-info/10", "p-4"]) {
-      for (const tokens of shared) expect(tokens).toContain(token);
+    // One family, one geometry, one hue — the tiers differ only in volume,
+    // which the per-surface cases above pin.
+    for (const tokens of shared) {
+      for (const token of ["rounded-md", "border", "p-4"]) {
+        expect(tokens).toContain(token);
+      }
+      expect(
+        [...tokens].some((t) => t.startsWith("border-info/")),
+      ).toBe(true);
     }
   });
 
@@ -445,7 +514,9 @@ describe("the info family", () => {
         })}
       />,
     );
-    const note = lineOf(container, "regionLock.note");
+    // The block's first paragraph is the note: the heading above it is an h3
+    // and the affordance below it is a button.
+    const note = infoBlocks(container)[0].querySelector("p");
     expect(note?.className).toContain("text-foreground");
     expect(note?.className).not.toContain("text-muted-foreground");
   });
@@ -457,7 +528,12 @@ describe("the info family", () => {
     const { container } = render(
       <SignupPanelView {...panel({ regionGate: eligible })} />,
     );
-    const receipt = lineOf(container, "regionLock.eligibleLocation");
-    expect(receipt?.className).toContain("text-muted-foreground");
+    // Two paragraphs, in the order they are read: the statement, then the
+    // receipt beneath it.
+    const [statement, receipt] =
+      infoBlocks(container)[0].querySelectorAll("p");
+    expect(statement.textContent).toContain("regionLock.eligible");
+    expect(receipt.textContent).toContain("regionLock.eligibleLocation");
+    expect(receipt.className).toContain("text-muted-foreground");
   });
 });
