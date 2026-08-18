@@ -9,48 +9,70 @@ import {
 } from "@/lib/daily";
 
 describe("buildUserName", () => {
-  it("encodes userId|role|displayName with no Minecraft slots when none are passed", () => {
+  it("encodes userId|role|displayName with no game slots when no platform is passed", () => {
     expect(
       buildUserName({ userId: "u1", role: "gamer", displayName: "Kid" }),
     ).toBe("u1|gamer|Kid");
   });
 
-  it("appends both Minecraft slots when a username + uuid are passed", () => {
+  it("appends all three game slots for a verified Minecraft identity", () => {
     expect(
       buildUserName({
         userId: "u1",
         role: "gamer",
         displayName: "Kid",
-        minecraftUsername: "Steve123",
-        minecraftUuid: "abc-uuid",
+        gamePlatform: "minecraft",
+        gameUsername: "Steve123",
+        gameExternalId: "abc-uuid",
       }),
-    ).toBe("u1|gamer|Kid|Steve123|abc-uuid");
+    ).toBe("u1|gamer|Kid|minecraft|Steve123|abc-uuid");
   });
 
-  it("emits empty (but present) Minecraft slots when the fields are null", () => {
-    // null = caller surfaces Minecraft but the user has no linked account →
-    // the client renders the "(Unknown)" badge, which requires the slots to
-    // exist (length > 3) even though they're empty.
+  it("writes a Roblox account id as its decimal string", () => {
+    // A Roblox key is an int64 where a Mojang key is a UUID string. One slot
+    // carries both, as text; parseUserName turns this one back into a number.
     expect(
       buildUserName({
         userId: "u1",
         role: "gamer",
         displayName: "Kid",
-        minecraftUsername: null,
-        minecraftUuid: null,
+        gamePlatform: "roblox",
+        gameUsername: "BuilderKid",
+        gameExternalId: 1583920471,
       }),
-    ).toBe("u1|gamer|Kid||");
+    ).toBe("u1|gamer|Kid|roblox|BuilderKid|1583920471");
   });
 
-  it("emits the slots when only one Minecraft field is passed (opt-in is per-call)", () => {
+  it("emits empty (but present) identity slots when the fields are null", () => {
+    // A platform with null fields = the room surfaces this identity but the
+    // user has no linked account → the client renders "(Unknown)", which
+    // requires the slots to exist even though they're empty.
     expect(
       buildUserName({
         userId: "u1",
         role: "gamer",
         displayName: "Kid",
-        minecraftUsername: "Steve123",
+        gamePlatform: "minecraft",
+        gameUsername: null,
+        gameExternalId: null,
       }),
-    ).toBe("u1|gamer|Kid|Steve123|");
+    ).toBe("u1|gamer|Kid|minecraft||");
+  });
+
+  it("emits no slots at all when the platform is null (a topic about no game account)", () => {
+    // The platform is the gate, not the identity fields: a product whose topic
+    // is about no single game account mints exactly what an instant room does,
+    // and the client hides the identity slot rather than showing "(Unknown)".
+    expect(
+      buildUserName({
+        userId: "u1",
+        role: "gamer",
+        displayName: "Kid",
+        gamePlatform: null,
+        gameUsername: null,
+        gameExternalId: null,
+      }),
+    ).toBe("u1|gamer|Kid");
   });
 
   it("strips pipe characters from displayName so a guest can't spoof the role slot", () => {
@@ -62,16 +84,17 @@ describe("buildUserName", () => {
     ).toBe("u1|guest|Eviladminx");
   });
 
-  it("strips pipe characters from the Minecraft slots too", () => {
+  it("strips pipe characters from the game slots too", () => {
     expect(
       buildUserName({
         userId: "u1",
         role: "gamer",
         displayName: "Kid",
-        minecraftUsername: "a|b",
-        minecraftUuid: "c|d",
+        gamePlatform: "minecraft",
+        gameUsername: "a|b",
+        gameExternalId: "c|d",
       }),
-    ).toBe("u1|gamer|Kid|ab|cd");
+    ).toBe("u1|gamer|Kid|minecraft|ab|cd");
   });
 });
 

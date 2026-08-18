@@ -109,6 +109,7 @@ import {
 } from "@/components/game-account";
 import { useRobloxProfile } from "@/services/roblox";
 import { ParticipantChip } from "@/components/admin/products/groups/participant-chip";
+import type { ChipGameIdentity } from "@/components/admin/products/groups/panel-rules";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
 import { cn } from "@/lib/utils";
@@ -499,19 +500,31 @@ function DialogDemo() {
 /*  Participant Card Demo                                              */
 /* ------------------------------------------------------------------ */
 
-// Roles + Minecraft fields exercise every identity state: gedu/gamer rows show
-// the compact identity row (verified / unverified / "(Unknown)"), while
-// non-gedu/gamer rows (and rows with `minecraftUsername === undefined`) show
-// none. Five of them, because the point of the compact figure is density —
-// one row cannot show whether a list breathes.
+// Roles + game fields exercise every identity state: gedu/gamer rows show the
+// compact identity row (verified / unverified / "(Unknown)"), while
+// non-gedu/gamer rows (and rows with no `gamePlatform`) show none. Six of them,
+// because the point of the compact figure is density — one row cannot show
+// whether a list breathes.
+//
+// **One platform for the whole list, deliberately.** The platform is the
+// *room's*, resolved from the product's topic at token-mint, so every peer in a
+// real room carries the same one or none at all — a mixed list would be a state
+// the product cannot produce. Minecraft here because it is the common case; the
+// same row on Roblox lives in the game-account section, at this exact `head`
+// figure, where both platforms sit side by side.
+//
+// Every row passes an explicit `gameAvatarUrl: null`: a fixture surface draws
+// the bundled stand-in rather than reaching a third-party skin host on load.
 const DEMO_PARTICIPANTS = [
   {
     userId: "4babfc78-d197-496e-860d-48f1207f5bc6",
     userName: "Emma",
     role: "gedu",
-    // Verified — username + uuid.
-    minecraftUsername: "ShadowFox99",
-    minecraftUuid: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+    // Verified — username + account key.
+    gamePlatform: "minecraft",
+    gameUsername: "ShadowFox99",
+    gameExternalId: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+    gameAvatarUrl: null,
     isLocal: true,
     isOwner: true,
     audioOn: true,
@@ -522,8 +535,10 @@ const DEMO_PARTICIPANTS = [
     userName: "Aino",
     role: "gamer",
     // Entered but unverified — username only.
-    minecraftUsername: "JaaKarhu",
-    minecraftUuid: null,
+    gamePlatform: "minecraft",
+    gameUsername: "JaaKarhu",
+    gameExternalId: null,
+    gameAvatarUrl: null,
     isLocal: false,
     isOwner: false,
     audioOn: true,
@@ -533,9 +548,11 @@ const DEMO_PARTICIPANTS = [
     userId: "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47",
     userName: "Oliver",
     role: "gamer",
-    // Linked-but-unset — renders the muted "(Unknown)" badge.
-    minecraftUsername: null,
-    minecraftUuid: null,
+    // Linked-but-unset — renders the muted "(Unknown)" row.
+    gamePlatform: "minecraft",
+    gameUsername: null,
+    gameExternalId: null,
+    gameAvatarUrl: null,
     isLocal: false,
     isOwner: false,
     audioOn: false,
@@ -545,8 +562,10 @@ const DEMO_PARTICIPANTS = [
     userId: "8661f882-c470-4225-934d-b7330e6867d1",
     userName: "Väinö",
     role: "gedu",
-    minecraftUsername: "DarkPhoenixRising",
-    minecraftUuid: "2b7c4d1e-90ab-4f56-8c3d-e1f2a3b4c5d6",
+    gamePlatform: "minecraft",
+    gameUsername: "DarkPhoenixRising",
+    gameExternalId: "2b7c4d1e-90ab-4f56-8c3d-e1f2a3b4c5d6",
+    gameAvatarUrl: null,
     isLocal: false,
     isOwner: true,
     audioOn: true,
@@ -556,8 +575,10 @@ const DEMO_PARTICIPANTS = [
     userId: "6f6a6faf-f556-43cd-8ffe-87a0573e68b5",
     userName: "Sofia",
     role: "gamer",
-    minecraftUsername: "GalaxyDestroyer9000",
-    minecraftUuid: "5e8f2349-67ab-4c12-9d3e-a1b2c3d4e5f6",
+    gamePlatform: "minecraft",
+    gameUsername: "GalaxyDestroyer9000",
+    gameExternalId: "5e8f2349-67ab-4c12-9d3e-a1b2c3d4e5f6",
+    gameAvatarUrl: null,
     isLocal: false,
     isOwner: false,
     audioOn: true,
@@ -567,15 +588,18 @@ const DEMO_PARTICIPANTS = [
     // A parent on their own seat — the imported id IS the gedu roster
     // fixtures' Marja, so she wears one face everywhere by construction
     // rather than by a copied literal. Her identity slot carries the shared
-    // Parent badge where a child's row shows the Minecraft identity — the
+    // Parent badge where a child's row shows the game identity — the
     // adult-variant grammar the rosters established, decided by the owner
     // after judging the unbadged treatment in this very demo. No game
-    // identity: parents cannot link game accounts, by scope decision.
+    // identity: parents cannot link game accounts, by scope decision, and the
+    // row would hide the slot for a customer even if the room had a platform.
     userId: SESSION_FEED_ADULT_ID,
     userName: "Marja",
     role: "customer",
-    minecraftUsername: null,
-    minecraftUuid: null,
+    gamePlatform: "minecraft",
+    gameUsername: null,
+    gameExternalId: null,
+    gameAvatarUrl: null,
     isLocal: false,
     isOwner: false,
     audioOn: true,
@@ -3045,6 +3069,19 @@ function GameAccountDemo() {
           &mdash; where the parent&rsquo;s name would be. Drag is live &mdash;
           the chips below are real, and there is nowhere to drop them.
         </p>
+        <p className="text-sm text-muted-foreground">
+          <strong className="font-medium text-foreground">
+            Which identity a chip draws is the product&rsquo;s topic, not the
+            chip&rsquo;s choice.
+          </strong>{" "}
+          A Minecraft product draws the Minecraft handle, a Roblox one the Roblox
+          handle beside the render the panel resolved by account id in one
+          batched call, and a topic about no single game account &mdash;
+          Programming, Esports &mdash; draws no identity row at all: the chip is
+          simply shorter, the same call the adult variant makes. Every figure
+          here is the drawn placeholder, because a fixture surface must not reach
+          a third-party image host on load.
+        </p>
         <ParticipantChipDemo />
       </SubSection>
     </div>
@@ -3059,7 +3096,7 @@ function GameAccountDemo() {
  *
  * `marja` is an adult holding a seat of her own. She has no date of birth, no
  * gender and no game account on purpose — those live on `gamer_profiles` and
- * `minecraft_accounts`, and an adult seat has neither row.
+ * the per-platform account tables, and an adult seat has none of those rows.
  */
 const CHIP_PEOPLE = {
   aino: "3f5f2c9a-1d7e-4c8b-9a2f-6b1e0c4d8a37",
@@ -3079,13 +3116,64 @@ function ParticipantChipDemo() {
   );
 }
 
+/**
+ * The identity a chip draws, one entry per variant. The panel resolves these
+ * from the product's topic and the snapshot's columns; a fixture states them
+ * outright.
+ *
+ * Every one passes `gameAvatarUrl: null` — the drawn placeholder — because a
+ * style-guide page must not reach a third-party image host on load. On a live
+ * Minecraft chip the prop is *omitted* instead, which is what lets the row
+ * derive the face from the name; a Roblox chip is always handed its render,
+ * because that platform has no by-name image host.
+ */
+const CHIP_IDENTITY = {
+  minecraftVerified: {
+    gamePlatform: "minecraft",
+    gameUsername: "Notch",
+    gameExternalId: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+    gameAvatarUrl: null,
+  },
+  minecraftUnverified: {
+    gamePlatform: "minecraft",
+    gameUsername: "jeb_",
+    gameExternalId: null,
+    gameAvatarUrl: null,
+  },
+  minecraftUnknown: {
+    gamePlatform: "minecraft",
+    gameUsername: null,
+    gameExternalId: null,
+    gameAvatarUrl: null,
+  },
+  robloxVerified: {
+    gamePlatform: "roblox",
+    gameUsername: "AinoBuilds",
+    gameExternalId: 261,
+    gameAvatarUrl: null,
+  },
+  robloxUnverified: {
+    gamePlatform: "roblox",
+    gameUsername: "joonas_makes",
+    gameExternalId: null,
+    gameAvatarUrl: null,
+  },
+  // A topic about no single game account — the chip draws no identity row.
+  none: {
+    gamePlatform: null,
+    gameUsername: null,
+    gameExternalId: null,
+    gameAvatarUrl: null,
+  },
+} as const satisfies Record<string, ChipGameIdentity>;
+
 function ParticipantChipRow() {
   return (
     <div className="flex flex-wrap items-start gap-6">
       {/* The real rail width in the groups panel, so the chip is judged at the
           size it actually renders at rather than stretched across the page. */}
       <div className="w-64 space-y-2 rounded-lg border p-3">
-        <DemoCaption>In a group column (w-64, the real rail)</DemoCaption>
+        <DemoCaption>On a Minecraft product (w-64, the real rail)</DemoCaption>
         <ParticipantChip
           participationId="demo-1"
           participantId={CHIP_PEOPLE.aino}
@@ -3094,8 +3182,7 @@ function ParticipantChipRow() {
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
-          minecraftUsername="Notch"
-          minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          {...CHIP_IDENTITY.minecraftVerified}
           participantEmail={null}
         />
         <ParticipantChip
@@ -3106,8 +3193,7 @@ function ParticipantChipRow() {
           gender="boy"
           parentFirstName="Petra"
           parentLastName="Nieminen"
-          minecraftUsername="jeb_"
-          minecraftUuid={null}
+          {...CHIP_IDENTITY.minecraftUnverified}
           participantEmail={null}
         />
         <ParticipantChip
@@ -3118,8 +3204,7 @@ function ParticipantChipRow() {
           gender={null}
           parentFirstName={null}
           parentLastName={null}
-          minecraftUsername={null}
-          minecraftUuid={null}
+          {...CHIP_IDENTITY.minecraftUnknown}
           participantEmail={null}
         />
         {/* The adult variant, deliberately last in the same column: the thing
@@ -3135,9 +3220,66 @@ function ParticipantChipRow() {
           gender={null}
           parentFirstName={null}
           parentLastName={null}
-          minecraftUsername={null}
-          minecraftUuid={null}
+          {...CHIP_IDENTITY.none}
           participantEmail="marja.korhonen@example.com"
+        />
+      </div>
+
+      {/* The same two children on a Roblox product. The row is the same shape at
+          the same height — a Minecraft face render and a Roblox headshot are
+          both square — so only the handle and the platform behind it differ. */}
+      <div className="w-64 space-y-2 rounded-lg border p-3">
+        <DemoCaption>On a Roblox product</DemoCaption>
+        <ParticipantChip
+          participationId="demo-6"
+          participantId={CHIP_PEOPLE.aino}
+          firstName="Aino"
+          dateOfBirth="2014-03-11"
+          gender="girl"
+          parentFirstName="Sanna"
+          parentLastName="Virtanen"
+          {...CHIP_IDENTITY.robloxVerified}
+          participantEmail={null}
+        />
+        <ParticipantChip
+          participationId="demo-7"
+          participantId={CHIP_PEOPLE.joonas}
+          firstName="Joonas"
+          dateOfBirth="2012-09-02"
+          gender="boy"
+          parentFirstName="Petra"
+          parentLastName="Nieminen"
+          {...CHIP_IDENTITY.robloxUnverified}
+          participantEmail={null}
+        />
+      </div>
+
+      {/* Programming, Esports, Game Studio — a topic about no one game account.
+          Worth seeing beside the two columns above: the chip is shorter by
+          exactly the row it does not draw, and holds no gap where one was. */}
+      <div className="w-64 space-y-2 rounded-lg border p-3">
+        <DemoCaption>On a topic with no game account</DemoCaption>
+        <ParticipantChip
+          participationId="demo-8"
+          participantId={CHIP_PEOPLE.aino}
+          firstName="Aino"
+          dateOfBirth="2014-03-11"
+          gender="girl"
+          parentFirstName="Sanna"
+          parentLastName="Virtanen"
+          {...CHIP_IDENTITY.none}
+          participantEmail={null}
+        />
+        <ParticipantChip
+          participationId="demo-9"
+          participantId={CHIP_PEOPLE.petra}
+          firstName="Petra"
+          dateOfBirth={null}
+          gender={null}
+          parentFirstName={null}
+          parentLastName={null}
+          {...CHIP_IDENTITY.none}
+          participantEmail={null}
         />
       </div>
 
@@ -3151,8 +3293,7 @@ function ParticipantChipRow() {
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
-          minecraftUsername="Notch"
-          minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          {...CHIP_IDENTITY.minecraftVerified}
           participantEmail={null}
           isPending
         />
