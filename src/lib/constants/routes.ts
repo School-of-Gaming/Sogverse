@@ -272,7 +272,15 @@ export const ROUTES = {
     campsNew: "/admin/camps/new",
     events: "/admin/events",
     eventsNew: "/admin/events/new",
-    voice: "/admin/voice",
+    /**
+     * Platform-operations tools that belong to no one product — the instant
+     * voice room and the Minecraft Education password reset, both shared by
+     * admins and certified gedus. The gedu half lives on their dashboard's
+     * Tools section rather than at a URL of its own; a gedu has no sidebar to
+     * reach one with. `/admin/voice` used to hold the room card and now only
+     * redirects here.
+     */
+    tools: "/admin/tools",
     uiComponents: "/admin/ui-components",
     uiPreviews: "/admin/ui-previews",
     testing: "/admin/testing",

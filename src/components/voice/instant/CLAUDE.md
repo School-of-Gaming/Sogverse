@@ -4,7 +4,7 @@ On-the-fly voice rooms any admin or *verified* gedu can spin up, share via a sho
 
 ## Flow
 
-A moderator (admin or verified gedu) creates a room from `/admin/voice` or `/gedu`. The server allocates a 4-character code, asks Daily.co to create a room named with that code, and returns the code. The dashboard shows a copyable URL chip + a Join button. The mod shares `/voice/{CODE}` with whoever should join. Anyone with the link joins, no account required — signed in they join as themselves, signed out they type a name. The room dies when a mod clicks "End for everyone" or after the room's `exp` (8h), whichever comes first.
+A moderator (admin or verified gedu) creates a room from the Tools surface their role has — `/admin/tools` for an admin, the `/gedu` dashboard's Tools section for a gedu. The server allocates a 4-character code, asks Daily.co to create a room named with that code, and returns the code. The dashboard shows a copyable URL chip + a Join button. The mod shares `/voice/{CODE}` with whoever should join. Anyone with the link joins, no account required — signed in they join as themselves, signed out they type a name. The room dies when a mod clicks "End for everyone" or after the room's `exp` (8h), whichever comes first.
 
 The page runs under the **standard app header with no footer** — that is the whole reason the `(voice)` route group exists (see `../../layout/CLAUDE.md`). It used to carry a simplified header of its own, from a launch era when the surrounding site wasn't production-ready; scheduled group rooms already ran live calls under the standard chrome, so the special case was inconsistency rather than protection.
 
@@ -59,8 +59,9 @@ they still join as themselves. The check is `isGeduCertified`
 (`../../../services/gedu/gedu-profiles.service.ts`).
 
 One UX surface mirrors the boundary (UX only — the server gates above are the real
-boundary): the `/gedu` dashboard hides the create card and shows an awaiting-approval
-notice. The join lobby no longer mirrors anything, because it no longer asks the question:
+boundary): the `/gedu` dashboard's Tools section hides the create card. The notice in its
+place is the *section's*, not this feature's — certification gates every tool under that
+heading at once, so one card explains it for all of them rather than one per panel. The join lobby no longer mirrors anything, because it no longer asks the question:
 its only conditional element is the name input, and that turns on *sign-in*, not on
 moderation.
 

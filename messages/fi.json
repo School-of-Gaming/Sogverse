@@ -12,6 +12,7 @@
       "yty": "Yty – Sogversen voima",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
+      "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "parentDashboardDescription": "Hallitse pelaajiasi ja heidän ilmoittautumisiaan",
       "geduDashboard": "Oma SOG",
@@ -1238,8 +1239,7 @@
     "help": "Apu",
     "yty": "Yty",
     "settings": "Asetukset",
-    "instantVoiceRoom": "Pikaäänihuone",
-    "instantVoiceRoomShort": "Äänihuone",
+    "tools": "Työkalut",
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "family": {
@@ -1832,7 +1832,7 @@
     "whatsapp": "WhatsApp",
     "testing": "Testaus",
     "settings": "Asetukset",
-    "voice": "Ääni",
+    "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki"
   },
@@ -2047,6 +2047,36 @@
     "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
     "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
   },
+  "tools": {
+    "uncertified": {
+      "title": "Odottaa hyväksyntää",
+      "body": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit avata äänihuoneita tai nollata Minecraft Education -salasanoja. Molemmat työkalut tulevat tähän näkyviin heti, kun tilisi on hyväksytty."
+    },
+    "minecraftPasswordReset": {
+      "title": "Minecraft Education -salasanat",
+      "description": "Vaihda jaetun Minecraft Education -tilin salasana ja lue uusi salasana suoraan näytöltä.",
+      "inputLabel": "Käyttäjätunnukset tai osoitteet",
+      "inputPlaceholder": "builder07, redstone12@gamer.sog.gg, creeper03",
+      "inputHint": "Yksi tai useampi – erota ne välilyönnillä, pilkulla tai rivinvaihdolla. Pelkät käyttäjätunnukset käyvät, samoin täydet osoitteet verkkotunnuksissa {domains}.",
+      "submit": "{count, plural, =0 {Vaihda salasanat} one {Vaihda 1 salasana} other {Vaihda # salasanaa}}",
+      "submitting": "Vaihdetaan…",
+      "unsupportedDomainEntries": "{count, plural, one {Tämä ei ole Minecraft Education -osoite, joten sitä ei lähetetä: {entries}. Käytä pelkkää käyttäjätunnusta tai osoitetta verkkotunnuksessa {domains}.} other {Nämä eivät ole Minecraft Education -osoitteita, joten niitä ei lähetetä: {entries}. Käytä pelkkiä käyttäjätunnuksia tai osoitteita verkkotunnuksissa {domains}.}}",
+      "tooMany": "Tunnuksia on {count} – vaihda enintään {max} salasanaa kerrallaan.",
+      "requestFailed": "Jokin meni pieleen. Yritä uudelleen.",
+      "resultsHeading": "Uudet salasanat",
+      "copyAll": "Kopioi kaikki {count}",
+      "copied": "Kopioitu",
+      "copyPasswordFor": "Kopioi tunnuksen {upn} uusi salasana",
+      "mustChangeOnFirstSignIn": "Vaihdettava ensimmäisellä kirjautumiskerralla",
+      "errors": {
+        "invalidUsername": "Kelvoton syöte. Anna pelkkä käyttäjätunnus tai täysi Minecraft Education -osoite.",
+        "unsupportedDomain": "Salasanan voi nollata vain verkkotunnuksissa {domains}.",
+        "notFound": "Tiliä ei löytynyt osoitteista {domains}.",
+        "azureAuth": "Microsoftiin ei saatu yhteyttä. Azure-tunnukset ovat ehkä vanhentuneet – ilmoita ylläpitäjälle.",
+        "graphError": "Microsoft ei hyväksynyt muutosta (virhe {status}). Yritä uudelleen."
+      }
+    }
+  },
   "verifyEmail": {
     "successTitle": "Sähköposti vahvistettu",
     "successDescription": "Kiitos – nyt tiedämme, että tämä osoite tavoittaa sinut, eikä mikään tärkeä jää saamatta.",
@@ -2232,9 +2262,7 @@
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
-        "join": "Liity",
-        "uncertifiedTitle": "Odottaa hyväksyntää",
-        "uncertifiedBody": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on hyväksytty."
+        "join": "Liity"
       }
     }
   },

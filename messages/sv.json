@@ -12,6 +12,7 @@
       "yty": "Yty – Sogversens kraft",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
+      "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
       "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
@@ -1238,8 +1239,7 @@
     "help": "Hjälp",
     "yty": "Yty",
     "settings": "Inställningar",
-    "instantVoiceRoom": "Direkt röstrum",
-    "instantVoiceRoomShort": "Röstrum",
+    "tools": "Verktyg",
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "family": {
@@ -1832,7 +1832,7 @@
     "whatsapp": "WhatsApp",
     "testing": "Testning",
     "settings": "Inställningar",
-    "voice": "Röst",
+    "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel"
   },
@@ -2047,6 +2047,36 @@
     "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
     "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen."
   },
+  "tools": {
+    "uncertified": {
+      "title": "Inväntar certifiering",
+      "body": "En administratör måste certifiera ditt Gedu-konto innan du kan starta röstrum eller återställa lösenord för Minecraft Education. Båda verktygen dyker upp här så snart du är certifierad."
+    },
+    "minecraftPasswordReset": {
+      "title": "Lösenord för Minecraft Education",
+      "description": "Byt lösenord på ett delat Minecraft Education-konto och läs det nya direkt på skärmen.",
+      "inputLabel": "Användarnamn eller adresser",
+      "inputPlaceholder": "builder07, redstone12@gamer.sog.gg, creeper03",
+      "inputHint": "Ett eller flera – separera dem med mellanslag, kommatecken eller nya rader. Både rena användarnamn och fullständiga adresser på {domains} fungerar.",
+      "submit": "{count, plural, =0 {Byt lösenord} one {Byt 1 lösenord} other {Byt # lösenord}}",
+      "submitting": "Byter…",
+      "unsupportedDomainEntries": "{count, plural, one {Det här är ingen Minecraft Education-adress, så den skickas inte: {entries}. Använd ett rent användarnamn eller en adress på {domains}.} other {De här är inga Minecraft Education-adresser, så de skickas inte: {entries}. Använd rena användarnamn eller adresser på {domains}.}}",
+      "tooMany": "Det är {count} användarnamn – byt högst {max} åt gången.",
+      "requestFailed": "Något gick fel. Försök igen.",
+      "resultsHeading": "Nya lösenord",
+      "copyAll": "Kopiera alla {count}",
+      "copied": "Kopierat",
+      "copyPasswordFor": "Kopiera det nya lösenordet för {upn}",
+      "mustChangeOnFirstSignIn": "Måste bytas vid första inloggningen",
+      "errors": {
+        "invalidUsername": "Ogiltig post. Ange ett användarnamn för sig eller en fullständig Minecraft Education-adress.",
+        "unsupportedDomain": "Bara konton på {domains} kan återställas.",
+        "notFound": "Inget konto hittades på {domains}.",
+        "azureAuth": "Kunde inte nå Microsoft. Azure-uppgifterna kan ha gått ut – meddela en administratör.",
+        "graphError": "Microsoft nekade ändringen (fel {status}). Försök igen."
+      }
+    }
+  },
   "verifyEmail": {
     "successTitle": "E-postadress verifierad",
     "successDescription": "Tack – nu vet vi att den här adressen når dig, så inget viktigt går förlorat.",
@@ -2232,9 +2262,7 @@
         "creating": "Skapar…",
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
-        "join": "Gå med",
-        "uncertifiedTitle": "Inväntar certifiering",
-        "uncertifiedBody": "En administratör måste certifiera ditt Gedu-konto innan du kan skapa röstrum. Du kan starta ett här så snart du är certifierad."
+        "join": "Gå med"
       }
     }
   },

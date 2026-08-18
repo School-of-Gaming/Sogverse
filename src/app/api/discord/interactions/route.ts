@@ -7,7 +7,7 @@ import {
   InteractionResponseType,
 } from "discord-interactions";
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
-import { resetPassword } from "@/lib/microsoft-graph";
+import { resetPassword, type PasswordResetOutcome } from "@/lib/microsoft-graph";
 
 // Just the slice of Discord's interaction payload we use. Lenient on
 // purpose — unknown fields and option value types Discord may add must not
@@ -85,6 +85,39 @@ async function patchDiscordResponse(interactionToken: string, content: string) {
   );
 }
 
+/**
+ * The English sentence for a failed reset.
+ *
+ * These strings live here rather than in the Graph module because they are
+ * Discord's copy, not the platform's: the same outcomes are rendered through
+ * next-intl on the in-app tools card, and a sentence baked into the library
+ * would be a sentence no locale could translate. Discord has no locale — it is
+ * a staff channel — so its wording stays fixed, and it is fixed *verbatim*:
+ * these are byte-for-byte the sentences the command has always sent.
+ */
+function discordFailureSentence(
+  outcome: Extract<PasswordResetOutcome, { ok: false }>
+): string {
+  switch (outcome.code) {
+    case "invalid_username":
+      return "Invalid username. Provide just the username, not the full email.";
+    // The one sentence here with no history behind it: the code is newer than
+    // the command, so this is its wording rather than a preserved one.
+    case "unsupported_domain":
+      return `Only ${outcome.domains
+        .map((domain) => `@${domain}`)
+        .join(" and ")} accounts can be reset.`;
+    case "azure_auth":
+      return "Failed to authenticate with Azure. Check bot configuration.";
+    case "graph_error":
+      return `Microsoft Graph error: ${outcome.status}`;
+    case "not_found":
+      return `User "${outcome.username}" not found on ${outcome.domains
+        .map((domain) => `@${domain}`)
+        .join(" or ")}.`;
+  }
+}
+
 async function sendPasswordReset(
   interactionToken: string,
   input: string
@@ -98,7 +131,7 @@ async function sendPasswordReset(
         const line = `✅ **${result.upn}** → \`${result.password}\``;
         return result.forceChange ? `${line} (must change on sign-in)` : line;
       }
-      return `❌ **${username}** — ${result.error}`;
+      return `❌ **${username}** — ${discordFailureSentence(result)}`;
     })
   );
 
