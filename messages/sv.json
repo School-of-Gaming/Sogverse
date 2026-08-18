@@ -12,6 +12,7 @@
       "yty": "Yty – Sogversens kraft",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
+      "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
       "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
@@ -1238,6 +1239,7 @@
     "help": "Hjälp",
     "yty": "Yty",
     "settings": "Inställningar",
+    "tools": "Verktyg",
     "instantVoiceRoom": "Direkt röstrum",
     "instantVoiceRoomShort": "Röstrum",
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
@@ -1833,6 +1835,7 @@
     "testing": "Testning",
     "settings": "Inställningar",
     "voice": "Röst",
+    "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel"
   },
@@ -2046,6 +2049,35 @@
     "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
     "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
     "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen."
+  },
+  "tools": {
+    "uncertified": {
+      "title": "Inväntar certifiering",
+      "body": "En administratör måste certifiera ditt Gedu-konto innan du kan använda de här verktygen. De dyker upp här så snart du är certifierad."
+    },
+    "minecraftPasswordReset": {
+      "title": "Lösenord för Minecraft Education",
+      "description": "Byt lösenord på ett delat Minecraft Education-konto och läs det nya direkt på skärmen.",
+      "inputLabel": "Användarnamn",
+      "inputPlaceholder": "builder07, redstone12, creeper03",
+      "inputHint": "Ett eller flera – separera dem med mellanslag, komma eller radbrytning.",
+      "submit": "{count, plural, =0 {Byt lösenord} one {Byt 1 lösenord} other {Byt # lösenord}}",
+      "submitting": "Byter…",
+      "emailEntries": "{count, plural, one {Ange bara användarnamnet, inte hela adressen: {entries}} other {Ange bara användarnamnen, inte hela adresserna: {entries}}}",
+      "tooMany": "Det är {count} användarnamn – byt högst {max} åt gången.",
+      "requestFailed": "Något gick fel. Försök igen.",
+      "resultsHeading": "Nya lösenord",
+      "copyAll": "Kopiera alla {count}",
+      "copied": "Kopierat",
+      "copyPasswordFor": "Kopiera det nya lösenordet för {upn}",
+      "mustChangeOnFirstSignIn": "Måste bytas vid första inloggningen",
+      "errors": {
+        "invalidUsername": "Ogiltigt användarnamn. Ange bara namnet, utan domänen.",
+        "notFound": "Inget konto hittades på {domains}.",
+        "azureAuth": "Kunde inte nå Microsoft. Azure-uppgifterna kan ha gått ut – meddela en administratör.",
+        "graphError": "Microsoft nekade ändringen (fel {status}). Försök igen."
+      }
+    }
   },
   "verifyEmail": {
     "successTitle": "E-postadress verifierad",

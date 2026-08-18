@@ -54,6 +54,8 @@ import {
   PersonChipList,
   type PersonChipListPerson,
 } from "@/components/ui/person-chip";
+import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
+import type { MinecraftPasswordResetResult } from "@/services/minecraft-education/minecraft-education.contracts";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
@@ -2138,9 +2140,82 @@ export default function AdminUIComponentsPage() {
         <GameAccountDemo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 18: Minecraft Education password reset                */}
+      {/* ============================================================ */}
+      <Section title="Minecraft Education password reset">
+        <p className="text-sm text-muted-foreground -mt-2">
+          One card, rendered unchanged on the gedu dashboard&rsquo;s Tools
+          section and on <code>/admin/tools</code>. The textarea, the
+          duplicate-collapsing, the bare-username warning and the batch cap are
+          all live &mdash; type into it &mdash; because they are pure UI over
+          local state; only the submit is inert here, and the result rows below
+          it come from fixtures rather than from Graph.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Every row shape is on the one card, because they only compare
+          themselves side by side: a <code>@gamer.sog.gg</code> account, which
+          keeps the password it is given; a <code>@gedu.sog.gg</code> one, which
+          must change it on first sign-in and says so under the address; and a
+          username no domain matched, whose message lands where the password
+          chip would be. The chips and the Copy-all button write to the real
+          clipboard.
+        </p>
+        <MinecraftPasswordResetDemo />
+      </Section>
+
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Minecraft Education password reset                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The three row shapes a submit can answer with, on one card: the two success
+ * variants (which differ only by domain, and therefore by whether the password
+ * survives the first sign-in) and a failure, which is the only row that carries
+ * a sentence instead of a password.
+ */
+const PASSWORD_RESET_DEMO_RESULTS: readonly MinecraftPasswordResetResult[] = [
+  {
+    username: "builder07",
+    ok: true,
+    upn: "builder07@gamer.sog.gg",
+    password: "Sogverse42",
+    forceChange: false,
+  },
+  {
+    username: "sanna.gedu",
+    ok: true,
+    upn: "sanna.gedu@gedu.sog.gg",
+    password: "Sogverse08",
+    forceChange: true,
+  },
+  {
+    username: "creeper99",
+    ok: false,
+    error: {
+      code: "not_found",
+      username: "creeper99",
+      domains: ["gamer.sog.gg", "gedu.sog.gg"],
+    },
+  },
+];
+
+function MinecraftPasswordResetDemo() {
+  return (
+    <MinecraftPasswordResetCardView
+      results={PASSWORD_RESET_DEMO_RESULTS}
+      submitting={false}
+      error={null}
+      onSubmit={noopSubmit}
+    />
+  );
+}
+
+function noopSubmit() {}
 
 /* ------------------------------------------------------------------ */
 /*  Section 13: Manage Billing Card                                    */

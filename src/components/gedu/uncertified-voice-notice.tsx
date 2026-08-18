@@ -1,12 +1,5 @@
-import { ShieldAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { UncertifiedNotice } from "./uncertified-notice";
 
 /**
  * Shown in place of the instant-room create card while a gedu is awaiting admin
@@ -16,20 +9,12 @@ import {
  *
  * It sits in its own module so the dashboard's draft body can render it without
  * importing the live body — which would pull the live body's query-bound
- * sections along with it.
+ * sections along with it. The card itself is the shared awaiting-certification
+ * shell beside it; only the two strings are voice's own.
  */
 export function UncertifiedVoiceNotice() {
   const t = useTranslations("voice.instant.createPage");
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-          {t("uncertifiedTitle")}
-        </CardTitle>
-        <CardDescription>{t("uncertifiedBody")}</CardDescription>
-      </CardHeader>
-      <CardContent />
-    </Card>
+    <UncertifiedNotice title={t("uncertifiedTitle")} body={t("uncertifiedBody")} />
   );
 }

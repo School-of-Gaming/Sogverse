@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
+import { MinecraftPasswordResetCard } from "@/components/tools/minecraft-password-reset-card";
 import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantRoomCard";
 import {
   formatProductSchedule,
@@ -91,6 +92,7 @@ export function GeduDashboardPage({
     <GeduDashboardPageBody
       assignments={assignments}
       certified={certified}
+      toolsCard={<MinecraftPasswordResetCard />}
       instantRoomCard={<CreateInstantRoomCard />}
     />
   );

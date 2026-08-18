@@ -12,6 +12,7 @@
       "yty": "Yty – the Force of the Sogverse",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin Dashboard",
+      "adminTools": "Tools",
       "parentDashboard": "My SOG",
       "parentDashboardDescription": "Manage your gamers and enrollments",
       "geduDashboard": "My SOG",
@@ -1238,6 +1239,7 @@
     "help": "Help",
     "yty": "Yty",
     "settings": "Settings",
+    "tools": "Tools",
     "instantVoiceRoom": "Instant Voice Room",
     "instantVoiceRoomShort": "Voice room",
     "loadingAssignments": "Loading your clubs, camps and events."
@@ -1833,6 +1835,7 @@
     "testing": "Testing",
     "settings": "Settings",
     "voice": "Voice",
+    "tools": "Tools",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar"
   },
@@ -2678,6 +2681,35 @@
     "verificationEmailSent": "Verification email sent — check your inbox.",
     "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
     "verificationEmailFailed": "We couldn’t send the verification email. Please try again."
+  },
+  "tools": {
+    "uncertified": {
+      "title": "Awaiting certification",
+      "body": "An admin needs to certify your Gedu account before you can use these tools. They’ll appear here as soon as you’re certified."
+    },
+    "minecraftPasswordReset": {
+      "title": "Minecraft Education passwords",
+      "description": "Reset the password on a shared Minecraft Education account and read the new one straight off the screen.",
+      "inputLabel": "Usernames",
+      "inputPlaceholder": "builder07, redstone12, creeper03",
+      "inputHint": "One or many — separate them with spaces, commas or new lines.",
+      "submit": "{count, plural, =0 {Reset passwords} one {Reset 1 password} other {Reset # passwords}}",
+      "submitting": "Resetting…",
+      "emailEntries": "{count, plural, one {Enter the bare username, not the full address: {entries}} other {Enter bare usernames, not full addresses: {entries}}}",
+      "tooMany": "That’s {count} usernames — reset at most {max} at a time.",
+      "requestFailed": "Something went wrong. Please try again.",
+      "resultsHeading": "New passwords",
+      "copyAll": "Copy all {count}",
+      "copied": "Copied",
+      "copyPasswordFor": "Copy the new password for {upn}",
+      "mustChangeOnFirstSignIn": "Must be changed on first sign-in",
+      "errors": {
+        "invalidUsername": "Not a valid username. Enter just the username, without the domain.",
+        "notFound": "No account found on {domains}.",
+        "azureAuth": "Couldn’t reach Microsoft. The Azure credentials may have expired — tell an admin.",
+        "graphError": "Microsoft refused the change (error {status}). Please try again."
+      }
+    }
   },
   "verifyEmail": {
     "successTitle": "Email verified",

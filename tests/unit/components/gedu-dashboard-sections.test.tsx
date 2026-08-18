@@ -48,6 +48,7 @@ function dashboardHtml(assignments: readonly GeduAssignmentCardData[]): string {
           <GeduDashboardPageBody
             assignments={assignments}
             certified
+            toolsCard={<div />}
             instantRoomCard={<div />}
           />
         </NowProvider>

@@ -273,6 +273,13 @@ export const ROUTES = {
     events: "/admin/events",
     eventsNew: "/admin/events/new",
     voice: "/admin/voice",
+    /**
+     * Platform-operations tools that belong to no one product — today the
+     * Minecraft Education password reset, which admins and certified gedus
+     * share. The gedu half of it lives on their dashboard's Tools section
+     * rather than at a URL of its own; a gedu has no sidebar to reach one with.
+     */
+    tools: "/admin/tools",
     uiComponents: "/admin/ui-components",
     uiPreviews: "/admin/ui-previews",
     testing: "/admin/testing",

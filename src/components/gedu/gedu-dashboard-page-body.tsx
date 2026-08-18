@@ -7,6 +7,7 @@ import {
   GeduAssignmentsSectionView,
   type GeduAssignmentCardData,
 } from "./GeduAssignmentsSectionView";
+import { UncertifiedToolsNotice } from "./uncertified-notice";
 import { UncertifiedVoiceNotice } from "./uncertified-voice-notice";
 
 /**
@@ -43,22 +44,30 @@ import { UncertifiedVoiceNotice } from "./uncertified-voice-notice";
  *   of scrolling. Every section takes the same wider container so their left
  *   edges still line up under the section pill, and the cards grid inside it.
  *
- * The assignments arrive as **data**, not as a rendered node, and the instant
- * room stays a node. That split is not an inconsistency: the instant-room panel
- * is one section with backend actions behind it, so a shell can hand it over
- * finished, whereas the activity sections' *shape* — how many there are and what
- * they are called — is derived from the rows, and no single node can express it.
- * The body still queries nothing; it is a plain function of its props either way.
+ * The assignments arrive as **data**, not as a rendered node, while the two
+ * action panels — tools and the instant room — stay nodes. That split is not an
+ * inconsistency: each panel is one section with backend actions behind it, so a
+ * shell can hand it over finished, whereas the activity sections' *shape* — how
+ * many there are and what they are called — is derived from the rows, and no
+ * single node can express it. The body still queries nothing; it is a plain
+ * function of its props either way.
  */
 export function GeduDashboardPageBody({
   assignments,
   certified,
+  toolsCard,
   instantRoomCard,
 }: {
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
-  /** Has an admin certified this gedu? Gates the instant-room panel. */
+  /**
+   * Has an admin certified this gedu? Gates both action panels — the
+   * instant-room one and the tools one — because both are moderator powers an
+   * unapproved account does not hold, and both refuse it server-side.
+   */
   certified: boolean;
+  /** The tools panel shown to a certified gedu. */
+  toolsCard: React.ReactNode;
   /** The instant-voice-room panel shown to a certified gedu. */
   instantRoomCard: React.ReactNode;
 }) {
@@ -93,6 +102,7 @@ export function GeduDashboardPageBody({
       id: ACTIVITY_HEADING_KEY[group.type],
       label: t(ACTIVITY_HEADING_KEY[group.type]),
     })),
+    { id: "tools", label: t("tools") },
     { id: "instant-voice-room", label: t("instantVoiceRoomShort") },
   ];
 
@@ -162,6 +172,24 @@ export function GeduDashboardPageBody({
             </section>
           ))}
         </div>
+
+        {/* Tools — the account-admin jobs a gedu does around a session rather
+            than in one. No `min-h` treatment: that belongs to the last section
+            alone, which needs it so its pill can scroll it to the top, and a
+            second one would put a screen of nothing between Tools and the
+            voice room. */}
+        <section
+          id="tools"
+          aria-labelledby="tools-heading"
+          className="scroll-mt-32"
+        >
+          <div className="mx-auto max-w-5xl space-y-6">
+            <h2 id="tools-heading" className="text-3xl font-bold">
+              {t("tools")}
+            </h2>
+            {certified ? toolsCard : <UncertifiedToolsNotice />}
+          </div>
+        </section>
 
         {/* Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms

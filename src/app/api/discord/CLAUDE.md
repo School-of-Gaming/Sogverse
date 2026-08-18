@@ -43,6 +43,11 @@ Resets passwords for shared Minecraft Education accounts in the sog.gg Azure AD 
 - New password is `Sogverse` + a random 2-digit number; each account gets a different one.
 - `@gamer.sog.gg` accounts keep the new password; `@gedu.sog.gg` accounts must change it on first sign-in (reported via a `forceChange` flag in the result line).
 
+**The command is no longer the only way in.** The same resets run in-app, from the gedu dashboard's Tools section and the admin tools page, through a route that calls the same module. Two consequences for anyone editing either end:
+
+- **The Graph module answers in outcome codes, never in prose.** The in-app card is translated into five locales, so a sentence chosen inside the module would be a sentence no locale could render. The English wording the command has always sent lives in this route and nowhere else, and it is pinned byte for byte by the integration test — Discord is a staff channel with no locale, and its wording is the whole interface for the educators using the bot. Adding a failure code means adding it in three places at once: the module, this route's sentence table, and the card's message keys.
+- **The command keeps resetting one username per call**, each fetching its own Azure token, while the in-app route resets a batch on one token. That is deliberate rather than an oversight: in a chat message a transient Azure failure on one name must not decide the answer for the next.
+
 **Azure prerequisites (break silently when expired/revoked):**
 - App registration "Sogverse Bot" with `User.ReadWrite.All` application permission, admin-consented.
 - Service principal needs the **Password Administrator** directory role (assigned via `az rest` against the Graph roleManagement API; PIM blocks portal assignment without a P2 license).

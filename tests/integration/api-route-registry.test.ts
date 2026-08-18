@@ -164,6 +164,8 @@ const TESTS = {
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
+  minecraftPasswordReset:
+    "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
@@ -771,6 +773,26 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "setLocaleBody" },
         test: TESTS.userLocale,
+      },
+    },
+  },
+
+  // --- Platform tools ------------------------------------------------------
+
+  // Resetting a Minecraft Education account password is a moderator power, so
+  // it carries the same gate as the instant voice room: admins, plus gedus an
+  // admin has certified. The in-app half of the Discord `/reset-password`
+  // command, running through the same Graph module.
+  "src/app/api/tools/minecraft-password-reset/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          roles: ["admin", "gedu"],
+          requireCertifiedGedu: true,
+        },
+        body: { kind: "json", schema: "minecraftPasswordResetBody" },
+        test: TESTS.minecraftPasswordReset,
       },
     },
   },

@@ -2,7 +2,41 @@ const AZURE_TENANT_ID = process.env.AZURE_TENANT_ID!;
 const AZURE_CLIENT_ID = process.env.AZURE_CLIENT_ID!;
 const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET!;
 
-const ALLOWED_DOMAINS = ["gamer.sog.gg", "gedu.sog.gg"];
+/**
+ * The two Minecraft Education domains in the sog.gg Azure AD tenant, tried in
+ * this order. `@gamer.sog.gg` first because it is the overwhelmingly common
+ * case, and it is also the one that keeps the password it is given — a
+ * `@gedu.sog.gg` account must change it on first sign-in.
+ */
+export const MINECRAFT_EDUCATION_DOMAINS = [
+  "gamer.sog.gg",
+  "gedu.sog.gg",
+] as const;
+
+/**
+ * The outcome of one reset attempt, as **data**.
+ *
+ * It used to be a success shape plus an English sentence, which was fine while
+ * Discord was the only caller and is not fine now that the platform renders the
+ * same outcomes through next-intl: a sentence chosen in this module is a
+ * sentence no locale can translate. Every failure therefore carries a code and
+ * whatever the message needs to name (the domains tried, the Graph status), and
+ * the two callers turn that into words — the Discord route back into the exact
+ * English it has always sent, the tools card into a message-file string.
+ */
+export type PasswordResetOutcome =
+  | { ok: true; upn: string; password: string; forceChange: boolean }
+  /** The input was not a bare username — empty, or carrying an `@` or a space. */
+  | { ok: false; code: "invalid_username" }
+  /**
+   * No account on any allowed domain. Carries the **sanitized** username,
+   * because that — not the raw input — is the name the account would have had.
+   */
+  | { ok: false; code: "not_found"; username: string; domains: readonly string[] }
+  /** The client-credentials grant failed: expired secret, revoked consent. */
+  | { ok: false; code: "azure_auth" }
+  /** Graph refused the PATCH for some other reason; the status is the clue. */
+  | { ok: false; code: "graph_error"; status: number };
 
 function generatePassword(): string {
   const num = Math.floor(Math.random() * 100).toString().padStart(2, "0");
@@ -31,32 +65,17 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-type ResetResult =
-  | { ok: true; upn: string; password: string; forceChange: boolean }
-  | { ok: false; error: string };
-
 /**
- * Reset the password for a username, trying each allowed domain.
- * Returns the UPN that worked and the new temp password.
+ * Reset one already-sanitized username, trying each allowed domain in turn.
+ * The token is passed in rather than fetched here so a batch pays for it once.
  */
-export async function resetPassword(username: string): Promise<ResetResult> {
-  const sanitized = username.trim().toLowerCase();
-
-  if (!sanitized || sanitized.includes("@") || sanitized.includes(" ")) {
-    return { ok: false, error: "Invalid username. Provide just the username, not the full email." };
-  }
-
-  let token: string;
-  try {
-    token = await getAccessToken();
-  } catch (e) {
-    console.error("Azure auth error:", e);
-    return { ok: false, error: "Failed to authenticate with Azure. Check bot configuration." };
-  }
-
+async function resetSanitized(
+  sanitized: string,
+  token: string,
+): Promise<PasswordResetOutcome> {
   const password = generatePassword();
 
-  for (const domain of ALLOWED_DOMAINS) {
+  for (const domain of MINECRAFT_EDUCATION_DOMAINS) {
     const upn = `${sanitized}@${domain}`;
     const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(upn)}`;
     const forceChange = domain !== "gamer.sog.gg";
@@ -85,11 +104,84 @@ export async function resetPassword(username: string): Promise<ResetResult> {
     // Any other error is unexpected — report it
     const text = await response.text();
     console.error(`Graph API error for ${upn}:`, text);
-    return { ok: false, error: `Microsoft Graph error: ${response.status}` };
+    return { ok: false, code: "graph_error", status: response.status };
   }
 
   return {
     ok: false,
-    error: `User "${sanitized}" not found on ${ALLOWED_DOMAINS.map((d) => `@${d}`).join(" or ")}.`,
+    code: "not_found",
+    username: sanitized,
+    domains: MINECRAFT_EDUCATION_DOMAINS,
   };
+}
+
+/**
+ * Reset a batch of usernames, in input order, **one Azure token for the whole
+ * batch**.
+ *
+ * The token is fetched lazily on the first username that survives validation,
+ * so a batch of nothing but malformed entries never touches Azure at all — and
+ * once the grant has failed it is not retried per username, because fifty
+ * identical failures against the same expired secret is a rate-limit incident
+ * rather than fifty chances of a different answer.
+ *
+ * Sequential rather than concurrent: this is a handful of accounts typed by a
+ * person, and Graph is a shared tenant-wide budget we would rather not spike.
+ */
+export async function resetPasswords(
+  usernames: readonly string[],
+): Promise<PasswordResetOutcome[]> {
+  // Named `bearer` rather than `token`: the security lint rule reads any
+  // comparison against an identifier containing "token" as a possible
+  // timing attack, and this is a null check on a cache slot, not a secret
+  // comparison. Renaming is the honest fix; suppressing would not be.
+  let bearer: string | null = null;
+  let grantFailed = false;
+  const outcomes: PasswordResetOutcome[] = [];
+
+  for (const username of usernames) {
+    const sanitized = username.trim().toLowerCase();
+
+    if (!sanitized || sanitized.includes("@") || sanitized.includes(" ")) {
+      outcomes.push({ ok: false, code: "invalid_username" });
+      continue;
+    }
+
+    if (grantFailed) {
+      outcomes.push({ ok: false, code: "azure_auth" });
+      continue;
+    }
+
+    if (bearer === null) {
+      try {
+        bearer = await getAccessToken();
+      } catch (e) {
+        console.error("Azure auth error:", e);
+        grantFailed = true;
+        outcomes.push({ ok: false, code: "azure_auth" });
+        continue;
+      }
+    }
+
+    outcomes.push(await resetSanitized(sanitized, bearer));
+  }
+
+  return outcomes;
+}
+
+/**
+ * Reset the password for a single username, fetching its own token.
+ *
+ * Kept alongside the batch form because the Discord command resets each
+ * username through its own call, and that independence is load-bearing there:
+ * a transient Azure failure on one name must not decide the answer for the
+ * next one in the same message.
+ */
+export async function resetPassword(
+  username: string,
+): Promise<PasswordResetOutcome> {
+  const [outcome] = await resetPasswords([username]);
+  // One input in, one outcome out — the array cannot be empty, and asserting it
+  // here keeps every caller from having to.
+  return outcome;
 }

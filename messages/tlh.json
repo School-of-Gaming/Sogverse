@@ -12,6 +12,7 @@
       "yty": "Yty – Sogverse HoS",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin QaD",
+      "adminTools": "janmey",
       "parentDashboard": "jIH SOG",
       "parentDashboardDescription": "toy’wI’pu’lIj ghom’a’meychaj je yIche’",
       "geduDashboard": "jIH SOG",
@@ -1286,6 +1287,7 @@
     "help": "boQ",
     "yty": "Yty",
     "settings": "tlhInganpu’ chu’",
+    "tools": "janmey",
     "instantVoiceRoom": "tugh Daq",
     "instantVoiceRoomShort": "QIch Daq",
     "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
@@ -1877,6 +1879,7 @@
     "testing": "Qu’ nI’moH",
     "settings": "ngoQmey",
     "voice": "jatlh",
+    "tools": "janmey",
     "expandSidebar": "HeDmey ’an",
     "collapseSidebar": "HeDmey SoQmoH"
   },
@@ -2090,6 +2093,35 @@
     "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
     "verificationEmailRateLimited": "law’qu’ Datlhobpu’! yIloS. tugh yInID je.",
     "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID."
+  },
+  "tools": {
+    "uncertified": {
+      "title": "patlh DaloStaH",
+      "body": "janmeyvam Dalo’ ’e’ DapoQ pa’, Gedu patlhlIj nob qum. patlh Daghajchugh, naDev janmey tu’lu’!"
+    },
+    "minecraftPasswordReset": {
+      "title": "Minecraft Education mu’ peghmey",
+      "description": "ghommey mu’ pegh chu’ yIchenmoH ’ej HaStaDaq yIlaD. mu’ pegh Sovbe’ jagh!",
+      "inputLabel": "pongmey",
+      "inputPlaceholder": "builder07, redstone12, creeper03",
+      "inputHint": "wa’ ghap law’ – pongmey yIchev.",
+      "submit": "{count, plural, =0 {mu’ peghmey yIchu’} one {wa’ mu’ pegh yIchu’} other {# mu’ peghmey yIchu’}}",
+      "submitting": "chu’lu’…",
+      "emailEntries": "{count, plural, one {pong neH yIqon, Se’ naQ ghobe’: {entries}} other {pongmey neH yIqon, Se’mey naQ ghobe’: {entries}}}",
+      "tooMany": "{count} pongmey tu’lu’ – {max} puS yIchu’.",
+      "requestFailed": "Qagh qaS. yInID!",
+      "resultsHeading": "mu’ peghmey chu’",
+      "copyAll": "Hoch yIvel ({count})",
+      "copied": "velta’",
+      "copyPasswordFor": "{upn} mu’ pegh chu’ yIvel",
+      "mustChangeOnFirstSignIn": "wa’DIch bImuvDI’ yIchu’",
+      "errors": {
+        "invalidUsername": "pong qab. pong neH yIqon, juH pong ghobe’.",
+        "notFound": "{domains}Daq De’wI’ tu’be’lu’.",
+        "azureAuth": "Microsoft yISuchlaHbe’. Azure ngoq ral’a’? qumvaD yIja’!",
+        "graphError": "Microsoft lajQo’ ({status} Qagh). yInID!"
+      }
+    }
   },
   "verifyEmail": {
     "successTitle": "ngu’lu’pu’ QIn Daq",

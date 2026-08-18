@@ -222,14 +222,14 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The gedu dashboard rolled up to one card per group they run, grouped under the type nouns: next session, the cadence in words with an aggregate “needs attention” badge on the end of it, a Live badge in the corner while something is running, and a footer holding the Join on a remote product, the venue on an in-person one, or the day it ended on a finished run. Every card is the same height because every zone holds something, not because empty ones are padded. The two scene-backed cards open the matching product-page scene.",
+      "The gedu dashboard rolled up to one card per group they run, grouped under the type nouns: next session, the cadence in words with an aggregate “needs attention” badge on the end of it, a Live badge in the corner while something is running, and a footer holding the Join on a remote product, the venue on an in-person one, or the day it ended on a finished run. Every card is the same height because every zone holds something, not because empty ones are padded. The two scene-backed cards open the matching product-page scene. Below the cards sit the two panels certification gates — Tools, holding the Minecraft Education password reset, and the instant voice room — each rendering its idle state with the backend action inert.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "default",
         label: "Working dashboard",
         description:
-          "All three type nouns, and the five card shapes that cover every state: a remote club live right now (Live badge, Join lit), a remote club later this week (Join locked), a club whose run has ended (muted, no next-session line, an “Ended …” date where the Join was, backlog badge undimmed), an in-person camp owing a write-up (attention badge, venue in the footer), and an in-person event running now (Live badge, venue, still no Join). The ended club sits under the same heading as the two live ones and below both, so the demotion is visible on the page; the last pairing is what proves the footer zone is full on both kinds of product.",
+          "All three type nouns, and the five card shapes that cover every state: a remote club live right now (Live badge, Join lit), a remote club later this week (Join locked), a club whose run has ended (muted, no next-session line, an “Ended …” date where the Join was, backlog badge undimmed), an in-person camp owing a write-up (attention badge, venue in the footer), and an in-person event running now (Live badge, venue, still no Join). The ended club sits under the same heading as the two live ones and below both, so the demotion is visible on the page; the last pairing is what proves the footer zone is full on both kinds of product. It is also the section pill at its widest — Clubs · Camps · Events · Tools · Voice room, the most chips this page can ever carry — which is the state to open on a phone-width viewport.",
       },
       {
         slug: "clubs-only",
@@ -241,7 +241,7 @@ export const PREVIEW_SCENES = [
         slug: "uncertified",
         label: "Awaiting certification",
         description:
-          "A brand-new account an admin has not approved yet: the instant-room panel is replaced by the awaiting-approval notice, and there are no cards at all, because certification is what gates group assignment. So this is also the empty state — a “Clubs” heading with its pill entry and one line saying a group will appear here once one is assigned, because a gedu with no assignments has no noun of their own and clubs is the default. Neither half can coexist with the default scenario.",
+          "A brand-new account an admin has not approved yet: both action panels — tools and the instant room — are replaced by their awaiting-approval notices, each naming its own feature, and there are no cards at all, because certification is what gates group assignment. So this is also the empty state — a “Clubs” heading with its pill entry and one line saying a group will appear here once one is assigned, because a gedu with no assignments has no noun of their own and clubs is the default. Neither half can coexist with the default scenario.",
       },
     ],
   },

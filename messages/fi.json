@@ -12,6 +12,7 @@
       "yty": "Yty – Sogversen voima",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
+      "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "parentDashboardDescription": "Hallitse pelaajiasi ja heidän ilmoittautumisiaan",
       "geduDashboard": "Oma SOG",
@@ -1238,6 +1239,7 @@
     "help": "Apu",
     "yty": "Yty",
     "settings": "Asetukset",
+    "tools": "Työkalut",
     "instantVoiceRoom": "Pikaäänihuone",
     "instantVoiceRoomShort": "Äänihuone",
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
@@ -1833,6 +1835,7 @@
     "testing": "Testaus",
     "settings": "Asetukset",
     "voice": "Ääni",
+    "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki"
   },
@@ -2046,6 +2049,35 @@
     "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
     "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
     "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
+  },
+  "tools": {
+    "uncertified": {
+      "title": "Odottaa hyväksyntää",
+      "body": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit käyttää näitä työkaluja. Ne tulevat tähän näkyviin heti, kun tilisi on hyväksytty."
+    },
+    "minecraftPasswordReset": {
+      "title": "Minecraft Education -salasanat",
+      "description": "Vaihda jaetun Minecraft Education -tilin salasana ja lue uusi salasana suoraan näytöltä.",
+      "inputLabel": "Käyttäjätunnukset",
+      "inputPlaceholder": "builder07, redstone12, creeper03",
+      "inputHint": "Yksi tai useampi – erota ne välilyönnillä, pilkulla tai rivinvaihdolla.",
+      "submit": "{count, plural, =0 {Vaihda salasanat} one {Vaihda 1 salasana} other {Vaihda # salasanaa}}",
+      "submitting": "Vaihdetaan…",
+      "emailEntries": "{count, plural, one {Kirjoita pelkkä käyttäjätunnus, ei koko osoitetta: {entries}} other {Kirjoita pelkät käyttäjätunnukset, ei koko osoitteita: {entries}}}",
+      "tooMany": "Tunnuksia on {count} – vaihda enintään {max} salasanaa kerrallaan.",
+      "requestFailed": "Jokin meni pieleen. Yritä uudelleen.",
+      "resultsHeading": "Uudet salasanat",
+      "copyAll": "Kopioi kaikki {count}",
+      "copied": "Kopioitu",
+      "copyPasswordFor": "Kopioi tunnuksen {upn} uusi salasana",
+      "mustChangeOnFirstSignIn": "Vaihdettava ensimmäisellä kirjautumiskerralla",
+      "errors": {
+        "invalidUsername": "Käyttäjätunnus ei kelpaa. Kirjoita pelkkä tunnus ilman verkkotunnusta.",
+        "notFound": "Tiliä ei löytynyt osoitteista {domains}.",
+        "azureAuth": "Microsoftiin ei saatu yhteyttä. Azure-tunnukset ovat ehkä vanhentuneet – ilmoita ylläpitäjälle.",
+        "graphError": "Microsoft ei hyväksynyt muutosta (virhe {status}). Yritä uudelleen."
+      }
+    }
   },
   "verifyEmail": {
     "successTitle": "Sähköposti vahvistettu",

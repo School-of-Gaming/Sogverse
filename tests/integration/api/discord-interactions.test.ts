@@ -224,6 +224,69 @@ describe("POST /api/discord/interactions", () => {
     await settleDeferred();
   });
 
+  /**
+   * The reset command's rendered message, line by line.
+   *
+   * The Graph module answers in outcome *codes* now, so the platform's tools
+   * card can translate them; the English sentences moved into this route and
+   * these two cases pin them byte for byte. Discord is a staff channel with no
+   * locale, and a wording change here is a change to the only interface the
+   * educators using the bot have.
+   */
+  async function patchedContent(input: string): Promise<string> {
+    await POST(
+      interactionRequest({
+        type: 2,
+        token: "interaction-token",
+        data: { name: "reset-password", options: [{ value: input }] },
+      }),
+    );
+    await settleDeferred();
+    const [, init] = mockFetch.mock.calls[0];
+    return JSON.parse(String(init.body)).content;
+  }
+
+  it("renders a success line, and marks the ones that must change on sign-in", async () => {
+    mockResetPassword
+      .mockResolvedValueOnce({
+        ok: true,
+        upn: "alice@gamer.sog.gg",
+        password: "Sogverse42",
+        forceChange: false,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        upn: "bob@gedu.sog.gg",
+        password: "Sogverse07",
+        forceChange: true,
+      });
+
+    expect(await patchedContent("alice bob")).toBe(
+      "✅ **alice@gamer.sog.gg** → `Sogverse42`\n" +
+        "✅ **bob@gedu.sog.gg** → `Sogverse07` (must change on sign-in)",
+    );
+  });
+
+  it("renders every failure code as the sentence it has always sent", async () => {
+    mockResetPassword
+      .mockResolvedValueOnce({ ok: false, code: "invalid_username" })
+      .mockResolvedValueOnce({
+        ok: false,
+        code: "not_found",
+        username: "carol",
+        domains: ["gamer.sog.gg", "gedu.sog.gg"],
+      })
+      .mockResolvedValueOnce({ ok: false, code: "azure_auth" })
+      .mockResolvedValueOnce({ ok: false, code: "graph_error", status: 503 });
+
+    expect(await patchedContent("a@b.c carol dave erin")).toBe(
+      "❌ **a@b.c** — Invalid username. Provide just the username, not the full email.\n" +
+        '❌ **carol** — User "carol" not found on @gamer.sog.gg or @gedu.sog.gg.\n' +
+        "❌ **dave** — Failed to authenticate with Azure. Check bot configuration.\n" +
+        "❌ **erin** — Microsoft Graph error: 503",
+    );
+  });
+
   it("falls back to a harmless PONG when the command carries no argument", async () => {
     const response = await POST(
       interactionRequest({

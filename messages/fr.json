@@ -12,6 +12,7 @@
       "yty": "Yty – la Force du Sogverse",
       "minecraftApi": "API du serveur Minecraft",
       "adminDashboard": "Tableau de bord admin",
+      "adminTools": "Outils",
       "parentDashboard": "Mon SOG",
       "parentDashboardDescription": "Gérez vos joueurs et leurs inscriptions",
       "geduDashboard": "Mon SOG",
@@ -1238,6 +1239,7 @@
     "help": "Aide",
     "yty": "Yty",
     "settings": "Paramètres",
+    "tools": "Outils",
     "instantVoiceRoom": "Salle vocale instantanée",
     "instantVoiceRoomShort": "Salle vocale",
     "loadingAssignments": "Chargement de vos clubs, stages et événements."
@@ -1833,6 +1835,7 @@
     "testing": "Tests",
     "settings": "Paramètres",
     "voice": "Vocal",
+    "tools": "Outils",
     "expandSidebar": "Déplier la barre latérale",
     "collapseSidebar": "Replier la barre latérale"
   },
@@ -2046,6 +2049,35 @@
     "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
     "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
     "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer."
+  },
+  "tools": {
+    "uncertified": {
+      "title": "En attente de certification",
+      "body": "Un administrateur doit certifier votre compte Gedu avant que vous puissiez utiliser ces outils. Ils apparaîtront ici dès que vous serez certifié."
+    },
+    "minecraftPasswordReset": {
+      "title": "Mots de passe Minecraft Education",
+      "description": "Réinitialisez le mot de passe d’un compte Minecraft Education partagé et lisez le nouveau directement à l’écran.",
+      "inputLabel": "Noms d’utilisateur",
+      "inputPlaceholder": "builder07, redstone12, creeper03",
+      "inputHint": "Un ou plusieurs – séparez-les par des espaces, des virgules ou des retours à la ligne.",
+      "submit": "{count, plural, =0 {Réinitialiser les mots de passe} one {Réinitialiser 1 mot de passe} other {Réinitialiser # mots de passe}}",
+      "submitting": "Réinitialisation…",
+      "emailEntries": "{count, plural, one {Saisissez uniquement le nom d’utilisateur, pas l’adresse complète : {entries}} other {Saisissez uniquement les noms d’utilisateur, pas les adresses complètes : {entries}}}",
+      "tooMany": "Cela fait {count} noms d’utilisateur – réinitialisez-en {max} au maximum à la fois.",
+      "requestFailed": "Une erreur est survenue. Veuillez réessayer.",
+      "resultsHeading": "Nouveaux mots de passe",
+      "copyAll": "Tout copier ({count})",
+      "copied": "Copié",
+      "copyPasswordFor": "Copier le nouveau mot de passe de {upn}",
+      "mustChangeOnFirstSignIn": "À changer à la première connexion",
+      "errors": {
+        "invalidUsername": "Nom d’utilisateur invalide. Saisissez uniquement le nom, sans le domaine.",
+        "notFound": "Aucun compte trouvé sur {domains}.",
+        "azureAuth": "Impossible de joindre Microsoft. Les identifiants Azure ont peut-être expiré – prévenez un administrateur.",
+        "graphError": "Microsoft a refusé la modification (erreur {status}). Veuillez réessayer."
+      }
+    }
   },
   "verifyEmail": {
     "successTitle": "Adresse e-mail vérifiée",
