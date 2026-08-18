@@ -66,15 +66,28 @@ export const geduFeedRosterEntry = z.object({
   /** When they joined the group — the feed uses it for nothing else. */
   signed_up_at: z.string(),
   /**
-   * The three child-shaped facts, null together on an adult seat: an adult has
-   * no `gamer_profiles` row and no linked game account. The row renders that as
-   * a deliberate absence rather than as missing data.
+   * The child-shaped facts, null together on an adult seat: an adult has no
+   * `gamer_profiles` row and no linked game account on either platform. The row
+   * renders that as a deliberate absence rather than as missing data.
    */
   date_of_birth: z.string().nullable(),
   gender: z.enum(Constants.public.Enums.gender_type).nullable(),
   minecraft_username: z.string().nullable(),
   /** Present only once a username has been resolved against Mojang. */
   minecraft_uuid: z.string().nullable(),
+  /**
+   * The Roblox pair (00195), on the same terms as the Minecraft one above and
+   * independent of it — a child may have given one handle, both, or neither,
+   * and which one the roster draws is decided by the product's topic (which
+   * this document does not carry; the page takes it from the assigned-product
+   * RPC).
+   *
+   * The account id is a **number**: Roblox's key is an int64 in a `bigint`
+   * column where Mojang's is a dashed UUID in a text one. Present only once a
+   * server-side lookup confirmed the account, which is the whole of "verified".
+   */
+  roblox_username: z.string().nullable(),
+  roblox_user_id: z.number().nullable(),
   parent_email: z.string().nullable(),
   /**
    * The seat-holder's own address — emitted for an adult participant and null

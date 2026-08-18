@@ -9,6 +9,7 @@ import {
   siteNotesResult,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { groupMemberMinecraftResult } from "@/services/minecraft/minecraft.contracts";
+import { groupMemberRobloxResult } from "@/services/roblox/roblox.contracts";
 import {
   createAdminTestClient,
   createAnonTestClient,
@@ -35,7 +36,9 @@ import {
  *      and has no UI.
  *   2. **Assignment (the actor)** — a gedu may only touch groups they teach.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
- *      edit the Minecraft name of, children actually in that group. A test
+ *      edit a game username of, children actually in that group. Both platforms
+ *      are covered: `set_group_member_minecraft` and, since 00195, its Roblox
+ *      twin, which is the same guard over a bigint key instead of a text one. A test
  *      where the attacker fails the role check as well proves much less than
  *      one where only the target check stands between them and the row.
  *
@@ -72,6 +75,14 @@ const ALL_PRODUCTS = [PRODUCT_MINE, PRODUCT_OTHER, PRODUCT_SITE];
  */
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
+
+/**
+ * A Roblox account id for the write-path fixtures. Any positive int64 will do —
+ * the column is not unique and nothing joins on it — but it is a NUMBER rather
+ * than a string on purpose: the whole point of the assertions using it is that
+ * a bigint survives the round trip as a JSON number.
+ */
+const ROBLOX_USER_ID = 987654321;
 
 /** `YYYY-MM-DD`, `offset` days from today. The products all run in UTC. */
 function dayOffset(offset: number): string {
@@ -267,6 +278,12 @@ describe("gedu session feed", () => {
           p_minecraft_uuid: "",
         });
         expect(minecraft.error?.code).toBe("42501");
+
+        const roblox = await client.rpc("set_group_member_roblox", {
+          p_participant_id: TEST_IDS.GAMER,
+          p_roblox_username: "Defaced",
+        });
+        expect(roblox.error?.code).toBe("42501");
       }
     });
   });
@@ -371,6 +388,73 @@ describe("gedu session feed", () => {
       expect(written.minecraft_username).toBeNull();
       // A uuid with no name behind it is a verified link to nothing.
       expect(written.minecraft_uuid).toBeNull();
+    });
+
+    it("refuses a Roblox edit for a child the gedu does not teach", async () => {
+      const { error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER_2,
+        p_roblox_username: "Defaced",
+      });
+      expect(error?.code).toBe("42501");
+    });
+
+    it("allows a Roblox edit for a child on the gedu's own roster, and the feed carries it", async () => {
+      const { data, error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "FeedFixtureRBX",
+        p_roblox_user_id: ROBLOX_USER_ID,
+      });
+
+      expect(error).toBeNull();
+      const written = groupMemberRobloxResult.parse(data);
+      // Name and account id land TOGETHER, same as the Minecraft pair — that is
+      // what makes a gedu's save read as verified rather than pending. The id
+      // is a NUMBER on the wire, because the column is a bigint.
+      expect(written.roblox_username).toBe("FeedFixtureRBX");
+      expect(written.roblox_user_id).toBe(ROBLOX_USER_ID);
+
+      // The rendered roster comes from the feed, not from the write's echo, so
+      // a write nobody can read back is a write that did nothing useful.
+      const feed = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const entry = geduGroupFeed
+        .parse(feed.data)
+        .roster.find((r) => r.participant_id === TEST_IDS.GAMER);
+      expect(entry?.roblox_username).toBe("FeedFixtureRBX");
+      expect(entry?.roblox_user_id).toBe(ROBLOX_USER_ID);
+    });
+
+    it("stores an unverified Roblox handle with no account id beside it", async () => {
+      // The account id argument is simply OMITTED — which is how an unverified
+      // save is expressed, the bigint column having no '' sentinel to borrow
+      // from the Minecraft twin. The route stores the name it was sent and
+      // takes an id only from its own lookup, so a name Roblox could not
+      // resolve arrives here exactly like this.
+      const { data, error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "NoLookupRan",
+      });
+
+      expect(error).toBeNull();
+      const written = groupMemberRobloxResult.parse(data);
+      expect(written.roblox_username).toBe("NoLookupRan");
+      expect(written.roblox_user_id).toBeNull();
+    });
+
+    it("clearing the Roblox username clears the account id with it", async () => {
+      const { data, error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "",
+        p_roblox_user_id: ROBLOX_USER_ID,
+      });
+
+      expect(error).toBeNull();
+      const written = groupMemberRobloxResult.parse(data);
+      expect(written.roblox_username).toBeNull();
+      // An account id with no name behind it is a verified link to nothing —
+      // the id is discarded even though this call supplied one.
+      expect(written.roblox_user_id).toBeNull();
     });
   });
 

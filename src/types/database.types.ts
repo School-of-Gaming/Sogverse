@@ -2034,6 +2034,14 @@ export type Database = {
         }
         Returns: Json
       }
+      set_group_member_roblox: {
+        Args: {
+          p_participant_id: string
+          p_roblox_user_id?: number
+          p_roblox_username: string
+        }
+        Returns: Json
+      }
       set_group_notes: {
         Args: { p_gedu_note: string; p_group_id: string; p_public_note: string }
         Returns: Json

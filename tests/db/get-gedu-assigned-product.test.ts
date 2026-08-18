@@ -17,8 +17,8 @@ import {
 /**
  * Auth + return-shape coverage for `get_gedu_assigned_product` (migrations
  * 00064 / 00065 / 00066). The RPC is SECURITY DEFINER and hands back gamer
- * first names, dates of birth, gender, Minecraft identifiers, AND the
- * primary parent's email — so this file is the regression gate for "who can
+ * first names, dates of birth, gender, both game identities (Minecraft and,
+ * since 00195, Roblox), AND the primary parent's email — so this file is the regression gate for "who can
  * call it" and, just as important, "whose roster they can see."
  *
  * The two guards being pinned (both raise 42501):
@@ -29,7 +29,7 @@ import {
  *                      the product. Wrong product / unknown product → 42501.
  *
  * The privacy invariant being pinned:
- *   - `roster` (names, DOB, gender, Minecraft, parent_email) is populated
+ *   - `roster` (names, DOB, gender, both game identities, parent_email) is populated
  *     ONLY for the caller's own group. Every sister group comes back with
  *     `roster: null` even when it has active participants — a gedu can copy
  *     parent emails for the kids they teach, not for a peer's group.
@@ -50,6 +50,13 @@ const NONEXISTENT_PRODUCT_ID = "00000000-0000-0000-0000-0000000007df";
 
 const GAMER_MINECRAFT_USERNAME = "TestGamerMC";
 const GAMER_MINECRAFT_UUID = "11111111-2222-3333-4444-555555555555";
+
+// The Roblox half of the same identity (00195). Independent of the Minecraft
+// pair above — a child may hold one, both or neither — so the fixture gives
+// this gamer BOTH, which is what lets one roster row prove the two travel
+// side by side rather than one replacing the other.
+const GAMER_ROBLOX_USERNAME = "TestGamerRBX";
+const GAMER_ROBLOX_USER_ID = 987654321;
 
 describe("get_gedu_assigned_product", () => {
   let admin: SupabaseClient<Database>;
@@ -142,6 +149,14 @@ describe("get_gedu_assigned_product", () => {
       minecraft_uuid: GAMER_MINECRAFT_UUID,
     });
 
+    // …and a verified Roblox one beside it, so the roster's roblox columns are
+    // exercised end-to-end too.
+    await admin.from("roblox_accounts").upsert({
+      user_id: TEST_IDS.GAMER,
+      roblox_username: GAMER_ROBLOX_USERNAME,
+      roblox_user_id: GAMER_ROBLOX_USER_ID,
+    });
+
     // parent_email is resolved from the parent's profile, not hardcoded —
     // fetch the seed value so the assertion can't drift if seed email changes.
     const { data: parent } = await admin
@@ -159,6 +174,10 @@ describe("get_gedu_assigned_product", () => {
       .in("product_id", ALL_PRODUCTS);
     await admin
       .from("minecraft_accounts")
+      .delete()
+      .eq("user_id", TEST_IDS.GAMER);
+    await admin
+      .from("roblox_accounts")
       .delete()
       .eq("user_id", TEST_IDS.GAMER);
     await deleteTestProducts(admin, ALL_PRODUCTS);
@@ -256,6 +275,11 @@ describe("get_gedu_assigned_product", () => {
       expect(result.product.id).toBe(PRODUCT_GEDU_ON);
       expect(result.my_group_id).toBe(myGroupId);
       expect(result.groups).toHaveLength(2);
+      // The topic rides on the shell as of 00195, and it is the whole of how a
+      // gedu surface decides which game identity (if any) to show. The fixture
+      // product is a minecraft_java one, which is the "show Minecraft" side of
+      // that decision.
+      expect(result.product.topic).toBe("minecraft_java");
     });
 
     it("populates the roster ONLY for the caller's own group", async () => {
@@ -280,7 +304,7 @@ describe("get_gedu_assigned_product", () => {
       expect(sister?.roster).toBeNull();
     });
 
-    it("returns full roster detail (name, DOB, gender, Minecraft, parent email) for the own group", async () => {
+    it("returns full roster detail (name, DOB, gender, both game identities, parent email) for the own group", async () => {
       const { data } = await geduAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT_GEDU_ON,
       });
@@ -294,6 +318,12 @@ describe("get_gedu_assigned_product", () => {
       expect(entry?.gender).toBe("boy");
       expect(entry?.minecraft_username).toBe(GAMER_MINECRAFT_USERNAME);
       expect(entry?.minecraft_uuid).toBe(GAMER_MINECRAFT_UUID);
+      // Both platforms on one row (00195). The account id arrives as a JSON
+      // NUMBER, not a string — Roblox's key is a bigint where Mojang's is a
+      // dashed uuid in text — and `toBe` on a number is what pins that: a
+      // stringified id would fail here rather than reaching a component.
+      expect(entry?.roblox_username).toBe(GAMER_ROBLOX_USERNAME);
+      expect(entry?.roblox_user_id).toBe(GAMER_ROBLOX_USER_ID);
       // parent_email comes from the parent's profile (not the gamer's own
       // synthetic email), and is the primary (oldest) parent link.
       expect(entry?.parent_email).toBe(parentEmail);

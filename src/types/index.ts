@@ -392,6 +392,13 @@ export interface GeduAssignedProductRosterEntry {
   minecraft_username: string | null;
   /** UUID present only when the account's Minecraft username is *verified*. */
   minecraft_uuid: string | null;
+  roblox_username: string | null;
+  /**
+   * Roblox's int64 account id, present only when a lookup *verified* the
+   * handle. A number where the Minecraft key is a string, because the columns
+   * are `bigint` and `text` respectively — the two are not one value space.
+   */
+  roblox_user_id: number | null;
   gender: GenderType | null;
   parent_email: string | null;
   /**
@@ -422,6 +429,12 @@ export interface GeduAssignedProductGroup {
 export interface GeduAssignedProductShell {
   id: string;
   product_type: Database["public"]["Enums"]["product_type"];
+  /**
+   * What the product is about, and therefore which game identity (if any) its
+   * surfaces show — resolved through `platformForTopic` in
+   * `src/lib/products/topics`. Non-nullable: every product carries a topic.
+   */
+  topic: ProductTopic;
   timezone: string;
   start_date: string | null;
   end_date: string | null;

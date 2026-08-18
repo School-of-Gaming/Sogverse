@@ -257,6 +257,8 @@ describe("dragSubjectsFrom", () => {
       participant_gender: null,
       participant_minecraft_username: null,
       participant_minecraft_uuid: null,
+      participant_roblox_username: null,
+      participant_roblox_user_id: null,
       parent_first_name: null,
       parent_last_name: null,
       participant_email: null,

@@ -38,6 +38,36 @@ export const updateRobloxAccountBody = z.object({
 });
 
 /**
+ * Request body of the gedu's group-member Roblox edit — a gedu fixing the
+ * handle of a child on their own roster.
+ *
+ * The same value schema as the self-serve route, because it is the same edit
+ * made by someone else: the server resolves the name against Roblox and stores
+ * the canonical spelling with the account id, so a gedu's save lands *verified*
+ * rather than pending. The gamer is named by the URL, not the body, so there is
+ * nothing here to aim at another child.
+ */
+export const updateGroupMemberRobloxBody = z.object({
+  robloxUsername: robloxUsernameValue,
+});
+
+/**
+ * What the `set_group_member_roblox` RPC hands back. Generated as `Json`, so
+ * this schema is the structure; the db tests parse real RPC output through it
+ * in CI.
+ *
+ * The account id is a number where the Minecraft twin's is a string — Roblox's
+ * key is an int64 `bigint`, Mojang's a dashed UUID in text — and it is null
+ * whenever the username is, because an id with no name behind it is a verified
+ * link to nothing.
+ */
+export const groupMemberRobloxResult = z.object({
+  participant_id: z.string(),
+  roblox_username: z.string().nullable(),
+  roblox_user_id: z.number().int().positive().nullable(),
+});
+
+/**
  * What the Roblox write path answers with.
  *
  * The account id is a number rather than a string, and that is the one place

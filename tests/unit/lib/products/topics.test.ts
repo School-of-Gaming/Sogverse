@@ -5,9 +5,11 @@ import {
   PRODUCT_TOPICS,
   PRODUCT_TOPIC_VALUES,
   TOPIC_FILTER_CHIPS,
+  platformForTopic,
   topicHasInfoCard,
   type TopicMeta,
 } from "@/lib/products/topics";
+import { SUPPORTED_GAME_PLATFORMS } from "@/lib/constants/game-platforms";
 
 // The topic module is where the generated enum, hand-written display data and
 // the message catalog have to agree, and the compiler only checks some of
@@ -156,6 +158,56 @@ describe("product topics", () => {
       "game_studio",
       "programming",
     ]);
+  });
+
+  // `platformForTopic` decides whether a product surface shows a game username
+  // at all, and which one. The compiler already forces every *enum* value
+  // through the switch — a new topic makes the function fall off its end, which
+  // its declared return type forbids — so the checks here are the ones the
+  // compiler cannot make: that the answers are real platforms, and that the two
+  // topics which map to one still do.
+  describe("platformForTopic", () => {
+    it("answers every enum value with a real platform or null", () => {
+      for (const topic of Constants.public.Enums.product_topic) {
+        const platform = platformForTopic(topic);
+        if (platform === null) continue;
+        expect(
+          (SUPPORTED_GAME_PLATFORMS as readonly string[]).includes(platform),
+          `platformForTopic(${topic}) returned "${platform}", which is not a platform`,
+        ).toBe(true);
+      }
+    });
+
+    it("maps minecraft_java to Minecraft and roblox_studio to Roblox", () => {
+      expect(platformForTopic("minecraft_java")).toBe("minecraft");
+      expect(platformForTopic("roblox_studio")).toBe("roblox");
+    });
+
+    // The other two Minecraft editions are the trap this test exists for: they
+    // are Minecraft, and they still map to nothing, because our
+    // minecraft_accounts row is a Java/Mojang identity and neither edition has
+    // a Mojang account behind it. Drawing a Java handle on a Bedrock club would
+    // assert an identity nobody verified.
+    it("maps the non-Java Minecraft editions to no platform", () => {
+      expect(platformForTopic("minecraft_bedrock")).toBeNull();
+      expect(platformForTopic("minecraft_education")).toBeNull();
+    });
+
+    // Both sides have to stay populated for the same reason the About-card
+    // check above says so: a surface branches on this, and a registry that
+    // drifted to "every topic has a platform" would leave the no-identity
+    // branch unexercised everywhere.
+    it("keeps both sides of the show-an-identity decision populated", () => {
+      const withPlatform = PRODUCT_TOPIC_VALUES.filter(
+        (t) => platformForTopic(t) !== null,
+      );
+      const without = PRODUCT_TOPIC_VALUES.filter(
+        (t) => platformForTopic(t) === null,
+      );
+
+      expect(withPlatform.sort()).toEqual(["minecraft_java", "roblox_studio"]);
+      expect(without.length).toBeGreaterThan(0);
+    });
   });
 
   it("covers every topic with exactly one filter chip", () => {

@@ -45,6 +45,14 @@ export const geduAssignedProduct = z.object({
   product: z.object({
     id: z.string(),
     product_type: z.enum(Constants.public.Enums.product_type),
+    /**
+     * What the product is about — and therefore which game identity, if any,
+     * its surfaces show. Non-nullable because the column is (every product has
+     * a topic); the topic → platform mapping lives in `src/lib/products/topics`
+     * rather than in the RPC, so a topic changing sides is a code decision
+     * rather than a migration.
+     */
+    topic: z.enum(Constants.public.Enums.product_topic),
     timezone: z.string(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
@@ -70,6 +78,14 @@ export const geduAssignedProduct = z.object({
             date_of_birth: z.string().nullable(),
             minecraft_username: z.string().nullable(),
             minecraft_uuid: z.string().nullable(),
+            /**
+             * The Roblox pair (00195), independent of the Minecraft one: a
+             * child may have given one, both or neither. The account id is a
+             * number because Roblox's key is an int64 `bigint`, and its
+             * presence is the whole of "verified".
+             */
+            roblox_username: z.string().nullable(),
+            roblox_user_id: z.number().nullable(),
             gender: z.enum(Constants.public.Enums.gender_type).nullable(),
             parent_email: z.string().nullable(),
             /**

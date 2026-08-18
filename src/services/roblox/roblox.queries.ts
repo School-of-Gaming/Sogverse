@@ -40,7 +40,25 @@ export const robloxKeys = {
   // "no picture".
   render: (robloxUserId: number, figure: GameFigure) =>
     [...robloxKeys.renders(), robloxUserId, figure] as const,
+  // One entry for one *batch*, and the id list is normalized into it — deduped
+  // and numerically sorted — so the key names the SET of accounts asked about
+  // rather than the order a roster happened to hand them over in. Two renders
+  // of the same list in a different order are one cache entry and one request.
+  // The `"batch"` segment keeps it clear of the single-id keys above, whose
+  // second element is a number.
+  renderBatch: (robloxUserIds: readonly number[], figure: GameFigure) =>
+    [
+      ...robloxKeys.renders(),
+      "batch",
+      figure,
+      normalizeRobloxIds(robloxUserIds).join(","),
+    ] as const,
 };
+
+/** Deduped, numerically sorted — the canonical form of a batch's id list. */
+function normalizeRobloxIds(robloxUserIds: readonly number[]): number[] {
+  return [...new Set(robloxUserIds)].sort((a, b) => a - b);
+}
 
 /**
  * A render URL stays good for as long as anyone is looking at the page.
@@ -126,6 +144,73 @@ export function useRobloxRender(
       return resolved === undefined ? null : robloxRenderUrl(resolved, figure);
     },
     enabled: robloxUserId !== null,
+    staleTime: RENDER_STALE_TIME,
+    retry: false,
+  });
+}
+
+/**
+ * The renders for **every stored, verified account on a page**, in one request.
+ *
+ * This is the shape a list must use, and `useRobloxRender` is the shape a
+ * single identity may use: the upstream cost is per *request*, not per id, so
+ * mapping the singular hook over N rows is N requests against a 60-per-minute
+ * bucket the whole serverless fleet shares — which one roster can drain on its
+ * own. A caller collects the ids of its verified rows, asks once, and hands
+ * each row the URL it gets back.
+ *
+ * **Answers are matched by the id the response names, never by position.** The
+ * result is a record keyed by the account id as a string, built by looking each
+ * asked-for id up in the response — the endpoint promises no order, and reading
+ * positionally would hand one child another child's face, which is the one
+ * failure worse than no picture. The response names *every* id it was asked
+ * about, so an entry present with a `null` URL means "asked, and Roblox has no
+ * render" — draw the silhouette. An entry that is missing entirely means the
+ * answer is not in yet.
+ *
+ * **Never retried, never persisted, resolved once per session.** A thumbnail is
+ * decoration: a failed fetch degrades to the silhouette, and a retry would
+ * spend more of the shared budget redrawing something nobody is waiting on. The
+ * URL addresses an immutable image, so `staleTime` is infinite — but the JSON
+ * naming it is `no-cache` upstream, so it is session-lived and never a column.
+ *
+ * **The batch has a ceiling: `ROBLOX_THUMBNAIL_BATCH_MAX` ids per request.** The
+ * route refuses a longer list outright rather than truncating it, because a
+ * half-answered roster is worse than a clean failure — the missing rows are
+ * indistinguishable from accounts with no avatar. This hook passes on what it
+ * is given and does not chunk: no surface we have comes close to the ceiling,
+ * and a page that one day does needs to decide deliberately how to split the
+ * work rather than inherit a silent policy from here.
+ *
+ * An empty list makes no request at all — there is nothing to ask about, and
+ * `enabled: false` is cheaper than a round trip that answers `{}`.
+ */
+export function useRobloxRenders(
+  robloxUserIds: readonly number[],
+  figure: GameFigure = "full",
+) {
+  const supabase = getClient();
+  const service = new RobloxService(supabase);
+
+  const ids = normalizeRobloxIds(robloxUserIds);
+
+  return useQuery<Partial<Record<string, string | null>>>({
+    queryKey: robloxKeys.renderBatch(ids, figure),
+    queryFn: async () => {
+      const renders = await service.resolveRenders(ids, [figure]);
+
+      // Built by asking the response about each id we sent, so an id the
+      // response somehow omitted lands as `null` (the silhouette) rather than
+      // as somebody else's picture.
+      const urls: Record<string, string | null> = {};
+      for (const id of ids) {
+        const resolved = renders[String(id)];
+        urls[String(id)] =
+          resolved === undefined ? null : robloxRenderUrl(resolved, figure);
+      }
+      return urls;
+    },
+    enabled: ids.length > 0,
     staleTime: RENDER_STALE_TIME,
     retry: false,
   });

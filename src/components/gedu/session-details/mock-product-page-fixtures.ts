@@ -753,6 +753,11 @@ export function buildGeduProductPageFixture(
       product: {
         id: `mock-product-${scenario}`,
         product_type: config.productType,
+        // The topic decides which game identity these surfaces show, and every
+        // roster fixture in this file carries Minecraft handles — so the shell
+        // says Minecraft, and the two agree. A scenario that wants the Roblox
+        // side needs both halves changed together.
+        topic: "minecraft_java",
         timezone: SESSION_FEED_TIMEZONE,
         start_date: calendarDate(now, -config.startedDaysAgo),
         end_date:
@@ -873,6 +878,9 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
         date_of_birth: null,
         minecraft_username: null,
         minecraft_uuid: null,
+        // An adult seat carries no linked game account on either platform.
+        roblox_username: null,
+        roblox_user_id: null,
         gender: null,
         // No linked parent — she is the adult. The RPC's two contact fields are
         // mutually exclusive and this is the other side of that.
@@ -893,6 +901,10 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
       date_of_birth: calendarDate(now, -(detail.age * 365 + 12)),
       minecraft_username: detail.minecraftUsername,
       minecraft_uuid: detail.minecraftUsername ? detail.minecraftUuid : null,
+      // This scene is a Minecraft product (see the shell's topic), so nobody
+      // here carries a Roblox handle. A Roblox scenario supplies both halves.
+      roblox_username: null,
+      roblox_user_id: null,
       gender: detail.gender,
       parent_email: detail.parentEmail,
       // A child's contact is their linked parent's address; their own profile

@@ -702,7 +702,7 @@ describe("product audience", () => {
   });
 
   // -------------------------------------------------------------------------
-  // set_group_member_minecraft refuses a non-gamer target (00177)
+  // The gedu game-account writers refuse a non-gamer target (00177 / 00195)
   // -------------------------------------------------------------------------
 
   /**
@@ -711,12 +711,17 @@ describe("product audience", () => {
    * minecraft_accounts row keyed to a customer is an orphan no surface renders
    * and the admin twin already refuses — before 00177 this write went through.
    *
+   * The Roblox writer (00195) carries the same guard over the same fixture, and
+   * is asserted beside it rather than in the Roblox feature's own file: the two
+   * refusals are one rule about who may hold a game identity, and splitting
+   * them is how one of them ends up quietly relaxed.
+   *
    * The gamer direction is not re-asserted here: gedu-session-feed.test.ts
    * already pins that an assigned gedu may edit a gamer on their roster, and
    * that test continuing to pass is what proves this guard does not refuse
    * everyone.
    */
-  describe("set_group_member_minecraft target role", () => {
+  describe("gedu game-account writers, target role", () => {
     it("refuses a Minecraft edit aimed at an adult seat", async () => {
       const { error } = await geduAuth.rpc("set_group_member_minecraft", {
         p_participant_id: TEST_IDS.CUSTOMER,
@@ -730,6 +735,20 @@ describe("product audience", () => {
       // Nothing was written: the guard sits before the INSERT.
       const { data } = await admin
         .from("minecraft_accounts")
+        .select("user_id")
+        .eq("user_id", TEST_IDS.CUSTOMER);
+      expect(data ?? []).toEqual([]);
+    });
+
+    it("refuses a Roblox edit aimed at an adult seat", async () => {
+      const { error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_roblox_username: "AdultShouldFail",
+      });
+      expect(error?.code).toBe("23514");
+
+      const { data } = await admin
+        .from("roblox_accounts")
         .select("user_id")
         .eq("user_id", TEST_IDS.CUSTOMER);
       expect(data ?? []).toEqual([]);
