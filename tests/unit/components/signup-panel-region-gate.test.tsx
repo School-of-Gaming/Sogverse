@@ -8,25 +8,19 @@ import {
 } from "@/components/public/products/signup-panel-view";
 
 /**
- * **The region lock's seam into the signup panel.**
+ * **What the region lock does to the signup panel.**
  *
- * Three candidate blocks are being compared on the preview scenes and two will
- * be deleted, but the seam they all go through is in the live panel: three
- * optional slots the view places without knowing what a region lock is. What is
- * pinned here is that seam, not any candidate's composition —
- *
- *  - a `replacesForm` node stands where the form did, and the form is *gone*
- *    rather than disabled, so nothing survives the swap to be moved by it;
- *  - a `note` leaves the form intact underneath;
- *  - a `cta` outranks every other missing-step label the button resolves, and
- *    is live exactly when it carries a handler.
- *
- * A candidate deleted from `region-lock/` leaves every one of these standing,
- * which is the point of testing the seam rather than the candidates.
+ * The gate has two blocked states and the panel answers them with two different
+ * shapes, which is the thing worth pinning: a missing location is a question,
+ * so the form stays whole and grows a section that asks it; a wrong country is
+ * a refusal, so the form goes entirely. Between them they carry the panel's
+ * grammar — the CTA never opens the dialog, the section does; the CTA names the
+ * next missing step in section order; an overlay means there is no decision to
+ * present.
  *
  * Translations are stubbed to echo their keys, so nothing here depends on
- * English wording — and the draft copy the candidates carry is literal English
- * held outside `messages/`, which is another reason not to assert on it.
+ * English wording. The interpolated country still comes through, which is how
+ * the refusal's one variable is checked.
  */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
@@ -42,7 +36,7 @@ const CHILD: SignupParticipantChoice = {
 };
 
 function panel(
-  regionGate: SignupPanelViewProps["regionGate"],
+  overrides: Partial<SignupPanelViewProps> = {},
 ): SignupPanelViewProps {
   const authState: AuthState = {
     kind: "ready",
@@ -64,14 +58,14 @@ function panel(
     onSelectParticipant: () => {},
     onAddGamer: () => {},
     // Agreed, so the CTA would otherwise be on its live label — which is what
-    // makes "the region CTA outranks it" a real assertion rather than a tie.
+    // makes "the location step outranks it" a real assertion rather than a tie.
     agreed: true,
     onAgreedChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
     locale: "en",
-    regionGate,
+    ...overrides,
   };
 }
 
@@ -86,74 +80,133 @@ const cta = (c: HTMLElement) => {
   return buttons[buttons.length - 1];
 };
 
-describe("no gate", () => {
-  it("leaves the panel exactly as it was", () => {
-    const { container } = render(<SignupPanelView {...panel(undefined)} />);
-    expect(rows(container)).toHaveLength(1);
-    expect(cta(container).textContent).toContain("ctaActive");
-    expect(cta(container).disabled).toBe(false);
+/** The location section's own affordance, which is not the CTA. */
+const setLocationButton = (c: HTMLElement) =>
+  [...c.querySelectorAll("button")].find(
+    (b) => b.textContent.includes("regionLock.setLocation") && b !== cta(c),
+  );
+
+describe("unlocked", () => {
+  it("leaves the panel exactly as it was, with or without a gate", () => {
+    for (const regionGate of [
+      undefined,
+      { gate: { kind: "unlocked" } as const, onSetLocation: () => {} },
+    ]) {
+      const { container } = render(<SignupPanelView {...panel({ regionGate })} />);
+      expect(rows(container)).toHaveLength(1);
+      expect(container.textContent).not.toContain("regionLock");
+      expect(cta(container).textContent).toContain("ctaActive");
+      expect(cta(container).disabled).toBe(false);
+    }
   });
 });
 
-describe("replacesForm", () => {
-  it("removes the form rather than disabling it", () => {
+describe("wrong country", () => {
+  const wrongCountry = {
+    gate: { kind: "wrong_country" as const, requiredCountry: "FI" },
+    onSetLocation: () => {},
+  };
+
+  it("replaces the form rather than disabling it", () => {
     const { container } = render(
-      <SignupPanelView
-        {...panel({ replacesForm: <p>region overlay</p> })}
-      />,
+      <SignupPanelView {...panel({ regionGate: wrongCountry })} />,
     );
-    expect(container.textContent).toContain("region overlay");
     // No picker, no consent, no CTA — nothing on screen before the swap is
     // still on screen after it, so nothing moved.
     expect(rows(container)).toHaveLength(0);
     expect(container.textContent).not.toContain("rulesHeading");
+    expect(container.querySelector("button")).toBeNull();
   });
 
-  it("still shows the panel's own price and header", () => {
+  it("names the country, in the reader's own language", () => {
     const { container } = render(
-      <SignupPanelView
-        {...panel({ replacesForm: <p>region overlay</p> })}
-      />,
+      <SignupPanelView {...panel({ regionGate: wrongCountry })} />,
+    );
+    expect(container.textContent).toContain("regionLock.wrongCountry");
+    expect(container.textContent).toContain("Finland");
+  });
+
+  it("still shows the panel's own header and price", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: wrongCountry })} />,
     );
     expect(container.textContent).toContain("noun.consumer_club");
   });
 });
 
-describe("note", () => {
-  it("sits above a form that stays usable", () => {
-    const { container } = render(
-      <SignupPanelView {...panel({ note: <p>region note</p> })} />,
-    );
-    expect(container.textContent).toContain("region note");
-    expect(rows(container)).toHaveLength(1);
-    expect(cta(container).disabled).toBe(false);
+describe("no location", () => {
+  const noLocation = (onSetLocation = () => {}) => ({
+    gate: { kind: "no_location" as const },
+    onSetLocation,
   });
-});
 
-describe("cta", () => {
-  it("outranks the live label and runs its own handler", () => {
-    const onClick = vi.fn();
+  it("keeps the form and adds the section that asks for one", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: noLocation() })} />,
+    );
+    expect(rows(container)).toHaveLength(1);
+    expect(container.textContent).toContain("regionLock.heading");
+    expect(container.textContent).toContain("regionLock.note");
+    // Between the picker and the rules, which is the order the CTA names them
+    // in.
+    const text = container.textContent;
+    expect(text.indexOf("regionLock.heading")).toBeGreaterThan(
+      text.indexOf("whoAreYouSigningUp"),
+    );
+    expect(text.indexOf("regionLock.heading")).toBeLessThan(
+      text.indexOf("rulesHeading"),
+    );
+  });
+
+  it("puts the action in the section, and never on the CTA", () => {
+    const onSetLocation = vi.fn();
     const onSubmit = vi.fn();
     const { container } = render(
       <SignupPanelView
-        {...panel({ cta: { label: "Set your location", onClick } })}
-        onSubmit={onSubmit}
+        {...panel({ regionGate: noLocation(onSetLocation), onSubmit })}
       />,
     );
-    const button = cta(container);
-    expect(button.textContent).toContain("Set your location");
-    expect(button.disabled).toBe(false);
-    fireEvent.click(button);
-    expect(onClick).toHaveBeenCalledTimes(1);
+
+    const button = setLocationButton(container);
+    expect(button).toBeDefined();
+    fireEvent.click(button!);
+    expect(onSetLocation).toHaveBeenCalledTimes(1);
+
+    // The CTA is an instruction here and nothing else: disabled, and clicking
+    // it neither submits nor opens the dialog.
+    fireEvent.click(cta(container));
     expect(onSubmit).not.toHaveBeenCalled();
+    expect(onSetLocation).toHaveBeenCalledTimes(1);
   });
 
-  it("is disabled when it carries no handler", () => {
+  it("names the location step on a disabled CTA", () => {
     const { container } = render(
-      <SignupPanelView {...panel({ cta: { label: "Not available here" } })} />,
+      <SignupPanelView {...panel({ regionGate: noLocation() })} />,
     );
-    const button = cta(container);
-    expect(button.textContent).toContain("Not available here");
-    expect(button.disabled).toBe(true);
+    expect(cta(container).textContent).toContain("regionLock.setLocation");
+    expect(cta(container).disabled).toBe(true);
+  });
+
+  it("keeps the CTA in section order: gamer, then location, then rules", () => {
+    // Nobody selected yet: the picker is above the location section, so its
+    // prompt comes first even though the location is missing too.
+    const noGamer = render(
+      <SignupPanelView
+        {...panel({
+          regionGate: noLocation(),
+          selectedParticipantId: null,
+        })}
+      />,
+    );
+    expect(cta(noGamer.container).textContent).toContain("ctaAddGamer");
+
+    // Selected but nothing agreed: the location sits above the rules, so it is
+    // the step named.
+    const unagreed = render(
+      <SignupPanelView {...panel({ regionGate: noLocation(), agreed: false })} />,
+    );
+    expect(cta(unagreed.container).textContent).toContain(
+      "regionLock.setLocation",
+    );
   });
 });

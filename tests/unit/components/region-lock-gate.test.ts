@@ -6,11 +6,10 @@ import {
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 
 /**
- * The region lock's one piece of real logic, and the one piece that outlives
- * the review: three candidate blocks are being compared on the preview scenes
- * and two of them will be deleted, but whichever wins reads its state from
- * here. Pinning it now means the surviving candidate inherits the decision
- * already tested rather than re-deriving it in a component.
+ * The region lock's one piece of real logic. Everything else about the lock is
+ * rendering: the page derives this, hands it to the panel, and the panel picks
+ * a shape for it — so the decision itself is tested once, here, and nothing
+ * re-derives it in a component.
  */
 describe("deriveRegionGate", () => {
   it("leaves an unlocked product alone, whoever is looking", () => {
@@ -50,32 +49,19 @@ describe("countryDisplayName", () => {
 });
 
 describe("region-lock preview scenarios", () => {
-  it("has unique slugs and covers every candidate in both blocked states", () => {
+  /**
+   * One scenario per blocked state and nothing else. The two are mutually
+   * exclusive viewers, which is what earns the split; a permitted family is not
+   * a third scenario, because the page it sees is the one every other product
+   * scenario already shows.
+   */
+  it("covers each blocked state exactly once, and nothing else", () => {
     const slugs = REGION_LOCK_SCENARIOS.map((s) => s.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
 
-    const blocked = REGION_LOCK_SCENARIOS.filter(
-      (s) =>
-        deriveRegionGate(s.regionLockCountry, s.viewerCountry).kind !==
-        "unlocked",
+    const kinds = REGION_LOCK_SCENARIOS.map(
+      (s) => deriveRegionGate(s.regionLockCountry, s.viewerCountry).kind,
     );
-    for (const variant of ["hybrid", "overlay-both", "checklist-both"]) {
-      const kinds = blocked
-        .filter((s) => s.variant === variant)
-        .map((s) => deriveRegionGate(s.regionLockCountry, s.viewerCountry).kind);
-      expect(new Set(kinds)).toEqual(new Set(["no_location", "wrong_country"]));
-    }
-  });
-
-  it("carries exactly one unlocked reference page", () => {
-    // One page, not one per candidate: none of them renders anything for a
-    // permitted family, so three copies would invite a hunt for a difference
-    // that cannot exist.
-    const unlocked = REGION_LOCK_SCENARIOS.filter(
-      (s) =>
-        deriveRegionGate(s.regionLockCountry, s.viewerCountry).kind ===
-        "unlocked",
-    );
-    expect(unlocked).toHaveLength(1);
+    expect(kinds.sort()).toEqual(["no_location", "wrong_country"]);
   });
 });

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +16,7 @@ import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
 import { PricingPanelView } from "./pricing-panel-view";
 import type { PricingOption } from "./pricing-options";
+import { countryDisplayName, type RegionGate } from "./region-lock/region-gate";
 import {
   SeatAvailabilityBar,
   type SeatAvailabilityBarProps,
@@ -107,42 +108,27 @@ export type AuthState =
 export type MyParticipationState = "waitlisted" | "active";
 
 /**
- * **DRAFT — the region lock's seam into this panel.**
+ * **The region lock, as this panel takes it.**
  *
  * A product may be sold in one country only, and a parent whose family is
- * somewhere else (or whose location we do not know) has to be told so on this
- * panel. Three candidate shapes for that are in front of the product owner —
- * see `region-lock/` and the `region-*` scenarios on the product-page preview
- * scene — and two of them will be deleted.
+ * somewhere else — or whose location we do not know — has to be told so here.
+ * The decision itself is made outside and arrives as one discriminated value
+ * (`region-lock/region-gate.ts`); the panel interprets it and owns nothing but
+ * the rendering, which is what lets a preview scene drive it from fixtures.
  *
- * So the panel takes **slots, not a state**: three optional nodes it will place
- * if handed them, with no idea what a region lock is and no branch per
- * candidate. Every difference between the candidates is composed outside, in a
- * builder per variant, which is what makes pruning the losers a matter of
- * deleting files rather than unpicking conditionals from this file. When one
- * wins, the surviving slots stay and the panel is unchanged; the loser's are
- * dropped from this interface.
+ * The callback is the section's own affordance and never the CTA's. Which of
+ * the two states the gate is in decides whether the reader sees a section or an
+ * overlay — see the panel's grammar above `FormOrAuth`.
  *
- * Slots apply only to a signed-in customer's form. A signed-out visitor meets
- * the sign-in overlay first, and a wrong-role visitor the wrong-role note:
- * telling either of them where the product is sold answers a question they have
- * not reached yet.
+ * The gate applies only to a signed-in customer's form. A signed-out visitor
+ * meets the sign-in overlay first, and a wrong-role visitor the wrong-role
+ * note: telling either of them where the product is sold answers a question
+ * they have not reached yet.
  */
-export interface SignupRegionGateSlots {
-  /**
-   * Replaces the whole form — picker, consent and CTA — the way the wrong-role
-   * note already does. Nothing survives that swap, so nothing moves.
-   */
-  replacesForm?: React.ReactNode;
-  /** A note above the picker, with the form left intact and usable beneath it. */
-  note?: React.ReactNode;
-  /**
-   * Takes over the CTA, ahead of every other missing-step label the button
-   * resolves. With an `onClick` it is a live button doing that instead of
-   * submitting; without one it is disabled, which is the shape every other
-   * checklist step already has.
-   */
-  cta?: { label: string; onClick?: () => void };
+export interface SignupRegionGate {
+  gate: RegionGate;
+  /** Opens the caller's set-location dialog. */
+  onSetLocation: () => void;
 }
 
 export interface SignupPanelViewProps {
@@ -183,8 +169,8 @@ export interface SignupPanelViewProps {
   submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
-  /** DRAFT — see `SignupRegionGateSlots`. Absent on every unlocked product. */
-  regionGate?: SignupRegionGateSlots;
+  /** See `SignupRegionGate`. Absent on every unlocked product. */
+  regionGate?: SignupRegionGate;
 }
 
 // ---------- Why the panel is flat ----------
@@ -395,6 +381,31 @@ interface FormOrAuthProps extends SignupPanelViewProps {
   variant?: "default" | "secondary";
 }
 
+// ---------- The panel's grammar ----------
+//
+// Four rules the whole panel obeys, so that a new state is answered with a
+// shape the reader has already learned rather than a new kind of control.
+//
+// **The CTA has exactly two live behaviours: submit and join-waitlist.** Submit
+// leads to Stripe Checkout, or straight to the confirmation summary where there
+// is nothing to charge; the waitlist join lands on that same summary. It never
+// navigates anywhere else and never opens a dialog.
+//
+// **A disabled CTA is an instruction.** It names the single next missing step,
+// in the order the sections stand on the page: add a gamer → set your location
+// → agree to the rules → wait for the window. The label points at the nearest
+// unfinished thing above the button, so following it is a walk down the panel
+// rather than a hunt.
+//
+// **Actions live in the sections, never in the CTA.** A section that needs
+// something offers its own affordance: the dashed add-a-gamer row inside the
+// picker, the set-location button inside the location section.
+//
+// **A full-panel overlay means ineligibility** — signed out, signed in as a
+// gamer or a gedu, in a country this product is not sold to. There is no
+// decision for that reader, so none is presented: no picker, no consent, no
+// button. The converse is what binds future states — a visible form promises
+// this reader can reach a purchase from here.
 function FormOrAuth(props: FormOrAuthProps) {
   switch (props.authState.kind) {
     case "unauthenticated":
@@ -408,13 +419,17 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "non_customer":
       return <NonCustomerOverlay forGamers={props.forGamers} />;
     case "ready":
-      // DRAFT (region lock): the overlay-shaped candidates hand the panel a
-      // node instead of a form. Same swap the wrong-role note above makes —
-      // picker, consent and CTA cease to exist rather than being disabled in
-      // place — so there is nothing on screen to hold still and nothing to
-      // reserve room for.
-      if (props.regionGate?.replacesForm !== undefined) {
-        return <>{props.regionGate.replacesForm}</>;
+      // A family in the wrong country is ineligible, so the form goes — the
+      // same swap the wrong-role note above makes, with picker, consent and CTA
+      // ceasing to exist rather than being disabled in place. Nothing on screen
+      // survives it, so nothing moves and nothing needs room reserved.
+      if (props.regionGate?.gate.kind === "wrong_country") {
+        return (
+          <WrongCountryOverlay
+            requiredCountry={props.regionGate.gate.requiredCountry}
+            locale={props.locale}
+          />
+        );
       }
       // selectedParticipantId comes through `props` (it's a top-level View prop,
       // not part of the AuthState union — see SignupPanelViewProps).
@@ -482,6 +497,75 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
   );
 }
 
+/**
+ * The product is not sold where this family lives.
+ *
+ * Deliberately the wrong-role note's exact treatment: a muted, bordered
+ * statement where the form was. The two say different things and mean the same
+ * one — there is nothing here for you — and a reader who has met either
+ * recognises the second. Nothing louder is warranted: no error, no destructive
+ * red, nothing has gone wrong.
+ *
+ * The country is named, in the reader's own language. A refusal that will not
+ * say what it is refusing on leaves them with nothing to understand — and the
+ * lock is not a secret, it is where the product is sold. What the sentence
+ * pointedly does not do is mention that a location is a settings field they
+ * could change: the block is a statement about who the product is offered to,
+ * not a puzzle with a published solution.
+ */
+function WrongCountryOverlay({
+  requiredCountry,
+  locale,
+}: {
+  requiredCountry: string;
+  locale: string;
+}) {
+  const t = useTranslations("productDetail.signupPanel");
+  return (
+    <p className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+      {t("regionLock.wrongCountry", {
+        country: countryDisplayName(requiredCountry, locale),
+      })}
+    </p>
+  );
+}
+
+/**
+ * The family's location is missing, and this is where they supply it.
+ *
+ * A section of the form like the picker and the rules, in the order the CTA
+ * names them: it sits between the two, so "Set your location" points at the
+ * thing directly above the button once a participant is chosen. It is a
+ * *question*, not a refusal — the form around it stays whole and every other
+ * step can still be finished first — which is why the copy asks where the
+ * family lives without naming the country that would unlock the page. Naming it
+ * would turn the question into a hint.
+ *
+ * The affordance is the picker's dashed add-a-gamer row, in the second place
+ * the panel needs the same grammar: a bordered, full-width, secondary-weight
+ * button that opens a dialog, sitting inside the section it is about rather
+ * than in the CTA.
+ */
+function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
+  const t = useTranslations("productDetail.signupPanel");
+  return (
+    <div>
+      <h3 className="text-sm font-semibold">{t("regionLock.heading")}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t("regionLock.note")}
+      </p>
+      <button
+        type="button"
+        onClick={onSetLocation}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+      >
+        <MapPin className="h-4 w-4" />
+        {t("regionLock.setLocation")}
+      </button>
+    </div>
+  );
+}
+
 function SignupForm(
   props: FormOrAuthProps & {
     participants: readonly SignupParticipantChoice[];
@@ -504,23 +588,18 @@ function SignupForm(
   const selectedIsSelf =
     props.participants.find((p) => p.id === props.selectedParticipantId)
       ?.isSelf === true;
-  const formReady = props.selectedParticipantId !== null && props.agreed;
-  // DRAFT (region lock): a region CTA outranks every other step the button can
-  // name, because it is the one blocking the purchase — an "Agree to the rules"
-  // prompt on a product this family cannot buy would be pointing at the wrong
-  // problem. Whether it is live is the presence of its handler and nothing
-  // else: the ask-shaped candidate opens the location dialog from here, and the
-  // refusal-shaped one has no action to offer and stays disabled, which is the
-  // shape the other checklist steps already have.
-  const regionCta = props.regionGate?.cta;
-  const clickable =
-    regionCta !== undefined
-      ? regionCta.onClick !== undefined
-      : formReady && props.active && !props.submitting;
+  // The location section renders exactly when the gate is asking for one. The
+  // wrong-country half never reaches this component — it replaced the form
+  // upstream — so this is the only region state the form itself knows about.
+  const needsLocation = props.regionGate?.gate.kind === "no_location";
+  const formReady =
+    props.selectedParticipantId !== null && props.agreed && !needsLocation;
+  const clickable = formReady && props.active && !props.submitting;
 
   // The CTA doubles as the instruction for the parent's next step: while it's
   // disabled it names exactly what's still missing, in the order they can act
-  // on it (add a gamer → agree to the rules → wait for the window). The same
+  // on it (add a gamer → set your location → agree to the rules → wait for the
+  // window), which is the order the sections stand in on the page. The same
   // checklist runs whether or not registration is open, so a parent can finish
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
@@ -531,28 +610,26 @@ function SignupForm(
   // product — the reader already holds the one seat there is. The latter two
   // both land on ctaAllSet; the picker rows show each person's exact
   // seat/waitlist status in place.
-  const ctaLabel =
-    regionCta !== undefined
-      ? regionCta.label
-      : props.submitting
-        ? t("ctaSubmitting")
-        : props.selectedParticipantId === null
-          ? canAddGamer
-            ? t("ctaAddGamer")
-            : t("ctaAllSet")
-          : !props.agreed
-            ? t("ctaAgreeRules")
-            : props.active
-              ? props.ctaLabelActive
-              : t("ctaReadyWaiting");
+  //
+  // The location step is an instruction and nothing more — the button stays
+  // disabled and the section above it carries the action, per the grammar note
+  // by `FormOrAuth`.
+  const ctaLabel = props.submitting
+    ? t("ctaSubmitting")
+    : props.selectedParticipantId === null
+      ? canAddGamer
+        ? t("ctaAddGamer")
+        : t("ctaAllSet")
+      : needsLocation
+        ? t("regionLock.setLocation")
+        : !props.agreed
+          ? t("ctaAgreeRules")
+          : props.active
+            ? props.ctaLabelActive
+            : t("ctaReadyWaiting");
 
   return (
     <div className="space-y-4">
-      {/* DRAFT (region lock): a note above the picker on the candidates that
-          keep the form. It renders with the panel and never arrives late, so
-          nothing below it is pushed anywhere. */}
-      {props.regionGate?.note}
-
       {/* No box around the picker — it is a grouping, not a control, and the
           heading below marks the section without a container around it. See
           the border-means-interactive note above. */}
@@ -679,6 +756,14 @@ function SignupForm(
         </div>
       </div>
 
+      {/* Between the picker and the rules, which is where the CTA's checklist
+          names it. It is present from the panel's first paint — the gate is
+          resolved before the page renders — so nothing below it is ever pushed
+          down by its arrival. */}
+      {needsLocation && props.regionGate !== undefined && (
+        <RegionLocationSection onSetLocation={props.regionGate.onSetLocation} />
+      )}
+
       <RulesCheckbox
         productType={props.productType}
         selfSeat={selectedIsSelf}
@@ -691,7 +776,7 @@ function SignupForm(
         variant={props.variant ?? "default"}
         className="w-full text-base"
         disabled={!clickable}
-        onClick={regionCta?.onClick ?? props.onSubmit}
+        onClick={props.onSubmit}
       >
         {ctaLabel}
       </Button>

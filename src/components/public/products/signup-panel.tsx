@@ -4,13 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductBrowseRow } from "@/types";
 import { AddGamerDialog } from "@/components/family";
+import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { ROUTES } from "@/lib/constants";
+import { useAuth } from "@/providers/auth-provider";
 import {
   useCreateParticipation,
   useJoinWaitlist,
   type CreateParticipationInput,
 } from "@/services/participations";
+import { useUpdateProfile } from "@/services/users";
 import { purchaseShapeFor } from "./pricing-options";
+import type { RegionGate } from "./region-lock/region-gate";
+import { SetLocationDialog } from "./region-lock/set-location-dialog";
 import {
   SignupPanelView,
   type AuthState,
@@ -40,14 +45,29 @@ interface SignupPanelProps {
   >;
   state: RegistrationState;
   authState: AuthState;
+  /**
+   * The region lock's answer for this viewer, derived by the page above — which
+   * is where the reads behind it live, and where the page holds its first paint
+   * until they have landed.
+   */
+  regionGate: RegionGate;
+  /**
+   * The country of a place confirmed in the location dialog. The page holds it
+   * so the gate re-derives on the spot rather than waiting for the keyed read
+   * of a row the picker just handed us.
+   */
+  onLocationConfirmed: (countryCode: string | null) => void;
 }
 
 export function SignupPanel({
   product,
   state,
   authState,
+  regionGate,
+  onLocationConfirmed,
 }: SignupPanelProps) {
   const router = useRouter();
+  const { user, refreshProfile } = useAuth();
   // Pricing / gamer selection / agreed / locale+currency — the view props
   // shared verbatim with the preview panel. This panel only adds the live
   // mutation actions on top, so the demo can't drift from the real UI.
@@ -55,9 +75,11 @@ export function SignupPanel({
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
+  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
 
   const createMutation = useCreateParticipation();
   const waitlistMutation = useJoinWaitlist();
+  const updateProfile = useUpdateProfile();
 
   // Per CLAUDE.md "Loading & Disabled State": flip true synchronously *before*
   // the mutation so there's no render where the button is enabled between
@@ -147,6 +169,33 @@ export function SignupPanel({
     );
   };
 
+  /**
+   * The parent's home location, written the way the settings form writes it:
+   * one plain profile update on the same column, under the same self-scoped
+   * policy. No guard is needed against clobbering a stored value — the dialog
+   * is only ever offered when there is none.
+   *
+   * Order matters on the way back. The confirmed country goes up *first*, so
+   * the gate re-derives from the row the picker already handed us; refreshing
+   * the profile after it keeps the in-memory profile true for every other
+   * surface in this document, and the keyed read it starts merely confirms what
+   * the page is already showing. Done the other way round, the page would drop
+   * to its skeleton waiting to be told something it knew.
+   *
+   * Rejections propagate: the dialog re-enables its button and shows why.
+   */
+  const saveHomeLocation = async (pick: LocationPick) => {
+    // Structurally unreachable: the gate only asks for a location when the
+    // viewer is a signed-in parent, which is what put a `user` in context.
+    if (!user) return;
+    await updateProfile.mutateAsync({
+      userId: user.id,
+      updates: { home_location_id: pick.location.id },
+    });
+    onLocationConfirmed(pick.location.country_code);
+    await refreshProfile();
+  };
+
   const viewProps: SignupPanelViewProps = {
     ...fields,
     state,
@@ -156,11 +205,20 @@ export function SignupPanel({
     onJoinWaitlist: handleJoinWaitlist,
     submitting: committing,
     submitError,
+    regionGate: {
+      gate: regionGate,
+      onSetLocation: () => setLocationDialogOpen(true),
+    },
   };
 
   return (
     <>
       <SignupPanelView {...viewProps} />
+      <SetLocationDialog
+        open={locationDialogOpen}
+        onOpenChange={setLocationDialogOpen}
+        onSave={saveHomeLocation}
+      />
       {/* Reusable family dialog — handles its own PIN gate (create/enter PIN)
           before showing the form, so no pre-check is needed here. On success
           we pre-select the new gamer; useCreateGamer invalidates the gamers

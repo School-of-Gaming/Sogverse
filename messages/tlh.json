@@ -1809,7 +1809,17 @@
       "seatIsFor": "’Iv quSvam ghaj",
       "selected": "wIvlu’",
       "agePill": "qan {age}",
-      "parentPill": "vav/SoS"
+      "parentPill": "vav/SoS",
+      "regionLock": {
+        "heading": "DaqlIj",
+        "note": "puqbe’pu’ vavpu’ je Sepmey puS neH lu’el. nuqDaq bIDab? yIja’, ’ej wISov.",
+        "setLocation": "DaqlIj yIchel",
+        "wrongCountry": "{country} qorDu’pu’ neH lu’el.",
+        "dialogTitle": "nuqDaq qorDu’lIj Dab?",
+        "dialogDescription": "DaqlIj wISov ’ej naDev qach’a’mey, wanI’mey je wISam. Qapla’ — DaH yIchoH ’e’ DalaH.",
+        "dialogField": "DaqlIj",
+        "dialogSave": "Daq yISaH"
+      }
     },
     "pricing": {
       "title": "Huch",

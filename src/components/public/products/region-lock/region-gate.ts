@@ -9,10 +9,10 @@ import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
  * `locations` row their `profiles.home_location_id` points at.
  *
  * This module owns exactly that decision and nothing else. Two codes in, one of
- * three answers out, no React, no data access — so the same call is made
- * identically by the fixture-driven preview panels and, at promotion, by the
- * live one. Deriving it anywhere else would be a second copy of a rule that has
- * to hold on the page *and* in the copy the page renders.
+ * three answers out, no React, no data access — so the fixture-driven preview
+ * page and the live one make the same call. Deriving it anywhere else would be
+ * a second copy of a rule that has to hold on the page *and* in the copy the
+ * page renders.
  *
  * **A UI-only soft block.** Nothing here is enforcement: a parent who changes
  * their location in settings walks straight through it, and the server does not
@@ -27,12 +27,14 @@ import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
  *   permitted family is told they were checked.
  * - `no_location` — the product is locked and we do not know where the family
  *   is. This is a *missing input*, not a refusal, and the parent can clear it
- *   themselves in one step, so the copy asks for the location and never names
- *   the country: naming it would turn a question into a hint about which answer
- *   unlocks the page.
+ *   themselves in one step, so the signup form stays and gains a section asking
+ *   for the location. The copy never names the country: naming it would turn a
+ *   question into a hint about which answer unlocks the page.
  * - `wrong_country` — we know where they are and it is not where this product
- *   is sold. Here the country IS named, because a refusal that will not say
- *   what it is refusing on is worse than useless to the reader.
+ *   is sold. The form goes; there is no decision left for this reader, and the
+ *   panel's grammar is that a full-panel note means exactly that. Here the
+ *   country IS named, because a refusal that will not say what it is refusing
+ *   on is worse than useless to the reader.
  */
 export type RegionGate =
   | { kind: "unlocked" }

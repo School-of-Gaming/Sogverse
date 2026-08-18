@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -8,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { useNow } from "@/providers";
 import { useAuth } from "@/providers/auth-provider";
+import { useLocationsByIds } from "@/services/locations";
 import { useProductDetail } from "@/services/products";
 import { useMyGamers } from "@/services/gamers";
 import {
@@ -20,6 +22,7 @@ import {
 } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "./product-audience";
+import { deriveRegionGate, type RegionGate } from "./region-lock/region-gate";
 import { SignupPanel } from "./signup-panel";
 import type { AuthState } from "./signup-panel-view";
 
@@ -75,6 +78,27 @@ export function ProductDetailPage({
   );
   const myCount = counts?.[0];
 
+  // ---------------------------------------------------------------------
+  // Where the family lives, for the region lock
+  //
+  // A locked product is sold in one country, and the family's is the country of
+  // the `locations` row their profile points at — the same keyed read the
+  // settings field resolves its stored pick with. It is fired for any signed-in
+  // parent who has a location, not only on a locked product, so it runs in
+  // parallel with the three reads below instead of waiting to learn whether it
+  // is needed: it is one row by primary key and lands with them.
+  //
+  // The country a parent confirms in the panel's dialog is held here for the
+  // gap between the write and the read of the row it points at — see the gate
+  // below.
+  // ---------------------------------------------------------------------
+  const homeLocationId = isCustomer ? profile.home_location_id : null;
+  const { data: homeLocationRows, isLoading: homeLocationLoading } =
+    useLocationsByIds(homeLocationId ? [homeLocationId] : []);
+  const [confirmedCountry, setConfirmedCountry] = useState<
+    string | null | undefined
+  >(undefined);
+
   // Live seat-count updates for this single product. Browse pages don't
   // subscribe per-card (a 30-card grid is too many channels) — detail page
   // is the only realtime subscriber. Per CLAUDE.md the callback only
@@ -89,11 +113,27 @@ export function ProductDetailPage({
   // the gedu session-details page from /gedu/clubs/[id] (or /camps/[id] /
   // /events/[id]) — the marketing route here shows them the public layout with
   // a non_customer overlay, which is the right thing for an enrolment-style URL.
+  //
+  // The region lock joins that list, and only where it can change what the
+  // panel says: a locked product, a signed-in parent, a location stored to
+  // resolve. The panel must never paint one answer and then the other — a form
+  // that turns into "not sold here", or a refusal that turns into a form — so
+  // the page waits for the country instead of guessing at it. Nobody else waits
+  // for this: an unlocked product, a visitor, and a parent with no location at
+  // all are all already decided. Nor does the wait return once the page is up —
+  // a parent confirming a place in the panel's dialog hands the country
+  // straight to `confirmedCountry`, so the read that follows has nothing left
+  // to tell us.
   if (
     productLoading ||
     authLoading ||
     (isCustomer && gamersLoading) ||
-    (isCustomer && countsLoading)
+    (isCustomer && countsLoading) ||
+    (isCustomer &&
+      product?.region_lock_country != null &&
+      homeLocationId !== null &&
+      confirmedCountry === undefined &&
+      homeLocationLoading)
   ) {
     return <DetailLoadingSkeleton />;
   }
@@ -184,13 +224,38 @@ export function ProductDetailPage({
     participationsCount,
   });
 
+  // The lock, against where this family says it lives. A visitor and a
+  // wrong-role viewer are handed `unlocked` rather than checked: they meet an
+  // overlay of their own first, and telling them where the product is sold
+  // answers a question they have not reached. The confirmed country outranks
+  // the read for as long as both are in play; they agree the moment the read
+  // lands.
+  const regionGate: RegionGate =
+    authState.kind === "ready"
+      ? deriveRegionGate(
+          product.region_lock_country,
+          confirmedCountry !== undefined
+            ? confirmedCountry
+            : (homeLocationRows?.[0]?.country_code ?? null),
+        )
+      : { kind: "unlocked" };
+
   return (
     <ProductDetailPageBody
       product={product}
       municipalitySlug={municipalitySlug}
       signupPanel={
-        <SignupPanel product={product} state={state} authState={authState} />
+        <SignupPanel
+          product={product}
+          state={state}
+          authState={authState}
+          regionGate={regionGate}
+          onLocationConfirmed={setConfirmedCountry}
+        />
       }
+      // The panel is where the region block is explained, so the phone-width
+      // jump button stays exactly as it was: it scrolls the reader to the
+      // answer, which is the same service it does for a gedu who lands here.
       signupActionable={registrationCtaKind(state) === "primary"}
     />
   );

@@ -159,10 +159,11 @@ describe("registry scenarios match their fixtures", () => {
 
   it("public product surfaces", () => {
     const productSlugs = PREVIEW_SCENARIOS.map((s) => s.slug);
-    // The product surface carries the product fixtures plus the region-lock
-    // candidates, which are the same page under a block and therefore share the
-    // scene rather than forking one. They are deliberately NOT on the
-    // confirmation surface: a blocked panel never reaches a summary.
+    // The product surface carries the product fixtures plus the two blocked
+    // region-lock states, which are the same page seen by a viewer the lock has
+    // something to say to and therefore share the scene rather than forking
+    // one. They are deliberately NOT on the confirmation surface: a blocked
+    // panel never reaches a summary.
     expect(slugsFor("products")).toEqual([
       ...productSlugs,
       ...REGION_LOCK_SCENARIOS.map((s) => s.slug),

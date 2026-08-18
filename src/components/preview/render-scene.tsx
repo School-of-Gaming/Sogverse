@@ -11,7 +11,10 @@ import {
   isShopBrowseScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
-import { findRegionLockScenario } from "@/components/public/products/region-lock/region-lock-scenarios";
+import {
+  REGION_LOCK_BASE_SCENARIO,
+  findRegionLockScenario,
+} from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -21,7 +24,6 @@ import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
-import { RegionLockProductScene } from "./scenes/region-lock-product-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 
 /**
@@ -46,11 +48,18 @@ const SCENE_RENDERERS: Record<
     return <ShopBrowseScene scenario={scenario} />;
   },
   products: (scenario) => {
-    // The region-lock candidates share this surface but not its fixtures: they
-    // all render one club and vary only in the gate on its panel, so they carry
-    // their own slug space rather than seven near-identical products.
+    // The region-lock scenarios are this page under a lock, so they go through
+    // the same scene — they share the surface but not its fixtures, rendering
+    // one club fixture with the gate as the only thing that varies.
     const regionLock = findRegionLockScenario(scenario);
-    if (regionLock) return <RegionLockProductScene scenario={regionLock} />;
+    if (regionLock) {
+      return (
+        <ProductDetailScene
+          scenario={REGION_LOCK_BASE_SCENARIO}
+          regionLock={regionLock}
+        />
+      );
+    }
     if (!isPreviewScenario(scenario)) notFound();
     return <ProductDetailScene scenario={scenario} />;
   },

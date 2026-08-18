@@ -1765,7 +1765,17 @@
       "seatIsFor": "À qui revient cette place",
       "selected": "Sélectionné",
       "agePill": "{age} ans",
-      "parentPill": "Parent"
+      "parentPill": "Parent",
+      "regionLock": {
+        "heading": "Votre localisation",
+        "note": "Ce produit n’est proposé qu’aux familles de certains pays. Dites-nous où vit votre famille et nous pourrons vérifier.",
+        "setLocation": "Ajoutez votre localisation",
+        "wrongCountry": "Ce produit n’est proposé qu’aux familles résidant dans le pays suivant : {country}.",
+        "dialogTitle": "Où vit votre famille ?",
+        "dialogDescription": "Nous l’utilisons pour déterminer quels clubs, stages et événements sont proposés là où vous vivez. Vous pourrez la modifier plus tard dans vos paramètres.",
+        "dialogField": "Votre localisation",
+        "dialogSave": "Enregistrer la localisation"
+      }
     },
     "pricing": {
       "title": "Tarifs",

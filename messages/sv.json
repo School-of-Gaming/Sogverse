@@ -1765,7 +1765,17 @@
       "seatIsFor": "Vem platsen är för",
       "selected": "Vald",
       "agePill": "Ålder {age}",
-      "parentPill": "Förälder"
+      "parentPill": "Förälder",
+      "regionLock": {
+        "heading": "Din plats",
+        "note": "Den här produkten erbjuds bara till familjer i vissa länder. Berätta var din familj bor, så kan vi kontrollera det.",
+        "setLocation": "Lägg till din plats",
+        "wrongCountry": "Den här produkten erbjuds bara till familjer i {country}.",
+        "dialogTitle": "Var bor din familj?",
+        "dialogDescription": "Vi använder det för att se vilka klubbar, läger och evenemang som erbjuds där du bor. Du kan ändra det senare i dina inställningar.",
+        "dialogField": "Din plats",
+        "dialogSave": "Spara plats"
+      }
     },
     "pricing": {
       "title": "Pris",
