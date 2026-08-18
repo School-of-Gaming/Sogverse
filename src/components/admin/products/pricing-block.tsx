@@ -54,7 +54,9 @@ export function PricingBlock({ shape, state, onChange }: PricingBlockProps) {
         <Input
           id="price-eur"
           type="number"
-          min="0"
+          // A paid product's price is strictly positive; "free" is the billing
+          // radio's answer, never a zero typed here.
+          min="0.01"
           step="0.01"
           value={prices[DEFAULT_CURRENCY][field]}
           onChange={(e) => setRow(e.target.value)}

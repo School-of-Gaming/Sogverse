@@ -19,11 +19,10 @@ export type ScheduleShape =
 export type StartMode = "date" | "date_and_threshold" | "threshold";
 
 export type BillingOption =
-  | { mode: "paid"; required: true }                                    // camp
   | { mode: "external_contract"; required: true }                       // municipality_club
-  | { mode: "free_or_paid" };                                           // consumer_club, event
+  | { mode: "free_or_paid" };                                           // consumer_club, camp, event
 
-// Pricing shape — drives the Capacity & billing card. Each paid type collects
+// Pricing shape — drives the Capacity & billing card. A paid product collects
 // a single `price_cents`: consumer clubs charge it as a flat monthly
 // subscription, camps and events as a one-time total. Municipality clubs are
 // invoiced off-site; the form shows an info card instead of a price input.
@@ -131,7 +130,10 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     i18nKey: "camp",
     routeSlug: "camps",
     scheduleShape: "multi_day_bounded",
-    billing: { mode: "paid", required: true },
+    // Free-or-paid, defaulting to paid — the same chooser clubs and events get.
+    // A free camp signs up through the billing_mode branch every free product
+    // shares; when paid, the upfront total below applies.
+    billing: { mode: "free_or_paid" },
     pricingShape: "upfront_total",
     allowsRemote: true,
     allowsInPerson: true,
@@ -178,19 +180,15 @@ export type PaidMode = (typeof PAID_MODE_VALUES)[number];
 
 /**
  * Which billing mode is actually in force, given the type's billing option and
- * (for the types that offer a choice) the admin's free/paid pick. Camps and
- * municipality clubs pin their mode, so `paidMode` is ignored for them.
+ * (for the types that offer a choice) the admin's free/paid pick. Municipality
+ * clubs pin their mode, so `paidMode` is ignored for them.
  */
 export function effectiveBillingMode(
   config: ProductTypeConfig,
   paidMode: PaidMode,
 ): BillingMode {
-  if (config.billing.mode === "free_or_paid") {
-    return paidMode === "free" ? "free" : "paid";
-  }
-  return config.billing.mode === "external_contract"
-    ? "external_contract"
-    : "paid";
+  if (config.billing.mode === "external_contract") return "external_contract";
+  return paidMode === "free" ? "free" : "paid";
 }
 
 export function productTypeFromSlug(slug: string): ProductType | null {

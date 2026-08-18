@@ -368,7 +368,7 @@
         "billingDescription": {
           "consumerClub": "Vanhemmat maksavat jokaisesta lapsen osallistumiskerrasta. Laskutus tapahtuu automaattisesti viikoittain.",
           "municipalityClub": "School of Gaming laskuttaa kuntaa suoraan. Vanhemmat ilmoittavat lapsensa maksutta paikkarajaan saakka.",
-          "camp": "Vanhemmat maksavat koko hinnan kerralla ilmoittautuessaan. Palautettavissa tiettyyn hetkeen asti.",
+          "camp": "Leirit voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja. Maksullisesta leiristä maksetaan koko hinta ilmoittautuessa, ja se on palautettavissa tiettyyn hetkeen asti.",
           "event": "Tapahtumat voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja."
         },
         "registration": "Ilmoittautumisaika",
@@ -565,9 +565,9 @@
         "seatCountRequired": "Paikkamäärä vaaditaan",
         "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
         "priceSessionMissing": "Anna kertahinta valuutassa {currency}",
-        "priceSessionNegative": "Kertahinta valuutassa {currency} ei voi olla negatiivinen",
+        "priceSessionInvalid": "Kertahinnan valuutassa {currency} on oltava suurempi kuin nolla",
         "priceMonthMissing": "Anna kuukausihinta valuutassa {currency}",
-        "priceMonthNegative": "Kuukausihinta valuutassa {currency} ei voi olla negatiivinen",
+        "priceMonthInvalid": "Kuukausihinnan valuutassa {currency} on oltava suurempi kuin nolla",
         "primaryGeduFeeInvalid": "Anna vastaavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei tiedossa tai Vapaaehtoinen",
         "assistantGeduFeeInvalid": "Anna avustavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei ole tai Vapaaehtoinen",
         "municipalityFeeInvalid": "Anna kunnan maksu, joka on suurempi kuin 0, tai valitse Ei tiedossa",

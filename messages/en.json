@@ -368,7 +368,7 @@
         "billingDescription": {
           "consumerClub": "Parents pay per session their child attends. Billing happens automatically each week.",
           "municipalityClub": "School of Gaming invoices the municipality directly. Parents register their child for free, up to the seat limit.",
-          "camp": "Parents pay the total price once, at signup. Refundable up to a cutoff.",
+          "camp": "Camps can be free (with or without a seat limit) or paid upfront. A paid camp is charged in full at signup, refundable up to a cutoff.",
           "event": "Events can be free (with or without a seat limit) or paid upfront."
         },
         "registration": "Registration timing",
@@ -565,9 +565,9 @@
         "seatCountRequired": "Seat count is required",
         "seatCountInvalid": "Seat count must be a positive integer",
         "priceSessionMissing": "Enter a price per session in {currency}",
-        "priceSessionNegative": "Price per session in {currency} can’t be negative",
+        "priceSessionInvalid": "Price per session in {currency} must be greater than zero",
         "priceMonthMissing": "Enter a monthly price in {currency}",
-        "priceMonthNegative": "Monthly price in {currency} can’t be negative",
+        "priceMonthInvalid": "Monthly price in {currency} must be greater than zero",
         "primaryGeduFeeInvalid": "Enter a primary Gedu fee greater than 0, or choose Unknown or Volunteer",
         "assistantGeduFeeInvalid": "Enter an assistant Gedu fee greater than 0, or choose None or Volunteer",
         "municipalityFeeInvalid": "Enter a municipality fee greater than 0, or choose Unknown",

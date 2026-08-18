@@ -368,7 +368,7 @@
         "billingDescription": {
           "consumerClub": "Les parents paient pour chaque session à laquelle leur enfant participe. La facturation est automatique chaque semaine.",
           "municipalityClub": "School of Gaming facture directement la commune. Les parents inscrivent leur enfant gratuitement, dans la limite des places disponibles.",
-          "camp": "Les parents paient le prix total en une fois, à l’inscription. Remboursable jusqu’à une date limite.",
+          "camp": "Les stages peuvent être gratuits (avec ou sans limite de places) ou payés à l’avance. Un stage payant est réglé en totalité à l’inscription, remboursable jusqu’à une date limite.",
           "event": "Les événements peuvent être gratuits (avec ou sans limite de places) ou payés à l’avance."
         },
         "registration": "Ouverture des inscriptions",
@@ -565,9 +565,9 @@
         "seatCountRequired": "Le nombre de places est obligatoire",
         "seatCountInvalid": "Le nombre de places doit être un entier positif",
         "priceSessionMissing": "Saisissez un prix par session en {currency}",
-        "priceSessionNegative": "Le prix par session en {currency} ne peut pas être négatif",
+        "priceSessionInvalid": "Le prix par session en {currency} doit être supérieur à zéro",
         "priceMonthMissing": "Saisissez un prix mensuel en {currency}",
-        "priceMonthNegative": "Le prix mensuel en {currency} ne peut pas être négatif",
+        "priceMonthInvalid": "Le prix mensuel en {currency} doit être supérieur à zéro",
         "primaryGeduFeeInvalid": "Saisissez une rémunération de Gedu principal supérieure à 0, ou choisissez Inconnu ou Bénévole",
         "assistantGeduFeeInvalid": "Saisissez une rémunération de Gedu assistant supérieure à 0, ou choisissez Aucune ou Bénévole",
         "municipalityFeeInvalid": "Saisissez un montant commune supérieur à 0, ou choisissez Inconnu",

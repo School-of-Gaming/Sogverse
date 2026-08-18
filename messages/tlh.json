@@ -416,7 +416,7 @@
         "billingDescription": {
           "consumerClub": "vavmey Huch nob qaStaHvISmey lop puqpu’. Hogh nIDqu’ tlhutlh.",
           "municipalityClub": "School of Gaming veng nIDqu’. vavmey puqpu’chaj loSlu’ Huch pagh, pa’ mI’ Sub.",
-          "camp": "vavmey Hoch Huch nob qaS ghItlh. cheghlaH Huch poH ngu’lu’ pagh.",
+          "camp": "pa’ Qugh Huch pagh (pa’ mI’ Sub qoj pagh) qoj Huch nob ’oHlaH. Huch nob pa’ QughvaD Hoch Huch nob qaS ghItlh, ’ej cheghlaH Huch poH ngu’lu’ pagh.",
           "event": "Qu’mey Huch pagh (pa’ mI’ Sub qoj pagh) qoj Huch nob ’oHlaH."
         },
         "registration": "ghItlh poH",
@@ -613,9 +613,9 @@
         "seatCountRequired": "pa’ mI’ poQ",
         "seatCountInvalid": "pa’ mI’ positiv ’oHnIS",
         "priceSessionMissing": "{currency} per qaStaHvIS Huch yIqon",
-        "priceSessionNegative": "{currency} per qaStaHvIS Huch nIQbe’ net poQ",
+        "priceSessionInvalid": "{currency} per qaStaHvIS Huch pagh ’oHbe’ net poQ",
         "priceMonthMissing": "{currency} per jar Huch yIqon",
-        "priceMonthNegative": "{currency} per jar Huch nIQbe’ net poQ",
+        "priceMonthInvalid": "{currency} per jar Huch pagh ’oHbe’ net poQ",
         "primaryGeduFeeInvalid": "Gedu wa’DIch Huch (0 law’) yIqon, pagh «Sovbe’» «matlh» je yIwIv",
         "assistantGeduFeeInvalid": "Gedu boQwI’ Huch (0 law’) yIqon, pagh «pagh» «matlh» je yIwIv",
         "municipalityFeeInvalid": "veng Huch (0 law’) yIqon, pagh «Sovbe’» yIwIv",

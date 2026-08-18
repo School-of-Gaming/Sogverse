@@ -368,7 +368,7 @@
         "billingDescription": {
           "consumerClub": "Föräldrar betalar för varje tillfälle barnet deltar. Faktureringen sker automatiskt varje vecka.",
           "municipalityClub": "School of Gaming fakturerar kommunen direkt. Föräldrar anmäler sitt barn gratis upp till platsgränsen.",
-          "camp": "Föräldrar betalar hela priset en gång vid anmälan. Återbetalas fram till en gräns.",
+          "camp": "Läger kan vara gratis (med eller utan platsgräns) eller förbetalda. Ett betalt läger betalas i sin helhet vid anmälan och återbetalas fram till en gräns.",
           "event": "Evenemang kan vara gratis (med eller utan platsgräns) eller förbetalda."
         },
         "registration": "Registreringstid",
@@ -565,9 +565,9 @@
         "seatCountRequired": "Antal platser krävs",
         "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
         "priceSessionMissing": "Ange ett pris per tillfälle i {currency}",
-        "priceSessionNegative": "Pris per tillfälle i {currency} kan inte vara negativt",
+        "priceSessionInvalid": "Pris per tillfälle i {currency} måste vara större än noll",
         "priceMonthMissing": "Ange ett månadspris i {currency}",
-        "priceMonthNegative": "Månadspris i {currency} kan inte vara negativt",
+        "priceMonthInvalid": "Månadspris i {currency} måste vara större än noll",
         "primaryGeduFeeInvalid": "Ange ett huvud-Gedu-arvode större än 0, eller välj Okänt eller Volontär",
         "assistantGeduFeeInvalid": "Ange ett assisterande Gedu-arvode större än 0, eller välj Inget eller Volontär",
         "municipalityFeeInvalid": "Ange en kommunavgift större än 0, eller välj Okänt",

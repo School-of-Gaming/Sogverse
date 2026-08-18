@@ -79,6 +79,46 @@ function validMuniState(): FormState {
   return s;
 }
 
+// A camp that passes validation: multi_day_bounded, so it needs both dates, and
+// paid by default, so it carries the upfront total in the `session` slot.
+function validCampState(): FormState {
+  const s = initialState(campConfig, "en");
+  s.translations = {
+    en: { name: "Test Camp", shortDescription: "A great camp", longDescription: "" },
+  };
+  s.activeLocale = "en";
+  s.topic = "minecraft_java";
+  s.spokenLanguageCode = "en";
+  s.isRemote = true;
+  s.startMode = "date";
+  s.startDate = "2026-09-01";
+  s.endDate = "2026-09-05";
+  s.scheduleSlots = [
+    { weekday: 0, start_time: "10:00", duration_minutes: 180 },
+    { weekday: 2, start_time: "10:00", duration_minutes: 180 },
+  ];
+  s.prices = { eur: { session: "120.00", month: "" } };
+  return s;
+}
+
+// An event that passes validation: single_date, so it needs no end date, and
+// free by default — the paid cases below opt in and add a total.
+function validEventState(): FormState {
+  const s = initialState(eventConfig, "en");
+  s.translations = {
+    en: { name: "Test Event", shortDescription: "A great event", longDescription: "" },
+  };
+  s.activeLocale = "en";
+  s.topic = "minecraft_java";
+  s.spokenLanguageCode = "en";
+  s.isRemote = true;
+  s.startMode = "date";
+  s.startDate = "2026-09-01";
+  s.scheduleSlots = [{ weekday: 0, start_time: "18:00", duration_minutes: 90 }];
+  s.seatCount = "30";
+  return s;
+}
+
 describe("validate", () => {
   describe("translations", () => {
     it("requires at least one filled locale", () => {
@@ -497,11 +537,64 @@ describe("validate", () => {
       });
     });
 
-    it("rejects negative price", () => {
+    // A paid product's price is validated through the exact value the payload
+    // will store, and it has to be strictly positive. Zero is not a price the
+    // admin may type: "free" is the billing radio's answer, and a €0 paid
+    // product would advertise a checkout the server has nothing to charge for.
+    it("rejects a negative or malformed monthly price", () => {
+      for (const month of ["-30.00", "abc", "1e999"]) {
+        const s = validConsumerState();
+        s.prices.eur = { session: "10.00", month };
+        expect(validate(s, consumerConfig), month).toEqual({
+          messageKey: "priceMonthInvalid",
+          values: { currency: "EUR" },
+        });
+      }
+    });
+
+    it("rejects a zero monthly price on a paid consumer club", () => {
+      for (const month of ["0", "0.00", "0.001"]) {
+        const s = validConsumerState();
+        s.prices.eur = { session: "10.00", month };
+        expect(validate(s, consumerConfig), month).toEqual({
+          messageKey: "priceMonthInvalid",
+          values: { currency: "EUR" },
+        });
+      }
+    });
+
+    it("rejects a zero upfront total on a paid camp and a paid event", () => {
+      for (const session of ["0", "0.00"]) {
+        const camp = validCampState();
+        camp.prices.eur = { session, month: "" };
+        expect(validate(camp, campConfig), session).toEqual({
+          messageKey: "priceSessionInvalid",
+          values: { currency: "EUR" },
+        });
+
+        const event = validEventState();
+        event.paidMode = "paid";
+        event.prices.eur = { session, month: "" };
+        expect(validate(event, eventConfig), session).toEqual({
+          messageKey: "priceSessionInvalid",
+          values: { currency: "EUR" },
+        });
+      }
+    });
+
+    it("accepts the smallest price the input allows", () => {
       const s = validConsumerState();
-      s.prices.eur = { session: "10.00", month: "-30.00" };
-      const result = validate(s, consumerConfig);
-      expect(result?.messageKey).toBe("priceMonthNegative");
+      s.prices.eur = { session: "", month: "0.01" };
+      expect(validate(s, consumerConfig)).toBeNull();
+    });
+
+    it("accepts a free camp with no price at all", () => {
+      // Camps became free-or-paid alongside clubs and events; a free one
+      // collects no price, so the blank map the paid path refuses is fine.
+      const s = validCampState();
+      s.paidMode = "free";
+      s.prices = { eur: { session: "", month: "" } };
+      expect(validate(s, campConfig)).toBeNull();
     });
 
     it("validates the monthly price for clubs and the session total for camps", () => {
@@ -620,6 +713,17 @@ describe("buildCreateInput", () => {
       { weekday: 0, start_time: "18:00", duration_minutes: 90 },
     ];
     const out = buildCreateInput(s, "event", eventConfig);
+    expect(out.prices).toEqual([]);
+    expect(out.billing_mode).toBe("free");
+  });
+
+  it("emits empty prices for a free camp, exactly as for a free event", () => {
+    // The enrollment path branches on billing_mode and never on type, so a free
+    // camp is the same wire shape a free event is.
+    const s = validCampState();
+    s.paidMode = "free";
+    s.prices = { eur: { session: "", month: "" } };
+    const out = buildCreateInput(s, "camp", campConfig);
     expect(out.prices).toEqual([]);
     expect(out.billing_mode).toBe("free");
   });

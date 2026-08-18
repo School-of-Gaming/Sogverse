@@ -64,9 +64,9 @@ export type ValidationKey =
   | "seatCountRequired"
   | "seatCountInvalid"
   | "priceSessionMissing"
-  | "priceSessionNegative"
+  | "priceSessionInvalid"
   | "priceMonthMissing"
-  | "priceMonthNegative"
+  | "priceMonthInvalid"
   | "primaryGeduFeeInvalid"
   | "assistantGeduFeeInvalid"
   | "municipalityFeeInvalid"
@@ -224,11 +224,18 @@ export function validate(
   if (showPricing) {
     // Each paid type collects a single price: `month` for the consumer-club
     // monthly subscription, `session` for the camp/event upfront total.
+    //
+    // A price is validated through the exact value the payload will store, and
+    // it must be strictly positive — the same standard the fees below hold. A
+    // paid product costing nothing is not a price, it is the free billing mode,
+    // and that is chosen on the radio rather than typed as a zero. A blank box
+    // keeps its own sentence: nothing was typed, so nothing is wrong with what
+    // was typed.
     const field = pricingShape === "monthly" ? "month" : "session";
     const missingKey =
       pricingShape === "monthly" ? "priceMonthMissing" : "priceSessionMissing";
-    const negativeKey =
-      pricingShape === "monthly" ? "priceMonthNegative" : "priceSessionNegative";
+    const invalidKey =
+      pricingShape === "monthly" ? "priceMonthInvalid" : "priceSessionInvalid";
     for (const currency of SUPPORTED_CURRENCIES) {
       const row = state.prices[currency];
       const currencyLabel = currency.toUpperCase();
@@ -236,9 +243,8 @@ export function validate(
       const trimmed = row[field].trim();
       if (trimmed === "")
         return err(missingKey, { currency: currencyLabel });
-      const value = Number(trimmed);
-      if (!Number.isFinite(value) || value < 0)
-        return err(negativeKey, { currency: currencyLabel });
+      if (!positiveAmountValid(trimmed))
+        return err(invalidKey, { currency: currencyLabel });
     }
   }
 
@@ -249,20 +255,20 @@ export function validate(
   // otherwise and the value is forced to null at build time).
   if (
     state.primaryGeduFee.status === "fee" &&
-    !feeAmountValid(state.primaryGeduFee.amount)
+    !positiveAmountValid(state.primaryGeduFee.amount)
   ) {
     return err("primaryGeduFeeInvalid");
   }
   if (
     state.assistantGeduFee.status === "fee" &&
-    !feeAmountValid(state.assistantGeduFee.amount)
+    !positiveAmountValid(state.assistantGeduFee.amount)
   ) {
     return err("assistantGeduFeeInvalid");
   }
   if (
     config.productType === "municipality_club" &&
     state.municipalityFee.status === "fee" &&
-    !feeAmountValid(state.municipalityFee.amount)
+    !positiveAmountValid(state.municipalityFee.amount)
   ) {
     return err("municipalityFeeInvalid");
   }
@@ -286,8 +292,14 @@ function ageOrNull(value: string): number | null {
   return trimmed === "" ? null : Number(trimmed);
 }
 
-/** A "fee" amount is valid only as a real positive number of cents. */
-function feeAmountValid(amount: string): boolean {
+/**
+ * A typed money amount is valid only as a real positive number of cents —
+ * judged through `decimalToCents`, the same conversion the payload stores, so a
+ * value that validates and a value that is written can never disagree. Zero is
+ * never a typed amount anywhere in this form: for a fee it is the separate
+ * "volunteer" status, for a price it is the free billing mode.
+ */
+function positiveAmountValid(amount: string): boolean {
   const cents = decimalToCents(amount);
   return cents != null && cents > 0;
 }
