@@ -5,12 +5,8 @@ import { useTranslations } from "next-intl";
 import {
   buildBrowseCounts,
   buildBrowseFixture,
-  SHOP_SCENE_AUDIENCES,
-  SHOP_SCENE_DEFAULT,
   SHOP_SCENE_TAGGED_CATALOG,
-  type PreviewScenario,
   type ShopBrowseScenario,
-  type ShopCatalogEntry,
 } from "@/components/public/products/mock-detail-fixtures";
 import { useNow } from "@/providers";
 import { type ProductBrowseSection } from "@/components/public/products/product-browse-results";
@@ -61,31 +57,6 @@ function categoryOf(productType: string): ShopCategory | undefined {
 }
 
 /**
- * A comparison grid's entries: a slug and nothing else. The tagged-catalog grid
- * adds the copy overrides, which `SHOP_SCENE_TAGGED_CATALOG` carries; giving
- * both shapes one type is what keeps the fixture build below a single path. The
- * tag and the picture are *not* here — they are row fields on the fixture, so
- * the detail page a card opens shows the same two things.
- */
-type SceneEntry = ShopCatalogEntry | { slug: PreviewScenario };
-
-/** Whether this entry carries the tagged-catalog grid's copy overrides. */
-function hasCopyOverride(entry: SceneEntry): entry is ShopCatalogEntry {
-  return "nameOverride" in entry;
-}
-
-function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
-  switch (scenario) {
-    case "default":
-      return SHOP_SCENE_DEFAULT.map((slug) => ({ slug }));
-    case "audiences":
-      return SHOP_SCENE_AUDIENCES.map((slug) => ({ slug }));
-    case "tagged-catalog":
-      return SHOP_SCENE_TAGGED_CATALOG;
-  }
-}
-
-/**
  * The shop storefront, over fixtures.
  *
  * It renders the same `ProductBrowseResults` the live `/shop` renders — the
@@ -96,20 +67,18 @@ function entriesFor(scenario: ShopBrowseScenario): readonly SceneEntry[] {
  *
  * The chip filters genuinely work: they live in the URL and `filterProducts`
  * runs client-side over these rows, so the audience and design-tag rows can be
- * toggled against a grid that actually answers — the tagged-catalog scenario is
- * the one that answers the tag row properly, carrying every tag value and a
- * handful of untagged products beside them.
+ * toggled against a grid that actually answers — the one grid carries every tag
+ * value, all three audiences, and a handful of products answering neither.
  *
  * Cards open the matching product-detail scene rather than `/shop/<id>`, which
  * no fixture id resolves to. Everything else about a card — its picture, its
- * tag, its audience — comes off the row, so the three scenarios differ only in
- * which rows they put on the grid.
+ * tag, its audience — comes off the row.
+ *
+ * The scenario slug is taken and not read: there is one storefront grid, so
+ * nothing branches on it, and the prop stays because the scene renderer hands
+ * every scene the slug the route resolved.
  */
-export function ShopBrowseScene({
-  scenario,
-}: {
-  scenario: ShopBrowseScenario;
-}) {
+export function ShopBrowseScene(_props: { scenario: ShopBrowseScenario }) {
   const t = useTranslations("productBrowse");
   // The Type row is an ordinary filter living in its own URL param, and the
   // live storefront expands an empty selection into every category before
@@ -119,11 +88,6 @@ export function ShopBrowseScene({
   const { categories } = useShopCategories();
   const visible = visibleCategories(categories);
 
-  // Memoised because the comparison scenarios build their entry list on the
-  // fly: a fresh array every render would re-run the fixture build below with
-  // it.
-  const entries = useMemo(() => entriesFor(scenario), [scenario]);
-
   // The fixtures are anchored once, on the first `useNow()` value, and held —
   // the same arrangement every other scene uses. The card keeps deriving its
   // state from the ticking clock; what is frozen is the calendar it derives
@@ -132,18 +96,15 @@ export function ShopBrowseScene({
   const [anchorNow] = useState(() => liveNow);
 
   const { sections, counts, hrefById } = useMemo(() => {
-    const products = entries.map((entry) => ({
+    const products = SHOP_SCENE_TAGGED_CATALOG.map((entry) => ({
       entry,
-      product: buildBrowseFixture(
-        entry.slug,
-        anchorNow,
-        // The tagged-catalog grid replaces both halves of a card's copy: real
-        // names, with the scenario descriptor moved down into the description.
-        // The comparison grids keep the ` · label` suffix they have always had.
-        hasCopyOverride(entry)
-          ? { name: entry.nameOverride, description: entry.descriptionOverride }
-          : undefined,
-      ),
+      product: buildBrowseFixture(entry.slug, anchorNow, {
+        // The grid replaces both halves of a card's copy: real names, with the
+        // scenario descriptor moved down into the description, so the titles
+        // sit the way a real catalogue's would.
+        name: entry.nameOverride,
+        description: entry.descriptionOverride,
+      }),
     }));
     // Fixture ids resolve to no real product, so a card must open its own
     // detail scene rather than `/shop/<id>`.
@@ -169,7 +130,7 @@ export function ShopBrowseScene({
       ),
       hrefById: hrefs,
     };
-  }, [anchorNow, entries, t, visible]);
+  }, [anchorNow, t, visible]);
 
   const productHref = useCallback(
     (id: string) => hrefById.get(id) ?? "#",

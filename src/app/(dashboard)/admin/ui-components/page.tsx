@@ -13,10 +13,6 @@ import {
   Plus,
   Pencil,
   Trash,
-  Users,
-  Package,
-  TrendingUp,
-  DollarSign,
   Check,
   AlertCircle,
   AlertTriangle,
@@ -48,7 +44,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
-import { MaterialLink } from "@/components/ui/material-link";
 import {
   PersonChip,
   PersonChipList,
@@ -69,7 +64,7 @@ import {
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
-import { useAuth, useNow, useTimezone } from "@/providers";
+import { useNow, useTimezone } from "@/providers";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { computeGlowStyle } from "@/lib/voice/glow";
@@ -80,7 +75,7 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { VoiceZone } from "@/types";
+import type { UserRole, VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -97,10 +92,6 @@ import {
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import {
-  ManageBillingCardView,
-  type BillingAccountSummary,
-} from "@/components/billing";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   GAME_PLATFORMS,
@@ -126,6 +117,21 @@ const PERSON_CHIP_PEOPLE: readonly PersonChipListPerson[] = [
   { id: "65884374-5a68-4b8c-83bb-dbeb60fe39c2", name: "Petra" },
   { id: "5a880b4d-b6a7-46b3-afcc-49e445c650e4", name: "Joonas" },
   { id: "60e43688-3e84-43a3-9e57-1be908284716", name: "Markus" },
+];
+
+/**
+ * The role badges, each label travelling with the role it belongs to.
+ *
+ * Paired rather than positional: the styles live in a record, and a
+ * hand-written label array read off `Object.values` of it would silently
+ * mislabel every badge the day somebody reordered that record. `customer` reads
+ * as "Parent" because that is what the product calls the role.
+ */
+const ROLE_BADGE_DEMO: readonly (readonly [UserRole, string])[] = [
+  ["gamer", "Gamer"],
+  ["customer", "Parent"],
+  ["gedu", "Gedu"],
+  ["admin", "Admin"],
 ];
 
 /* ------------------------------------------------------------------ */
@@ -236,8 +242,15 @@ function Swatch({
 /*  Voice Room Avatar Demo                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The face the speaking-glow demo wears. A real generated UUIDv4, hardcoded:
+ * the identicon is hashed out of the id's hex bytes, so the viewing admin's own
+ * id would give this demo a different face for every reader, and a readable
+ * stand-in would give it a degenerate one.
+ */
+const VOICE_AVATAR_DEMO_ID = "2ccb1824-4c93-4ec6-a034-a92bd327149e";
+
 function VoiceAvatarDemo() {
-  const { user, profile } = useAuth();
   const [level, setLevel] = useState(0);
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(false);
@@ -278,7 +291,7 @@ function VoiceAvatarDemo() {
   return (
     <div className="flex items-center gap-8">
       <VoiceAvatar
-        userId={profile?.id || user?.id || "demo"}
+        userId={VOICE_AVATAR_DEMO_ID}
         audioOn={micOn}
         videoOn={cameraOn}
         isLocal
@@ -340,27 +353,26 @@ function CheckboxDemo() {
 
   return (
     <>
-      <SubSection title="States">
-        <div className="flex flex-wrap items-center gap-6">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <Checkbox
-              checked={newsletter}
-              onChange={(e) => setNewsletter(e.target.checked)}
-            />
-            Unchecked / checked (toggle me)
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
-            <Checkbox checked={false} disabled />
-            Disabled
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
-            <Checkbox checked disabled />
-            Disabled (checked)
-          </label>
-        </div>
-      </SubSection>
+      <div className="flex flex-wrap items-center gap-6">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <Checkbox
+            checked={newsletter}
+            onChange={(e) => setNewsletter(e.target.checked)}
+          />
+          Unchecked / checked (toggle me)
+        </label>
+        <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+          <Checkbox checked={false} disabled />
+          Disabled
+        </label>
+        <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+          <Checkbox checked disabled />
+          Disabled (checked)
+        </label>
+      </div>
 
-      <SubSection title="Multi-line label — top-aligned with mt-0.5">
+      <div className="flex flex-wrap items-start gap-6">
+        {/* Multi-line label: `mt-0.5` pins the box to the first line. */}
         <label className="flex max-w-md items-start gap-2 text-xs cursor-pointer">
           <Checkbox
             className="mt-0.5"
@@ -373,9 +385,8 @@ function CheckboxDemo() {
             first line rather than centering on the whole block.
           </span>
         </label>
-      </SubSection>
 
-      <SubSection title="Boxed gate — reacts to checked state (signup panel pattern)">
+        {/* The boxed gate the signup panel uses: the container itself reacts. */}
         <label
           className={`flex max-w-md cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors ${
             boxed
@@ -393,7 +404,7 @@ function CheckboxDemo() {
             required agreement visible weight instead of reading as fine print.
           </span>
         </label>
-      </SubSection>
+      </div>
     </>
   );
 }
@@ -407,24 +418,22 @@ function SwitchProfileDialogDemo() {
 
   return (
     <Section title="Switch Profile Dialog">
-      <SubSection title="Confirm an account switch (parent ↔ gamer)">
-        <p className="text-sm text-muted-foreground mb-3">
-          Shown when a parent clicks &ldquo;Join&rdquo; on a voice session, or a gamer clicks
-          &ldquo;Add Gamer.&rdquo; Uses info color to signal an attention-worthy auth action. The
-          avatar tile is the CTA — clicking it swaps the session then full-page navigates.
-        </p>
-        <Button variant="secondary" onClick={() => setOpen(true)}>
-          Open Switch Dialog
-        </Button>
-        <SwitchProfileDialog
-          open={open}
-          onOpenChange={setOpen}
-          target={{ id: "7d0cf9eb-2567-4ec8-a883-2e67b9138a98", role: "gamer", first_name: "Aino" }}
-          redirectUrl="#"
-          title="Switch to Aino's profile to join Minecraft Club?"
-          oneWayWarning="You'll be signed out of your parent account."
-        />
-      </SubSection>
+      <p className="text-sm text-muted-foreground">
+        Shown when a parent clicks &ldquo;Join&rdquo; on a voice session, or a gamer clicks
+        &ldquo;Add Gamer.&rdquo; Uses info color to signal an attention-worthy auth action. The
+        avatar tile is the CTA — clicking it swaps the session then full-page navigates.
+      </p>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        Open Switch Dialog
+      </Button>
+      <SwitchProfileDialog
+        open={open}
+        onOpenChange={setOpen}
+        target={{ id: "7d0cf9eb-2567-4ec8-a883-2e67b9138a98", role: "gamer", first_name: "Aino" }}
+        redirectUrl="#"
+        title="Switch to Aino's profile to join Minecraft Club?"
+        oneWayWarning="You'll be signed out of your parent account."
+      />
     </Section>
   );
 }
@@ -434,19 +443,17 @@ function DialogDemo() {
 
   return (
     <Section title="Dialog">
-      <SubSection title="Trigger Buttons">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" onClick={() => setOpenDialog("confirm")}>
-            Confirmation Dialog
-          </Button>
-          <Button variant="destructive" onClick={() => setOpenDialog("destructive")}>
-            Destructive Dialog
-          </Button>
-          <Button variant="secondary" onClick={() => setOpenDialog("info")}>
-            Info Dialog
-          </Button>
-        </div>
-      </SubSection>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="outline" onClick={() => setOpenDialog("confirm")}>
+          Confirmation Dialog
+        </Button>
+        <Button variant="destructive" onClick={() => setOpenDialog("destructive")}>
+          Destructive Dialog
+        </Button>
+        <Button variant="secondary" onClick={() => setOpenDialog("info")}>
+          Info Dialog
+        </Button>
+      </div>
 
       <Dialog open={openDialog === "confirm"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent>
@@ -881,9 +888,11 @@ function ParticipantCardDemo() {
  * **Three audiences, and that is the second reason this section exists.** Two
  * of the footers on this card have three wordings — a parent reading about
  * their child, the child reading about themselves, and a parent reading about a
- * seat of their own — and a page can only ever be one of the three. Stacked
- * here they can be read one after another, which is the only way to tell
- * whether the three actually say the same thing.
+ * seat of their own — and a page can only ever be one of the three. They are
+ * laid out here as a matrix, a row per state and a column per audience, so the
+ * three wordings of one footer land beside each other on one line: three
+ * versions of a sentence stacked in three blocks can only be compared from
+ * memory, which is the one thing this section exists to avoid.
  *
  * The fixtures go through `buildEnrollmentFixture`, the same builder the two
  * dashboard scenes use, so the schedule sentence and the next session are the
@@ -892,6 +901,10 @@ function ParticipantCardDemo() {
  * one's label names a time the shared clock will actually reach.
  */
 const ENROLLMENT_DEMO_SITE = "Kirjasto Oodi, Helsinki";
+
+/** The matrix's columns, in the order they are read. */
+const ENROLLMENT_AUDIENCES = ["customer", "gamer", "self"] as const;
+type EnrollmentAudience = (typeof ENROLLMENT_AUDIENCES)[number];
 
 function EnrollmentCardDemo() {
   const now = useNow();
@@ -995,68 +1008,89 @@ function EnrollmentCardDemo() {
   // The confirm dialog in front of it is pure UI and works.
   const inert = () => {};
 
+  // One cell of the matrix. The three arms take different props rather than one
+  // `audience` string, which is the point: the child's card cannot be handed a
+  // portal or a leave handler at all, and the parent's own seat has no
+  // `onJoinClick` to hand it.
+  const cell = (
+    audience: EnrollmentAudience,
+    enrollment: (typeof cards)[keyof typeof cards],
+  ) => {
+    if (audience === "gamer") {
+      return <EnrollmentCard enrollment={enrollment} audience="gamer" />;
+    }
+    if (audience === "self") {
+      return (
+        <EnrollmentCard
+          enrollment={enrollment}
+          audience="self"
+          onOpenPortal={inert}
+          onLeaveWaitlist={inert}
+        />
+      );
+    }
+    return (
+      <EnrollmentCard
+        enrollment={enrollment}
+        audience="customer"
+        gamerFirstName="Aino"
+        onOpenPortal={inert}
+        onJoinClick={inert}
+        onLeaveWaitlist={inert}
+      />
+    );
+  };
+
+  const rows: readonly {
+    label: string;
+    enrollment: (typeof cards)[keyof typeof cards];
+    arms: readonly EnrollmentAudience[];
+  }[] = [
+    { label: "Live", enrollment: cards.live, arms: ["customer", "self"] },
+    { label: "Locked", enrollment: cards.locked, arms: ["customer"] },
+    { label: "Failing card", enrollment: cards.badged, arms: ["customer", "self"] },
+    { label: "Cancelled", enrollment: cards.cancelled, arms: ["customer"] },
+    {
+      label: "Cancelled, window used up",
+      enrollment: cards.cancelledNoDate,
+      arms: ["customer"],
+    },
+    {
+      label: "Awaiting placement",
+      enrollment: cards.awaiting,
+      arms: ENROLLMENT_AUDIENCES,
+    },
+    {
+      label: "Waitlisted",
+      enrollment: cards.waitlisted,
+      arms: ENROLLMENT_AUDIENCES,
+    },
+    { label: "In person", enrollment: cards.inPerson, arms: ["customer"] },
+    { label: "Finished", enrollment: cards.finished, arms: ["customer"] },
+  ];
+
   return (
-    <div className="space-y-6">
-      <SubSection title="Parent — every state">
-        <div className="grid gap-8 lg:grid-cols-2">
-          {(
-            [
-              ["Live — session in progress", cards.live],
-              ["Locked — next session named", cards.locked],
-              ["Failing card — corner badge", cards.badged],
-              ["Cancelled — won't renew line", cards.cancelled],
-              [
-                "Cancelled, window used up — no date named",
-                cards.cancelledNoDate,
-              ],
-              ["Awaiting placement — no seat yet", cards.awaiting],
-              ["Waitlisted — place in line", cards.waitlisted],
-              ["In person — venue, no Join", cards.inPerson],
-              ["Finished — muted, ended on", cards.finished],
-            ] as const
-          ).map(([caption, enrollment]) => (
-            <div key={enrollment.participationId} className="space-y-2">
-              <DemoCaption>{caption}</DemoCaption>
-              <EnrollmentCard
-                enrollment={enrollment}
-                audience="customer"
-                gamerFirstName="Aino"
-                onOpenPortal={inert}
-                onJoinClick={inert}
-                onLeaveWaitlist={inert}
-              />
-            </div>
-          ))}
-        </div>
-      </SubSection>
+    // Wide by design — this is an admin surface, and the matrix only works if a
+    // row's three cells are on one line. Below that width it scrolls sideways
+    // rather than reflowing into the three stacks it exists to replace.
+    <div className="overflow-x-auto">
+      <div className="grid min-w-[56rem] grid-cols-[8rem_repeat(3,minmax(0,1fr))] items-start gap-x-6 gap-y-8">
+        <div />
+        <DemoCaption>customer &mdash; a parent about their child</DemoCaption>
+        <DemoCaption>gamer &mdash; the child about themselves</DemoCaption>
+        <DemoCaption>self &mdash; a parent about their own seat</DemoCaption>
 
-      <SubSection title="Gamer — the same card, addressed to the child">
-        <p className="max-w-prose text-sm text-muted-foreground">
-          Only the two footers that speak <em>about</em> a child on the parent&rsquo;s
-          page speak <em>to</em> them here, and money is gone entirely: no corner
-          badge, no won&rsquo;t-renew line, and no way to give up a place in line
-          &mdash; not hidden, but unreachable, because the card&rsquo;s props make
-          the parent-only half unavailable to a <code>gamer</code> audience.
+        <div />
+        <div />
+        <p className="text-sm text-muted-foreground">
+          Only the two footers that speak <em>about</em> a child on the
+          parent&rsquo;s page speak <em>to</em> them here, and money is gone
+          entirely: no corner badge, no won&rsquo;t-renew line, and no way to
+          give up a place in line &mdash; not hidden, but unreachable, because
+          the card&rsquo;s props make the parent-only half unavailable to a{" "}
+          <code>gamer</code> audience.
         </p>
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-2">
-            <DemoCaption>Awaiting placement</DemoCaption>
-            <EnrollmentCard enrollment={cards.awaiting} audience="gamer" />
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>Waitlisted</DemoCaption>
-            <EnrollmentCard enrollment={cards.waitlisted} audience="gamer" />
-          </div>
-        </div>
-      </SubSection>
-
-      {/* The third audience, and the reason this section is worth having at all
-          rather than leaving the card to the dashboard scenes: these two
-          footers are the only strings in the product with three wordings, and
-          no single page can show more than one of them. Here they sit under the
-          other two. */}
-      <SubSection title="The parent's own seat — the card about the reader">
-        <p className="max-w-prose text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           A for-parents product puts the reader in the seat, so the two footers
           move into the second person again &mdash; and the leave dialog behind
           the waitlist card names nobody, because there is nobody but them to
@@ -1066,42 +1100,31 @@ function EnrollmentCardDemo() {
           straight to the room rather than opening the switch-profile dialog a
           child&rsquo;s card opens.
         </p>
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-2">
-            <DemoCaption>Live — Join goes straight to the room</DemoCaption>
-            <EnrollmentCard
-              enrollment={cards.live}
-              audience="self"
-              onOpenPortal={inert}
-            />
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>Awaiting placement</DemoCaption>
-            <EnrollmentCard
-              enrollment={cards.awaiting}
-              audience="self"
-              onOpenPortal={inert}
-            />
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>Waitlisted — the dialog names nobody</DemoCaption>
-            <EnrollmentCard
-              enrollment={cards.waitlisted}
-              audience="self"
-              onOpenPortal={inert}
-              onLeaveWaitlist={inert}
-            />
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>Failing card — corner badge, unchanged</DemoCaption>
-            <EnrollmentCard
-              enrollment={cards.badged}
-              audience="self"
-              onOpenPortal={inert}
-            />
-          </div>
-        </div>
-      </SubSection>
+
+        {rows.map(({ label, enrollment, arms }) => (
+          <Fragment key={enrollment.participationId}>
+            <DemoCaption>{label}</DemoCaption>
+            {ENROLLMENT_AUDIENCES.map((audience) =>
+              arms.includes(audience) ? (
+                <div key={audience}>{cell(audience, enrollment)}</div>
+              ) : (
+                // An empty cell is a fact, not a gap: the child never meets a
+                // state that is about money, and the parent's own seat renders
+                // the rest exactly as the card about their child does. Holding
+                // the column keeps the row's three wordings on one line where
+                // there are three.
+                <div
+                  key={audience}
+                  aria-hidden
+                  className="flex min-h-24 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground"
+                >
+                  &mdash;
+                </div>
+              ),
+            )}
+          </Fragment>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1150,7 +1173,7 @@ const SEAT_DEMO_CASES: {
     waitlistEnabled: true,
   },
   {
-    label: "Full, no waitlist — 0 of 15 (no chip; the label beside it says Full)",
+    label: "Full, no waitlist — 0 of 15",
     seatCount: 15,
     seatsLeft: 0,
     waitlistEnabled: false,
@@ -1210,19 +1233,6 @@ function ProductsDemo() {
           </div>
         </SubSection>
       ))}
-
-      <SubSection title="Closed-state signup panel">
-        <p className="max-w-prose text-sm text-muted-foreground">
-          The shared &ldquo;registration closed&rdquo; panel (ended / already
-          started / fully booked) has no browse-card link &mdash; a parent only
-          reaches it through a stale link or bookmark. It is still previewable
-          full-page: every scenario, closed ones included, is listed on the{" "}
-          <a href={ROUTES.admin.uiPreviews} className="underline">
-            UI Previews
-          </a>{" "}
-          page.
-        </p>
-      </SubSection>
     </div>
   );
 }
@@ -1353,6 +1363,28 @@ export default function AdminUIComponentsPage() {
             <Button variant="ghost">Ghost</Button>
             <Button variant="link">Link</Button>
           </div>
+          {/* The same six, one prop apart, directly under themselves — the
+              disabled treatment is only judgeable against the enabled one. */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="default" disabled>
+              Default
+            </Button>
+            <Button variant="destructive" disabled>
+              Destructive
+            </Button>
+            <Button variant="outline" disabled>
+              Outline
+            </Button>
+            <Button variant="secondary" disabled>
+              Secondary
+            </Button>
+            <Button variant="ghost" disabled>
+              Ghost
+            </Button>
+            <Button variant="link" disabled>
+              Link
+            </Button>
+          </div>
         </SubSection>
 
         <SubSection title="Sizes">
@@ -1362,21 +1394,6 @@ export default function AdminUIComponentsPage() {
             <Button size="lg">Large</Button>
             <Button size="icon">
               <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </SubSection>
-
-        <SubSection title="Disabled">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button disabled>Default</Button>
-            <Button variant="destructive" disabled>
-              Destructive
-            </Button>
-            <Button variant="outline" disabled>
-              Outline
-            </Button>
-            <Button variant="secondary" disabled>
-              Secondary
             </Button>
           </div>
         </SubSection>
@@ -1411,8 +1428,10 @@ export default function AdminUIComponentsPage() {
         </div>
         <p className="text-sm text-muted-foreground mt-4 mb-2">Role badges</p>
         <div className="flex flex-wrap items-center gap-3">
-          {(["Gamer", "Parent", "Gedu", "Admin"] as const).map((label, i) => (
-            <Badge key={label} className={Object.values(ROLE_BADGE_STYLES)[i]}>{label}</Badge>
+          {ROLE_BADGE_DEMO.map(([role, label]) => (
+            <Badge key={role} className={ROLE_BADGE_STYLES[role]}>
+              {label}
+            </Badge>
           ))}
         </div>
 
@@ -1522,7 +1541,7 @@ export default function AdminUIComponentsPage() {
       {/* ============================================================ */}
       <Section title="Avatar & Identicon">
         <SubSection title="Identicons (different IDs)">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-end gap-4">
             {[
               { id: "4babfc78-d197-496e-860d-48f1207f5bc6", name: "Emma" },
               { id: "1a54d62e-828f-4a42-89f1-cc36185351b0", name: "Aino" },
@@ -1537,11 +1556,9 @@ export default function AdminUIComponentsPage() {
                 <span className="text-xs text-muted-foreground">{name}</span>
               </div>
             ))}
-          </div>
-        </SubSection>
-
-        <SubSection title="Size Comparison">
-          <div className="flex flex-wrap items-end gap-4">
+            {/* The size step, appended to the row of ids rather than repeated
+                below it: 48px only means anything measured against the 40px
+                default, which is what the five faces to the left already are. */}
             <div className="flex flex-col items-center gap-1.5">
               <Avatar>
                 <Identicon id="e3248221-170c-472f-ab56-eb60f1261966" />
@@ -1558,172 +1575,131 @@ export default function AdminUIComponentsPage() {
             </div>
           </div>
         </SubSection>
+      </Section>
 
-        <SubSection title="Person chip">
-          <p className="max-w-prose text-sm text-muted-foreground">
-            A person as a pill — identicon plus first name. The avatar box and
-            the identicon&rsquo;s pixel size are paired inside the component, so
-            a call site can&rsquo;t desync them. Use{" "}
-            <code>compact</code> on a line that already carries something else
-            (a rail row with a button beside the chips); the default size is for
-            a row of chips on their own line.
-          </p>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">Default</p>
-              <PersonChipList people={PERSON_CHIP_PEOPLE} />
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">Compact</p>
-              <PersonChipList people={PERSON_CHIP_PEOPLE} size="compact" />
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">
-                Labelled, as the product page&rsquo;s rail does it — the row
-                already shows a gamer count, so an unlabelled set of faces would
-                read as children rather than as the Gedus teaching the group.
-              </p>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Gedus
-                </span>
-                <PersonChipList
-                  people={PERSON_CHIP_PEOPLE.slice(0, 2)}
-                  size="compact"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">Single chip</p>
-              <PersonChip
-                id={PERSON_CHIP_PEOPLE[0].id}
-                name={PERSON_CHIP_PEOPLE[0].name}
+      {/* ============================================================ */}
+      {/* Section 6b: Person chip                                       */}
+      {/* ============================================================ */}
+      <Section title="Person chip">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          A person as a pill — identicon plus first name. The avatar box and
+          the identicon&rsquo;s pixel size are paired inside the component, so
+          a call site can&rsquo;t desync them. Use <code>compact</code> on a
+          line that already carries something else (a rail row with a button
+          beside the chips); the default size is for a row of chips on their own
+          line.
+        </p>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Default</p>
+            <PersonChipList people={PERSON_CHIP_PEOPLE} />
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Compact</p>
+            <PersonChipList people={PERSON_CHIP_PEOPLE} size="compact" />
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">
+              Labelled, as the product page&rsquo;s rail does it — the row
+              already shows a gamer count, so an unlabelled set of faces would
+              read as children rather than as the Gedus teaching the group.
+            </p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Gedus
+              </span>
+              <PersonChipList
+                people={PERSON_CHIP_PEOPLE.slice(0, 2)}
+                size="compact"
               />
             </div>
           </div>
-        </SubSection>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Single chip</p>
+            <PersonChip
+              id={PERSON_CHIP_PEOPLE[0].id}
+              name={PERSON_CHIP_PEOPLE[0].name}
+            />
+          </div>
+        </div>
       </Section>
 
       {/* ============================================================ */}
       {/* Section 7: Alert                                              */}
       {/* ============================================================ */}
       <Section title="Alert">
-        <SubSection title="Variants">
-          <div className="space-y-3 max-w-lg">
-            <Alert>
-              <Info className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <AlertTitle>Default</AlertTitle>
-                <AlertDescription>
-                  A neutral informational alert for general messages.
-                </AlertDescription>
-              </div>
-            </Alert>
-            <Alert variant="success">
-              <Check className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <AlertTitle>Success</AlertTitle>
-                <AlertDescription>
-                  Profile updated successfully!
-                </AlertDescription>
-              </div>
-            </Alert>
-            <Alert variant="destructive">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <AlertTitle>Destructive</AlertTitle>
-                <AlertDescription>
-                  Something went wrong. Please try again.
-                </AlertDescription>
-              </div>
-            </Alert>
-            <Alert variant="info">
-              <Info className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <AlertTitle>Info</AlertTitle>
-                <AlertDescription>
-                  Your session will expire in 5 minutes.
-                </AlertDescription>
-              </div>
-            </Alert>
-            <Alert variant="warning">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <AlertTitle>Warning</AlertTitle>
-                <AlertDescription>
-                  Heads up — this action affects production data.
-                </AlertDescription>
-              </div>
-            </Alert>
-          </div>
-        </SubSection>
+        <div className="space-y-3 max-w-lg">
+          <Alert>
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <AlertTitle>Default</AlertTitle>
+              <AlertDescription>
+                A neutral informational alert for general messages.
+              </AlertDescription>
+            </div>
+          </Alert>
+          <Alert variant="success">
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>
+                Profile updated successfully!
+              </AlertDescription>
+            </div>
+          </Alert>
+          <Alert variant="destructive">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <AlertTitle>Destructive</AlertTitle>
+              <AlertDescription>
+                Something went wrong. Please try again.
+              </AlertDescription>
+            </div>
+          </Alert>
+          <Alert variant="info">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <AlertTitle>Info</AlertTitle>
+              <AlertDescription>
+                Your session will expire in 5 minutes.
+              </AlertDescription>
+            </div>
+          </Alert>
+          <Alert variant="warning">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <AlertTitle>Warning</AlertTitle>
+              <AlertDescription>
+                Heads up — this action affects production data.
+              </AlertDescription>
+            </div>
+          </Alert>
 
-        <SubSection title="Without Title">
-          <div className="space-y-3 max-w-lg">
-            <Alert variant="success">
-              <Check className="mt-0.5 h-4 w-4 shrink-0" />
-              <AlertDescription>Profile updated successfully!</AlertDescription>
-            </Alert>
-            <Alert variant="destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <AlertDescription>Something went wrong. Please try again.</AlertDescription>
-            </Alert>
-          </div>
-        </SubSection>
+          {/* The same variants with the title dropped, and then centred as
+              the purchase banners use them — one prop apart each, so they
+              only mean anything read against the five above. */}
+          <Alert variant="success">
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
+            <AlertDescription>Profile updated successfully!</AlertDescription>
+          </Alert>
+          <Alert variant="destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <AlertDescription>Something went wrong. Please try again.</AlertDescription>
+          </Alert>
 
-        <SubSection title="Centered (banners)">
-          <div className="space-y-3 max-w-lg">
-            <Alert variant="success" align="center">
-              <Check className="h-4 w-4 shrink-0" />
-              <AlertDescription>Purchase successful!</AlertDescription>
-            </Alert>
-            <Alert variant="warning" align="center">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <AlertDescription>Purchase canceled. No charges were made.</AlertDescription>
-            </Alert>
-            <Alert variant="destructive" align="center">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <AlertDescription>Something went wrong starting checkout. Please try again.</AlertDescription>
-            </Alert>
-          </div>
-        </SubSection>
-
-        <SubSection title="Icon Circles">
-          <div className="flex flex-wrap gap-6">
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-                <Check className="h-8 w-8 text-success" />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                bg-success/10 + text-success
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-                <AlertCircle className="h-8 w-8 text-destructive" />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                bg-destructive/10 + text-destructive
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-info/10">
-                <Info className="h-8 w-8 text-info" />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                bg-info/10 + text-info
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-warning/10">
-                <AlertTriangle className="h-8 w-8 text-warning" />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                bg-warning/10 + text-warning
-              </span>
-            </div>
-          </div>
-        </SubSection>
+          <Alert variant="success" align="center">
+            <Check className="h-4 w-4 shrink-0" />
+            <AlertDescription>Purchase successful!</AlertDescription>
+          </Alert>
+          <Alert variant="warning" align="center">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <AlertDescription>Purchase canceled. No charges were made.</AlertDescription>
+          </Alert>
+          <Alert variant="destructive" align="center">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <AlertDescription>Something went wrong starting checkout. Please try again.</AlertDescription>
+          </Alert>
+        </div>
       </Section>
 
       {/* ============================================================ */}
@@ -1802,72 +1778,74 @@ export default function AdminUIComponentsPage() {
           read behind the real panel is a small indexed lookup, so the list box
           — which already has its final height — just fills in.
         </p>
-        <SubSection title="Single mode (pick one place)">
-          <p className="text-sm text-muted-foreground mb-3">
-            The rows are real table rows, so confirming one hands the caller the
-            row itself plus its ancestors — enough to write the foreign key and
-            render the place with its path, with nothing left to resolve. A row
-            of a pickable type is terminal: clicking it selects rather than
-            descends, so the level a caller asked for is where browsing stops.
-          </p>
-          <p className="text-sm text-muted-foreground mb-3">
-            Two things a caller can do are deliberately <em>not</em> visible
-            here, because they belong to the data container rather than to this
-            panel: opening the breadcrumb already inside a country, and
-            restricting every row offered to one country. The product form&rsquo;s
-            municipality field uses both — it opens on Finland&rsquo;s maakunnat
-            and will not offer a French commune — and both are fed by the same
-            browse and search reads this demo replaces with fixtures. What the
-            panel does say about them has a demo of its own, below.
-          </p>
-          <LocationPickerDemo />
-        </SubSection>
-        <SubSection title="Multi mode (gedu coverage)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Every level is tickable and each tick is an independent &ldquo;I
-            cover this whole subtree&rdquo; claim, so ticking Hauts-de-France and
-            then drilling into it shows Nord and Pas-de-Calais{" "}
-            <em>unticked</em> — deliberately. Half-ticking them would say
-            something the saved rows don&rsquo;t: one claim is one row, and
-            matching walks the ancestor chain to find it.
-          </p>
-          <LocationCoverageDemo />
-        </SubSection>
-        <SubSection title="Searching">
-          <p className="text-sm text-muted-foreground mb-3">
-            The same panel, told it is showing search hits: each row carries the
-            path that tells two identically-named communes apart, and the status
-            line reports the true match count behind the rendered cap. In the
-            real app the ranking, the cap and that count all come from the
-            database — a prefix match beats an infix one however late in the
-            table it sits.
-          </p>
-          <p className="text-sm text-muted-foreground mb-3">
-            This one is configured the way the product form&rsquo;s venue dialog
-            configures it: <code>municipality</code> and <code>site</code> are
-            both pickable, so the venue &ldquo;Gymnase municipal de Nîmes&rdquo;
-            is confirmable straight from a search. The caller reads the type to
-            decide what the confirmation meant — a site is the answer, a
-            municipality is the next question (&ldquo;show me the venues
-            here&rdquo;, which is also the only screen that can offer to create
-            one). That is why a site is confirmable but never browsable to:
-            making a municipality terminal is exactly what stops the tree
-            walking past the screen that carries creation.
-          </p>
-          <LocationSearchDemo />
-        </SubSection>
-        <SubSection title="Bound to one country">
-          <p className="text-sm text-muted-foreground mb-3">
-            The same panel, told which country its container has bound it to.
-            The bound country is copy and nothing else — the filtering happens
-            above, and the rows here are the same fixtures as everywhere else on
-            this page — but two lines would otherwise claim more than the picker
-            is doing. The breadcrumb starts <em>at</em> the country rather than
-            behind an &ldquo;all countries&rdquo; crumb that opens a list holding
-            only that country, and typing two characters says which country is
-            being searched instead of &ldquo;everywhere&rdquo;.
-          </p>
-          <LocationBoundCountryDemo />
+        <SubSection title="Configurations">
+          <div className="grid gap-x-8 gap-y-10 xl:grid-cols-2">
+            <div className="space-y-3">
+              <DemoCaption>Single mode &mdash; pick one place</DemoCaption>
+              <p className="text-sm text-muted-foreground">
+                Two things a caller can do are deliberately <em>not</em> visible
+                here, because they belong to the data container rather than to
+                this panel: opening the breadcrumb already inside a country, and
+                restricting every row offered to one country. The product
+                form&rsquo;s municipality field uses both — it opens on
+                Finland&rsquo;s maakunnat and will not offer a French commune —
+                and both are fed by the same browse and search reads this demo
+                replaces with fixtures. What the panel does say about them is the
+                bound-country panel beside it. This one is handed no search rows
+                at all, which is why typing into it finds nothing and why the
+                search branch has a panel of its own.
+              </p>
+              <LocationPickerDemo />
+            </div>
+
+            <div className="space-y-3">
+              <DemoCaption>Multi mode &mdash; gedu coverage</DemoCaption>
+              <p className="text-sm text-muted-foreground">
+                Every level is tickable and each tick is an independent &ldquo;I
+                cover this whole subtree&rdquo; claim, so ticking
+                Hauts-de-France and then drilling into it shows Nord and
+                Pas-de-Calais <em>unticked</em> — deliberately. Half-ticking
+                them would say something the saved rows don&rsquo;t: one claim
+                is one row, and matching walks the ancestor chain to find it.
+              </p>
+              <LocationCoverageDemo />
+            </div>
+
+            <div className="space-y-3">
+              <DemoCaption>Searching</DemoCaption>
+              <p className="text-sm text-muted-foreground">
+                Configured the way the product form&rsquo;s venue dialog
+                configures it: <code>municipality</code> and <code>site</code>{" "}
+                are both pickable, so the venue &ldquo;Gymnase municipal de
+                Nîmes&rdquo; is confirmable straight from a search. The caller
+                reads the type to decide what the confirmation meant — a site is
+                the answer, a municipality is the next question (&ldquo;show me
+                the venues here&rdquo;, which is also the only screen that can
+                offer to create one). That is why a site is confirmable but
+                never browsable to: making a municipality terminal is exactly
+                what stops the tree walking past the screen that carries
+                creation. In the real app the ranking, the cap and the match
+                count all come from the database — a prefix match beats an infix
+                one however late in the table it sits.
+              </p>
+              <LocationSearchDemo />
+            </div>
+
+            <div className="space-y-3">
+              <DemoCaption>Bound to one country</DemoCaption>
+              <p className="text-sm text-muted-foreground">
+                The same panel, told which country its container has bound it
+                to. The bound country is copy and nothing else — the filtering
+                happens above, and the rows here are the same fixtures as
+                everywhere else on this page — but two lines would otherwise
+                claim more than the picker is doing: the breadcrumb would open
+                behind an &ldquo;all countries&rdquo; crumb onto a list holding
+                only that country, and typing would say it was searching
+                everywhere.
+              </p>
+              <LocationBoundCountryDemo />
+            </div>
+          </div>
         </SubSection>
         <SubSection title="Home location field (parent profile)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -1889,99 +1867,50 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 10: Composite Patterns                                */}
+      {/* Section 10: User Row (admin/users)                            */}
       {/* ============================================================ */}
-      <Section title="Composite Patterns">
-        {/* -- User Row (admin/users) -- */}
-        <SubSection title="User Row (admin/users)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Row showing a user with role badge, optional nested gamers. Used in admin/users.
-          </p>
-          <div className="space-y-4">
-            <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", first_name: "Jane", last_name: "Doe", email: "jane@example.com", email_verified_at: "2026-03-04T09:12:00.000Z", role: "customer" }}
-              linkedGamers={[
-                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
-                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
-              ]}
-            />
-            {/* A certified gedu whose address is confirmed too — the row that
-                carries both marks, and the reason their order is fixed. */}
-            <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", first_name: "Sam", last_name: "Smith", email: "sam@example.com", email_verified_at: "2026-02-19T17:40:00.000Z", role: "gedu" }}
-              certified
-            />
-            {/* The same row with a known "no": an educator waiting on an admin,
-                shield withheld. */}
-            <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000004", first_name: "Riikka", last_name: "Laine", email: "riikka@example.com", email_verified_at: "2026-05-02T08:05:00.000Z", role: "gedu" }}
-              certified={false}
-            />
-            {/* And the third state: the certification read failed, so nobody's
-                status is known. It has to look like the "no" above rather than
-                like the "yes" — a mark is a claim, and there is nobody here to
-                make it. */}
-            <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000005", first_name: "Petri", last_name: "Koskinen", email: "petri@example.com", email_verified_at: null, role: "gedu" }}
-              certified={null}
-            />
-            {/* A parent who has never confirmed their address: no mark at all,
-                which is the ordinary state of a new account. */}
-            <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000003", first_name: "Otto", last_name: "Nieminen", email: "otto@example.com", email_verified_at: null, role: "customer" }}
-            />
-          </div>
-        </SubSection>
-
-        {/* -- Stat Card (admin dashboard) -- */}
-        <SubSection title="Stat Card (admin dashboard)">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                title: "Total Users",
-                value: "128",
-                description: "Active accounts",
-                icon: Users,
-              },
-              {
-                title: "Products",
-                value: "24",
-                description: "Active products",
-                icon: Package,
-              },
-              {
-                title: "Revenue",
-                value: "$4,320",
-                description: "This month",
-                icon: DollarSign,
-              },
-              {
-                title: "Growth",
-                value: "+12%",
-                description: "From last month",
-                icon: TrendingUp,
-              },
-            ].map((stat) => (
-              <Card
-                key={stat.title}
-                className="group transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stat.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </SubSection>
+      <Section title="User Row (admin/users)">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Row showing a user with role badge, optional nested gamers. Used in admin/users.
+        </p>
+        {/* The ids are real generated UUIDv4s, hardcoded and deliberately
+            unrelated to each other: an identicon is hashed out of the id's
+            first bytes, so a near-identical series would give five different
+            people one face and make the row look like a rendering bug. */}
+        <div className="space-y-4">
+          <UserRow
+            user={{ id: "1336ddd9-c36d-4a16-b5a9-e2a0cc867868", first_name: "Jane", last_name: "Doe", email: "jane@example.com", email_verified_at: "2026-03-04T09:12:00.000Z", role: "customer" }}
+            linkedGamers={[
+              { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
+              { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
+            ]}
+          />
+          {/* A certified gedu whose address is confirmed too — the row that
+              carries both marks, and the reason their order is fixed. */}
+          <UserRow
+            user={{ id: "f4c215ef-174c-4ed3-9a25-26d2ba765b6d", first_name: "Sam", last_name: "Smith", email: "sam@example.com", email_verified_at: "2026-02-19T17:40:00.000Z", role: "gedu" }}
+            certified
+          />
+          {/* The same row with a known "no": an educator waiting on an admin,
+              shield withheld. */}
+          <UserRow
+            user={{ id: "2ddca203-1c71-4144-93c1-f79c25b93407", first_name: "Riikka", last_name: "Laine", email: "riikka@example.com", email_verified_at: "2026-05-02T08:05:00.000Z", role: "gedu" }}
+            certified={false}
+          />
+          {/* And the third state: the certification read failed, so nobody's
+              status is known. It has to look like the "no" above rather than
+              like the "yes" — a mark is a claim, and there is nobody here to
+              make it. */}
+          <UserRow
+            user={{ id: "006da659-e900-4d7a-b5ae-112ff93b28a9", first_name: "Petri", last_name: "Koskinen", email: "petri@example.com", email_verified_at: null, role: "gedu" }}
+            certified={null}
+          />
+          {/* A parent who has never confirmed their address: no mark at all,
+              which is the ordinary state of a new account. */}
+          <UserRow
+            user={{ id: "6a909d0b-f865-4b31-846e-f39052953107", first_name: "Otto", last_name: "Nieminen", email: "otto@example.com", email_verified_at: null, role: "customer" }}
+          />
+        </div>
       </Section>
 
       {/* ============================================================ */}
@@ -2008,21 +1937,23 @@ export default function AdminUIComponentsPage() {
           one mocked product rendered as the browse card a parent sees in the
           shop (/shop). <strong>The whole card is the click target</strong> —
           clicking anywhere on one that carries a chevron opens that same
-          mock&rsquo;s full detail page in the public layout — hero, long
-          description, schedule calendar, and the registration signup panel —
-          exactly as a parent would see it. The panel therefore needs no
-          separate demo: it lives in the full-page view. The
-          &ldquo;View&rdquo; hint in the footer is a label on that target
-          rather than a separate one — it is not a link, and the card beneath
-          it takes the click. <strong>Cards with no chevron are inert:</strong>{" "}
-          full-and-closed, an already-started camp and an already-over event
-          each state the reason as muted text where the hint would be, and a
-          finished run drops the footer row for a note and desaturates. None of
-          the four has a detail page, because a parent can&rsquo;t act there. Compare the two groups
-          by hovering: only the openable ones lift, brighten and nudge their
-          chevron. Between them the cards cover every registration state,
-          including one a parent reaches only by leaving a tab open past
-          midnight.
+          mock&rsquo;s full detail page in the public layout, exactly as a
+          parent would see it, so the registration signup panel needs no
+          separate demo here. The &ldquo;View&rdquo; hint in the footer is a
+          label on that target rather than a separate one — it is not a link,
+          and the card beneath it takes the click.{" "}
+          <strong>Cards with no chevron are inert:</strong> none of the four has
+          a detail page, because a parent can&rsquo;t act there. Only the
+          openable ones react to hover. Between them the cards cover every
+          registration state, including one a parent reaches only by leaving a
+          tab open past midnight. The one surface with no card of its own is the
+          shared &ldquo;registration closed&rdquo; panel (ended / already started
+          / fully booked), which a parent meets only through a stale link — it is
+          previewable full-page from the{" "}
+          <a href={ROUTES.admin.uiPreviews} className="underline">
+            UI Previews
+          </a>{" "}
+          page.
         </p>
         <p className="text-sm text-muted-foreground">
           <strong>No card carries seat information</strong> except the
@@ -2041,22 +1972,7 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 13: Billing — Manage Billing Card                      */}
-      {/* ============================================================ */}
-      <Section title="Billing — Manage Billing Card">
-        <p className="text-sm text-muted-foreground -mt-2">
-          Shown in the Billing section of the parent dashboard. A single
-          &ldquo;Manage billing&rdquo; button that opens Stripe&rsquo;s Customer
-          Portal — payment methods, invoices, and subscriptions all live on
-          Stripe. The &ldquo;opening&rdquo; state keeps the button disabled from
-          the click through the full-page navigation, so a fast user can&rsquo;t
-          open two portal sessions.
-        </p>
-        <ManageBillingCardDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 14: Family — Enrollment Card                          */}
+      {/* Section 13: Family — Enrollment Card                          */}
       {/* ============================================================ */}
       <Section title="Family — Enrollment Card">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2065,12 +1981,9 @@ export default function AdminUIComponentsPage() {
           out of. It states the <strong>schedule</strong>, not the next session:
           the next session lives in the Join button&rsquo;s locked label and in
           the Live badge, so a weekly club is one card all term instead of one
-          card per week. The type noun is the eyebrow, the schedule is the shared
-          product-schedule formatter&rsquo;s sentence, and the footer answers the
-          one remaining question in whichever way this enrollment can: the Join
-          on a remote product, the venue on an in-person one, the place in line
-          on a waitlisted one, the fact that a Gedu is being matched on a seat
-          nobody has been placed in yet, or the day a finished run ended.
+          card per week. The schedule sentence is the shared product-schedule
+          formatter&rsquo;s, and the footer answers the one remaining question in
+          whichever way this enrollment can.
         </p>
         <p className="text-sm text-muted-foreground">
           <strong>Two states have nothing behind them</strong> &mdash; a queue
@@ -2079,57 +1992,13 @@ export default function AdminUIComponentsPage() {
           more inside when there is not. The corner is reserved for a genuine
           problem (a failing card), which is why a cancelled membership is a
           quiet line in the body instead: the parent chose it, so it is
-          confirmation rather than an alarm. Leaving a waitlist is likewise a
-          quiet text link under its own footer sentence.
+          confirmation rather than an alarm.
         </p>
         <EnrollmentCardDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 15: Product links — the Gedu material link            */}
-      {/* ============================================================ */}
-      <Section title="Product links — the Gedu material link">
-        <p className="text-sm text-muted-foreground -mt-2">
-          The one outward link a product still carries, and it is{" "}
-          <strong>Gedu-only</strong> &mdash; carried by a padlocked book glyph
-          and a hover title. A product used to carry a family-facing link beside
-          it as well; families read their sessions in the app now, so this is the
-          only one left. The component renders whatever href it is given and
-          knows nothing about who is looking:{" "}
-          <em>
-            only render it on a gedu- or admin-only surface. Never hide it with
-            CSS on a page a parent can reach
-          </em>{" "}
-          &mdash; the URL would still be in the HTML.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          The material link has <strong>two weights</strong>, because it means two
-          different things in two places. In a row of a product&rsquo;s links it
-          is one entry among several and takes the quiet <code>chip</code> form.
-          On a gedu&rsquo;s own workspace it is the thing they came for &mdash; a
-          gedu opening the page before a session is going to fetch the material
-          &mdash; so there it takes the <code>button</code> form and reads as an
-          action rather than as metadata about the product. Both are the same
-          component: two implementations would drift in glyph, label and, worst of
-          all, in the staff-only warning that has to travel with the URL.
-        </p>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-lg border p-4">
-          <div className="flex flex-col items-start gap-2">
-            <DemoCaption>Material chip (quiet)</DemoCaption>
-            <MaterialLink href="https://drive.sog.gg/minecraft-monday-club/lesson-plans" />
-          </div>
-          <div className="flex flex-col items-start gap-2">
-            <DemoCaption>Material button (prominent)</DemoCaption>
-            <MaterialLink
-              href="https://drive.sog.gg/minecraft-monday-club/lesson-plans"
-              variant="button"
-            />
-          </div>
-        </div>
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 16: Rich text editor — authoring and what it stores   */}
+      {/* Section 14: Rich text editor — authoring and what it stores   */}
       {/* ============================================================ */}
       <Section title="Rich text editor — authoring and what it stores">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2147,11 +2016,22 @@ export default function AdminUIComponentsPage() {
           so a pasted table or a stray tag shows its words instead of silently
           deleting a paragraph of somebody&rsquo;s writing.
         </p>
+        <p className="text-sm text-muted-foreground">
+          The <strong>marketing</strong> variant adds one button to that subset,
+          and what it does with an address is worth knowing before you press it:
+          a bare &ldquo;sog.gg/privacy&rdquo; is read as an external address and
+          gets <code>https://</code> rather than becoming a path under this page,
+          and an address the reader&rsquo;s renderer would strip anyway
+          (<code>tel:</code>, <code>ftp://</code>) keeps the address row open and
+          says so instead of closing on nothing. Its headings are a page&rsquo;s
+          scale rather than a card&rsquo;s, because that is where its output
+          lands.
+        </p>
         <RichTextEditorDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 17: Game account — one identity, any platform         */}
+      {/* Section 15: Game account — one identity, any platform         */}
       {/* ============================================================ */}
       <Section title="Game account — one identity, any platform">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2165,7 +2045,7 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 18: Minecraft Education password reset                */}
+      {/* Section 16: Minecraft Education password reset                */}
       {/* ============================================================ */}
       <Section title="Minecraft Education password reset">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2240,10 +2120,6 @@ function MinecraftPasswordResetDemo() {
 }
 
 function noopSubmit() {}
-
-/* ------------------------------------------------------------------ */
-/*  Section 13: Manage Billing Card                                    */
-/* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
 /*  Location Picker Demo                                               */
@@ -2536,22 +2412,6 @@ function HomeLocationFieldDemo() {
   );
 }
 
-// A Stripe billing-portal session covers exactly one customer. Almost every
-// parent has one, and sees the single unlabelled button (the first two demos).
-// Parents migrated from the old platform can own several — that platform made a
-// customer per enrolment, and Stripe can neither move a subscription between
-// customers nor merge them — so they get one labelled button each. The last
-// account carries no subscriptions, which is the profile-bound customer holding
-// only saved cards and invoice history.
-const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
-  { stripeCustomerId: "cus_demo_native", covers: ["Alex · Rocket League Club"] },
-  {
-    stripeCustomerId: "cus_demo_migrated",
-    covers: ["Bobby · Cosmic Builders Club"],
-  },
-  { stripeCustomerId: "cus_demo_empty", covers: [] },
-];
-
 /* ------------------------------------------------------------------ */
 /*  Rich text editor                                                   */
 /* ------------------------------------------------------------------ */
@@ -2597,64 +2457,42 @@ function RichTextEditorDemo() {
   );
 
   return (
-    <div className="space-y-8">
-      <SubSection title="The feed variant, and what it stores">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-2">
-            <DemoCaption>
-              Rich editor — seven buttons, fixed toolbar height, no link control
-            </DemoCaption>
-            <RichTextEditor
-              initialValue={DEMO_MARKDOWN}
-              onChange={setMarkdown}
-              ariaLabel="Session report"
-              placeholder="What the group built, played or figured out."
-            />
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>
-              Serialised markdown — the value that is actually stored
-            </DemoCaption>
-            <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
-              {markdown}
-            </pre>
-          </div>
-        </div>
-      </SubSection>
+    // One 2×2 grid rather than two blocks: the whole difference between the
+    // variants is one toolbar button, and a seven-button row directly above an
+    // eight-button one is the only way to see that.
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="space-y-2">
+        <DemoCaption>Feed variant</DemoCaption>
+        <RichTextEditor
+          initialValue={DEMO_MARKDOWN}
+          onChange={setMarkdown}
+          ariaLabel="Session report"
+          placeholder="What the group built, played or figured out."
+        />
+      </div>
+      <div className="space-y-2">
+        <DemoCaption>Serialised markdown</DemoCaption>
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+          {markdown}
+        </pre>
+      </div>
 
-      <SubSection title="The marketing variant — the same editor, plus links">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-2">
-            <DemoCaption>
-              An eighth button. Select some words and press it: the address row
-              opens between the toolbar and the text, seeded with the current
-              link&rsquo;s address when the caret is already inside one. Enter
-              applies, Escape closes, and the middle button unlinks. A bare
-              &ldquo;sog.gg/privacy&rdquo; is treated as an external address and
-              gets https:// rather than becoming a path under this page; an
-              address the reader&rsquo;s renderer would strip (tel:, ftp://)
-              keeps the row open and says so, instead of closing on nothing.
-              Headings are a page&rsquo;s scale here rather than a
-              card&rsquo;s.
-            </DemoCaption>
-            <RichTextEditor
-              variant="marketing"
-              initialValue={DEMO_MARKETING_MARKDOWN}
-              onChange={setMarketingMarkdown}
-              ariaLabel="Product long description"
-              placeholder="The expanded pitch under the hero."
-            />
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>
-              Serialised markdown — links included
-            </DemoCaption>
-            <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
-              {marketingMarkdown}
-            </pre>
-          </div>
-        </div>
-      </SubSection>
+      <div className="space-y-2">
+        <DemoCaption>Marketing variant</DemoCaption>
+        <RichTextEditor
+          variant="marketing"
+          initialValue={DEMO_MARKETING_MARKDOWN}
+          onChange={setMarketingMarkdown}
+          ariaLabel="Product long description"
+          placeholder="The expanded pitch under the hero."
+        />
+      </div>
+      <div className="space-y-2">
+        <DemoCaption>Serialised markdown</DemoCaption>
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+          {marketingMarkdown}
+        </pre>
+      </div>
     </div>
   );
 }
@@ -2681,21 +2519,24 @@ const DEMO_USERNAME: Readonly<Record<GamePlatform, string>> = {
 };
 
 /**
- * The one grid all three demos are laid out on: a label column, then a column
+ * The one grid every demo below is laid out on: a label column, then a column
  * per platform.
  *
  * Shared so the identity rows line up vertically down the whole section. The
- * three demos exist to be *compared* — they are three presentations of one row —
- * and three different container widths made that impossible.
+ * demos exist to be *compared* — they are presentations of one row — and
+ * different container widths made that impossible.
  */
 const GAME_DEMO_GRID =
   "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border p-4";
 
-/** The header row every demo grid opens with. */
-function GameDemoHeader() {
+/**
+ * The header row every demo grid opens with. The corner cell names the grid
+ * where a subsection holds more than one — it is otherwise empty.
+ */
+function GameDemoHeader({ label }: { label?: string }) {
   return (
     <>
-      <div />
+      <div>{label ? <DemoCaption>{label}</DemoCaption> : null}</div>
       {DEMO_PLATFORMS.map((platform) => (
         <DemoCaption key={platform}>{GAME_PLATFORMS[platform].name}</DemoCaption>
       ))}
@@ -2724,7 +2565,7 @@ function GameFirstCaptureDemo() {
 
   return (
     <div className={cn(GAME_DEMO_GRID, "items-start gap-y-3")}>
-      <GameDemoHeader />
+      <GameDemoHeader label="Register" />
       <DemoCaption>Nothing saved yet</DemoCaption>
       {DEMO_PLATFORMS.map((platform) => (
         <div key={platform} className="space-y-1.5">
@@ -2760,9 +2601,10 @@ function GameFirstCaptureDemo() {
 
 /**
  * The three fixture rows for the read-only demo: one account we have confirmed,
- * one saved name nobody ever checked, one child who has never given a name. The
- * fourth state, `checking`, is not a fixture — it belongs to a lookup in flight,
- * so it is met by committing in the demos either side of this one.
+ * one saved name nobody ever checked, one child who has never given a name.
+ * `checking` belongs to a lookup in flight rather than to a stored account,
+ * which is why it is pinned once at the foot of the head grid and otherwise met
+ * by committing in the editable demo.
  */
 const VIEW_ONLY_ROWS: readonly {
   caption: string;
@@ -2805,10 +2647,10 @@ const VIEW_ONLY_ROWS: readonly {
  * only lookup available to it, and is why it is behind a button.
  *
  * **The lookup belongs here, not in the row** — the row stays fixture-pure and
- * takes a URL. Both demos call this with the same handle, so React Query serves
- * one request for the pair. While it is in flight `data` is undefined and the
- * rows draw the stand-in in a box that is already its final size, so nothing
- * moves when the render lands.
+ * takes a URL. One call feeds both figures, so the body and the head come out of
+ * a single request. While it is in flight `data` is undefined and the rows draw
+ * the stand-in in a box that is already its final size, so nothing moves when
+ * the render lands.
  */
 function useRobloxDemoRenders(
   live: boolean,
@@ -2867,6 +2709,14 @@ function demoFigureUrl(
   return named ? resolved : null;
 }
 
+/**
+ * The read-only row, in both figures, under one toggle.
+ *
+ * The two figures were two demos, each holding its own `live` flag and its own
+ * copy of the toggle while asking React Query for the very same handle. One
+ * flag, one button, one request, and the 32px head now sits directly under the
+ * 60px body it is a reduction of — which is the only way to judge a size step.
+ */
 function GameViewOnlyDemo() {
   const [live, setLive] = useState(false);
   const renders = useRobloxDemoRenders(live);
@@ -2874,8 +2724,9 @@ function GameViewOnlyDemo() {
   return (
     <div className="space-y-3">
       <RobloxLiveToggle live={live} onLoad={() => setLive(true)} />
+
       <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
-        <GameDemoHeader />
+        <GameDemoHeader label="Full figure" />
         {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
           <Fragment key={caption}>
             <DemoCaption>{caption}</DemoCaption>
@@ -2889,6 +2740,37 @@ function GameViewOnlyDemo() {
               />
             ))}
           </Fragment>
+        ))}
+      </div>
+
+      <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
+        <GameDemoHeader label="Head" />
+        {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
+          <Fragment key={caption}>
+            <DemoCaption>{caption}</DemoCaption>
+            {DEMO_PLATFORMS.map((platform) => (
+              <GameUsernameRow
+                key={platform}
+                platform={platform}
+                figure="head"
+                username={named ? DEMO_USERNAME[platform] : null}
+                externalId={externalId[platform]}
+                avatarUrl={demoFigureUrl(platform, named, renders.head)}
+              />
+            ))}
+          </Fragment>
+        ))}
+
+        <DemoCaption>Checking</DemoCaption>
+        {DEMO_PLATFORMS.map((platform) => (
+          <GameUsernameRow
+            key={platform}
+            platform={platform}
+            figure="head"
+            username={DEMO_USERNAME[platform]}
+            status="checking"
+            avatarUrl={demoFigureUrl(platform, true, renders.head)}
+          />
         ))}
       </div>
     </div>
@@ -2956,7 +2838,7 @@ function GameEditableRowDemo() {
 
   return (
     <div className={cn(GAME_DEMO_GRID, "items-start gap-y-1")}>
-      <GameDemoHeader />
+      <GameDemoHeader label="Roster" />
       {rows.map((row) => (
         <Fragment key={row.key}>
           <DemoCaption>{row.person}</DemoCaption>
@@ -2974,52 +2856,6 @@ function GameEditableRowDemo() {
           ))}
         </Fragment>
       ))}
-    </div>
-  );
-}
-
-/**
- * The compact figure, in every state, on both platforms — both showing a real
- * picture, the Minecraft face derived from the name and the Roblox headshot
- * resolved by the demo.
- */
-function GameHeadRowDemo() {
-  const [live, setLive] = useState(false);
-  const renders = useRobloxDemoRenders(live);
-
-  return (
-    <div className="space-y-3">
-      <RobloxLiveToggle live={live} onLoad={() => setLive(true)} />
-      <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
-        <GameDemoHeader />
-        {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
-          <Fragment key={caption}>
-            <DemoCaption>{caption}</DemoCaption>
-            {DEMO_PLATFORMS.map((platform) => (
-              <GameUsernameRow
-                key={platform}
-                platform={platform}
-                figure="head"
-                username={named ? DEMO_USERNAME[platform] : null}
-                externalId={externalId[platform]}
-                avatarUrl={demoFigureUrl(platform, named, renders.head)}
-              />
-            ))}
-          </Fragment>
-        ))}
-
-        <DemoCaption>Checking</DemoCaption>
-        {DEMO_PLATFORMS.map((platform) => (
-          <GameUsernameRow
-            key={platform}
-            platform={platform}
-            figure="head"
-            username={DEMO_USERNAME[platform]}
-            status="checking"
-            avatarUrl={demoFigureUrl(platform, true, renders.head)}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -3059,18 +2895,23 @@ function AddGamerDialogDemo() {
 function GameAccountDemo() {
   return (
     <div className="space-y-8">
-      <SubSection title="1. First time entering a username (register)">
+      <SubSection title="Entering and editing a username">
         <p className="text-sm text-muted-foreground">
-          The same row, opened straight into edit mode &mdash; there is nothing to
-          view yet, so the input sits where the name will be. Live: committing
-          <em> is </em>the verification, so press Enter or the tick and watch the
-          status square. The label above each row belongs to the surface, not to
-          the component; a roster wants none.
+          One component, one prop apart. A register form has nothing to view yet,
+          so <code>autoEdit</code> opens the row straight into edit mode with the
+          input where the name will be; a roster leaves it closed and opens on a
+          click. Either way, committing <em>is</em> the verification &mdash;
+          press Enter or the tick and watch the status square: the name appears
+          immediately, the spinner sits in the square the tick will land in, and
+          a failed lookup leaves the name saved as unverified with the reason
+          underneath. The label above each register row belongs to the surface,
+          not to the component; a roster wants none.
         </p>
         <GameFirstCaptureDemo />
+        <GameEditableRowDemo />
       </SubSection>
 
-      <SubSection title="2. View, no editing here">
+      <SubSection title="View only">
         <p className="text-sm text-muted-foreground">
           Real pictures on both sides. Minecraft derives its skin from the
           username, so the row needs nothing; Roblox has no username-addressable
@@ -3083,39 +2924,20 @@ function GameAccountDemo() {
           instead &mdash; two upstream calls rather than three, and one call for
           a whole roster rather than one per row.
         </p>
+        <p className="text-sm text-muted-foreground">
+          <code>figure=&quot;head&quot;</code> is the same row at 32px instead of
+          60px, for a dense list where the whole character crowds out what the
+          list is about. Two surfaces use it &mdash; the voice participant row
+          and the participant chip below; everywhere else, the admin user detail
+          page included, keeps the whole figure. The two platforms are{" "}
+          <em>identical</em> at that size, because a Minecraft face render and a
+          Roblox headshot are both square, so the 1:2-vs-1:1 divergence that
+          makes the full figure&rsquo;s box differ simply does not exist.
+        </p>
         <GameViewOnlyDemo />
       </SubSection>
 
-      <SubSection title="2b. The compact figure — head instead of full">
-        <p className="text-sm text-muted-foreground">
-          Same row, same four states, <code>figure=&quot;head&quot;</code>: 32px
-          instead of 60px, for a dense list where the whole character crowds out
-          what the list is about. Two surfaces use it &mdash; the voice
-          participant row and the participant chip below. Everywhere else, including the
-          admin user detail page, keeps the whole figure. Both platforms are{" "}
-          <em>identical</em> here
-          &mdash; a Minecraft face render and a Roblox headshot are both square,
-          so the 1:2-vs-1:1 divergence that makes the full figure&rsquo;s box
-          differ simply does not exist. Both draw a real picture: Minecraft
-          derives its face from the username, and the demo resolves the Roblox
-          headshot from the same lookup as the section above &mdash; one request
-          for the pair, because they ask for the same handle.
-        </p>
-        <GameHeadRowDemo />
-      </SubSection>
-
-      <SubSection title="3. View and edit, in place">
-        <p className="text-sm text-muted-foreground">
-          The same component as demo 1 without <code>autoEdit</code>. Enter
-          commits, Escape cancels, and a commit runs the real lookup: the name
-          appears immediately, the spinner sits in the square the tick will land
-          in, and a failed lookup leaves the name saved as unverified with the
-          reason underneath.
-        </p>
-        <GameEditableRowDemo />
-      </SubSection>
-
-      <SubSection title="4. Where both rows land — the add-gamer dialog">
+      <SubSection title="In the add-gamer dialog">
         <p className="text-sm text-muted-foreground">
           The real dialog, inert: the create call is a prop rather than a hook, so
           this page hands it something that resolves after a beat and writes
@@ -3123,7 +2945,7 @@ function GameAccountDemo() {
           conditional on one query with nothing of its own to look at. Both game
           rows are the real thing and both commits run the real lookup; only the
           submit is defanged. They sit <em>closed</em> rather than opened, unlike
-          the register form in demo 1 &mdash; the same row costs the same height
+          the register rows above &mdash; the same row costs the same height
           either way, so the choice is about how much the dialog appears to be
           asking for. The gender buttons are three across at every width, which is
           what pays for the two rows fitting on a phone.
@@ -3248,7 +3070,7 @@ function ParticipantChipRow() {
       {/* The real rail width in the groups panel, so the chip is judged at the
           size it actually renders at rather than stretched across the page. */}
       <div className="w-64 space-y-2 rounded-lg border p-3">
-        <DemoCaption>On a Minecraft product (w-64, the real rail)</DemoCaption>
+        <DemoCaption>On a Minecraft product</DemoCaption>
         <ParticipantChip
           participationId="demo-1"
           participantId={CHIP_PEOPLE.aino}
@@ -3359,7 +3181,7 @@ function ParticipantChipRow() {
       </div>
 
       <div className="w-64 space-y-2 rounded-lg border p-3">
-        <DemoCaption>Mid-save — greyed and undraggable</DemoCaption>
+        <DemoCaption>Mid-save</DemoCaption>
         <ParticipantChip
           participationId="demo-4"
           participantId={CHIP_PEOPLE.aino}
@@ -3377,42 +3199,4 @@ function ParticipantChipRow() {
   );
 }
 
-function ManageBillingCardDemo() {
-  return (
-    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Idle</DemoCaption>
-        <ManageBillingCardView
-          accounts={[]}
-          onManage={() => {}}
-          isOpening={false}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Opening (disabled)</DemoCaption>
-        <ManageBillingCardView accounts={[]} onManage={() => {}} isOpening />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Several billing accounts</DemoCaption>
-        <ManageBillingCardView
-          accounts={BILLING_ACCOUNTS_SPLIT}
-          onManage={() => {}}
-          isOpening={false}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Several accounts, one opening</DemoCaption>
-        <ManageBillingCardView
-          accounts={BILLING_ACCOUNTS_SPLIT}
-          onManage={() => {}}
-          isOpening
-          openingAccountId="cus_demo_migrated"
-        />
-      </div>
-    </div>
-  );
-}
 

@@ -19,13 +19,15 @@ import { useNow, useTimezone } from "@/providers";
  * parent's own section when they hold a seat themselves, one card per
  * enrollment, then billing and help.
  *
- * Every section is the real presentational component over fixtures, and every
- * action the page has is passed a no-op — the billing card's Manage buttons, the
- * add-gamer affordances, and the payment badge that hangs off a failing card's
- * corner. Each has to be *there*, looking like itself and clickable, or the page
- * stops reading as the real dashboard; what none of them may do is reach a
- * backend. Browsing the shop is the exception and needs no handler: it is plain
- * navigation to a public page, so the empty-state card links there for real.
+ * Every section is the real presentational component over fixtures, and no
+ * action reaches a backend — the add-gamer affordances, the payment badge that
+ * hangs off a failing card's corner and the lit Join are passed no-ops. Each
+ * has to be *there*, looking like itself and clickable, or the page stops
+ * reading as the real dashboard. Browsing the shop is the exception and needs
+ * no handler: it is plain navigation to a public page, so the empty-state card
+ * links there for real. Manage billing is the other kind of exception — inert
+ * like the rest, but driving the card's own opening state from local state, so
+ * the one thing a click really does is visible here (see below).
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state, the same way the gedu scene holds its own. Rebuilding it on every
@@ -75,6 +77,14 @@ export function ParentDashboardScene({
  * are translated copy, and a pure fixture has no translator. Everything else —
  * how many buttons there are, whether the split explanation appears — falls out
  * of the account list, exactly as it does in production.
+ *
+ * The opening state is real local state rather than a hardcoded `false`, and
+ * *not* clearing it is the point: on the live page the click is followed by a
+ * full-page navigation to Stripe's portal, so the flag is set once and the
+ * document unloads under it. Here nothing unloads, which is what makes the
+ * disabled buttons and the button's own spinner reviewable at all — this scene
+ * is the only place that state is rendered. Clicking reaches no backend; the
+ * card is left in the state a click really leaves it in.
  */
 function FixtureBillingCard({
   accounts,
@@ -85,6 +95,8 @@ function FixtureBillingCard({
   }[];
 }) {
   const t = useTranslations("parent.billing.manage");
+  const [openingAccountId, setOpeningAccountId] = useState<string | null>(null);
+  const [opening, setOpening] = useState(false);
 
   const summaries: BillingAccountSummary[] = accounts.map((account) => ({
     stripeCustomerId: account.stripeCustomerId,
@@ -99,9 +111,12 @@ function FixtureBillingCard({
   return (
     <ManageBillingCardView
       accounts={summaries}
-      onManage={noop}
-      isOpening={false}
-      openingAccountId={null}
+      onManage={(stripeCustomerId) => {
+        setOpening(true);
+        setOpeningAccountId(stripeCustomerId);
+      }}
+      isOpening={opening}
+      openingAccountId={openingAccountId}
       error={null}
     />
   );
