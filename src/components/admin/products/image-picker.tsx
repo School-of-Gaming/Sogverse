@@ -92,12 +92,19 @@ export function ImagePicker({ value, onChange, disabled }: ImagePickerProps) {
           // deliberately the same height as the empty drop zone below so the
           // control does not change size when a file is picked.
           <div className="relative mx-auto h-40 w-60 overflow-hidden rounded-md border bg-muted">
+            {/* Two src kinds, one call. An existing product's picture is a
+                bucket URL and goes through the optimizer like every other
+                surface — this preview is 240px wide and the stored original is
+                multiple megabytes. A just-picked File is an object URL that no
+                server can fetch to resize, and `next/image` renders `blob:`
+                srcs unoptimized itself, so nothing here has to distinguish
+                them. */}
             <Image
               src={previewUrl}
               alt={t("previewAlt")}
               fill
+              sizes="240px"
               loading="lazy"
-              unoptimized
               className="object-cover"
             />
           </div>

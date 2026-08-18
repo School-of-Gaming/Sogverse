@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { PurchaseConfirmationView } from "@/components/public/products/purchase-confirmation-view";
 import { buildScenarioFixture } from "@/components/public/products/mock-detail-fixtures";
@@ -49,13 +49,41 @@ function renderConfirmation(imagePath: string | null) {
 }
 
 describe("purchase confirmation product picture", () => {
+  beforeEach(() => {
+    // A real product's `image_path` resolves against the bucket URL, so the
+    // resolver needs the env var the deployment always carries.
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // The half that actually changed: a bucket object is routed through the
+  // optimizer rather than handed to the browser whole, and the thumb's own
+  // width reaches the browser so it picks a 96px candidate instead of the
+  // multi-megabyte master.
+  it("serves a bucket picture through the optimizer at the thumb's width", () => {
+    const { container } = renderConfirmation(
+      "b7a1c0de-4f2b-4d1e-9c3a-5e6f70819a2b.png",
+    );
+    const img = container.querySelector("img");
+    expect(img?.getAttribute("src")).toMatch(/^\/_next\/image/);
+    expect(img?.getAttribute("sizes")).toBe("96px");
+  });
+
   it("crops the picture to 3:2 rather than letterboxing it", () => {
     const { container } = renderConfirmation("/preview-art/card-terrain.svg");
     const img = container.querySelector("img");
     expect(img).not.toBeNull();
+    // The ratio lives on the wrapper rather than the image: the banner fills
+    // its frame (`next/image`'s `fill`, which needs a positioned ancestor), so
+    // the frame is the parent and the image is what covers it. Root-relative
+    // fixture art is passed through untouched — the optimizer refuses SVG, so
+    // the rendered src is still the stored value.
     expect(img?.getAttribute("src")).toBe("/preview-art/card-terrain.svg");
-    expect(img?.className).toContain("aspect-[3/2]");
     expect(img?.className).toContain("object-cover");
+    expect(img?.parentElement?.className).toContain("aspect-[3/2]");
   });
 
   it.each([

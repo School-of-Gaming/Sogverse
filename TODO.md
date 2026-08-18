@@ -351,13 +351,14 @@ Several files define inline `selectClassName` strings that duplicate `<Input>` s
 - [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
 - [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the add-gamer dialog, plus any other occurrences
 
-### Optimize Product Images via `next/image`
+### Resize Product Images at Upload — Then Re-enable AVIF
 
-Product images currently render with `unoptimized` everywhere, so the original bucket file is served at every viewport. If the catalogue grows or pages get heavier, switching to the Next image optimizer would give us automatic WebP/AVIF conversion, viewport-appropriate resizing, and CDN caching. The cost is a bit of complexity per call site (`sizes` attribute) and a one-line `images.remotePatterns` entry in `next.config.ts`.
+The image-optimizer branch put Vercel's optimizer in front of browsers, but the stored originals are still unbounded admin uploads (2–4 MB camera-roll PNGs). That weight is why AVIF was rejected (`next.config.ts` records the pricing: the first visitor to each image-and-width pays a slow encode in front of the LCP hero), it is what og:image unfurl scrapers still fetch raw — the one Supabase egress path the optimizer cannot cover — and it is the full weight of every optimizer origin fetch. Shrinking the source dissolves all three at once.
 
-- [ ] Add the Supabase Storage host to `next.config.ts` `images.remotePatterns`
-- [ ] Drop `unoptimized` from product image `<Image>` components and add a `sizes` prop matching each layout
-- [ ] Skipped during the PR 2 self-hosted images migration to keep the change minimal
+- [ ] Re-encode at upload in the two admin product routes (cap ~1600px wide, WebP q≈80 — ~150–250 kB per image)
+- [ ] One-off re-encode of the existing catalogue (67 prod / 44 staging objects). Mint **new** paths and update `products.image_path` — a bucket URL's bytes are immutable by contract (the `minimumCacheTTL` justification in `next.config.ts`), so never rewrite an object in place
+- [ ] Flip `formats` back to `["image/avif", "image/webp"]` — with small encode inputs the first-encounter cost dissolves at any traffic level
+- [ ] Confirm a WhatsApp/Slack unfurl fetches the smaller og:image
 
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 

@@ -332,7 +332,14 @@ export function ProductDetailPageBody({
         <div className="relative overflow-hidden rounded-lg border">
           {/* Eager: the hero is the page's picture and reliably above the
               fold — the one banner that must not wait for a scroll. */}
-          <ProductBanner src={heroSrc} eager />
+          {/* The reading column's width: capped at 44rem from `lg`, and below
+              that the `px-4` container — which itself caps at 768 and 640 on
+              the two breakpoints under it. */}
+          <ProductBanner
+            src={heroSrc}
+            sizes="(min-width: 1024px) 704px, (min-width: 768px) 736px, (min-width: 640px) 608px, calc(100vw - 2rem)"
+            eager
+          />
           <ProductMediaChips tag={tag} whoLabel={whoLabel} />
         </div>
 

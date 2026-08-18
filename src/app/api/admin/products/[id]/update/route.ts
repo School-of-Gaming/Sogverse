@@ -140,6 +140,17 @@ export const POST = defineRoute({
         .upload(uploadMeta.path, file, {
           contentType: uploadMeta.contentType,
           upsert: false,
+          // A year — safe precisely because this route never writes over a
+          // path: it uploads a fresh UUID and deletes the superseded object
+          // once the RPC commits, so a URL's bytes never change. Storage
+          // otherwise defaults to an hour. This does not reach the image
+          // optimizer — that cache floors its TTL at
+          // `images.minimumCacheTTL` regardless of what the object stores —
+          // so what it buys is the paths that bypass the optimizer entirely:
+          // browser and Supabase-CDN caching of the raw original, fetched by
+          // link scrapers for og:image and by any direct bucket hit. Objects
+          // uploaded before this line was added keep their old header.
+          cacheControl: "31536000",
         });
       if (uploadError) {
         console.error("[products/update] image upload failed", uploadError);
