@@ -134,7 +134,9 @@ export function MinecraftPasswordResetCardView({
             </p>
           )}
 
-          <div className="flex items-center gap-3">
+          {/* Centered to match the instant room card's action, the panel
+              rendered directly below this one on the gedu dashboard. */}
+          <div className="flex justify-center">
             <Button type="submit" disabled={!canSubmit} className="gap-2">
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {submitting
