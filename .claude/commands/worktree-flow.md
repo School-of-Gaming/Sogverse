@@ -80,6 +80,20 @@ them as they come up, and expect several rounds of feedback and fixes before
 either of you is satisfied. Do not rush toward landing — Phase 5 begins only when
 they say so.
 
+**When the work starts with aligning on a design — demos, mocks, UI Previews
+scenarios, UI Components entries the user wants to compare before deciding —
+that alignment work is part of this flow, not a prelude to it.** Phase 1 runs
+first, so the demos are built in the worktree on the same branch the real work
+will land on — never as uncommitted edits in the main checkout, whose dev server
+is serving `dev` and whose working tree is not this branch's scratch space. The
+demo build is delegated to an Opus agent like any other implementation, and the
+trivial carve-out does not apply to it: demo variants are diff-heavy by nature
+(fixture plumbing, prop threading, registry entries), which makes them expensive
+to *hold* however easy they are to write. Preview them through Phase 3, take the
+user's ruling — and then **strip the demo code on this same branch before (or
+as the first commit of) building the chosen design**. Temp scenarios and
+variant switches exist to be compared once; none of it merges.
+
 **Build by delegating, not by typing.** The session's role in this phase is
 orchestration: write the implementation prompt, launch an agent into this
 worktree (model `opus` — the Models section below governs the whole flow, not
