@@ -23,6 +23,7 @@ import type {
   GameAccountStatus,
   GamePlatform,
 } from "@/components/game-account";
+import type { RobloxRenderMap } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
 import type { GeduAssignedProduct, GeduAssignedProductGroup } from "@/types";
 import {
@@ -230,7 +231,7 @@ interface GeduProductPageBodyProps {
    * Untouched by the Minecraft side, which derives its own figure from a
    * verified name and needs nothing handed in.
    */
-  robloxAvatarUrls?: Readonly<Partial<Record<string, string | null>>>;
+  robloxAvatarUrls?: RobloxRenderMap;
 }
 
 export function GeduProductPageBody({
@@ -609,6 +610,34 @@ function OtherGroupsRailCard({
 }
 
 /**
+ * The figure one roster row draws, with the row's three meanings of `avatarUrl`
+ * kept apart.
+ *
+ * Minecraft **omits** it: that platform's skin host is addressable by username,
+ * so a row holding a verified name finds its own picture and handing one in
+ * would only be a second source of truth. Roblox always hands over an explicit
+ * value, because a Roblox render can only come from a lookup somebody made by
+ * account id — leaving the prop off there would quietly mean "placeholder"
+ * while reading as "not decided".
+ *
+ * **An unverified member has no account id, and that is checked before the map
+ * is read rather than left to the lookup to miss.** Stringifying a null id
+ * produces the key `"null"`, which is absent from every answer and so arrives at
+ * the right silhouette by luck; the gate says what it means instead — resolving
+ * an unverified handle by *name* would draw whichever stranger owns it beside a
+ * child's, which is why there is nothing to look up.
+ */
+function rosterAvatarUrl(
+  platform: GamePlatform | null,
+  robloxUserId: number | null,
+  renders: RobloxRenderMap | undefined,
+): string | null | undefined {
+  if (platform !== "roblox") return undefined;
+  if (robloxUserId === null) return null;
+  return renders?.[String(robloxUserId)] ?? null;
+}
+
+/**
  * This group: its own room's Join, the gedus teaching it, then every child with
  * their parent's email and the copy-all helper.
  *
@@ -666,7 +695,7 @@ function GroupRailCard({
     username: string,
   ) => void | Promise<void>;
   gameStatuses?: Readonly<Record<string, GameAccountStatus>>;
-  robloxAvatarUrls?: Readonly<Partial<Record<string, string | null>>>;
+  robloxAvatarUrls?: RobloxRenderMap;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -724,16 +753,11 @@ function GroupRailCard({
                 platform={platform}
                 onSaveGameUsername={onSaveGameUsername}
                 gameStatus={gameStatuses?.[member.participant_id]}
-                // Explicitly handed over on Roblox — including the `null` that
-                // means "draw the stand-in" — because a Roblox render resolves
-                // by account id and this list's owner resolved them all at once.
-                // Left off entirely on Minecraft, where the row derives its own
-                // skin from a verified name.
-                avatarUrl={
-                  platform === "roblox"
-                    ? (robloxAvatarUrls?.[String(member.roblox_user_id)] ?? null)
-                    : undefined
-                }
+                avatarUrl={rosterAvatarUrl(
+                  platform,
+                  member.roblox_user_id,
+                  robloxAvatarUrls,
+                )}
               />
             ))}
           </ul>

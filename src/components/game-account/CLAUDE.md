@@ -188,6 +188,18 @@ ids per request (on the order of a hundred), so a roster resolves every render i
 needs in one call and hands each row its URL. A per-row hook exists for the
 single-identity surfaces and **must not be mapped over a list**.
 
+**A list whose membership changes while the page is open needs the other batch,
+and the two are not interchangeable.** The plain one is keyed by its whole id
+set, so a changed set is a different question and is asked from scratch — correct
+for a snapshot (the ids arrive with the page and the key collapses reorderings to
+one entry), and quadratic for a voice room, where each join would re-ask about
+everyone already resolved. The live one accumulates instead: an ever-seen set of
+ids beside the resolved map, one request per change and only about the ids that
+change brought, none at all for a change that brought no new verified account. An
+id is marked seen before its request is sent, so a second change asks only about
+its own newcomers while the first request is still in flight, and no two
+responses can ever name the same id. Neither shape is ever a hook per row.
+
 **The list's owner does the resolving, and on a page split into a data shell and
 a presentational body that is the shell.** The body takes the answers as a prop,
 keyed by account id, which is what lets the same body serve a live page and a

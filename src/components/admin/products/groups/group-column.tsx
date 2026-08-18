@@ -16,7 +16,8 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupPending } from "@/services/groups";
 import type { ProductGroupWithDetails } from "@/types";
 import { ParticipantChip } from "./participant-chip";
-import { chipGameIdentity, type RobloxRenderMap } from "./panel-rules";
+import type { RobloxRenderMap } from "@/services/roblox";
+import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
 
 interface GroupColumnProps {

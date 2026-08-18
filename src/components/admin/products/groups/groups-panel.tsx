@@ -48,11 +48,10 @@ import {
   resolveDrop,
   robloxIdsFrom,
   type BlockedDropReason,
-  type RobloxRenderMap,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
-import { useRobloxRenders } from "@/services/roblox";
+import { useRobloxRenders, type RobloxRenderMap } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {

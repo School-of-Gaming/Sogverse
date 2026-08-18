@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
 import { ParticipantChip } from "./participant-chip";
-import { chipGameIdentity, type RobloxRenderMap } from "./panel-rules";
+import type { RobloxRenderMap } from "@/services/roblox";
+import { chipGameIdentity } from "./panel-rules";
 
 interface WaitlistCardProps {
   /** Waitlisted gamers in derived order (waitlisted_at, id) — already ordered. */

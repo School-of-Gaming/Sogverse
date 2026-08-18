@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { robloxRenderUrl } from "@/lib/roblox";
@@ -7,7 +8,11 @@ import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
 import type { GameFigure } from "@/lib/constants/game-platforms";
 import type { RobloxAccount } from "@/types";
 import { RobloxService } from "./roblox.service";
-import type { RobloxProfileResponse } from "./roblox.contracts";
+import type {
+  RobloxProfileResponse,
+  RobloxRenderMap,
+  RobloxRenderUrls,
+} from "./roblox.contracts";
 
 /**
  * Three branches under one root, and the split is load-bearing.
@@ -151,7 +156,8 @@ export function useRobloxRender(
 }
 
 /**
- * The renders for **every stored, verified account on a page**, in one request.
+ * The renders for **every stored, verified account on a page**, in one request
+ * — for a list that is resolved once and then stops changing.
  *
  * This is the shape a list must use, and `useRobloxRender` is the shape a
  * single identity may use: the upstream cost is per *request*, not per id, so
@@ -159,6 +165,16 @@ export function useRobloxRender(
  * bucket the whole serverless fleet shares — which one roster can drain on its
  * own. A caller collects the ids of its verified rows, asks once, and hands
  * each row the URL it gets back.
+ *
+ * **Keyed by the whole id set, so a changed set is a different question and is
+ * asked from scratch.** That is the right trade for a snapshot — an admin's
+ * groups panel, a gedu's roster — where the ids arrive with the page and the
+ * only thing that reorders them is a caller handing them over differently,
+ * which the normalized key already collapses to one entry. It is the wrong
+ * trade for a list whose membership moves while the page is open: each change
+ * would discard the answer and re-ask about everyone, so a room filling one
+ * person at a time costs a request per join *for the whole room*. A live list
+ * uses `useLiveRobloxRenders` instead.
  *
  * **Answers are matched by the id the response names, never by position.** The
  * result is a record keyed by the account id as a string, built by looking each
@@ -195,26 +211,120 @@ export function useRobloxRenders(
 
   const ids = normalizeRobloxIds(robloxUserIds);
 
-  return useQuery<Partial<Record<string, string | null>>>({
+  return useQuery<RobloxRenderMap>({
     queryKey: robloxKeys.renderBatch(ids, figure),
-    queryFn: async () => {
-      const renders = await service.resolveRenders(ids, [figure]);
-
-      // Built by asking the response about each id we sent, so an id the
-      // response somehow omitted lands as `null` (the silhouette) rather than
-      // as somebody else's picture.
-      const urls: Record<string, string | null> = {};
-      for (const id of ids) {
-        const resolved = renders[String(id)];
-        urls[String(id)] =
-          resolved === undefined ? null : robloxRenderUrl(resolved, figure);
-      }
-      return urls;
-    },
+    queryFn: () =>
+      service.resolveRenders(ids, [figure]).then(urlsFor(ids, figure)),
     enabled: ids.length > 0,
     staleTime: RENDER_STALE_TIME,
     retry: false,
   });
+}
+
+/**
+ * Turn a batch's answer into the map a surface reads: **built by asking the
+ * response about each id we sent**, so an id the response somehow omitted lands
+ * as `null` — the silhouette — rather than as somebody else's picture.
+ */
+function urlsFor(ids: readonly number[], figure: GameFigure) {
+  return (renders: Partial<Record<string, RobloxRenderUrls>>) => {
+    const urls: Record<string, string | null> = {};
+    for (const id of ids) {
+      const resolved = renders[String(id)];
+      urls[String(id)] =
+        resolved === undefined ? null : robloxRenderUrl(resolved, figure);
+    }
+    return urls;
+  };
+}
+
+/**
+ * The renders for a list whose **membership changes while the page is open** —
+ * a voice room filling up, which is the only such list we have.
+ *
+ * `useRobloxRenders` is keyed by its whole id set, and that is exactly wrong
+ * here: a join changes the set, so the cached answer is discarded and everyone
+ * is re-asked about. Joining a ten-person room one person at a time costs
+ * 1+2+…+10 upstream thumbnail calls against a bucket of sixty a minute that the
+ * whole serverless fleet shares — a single busy session draining a budget the
+ * by-id path exists to conserve.
+ *
+ * So this hook accumulates instead of re-asking. It keeps an ever-seen set of
+ * ids beside a resolved map, and each time the membership changes it asks about
+ * the difference — **once, for the whole batch of newcomers, and never again
+ * about anyone already asked after.** A change that brings no new verified
+ * account (somebody left, somebody with no linked handle arrived) issues no
+ * request at all. There is still no per-row hook anywhere in the shape: the
+ * request count is one per *change that brings new people*, not one per person.
+ *
+ * **An id is marked seen before its request goes out, not after.** That is what
+ * makes a second join ask only about the newcomer while the first request is
+ * still in flight, and it is also what makes React's development-mode double
+ * invocation of the effect issue one request rather than two.
+ *
+ * **Answers are matched by the id the response names, never by position** — the
+ * endpoint promises no order, and a positional read hands one child another
+ * child's face. Because every id is asked about exactly once, no two responses
+ * can name the same id, so responses landing out of order merge cleanly and the
+ * map never fights itself.
+ *
+ * **Never retried, never persisted, resolved once per id per session.** A batch
+ * that fails settles its ids as `null` — the silhouette — and they are not asked
+ * about again: a thumbnail is decoration, and a retry spends more of the shared
+ * budget redrawing something nobody is waiting on. The map lives in component
+ * state rather than the query cache, so it is session-lived by construction and
+ * has no route into anything persisted.
+ *
+ * `figure` is fixed at a call site; passing a different one re-asks about
+ * everybody under the new figure, because a render only answers for the figure
+ * it was requested with.
+ */
+export function useLiveRobloxRenders(
+  robloxUserIds: readonly number[],
+  figure: GameFigure = "full",
+): RobloxRenderMap {
+  const supabase = getClient();
+
+  const [renders, setRenders] = useState<RobloxRenderMap>({});
+  const askedRef = useRef<Set<string>>(new Set());
+  const mountedRef = useRef(true);
+
+  // Set in the body rather than initialised once, because React's development
+  // double-invocation runs this effect's cleanup and then its setup again — a
+  // ref that only ever moved to `false` would stay there for the real mount.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // The set as one primitive, so the effect below re-runs when the membership
+  // really changed and not merely because a parent handed over an equal array.
+  const idList = normalizeRobloxIds(robloxUserIds).join(",");
+
+  useEffect(() => {
+    const ids = idList === "" ? [] : idList.split(",").map(Number);
+    const unseen = ids.filter((id) => !askedRef.current.has(`${figure}:${id}`));
+    if (unseen.length === 0) return;
+
+    for (const id of unseen) askedRef.current.add(`${figure}:${id}`);
+
+    const service = new RobloxService(supabase);
+    void service
+      .resolveRenders(unseen, [figure])
+      .then(urlsFor(unseen, figure))
+      // A failed batch is an answer of "no picture" for the ids it asked about,
+      // settled rather than left pending: the rows are already drawing the
+      // silhouette and nothing is waiting on this.
+      .catch(() => Object.fromEntries(unseen.map((id) => [String(id), null])))
+      .then((urls: Record<string, string | null>) => {
+        if (!mountedRef.current) return;
+        setRenders((previous) => ({ ...previous, ...urls }));
+      });
+  }, [idList, figure, supabase]);
+
+  return renders;
 }
 
 /**

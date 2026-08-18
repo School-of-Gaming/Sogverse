@@ -1,5 +1,6 @@
 import type { GameAccountExternalId } from "@/components/game-account";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+import type { RobloxRenderMap } from "@/services/roblox";
 import type {
   BillingMode,
   GroupParticipationDetail,
@@ -262,19 +263,6 @@ export function canCompEnroll(
 // ---------------------------------------------------------------------------
 // The chip's game identity
 // ---------------------------------------------------------------------------
-
-/**
- * The render URLs one batched Roblox lookup resolved, keyed by the account id
- * as a string — the record `useRobloxRenders` hands back, and the only form an
- * answer may be read in: **by the id the response names, never by position.**
- *
- * `undefined` is the whole map before the one call lands (or after it failed),
- * and a missing or `null` entry is an account Roblox has no render for. All
- * three draw the silhouette, so they collapse to one value here — the chip's
- * figure box is a fixed square either way, and nothing moves when the pictures
- * arrive.
- */
-export type RobloxRenderMap = Partial<Record<string, string | null>>;
 
 /**
  * A chip's identity props, as the panel resolves them. Flat rather than an

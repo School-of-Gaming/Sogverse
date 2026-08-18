@@ -1,6 +1,7 @@
 export { RobloxService } from "./roblox.service";
 export {
   robloxKeys,
+  useLiveRobloxRenders,
   useMyRobloxAccount,
   useRobloxAccount,
   useRobloxProfile,
@@ -22,5 +23,6 @@ export {
   verifyRobloxQuery,
   type RobloxAvatarsResponse,
   type RobloxProfileResponse,
+  type RobloxRenderMap,
   type RobloxRenderUrls,
 } from "./roblox.contracts";

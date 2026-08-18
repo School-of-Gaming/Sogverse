@@ -42,10 +42,18 @@ export const updateRobloxAccountBody = z.object({
  * handle of a child on their own roster.
  *
  * The same value schema as the self-serve route, because it is the same edit
- * made by someone else: the server resolves the name against Roblox and stores
- * the canonical spelling with the account id, so a gedu's save lands *verified*
- * rather than pending. The gamer is named by the URL, not the body, so there is
- * nothing here to aim at another child.
+ * made by someone else. **What the server does with the name it parses out is
+ * store it, unchanged.** It runs the Roblox lookup, but takes only the account
+ * id from it: the spelling saved is the one that was sent, so the stored value
+ * does not depend on when the lookup last ran — and the editor already adopted
+ * the canonical casing before it committed, so what arrives is what the gedu
+ * meant. A name Roblox resolves lands verified, with the id beside it; a name it
+ * cannot resolve — including during a Roblox outage, which reads as "no answer"
+ * rather than as an error — is saved all the same with a null id, which is an
+ * unverified account and a success, not a failure.
+ *
+ * The gamer is named by the URL, not the body, so there is nothing here to aim
+ * at another child.
  */
 export const updateGroupMemberRobloxBody = z.object({
   robloxUsername: robloxUsernameValue,
@@ -236,3 +244,23 @@ export type RobloxAvatarsResponse = z.infer<typeof robloxAvatarsResponse>;
 
 /** Both renders of one account, as a surface consumes them. */
 export type RobloxRenderUrls = RobloxAvatarsResponse["renders"][string];
+
+/**
+ * What a batched lookup leaves behind: one figure's render URL per account,
+ * keyed by the account id **as a string** — and the only form an answer may be
+ * read in, **by the id the response names and never by position**. Reading
+ * positionally would hand one child another child's face, which is the one
+ * failure worse than no picture.
+ *
+ * Three values collapse to the same drawing, which is why this is `Partial` and
+ * why the entries are nullable: an id with no entry has not been answered for
+ * yet, an entry holding `null` is an account Roblox has no render for, and an
+ * empty map is a lookup that has not landed (or that failed — renders are never
+ * retried). All three draw the silhouette, in a figure box already at its final
+ * size, so nothing moves when the pictures arrive.
+ *
+ * Read-only because every consumer reads: the surfaces that own a lookup build
+ * their own record and hand it down, and a body that mutated the map it was
+ * given would be writing into another component's state.
+ */
+export type RobloxRenderMap = Readonly<Partial<Record<string, string | null>>>;

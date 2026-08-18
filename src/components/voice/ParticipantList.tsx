@@ -4,20 +4,11 @@ import { useMemo, useRef } from "react";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { robloxAccountId } from "@/components/game-account";
-import { useRobloxRenders } from "@/services/roblox";
+import { useLiveRobloxRenders, type RobloxRenderMap } from "@/services/roblox";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { ParticipantRow } from "./ParticipantRow";
 import type { VoiceParticipant, LockState } from "./hooks/types";
-
-/**
- * The render URLs one batched Roblox lookup resolved, keyed by the account id as
- * a string — and the only form an answer may be read in: **by the id the
- * response names, never by position.** `undefined` is the whole map before the
- * call lands (or after it failed); a missing or `null` entry is an account
- * Roblox has no render for. All three draw the silhouette.
- */
-type RobloxRenderMap = Partial<Record<string, string | null>>;
 
 /**
  * The figure URL for one participant, with the row's three meanings intact.
@@ -30,12 +21,12 @@ type RobloxRenderMap = Partial<Record<string, string | null>>;
  */
 function gameAvatarUrlFor(
   p: VoiceParticipant,
-  renders: RobloxRenderMap | undefined,
+  renders: RobloxRenderMap,
 ): string | null | undefined {
   if (!p.gamePlatform) return undefined;
   const id = robloxAccountId(p.gamePlatform, p.gameExternalId);
   if (id === null) return p.gamePlatform === "roblox" ? null : undefined;
-  return renders?.[String(id)] ?? null;
+  return renders[String(id)] ?? null;
 }
 
 export function ParticipantList() {
@@ -49,17 +40,20 @@ export function ParticipantList() {
 
   const t = useTranslations('voice');
 
-  // One batched lookup for the whole room, and it lives here because the row
-  // must stay dumb: the thumbnails API is rate-limited per IP across the entire
+  // One batched lookup for the room, and it lives here because the row must
+  // stay dumb: the thumbnails API is rate-limited per IP across the entire
   // serverless fleet, so a hook per row would be N requests against a budget one
   // busy session could drain on its own. On any other platform — and on every
-  // instant room — this list is empty, which disables the query outright.
+  // instant room — this list is empty and nothing is ever asked.
   //
-  // Ids change as people join and leave; the hook normalizes them into its own
-  // key, so a room in flux re-asks only about ids it has not already resolved.
+  // **The live variant, because a room's membership moves under it.** The
+  // set-keyed batch would treat every join and leave as a new question and
+  // re-ask about the whole room; this one accumulates, asking once about the
+  // people a change actually brought and never again about anyone already
+  // resolved. A change that brings no new verified account issues no request.
   // `head` because that is the figure the row draws, and a caller must pass the
-  // render matching the figure it asked for. While the call is in flight (and if
-  // it fails — renders are never retried) every row falls back to the
+  // render matching the figure it asked for. Before an answer lands (and if the
+  // batch fails — renders are never retried) every row falls back to the
   // silhouette, in a figure box already at its final square size, so the
   // pictures landing moves nothing.
   const robloxIds = useMemo(
@@ -72,7 +66,7 @@ export function ParticipantList() {
       }),
     [participants],
   );
-  const { data: robloxRenders } = useRobloxRenders(robloxIds, "head");
+  const robloxRenders = useLiveRobloxRenders(robloxIds, "head");
 
   // No enclosing Card: each ParticipantRow is itself a bordered card, so wrapping
   // them in another card was card-in-card (two borders, doubled padding). Flush
