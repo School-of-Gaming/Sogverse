@@ -185,10 +185,7 @@ export function GeduDashboardPageBody({
             their Minecraft account. They were two sections until the second
             tool arrived and made it obvious they were one: a heading per tool
             means a pill chip per tool, and a nav that grows a chip every time
-            somebody adds a button is a nav that stops fitting on a phone. The
-            room comes first because it is the one a gedu reaches for every
-            session; the password reset is the one they reach for when
-            something has gone wrong.
+            somebody adds a button is a nav that stops fitting on a phone.
 
             Last section, so it gets the viewport-height min: without it the
             page bottoms out mid-scroll and clicking the Tools chip leaves the
@@ -209,8 +206,8 @@ export function GeduDashboardPageBody({
                 to a gedu whose page has nothing else on it. */}
             {certified ? (
               <>
-                {instantRoomCard}
                 {toolsCard}
+                {instantRoomCard}
               </>
             ) : (
               <UncertifiedToolsNotice />

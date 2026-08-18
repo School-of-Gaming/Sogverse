@@ -17,7 +17,7 @@ import { useNow, useTimezone } from "@/providers";
  * with each card's needs-attention badge counted out of the feed it links to.
  *
  * Every section is the real presentational component over fixtures. Both panels
- * in the Tools section — the instant room and the password reset — render their
+ * in the Tools section — the password reset and the instant room — render their
  * idle states with the backend action inert: each has to be *there*, looking
  * like itself, or the page stops reading as the real dashboard; what they must
  * not do is create a room or reset an account.
