@@ -776,6 +776,10 @@ describe("family product feed", () => {
       });
       const feed = familyProductFeed.parse(data);
 
+      // Or the loop below asserts nothing at all and the case passes on an
+      // empty history.
+      expect(feed.sessions.length).toBeGreaterThan(0);
+
       for (const session of feed.sessions) {
         expect(session.updated_by).toBeNull();
         expect(session.updated_by_first_name).toBeNull();

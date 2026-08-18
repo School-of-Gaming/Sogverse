@@ -25,7 +25,7 @@
  */
 
 export { NowDivider } from "./NowDivider";
-export { SessionAuthorChip } from "./SessionAuthorChip";
+export { SessionAttributionChip } from "./SessionAttributionChip";
 export { SessionReport } from "./SessionReport";
 export { SessionFeedShell } from "./SessionFeedShell";
 export type { SessionFeedRowContext } from "./SessionFeedShell";

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Markdown } from "@/components/ui/markdown";
 import {
-  SessionAuthorChip,
+  SessionAttributionChip,
   SessionReport,
   hasReport,
   type SessionLabels,
@@ -280,6 +280,14 @@ export function SessionFeedItem({
     <Card
       className={cn(
         "p-4 sm:p-5",
+        // Room for the chip, derived from its geometry and not from taste: it
+        // stands 30px tall plus a 2px ring and hangs 10px below the card, so
+        // 22px of it rises above the card's bottom border — past a 16/20px pad
+        // and over the last block of content. 32px at BOTH breakpoints (the
+        // chip's size does not change with the viewport) leaves ~11px between
+        // the content's bottom edge and the top of the chip. Re-derive this if
+        // the chip's height or its `-bottom-*` offset ever moves.
+        signedBy !== null && "pb-8 sm:pb-8",
         entry.kind === "future" && prominent && "border-info/50",
       )}
     >
@@ -360,17 +368,25 @@ export function SessionFeedItem({
     </Card>
   );
 
-  if (signedBy === null) return card;
-
-  // The chip is the card's **sibling** inside a relative shell rather than its
-  // child: it hangs half past the card's edge, and a card clipping its own
-  // overflow would cut it in two. The shell wraps the whole card — collapsible
-  // regions and all — so nothing about the feed's keyed list or the markers
-  // beside it changes: the row still renders exactly one element.
+  // The wrapper gives the chip a positioning context of **exactly one card**,
+  // so its offsets resolve against this row rather than against whatever
+  // ancestor happens to be positioned. It is **unconditional** — present on
+  // every carded entry, signed or not — because it is what keeps the card's
+  // subtree identity stable across state flips. It used to appear and vanish
+  // with the chip, which meant toggling this entry's editor swapped the whole
+  // card for a structurally different tree: React discarded the node mid-flush,
+  // taking the Edit button the feed refocuses on close and the report's
+  // Read-more state with it. The shell wraps the whole card — collapsible
+  // regions and all — so the row still renders exactly one element either way.
   return (
     <div className="relative">
       {card}
-      <SessionAuthorChip id={signedBy.id} firstName={signedBy.firstName} />
+      {signedBy !== null && (
+        <SessionAttributionChip
+          id={signedBy.id}
+          firstName={signedBy.firstName}
+        />
+      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ import {
 import type {
   SessionEditor,
   SessionFeedEntry,
-} from "@/components/gedu/session-feed/types";
+} from "@/components/gedu/session-feed";
 import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**

@@ -1276,6 +1276,11 @@ describe("gedu session feed", () => {
         .delete()
         .eq("gedu_id", markerId);
       await admin.auth.admin.deleteUser(markerId);
+      // The rows this block materialized, mirroring the family suite's cleanup.
+      // A blanket delete over the group is safe here: the file-level beforeEach
+      // wipes these three groups before every test, so nothing downstream reads
+      // a session list this could shorten.
+      await admin.from("group_sessions").delete().eq("group_id", GROUP_MINE);
     });
 
     /** GROUP_MINE's session on `date`, straight off the feed. */
@@ -1293,13 +1298,17 @@ describe("gedu session feed", () => {
       // Seeded straight through the service-role client, so nothing set
       // `updated_by`. Null is the honest answer and the card renders no chip —
       // which is why the contract wants BOTH halves before it names anyone.
-      await admin.from("group_sessions").insert({
+      // Asserted, not fired and forgotten: (group, date) is unique, so a row
+      // left behind by an earlier run would turn this into a silent no-op and
+      // the expectations below would be reading somebody else's leftovers.
+      const { error: seedError } = await admin.from("group_sessions").insert({
         group_id: GROUP_MINE,
         session_date: YESTERDAY,
         starts_at: `${YESTERDAY}T23:00:00.000Z`,
         ends_at: `${TODAY}T00:00:00.000Z`,
         report: "Written by nobody in particular.",
       });
+      expect(seedError).toBeNull();
 
       const session = await sessionOn(geduAuth, YESTERDAY);
       expect(session?.updated_by).toBeNull();

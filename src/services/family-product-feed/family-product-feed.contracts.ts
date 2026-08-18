@@ -118,8 +118,8 @@ export const familyFeedSession = z
     report: z.string().nullable(),
     /**
      * Who last edited this session, and their first name — the pair behind the
-     * author chip on a report card. Null together when nothing has stamped the
-     * row; a consumer wants BOTH halves before it renders an author.
+     * attribution chip on a report card. Null together when nothing has stamped
+     * the row; a consumer wants BOTH halves before it names anybody.
      *
      * **This is the session's last editor, not the report's author, and the
      * imprecision is accepted rather than overlooked.** `updated_by` is stamped

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   ATTENDANCE_TONE,
-  SessionAuthorChip,
+  SessionAttributionChip,
   SessionReport,
   hasReport,
   type AttendanceMark,
@@ -109,10 +109,24 @@ export function FamilySessionFeedItem({
     );
   }
 
+  // Signed only where there is something to sign. Both halves have to hold: a
+  // card with no write-up has nothing to attribute, and a row nothing has
+  // stamped (or whose editor's profile has gone) has nobody to name.
+  const editor = written ? entry.lastEditedBy : null;
+
   const card = (
     <Card
       className={cn(
         "p-4 sm:p-5",
+        // Room for the chip, derived from its geometry and not from taste: it
+        // stands 30px tall plus a 2px ring and hangs 10px below the card, so
+        // 22px of it rises above the card's bottom border — past a 16/20px pad
+        // and over the last block of content. 32px at BOTH breakpoints (the
+        // chip's size does not change with the viewport) leaves ~11px between
+        // the content's bottom edge and the top of the chip. Re-derive this if
+        // the chip's height or its `-bottom-*` offset ever moves. The gedu row
+        // reserves the same space from the same numbers.
+        editor !== null && "pb-8 sm:pb-8",
         entry.kind === "future" && prominent && "border-info/50",
       )}
     >
@@ -172,21 +186,18 @@ export function FamilySessionFeedItem({
     </Card>
   );
 
-  // Signed only where there is something to sign. Both halves have to hold: a
-  // card with no write-up has no authorship to claim, and a row nothing has
-  // stamped (or whose editor's profile has gone) has nobody to name. Either way
-  // the card is returned bare — the `relative` shell exists solely to hang the
-  // chip off, so a card without one has no reason to carry a wrapper.
-  const editor = written ? entry.lastEditedBy : null;
-  if (editor === null) return card;
-
-  // The chip is the card's **sibling** inside a relative shell rather than its
-  // child: it hangs half past the card's edge, and a card clipping its own
-  // overflow would cut it in two.
+  // The wrapper gives the chip a positioning context of **exactly one card**,
+  // so its offsets resolve against this row rather than against whatever
+  // ancestor happens to be positioned. It is **unconditional** — every carded
+  // entry gets it, signed or not — so the card's subtree identity does not
+  // change when the chip appears or disappears, and both feeds return the same
+  // shape for a card. The row still renders exactly one element either way.
   return (
     <div className="relative">
       {card}
-      <SessionAuthorChip id={editor.id} firstName={editor.firstName} />
+      {editor !== null && (
+        <SessionAttributionChip id={editor.id} firstName={editor.firstName} />
+      )}
     </div>
   );
 }

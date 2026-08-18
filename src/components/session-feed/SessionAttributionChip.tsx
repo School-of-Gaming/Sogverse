@@ -24,10 +24,14 @@ import { cn } from "@/lib/utils";
  * both feeds, and hanging half of the chip past the edge reads as a signature
  * rather than as another status.
  *
- * **It is the card's sibling, not its child.** The chip has to sit half outside
- * the card's border box, and a card clipping its own overflow would cut it in
- * two; a plain `relative` shell around the card puts the chip beyond that box
- * without any card needing to opt out of clipping.
+ * **It is positioned against a wrapper that holds exactly one card.** The chip
+ * is `absolute`, so it needs a positioning context, and the nearest one has to
+ * be that single card or the offsets would resolve against whatever ancestor
+ * happened to be positioned — the feed's list, or the page. The wrapper is
+ * unconditional on both feeds, present whether or not anybody is named, so the
+ * card's subtree identity never changes when the chip appears or disappears.
+ * (Nothing here needs the card to opt out of clipping: `Card` sets no overflow,
+ * so a chip rendered *inside* one would not be cut in two either.)
  *
  * **A screen reader gets one labelled unit, not a bare name.** The identicon
  * carries no text and the chip's own body is a first name with nothing to say
@@ -36,8 +40,15 @@ import { cn } from "@/lib/utils";
  * the reader hears the attribution as a sentence. Doing it on the wrapper is
  * what keeps the chip primitive itself free of any assumption about why it is
  * being rendered.
+ *
+ * **Its geometry is what the signed card's bottom padding is derived from.**
+ * The chip stands 30px tall (a 20px avatar, `py-1`, a 1px border) plus a 2px
+ * ring, and `-bottom-2.5` drops it 10px below the card's border box — so 22px
+ * of it rises *above* that border, past the card's ordinary 16/20px padding and
+ * into the content. Both feed items reserve bottom padding against those
+ * numbers; move any of them and re-derive it there.
  */
-export function SessionAuthorChip({
+export function SessionAttributionChip({
   id,
   firstName,
   className,

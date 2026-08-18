@@ -117,7 +117,7 @@ export const geduFeedSession = z.object({
    * second lookup. Null when nothing has stamped the row, and null with
    * `updated_by` set only if the profile has gone (the FK is ON DELETE SET
    * NULL, so that pairing is unreachable today) — a consumer wants BOTH halves
-   * before it renders an author.
+   * before it names anybody.
    *
    * **This is the session's last editor, not the report's author, and the
    * imprecision is accepted rather than overlooked.** `updated_by` is stamped
