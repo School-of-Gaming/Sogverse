@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Identicon } from "@/components/ui/identicon";
-import { GameUsernameRow } from "@/components/game-account";
+import {
+  GameUsernameRow,
+  type GameAccountExternalId,
+  type GamePlatform,
+} from "@/components/game-account";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
@@ -17,12 +21,25 @@ export interface ParticipantRowData {
   userName: string;
   role: VoiceRole;
   /**
-   * The participant's Minecraft username/UUID (group rooms only). `null` =
-   * linked-but-unset → "(Unknown)"; `undefined` = no Minecraft context
-   * (instant rooms) → the identity row is hidden entirely. See VoiceParticipant.
+   * The participant's game identity, as the room's product decided it. `null`
+   * username = linked-but-unset → "(Unknown)"; an absent platform = no game
+   * context (an instant room, or a topic about no single game account) → the
+   * identity row is hidden entirely. See VoiceParticipant.
    */
-  minecraftUsername?: string | null;
-  minecraftUuid?: string | null;
+  gamePlatform?: GamePlatform;
+  gameUsername?: string | null;
+  gameExternalId?: GameAccountExternalId | null;
+  /**
+   * The figure's URL, with the row's three meanings intact: a string draws that
+   * render, `null` draws the placeholder without going looking, and omitting it
+   * lets the platform derive one from the name — which only Minecraft can do.
+   *
+   * **A Roblox row must always be handed one of the first two.** Its renders
+   * come from a batched by-id lookup that only a *list* may run, so whoever
+   * renders the list resolves them and passes each row its answer; the row
+   * itself never fetches. See ParticipantList.
+   */
+  gameAvatarUrl?: string | null;
   audioOn: boolean;
   videoOn: boolean;
   isLocal: boolean;
@@ -49,13 +66,14 @@ export function ParticipantRow({
 }: ParticipantRowProps) {
   const c = useTranslations("common");
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
-  // Show the Minecraft identity for gedu/gamer participants, but only when the
-  // token actually carried Minecraft context (group rooms). `undefined` ==
-  // no context (instant rooms) → hide; `null` == linked-but-unset → render
-  // "(Unknown)". See mapParticipant.
-  const showMinecraft =
-    (p.role === "gamer" || p.role === "gedu") &&
-    p.minecraftUsername !== undefined;
+  // Show the game identity for gedu/gamer participants, but only when the token
+  // actually carried a platform. An absent platform == no game context (an
+  // instant room, or a product whose topic is about no single game account) →
+  // hide the slot; a `null` username == linked-but-unset → render "(Unknown)".
+  // Narrowed into a local so the platform is a value the row can pass, not just
+  // a condition it tested. See mapParticipant.
+  const gamePlatform: GamePlatform | undefined =
+    p.role === "gamer" || p.role === "gedu" ? p.gamePlatform : undefined;
 
   return (
     <div
@@ -82,15 +100,17 @@ export function ParticipantRow({
         <span className="truncate text-sm font-medium">
           {p.userName}
         </span>
-        {showMinecraft && (
+        {gamePlatform && (
           <GameUsernameRow
-            platform="minecraft"
-            username={p.minecraftUsername ?? null}
-            externalId={p.minecraftUuid ?? null}
+            platform={gamePlatform}
+            username={p.gameUsername ?? null}
+            externalId={p.gameExternalId ?? null}
+            avatarUrl={p.gameAvatarUrl}
             // The compact figure. A participant list is dense by nature and the
             // full body made every row half again as tall while outweighing the
             // identicon beside it — the face carries the same identity at the
-            // identicon's own size.
+            // identicon's own size. It is also square on both platforms, so the
+            // slot's geometry does not move when the room's platform changes.
             figure="head"
             className="w-40 shrink-0"
           />

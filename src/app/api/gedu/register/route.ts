@@ -73,15 +73,15 @@ export const POST = defineRoute({
 
     const admin = createAdminClient();
 
-    // Both handles arrived already validated: the body schema composes each
-    // platform's real username rule with the `''` sentinel, so a malformed name
-    // was a 400 before this handler ran — and before `createUser` burned the
-    // email irreversibly, which is what made the ordering matter. All that is
-    // left here is to read "absent" out of the three shapes it can take.
+    // Both handles arrived trimmed and length-bounded, with an empty field
+    // already collapsed to null by the shared value schemas. All that is left
+    // here is to read "absent" out of the shapes it can take.
     //
-    // Whether the platform *knows* the name still gates nothing: an unresolvable
-    // one is stored with a null account key, and another account already holding
-    // it is allowed.
+    // **Nothing about either name gates the registration.** We do not judge what
+    // a Minecraft or Roblox handle may look like — the platform does — and even
+    // its answer decides only whether an account key is stored: an unresolvable
+    // name is kept with a null key, and another account already holding it is
+    // allowed.
     const mcName = minecraftUsername || null;
     const robloxName = robloxUsername || null;
 

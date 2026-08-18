@@ -71,7 +71,8 @@ function parseZoneUserData(userData: unknown): ZoneUserData {
 }
 
 function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): VoiceParticipant {
-  const { userId, role, displayName, minecraftUsername, minecraftUuid } = parseUserName(p.user_name);
+  const { userId, role, displayName, gamePlatform, gameUsername, gameExternalId } =
+    parseUserName(p.user_name);
   const { zoneId, broadcasting } = parseZoneUserData(p.userData);
 
   return {
@@ -79,8 +80,9 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): Vo
     userId: userId || p.session_id,
     role,
     userName: displayName,
-    minecraftUsername,
-    minecraftUuid,
+    gamePlatform,
+    gameUsername,
+    gameExternalId,
     audioOn: !p.audio ? false : p.tracks.audio.state === "playable",
     videoOn: !p.video ? false : p.tracks.video.state === "playable",
     screenShareOn: p.tracks.screenVideo.state === "playable",

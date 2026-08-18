@@ -106,16 +106,24 @@ describe("preview scene registry", () => {
    * up to a scenario per state is the drift this pins down, and a scene whose
    * scenarios each need a sentence of explanation has to actually carry one.
    *
-   * The dashboard is allowed one more than the product page, and only one: the
-   * *composition* of its sections changes with which type nouns a gedu runs, and
-   * a single-noun page is a shape the all-three page structurally cannot show.
+   * The dashboard's ceiling is three because the *composition* of its sections
+   * changes with which type nouns a gedu runs, and a single-noun page is a shape
+   * the all-three page structurally cannot show.
+   *
+   * The product page's is four because it has **two** exclusive axes rather than
+   * one, and the ceiling is the sum of them: the product's shape (remote and
+   * weekly against in-person and daily) and the roster's, since a product has
+   * exactly one topic and a topic gives exactly one of three answers about which
+   * game identity the rows show — Minecraft, Roblox, or none. Neither axis can be
+   * folded into the other, and neither may grow a scenario per *state*: that is
+   * still what this ceiling exists to stop.
    */
   it("keeps the gedu scenes down to their mutually-exclusive scenarios", () => {
     // A ceiling, not an equality: this test is here to stop a scene creeping
     // back up to a scenario per state, and pinning the exact count would also
     // fail on the day somebody correctly *folds* two scenarios into one.
     const MAX_SCENARIOS: Record<string, number> = {
-      "gedu-product": 2,
+      "gedu-product": 4,
       "gedu-dashboard": 3,
     };
     for (const surface of ["gedu-product", "gedu-dashboard"] as const) {

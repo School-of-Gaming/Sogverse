@@ -161,6 +161,7 @@ const TESTS = {
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
+  geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
@@ -621,6 +622,19 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["gedu"] },
         body: { kind: "json", schema: "updateGroupMemberMinecraftBody" },
         test: TESTS.geduGamerMinecraft,
+      },
+    },
+  },
+
+  // The Roblox twin of the route above, and the same reasoning applies verbatim:
+  // the role gate says "an educator", and `set_group_member_roblox` says which
+  // children that educator may touch, re-deriving them from auth.uid().
+  "src/app/api/gedu/gamers/[gamerId]/roblox/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: { kind: "role-gated", roles: ["gedu"] },
+        body: { kind: "json", schema: "updateGroupMemberRobloxBody" },
+        test: TESTS.geduGamerRoblox,
       },
     },
   },

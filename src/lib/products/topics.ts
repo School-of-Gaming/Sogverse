@@ -1,4 +1,5 @@
 import type { ProductTopic } from "@/types";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
 
 // Product "topic" is a fixed Postgres enum (`product_topic`), and it is one
 // flat axis: every value is simply a topic. There is no game/subject split in
@@ -266,6 +267,54 @@ export function topicHasInfoCard(
 ): topic is TopicWithInfoCard {
   const meta: TopicMeta = PRODUCT_TOPICS[topic];
   return meta.info !== undefined;
+}
+
+// Which game identity a product's surfaces are about — the first of the
+// per-topic config this map's header anticipated, and the one thing that
+// decides whether a roster, a chip or a product page shows a game username at
+// all. `null` is a real answer and the common one: most topics are about no
+// single account a child holds.
+//
+// Only two topics map to a platform, and the omissions are the deliberate part:
+//
+//   - `minecraft_bedrock` and `minecraft_education` map to NOTHING, even though
+//     they are Minecraft. Our `minecraft_accounts` row is a Java/Mojang
+//     identity — the username rule is Mojang's and the lookup that verifies it
+//     is Mojang's — and neither of those editions has a Mojang account behind
+//     it (Bedrock signs in with a Microsoft/Xbox gamertag, Education with a
+//     school tenant). Showing a Java handle on a Bedrock club would be
+//     asserting an identity we did not check and the child may not have.
+//   - `esports`, `creator_studio`, `game_studio`, `programming` and `ai` name
+//     subject matter rather than one piece of software, so there is nothing
+//     single to hold an account on; `fortnite`, `rocket_league` and
+//     `pokemon_go` are real games we simply store no identity for.
+//
+// A `switch` with no `default`, so adding an enum value fails to compile here
+// (the function would fall off its end and return `undefined`, which the
+// declared return type forbids) rather than silently joining the null side.
+//
+// The return type is the shared platform union rather than a locally-spelled
+// one: it lives in `@/lib/constants/game-platforms`, which is the module the
+// wire schemas and the UI descriptor registry both key off, so this cannot
+// drift from what a caller can actually render.
+export function platformForTopic(topic: ProductTopic): GamePlatform | null {
+  switch (topic) {
+    case "minecraft_java":
+      return "minecraft";
+    case "roblox_studio":
+      return "roblox";
+    case "minecraft_education":
+    case "minecraft_bedrock":
+    case "fortnite":
+    case "rocket_league":
+    case "pokemon_go":
+    case "esports":
+    case "creator_studio":
+    case "game_studio":
+    case "programming":
+    case "ai":
+      return null;
+  }
 }
 
 // Display order for pickers and filter chips. This is hand-ordered rather than

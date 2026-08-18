@@ -1401,17 +1401,17 @@
       "genderBoy": "loDHom",
       "genderGirl": "be’Hom",
       "genderNonBinary": "tlhejbogh",
-      "minecraftUsernameLabel": "Minecraft pong",
-      "minecraftUsernamePlaceholder": "Minecraft pong",
-      "minecraftUsernameSave": "yIpol",
-      "minecraftUsernameCancel": "yIqIl",
-      "editMinecraftUsername": "{name} Minecraft pong yIchoH",
+      "gameUsernameLabel": "{platform} pong",
+      "gameUsernamePlaceholder": "{platform} pong",
+      "gameUsernameSave": "yIpol",
+      "gameUsernameCancel": "yIqIl",
+      "editGameUsername": "{name} {platform} pong yIchoH",
       "copyContactEmail": "QInHom yI’aQ {email}",
       "emailCopied": "QInHom ’aQpu’",
       "copyAllContactEmails": "Hoch QInHommey yI’aQ ({count})",
       "allEmailsCopied": "Hoch QInHommey ’aQpu’",
       "loadingWorkspace": "ghom’a’vam may’mey laDlu’…",
-      "minecraftSaveFailed": "pong pollu’be’. yIboq."
+      "gameSaveFailed": "pong pollu’be’. yIboq."
     },
     "sessionFeed": {
       "edit": "yIchoH",

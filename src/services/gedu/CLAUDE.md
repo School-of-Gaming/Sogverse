@@ -28,9 +28,11 @@ confirmed address — in a fixed order, and never one glyph standing for both.
 Public, unauthenticated `/register-gedu` page → `POST /api/gedu/register`:
 
 1. Resolve the optional Minecraft username (Mojang HTTP) **before** creating the auth
-   user — the format check is a 400, and `createUser` is irreversible. Resolution itself
-   can't refuse the registration: a name Mojang doesn't know is stored with a null uuid,
-   and one another account already holds is allowed (accounts may be shared).
+   user, because `createUser` is irreversible and the ordering is what keeps a failure
+   cheap. Nothing about the name can refuse the registration — we do not judge what a
+   game handle may look like, and even the platform's answer only decides whether an
+   account key is stored: a name Mojang doesn't know is kept with a null uuid, and one
+   another account already holds is allowed (accounts may be shared).
 2. `admin.auth.admin.createUser` (`email_confirm: true` — email confirmation is disabled
    platform-wide). The new-user trigger seeds a `customer`-role profile.
 3. `register_gedu` RPC — one transaction: promote `customer`→`gedu`, swap

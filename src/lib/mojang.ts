@@ -1,11 +1,12 @@
 import { z } from "zod";
+import {
+  GAME_USERNAME_MAX_LENGTH,
+  normalizeGameUsername,
+} from "@/lib/constants/game-platforms";
 
 const MOJANG_API = "https://api.mojang.com/users/profiles/minecraft";
 
 const mojangResponse = z.object({ name: z.string(), id: z.string() });
-
-// Minecraft usernames: 3-16 chars, alphanumeric + underscore
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,16}$/;
 
 export interface MojangProfile {
   username: string; // Correctly-cased name from Mojang
@@ -21,6 +22,15 @@ function formatUuid(hex: string): string {
  * Look up a Minecraft Java account by username via the Mojang API.
  * Returns the correctly-cased username + dashed UUID, or null if not found.
  *
+ * **Mojang decides what a Minecraft name is; this function only asks.** There
+ * was a format check here once that answered "not found" without ever calling
+ * out, and it was wrong about real accounts — names issued before the modern
+ * rules are shorter than the check's minimum or carry characters it forbade, and
+ * every one of those was reported as nonexistent by us rather than by Mojang.
+ * What is left is the shared normalization and a length no request should carry
+ * — both rules about the request rather than about the name; the name is
+ * URL-encoded on the way out, so nothing else here needs a shape.
+ *
  * **Never throws.** Every caller treats the answer as optional — a name Mojang
  * cannot resolve is still stored, with a null uuid, because it is the child's
  * answer either way. A rejected fetch (DNS failure, connection reset, Mojang
@@ -32,9 +42,18 @@ function formatUuid(hex: string): string {
 export async function lookupMinecraftUser(
   username: string,
 ): Promise<MojangProfile | null> {
-  if (!USERNAME_RE.test(username)) return null;
+  // The same normalization and bound the wire schemas apply, restated for the
+  // callers that reach this directly — the two layers have to agree, or the name
+  // asked about is not the name stored. Format characters out and the ends
+  // trimmed (both statements about our own request, not about Minecraft names);
+  // then a name with nothing left has nothing to ask about, and one past the
+  // bound is a request we would not have accepted in the first place.
+  const name = normalizeGameUsername(username);
+  if (name.length === 0 || name.length > GAME_USERNAME_MAX_LENGTH) {
+    return null;
+  }
 
-  const res = await fetch(`${MOJANG_API}/${encodeURIComponent(username)}`).catch(
+  const res = await fetch(`${MOJANG_API}/${encodeURIComponent(name)}`).catch(
     () => null,
   );
   if (!res?.ok) return null;
@@ -50,10 +69,6 @@ export async function lookupMinecraftUser(
     username: parsed.data.name,
     uuid: formatUuid(parsed.data.id),
   };
-}
-
-export function isValidMinecraftUsername(username: string): boolean {
-  return USERNAME_RE.test(username);
 }
 
 /**

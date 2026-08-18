@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { GameAccountStatus } from "@/components/game-account";
+import { platformForTopic } from "@/lib/products/topics";
 import {
   applyDraftToEntry,
   applyPlanDraftToEntry,
@@ -17,6 +18,7 @@ import {
   type GeduProductScenario,
 } from "@/components/gedu/session-details/mock-product-page-fixtures";
 import { useNow } from "@/providers";
+import type { GeduAssignedProductRosterEntry } from "@/types";
 
 /**
  * The gedu's product page built around the session feed, over fixtures.
@@ -26,9 +28,10 @@ import { useNow } from "@/providers";
  * session notes on a past *or* a future session — pre-epoch ones included,
  * which open the same record editor — writing the group's standing notes, and,
  * on an in-person product, the venue's shared ones, plus correcting a child's
- * Minecraft username from the roster. A flagged session turning into a finished
- * one, and a part-marked one staying flagged, are the two most important things
- * to feel here. Nothing persists past a reload.
+ * game username from the roster — on whichever platform the scenario's topic
+ * names, or not at all on the one topic that names none. A flagged session
+ * turning into a finished one, and a part-marked one staying flagged, are the
+ * two most important things to feel here. Nothing persists past a reload.
  *
  * Every save resolves immediately, so the in-flight and failure states the live
  * page has are not what this scene is for; what it rehearses is the shape of
@@ -64,9 +67,17 @@ export function GeduProductPageScene({
   const [groupNotesEditing, setGroupNotesEditing] = useState(false);
   const [site, setSite] = useState(fixture.site);
   const [siteNotesEditing, setSiteNotesEditing] = useState(false);
-  const [minecraftStatuses, setMinecraftStatuses] = useState<
+  const [gameStatuses, setGameStatuses] = useState<
     Record<string, GameAccountStatus>
   >({});
+
+  /**
+   * Which identity this scenario's roster shows, read off the fixture's own
+   * topic — exactly as the live page reads it off the product's. `null` on the
+   * scenario about no game account, where no row renders an editor and this
+   * handler is unreachable.
+   */
+  const platform = platformForTopic(fixture.data.product.topic);
 
   // Faked latency has to be cancellable, or a reviewer who navigates away
   // mid-check leaves a timer setting state on an unmounted tree.
@@ -132,32 +143,17 @@ export function GeduProductPageScene({
   };
 
   /**
-   * A gedu correcting a mistyped Minecraft name, **with the Mojang round trip
-   * faked at a realistic latency**.
+   * Rewrite one roster member of the gedu's own group, in place.
    *
-   * The point of doing it here rather than saving instantly is that the check is
-   * the whole reason the roster row was redesigned: a name goes in, a spinner
-   * sits in a slot that was already holding its space, and about a second later a
-   * tick or a cross lands in the same slot without anything moving. That sequence
-   * is impossible to judge from a static screenshot and trivial to get wrong, so
-   * the scene rehearses it.
-   *
-   * Validity stands in for Mojang with the format rule the real lookup applies
-   * before it ever calls out — three to sixteen letters, digits or underscores.
-   * Type `Steve_99` and it lands valid; type `nope!!` and it lands invalid, which
-   * is the cheapest way to see the failed state without inventing a fake account
-   * database.
-   *
-   * The write is scoped the way the real one is — only the gedu's own group —
-   * and it clears `minecraft_uuid` **while the check is in flight**, because a
-   * verification belongs to the name it was issued for and keeping the old one
-   * would render a new, unchecked name in verified green. A check that comes
-   * back valid then lands a UUID, matching what the live route does: the server
-   * resolves the name against Mojang before writing, so a successful gedu edit
-   * ends up *verified* rather than pending.
+   * Two of the three writes below are the same traversal — the group, then the
+   * member, then the fields — and the third would have been a third copy of it.
+   * Scoped to `my_group_id` the way the real RPC is: a peer group's roster is
+   * never even loaded on this page, let alone editable.
    */
-  const handleSaveMinecraftUsername = (gamerId: string, username: string) => {
-    const trimmed = username.trim();
+  const patchMember = (
+    gamerId: string,
+    patch: Partial<GeduAssignedProductRosterEntry>,
+  ) =>
     setData((prev) => ({
       ...prev,
       groups: prev.groups.map((group) =>
@@ -167,47 +163,81 @@ export function GeduProductPageScene({
               ...group,
               roster: group.roster.map((member) =>
                 member.participant_id === gamerId
-                  ? {
-                      ...member,
-                      minecraft_username: trimmed.length > 0 ? trimmed : null,
-                      minecraft_uuid: null,
-                    }
+                  ? { ...member, ...patch }
                   : member,
               ),
             },
       ),
     }));
 
+  /**
+   * A gedu correcting a mistyped game name, **with the platform's round trip
+   * faked at a realistic latency**.
+   *
+   * The point of doing it here rather than saving instantly is that the check is
+   * the whole reason the roster row was redesigned: a name goes in, a spinner
+   * sits in a slot that was already holding its space, and about a second later a
+   * tick or a cross lands in the same slot without anything moving. That sequence
+   * is impossible to judge from a static screenshot and trivial to get wrong, so
+   * the scene rehearses it — on either platform, since the interaction is the one
+   * thing the two share exactly.
+   *
+   * **A fixture list of handles stands in for the platform's account database**,
+   * and it has to, because there is no rule left to stand in for one. The
+   * product asks the platform about every name it is given and takes the
+   * platform's word; nothing on our side decides in advance which names could
+   * exist. A scene that answered from a format check would be rehearsing a gate
+   * the product does not have, and would call a real, live handle impossible for
+   * the same reason the removed gate did.
+   *
+   * So the names below are known and everything else misses — which is also what
+   * lets a reviewer see both outcomes on purpose rather than by typing something
+   * malformed. One of them carries a space, which no format rule of ours ever
+   * allowed and which both platforms have live accounts holding.
+   *
+   * The write is scoped the way the real one is — only the gedu's own group —
+   * and it clears the account key **while the check is in flight**, because a
+   * verification belongs to the name it was issued for and keeping the old one
+   * would render a new, unchecked name in verified green. A check that comes back
+   * valid then lands a key of that platform's own shape, matching what the live
+   * route does: the server resolves the name before writing, so a successful gedu
+   * edit ends up *verified* rather than pending.
+   */
+  const handleSaveGameUsername = (gamerId: string, username: string) => {
+    // Unreachable on the no-platform scenario, whose rows render no editor at
+    // all — the guard is what proves that to the compiler.
+    if (platform === null) return;
+    const trimmed = username.trim();
+    const value = trimmed.length > 0 ? trimmed : null;
+
+    patchMember(
+      gamerId,
+      platform === "minecraft"
+        ? { minecraft_username: value, minecraft_uuid: null }
+        : { roblox_username: value, roblox_user_id: null },
+    );
+
     // Cleared rather than checked: there is no name to look up, so the row goes
     // straight back to its resting state.
-    if (trimmed.length === 0) {
-      setMinecraftStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
+    if (value === null) {
+      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
       return;
     }
 
-    setMinecraftStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
+    setGameStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
     const timer = window.setTimeout(() => {
-      const verified = MOJANG_NAME_SHAPE.test(trimmed);
-      setMinecraftStatuses((prev) => ({
+      const verified = SIMULATED_KNOWN_HANDLES.has(value.toLowerCase());
+      setGameStatuses((prev) => ({
         ...prev,
         [gamerId]: verified ? "verified" : "unverified",
       }));
       if (!verified) return;
-      setData((prev) => ({
-        ...prev,
-        groups: prev.groups.map((group) =>
-          group.id !== prev.my_group_id || group.roster === null
-            ? group
-            : {
-                ...group,
-                roster: group.roster.map((member) =>
-                  member.participant_id === gamerId
-                    ? { ...member, minecraft_uuid: SIMULATED_CHECK_UUID }
-                    : member,
-                ),
-              },
-        ),
-      }));
+      patchMember(
+        gamerId,
+        platform === "minecraft"
+          ? { minecraft_uuid: SIMULATED_CHECK_UUID }
+          : { roblox_user_id: SIMULATED_CHECK_ROBLOX_ID },
+      );
     }, SIMULATED_CHECK_MS);
     pendingChecks.current.add(timer);
   };
@@ -233,8 +263,13 @@ export function GeduProductPageScene({
       editingEntryId={editingEntryId}
       onEditEntry={setEditingEntryId}
       onSaveEntry={handleSave}
-      onSaveMinecraftUsername={handleSaveMinecraftUsername}
-      minecraftStatuses={minecraftStatuses}
+      onSaveGameUsername={handleSaveGameUsername}
+      gameStatuses={gameStatuses}
+      // Deliberately not passed. A Roblox render can only be resolved by
+      // account id through our own route, and a scene must not reach a
+      // third-party host on load — so every figure here is the drawn stand-in,
+      // verified rows included. The live page resolves the whole roster in one
+      // batched call instead.
     />
   );
 }
@@ -247,20 +282,40 @@ export function GeduProductPageScene({
 const SIMULATED_CHECK_MS = 800;
 
 /**
- * The shape Mojang accepts, which is also the gate the real verify route applies
- * before it ever calls out. It stands in for the account lookup here: any
- * well-formed name is treated as a real account, and a malformed one fails —
- * which is the state worth being able to see on demand.
- */
-const MOJANG_NAME_SHAPE = /^[a-zA-Z0-9_]{3,16}$/;
-
-/**
- * The UUID a passed check lands, standing in for the one Mojang would return.
+ * The account key a passed check lands, one per platform, standing in for what
+ * the real lookup would return.
  *
- * A real generated UUIDv4 rather than a readable string: the roster row treats
- * a non-null UUID as proof the name is verified, and the fixtures elsewhere in
- * this feature all hold themselves to looking like the thing they stand in for.
- * A scene never fetches the skin it unlocks — the bundled placeholder figure is
- * what a preview draws, because a preview must not reach a third-party host.
+ * Each looks like the thing it stands in for — a real generated UUIDv4 where
+ * Mojang hands out UUIDs, a positive integer in Roblox's own range where Roblox
+ * hands out int64s — rather than a readable string. The roster row treats a
+ * non-null key as proof the name is verified, and the fixtures elsewhere in this
+ * feature all hold themselves to the same bar. **A scene never fetches the
+ * figure it unlocks**: the bundled stand-in is what a preview draws, because a
+ * preview must not reach a third-party host on load.
  */
 const SIMULATED_CHECK_UUID = "0f0f7f2c-1a5b-4a2a-9d0f-6a2f2b6f4b1e";
+const SIMULATED_CHECK_ROBLOX_ID = 2748301956;
+
+/**
+ * The handles this scene's stand-in platform knows about, lower-cased because
+ * both real lookups are case-insensitive.
+ *
+ * **A list, not a rule.** Every handle the roster already carries is here, so
+ * re-saving a child's own name lands verified rather than reading as a
+ * regression; anything else misses and shows the unverified row with its
+ * sentence. `Old Timer` is the one that is not on the roster and is the point of
+ * the list: a name with a space in it, which our own format checks used to call
+ * impossible and which both platforms have been issuing accounts under for
+ * longer than they have had signup validators.
+ */
+const SIMULATED_KNOWN_HANDLES: ReadonlySet<string> = new Set([
+  "ainobuilds",
+  "vainothebold",
+  "eliasredstone",
+  "elias_builds",
+  "hildahollow",
+  "linnealoops",
+  "oskarore",
+  "siirisky",
+  "old timer",
+]);

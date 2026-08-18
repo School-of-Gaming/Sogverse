@@ -33,7 +33,8 @@ export const createGamerBody = z.object({
     .union([z.enum(Constants.public.Enums.gender_type), z.literal(""), z.null()])
     .optional(),
   // Both game identities are optional and independent: a parent may give one,
-  // both, or neither, and each carries its own platform's format rule.
+  // both, or neither. Neither is judged for shape here — the platform is asked
+  // and its answer decides whether a key is stored beside the name.
   minecraftUsername: minecraftUsernameValue.optional(),
   robloxUsername: robloxUsernameValue.optional(),
 });

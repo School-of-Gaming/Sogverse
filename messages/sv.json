@@ -1357,17 +1357,17 @@
       "genderBoy": "Pojke",
       "genderGirl": "Flicka",
       "genderNonBinary": "Icke-binär",
-      "minecraftUsernameLabel": "Minecraft-användarnamn",
-      "minecraftUsernamePlaceholder": "Minecraft-användarnamn",
-      "minecraftUsernameSave": "Spara",
-      "minecraftUsernameCancel": "Avbryt",
-      "editMinecraftUsername": "Redigera Minecraft-användarnamn för {name}",
+      "gameUsernameLabel": "{platform}-användarnamn",
+      "gameUsernamePlaceholder": "{platform}-användarnamn",
+      "gameUsernameSave": "Spara",
+      "gameUsernameCancel": "Avbryt",
+      "editGameUsername": "Redigera {platform}-användarnamn för {name}",
       "copyContactEmail": "Kopiera kontaktadress {email}",
       "emailCopied": "E-post kopierad",
       "copyAllContactEmails": "Kopiera alla kontaktadresser ({count})",
       "allEmailsCopied": "Alla kontaktadresser kopierade",
       "loadingWorkspace": "Laddar gruppens tillfällen.",
-      "minecraftSaveFailed": "Användarnamnet sparades inte. Försök igen."
+      "gameSaveFailed": "Användarnamnet sparades inte. Försök igen."
     },
     "sessionFeed": {
       "edit": "Redigera",

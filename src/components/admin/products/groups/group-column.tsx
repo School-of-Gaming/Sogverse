@@ -12,14 +12,21 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupPending } from "@/services/groups";
 import type { ProductGroupWithDetails } from "@/types";
 import { ParticipantChip } from "./participant-chip";
+import type { RobloxRenderMap } from "@/services/roblox";
+import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
 
 interface GroupColumnProps {
   group: ProductGroupWithDetails;
   pending: GroupPending;
+  /** Which identity this product's chips draw, or null for a topic with none. */
+  gamePlatform: GamePlatform | null;
+  /** The panel's one batched Roblox lookup; undefined until it lands. */
+  robloxRenders: RobloxRenderMap | undefined;
   /**
    * True when this product has a joinable voice room: remote, with a session
    * still ahead. False for in-person and completed products — no Join button.
@@ -40,6 +47,8 @@ interface GroupColumnProps {
 export function GroupColumn({
   group,
   pending,
+  gamePlatform,
+  robloxRenders,
   voiceAvailable,
   voiceIsOpen,
   opensDate,
@@ -265,8 +274,7 @@ export function GroupColumn({
                     gender={p.participant_gender}
                     parentFirstName={p.parent_first_name}
                     parentLastName={p.parent_last_name}
-                    minecraftUsername={p.participant_minecraft_username}
-                    minecraftUuid={p.participant_minecraft_uuid}
+                    {...chipGameIdentity(p, gamePlatform, robloxRenders)}
                     isPending={pending.moves.has(p.id) || pending.removes.has(p.id)}
                   />
                 ))}

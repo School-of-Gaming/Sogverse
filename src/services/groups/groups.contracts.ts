@@ -64,6 +64,18 @@ export const groupParticipationDetail = z.object({
   participant_minecraft_username: z.string().nullable(),
   participant_minecraft_uuid: z.string().nullable(),
   /**
+   * The Roblox half of the same story (00195), independent of the Minecraft
+   * pair above it: a child may have given one handle, both, or neither, and
+   * the chip draws whichever the product's topic is about.
+   *
+   * The account id is a JSON **number** rather than a string — Roblox's key is
+   * an int64 in a `bigint` column, where Mojang's is a dashed UUID in a text
+   * one. Null means no lookup ever confirmed the account; presence is the whole
+   * of "verified", exactly as the uuid is for Minecraft.
+   */
+  participant_roblox_username: z.string().nullable(),
+  participant_roblox_user_id: z.number().nullable(),
+  /**
    * The contact standing behind a *child's* seat — not the participant, which
    * is why these two lost the `gamer_` prefix in 00175 rather than gaining a
    * `participant_` one. Null on an adult seat, which has no linked parent.

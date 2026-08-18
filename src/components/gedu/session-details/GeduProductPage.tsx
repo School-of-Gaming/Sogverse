@@ -10,6 +10,7 @@ import {
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
+import { platformForTopic } from "@/lib/products/topics";
 import { sessionEntryId } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
@@ -22,6 +23,10 @@ import {
   type GeduGroupFeed,
 } from "@/services/gedu-sessions";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
+import {
+  useRobloxRenders,
+  useUpdateGroupMemberRoblox,
+} from "@/services/roblox";
 import type { GeduAssignedProduct } from "@/types";
 import { SessionDetailsBackLink } from "./BackLink";
 import { GeduProductPageBody } from "./GeduProductPageBody";
@@ -49,8 +54,8 @@ import type { SiteNotesDraft } from "./SiteNotesPanel";
  *
  * **The roster the rail renders comes from the feed, not from the assignment
  * read.** They are the same children, but only one of the two is invalidated
- * when a gedu fixes a Minecraft username, and a roster that does not refresh
- * after its own edit is worse than a slightly indirect one.
+ * when a gedu fixes a game username, and a roster that does not refresh after
+ * its own edit is worse than a slightly indirect one.
  *
  * **Both reads are usually already answered before this renders.** The route's
  * server half runs the same pair and hydrates them into the cache, so a direct
@@ -142,15 +147,56 @@ function Workspace({
   const [feedNow, setFeedNow] = useState<Date | null>(null);
   const [groupNotesEditing, setGroupNotesEditing] = useState(false);
   const [siteNotesEditing, setSiteNotesEditing] = useState(false);
-  const [minecraftStatuses, setMinecraftStatuses] = useState<
+  const [gameStatuses, setGameStatuses] = useState<
     Record<string, GameAccountStatus>
   >({});
+
+  /**
+   * Which game identity this product's surfaces are about, `null` for a topic
+   * that has none.
+   *
+   * The body answers the same question from the same column for its rows; this
+   * copy exists because the *save* has to pick a mutation and the render batch
+   * has to know whether to ask at all, and neither of those is the body's job.
+   */
+  const platform = platformForTopic(product.product.topic);
 
   const setSessionNotes = useSetSessionNotes(groupId);
   const recordAttendance = useRecordAttendance(groupId);
   const setGroupNotes = useSetGroupNotes(groupId);
   const setSiteNotes = useSetSiteNotes(groupId);
+  // Both platforms' mutations, unconditionally: a hook cannot be called behind
+  // a branch, and the one that is never fired costs nothing but the object it
+  // returns. The dispatch happens inside the save handler instead.
   const updateMinecraft = useUpdateGroupMemberMinecraft(groupId);
+  const updateRoblox = useUpdateGroupMemberRoblox(groupId);
+
+  /**
+   * The account ids whose Roblox figure this roster needs — verified rows only,
+   * and only on a Roblox product.
+   *
+   * **One call for the whole list, never one per row.** The upstream cost is per
+   * request rather than per id, against a 60-per-minute budget every IP in the
+   * serverless fleet draws on, so a hook mapped over eight rows is eight
+   * requests where one would do — and a page of rosters could drain the bucket
+   * on its own. An unverified handle contributes nothing: it has no id, and
+   * resolving the *name* instead would draw whichever stranger owns it beside a
+   * child's. On any other platform the list is empty, which makes no request at
+   * all rather than one that answers `{}`.
+   */
+  const robloxIds = useMemo(
+    () =>
+      platform === "roblox"
+        ? feed.roster
+            .map((member) => member.roblox_user_id)
+            .filter((id): id is number => id !== null)
+        : [],
+    [platform, feed.roster],
+  );
+  // The full figure, because that is what the roster draws — the rail is not a
+  // dense list, and asking for the head as well would be a second upstream
+  // request for a picture nothing here renders.
+  const { data: robloxAvatarUrls } = useRobloxRenders(robloxIds, "full");
 
   const now = feedNow ?? liveNow;
 
@@ -209,8 +255,8 @@ function Workspace({
    * replaced by the feed's.
    *
    * Same children, but the feed is the copy a write invalidates, so the rail
-   * shows a corrected Minecraft username the moment the round trip lands
-   * instead of at the next hard navigation.
+   * shows a corrected game username the moment the round trip lands instead of
+   * at the next hard navigation.
    *
    * The count is overwritten alongside the rows for the same reason, and it has
    * to be the *same array* the rows are rendered from rather than a second
@@ -358,41 +404,60 @@ function Workspace({
   };
 
   /**
-   * A gedu correcting a child's Minecraft username, with the real Mojang round
+   * A gedu correcting a child's game username, with the platform's real round
    * trip behind it.
    *
-   * The route resolves the name server-side and stores the canonical spelling
-   * with the UUID, so a save that finds an account lands **verified** — the
-   * status here is read off what came back rather than guessed at, and a name
-   * Mojang does not know lands `unverified` with the name still saved. A clear
-   * needs no lookup and no status at all.
+   * The route resolves the name server-side and stores the account key beside
+   * it, so a save that finds an account lands **verified** — the status here is
+   * read off what came back rather than guessed at, and a name the platform does
+   * not know lands `unverified` with the name still saved. A clear needs no
+   * lookup and no status at all.
+   *
+   * **The platform decides which write happens, and it is the product's rather
+   * than the row's**: one roster shows one identity, so there is no per-child
+   * question to ask here. A product whose topic names no platform renders no
+   * editor at all, so this cannot be reached with a null one — and it returns
+   * quietly rather than throwing if it somehow is, because a roster row is not
+   * the place to surface a programming error.
    */
-  const handleSaveMinecraftUsername = async (
-    gamerId: string,
-    username: string,
-  ) => {
+  const handleSaveGameUsername = async (gamerId: string, username: string) => {
+    if (platform === null) return;
     const trimmed = username.trim();
+    const value = trimmed.length === 0 ? null : trimmed;
 
-    if (trimmed.length === 0) {
-      await updateMinecraft.mutateAsync({ gamerId, minecraftUsername: null });
-      setMinecraftStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
+    /** The write for this product's platform, answering with the stored key. */
+    const save = async (): Promise<string | number | null> =>
+      platform === "minecraft"
+        ? (
+            await updateMinecraft.mutateAsync({
+              gamerId,
+              minecraftUsername: value,
+            })
+          ).minecraft_uuid
+        : (
+            await updateRoblox.mutateAsync({ gamerId, robloxUsername: value })
+          ).roblox_user_id;
+
+    if (value === null) {
+      await save();
+      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
       return;
     }
 
-    setMinecraftStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
+    setGameStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
     try {
-      const result = await updateMinecraft.mutateAsync({
-        gamerId,
-        minecraftUsername: trimmed,
-      });
-      setMinecraftStatuses((prev) => ({
+      // Presence of the key is the whole of "verified" — nothing reads its
+      // value, which is how a dashed Mojang UUID and a Roblox integer share one
+      // branch without being pretended to be the same value space.
+      const externalId = await save();
+      setGameStatuses((prev) => ({
         ...prev,
-        [gamerId]: result.minecraft_uuid === null ? "unverified" : "verified",
+        [gamerId]: externalId === null ? "unverified" : "verified",
       }));
     } catch (error) {
       // A refused write says nothing about the name, so the row goes back to
       // whatever its account says rather than claiming a failed check.
-      setMinecraftStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
+      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
       throw error;
     }
   };
@@ -429,8 +494,9 @@ function Workspace({
       editingEntryId={editingEntryId}
       onEditEntry={handleEditEntry}
       onSaveEntry={handleSaveEntry}
-      onSaveMinecraftUsername={handleSaveMinecraftUsername}
-      minecraftStatuses={minecraftStatuses}
+      onSaveGameUsername={handleSaveGameUsername}
+      gameStatuses={gameStatuses}
+      robloxAvatarUrls={robloxAvatarUrls}
     />
   );
 }

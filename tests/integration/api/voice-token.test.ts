@@ -4,6 +4,7 @@ import { POST } from "@/app/api/voice/token/route";
 import { DailyApiError } from "@/lib/daily";
 import { mockSupabaseSuccess } from "../../mocks/supabase";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import type { ProductTopic } from "@/types";
 
 // --- Mocks ---
 
@@ -58,6 +59,11 @@ const occupantEq2 = vi.fn();
 const occupantEq1 = vi.fn();
 const occupantSelect = vi.fn();
 
+// Which game-account table the route actually touched on a join. A topic about
+// no single game account must read *neither* — "no row found" and "never asked"
+// produce the same empty identity, and only this can tell them apart.
+const gameAccountReads: string[] = [];
+
 function tokenRequest(body: Record<string, unknown>): Request {
   return new Request("http://localhost:3000/api/voice/token", {
     method: "POST",
@@ -87,11 +93,15 @@ function mockTables(opts: {
   group: {
     timezone?: string;
     is_remote?: boolean;
+    /** Drives which game identity (if any) the token carries. Defaults to the
+     *  Minecraft Java topic, which is what most remote clubs are. */
+    topic?: ProductTopic;
     slots?: Array<{ weekday: number; start_time: string; duration_minutes: number }>;
   } | null;
   participation?: { id: string } | null;
   geduAssignment?: { group_id: string } | null;
   minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
+  robloxAccount?: { roblox_username: string | null; roblox_user_id: number | null } | null;
 }) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "product_groups") {
@@ -103,6 +113,7 @@ function mockTables(opts: {
               id: PRODUCT_ID,
               timezone: opts.group.timezone ?? "Europe/Helsinki",
               is_remote: opts.group.is_remote ?? true,
+              topic: opts.group.topic ?? "minecraft_java",
               slots: opts.group.slots ?? [
                 { weekday: 1, start_time: "14:00", duration_minutes: 60 },
               ],
@@ -150,12 +161,25 @@ function mockTables(opts: {
       };
     }
     if (table === "minecraft_accounts") {
+      gameAccountReads.push(table);
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             maybeSingle: vi
               .fn()
               .mockResolvedValue(mockSupabaseSuccess(opts.minecraftAccount ?? null)),
+          }),
+        }),
+      };
+    }
+    if (table === "roblox_accounts") {
+      gameAccountReads.push(table);
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi
+              .fn()
+              .mockResolvedValue(mockSupabaseSuccess(opts.robloxAccount ?? null)),
           }),
         }),
       };
@@ -176,6 +200,7 @@ describe("POST /api/voice/token", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    gameAccountReads.length = 0;
     // Rebuild the prune chain each test (clearAllMocks wipes return values).
     placementLt.mockResolvedValue({ error: null });
     placementEq.mockReturnValue({ lt: placementLt });
@@ -407,9 +432,10 @@ describe("POST /api/voice/token", () => {
           userId: "gamer-id",
           // No private-zone occupants → no receive block baked.
           canReceive: undefined,
-          // No Minecraft account → empty trailing slots, which the client
-          // renders as the "(Unknown)" badge.
-          userName: "gamer-id|gamer|Kid||",
+          // A Minecraft topic with no linked account → the platform slot is
+          // present and the identity slots are empty, which the client renders
+          // as the "(Unknown)" row.
+          userName: "gamer-id|gamer|Kid|minecraft||",
         }),
       );
     });
@@ -453,10 +479,14 @@ describe("POST /api/voice/token", () => {
       );
     });
 
-    it("embeds the joiner's Minecraft username + uuid in the token user_name", async () => {
+    // Which identity a room carries is the *product's* decision, not the
+    // joiner's: the topic picks the platform, the platform picks the table, and
+    // a topic about no single game account reads nothing at all. Three topics,
+    // three outcomes — the whole of the branch.
+    it("embeds the joiner's Minecraft username + uuid on a Minecraft topic", async () => {
       authAs("gamer-id", { role: "gamer", first_name: "Kid" });
       mockTables({
-        group: {},
+        group: { topic: "minecraft_java" },
         participation: { id: "participation-1" },
         minecraftAccount: {
           minecraft_username: "Steve123",
@@ -468,9 +498,57 @@ describe("POST /api/voice/token", () => {
       expect(res.status).toBe(200);
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({
-          userName: "gamer-id|gamer|Kid|Steve123|abc-uuid",
+          userName: "gamer-id|gamer|Kid|minecraft|Steve123|abc-uuid",
         }),
       );
+      expect(gameAccountReads).toEqual(["minecraft_accounts"]);
+    });
+
+    it("embeds the joiner's Roblox handle + numeric id on a Roblox topic", async () => {
+      // The account key crosses as text either way — a Mojang UUID already is
+      // one, a Roblox int64 goes over as its decimal string and the client
+      // parses it back to a number.
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: { topic: "roblox_studio" },
+        participation: { id: "participation-1" },
+        robloxAccount: {
+          roblox_username: "BuilderKid",
+          roblox_user_id: 1583920471,
+        },
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userName: "gamer-id|gamer|Kid|roblox|BuilderKid|1583920471",
+        }),
+      );
+      expect(gameAccountReads).toEqual(["roblox_accounts"]);
+    });
+
+    it("mints no game slots — and reads no account table — on a topic about no game account", async () => {
+      // An Esports club is about whichever game the product is about, so there
+      // is no single handle to show. The token is the same 3-slot shape an
+      // instant room mints, and the row hides its identity slot entirely rather
+      // than showing "(Unknown)" for an account nobody was ever asked for.
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: { topic: "esports" },
+        participation: { id: "participation-1" },
+        minecraftAccount: {
+          minecraft_username: "Steve123",
+          minecraft_uuid: "abc-uuid",
+        },
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ userName: "gamer-id|gamer|Kid" }),
+      );
+      expect(gameAccountReads).toEqual([]);
     });
 
     it("self-heals: prunes the group's prior-session private-zone occupancy on join", async () => {
@@ -538,7 +616,7 @@ describe("POST /api/voice/token", () => {
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({
           isOwner: false,
-          userName: "customer-id|customer|Parent||",
+          userName: "customer-id|customer|Parent|minecraft||",
         }),
       );
     });

@@ -1,3 +1,7 @@
+import type {
+  GameAccountExternalId,
+  GamePlatform,
+} from "@/components/game-account";
 import type { GeduAssignedProductRosterEntry } from "@/types";
 
 /**
@@ -25,4 +29,27 @@ export function rosterContactEmail(
   entry: ParticipantSessionRow,
 ): string | null {
   return entry.participant_email ?? entry.parent_email;
+}
+
+/**
+ * The two columns one platform's identity lives in, read off a roster row.
+ *
+ * A roster row carries every platform's pair at once and the surface shows one
+ * of them — whichever the product's topic is about — so something has to map a
+ * platform onto the right two fields. Written inline it would be the same
+ * ternary in the row, in the batch that collects account ids, and in the save
+ * handler that decides which mutation to fire, which is three chances to pair a
+ * Roblox name with a Mojang uuid.
+ *
+ * The key types stay apart on the way through: `externalId` is the shared union
+ * (a dashed string or a positive integer), never one squeezed into the other,
+ * and nothing downstream reads its value — presence is the whole of "verified".
+ */
+export function rosterGameAccount(
+  entry: ParticipantSessionRow,
+  platform: GamePlatform,
+): { username: string | null; externalId: GameAccountExternalId | null } {
+  return platform === "minecraft"
+    ? { username: entry.minecraft_username, externalId: entry.minecraft_uuid }
+    : { username: entry.roblox_username, externalId: entry.roblox_user_id };
 }

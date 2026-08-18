@@ -153,6 +153,16 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "half of the gate refuses with a second 42501. Positive path: " +
       "gedu-session-feed.test.ts.",
   },
+  // The Roblox twin (00195). Same guard, same scope check, same target role
+  // check — and therefore the same reason its permitted half cannot be asserted
+  // on NULL arguments.
+  set_group_member_roblox: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "no NULL child participates in a group the caller teaches, so the target " +
+      "half of the gate refuses with a second 42501. Positive path: " +
+      "gedu-session-feed.test.ts.",
+  },
 
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product is SECURITY INVOKER, so

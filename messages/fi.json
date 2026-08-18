@@ -1357,17 +1357,17 @@
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
       "genderNonBinary": "Muu",
-      "minecraftUsernameLabel": "Minecraft-käyttäjänimi",
-      "minecraftUsernamePlaceholder": "Minecraft-käyttäjänimi",
-      "minecraftUsernameSave": "Tallenna",
-      "minecraftUsernameCancel": "Peruuta",
-      "editMinecraftUsername": "Muokkaa pelaajan {name} Minecraft-käyttäjänimeä",
+      "gameUsernameLabel": "{platform}-käyttäjänimi",
+      "gameUsernamePlaceholder": "{platform}-käyttäjänimi",
+      "gameUsernameSave": "Tallenna",
+      "gameUsernameCancel": "Peruuta",
+      "editGameUsername": "Muokkaa pelaajan {name} {platform}-käyttäjänimeä",
       "copyContactEmail": "Kopioi yhteyssähköposti {email}",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllContactEmails": "Kopioi kaikki yhteyssähköpostit ({count})",
       "allEmailsCopied": "Kaikki yhteyssähköpostit kopioitu",
       "loadingWorkspace": "Ladataan tämän ryhmän kertoja.",
-      "minecraftSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
+      "gameSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
     },
     "sessionFeed": {
       "edit": "Muokkaa",

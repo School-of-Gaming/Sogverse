@@ -40,16 +40,26 @@ import { ParticipantChip } from "./participant-chip";
 import { GroupColumn } from "./group-column";
 import {
   canCompEnroll,
+  chipGameIdentity,
   dragSubjectsFrom,
   isSubscriptionShaped,
   readDropData,
   readChipDragData,
   resolveDrop,
+  robloxIdsFrom,
   type BlockedDropReason,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
-import type { BillingMode, ProductGroupsSnapshot, ProductType } from "@/types";
+import { useRobloxRenders, type RobloxRenderMap } from "@/services/roblox";
+import { platformForTopic } from "@/lib/products/topics";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
+import type {
+  BillingMode,
+  ProductGroupsSnapshot,
+  ProductTopic,
+  ProductType,
+} from "@/types";
 
 interface GroupsPanelProps {
   productId: string;
@@ -64,6 +74,12 @@ interface GroupsPanelProps {
    * is trusted.
    */
   billingMode: BillingMode;
+  /**
+   * What the product is about — and therefore which game identity, if any, its
+   * chips carry. Most topics are about no single account a child holds, and
+   * those chips draw no identity row at all.
+   */
+  topic: ProductTopic;
   /**
    * Who the product may seat. Read for one thing only: the participant picker
    * offers its Add button to the people this admits and to nobody else, so an
@@ -96,8 +112,12 @@ interface GroupsPanelProps {
 // the entire panel on every pointer move).
 function DragOverlayContent({
   snapshot,
+  gamePlatform,
+  robloxRenders,
 }: {
   snapshot: ProductGroupsSnapshot | undefined;
+  gamePlatform: GamePlatform | null;
+  robloxRenders: RobloxRenderMap | undefined;
 }) {
   const { active } = useDndContext();
 
@@ -130,8 +150,9 @@ function DragOverlayContent({
         gender={overlay.participant_gender}
         parentFirstName={overlay.parent_first_name}
         parentLastName={overlay.parent_last_name}
-        minecraftUsername={overlay.participant_minecraft_username}
-        minecraftUuid={overlay.participant_minecraft_uuid}
+        // The lifted chip is the same chip: same identity, resolved from the
+        // same batch, so nothing about it changes as it leaves the column.
+        {...chipGameIdentity(overlay, gamePlatform, robloxRenders)}
       />
     </div>
   );
@@ -180,6 +201,7 @@ export function GroupsPanel({
   productId,
   productType,
   billingMode,
+  topic,
   audience,
   seatCount,
   waitlistEnabled,
@@ -252,6 +274,28 @@ export function GroupsPanel({
   // participation object, so the whole decision comes from the document that
   // drew the chip and no second read can contradict it.
   const dragSubjects = useMemo(() => dragSubjectsFrom(snapshot), [snapshot]);
+
+  // Which identity every chip on this panel is about — one answer for the whole
+  // product, from its topic. Most topics resolve to `null` and the chips simply
+  // carry no identity row.
+  const gamePlatform = platformForTopic(topic);
+
+  // One batched lookup for the entire snapshot — groups, inbox and waitlist
+  // together — and only on a Roblox product; every other platform hands back an
+  // empty list, which disables the query outright. Per-chip resolution is the
+  // shape this panel exists as the counter-example to: fifty-plus chips against
+  // a per-IP budget the whole serverless fleet shares.
+  //
+  // `head` because that is the figure the chip draws, and a caller must pass the
+  // render matching the figure it asked for. While the call is in flight (and if
+  // it fails — renders are never retried) `data` is undefined, which each chip
+  // reads as the placeholder: the figure box is already at its final size, so
+  // the pictures landing moves nothing.
+  const robloxIds = useMemo(
+    () => robloxIdsFrom(snapshot, gamePlatform),
+    [snapshot, gamePlatform],
+  );
+  const { data: robloxRenders } = useRobloxRenders(robloxIds, "head");
 
   // Seats taken = every active participation (groups + unassigned; the snapshot
   // only ever holds active rows there). Drives the seat-availability bar and the
@@ -423,6 +467,8 @@ export function GroupsPanel({
           <UnassignedCard
             participations={unassigned}
             pendingChipIds={busyChipIds}
+            gamePlatform={gamePlatform}
+            robloxRenders={robloxRenders}
           />
 
           {hasGroups ? (
@@ -431,6 +477,8 @@ export function GroupsPanel({
                 key={g.id}
                 group={g}
                 pending={pending}
+                gamePlatform={gamePlatform}
+                robloxRenders={robloxRenders}
                 voiceAvailable={voiceAvailable}
                 voiceIsOpen={voiceIsOpen}
                 opensDate={opensDate}
@@ -474,12 +522,18 @@ export function GroupsPanel({
             <WaitlistCard
               participations={waitlist}
               pendingChipIds={busyChipIds}
+              gamePlatform={gamePlatform}
+              robloxRenders={robloxRenders}
             />
           )}
         </div>
 
         <DragOverlay>
-          <DragOverlayContent snapshot={snapshot} />
+          <DragOverlayContent
+            snapshot={snapshot}
+            gamePlatform={gamePlatform}
+            robloxRenders={robloxRenders}
+          />
         </DragOverlay>
       </DndContext>
 

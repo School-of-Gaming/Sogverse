@@ -1,6 +1,8 @@
 import type { DailyCall } from "@daily-co/daily-js";
 import type { UserRole, VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
+import type { GameAccountExternalId } from "@/components/game-account";
 import type { AudioInputDevice } from "./use-mic-devices";
 import type { MediaErrorCategory } from "@/lib/voice/media-error";
 
@@ -21,13 +23,19 @@ export interface VoiceParticipant {
   role: VoiceRole;
   userName: string;
   /**
-   * The participant's own Minecraft username/UUID, decoded from the Daily
-   * token's `user_name` field (group rooms only). `null` = linked-but-unset
-   * (the badge renders "(Unknown)"); `undefined` = the room doesn't surface
-   * Minecraft (instant rooms) → no badge. See buildUserName / mapParticipant.
+   * The participant's own game identity, decoded from the Daily token's
+   * `user_name` field. Which platform (if any) is the *product's* decision, not
+   * the participant's: the token route resolves it from the product's topic, so
+   * every peer in a room carries the same platform or none at all.
+   *
+   * `undefined` on all three = the room surfaces no game identity (an instant
+   * room, or a topic about no single game account) → the row hides its identity
+   * slot. A platform with a `null` username = linked-but-unset → "(Unknown)".
+   * See buildUserName / mapParticipant.
    */
-  minecraftUsername?: string | null;
-  minecraftUuid?: string | null;
+  gamePlatform?: GamePlatform;
+  gameUsername?: string | null;
+  gameExternalId?: GameAccountExternalId | null;
   audioOn: boolean;
   videoOn: boolean;
   screenShareOn: boolean;

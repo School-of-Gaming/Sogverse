@@ -175,6 +175,7 @@ export function ProductDetailsPage({
         productId={productId}
         productType={productType}
         billingMode={product.billing_mode}
+        topic={product.topic}
         audience={productAudience(product)}
         seatCount={product.seat_count}
         waitlistEnabled={product.waitlist_enabled}
