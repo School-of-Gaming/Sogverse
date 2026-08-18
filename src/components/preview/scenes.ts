@@ -94,10 +94,11 @@ const PRODUCT_SCENARIOS: readonly PreviewScenarioMeta[] = PREVIEW_SCENARIOS.map(
 );
 
 /**
- * The confirmation surface takes a curated subset instead, because a summary
- * page is only reachable from a signup panel's CTA and only meaningful about a
- * purchase that could have happened. The list itself — and the reasoning that
- * picked it — lives with the fixtures.
+ * The confirmation surface takes a subset instead, because a summary page is
+ * only reachable from a signup panel's CTA. Which scenarios that leaves is
+ * derived from the panel's own states rather than picked, since the product
+ * scene wires that CTA unconditionally and a missing scenario here is a live
+ * button landing on a 404. The derivation lives with the fixtures.
  */
 const CONFIRMATION_SCENARIOS: readonly PreviewScenarioMeta[] =
   PREVIEW_SCENARIOS.filter(({ slug }) =>
@@ -325,6 +326,18 @@ export const PREVIEW_SCENES = [
 
 export type PreviewScene = (typeof PREVIEW_SCENES)[number];
 export type PreviewSurface = PreviewScene["surface"];
+
+/**
+ * The same list, read through its declared interface.
+ *
+ * `PREVIEW_SCENES` is `as const` — which is what gives `PreviewSurface` its
+ * literal union, and therefore what makes a scene with no renderer fail to
+ * compile — but it also means a scenario that omits its optional `description`
+ * has no such property on the literal type at all, so a reader that walks every
+ * scenario cannot ask for one. Widening to the interface is the fix, and it is
+ * done once here rather than at each read site.
+ */
+export const PREVIEW_SCENE_LIST: readonly PreviewSceneMeta[] = PREVIEW_SCENES;
 
 /** The scene for a URL segment, or `null` when nothing claims it. */
 export function findPreviewScene(surface: string): PreviewScene | null {

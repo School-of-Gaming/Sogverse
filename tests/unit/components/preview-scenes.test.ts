@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { formatInTimeZone } from "date-fns-tz";
 import {
   PREVIEW_SCENES,
+  PREVIEW_SCENE_LIST,
   findPreviewScene,
   previewSceneHref,
   sceneHasScenario,
-  type PreviewScenarioMeta,
 } from "@/components/preview/scenes";
 import {
   GEDU_DASHBOARD_SCENARIOS,
@@ -125,16 +125,17 @@ describe("preview scene registry", () => {
       "gedu-dashboard": 3,
     };
     for (const surface of ["gedu-product", "gedu-dashboard"] as const) {
-      const scene = findPreviewScene(surface);
-      expect(scene).not.toBeNull();
+      // Through `PREVIEW_SCENE_LIST` rather than `findPreviewScene`, because
+      // the registry is `as const` and a scenario that omits its optional
+      // `description` has no such property on its literal type — the widened
+      // list is where `description` is the optional field it was declared as,
+      // and this is the assertion that these scenarios did not omit it.
+      const scene = PREVIEW_SCENE_LIST.find((s) => s.surface === surface);
+      expect(scene, surface).toBeDefined();
       expect(scene!.scenarios.length, surface).toBeLessThanOrEqual(
         MAX_SCENARIOS[surface],
       );
-      // Read through the declared interface: the registry is `as const`, so a
-      // scenario that omits its optional `description` has no such property on
-      // its literal type, and this is the assertion that it did not omit it.
-      const scenarios: readonly PreviewScenarioMeta[] = scene!.scenarios;
-      for (const scenario of scenarios) {
+      for (const scenario of scene!.scenarios) {
         expect(scenario.description?.trim(), `${surface}/${scenario.slug}`)
           .toBeTruthy();
       }
@@ -173,23 +174,49 @@ describe("registry scenarios match their fixtures", () => {
    * and the confirmation surface filters it against
    * `CONFIRMATION_PRODUCT_SCENARIOS`. So asserting the registry equals those
    * lists compares an expression with itself, and there is no edit that fails
-   * it. What is worth checking is the one thing derivation cannot guarantee:
-   * that the *curated* list names products that still exist.
-   *
-   * The confirmation surface carries a subset on purpose. A scenario earns a
-   * summary page only if a purchase can land on it, so the states that never
-   * reach one — full and shut, not yet open, running, finished — are off it, as
-   * are the two whose only difference is seat arithmetic this page does not
-   * render. The region-lock states are off it on the same reasoning: two never
-   * reach a summary, and the third reaches the ordinary one every product
-   * scenario already covers.
+   * it. What is worth checking is what derivation cannot guarantee on its own:
+   * that the list names products that still exist, and that it names *every*
+   * product whose page has a live button pointing here.
    */
-  it("curates the confirmation surface out of real product scenarios", () => {
+  it("builds the confirmation surface out of real product scenarios", () => {
     const productSlugs = PREVIEW_SCENARIOS.map((s) => s.slug);
     // A slug that drifted out of the fixtures would otherwise only show up as
     // a dead link on an admin page nobody opens until they need it.
     for (const slug of CONFIRMATION_PRODUCT_SCENARIOS) {
       expect(productSlugs, slug).toContain(slug);
+    }
+  });
+
+  /**
+   * **A scenario whose panel can commit must be on the confirmation surface.**
+   *
+   * This is the direction that bites. The product scene builds its summary href
+   * unconditionally — every scenario gets one, whether or not the registry
+   * declares it — and the panel pushes that href after its fake commit. So a
+   * scenario the panel can commit and the confirmation scene omits is not a
+   * missing demo whose worst case is nobody looking at it: it is a live CTA on
+   * an admin's screen landing on a 404, which is the exact failure a previous
+   * hand-curated list shipped for six scenarios.
+   *
+   * Three state kinds render the inert closed panel and have no button at all;
+   * everything else renders the signup body, which always ends in one. The
+   * pre-open countdowns are in that second group and are the easy ones to talk
+   * yourself out of: their CTA is dormant rather than absent, and it goes live
+   * in place the moment the clock runs out on the page somebody left open.
+   *
+   * The region-lock scenarios are swept by this too, without appearing in it.
+   * They render one ordinary club fixture under a gate, so their CTA points at
+   * that club's summary rather than at one of their own — which is declared,
+   * and is why the confirmation surface needs no lock states.
+   */
+  it("gives every committable scenario a confirmation page to land on", () => {
+    const closed = ["ended", "running_late", "full_closed"];
+    const confirmation = findPreviewScene("confirmation");
+    expect(confirmation).not.toBeNull();
+    for (const { slug } of PREVIEW_SCENARIOS) {
+      const { state } = buildScenarioFixture(slug);
+      if (closed.includes(state.kind)) continue;
+      expect(sceneHasScenario(confirmation!, slug), slug).toBe(true);
     }
   });
 

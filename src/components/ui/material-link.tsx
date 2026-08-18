@@ -6,30 +6,24 @@ import { cn } from "@/lib/utils";
 interface MaterialLinkProps {
   href: string;
   /**
-   * `"chip"` (default) is the quiet inline form, for a row of links where this
-   * one is not the point. `"button"` is the prominent form — a real
-   * button-weight affordance for a surface where fetching the materials is one
-   * of the first things the reader is expected to do.
+   * The one shape this link has. Kept as a prop only because the call site
+   * still names it; there is nothing else it can be set to, and it can be
+   * dropped from both ends in one change.
    */
-  variant?: "chip" | "button";
+  variant?: "button";
   className?: string;
 }
 
 /**
  * Link to a product's lesson/material content — **gedu- and admin-facing only**.
  *
- * **Two weights, because the link means two different things in two places.** In
- * a list of a product's outward links it is one entry among several and takes
- * the quiet chip form. On a gedu's own workspace it is the thing they came for:
- * a gedu opening the page before a session is going to fetch the material, and a
- * small tinted chip tucked beside the type label is not what a primary errand
- * looks like. There it takes the button form, so it reads as an action rather
- * than as metadata about the product.
- *
- * It stays one component in both cases. The prominence is a variant, not a
- * second implementation — two components would drift in glyph, label and, worst
- * of all, in the staff-only warning that has to travel with the URL wherever it
- * goes.
+ * **One weight: a button.** The link only ever appears on a gedu's own
+ * workspace, where it is the thing they came for — a gedu opening the page
+ * before a session is going to fetch the material — so it reads as an action
+ * rather than as metadata about the product. It once had a quieter chip form
+ * for a row of outward links where this one was not the point; no surface
+ * renders that row any more, so the variant went with it rather than staying
+ * on as a shape nothing asks for.
  *
  * **The visibility rule is the caller's to enforce.** This component renders
  * whatever href it is handed; it has no idea who is looking. It is safe on a
@@ -37,11 +31,7 @@ interface MaterialLinkProps {
  * not render it at all — not hide it with CSS, not disable it — because the URL
  * would still be in the HTML.
  */
-export function MaterialLink({
-  href,
-  variant = "chip",
-  className,
-}: MaterialLinkProps) {
+export function MaterialLink({ href, className }: MaterialLinkProps) {
   const t = useTranslations("groups");
 
   return (
@@ -51,17 +41,13 @@ export function MaterialLink({
       rel="noopener noreferrer"
       title={t("materialStaffOnly")}
       className={cn(
-        variant === "button"
-          ? cn(buttonVariants({ variant: "outline", size: "default" }), "gap-2")
-          : "inline-flex items-center gap-1 text-sm text-primary hover:underline",
+        buttonVariants({ variant: "outline", size: "default" }),
+        "gap-2",
         className,
       )}
     >
-      <BookLock
-        className={variant === "button" ? "h-4 w-4" : "h-3.5 w-3.5"}
-        aria-hidden
-      />
-      {variant === "button" ? t("materialAction") : t("material")}
+      <BookLock className="h-4 w-4" aria-hidden />
+      {t("materialAction")}
       <span className="sr-only">{t("materialStaffOnly")}</span>
     </a>
   );

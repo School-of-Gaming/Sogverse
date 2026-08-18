@@ -9,7 +9,7 @@ import { findPreviewScene, sceneHasScenario } from "@/components/preview/scenes"
  *
  * Fully fixture-driven — no DB calls, nothing to leak — and admin-only: the
  * proxy gates `/preview/*` on the admin role, so every future scene is covered
- * with no new code. Never indexed. Links live on `/admin/ui-components`.
+ * with no new code. Never indexed. Links live on `/admin/ui-previews`.
  *
  * Unknown surface or a scenario the scene doesn't declare 404s, so a stale link
  * fails loudly instead of rendering an empty shell.

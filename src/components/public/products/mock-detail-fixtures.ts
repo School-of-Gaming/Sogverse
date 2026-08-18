@@ -1006,38 +1006,44 @@ export const CONFIRMATION_NOTICE_SCENARIOS = [
 }[];
 
 /**
+ * The three registration states whose panel is inert — the kinds that render
+ * the closed panel instead of a signup body, and so put no CTA on the page at
+ * all. Every other kind ends in a button. Mirrors the switch in
+ * `SignupPanelView`, and is the whole of what decides the list below.
+ */
+const NON_COMMITTING_STATE_KINDS: readonly RegistrationState["kind"][] = [
+  "ended",
+  "running_late",
+  "full_closed",
+];
+
+/**
  * The product scenarios the **confirmation** scene previews.
  *
- * A curated subset rather than the whole of `PREVIEW_SCENARIOS`, on the same
- * reasoning that keeps the region-lock states off this surface: a scenario
- * earns a confirmation page only if a purchase can actually land on it. The
- * closed states — full and shut, not yet open, running, finished — never reach
- * a summary, because the only way to this page is the signup panel's CTA and
- * those states do not render one; a page saying "you have paid" about a product
- * nobody can pay for is a picture of nothing.
+ * Derived from the panel rather than curated by hand, because this is not a
+ * taste question: the product scene wires its CTA to the matching confirmation
+ * scenario unconditionally, so a scenario whose panel can commit and which this
+ * list omits is not a missing demo — it is a dead link, and the route 404s on
+ * the scenario the registry never declared.
  *
- * Seat arithmetic is the other omission, and it is a rendering fact rather than
- * a reachability one: the summary shows who the seat is for and what it cost
- * and says nothing about how full the product is, so the almost-full and
- * uncapped municipality scenarios render byte-for-byte the same page as the
- * empty one.
+ * That includes the pre-open countdowns, whose CTA is dormant rather than
+ * absent: it goes live in place the moment the clock runs out, on the same page
+ * somebody left open.
+ *
+ * The pages this yields are not all visually distinct — the summary says who
+ * the seat is for and what it cost, and nothing about how full the product is,
+ * so several of them render the same page. That redundancy is what a reachable
+ * surface costs, and it is the right way round: an extra link nobody needs to
+ * open beats a live button landing on a 404.
  */
-export const CONFIRMATION_PRODUCT_SCENARIOS: readonly PreviewScenario[] = [
-  "consumer-club",
-  "consumer-club-free",
-  "consumer-club-full-waitlist",
-  "consumer-club-threshold",
-  "consumer-club-future-start",
-  "consumer-club-future-start-clamped",
-  "consumer-club-parents-only",
-  "muni-empty",
-  "muni-filling",
-  "muni-full-waitlist",
-  "camp-open",
-  "free-event",
-  "event-parents-only",
-  "event-both-audiences",
-];
+export const CONFIRMATION_PRODUCT_SCENARIOS: readonly PreviewScenario[] =
+  SCENARIO_ORDER.filter((slug) => {
+    const config = SCENARIOS[slug];
+    // A countdown resolves to `closed_pre` at build time, which is a signup
+    // body like any other — it is the clock that is closed, not the panel.
+    if ("opensInMs" in config) return true;
+    return !NON_COMMITTING_STATE_KINDS.includes(config.state.kind);
+  });
 
 export type ConfirmationNoticeScenario =
   (typeof CONFIRMATION_NOTICE_SCENARIOS)[number]["slug"];
@@ -1060,8 +1066,8 @@ export function findConfirmationNotice(
 // exists: every scenario is previewable full-page from the UI Previews list,
 // because the product scene maps the whole of `PREVIEW_SCENARIOS`. The closed
 // states especially, since no card links to them and that page is the only way
-// to look at one. (The confirmation scene takes the curated subset above
-// instead — a closed product has no purchase to confirm.)
+// to look at one. (The confirmation scene takes the derived subset above
+// instead — a closed product has no CTA, so no purchase to confirm.)
 
 // Seats already taken on a scenario — the count the municipality seat-fill bar
 // reads. Derived from the authored state so the bar and the card's state stay

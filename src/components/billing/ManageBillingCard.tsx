@@ -48,8 +48,11 @@ export type ManageBillingCardViewProps = {
 };
 
 /**
- * Pure prop-driven view. Used directly by /admin/ui-components to render
- * deterministic demos of each state.
+ * Pure prop-driven view — every state falls out of the account list it is
+ * handed, with no data of its own. That is what lets the parent-dashboard
+ * preview scene mount it over fixtures and render each state in the page it
+ * lives in: one button, several buttons under their explanation, an account
+ * covering nothing, and the opening spinner a live click leaves behind.
  */
 export function ManageBillingCardView({
   accounts,

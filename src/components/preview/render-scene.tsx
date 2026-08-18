@@ -44,8 +44,12 @@ const SCENE_RENDERERS: Record<
   (scenario: string) => React.ReactNode
 > = {
   shop: (scenario) => {
+    // Checked and not handed on: there is one storefront grid, so the scene
+    // body branches on nothing. The check still belongs here — it is what makes
+    // a slug the registry does not declare 404 rather than render the grid
+    // under a made-up name.
     if (!isShopBrowseScenario(scenario)) notFound();
-    return <ShopBrowseScene scenario={scenario} />;
+    return <ShopBrowseScene />;
   },
   products: (scenario) => {
     // The region-lock scenarios are this page under a lock, so they go through

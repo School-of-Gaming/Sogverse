@@ -1,24 +1,9 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only index of fixture-driven preview scenes; every string here is scene metadata or an explanation of the mechanism, not user-facing copy that ships in any locale */
 import { buttonVariants } from "@/components/ui/button";
 import {
-  PREVIEW_SCENES,
+  PREVIEW_SCENE_LIST,
   previewSceneHref,
-  type PreviewSceneMeta,
 } from "@/components/preview/scenes";
-
-/**
- * The registry, read through the interface it satisfies rather than through its
- * literal type.
- *
- * `PREVIEW_SCENES` is `as const` so the renderer can be keyed by a literal
- * `PreviewSurface` union — which is what makes a scene with no render fail to
- * compile. The cost is that a scenario omitting its optional `description` has
- * no such property on its literal type at all, so reading `.description` off
- * the union does not type-check. This page only ever reads metadata, so it
- * reads through `PreviewSceneMeta`, where `description` is the optional field
- * it was declared as.
- */
-const SCENES: readonly PreviewSceneMeta[] = PREVIEW_SCENES;
 
 /**
  * **UI Previews** — the single home for the full-page preview scenes.
@@ -40,8 +25,8 @@ const SCENES: readonly PreviewSceneMeta[] = PREVIEW_SCENES;
  * user-facing-shaped and goes through next-intl as usual.
  */
 export default function AdminUIPreviewsPage() {
-  const sceneCount = PREVIEW_SCENES.length;
-  const scenarioCount = PREVIEW_SCENES.reduce(
+  const sceneCount = PREVIEW_SCENE_LIST.length;
+  const scenarioCount = PREVIEW_SCENE_LIST.reduce(
     (total, scene) => total + scene.scenarios.length,
     0,
   );
@@ -67,7 +52,7 @@ export default function AdminUIPreviewsPage() {
       </div>
 
       <div className="space-y-6">
-        {SCENES.map((scene) => (
+        {PREVIEW_SCENE_LIST.map((scene) => (
           <section
             key={scene.surface}
             className="space-y-3 rounded-lg border p-6"

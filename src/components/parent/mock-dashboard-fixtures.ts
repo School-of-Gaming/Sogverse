@@ -52,9 +52,10 @@ import type { ParentDashboardParticipant } from "./parent-dashboard-page-body";
  * straight to the room with no account switch, and a queue place whose leave
  * dialog is the one that names nobody. One child's name is deliberately long,
  * because a section heading and a nav chip are the two places user content gets
- * to decide the layout. Billing carries two Stripe customers — the
+ * to decide the layout. Billing carries three Stripe customers — the
  * migrated-family shape, and the only one where the card grows a button per
- * account.
+ * account; the third of them covers nothing current, which is the one state a
+ * button has that is not a list of what it pays for.
  *
  * **The child with nothing booked used to be here and is not any more**, and
  * that is the one thing the parent chip cost this scenario: a third child would
@@ -300,7 +301,7 @@ export function buildParentDashboardFixture(
         // The reader's own section — two children and one of these is exactly
         // the pill's named limit, which is why this scenario stops at two.
         self: parentsOwnSection(clock),
-        // Two Stripe customers — the shape a family migrated from the old
+        // Three Stripe customers — the shape a family migrated from the old
         // platform ends up with, and the only one where the billing card grows
         // a button per account with an explanation above them.
         accounts: [
@@ -329,6 +330,13 @@ export function buildParentDashboardFixture(
               },
             ],
           },
+          // A customer with nothing current on it: every subscription it once
+          // carried has ended, so there is no "{child} · {club}" line to print
+          // and the button names what is still behind it instead — the saved
+          // cards and the past invoices. It is a real state (a family that
+          // stopped a club keeps its portal), it only ever appears alongside
+          // accounts that *do* cover something, and this is its one home.
+          { stripeCustomerId: "cus_mock_dormant", covers: [] },
         ],
       };
 

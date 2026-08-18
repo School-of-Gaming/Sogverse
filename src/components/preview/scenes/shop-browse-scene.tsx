@@ -6,7 +6,6 @@ import {
   buildBrowseCounts,
   buildBrowseFixture,
   SHOP_SCENE_TAGGED_CATALOG,
-  type ShopBrowseScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { useNow } from "@/providers";
 import { type ProductBrowseSection } from "@/components/public/products/product-browse-results";
@@ -74,11 +73,12 @@ function categoryOf(productType: string): ShopCategory | undefined {
  * no fixture id resolves to. Everything else about a card — its picture, its
  * tag, its audience — comes off the row.
  *
- * The scenario slug is taken and not read: there is one storefront grid, so
- * nothing branches on it, and the prop stays because the scene renderer hands
- * every scene the slug the route resolved.
+ * It takes no scenario, because there is one storefront grid and nothing
+ * branches on the slug. The renderer still validates the URL segment against
+ * `isShopBrowseScenario` before mounting this — that check is about what the
+ * registry declares, not about what the body needs.
  */
-export function ShopBrowseScene(_props: { scenario: ShopBrowseScenario }) {
+export function ShopBrowseScene() {
   const t = useTranslations("productBrowse");
   // The Type row is an ordinary filter living in its own URL param, and the
   // live storefront expands an empty selection into every category before
