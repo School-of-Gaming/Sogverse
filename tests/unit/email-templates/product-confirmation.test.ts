@@ -126,8 +126,8 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
-   * The self seat, same reasoning as the enrollment mails: the recipient and the
-   * participant are one person, so the copy moves to the second person by
+   * The self seat: the recipient and the participant are one person, so the
+   * copy moves to the second person by
    * swapping whole keys — reading your own name back at you in the third person
    * is the shape of a mail sent about somebody else.
    */

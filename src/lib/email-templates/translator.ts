@@ -10,7 +10,7 @@ export type EmailTranslator = ReturnType<typeof createTranslator<Messages, "emai
 
 /**
  * Creates a translator scoped to the `email` namespace for the given locale.
- * Used by email template builders and their callers (API routes, notification orchestrator).
+ * Used by email template builders and the API routes that send their output.
  */
 export async function getEmailTranslator(
   locale: SupportedLocale = DEFAULT_LOCALE,
