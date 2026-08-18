@@ -29,10 +29,15 @@ So you do not have to *reason* about whether a candidate is used. You delete it 
 
 **The one exception, verified twice against the real `npx tsc`: `t.raw()` keys are NOT
 checked.** Deleting a key reached only through `` t.raw(`sections.${key}.paragraphs`) ``
-compiles clean. Every `.raw(` call site today is a legal page — `privacy`, `terms`,
-`discipline`, `robloxPrivacy`, `robloxSafeguarding`, `robloxTerms`, and `roblox.hero.title`.
-**Treat those namespaces as untouchable**: the compiler will not catch you, and the failure
-lands at runtime on a policy page. If you believe a key there is dead, prove it by reading
+compiles clean.
+
+**So start by finding the `.raw(` call sites yourself** — `grep -rn "\.raw(" src/` — and treat
+every namespace they read as untouchable. Derive the list rather than trusting the one here,
+because a new call site added since this was written would make the list quietly wrong in
+the one place the compiler cannot cover for you. As of 2026-08 it was five legal pages plus
+`roblox.hero.title`: `privacy`, `terms`, `discipline`, `robloxPrivacy`, `robloxSafeguarding`,
+`robloxTerms`, `roblox`. If what you find differs, that is the finding — update this file.
+The failure being avoided lands at runtime on a policy page. If you believe a key there is dead, prove it by reading
 the page component, and say in your report that the compiler did not back you up.
 
 ## Where the orphans actually are
