@@ -9,7 +9,11 @@
 // through t() (see product-form.tsx).
 
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
-import { isSupportedCurrency, SUPPORTED_CURRENCIES } from "@/lib/constants";
+import {
+  CURRENCY_CONFIG,
+  isSupportedCurrency,
+  SUPPORTED_CURRENCIES,
+} from "@/lib/constants";
 import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
@@ -226,11 +230,15 @@ export function validate(
     // monthly subscription, `session` for the camp/event upfront total.
     //
     // A price is validated through the exact value the payload will store, and
-    // it must be strictly positive — the same standard the fees below hold. A
-    // paid product costing nothing is not a price, it is the free billing mode,
-    // and that is chosen on the radio rather than typed as a zero. A blank box
-    // keeps its own sentence: nothing was typed, so nothing is wrong with what
-    // was typed.
+    // it must reach the currency's minimum charge at Stripe — a lower bound that
+    // subsumes the strictly-positive one the fees below hold. A paid product
+    // costing nothing is not a price, it is the free billing mode, chosen on the
+    // radio rather than typed as a zero; and a price under the minimum is a
+    // product the admin can save that no family can buy, since Stripe refuses it
+    // at checkout (see `minimumChargeCents` in lib/constants/currency.ts). Both
+    // failures share the one message, which names the minimum. A blank box keeps
+    // its own sentence: nothing was typed, so nothing is wrong with what was
+    // typed.
     const field = pricingShape === "monthly" ? "month" : "session";
     const missingKey =
       pricingShape === "monthly" ? "priceMonthMissing" : "priceSessionMissing";
@@ -239,12 +247,22 @@ export function validate(
     for (const currency of SUPPORTED_CURRENCIES) {
       const row = state.prices[currency];
       const currencyLabel = currency.toUpperCase();
+      const { minimumChargeCents } = CURRENCY_CONFIG[currency];
 
       const trimmed = row[field].trim();
       if (trimmed === "")
         return err(missingKey, { currency: currencyLabel });
-      if (!positiveAmountValid(trimmed))
-        return err(invalidKey, { currency: currencyLabel });
+      // The minimum travels as raw *cents*, not as a money string: this module
+      // is locale-free, and a formatted amount is a locale decision. The form
+      // turns the pair into the viewer's money string at the t() call site, the
+      // same shape translationIncomplete's language name uses.
+      const cents = decimalToCents(trimmed);
+      if (cents == null || cents < minimumChargeCents) {
+        return err(invalidKey, {
+          currency: currencyLabel,
+          minimum: minimumChargeCents,
+        });
+      }
     }
   }
 
@@ -293,11 +311,15 @@ function ageOrNull(value: string): number | null {
 }
 
 /**
- * A typed money amount is valid only as a real positive number of cents —
- * judged through `decimalToCents`, the same conversion the payload stores, so a
- * value that validates and a value that is written can never disagree. Zero is
- * never a typed amount anywhere in this form: for a fee it is the separate
- * "volunteer" status, for a price it is the free billing mode.
+ * A typed fee is valid only as a real positive number of cents — judged through
+ * `decimalToCents`, the same conversion the payload stores, so a value that
+ * validates and a value that is written can never disagree. Zero is never a
+ * typed amount anywhere in this form: for a fee it is the separate "volunteer"
+ * status, for a price it is the free billing mode.
+ *
+ * Prices hold a *higher* bar than this and are checked inline against their
+ * currency's minimum charge — a fee is money we pay out of band, so nothing
+ * about a payment processor's floor applies to it.
  */
 function positiveAmountValid(amount: string): boolean {
   const cents = decimalToCents(amount);

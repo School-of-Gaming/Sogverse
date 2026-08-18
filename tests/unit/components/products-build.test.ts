@@ -538,16 +538,20 @@ describe("validate", () => {
     });
 
     // A paid product's price is validated through the exact value the payload
-    // will store, and it has to be strictly positive. Zero is not a price the
-    // admin may type: "free" is the billing radio's answer, and a €0 paid
-    // product would advertise a checkout the server has nothing to charge for.
+    // will store, and it has to reach the currency's minimum charge at Stripe.
+    // Zero is not a price the admin may type: "free" is the billing radio's
+    // answer, and a €0 paid product would advertise a checkout the server has
+    // nothing to charge for. The failure carries the minimum in *cents* — the
+    // form formats it into the viewer's money string.
+    const EUR_MINIMUM = { currency: "EUR", minimum: 50 };
+
     it("rejects a negative or malformed monthly price", () => {
       for (const month of ["-30.00", "abc", "1e999"]) {
         const s = validConsumerState();
         s.prices.eur = { session: "10.00", month };
         expect(validate(s, consumerConfig), month).toEqual({
           messageKey: "priceMonthInvalid",
-          values: { currency: "EUR" },
+          values: EUR_MINIMUM,
         });
       }
     });
@@ -558,7 +562,7 @@ describe("validate", () => {
         s.prices.eur = { session: "10.00", month };
         expect(validate(s, consumerConfig), month).toEqual({
           messageKey: "priceMonthInvalid",
-          values: { currency: "EUR" },
+          values: EUR_MINIMUM,
         });
       }
     });
@@ -569,7 +573,7 @@ describe("validate", () => {
         camp.prices.eur = { session, month: "" };
         expect(validate(camp, campConfig), session).toEqual({
           messageKey: "priceSessionInvalid",
-          values: { currency: "EUR" },
+          values: EUR_MINIMUM,
         });
 
         const event = validEventState();
@@ -577,15 +581,41 @@ describe("validate", () => {
         event.prices.eur = { session, month: "" };
         expect(validate(event, eventConfig), session).toEqual({
           messageKey: "priceSessionInvalid",
-          values: { currency: "EUR" },
+          values: EUR_MINIMUM,
         });
       }
     });
 
-    it("accepts the smallest price the input allows", () => {
+    // Under Stripe's €0.50 floor a price is not merely small, it is unsellable:
+    // Stripe refuses the charge with `amount_too_small`, so the product saves
+    // fine and then fails at checkout, on the family rather than on the admin
+    // who typed it. Rejecting only zero left this whole band open.
+    it("rejects a price below the currency's minimum charge", () => {
+      for (const month of ["0.01", "0.49"]) {
+        const s = validConsumerState();
+        s.prices.eur = { session: "", month };
+        expect(validate(s, consumerConfig), month).toEqual({
+          messageKey: "priceMonthInvalid",
+          values: EUR_MINIMUM,
+        });
+      }
+
+      const camp = validCampState();
+      camp.prices.eur = { session: "0.49", month: "" };
+      expect(validate(camp, campConfig)).toEqual({
+        messageKey: "priceSessionInvalid",
+        values: EUR_MINIMUM,
+      });
+    });
+
+    it("accepts a price exactly at the currency's minimum charge", () => {
       const s = validConsumerState();
-      s.prices.eur = { session: "", month: "0.01" };
+      s.prices.eur = { session: "", month: "0.50" };
       expect(validate(s, consumerConfig)).toBeNull();
+
+      const camp = validCampState();
+      camp.prices.eur = { session: "0.50", month: "" };
+      expect(validate(camp, campConfig)).toBeNull();
     });
 
     it("accepts a free camp with no price at all", () => {

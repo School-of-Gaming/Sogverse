@@ -42,6 +42,15 @@ export function BillingSection({
   const pricingShape = effectivePricingShape(config);
   const showExternalInfo = billingMode === "external_contract";
 
+  // What "paid" *means* differs by pricing shape — a club is a monthly
+  // subscription, a camp or event a single charge at signup — so the radio that
+  // chooses it says which. One sentence for both would be wrong for one of them
+  // on the screen where the admin is deciding.
+  const paidHint =
+    pricingShape === "monthly"
+      ? t("hints.paidDetailMonthly")
+      : t("hints.paidDetailUpfront");
+
   // VAT is derived from the product type and shown only for a product that
   // actually reaches Stripe: a free club or a municipality club never produces
   // a sale, so a rate beside them would claim an invoice we never issue.
@@ -94,7 +103,7 @@ export function BillingSection({
                       {t(`labels.${mode}`)}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {t(`hints.${mode}Detail`)}
+                      {mode === "free" ? t("hints.freeDetail") : paidHint}
                     </div>
                   </div>
                 </label>
