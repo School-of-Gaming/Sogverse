@@ -238,7 +238,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-product",
     title: "Gedu product page",
     description:
-      "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state. Both scenarios carry a mixed roster: eight children and one adult holding a seat of her own, so the rail's adult row is judged where it actually sits — last in a column of child rows, a line shorter than all of them — and she appears on the attendance checklist alongside them, because a gedu marks a parent present exactly as they mark a child.",
+      "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state. The first two scenarios are the product's shapes (remote and weekly against in-person and daily); the last two are the roster's, since a product's topic decides which game identity its rows show and the three answers cannot coexist on one page. All four carry the same mixed roster: eight children and one adult holding a seat of her own, so the rail's adult row is judged where it actually sits — last in a column of child rows, a line shorter than all of them — and she appears on the attendance checklist alongside them, because a gedu marks a parent present exactly as they mark a child.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -252,6 +252,18 @@ export const PREVIEW_SCENES = [
         label: "Camp — in person, daily",
         description:
           "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert. It owes exactly one day — yesterday's register — because every other day of the run has both its register and its report in; that single gap is what puts an attention badge on an in-person dashboard card.",
+      },
+      {
+        slug: "roblox",
+        label: "Roblox topic — the other game identity",
+        description:
+          "The rail's roster on a Roblox Studio product. Which identity a roster shows is the product's topic's decision, so this is the only place the Roblox row can be judged where it actually sits — a square bust where the Minecraft rows draw a whole body, in a column of eight, at rail width. The pencil, the in-place editor, the fixed height through a save and the failure line beneath it are all identical to the Minecraft side, which is the property worth checking by flipping between the two scenarios. Every figure is the drawn stand-in, verified rows included: a Roblox render resolves by account id through our own route and a preview must not reach a third-party host, so the live page's one batched call has no counterpart here. Type a name and watch the same second-long check land a tick — Roblox's own rule decides, so `Builder_Man` passes and `_builder` does not. The feed behind it is deliberately four ordinary weeks: this scenario is open to answer a question about the rail.",
+      },
+      {
+        slug: "no-platform",
+        label: "No game identity — the short row",
+        description:
+          "A programming club, and the third answer the topic can give: no platform at all, so no roster row carries an identity cell. What is being judged is the absence — a column of eight short rows with no reserved space where a figure would be, which has to read as a deliberately compact roster rather than as one that failed to load. The adult row at the bottom is the control: it has always been this shape, and here it is no shorter than the children above it. Most topics answer this way (esports, the studio programmes, AI, and both non-Java Minecraft editions), so this is the commoner roster rather than the edge case.",
       },
     ],
   },

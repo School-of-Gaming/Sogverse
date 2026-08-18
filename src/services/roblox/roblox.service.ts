@@ -2,6 +2,7 @@ import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import type { AppSupabaseClient, RobloxAccount } from "@/types";
 import type { GameFigure } from "@/lib/constants/game-platforms";
 import {
+  robloxAccountWriteResult,
   robloxAvatarsResponse,
   robloxProfileResponse,
   type RobloxProfileResponse,
@@ -67,6 +68,42 @@ export class RobloxService {
         await readErrorMessage(response, "Failed to update Roblox username"),
       );
     }
+  }
+
+  /**
+   * A gedu correcting the Roblox username of a child in a group they teach.
+   *
+   * Deliberately a separate method from `updateMyRoblox` rather than a flag on
+   * it: the two hit different routes with different authorization, and one of
+   * them names a target while the other cannot. Collapsing them would put a
+   * "whose account is this" branch inside a method whose safety comes from not
+   * having one.
+   *
+   * The route resolves the handle against Roblox before writing, so the result
+   * carries the account id — a successful save lands verified, and the caller
+   * renders that state from what came back rather than guessing at it. A handle
+   * Roblox does not know comes back with a null id and the name still stored.
+   */
+  async updateGroupMemberRoblox(
+    gamerId: string,
+    robloxUsername: string | null,
+  ) {
+    const response = await fetch(
+      `/api/gedu/gamers/${encodeURIComponent(gamerId)}/roblox`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ robloxUsername }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to update the Roblox username"),
+      );
+    }
+
+    return parseJsonResponse(response, robloxAccountWriteResult);
   }
 
   /**

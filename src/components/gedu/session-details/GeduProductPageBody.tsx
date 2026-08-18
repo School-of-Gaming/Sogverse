@@ -19,7 +19,11 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
-import type { GameAccountStatus } from "@/components/game-account";
+import type {
+  GameAccountStatus,
+  GamePlatform,
+} from "@/components/game-account";
+import { platformForTopic } from "@/lib/products/topics";
 import type { GeduAssignedProduct, GeduAssignedProductGroup } from "@/types";
 import {
   CopyAllEmailsButton,
@@ -190,24 +194,43 @@ interface GeduProductPageBodyProps {
     draft: SessionEntryDraft,
   ) => void | Promise<void>;
   /**
-   * Save a roster member's Minecraft username. A gedu is the person who finds
-   * out a name is wrong — mid-session, when the server doesn't recognise it —
-   * so the roster is where it gets fixed. Awaited by the roster row: the write
-   * makes a Mojang lookup on the way through, so the row stays disabled for a
-   * real round trip.
+   * Save a roster member's game username, on whichever platform this product's
+   * topic is about. A gedu is the person who finds out a name is wrong —
+   * mid-session, when the server doesn't recognise it — so the roster is where
+   * it gets fixed. Awaited by the roster row: the write makes the platform's own
+   * lookup on the way through, so the row stays disabled for a real round trip.
+   *
+   * Never called on a product whose topic names no platform, because no row on
+   * such a roster renders an editor.
    */
-  onSaveMinecraftUsername: (
+  onSaveGameUsername: (
     gamerId: string,
     username: string,
   ) => void | Promise<void>;
   /**
-   * In-flight or just-landed Mojang checks, keyed by gamer id. A roster member
+   * In-flight or just-landed platform checks, keyed by gamer id. A roster member
    * with no entry here shows the resting state derived from their account.
    *
    * It lives with whoever owns the save, because that is the only place that
    * knows a check started.
    */
-  minecraftStatuses?: Readonly<Record<string, GameAccountStatus>>;
+  gameStatuses?: Readonly<Record<string, GameAccountStatus>>;
+  /**
+   * The resolved Roblox renders for this roster, keyed by account id as a
+   * string — what the by-id avatars batch answers with.
+   *
+   * **A prop rather than a lookup this body makes**, and that is the same "one
+   * body, two shells" split every other datum here obeys: the live workspace
+   * resolves the whole roster in one request and hands the answers down, and a
+   * fixture-driven scene hands down nothing at all, so a preview never reaches a
+   * third-party host on load. An id absent from the record is an answer that has
+   * not arrived; the row draws the stand-in either way, because a Roblox figure
+   * is decoration and its absence is not worth a loading state.
+   *
+   * Untouched by the Minecraft side, which derives its own figure from a
+   * verified name and needs nothing handed in.
+   */
+  robloxAvatarUrls?: Readonly<Partial<Record<string, string | null>>>;
 }
 
 export function GeduProductPageBody({
@@ -229,8 +252,9 @@ export function GeduProductPageBody({
   editingEntryId,
   onEditEntry,
   onSaveEntry,
-  onSaveMinecraftUsername,
-  minecraftStatuses,
+  onSaveGameUsername,
+  gameStatuses,
+  robloxAvatarUrls,
 }: GeduProductPageBodyProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
@@ -241,6 +265,17 @@ export function GeduProductPageBody({
 
   const productName =
     resolveTranslation(data.product.translations, uiLocale)?.name ?? "";
+
+  /**
+   * Which game identity this page's roster shows, or `null` for a product about
+   * no single account.
+   *
+   * Derived here from the product the body was handed rather than taken as a
+   * prop, so the topic on screen and the platform the rows render can't
+   * disagree — the shell resolves the same question from the same field to pick
+   * a mutation, and both answers come out of one function over one column.
+   */
+  const platform = platformForTopic(data.product.topic);
 
   const { assignedGroup, peerGroups } = useMemo(() => {
     const assigned = data.groups.find((g) => g.id === data.my_group_id) ?? null;
@@ -340,8 +375,10 @@ export function GeduProductPageBody({
               opensDate={voiceState.opensDate}
               opensTime={voiceState.opensTime}
               backHref={workspaceHref}
-              onSaveMinecraftUsername={onSaveMinecraftUsername}
-              minecraftStatuses={minecraftStatuses}
+              platform={platform}
+              onSaveGameUsername={onSaveGameUsername}
+              gameStatuses={gameStatuses}
+              robloxAvatarUrls={robloxAvatarUrls}
             />
           )}
 
@@ -610,8 +647,10 @@ function GroupRailCard({
   opensDate,
   opensTime,
   backHref,
-  onSaveMinecraftUsername,
-  minecraftStatuses,
+  platform,
+  onSaveGameUsername,
+  gameStatuses,
+  robloxAvatarUrls,
 }: {
   group: GeduAssignedProductGroup;
   isRemote: boolean;
@@ -620,11 +659,14 @@ function GroupRailCard({
   opensTime: string;
   /** Where leaving this group's room lands — back on this workspace. */
   backHref: string;
-  onSaveMinecraftUsername: (
+  /** The product's game identity, or `null` for a topic that has none. */
+  platform: GamePlatform | null;
+  onSaveGameUsername: (
     gamerId: string,
     username: string,
   ) => void | Promise<void>;
-  minecraftStatuses?: Readonly<Record<string, GameAccountStatus>>;
+  gameStatuses?: Readonly<Record<string, GameAccountStatus>>;
+  robloxAvatarUrls?: Readonly<Partial<Record<string, string | null>>>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -675,12 +717,23 @@ function GroupRailCard({
           <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
         ) : (
           <ul className="space-y-1.5">
-            {roster.map((g) => (
+            {roster.map((member) => (
               <ParticipantRosterRow
-                key={g.participant_id}
-                participant={g}
-                onSaveMinecraftUsername={onSaveMinecraftUsername}
-                minecraftStatus={minecraftStatuses?.[g.participant_id]}
+                key={member.participant_id}
+                participant={member}
+                platform={platform}
+                onSaveGameUsername={onSaveGameUsername}
+                gameStatus={gameStatuses?.[member.participant_id]}
+                // Explicitly handed over on Roblox — including the `null` that
+                // means "draw the stand-in" — because a Roblox render resolves
+                // by account id and this list's owner resolved them all at once.
+                // Left off entirely on Minecraft, where the row derives its own
+                // skin from a verified name.
+                avatarUrl={
+                  platform === "roblox"
+                    ? (robloxAvatarUrls?.[String(member.roblox_user_id)] ?? null)
+                    : undefined
+                }
               />
             ))}
           </ul>

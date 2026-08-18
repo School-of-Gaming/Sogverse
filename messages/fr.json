@@ -1351,17 +1351,17 @@
       "genderBoy": "Garçon",
       "genderGirl": "Fille",
       "genderNonBinary": "Non binaire",
-      "minecraftUsernameLabel": "Nom d’utilisateur Minecraft",
-      "minecraftUsernamePlaceholder": "Nom d’utilisateur Minecraft",
-      "minecraftUsernameSave": "Enregistrer",
-      "minecraftUsernameCancel": "Annuler",
-      "editMinecraftUsername": "Modifier le nom d’utilisateur Minecraft de {name}",
+      "gameUsernameLabel": "Nom d’utilisateur {platform}",
+      "gameUsernamePlaceholder": "Nom d’utilisateur {platform}",
+      "gameUsernameSave": "Enregistrer",
+      "gameUsernameCancel": "Annuler",
+      "editGameUsername": "Modifier le nom d’utilisateur {platform} de {name}",
       "copyContactEmail": "Copier l’adresse de contact {email}",
       "emailCopied": "E-mail copié",
       "copyAllContactEmails": "Copier toutes les adresses de contact ({count})",
       "allEmailsCopied": "Toutes les adresses de contact ont été copiées",
       "loadingWorkspace": "Chargement des séances de ce groupe.",
-      "minecraftSaveFailed": "Ce nom d’utilisateur n’a pas été enregistré. Réessayez."
+      "gameSaveFailed": "Ce nom d’utilisateur n’a pas été enregistré. Réessayez."
     },
     "sessionFeed": {
       "edit": "Modifier",

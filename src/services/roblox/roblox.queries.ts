@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { robloxRenderUrl } from "@/lib/roblox";
+import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
 import type { GameFigure } from "@/lib/constants/game-platforms";
 import type { RobloxAccount } from "@/types";
 import { RobloxService } from "./roblox.service";
@@ -255,6 +256,39 @@ export function useVerifyRoblox() {
       // typed. Both spellings normalize to the same key, so this is a no-op
       // unless the canonical name differs by more than case.
       queryClient.setQueryData(robloxKeys.profile(profile.username), profile);
+    },
+  });
+}
+
+/**
+ * A gedu editing a group member's handle.
+ *
+ * `groupId` is not sent to the server — the RPC re-derives what the caller may
+ * touch from their own assignments — it is here purely so the invalidation can
+ * name the one feed whose roster row just changed.
+ *
+ * **Two keys, and neither of them is the platform's root.** The workspace's
+ * roster comes from the feed document, so that is what has to refetch for the
+ * row to show its new state; the stored-account entry for that one gamer is the
+ * other thing this write really changed. Invalidating `robloxKeys.all` — or
+ * even `renders()` — would drag every mounted render lookup into a refetch to
+ * re-learn an answer the save did not touch, spending a per-IP budget the whole
+ * fleet shares. The refreshed roster carries the new id, and the batch keyed by
+ * that id list resolves it on its own.
+ */
+export function useUpdateGroupMemberRoblox(groupId: string) {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new RobloxService(supabase);
+
+  return useMutation({
+    mutationFn: (vars: { gamerId: string; robloxUsername: string | null }) =>
+      service.updateGroupMemberRoblox(vars.gamerId, vars.robloxUsername),
+    onSuccess: (_result, vars) => {
+      queryClient.invalidateQueries({ queryKey: geduSessionKeys.feed(groupId) });
+      queryClient.invalidateQueries({
+        queryKey: robloxKeys.account(vars.gamerId),
+      });
     },
   });
 }

@@ -10,13 +10,23 @@ child, a gedu editing a child on their own roster, and an admin editing anyone.
 The admin one is the widest and is the only one that can reach an account it has
 no relationship to — see "Wiring a save" for what authorizes it.
 
-**The gedu surface is Minecraft-only, and that is a gap rather than a decision.**
-Its write goes through an RPC that names Minecraft columns, so a gedu looking at
-a roster can fix a child's Minecraft handle and cannot touch their Roblox one —
-and the roster does not draw a Roblox figure either, because a list needs the
-batched by-id resolution rather than a lookup per row. Every other surface treats
-the two platforms identically. Closing it is tracked in `TODO.md`; until then,
-do not read "a gedu can edit a roster member's identity" as covering both.
+**The gedu surface covers both platforms, and *which* one it shows is the
+product's decision rather than the reader's.** A roster shows one identity for
+everybody on it, resolved from the product's topic: a Minecraft product's roster
+shows Minecraft handles, a Roblox product's shows Roblox ones, and a product
+about no single game account — which is most topics, since most name subject
+matter rather than one piece of software — shows no identity cell at all. There
+is one editor behind all three, taking the platform as a parameter, because the
+interaction is the one thing the platforms share exactly; everything they differ
+on already lives in the descriptor.
+
+**A roster with no identity cell is shorter, and reserves nothing.** The
+precedent is the adult seat, which has always rendered the same absence for the
+same reason: a blank cell beside a pencil that edits an account the product has
+no use for is an affordance pointing at nothing, and a slot held open for
+something that cannot appear while the page is open is dead space. Neither
+discriminator moves under the reader — a seat's holder and a product's topic both
+arrive with the payload — so the shorter row costs no layout stability.
 
 Both platforms are **persisted**, in one table each keyed by the profile
 (`minecraft_accounts`, `roblox_accounts`), and the two are independent
@@ -175,9 +185,21 @@ whoever renders a list owns the lookup — and the naive shape of that is N
 requests against a thumbnails API rate-limited per IP across the whole serverless
 fleet, which a single roster can drain on its own. The API accepts many account
 ids per request (on the order of a hundred), so a roster resolves every render it
-needs in one call and hands each row its URL. The by-id route takes a list for
-exactly this reason even though today's callers each pass one; a per-row hook
-exists for the single-identity surfaces and **must not be mapped over a list**.
+needs in one call and hands each row its URL. A per-row hook exists for the
+single-identity surfaces and **must not be mapped over a list**.
+
+**The list's owner does the resolving, and on a page split into a data shell and
+a presentational body that is the shell.** The body takes the answers as a prop,
+keyed by account id, which is what lets the same body serve a live page and a
+fixture-driven scene: the live shell hands down what it resolved, and a scene
+hands down nothing, so a preview never reaches a third-party host on load. A body
+that fetched for itself would make that impossible and would put the request
+behind whichever surface happened to mount it.
+
+**An id the caller has no answer for yet is the silhouette, not a loading
+state.** A figure is decoration; the name and the tick are already on screen, the
+box is already at its final size, and nothing about a picture arriving later is
+worth a skeleton or a spinner.
 
 **Two properties of the batch are load-bearing and easy to lose.** An answer is
 matched to the id the *response* names, never to its position — the endpoint does
@@ -251,10 +273,11 @@ one could not have been looked up there.
 **Rule: a write path that names a target must authorize the target, not just the
 actor.** Three of the four write paths cannot name one at all — the self-serve
 routes derive the row from `auth.uid()`, which is most of what makes them safe —
-and the two that can (the gedu's Minecraft-only group-member edit, the admin's
-user edit) each
+and the two that can (the gedu's group-member edit, the admin's user edit) each
 answer it differently: the gedu's is settled inside the database by an RPC that
-re-derives what that caller may touch, and the admin's is settled in the route,
+re-derives what that caller may touch — one per platform, each naming that
+platform's columns and each carrying the same derivation — and the admin's is
+settled in the route,
 which refuses an id naming nobody and an id naming an account that cannot hold a
 game identity. **Only a gamer or a gedu can**, because those are exactly the
 roles the self-serve route is gated to; writing one onto a parent or an admin
@@ -275,6 +298,18 @@ make the value in the database depend on when the lookup last ran. A name the
 platform cannot resolve is stored all the same, with a null key — an unverified
 name is still the child's answer, which is the whole of why `unverified` is a
 state and a failed lookup is not.
+
+**One route predates that rule and still adopts the spelling its lookup returned
+— the gedu's Minecraft edit — and it is a known divergence rather than the
+pattern to copy.** Its own test pins the behaviour, so changing it is a decision
+with a test to rewrite; until somebody makes that decision, read the rule above
+as the one a new write path follows and this sentence as the exception it has.
+
+**A key the route did not obtain is *absent*, never a stand-in value.** Where an
+RPC defaults its key argument to SQL NULL, the argument is omitted; there is no
+number or string that means "not verified", and inventing one puts a value in a
+column that has no business holding it. The `unverified` state is the absence,
+which is the same thing the presence rule says from the other side.
 
 **Rule: a mutation invalidates the stored rows, never a platform's whole cache
 root.** The two branches under a platform's key hierarchy are not alike: one

@@ -10,14 +10,20 @@ import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
 import {
   gameFigureHeight,
+  GAME_PLATFORMS,
   GameUsernameRow,
   type GameAccountStatus,
+  type GamePlatform,
 } from "@/components/game-account";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import { rosterContactEmail, type ParticipantSessionRow } from "./types";
+import {
+  rosterContactEmail,
+  rosterGameAccount,
+  type ParticipantSessionRow,
+} from "./types";
 
 const GENDER_KEY = {
   boy: "genderBoy",
@@ -28,10 +34,24 @@ const GENDER_KEY = {
 interface ParticipantRosterRowProps {
   participant: ParticipantSessionRow;
   /**
-   * Save a new Minecraft username for this child. **Omit it and the row is
-   * read-only** — which is what the surfaces that only display a roster want,
-   * and what keeps the edit affordance from appearing somewhere nothing is
-   * listening for it.
+   * Which game identity this roster is about, or `null` for a product about no
+   * single game account at all.
+   *
+   * It is the product's, not the row's: a roster shows one platform for
+   * everybody on it, decided by the topic, because the question a gedu is
+   * asking mid-session is "does this name match the one on my server" and there
+   * is only ever one server. `null` renders **no identity cell whatsoever** —
+   * the same absence the adult variant already makes, for the same reason. A
+   * blank cell beside a pencil that edits an account the product has no use for
+   * is an affordance pointing at nothing, and reserving its space would leave a
+   * hole in a rail that is a third of the page.
+   */
+  platform: GamePlatform | null;
+  /**
+   * Save a new username for this child, on whichever platform the roster is
+   * showing. **Omit it and the row is read-only** — which is what the surfaces
+   * that only display a roster want, and what keeps the edit affordance from
+   * appearing somewhere nothing is listening for it.
    *
    * A trimmed empty string means "clear it".
    *
@@ -39,22 +59,35 @@ interface ParticipantRosterRowProps {
    * once the write has landed; a rejection leaves it open with the typed name
    * still in the box.
    *
-   * Never reached on an adult row, which renders no Minecraft cell at all.
+   * Never reached on an adult row or on a product with no platform, neither of
+   * which renders an identity cell at all.
    */
-  onSaveMinecraftUsername?: (
+  onSaveGameUsername?: (
     participantId: string,
     username: string,
   ) => void | Promise<void>;
   /**
-   * Where the Mojang check for this child's name has got to, when one is in
+   * Where the platform's check for this child's name has got to, when one is in
    * flight or has just landed. Omitted, the row derives its own resting state
-   * from whether the account carries a verified UUID — which is what every row
+   * from whether the account carries a confirmed key — which is what every row
    * nobody has touched shows.
    *
    * The caller owns this rather than the row, because the check is one request
    * per save and the owner of the save is the only one who knows when it started.
    */
-  minecraftStatus?: GameAccountStatus;
+  gameStatus?: GameAccountStatus;
+  /**
+   * The figure to draw, when the platform cannot derive one from the name.
+   *
+   * Three meanings, exactly as the shared row documents them: a string draws
+   * that image, `null` draws the bundled stand-in and goes looking for nothing,
+   * and **omitted lets the platform decide** — which on Minecraft is a network
+   * request off the username and on Roblox is the stand-in. A Roblox roster
+   * therefore always passes this explicitly, `null` included, because a Roblox
+   * render can only be resolved by account id and is resolved for the whole
+   * list at once by whoever owns the list. A Minecraft roster omits it.
+   */
+  avatarUrl?: string | null;
 }
 
 /**
@@ -62,7 +95,7 @@ interface ParticipantRosterRowProps {
  * holding a seat of their own.
  *
  * **Two lines, and the split is the whole design.** Line one is identity —
- * identicon, first name, age/gender, Minecraft username. Line two is the
+ * identicon, first name, age/gender, game username. Line two is the
  * contact email on its own, because an email is the one field here with no
  * useful upper bound: `sofia.margareta.lindqvist-holmberg@kotiposti.example.com`
  * sharing a line with a name either wrapped into a ragged three-line block or
@@ -76,7 +109,7 @@ interface ParticipantRosterRowProps {
  *
  * **The adult variant is an absence, not a set of blanks.** A parent has a
  * `Parent` badge where a child has their age and gender, their own address in
- * the contact cell (there is no linked parent to name), and *no Minecraft cell
+ * the contact cell (there is no linked parent to name), and *no identity cell
  * whatsoever* — game-account linking for parents does not exist, so a
  * placeholder saying "none" beside a pencil that opens an editor for an account
  * that cannot be created would be an affordance pointing at nothing. Rendering
@@ -85,7 +118,15 @@ interface ParticipantRosterRowProps {
  * after paint, so the shorter row costs no layout stability: the discriminator
  * arrives with the roster, in the same payload as the name.
  *
- * **Minecraft usernames are editable here** — on child rows. Children mistype
+ * **A product about no game account makes the same absence, on every row.** The
+ * topic decides which identity a roster shows, and most topics name subject
+ * matter rather than one piece of software — so a programming club's roster is
+ * the short row throughout. The precedent is the adult variant above and the
+ * reasoning is identical: nothing is reserved for a cell that cannot appear
+ * while this page is open, because the platform is a property of the product and
+ * a product's topic does not change under the reader.
+ *
+ * **Game usernames are editable here** — on child rows. Children mistype
  * them, change them, or never got round to entering one, and the gedu is the
  * person who finds out mid-session, when the name doesn't match anyone on the
  * server. So the identity line carries a pencil: quiet by default (muted, and
@@ -102,8 +143,10 @@ interface ParticipantRosterRowProps {
  */
 export function ParticipantRosterRow({
   participant,
-  onSaveMinecraftUsername,
-  minecraftStatus,
+  platform,
+  onSaveGameUsername,
+  gameStatus,
+  avatarUrl,
 }: ParticipantRosterRowProps) {
   const t = useTranslations("gedu.sessionDetails");
   const c = useTranslations("common");
@@ -160,11 +203,13 @@ export function ParticipantRosterRow({
               )
             )}
           </div>
-          {!isAdult && (
-            <MinecraftIdentityCell
+          {!isAdult && platform !== null && (
+            <GameIdentityCell
               participant={participant}
-              status={minecraftStatus}
-              onSave={onSaveMinecraftUsername}
+              platform={platform}
+              status={gameStatus}
+              avatarUrl={avatarUrl}
+              onSave={onSaveGameUsername}
             />
           )}
         </div>
@@ -175,39 +220,54 @@ export function ParticipantRosterRow({
 }
 
 /**
- * The child's Minecraft identity — skin, username, check state — plus the inline
- * editor it swaps for.
+ * The child's identity on the product's platform — figure, username, check
+ * state — plus the inline editor it swaps for.
+ *
+ * **One cell, either platform, and the platform is a parameter rather than a
+ * fork.** Everything the two do differently — the figure's proportion, its
+ * stand-in, whether a picture can be derived from a name, the brand word in the
+ * copy — already lives in the shared descriptor registry, so a Roblox copy of
+ * this cell would have been a second place for the interaction contract to
+ * drift while restating none of the platform's actual differences.
  *
  * The draft is seeded when the editor opens rather than held across closes, so
  * cancelling really discards. **Save holds the editor open, greyed, until the
- * write has landed** — the round trip includes a Mojang lookup, so it is a real
- * wait rather than a formality — and closes only then; the new username and the
- * verified state arrive back as props, because the caller owns the row. A
- * refused write leaves the editor open with the typed name still in the box and
- * one line saying it did not save.
+ * write has landed** — the round trip includes the platform's own lookup, so it
+ * is a real wait rather than a formality — and closes only then; the new
+ * username and the verified state arrive back as props, because the caller owns
+ * the row. A refused write leaves the editor open with the typed name still in
+ * the box and one line saying it did not save.
  *
- * **The resting state and the figure belong to the shared row now.** It derives
- * the state from the account's own columns, so eight untouched rows are not
- * eight rows claiming a check just ran, and it draws a real skin only for a
- * verified account — the render host resolves by *name*, so a figure for an
- * unconfirmed string could quietly show a stranger's costume beside a child's
- * name. An explicit status from the caller still wins, because that is a check
- * that really is in flight or really did just land.
+ * **The resting state belongs to the shared row.** It derives the state from the
+ * account's own columns, so eight untouched rows are not eight rows claiming a
+ * check just ran. An explicit status from the caller still wins, because that is
+ * a check that really is in flight or really did just land.
+ *
+ * **The figure is not this cell's to find, on either platform.** Minecraft
+ * derives one from a verified name (its skin host is addressable by username),
+ * and Roblox cannot — its renders resolve by account id, in one batched request
+ * for the whole roster, so the URL is handed down. Either way the picture is a
+ * prop or a derivation, never a lookup this cell makes per row.
  *
  * **The lookup stays on the server here, unlike every other editable surface.**
- * The write this row awaits resolves the name against Mojang on its way through
- * and answers with what was stored, so a client-side check in front of it would
- * be the same question asked twice and the same rate limit paid twice. That is
- * why this cell keeps its own editor instead of the shared editable row, which
- * owns its verification — the two are different flows, not two spellings of one.
+ * The write this row awaits resolves the name against the platform on its way
+ * through and answers with what was stored, so a client-side check in front of
+ * it would be the same question asked twice and the same rate limit paid twice.
+ * That is why this cell keeps its own editor instead of the shared editable row,
+ * which owns its verification — the two are different flows, not two spellings
+ * of one.
  */
-function MinecraftIdentityCell({
+function GameIdentityCell({
   participant,
+  platform,
   status,
+  avatarUrl,
   onSave,
 }: {
   participant: ParticipantSessionRow;
+  platform: GamePlatform;
   status?: GameAccountStatus;
+  avatarUrl?: string | null;
   onSave?: (participantId: string, username: string) => void | Promise<void>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
@@ -216,12 +276,20 @@ function MinecraftIdentityCell({
   const [committing, setCommitting] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  const { username, externalId } = rosterGameAccount(participant, platform);
+  // The brand word the copy interpolates. Read off the descriptor rather than
+  // spelled here, so the one place a platform is named is the one place it is
+  // named — and it is deliberately not a translated string: "Minecraft" is
+  // "Minecraft" in every locale, and the locales own the words around it.
+  const platformName = GAME_PLATFORMS[platform].name;
+
   const identity = (
     <GameUsernameRow
-      platform="minecraft"
-      username={participant.minecraft_username}
-      externalId={participant.minecraft_uuid}
+      platform={platform}
+      username={username}
+      externalId={externalId}
       status={status}
+      avatarUrl={avatarUrl}
       className="min-w-0 flex-1"
     />
   );
@@ -258,7 +326,7 @@ function MinecraftIdentityCell({
             and has already changed once. */}
         <div className={cn("flex items-center gap-1.5", gameFigureHeight("full"))}>
           <label className="sr-only" htmlFor={inputId}>
-            {t("minecraftUsernameLabel")}
+            {t("gameUsernameLabel", { platform: platformName })}
           </label>
           <Input
             id={inputId}
@@ -270,7 +338,7 @@ function MinecraftIdentityCell({
               if (e.key === "Enter") void commit();
               if (e.key === "Escape" && !committing) setDraft(null);
             }}
-            placeholder={t("minecraftUsernamePlaceholder")}
+            placeholder={t("gameUsernamePlaceholder", { platform: platformName })}
             className="h-7 w-40 min-w-0 flex-1 px-2 py-0 text-xs"
           />
           <Button
@@ -285,7 +353,7 @@ function MinecraftIdentityCell({
             ) : (
               <Check className="h-3.5 w-3.5" aria-hidden />
             )}
-            {t("minecraftUsernameSave")}
+            {t("gameUsernameSave")}
           </Button>
           <Button
             type="button"
@@ -293,7 +361,7 @@ function MinecraftIdentityCell({
             size="sm"
             disabled={committing}
             onClick={() => setDraft(null)}
-            aria-label={t("minecraftUsernameCancel")}
+            aria-label={t("gameUsernameCancel")}
             className="h-7 w-7 shrink-0 p-0"
           >
             <X className="h-3.5 w-3.5" aria-hidden />
@@ -301,7 +369,7 @@ function MinecraftIdentityCell({
         </div>
         {failed && (
           <p role="alert" className="text-[11px] text-destructive">
-            {t("minecraftSaveFailed")}
+            {t("gameSaveFailed")}
           </p>
         )}
       </div>
@@ -313,16 +381,19 @@ function MinecraftIdentityCell({
        inside the row instead of spilling into its neighbours. */
     <div
       className={cn(
-        "group/mc flex min-w-0 items-center gap-1",
+        "group/game flex min-w-0 items-center gap-1",
         gameFigureHeight("full"),
       )}
     >
       {identity}
       <button
         type="button"
-        onClick={() => setDraft(participant.minecraft_username ?? "")}
-        aria-label={t("editMinecraftUsername", { name: participant.first_name })}
-        className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/mc:opacity-100"
+        onClick={() => setDraft(username ?? "")}
+        aria-label={t("editGameUsername", {
+          name: participant.first_name,
+          platform: platformName,
+        })}
+        className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/game:opacity-100"
       >
         <Pencil className="h-3 w-3" aria-hidden />
       </button>

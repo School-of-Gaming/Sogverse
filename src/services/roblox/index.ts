@@ -6,6 +6,7 @@ export {
   useRobloxProfile,
   useRobloxRender,
   useRobloxRenders,
+  useUpdateGroupMemberRoblox,
   useUpdateMyRoblox,
   useVerifyRoblox,
 } from "./roblox.queries";
