@@ -9,7 +9,6 @@
       "resetPassword": "Reset Password",
       "registerGedu": "Become a Game Educator",
       "about": "About Us",
-      "yty": "Yty – the Force of the Sogverse",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin Dashboard",
       "adminTools": "Tools",
@@ -21,8 +20,6 @@
       "familyProductDescription": "The schedule for this group and the write-up from every session.",
       "gamerDashboard": "My SOG",
       "gamerDashboardDescription": "Your clubs, camps and events in the Sogverse",
-      "gamerGroups": "My Groups",
-      "gamerGroupDetails": "Group Details",
       "voiceSession": "Voice Session",
       "help": "Help",
       "shop": "Shop",
@@ -77,12 +74,9 @@
     "createAccount": "Create Account",
     "unexpectedError": "An unexpected error occurred",
     "somethingWentWrong": "Something went wrong",
-    "noPermission": "You don’t have permission to view this page.",
-    "perSession": "per session",
     "minutes": "min",
     "ages": "Ages {min}–{max}",
     "schedule": "Every {day} at {time} {tz}",
-    "duration": "{minutes} minutes",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
@@ -100,10 +94,6 @@
     "backToLogin": "Back to Login",
     "passwordMinLength": "Must be at least {count} characters",
     "forgotPassword": "Forgot password?",
-    "failedToLoad": "Failed to load data",
-    "alreadyEnrolled": "Already enrolled",
-    "noRecentActivity": "No recent activity to display.",
-    "recentActivity": "Recent Activity",
     "selectLanguage": "Select language",
     "roleAdmin": "Admin",
     "roleParent": "Parent",
@@ -154,10 +144,6 @@
       "heading": "For Parents",
       "paragraph1": "Parental game education is just as important a part of what we do as the clubs themselves. We want to help parents keep up with the ever-changing gaming world so they can support their children with confidence.",
       "paragraph2": "You stay in control — managing accounts, enrolments, and spending — while your child enjoys a safe environment guided by professionals who care."
-    },
-    "cta": {
-      "heading": "Join Our Community",
-      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional Game Educator."
     }
   },
   "admin": {
@@ -291,8 +277,7 @@
         "label": "Languages",
         "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in.",
         "addLocale": "+ Add language",
-        "removeLocale": "Remove {locale}",
-        "inlineCreateHint": "Saved in {locale}. Translations for other languages can be added later from topic & tag management."
+        "removeLocale": "Remove {locale}"
       },
       "newPage": {
         "back": "Back to {plural}",
@@ -300,7 +285,6 @@
       },
       "detailsPage": {
         "notFound": "Product not found.",
-        "locationMissing": "—",
         "uncapped": "No seat limit",
         "listed": "Listed publicly",
         "unlisted": "Unlisted — direct link only",
@@ -315,7 +299,6 @@
         "fields": {
           "topic": "Topic",
           "materialUrl": "Lesson material",
-          "locales": "Languages",
           "startDate": "Start date",
           "endDate": "End date",
           "signupThreshold": "Signup threshold",
@@ -822,9 +805,6 @@
       }
     },
     "locations": {
-      "title": "Locations",
-      "description": "Manage countries, cities, and sites",
-      "searchPlaceholder": "Search locations...",
       "editName": "Edit {name}",
       "addChildUnder": "Add {type} under {parent}",
       "location": "Location",
@@ -833,16 +813,7 @@
       "enterTypeName": "Enter {type} name",
       "enterName": "Enter name",
       "adding": "Adding...",
-      "addType": "Add {type}",
-      "noLocationsYet": "No locations yet. Add a country to get started.",
-      "noLocationsMatchSearch": "No locations found matching your search."
-    },
-    "productLocation": {
-      "locationLabel": "Location",
-      "remote": "Remote",
-      "inPerson": "In-person",
-      "selectLevel": "Select {type}...",
-      "selectSiteHint": "Drill down to a specific site to finish."
+      "addType": "Add {type}"
     },
     "testing": {
       "title": "Testing",
@@ -881,89 +852,6 @@
       "notDelivered": "Not delivered",
       "today": "Today",
       "yesterday": "Yesterday"
-    },
-    "groups": {
-      "pendingChanges": "{count, plural, one {# pending change} other {# pending changes}}",
-      "discard": "Discard",
-      "commitChanges": "Commit Changes",
-      "confirmGroupChanges": "Confirm Group Changes",
-      "changesWillBeApplied": "The following changes will be applied:",
-      "saving": "Saving...",
-      "applyingChanges": "Applying Changes",
-      "errorOccurred": "An error occurred during the operation.",
-      "allChangesApplied": "All changes have been applied successfully.",
-      "savingAndNotifying": "Saving changes and sending notifications...",
-      "working": "Working...",
-      "serverError": "Server error ({status})",
-      "noResponseStream": "No response stream from server",
-      "failedToSaveChanges": "Failed to save changes",
-      "operationFailed": "Operation failed",
-      "networkError": "Network error",
-      "geduGroups": "Gedu Groups",
-      "addGroup": "Add Group",
-      "noGroups": "No Gedu groups yet. Add a group to assign a Gedu.",
-      "selectGeduForGroup": "Select a gedu to create a new group.",
-      "group": "Group",
-      "groupNumber": "Group {number}",
-      "groupDeleted": "{label} (deleted)",
-      "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
-      "genderBoy": "Boy",
-      "genderGirl": "Girl",
-      "genderNonBinary": "Non-binary",
-      "boyCount": "{count, plural, one {# boy} other {# boys}}",
-      "girlCount": "{count, plural, one {# girl} other {# girls}}",
-      "nonBinaryCount": "{count, plural, one {# non-binary} other {# non-binary}}",
-      "ageRangeLabel": "age range {range}",
-      "reassignGedu": "Reassign gedu",
-      "moveGamersFirst": "Move all gamers out first",
-      "deleteGroup": "Delete group",
-      "markedForDeletion": "Marked for deletion",
-      "noGamersEnrolled": "No gamers enrolled. Drag gamers here.",
-      "new": "New",
-      "deleteGroupConfirmTitle": "Delete {label}?",
-      "deleteGroupConfirmDescription": "This will remove the group and its gedu assignment. This change won’t take effect until you commit.",
-      "reassignGeduFor": "Reassign Gedu for {label}",
-      "selectDifferentGedu": "Select a different gedu for this group.",
-      "searchByNameOrEmail": "Search by name or email…",
-      "noGedusMatchSearch": "No gedus match your search."
-    },
-    "forms": {
-      "nameLabel": "Name",
-      "namePlaceholder": "Product name",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Describe your product",
-      "approxPerSession": "≈ {amount} per session",
-      "imageLabel": "Image",
-      "preview": "Preview",
-      "imagePickerHint": "Drag an image here, or choose a file",
-      "imageChooseFile": "Choose file",
-      "imageRemove": "Remove",
-      "imageRequired": "Product image is required",
-      "gameLabel": "Game",
-      "newGameName": "New game name",
-      "addButton": "Add",
-      "selectGame": "Select a game...",
-      "addNewGame": "Add new game",
-      "dayOfWeekLabel": "Day of Week",
-      "startTimeLabel": "Start Time",
-      "startTimeHint": "Enter time in Finland time (Europe/Helsinki). Parents will see this in their local timezone.",
-      "durationLabel": "Duration (minutes)",
-      "minAgeLabel": "Min Age",
-      "maxAgeLabel": "Max Age",
-      "nameRequired": "Product name is required",
-      "nameMaxLength": "Product name must be at most 100 characters",
-      "descriptionRequired": "Description is required",
-      "validUrl": "Must be a valid URL",
-      "gameRequired": "Game is required",
-      "validTime": "Must be a valid time",
-      "durationMin": "Duration must be at least 1 minute",
-      "minAgeMin": "Min age must be 0 or greater",
-      "maxAgeMin": "Max age must be 0 or greater",
-      "maxAgeGte": "Max age must be greater than or equal to min age",
-      "failedToCreateGame": "Failed to create game",
-      "spokenLanguageLabel": "Language delivered in",
-      "spokenLanguageRequired": "Please pick the language the club is delivered in",
-      "locationRequired": "Please pick a location or mark the club as remote"
     }
   },
   "auth": {
@@ -1071,10 +959,6 @@
       "successDescription": "Your parent PIN has been changed.",
       "backToSettings": "Back to settings"
     }
-  },
-  "checkout": {
-    "redirecting": "Redirecting to checkout...",
-    "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
   },
   "purchaseConfirmation": {
     "heading": "You’re all set!",
@@ -1238,7 +1122,6 @@
     "billing": "Billing",
     "help": "Help",
     "yty": "Yty",
-    "settings": "Settings",
     "tools": "Tools",
     "loadingAssignments": "Loading your clubs, camps and events."
   },
@@ -1337,8 +1220,7 @@
       "chooseAreas": "Choose areas",
       "loading": "Loading locations...",
       "save": "Save",
-      "saving": "Saving...",
-      "saveError": "Failed to save coverage"
+      "saving": "Saving..."
     },
     "sessionDetails": {
       "back": "Back to My SOG",
@@ -1453,28 +1335,8 @@
     "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}"
   },
   "groups": {
-    "title": "Groups",
-    "backToGroups": "Back to Groups",
-    "groupNotFound": "Group not found.",
-    "live": "Live",
-    "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
-    "noGamersEnrolled": "No gamers enrolled yet.",
-    "age": "Age {age}",
-    "unenrollGamer": "Unenrol {name}",
-    "noGroupsYet": "No Groups Yet",
-    "nextSession": "Next: {date}",
-    "startsIn": "(starts in {countdown})",
-    "sessionInProgress": "Session in progress",
-    "everyDay": "Every {day}",
-    "join": "Join",
-    "alwaysOpen": "Always Open",
     "materialAction": "Teaching materials",
-    "materialStaffOnly": "Gedu only — families never see this link",
-    "myGroupsHeading": "My Groups",
-    "myGroupsSubheading": "Your enrolled groups and upcoming voice sessions.",
-    "myGroupsEmpty": "You’re not enrolled in any groups yet.",
-    "currentGedu": "Current",
-    "assignedGedu": "Assigned"
+    "materialStaffOnly": "Gedu only — families never see this link"
   },
   "richText": {
     "bold": "Bold",
@@ -1694,7 +1556,6 @@
       "audience": "Audience",
       "language": "Language",
       "online": "Online",
-      "atVenue": "At {venue}",
       "tbd": "To be confirmed"
     },
     "calendar": {
@@ -1780,7 +1641,6 @@
       }
     },
     "pricing": {
-      "title": "Pricing",
       "subscriptionHint": "Billed monthly · cancel anytime.",
       "free": "Free",
       "freeHint": "No payment needed.",
@@ -1797,25 +1657,10 @@
       "minutes": "min",
       "seconds": "sec"
     },
-    "loading": "Loading…",
     "notFound": {
       "title": "We couldn’t find that",
       "description": "It may have been removed or the link is wrong. Browse what’s available below.",
       "cta": "Back to browse"
-    },
-    "geduGroups": {
-      "heading": "Groups",
-      "yourGroupBadge": "Your group",
-      "educatorsLabel": "Game Educators",
-      "noEducators": "No Game Educators assigned yet.",
-      "gamersLabel": "Gamers",
-      "gamerCount": "{count, plural, =0 {0 gamers} one {# gamer} other {# gamers}}",
-      "emptyNoGamers": "No gamers in this group yet.",
-      "emptyNoGroups": "No groups have been created for this product yet.",
-      "age": "Age {age}",
-      "genderBoy": "Boy",
-      "genderGirl": "Girl",
-      "genderNonBinary": "Non-binary"
     }
   },
   "sidebar": {
@@ -1825,7 +1670,6 @@
     "municipalityClubs": "Municipality Clubs",
     "camps": "Camps",
     "events": "Events",
-    "locations": "Locations",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
     "whatsapp": "WhatsApp",
@@ -2556,9 +2400,6 @@
     "saveFailed": "Failed to update {platform} username."
   },
   "parent": {
-    "placeholders": {
-      "myGamersHint": "Select a gamer to manage their account."
-    },
     "waitlist": {
       "footerReassuranceCustomer": "You’re #{position} in line — we’ll email you the moment a seat opens.",
       "footerReassuranceGamer": "You’re #{position} in line — we’ll email a parent as soon as a seat opens.",
@@ -2729,7 +2570,6 @@
     "sharerScreen": "{name}’s screen",
     "stopSharing": "Stop sharing",
     "voiceRoom": "Voice Room",
-    "spatialDescription": "Drag your avatar to move between zones. Same-zone participants can hear each other.",
     "leave": "Leave",
     "failedToJoinRoom": "Failed to join room",
     "sessionEnded": "Session has ended",
@@ -2750,7 +2590,6 @@
     "joinZone": "Join {zone}",
     "zonesDescription": "Tap or drag yourself onto a zone to move in. You hear everyone in the same zone.",
     "privateZone": "Private",
-    "privateZoneHint": "This zone is private and secure.",
     "newZone": "New zone",
     "editZone": "Edit zone",
     "createZone": "Create zone",
@@ -2941,10 +2780,6 @@
       "paragraph1": "Yty points are earned through participation. Attending weekly club sessions, completing quests and challenges, showing kindness to fellow gamers, joining community events and camps — all of these contribute to a gamer’s Yty.",
       "paragraph2": "As points accumulate under specific achievement badges, gamers level up those badges — from bronze to silver, gold, platinum, and diamond. Every point also feeds into their overall Yty level and the element it belongs to.",
       "paragraph3": "And it’s not just gamers. Gedus, parents, and the entire community can take part in building the Yty of the Sogverse through events and shared activities."
-    },
-    "cta": {
-      "heading": "Start Your Journey",
-      "subheading": "Join the Sogverse and start earning Yty. Every session, every friendship, every act of kindness makes a difference."
     }
   },
   "email": {

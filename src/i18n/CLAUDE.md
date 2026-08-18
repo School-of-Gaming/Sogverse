@@ -39,6 +39,18 @@ Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `f
 
 A CI script (under `scripts/`) validates translation completeness on every push — missing keys, empty values, and stale keys. It picks up new locale files automatically.
 
+## Dead copy: orphaned keys
+
+The catalog only rots in one direction, and it is worth knowing which. A key that is **used but missing** is a build failure: `types.ts` registers the catalog as next-intl's `Messages`, so a translator's key parameter is the union of its namespace's keys. That has been verified by execution for a literal key, for one composed at the call site (`` t(`startModes.${option}`) ``, where the compiler expands the union and even suggests the nearest surviving member), for a key read as a plain property off a catalog object, and for one referenced only from `tests/`. So typos and stale references cannot ship.
+
+Nothing guards the other direction. A key **defined but unreachable** breaks nothing, costs nothing at runtime, and shows up only as translation spend and as copy that reads like a shipping feature to whoever greps the catalog next. 139 such keys had accumulated before anyone counted.
+
+**The one place the compiler does not help is `t.raw()`.** Its key is not validated — verified by deleting one and building clean — so on that path a *missing* key fails at runtime instead, on a legal page. Every `.raw(` call site today is one: `privacy`, `terms`, `discipline`, `robloxPrivacy`, `robloxSafeguarding`, `robloxTerms`, and `roblox.hero.title`. Treat keys in those namespaces as unverifiable by the compiler in either direction.
+
+**There is deliberately no CI check for unreachable keys**, and the reasoning is worth keeping because the idea comes back. A check that is *sound* and *fast* can only prove the subset nothing scopes at all — measured at 86 of the 139, all of them whole namespaces left by a feature deletion. Going further means modelling how a translator can be consumed: composed keys, `t.raw()`, a translator passed to a helper whose parameter names its own key union, a namespace assembled at runtime. Each of those is a belief about next-intl's types, and a stale belief there produces a *false positive* — CI ordering live copy deleted. That trade is bad at any speed, so cleanup stays deliberate: run **`/prune-message-keys`**, which reasons about candidates and then proves each one by deleting it and asking the compiler.
+
+Whole namespaces are the shape that actually accumulates, so if a sweep turns up a large cluster, look for an earlier removal that swept its code and not its copy — both lineages found in 2026-08 were exactly that (the v1 product teardown, and the Sorg token drop taking the enrollment emails with it).
+
 ## Editing a message catalog
 
 **Rule: for any change touching more than a handful of keys, edit a catalog with a script that round-trips the file — not a hand merge.** Every `messages/*.json` round-trips byte-identically through `JSON.stringify(parsed, null, 2) + "\n"`, so a scripted set-by-path merge cannot reformat the file or reorder keys. Assert each target path already exists, so a mistyped key fails loudly instead of silently adding one the other locales don't have.
