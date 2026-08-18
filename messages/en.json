@@ -329,6 +329,7 @@
           "municipalityFee": "Municipality fee / session",
           "registrationOpensAt": "Registration opens",
           "tag": "Designed for",
+          "regionLock": "Region lock",
           "visibility": "Visibility"
         }
       },
@@ -382,11 +383,12 @@
         "materialUrl": "Lesson material URL",
         "seatAudience": "Who can take a seat",
         "tag": "Designed for",
+        "regionLock": "Region lock",
         "forGamers": "For gamers",
         "forParents": "For parents",
         "minAge": "Min age",
         "maxAge": "Max age",
-        "deliveredIn": "Delivered in",
+        "spokenLanguage": "Spoken language",
         "online": "Online",
         "inPerson": "In person",
         "municipality": "Municipality this is for",
@@ -507,6 +509,9 @@
       "tagOptions": {
         "none": "No tag"
       },
+      "regionLock": {
+        "none": "Not region locked"
+      },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
@@ -516,7 +521,8 @@
         "forGamersHint": "A parent signs their gamer up and the gamer takes the seat. Needs an age range.",
         "forParentsHint": "A parent takes a seat for themselves and attends it. No age range — age describes children, not adults.",
         "tagHint": "Optional. Families see it as a badge on the shop card and product page. It says who the sessions were built for, not who may take a seat.",
-        "deliveredInHint": "The primary language used during sessions.",
+        "regionLockHint": "Only families in the chosen country can sign up. Their location is the one they told us themselves, so this is a signpost in the shop rather than a hard block — and anyone already enrolled keeps their place if they move.",
+        "spokenLanguageHint": "The main language spoken in the sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",
         "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
@@ -1760,7 +1766,19 @@
       "seatIsFor": "Who this seat is for",
       "selected": "Selected",
       "agePill": "Age {age}",
-      "parentPill": "Parent"
+      "parentPill": "Parent",
+      "regionLock": {
+        "heading": "Your location",
+        "note": "This product is only offered in some countries. Add your family’s location.",
+        "setLocation": "Set your location",
+        "wrongCountry": "This product is only offered in one country: <name>{country}</name>.",
+        "eligible": "Just for families in your country: {country}",
+        "eligibleLocation": "Your family’s location: {location}",
+        "dialogTitle": "Where does your family live?",
+        "dialogDescription": "We use this to work out which clubs, camps and events are offered where you live. You can change it later in your settings.",
+        "dialogField": "Your location",
+        "dialogSave": "Save location"
+      }
     },
     "pricing": {
       "title": "Pricing",

@@ -329,6 +329,7 @@
           "municipalityFee": "Montant commune / session",
           "registrationOpensAt": "Ouverture des inscriptions",
           "tag": "Conçu pour",
+          "regionLock": "Restriction par pays",
           "visibility": "Visibilité"
         }
       },
@@ -382,11 +383,12 @@
         "materialUrl": "URL du matériel pédagogique",
         "seatAudience": "Qui peut occuper une place",
         "tag": "Conçu pour",
+        "regionLock": "Restriction par pays",
         "forGamers": "Pour les joueurs",
         "forParents": "Pour les parents",
         "minAge": "Âge min.",
         "maxAge": "Âge max.",
-        "deliveredIn": "Animé en",
+        "spokenLanguage": "Langue parlée",
         "online": "En ligne",
         "inPerson": "En présentiel",
         "municipality": "Commune concernée",
@@ -507,6 +509,9 @@
       "tagOptions": {
         "none": "Aucune étiquette"
       },
+      "regionLock": {
+        "none": "Aucune restriction par pays"
+      },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
         "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
@@ -516,7 +521,8 @@
         "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
         "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
         "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
-        "deliveredInHint": "La langue principale utilisée pendant les sessions.",
+        "regionLockHint": "Seules les familles du pays choisi peuvent s’inscrire. Le lieu est celui que la famille a elle-même déclaré : c’est donc une indication dans la boutique plutôt qu’un blocage strict, et toute personne déjà inscrite conserve sa place même si elle déménage.",
+        "spokenLanguageHint": "La langue principale parlée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
         "voiceRoomAuto": "Une salle vocale sera créée automatiquement pour ce produit.",
         "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
@@ -1760,7 +1766,19 @@
       "seatIsFor": "À qui revient cette place",
       "selected": "Sélectionné",
       "agePill": "{age} ans",
-      "parentPill": "Parent"
+      "parentPill": "Parent",
+      "regionLock": {
+        "heading": "Votre localisation",
+        "note": "Ce produit n’est proposé que dans certains pays. Indiquez où habite votre famille.",
+        "setLocation": "Ajoutez votre localisation",
+        "wrongCountry": "Ce produit n’est proposé que dans un seul pays : <name>{country}</name>.",
+        "eligible": "Rien que pour les familles de votre pays : {country}",
+        "eligibleLocation": "Localisation de votre famille : {location}",
+        "dialogTitle": "Où vit votre famille ?",
+        "dialogDescription": "Nous l’utilisons pour déterminer quels clubs, stages et événements sont proposés là où vous vivez. Vous pourrez la modifier plus tard dans vos paramètres.",
+        "dialogField": "Votre localisation",
+        "dialogSave": "Enregistrer la localisation"
+      }
     },
     "pricing": {
       "title": "Tarifs",

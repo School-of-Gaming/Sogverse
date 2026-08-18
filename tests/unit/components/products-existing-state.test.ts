@@ -26,6 +26,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     min_age: 7,
     max_age: 12,
     tag: null,
+    region_lock_country: null,
     spoken_language_code: "en",
     image_path: "abc.png",
     // Staff-only, so it arrives on its own embedded row rather than as a column
@@ -102,6 +103,8 @@ describe("existingFormState", () => {
     // Untagged is the fixture's stored state and the picker's default, so the
     // two agree here — the interesting direction is the one below.
     expect(state.tag).toBeNull();
+    // Same for the region lock: unlocked stored, unlocked in the picker.
+    expect(state.regionLockCountry).toBeNull();
   });
 
   // The tag is freely editable for the product's whole life (no form lock), so
@@ -341,5 +344,53 @@ describe("buildUpdateInput round-trip", () => {
 
     expect(input).toHaveProperty("tag");
     expect(input.tag).toBeNull();
+  });
+
+  // The region lock has the tag's failure mode with a louder consequence: a
+  // stored lock that fails the round trip is not left alone, it is *removed*,
+  // and the product quietly goes on sale in every country on the next edit of
+  // anything at all.
+  it("re-emits a stored region lock through an unrelated edit", () => {
+    const product = syntheticConsumerProduct();
+    product.region_lock_country = "FI";
+    const state = existingFormState(product, consumerConfig, "en");
+    expect(state.regionLockCountry).toBe("FI");
+
+    state.translations = {
+      en: {
+        name: "Build Club Renamed",
+        shortDescription: "Build castles together.",
+        longDescription: "",
+      },
+    };
+    expect(buildUpdateInput(state, consumerConfig).region_lock_country).toBe(
+      "FI",
+    );
+  });
+
+  it("round-trips an unlocked product as an explicit null", () => {
+    const product = syntheticConsumerProduct(); // region_lock_country: null
+    const state = existingFormState(product, consumerConfig, "en");
+    const input = buildUpdateInput(state, consumerConfig);
+
+    expect(input).toHaveProperty("region_lock_country");
+    expect(input.region_lock_country).toBeNull();
+  });
+
+  it("loads a lock on an unseedable country as unlocked", () => {
+    // "ES" is a declared but unseeded country: the picker cannot offer it, so a
+    // stored lock on one would render as a select whose value matches no option
+    // — the admin sees "Not region locked" while state holds something else —
+    // and every save would then be refused by a write contract that only admits
+    // seeded countries, over a field they were never shown. Loading it as null
+    // makes the form honest and lets the next save normalise the row.
+    const product = syntheticConsumerProduct();
+    product.region_lock_country = "ES";
+    const state = existingFormState(product, consumerConfig, "en");
+
+    expect(state.regionLockCountry).toBeNull();
+    expect(
+      buildUpdateInput(state, consumerConfig).region_lock_country,
+    ).toBeNull();
   });
 });

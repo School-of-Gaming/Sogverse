@@ -329,6 +329,7 @@
           "municipalityFee": "Kommunavgift / tillfälle",
           "registrationOpensAt": "Anmälan öppnar",
           "tag": "Utformad för",
+          "regionLock": "Landsbegränsning",
           "visibility": "Synlighet"
         }
       },
@@ -382,11 +383,12 @@
         "materialUrl": "URL till lektionsmaterial",
         "seatAudience": "Vem kan ta en plats",
         "tag": "Utformad för",
+        "regionLock": "Landsbegränsning",
         "forGamers": "För spelare",
         "forParents": "För föräldrar",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
-        "deliveredIn": "Genomförs på",
+        "spokenLanguage": "Talat språk",
         "online": "Online",
         "inPerson": "På plats",
         "municipality": "Vilken kommun detta är för",
@@ -507,6 +509,9 @@
       "tagOptions": {
         "none": "Ingen märkning"
       },
+      "regionLock": {
+        "none": "Ingen landsbegränsning"
+      },
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Hela presentationen, som visas endast på produktens detaljsida. Rubriker, listor, betoning och länkar är tillgängliga.",
@@ -516,7 +521,8 @@
         "forGamersHint": "En förälder anmäler sin spelare och spelaren tar platsen. Kräver ett åldersintervall.",
         "forParentsHint": "En förälder tar en plats åt sig själv och deltar. Inget åldersintervall – ålder beskriver barn, inte vuxna.",
         "tagHint": "Valfritt. Familjer ser den som en märkning på butikskortet och produktsidan. Den säger vem tillfällena är utformade för, inte vem som får ta en plats.",
-        "deliveredInHint": "Det primära språk som används under tillfällena.",
+        "regionLockHint": "Endast familjer i det valda landet kan anmäla sig. Platsen är den familjen själv har uppgett, så det här är en vägvisning i butiken snarare än ett hårt hinder – och den som redan är anmäld behåller sin plats även om hen flyttar.",
+        "spokenLanguageHint": "Det huvudsakliga språk som talas under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
@@ -1760,7 +1766,19 @@
       "seatIsFor": "Vem platsen är för",
       "selected": "Vald",
       "agePill": "Ålder {age}",
-      "parentPill": "Förälder"
+      "parentPill": "Förälder",
+      "regionLock": {
+        "heading": "Din plats",
+        "note": "Den här produkten erbjuds bara i vissa länder. Ange var din familj bor.",
+        "setLocation": "Lägg till din plats",
+        "wrongCountry": "Den här produkten erbjuds bara i ett land: <name>{country}</name>.",
+        "eligible": "Bara för familjer i ditt land: {country}",
+        "eligibleLocation": "Din familjs plats: {location}",
+        "dialogTitle": "Var bor din familj?",
+        "dialogDescription": "Vi använder det för att se vilka klubbar, läger och evenemang som erbjuds där du bor. Du kan ändra det senare i dina inställningar.",
+        "dialogField": "Din plats",
+        "dialogSave": "Spara plats"
+      }
     },
     "pricing": {
       "title": "Pris",

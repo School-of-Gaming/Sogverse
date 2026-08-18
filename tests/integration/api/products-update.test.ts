@@ -84,6 +84,7 @@ const validBody = {
   min_age: 7,
   max_age: 12,
   tag: null,
+  region_lock_country: null,
   spoken_language_code: "en",
   material_url: null,
   location_id: null,
@@ -366,6 +367,54 @@ describe("POST /api/admin/products/[id]/update", () => {
     const { tag: _tag, ...noTag } = validBody;
 
     const response = await POST(updateRequest({ data: noTag }), { params });
+
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("carries a region lock through, and unlocks by omitting the argument", async () => {
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({ data: { ...validBody, region_lock_country: "SE" } }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({ p_region_lock_country: "SE" }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    // A null lock is a deliberate unlock, by the same route the tag's clear
+    // takes: null → undefined → dropped key → the RPC's DEFAULT NULL.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_region_lock_country).toBeUndefined();
+  });
+
+  it("returns 400 when the region lock field is missing", async () => {
+    // The same wire-level guard the tag needs, and for a consequence that is
+    // arguably worse: an omitted field would silently open a product to every
+    // country on an edit that was about something else entirely.
+    mockAuthenticatedAdmin();
+    const { region_lock_country: _lock, ...noLock } = validBody;
+
+    const response = await POST(updateRequest({ data: noLock }), { params });
+
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a country the lock cannot point at", async () => {
+    // Narrowed to the SEEDED countries rather than to the column's alpha-2
+    // shape: "JP" is well-formed, declared in SUPPORTED_COUNTRIES, and has no
+    // location rows, so a lock on it would be a gate nobody could ever pass.
+    mockAuthenticatedAdmin();
+
+    const response = await POST(
+      updateRequest({ data: { ...validBody, region_lock_country: "JP" } }),
+      { params },
+    );
 
     expect(response.status).toBe(400);
     expect(mockUserRpc).not.toHaveBeenCalled();

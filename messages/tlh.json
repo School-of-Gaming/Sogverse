@@ -377,6 +377,7 @@
           "municipalityFee": "veng Huch / qaStaHvIS",
           "registrationOpensAt": "ghIH poSchoH",
           "tag": "’Iv chenmoHlu’pu’",
+          "regionLock": "Sep ngaQmoH",
           "visibility": "leghlu"
         }
       },
@@ -430,11 +431,12 @@
         "materialUrl": "ghojmoHmeH De’ URL",
         "seatAudience": "quS Suq ’Iv",
         "tag": "’Iv chenmoHlu’pu’",
+        "regionLock": "Sep ngaQmoH",
         "forGamers": "toy’wI’pu’vaD",
         "forParents": "vavpu’vaD",
         "minAge": "DIS mach",
         "maxAge": "DIS tIn",
-        "deliveredIn": "Hol lo’lu’bogh",
+        "spokenLanguage": "Hol jatlhlu’bogh",
         "online": "rurmey",
         "inPerson": "Daq",
         "municipality": "Doch veng",
@@ -555,6 +557,9 @@
       "tagOptions": {
         "none": "per pagh"
       },
+      "regionLock": {
+        "none": "Sep ngaQbe’ — Hoch qo’vaD"
+      },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
         "longDescription": "vItlhutlh. QIn naQ, Doch ’aqroSDaq neH cha’lu’. nargh, tetlh, ’ej ghomHa’ ghItlh lo’laH.",
@@ -564,7 +569,8 @@
         "forGamersHint": "toy’wI’ chel vav, ’ej quS Suq toy’wI’. DIS mach DIS tIn je poQ.",
         "forParentsHint": "quS Suq vav ’ej lop ghaH. DIS poQbe’ — puqpu’ DIS qel, loDpu’ DISbe’.",
         "tagHint": "poQbe’lu’. per legh qorDu’pu’ — tetlh HaSta ’ej Doch HaSta. ’Iv chenmoHlu’pu’ ja’ per; quS Suqbogh nuv ja’be’.",
-        "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
+        "regionLockHint": "wIvbogh SepDaq qorDu’pu’ neH ghIH. ’ach Daqchaj ja’ qorDu’ ’e’ Sov: malja’Daq De’wI’ per ’oH, veH tIn ’oHbe’. quS Suqbogh nuv chIlbe’ quSDaj, Sep chu’Daq jaHchugh je.",
+        "spokenLanguageHint": "qepmeyDaq Hol potlh jatlhlu’.",
         "onlineNoLocation": "rurmey — Daq poQbe’. Hoch vavmey nej Hoch lulegh, qo’Daq pagh.",
         "voiceRoomAuto": "voice room chenmoHlu’.",
         "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey neH lulegh.",
@@ -1804,7 +1810,19 @@
       "seatIsFor": "’Iv quSvam ghaj",
       "selected": "wIvlu’",
       "agePill": "qan {age}",
-      "parentPill": "vav/SoS"
+      "parentPill": "vav/SoS",
+      "regionLock": {
+        "heading": "DaqlIj",
+        "note": "Sepmey puS neHvaD Doch vam ngeHlu’. qorDu’lIj Daq yIper.",
+        "setLocation": "DaqlIj yIchel",
+        "wrongCountry": "wa’ Sep neHDaq ngevlu’ Dochvam: <name>{country}</name>.",
+        "eligible": "SeplIj qorDu’pu’vaD neH: {country}",
+        "eligibleLocation": "qorDu’lIj Daq: {location}",
+        "dialogTitle": "nuqDaq qorDu’lIj Dab?",
+        "dialogDescription": "DaqlIj wISov ’ej naDev qach’a’mey, wanI’mey je wISam. Qapla’ — DaH yIchoH ’e’ DalaH.",
+        "dialogField": "DaqlIj",
+        "dialogSave": "Daq yISaH"
+      }
     },
     "pricing": {
       "title": "Huch",

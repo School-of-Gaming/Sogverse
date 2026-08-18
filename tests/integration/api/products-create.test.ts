@@ -100,6 +100,7 @@ const validBody = {
   min_age: 7,
   max_age: 12,
   tag: null,
+  region_lock_country: null,
   spoken_language_code: "en",
   material_url: null,
   location_id: null,
@@ -317,6 +318,48 @@ describe("POST /api/admin/products/create", () => {
     mockAuthenticatedAdmin();
     const { tag: _tag, ...noTag } = validBody;
     const response = await POST(createRequest({ data: noTag }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("passes a region lock through, and sends an omission for an unlocked product", async () => {
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({ data: { ...validBody, region_lock_country: "FI" } }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_region_lock_country: "FI" }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Same shape as an untagged product: null on the wire becomes undefined,
+    // supabase-js drops the key, and the RPC's DEFAULT NULL writes "unlocked".
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_region_lock_country).toBeUndefined();
+  });
+
+  it("returns 400 when the region lock field is missing", async () => {
+    // Required-nullable for the same reason the tag is: the RPC parameter is
+    // defaulted, so a forgotten field would silently unlock the product.
+    mockAuthenticatedAdmin();
+    const { region_lock_country: _lock, ...noLock } = validBody;
+    const response = await POST(createRequest({ data: noLock }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a country the lock cannot point at", async () => {
+    // The contract narrows to the SEEDED countries, not to the column CHECK's
+    // alpha-2 shape. "ES" is a real, well-formed code and a declared entry in
+    // SUPPORTED_COUNTRIES — it is simply not seeded, so a lock on it could
+    // never match any family's stored location. Refusing here is the only place
+    // that distinction is enforced.
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, region_lock_country: "ES" } }),
+    );
     expect(response.status).toBe(400);
     expect(mockUserRpc).not.toHaveBeenCalled();
   });

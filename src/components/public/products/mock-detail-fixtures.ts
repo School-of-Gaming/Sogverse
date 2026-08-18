@@ -1324,6 +1324,12 @@ function buildBaseProduct(
     // hero and the tag note all read `product.tag`, so nothing keyed by
     // scenario can leave two surfaces disagreeing about one club.
     tag: SCENARIO_TAG[slug] ?? null,
+    // Unlocked on every product scenario here: the region lock is a property of
+    // *who is looking*, not of the club, so it has nothing to say about the
+    // registration states this set enumerates. The candidate blocks for it are
+    // their own scenarios on the same scene (`region-*`), which render one of
+    // these products and supply the lock and the viewer's country alongside it.
+    region_lock_country: null,
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,

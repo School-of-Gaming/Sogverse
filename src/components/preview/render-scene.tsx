@@ -11,6 +11,10 @@ import {
   isShopBrowseScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
+import {
+  REGION_LOCK_BASE_SCENARIO,
+  findRegionLockScenario,
+} from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -44,6 +48,18 @@ const SCENE_RENDERERS: Record<
     return <ShopBrowseScene scenario={scenario} />;
   },
   products: (scenario) => {
+    // The region-lock scenarios are this page under a lock, so they go through
+    // the same scene — they share the surface but not its fixtures, rendering
+    // one club fixture with the gate as the only thing that varies.
+    const regionLock = findRegionLockScenario(scenario);
+    if (regionLock) {
+      return (
+        <ProductDetailScene
+          scenario={REGION_LOCK_BASE_SCENARIO}
+          regionLock={regionLock}
+        />
+      );
+    }
     if (!isPreviewScenario(scenario)) notFound();
     return <ProductDetailScene scenario={scenario} />;
   },
