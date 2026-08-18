@@ -55,7 +55,7 @@ export function buildPricingOption({
   }
 
   // Paid camps and paid events are a single upfront total. A free one of
-  // either type has no checkout at all and left above as `free`.
+  // either type has no checkout at all and is left above as `free`.
   return { kind: "upfront", totalCents: row.price_cents };
 }
 

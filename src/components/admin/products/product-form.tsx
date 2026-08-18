@@ -73,12 +73,19 @@ export function ProductFormShell({
    * needs the viewer's locale travels as a raw machine value and is resolved
    * here — two cases, and they are the same shape:
    *
-   *   - translationIncomplete carries a locale *code*, swapped for the language
-   *     name in the viewer's language (the i18n language-name rule).
-   *   - the price-floor errors carry the currency's minimum charge in *cents*,
-   *     formatted into the viewer's money string. The currency to format it in
-   *     round-trips through the `currency` value the validator already sends
-   *     (its uppercase label, which lowercases back to the code exactly).
+   *   - a locale *code*, swapped for the language name in the viewer's language
+   *     (the i18n language-name rule).
+   *   - a `minimum` in *cents*, formatted into the viewer's money string. The
+   *     currency to format it in round-trips through the `currency` value the
+   *     validator sends alongside (its uppercase label, which lowercases back to
+   *     the code exactly).
+   *
+   * Both branches key on the **data** rather than on a list of message keys:
+   * whichever failure carries a numeric `minimum` gets it formatted, so a key
+   * added later cannot render raw cents ("must be at least 50" — a plausible
+   * sentence that is off by a factor of a hundred) by forgetting to join a
+   * hand-maintained list. A value the pair cannot be made sense of — a
+   * non-numeric minimum, an unsupported currency — falls through untouched.
    */
   function displayValues(failure: ValidationFailure) {
     const values = failure.values;
@@ -93,15 +100,10 @@ export function ProductFormShell({
       };
     }
 
-    if (
-      failure.messageKey === "priceSessionInvalid" ||
-      failure.messageKey === "priceMonthInvalid"
-    ) {
+    const minimum = values.minimum;
+    if (typeof minimum === "number") {
       const currency = String(values.currency).toLowerCase();
-      const minimum = values.minimum;
-      if (typeof minimum !== "number" || !isSupportedCurrency(currency)) {
-        return values;
-      }
+      if (!isSupportedCurrency(currency)) return values;
       return {
         ...values,
         minimum: formatCurrencyFromCents(minimum, currency, uiLocale),

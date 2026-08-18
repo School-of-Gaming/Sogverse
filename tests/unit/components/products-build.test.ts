@@ -600,12 +600,17 @@ describe("validate", () => {
         });
       }
 
-      const camp = validCampState();
-      camp.prices.eur = { session: "0.49", month: "" };
-      expect(validate(camp, campConfig)).toEqual({
-        messageKey: "priceSessionInvalid",
-        values: EUR_MINIMUM,
-      });
+      // The same band on the other shape: the floor is the currency's, so it
+      // binds a camp's upfront total exactly as it binds a club's month, and
+      // both ends of the band are checked on both.
+      for (const session of ["0.01", "0.49"]) {
+        const camp = validCampState();
+        camp.prices.eur = { session, month: "" };
+        expect(validate(camp, campConfig), session).toEqual({
+          messageKey: "priceSessionInvalid",
+          values: EUR_MINIMUM,
+        });
+      }
     });
 
     it("accepts a price exactly at the currency's minimum charge", () => {
