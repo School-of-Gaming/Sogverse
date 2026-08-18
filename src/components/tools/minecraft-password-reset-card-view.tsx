@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
@@ -90,22 +90,25 @@ export function MinecraftPasswordResetCardView({
             onSubmit(usernames);
           }}
         >
-          <div className="space-y-1.5">
-            <Label htmlFor="minecraft-password-reset-usernames">
-              {t("inputLabel")}
-            </Label>
-            <Textarea
-              id="minecraft-password-reset-usernames"
-              rows={4}
-              value={raw}
-              onChange={(event) => setRaw(event.target.value)}
-              placeholder={t("inputPlaceholder")}
-              spellCheck={false}
-              autoCapitalize="none"
-              className="font-mono"
-            />
-            <p className="text-xs text-muted-foreground">{t("inputHint")}</p>
-          </div>
+          <Field
+            label={t("inputLabel")}
+            htmlFor="minecraft-password-reset-usernames"
+            hint={t("inputHint")}
+          >
+            {({ hintId }) => (
+              <Textarea
+                id="minecraft-password-reset-usernames"
+                rows={4}
+                value={raw}
+                onChange={(event) => setRaw(event.target.value)}
+                placeholder={t("inputPlaceholder")}
+                spellCheck={false}
+                autoCapitalize="none"
+                aria-describedby={hintId}
+                className="font-mono"
+              />
+            )}
+          </Field>
 
           {emailLike.length > 0 && (
             <p className="flex items-start gap-2 text-sm text-warning">
