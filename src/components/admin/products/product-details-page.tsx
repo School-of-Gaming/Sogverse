@@ -443,8 +443,15 @@ function OperationalFacts({
         {/* Not region locked is the ordinary state rather than a gap, so it says
             so in muted text — the same words the form's picker offers — the way
             the untagged row above does. The hint about UI-only enforcement is
-            not repeated here: it belongs where the setting is made. */}
-        {regionLockable && (
+            not repeated here: it belongs where the setting is made.
+
+            The row also appears on a type that cannot be locked, if one somehow
+            carries a lock: the shop enforces the column regardless of the
+            product's type, so a stored value has to be visible to the admins
+            answering for it rather than hidden by the setting's own
+            availability. Nothing today can produce that pairing — it is one
+            cheap condition against a state that would otherwise be silent. */}
+        {(regionLockable || product.region_lock_country !== null) && (
           <Fact icon={MapPin} label={t("detailsPage.fields.regionLock")}>
             {regionLockName === null ? (
               <span className="text-muted-foreground">

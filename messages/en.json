@@ -1771,6 +1771,8 @@
         "note": "This product is only offered to families in certain countries. Tell us where your family lives and we can check.",
         "setLocation": "Set your location",
         "wrongCountry": "This product is only offered to families in {country}.",
+        "eligible": "This product is only offered to families in {country}.",
+        "eligibleLocation": "Your family’s location: {location}",
         "dialogTitle": "Where does your family live?",
         "dialogDescription": "We use this to work out which clubs, camps and events are offered where you live. You can change it later in your settings.",
         "dialogField": "Your location",

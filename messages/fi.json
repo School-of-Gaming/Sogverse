@@ -1771,6 +1771,8 @@
         "note": "Tätä tuotetta tarjotaan vain perheille tietyissä maissa. Kerro, missä perheesi asuu, niin voimme tarkistaa asian.",
         "setLocation": "Lisää sijaintisi",
         "wrongCountry": "Tätä tuotetta tarjotaan vain perheille, joiden kotimaa on {country}.",
+        "eligible": "Tätä tuotetta tarjotaan vain perheille, joiden kotimaa on {country}.",
+        "eligibleLocation": "Perheesi sijainti: {location}",
         "dialogTitle": "Missä perheesi asuu?",
         "dialogDescription": "Tämän perusteella näemme, mitkä kerhot, leirit ja tapahtumat ovat tarjolla asuinpaikassasi. Voit vaihtaa sijainnin myöhemmin asetuksissa.",
         "dialogField": "Sijaintisi",

@@ -92,11 +92,11 @@ const PRODUCT_SCENARIOS: readonly PreviewScenarioMeta[] = PREVIEW_SCENARIOS.map(
 );
 
 /**
- * The two blocked region-lock states, on the same scene rather than one of
- * their own: they are the product page, seen by a viewer the lock has something
- * to say to. Two, because a family with no location and a family in the wrong
- * country cannot be the same viewer; no third, because a permitted family sees
- * the page every other scenario already shows.
+ * The three region-lock states, on the same scene rather than one of their own:
+ * they are the product page, seen by a viewer the lock has something to say to.
+ * Three, because no family can be two of them at once — no location, wrong
+ * country, or in the country and told so. An unlocked product is not a fourth:
+ * that is the page every other scenario already shows.
  */
 const REGION_LOCK_SCENARIO_META: readonly PreviewScenarioMeta[] =
   REGION_LOCK_SCENARIOS.map(({ slug, label }) => ({ slug, label }));
@@ -133,7 +133,7 @@ export const PREVIEW_SCENES = [
     surface: "products",
     title: "Product detail page",
     description:
-      "The public product page a parent lands on from the shop, with the registration signup panel in each of its states — and, at the end of each product type's run, the audience scenarios: the three shapes the picker takes once a product can be sold to parents. Those three are the only way to look at a for-parents product at all, since none exists yet. The page is three tracks and a band: the band spans the content columns with each element over the column it belongs to — back link right-aligned over the facts rail, h1 over the hero, type · topic eyebrow over the signup panel — and never over the gutters. Beneath it the reading column leads with a 3:2 hero at the browse card's treatment, wearing the same two chips in the same corners (tag bottom-left, audience-or-age top-right), so a family meets the same pill on the page a card sent them to; a product with no picture wears them on the wordmark banner instead. The short description follows, and on a tagged product the tag explained: what SOG actually does about that tag, in a quiet block at the reading column's full width, with the tag's icon and word but deliberately no second pill. An untagged product — most of them — shows neither chip nor block, with no hole where either would be. Under that, on a phone only, the jump button down to the signup panel: full width, text only, carrying the panel's own verb, since below `lg` the panel is the last thing in a long document. The panel itself sits in a sticky right rail from `lg`, its picker unboxed so a name, an age and “Already joined” fit one line at that width; from 2xl the overview card moves out again into a sticky left facts rail, label-over-value at rail width, leaving the reading column between them. The club and camp scenarios also carry a full marketing long description below the short one, which is where to look when the question is how a long blurb sits on the page: several sections of realistic copy at full paragraph length, with a real bulleted list, emphasis, and links out to the game's own store and back to our privacy policy. That field is authored markdown, written in the same rich editor gedus write session reports in, and it is the one authored field that carries links — this copy is an admin's, for our own shop pages, rather than a gedu's for one family. Its headings render one step above the body, under the product's own name, which is what the editor's Title button produces. The scenarios carrying no blurb render no card at all and leave no hole where one would be. The tag explanation copy is placeholder text written by an engineer and is being replaced wholesale by the product owner — read it for shape and length, not for wording. The last two scenarios are the same page under a **region lock**: a product may name one country it is sold in, and a family whose self-attested home location is elsewhere — or unknown — is told so on the signup panel, by a section asking where they live or by a note replacing the form. It is a soft, UI-only statement about who a product is offered to; nothing on the server enforces it, and the copy therefore never mentions that changing your location in settings walks straight through it.",
+      "The public product page a parent lands on from the shop, once per state its signup panel can be met in: registration window, audience, and region lock.",
     chrome: "public",
     scenarios: [...PRODUCT_SCENARIOS, ...REGION_LOCK_SCENARIO_META],
   },

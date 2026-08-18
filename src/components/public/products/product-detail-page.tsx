@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useNow } from "@/providers";
 import { useAuth } from "@/providers/auth-provider";
 import { useLocationsByIds } from "@/services/locations";
@@ -22,9 +23,12 @@ import {
 } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "./product-audience";
-import { deriveRegionGate, type RegionGate } from "./region-lock/region-gate";
+import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
 import { SignupPanel } from "./signup-panel";
-import type { AuthState } from "./signup-panel-view";
+import type {
+  AuthState,
+  ConfirmedHomeLocation,
+} from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -55,6 +59,9 @@ export function ProductDetailPage({
 }: ProductDetailPageProps) {
   const pathname = usePathname();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
+  // The viewer's own locale, for the one string on this page built from a
+  // database row rather than a message file: the home location's name.
+  const locale = useLocale();
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
@@ -88,15 +95,19 @@ export function ProductDetailPage({
   // parallel with the three reads below instead of waiting to learn whether it
   // is needed: it is one row by primary key and lands with them.
   //
-  // The country a parent confirms in the panel's dialog is held here for the
-  // gap between the write and the read of the row it points at — see the gate
-  // below.
+  // The place a parent confirms in the panel's dialog is held here for the gap
+  // between the write and the read of the row it points at — see the gate
+  // below. It carries the resolved name as well as the country, because the
+  // panel says both back and neither is on the profile yet.
   // ---------------------------------------------------------------------
   const homeLocationId = isCustomer ? profile.home_location_id : null;
-  const { data: homeLocationRows, isLoading: homeLocationLoading } =
-    useLocationsByIds(homeLocationId ? [homeLocationId] : []);
-  const [confirmedCountry, setConfirmedCountry] = useState<
-    string | null | undefined
+  const {
+    data: homeLocationRows,
+    isLoading: homeLocationLoading,
+    isError: homeLocationError,
+  } = useLocationsByIds(homeLocationId ? [homeLocationId] : []);
+  const [confirmedLocation, setConfirmedLocation] = useState<
+    ConfirmedHomeLocation | undefined
   >(undefined);
 
   // Live seat-count updates for this single product. Browse pages don't
@@ -122,8 +133,10 @@ export function ProductDetailPage({
   // for this: an unlocked product, a visitor, and a parent with no location at
   // all are all already decided. Nor does the wait return once the page is up —
   // a parent confirming a place in the panel's dialog hands the country
-  // straight to `confirmedCountry`, so the read that follows has nothing left
-  // to tell us.
+  // straight to `confirmedLocation`, so the read that follows has nothing left
+  // to tell us. And a *failed* read does not hold the page either: React Query
+  // retries a failure for several seconds, which would trade the whole page for
+  // a check the gate below has already given up on.
   if (
     productLoading ||
     authLoading ||
@@ -132,7 +145,8 @@ export function ProductDetailPage({
     (isCustomer &&
       product?.region_lock_country != null &&
       homeLocationId !== null &&
-      confirmedCountry === undefined &&
+      confirmedLocation === undefined &&
+      !homeLocationError &&
       homeLocationLoading)
   ) {
     return <DetailLoadingSkeleton />;
@@ -224,20 +238,29 @@ export function ProductDetailPage({
     participationsCount,
   });
 
+  const homeLocationRow = homeLocationRows?.[0] ?? null;
+
   // The lock, against where this family says it lives. A visitor and a
   // wrong-role viewer are handed `unlocked` rather than checked: they meet an
   // overlay of their own first, and telling them where the product is sold
-  // answers a question they have not reached. The confirmed country outranks
-  // the read for as long as both are in play; they agree the moment the read
-  // lands.
+  // answers a question they have not reached. The confirmed pick outranks the
+  // read for as long as both are in play; they agree the moment the read lands.
+  //
+  // Precedence and the two fail-open cases both live in `resolveRegionGate`, so
+  // the rule can be tested without a page around it. All this end owes it is an
+  // honest account of what the reads returned — in particular the difference
+  // between no row at all (undefined) and a row carrying no country (null),
+  // which is the difference between asking the family where they live and
+  // deciding not to.
   const regionGate: RegionGate =
     authState.kind === "ready"
-      ? deriveRegionGate(
-          product.region_lock_country,
-          confirmedCountry !== undefined
-            ? confirmedCountry
-            : (homeLocationRows?.[0]?.country_code ?? null),
-        )
+      ? resolveRegionGate({
+          regionLockCountry: product.region_lock_country,
+          confirmedCountry: confirmedLocation?.countryCode,
+          homeLocationReadFailed: homeLocationError,
+          homeLocationCountry:
+            homeLocationRow === null ? undefined : homeLocationRow.country_code,
+        })
       : { kind: "unlocked" };
 
   return (
@@ -250,7 +273,15 @@ export function ProductDetailPage({
           state={state}
           authState={authState}
           regionGate={regionGate}
-          onLocationConfirmed={setConfirmedCountry}
+          // Only the `eligible` variant reads it, and only the confirmed pick
+          // can answer before the row does — the same precedence the gate uses.
+          homeLocationName={
+            confirmedLocation?.name ??
+            (homeLocationRow !== null
+              ? localizedLocationName(homeLocationRow, locale)
+              : null)
+          }
+          onLocationConfirmed={setConfirmedLocation}
         />
       }
       // The panel is where the region block is explained, so the phone-width
@@ -270,6 +301,13 @@ export function ProductDetailPage({
  * this is a perceptibly slow call and gets a structured skeleton immediately,
  * with no delay and no fade. It is not one indexed row, and it is not
  * something React Query can already have.
+ *
+ * A fifth read joins them on a narrow slice of visits: the keyed lookup of the
+ * family's home location, waited on only where it can change what the signup
+ * panel says — a region-locked product, a signed-in parent, a location stored
+ * to resolve, and no pick confirmed in the panel's own dialog yet. It drops out
+ * again the moment that read errors, since the gate fails open rather than
+ * holding the page over a retry.
  *
  * **Nothing here is real chrome, and that is a property of this route rather
  * than a shortcut.** The band's three elements — back link, eyebrow, title —

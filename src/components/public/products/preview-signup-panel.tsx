@@ -4,9 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductBrowseRow } from "@/types";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { RegionGate } from "./region-lock/region-gate";
 import { SetLocationDialog } from "./region-lock/set-location-dialog";
-import { SignupPanelView, type AuthState } from "./signup-panel-view";
+import {
+  SignupPanelView,
+  type AuthState,
+  type ConfirmedHomeLocation,
+} from "./signup-panel-view";
 import { useSignupPanelFields } from "./use-signup-panel-fields";
 import type { RegistrationState } from "./derive-registration-state";
 
@@ -46,8 +51,10 @@ interface PreviewSignupPanelProps {
    * scenario.
    */
   regionGate?: RegionGate;
-  /** The country of a place confirmed in the location dialog. */
-  onLocationPicked?: (countryCode: string | null) => void;
+  /** The family's location, as the gate's `eligible` variant says it back. */
+  homeLocationName?: string | null;
+  /** A place confirmed in the location dialog. */
+  onLocationPicked?: (confirmed: ConfirmedHomeLocation) => void;
 }
 
 // Long enough that the "Signing up…" state is visibly the same beat a real
@@ -60,6 +67,7 @@ export function PreviewSignupPanel({
   authState,
   summaryHref,
   regionGate,
+  homeLocationName,
   onLocationPicked,
 }: PreviewSignupPanelProps) {
   const router = useRouter();
@@ -87,7 +95,14 @@ export function PreviewSignupPanel({
    */
   const saveLocation = async (pick: LocationPick) => {
     await new Promise((resolve) => setTimeout(resolve, FAKE_COMMIT_MS));
-    onLocationPicked?.(pick.location.country_code);
+    // The same fall-through the live adapter makes: a row with no country tells
+    // the gate nothing, so nothing is reported and the scene keeps what it had.
+    if (pick.location.country_code !== null) {
+      onLocationPicked?.({
+        countryCode: pick.location.country_code,
+        name: localizedLocationName(pick.location, fields.locale),
+      });
+    }
   };
 
   return (
@@ -99,6 +114,7 @@ export function PreviewSignupPanel({
         regionGate={
           regionGate && {
             gate: regionGate,
+            locationName: homeLocationName ?? null,
             onSetLocation: () => setLocationDialogOpen(true),
           }
         }

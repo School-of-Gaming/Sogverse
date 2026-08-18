@@ -6,6 +6,7 @@ import type { ProductBrowseRow } from "@/types";
 import { AddGamerDialog } from "@/components/family";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { ROUTES } from "@/lib/constants";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
 import {
   useCreateParticipation,
@@ -19,6 +20,7 @@ import { SetLocationDialog } from "./region-lock/set-location-dialog";
 import {
   SignupPanelView,
   type AuthState,
+  type ConfirmedHomeLocation,
   type SignupPanelViewProps,
 } from "./signup-panel-view";
 import { useSignupPanelFields } from "./use-signup-panel-fields";
@@ -52,11 +54,17 @@ interface SignupPanelProps {
    */
   regionGate: RegionGate;
   /**
-   * The country of a place confirmed in the location dialog. The page holds it
-   * so the gate re-derives on the spot rather than waiting for the keyed read
-   * of a row the picker just handed us.
+   * The family's home location as the viewer's locale spells it, resolved by
+   * the page from the row its keyed read returned (or from a pick confirmed
+   * here). Read only by the gate's `eligible` variant.
    */
-  onLocationConfirmed: (countryCode: string | null) => void;
+  homeLocationName: string | null;
+  /**
+   * A place confirmed in the location dialog. The page holds it so the gate
+   * re-derives on the spot rather than waiting for the keyed read of a row the
+   * picker just handed us.
+   */
+  onLocationConfirmed: (confirmed: ConfirmedHomeLocation) => void;
 }
 
 export function SignupPanel({
@@ -64,6 +72,7 @@ export function SignupPanel({
   state,
   authState,
   regionGate,
+  homeLocationName,
   onLocationConfirmed,
 }: SignupPanelProps) {
   const router = useRouter();
@@ -175,14 +184,20 @@ export function SignupPanel({
    * policy. No guard is needed against clobbering a stored value — the dialog
    * is only ever offered when there is none.
    *
-   * Order matters on the way back. The confirmed country goes up *first*, so
-   * the gate re-derives from the row the picker already handed us; refreshing
-   * the profile after it keeps the in-memory profile true for every other
-   * surface in this document, and the keyed read it starts merely confirms what
-   * the page is already showing. Done the other way round, the page would drop
-   * to its skeleton waiting to be told something it knew.
+   * **The promise this returns is the write, and only the write.** The dialog
+   * shows an error when it rejects, so anything awaited here is something a
+   * parent can be told failed — and a committed save reported as a failure is
+   * the worst outcome available: they retry a write that already landed, or
+   * walk away from a purchase that was one click from done.
    *
-   * Rejections propagate: the dialog re-enables its button and shows why.
+   * So the profile refresh that follows is deliberately not part of it. It is a
+   * consistency chore for the *other* surfaces in this document, not a step in
+   * what the parent just asked for, and the gate has already re-derived from
+   * the pick the picker handed us. Fire it, catch it, and let the page carry on
+   * saying what it already knows to be true.
+   *
+   * Rejections of the write itself propagate: the dialog re-enables its button
+   * and shows why.
    */
   const saveHomeLocation = async (pick: LocationPick) => {
     // Structurally unreachable: the gate only asks for a location when the
@@ -192,8 +207,21 @@ export function SignupPanel({
       userId: user.id,
       updates: { home_location_id: pick.location.id },
     });
-    onLocationConfirmed(pick.location.country_code);
-    await refreshProfile();
+    // A row with no country tells the gate nothing, so nothing is handed up and
+    // the keyed read of the row we just pointed at stays the authority. Setting
+    // a null here would pin the gate to "we do not know" for the life of the
+    // page — a wedge, on the one path that was supposed to clear it.
+    if (pick.location.country_code !== null) {
+      onLocationConfirmed({
+        countryCode: pick.location.country_code,
+        name: localizedLocationName(pick.location, fields.locale),
+      });
+    }
+    void refreshProfile().catch(() => {
+      // Nothing to say and nobody to say it to: the write landed, the panel is
+      // already showing its outcome, and the next navigation rebuilds the
+      // profile anyway.
+    });
   };
 
   const viewProps: SignupPanelViewProps = {
@@ -207,6 +235,7 @@ export function SignupPanel({
     submitError,
     regionGate: {
       gate: regionGate,
+      locationName: homeLocationName,
       onSetLocation: () => setLocationDialogOpen(true),
     },
   };

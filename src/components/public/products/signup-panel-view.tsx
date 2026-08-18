@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { MapPin, Plus } from "lucide-react";
+import { MapPin, MapPinCheck, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -110,15 +110,17 @@ export type MyParticipationState = "waitlisted" | "active";
 /**
  * **The region lock, as this panel takes it.**
  *
- * A product may be sold in one country only, and a parent whose family is
- * somewhere else — or whose location we do not know — has to be told so here.
- * The decision itself is made outside and arrives as one discriminated value
+ * A product may be sold in one country only, and every parent looking at a
+ * locked one is told about it here — the family somewhere else, the family
+ * whose location we do not know, and the family who is in it. The decision
+ * itself is made outside and arrives as one discriminated value
  * (`region-lock/region-gate.ts`); the panel interprets it and owns nothing but
  * the rendering, which is what lets a preview scene drive it from fixtures.
  *
- * The callback is the section's own affordance and never the CTA's. Which of
- * the two states the gate is in decides whether the reader sees a section or an
- * overlay — see the panel's grammar above `FormOrAuth`.
+ * The callback is the section's own affordance and never the CTA's, and it
+ * belongs to the one state that asks a question. Which state the gate is in
+ * decides whether the reader sees a section, a statement in that same slot, or
+ * an overlay where the form was — see the panel's grammar above `FormOrAuth`.
  *
  * The gate applies only to a signed-in customer's form. A signed-out visitor
  * meets the sign-in overlay first, and a wrong-role visitor the wrong-role
@@ -127,8 +129,35 @@ export type MyParticipationState = "waitlisted" | "active";
  */
 export interface SignupRegionGate {
   gate: RegionGate;
+  /**
+   * The family's home location as the reader's own locale spells it, read only
+   * by the `eligible` variant — which states where the family lives, so that a
+   * parent who has just answered the question can see *which* answer was
+   * recorded.
+   *
+   * It sits beside the gate rather than inside it because the gate is a pure
+   * decision over two country codes, and a place name is neither an input to
+   * that decision nor derivable from it. Null when nothing has resolved a name;
+   * the variant then makes its statement without naming a place.
+   */
+  locationName?: string | null;
   /** Opens the caller's set-location dialog. */
   onSetLocation: () => void;
+}
+
+/**
+ * A home location the parent confirmed in the panel's own dialog, on its way
+ * back up to whoever owns the gate.
+ *
+ * Both halves are what the panel's host needs and cannot get from the write it
+ * just made: the country re-derives the gate before the keyed read of the row
+ * lands, and the name is what the confirmation variant says back. A pick whose
+ * row carries no country never becomes one of these — see the adapter.
+ */
+export interface ConfirmedHomeLocation {
+  countryCode: string;
+  /** Already resolved for the viewer's locale. */
+  name: string;
 }
 
 export interface SignupPanelViewProps {
@@ -423,6 +452,16 @@ function FormOrAuth(props: FormOrAuthProps) {
       // same swap the wrong-role note above makes, with picker, consent and CTA
       // ceasing to exist rather than being disabled in place. Nothing on screen
       // survives it, so nothing moves and nothing needs room reserved.
+      //
+      // **This applies to a family already enrolled, and that is decided rather
+      // than overlooked.** The overlay replaces the whole panel, the
+      // already-joined picker row included, so a family that moves after buying
+      // a seat is shown no acknowledgement of it here. Nothing about the seat is
+      // touched: the product they own stays on their own dashboard, keyed by the
+      // participation, which is the surface for what a family already has. What
+      // they lose is the ability to buy *further* seats until their location
+      // matches again, which is the gate doing its job — it gates entrance, and
+      // an enrolment is an entrance.
       if (props.regionGate?.gate.kind === "wrong_country") {
         return (
           <WrongCountryOverlay
@@ -566,6 +605,60 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
   );
 }
 
+/**
+ * The family's location is known, and it is where this product is sold.
+ *
+ * The same slot the question occupied, answered — which is the point of putting
+ * it there. A parent who confirms a matching place in the dialog watches the
+ * section they were asked to fill in state the outcome in its place, which is
+ * how they learn the save worked without a toast or a reloaded page. The
+ * transform is the direct result of the confirm they just made, so the reflow
+ * below it is one the reader is braced for.
+ *
+ * **It says something worth saying to the people it is true for.** The
+ * refused reader is told the product is only offered in one country; so is the
+ * permitted one, and for them it is the sentence that explains why the location
+ * on file matters at all. What it does not do is invite an edit: there is no
+ * change-location control, because a parent halfway through a purchase should
+ * not be nudged into rewriting a profile field, and settings is where a location
+ * is changed. That absence is also what keeps this out of the CTA's checklist —
+ * an eligible family has nothing left to do here, so the button is untouched.
+ *
+ * No border: it is a statement, and in this panel a border means you can act on
+ * what it surrounds.
+ */
+function RegionEligibleSection({
+  requiredCountry,
+  locationName,
+  locale,
+}: {
+  requiredCountry: string;
+  locationName: string | null;
+  locale: string;
+}) {
+  const t = useTranslations("productDetail.signupPanel");
+  return (
+    <div>
+      <p className="flex items-start gap-2 text-sm text-foreground">
+        <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <span>
+          {t("regionLock.eligible", {
+            country: countryDisplayName(requiredCountry, locale),
+          })}
+        </span>
+      </p>
+      {/* Only when a name actually resolved. A line reading "Your family's
+          location:" with nothing after it would be worse than not saying where
+          they live. */}
+      {locationName !== null && (
+        <p className="mt-1 pl-6 text-xs text-muted-foreground">
+          {t("regionLock.eligibleLocation", { location: locationName })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SignupForm(
   props: FormOrAuthProps & {
     participants: readonly SignupParticipantChoice[];
@@ -588,9 +681,9 @@ function SignupForm(
   const selectedIsSelf =
     props.participants.find((p) => p.id === props.selectedParticipantId)
       ?.isSelf === true;
-  // The location section renders exactly when the gate is asking for one. The
-  // wrong-country half never reaches this component — it replaced the form
-  // upstream — so this is the only region state the form itself knows about.
+  // Two of the four gate states put a section in the form, and only one of them
+  // stops the CTA. The wrong-country half never reaches this component — it
+  // replaced the form upstream — and `unlocked` renders nothing at all.
   const needsLocation = props.regionGate?.gate.kind === "no_location";
   const formReady =
     props.selectedParticipantId !== null && props.agreed && !needsLocation;
@@ -756,12 +849,21 @@ function SignupForm(
         </div>
       </div>
 
-      {/* Between the picker and the rules, which is where the CTA's checklist
-          names it. It is present from the panel's first paint — the gate is
-          resolved before the page renders — so nothing below it is ever pushed
-          down by its arrival. */}
+      {/* One slot between the picker and the rules, which is where the CTA's
+          checklist names it, and which both locked-and-signed-in states share.
+          It is present from the panel's first paint — the gate is resolved
+          before the page renders — so nothing below it is ever pushed down by
+          its arrival; the only later change is the question becoming its own
+          answer in place, which is a confirm the reader just made. */}
       {needsLocation && props.regionGate !== undefined && (
         <RegionLocationSection onSetLocation={props.regionGate.onSetLocation} />
+      )}
+      {props.regionGate?.gate.kind === "eligible" && (
+        <RegionEligibleSection
+          requiredCountry={props.regionGate.gate.requiredCountry}
+          locationName={props.regionGate.locationName ?? null}
+          locale={props.locale}
+        />
       )}
 
       <RulesCheckbox

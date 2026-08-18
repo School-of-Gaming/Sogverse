@@ -1,13 +1,15 @@
 import type { PreviewScenario } from "../mock-detail-fixtures";
 
 /**
- * **The two blocked region-lock states, as preview scenarios.**
+ * **The three region-lock states the panel says something about, as preview
+ * scenarios.**
  *
  * They belong to the product-detail scene — they are that page, seen by a
- * viewer the lock has something to say to — and they are two rather than one
- * because a family with no location and a family in the wrong country cannot be
- * the same viewer. A permitted family needs no scenario: the panel is untouched
- * there, which is what every other product scenario already shows.
+ * viewer the lock has something to say to — and they are three rather than one
+ * because no family can be two of them at once: a family with no location, a
+ * family in the wrong country and a family in the right one are three different
+ * viewers. An *unlocked* product needs no scenario at all; that is the page
+ * every other product scenario already shows.
  *
  * A slug space of their own rather than entries in `PreviewScenario`, because
  * they are not products: both render the *same* product fixture, and what
@@ -26,6 +28,12 @@ export interface RegionLockScenarioMeta {
   regionLockCountry: string;
   /** The country under the parent's home location; null when they have none. */
   viewerCountry: string | null;
+  /**
+   * What that home location is called, as the confirmation variant says it
+   * back. Null wherever there is no location to name — which is every scenario
+   * but the eligible one.
+   */
+  viewerLocationName: string | null;
 }
 
 /**
@@ -42,18 +50,30 @@ const LOCK = "FI";
 /** Where the family is, in the wrong-country scenario. */
 const ELSEWHERE = "SE";
 
+/** Where the family lives, in the eligible scenario. */
+const HOME = "Helsinki";
+
 export const REGION_LOCK_SCENARIOS: readonly RegionLockScenarioMeta[] = [
   {
     slug: "region-no-location",
     label: "Region lock — no location set",
     regionLockCountry: LOCK,
     viewerCountry: null,
+    viewerLocationName: null,
   },
   {
     slug: "region-wrong-country",
     label: "Region lock — wrong country",
     regionLockCountry: LOCK,
     viewerCountry: ELSEWHERE,
+    viewerLocationName: null,
+  },
+  {
+    slug: "region-eligible",
+    label: "Region lock — eligible",
+    regionLockCountry: LOCK,
+    viewerCountry: LOCK,
+    viewerLocationName: HOME,
   },
 ];
 

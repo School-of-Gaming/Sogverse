@@ -9,7 +9,7 @@ import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
  * `locations` row their `profiles.home_location_id` points at.
  *
  * This module owns exactly that decision and nothing else. Two codes in, one of
- * three answers out, no React, no data access — so the fixture-driven preview
+ * four answers out, no React, no data access — so the fixture-driven preview
  * page and the live one make the same call. Deriving it anywhere else would be
  * a second copy of a rule that has to hold on the page *and* in the copy the
  * page renders.
@@ -20,11 +20,19 @@ import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
  * never mentions settings — the block is a statement about who a product is
  * offered to, not a lock somebody is meant to pick.
  *
- * The three answers, and why "no location" is not just a flavour of "wrong":
+ * The four answers, and why each is its own state:
  *
- * - `unlocked` — no lock on the product, or the family is in the right country.
- *   The panel is untouched; there is deliberately no third state where a
- *   permitted family is told they were checked.
+ * - `unlocked` — there is no lock on this product, so there is nothing to say
+ *   and no trace that anything was checked. It is also what the page hands back
+ *   when the read behind the check failed: the block is a soft signal, and
+ *   turning a failed lookup into a refusal would cost an honest buyer their
+ *   purchase over our own outage.
+ * - `eligible` — the product is locked and this family is inside it. The signup
+ *   form stays whole and gains a section stating where the product is offered
+ *   and where the family lives. It carries no action: the statement is worth
+ *   making to the people it is true for — it is the same sentence the blocked
+ *   reader gets, and here it explains why the location on file matters — but
+ *   changing a location mid-purchase is settings' business, not the panel's.
  * - `no_location` — the product is locked and we do not know where the family
  *   is. This is a *missing input*, not a refusal, and the parent can clear it
  *   themselves in one step, so the signup form stays and gains a section asking
@@ -35,9 +43,16 @@ import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
  *   panel's grammar is that a full-panel note means exactly that. Here the
  *   country IS named, because a refusal that will not say what it is refusing
  *   on is worse than useless to the reader.
+ *
+ * `eligible` and `no_location` share a slot on the panel, which is what makes
+ * answering the question in place possible: a parent who confirms a matching
+ * location watches the section they were asked to fill in become the section
+ * saying they are in. `unlocked` and `wrong_country` are the two ends that show
+ * nothing and everything.
  */
 export type RegionGate =
   | { kind: "unlocked" }
+  | { kind: "eligible"; requiredCountry: string }
   | { kind: "no_location" }
   | { kind: "wrong_country"; requiredCountry: string };
 
@@ -54,8 +69,69 @@ export function deriveRegionGate(
 ): RegionGate {
   if (regionLockCountry === null) return { kind: "unlocked" };
   if (viewerCountry === null) return { kind: "no_location" };
-  if (viewerCountry === regionLockCountry) return { kind: "unlocked" };
+  if (viewerCountry === regionLockCountry) {
+    return { kind: "eligible", requiredCountry: regionLockCountry };
+  }
   return { kind: "wrong_country", requiredCountry: regionLockCountry };
+}
+
+/**
+ * Everything the live page knows about where this family lives, before it has
+ * a country to compare.
+ */
+export interface RegionGateInputs {
+  /** The product's lock — `products.region_lock_country`. */
+  regionLockCountry: string | null;
+  /**
+   * The country of a place confirmed in the panel's own dialog. Undefined until
+   * one is; it outranks the read for as long as both are in play, because the
+   * picker handed us the row the profile now points at and the keyed read of it
+   * is merely catching up.
+   */
+  confirmedCountry: string | undefined;
+  /** The keyed read of the family's home location errored. */
+  homeLocationReadFailed: boolean;
+  /**
+   * The country on the resolved home-location row. Three distinct values:
+   * a code, `null` for a row that carries none, and `undefined` for no row at
+   * all — no location stored, or a stored id that resolves to nothing.
+   */
+  homeLocationCountry: string | null | undefined;
+}
+
+/**
+ * The gate the live page shows, reads and all.
+ *
+ * `deriveRegionGate` answers the question once there is a country to compare;
+ * this answers what to do when there might not be, and it lives here rather
+ * than in the page because the two ways of not knowing are a *rule*, not
+ * plumbing — and a rule stated in a component is one nothing can test.
+ *
+ * **Both of them fail open.** The block is a soft UI signal with nothing behind
+ * it, so the two errors are not symmetric: refusing an honest buyer — or
+ * standing them in front of a question they have already answered — costs a
+ * sale over a fault of ours, while letting one family past a lock the server
+ * never enforced costs nothing the design was relying on.
+ *
+ * - **The read failed.** No country now, and none on this render however long
+ *   React Query keeps retrying.
+ * - **The row resolved and carries no country at all.** Deliberately not
+ *   `no_location`: their location *is* set, this read is the authority on it,
+ *   and offering the dialog would ask them to overwrite a stored value to
+ *   answer a question about data we are missing.
+ */
+export function resolveRegionGate({
+  regionLockCountry,
+  confirmedCountry,
+  homeLocationReadFailed,
+  homeLocationCountry,
+}: RegionGateInputs): RegionGate {
+  if (confirmedCountry !== undefined) {
+    return deriveRegionGate(regionLockCountry, confirmedCountry);
+  }
+  if (homeLocationReadFailed) return { kind: "unlocked" };
+  if (homeLocationCountry === null) return { kind: "unlocked" };
+  return deriveRegionGate(regionLockCountry, homeLocationCountry ?? null);
 }
 
 /**
@@ -73,6 +149,19 @@ export function deriveRegionGate(
  * deliberately catalogued could still be named. The bare code is the last
  * resort — wrong-looking on purpose, since a page saying "families in FI" is
  * visibly a bug rather than a quietly missing word.
+ *
+ * Two details of the `Intl` call are load-bearing, and are the same two the
+ * admin form's country picker states:
+ *
+ * - **`"en"` is listed second, not left implicit.** A bare `[locale]` falls back
+ *   to the *runtime* default locale for any locale ICU has no data for — which
+ *   is `tlh` — and that default differs between the server and each visitor's
+ *   machine. The result is a hydration mismatch on exactly the sentence this
+ *   function exists to build. A named second language makes both ends agree.
+ * - **`fallback: "none"`**, so an unknown region resolves to `undefined` and the
+ *   chain below actually runs. The default (`"code"`) hands back the code
+ *   itself, which is truthy — it would make the documented fallbacks dead code
+ *   and quietly print "families in FI" where the config knows the word.
  */
 export function countryDisplayName(code: string, locale: string): string {
   const fallback =
@@ -81,5 +170,10 @@ export function countryDisplayName(code: string, locale: string): string {
   // well-formed region subtag, so the shape is checked rather than caught: a
   // malformed code is a data problem, and a try/catch here would swallow it.
   if (!/^[A-Za-z]{2}$/.test(code)) return fallback;
-  return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? fallback;
+  return (
+    new Intl.DisplayNames([locale, "en"], {
+      type: "region",
+      fallback: "none",
+    }).of(code) ?? fallback
+  );
 }

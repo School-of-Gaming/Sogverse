@@ -41,14 +41,19 @@ export function ProductDetailScene({
   scenario: PreviewScenario;
   regionLock?: RegionLockScenarioMeta;
 }) {
-  // Where the family lives. The scenario seeds it; confirming a place in the
-  // panel's dialog replaces it, so the gate re-derives against the pick and a
-  // reviewer can walk from "no location" into either outcome without opening a
+  // Where the family lives, country and name both. The scenario seeds it;
+  // confirming a place in the panel's dialog replaces it, so the gate re-derives
+  // against the pick and a reviewer can walk from "no location" into either
+  // outcome — the confirmation in place, or the overlay — without opening a
   // second page. The write behind it is inert, as every backend-touching action
-  // in a scene is — there is no profile row here.
-  const [viewerCountry, setViewerCountry] = useState<string | null>(
-    regionLock?.viewerCountry ?? null,
-  );
+  // in a scene is: there is no profile row here.
+  const [viewerLocation, setViewerLocation] = useState<{
+    country: string | null;
+    name: string | null;
+  }>({
+    country: regionLock?.viewerCountry ?? null,
+    name: regionLock?.viewerLocationName ?? null,
+  });
 
   const fixture = buildScenarioFixture(scenario);
   const summaryHref = previewSceneHref("confirmation", scenario);
@@ -70,9 +75,12 @@ export function ProductDetailScene({
           summaryHref={summaryHref}
           regionGate={deriveRegionGate(
             product.region_lock_country,
-            viewerCountry,
+            viewerLocation.country,
           )}
-          onLocationPicked={setViewerCountry}
+          homeLocationName={viewerLocation.name}
+          onLocationPicked={({ countryCode, name }) =>
+            setViewerLocation({ country: countryCode, name })
+          }
         />
       }
       // Read from the registration state exactly as the live route reads it,

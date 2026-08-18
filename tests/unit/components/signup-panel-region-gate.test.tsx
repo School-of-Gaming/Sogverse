@@ -10,13 +10,14 @@ import {
 /**
  * **What the region lock does to the signup panel.**
  *
- * The gate has two blocked states and the panel answers them with two different
- * shapes, which is the thing worth pinning: a missing location is a question,
- * so the form stays whole and grows a section that asks it; a wrong country is
- * a refusal, so the form goes entirely. Between them they carry the panel's
- * grammar — the CTA never opens the dialog, the section does; the CTA names the
- * next missing step in section order; an overlay means there is no decision to
- * present.
+ * The gate has three states the panel answers, in three different shapes, which
+ * is the thing worth pinning: a missing location is a question, so the form
+ * stays whole and grows a section that asks it; being in the right country is a
+ * statement, so the same slot holds the answer and nothing else changes; a
+ * wrong country is a refusal, so the form goes entirely. Between them they
+ * carry the panel's grammar — the CTA never opens the dialog, the section does;
+ * the CTA names the next missing step in section order; an overlay means there
+ * is no decision to present.
  *
  * Translations are stubbed to echo their keys, so nothing here depends on
  * English wording. The interpolated country still comes through, which is how
@@ -134,6 +135,12 @@ describe("wrong country", () => {
   });
 });
 
+const eligible = {
+  gate: { kind: "eligible" as const, requiredCountry: "FI" },
+  locationName: "Helsinki",
+  onSetLocation: () => {},
+};
+
 describe("no location", () => {
   const noLocation = (onSetLocation = () => {}) => ({
     gate: { kind: "no_location" as const },
@@ -187,6 +194,29 @@ describe("no location", () => {
     expect(cta(container).disabled).toBe(true);
   });
 
+  it("swaps to the confirmation in the same slot once a matching place lands", () => {
+    // The transform the in-place answer rests on: same mount, same position,
+    // the question replaced by its own answer. Rendering it as a rerender is
+    // what makes "in place" a claim about this component rather than about two
+    // screenshots.
+    const { container, rerender } = render(
+      <SignupPanelView {...panel({ regionGate: noLocation() })} />,
+    );
+    expect(container.textContent).toContain("regionLock.note");
+
+    rerender(<SignupPanelView {...panel({ regionGate: eligible })} />);
+    expect(container.textContent).not.toContain("regionLock.note");
+    expect(container.textContent).toContain("regionLock.eligible");
+
+    const text = container.textContent;
+    expect(text.indexOf("regionLock.eligible")).toBeGreaterThan(
+      text.indexOf("whoAreYouSigningUp"),
+    );
+    expect(text.indexOf("regionLock.eligible")).toBeLessThan(
+      text.indexOf("rulesHeading"),
+    );
+  });
+
   it("keeps the CTA in section order: gamer, then location, then rules", () => {
     // Nobody selected yet: the picker is above the location section, so its
     // prompt comes first even though the location is missing too.
@@ -208,5 +238,66 @@ describe("no location", () => {
     expect(cta(unagreed.container).textContent).toContain(
       "regionLock.setLocation",
     );
+  });
+});
+
+describe("eligible", () => {
+  it("keeps the whole form and states where the product is offered", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: eligible })} />,
+    );
+    expect(rows(container)).toHaveLength(1);
+    expect(container.textContent).toContain("rulesHeading");
+    expect(container.textContent).toContain("regionLock.eligible");
+    // The country is named, in the reader's own language — the same courtesy
+    // the refusal does, and the reason this state says anything at all.
+    expect(container.textContent).toContain("Finland");
+  });
+
+  it("says which location it is talking about", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: eligible })} />,
+    );
+    expect(container.textContent).toContain("regionLock.eligibleLocation");
+    expect(container.textContent).toContain("Helsinki");
+  });
+
+  it("makes its statement without one when no name resolved", () => {
+    // A label with nothing after it would be worse than not naming the place.
+    const { container } = render(
+      <SignupPanelView
+        {...panel({ regionGate: { ...eligible, locationName: null } })}
+      />,
+    );
+    expect(container.textContent).toContain("regionLock.eligible");
+    expect(container.textContent).not.toContain("regionLock.eligibleLocation");
+  });
+
+  it("offers no action at all — location changes belong to settings", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: eligible })} />,
+    );
+    // No set-location affordance anywhere, and nothing else clickable inside
+    // the section either — a parent mid-purchase is not invited to rewrite a
+    // profile field.
+    expect(setLocationButton(container)).toBeUndefined();
+    expect(container.textContent).not.toContain("regionLock.setLocation");
+    const regionButtons = [...container.querySelectorAll("button")].filter((b) =>
+      b.textContent.includes("regionLock"),
+    );
+    expect(regionButtons).toEqual([]);
+  });
+
+  it("leaves the CTA exactly as an unlocked product would", () => {
+    // Eligible blocks nothing, so it adds no step to the checklist: same live
+    // label, same enabled button, and clicking it still submits.
+    const onSubmit = vi.fn();
+    const { container } = render(
+      <SignupPanelView {...panel({ regionGate: eligible, onSubmit })} />,
+    );
+    expect(cta(container).textContent).toContain("ctaActive");
+    expect(cta(container).disabled).toBe(false);
+    fireEvent.click(cta(container));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 });
