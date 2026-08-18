@@ -1814,6 +1814,13 @@ BEGIN
   SELECT jsonb_build_object(
     'id',           p.id,
     'product_type', p.product_type,
+    -- Which game identity this product's surfaces are about, if any. The enum
+    -- travels as its text value; the mapping from a topic to a platform is a
+    -- client-side decision (minecraft_java -> Minecraft, roblox_studio ->
+    -- Roblox, everything else -> no game identity), deliberately not encoded
+    -- here: a topic gaining or losing a platform is a product decision, not a
+    -- schema change.
+    'topic',        p.topic,
     'timezone',     p.timezone,
     'start_date',   p.start_date,
     'end_date',     p.end_date,
@@ -1893,6 +1900,8 @@ BEGIN
                          'gender',             gprof.gender,
                          'minecraft_username', mca.minecraft_username,
                          'minecraft_uuid',     mca.minecraft_uuid,
+                         'roblox_username',    rba.roblox_username,
+                         'roblox_user_id',     rba.roblox_user_id,
                          'parent_email',       (
                            SELECT pp.email
                              FROM parent_gamer pgm
@@ -1921,6 +1930,7 @@ BEGIN
                 JOIN profiles gmp              ON gmp.id        = part.participant_id
                 LEFT JOIN gamer_profiles gprof  ON gprof.user_id = part.participant_id
                 LEFT JOIN minecraft_accounts mca ON mca.user_id  = part.participant_id
+                LEFT JOIN roblox_accounts rba    ON rba.user_id   = part.participant_id
                WHERE part.group_id = pg.id
                  AND part.status   = 'active'
             ), '[]'::jsonb)
@@ -1944,7 +1954,7 @@ $$;
 -- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) IS 'One round trip for a gedu opening a product they are assigned to: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id (00175) — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy.';
+COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) IS 'One round trip for a gedu opening a product they are assigned to: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id (00175) — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy. Since 00195 the shell carries the product''s topic (which decides whether a game identity is shown at all, and which one) and each roster entry carries roblox_username/roblox_user_id beside the Minecraft pair.';
 
 
 --
@@ -2043,8 +2053,13 @@ BEGIN
   --
   -- The identity key is `participant_id` as of 00175. Every row on this roster
   -- is whoever holds the seat, and since 00173 that can be an adult — the
-  -- date_of_birth / gender / minecraft columns below simply come back NULL for
-  -- one, which is the deliberate empty the row renders rather than a gap.
+  -- date_of_birth / gender / game-account columns below simply come back NULL
+  -- for one, which is the deliberate empty the row renders rather than a gap.
+  --
+  -- Both platforms travel (00195), and neither implies the other: a child may
+  -- have given one handle, both, or none. Which one a surface draws is decided
+  -- by the product's topic, which this document does not carry — the page takes
+  -- it from get_gedu_assigned_product.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
     INTO v_roster
     FROM (
@@ -2056,6 +2071,8 @@ BEGIN
         'gender',             gprof.gender,
         'minecraft_username', mca.minecraft_username,
         'minecraft_uuid',     mca.minecraft_uuid,
+        'roblox_username',    rba.roblox_username,
+        'roblox_user_id',     rba.roblox_user_id,
         -- Every gamer account is created by a parent who signed up with an
         -- email, so on a CHILD row this is non-null in practice and the wire
         -- contract said so until 00173. An ADULT row has no parent link at all,
@@ -2085,6 +2102,7 @@ BEGIN
         JOIN public.profiles gmp                ON gmp.id        = part.participant_id
         LEFT JOIN public.gamer_profiles gprof   ON gprof.user_id = part.participant_id
         LEFT JOIN public.minecraft_accounts mca ON mca.user_id   = part.participant_id
+        LEFT JOIN public.roblox_accounts rba    ON rba.user_id   = part.participant_id
        WHERE part.group_id = p_group_id
          AND part.status   = 'active'::public.participation_status
     ) AS roster_rows;
@@ -2112,6 +2130,11 @@ BEGIN
         'updated_by',       s.updated_by,
         -- The last editor's first name, for the author chip on the card.
         --
+        -- 00194's field, carried through verbatim — see this migration's
+        -- header. Nothing here reads it; it is the current definition of this
+        -- function on the database this file is pushed to, and recreating a
+        -- function preserves what it is not deliberately changing.
+        --
         -- LEFT-JOIN-shaped on purpose: NULL when nothing has stamped the row
         -- yet, and NULL again if the profile has gone. The FK is ON DELETE SET
         -- NULL, so the second case cannot arise from a deleted profile — it is
@@ -2119,8 +2142,7 @@ BEGIN
         -- than because it is reachable today.
         --
         -- This is the LAST TOUCHER of the whole session, not the report's
-        -- author: an attendance correction or a staff-note edit moves it. See
-        -- this migration's header for why that is accepted.
+        -- author: an attendance correction or a staff-note edit moves it.
         'updated_by_first_name', (
           SELECT pr.first_name
             FROM public.profiles pr
@@ -2153,7 +2175,7 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult) and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Each session carries updated_by with the last editor''s first name beside it (00194) — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it.';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox).';
 
 
 --
@@ -2786,6 +2808,13 @@ BEGIN
                      'participant_gender',             gprof.gender,
                      'participant_minecraft_username', mca.minecraft_username,
                      'participant_minecraft_uuid',     mca.minecraft_uuid,
+                     -- The Roblox pair, on the same terms as the Minecraft one
+                     -- next to it: both are LEFT-joined, both are null on a
+                     -- person who has never given that platform a handle, and
+                     -- neither implies the other. The chip shows whichever the
+                     -- product's topic is about.
+                     'participant_roblox_username',    rba.roblox_username,
+                     'participant_roblox_user_id',     rba.roblox_user_id,
                      -- The contact behind a CHILD's seat, which is what these
                      -- two describe — not the participant. Hence `parent_`
                      -- rather than `participant_parent_`: one prefix per
@@ -2819,6 +2848,9 @@ BEGIN
             JOIN profiles gmp ON gmp.id = p.participant_id
             LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.participant_id
             LEFT JOIN minecraft_accounts mca ON mca.user_id = p.participant_id
+            -- user_id is this table's primary key, so this cannot fan the row
+            -- out any more than the Minecraft join above it can.
+            LEFT JOIN roblox_accounts rba ON rba.user_id = p.participant_id
             -- participation_id is UNIQUE here, so this cannot fan the row out.
             -- The status predicate lives in the JOIN rather than a WHERE so a
             -- dead subscription simply fails to match and leaves fs.id NULL,
@@ -2851,6 +2883,8 @@ BEGIN
              'participant_gender',             gprof.gender,
              'participant_minecraft_username', mca.minecraft_username,
              'participant_minecraft_uuid',     mca.minecraft_uuid,
+             'participant_roblox_username',    rba.roblox_username,
+             'participant_roblox_user_id',     rba.roblox_user_id,
              'parent_first_name',              parent.first_name,
              'parent_last_name',               parent.last_name,
              'participant_email',
@@ -2869,6 +2903,7 @@ BEGIN
     JOIN profiles gmp ON gmp.id = p.participant_id
     LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.participant_id
     LEFT JOIN minecraft_accounts mca ON mca.user_id = p.participant_id
+    LEFT JOIN roblox_accounts rba ON rba.user_id = p.participant_id
     LEFT JOIN family_subscriptions fs
            ON fs.participation_id = p.id
           AND fs.status <> 'cancelled'
@@ -2911,6 +2946,8 @@ BEGIN
              'participant_gender',             gprof.gender,
              'participant_minecraft_username', mca.minecraft_username,
              'participant_minecraft_uuid',     mca.minecraft_uuid,
+             'participant_roblox_username',    rba.roblox_username,
+             'participant_roblox_user_id',     rba.roblox_user_id,
              'parent_first_name',              parent.first_name,
              'parent_last_name',               parent.last_name,
              'participant_email',
@@ -2929,6 +2966,7 @@ BEGIN
     JOIN profiles gmp ON gmp.id = p.participant_id
     LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.participant_id
     LEFT JOIN minecraft_accounts mca ON mca.user_id = p.participant_id
+    LEFT JOIN roblox_accounts rba ON rba.user_id = p.participant_id
     LEFT JOIN family_subscriptions fs
            ON fs.participation_id = p.id
           AND fs.status <> 'cancelled'
@@ -2957,7 +2995,7 @@ $$;
 -- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row.';
 
 
 --
@@ -4218,6 +4256,81 @@ $$;
 --
 
 COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design.';
+
+
+--
+-- Name: set_group_member_roblox(uuid, text, bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint DEFAULT NULL::bigint) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_username text;
+  v_user_id  bigint;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  -- Actor AND target: the participant must be actively participating in a group
+  -- the caller is assigned to. A gedu may fix a username for the people they
+  -- teach and for nobody else.
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.participations part
+      JOIN public.gedu_group_assignments ga ON ga.group_id = part.group_id
+     WHERE part.participant_id = p_participant_id
+       AND part.status   = 'active'::public.participation_status
+       AND ga.gedu_id    = (SELECT auth.uid())
+  ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Target must be a GAMER (00177). A game account is a child's; an adult seat
+  -- carries none and the roster renders that slot empty by design, so a row
+  -- keyed to a customer would be an orphan the admin twin already refuses to
+  -- write. The scope check above does not care about the target's role, so this
+  -- stands on its own.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = p_participant_id
+       AND pr.role = 'gamer'
+  ) THEN
+    RAISE EXCEPTION 'participant % is not a gamer', p_participant_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_username := NULLIF(btrim(COALESCE(p_roblox_username, '')), '');
+  -- Clearing the username clears the account id with it: an id without a name
+  -- is a verified link to nothing. An omitted (or NULL) id alongside a name is
+  -- the UNVERIFIED save — the calling route stores the name it was sent and
+  -- takes the id only from its own server-side lookup, so a name Roblox could
+  -- not resolve lands here with nothing beside it.
+  v_user_id := CASE WHEN v_username IS NULL
+                    THEN NULL
+                    ELSE p_roblox_user_id
+               END;
+
+  INSERT INTO public.roblox_accounts (user_id, roblox_username, roblox_user_id)
+  VALUES (p_participant_id, v_username, v_user_id)
+  ON CONFLICT (user_id) DO UPDATE
+    SET roblox_username = EXCLUDED.roblox_username,
+        roblox_user_id  = EXCLUDED.roblox_user_id;
+
+  RETURN jsonb_build_object(
+    'participant_id',  p_participant_id,
+    'roblox_username', v_username,
+    'roblox_user_id',  v_user_id
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) IS 'Set a group member''s Roblox username + resolved account id, scoped to participants actively enrolled in a group the calling gedu teaches. The Roblox twin of set_group_member_minecraft, and identical to it in every respect but the key''s type: Roblox''s id is an int64, so the account-id parameter is a DEFAULTed bigint rather than a text column carrying an '''' sentinel, and omitting it is how an unverified save is expressed. The Roblox lookup happens in the calling route (neither Roblox API is reachable from a browser), so an id arriving here was resolved server-side and its presence is the whole of "verified". Clearing the username clears the id with it. In practice the target is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design.';
 
 
 --
@@ -8621,6 +8734,15 @@ GRANT ALL ON FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified bool
 REVOKE ALL ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO authenticated;
 GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+
+
+--
+-- Name: FUNCTION set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) TO authenticated;
+GRANT ALL ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) TO service_role;
 
 
 --
