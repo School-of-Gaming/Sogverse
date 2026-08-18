@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import {
+  GAME_USERNAME_MAX_LENGTH,
+  normalizeGameUsername,
+} from "@/lib/constants/game-platforms";
 
 const MOJANG_API = "https://api.mojang.com/users/profiles/minecraft";
 
@@ -24,7 +27,8 @@ function formatUuid(hex: string): string {
  * out, and it was wrong about real accounts — names issued before the modern
  * rules are shorter than the check's minimum or carry characters it forbade, and
  * every one of those was reported as nonexistent by us rather than by Mojang.
- * The only thing refused now is a length no request should carry; the name is
+ * What is left is the shared normalization and a length no request should carry
+ * — both rules about the request rather than about the name; the name is
  * URL-encoded on the way out, so nothing else here needs a shape.
  *
  * **Never throws.** Every caller treats the answer as optional — a name Mojang
@@ -38,14 +42,18 @@ function formatUuid(hex: string): string {
 export async function lookupMinecraftUser(
   username: string,
 ): Promise<MojangProfile | null> {
-  // The same bound the wire schemas apply, restated for the callers that reach
-  // this directly. An empty name has nothing to ask about, and a name past the
+  // The same normalization and bound the wire schemas apply, restated for the
+  // callers that reach this directly — the two layers have to agree, or the name
+  // asked about is not the name stored. Format characters out and the ends
+  // trimmed (both statements about our own request, not about Minecraft names);
+  // then a name with nothing left has nothing to ask about, and one past the
   // bound is a request we would not have accepted in the first place.
-  if (username.length === 0 || username.length > GAME_USERNAME_MAX_LENGTH) {
+  const name = normalizeGameUsername(username);
+  if (name.length === 0 || name.length > GAME_USERNAME_MAX_LENGTH) {
     return null;
   }
 
-  const res = await fetch(`${MOJANG_API}/${encodeURIComponent(username)}`).catch(
+  const res = await fetch(`${MOJANG_API}/${encodeURIComponent(name)}`).catch(
     () => null,
   );
   if (!res?.ok) return null;

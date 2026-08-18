@@ -8,6 +8,11 @@ import {
   resolveRobloxRenders,
   robloxRenderUrl,
 } from "@/lib/roblox";
+import {
+  INVISIBLE_ONLY_NAME,
+  RIGHT_TO_LEFT_OVERRIDE,
+  ZERO_WIDTH_SPACE,
+} from "../../helpers/invisible-characters";
 
 /**
  * A `fetch` stand-in. A real `Response` rather than a hand-shaped object, so the
@@ -108,6 +113,37 @@ describe("lookupRobloxUser", () => {
       lookupRobloxUser("a".repeat(GAME_USERNAME_MAX_LENGTH + 1)),
     ).resolves.toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // The other half of the transport rule, and the half `.trim()` cannot do:
+  // format characters are not whitespace, so a name made of nothing but them
+  // survives a trim and would spend a request against a shared per-IP budget
+  // asking about nothing.
+  it("returns null without calling out for a name of only invisible characters", async () => {
+    await expect(lookupRobloxUser(INVISIBLE_ONLY_NAME)).resolves.toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // And the layers have to agree: what the wire schema stores is the stripped
+  // name, so the stripped name is what has to be asked about. Asking with the
+  // character still in it would look up a handle nobody has.
+  it.each([
+    ["a zero-width space", ZERO_WIDTH_SPACE],
+    ["a right-to-left override", RIGHT_TO_LEFT_OVERRIDE],
+  ])("strips %s out of the name it asks Roblox about", async (_label, character) => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        data: [{ id: 42, name: "builderman", displayName: "builderman" }],
+      }),
+    );
+
+    await expect(
+      lookupRobloxUser(`builder${character}man`),
+    ).resolves.toMatchObject({ username: "builderman" });
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
+      usernames: ["builderman"],
+      excludeBannedUsers: true,
+    });
   });
 
   it("returns null on a non-ok response", async () => {

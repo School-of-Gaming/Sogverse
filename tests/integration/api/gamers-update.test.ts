@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/gamers/[id]/route";
 import { NextResponse } from "next/server";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 // --- Mocks ---
 
@@ -605,6 +606,72 @@ describe("PATCH /api/gamers/[id]", () => {
     // Nothing to look up when clearing.
     expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
   });
+
+  /**
+   * **A blank field clears, and that is the direction that changed.** It used to
+   * be a 400 on both platforms; it now empties the child's stored account, so
+   * each spelling of "nothing here" has to be pinned as the destructive write it
+   * is — both columns null, no lookup — and not as a no-op leaving the old name
+   * in place. The invisible case is the one `.trim()` alone would let through.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])(
+    "clears both platforms' columns for %s, without a lookup",
+    async (_label, name) => {
+      for (const platform of ["minecraft", "roblox"] as const) {
+        vi.clearAllMocks();
+        mockAuthenticated("customer-123");
+        mockParentGamerLookup(true);
+
+        const roleCheck = mockTargetProfile("gamer");
+        const accountUpsert = {
+          upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+        };
+        const fetch = mockProfileFetch({
+          id: GAMER_ID,
+          first_name: "Existing",
+          role: "gamer",
+        });
+
+        let callCount = 0;
+        mockAdminFrom.mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) return roleCheck;
+          if (callCount === 2) return accountUpsert;
+          return fetch;
+        });
+
+        const [req, ctx] = createRequest(
+          GAMER_ID,
+          platform === "minecraft"
+            ? { minecraftUsername: name }
+            : { robloxUsername: name },
+        );
+        const response = await PATCH(req, ctx);
+
+        expect(response.status).toBe(200);
+        expect(accountUpsert.upsert).toHaveBeenCalledWith(
+          platform === "minecraft"
+            ? {
+                user_id: GAMER_ID,
+                minecraft_username: null,
+                minecraft_uuid: null,
+              }
+            : {
+                user_id: GAMER_ID,
+                roblox_username: null,
+                roblox_user_id: null,
+              },
+          { onConflict: "user_id" },
+        );
+        expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+        expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+      }
+    },
+  );
 
   /**
    * The Roblox half of the same decision. A handle with a space is the sharpest

@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { lookupMinecraftUser } from "@/lib/mojang";
+import {
+  INVISIBLE_ONLY_NAME,
+  RIGHT_TO_LEFT_OVERRIDE,
+  ZERO_WIDTH_SPACE,
+} from "../../helpers/invisible-characters";
 
 /**
  * A `fetch` stand-in. A real `Response` rather than a hand-shaped object, so the
@@ -73,6 +78,33 @@ describe("lookupMinecraftUser", () => {
       lookupMinecraftUser("a".repeat(GAME_USERNAME_MAX_LENGTH + 1)),
     ).resolves.toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // The other half of the transport rule, and the half `.trim()` cannot do:
+  // format characters are not whitespace, so a name made of nothing but them
+  // survives a trim and would go out as a URL asking Mojang about nothing.
+  it("returns null without calling out for a name of only invisible characters", async () => {
+    await expect(lookupMinecraftUser(INVISIBLE_ONLY_NAME)).resolves.toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // And the layers have to agree: what the wire schema stores is the stripped
+  // name, so the stripped name is what has to be asked about. Asking with the
+  // character still in it would look up a handle nobody has.
+  it.each([
+    ["a zero-width space", ZERO_WIDTH_SPACE],
+    ["a right-to-left override", RIGHT_TO_LEFT_OVERRIDE],
+  ])("strips %s out of the name it asks Mojang about", async (_label, character) => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ name: "Notch", id: "0".repeat(32) }),
+    );
+
+    await expect(
+      lookupMinecraftUser(`No${character}tch`),
+    ).resolves.toMatchObject({ username: "Notch" });
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://api.mojang.com/users/profiles/minecraft/Notch",
+    );
   });
 
   it("returns null when Mojang has no such account", async () => {

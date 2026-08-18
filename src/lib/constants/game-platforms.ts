@@ -46,7 +46,39 @@ export type GameFigure = (typeof SUPPORTED_GAME_FIGURES)[number];
  * within it is sent to the platform, and the platform's answer decides whether
  * the name lands verified or is stored unverified.
  *
- * Shared by both platforms because it is a statement about *us*, and the two
- * lookups and the two wire schemas all measure against this one number.
+ * Shared by both platforms because it is a statement about *us*: every layer
+ * that puts a game username into a request measures against this one number.
  */
 export const GAME_USERNAME_MAX_LENGTH = 100;
+
+/**
+ * Every Unicode **format character** (general category `Cf`) — zero-width
+ * spaces and joiners, the BOM, and the bidi controls including the override
+ * `U+202E`.
+ */
+const FORMAT_CHARACTERS = /\p{Cf}/gu;
+
+/**
+ * Put a game username into the form we are willing to send and store: format
+ * characters out, then the ends trimmed.
+ *
+ * **This is the same category of rule as the length above — about our own
+ * request and our own rendering, not about what a name may be.** Neither
+ * platform issues a handle containing a `Cf` character, so nothing real is
+ * refused here; what is refused is a string that *looks* like a name and is
+ * not. `.trim()` alone does not catch them — they are not whitespace — so a
+ * value of nothing but zero-width characters survives it, lands in the column,
+ * and renders as a row with an empty-looking name that no one can explain. The
+ * bidi controls are the sharper half: an override embedded in a handle
+ * visually reverses the span around it, so the name on screen is not the name
+ * in the database.
+ *
+ * Order matters and is fixed: **strip, then trim**, so a name that is only
+ * invisible characters (with or without spaces around them) comes out `""` —
+ * which every caller then reads as "there is no name here", exactly as it reads
+ * a blank field. The length bound is measured on the result, because the result
+ * is what travels.
+ */
+export function normalizeGameUsername(raw: string): string {
+  return raw.replace(FORMAT_CHARACTERS, "").trim();
+}

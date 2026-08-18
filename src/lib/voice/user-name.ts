@@ -72,9 +72,17 @@ export type GameExternalId = string | number;
  * could spoof the `role` slot and have their avatar render with an "admin"
  * badge. The Daily-side `is_owner` flag (set server-side) is the actual
  * permission authority, so this is cosmetic only, but worth preventing —
- * guests pick their own names on instant voice rooms. (No game username or
- * account key can contain `|`, but stripping keeps the slots positionally
- * stable regardless.)
+ * guests pick their own names on instant voice rooms.
+ *
+ * **The strip on the game-username slot is load-bearing too, and is not to be
+ * removed as redundant.** It once looked that way, on the strength of a format
+ * rule that no longer exists: a game username is free-form now — we hold no
+ * opinion about its shape, only a length bound — so anyone can store
+ * `x|admin|Someone` as an unverified handle, and the platform never has to have
+ * heard of it. Stripping here is the only thing keeping the slots positionally
+ * stable. (The account key is still a UUID or a decimal id, so its strip really
+ * is belt-and-braces — but it costs nothing and the three slots are written
+ * together.)
  */
 export function buildUserName(parts: {
   userId: string;
@@ -139,7 +147,9 @@ const NO_GAME_CONTEXT = {
  * (`undefined`) means "this room doesn't surface a game identity" → no row,
  * while a present platform with an empty username (`null`) means "gedu/gamer
  * with no linked account" → "(Unknown)". Because `buildUserName` strips `|`
- * from `displayName`, a real name can never bleed into the game slots.
+ * from **both** the display name and the game username — the two free-form
+ * slots, neither of which has any format rule behind it — a name a person chose
+ * can never bleed into the slots after it, in either direction.
  *
  * **Three layouts are accepted, because a room outlives a deploy.** A token is
  * minted once at join and lives for the whole session window, so a deploy

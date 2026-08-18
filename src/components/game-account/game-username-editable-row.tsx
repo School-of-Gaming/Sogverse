@@ -5,6 +5,7 @@ import { Check, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { cn } from "@/lib/utils";
 import { GameAvatarBox, GameUsernameRow } from "./game-username-row";
 import {
@@ -327,6 +328,11 @@ export function GameUsernameEditableRow({
                 setDraft(null);
               }
             }}
+            // The transport bound, enforced where it is cheapest: the field
+            // simply stops taking characters rather than letting a name be
+            // typed, committed, and refused by a schema. It is the only rule
+            // this input has — nothing here judges the shape of a handle.
+            maxLength={GAME_USERNAME_MAX_LENGTH}
             placeholder={t("placeholder", {
               example: descriptor.usernameExample,
             })}

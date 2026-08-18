@@ -3,6 +3,7 @@ import { ROBLOX_THUMBNAIL_BATCH_MAX } from "@/lib/roblox";
 import {
   GAME_USERNAME_MAX_LENGTH,
   SUPPORTED_GAME_FIGURES,
+  normalizeGameUsername,
   type GameFigure,
 } from "@/lib/constants/game-platforms";
 
@@ -26,23 +27,31 @@ function isSupportedGameFigure(value: string): value is GameFigure {
  * and its own signup validator arrived long after its accounts did — so real,
  * live handles carry characters that validator would refuse today, and a copy of
  * it here refused those accounts on Roblox's behalf and got it wrong. A name is
- * trimmed, bounded at a length that is a statement about our own request, and
+ * normalized, bounded at a length that is a statement about our own request, and
  * handed to the lookup; what comes back decides between verified and stored
  * unverified.
  *
- * A trimmed-empty string is a clear, exactly as `null` is: there is no name left
- * in the field, and the two spellings of that must not mean different things
- * depending on which surface sent them.
+ * The normalization is the shared one — invisible format characters stripped,
+ * then trimmed — and it is the same category of rule as the bound: about the
+ * request we make and the row we draw, never about what Roblox may have issued.
+ *
+ * A string that is empty after that is a clear, exactly as `null` is: there is no
+ * name left in the field, and the spellings of that must not mean different
+ * things depending on which surface sent them.
  *
  * Every surface that accepts a Roblox username imports this rather than
  * restating the bound.
  */
 export const robloxUsernameValue = z
   .string()
-  .trim()
-  .max(
-    GAME_USERNAME_MAX_LENGTH,
-    `Roblox username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+  .transform(normalizeGameUsername)
+  .pipe(
+    z
+      .string()
+      .max(
+        GAME_USERNAME_MAX_LENGTH,
+        `Roblox username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+      ),
   )
   .nullable()
   .transform((username) =>
@@ -110,17 +119,21 @@ export const robloxAccountWriteResult = z.object({
  * Query string of GET /api/roblox/verify — the public Roblox lookup.
  *
  * The same reasoning as the value schema above, minus the unlink: there is
- * nothing to clear on a read, so an empty name is a query with no question in it
- * and is refused. Everything else goes to Roblox.
+ * nothing to clear on a read, so a name that normalizes to nothing is a query
+ * with no question in it and is refused. Everything else goes to Roblox.
  */
 export const verifyRobloxQuery = z.object({
   username: z
     .string()
-    .trim()
-    .min(1, "A username is required")
-    .max(
-      GAME_USERNAME_MAX_LENGTH,
-      `Username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+    .transform(normalizeGameUsername)
+    .pipe(
+      z
+        .string()
+        .min(1, "A username is required")
+        .max(
+          GAME_USERNAME_MAX_LENGTH,
+          `Username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+        ),
     ),
 });
 

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { PATCH } from "@/app/api/gedu/gamers/[gamerId]/roblox/route";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/roblox — a gedu fixing a group member's
@@ -232,6 +233,37 @@ describe("PATCH /api/gedu/gamers/[gamerId]/roblox", () => {
     expect(mockLookupRobloxUser).not.toHaveBeenCalled();
     // Empty string rather than null: the generated RPC argument types make
     // every text parameter non-null, and the function maps '' back to NULL.
+    expect(mockRpc).toHaveBeenCalledWith("set_group_member_roblox", {
+      p_participant_id: GAMER_ID,
+      p_roblox_username: "",
+    });
+    expect(data.roblox_username).toBeNull();
+    expect(data.roblox_user_id).toBeNull();
+  });
+
+  /**
+   * **A blank field is the destructive half of "no format rule", and this is
+   * the direction that changed.** It used to be a 400; it now clears the child's
+   * stored account outright, so it has to be pinned as a clear — the name
+   * argument sent as the RPC's empty-string sentinel and the id argument absent,
+   * no lookup — rather than as a no-op that leaves the old handle on the row.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])("clears both columns for %s, without asking Roblox", async (_label, name) => {
+    mockAuthenticatedGedu();
+    mockRpcSuccess(null, null);
+
+    const response = await PATCH(
+      createRequest({ robloxUsername: name }),
+      routeContext(),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxUser).not.toHaveBeenCalled();
     expect(mockRpc).toHaveBeenCalledWith("set_group_member_roblox", {
       p_participant_id: GAMER_ID,
       p_roblox_username: "",

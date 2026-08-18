@@ -145,16 +145,37 @@ a check written from those rules told real children their own handle could not
 exist, without ever asking. Agreeing by construction is worth nothing when what
 both ends agree on is wrong.
 
-**So the whole path is: trim, bound the length, send it, let the platform
+**So the whole path is: normalize, bound the length, send it, let the platform
 answer.** A name that resolves lands verified with the account key beside it; a
 name that does not is stored unverified with the "couldn't find" sentence — which
 is also where a lookup during an outage lands, and where a name we would once
-have refused outright now lands too. **The length bound is the only rule left,
-and it is a rule about our own request** rather than about names: a cap generous
-enough that no real handle meets it, existing so an unbounded string cannot be
-put into a URL, a JSON body and a text column. It is one number, shared by both
-platforms, because it is a statement about us. Over it is the single refusal on
-this path.
+have refused outright now lands too.
+
+**What survives is the transport rule, and every part of it is a statement about
+our own request and our own rendering rather than about names:**
+
+- **Strip the Unicode format characters (category `Cf`)** — zero-width spaces and
+  joiners, the BOM, the bidi controls. `.trim()` does not touch them, so without
+  this a handle of nothing but invisible characters is stored and draws a row
+  whose name looks blank, and an embedded `U+202E` visually reverses the span so
+  the name on screen is not the name in the column. Neither platform issues a
+  handle containing one, so nothing real is refused.
+- **Then trim**, so a value that was only invisible characters (with or without
+  spaces around them) comes out empty and is read as "no name here" — a clear,
+  exactly like a blank field.
+- **Then bound the length**: a cap generous enough that no real handle meets it,
+  existing so an unbounded string cannot be put into a URL, a JSON body and a
+  text column. One number, shared by both platforms. **Over it is the single
+  refusal left on this path**; the two steps above never refuse anything, they
+  only decide whether what is left is a name or a clear.
+
+The order is fixed — strip, trim, bound, collapse-to-null — because each step
+feeds the next, and it is restated identically in two layers: the wire schemas
+(both platforms' value *and* query schemas) and the cheap local check inside each
+lookup, which the write paths reach directly. The layers have to agree, or the
+name asked about is not the name stored. The username inputs carry the same
+length as a `maxLength`, so the bound is enforced before a name can be typed past
+it rather than only on save.
 
 The editor has no format branch either, for the same reason: every committed name
 goes to the lookup, and a miss lands exactly where a miss has always landed.

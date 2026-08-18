@@ -66,6 +66,7 @@ import { POST } from "@/app/api/gedu/register/route";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { verifyEmailVerificationToken } from "@/lib/email-verification";
 import { asObject, getString } from "../../helpers/json";
+import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 const NEW_USER_ID = "99999999-9999-4999-8999-999999999999";
 
@@ -334,6 +335,39 @@ describe("POST /api/gedu/register", () => {
     expect(args.p_roblox_username).toBe("");
     expect(args.p_roblox_user_id).toBe("");
     expect(args.p_minecraft_username).toBe("");
+  });
+
+  /**
+   * **A field the educator opened and left blank registers no account at all,
+   * and that is the direction that changed.** A blank handle used to be refused
+   * by a format rule; it now means the same thing as a field never touched, so
+   * both spellings have to land on the RPC's empty sentinels — which is what
+   * makes the function skip the account row rather than insert an empty one —
+   * and neither may cost a call to a platform. The invisible case is the one
+   * `.trim()` alone would let through, and it would create a row holding a name
+   * that draws as nothing.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])("creates no game account row for %s in either field", async (_label, name) => {
+    const response = await POST(
+      registerRequest({
+        ...validBody,
+        minecraftUsername: name,
+        robloxUsername: name,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_minecraft_username).toBe("");
+    expect(args.p_minecraft_uuid).toBe("");
+    expect(args.p_roblox_username).toBe("");
+    expect(args.p_roblox_user_id).toBe("");
   });
 
   // -- Referral attribution --

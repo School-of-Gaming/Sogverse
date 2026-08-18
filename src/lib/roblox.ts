@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   GAME_USERNAME_MAX_LENGTH,
+  normalizeGameUsername,
   type GameFigure,
 } from "@/lib/constants/game-platforms";
 
@@ -128,16 +129,21 @@ export interface RobloxProfile {
  * introduced long after accounts were, so handles carrying spaces (or anything
  * else the modern validator refuses) were reported as nonexistent by us rather
  * than by Roblox. The name travels in a JSON body, so nothing here needs a shape
- * for it; only a length no request should carry is refused.
+ * for it; what is left is the shared normalization and a length no request
+ * should carry, both rules about the request rather than about the name.
  */
 export async function lookupRobloxUser(
   username: string,
 ): Promise<Omit<RobloxProfile, "avatarUrl" | "headshotUrl"> | null> {
-  // The same bound the wire schemas apply, restated for the callers that reach
-  // this directly. An empty name has nothing to ask about, and a name past the
+  // The same normalization and bound the wire schemas apply, restated for the
+  // callers that reach this directly — the two layers have to agree, or the name
+  // asked about is not the name stored. Format characters out and the ends
+  // trimmed (both statements about our own request, not about Roblox handles);
+  // then a name with nothing left has nothing to ask about, and one past the
   // bound is a request we would not have accepted in the first place — worth a
   // line here because every call costs a request against a shared budget.
-  if (username.length === 0 || username.length > GAME_USERNAME_MAX_LENGTH) {
+  const name = normalizeGameUsername(username);
+  if (name.length === 0 || name.length > GAME_USERNAME_MAX_LENGTH) {
     return null;
   }
 
@@ -149,7 +155,7 @@ export async function lookupRobloxUser(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      usernames: [username],
+      usernames: [name],
       excludeBannedUsers: true,
     }),
   }).catch(() => null);

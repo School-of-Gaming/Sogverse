@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import {
+  GAME_USERNAME_MAX_LENGTH,
+  normalizeGameUsername,
+} from "@/lib/constants/game-platforms";
 
 /**
  * A Minecraft username as it travels on the wire, or `null` to unlink.
@@ -7,13 +10,17 @@ import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
  * **There is no format rule here, and that is the decision rather than an
  * omission.** Mojang is the only authority on which Minecraft names exist, and
  * accounts issued before its modern rules break every regex we could write —
- * so a name is trimmed, bounded at a length that is a statement about our own
+ * so a name is normalized, bounded at a length that is a statement about our own
  * request, and handed to the lookup. What comes back decides: an account
  * resolves and the name lands verified, nothing resolves and the same name is
  * stored unverified with the "couldn't find" sentence beside it.
  *
- * A trimmed-empty string is a clear, exactly as `null` is: there is no name
- * left in the field, and the two spellings of that must not mean different
+ * The normalization is the shared one — invisible format characters stripped,
+ * then trimmed — and it is the same category of rule as the bound: about the
+ * request we make and the row we draw, never about what Mojang may have issued.
+ *
+ * A string that is empty after that is a clear, exactly as `null` is: there is
+ * no name left in the field, and the spellings of that must not mean different
  * things depending on which surface sent them.
  *
  * Every route that accepts a Minecraft username imports this rather than
@@ -21,10 +28,14 @@ import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
  */
 export const minecraftUsernameValue = z
   .string()
-  .trim()
-  .max(
-    GAME_USERNAME_MAX_LENGTH,
-    `Minecraft username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+  .transform(normalizeGameUsername)
+  .pipe(
+    z
+      .string()
+      .max(
+        GAME_USERNAME_MAX_LENGTH,
+        `Minecraft username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+      ),
   )
   .nullable()
   .transform((username) =>
@@ -72,16 +83,20 @@ export const minecraftAccountWriteResult = z.object({
  * Query string of GET /api/minecraft/verify — the public Mojang lookup.
  *
  * The same reasoning as the value schema above, minus the unlink: there is
- * nothing to clear on a read, so an empty name is a query with no question in
- * it and is refused. Everything else goes to Mojang.
+ * nothing to clear on a read, so a name that normalizes to nothing is a query
+ * with no question in it and is refused. Everything else goes to Mojang.
  */
 export const verifyMinecraftQuery = z.object({
   username: z
     .string()
-    .trim()
-    .min(1, "A username is required")
-    .max(
-      GAME_USERNAME_MAX_LENGTH,
-      `Username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+    .transform(normalizeGameUsername)
+    .pipe(
+      z
+        .string()
+        .min(1, "A username is required")
+        .max(
+          GAME_USERNAME_MAX_LENGTH,
+          `Username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+        ),
     ),
 });

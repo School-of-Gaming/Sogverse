@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { PATCH } from "@/app/api/gedu/gamers/[gamerId]/minecraft/route";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/minecraft — a gedu fixing a group member's
@@ -215,6 +216,38 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
 
     const response = await PATCH(
       createRequest({ minecraftUsername: null }),
+      routeContext(),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+    expect(mockRpc).toHaveBeenCalledWith("set_group_member_minecraft", {
+      p_participant_id: GAMER_ID,
+      p_minecraft_username: "",
+      p_minecraft_uuid: "",
+    });
+    expect(data.minecraft_username).toBeNull();
+    expect(data.minecraft_uuid).toBeNull();
+  });
+
+  /**
+   * **A blank field is the destructive half of "no format rule", and this is
+   * the direction that changed.** It used to be a 400; it now clears the child's
+   * stored account outright, so it has to be pinned as a clear — both columns
+   * emptied, no lookup — rather than as a no-op that quietly leaves the old name
+   * on the row.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])("clears both columns for %s, without asking Mojang", async (_label, name) => {
+    mockAuthenticatedGedu();
+    mockRpcSuccess(null, null);
+
+    const response = await PATCH(
+      createRequest({ minecraftUsername: name }),
       routeContext(),
     );
     const data = await response.json();

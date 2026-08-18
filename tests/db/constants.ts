@@ -42,8 +42,9 @@ export const TEST_CREDENTIALS = {
 export const SEED = {
   MINECRAFT_USERNAME_GEDU: "TestGedu",
   MINECRAFT_USERNAME_GAMER: "TestGamer",
-  // Roblox permits at most one underscore and none at either end, so these
-  // cannot mirror the Minecraft names character for character.
+  // Spelled differently from the Minecraft pair on purpose: a test asserting on
+  // one platform's stored handle would pass against the other's row if the two
+  // fixtures were the same string.
   ROBLOX_USERNAME_GEDU: "TestGeduRoblox",
   ROBLOX_USERNAME_GAMER: "TestGamerRoblox",
 } as const;

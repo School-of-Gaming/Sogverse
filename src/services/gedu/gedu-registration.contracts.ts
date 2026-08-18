@@ -7,8 +7,8 @@ import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
  * Request body for public gedu self-registration (`POST /api/gedu/register`).
  * Shared by the route (which validates with it) and the register-gedu form.
  *
- * Optional text fields are sent through as-is (the form posts `""` for an empty
- * phone or game handle); the `register_gedu` RPC NULLIFs them server-side.
+ * Optional text fields are sent through as-is and the `register_gedu` RPC
+ * NULLIFs them server-side; the form simply omits a field nobody filled in.
  * Language and location ids are validated for *shape* here — the DB (the
  * validate_profile_languages trigger and the locations FK) is the source of
  * truth for whether the values actually exist.
@@ -31,11 +31,13 @@ export const registerGeduBody = z.object({
   locale: z.string().optional(),
   locationIds: z.array(z.string().uuid()).default([]),
   /**
-   * Both game handles are optional, and the shared value schemas already read
-   * `''` as "no handle" — they trim and collapse an empty field to `null`, which
-   * is the same "there is no name here" every other write path sends. This form
-   * posts `''` for a field nobody filled in, so that collapse is exactly the
-   * sentinel this body used to spell out with a union of its own.
+   * Both game handles are optional, and the two spellings of "no handle" land in
+   * the same place. The form omits the key outright for a field nobody filled in
+   * — `undefined`, which `.optional()` takes — and that is the path actually
+   * exercised. A surface that instead posts `''` is equally fine: the shared
+   * value schemas normalize and collapse an empty field to `null`, which is the
+   * same "there is no name here" every other write path sends. Between them they
+   * cover the sentinel this body used to spell out with a union of its own.
    */
   minecraftUsername: minecraftUsernameValue.optional(),
   robloxUsername: robloxUsernameValue.optional(),

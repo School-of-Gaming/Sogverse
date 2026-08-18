@@ -17,6 +17,7 @@ import {
 } from "@/components/game-account";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import {
@@ -338,6 +339,11 @@ function GameIdentityCell({
               if (e.key === "Enter") void commit();
               if (e.key === "Escape" && !committing) setDraft(null);
             }}
+            // The same transport bound the shared editable row carries — this
+            // input is bespoke to the roster, so it has to restate it or a gedu
+            // is the one person who can type past the wire schema and only find
+            // out on save.
+            maxLength={GAME_USERNAME_MAX_LENGTH}
             placeholder={t("gameUsernamePlaceholder", { platform: platformName })}
             className="h-7 w-40 min-w-0 flex-1 px-2 py-0 text-xs"
           />
