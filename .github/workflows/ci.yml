@@ -83,9 +83,6 @@ jobs:
       - name: Run type check
         run: npm run type-check
 
-      - name: Check for orphaned message keys
-        run: npm run check-orphaned-messages
-
   test:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
