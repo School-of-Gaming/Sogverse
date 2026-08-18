@@ -106,6 +106,45 @@ export type AuthState =
  */
 export type MyParticipationState = "waitlisted" | "active";
 
+/**
+ * **DRAFT — the region lock's seam into this panel.**
+ *
+ * A product may be sold in one country only, and a parent whose family is
+ * somewhere else (or whose location we do not know) has to be told so on this
+ * panel. Three candidate shapes for that are in front of the product owner —
+ * see `region-lock/` and the `region-*` scenarios on the product-page preview
+ * scene — and two of them will be deleted.
+ *
+ * So the panel takes **slots, not a state**: three optional nodes it will place
+ * if handed them, with no idea what a region lock is and no branch per
+ * candidate. Every difference between the candidates is composed outside, in a
+ * builder per variant, which is what makes pruning the losers a matter of
+ * deleting files rather than unpicking conditionals from this file. When one
+ * wins, the surviving slots stay and the panel is unchanged; the loser's are
+ * dropped from this interface.
+ *
+ * Slots apply only to a signed-in customer's form. A signed-out visitor meets
+ * the sign-in overlay first, and a wrong-role visitor the wrong-role note:
+ * telling either of them where the product is sold answers a question they have
+ * not reached yet.
+ */
+export interface SignupRegionGateSlots {
+  /**
+   * Replaces the whole form — picker, consent and CTA — the way the wrong-role
+   * note already does. Nothing survives that swap, so nothing moves.
+   */
+  replacesForm?: React.ReactNode;
+  /** A note above the picker, with the form left intact and usable beneath it. */
+  note?: React.ReactNode;
+  /**
+   * Takes over the CTA, ahead of every other missing-step label the button
+   * resolves. With an `onClick` it is a live button doing that instead of
+   * submitting; without one it is disabled, which is the shape every other
+   * checklist step already has.
+   */
+  cta?: { label: string; onClick?: () => void };
+}
+
 export interface SignupPanelViewProps {
   productType: ProductType;
   /**
@@ -144,6 +183,8 @@ export interface SignupPanelViewProps {
   submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
+  /** DRAFT — see `SignupRegionGateSlots`. Absent on every unlocked product. */
+  regionGate?: SignupRegionGateSlots;
 }
 
 // ---------- Why the panel is flat ----------
@@ -367,6 +408,14 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "non_customer":
       return <NonCustomerOverlay forGamers={props.forGamers} />;
     case "ready":
+      // DRAFT (region lock): the overlay-shaped candidates hand the panel a
+      // node instead of a form. Same swap the wrong-role note above makes —
+      // picker, consent and CTA cease to exist rather than being disabled in
+      // place — so there is nothing on screen to hold still and nothing to
+      // reserve room for.
+      if (props.regionGate?.replacesForm !== undefined) {
+        return <>{props.regionGate.replacesForm}</>;
+      }
       // selectedParticipantId comes through `props` (it's a top-level View prop,
       // not part of the AuthState union — see SignupPanelViewProps).
       return (
@@ -456,7 +505,18 @@ function SignupForm(
     props.participants.find((p) => p.id === props.selectedParticipantId)
       ?.isSelf === true;
   const formReady = props.selectedParticipantId !== null && props.agreed;
-  const clickable = formReady && props.active && !props.submitting;
+  // DRAFT (region lock): a region CTA outranks every other step the button can
+  // name, because it is the one blocking the purchase — an "Agree to the rules"
+  // prompt on a product this family cannot buy would be pointing at the wrong
+  // problem. Whether it is live is the presence of its handler and nothing
+  // else: the ask-shaped candidate opens the location dialog from here, and the
+  // refusal-shaped one has no action to offer and stays disabled, which is the
+  // shape the other checklist steps already have.
+  const regionCta = props.regionGate?.cta;
+  const clickable =
+    regionCta !== undefined
+      ? regionCta.onClick !== undefined
+      : formReady && props.active && !props.submitting;
 
   // The CTA doubles as the instruction for the parent's next step: while it's
   // disabled it names exactly what's still missing, in the order they can act
@@ -471,20 +531,28 @@ function SignupForm(
   // product — the reader already holds the one seat there is. The latter two
   // both land on ctaAllSet; the picker rows show each person's exact
   // seat/waitlist status in place.
-  const ctaLabel = props.submitting
-    ? t("ctaSubmitting")
-    : props.selectedParticipantId === null
-      ? canAddGamer
-        ? t("ctaAddGamer")
-        : t("ctaAllSet")
-      : !props.agreed
-        ? t("ctaAgreeRules")
-        : props.active
-          ? props.ctaLabelActive
-          : t("ctaReadyWaiting");
+  const ctaLabel =
+    regionCta !== undefined
+      ? regionCta.label
+      : props.submitting
+        ? t("ctaSubmitting")
+        : props.selectedParticipantId === null
+          ? canAddGamer
+            ? t("ctaAddGamer")
+            : t("ctaAllSet")
+          : !props.agreed
+            ? t("ctaAgreeRules")
+            : props.active
+              ? props.ctaLabelActive
+              : t("ctaReadyWaiting");
 
   return (
     <div className="space-y-4">
+      {/* DRAFT (region lock): a note above the picker on the candidates that
+          keep the form. It renders with the panel and never arrives late, so
+          nothing below it is pushed anywhere. */}
+      {props.regionGate?.note}
+
       {/* No box around the picker — it is a grouping, not a control, and the
           heading below marks the section without a container around it. See
           the border-means-interactive note above. */}
@@ -623,7 +691,7 @@ function SignupForm(
         variant={props.variant ?? "default"}
         className="w-full text-base"
         disabled={!clickable}
-        onClick={props.onSubmit}
+        onClick={regionCta?.onClick ?? props.onSubmit}
       >
         {ctaLabel}
       </Button>

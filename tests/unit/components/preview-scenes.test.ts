@@ -44,6 +44,7 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
+import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
@@ -158,7 +159,14 @@ describe("registry scenarios match their fixtures", () => {
 
   it("public product surfaces", () => {
     const productSlugs = PREVIEW_SCENARIOS.map((s) => s.slug);
-    expect(slugsFor("products")).toEqual(productSlugs);
+    // The product surface carries the product fixtures plus the region-lock
+    // candidates, which are the same page under a block and therefore share the
+    // scene rather than forking one. They are deliberately NOT on the
+    // confirmation surface: a blocked panel never reaches a summary.
+    expect(slugsFor("products")).toEqual([
+      ...productSlugs,
+      ...REGION_LOCK_SCENARIOS.map((s) => s.slug),
+    ]);
     // The confirmation surface carries the product scenarios plus the paid
     // no-order notice states, which no product fixture backs.
     expect(slugsFor("confirmation")).toEqual([

@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductBrowseRow } from "@/types";
-import { SignupPanelView, type AuthState } from "./signup-panel-view";
+import {
+  SignupPanelView,
+  type AuthState,
+  type SignupRegionGateSlots,
+} from "./signup-panel-view";
 import { useSignupPanelFields } from "./use-signup-panel-fields";
 import type { RegistrationState } from "./derive-registration-state";
 
@@ -37,6 +41,14 @@ interface PreviewSignupPanelProps {
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
   summaryHref: string;
+  /**
+   * DRAFT (region lock) — the slots one candidate block wants placed, built by
+   * the scene from the fixture's gate. Passed straight through: this panel has
+   * no more idea what a region lock is than the view does, which is what lets
+   * the same panel serve the ordinary product scenes and the region ones
+   * without a branch.
+   */
+  regionGate?: SignupRegionGateSlots;
 }
 
 // Long enough that the "Signing up…" state is visibly the same beat a real
@@ -48,6 +60,7 @@ export function PreviewSignupPanel({
   state,
   authState,
   summaryHref,
+  regionGate,
 }: PreviewSignupPanelProps) {
   const router = useRouter();
   const fields = useSignupPanelFields(product, authState);
@@ -67,6 +80,7 @@ export function PreviewSignupPanel({
       {...fields}
       state={state}
       authState={authState}
+      regionGate={regionGate}
       onAddGamer={() => {}}
       onSubmit={goToSummary}
       onJoinWaitlist={goToSummary}
