@@ -190,9 +190,13 @@ export const POST = defineRoute({
           // A year, because the path is a fresh UUID per upload and
           // `upsert: false` above is what guarantees it: these bytes are
           // immutable, and replacing the picture mints a different path.
-          // Storage defaults to an hour, which would have the image optimizer
-          // re-fetching the origin hourly — the Supabase egress the optimizer
-          // exists to avoid.
+          // Storage otherwise defaults to an hour. This does not reach the
+          // image optimizer — that cache floors its TTL at
+          // `images.minimumCacheTTL` regardless of what the object stores —
+          // so what it buys is the paths that bypass the optimizer entirely:
+          // browser and Supabase-CDN caching of the raw original, fetched by
+          // link scrapers for og:image and by any direct bucket hit. Objects
+          // uploaded before this line was added keep their old header.
           cacheControl: "31536000",
         });
 

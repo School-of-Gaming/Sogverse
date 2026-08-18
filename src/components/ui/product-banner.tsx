@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { isOptimizableImageSrc } from "@/lib/images/product-image-url";
 import { cn } from "@/lib/utils";
 
 /** The one frame every product picture is painted in. */
@@ -43,7 +42,10 @@ const BANNER_FRAME = "aspect-[3/2] w-full";
  * from the request's `Accept`, which is most of the remaining bytes; and the
  * bytes served from our own edge cache rather than metered Supabase egress.
  * Because there is exactly one frame, that switch is one change here instead
- * of five at the call sites.
+ * of five at the call sites. `next/image` renders `blob:`/`data:` srcs and
+ * `.svg` paths unoptimized on its own — the preview scenes' `/preview-art/*.svg`
+ * fixtures and the picker's object-URL preview ride on that — so there is no
+ * per-call-site opt-out here to get wrong.
  *
  * **`sizes` is a required decision, not a detail.** With `fill`, a missing
  * `sizes` makes the browser assume the image is the full viewport width and
@@ -92,7 +94,6 @@ export function ProductBanner({
         fill
         sizes={sizes}
         priority={eager}
-        unoptimized={!isOptimizableImageSrc(src)}
         className="object-cover"
       />
     </div>

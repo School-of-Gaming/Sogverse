@@ -22,6 +22,11 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
  * only loaded by `next dev`/`build`/`start`, all of which already require the
  * same variable for Supabase itself (the URL resolver throws on it too), so
  * there is no tooling context that legitimately loads it without one.
+ *
+ * **If this ever points at a local stack (`http://127.0.0.1:54321`), every
+ * banner 400s**: the optimizer refuses to fetch a local-IP origin unless
+ * `images.dangerouslyAllowLocalIP` is set, and the error names neither this
+ * file nor the flag. No local stack exists today, so the flag is not set here.
  */
 function productImagePattern() {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -49,14 +54,17 @@ const nextConfig: NextConfig = {
     // paid back on every fetch. Egress is the whole reason this optimizer is
     // here.
     formats: ["image/avif", "image/webp"],
-    // One year. The optimizer would otherwise honour the *stored* object's
-    // `cacheControl` metadata, and re-fetch the origin every hour — exactly
-    // the Supabase egress this change exists to stop. Safe because a bucket
-    // path is immutable: both admin product routes mint a fresh
-    // `${randomUUID()}.${ext}` per upload with `upsert: false` and delete the
-    // superseded object, so a given URL's bytes never change. Replacing a
-    // product's picture produces a new URL, which is a cache miss by
-    // construction.
+    // One year, and this value alone decides it: the optimizer caches an entry
+    // for `max(minimumCacheTTL, the upstream's own Cache-Control max-age)`, so
+    // the config is a floor rather than something the stored header can
+    // undercut. Next's own default is four hours, which would have the
+    // optimizer re-fetching the bucket six times a day for bytes that cannot
+    // have moved — exactly the Supabase egress this change exists to stop.
+    // Safe because a bucket path is immutable: both admin product routes mint
+    // a fresh `${randomUUID()}.${ext}` per upload with `upsert: false` and
+    // delete the superseded object, so a given URL's bytes never change.
+    // Replacing a product's picture produces a new URL, which is a cache miss
+    // by construction.
     minimumCacheTTL: 31_536_000,
   },
   async headers() {
