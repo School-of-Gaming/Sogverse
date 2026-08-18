@@ -351,6 +351,15 @@ Several files define inline `selectClassName` strings that duplicate `<Input>` s
 - [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
 - [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the add-gamer dialog, plus any other occurrences
 
+### Resize Product Images at Upload — Then Re-enable AVIF
+
+The image-optimizer branch put Vercel's optimizer in front of browsers, but the stored originals are still unbounded admin uploads (2–4 MB camera-roll PNGs). That weight is why AVIF was rejected (`next.config.ts` records the pricing: the first visitor to each image-and-width pays a slow encode in front of the LCP hero), it is what og:image unfurl scrapers still fetch raw — the one Supabase egress path the optimizer cannot cover — and it is the full weight of every optimizer origin fetch. Shrinking the source dissolves all three at once.
+
+- [ ] Re-encode at upload in the two admin product routes (cap ~1600px wide, WebP q≈80 — ~150–250 kB per image)
+- [ ] One-off re-encode of the existing catalogue (67 prod / 44 staging objects). Mint **new** paths and update `products.image_path` — a bucket URL's bytes are immutable by contract (the `minimumCacheTTL` justification in `next.config.ts`), so never rewrite an object in place
+- [ ] Flip `formats` back to `["image/avif", "image/webp"]` — with small encode inputs the first-encounter cost dissolves at any traffic level
+- [ ] Confirm a WhatsApp/Slack unfurl fetches the smaller og:image
+
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
 Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
