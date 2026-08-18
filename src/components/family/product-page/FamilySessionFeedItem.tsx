@@ -20,8 +20,20 @@ import type { FamilySessionEntry } from "./types";
 export type ReportAttributionVariant =
   | "none"
   | "corner"
+  | "corner-left"
+  | "corner-bottom"
   | "byline"
   | "signature";
+
+// TEMP(report-attribution): where each corner variant's chip is pinned on the
+// relative shell. Absence from this map is what makes a variant not a corner.
+const CORNER_ATTRIBUTION_POSITIONS: Partial<
+  Record<ReportAttributionVariant, string>
+> = {
+  corner: "-right-2 -top-2.5",
+  "corner-left": "-left-2 -top-2.5",
+  "corner-bottom": "-right-2 -bottom-2.5",
+};
 
 interface FamilySessionFeedItemProps {
   entry: FamilySessionEntry;
@@ -199,19 +211,23 @@ export function FamilySessionFeedItem({
     </Card>
   );
 
-  // TEMP(report-attribution): corner variant — chip straddling the top-right
-  // corner, borrowing the card-corner-badge geometry (ring cut-out, half off
-  // the edge). Rendered as the card's sibling inside a relative shell so the
-  // card's own overflow cannot clip it.
-  if (attributionVariant === "corner" && written && author !== null) {
+  // TEMP(report-attribution): corner variants — chip straddling the top-right,
+  // top-left or bottom-right corner, borrowing the card-corner-badge geometry
+  // (ring cut-out, half off the edge). Rendered as the card's sibling inside a
+  // relative shell so the card's own overflow cannot clip it.
+  const cornerPosition = CORNER_ATTRIBUTION_POSITIONS[attributionVariant];
+  if (cornerPosition !== undefined && written && author !== null) {
     return (
       <div className="relative">
         {card}
         <PersonChip
           id={author.id}
           name={author.firstName}
-          size="compact"
-          className="absolute -right-2 -top-2 z-10 bg-card shadow-sm ring-2 ring-background"
+          size="default"
+          className={cn(
+            "absolute z-10 bg-card shadow-sm ring-2 ring-background",
+            cornerPosition,
+          )}
         />
       </div>
     );

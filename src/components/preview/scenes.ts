@@ -262,14 +262,26 @@ export const PREVIEW_SCENES = [
       "The page a parent opens from My SOG for one enrollment: participant-scoped (“Minecraft Builders Club, for Aino”, with her group on the line beneath — or “for you” on a seat the parent holds themselves), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — a notice under it says so when the enrollment has a billing problem, the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this participant's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
     chrome: "dashboard",
     scenarios: [
-      // TEMP(report-attribution): three comparison scenarios for the
-      // report-author UI alignment. Same active-club fixture, three
+      // TEMP(report-attribution): five comparison scenarios for the
+      // report-author UI alignment. Same active-club fixture, five
       // placements. Remove after the decision is made.
       {
         slug: "attribution-corner",
         label: "TEMP — report author: corner chip",
         description:
           "Author chip straddling the card's top-right corner (the card-corner-badge geometry). Alternating Sanna/Petra so the multi-gedu case is visible.",
+      },
+      {
+        slug: "attribution-corner-left",
+        label: "TEMP — report author: corner chip, top-left",
+        description:
+          "Author chip straddling the card's top-LEFT corner — who/when on the left (chip over the date line), status alone on the right, so the chip never stacks over Present/LIVE.",
+      },
+      {
+        slug: "attribution-corner-bottom",
+        label: "TEMP — report author: corner chip, bottom-right",
+        description:
+          "Author chip straddling the card's bottom-right corner, signature-style — maximally far from the header statuses; judge how it half-hangs into the gap before the next card.",
       },
       {
         slug: "attribution-byline",
