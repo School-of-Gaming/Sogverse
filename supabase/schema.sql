@@ -2110,6 +2110,22 @@ BEGIN
         'updated_at',       s.updated_at,
         'created_by',       s.created_by,
         'updated_by',       s.updated_by,
+        -- The last editor's first name, for the author chip on the card.
+        --
+        -- LEFT-JOIN-shaped on purpose: NULL when nothing has stamped the row
+        -- yet, and NULL again if the profile has gone. The FK is ON DELETE SET
+        -- NULL, so the second case cannot arise from a deleted profile — it is
+        -- written this way so the shape survives any future relaxation rather
+        -- than because it is reachable today.
+        --
+        -- This is the LAST TOUCHER of the whole session, not the report's
+        -- author: an attendance correction or a staff-note edit moves it. See
+        -- this migration's header for why that is accepted.
+        'updated_by_first_name', (
+          SELECT pr.first_name
+            FROM public.profiles pr
+           WHERE pr.id = s.updated_by
+        ),
         -- Sparse map keyed by participant id. A roster member absent from this
         -- object is UNMARKED, which is a different claim from 'absent'.
         'attendance', COALESCE((
@@ -2137,7 +2153,7 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult) and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox).';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult) and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Each session carries updated_by with the last editor''s first name beside it (00194) — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it.';
 
 
 --
@@ -2372,6 +2388,15 @@ BEGIN
   -- roster, which is what makes another child's mark structurally unreachable
   -- rather than merely unrendered. NULL means unmarked, which is a third state
   -- and not the same claim as 'absent'.
+  --
+  -- The two `updated_by*` keys are the ONE widening 00194 makes here, and the
+  -- name travels per session rather than being resolved against `gedus` above
+  -- because the sets genuinely differ: the gedu who wrote up September may not
+  -- teach the group in November, and resolving against the current list would
+  -- leave the oldest reports unsigned. A first name is the same quantum of
+  -- information a family already gets for every assigned gedu. It is the last
+  -- editor of the SESSION, not the report's author — an attendance mark moves
+  -- it — which is a limitation this document states rather than hides.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'session_date' DESC), '[]'::jsonb)
     INTO v_sessions
     FROM (
@@ -2381,6 +2406,12 @@ BEGIN
         'starts_at',    s.starts_at,
         'ends_at',      s.ends_at,
         'report',       s.report,
+        'updated_by',   s.updated_by,
+        'updated_by_first_name', (
+          SELECT pr.first_name
+            FROM public.profiles pr
+           WHERE pr.id = s.updated_by
+        ),
         'attendance', (
           SELECT a.status
             FROM public.session_attendance a
@@ -2408,7 +2439,7 @@ $$;
 -- Name: FUNCTION get_my_family_product_feed(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports, and the named participant''s own attendance marks. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page. Carries no gedu note of any scope, no roster, no other participant''s marks, no parent email, no material link and no owed/completeness state.';
+COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports, and the named participant''s own attendance marks. Each session also carries updated_by and the last editor''s first name (00194) — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page. Carries no gedu note of any scope, no roster, no other participant''s marks, no parent email, no material link and no owed/completeness state.';
 
 
 SET default_tablespace = '';
