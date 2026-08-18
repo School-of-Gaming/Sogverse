@@ -102,7 +102,7 @@ function defineTemplate<P extends TemplateParams>(entry: {
   };
 }
 
-// --- Shared select options & resolvers ---
+// --- Select options & resolvers ---
 
 /**
  * Whose seat the mail is about.

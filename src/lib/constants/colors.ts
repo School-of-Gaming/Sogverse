@@ -8,11 +8,6 @@ export const BRAND = { primary: "#FAA901", secondary: "#8F00E2" } as const;
 // primary(20%) over #121212 = #40300F, secondary(10%) over #121212 = #1F1027
 export const GRADIENT = { primaryGlow: "#40300F", secondaryGlow: "#1F1027" } as const;
 
-export const STATUS = {
-  success: "#2EB88A",    // --success: 160 60% 45%
-  warning: "#E7B008",    // --warning: 45 93% 47%
-} as const;
-
 export const YTY_ELEMENT = {
   harmony: "#34d399",
   glow: "#fbbf24",

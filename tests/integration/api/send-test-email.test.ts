@@ -352,32 +352,35 @@ describe("POST /api/admin/send-test-email", () => {
 
   /**
    * The wire schema and the registry's own param schema are declared in two
-   * places, and `isSelfSeat` is the only param that is not a string: a wire
-   * schema still typed `Record<string, string | null>` rejects the whole body
-   * before the template ever sees it, so the one template carrying a boolean
-   * becomes unsendable from the testing page while every other one keeps
-   * working. Both boolean values are posted because `false` is the one a
-   * "truthy values only" narrowing would still let through.
+   * places, and the wire one has to admit every non-string a real test send
+   * can carry — both of which the testing page produces client-side, before
+   * the POST, by running the template's own `resolveParams`: the boolean the
+   * seat select expands into, and the null the price becomes on the modes
+   * that state no amount. A wire schema typed `Record<string, string | null>`
+   * rejects the first before the template ever sees it; one typed
+   * `Record<string, string | boolean>` rejects the second. Both boolean
+   * values are posted because `false` is the one a "truthy values only"
+   * narrowing would still let through.
    */
-  const confirmationTemplateBody = (isSelfSeat: boolean) => ({
+  const confirmationTemplateBody = (params: Record<string, string | boolean | null>) => ({
     mode: "template",
     toEmail: "test@example.com",
     template: "productConfirmation",
     params: {
       participantName: "Marja",
-      isSelfSeat,
       productName: "Parents' Minecraft Evening",
       productType: "consumer_club",
       mode: "subscription",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      ...params,
     },
   });
 
   it("should accept the boolean isSelfSeat param on the self seat", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest(confirmationTemplateBody(true)));
+    const response = await POST(createRequest(confirmationTemplateBody({ isSelfSeat: true })));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -392,12 +395,29 @@ describe("POST /api/admin/send-test-email", () => {
   it("should accept the boolean isSelfSeat param on a child's seat", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest(confirmationTemplateBody(false)));
+    const response = await POST(createRequest(confirmationTemplateBody({ isSelfSeat: false })));
 
     expect(response.status).toBe(200);
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         subject: "Marja is enrolled in Parents' Minecraft Evening",
+      }),
+    );
+  });
+
+  it("should accept a null param on a mode that states no price", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(
+      createRequest(
+        confirmationTemplateBody({ isSelfSeat: false, mode: "waitlist", priceAmount: null }),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Marja is on the waitlist for Parents' Minecraft Evening",
       }),
     );
   });
