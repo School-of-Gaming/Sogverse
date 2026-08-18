@@ -10,10 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
-import {
-  FamilySessionFeedItem,
-  type ReportAttributionVariant,
-} from "./FamilySessionFeedItem";
+import { FamilySessionFeedItem } from "./FamilySessionFeedItem";
 import type { FamilySessionEntry } from "./types";
 
 interface FamilySessionFeedProps {
@@ -34,9 +31,6 @@ interface FamilySessionFeedProps {
   showAttendance: boolean;
   /** Which of the two empty-state voices to speak in when there is no past. */
   audience: SessionAudience;
-  // TEMP(report-attribution): preview-only. Remove before the real
-  // implementation.
-  attributionVariant?: ReportAttributionVariant;
   className?: string;
 }
 
@@ -73,7 +67,6 @@ export function FamilySessionFeed({
   sourceTimeZone,
   showAttendance,
   audience,
-  attributionVariant = "none",
   className,
 }: FamilySessionFeedProps) {
   const t = useTranslations("familyProduct");
@@ -126,7 +119,6 @@ export function FamilySessionFeed({
             now.getTime() < entry.endsAt.getTime()
           }
           showAttendance={showAttendance}
-          attributionVariant={attributionVariant}
           labels={formatSessionLabels(entry, {
             locale,
             timeZone,

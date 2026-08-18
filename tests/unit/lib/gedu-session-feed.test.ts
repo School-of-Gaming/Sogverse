@@ -180,6 +180,77 @@ describe("buildGeduSessionFeed — entry kinds", () => {
   });
 });
 
+/**
+ * The last-editor pair, and the one rule over it: **both halves or nobody.**
+ *
+ * The id seeds an identicon and the name is what the chip says, so half a pair
+ * is not an attribution anyone can read — it is a face with no name or a name
+ * with a degenerate face. The builder answers `null` for any row missing either
+ * half, and for every occurrence with no row behind it at all — which includes
+ * the pre-epoch gap kind, whose shape has no field to put an editor in, because
+ * a session nothing has ever touched has nobody to name.
+ *
+ * Nothing here is about *who* the editor is. The column is the session's last
+ * editor rather than the report's author, which is a documented product
+ * decision the builder has no opinion about: it maps the pair through, and the
+ * card decides whether there is a write-up worth signing.
+ */
+describe("buildGeduSessionFeed — the last editor", () => {
+  const EDITOR = {
+    updated_by: "9f1c1a3f-1d4c-4a0b-9c6e-7f2a5f0e11aa",
+    updated_by_first_name: "Sanna",
+  };
+
+  it("maps the pair through when both halves are present", () => {
+    const entries = build({ sessions: [row("2026-03-16", EDITOR)] });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      kind: "past",
+      lastEditedBy: { id: EDITOR.updated_by, firstName: "Sanna" },
+    });
+  });
+
+  it("carries it on a future entry too — a plan is the same field earlier", () => {
+    const entries = build({ sessions: [row("2026-03-23", EDITOR)] });
+    expect(byDate(entries, "2026-03-23")).toMatchObject({
+      kind: "future",
+      lastEditedBy: { id: EDITOR.updated_by, firstName: "Sanna" },
+    });
+  });
+
+  it("answers null when the id is there and the name is not", () => {
+    const entries = build({
+      sessions: [
+        row("2026-03-16", { ...EDITOR, updated_by_first_name: null }),
+      ],
+    });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      lastEditedBy: null,
+    });
+  });
+
+  it("answers null when the name is there and the id is not", () => {
+    const entries = build({
+      sessions: [row("2026-03-16", { ...EDITOR, updated_by: null })],
+    });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      lastEditedBy: null,
+    });
+  });
+
+  it("answers null on an occurrence with no stored row behind it", () => {
+    expect(byDate(build(), "2026-03-16")).toMatchObject({
+      lastEditedBy: null,
+    });
+  });
+
+  it("gives a pre-epoch gap no editor field at all", () => {
+    const entries = build({ epoch: "2026-03-10", startDate: "2026-01-05" });
+    const gap = byDate(entries, "2026-03-02");
+    expect(gap?.kind).toBe("no_record");
+    expect(gap).not.toHaveProperty("lastEditedBy");
+  });
+});
+
 describe("buildGeduSessionFeed — records beat projections", () => {
   it("lays a row over the occurrence it shares a date with", () => {
     const entries = build({

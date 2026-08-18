@@ -1443,6 +1443,7 @@
   "sessionFeed": {
     "readMore": "Lire la suite",
     "showLess": "Réduire",
+    "lastEditedBy": "Par {name}",
     "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}"
   },
   "groups": {

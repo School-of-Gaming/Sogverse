@@ -69,6 +69,9 @@ function liveEntry(attendance: AttendanceMarks = {}): SessionFeedEntry {
     report: null,
     staffNote: null,
     attendance,
+    // Unsigned: this suite is about the clock, and the attribution chip needs a
+    // written report before it renders anything at all.
+    lastEditedBy: null,
   };
 }
 
@@ -244,6 +247,7 @@ describe("SessionFeedItem — the live card shows its register", () => {
       report: null,
       staffNote: null,
       attendance: {},
+      lastEditedBy: null,
     };
 
     const { queryByRole, getByText } = renderFeed({

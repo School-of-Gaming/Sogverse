@@ -6,34 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   ATTENDANCE_TONE,
+  SessionAuthorChip,
   SessionReport,
   hasReport,
   type AttendanceMark,
   type SessionLabels,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
-import { PersonChip } from "@/components/ui/person-chip";
 import type { FamilySessionEntry } from "./types";
-
-// TEMP(report-attribution): preview-only variant switch for UI alignment.
-// Remove before the real implementation.
-export type ReportAttributionVariant =
-  | "none"
-  | "corner"
-  | "corner-left"
-  | "corner-bottom"
-  | "byline"
-  | "signature";
-
-// TEMP(report-attribution): where each corner variant's chip is pinned on the
-// relative shell. Absence from this map is what makes a variant not a corner.
-const CORNER_ATTRIBUTION_POSITIONS: Partial<
-  Record<ReportAttributionVariant, string>
-> = {
-  corner: "-right-2 -top-2.5",
-  "corner-left": "-left-2 -top-2.5",
-  "corner-bottom": "-right-2 -bottom-2.5",
-};
 
 interface FamilySessionFeedItemProps {
   entry: FamilySessionEntry;
@@ -64,9 +44,6 @@ interface FamilySessionFeedItemProps {
    * what differs, so this is a rendering decision rather than a data one.
    */
   showAttendance: boolean;
-  // TEMP(report-attribution): preview-only. Remove before the real
-  // implementation.
-  attributionVariant?: ReportAttributionVariant;
 }
 
 /**
@@ -90,6 +67,13 @@ interface FamilySessionFeedItemProps {
  * report and no mark means there is genuinely nothing to say about that evening;
  * a full card holding one apologetic sentence would give an absence of
  * paperwork the same weight on the page as an actual write-up.
+ *
+ * **A card with a write-up on it is signed**, with the chip straddling its
+ * bottom-right corner — and it is signed identically for a parent and for the
+ * child. Attendance is the parent-only signal on this row because it is a fact
+ * about the child that the adult paying for the club needs; who wrote the
+ * write-up is a fact about the write-up, and a child reading their own club's
+ * page has the same reason to know whose voice it is.
  */
 export function FamilySessionFeedItem({
   entry,
@@ -97,14 +81,9 @@ export function FamilySessionFeedItem({
   prominent,
   live,
   showAttendance,
-  attributionVariant = "none",
 }: FamilySessionFeedItemProps) {
   const t = useTranslations("familyProduct");
   const b = useTranslations("sessionBadge");
-
-  // TEMP(report-attribution): preview-only.
-  const author =
-    attributionVariant !== "none" ? (entry.reportAuthor ?? null) : null;
 
   const attendance =
     entry.kind === "past" && showAttendance ? entry.attendance : null;
@@ -130,8 +109,6 @@ export function FamilySessionFeedItem({
     );
   }
 
-  // TEMP(report-attribution): the card is wrapped in a relative shell so the
-  // corner variant's chip can straddle the corner without being clipped.
   const card = (
     <Card
       className={cn(
@@ -185,55 +162,33 @@ export function FamilySessionFeedItem({
         {attendance !== null && <AttendanceMarkChip mark={attendance} />}
       </div>
 
-      {/* TEMP(report-attribution): byline variant — chip above the report. */}
-      {written && author !== null && attributionVariant === "byline" && (
-        <div className="pt-3">
-          <PersonChip id={author.id} name={author.firstName} size="compact" />
-        </div>
-      )}
-
       {written && (
         <SessionReport
           markdown={entry.report ?? ""}
           clamped={false}
-          className={
-            attributionVariant === "byline" && author !== null ? "pt-2" : "pt-3"
-          }
+          className="pt-3"
         />
-      )}
-
-      {/* TEMP(report-attribution): signature variant — chip below the report. */}
-      {written && author !== null && attributionVariant === "signature" && (
-        <div className="pt-2">
-          <PersonChip id={author.id} name={author.firstName} size="compact" />
-        </div>
       )}
     </Card>
   );
 
-  // TEMP(report-attribution): corner variants — chip straddling the top-right,
-  // top-left or bottom-right corner, borrowing the card-corner-badge geometry
-  // (ring cut-out, half off the edge). Rendered as the card's sibling inside a
-  // relative shell so the card's own overflow cannot clip it.
-  const cornerPosition = CORNER_ATTRIBUTION_POSITIONS[attributionVariant];
-  if (cornerPosition !== undefined && written && author !== null) {
-    return (
-      <div className="relative">
-        {card}
-        <PersonChip
-          id={author.id}
-          name={author.firstName}
-          size="default"
-          className={cn(
-            "absolute z-10 bg-card shadow-sm ring-2 ring-background",
-            cornerPosition,
-          )}
-        />
-      </div>
-    );
-  }
+  // Signed only where there is something to sign. Both halves have to hold: a
+  // card with no write-up has no authorship to claim, and a row nothing has
+  // stamped (or whose editor's profile has gone) has nobody to name. Either way
+  // the card is returned bare — the `relative` shell exists solely to hang the
+  // chip off, so a card without one has no reason to carry a wrapper.
+  const editor = written ? entry.lastEditedBy : null;
+  if (editor === null) return card;
 
-  return card;
+  // The chip is the card's **sibling** inside a relative shell rather than its
+  // child: it hangs half past the card's edge, and a card clipping its own
+  // overflow would cut it in two.
+  return (
+    <div className="relative">
+      {card}
+      <SessionAuthorChip id={editor.id} firstName={editor.firstName} />
+    </div>
+  );
 }
 
 /**

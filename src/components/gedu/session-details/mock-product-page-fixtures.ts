@@ -2,6 +2,7 @@ import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import {
   CLUB_FUTURE_SPECS,
   SESSION_FEED_ADULT_ID,
+  SESSION_FEED_EDITORS,
   SESSION_FEED_GAMER_IDS,
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
@@ -178,6 +179,7 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
     kind: "future",
     report:
       "# Last day: showcase afternoon\n\nEvery team demos their finished course, and we vote on the one nobody could beat.\n\n**Parents are welcome from 15:00** if you would like to come and be beaten by an obstacle course built by ten-year-olds.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "future",
@@ -199,6 +201,7 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
     kind: "future",
     report:
       "# Leaderboards\n\nWe wire the finish line up to a scoreboard so the course remembers who got round it fastest.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   { kind: "future" },
   {
@@ -210,6 +213,7 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
     kind: "future",
     report:
       "# Tomorrow: playtesting, round two\n\nEvery team hands their course to another team and watches them fail at it — the most useful hour of the week, and the one everybody asks to repeat.",
+    lastEditedBy: SESSION_FEED_EDITORS.petra,
   },
 ];
 
@@ -236,12 +240,14 @@ const CAMP_SPECS: readonly EntrySpec[] = [
     kind: "past",
     report:
       "# Day five: playtesting\n\nEvery team handed their obby to another team and watched them fail at it, which is reliably the most useful hour of the week.\n\nThree levels got quietly made easier straight afterwards, and nobody admitted to it.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
     allPresent: true,
     report:
       "# Day four: sound and lighting\n\nNeon needs neon, so the afternoon went on emissive parts and a soundtrack that loops without anyone noticing the seam.\n\n## What changed\n\n- Every obstacle now lights its own approach, so you can see where you are going\n- A four-bar loop under the whole course, built by three of the group together\n- A very loud sound on the finish line, which was not my idea and is staying",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
@@ -250,24 +256,28 @@ const CAMP_SPECS: readonly EntrySpec[] = [
       "# Day three: our first scripts\n\nWe wrote our first Lua today — a checkpoint that saves where you got to — and then broke it on purpose to find out what the error messages actually mean.\n\n## How it went\n\nEveryone got a working checkpoint. The useful part was the breaking: a script that says `attempt to index nil` is not being rude, it is telling you that the thing you asked for is not there, and once that landed the group started reading the errors instead of calling me over.\n\nHilda finished early and ended up debugging two other tables' scripts, which she was very pleased about.\n\n**At home:** the place to look is the Output window at the bottom of Studio. Almost every problem is named there in plain words.",
     staffNote:
       "The room's laptops are slow to load Studio; start the machines ten minutes before the group arrives tomorrow.",
+    lastEditedBy: SESSION_FEED_EDITORS.petra,
   },
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar, SESSION_FEED_GAMER_IDS.emil],
     report:
       "# Day two: building the course\n\nTeams of two, one obstacle each, all snapped together into a single course by the end of the afternoon.\n\nIt is unfair and much too long, which everyone considers to be the point.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.hilda],
     report:
       "# Day one and a half: picking a theme\n\nThe group voted on a theme for the shared course. Neon city won by a distance, and half the afternoon went on arguing about whether lava counts as neon.\n\nIt does not, and the ruling was extremely unpopular.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
     allPresent: true,
     report:
       "# Day one: getting started\n\nEveryone got a Roblox Studio account working, made a baseplate and pushed a block off it.\n\n- Names and ground rules\n- Who is sitting next to whom for the week\n- One baseplate each, and one block pushed off each\n\nA quiet start on purpose. Tomorrow we pick a theme and start building for real.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 ];
 
@@ -485,6 +495,18 @@ function yearlongSpecs(): readonly EntrySpec[] {
   // the feed and again deep into the scrollback, sitting beside the
   // unmarked-register cases it must not be mistaken for.
   const MARKED_BUT_NO_REPORT_AT = new Set([1, 9, 22, 37]);
+  /**
+   * The weeks Petra covered. Sanna has the group and writes most of it up; a
+   * scattered handful are Petra's, which is what a regular-plus-stand-in group
+   * looks like — and it puts a second face down the scrollback without the
+   * chips reading as an alternating pattern. Named indices rather than a
+   * modulo, because who ran a given week is a fact about that week.
+   */
+  const COVERED_BY_PETRA_AT = new Set([3, 11, 19, 26, 41]);
+  const editorAt = (index: number) =>
+    COVERED_BY_PETRA_AT.has(index)
+      ? SESSION_FEED_EDITORS.petra
+      : SESSION_FEED_EDITORS.sanna;
   const past: EntrySpec[] = [];
 
   for (let index = 0; index < 53; index++) {
@@ -506,6 +528,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
           ],
           absent: [SESSION_FEED_GAMER_IDS.linnea],
         },
+        lastEditedBy: editorAt(index),
       });
       continue;
     }
@@ -513,6 +536,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
       past.push({
         kind: "past",
         report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+        lastEditedBy: editorAt(index),
       });
       continue;
     }
@@ -521,6 +545,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
         kind: "past",
         allPresent: true,
         staffNote: YEARLONG_STAFF_NOTES[index % YEARLONG_STAFF_NOTES.length],
+        lastEditedBy: editorAt(index),
       });
       continue;
     }
@@ -533,6 +558,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
     past.push({
       kind: "past",
       report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+      lastEditedBy: editorAt(index),
       ...(index % 7 === 3
         ? { staffNote: YEARLONG_STAFF_NOTES[index % YEARLONG_STAFF_NOTES.length] }
         : {}),
@@ -554,6 +580,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
       report: `# Before we kept records
 
 Written up from memory and the world save, long after the fact. Half the register is guesswork, so it stays half-marked — and nothing is asking for the rest.`,
+      lastEditedBy: SESSION_FEED_EDITORS.sanna,
     },
     { kind: "no_record" },
     { kind: "no_record" },

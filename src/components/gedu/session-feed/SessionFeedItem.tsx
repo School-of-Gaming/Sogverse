@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Markdown } from "@/components/ui/markdown";
 import {
+  SessionAuthorChip,
   SessionReport,
+  hasReport,
   type SessionLabels,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
@@ -256,7 +258,25 @@ export function SessionFeedItem({
     );
   }
 
-  return (
+  /**
+   * Who to sign this card with, or `null` for no chip.
+   *
+   * Three conditions, and the last is this feed's own. There has to be a
+   * write-up to attribute — the shared trimmed test, so a report of one newline
+   * signs nothing — and somebody to name. And **the chip is withheld while this
+   * entry's editor is open**: Save and Cancel sit in the bottom-right corner of
+   * the expanded card, exactly where the chip hangs, and a chip floating over an
+   * unsaved draft would be claiming authorship of text that is not stored yet.
+   * It comes back when the editor closes, over whatever was actually saved.
+   *
+   * The pre-epoch dashed line never reaches here — it returns above — which is
+   * the right answer twice over: it is a row rather than a card, and it has no
+   * stored row behind it to have been edited by anybody.
+   */
+  const signedBy =
+    !editing && hasReport(entry.report) ? entry.lastEditedBy : null;
+
+  const card = (
     <Card
       className={cn(
         "p-4 sm:p-5",
@@ -338,6 +358,20 @@ export function SessionFeedItem({
         </CollapsibleRegion>
       )}
     </Card>
+  );
+
+  if (signedBy === null) return card;
+
+  // The chip is the card's **sibling** inside a relative shell rather than its
+  // child: it hangs half past the card's edge, and a card clipping its own
+  // overflow would cut it in two. The shell wraps the whole card — collapsible
+  // regions and all — so nothing about the feed's keyed list or the markers
+  // beside it changes: the row still renders exactly one element.
+  return (
+    <div className="relative">
+      {card}
+      <SessionAuthorChip id={signedBy.id} firstName={signedBy.firstName} />
+    </div>
   );
 }
 

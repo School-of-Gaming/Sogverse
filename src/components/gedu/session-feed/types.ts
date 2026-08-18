@@ -92,6 +92,33 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
    * kind split, whose only real job was getting that editor onto the card.
    */
   attendance: AttendanceMarks;
+  /** Who last touched this session — see the type's own note. */
+  lastEditedBy: SessionEditor | null;
+}
+
+/**
+ * The gedu who last touched a session, as the attribution chip needs them: an
+ * id to hash the identicon out of, and a first name.
+ *
+ * **It is the session's last editor, not the report's author, and the
+ * imprecision is accepted rather than overlooked.** The stored row's audit
+ * column is stamped by every recorded touch — materializing the row, saving
+ * either written field, and each attendance mark or unmark — so a gedu who only
+ * corrected a tick is named beside a write-up somebody else typed. In practice
+ * the gedu who touches one part of a session touches all of it, and a per-field
+ * author column was judged not worth the schema for that edge, which is why the
+ * field says *last edited by* rather than *author*. Do not close the gap by
+ * quietly adding a report-author column; that is a product decision rather than
+ * a refactor.
+ *
+ * `null` wherever the pair is incomplete: an occurrence with no stored row
+ * behind it, a row nothing has stamped, or a stamp whose profile is gone. Both
+ * halves are wanted before anybody is named.
+ */
+export interface SessionEditor {
+  /** Real UUID — the identicon is hashed out of its hex bytes. */
+  id: string;
+  firstName: string;
 }
 
 /**
@@ -156,6 +183,8 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * sheet, write the report, and it is earned.
    */
   owed: boolean;
+  /** Who last touched this session — see the type's own note. */
+  lastEditedBy: SessionEditor | null;
 }
 
 /**

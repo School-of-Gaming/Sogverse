@@ -1443,6 +1443,7 @@
   "sessionFeed": {
     "readMore": "Lue lisää",
     "showLess": "Näytä vähemmän",
+    "lastEditedBy": "Kirjoittanut {name}",
     "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}"
   },
   "groups": {

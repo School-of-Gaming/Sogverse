@@ -3,6 +3,7 @@ import { getNextSessionStart } from "@/lib/enrollment";
 import type { AttendanceMark } from "@/components/session-feed";
 import type {
   AttendanceMarks,
+  SessionEditor,
   SessionFeedEntry,
   SessionFeedGamer,
 } from "./types";
@@ -98,6 +99,22 @@ export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
 ];
 
 /**
+ * The gedus a fixture session can have been last edited by — the pair who teach
+ * the club these fixtures describe.
+ *
+ * Real generated UUIDv4s, hardcoded, for the same reason the children's ids are:
+ * each one renders as an identicon in the attribution chip, so a readable
+ * stand-in would render a degenerate square, and generating one at module load
+ * would hand the same gedu a different face on every reload. They are
+ * deliberately the same two ids the gedu product-page fixtures give the group,
+ * so the gedu named on a card is one of the gedus the rail says teaches it.
+ */
+export const SESSION_FEED_EDITORS = {
+  sanna: { id: "4a84d001-b789-41f5-ace3-cfcffa139869", firstName: "Sanna" },
+  petra: { id: "96e29545-ad63-4948-b783-14e91189ad75", firstName: "Petra" },
+} as const satisfies Record<string, SessionEditor>;
+
+/**
  * How often the group meets.
  *
  * `weekly` is a club: the same weekday every week. `daily` is a camp: back to
@@ -131,6 +148,18 @@ export type EntrySpec =
       kind: "future";
       /** The session report families read, as markdown. */
       report?: string;
+      /**
+       * Who last touched this session — the gedu the attribution chip names.
+       *
+       * A fact about the individual week rather than anything derivable, so it
+       * is stated rather than rotated: one gedu carries most of the term and
+       * the other appears on a handful, which is what a group with a regular
+       * and a stand-in looks like, and it puts two faces down a scrolled feed
+       * instead of one repeated. A spec with no report needs none — the chip
+       * signs a write-up, and a session with nothing written has nothing to
+       * sign.
+       */
+      lastEditedBy?: SessionEditor;
       /** Gedu note — a reminder for whoever runs it. Plain text. */
       staffNote?: string;
       /**
@@ -152,6 +181,8 @@ export type EntrySpec =
        * to expand it, and a fixture full of one-liners would never exercise that.
        */
       report?: string;
+      /** Who last touched this session — see the future spec's own note. */
+      lastEditedBy?: SessionEditor;
       staffNote?: string;
       /**
        * Roster ids marked absent; everyone else is marked present. Omit every
@@ -279,6 +310,7 @@ export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
     kind: "future",
     report:
       "# Redstone follow-up\n\nWe are wiring the item sorters into the storage room and finding out whether the overflow fix survives eight people using it at once.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "future",
@@ -286,6 +318,7 @@ export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
       "# The lighthouse\n\nWe are finishing the harbour road and starting on the lighthouse at the end of it.\n\n**Bring:** ideas for what should be inside it. A library, a beacon room and a slide have all been suggested, and only one of those is structurally sensible.",
     staffNote:
       "Ask Siiri's group to pair her with Aino this week rather than leaving her to pick — she goes quiet when she has to choose.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 ];
 
@@ -298,6 +331,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar],
     report: VILLAGE_SQUARE_REPORT,
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 
   // Written up on the night and never marked off — the case the whole model
@@ -306,6 +340,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
   {
     kind: "past",
     report: COMMAND_BLOCKS_REPORT,
+    lastEditedBy: SESSION_FEED_EDITORS.petra,
   },
 
   // Started and abandoned: three marked, six still unanswered. The state a
@@ -319,6 +354,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     },
     report:
       "# Mob-proofing night\n\nWe lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper — which has not happened before.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 
   {
@@ -329,6 +365,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     // handover to whoever runs the room next is naturally a short list.
     staffNote:
       "**Two things for next week:**\n\n- Siiri was quiet again and dropped out of the call twice without saying anything. Worth a word with her parents if it carries on.\n- Laptops 3 and 5 couldn't hear shared audio for the first ten minutes. Check the room setup before the group arrives.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 
   // Marked off to the last child and never written up — and **flagged for it**.
@@ -341,6 +378,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     allPresent: true,
     staffNote:
       "Ran short — the school hall overran and we lost the first fifteen minutes. Still owe the write-up for this one.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 
   {
@@ -349,6 +387,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     report: BUILD_BATTLE_REPORT,
     staffNote:
       "Emil and Oskar are better on separate teams next time. It got competitive and there was some sniping in chat before I stepped in.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 
   // Nothing at all on this one — the plain gap.
@@ -363,6 +402,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     ],
     report:
       "# A housekeeping week\n\nA few were away, so we used the session to tidy up rather than start anything new.\n\n- Cleared and replanted the spawn area\n- Fixed the paths people kept falling off\n- Agreed some ground rules about building on each other's plots\n\nHilda started a shared library that anyone can add books to. It already has four, two of which are just the word \"hello\" repeated.",
+    lastEditedBy: SESSION_FEED_EDITORS.petra,
   },
 
   // Before the epoch, and recorded anyway: a gedu went back over an old
@@ -376,6 +416,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     report: `# Before we kept records
 
 Written up long after the fact, from memory and the world save. Half the register is guesswork, so it stays half-marked.`,
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 
   // Before the epoch and untouched: nothing was ever expected here, so nothing
@@ -652,6 +693,10 @@ function toEntry(
         attendance: Object.fromEntries(
           (spec.present ?? []).map((id) => [id, "present" as const]),
         ),
+        // Unstamped unless the spec says otherwise, which is what an occurrence
+        // with no stored row behind it looks like — and the state the
+        // attribution chip renders nothing for.
+        lastEditedBy: spec.lastEditedBy ?? null,
       };
     case "past":
       return {
@@ -663,6 +708,7 @@ function toEntry(
         report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
         attendance: marksForSpec(spec),
+        lastEditedBy: spec.lastEditedBy ?? null,
       };
     case "no_record":
       return { kind: "no_record", id, startsAt, endsAt };

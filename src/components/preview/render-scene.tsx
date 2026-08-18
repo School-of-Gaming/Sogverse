@@ -11,7 +11,6 @@ import {
   isShopBrowseScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
-import type { ReportAttributionVariant } from "@/components/family/product-page/FamilySessionFeedItem";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -22,18 +21,6 @@ import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
-
-// TEMP(report-attribution): the comparison scenarios' slugs and the variant
-// each one renders. Remove with the rest of the TEMP(report-attribution) code.
-const TEMP_ATTRIBUTION_SCENARIOS: Partial<
-  Record<string, ReportAttributionVariant>
-> = {
-  "attribution-corner": "corner",
-  "attribution-corner-left": "corner-left",
-  "attribution-corner-bottom": "corner-bottom",
-  "attribution-byline": "byline",
-  "attribution-signature": "signature",
-};
 
 /**
  * What each scene renders for a given scenario.
@@ -90,19 +77,6 @@ const SCENE_RENDERERS: Record<
   // opening both in adjacent tabs is how you check that the gamer's copy is the
   // parent's minus attendance and nothing else has quietly drifted.
   "parent-club": (scenario) => {
-    // TEMP(report-attribution): comparison scenarios for the report-author
-    // UI alignment — same active-club fixture, five attribution placements.
-    // Remove with the rest of the TEMP(report-attribution) code.
-    const attributionVariant = TEMP_ATTRIBUTION_SCENARIOS[scenario];
-    if (attributionVariant !== undefined) {
-      return (
-        <FamilyProductPageScene
-          audience="customer"
-          scenario="active-club"
-          attributionVariant={attributionVariant}
-        />
-      );
-    }
     if (!isFamilyProductScenario(scenario)) notFound();
     return <FamilyProductPageScene audience="customer" scenario={scenario} />;
   },

@@ -70,6 +70,41 @@ family module reaching into the gedu tree.
 string under `gedu.*` means a copy edit for the workspace silently rewrites what a parent
 reads — that bug shipped once; the namespaces are the fix.
 
+## The attribution chip
+
+**Rule: a card carrying a write-up is signed, in its bottom-right corner, on both feeds.**
+The chip is one shared component in this module rather than a copy per surface: a report is
+attributed the same way wherever it is read, and a chip that sat somewhere else — or said
+something else — on the staff side would be inventing a distinction neither surface has. It
+renders only where there is both a write-up (the shared trimmed test, so a report of one
+newline signs nothing) and somebody to name. The corner is chosen for what it is far from:
+both cards spend their header's right-hand side on a status, so the top corner would stack
+against whichever status is up, and the bottom one is empty on every card in both feeds. It
+is rendered as the card's **sibling** inside a plain relative shell, because it hangs half
+past the card's edge and a card clipping its own overflow would cut it in two. Its label
+comes from the shared `sessionFeed` namespace, and the positioned wrapper carries that label
+as the accessible name for the whole chip — a bare first name read out on its own says
+nothing about why it is there.
+
+**Rule: the chip names the session's LAST EDITOR, not the report's author, and that
+imprecision is a settled product decision.** The stored row's audit column is stamped by
+every recorded touch — materializing the row, saving either written field, and each
+attendance mark or unmark — so a gedu who only corrected a tick is named beside a write-up
+somebody else typed. In practice the gedu who touches one part of a session touches all of
+it, and a per-field author column was judged not worth the schema for that edge. **Do not
+close the gap by adding a report-author column**; that is a new product decision, not a
+refactor, and the field is named *last edited by* rather than *author* precisely so the
+claim on screen stays true. Both halves of the pair — the id that seeds the identicon and
+the first name — are required before anybody is named; either half missing is nobody.
+
+**Rule: the staff feed hides the chip while that entry's editor is open.** Save and Cancel
+sit in the bottom-right corner of the expanded card, exactly where the chip hangs, and a
+chip floating over an unsaved draft would be claiming authorship of text that is not stored
+yet. It returns when the editor closes, over whatever was actually saved. Folding a saved
+draft into an entry locally carries the existing editor through rather than rewriting it,
+for the same reason: the stamp belongs to the database, and the authoritative answer arrives
+with the refetched row.
+
 ## Contracts the shell holds (and why they are load-bearing)
 
 - **One keyed list, one boundary.** Future entries, month labels, the now-divider and the

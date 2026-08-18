@@ -80,6 +80,20 @@ nothing, so a Read-more would only put a tap between a family and the content. T
 arithmetic and the reasoning behind it live with the shared feed machinery; this surface
 simply does not use it.
 
+**Rule: a report card carries the chip of the gedu who last edited that session, for the
+parent and the gamer alike.** Attendance is the parent-only signal on this feed because it
+is a fact about the child that the adult paying for the club needs; who wrote the write-up
+is a fact about the write-up, so both audiences get it. **Exposing that gedu's first name to
+a family is deliberate rather than an oversight in the privacy line**: the page already
+names every gedu assigned to the group by id and first name, and this is the same quantum of
+information about the same kind of person. It travels *per session* instead of being
+resolved against the group's gedus because the two sets genuinely differ — a session's last
+editor may have left the group since — and resolving would leave the oldest reports
+unsigned. Nothing else of the staff row comes with it: no creator, no gedu note, and the
+wire schema is strict so nothing can arrive alongside it. The chip's placement, its
+last-editor semantics and the accepted mis-attribution edge are all documented once, with
+the shared feed machinery.
+
 **A past session with nothing on it renders as a quiet line, not a card.** No report and
 no mark means there is genuinely nothing to say about that evening, and a full card
 holding one apologetic sentence would give an absence of paperwork the same weight as an

@@ -6,8 +6,6 @@ import {
   buildFamilyProductPageFixture,
   type FamilyProductScenario,
 } from "@/components/family/product-page/mock-fixtures";
-// TEMP(report-attribution): preview-only import.
-import type { ReportAttributionVariant } from "@/components/family/product-page/FamilySessionFeedItem";
 import { useNow } from "@/providers";
 import type { SessionAudience } from "@/types";
 
@@ -31,13 +29,9 @@ import type { SessionAudience } from "@/types";
 export function FamilyProductPageScene({
   audience,
   scenario,
-  attributionVariant = "none",
 }: {
   audience: SessionAudience;
   scenario: FamilyProductScenario;
-  // TEMP(report-attribution): preview-only. Remove before the real
-  // implementation.
-  attributionVariant?: ReportAttributionVariant;
 }) {
   const now = useNow();
   const [fixture] = useState(() =>
@@ -84,7 +78,6 @@ export function FamilyProductPageScene({
       onJoinClick={noop}
       entries={fixture.entries}
       sourceTimeZone={fixture.sourceTimeZone}
-      attributionVariant={attributionVariant}
     />
   );
 }

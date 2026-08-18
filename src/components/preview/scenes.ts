@@ -262,43 +262,11 @@ export const PREVIEW_SCENES = [
       "The page a parent opens from My SOG for one enrollment: participant-scoped (“Minecraft Builders Club, for Aino”, with her group on the line beneath — or “for you” on a seat the parent holds themselves), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — a notice under it says so when the enrollment has a billing problem, the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this participant's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
     chrome: "dashboard",
     scenarios: [
-      // TEMP(report-attribution): five comparison scenarios for the
-      // report-author UI alignment. Same active-club fixture, five
-      // placements. Remove after the decision is made.
-      {
-        slug: "attribution-corner",
-        label: "TEMP — report author: corner chip",
-        description:
-          "Author chip straddling the card's top-right corner (the card-corner-badge geometry). Alternating Sanna/Petra so the multi-gedu case is visible.",
-      },
-      {
-        slug: "attribution-corner-left",
-        label: "TEMP — report author: corner chip, top-left",
-        description:
-          "Author chip straddling the card's top-LEFT corner — who/when on the left (chip over the date line), status alone on the right, so the chip never stacks over Present/LIVE.",
-      },
-      {
-        slug: "attribution-corner-bottom",
-        label: "TEMP — report author: corner chip, bottom-right",
-        description:
-          "Author chip straddling the card's bottom-right corner, signature-style — maximally far from the header statuses; judge how it half-hangs into the gap before the next card.",
-      },
-      {
-        slug: "attribution-byline",
-        label: "TEMP — report author: byline above",
-        description:
-          "Author chip as the first line of the report block, above the text.",
-      },
-      {
-        slug: "attribution-signature",
-        label: "TEMP — report author: signature below",
-        description: "Author chip under the report text, like a sign-off.",
-      },
       {
         slug: "active-club",
         label: "Club — remote, session in progress",
         description:
-          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Live” instead of “Next session” — the same word the cards on both dashboards use, because it is the same state. It is also the cancelled membership — the muted “won't renew” line under the masthead naming the last covered session, which is not an alarm because nothing is wrong; the gamer's copy of this same scenario shows no such line at all. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the scroll-fed past, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all.",
+          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Live” instead of “Next session” — the same word the cards on both dashboards use, because it is the same state. It is also the cancelled membership — the muted “won't renew” line under the masthead naming the last covered session, which is not an alarm because nothing is wrong; the gamer's copy of this same scenario shows no such line at all. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the scroll-fed past, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all. Every card carrying a write-up is signed in its bottom-right corner with the chip of the gedu who last edited that session — Sanna on most of them, Petra on a few, so a scroll through the term shows both faces.",
       },
       {
         slug: "in-person-club",
