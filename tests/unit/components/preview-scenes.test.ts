@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { formatInTimeZone } from "date-fns-tz";
 import {
   PREVIEW_SCENES,
+  PREVIEW_SCENE_LIST,
   findPreviewScene,
   previewSceneHref,
   sceneHasScenario,
@@ -32,10 +33,8 @@ import {
 import { activityTypeOf, type ActivityType } from "@/lib/activity-type";
 import { runEndedOn, runLiveness } from "@/lib/product-run";
 import {
-  CONFIRMATION_NOTICE_SCENARIOS,
+  CONFIRMATION_PRODUCT_SCENARIOS,
   PREVIEW_SCENARIOS,
-  SHOP_SCENE_AUDIENCES,
-  SHOP_SCENE_DEFAULT,
   SHOP_SCENE_TAGGED_CATALOG,
   buildBrowseFixture,
   buildConfirmationFixture,
@@ -44,7 +43,6 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
-import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
@@ -127,8 +125,13 @@ describe("preview scene registry", () => {
       "gedu-dashboard": 3,
     };
     for (const surface of ["gedu-product", "gedu-dashboard"] as const) {
-      const scene = findPreviewScene(surface);
-      expect(scene).not.toBeNull();
+      // Through `PREVIEW_SCENE_LIST` rather than `findPreviewScene`, because
+      // the registry is `as const` and a scenario that omits its optional
+      // `description` has no such property on its literal type — the widened
+      // list is where `description` is the optional field it was declared as,
+      // and this is the assertion that these scenarios did not omit it.
+      const scene = PREVIEW_SCENE_LIST.find((s) => s.surface === surface);
+      expect(scene, surface).toBeDefined();
       expect(scene!.scenarios.length, surface).toBeLessThanOrEqual(
         MAX_SCENARIOS[surface],
       );
@@ -165,24 +168,56 @@ describe("registry scenarios match their fixtures", () => {
     }
   });
 
-  it("public product surfaces", () => {
+  /**
+   * The two public product surfaces build their scenario lists *from* these
+   * same fixture constants — the product surface maps all of `PREVIEW_SCENARIOS`
+   * and the confirmation surface filters it against
+   * `CONFIRMATION_PRODUCT_SCENARIOS`. So asserting the registry equals those
+   * lists compares an expression with itself, and there is no edit that fails
+   * it. What is worth checking is what derivation cannot guarantee on its own:
+   * that the list names products that still exist, and that it names *every*
+   * product whose page has a live button pointing here.
+   */
+  it("builds the confirmation surface out of real product scenarios", () => {
     const productSlugs = PREVIEW_SCENARIOS.map((s) => s.slug);
-    // The product surface carries the product fixtures plus the three region-
-    // lock states the panel speaks to, which are the same page seen by a viewer
-    // the lock has something to say to and therefore share the scene rather
-    // than forking one. They are deliberately NOT on the confirmation surface:
-    // two of them never reach a summary, and the third reaches the ordinary
-    // one every product scenario already covers.
-    expect(slugsFor("products")).toEqual([
-      ...productSlugs,
-      ...REGION_LOCK_SCENARIOS.map((s) => s.slug),
-    ]);
-    // The confirmation surface carries the product scenarios plus the paid
-    // no-order notice states, which no product fixture backs.
-    expect(slugsFor("confirmation")).toEqual([
-      ...productSlugs,
-      ...CONFIRMATION_NOTICE_SCENARIOS.map((n) => n.slug),
-    ]);
+    // A slug that drifted out of the fixtures would otherwise only show up as
+    // a dead link on an admin page nobody opens until they need it.
+    for (const slug of CONFIRMATION_PRODUCT_SCENARIOS) {
+      expect(productSlugs, slug).toContain(slug);
+    }
+  });
+
+  /**
+   * **A scenario whose panel can commit must be on the confirmation surface.**
+   *
+   * This is the direction that bites. The product scene builds its summary href
+   * unconditionally — every scenario gets one, whether or not the registry
+   * declares it — and the panel pushes that href after its fake commit. So a
+   * scenario the panel can commit and the confirmation scene omits is not a
+   * missing demo whose worst case is nobody looking at it: it is a live CTA on
+   * an admin's screen landing on a 404, which is the exact failure a previous
+   * hand-curated list shipped for six scenarios.
+   *
+   * Three state kinds render the inert closed panel and have no button at all;
+   * everything else renders the signup body, which always ends in one. The
+   * pre-open countdowns are in that second group and are the easy ones to talk
+   * yourself out of: their CTA is dormant rather than absent, and it goes live
+   * in place the moment the clock runs out on the page somebody left open.
+   *
+   * The region-lock scenarios are swept by this too, without appearing in it.
+   * They render one ordinary club fixture under a gate, so their CTA points at
+   * that club's summary rather than at one of their own — which is declared,
+   * and is why the confirmation surface needs no lock states.
+   */
+  it("gives every committable scenario a confirmation page to land on", () => {
+    const closed = ["ended", "running_late", "full_closed"];
+    const confirmation = findPreviewScene("confirmation");
+    expect(confirmation).not.toBeNull();
+    for (const { slug } of PREVIEW_SCENARIOS) {
+      const { state } = buildScenarioFixture(slug);
+      if (closed.includes(state.kind)) continue;
+      expect(sceneHasScenario(confirmation!, slug), slug).toBe(true);
+    }
   });
 
   it("shop browse", () => {
@@ -367,9 +402,9 @@ describe("the audience scenarios cover all three cases", () => {
 
 /**
  * The shop scene is a comparison, and a comparison needs the things being
- * compared on the same page. Its audience scenario is the only grid where the
- * badge's presence and its absence sit side by side, so a fixture edit that
- * left it single-audience would take the whole point of the scene away without
+ * compared on the same page. There is one grid and it has to carry all of them
+ * — every tag, all three audiences, the badge's presence and its absence — so a
+ * fixture edit that narrowed it would take the point of the scene away without
  * failing a thing.
  */
 describe("the shop browse scene", () => {
@@ -380,12 +415,12 @@ describe("the shop browse scene", () => {
     !product.for_parents ? "gamers" : product.for_gamers ? "both" : "parents";
 
   /**
-   * The showcase grid's rows, built the way the scene builds them — through its
-   * own copy overrides. Sweeping the *rendered* rows rather than the slug list
-   * is what makes those overrides covered: a name override colliding with
-   * another card's, or a description that swallowed a card's identity, is
-   * invisible to a slug-level check. It is also how the tag and the picture are
-   * read, since both are row fields now rather than scene-side maps.
+   * The grid's rows, built the way the scene builds them — through its own copy
+   * overrides. Sweeping the *rendered* rows rather than the slug list is what
+   * makes those overrides covered: a name override colliding with another
+   * card's, or a description that swallowed a card's identity, is invisible to
+   * a slug-level check. It is also how the tag and the picture are read, since
+   * both are row fields now rather than scene-side maps.
    */
   const taggedCatalogRows = SHOP_SCENE_TAGGED_CATALOG.map((entry) => ({
     slug: entry.slug,
@@ -395,66 +430,34 @@ describe("the shop browse scene", () => {
     }),
   }));
 
-  /** Every grid the scene can render. */
-  const GRIDS = [
-    {
-      name: "default",
-      rows: SHOP_SCENE_DEFAULT.map((slug) => ({
-        slug,
-        product: buildBrowseFixture(slug, anchor),
-      })),
-    },
-    {
-      name: "audiences",
-      rows: SHOP_SCENE_AUDIENCES.map((slug) => ({
-        slug,
-        product: buildBrowseFixture(slug, anchor),
-      })),
-    },
-    { name: "tagged-catalog", rows: taggedCatalogRows },
-  ];
-
-  it("puts all three audiences on the audience grid", () => {
+  it("puts all three audiences on the grid", () => {
+    // The badge's presence on two audiences and its absence on the third is a
+    // comparison the eye has to make in one pass, which needs all three on the
+    // one page.
     const audiences = new Set(
-      SHOP_SCENE_AUDIENCES.map((slug) =>
-        audienceOf(buildBrowseFixture(slug, anchor)),
-      ),
+      taggedCatalogRows.map(({ product }) => audienceOf(product)),
     );
     expect(audiences).toEqual(new Set(["gamers", "parents", "both"]));
   });
 
-  it("keeps the default grid entirely gamers-only, so it stays the regression case", () => {
-    for (const slug of SHOP_SCENE_DEFAULT) {
-      expect(audienceOf(buildBrowseFixture(slug, anchor)), slug).toBe("gamers");
-    }
-  });
-
-  it("surfaces no municipality club on any grid", () => {
+  it("surfaces no municipality club", () => {
     // The storefront discovers those location-first from /schools, so a shop
     // scene carrying one would show a card the real page cannot produce.
-    for (const grid of GRIDS) {
-      for (const { slug, product } of grid.rows) {
-        expect(product.product_type, `${grid.name}/${slug}`).not.toBe(
-          "municipality_club",
-        );
-      }
+    for (const { slug, product } of taggedCatalogRows) {
+      expect(product.product_type, slug).not.toBe("municipality_club");
     }
   });
 
-  it("gives every card on a grid a distinct name", () => {
+  it("gives every card a distinct name", () => {
     // The per-type copy names every consumer club the same thing, which is fine
-    // on a detail page and unreadable on a grid of them. The two comparison
-    // grids suffix each name with its fixture's label for exactly this reason;
-    // the showcase grid instead overrides the name outright with something a
-    // real catalogue would carry — same obligation, different mechanism, and
-    // the override is the one that can collide by hand.
-    for (const grid of GRIDS) {
-      const names = grid.rows.map(
-        ({ product }) => product.product_translations[0].name,
-      );
-      expect(new Set(names).size, grid.name).toBe(names.length);
-      for (const name of names) expect(name.trim(), grid.name).not.toBe("");
-    }
+    // on a detail page and unreadable on a grid of them. This grid overrides
+    // the name outright with something a real catalogue would carry — which is
+    // the mechanism that can collide by hand.
+    const names = taggedCatalogRows.map(
+      ({ product }) => product.product_translations[0].name,
+    );
+    expect(new Set(names).size).toBe(names.length);
+    for (const name of names) expect(name.trim()).not.toBe("");
   });
 
   it("re-bases the fixture calendar onto the anchor, so no card reads as ended", () => {
@@ -462,16 +465,14 @@ describe("the shop browse scene", () => {
     // clock; the raw fixtures are anchored to a static January reference, so
     // an un-rebased grid renders every card as months-over ("wrapped") — the
     // bug this pins. A fixture authored as ended would legitimately fail this
-    // sweep, and should: no shop list carries one, which is also why the card's
-    // ended treatment cannot be looked at on any shop grid.
-    for (const grid of GRIDS) {
-      for (const { slug, product } of grid.rows) {
-        if (product.end_date === null) continue;
-        expect(
-          new Date(`${product.end_date}T23:59:59Z`).getTime(),
-          `${grid.name}/${slug}`,
-        ).toBeGreaterThan(anchor.getTime());
-      }
+    // sweep, and should: the shop list carries none, which is also why the
+    // card's ended treatment cannot be looked at on the shop grid.
+    for (const { slug, product } of taggedCatalogRows) {
+      if (product.end_date === null) continue;
+      expect(
+        new Date(`${product.end_date}T23:59:59Z`).getTime(),
+        slug,
+      ).toBeGreaterThan(anchor.getTime());
     }
   });
 

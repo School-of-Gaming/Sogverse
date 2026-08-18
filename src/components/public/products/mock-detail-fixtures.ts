@@ -654,46 +654,6 @@ export function isPreviewScenario(s: string): s is PreviewScenario {
 }
 
 /**
- * The scenarios the **shop browse** scene puts on its grid, in section order.
- *
- * Municipality clubs are absent because the storefront does not surface them —
- * they are discovered location-first from `/schools` — so a shop scene carrying
- * one would be showing a card the real page cannot produce.
- *
- * Two lists, because the two questions are different. `SHOP_SCENE_DEFAULT` is
- * the ordinary storefront: every card gamers-only, which is the audience
- * regression case. `SHOP_SCENE_AUDIENCES` is the audience question, and it is
- * deliberately the *smallest* grid that can answer it — one card of each
- * audience per section, so the badge's presence on two of them and its absence
- * on the third is a comparison the eye makes in one pass rather than a hunt.
- * (The tagged catalog carries the audience scenarios too, so its chips filter
- * there as well — this list stays the isolated comparison.)
- *
- * **Both inherit whatever tag and picture their scenarios carry**, because tags
- * and art are row fields now and these lists are scenario slugs. That is
- * deliberate rather than tolerated: a real storefront is a mixed grid, so
- * "ordinary" means an ordinary mix, not "no tags anywhere". Each list is still
- * narrow on the axis it is about — audience — and says nothing about tags.
- */
-export const SHOP_SCENE_DEFAULT: readonly PreviewScenario[] = [
-  "consumer-club",
-  "consumer-club-free",
-  "consumer-club-full-waitlist",
-  "consumer-club-threshold",
-  "camp-open",
-  "camp-full-closed",
-  "free-event",
-];
-
-export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
-  "consumer-club",
-  "consumer-club-parents-only",
-  "free-event",
-  "event-parents-only",
-  "event-both-audiences",
-];
-
-/**
  * Scene-only demo art, in `public/preview-art/`.
  *
  * A fixture row has no storage object behind it, so a grid built from rows with
@@ -805,9 +765,23 @@ export interface ShopCatalogEntry {
 }
 
 /**
- * The **tagged catalog** grid: one page carrying every combination the browse
- * card has to survive, reusing the existing scenarios rather than authoring a
- * parallel set of products.
+ * The **storefront grid**: the one page the shop scene renders, carrying every
+ * combination the browse card has to survive, reusing the existing scenarios
+ * rather than authoring a parallel set of products.
+ *
+ * Municipality clubs are absent because the storefront does not surface them —
+ * they are discovered location-first from `/schools` — so a shop scene carrying
+ * one would be showing a card the real page cannot produce.
+ *
+ * There were once two narrower grids beside this one, isolating the audience
+ * question. They were a strict subset of this list and composed their Events
+ * section out of the identical three cards, so they compared nothing this grid
+ * does not already put side by side.
+ *
+ * **Every row inherits whatever tag and picture its scenario carries**, because
+ * tags and art are row fields and this list is scenario slugs. That is
+ * deliberate rather than tolerated: a real storefront is a mixed grid, so an
+ * ordinary storefront means an ordinary mix, not "no tags anywhere".
  *
  * What it puts side by side, and why each earns its place:
  *
@@ -905,16 +879,11 @@ export const SHOP_SCENE_TAGGED_CATALOG: readonly ShopCatalogEntry[] = [
  * during server render is a runtime error. Same arrangement as every other
  * surface (the guard lives with the fixtures, the component imports it).
  *
- * All three render the one browse card; they differ only in the rows they put
- * under it. `tagged-catalog` is the showcase — the widest grid, with realistic
- * names, the long Finnish title and the un-imaged-but-tagged card — while the
- * other two stay the narrow comparisons they were built as.
+ * One scenario, because there is one storefront grid: `SHOP_SCENE_TAGGED_CATALOG`
+ * carries every card shape at once, so nothing a second grid could show is
+ * missing from it.
  */
-export const SHOP_BROWSE_SCENARIOS = [
-  "default",
-  "audiences",
-  "tagged-catalog",
-] as const;
+export const SHOP_BROWSE_SCENARIOS = ["default"] as const;
 
 export type ShopBrowseScenario = (typeof SHOP_BROWSE_SCENARIOS)[number];
 
@@ -1019,29 +988,62 @@ export const CONFIRMATION_NOTICE_SCENARIOS = [
     slug: "paid-finalizing",
     kind: "finalizing",
     label: "Finalizing — webhook not landed yet",
-    description:
-      "The bounded waiting state: payment received, order row not written yet. On the live page a wrapper polls and swaps this out; here it just holds.",
   },
   {
     slug: "paid-timed-out",
     kind: "timedOut",
     label: "Timed out — stopped waiting",
-    description:
-      "The poll bound ran out. The copy stops promising “a moment” and says where the signup will appear and how to reach us.",
   },
   {
     slug: "paid-duplicate",
     kind: "duplicatePayment",
     label: "Duplicate payment — seat already taken",
-    description:
-      "A second payment for a product the gamer already holds a spot on. No row will ever carry this session, so waiting would never resolve.",
   },
 ] as const satisfies readonly {
   slug: string;
   kind: ConfirmationNoticeKind;
   label: string;
-  description: string;
 }[];
+
+/**
+ * The three registration states whose panel is inert — the kinds that render
+ * the closed panel instead of a signup body, and so put no CTA on the page at
+ * all. Every other kind ends in a button. Mirrors the switch in
+ * `SignupPanelView`, and is the whole of what decides the list below.
+ */
+const NON_COMMITTING_STATE_KINDS: readonly RegistrationState["kind"][] = [
+  "ended",
+  "running_late",
+  "full_closed",
+];
+
+/**
+ * The product scenarios the **confirmation** scene previews.
+ *
+ * Derived from the panel rather than curated by hand, because this is not a
+ * taste question: the product scene wires its CTA to the matching confirmation
+ * scenario unconditionally, so a scenario whose panel can commit and which this
+ * list omits is not a missing demo — it is a dead link, and the route 404s on
+ * the scenario the registry never declared.
+ *
+ * That includes the pre-open countdowns, whose CTA is dormant rather than
+ * absent: it goes live in place the moment the clock runs out, on the same page
+ * somebody left open.
+ *
+ * The pages this yields are not all visually distinct — the summary says who
+ * the seat is for and what it cost, and nothing about how full the product is,
+ * so several of them render the same page. That redundancy is what a reachable
+ * surface costs, and it is the right way round: an extra link nobody needs to
+ * open beats a live button landing on a 404.
+ */
+export const CONFIRMATION_PRODUCT_SCENARIOS: readonly PreviewScenario[] =
+  SCENARIO_ORDER.filter((slug) => {
+    const config = SCENARIOS[slug];
+    // A countdown resolves to `closed_pre` at build time, which is a signup
+    // body like any other — it is the clock that is closed, not the panel.
+    if ("opensInMs" in config) return true;
+    return !NON_COMMITTING_STATE_KINDS.includes(config.state.kind);
+  });
 
 export type ConfirmationNoticeScenario =
   (typeof CONFIRMATION_NOTICE_SCENARIOS)[number]["slug"];
@@ -1062,9 +1064,10 @@ export function findConfirmationNotice(
 //
 // Note also that a card being inert says nothing about whether a preview page
 // exists: every scenario is previewable full-page from the UI Previews list,
-// because the scene registry maps the whole of `PREVIEW_SCENARIOS`. The closed
+// because the product scene maps the whole of `PREVIEW_SCENARIOS`. The closed
 // states especially, since no card links to them and that page is the only way
-// to look at one.
+// to look at one. (The confirmation scene takes the derived subset above
+// instead — a closed product has no CTA, so no purchase to confirm.)
 
 // Seats already taken on a scenario — the count the municipality seat-fill bar
 // reads. Derived from the authored state so the bar and the card's state stay
