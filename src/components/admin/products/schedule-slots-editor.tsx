@@ -12,6 +12,7 @@ import {
   withMinute,
 } from "@/lib/time-of-day";
 import type { ProductType } from "@/types";
+import { HOUR_OPTIONS, MINUTE_OPTIONS, MINUTE_STEP } from "./product-form-state";
 
 export interface ScheduleSlotDraft {
   weekday: number; // 0=Mon..6=Sun
@@ -21,17 +22,12 @@ export interface ScheduleSlotDraft {
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-// Chrome's native <input type="time"> picker ignores the `step` attribute in
-// its dropdown (only form validation respects it), so the time field is
-// split into two selects: hour + 15-minute-interval minute.
-const HOUR_OPTIONS: string[] = Array.from({ length: 24 }, (_, i) =>
-  String(i).padStart(2, "0")
-);
-const MINUTE_OPTIONS: string[] = ["00", "15", "30", "45"];
-
-// Smallest selectable session length. The time picker is on a 15-minute grid,
-// so the shortest gap between start and a later end is one step.
-const MIN_DURATION_MINUTES = 15;
+// Smallest selectable session length: one step of the shared time grid, which
+// is also the shortest gap this picker can express between a start and a later
+// end. The grid itself (and why it is a pair of selects) lives with the
+// constants in product-form-state.ts, so this editor and the registration-opens
+// field cannot drift onto different steps.
+const MIN_DURATION_MINUTES = MINUTE_STEP;
 
 interface ScheduleSlotsEditorProps {
   productType: ProductType;
