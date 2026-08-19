@@ -958,6 +958,7 @@
       "requestNewLink": "chu’ yInej",
       "passwordsDoNotMatch": "rapbe’ mu’mey.",
       "updateFailed": "mu’mey choHlu’pu’be’. yInID.",
+      "samePassword": "rap mu’ pegh ngo’ chu’ je — Qu’ Data’be’! DaH ’el DaneHchugh, Dalo’taHlaH. ’ach bIQanchoHmeH pIm mu’ pegh yIwIv.",
       "successTitle": "mu’mey choHlu’",
       "successDescription": "mu’mey chu’moHlu’. Qapla’!"
     },
@@ -1916,7 +1917,9 @@
     "profileUpdated": "SoQmoHwI’ choHlu’. Qapla’!",
     "failedToUpdateProfile": "SoQmoHwI’ choH Dabe’lu’.",
     "securityDescription": "mu’mey je QaQ ngoQmey tI’ang",
-    "changePassword": "mu’mey yIchoH",
+    "resetPassword": "mu’mey yIchoH",
+    "resetPasswordEmailSent": "{email}vaD chovmoH QIn ngeHlu’. QIn tepqengwI’lIj yIbej!",
+    "resetPasswordEmailFailed": "QIn ngeHlu’be’pu’. yInID je.",
     "changePin": "PIN yIchoH",
     "minecraftAccount": "Minecraft Account",
     "minecraftDescription": "Minecraft Java Edition account jonmoH",

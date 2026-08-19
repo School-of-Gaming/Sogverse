@@ -910,6 +910,7 @@
       "requestNewLink": "Pyydä uusi linkki",
       "passwordsDoNotMatch": "Antamasi salasanat eivät täsmää.",
       "updateFailed": "Salasanan päivitys epäonnistui. Yritä uudelleen.",
+      "samePassword": "Tämä on jo nykyinen salasanasi, joten voit kirjautua sillä jatkossakin. Jos haluat suojata tilisi, valitse jokin muu salasana.",
       "successTitle": "Salasana päivitetty",
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
@@ -1872,7 +1873,9 @@
     "profileUpdated": "Profiili päivitetty onnistuneesti!",
     "failedToUpdateProfile": "Profiilin päivittäminen epäonnistui.",
     "securityDescription": "Hallitse salasanaasi ja turvallisuusasetuksiasi",
-    "changePassword": "Vaihda salasana",
+    "resetPassword": "Nollaa salasana",
+    "resetPasswordEmailSent": "Salasanan nollauslinkki lähetetty osoitteeseen {email} – tarkista sähköpostisi.",
+    "resetPasswordEmailFailed": "Nollausviestin lähetys epäonnistui. Yritä uudelleen.",
     "changePin": "Vaihda PIN",
     "minecraftAccount": "Minecraft-tili",
     "minecraftDescription": "Linkitä Minecraft Java Edition -tilisi",

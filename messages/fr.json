@@ -910,6 +910,7 @@
       "requestNewLink": "Demander un nouveau lien",
       "passwordsDoNotMatch": "Les mots de passe saisis ne correspondent pas.",
       "updateFailed": "Nous n’avons pas pu mettre à jour votre mot de passe. Veuillez réessayer.",
+      "samePassword": "C’est déjà votre mot de passe actuel — vous pouvez continuer à vous connecter avec. Si vous souhaitez sécuriser votre compte, choisissez un mot de passe différent.",
       "successTitle": "Mot de passe mis à jour",
       "successDescription": "Votre mot de passe a bien été mis à jour."
     },
@@ -1872,7 +1873,9 @@
     "profileUpdated": "Profil mis à jour avec succès !",
     "failedToUpdateProfile": "Échec de la mise à jour du profil.",
     "securityDescription": "Gérez votre mot de passe et vos paramètres de sécurité",
-    "changePassword": "Modifier le mot de passe",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "resetPasswordEmailSent": "Lien de réinitialisation envoyé à {email} — consultez votre boîte de réception.",
+    "resetPasswordEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de réinitialisation. Veuillez réessayer.",
     "changePin": "Modifier le code PIN",
     "minecraftAccount": "Compte Minecraft",
     "minecraftDescription": "Associez votre compte Minecraft Java Edition",

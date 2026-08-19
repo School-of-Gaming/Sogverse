@@ -60,12 +60,25 @@ export type MunicipalityFeeStatus =
 // is only meaningful (and only collected) when status is "fee".
 export type FeeDraft<S> = { status: S; amount: string };
 
-// 15-minute-interval time picker — same pattern as schedule-slots-editor.tsx,
-// where the rationale comment lives (Chrome's <input type="time"> ignores `step`).
+// The time picker's grid, shared by the schedule-slots editor and the
+// registration-opens field. It is a pair of selects rather than a native
+// <input type="time"> for two reasons that both still hold: Chrome's native
+// picker ignores `step` in its dropdown, so it cannot express a grid at all,
+// and admins told us free entry of any minute gave them more choice than was
+// useful. What did not hold was the quarter-hour step — real club times are not
+// all quarter-hour aligned (a school slot starting at 14:20), and a time the
+// picker cannot offer is worse than a longer list: a select whose value matches
+// no option shows the admin the first one while state holds something else, so
+// an off-grid product read as :00 and "correcting" it wrote a different time.
+export const MINUTE_STEP = 5;
+
 export const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) =>
   String(i).padStart(2, "0"),
 );
-export const MINUTE_OPTIONS = ["00", "15", "30", "45"] as const;
+export const MINUTE_OPTIONS = Array.from(
+  { length: 60 / MINUTE_STEP },
+  (_, i) => String(i * MINUTE_STEP).padStart(2, "0"),
+);
 
 export const FIXED_TIMEZONE = "Europe/Helsinki";
 

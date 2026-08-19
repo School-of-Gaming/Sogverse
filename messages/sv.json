@@ -910,6 +910,7 @@
       "requestNewLink": "Begär en ny länk",
       "passwordsDoNotMatch": "Lösenorden du angav matchar inte.",
       "updateFailed": "Vi kunde inte uppdatera ditt lösenord. Försök igen.",
+      "samePassword": "Det här är redan ditt nuvarande lösenord – du kan fortsätta logga in med det. Om du vill skydda ditt konto väljer du ett annat lösenord.",
       "successTitle": "Lösenordet uppdaterat",
       "successDescription": "Ditt lösenord har uppdaterats."
     },
@@ -1872,7 +1873,9 @@
     "profileUpdated": "Profilen har uppdaterats!",
     "failedToUpdateProfile": "Kunde inte uppdatera profilen.",
     "securityDescription": "Hantera ditt lösenord och säkerhetsinställningar",
-    "changePassword": "Byt lösenord",
+    "resetPassword": "Återställ lösenord",
+    "resetPasswordEmailSent": "Återställningslänk skickad till {email} – kolla din inkorg.",
+    "resetPasswordEmailFailed": "Vi kunde inte skicka återställningsmejlet. Försök igen.",
     "changePin": "Byt PIN",
     "minecraftAccount": "Minecraft-konto",
     "minecraftDescription": "Koppla ditt Minecraft Java Edition-konto",

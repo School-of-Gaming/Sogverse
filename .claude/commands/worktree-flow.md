@@ -232,13 +232,21 @@ Order matters — several of these steps block the next one if skipped.
    touched `messages/` — and everything is committed. Phase 2's per-file test
    runs were for iteration; landing gets the whole suite.
 
-2. **Stop the dev server first, if Phase 3 started one.** Stopping the background
-   task kills only the wrapper — the Next child survives and keeps holding the
-   port, which then blocks worktree removal and looks like a git error. Verify:
-   `Get-NetTCPConnection -State Listen -LocalPort <port>`. If it is still
-   listening, kill the owning PID — but confirm first that the PID owns only that
-   port — the user may well have servers of their own running. Afterwards re-check
-   that their ports are still up.
+2. **Stop the dev server first, if Phase 3 started one — by port, with a tree
+   kill. Every time; this is the procedure, not a recovery.** On Windows,
+   stopping the background task kills only the wrapper shell and the Next child
+   *always* survives it holding the port (deterministic, not a race) — left
+   there, it blocks worktree removal in a way that looks like a git error. So:
+
+   1. Stop the background task (retires the wrapper; nothing more).
+   2. Find the real server: `Get-NetTCPConnection -State Listen -LocalPort
+      <port>` → the owning PID.
+   3. Confirm that PID listens on **only** that port — the user runs servers of
+      their own, and the paranoia is aimed at never killing theirs.
+   4. `taskkill /F /T /PID <pid>` — `/T` is the load-bearing flag: it takes the
+      whole process tree (route workers included), where `Stop-Process` has no
+      tree mode and can leave grandchildren behind.
+   5. Re-check the port is free, and that the user's own ports are still up.
 
 3. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
    to the main checkout. `remove` will refuse here, because the worktree was
