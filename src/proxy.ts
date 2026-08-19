@@ -29,8 +29,8 @@ import {
 // that can only tell them their link expired. The gate buys nothing in return.
 // Both pages are public, so a signed-out visitor walks onto them regardless,
 // and the reset is authorized by possession of the mailbox, not by the parent
-// session — a locked session reaching them is no more than an unlocked one
-// could do by signing out first. The settings-page flow makes this the common
+// session — a locked session reaching them is no more than a locked one
+// could already do by signing out first. The settings-page flow makes this the common
 // case rather than the edge one: the parent presses the button while unlocked,
 // then opens the mail an hour later, or on their phone, where the session has
 // re-locked or never existed.

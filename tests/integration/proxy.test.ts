@@ -443,21 +443,24 @@ describe("proxy", () => {
     );
 
     // The password pages are exempt for a sharper reason than "not trapped":
-    // the bounce carries `?redirect=<pathname>`, and a pathname has no query
-    // string, so gating /reset-password silently drops the single-use
-    // token_hash. The parent would enter their PIN and arrive at a bare reset
-    // page that could only tell them the link had expired. Asserting the token
-    // is still on the URL the proxy passes through is the half that would
-    // survive someone "fixing" this by adding the search string to the
-    // redirect instead.
-    it("lets a locked customer through to /reset-password with the token intact", async () => {
+    // the unlock bounce carries `?redirect=<pathname>`, and a pathname has no
+    // query string, so gating /reset-password would silently drop the
+    // single-use token_hash — the parent would enter their PIN and arrive at
+    // a bare reset page that could only tell them the link had expired. The
+    // it.each above pins the exemption itself; this pins its premise, on a
+    // path that IS still gated: the bounce really does lose the query. If
+    // this fails because the bounce learned to carry the search string, the
+    // exemption is no longer what protects the token — revisit the comment on
+    // isPinExemptPath rather than just updating the assertion.
+    it("drops the query string when bouncing a gated path to the unlock gate", async () => {
       mockUser("customer");
-      const request = createNextRequest(
-        "/reset-password?token_hash=abc123&type=recovery",
+      const response = await proxy(
+        createNextRequest("/parent?token_hash=abc123&type=recovery"),
       );
-      const response = await proxy(request);
-      expect(response.status).toBe(200);
-      expect(request.nextUrl.searchParams.get("token_hash")).toBe("abc123");
+      expect(response.status).toBe(307);
+      const redirect = getRedirectUrl(response);
+      expect(redirect.pathname).toBe("/parent/unlock");
+      expect(redirect.searchParams.get("redirect")).toBe("/parent");
     });
 
     it("treats a cookie bound to a different session as locked (stale after switch/re-login)", async () => {
