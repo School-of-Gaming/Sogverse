@@ -52,11 +52,16 @@ export function ResetPasswordForm() {
     // never submits) burn the single-use token before the real user acts. See
     // the emailed-link comment in src/app/api/auth/forgot-password/route.ts.
     //
-    // A missing token_hash is a can't-happen in practice — the only way onto this
-    // page is the emailed link, which always carries the token, so the real cases
-    // are "valid" and "expired", both handled below. We deliberately don't
-    // pre-check presence on mount (it'd only matter for a hand-typed URL); if it's
-    // somehow absent we fall through to the same dead-link view here.
+    // Every route onto this page is the emailed link — whether the mail was
+    // asked for from /forgot-password or from the settings page — and that link
+    // always carries the token, so the real cases are "valid" and "expired",
+    // both handled below. A tokenless arrival is a hand-typed or truncated URL.
+    // (It was briefly reachable from a button: settings used to *navigate* here
+    // instead of sending the mail, which made a page that cannot work without a
+    // token the destination of a click that never had one. That button now sends
+    // the mail and stays put.) We deliberately don't pre-check presence on
+    // mount; if the token is absent we fall through to the same dead-link view
+    // here, which is the right answer for a URL that cannot be completed.
     const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
     if (!tokenHash) {
       setLinkFailed(true);
