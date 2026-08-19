@@ -115,7 +115,7 @@ The room is open by design; defenses target privilege escalation and bounding bl
 | `create` | POST | admin / certified gedu | No body. Mints code, creates Daily room with `exp = now + INSTANT_ROOM_EXP_SECONDS`, retries on duplicate name. Returns `{ code }`. Uncertified gedu → 403 `GEDU_UNCERTIFIED`. |
 | `token` | POST | **public** | Body `{ code, displayName, micOn, cameraOn }`. Validates code, detects auth, verifies the Daily room exists (404 → `{ error: "room_not_found", code }`), mints a token. `displayName` is read **only** when no session resolves to a profile — required and length-checked there, and ignored entirely for anyone signed in (moderator or not). Returns `{ token, roomUrl, role, userId, displayName }`. |
 | `exists` | GET | **public** | `?code=`. Cheap pre-flight so the not-found screen can render before burning the camera/mic prompt. **Returns 204 (not 200) on success, 404 when missing.** Clients must branch on `=== 404`, not `=== 200`. |
-| `end` | POST | admin / certified gedu | Body `{ code }`. `DELETE`s the Daily room (ejects all participants). Daily 404 → 204 no-op. Returns 204. |
+| `end` | POST | admin / certified gedu | Body `{ code }`. `DELETE`s the Daily room (ejects all participants). Daily 404 → 204 no-op (and, like the lazy-create probe miss, deliberately not logged at error level — "already gone" is an answer, not a failure). Returns 204. |
 
 `micOn`/`cameraOn` default to mic-on / camera-off when absent. Token `exp` matches `INSTANT_ROOM_EXP_SECONDS` from each participant's own join; the room's `eject_at_room_exp` lands first in practice, so the per-token cap is just a per-participant ceiling.
 

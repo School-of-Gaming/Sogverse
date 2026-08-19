@@ -3,6 +3,8 @@ import {
   buildUserName,
   createMeetingToken,
   DailyApiError,
+  deleteDailyRoom,
+  getDailyRoom,
   getOrCreateDailyRoom,
   groupVoiceRoomName,
   isDailyDuplicateRoomError,
@@ -165,6 +167,30 @@ describe("isDailyDuplicateRoomError", () => {
   });
 });
 
+function mockSequence(
+  calls: Array<{ status: number; body: unknown }>,
+): ReturnType<typeof vi.fn<typeof fetch>> {
+  const fn = vi.fn<typeof fetch>();
+  for (const call of calls) {
+    fn.mockResolvedValueOnce(
+      new Response(JSON.stringify(call.body), {
+        status: call.status,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  }
+  vi.stubGlobal("fetch", fn);
+  return fn;
+}
+
+const ROOM = {
+  id: "room-id",
+  name: "g-test-202605270425",
+  url: "https://test.daily.co/g-test-202605270425",
+  privacy: "private",
+  created_at: "2026-05-27T04:25:00Z",
+};
+
 describe("getOrCreateDailyRoom", () => {
   const originalKey = process.env.DAILY_API_KEY;
 
@@ -176,30 +202,6 @@ describe("getOrCreateDailyRoom", () => {
     vi.unstubAllGlobals();
     process.env.DAILY_API_KEY = originalKey;
   });
-
-  function mockSequence(
-    calls: Array<{ status: number; body: unknown }>,
-  ): ReturnType<typeof vi.fn<typeof fetch>> {
-    const fn = vi.fn<typeof fetch>();
-    for (const call of calls) {
-      fn.mockResolvedValueOnce(
-        new Response(JSON.stringify(call.body), {
-          status: call.status,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    }
-    vi.stubGlobal("fetch", fn);
-    return fn;
-  }
-
-  const ROOM = {
-    id: "room-id",
-    name: "g-test-202605270425",
-    url: "https://test.daily.co/g-test-202605270425",
-    privacy: "private",
-    created_at: "2026-05-27T04:25:00Z",
-  };
 
   it("returns the existing room without calling POST when GET succeeds", async () => {
     const fetchMock = mockSequence([{ status: 200, body: ROOM }]);
@@ -260,6 +262,123 @@ describe("getOrCreateDailyRoom", () => {
       DailyApiError,
     );
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("expected Daily responses stay out of the error log", () => {
+  // These pin the log-noise discipline, not control flow: an *expected* Daily
+  // response (a lazy-create probe miss, a duplicate-name race, deleting an
+  // already-reaped room) must not console.error, so that any Daily error that
+  // does reach prod logs is genuinely wrong. Each expected path instead
+  // leaves (at most) the "Created Daily.co room" breadcrumb via console.log.
+  const originalKey = process.env.DAILY_API_KEY;
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+  let logSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    process.env.DAILY_API_KEY = "test-key";
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    process.env.DAILY_API_KEY = originalKey;
+  });
+
+  it("first-joiner lazy create: no error log, one created-room breadcrumb", async () => {
+    mockSequence([
+      { status: 404, body: { error: "not-found", info: `room ${ROOM.name} not found` } },
+      { status: 201, body: ROOM },
+    ]);
+
+    await getOrCreateDailyRoom({ name: ROOM.name });
+
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(`[daily] created room=${ROOM.name}`);
+  });
+
+  it("duplicate-name race loser: no error log", async () => {
+    mockSequence([
+      { status: 404, body: { error: "not-found" } },
+      {
+        status: 400,
+        body: {
+          error: "invalid-request-error",
+          info: `a room named ${ROOM.name} already exists`,
+        },
+      },
+      { status: 200, body: ROOM },
+    ]);
+
+    await getOrCreateDailyRoom({ name: ROOM.name });
+
+    expect(errorSpy).not.toHaveBeenCalled();
+    // The loser created nothing — no breadcrumb either.
+    expect(logSpy).not.toHaveBeenCalled();
+  });
+
+  it("getDailyRoom miss: no error log, returns null", async () => {
+    mockSequence([{ status: 404, body: { error: "not-found" } }]);
+
+    expect(await getDailyRoom("abcd")).toBeNull();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("deleting an already-reaped room: no error log (the 404 still throws)", async () => {
+    mockSequence([{ status: 404, body: { error: "not-found" } }]);
+
+    await expect(deleteDailyRoom("abcd")).rejects.toThrow(DailyApiError);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("getDailyRoom logs a non-404 failure (only the miss is quiet)", async () => {
+    // Pins the quiet set exactly: a widened predicate (e.g. status >= 400)
+    // would silence this 500 and fail here.
+    mockSequence([
+      { status: 500, body: { error: "internal-server-error", info: "boom" } },
+    ]);
+
+    expect(await getDailyRoom("abcd")).toBeNull();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("deleteDailyRoom logs a non-404 failure (only 'already gone' is quiet)", async () => {
+    mockSequence([
+      { status: 500, body: { error: "internal-server-error", info: "boom" } },
+    ]);
+
+    await expect(deleteDailyRoom("abcd")).rejects.toThrow(DailyApiError);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("a genuine Daily failure still logs at error level", async () => {
+    mockSequence([
+      { status: 404, body: { error: "not-found" } },
+      { status: 500, body: { error: "internal-server-error", info: "boom" } },
+    ]);
+
+    await expect(getOrCreateDailyRoom({ name: ROOM.name })).rejects.toThrow(
+      DailyApiError,
+    );
+    // Exactly one error line — the 500 — while the probe miss stayed quiet.
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("a genuine 400 on room creation still logs (only the duplicate shape is quiet)", async () => {
+    mockSequence([
+      { status: 404, body: { error: "not-found" } },
+      {
+        status: 400,
+        body: { error: "invalid-request-error", info: "invalid exp value" },
+      },
+    ]);
+
+    await expect(getOrCreateDailyRoom({ name: ROOM.name })).rejects.toThrow(
+      DailyApiError,
+    );
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 });
 

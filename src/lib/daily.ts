@@ -36,23 +36,43 @@ export function isDailyDuplicateRoomError(err: unknown): boolean {
   return err.status === 400 && err.message.includes("already exists");
 }
 
-async function dailyFetch(path: string, options?: RequestInit) {
+interface DailyFetchOptions extends RequestInit {
+  /**
+   * Errors the caller treats as normal control flow — an expected miss, not a
+   * failure. A matching error is thrown exactly as usual (callers still branch
+   * on it); the only difference is that it is not logged at error level here.
+   *
+   * The wrapper logs *before* callers decide what a response means, so without
+   * this an expected response (the lazy get-or-create's first-joiner probe
+   * miss, once per session) lands in prod error logs as a false alarm.
+   * Suppression is deliberately predicate-per-call, never global: a status is
+   * only quiet where that specific call treats it as an answer, so any Daily
+   * error that does reach the logs is genuinely wrong.
+   */
+  quietError?: (err: DailyApiError) => boolean;
+}
+
+async function dailyFetch(path: string, options?: DailyFetchOptions) {
+  const { quietError, ...init } = options ?? {};
   const response = await fetch(`${DAILY_API_BASE}${path}`, {
-    ...options,
+    ...init,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${getApiKey()}`,
-      ...options?.headers,
+      ...init.headers,
     },
   });
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    console.error("Daily.co API error:", response.status, response.statusText, JSON.stringify(body));
-    throw new DailyApiError(
+    const error = new DailyApiError(
       response.status,
       body.info || body.error || `Daily.co API error: ${response.status} ${response.statusText}`,
     );
+    if (!quietError?.(error)) {
+      console.error("Daily.co API error:", response.status, response.statusText, JSON.stringify(body));
+    }
+    throw error;
   }
 
   return response.json();
@@ -96,26 +116,51 @@ export async function createDailyRoom(config: CreateRoomConfig): Promise<DailyRo
     properties.exp = config.expUnix;
   }
 
-  return dailyFetch("/rooms", {
+  const room: DailyRoom = await dailyFetch("/rooms", {
     method: "POST",
     body: JSON.stringify({
       name: config.name,
       privacy: "private",
       properties,
     }),
+    // Callers treat a duplicate name as control flow, not failure: the
+    // get-or-create race loser falls through to a re-GET, and the instant-room
+    // code collision retries with a fresh code. A genuine 400 still logs.
+    quietError: isDailyDuplicateRoomError,
   });
+  // Load-bearing observability, not debug output: rooms are created on demand
+  // by the first joiner (or an instant-room mint), so this line is the only
+  // trace of when and by which name a room came into being. Do not remove.
+  console.log(`[daily] created room=${room.name}`);
+  return room;
 }
 
+/**
+ * Room by name, or `null` when it doesn't exist. Part of the contract: a 404
+ * is an answer, never logged — under the lazy-create model every session's
+ * first joiner probes a room that isn't there yet. Any other failure logs and
+ * still resolves `null`.
+ */
 export async function getDailyRoom(name: string): Promise<DailyRoom | null> {
   try {
-    return await dailyFetch(`/rooms/${encodeURIComponent(name)}`);
+    return await dailyFetch(`/rooms/${encodeURIComponent(name)}`, {
+      quietError: (err) => err.status === 404,
+    });
   } catch {
     return null;
   }
 }
 
+/**
+ * Delete a room. A 404 (Daily already reaped it at its `exp`) throws like any
+ * other failure but is deliberately not logged — callers treat "already gone"
+ * as success; one that instead needs the 404 visible must log it itself.
+ */
 export async function deleteDailyRoom(name: string): Promise<void> {
-  await dailyFetch(`/rooms/${encodeURIComponent(name)}`, { method: "DELETE" });
+  await dailyFetch(`/rooms/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+    quietError: (err) => err.status === 404,
+  });
 }
 
 /**
