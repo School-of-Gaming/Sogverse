@@ -42,13 +42,12 @@ interface DailyFetchOptions extends RequestInit {
    * failure. A matching error is thrown exactly as usual (callers still branch
    * on it); the only difference is that it is not logged at error level here.
    *
-   * This exists because the wrapper logs *before* callers decide what a
-   * response means, so expected responses used to land in prod error logs as
-   * false alarms: the lazy get-or-create's first-joiner GET 404 fired one per
-   * session, and each triggered an incident-shaped investigation. Suppression
-   * is deliberately predicate-per-call, never global: a status is only quiet
-   * where that specific call treats it as an answer, so any Daily error that
-   * does reach the logs is genuinely wrong.
+   * The wrapper logs *before* callers decide what a response means, so without
+   * this an expected response (the lazy get-or-create's first-joiner probe
+   * miss, once per session) lands in prod error logs as a false alarm.
+   * Suppression is deliberately predicate-per-call, never global: a status is
+   * only quiet where that specific call treats it as an answer, so any Daily
+   * error that does reach the logs is genuinely wrong.
    */
   quietError?: (err: DailyApiError) => boolean;
 }
@@ -124,24 +123,27 @@ export async function createDailyRoom(config: CreateRoomConfig): Promise<DailyRo
       privacy: "private",
       properties,
     }),
-    // Both callers treat a duplicate name as control flow, not failure: the
+    // Callers treat a duplicate name as control flow, not failure: the
     // get-or-create race loser falls through to a re-GET, and the instant-room
     // code collision retries with a fresh code. A genuine 400 still logs.
     quietError: isDailyDuplicateRoomError,
   });
-  // The one breadcrumb of lazy room creation: rooms are created on demand by
-  // the first joiner (or an instant-room mint), so this line is the searchable
-  // per-room trace of when and by which name a room came into being.
-  console.log(`Created Daily.co room ${room.name}`);
+  // Load-bearing observability, not debug output: rooms are created on demand
+  // by the first joiner (or an instant-room mint), so this line is the only
+  // trace of when and by which name a room came into being. Do not remove.
+  console.log(`[daily] created room=${room.name}`);
   return room;
 }
 
+/**
+ * Room by name, or `null` when it doesn't exist. Part of the contract: a 404
+ * is an answer, never logged — under the lazy-create model every session's
+ * first joiner probes a room that isn't there yet. Any other failure logs and
+ * still resolves `null`.
+ */
 export async function getDailyRoom(name: string): Promise<DailyRoom | null> {
   try {
     return await dailyFetch(`/rooms/${encodeURIComponent(name)}`, {
-      // A miss is an answer, not a failure — this function's contract is
-      // "null when the room doesn't exist", and under the lazy-create model
-      // every session's first joiner probes a room that isn't there yet.
       quietError: (err) => err.status === 404,
     });
   } catch {
@@ -149,11 +151,14 @@ export async function getDailyRoom(name: string): Promise<DailyRoom | null> {
   }
 }
 
+/**
+ * Delete a room. A 404 (Daily already reaped it at its `exp`) throws like any
+ * other failure but is deliberately not logged — callers treat "already gone"
+ * as success; one that instead needs the 404 visible must log it itself.
+ */
 export async function deleteDailyRoom(name: string): Promise<void> {
   await dailyFetch(`/rooms/${encodeURIComponent(name)}`, {
     method: "DELETE",
-    // Deleting a room Daily already reaped (its `exp` passed) answers 404;
-    // the caller treats "already gone" as success, so it isn't an error here.
     quietError: (err) => err.status === 404,
   });
 }

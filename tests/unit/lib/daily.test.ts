@@ -296,7 +296,7 @@ describe("expected Daily responses stay out of the error log", () => {
     await getOrCreateDailyRoom({ name: ROOM.name });
 
     expect(errorSpy).not.toHaveBeenCalled();
-    expect(logSpy).toHaveBeenCalledWith(`Created Daily.co room ${ROOM.name}`);
+    expect(logSpy).toHaveBeenCalledWith(`[daily] created room=${ROOM.name}`);
   });
 
   it("duplicate-name race loser: no error log", async () => {
@@ -331,6 +331,26 @@ describe("expected Daily responses stay out of the error log", () => {
 
     await expect(deleteDailyRoom("abcd")).rejects.toThrow(DailyApiError);
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("getDailyRoom logs a non-404 failure (only the miss is quiet)", async () => {
+    // Pins the quiet set exactly: a widened predicate (e.g. status >= 400)
+    // would silence this 500 and fail here.
+    mockSequence([
+      { status: 500, body: { error: "internal-server-error", info: "boom" } },
+    ]);
+
+    expect(await getDailyRoom("abcd")).toBeNull();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("deleteDailyRoom logs a non-404 failure (only 'already gone' is quiet)", async () => {
+    mockSequence([
+      { status: 500, body: { error: "internal-server-error", info: "boom" } },
+    ]);
+
+    await expect(deleteDailyRoom("abcd")).rejects.toThrow(DailyApiError);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
   it("a genuine Daily failure still logs at error level", async () => {
