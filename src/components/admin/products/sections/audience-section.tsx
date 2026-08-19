@@ -3,10 +3,8 @@
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { LanguageFlag } from "@/components/ui/language-flag";
 import { cn } from "@/lib/utils";
 import { useSpokenLanguages } from "@/services/users";
-import { useLanguageNames } from "@/hooks/use-language-names";
 import { Field } from "@/components/ui/field";
 import { TagGlyph } from "@/components/public/products/product-chips";
 import {
@@ -16,6 +14,9 @@ import {
 import type { ProductTag } from "@/types";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
+import type { ProductTypeConfig } from "../product-type-config";
+import { RegionLockRadios } from "./region-lock-radios";
+import { SpokenLanguageRadios } from "./spoken-language-radios";
 
 // The design-tag choices, in the order the admin reads them: "no tag" first
 // because it is the default and by far the commonest answer, then the tag
@@ -34,16 +35,20 @@ const TAG_OPTIONS: readonly (ProductTag | null)[] = [
 interface AudienceSectionProps {
   state: FormState;
   setState: React.Dispatch<React.SetStateAction<FormState>>;
+  config: ProductTypeConfig;
 }
 
-export function AudienceSection({ state, setState }: AudienceSectionProps) {
+export function AudienceSection({
+  state,
+  setState,
+  config,
+}: AudienceSectionProps) {
   const t = useTranslations("admin.products");
   // The family-facing tag words, so the admin picks from the same vocabulary the
   // parent will read on the card. Resolved through the tag module's key map, not
   // by spelling the message key from the enum value.
   const tTag = useTranslations("productTag");
   const { data: spokenLanguages } = useSpokenLanguages();
-  const languageName = useLanguageNames();
 
   // The two audience flags as one list, so the pair renders from a single card
   // body and the "at least one" rule is counted once instead of mirrored per
@@ -156,18 +161,64 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
         </div>
       )}
 
+      {/* Region lock — the geographic half of "who may hold a seat", so it sits
+          with the audience pair rather than in "Where": that section says where
+          the product RUNS, and a fully remote club is as lockable as an
+          in-person one. Rendered only for types whose config allows it, which
+          excludes municipality clubs — their country is already settled by the
+          separate `countryBound` mechanism, and offering both would be two
+          controls for one fact. The flag is fixed for the whole life of a form,
+          so nothing appears or disappears under the admin's cursor.
+
+          It takes no part in the form locks: a lock is editable on a running
+          product, because it gates future enrolments and is never re-run
+          against a seat somebody already holds. And it is enforced by the shop
+          UI alone — a family's location is self-attested — which the hint says
+          out loud, because an admin who thinks this is a hard gate would be
+          wrong about the one thing that matters. */}
+      {config.regionLockable && (
+        <Field
+          label={t("labels.regionLock")}
+          optional
+          hint={t("hints.regionLockHint")}
+        >
+          {/* `optional` because it genuinely is — NULL is the default and by
+              far the commonest state. The form's convention marks the
+              exceptions rather than the norm, so the marker belongs on the
+              label and the hint no longer opens by saying "Optional.": the
+              hint's job is the self-attested/soft-block caveat, which is the
+              one thing an admin must not miss here.
+
+              Function children so the card grid is a real group: the label
+              names it and the hint describes it. Neither is announced as loose
+              text beside a bare grid. */}
+          {({ hintId, labelId }) => (
+            <RegionLockRadios
+              value={state.regionLockCountry}
+              onChange={(code) =>
+                setState({ ...state, regionLockCountry: code })
+              }
+              labelId={labelId}
+              hintId={hintId}
+            />
+          )}
+        </Field>
+      )}
+
       {/* Sits with the audience pair because it answers the neighbouring half of
           the same question — the flags above say who may hold a seat, this says
-          who the sessions were built for — and above "Delivered in", which is a
-          property of how the product runs rather than of who it is for. It takes
+          who the sessions were built for — and above the spoken language, which
+          is a property of how the product runs rather than of who it is for.
+          It takes
           no part in the form locks: a tag is freely editable for the product's
           whole life, on a running club as much as a pending one. */}
       <Field label={t("labels.tag")} hint={t("hints.tagHint")}>
         {/* Function children for the same reason the pair above uses them: a
             radio group needs the label to name it and the hint to describe it,
             and neither is announced as loose text. The options are a wrapping
-            row of intrinsic-width chips — the same shape as the language chips
-            below — rather than a column grid sized to today's count: the enum
+            row of intrinsic-width chips — a near neighbour of the language
+            pills below — rather than a column grid sized to today's count: the
+            enum
             is expected to grow, and a wrap adds rows where fixed columns would
             squeeze. Each tag option wears the glyph from the shared chip
             vocabulary, so the admin picks from the same icon-and-word pairing
@@ -222,34 +273,32 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
 
       {/* The reference set is a bounded, near-instant read (category 2 of the
           loading rules), so the field renders at once with its final chrome —
-          label, hint, and a chip row holding its one-row height — instead of
+          label, hint, and a pill row holding its one-row height — instead of
           the whole Field popping in on the query's schedule and shoving the
-          sections below it down. */}
-      <Field label={t("labels.deliveredIn")} hint={t("hints.deliveredInHint")}>
-        <div className="flex min-h-9 flex-wrap gap-2">
-          {(spokenLanguages ?? []).map((lang) => (
-              <button
-                key={lang.code}
-                type="button"
-                onClick={() =>
-                  setState({ ...state, spokenLanguageCode: lang.code })
-                }
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors",
-                  state.spokenLanguageCode === lang.code
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
-                )}
-              >
-                <LanguageFlag
-                  code={lang.code}
-                  showCode={false}
-                  title={languageName(lang.code, lang.name)}
-                />
-                {languageName(lang.code, lang.name)}
-              </button>
-            ))}
-        </div>
+          sections below it down.
+
+          The label is "Spoken language" rather than "Delivered in": the field
+          is the `spoken_language_code` column, and the house split between
+          *locale* and *spoken language* is what the label should say out loud.
+          The hint names neither a product type nor an audience — this section
+          renders for clubs, camps and events alike, and for parent-only
+          products, which have no gamers to speak anything. It says "main"
+          because the column is one code while a session may mix languages. */}
+      <Field
+        label={t("labels.spokenLanguage")}
+        hint={t("hints.spokenLanguageHint")}
+      >
+        {({ hintId, labelId }) => (
+          <SpokenLanguageRadios
+            spokenLanguages={spokenLanguages ?? []}
+            value={state.spokenLanguageCode}
+            onChange={(code) =>
+              setState({ ...state, spokenLanguageCode: code })
+            }
+            labelId={labelId}
+            hintId={hintId}
+          />
+        )}
       </Field>
     </FormSection>
   );

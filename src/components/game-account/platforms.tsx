@@ -1,12 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import {
-  isValidMinecraftUsername,
-  minecraftSkinBodyUrl,
-  minecraftSkinFaceUrl,
-} from "@/lib/mojang";
-import { isValidRobloxUsername } from "@/lib/roblox";
+import { minecraftSkinBodyUrl, minecraftSkinFaceUrl } from "@/lib/mojang";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import { useVerifyMinecraft } from "@/services/minecraft";
 import { useVerifyRoblox } from "@/services/roblox";
@@ -211,12 +206,14 @@ export interface GamePlatformDescriptor {
    */
   name: string;
   /**
-   * The platform's own username rule. Imported from the module that also runs
-   * the lookup, so the field and the server agree by construction rather than by
-   * two copies of a regex agreeing today.
+   * A real handle on the platform, for the input's example placeholder.
+   *
+   * **An example, and nothing more.** There is deliberately no username *rule*
+   * on this descriptor: a platform is the only authority on which of its own
+   * names exist, so a typed name is sent to that platform and its answer is what
+   * decides. A regex here would only be us guessing, and both platforms carry
+   * live accounts our guesses called impossible.
    */
-  isValidUsername: (username: string) => boolean;
-  /** A real handle on the platform, for the input's example placeholder. */
   usernameExample: string;
   avatar: GameAvatarModel;
 }
@@ -370,7 +367,6 @@ export const GAME_PLATFORMS: Readonly<
   minecraft: {
     platform: "minecraft",
     name: "Minecraft",
-    isValidUsername: isValidMinecraftUsername,
     usernameExample: "Steve",
     avatar: {
       full: {
@@ -390,7 +386,6 @@ export const GAME_PLATFORMS: Readonly<
   roblox: {
     platform: "roblox",
     name: "Roblox",
-    isValidUsername: isValidRobloxUsername,
     usernameExample: "builderman",
     avatar: {
       full: {

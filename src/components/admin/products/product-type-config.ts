@@ -19,11 +19,10 @@ export type ScheduleShape =
 export type StartMode = "date" | "date_and_threshold" | "threshold";
 
 export type BillingOption =
-  | { mode: "paid"; required: true }                                    // camp
   | { mode: "external_contract"; required: true }                       // municipality_club
-  | { mode: "free_or_paid" };                                           // consumer_club, event
+  | { mode: "free_or_paid" };                                           // consumer_club, camp, event
 
-// Pricing shape — drives the Capacity & billing card. Each paid type collects
+// Pricing shape — drives the Capacity & billing card. A paid product collects
 // a single `price_cents`: consumer clubs charge it as a flat monthly
 // subscription, camps and events as a one-time total. Municipality clubs are
 // invoiced off-site; the form shows an info card instead of a price input.
@@ -49,6 +48,30 @@ export interface ProductTypeConfig {
    * country's rows.
    */
   countryBound: string | null;
+  /**
+   * Whether the form offers a **region lock** — one country whose families may
+   * enrol, chosen from the seeded entries of `SUPPORTED_COUNTRIES`. Off for
+   * municipality clubs and on for everything else.
+   *
+   * Two things about this flag are worth stating where it lives, because both
+   * are easy to get wrong from the outside:
+   *
+   *   - **It is a different dimension from `countryBound` above.** That one
+   *     binds a muni club's *location pickers* to the country whose kunta funds
+   *     it, and says nothing about who may enrol; this one says who may enrol,
+   *     and says nothing about where the product runs (a fully remote club can
+   *     be region-locked). Municipality clubs are excluded here precisely so
+   *     nobody has to reconcile the two: their Finnish binding is already
+   *     expressed, by the other mechanism.
+   *   - **The lock is enforced in the UI alone, deliberately.** A family's
+   *     location is self-attested and editable by them at any moment, so the
+   *     shop's signup panel refusing to open is the whole mechanism — there is
+   *     no server-side or database-side block, and its absence is a decision
+   *     rather than an omission. A parent who restates their location can
+   *     enrol, and a parent who moves after enroling keeps their seat. Known
+   *     and accepted; see the `region_lock_country` column comment.
+   */
+  regionLockable: boolean;
   hasHolidayCalendars: boolean;
   /** Start triggers admin can choose from. First entry is the default. */
   allowedStartModes: StartMode[];
@@ -79,6 +102,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
+    regionLockable: true,
     hasHolidayCalendars: true,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "paid",
@@ -94,6 +118,9 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: true,
     countryBound: MUNI_CLUB_COUNTRY_CODE,
+    // The one type with no region lock: its country is already settled by
+    // `countryBound` above, through an entirely separate mechanism.
+    regionLockable: false,
     hasHolidayCalendars: true,
     allowedStartModes: ["date"],
     defaultBillingMode: "external_contract",
@@ -103,12 +130,16 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     i18nKey: "camp",
     routeSlug: "camps",
     scheduleShape: "multi_day_bounded",
-    billing: { mode: "paid", required: true },
+    // Free-or-paid, defaulting to paid — the same chooser clubs and events get.
+    // A free camp signs up through the billing_mode branch every free product
+    // shares; when paid, the upfront total below applies.
+    billing: { mode: "free_or_paid" },
     pricingShape: "upfront_total",
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
+    regionLockable: true,
     hasHolidayCalendars: false,
     allowedStartModes: ["date", "date_and_threshold"],
     defaultBillingMode: "paid",
@@ -126,6 +157,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
+    regionLockable: true,
     hasHolidayCalendars: false,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "free",
@@ -148,19 +180,15 @@ export type PaidMode = (typeof PAID_MODE_VALUES)[number];
 
 /**
  * Which billing mode is actually in force, given the type's billing option and
- * (for the types that offer a choice) the admin's free/paid pick. Camps and
- * municipality clubs pin their mode, so `paidMode` is ignored for them.
+ * (for the types that offer a choice) the admin's free/paid pick. Municipality
+ * clubs pin their mode, so `paidMode` is ignored for them.
  */
 export function effectiveBillingMode(
   config: ProductTypeConfig,
   paidMode: PaidMode,
 ): BillingMode {
-  if (config.billing.mode === "free_or_paid") {
-    return paidMode === "free" ? "free" : "paid";
-  }
-  return config.billing.mode === "external_contract"
-    ? "external_contract"
-    : "paid";
+  if (config.billing.mode === "external_contract") return "external_contract";
+  return paidMode === "free" ? "free" : "paid";
 }
 
 export function productTypeFromSlug(slug: string): ProductType | null {

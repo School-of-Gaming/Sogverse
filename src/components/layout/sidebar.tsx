@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  AudioLines,
   Palette,
   MonitorPlay,
   Settings,
@@ -17,6 +16,7 @@ import {
   School,
   Tent,
   CalendarDays,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
@@ -28,7 +28,7 @@ import type { UserRole } from "@/types";
 type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
-  | "voice" | "consumerClubs" | "municipalityClubs" | "camps" | "events";
+  | "tools" | "consumerClubs" | "municipalityClubs" | "camps" | "events";
 
 interface NavItemDef {
   href: string;
@@ -47,7 +47,7 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: <School className="h-5 w-5" /> },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
     { href: ROUTES.admin.events, labelKey: "events", icon: <CalendarDays className="h-5 w-5" /> },
-    { href: ROUTES.admin.voice, labelKey: "voice", icon: <AudioLines className="h-5 w-5" /> },
+    { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },
     { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },

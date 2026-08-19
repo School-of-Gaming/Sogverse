@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { PATCH } from "@/app/api/gedu/gamers/[gamerId]/minecraft/route";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/minecraft — a gedu fixing a group member's
@@ -28,8 +30,6 @@ vi.mock("@/lib/auth", () => ({
 const mockLookupMinecraftUser = vi.fn();
 vi.mock("@/lib/mojang", () => ({
   lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
-  isValidMinecraftUsername: (username: string) =>
-    /^[a-zA-Z0-9_]{3,16}$/.test(username),
 }));
 
 const GAMER_ID = "11111111-2222-3333-4444-555555555555";
@@ -106,16 +106,47 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
     expect(mockRequireRole).toHaveBeenCalledWith("gedu", expect.any(Object));
   });
 
-  it("rejects a malformed Minecraft username", async () => {
+  // **The decision, on a gedu's edit: no name is refused for its shape.** A
+  // two-character handle was a 400 here once and Mojang has issued them, so a
+  // gedu correcting a child's real name was told it could not exist. Now it goes
+  // to Mojang, and a miss is stored unverified — the same outcome the self-serve
+  // route gives.
+  it("stores a name our old format rule called impossible, unverified", async () => {
     mockAuthenticatedGedu();
+    mockLookupMinecraftUser.mockResolvedValue(null);
+    mockRpcSuccess("ab", null);
 
     const response = await PATCH(
       createRequest({ minecraftUsername: "ab" }),
       routeContext(),
     );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).toHaveBeenCalledWith("ab");
+    expect(mockRpc).toHaveBeenCalledWith("set_group_member_minecraft", {
+      p_participant_id: GAMER_ID,
+      p_minecraft_username: "ab",
+      p_minecraft_uuid: "",
+    });
+    expect(data.minecraft_username).toBe("ab");
+    expect(data.minecraft_uuid).toBeNull();
+  });
+
+  // The one refusal left: a bound on our own request, not a claim about names.
+  it("rejects a Minecraft username past the length bound", async () => {
+    mockAuthenticatedGedu();
+
+    const response = await PATCH(
+      createRequest({
+        minecraftUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+      }),
+      routeContext(),
+    );
 
     expect(response.status).toBe(400);
     expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
   });
 
   it("rejects a gamer id that is not a uuid", async () => {
@@ -185,6 +216,38 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
 
     const response = await PATCH(
       createRequest({ minecraftUsername: null }),
+      routeContext(),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+    expect(mockRpc).toHaveBeenCalledWith("set_group_member_minecraft", {
+      p_participant_id: GAMER_ID,
+      p_minecraft_username: "",
+      p_minecraft_uuid: "",
+    });
+    expect(data.minecraft_username).toBeNull();
+    expect(data.minecraft_uuid).toBeNull();
+  });
+
+  /**
+   * **A blank field is the destructive half of "no format rule", and this is
+   * the direction that changed.** It used to be a 400; it now clears the child's
+   * stored account outright, so it has to be pinned as a clear — both columns
+   * emptied, no lookup — rather than as a no-op that quietly leaves the old name
+   * on the row.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])("clears both columns for %s, without asking Mojang", async (_label, name) => {
+    mockAuthenticatedGedu();
+    mockRpcSuccess(null, null);
+
+    const response = await PATCH(
+      createRequest({ minecraftUsername: name }),
       routeContext(),
     );
     const data = await response.json();

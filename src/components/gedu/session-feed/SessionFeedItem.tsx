@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Markdown } from "@/components/ui/markdown";
 import {
+  SessionAttributionChip,
   SessionReport,
+  hasReport,
   type SessionLabels,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
@@ -256,10 +258,36 @@ export function SessionFeedItem({
     );
   }
 
-  return (
+  /**
+   * Who to sign this card with, or `null` for no chip.
+   *
+   * Three conditions, and the last is this feed's own. There has to be a
+   * write-up to attribute — the shared trimmed test, so a report of one newline
+   * signs nothing — and somebody to name. And **the chip is withheld while this
+   * entry's editor is open**: Save and Cancel sit in the bottom-right corner of
+   * the expanded card, exactly where the chip hangs, and a chip floating over an
+   * unsaved draft would be claiming authorship of text that is not stored yet.
+   * It comes back when the editor closes, over whatever was actually saved.
+   *
+   * The pre-epoch dashed line never reaches here — it returns above — which is
+   * the right answer twice over: it is a row rather than a card, and it has no
+   * stored row behind it to have been edited by anybody.
+   */
+  const signedBy =
+    !editing && hasReport(entry.report) ? entry.lastEditedBy : null;
+
+  const card = (
     <Card
       className={cn(
         "p-4 sm:p-5",
+        // Room for the chip, derived from its geometry and not from taste: it
+        // stands 30px tall plus a 2px ring and hangs 10px below the card, so
+        // 22px of it rises above the card's bottom border — past a 16/20px pad
+        // and over the last block of content. 32px at BOTH breakpoints (the
+        // chip's size does not change with the viewport) leaves ~11px between
+        // the content's bottom edge and the top of the chip. Re-derive this if
+        // the chip's height or its `-bottom-*` offset ever moves.
+        signedBy !== null && "pb-8 sm:pb-8",
         entry.kind === "future" && prominent && "border-info/50",
       )}
     >
@@ -338,6 +366,28 @@ export function SessionFeedItem({
         </CollapsibleRegion>
       )}
     </Card>
+  );
+
+  // The wrapper gives the chip a positioning context of **exactly one card**,
+  // so its offsets resolve against this row rather than against whatever
+  // ancestor happens to be positioned. It is **unconditional** — present on
+  // every carded entry, signed or not — because it is what keeps the card's
+  // subtree identity stable across state flips. It used to appear and vanish
+  // with the chip, which meant toggling this entry's editor swapped the whole
+  // card for a structurally different tree: React discarded the node mid-flush,
+  // taking the Edit button the feed refocuses on close and the report's
+  // Read-more state with it. The shell wraps the whole card — collapsible
+  // regions and all — so the row still renders exactly one element either way.
+  return (
+    <div className="relative">
+      {card}
+      {signedBy !== null && (
+        <SessionAttributionChip
+          id={signedBy.id}
+          firstName={signedBy.firstName}
+        />
+      )}
+    </div>
   );
 }
 

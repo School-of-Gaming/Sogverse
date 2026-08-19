@@ -67,12 +67,17 @@ export const SEARCHED_PROFILE_COLUMNS =
  * (`PATCH /api/admin/users/[id]/game-account`).
  *
  * **A discriminated union rather than a platform string beside a loose
- * username**, because the format rule is the one thing that genuinely differs
- * per platform — Mojang allows underscores freely, Roblox allows at most one and
- * never at an end — and a union is what keeps each rule attached to its own
- * platform instead of leaving the route to remember which check to run. Both
- * halves import the same value schemas the self-serve routes use, so an admin's
- * edit cannot accept a name a person could not have typed themselves.
+ * username**, because the account key genuinely differs per platform — a dashed
+ * Mojang UUID on one and an int64 on the other — and a union is what keeps each
+ * platform's own shape attached to it instead of leaving the route to remember
+ * which one it is answering about. Both halves import the same value schemas the
+ * self-serve routes use, so an admin's edit travels under exactly the rules a
+ * person's own edit does.
+ *
+ * **Neither half carries a format rule, on purpose.** The platform is the only
+ * authority on which of its names exist, so what an admin types is trimmed,
+ * length-bounded and sent — and the lookup's answer decides between a stored key
+ * and an unverified name, here as everywhere else.
  *
  * `null` unlinks, exactly as it does on every other write path.
  */
@@ -96,8 +101,11 @@ function gamePlatformLiteral<P extends GamePlatform>(platform: P) {
  * one. What a mapped union would have bought is the guarantee that *every*
  * platform has a branch, and `satisfies Record<GamePlatform, …>` buys exactly
  * that instead: adding a platform to `SUPPORTED_GAME_PLATFORMS` fails to compile
- * here until it is given a username rule and an account-key type, which are
- * precisely the two decisions a new platform owes this file.
+ * here until it is given a wire value and an account-key type, which are
+ * precisely the two decisions a new platform owes this file. The two wire values
+ * happen to read alike today — a trim and a length bound is all either platform
+ * asks of us — and each still names its own, because the platform that changes
+ * its mind should change one line rather than share one.
  */
 const USERNAME_BY_PLATFORM = {
   minecraft: minecraftUsernameValue,

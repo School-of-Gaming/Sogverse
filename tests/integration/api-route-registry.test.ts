@@ -161,9 +161,12 @@ const TESTS = {
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
+  geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
+  minecraftPasswordReset:
+    "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
@@ -625,6 +628,19 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // The Roblox twin of the route above, and the same reasoning applies verbatim:
+  // the role gate says "an educator", and `set_group_member_roblox` says which
+  // children that educator may touch, re-deriving them from auth.uid().
+  "src/app/api/gedu/gamers/[gamerId]/roblox/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: { kind: "role-gated", roles: ["gedu"] },
+        body: { kind: "json", schema: "updateGroupMemberRobloxBody" },
+        test: TESTS.geduGamerRoblox,
+      },
+    },
+  },
+
   // --- Educator self-registration ------------------------------------------
 
   "src/app/api/gedu/register/route.ts": {
@@ -771,6 +787,26 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "setLocaleBody" },
         test: TESTS.userLocale,
+      },
+    },
+  },
+
+  // --- Platform tools ------------------------------------------------------
+
+  // Resetting a Minecraft Education account password is a moderator power, so
+  // it carries the same gate as the instant voice room: admins, plus gedus an
+  // admin has certified. The in-app half of the Discord `/reset-password`
+  // command, running through the same Graph module.
+  "src/app/api/tools/minecraft-password-reset/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          roles: ["admin", "gedu"],
+          requireCertifiedGedu: true,
+        },
+        body: { kind: "json", schema: "minecraftPasswordResetBody" },
+        test: TESTS.minecraftPasswordReset,
       },
     },
   },

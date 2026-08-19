@@ -40,9 +40,6 @@
   - **`GET /api/roblox/verify` is now a third such surface, and it is the sharpest of them — treat it first when this is revisited.** It is the same shape as the Minecraft one (public because a username is checked before any account exists) but it is worse in three specific ways. One inbound request fans out to **three** upstream calls — username→id, then id→bust *and* id→headshot (the compact figure's render, added when the row grew a `head` variant; the two thumbnails are issued in parallel, so this costs latency once but budget twice) — so it amplifies 3×. The thumbnail hops are rate-limited to **60 requests per minute per IP**, and a serverless fleet shares its egress IPs, so our whole deployment draws on one bucket that a modest script can drain; the route deliberately keeps the browser off that hop, which means we absorb all of it. And there is no cache, so probing one username repeatedly fans out every time. The consequence of exhausting it is degraded rather than broken — the avatar resolver returns `null` and verification still succeeds without a picture — but a short-TTL cache keyed on the username buys more here than anywhere else on this list. Unverified gedus can't reach any child data (access keys off `gedu_group_assignments`, which the verification gate blocks), so the registration spam is a resource/cleanup concern, not a data-exposure one.
   - **`GET /api/roblox/avatars` is a second amplifier on the same bucket, and it is the one that runs on every page view.** It draws from the identical 60-per-minute-per-IP thumbnail budget as the verify route above, so the two contend: exhausting one degrades the other. It is *milder* per call — one upstream request per figure asked for (the default is the full figure alone), and the cost is independent of how many ids are in the batch, so a hundred-row roster still costs one — and it requires a session, so a stranger cannot reach it at all. But it is the one on the hot path: every settings, gamer-detail and admin-user view resolves a render. **Intended shape when this is picked up:** the in-repo precedent is the feedback route's atomic RPC limiter (a counter incremented and checked in one statement, so two concurrent requests cannot both pass), applied per user rather than per IP here since the route is authenticated.
   - **The likely next move is caching the resolved URLs on our end, and it is worth more than the limiter.** The thumbnail JSON is `no-cache` upstream, but the CDN URLs it *names* are effectively immutable — they change only when someone redesigns their avatar — so a server-side cache keyed on `roblox_user_id`, holding the resolved URL with a generous TTL, collapses repeat views to zero upstream calls. **Cache the URL, not the image bytes**: proxying images would put our egress in front of a CDN already doing that job. It is independent of the limiter and helps the commoner case (the same accounts viewed again and again), so it is worth doing first.
-- [ ] **A gedu can fix a roster member's Minecraft username but not their Roblox one.** Every other surface treats the two platforms identically; the gedu session roster is the one gap. Two halves to it, and they are separable:
-  - **The write.** The gedu path goes through `set_group_member_minecraft`, which names Minecraft columns — so closing this means a Roblox sibling (or a platform-parameterised replacement) with the same authorization shape: the RPC re-derives from `auth.uid()` and refuses any gamer not actively participating in a group that gedu is assigned to, so the target check stays in the database rather than in a route. Plus its contracts, its route, and the write-IDOR/db coverage the existing one has.
-  - **The display.** The roster does not draw Roblox figures at all today. It must not resolve them per row — that is N requests against a per-IP thumbnail budget the whole fleet shares, which one roster can drain. The by-id avatars route already takes a batch and answers in one request per figure regardless of id count, so the roster collects the ids it needs, asks once, and hands each row its URL. A roster wants the `head` figure, which is the second figure and therefore a second upstream request; see the rate-limit item above.
 
 - [ ] **Stop logging expected conditions at `error` level — they drown out real errors in Vercel's `level:error` view.** A two-week sweep of prod/staging `level:error` logs (2026-06-30) was 20-for-20 benign, all routine conditions emitted as errors. Signal-to-noise only; nothing here is a reliability problem. The offenders:
   - **Daily.co "room not found" 404s.** `dailyFetch` (`src/lib/daily.ts:51`) does a blanket `console.error` on *any* non-OK response, before throwing — even when the caller expects the 404 and handles it. `getDailyRoom` (`daily.ts:109`) catches the throw and returns null, so the 404 is fully absorbed, but the error line already fired. This fires for `/api/voice/instant/exists` (the existence check itself — returns 404 by design) and for `/api/voice/token` (the GET half of `getOrCreateDailyRoom`'s get-or-create — room doesn't exist yet, gets created, route returns 200). Fix: don't `console.error` inside `dailyFetch` for statuses the caller branches on (esp. 404); let the caller decide, or pass a flag to suppress.
@@ -354,13 +351,14 @@ Several files define inline `selectClassName` strings that duplicate `<Input>` s
 - [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
 - [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the add-gamer dialog, plus any other occurrences
 
-### Optimize Product Images via `next/image`
+### Resize Product Images at Upload — Then Re-enable AVIF
 
-Product images currently render with `unoptimized` everywhere, so the original bucket file is served at every viewport. If the catalogue grows or pages get heavier, switching to the Next image optimizer would give us automatic WebP/AVIF conversion, viewport-appropriate resizing, and CDN caching. The cost is a bit of complexity per call site (`sizes` attribute) and a one-line `images.remotePatterns` entry in `next.config.ts`.
+The image-optimizer branch put Vercel's optimizer in front of browsers, but the stored originals are still unbounded admin uploads (2–4 MB camera-roll PNGs). That weight is why AVIF was rejected (`next.config.ts` records the pricing: the first visitor to each image-and-width pays a slow encode in front of the LCP hero), it is what og:image unfurl scrapers still fetch raw — the one Supabase egress path the optimizer cannot cover — and it is the full weight of every optimizer origin fetch. Shrinking the source dissolves all three at once.
 
-- [ ] Add the Supabase Storage host to `next.config.ts` `images.remotePatterns`
-- [ ] Drop `unoptimized` from product image `<Image>` components and add a `sizes` prop matching each layout
-- [ ] Skipped during the PR 2 self-hosted images migration to keep the change minimal
+- [ ] Re-encode at upload in the two admin product routes (cap ~1600px wide, WebP q≈80 — ~150–250 kB per image)
+- [ ] One-off re-encode of the existing catalogue (67 prod / 44 staging objects). Mint **new** paths and update `products.image_path` — a bucket URL's bytes are immutable by contract (the `minimumCacheTTL` justification in `next.config.ts`), so never rewrite an object in place
+- [ ] Flip `formats` back to `["image/avif", "image/webp"]` — with small encode inputs the first-encounter cost dissolves at any traffic level
+- [ ] Confirm a WhatsApp/Slack unfurl fetches the smaller og:image
 
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
@@ -448,6 +446,68 @@ We keep circling back to wanting an automated dead-code check (unused exports/fi
 **Strategy regardless of tool: ratchet, don't boil the ocean.** Don't clear ~150 historical hits in one risky PR. Mark intentional-but-unimported exports as deliberate (knip honors a `// @public` JSDoc tag, or config `ignore` — this is where the `types/` aliases go), drive it to a true zero, then make CI fail on any *new* finding. The value isn't the one-time cleanup, it's preventing the next orphan export from landing. (Knip is accurate enough that a real zero is reachable; the noisy ESLint rule basically never gets there.)
 
 If we ever specifically want it *inside* ESLint for editor feedback: `import/no-unused-modules` set to `warn`, **exclude `src/app/**`**, never auto-delete from its output (barrel blind spot), ratchet the same way. Weaker, but single-toolchain.
+
+### Leaving a group voice room — always return to the product page?
+
+**Undecided, and the undecidedness is the point: this is a UX judgment, not a
+defect.** Today the Leave button returns you to wherever you launched from (the
+voice route reads a `?back=` query the shared Join button fills in with the
+current pathname, falling back to the role dashboard). The proposal is to make
+the destination a property of the *room and the viewer* instead: a gamer or
+parent always lands on their family product page, a gedu always lands on the
+group's workspace, however they got in.
+
+**The case for.** The product page is where the work *after* a session lives —
+families read session reports there, gedus take attendance and write notes.
+Someone who joined from a dashboard is dropped back on a tile grid and has to
+navigate to the page they now actually need.
+
+**The case against.** "Back" that doesn't go back is disorienting, and it breaks
+the one expectation the affordance sets. A parent who dipped into a room from
+their dashboard to check on a child may want the dashboard, not a page about one
+enrollment. We have no evidence either way, which is why this is parked rather
+than built.
+
+**If we pick it up, the investigation is already done — don't redo it.** The
+approach that works keeps the `backHref` prop and changes what callers pass; no
+database work is needed, because every call site already holds the participation
+id and product type that the destination is built from. Three of the five
+in-scope call sites are already correct (both product-page bodies pass or
+default to their own page; the gedu dashboard card already passes the
+workspace), so the change is essentially one prop on the family enrollment card
+plus the two items below. The alternative — deriving the destination server-side
+in the voice route — was rejected: it needs a group-to-product lookup on a page
+that does no database work today, and the family product page is keyed by
+participation id rather than product id, so it needs a second query on top.
+
+- [ ] Pass the family product page as `backHref` from the enrollment card on the
+      parent and gamer dashboards (the card already carries the href it links to)
+- [ ] **The switch-to-gamer path emits no `?back=` at all.** A parent joining
+      their *child's* room goes through the profile-switch dialog, which
+      redirects to a bare voice URL — so that child always falls back to the
+      gamer dashboard on leave, whatever we decide here. The fix can't reuse the
+      card's own href (that one points into the parent's root); it has to be the
+      gamer's copy of the same participation
+- [ ] Consider making `backHref` required and deleting the current-pathname
+      default, so the rule is enforced by the type system rather than by each
+      call site happening to pass the right thing. Without this the change is a
+      behavior swap, not a simplification — the two product-page bodies are
+      correct today only because they happen to sit on the page they'd send you
+      to. Cost is that the remaining callers (both product-page bodies, plus the
+      admin group card, which is outside this rule) must name a destination
+      explicitly
+- [ ] Guard the `"#"` sentinel. An awaiting or unplaced seat carries `"#"` as its
+      open href, and `"#"` survives the internal-path safety check and resolves
+      to `"/"` — the public marketing home page. Unreachable today (the awaiting
+      arm of the Join button renders a disabled button before the link branch),
+      but it stops being a coincidence the moment `backHref` becomes the
+      load-bearing value rather than a fallback
+- [ ] Admin is deliberately out of scope. The admin group card passes nothing and
+      the pathname default already lands on the admin product page, so it needs a
+      decision only if the default is deleted
+
+**Delete this item if we decide against the change** — a `[ ]` here means the
+question is still open, not that the work is owed.
 
 ### Multi-Parent Gamer Linking
 

@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/users/[id]/game-account/route";
 import { NextResponse } from "next/server";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import {
+  INVISIBLE_ONLY_NAME,
+  RIGHT_TO_LEFT_OVERRIDE,
+  ZERO_WIDTH_SPACE,
+} from "../../helpers/invisible-characters";
 
 /**
  * The admin's edit of somebody else's game username.
@@ -134,24 +140,58 @@ describe("PATCH /api/admin/users/[id]/game-account", () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("applies each platform's OWN format rule, not a shared one", async () => {
-    mockAdmin();
+  /**
+   * **The decision, on the admin's edit: neither branch judges the shape of a
+   * name.** A handle with two underscores was refused on the Roblox branch here
+   * once, on the strength of that platform's current signup validator — a rule
+   * younger than the accounts it judges. Both branches now carry the same wire
+   * rule (a trim and a length bound), because it is a rule about our request
+   * rather than about either platform's names.
+   */
+  it.each([
+    ["minecraft", "minecraft_username", () => mockLookupMinecraftUser],
+    ["roblox", "roblox_username", () => mockLookupRobloxProfile],
+  ] as const)(
+    "sends a %s name our old format rule called impossible to the lookup and stores it",
+    async (platform, column, lookup) => {
+      mockAdmin();
+      mockLookupMinecraftUser.mockResolvedValue(null);
+      mockLookupRobloxProfile.mockResolvedValue(null);
+      const { upsert } = mockTarget("gamer");
 
-    // Two underscores: legal on Minecraft, refused by Roblox. A single shared
-    // username rule would have let this through, which is the whole reason the
-    // body is a discriminated union.
-    const mc = await PATCH(
-      ...createRequest(TARGET, { platform: "minecraft", username: "a_b_c" }),
-    );
-    const roblox = await PATCH(
-      ...createRequest(TARGET, { platform: "roblox", username: "a_b_c" }),
-    );
+      const response = await PATCH(
+        ...createRequest(TARGET, { platform, username: "Old Timer" }),
+      );
 
-    expect(roblox.status).toBe(400);
-    // Minecraft's own rule accepts it, so it gets past the schema and on to the
-    // target check (which this test has not mocked a profile for).
-    expect(mc.status).not.toBe(400);
-  });
+      expect(response.status).toBe(200);
+      // The name reaches the platform verbatim, and the same string is what
+      // lands in the row — the two assertions the sibling route suites make, and
+      // the only ones that prove nothing rewrote or refused it on the way.
+      expect(lookup()).toHaveBeenCalledWith("Old Timer");
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: TARGET, [column]: "Old Timer" }),
+        { onConflict: "user_id" },
+      );
+    },
+  );
+
+  // The one refusal left, and it holds on both branches.
+  it.each(["minecraft", "roblox"])(
+    "returns 400 for a %s username past the length bound",
+    async (platform) => {
+      mockAdmin();
+
+      const response = await PATCH(
+        ...createRequest(TARGET, {
+          platform,
+          username: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(mockFrom).not.toHaveBeenCalled();
+    },
+  );
 
   it("returns 400 for a non-uuid user id", async () => {
     mockAdmin();
@@ -302,6 +342,72 @@ describe("PATCH /api/admin/users/[id]/game-account", () => {
     );
     expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
   });
+
+  /**
+   * **The direction this changed in is the one worth a test.** A blank username
+   * used to be a 400; it is now a clear, which means the same request that used
+   * to be refused outright now *destroys* a stored account. Pinning it here is
+   * what stops a future normalization tweak turning a clear back into a no-op —
+   * which would silently leave a name on a row somebody asked to have emptied.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    // `.trim()` leaves every format character in place, so without the strip
+    // this stores a name that renders as an empty-looking row.
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])("clears both columns for %s, without a lookup", async (_label, username) => {
+    mockAdmin();
+    const { upsert } = mockTarget("gamer");
+
+    const response = await PATCH(
+      ...createRequest(TARGET, { platform: "minecraft", username }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.username).toBeNull();
+    expect(data.externalId).toBeNull();
+    expect(upsert).toHaveBeenCalledWith(
+      {
+        user_id: TARGET,
+        minecraft_username: null,
+        minecraft_uuid: null,
+      },
+      { onConflict: "user_id" },
+    );
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a zero-width space", ZERO_WIDTH_SPACE],
+    ["a right-to-left override", RIGHT_TO_LEFT_OVERRIDE],
+  ])(
+    "strips %s out of a name before the lookup and the write",
+    async (_label, character) => {
+      mockAdmin();
+      mockLookupMinecraftUser.mockResolvedValue(null);
+      const { upsert } = mockTarget("gamer");
+
+      const response = await PATCH(
+        ...createRequest(TARGET, {
+          platform: "minecraft",
+          username: `Old${character}Timer`,
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      // One name, in all three places: what Mojang was asked about, what the
+      // row holds, and what the response echoes. The invisible character is in
+      // none of them, so the stored name and the drawn name are the same name.
+      expect(mockLookupMinecraftUser).toHaveBeenCalledWith("OldTimer");
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ minecraft_username: "OldTimer" }),
+        { onConflict: "user_id" },
+      );
+      expect((await response.json()).username).toBe("OldTimer");
+    },
+  );
 
   it("writes on the user-bound client, so the admin RLS policy is what permits it", async () => {
     // The gate's `supabase` is the only client this route ever touches. If it

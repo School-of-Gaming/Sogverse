@@ -1,5 +1,9 @@
 import { z } from "zod";
-import type { GameFigure } from "@/lib/constants/game-platforms";
+import {
+  GAME_USERNAME_MAX_LENGTH,
+  normalizeGameUsername,
+  type GameFigure,
+} from "@/lib/constants/game-platforms";
 
 /**
  * Roblox account lookup — the counterpart to `mojang.ts`.
@@ -89,23 +93,6 @@ const avatarResponse = z.object({
   ),
 });
 
-/**
- * Roblox usernames, as `auth.roblox.com`'s own validator enforces them:
- * 3–20 characters, only `a-z A-Z 0-9 _`, **at most one** underscore, and never
- * one at either end.
- *
- * Written as two flat alternatives — a run with no underscore, or exactly two
- * runs joined by one — rather than the shorter `[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)?`.
- * That form nests a quantifier inside an optional group, which is the shape
- * static analysis reads as a backtracking hazard; the alternation says the same
- * thing at star height one and needs no exemption. The length is checked
- * separately, because expressing it as a quantifier here would fight the
- * underscore-position rule.
- */
-const USERNAME_RE = /^(?:[a-zA-Z0-9]+|[a-zA-Z0-9]+_[a-zA-Z0-9]+)$/;
-const USERNAME_MIN_LENGTH = 3;
-const USERNAME_MAX_LENGTH = 20;
-
 /** A Roblox account, with its avatar resolved if one could be. */
 export interface RobloxProfile {
   /** The unique handle, correctly cased as Roblox returns it. */
@@ -132,22 +119,33 @@ export interface RobloxProfile {
   headshotUrl: string | null;
 }
 
-export function isValidRobloxUsername(username: string): boolean {
-  return (
-    username.length >= USERNAME_MIN_LENGTH &&
-    username.length <= USERNAME_MAX_LENGTH &&
-    USERNAME_RE.test(username)
-  );
-}
-
 /**
  * Look up a Roblox account by username. Case-insensitive; the `name` that comes
  * back is the canonical casing. Returns null if there is no such account.
+ *
+ * **Roblox decides what a Roblox name is; this function only asks.** There was a
+ * copy of that platform's current signup validator here once, gating the call —
+ * and it was wrong about real accounts, because the rules it encoded were
+ * introduced long after accounts were, so handles carrying spaces (or anything
+ * else the modern validator refuses) were reported as nonexistent by us rather
+ * than by Roblox. The name travels in a JSON body, so nothing here needs a shape
+ * for it; what is left is the shared normalization and a length no request
+ * should carry, both rules about the request rather than about the name.
  */
 export async function lookupRobloxUser(
   username: string,
 ): Promise<Omit<RobloxProfile, "avatarUrl" | "headshotUrl"> | null> {
-  if (!isValidRobloxUsername(username)) return null;
+  // The same normalization and bound the wire schemas apply, restated for the
+  // callers that reach this directly — the two layers have to agree, or the name
+  // asked about is not the name stored. Format characters out and the ends
+  // trimmed (both statements about our own request, not about Roblox handles);
+  // then a name with nothing left has nothing to ask about, and one past the
+  // bound is a request we would not have accepted in the first place — worth a
+  // line here because every call costs a request against a shared budget.
+  const name = normalizeGameUsername(username);
+  if (name.length === 0 || name.length > GAME_USERNAME_MAX_LENGTH) {
+    return null;
+  }
 
   // Never throws, for the same reason the thumbnail path does not: every caller
   // treats the answer as optional and stores an unresolvable name unverified. A
@@ -157,7 +155,7 @@ export async function lookupRobloxUser(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      usernames: [username],
+      usernames: [name],
       excludeBannedUsers: true,
     }),
   }).catch(() => null);

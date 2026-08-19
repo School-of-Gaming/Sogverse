@@ -38,8 +38,7 @@ interface ProductConfirmationEmailOptions {
    * True when the parent took the seat themselves. Every sentence naming the
    * participant then moves to the second person, and it moves by swapping the
    * *whole key* rather than interpolating a pronoun — a possessive that agrees
-   * with a name in English does not in Finnish or Swedish. Same shape as the
-   * enrollment mails' self-seat variant.
+   * with a name in English does not in Finnish or Swedish.
    */
   isSelfSeat: boolean;
   productName: string;

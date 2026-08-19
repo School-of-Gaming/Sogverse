@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { isValidRobloxUsername, ROBLOX_THUMBNAIL_BATCH_MAX } from "@/lib/roblox";
+import { ROBLOX_THUMBNAIL_BATCH_MAX } from "@/lib/roblox";
 import {
+  GAME_USERNAME_MAX_LENGTH,
   SUPPORTED_GAME_FIGURES,
+  normalizeGameUsername,
   type GameFigure,
 } from "@/lib/constants/game-platforms";
 
@@ -17,24 +19,86 @@ function isSupportedGameFigure(value: string): value is GameFigure {
  * same schema. Neither end restates the other's shape.
  */
 
-const INVALID_USERNAME_MESSAGE =
-  "Invalid Roblox username. Must be 3-20 characters: letters, numbers, and at " +
-  "most one underscore, not at either end.";
-
 /**
- * A Roblox username as it travels on the wire, or `null` to unlink. The format
- * rule is the shared Roblox one, so a value that parses can be handed straight
- * to the lookup. Every surface that accepts a Roblox username imports this
- * rather than restating the character rules.
+ * A Roblox username as it travels on the wire, or `null` to unlink.
+ *
+ * **There is no format rule here, and that is the decision rather than an
+ * omission.** Roblox is the only authority on which handles exist on Roblox,
+ * and its own signup validator arrived long after its accounts did — so real,
+ * live handles carry characters that validator would refuse today, and a copy of
+ * it here refused those accounts on Roblox's behalf and got it wrong. A name is
+ * normalized, bounded at a length that is a statement about our own request, and
+ * handed to the lookup; what comes back decides between verified and stored
+ * unverified.
+ *
+ * The normalization is the shared one — invisible format characters stripped,
+ * then trimmed — and it is the same category of rule as the bound: about the
+ * request we make and the row we draw, never about what Roblox may have issued.
+ *
+ * A string that is empty after that is a clear, exactly as `null` is: there is no
+ * name left in the field, and the spellings of that must not mean different
+ * things depending on which surface sent them.
+ *
+ * Every surface that accepts a Roblox username imports this rather than
+ * restating the bound.
  */
 export const robloxUsernameValue = z
   .string()
-  .refine(isValidRobloxUsername, { message: INVALID_USERNAME_MESSAGE })
-  .nullable();
+  .transform(normalizeGameUsername)
+  .pipe(
+    z
+      .string()
+      .max(
+        GAME_USERNAME_MAX_LENGTH,
+        `Roblox username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+      ),
+  )
+  .nullable()
+  .transform((username) =>
+    username === null || username === "" ? null : username,
+  );
 
 /** Request body of PATCH /api/roblox/account — link or unlink one's own. */
 export const updateRobloxAccountBody = z.object({
   robloxUsername: robloxUsernameValue,
+});
+
+/**
+ * Request body of the gedu's group-member Roblox edit — a gedu fixing the
+ * handle of a child on their own roster.
+ *
+ * The same value schema as the self-serve route, because it is the same edit
+ * made by someone else. **What the server does with the name it parses out is
+ * store it, unchanged.** It runs the Roblox lookup, but takes only the account
+ * id from it: the spelling saved is the one that was sent, so the stored value
+ * does not depend on when the lookup last ran — and the editor already adopted
+ * the canonical casing before it committed, so what arrives is what the gedu
+ * meant. A name Roblox resolves lands verified, with the id beside it; a name it
+ * cannot resolve — including during a Roblox outage, which reads as "no answer"
+ * rather than as an error — is saved all the same with a null id, which is an
+ * unverified account and a success, not a failure.
+ *
+ * The gamer is named by the URL, not the body, so there is nothing here to aim
+ * at another child.
+ */
+export const updateGroupMemberRobloxBody = z.object({
+  robloxUsername: robloxUsernameValue,
+});
+
+/**
+ * What the `set_group_member_roblox` RPC hands back. Generated as `Json`, so
+ * this schema is the structure; the db tests parse real RPC output through it
+ * in CI.
+ *
+ * The account id is a number where the Minecraft twin's is a string — Roblox's
+ * key is an int64 `bigint`, Mojang's a dashed UUID in text — and it is null
+ * whenever the username is, because an id with no name behind it is a verified
+ * link to nothing.
+ */
+export const groupMemberRobloxResult = z.object({
+  participant_id: z.string(),
+  roblox_username: z.string().nullable(),
+  roblox_user_id: z.number().int().positive().nullable(),
 });
 
 /**
@@ -51,11 +115,26 @@ export const robloxAccountWriteResult = z.object({
   roblox_user_id: z.number().int().positive().nullable(),
 });
 
-/** Query string of GET /api/roblox/verify — the public Roblox lookup. */
+/**
+ * Query string of GET /api/roblox/verify — the public Roblox lookup.
+ *
+ * The same reasoning as the value schema above, minus the unlink: there is
+ * nothing to clear on a read, so a name that normalizes to nothing is a query
+ * with no question in it and is refused. Everything else goes to Roblox.
+ */
 export const verifyRobloxQuery = z.object({
   username: z
     .string()
-    .refine(isValidRobloxUsername, { message: INVALID_USERNAME_MESSAGE }),
+    .transform(normalizeGameUsername)
+    .pipe(
+      z
+        .string()
+        .min(1, "A username is required")
+        .max(
+          GAME_USERNAME_MAX_LENGTH,
+          `Username must be at most ${GAME_USERNAME_MAX_LENGTH} characters`,
+        ),
+    ),
 });
 
 /**
@@ -206,3 +285,23 @@ export type RobloxAvatarsResponse = z.infer<typeof robloxAvatarsResponse>;
 
 /** Both renders of one account, as a surface consumes them. */
 export type RobloxRenderUrls = RobloxAvatarsResponse["renders"][string];
+
+/**
+ * What a batched lookup leaves behind: one figure's render URL per account,
+ * keyed by the account id **as a string** — and the only form an answer may be
+ * read in, **by the id the response names and never by position**. Reading
+ * positionally would hand one child another child's face, which is the one
+ * failure worse than no picture.
+ *
+ * Three values collapse to the same drawing, which is why this is `Partial` and
+ * why the entries are nullable: an id with no entry has not been answered for
+ * yet, an entry holding `null` is an account Roblox has no render for, and an
+ * empty map is a lookup that has not landed (or that failed — renders are never
+ * retried). All three draw the silhouette, in a figure box already at its final
+ * size, so nothing moves when the pictures arrive.
+ *
+ * Read-only because every consumer reads: the surfaces that own a lookup build
+ * their own record and hand it down, and a body that mutated the map it was
+ * given would be writing into another component's state.
+ */
+export type RobloxRenderMap = Readonly<Partial<Record<string, string | null>>>;

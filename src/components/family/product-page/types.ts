@@ -14,7 +14,10 @@
  * **These types are the privacy boundary, and that is their main job.** The
  * gedu's feed entry carries a staff note, the whole group's attendance map and
  * an `owed` flag; the family's carries a report, one participant's mark, and
- * nothing else. Narrowing the *type* rather than filtering in a component is
+ * the first name of whoever last edited the session — which is the same quantum
+ * of information the page already gives for every gedu on the group, and is the
+ * only staff-shaped thing on it. Narrowing the *type* rather than filtering in
+ * a component is
  * what makes
  * "never render staff notes or another child's attendance on a family surface" a
  * compile-time fact instead of a rule somebody has to remember. Anything that
@@ -45,6 +48,29 @@ interface FamilySessionEntryBase {
   startsAt: Date;
   /** Absolute instant the session ends; rendered in the viewer's zone. */
   endsAt: Date;
+  /**
+   * The gedu who last touched this session, from the stored row's audit column
+   * — `null` on an occurrence with no row behind it, and `null` too when the
+   * row has never been stamped or the person behind the stamp is gone.
+   *
+   * **It is the session's last editor, not the report's author, and the
+   * imprecision is accepted rather than overlooked.** The column is stamped by
+   * every recorded touch: materializing the row, saving either written field,
+   * and each attendance mark or unmark. So a gedu who only corrected a tick is
+   * named beside a write-up somebody else typed. In practice the gedu who
+   * touches one part of a session touches all of it, and a per-field author
+   * column was judged not worth the schema for that edge — which is why the
+   * field is called *last edited by* rather than *author*. Do not close the gap
+   * by quietly adding a report-author column; that is a product decision, not a
+   * refactor.
+   *
+   * **It is carried on both kinds** because a plan written before a session and
+   * a write-up written after it are the same field at two moments. What renders
+   * it is narrower than what carries it: the chip appears only on a card that
+   * actually has a report, so a session with an editor and nothing written
+   * shows no attribution at all.
+   */
+  lastEditedBy: FamilyProductGedu | null;
 }
 
 /**

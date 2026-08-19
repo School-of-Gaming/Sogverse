@@ -12,7 +12,10 @@ import {
   undatedPastFloor,
   type SlotShape,
 } from "@/lib/session-occurrence";
-import type { SessionFeedEntry } from "@/components/gedu/session-feed/types";
+import type {
+  SessionEditor,
+  SessionFeedEntry,
+} from "@/components/gedu/session-feed";
 import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
@@ -248,6 +251,7 @@ function toEntry(args: {
       // start instant — so the field is "what has been said so far", which is
       // honestly nothing until the club opens the door.
       attendance: row?.attendance ?? {},
+      lastEditedBy: toLastEditedBy(row),
     };
   }
 
@@ -272,5 +276,27 @@ function toEntry(args: {
     report: row?.report ?? null,
     staffNote: row?.gedu_note ?? null,
     attendance: row?.attendance ?? {},
+    lastEditedBy: toLastEditedBy(row),
   };
+}
+
+/**
+ * The row's last editor, or `null`.
+ *
+ * **Both halves or nobody.** The id seeds an identicon and the name is what the
+ * chip says, so an id without a name would render a face with nothing beside it
+ * and a name without an id a degenerate square — neither is an attribution
+ * anyone can read. An occurrence with no stored row behind it has no editor at
+ * all, which is the same answer by a different route, and the `no_record` kind
+ * has no field to put one in for exactly that reason.
+ *
+ * It is the *session's* last editor rather than the report's author, and that
+ * imprecision is a documented product decision — the editor type's own note
+ * carries it.
+ */
+function toLastEditedBy(row: GeduFeedSession | undefined): SessionEditor | null {
+  if (row === undefined) return null;
+  return row.updated_by !== null && row.updated_by_first_name !== null
+    ? { id: row.updated_by, firstName: row.updated_by_first_name }
+    : null;
 }

@@ -7,7 +7,7 @@ import {
   GeduAssignmentsSectionView,
   type GeduAssignmentCardData,
 } from "./GeduAssignmentsSectionView";
-import { UncertifiedVoiceNotice } from "./uncertified-voice-notice";
+import { UncertifiedToolsNotice } from "./uncertified-notice";
 
 /**
  * The gedu dashboard's page body — everything below the route's data shell.
@@ -43,23 +43,38 @@ import { UncertifiedVoiceNotice } from "./uncertified-voice-notice";
  *   of scrolling. Every section takes the same wider container so their left
  *   edges still line up under the section pill, and the cards grid inside it.
  *
- * The assignments arrive as **data**, not as a rendered node, and the instant
- * room stays a node. That split is not an inconsistency: the instant-room panel
- * is one section with backend actions behind it, so a shell can hand it over
- * finished, whereas the activity sections' *shape* — how many there are and what
- * they are called — is derived from the rows, and no single node can express it.
- * The body still queries nothing; it is a plain function of its props either way.
+ * The assignments arrive as **data**, not as a rendered node, while the two
+ * tool panels — the instant room and the password reset — stay nodes. That
+ * split is not an inconsistency: each panel is a self-contained thing with
+ * backend actions behind it, so a shell can hand it over finished, whereas the
+ * activity sections' *shape* — how many there are and what they are called — is
+ * derived from the rows, and no single node can express it. The body still
+ * queries nothing; it is a plain function of its props either way.
  */
 export function GeduDashboardPageBody({
   assignments,
   certified,
+  toolsCard,
   instantRoomCard,
 }: {
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
-  /** Has an admin certified this gedu? Gates the instant-room panel. */
+  /**
+   * Has an admin certified this gedu? Gates the whole Tools section, because
+   * every tool in it is a moderator power an unapproved account does not hold
+   * and every one of them refuses it server-side. One flag, one notice: the
+   * section is gated as a unit, so an uncertified gedu reads the reason once
+   * rather than once per panel.
+   */
   certified: boolean;
-  /** The instant-voice-room panel shown to a certified gedu. */
+  /** The Minecraft Education password-reset panel, shown to a certified gedu. */
+  toolsCard: React.ReactNode;
+  /**
+   * The instant-voice-room panel, shown to a certified gedu. Two props rather
+   * than one node for the pair: they are separate self-contained panels that
+   * happen to share a heading, and a shell that had to compose them would own a
+   * slice of this page's layout.
+   */
   instantRoomCard: React.ReactNode;
 }) {
   const t = useTranslations("dashboardSections");
@@ -81,19 +96,21 @@ export function GeduDashboardPageBody({
    * The pill is a row of small chips in a rounded bar that has to fit on a
    * phone; a heading is a line of its own on a wide page. Borrowing one for the
    * other worked in English by luck — the type nouns happen to be one short
-   * word each — and broke the moment a locale disagreed: "Instant Voice Room"
-   * is *Salon vocal instantané* in French, which wrapped the pill onto two
-   * lines and pushed every other chip off the bar. So the nav gets its own
-   * short label per section, and a heading is free to be as long as it reads
-   * best. The type nouns pass the same key to both because in every locale they
-   * are already the shortest true word for the thing.
+   * word each — and broke the moment a locale disagreed: a section headed
+   * "Instant Voice Room" wrapped its own chip onto a second line in French and
+   * pushed every other chip off the bar. That section is now a panel inside
+   * Tools rather than a chip of its own, so the bar happens to be all short
+   * words again — but the separation stays, because it is what lets a heading
+   * be as long as it reads best. The type nouns pass the same key to both
+   * because in every locale they are already the shortest true word for the
+   * thing.
    */
   const sections: DashboardSection[] = [
     ...activitySections.map((group) => ({
       id: ACTIVITY_HEADING_KEY[group.type],
       label: t(ACTIVITY_HEADING_KEY[group.type]),
     })),
-    { id: "instant-voice-room", label: t("instantVoiceRoomShort") },
+    { id: "tools", label: t("tools") },
   ];
 
   return (
@@ -119,8 +136,8 @@ export function GeduDashboardPageBody({
       {/* Two rhythms, because there are two kinds of gap here. The type nouns
           are subgroups of one thing — the activities this gedu runs — so a full
           section break between Clubs and Camps read as three unrelated pages
-          stacked up and put a screen of nothing between a gedu's two cards. The
-          instant room genuinely is a different section and keeps the wide gap. */}
+          stacked up and put a screen of nothing between a gedu's two cards.
+          Tools genuinely is a different section and keeps the wide gap. */}
       <div className="space-y-24 pb-24">
         <div className="space-y-10">
           {activitySections.map((group) => (
@@ -163,20 +180,38 @@ export function GeduDashboardPageBody({
           ))}
         </div>
 
-        {/* Last section gets viewport-height min so clicking its pill can
-            actually scroll it to the top — without this the page bottoms
-            out mid-scroll and the heading stays in the middle of the
-            viewport. Same shape as the parent dashboard's last section. */}
+        {/* Tools — everything a gedu does *around* a session rather than in
+            one: spinning up a room to talk in, and putting a child back into
+            their Minecraft account. They were two sections until the second
+            tool arrived and made it obvious they were one: a heading per tool
+            means a pill chip per tool, and a nav that grows a chip every time
+            somebody adds a button is a nav that stops fitting on a phone.
+
+            Last section, so it gets the viewport-height min: without it the
+            page bottoms out mid-scroll and clicking the Tools chip leaves the
+            heading in the middle of the viewport. Same shape as the parent
+            dashboard's last section. */}
         <section
-          id="instant-voice-room"
-          aria-labelledby="instant-voice-room-heading"
+          id="tools"
+          aria-labelledby="tools-heading"
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-5xl space-y-6">
-            <h2 id="instant-voice-room-heading" className="text-3xl font-bold">
-              {t("instantVoiceRoom")}
+            <h2 id="tools-heading" className="text-3xl font-bold">
+              {t("tools")}
             </h2>
-            {certified ? instantRoomCard : <UncertifiedVoiceNotice />}
+            {/* One notice for the section, not one per panel. Certification is
+                a single fact about the account and the same sentence answered
+                both panels, so two of them stacked said the same thing twice
+                to a gedu whose page has nothing else on it. */}
+            {certified ? (
+              <>
+                {toolsCard}
+                {instantRoomCard}
+              </>
+            ) : (
+              <UncertifiedToolsNotice />
+            )}
           </div>
         </section>
       </div>

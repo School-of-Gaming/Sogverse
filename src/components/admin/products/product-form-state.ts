@@ -130,6 +130,18 @@ export interface FormState {
   // no part in the form-lock machinery, because retagging a running club has no
   // consequence for anyone already enrolled.
   tag: ProductTag | null;
+  // The one country whose families may enrol, as an ISO 3166-1 alpha-2 code, or
+  // `null` for no lock — the default and the ordinary state. Sits beside the
+  // audience because it narrows the same question (who may take a seat) and not
+  // the "Where" fields, which say where the product runs: a fully remote club is
+  // as lockable as an in-person one.
+  //
+  // Offered only for types whose config sets `regionLockable`, which excludes
+  // municipality clubs — their country is settled by the separate `countryBound`
+  // mechanism. Freely editable for a product's whole life, live ones included,
+  // because the lock gates future enrolments and never revisits a held seat, and
+  // enforced by the shop UI alone (a family's location is self-attested).
+  regionLockCountry: string | null;
   spokenLanguageCode: string;
 
   // Where
@@ -221,6 +233,9 @@ export function initialState(
     // Untagged until somebody decides otherwise. There is no sensible default
     // design tag — a wrong one advertises a promise to families we did not make.
     tag: null,
+    // Unlocked until somebody decides otherwise. A default lock would quietly
+    // hide a new product from every family outside one country.
+    regionLockCountry: null,
     spokenLanguageCode: "",
     isRemote: true,
     locationId: null,

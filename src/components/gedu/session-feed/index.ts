@@ -48,6 +48,7 @@ export type {
   FutureSessionFeedEntry,
   NoRecordSessionFeedEntry,
   PastSessionFeedEntry,
+  SessionEditor,
   SessionEditorState,
   SessionEntryDraft,
   SessionFeedEntry,

@@ -2,6 +2,7 @@ import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import {
   CLUB_FUTURE_SPECS,
   SESSION_FEED_ADULT_ID,
+  SESSION_FEED_EDITORS,
   SESSION_FEED_GAMER_IDS,
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
@@ -10,10 +11,13 @@ import {
   type SessionFeedCadence,
 } from "@/components/gedu/session-feed/mock-fixtures";
 import type { SessionFeedEntry, SessionFeedGamer } from "@/components/gedu/session-feed";
+import { platformForTopic } from "@/lib/products/topics";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
   GeduAssignedProduct,
   GeduAssignedProductGroup,
   GeduAssignedProductRosterEntry,
+  ProductTopic,
 } from "@/types";
 
 /**
@@ -34,22 +38,35 @@ import type {
  */
 
 /**
- * **Two scenarios, and deliberately only two.**
+ * **Four scenarios, and each one is a shape the others structurally cannot
+ * make.**
  *
- * There were five, and four of them differed from the kitchen sink by one
+ * There were five once, and four of them differed from the kitchen sink by one
  * state each — a heavier backlog, a shorter history, no peer groups. States
  * that can coexist belong in the same scenario, because a reviewer who has to
- * open five pages to see five things will see three of them; and every extra
- * scenario is another fixture to keep honest for a page that only has two
- * genuinely exclusive shapes to be in.
+ * open five pages to see five things will see three of them.
  *
- * Those two are the shapes that cannot coexist: `club` is remote and weekly,
- * `camp` is in-person and daily. Everything else the page can do — a year of
- * history, a session written up but never marked off, a skipped week, an
- * unstaffed sister group, a venue's shared notes — is packed into whichever of
- * the two it belongs to.
+ * The two that survived that cull are the product shapes: `club` is remote and
+ * weekly, `camp` is in-person and daily. Everything else the *page* can do — a
+ * year of history, a session written up but never marked off, a skipped week,
+ * an unstaffed sister group, a venue's shared notes — is packed into whichever
+ * of the two it belongs to.
+ *
+ * The two beside them are the *roster's* shapes, and they exist for the same
+ * reason: a product's topic decides which game identity its roster shows, and
+ * the three answers cannot coexist on one page. `roblox` is a Roblox-topic
+ * product, `no-platform` a topic about no single game account at all — where
+ * every child row is the short row, the same absence the adult row already
+ * makes. They are deliberately thin on everything else (a short run, one peer
+ * group) because the only question they are open to answer is what the rail's
+ * roster looks like.
  */
-export const GEDU_PRODUCT_SCENARIOS = ["club", "camp"] as const;
+export const GEDU_PRODUCT_SCENARIOS = [
+  "club",
+  "camp",
+  "roblox",
+  "no-platform",
+] as const;
 
 export type GeduProductScenario = (typeof GEDU_PRODUCT_SCENARIOS)[number];
 
@@ -115,6 +132,12 @@ const CAMP_SLOTS = [0, 1, 2, 3, 4].map((weekday) => ({
 interface ScenarioConfig {
   productName: string;
   productType: GeduAssignedProduct["product"]["product_type"];
+  /**
+   * What the product is about — and therefore which game identity, if any, its
+   * roster rows show. The roster is built from it rather than beside it, so a
+   * scenario cannot claim a Minecraft topic and hand out Roblox handles.
+   */
+  topic: ProductTopic;
   cadence: SessionFeedCadence;
   specs: readonly EntrySpec[];
   startTime: string;
@@ -178,6 +201,7 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
     kind: "future",
     report:
       "# Last day: showcase afternoon\n\nEvery team demos their finished course, and we vote on the one nobody could beat.\n\n**Parents are welcome from 15:00** if you would like to come and be beaten by an obstacle course built by ten-year-olds.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "future",
@@ -199,6 +223,7 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
     kind: "future",
     report:
       "# Leaderboards\n\nWe wire the finish line up to a scoreboard so the course remembers who got round it fastest.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   { kind: "future" },
   {
@@ -210,6 +235,7 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
     kind: "future",
     report:
       "# Tomorrow: playtesting, round two\n\nEvery team hands their course to another team and watches them fail at it — the most useful hour of the week, and the one everybody asks to repeat.",
+    lastEditedBy: SESSION_FEED_EDITORS.petra,
   },
 ];
 
@@ -236,12 +262,14 @@ const CAMP_SPECS: readonly EntrySpec[] = [
     kind: "past",
     report:
       "# Day five: playtesting\n\nEvery team handed their obby to another team and watched them fail at it, which is reliably the most useful hour of the week.\n\nThree levels got quietly made easier straight afterwards, and nobody admitted to it.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
     allPresent: true,
     report:
       "# Day four: sound and lighting\n\nNeon needs neon, so the afternoon went on emissive parts and a soundtrack that loops without anyone noticing the seam.\n\n## What changed\n\n- Every obstacle now lights its own approach, so you can see where you are going\n- A four-bar loop under the whole course, built by three of the group together\n- A very loud sound on the finish line, which was not my idea and is staying",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
@@ -250,24 +278,28 @@ const CAMP_SPECS: readonly EntrySpec[] = [
       "# Day three: our first scripts\n\nWe wrote our first Lua today — a checkpoint that saves where you got to — and then broke it on purpose to find out what the error messages actually mean.\n\n## How it went\n\nEveryone got a working checkpoint. The useful part was the breaking: a script that says `attempt to index nil` is not being rude, it is telling you that the thing you asked for is not there, and once that landed the group started reading the errors instead of calling me over.\n\nHilda finished early and ended up debugging two other tables' scripts, which she was very pleased about.\n\n**At home:** the place to look is the Output window at the bottom of Studio. Almost every problem is named there in plain words.",
     staffNote:
       "The room's laptops are slow to load Studio; start the machines ten minutes before the group arrives tomorrow.",
+    lastEditedBy: SESSION_FEED_EDITORS.petra,
   },
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar, SESSION_FEED_GAMER_IDS.emil],
     report:
       "# Day two: building the course\n\nTeams of two, one obstacle each, all snapped together into a single course by the end of the afternoon.\n\nIt is unfair and much too long, which everyone considers to be the point.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.hilda],
     report:
       "# Day one and a half: picking a theme\n\nThe group voted on a theme for the shared course. Neon city won by a distance, and half the afternoon went on arguing about whether lava counts as neon.\n\nIt does not, and the ruling was extremely unpopular.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
   {
     kind: "past",
     allPresent: true,
     report:
       "# Day one: getting started\n\nEveryone got a Roblox Studio account working, made a baseplate and pushed a block off it.\n\n- Names and ground rules\n- Who is sitting next to whom for the week\n- One baseplate each, and one block pushed off each\n\nA quiet start on purpose. Tomorrow we pick a theme and start building for real.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 ];
 
@@ -485,6 +517,18 @@ function yearlongSpecs(): readonly EntrySpec[] {
   // the feed and again deep into the scrollback, sitting beside the
   // unmarked-register cases it must not be mistaken for.
   const MARKED_BUT_NO_REPORT_AT = new Set([1, 9, 22, 37]);
+  /**
+   * The weeks Petra covered. Sanna has the group and writes most of it up; a
+   * scattered handful are Petra's, which is what a regular-plus-stand-in group
+   * looks like — and it puts a second face down the scrollback without the
+   * chips reading as an alternating pattern. Named indices rather than a
+   * modulo, because who ran a given week is a fact about that week.
+   */
+  const COVERED_BY_PETRA_AT = new Set([3, 11, 19, 26, 41]);
+  const editorAt = (index: number) =>
+    COVERED_BY_PETRA_AT.has(index)
+      ? SESSION_FEED_EDITORS.petra
+      : SESSION_FEED_EDITORS.sanna;
   const past: EntrySpec[] = [];
 
   for (let index = 0; index < 53; index++) {
@@ -506,6 +550,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
           ],
           absent: [SESSION_FEED_GAMER_IDS.linnea],
         },
+        lastEditedBy: editorAt(index),
       });
       continue;
     }
@@ -513,6 +558,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
       past.push({
         kind: "past",
         report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+        lastEditedBy: editorAt(index),
       });
       continue;
     }
@@ -521,6 +567,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
         kind: "past",
         allPresent: true,
         staffNote: YEARLONG_STAFF_NOTES[index % YEARLONG_STAFF_NOTES.length],
+        lastEditedBy: editorAt(index),
       });
       continue;
     }
@@ -533,6 +580,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
     past.push({
       kind: "past",
       report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+      lastEditedBy: editorAt(index),
       ...(index % 7 === 3
         ? { staffNote: YEARLONG_STAFF_NOTES[index % YEARLONG_STAFF_NOTES.length] }
         : {}),
@@ -554,6 +602,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
       report: `# Before we kept records
 
 Written up from memory and the world save, long after the fact. Half the register is guesswork, so it stays half-marked — and nothing is asking for the rest.`,
+      lastEditedBy: SESSION_FEED_EDITORS.sanna,
     },
     { kind: "no_record" },
     { kind: "no_record" },
@@ -561,6 +610,44 @@ Written up from memory and the world save, long after the fact. Half the registe
 }
 
 const CLUB_SPECS = yearlongSpecs();
+
+/**
+ * A short, unremarkable run — the timeline for the two scenarios whose subject
+ * is the **roster**, not the feed.
+ *
+ * Deliberately boring: the club scenario already carries every state a session
+ * can be in, and repeating a slice of it here would only give a reviewer more
+ * to scroll past on the way to the rail they came to look at. Four finished
+ * weeks and the standard future block is enough that the page reads as a real
+ * workspace rather than an empty one.
+ */
+const ROSTER_SCENARIO_SPECS: readonly EntrySpec[] = [
+  ...CLUB_FUTURE_SPECS,
+  {
+    kind: "past",
+    allPresent: true,
+    report:
+      "# Obby week three\n\nEvery team's course is joined end to end now, and the whole thing is playable start to finish for the first time.",
+  },
+  {
+    kind: "past",
+    absent: [SESSION_FEED_GAMER_IDS.siiri],
+    report:
+      "# Checkpoints and spawns\n\nWe added checkpoints so nobody has to start from the beginning again, which was by some distance the most requested feature.",
+  },
+  {
+    kind: "past",
+    allPresent: true,
+    report:
+      "# Building the first obstacles\n\nTeams of two, one obstacle each. Unfair and much too long, which everyone considers to be the point.",
+  },
+  {
+    kind: "past",
+    allPresent: true,
+    report:
+      "# Getting started\n\nNames, ground rules, and one baseplate each. A quiet start on purpose.",
+  },
+];
 
 /* ------------------------------------------------------------------ */
 
@@ -581,6 +668,7 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   club: {
     productName: "Minecraft Monday Club",
     productType: "consumer_club",
+    topic: "minecraft_java",
     cadence: "weekly",
     specs: CLUB_SPECS,
     startTime: "16:30",
@@ -653,6 +741,13 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   camp: {
     productName: "Roblox Builders Camp",
     productType: "camp",
+    // Named for Roblox and topiced for Minecraft, which looks like a mistake
+    // and is not: this scenario's job is the in-person, daily, end-dated
+    // *product* shape, and its roster was authored with Minecraft handles.
+    // The `roblox` scenario below is where the other identity is judged, with
+    // both halves changed together — a fixture whose topic disagreed with its
+    // roster would render eight "none" rows and prove nothing.
+    topic: "minecraft_java",
     cadence: "daily",
     specs: CAMP_SPECS,
     // **A full camp day, and the length is the point.** A three-hour morning
@@ -706,6 +801,96 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       },
     ],
   },
+
+  /**
+   * **The other game identity.** A Roblox Studio product, so every child row
+   * carries a Roblox handle instead of a Minecraft one — a bust-proportioned
+   * figure where the club draws a whole body, the same pencil, the same inline
+   * editor, and the same fixed geometry through a save.
+   *
+   * The roster spreads the two states a fixture can reach: verified handles
+   * (a stored account id) and typed-but-unchecked ones (a name with no id),
+   * plus two children who have given nothing. The in-flight and refused states
+   * come from a real lookup and are rehearsed by the scene's faked latency, the
+   * same way the Minecraft scenarios rehearse theirs.
+   *
+   * **Every figure here is the drawn stand-in, including on the verified rows**,
+   * and that is a property of previews rather than of Roblox: a scene must not
+   * reach a third-party host on load, so no render is resolved. On the live page
+   * a verified row's picture arrives from the roster's one batched by-id call.
+   */
+  roblox: {
+    productName: "Roblox Studio Thursday",
+    productType: "consumer_club",
+    topic: "roblox_studio",
+    cadence: "weekly",
+    specs: ROSTER_SCENARIO_SPECS,
+    startTime: "17:00",
+    durationMinutes: 90,
+    slots: [{ weekday: 3, start_time: "17:00", duration_minutes: 90 }],
+    startedDaysAgo: 4 * 7,
+    endsInDays: null,
+    isRemote: true,
+    site: null,
+    materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
+    groupName: "Thursday A",
+    groupNotes: {
+      publicNote:
+        "Thursday A are building one shared obstacle course, a few obstacles at a time. Everything each team makes gets snapped into it at the end of the term.",
+      staffNote:
+        "Studio is slow to open on the older laptops — worth starting it before the group arrives. Siiri needs pairing rather than free choice of partner.",
+    },
+    peers: [
+      {
+        id: "mock-group-thursday-b",
+        name: "Thursday B",
+        participantCount: 6,
+        gedus: [PETRA],
+      },
+    ],
+  },
+
+  /**
+   * **A product about no game account at all**, which is the commonest kind:
+   * most topics name subject matter rather than one piece of software, so most
+   * rosters show no identity cell anywhere.
+   *
+   * The whole point of the scenario is what is *missing* — every child row is
+   * the short row, with nothing reserved where a figure would be, so the rail
+   * reads as a deliberately compact column rather than as a roster that failed
+   * to load. The adult row at the bottom is the reference: it has always been
+   * this shape, and here it is no shorter than the eight above it.
+   */
+  "no-platform": {
+    productName: "Programming Club",
+    productType: "consumer_club",
+    topic: "programming",
+    cadence: "weekly",
+    specs: ROSTER_SCENARIO_SPECS,
+    startTime: "16:00",
+    durationMinutes: 90,
+    slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
+    startedDaysAgo: 4 * 7,
+    endsInDays: null,
+    isRemote: true,
+    site: null,
+    materialUrl: null,
+    groupName: "Tuesday A",
+    groupNotes: {
+      publicNote:
+        "Tuesday A are working through the basics in Python. Nothing needs installing at home — everything runs in the browser.",
+      staffNote:
+        "No game account on this product, so nothing to check against a server. Two of the group are well ahead and want harder problems.",
+    },
+    peers: [
+      {
+        id: "mock-group-tuesday-b",
+        name: "Tuesday B",
+        participantCount: 5,
+        gedus: [JOONAS],
+      },
+    ],
+  },
 };
 
 export function buildGeduProductPageFixture(
@@ -732,7 +917,10 @@ export function buildGeduProductPageFixture(
       { id: GEDU_IDS.sanna, first_name: "Sanna" },
       { id: GEDU_IDS.petra, first_name: "Petra" },
     ],
-    roster: buildRoster(now),
+    // Read off the topic rather than passed beside it, so the shell and the rows
+    // cannot disagree about which identity this product is about — the same
+    // function the page itself resolves the question with.
+    roster: buildRoster(now, platformForTopic(config.topic)),
   };
 
   const peerGroups: GeduAssignedProductGroup[] = config.peers.map((peer) => ({
@@ -753,6 +941,7 @@ export function buildGeduProductPageFixture(
       product: {
         id: `mock-product-${scenario}`,
         product_type: config.productType,
+        topic: config.topic,
         timezone: SESSION_FEED_TIMEZONE,
         start_date: calendarDate(now, -config.startedDaysAgo),
         end_date:
@@ -802,17 +991,25 @@ function calendarDate(now: Date, dayOffset: number): string {
 
 /**
  * The nine feed regulars as roster rows — eight children and one adult. Ages,
- * genders and Minecraft states are spread across the group so every shape this
- * surface can produce is on screen at once.
+ * genders and game-account states are spread across the group so every shape
+ * this surface can produce is on screen at once.
+ *
+ * **The platform is a parameter, and it decides which columns carry anything.**
+ * A roster row holds both platforms' pairs at once and the page shows the one
+ * its topic is about, so a Minecraft product's rows leave the Roblox pair null
+ * and a Roblox product's rows leave the Minecraft pair null — never both filled,
+ * which would let a fixture look right on a page reading the wrong column. A
+ * product about no platform fills neither, and every child row is then the short
+ * row.
  *
  * That is **two** rendered states for the game account, not three. The row draws
- * a check for an account with a verified UUID and nothing at all otherwise, so a
+ * a check for an account with a confirmed key and nothing at all otherwise, so a
  * name typed in but never checked and no name at all land on the same treatment
  * — the only difference between them is the text, one showing the username and
  * the other the "none" placeholder. Both are here anyway, because that text is
  * the thing a gedu reads. The row's other two states (a check in flight, a name
- * Mojang does not know) can only come from a live lookup, which a preview never
- * makes.
+ * the platform does not know) can only come from a live lookup, which a preview
+ * never makes.
  *
  * Two children share a parent email — that's the sibling case the
  * copy-all-emails helper de-duplicates.
@@ -835,7 +1032,10 @@ function calendarDate(now: Date, dayOffset: number): string {
  * that is wider than the rail they sit in, and a fixture full of tidy
  * eleven-character addresses is exactly how a wrapping bug ships.
  */
-function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
+function buildRoster(
+  now: Date,
+  platform: GamePlatform | null,
+): GeduAssignedProductRosterEntry[] {
   /**
    * Keyed by participant id rather than positioned against the roster array:
    * the adult sits in that array too, so an index-aligned list of eight child
@@ -843,26 +1043,33 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
    * or giving a second adult a seat — would then hand a child somebody else's
    * age, gender and parent address with nothing failing.
    *
-   * The Minecraft UUIDs are real generated UUIDv4s: Mojang hands out real ones,
-   * so a fixture standing in for one has to look like a UUID or the row that
-   * renders it stops being a fair test. A null UUID beside a username is the
-   * typed-but-never-checked state.
+   * Each child carries a handle on **both** platforms; which pair is emitted is
+   * decided below by the product's own platform. The keys are shaped like the
+   * real ones on each side, because a fixture that does not look like the thing
+   * it stands in for stops being a fair test of the row that renders it: the
+   * Minecraft ones are real generated UUIDv4s, and the Roblox ones are positive
+   * integers in the range Roblox has been issuing for years. A null key beside a
+   * username is the typed-but-never-checked state, and it is deliberately not
+   * the same children on the two platforms — so switching scenarios shuffles
+   * which rows wear a tick rather than repeating one arrangement twice.
    */
   const details: Record<string, {
     age: number;
     gender: GeduAssignedProductRosterEntry["gender"];
     minecraftUsername: string | null;
     minecraftUuid: string | null;
+    robloxUsername: string | null;
+    robloxUserId: number | null;
     parentEmail: string;
   } | undefined> = {
-    [SESSION_FEED_GAMER_IDS.aino]: { age: 11, gender: "girl", minecraftUsername: "AinoBuilds", minecraftUuid: "617bc50c-7dfe-4b39-8c74-8f01b9110f92", parentEmail: "marja.korhonen@example.com" },
-    [SESSION_FEED_GAMER_IDS.vaino]: { age: 12, gender: "boy", minecraftUsername: "VainoTheBold", minecraftUuid: "04c2b904-a933-44b1-b295-38d499d58b2b", parentEmail: "marja.korhonen@example.com" },
-    [SESSION_FEED_GAMER_IDS.elias]: { age: 10, gender: "boy", minecraftUsername: "EliasRedstone", minecraftUuid: null, parentEmail: "tuomas.laine@example.com" },
-    [SESSION_FEED_GAMER_IDS.linnea]: { age: 13, gender: "girl", minecraftUsername: null, minecraftUuid: null, parentEmail: "sofia.margareta.lindqvist-holmberg@kotiposti.example.com" },
-    [SESSION_FEED_GAMER_IDS.oskar]: { age: 9, gender: "boy", minecraftUsername: "OskarOre", minecraftUuid: "c0be0c66-a9ab-40ee-9768-c4f8307f8cdb", parentEmail: "henrik.lindqvist@example.com" },
-    [SESSION_FEED_GAMER_IDS.siiri]: { age: 11, gender: "girl", minecraftUsername: "SiiriSky", minecraftUuid: null, parentEmail: "petri.makinen@example.com" },
-    [SESSION_FEED_GAMER_IDS.emil]: { age: 12, gender: "boy", minecraftUsername: null, minecraftUuid: null, parentEmail: "anna.virtanen@example.com" },
-    [SESSION_FEED_GAMER_IDS.hilda]: { age: 10, gender: "non_binary", minecraftUsername: "HildaHollow", minecraftUuid: "550f9847-3598-44a8-8232-7280d4881f5b", parentEmail: "kaisa.nieminen@example.com" },
+    [SESSION_FEED_GAMER_IDS.aino]: { age: 11, gender: "girl", minecraftUsername: "AinoBuilds", minecraftUuid: "617bc50c-7dfe-4b39-8c74-8f01b9110f92", robloxUsername: "AinoBuilds", robloxUserId: 1583920471, parentEmail: "marja.korhonen@example.com" },
+    [SESSION_FEED_GAMER_IDS.vaino]: { age: 12, gender: "boy", minecraftUsername: "VainoTheBold", minecraftUuid: "04c2b904-a933-44b1-b295-38d499d58b2b", robloxUsername: "VainoTheBold", robloxUserId: 2094817330, parentEmail: "marja.korhonen@example.com" },
+    [SESSION_FEED_GAMER_IDS.elias]: { age: 10, gender: "boy", minecraftUsername: "EliasRedstone", minecraftUuid: null, robloxUsername: "Elias_Builds", robloxUserId: 3312048765, parentEmail: "tuomas.laine@example.com" },
+    [SESSION_FEED_GAMER_IDS.linnea]: { age: 13, gender: "girl", minecraftUsername: null, minecraftUuid: null, robloxUsername: "LinneaLoops", robloxUserId: null, parentEmail: "sofia.margareta.lindqvist-holmberg@kotiposti.example.com" },
+    [SESSION_FEED_GAMER_IDS.oskar]: { age: 9, gender: "boy", minecraftUsername: "OskarOre", minecraftUuid: "c0be0c66-a9ab-40ee-9768-c4f8307f8cdb", robloxUsername: null, robloxUserId: null, parentEmail: "henrik.lindqvist@example.com" },
+    [SESSION_FEED_GAMER_IDS.siiri]: { age: 11, gender: "girl", minecraftUsername: "SiiriSky", minecraftUuid: null, robloxUsername: "SiiriSky", robloxUserId: 4460918227, parentEmail: "petri.makinen@example.com" },
+    [SESSION_FEED_GAMER_IDS.emil]: { age: 12, gender: "boy", minecraftUsername: null, minecraftUuid: null, robloxUsername: null, robloxUserId: null, parentEmail: "anna.virtanen@example.com" },
+    [SESSION_FEED_GAMER_IDS.hilda]: { age: 10, gender: "non_binary", minecraftUsername: "HildaHollow", minecraftUuid: "550f9847-3598-44a8-8232-7280d4881f5b", robloxUsername: "HildaHollow", robloxUserId: 1907754382, parentEmail: "kaisa.nieminen@example.com" },
   };
 
   return SESSION_FEED_ROSTER.map((person) => {
@@ -871,8 +1078,11 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
         participant_id: person.id,
         first_name: person.firstName,
         date_of_birth: null,
+        // An adult seat carries no linked game account on either platform.
         minecraft_username: null,
         minecraft_uuid: null,
+        roblox_username: null,
+        roblox_user_id: null,
         gender: null,
         // No linked parent — she is the adult. The RPC's two contact fields are
         // mutually exclusive and this is the other side of that.
@@ -886,13 +1096,22 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
         `session-feed roster member ${person.firstName} (${person.id}) has no roster detail fixture`,
       );
     }
+    // Exactly one pair is emitted, and on a product about no platform neither
+    // is. A row carrying both would render correctly here and hide the bug the
+    // moment a surface read the column its topic did not name.
+    const minecraft = platform === "minecraft";
+    const roblox = platform === "roblox";
     return {
       participant_id: person.id,
       first_name: person.firstName,
       // Offset a few days past the birthday so the computed age is exact.
       date_of_birth: calendarDate(now, -(detail.age * 365 + 12)),
-      minecraft_username: detail.minecraftUsername,
-      minecraft_uuid: detail.minecraftUsername ? detail.minecraftUuid : null,
+      minecraft_username: minecraft ? detail.minecraftUsername : null,
+      minecraft_uuid:
+        minecraft && detail.minecraftUsername ? detail.minecraftUuid : null,
+      roblox_username: roblox ? detail.robloxUsername : null,
+      roblox_user_id:
+        roblox && detail.robloxUsername ? detail.robloxUserId : null,
       gender: detail.gender,
       parent_email: detail.parentEmail,
       // A child's contact is their linked parent's address; their own profile

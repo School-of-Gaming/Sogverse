@@ -19,10 +19,23 @@ import type {
   FutureSessionFeedEntry,
   NoRecordSessionFeedEntry,
   PastSessionFeedEntry,
+  SessionEditor,
   SessionEditorState,
   SessionFeedEntry,
   SessionFeedGamer,
 } from "@/components/gedu/session-feed/types";
+
+/**
+ * Somebody the database has already stamped on a session.
+ *
+ * A real UUID literal because that is what the field promises — the id seeds an
+ * identicon wherever one of these reaches a chip — and hardcoded rather than
+ * generated so the fixture is the same person on every run.
+ */
+const EDITOR: SessionEditor = {
+  id: "a61e404b-99ea-4d92-b462-eac895cf4150",
+  firstName: "Sanna",
+};
 
 const ROSTER: SessionFeedGamer[] = [
   { id: "a", firstName: "Aino" },
@@ -60,6 +73,9 @@ function past(
     staffNote: null,
     attendance: {},
     owed: true,
+    // Unsigned by default: these derivations are about what a session owes and
+    // what its editors do, none of which turns on who last touched it.
+    lastEditedBy: null,
     ...fields,
   };
 }
@@ -97,6 +113,7 @@ function future(
     report: null,
     staffNote: null,
     attendance: {},
+    lastEditedBy: null,
     ...fields,
   };
 }
@@ -612,7 +629,33 @@ describe("applyPlanDraftToEntry", () => {
       // A future entry carries a sheet now, because one of them can be the
       // session in progress. Planning notes never touch it.
       attendance: {},
+      // Carried through rather than rewritten: the stamp is the database's, and
+      // folding a draft in locally must not invent a name the next read could
+      // contradict.
+      lastEditedBy: null,
     });
+  });
+
+  /*
+   * The carry-through, asserted against somebody rather than against the
+   * default null — which is the only version of this that can fail. An entry
+   * already stamped by Sanna comes back stamped by Sanna, however much of its
+   * text the draft rewrites: this function does not know who is saving, the
+   * stamp is the database's, and the authoritative answer arrives with the
+   * refetched row.
+   */
+  it("keeps the existing editor on the folded entry", () => {
+    const entry = future("f", {
+      report: "Lighthouse week.",
+      lastEditedBy: EDITOR,
+    });
+    const folded = applyPlanDraftToEntry(entry, {
+      kind: "plan",
+      report: "Harbour road instead.",
+      staffNote: "Bring the spare mouse.",
+    });
+    expect(folded.report).toBe("Harbour road instead.");
+    expect(folded.lastEditedBy).toEqual(EDITOR);
   });
 
   it("collapses cleared notes to null so their blocks stop rendering", () => {
@@ -854,6 +897,9 @@ describe("applyDraftToEntry", () => {
       // An emptied note collapses to null so its block stops rendering.
       staffNote: null,
       attendance: ALL_MARKED,
+      // Carried through rather than rewritten: the stamp is the database's, so
+      // a session saved locally stays unsigned until the row comes back.
+      lastEditedBy: null,
     });
   });
 
@@ -891,6 +937,44 @@ describe("applyDraftToEntry", () => {
     });
     expect(saved).toMatchObject({ attendance: { a: "present" } });
     expect(entryNeedsAttention(saved, ROSTER)).toBe(true);
+  });
+
+  /*
+   * The carry-through, against somebody rather than against the default null.
+   * The same session, rewritten by whoever is at the keyboard now, still names
+   * the gedu the database last stamped it with — this function has no idea who
+   * is saving and must not guess, and the real answer comes back with the
+   * refetched row a moment later. Asserted on both editors' fold paths because
+   * a rule that holds on one of them and not the other is the drift worth
+   * catching.
+   */
+  it("keeps the existing editor on the folded entry", () => {
+    const saved = applyDraftToEntry(
+      past("g", { report: "Redstone week.", lastEditedBy: EDITOR }),
+      {
+        kind: "past",
+        attendance: ALL_MARKED,
+        report: "Redstone week, corrected.",
+        staffNote: "",
+      },
+    );
+    expect(saved).toMatchObject({
+      report: "Redstone week, corrected.",
+      lastEditedBy: EDITOR,
+    });
+  });
+
+  it("leaves a pre-epoch gap unsigned, because nothing has stored it yet", () => {
+    // The one place this function *does* write the field, and it writes the
+    // honest answer: a gap has no stored row behind it, so there is no stamp to
+    // carry — the entry it becomes is unsigned until the write comes back.
+    const saved = applyDraftToEntry(noRecord("n"), {
+      kind: "past",
+      attendance: ALL_MARKED,
+      report: "# From memory",
+      staffNote: "",
+    });
+    expect(saved).toMatchObject({ kind: "past", lastEditedBy: null });
   });
 
   it("round-trips a finished entry through the editor without losing anything", () => {

@@ -1008,6 +1008,7 @@ export type Database = {
           municipality_fee_cents: number | null
           primary_gedu_fee_cents: number | null
           product_type: Database["public"]["Enums"]["product_type"]
+          region_lock_country: string | null
           registration_opens_at: string
           seat_count: number | null
           signup_threshold: number | null
@@ -1038,6 +1039,7 @@ export type Database = {
           municipality_fee_cents?: number | null
           primary_gedu_fee_cents?: number | null
           product_type: Database["public"]["Enums"]["product_type"]
+          region_lock_country?: string | null
           registration_opens_at: string
           seat_count?: number | null
           signup_threshold?: number | null
@@ -1068,6 +1070,7 @@ export type Database = {
           municipality_fee_cents?: number | null
           primary_gedu_fee_cents?: number | null
           product_type?: Database["public"]["Enums"]["product_type"]
+          region_lock_country?: string | null
           registration_opens_at?: string
           seat_count?: number | null
           signup_threshold?: number | null
@@ -1787,6 +1790,7 @@ export type Database = {
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
           p_product_type: Database["public"]["Enums"]["product_type"]
+          p_region_lock_country?: string
           p_registration_opens_at: string
           p_schedule_slots?: Json
           p_seat_count?: number
@@ -2034,6 +2038,14 @@ export type Database = {
         }
         Returns: Json
       }
+      set_group_member_roblox: {
+        Args: {
+          p_participant_id: string
+          p_roblox_user_id?: number
+          p_roblox_username: string
+        }
+        Returns: Json
+      }
       set_group_notes: {
         Args: { p_gedu_note: string; p_group_id: string; p_public_note: string }
         Returns: Json
@@ -2084,6 +2096,7 @@ export type Database = {
           p_municipality_fee_cents?: number
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
+          p_region_lock_country?: string
           p_registration_opens_at: string
           p_schedule_slots?: Json
           p_seat_count?: number

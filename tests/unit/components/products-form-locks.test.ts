@@ -99,6 +99,7 @@ describe("capacityDefaultsToCapped", () => {
     // blank and required — but the decision is made rather than defaulted past.
     expect(capacityDefaultsToCapped(eventConfig, "free")).toBe(true);
     expect(capacityDefaultsToCapped(consumerConfig, "free")).toBe(true);
+    expect(capacityDefaultsToCapped(campConfig, "free")).toBe(true);
   });
 
   it("leaves every paid product open", () => {

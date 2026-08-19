@@ -52,7 +52,9 @@ const eslintConfig = defineConfig([
             // ".*ClassName" covers compound class-name props (e.g. listClassName)
             // — Tailwind class strings, definitionally non-translatable like className.
             "className", ".*ClassName", "styleName", "style", "type", "key", "id",
-            "width", "height", "href", "src", "alt", "htmlFor",
+            // "sizes" is the <img>/next-image srcset descriptor — a list of CSS
+            // media conditions and lengths, as non-translatable as a class string.
+            "width", "height", "sizes", "href", "src", "alt", "htmlFor",
             "data-.*", "role",
             "name", "value", "defaultValue", "defaultTheme",
             "autoComplete", "autoCapitalize",

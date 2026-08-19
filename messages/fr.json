@@ -9,9 +9,9 @@
       "resetPassword": "Réinitialiser le mot de passe",
       "registerGedu": "Devenir animateur",
       "about": "À propos",
-      "yty": "Yty – la Force du Sogverse",
       "minecraftApi": "API du serveur Minecraft",
       "adminDashboard": "Tableau de bord admin",
+      "adminTools": "Outils",
       "parentDashboard": "Mon SOG",
       "parentDashboardDescription": "Gérez vos joueurs et leurs inscriptions",
       "geduDashboard": "Mon SOG",
@@ -20,8 +20,6 @@
       "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
       "gamerDashboard": "Mon SOG",
       "gamerDashboardDescription": "Vos clubs, stages et événements dans le Sogverse",
-      "gamerGroups": "Mes groupes",
-      "gamerGroupDetails": "Détails du groupe",
       "voiceSession": "Session vocale",
       "help": "Aide",
       "shop": "Boutique",
@@ -76,12 +74,9 @@
     "createAccount": "Créer un compte",
     "unexpectedError": "Une erreur inattendue s’est produite",
     "somethingWentWrong": "Une erreur est survenue",
-    "noPermission": "Vous n’avez pas l’autorisation de consulter cette page.",
-    "perSession": "par session",
     "minutes": "min",
     "ages": "{min}–{max} ans",
     "schedule": "Chaque {day} à {time} {tz}",
-    "duration": "{minutes} minutes",
     "email": "E-mail",
     "password": "Mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
@@ -99,10 +94,6 @@
     "backToLogin": "Retour à la connexion",
     "passwordMinLength": "Doit contenir au moins {count} caractères",
     "forgotPassword": "Mot de passe oublié ?",
-    "failedToLoad": "Échec du chargement des données",
-    "alreadyEnrolled": "Déjà inscrit",
-    "noRecentActivity": "Aucune activité récente à afficher.",
-    "recentActivity": "Activité récente",
     "selectLanguage": "Choisir la langue",
     "roleAdmin": "Administrateur",
     "roleParent": "Parent",
@@ -153,10 +144,6 @@
       "heading": "Pour les parents",
       "paragraph1": "Accompagner son enfant dans le jeu vidéo, ça s’apprend aussi. Le monde du gaming évolue vite, et personne ne peut tout suivre. On est là pour ça : vous tenir au courant, vous expliquer ce qui se passe, et faire en sorte que vous vous sentiez à l’aise avec ce que vit votre enfant.",
       "paragraph2": "Côté pratique, vous gardez la main sur tout : comptes, inscriptions, dépenses. Votre enfant joue dans un environnement sécurisé, encadré par des professionnels qui s’investissent vraiment."
-    },
-    "cta": {
-      "heading": "Rejoignez notre communauté",
-      "subheading": "Offrez à votre enfant un espace amusant et sécurisé pour jouer, apprendre et se faire de vrais amis, encadré par un animateur professionnel."
     }
   },
   "admin": {
@@ -290,8 +277,7 @@
         "label": "Langues",
         "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée.",
         "addLocale": "+ Ajouter une langue",
-        "removeLocale": "Retirer {locale}",
-        "inlineCreateHint": "Enregistré en {locale}. Les traductions dans les autres langues pourront être ajoutées plus tard depuis la gestion des thèmes et étiquettes."
+        "removeLocale": "Retirer {locale}"
       },
       "newPage": {
         "back": "Retour aux {plural}",
@@ -299,7 +285,6 @@
       },
       "detailsPage": {
         "notFound": "Produit introuvable.",
-        "locationMissing": "—",
         "uncapped": "Aucune limite de places",
         "listed": "Répertorié publiquement",
         "unlisted": "Hors catalogue — lien direct uniquement",
@@ -314,7 +299,6 @@
         "fields": {
           "topic": "Thème",
           "materialUrl": "Matériel pédagogique",
-          "locales": "Langues",
           "startDate": "Date de début",
           "endDate": "Date de fin",
           "signupThreshold": "Seuil d’inscriptions",
@@ -329,6 +313,7 @@
           "municipalityFee": "Montant commune / session",
           "registrationOpensAt": "Ouverture des inscriptions",
           "tag": "Conçu pour",
+          "regionLock": "Restriction par pays",
           "visibility": "Visibilité"
         }
       },
@@ -366,7 +351,7 @@
         "billingDescription": {
           "consumerClub": "Les parents paient pour chaque session à laquelle leur enfant participe. La facturation est automatique chaque semaine.",
           "municipalityClub": "School of Gaming facture directement la commune. Les parents inscrivent leur enfant gratuitement, dans la limite des places disponibles.",
-          "camp": "Les parents paient le prix total en une fois, à l’inscription. Remboursable jusqu’à une date limite.",
+          "camp": "Les stages peuvent être gratuits (avec ou sans limite de places) ou payés à l’avance. Un stage payant est réglé en totalité à l’inscription, remboursable jusqu’à une date limite.",
           "event": "Les événements peuvent être gratuits (avec ou sans limite de places) ou payés à l’avance."
         },
         "registration": "Ouverture des inscriptions",
@@ -382,11 +367,12 @@
         "materialUrl": "URL du matériel pédagogique",
         "seatAudience": "Qui peut occuper une place",
         "tag": "Conçu pour",
+        "regionLock": "Restriction par pays",
         "forGamers": "Pour les joueurs",
         "forParents": "Pour les parents",
         "minAge": "Âge min.",
         "maxAge": "Âge max.",
-        "deliveredIn": "Animé en",
+        "spokenLanguage": "Langue parlée",
         "online": "En ligne",
         "inPerson": "En présentiel",
         "municipality": "Commune concernée",
@@ -507,6 +493,9 @@
       "tagOptions": {
         "none": "Aucune étiquette"
       },
+      "regionLock": {
+        "none": "Aucune restriction par pays"
+      },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
         "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
@@ -516,7 +505,8 @@
         "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
         "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
         "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
-        "deliveredInHint": "La langue principale utilisée pendant les sessions.",
+        "regionLockHint": "Seules les familles du pays choisi peuvent s’inscrire. Le lieu est celui que la famille a elle-même déclaré : c’est donc une indication dans la boutique plutôt qu’un blocage strict, et toute personne déjà inscrite conserve sa place même si elle déménage.",
+        "spokenLanguageHint": "La langue principale parlée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
         "voiceRoomAuto": "Une salle vocale sera créée automatiquement pour ce produit.",
         "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
@@ -528,7 +518,8 @@
         "holidayHint": "Aucune session n’aura lieu aux dates issues des calendriers sélectionnés. Modifiez un calendrier une fois et tous les produits qui l’utilisent se mettent à jour automatiquement.",
         "billingHint": "Les produits gratuits ont une limite de places par défaut ; les produits payants démarrent sans limite.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
-        "paidDetail": "Paiement unique à l’inscription.",
+        "paidDetailMonthly": "Facturé chaque mois sous forme d’abonnement.",
+        "paidDetailUpfront": "Paiement unique à l’inscription.",
         "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
         "pricingMonthly": "Prélevé chaque mois tant que l’abonnement est actif. Résiliable à tout moment.",
         "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
@@ -558,9 +549,9 @@
         "seatCountRequired": "Le nombre de places est obligatoire",
         "seatCountInvalid": "Le nombre de places doit être un entier positif",
         "priceSessionMissing": "Saisissez un prix par session en {currency}",
-        "priceSessionNegative": "Le prix par session en {currency} ne peut pas être négatif",
+        "priceSessionInvalid": "Le prix par session doit être d’au moins {minimum}",
         "priceMonthMissing": "Saisissez un prix mensuel en {currency}",
-        "priceMonthNegative": "Le prix mensuel en {currency} ne peut pas être négatif",
+        "priceMonthInvalid": "Le prix mensuel doit être d’au moins {minimum}",
         "primaryGeduFeeInvalid": "Saisissez une rémunération de Gedu principal supérieure à 0, ou choisissez Inconnu ou Bénévole",
         "assistantGeduFeeInvalid": "Saisissez une rémunération de Gedu assistant supérieure à 0, ou choisissez Aucune ou Bénévole",
         "municipalityFeeInvalid": "Saisissez un montant commune supérieur à 0, ou choisissez Inconnu",
@@ -815,9 +806,6 @@
       }
     },
     "locations": {
-      "title": "Lieux",
-      "description": "Gérer les pays, les villes et les sites",
-      "searchPlaceholder": "Rechercher des lieux...",
       "editName": "Modifier {name}",
       "addChildUnder": "Ajouter {type} sous {parent}",
       "location": "Lieu",
@@ -826,16 +814,7 @@
       "enterTypeName": "Saisissez le nom du {type}",
       "enterName": "Saisissez un nom",
       "adding": "Ajout...",
-      "addType": "Ajouter {type}",
-      "noLocationsYet": "Aucun lieu pour l’instant. Ajoutez un pays pour commencer.",
-      "noLocationsMatchSearch": "Aucun lieu ne correspond à votre recherche."
-    },
-    "productLocation": {
-      "locationLabel": "Lieu",
-      "remote": "À distance",
-      "inPerson": "En présentiel",
-      "selectLevel": "Sélectionner {type}...",
-      "selectSiteHint": "Descendez jusqu’à un site précis pour terminer."
+      "addType": "Ajouter {type}"
     },
     "testing": {
       "title": "Tests",
@@ -874,89 +853,6 @@
       "notDelivered": "Non remis",
       "today": "Aujourd’hui",
       "yesterday": "Hier"
-    },
-    "groups": {
-      "pendingChanges": "{count, plural, one {# modification en attente} other {# modifications en attente}}",
-      "discard": "Abandonner",
-      "commitChanges": "Valider les modifications",
-      "confirmGroupChanges": "Confirmer les modifications de groupes",
-      "changesWillBeApplied": "Les modifications suivantes seront appliquées :",
-      "saving": "Enregistrement...",
-      "applyingChanges": "Application des modifications",
-      "errorOccurred": "Une erreur s’est produite pendant l’opération.",
-      "allChangesApplied": "Toutes les modifications ont été appliquées avec succès.",
-      "savingAndNotifying": "Enregistrement des modifications et envoi des notifications...",
-      "working": "Traitement...",
-      "serverError": "Erreur serveur ({status})",
-      "noResponseStream": "Aucun flux de réponse du serveur",
-      "failedToSaveChanges": "Échec de l’enregistrement des modifications",
-      "operationFailed": "L’opération a échoué",
-      "networkError": "Erreur réseau",
-      "geduGroups": "Groupes de Gedus",
-      "addGroup": "Ajouter un groupe",
-      "noGroups": "Aucun groupe de Gedu pour l’instant. Ajoutez un groupe pour y affecter un Gedu.",
-      "selectGeduForGroup": "Sélectionnez un gedu pour créer un nouveau groupe.",
-      "group": "Groupe",
-      "groupNumber": "Groupe {number}",
-      "groupDeleted": "{label} (supprimé)",
-      "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
-      "genderBoy": "Garçon",
-      "genderGirl": "Fille",
-      "genderNonBinary": "Non binaire",
-      "boyCount": "{count, plural, one {# garçon} other {# garçons}}",
-      "girlCount": "{count, plural, one {# fille} other {# filles}}",
-      "nonBinaryCount": "{count, plural, one {# non binaire} other {# non binaires}}",
-      "ageRangeLabel": "tranche d’âge {range}",
-      "reassignGedu": "Réaffecter le gedu",
-      "moveGamersFirst": "Déplacez d’abord tous les joueurs",
-      "deleteGroup": "Supprimer le groupe",
-      "markedForDeletion": "Marqué pour suppression",
-      "noGamersEnrolled": "Aucun joueur inscrit. Faites glisser des joueurs ici.",
-      "new": "Nouveau",
-      "deleteGroupConfirmTitle": "Supprimer {label} ?",
-      "deleteGroupConfirmDescription": "Cela supprimera le groupe et l’affectation de son gedu. Cette modification ne prendra effet qu’après validation.",
-      "reassignGeduFor": "Réaffecter le Gedu de {label}",
-      "selectDifferentGedu": "Sélectionnez un autre gedu pour ce groupe.",
-      "searchByNameOrEmail": "Rechercher par nom ou e-mail…",
-      "noGedusMatchSearch": "Aucun gedu ne correspond à votre recherche."
-    },
-    "forms": {
-      "nameLabel": "Nom",
-      "namePlaceholder": "Nom du produit",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Décrivez votre produit",
-      "approxPerSession": "≈ {amount} par session",
-      "imageLabel": "Image",
-      "preview": "Aperçu",
-      "imagePickerHint": "Faites glisser une image ici, ou choisissez un fichier",
-      "imageChooseFile": "Choisir un fichier",
-      "imageRemove": "Retirer",
-      "imageRequired": "L’image du produit est obligatoire",
-      "gameLabel": "Jeu",
-      "newGameName": "Nom du nouveau jeu",
-      "addButton": "Ajouter",
-      "selectGame": "Sélectionnez un jeu...",
-      "addNewGame": "Ajouter un nouveau jeu",
-      "dayOfWeekLabel": "Jour de la semaine",
-      "startTimeLabel": "Heure de début",
-      "startTimeHint": "Saisissez l’heure en heure finlandaise (Europe/Helsinki). Les parents la verront dans leur fuseau horaire.",
-      "durationLabel": "Durée (minutes)",
-      "minAgeLabel": "Âge minimum",
-      "maxAgeLabel": "Âge maximum",
-      "nameRequired": "Le nom du produit est obligatoire",
-      "nameMaxLength": "Le nom du produit ne doit pas dépasser 100 caractères",
-      "descriptionRequired": "La description est obligatoire",
-      "validUrl": "Doit être une URL valide",
-      "gameRequired": "Le jeu est obligatoire",
-      "validTime": "Doit être une heure valide",
-      "durationMin": "La durée doit être d’au moins 1 minute",
-      "minAgeMin": "L’âge minimum doit être supérieur ou égal à 0",
-      "maxAgeMin": "L’âge maximum doit être supérieur ou égal à 0",
-      "maxAgeGte": "L’âge maximum doit être supérieur ou égal à l’âge minimum",
-      "failedToCreateGame": "Échec de la création du jeu",
-      "spokenLanguageLabel": "Langue d’animation",
-      "spokenLanguageRequired": "Veuillez choisir la langue dans laquelle le club est animé",
-      "locationRequired": "Veuillez choisir un lieu ou indiquer que le club se déroule à distance"
     }
   },
   "auth": {
@@ -1064,10 +960,6 @@
       "successDescription": "Votre code PIN parent a bien été modifié.",
       "backToSettings": "Retour aux paramètres"
     }
-  },
-  "checkout": {
-    "redirecting": "Redirection vers le paiement...",
-    "error": "Un problème est survenu au lancement du paiement. Veuillez <link>revenir en arrière</link> et réessayer."
   },
   "purchaseConfirmation": {
     "heading": "C’est tout bon !",
@@ -1231,9 +1123,7 @@
     "billing": "Facturation",
     "help": "Aide",
     "yty": "Yty",
-    "settings": "Paramètres",
-    "instantVoiceRoom": "Salle vocale instantanée",
-    "instantVoiceRoomShort": "Salle vocale",
+    "tools": "Outils",
     "loadingAssignments": "Chargement de vos clubs, stages et événements."
   },
   "family": {
@@ -1331,8 +1221,7 @@
       "chooseAreas": "Choisir des zones",
       "loading": "Chargement des lieux...",
       "save": "Enregistrer",
-      "saving": "Enregistrement...",
-      "saveError": "Échec de l’enregistrement des zones d’intervention"
+      "saving": "Enregistrement..."
     },
     "sessionDetails": {
       "back": "Retour à Mon SOG",
@@ -1351,17 +1240,17 @@
       "genderBoy": "Garçon",
       "genderGirl": "Fille",
       "genderNonBinary": "Non binaire",
-      "minecraftUsernameLabel": "Nom d’utilisateur Minecraft",
-      "minecraftUsernamePlaceholder": "Nom d’utilisateur Minecraft",
-      "minecraftUsernameSave": "Enregistrer",
-      "minecraftUsernameCancel": "Annuler",
-      "editMinecraftUsername": "Modifier le nom d’utilisateur Minecraft de {name}",
+      "gameUsernameLabel": "Nom d’utilisateur {platform}",
+      "gameUsernamePlaceholder": "Nom d’utilisateur {platform}",
+      "gameUsernameSave": "Enregistrer",
+      "gameUsernameCancel": "Annuler",
+      "editGameUsername": "Modifier le nom d’utilisateur {platform} de {name}",
       "copyContactEmail": "Copier l’adresse de contact {email}",
       "emailCopied": "E-mail copié",
       "copyAllContactEmails": "Copier toutes les adresses de contact ({count})",
       "allEmailsCopied": "Toutes les adresses de contact ont été copiées",
       "loadingWorkspace": "Chargement des séances de ce groupe.",
-      "minecraftSaveFailed": "Ce nom d’utilisateur n’a pas été enregistré. Réessayez."
+      "gameSaveFailed": "Ce nom d’utilisateur n’a pas été enregistré. Réessayez."
     },
     "sessionFeed": {
       "edit": "Modifier",
@@ -1443,32 +1332,12 @@
   "sessionFeed": {
     "readMore": "Lire la suite",
     "showLess": "Réduire",
+    "lastEditedBy": "Par {name}",
     "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}"
   },
   "groups": {
-    "title": "Groupes",
-    "backToGroups": "Retour aux groupes",
-    "groupNotFound": "Groupe introuvable.",
-    "live": "En direct",
-    "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
-    "noGamersEnrolled": "Aucun joueur inscrit pour l’instant.",
-    "age": "{age} ans",
-    "unenrollGamer": "Désinscrire {name}",
-    "noGroupsYet": "Pas encore de groupe",
-    "nextSession": "Prochaine : {date}",
-    "startsIn": "(commence dans {countdown})",
-    "sessionInProgress": "Session en cours",
-    "everyDay": "Chaque {day}",
-    "join": "Rejoindre",
-    "alwaysOpen": "Toujours ouvert",
-    "material": "Supports",
     "materialAction": "Supports pédagogiques",
-    "materialStaffOnly": "Gedus uniquement — les familles ne voient jamais ce lien",
-    "myGroupsHeading": "Mes groupes",
-    "myGroupsSubheading": "Vos groupes d’inscription et vos prochaines sessions vocales.",
-    "myGroupsEmpty": "Vous n’êtes encore inscrit dans aucun groupe.",
-    "currentGedu": "Actuel",
-    "assignedGedu": "Affecté"
+    "materialStaffOnly": "Gedus uniquement — les familles ne voient jamais ce lien"
   },
   "richText": {
     "bold": "Gras",
@@ -1688,7 +1557,6 @@
       "audience": "Public",
       "language": "Langue",
       "online": "En ligne",
-      "atVenue": "À {venue}",
       "tbd": "À confirmer"
     },
     "calendar": {
@@ -1759,10 +1627,21 @@
       "seatIsFor": "À qui revient cette place",
       "selected": "Sélectionné",
       "agePill": "{age} ans",
-      "parentPill": "Parent"
+      "parentPill": "Parent",
+      "regionLock": {
+        "heading": "Votre localisation",
+        "note": "Ce produit n’est proposé que dans certains pays. Indiquez où habite votre famille.",
+        "setLocation": "Ajoutez votre localisation",
+        "wrongCountry": "Ce produit n’est proposé que dans un seul pays : <name>{country}</name>.",
+        "eligible": "Rien que pour les familles de votre pays : {country}",
+        "eligibleLocation": "Localisation de votre famille : {location}",
+        "dialogTitle": "Où vit votre famille ?",
+        "dialogDescription": "Nous l’utilisons pour déterminer quels clubs, stages et événements sont proposés là où vous vivez. Vous pourrez la modifier plus tard dans vos paramètres.",
+        "dialogField": "Votre localisation",
+        "dialogSave": "Enregistrer la localisation"
+      }
     },
     "pricing": {
-      "title": "Tarifs",
       "subscriptionHint": "Facturé mensuellement · résiliable à tout moment.",
       "free": "Gratuit",
       "freeHint": "Aucun paiement nécessaire.",
@@ -1779,25 +1658,10 @@
       "minutes": "min",
       "seconds": "s"
     },
-    "loading": "Chargement…",
     "notFound": {
       "title": "On n’a pas trouvé ça",
       "description": "Elle a peut-être été supprimée ou le lien est erroné. Parcourez l’offre disponible ci-dessous.",
       "cta": "Retour au catalogue"
-    },
-    "geduGroups": {
-      "heading": "Groupes",
-      "yourGroupBadge": "Votre groupe",
-      "educatorsLabel": "Animateurs",
-      "noEducators": "Aucun animateur affecté pour l’instant.",
-      "gamersLabel": "Joueurs",
-      "gamerCount": "{count, plural, =0 {0 joueur} one {# joueur} other {# joueurs}}",
-      "emptyNoGamers": "Aucun joueur dans ce groupe pour l’instant.",
-      "emptyNoGroups": "Aucun groupe n’a encore été créé pour ce produit.",
-      "age": "{age} ans",
-      "genderBoy": "Garçon",
-      "genderGirl": "Fille",
-      "genderNonBinary": "Non binaire"
     }
   },
   "sidebar": {
@@ -1807,13 +1671,12 @@
     "municipalityClubs": "Clubs municipaux",
     "camps": "Stages",
     "events": "Événements",
-    "locations": "Lieux",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
     "whatsapp": "WhatsApp",
     "testing": "Tests",
     "settings": "Paramètres",
-    "voice": "Vocal",
+    "tools": "Outils",
     "expandSidebar": "Déplier la barre latérale",
     "collapseSidebar": "Replier la barre latérale"
   },
@@ -1906,9 +1769,6 @@
     "saveFailed": "Échec de la mise à jour du nom d’utilisateur {platform}."
   },
   "parent": {
-    "placeholders": {
-      "myGamersHint": "Sélectionnez un joueur pour gérer son compte."
-    },
     "waitlist": {
       "footerReassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
       "footerReassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
@@ -2028,6 +1888,36 @@
     "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
     "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer."
   },
+  "tools": {
+    "uncertified": {
+      "title": "En attente de certification",
+      "body": "Un administrateur doit certifier votre compte Gedu avant que vous puissiez lancer des salles vocales ou réinitialiser des mots de passe Minecraft Education. Les deux outils apparaîtront ici dès que vous serez certifié."
+    },
+    "minecraftPasswordReset": {
+      "title": "Mots de passe Minecraft Education",
+      "description": "Réinitialisez le mot de passe d’un compte Minecraft Education partagé et lisez le nouveau directement à l’écran.",
+      "inputLabel": "Noms d’utilisateur ou adresses",
+      "inputPlaceholder": "builder07, redstone12@gamer.sog.gg, creeper03",
+      "inputHint": "Un ou plusieurs — séparez-les par des espaces, des virgules ou des retours à la ligne. Les noms d’utilisateur seuls fonctionnent, et les adresses complètes sur {domains} aussi.",
+      "submit": "{count, plural, =0 {Réinitialiser les mots de passe} one {Réinitialiser 1 mot de passe} other {Réinitialiser # mots de passe}}",
+      "submitting": "Réinitialisation…",
+      "unsupportedDomainEntries": "{count, plural, one {Ce n’est pas une adresse Minecraft Education, elle ne sera donc pas envoyée : {entries}. Utilisez un nom d’utilisateur seul ou une adresse sur {domains}.} other {Ce ne sont pas des adresses Minecraft Education, elles ne seront donc pas envoyées : {entries}. Utilisez des noms d’utilisateur seuls ou des adresses sur {domains}.}}",
+      "tooMany": "Cela fait {count} noms d’utilisateur – réinitialisez-en {max} au maximum à la fois.",
+      "requestFailed": "Une erreur est survenue. Veuillez réessayer.",
+      "resultsHeading": "Nouveaux mots de passe",
+      "copyAll": "Tout copier ({count})",
+      "copied": "Copié",
+      "copyPasswordFor": "Copier le nouveau mot de passe de {upn}",
+      "mustChangeOnFirstSignIn": "À changer à la première connexion",
+      "errors": {
+        "invalidUsername": "Entrée invalide. Saisissez un nom d’utilisateur seul ou une adresse Minecraft Education complète.",
+        "unsupportedDomain": "Seuls les comptes sur {domains} peuvent être réinitialisés.",
+        "notFound": "Aucun compte trouvé sur {domains}.",
+        "azureAuth": "Impossible de joindre Microsoft. Les identifiants Azure ont peut-être expiré – prévenez un administrateur.",
+        "graphError": "Microsoft a refusé la modification (erreur {status}). Veuillez réessayer."
+      }
+    }
+  },
   "verifyEmail": {
     "successTitle": "Adresse e-mail vérifiée",
     "successDescription": "Merci — nous savons désormais que cette adresse vous joint, et rien d’important ne se perdra.",
@@ -2049,7 +1939,6 @@
     "sharerScreen": "Écran de {name}",
     "stopSharing": "Arrêter le partage",
     "voiceRoom": "Salle vocale",
-    "spatialDescription": "Faites glisser votre avatar pour changer de zone. Les participants d’une même zone s’entendent entre eux.",
     "leave": "Quitter",
     "failedToJoinRoom": "Impossible de rejoindre la salle",
     "sessionEnded": "La session est terminée",
@@ -2070,7 +1959,6 @@
     "joinZone": "Rejoindre {zone}",
     "zonesDescription": "Touchez une zone ou faites-vous glisser dessus pour y entrer. Vous entendez tout le monde dans la même zone.",
     "privateZone": "Privée",
-    "privateZoneHint": "Cette zone est privée et sécurisée.",
     "newZone": "Nouvelle zone",
     "editZone": "Modifier la zone",
     "createZone": "Créer une zone",
@@ -2213,9 +2101,7 @@
         "creating": "Création…",
         "createFailed": "Impossible de créer une salle. Veuillez réessayer.",
         "ready": "Votre salle est prête",
-        "join": "Rejoindre",
-        "uncertifiedTitle": "En attente de certification",
-        "uncertifiedBody": "Un administrateur doit certifier votre compte Gedu avant que vous puissiez créer des salles vocales. Vous pourrez en lancer une ici dès que vous serez certifié."
+        "join": "Rejoindre"
       }
     }
   },
@@ -2263,10 +2149,6 @@
       "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
       "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau global et l’élément auquel il correspond.",
       "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty du Sogverse à travers les événements et les activités partagées."
-    },
-    "cta": {
-      "heading": "Commencez votre aventure",
-      "subheading": "Rejoignez le Sogverse et commencez à gagner de l’Yty. Chaque session, chaque amitié, chaque geste de gentillesse fait la différence."
     }
   },
   "email": {
@@ -2290,77 +2172,6 @@
       "expiry": "Ce lien expirera dans 24 heures.",
       "ignore": "Si vous n’avez pas demandé de réinitialisation du code PIN, vous pouvez ignorer cet e-mail sans crainte. Votre code PIN ne sera pas modifié.",
       "button": "Réinitialiser le code PIN"
-    },
-    "minecraft": {
-      "label": "Nom d’utilisateur Minecraft :",
-      "verified": "{username} (vérifié)",
-      "unverified": "{username} (pas encore vérifié)",
-      "notProvided": "Non renseigné"
-    },
-    "enrollmentParent": {
-      "subject": "{participantName} est maintenant inscrit à {productName}",
-      "subjectSelf": "Vous êtes maintenant inscrit à {productName}",
-      "heading": "Inscription confirmée",
-      "body": "Bonjour {parentName}, {participantName} est maintenant inscrit à {productName} avec le Gedu {geduName}.",
-      "bodySelf": "Bonjour {parentName}, vous êtes maintenant inscrit à {productName} avec le Gedu {geduName}."
-    },
-    "enrollmentGedu": {
-      "subject": "{participantName} a rejoint votre groupe – {productName}",
-      "heading": "Nouveau participant dans votre groupe",
-      "body": "Bonjour {geduName}, {participantName} a rejoint votre groupe pour {productName}."
-    },
-    "unenrollmentParent": {
-      "subject": "{participantName} a été désinscrit de {productName}",
-      "subjectSelf": "Votre inscription à {productName} a été annulée",
-      "heading": "Désinscription confirmée",
-      "body": "Bonjour {parentName}, {participantName} a été désinscrit de {productName} (Gedu : {geduName}).",
-      "bodySelf": "Bonjour {parentName}, votre inscription à {productName} a été annulée (Gedu : {geduName})."
-    },
-    "unenrollmentGedu": {
-      "subject": "{participantName} a quitté votre groupe – {productName}",
-      "heading": "Un participant a quitté votre groupe",
-      "body": "Bonjour {geduName}, {participantName} a quitté votre groupe pour {productName}."
-    },
-    "groupAdded": {
-      "subject": "Vous avez été affecté à un nouveau groupe – {productName}",
-      "heading": "Vous avez été affecté à un nouveau groupe",
-      "body": "Bonjour {geduName}, vous avez été affecté à un nouveau groupe pour {productName}.",
-      "dashboardNote": "Ce groupe apparaîtra sous peu dans Mon SOG."
-    },
-    "groupDeleted": {
-      "subject": "Votre groupe a été supprimé – {productName}",
-      "heading": "Votre groupe a été supprimé",
-      "body": "Bonjour {geduName}, votre groupe pour {productName} a été supprimé par un administrateur."
-    },
-    "groupReassignedOldGedu": {
-      "subject": "Votre groupe a été réaffecté – {productName}",
-      "heading": "Votre groupe a été réaffecté",
-      "body": "Bonjour {oldGeduName}, votre groupe pour {productName} a été réaffecté à {newGeduName}."
-    },
-    "groupReassignedNewGedu": {
-      "subject": "Vous avez été affecté à un groupe – {productName}",
-      "heading": "Vous avez été affecté à un groupe",
-      "body": "Bonjour {newGeduName}, vous avez été affecté à un groupe pour {productName} (auparavant animé par {oldGeduName})."
-    },
-    "groupReassignedParent": {
-      "subject": "Changement de Gedu pour {gamerName} – {productName}",
-      "heading": "Le Gedu de votre joueur a changé",
-      "body": "Bonjour {parentName}, le Gedu du groupe de {gamerName} dans {productName} est passé de {oldGeduName} à {newGeduName}."
-    },
-    "gamerMovedParent": {
-      "subject": "{gamerName} a été déplacé dans un nouveau groupe – {productName}",
-      "heading": "Votre enfant a été déplacé dans un nouveau groupe",
-      "body": "Bonjour {parentName}, {gamerName} est passé du groupe de {oldGeduName} au groupe de {newGeduName} dans {productName}."
-    },
-    "gamerMovedOldGedu": {
-      "subject": "{gamerName} a été retiré de votre groupe – {productName}",
-      "heading": "Un joueur a été retiré de votre groupe",
-      "body": "Bonjour {geduName}, {gamerName} est passé de votre groupe à celui de {newGeduName} dans {productName}."
-    },
-    "gamerMovedNewGedu": {
-      "subject": "{gamerName} a été ajouté à votre groupe – {productName}",
-      "heading": "Un joueur a été ajouté à votre groupe",
-      "body": "Bonjour {geduName}, {gamerName} est passé du groupe de {oldGeduName} au vôtre dans {productName}."
     },
     "feedback": {
       "subject": "Retour de {displayName} ({role})",

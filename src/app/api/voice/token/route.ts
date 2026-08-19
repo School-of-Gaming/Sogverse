@@ -11,6 +11,9 @@ import {
 } from "@/lib/daily";
 import { computeSessionWindow } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { platformForTopic } from "@/lib/products/topics";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
+import type { GameExternalId } from "@/lib/voice/user-name";
 import { tokenCanReceiveFor } from "@/lib/voice/receive-permissions";
 import { voiceTokenResponse } from "@/services/voice/voice.contracts";
 
@@ -66,7 +69,7 @@ export const POST = defineRoute({
         `
           id, product_id,
           product:products!inner(
-            id, timezone, is_remote,
+            id, timezone, is_remote, topic,
             slots:schedule_slots(weekday, start_time, duration_minutes)
           )
         `,
@@ -212,17 +215,19 @@ export const POST = defineRoute({
       throw new ApiError("missing NEXT_PUBLIC_DAILY_DOMAIN", 500);
     }
 
-    // The joiner's own Minecraft identity rides along in the Daily token so
-    // peers can render the badge without a DB lookup — `minecraft_accounts` RLS
-    // forbids reading another user's row, so per-participant client fetches
-    // aren't possible. We read the joiner's own row (always passing the slots,
-    // even when there's no row, so the client shows "(Unknown)" rather than no
-    // badge for gamers/gedus).
-    const { data: minecraft } = await admin
-      .from("minecraft_accounts")
-      .select("minecraft_username, minecraft_uuid")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // The joiner's own game identity rides along in the Daily token so peers can
+    // render it without a DB lookup — the account tables' RLS forbids reading
+    // another user's row, so per-participant client fetches aren't possible. We
+    // read the joiner's own row (always passing the slots once a platform is in
+    // play, even when there's no row, so the client shows "(Unknown)" rather
+    // than nothing for gamers/gedus).
+    //
+    // **The product's topic decides which identity, or none.** Minecraft Java
+    // reads `minecraft_accounts`, Roblox Studio reads `roblox_accounts`, and
+    // every other topic is about no single game account — no read at all, and a
+    // token with no game slots, exactly what an instant room already mints.
+    const gamePlatform = platformForTopic(group.product.topic);
+    const gameAccount = await readGameAccount(admin, gamePlatform, user.id);
 
     // Moderator rights are granted by an explicit allow-list, never by
     // excluding a role. `isOwner` is doubled at the mint — `createMeetingToken`
@@ -240,8 +245,9 @@ export const POST = defineRoute({
         userId: user.id,
         role,
         displayName: profile.first_name,
-        minecraftUsername: minecraft?.minecraft_username ?? null,
-        minecraftUuid: minecraft?.minecraft_uuid ?? null,
+        gamePlatform,
+        gameUsername: gameAccount.username,
+        gameExternalId: gameAccount.externalId,
       }),
       userId: user.id,
       canReceive,
@@ -260,3 +266,49 @@ export const POST = defineRoute({
     };
   },
 });
+
+/**
+ * The joiner's own row on the platform this room is about — one table per
+ * platform, one shape out.
+ *
+ * `null` platform is not "no row found": it is a topic about no single game
+ * account, and it issues **no query at all**. The two are worth keeping apart
+ * because they end up in different places downstream — a missing row still
+ * mints the slots (empty → "(Unknown)"), while no platform mints none.
+ *
+ * A `switch` with no `default`, so a new platform fails to compile here rather
+ * than silently minting empty slots for an identity we never read.
+ */
+async function readGameAccount(
+  admin: ReturnType<typeof createAdminClient>,
+  platform: GamePlatform | null,
+  userId: string,
+): Promise<{ username: string | null; externalId: GameExternalId | null }> {
+  const none = { username: null, externalId: null };
+  if (platform === null) return none;
+
+  switch (platform) {
+    case "minecraft": {
+      const { data } = await admin
+        .from("minecraft_accounts")
+        .select("minecraft_username, minecraft_uuid")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return {
+        username: data?.minecraft_username ?? null,
+        externalId: data?.minecraft_uuid ?? null,
+      };
+    }
+    case "roblox": {
+      const { data } = await admin
+        .from("roblox_accounts")
+        .select("roblox_username, roblox_user_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return {
+        username: data?.roblox_username ?? null,
+        externalId: data?.roblox_user_id ?? null,
+      };
+    }
+  }
+}

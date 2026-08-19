@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +16,7 @@ import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
 import { PricingPanelView } from "./pricing-panel-view";
 import type { PricingOption } from "./pricing-options";
+import { countryDisplayName, type RegionGate } from "./region-lock/region-gate";
 import {
   SeatAvailabilityBar,
   type SeatAvailabilityBarProps,
@@ -106,6 +107,65 @@ export type AuthState =
  */
 export type MyParticipationState = "waitlisted" | "active";
 
+/**
+ * **The region lock, as this panel takes it.**
+ *
+ * A product may be sold in one country only, and every parent looking at a
+ * locked one is told about it here — the family somewhere else, the family
+ * whose location we do not know, and the family who is in it. The decision
+ * itself is made outside and arrives as one discriminated value
+ * (`region-lock/region-gate.ts`); the panel interprets it and owns nothing but
+ * the rendering, which is what lets a preview scene drive it from fixtures.
+ *
+ * The callback is the section's own affordance and never the CTA's, and it
+ * belongs to the one state that asks a question. Which state the gate is in
+ * decides whether the reader sees a section, a statement in that same slot, or
+ * an overlay where the form was — see the panel's grammar above `FormOrAuth`.
+ *
+ * The gate applies only to a signed-in customer's form. A signed-out visitor
+ * meets the sign-in overlay first, and a wrong-role visitor the wrong-role
+ * note: telling either of them where the product is sold answers a question
+ * they have not reached yet.
+ */
+export interface SignupRegionGate {
+  gate: RegionGate;
+  /**
+   * The family's home location as the reader's own locale spells it, read only
+   * by the `eligible` variant — which states where the family lives, so that a
+   * parent who has just answered the question can see *which* answer was
+   * recorded.
+   *
+   * It sits beside the gate rather than inside it because the gate is a pure
+   * decision over two country codes, and a place name is neither an input to
+   * that decision nor derivable from it. Null when nothing has resolved a name;
+   * the variant then makes its statement without naming a place.
+   */
+  locationName?: string | null;
+  /** Opens the caller's set-location dialog. */
+  onSetLocation: () => void;
+}
+
+/**
+ * A home location the parent confirmed in the panel's own dialog, on its way
+ * back up to whoever owns the gate.
+ *
+ * Both halves are what the panel's host needs and cannot get from the write it
+ * just made: the country re-derives the gate before the keyed read of the row
+ * lands, and the name is what the confirmation variant says back.
+ *
+ * **A pick whose row carries no country is still one of these**, with a null
+ * code. The alternative — reporting nothing and letting the keyed read stay the
+ * authority — leaves the gate saying "we do not know where you live" after the
+ * parent has just told us, on the one path that exists to clear that question.
+ * A confirmed null is a fact, and the gate fails it open exactly as it fails
+ * open on a codeless row it read for itself.
+ */
+export interface ConfirmedHomeLocation {
+  countryCode: string | null;
+  /** Already resolved for the viewer's locale. */
+  name: string;
+}
+
 export interface SignupPanelViewProps {
   productType: ProductType;
   /**
@@ -144,6 +204,8 @@ export interface SignupPanelViewProps {
   submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
+  /** See `SignupRegionGate`. Absent on every unlocked product. */
+  regionGate?: SignupRegionGate;
 }
 
 // ---------- Why the panel is flat ----------
@@ -159,6 +221,10 @@ export interface SignupPanelViewProps {
 // attached), while the participant rows keep a border, because that border is
 // what says "you can pick this"; the consent toggle keeps one, because it is a
 // control; and the add-a-child affordance keeps one, because it is a button.
+// The one deliberate exception is the region-lock family, whose three surfaces
+// are bordered in the `info` hue whether or not they hold a control — that hue
+// marks the subject speaking rather than the ability to act, and the full
+// reasoning for spending the rule there lives on `RegionEligibleSection`.
 //
 // This was an opt-in variant while the rail was being judged and is now the
 // only look, on single-column pages too. Nothing about what is rendered,
@@ -354,6 +420,31 @@ interface FormOrAuthProps extends SignupPanelViewProps {
   variant?: "default" | "secondary";
 }
 
+// ---------- The panel's grammar ----------
+//
+// Four rules the whole panel obeys, so that a new state is answered with a
+// shape the reader has already learned rather than a new kind of control.
+//
+// **The CTA has exactly two live behaviours: submit and join-waitlist.** Submit
+// leads to Stripe Checkout, or straight to the confirmation summary where there
+// is nothing to charge; the waitlist join lands on that same summary. It never
+// navigates anywhere else and never opens a dialog.
+//
+// **A disabled CTA is an instruction.** It names the single next missing step,
+// in the order the sections stand on the page: add a gamer → set your location
+// → agree to the rules → wait for the window. The label points at the nearest
+// unfinished thing above the button, so following it is a walk down the panel
+// rather than a hunt.
+//
+// **Actions live in the sections, never in the CTA.** A section that needs
+// something offers its own affordance: the dashed add-a-gamer row inside the
+// picker, the set-location button inside the location section.
+//
+// **A full-panel overlay means ineligibility** — signed out, signed in as a
+// gamer or a gedu, in a country this product is not sold to. There is no
+// decision for that reader, so none is presented: no picker, no consent, no
+// button. The converse is what binds future states — a visible form promises
+// this reader can reach a purchase from here.
 function FormOrAuth(props: FormOrAuthProps) {
   switch (props.authState.kind) {
     case "unauthenticated":
@@ -367,6 +458,28 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "non_customer":
       return <NonCustomerOverlay forGamers={props.forGamers} />;
     case "ready":
+      // A family in the wrong country is ineligible, so the form goes — the
+      // same swap the wrong-role note above makes, with picker, consent and CTA
+      // ceasing to exist rather than being disabled in place. Nothing on screen
+      // survives it, so nothing moves and nothing needs room reserved.
+      //
+      // **This applies to a family already enrolled, and that is decided rather
+      // than overlooked.** The overlay replaces the whole panel, the
+      // already-joined picker row included, so a family that moves after buying
+      // a seat is shown no acknowledgement of it here. Nothing about the seat is
+      // touched: the product they own stays on their own dashboard, keyed by the
+      // participation, which is the surface for what a family already has. What
+      // they lose is the ability to buy *further* seats until their location
+      // matches again, which is the gate doing its job — it gates entrance, and
+      // an enrolment is an entrance.
+      if (props.regionGate?.gate.kind === "wrong_country") {
+        return (
+          <WrongCountryOverlay
+            requiredCountry={props.regionGate.gate.requiredCountry}
+            locale={props.locale}
+          />
+        );
+      }
       // selectedParticipantId comes through `props` (it's a top-level View prop,
       // not part of the AuthState union — see SignupPanelViewProps).
       return (
@@ -433,6 +546,207 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
   );
 }
 
+/**
+ * The product is not sold where this family lives.
+ *
+ * **Louder than the wrong-role note beside it, and on purpose.** The two look
+ * like the same thing — a statement where the form was — but they are met by
+ * different readers. A gedu or a gamer on a shop URL already knows they are not
+ * the audience; the note only confirms it, so a muted line is right. A parent
+ * who came to buy does not know, and an inert panel with a small grey line
+ * under it reads as a page that failed to load. This is the whole answer they
+ * get, so it is sized like one.
+ *
+ * **Info, not warning and not error.** Nothing has gone wrong and nothing is
+ * their fault: the product is sold somewhere else, which is a fact about the
+ * product. So the tint is the `info` semantic pair, never `destructive` or
+ * `warning` (which would tell them to fix something) and never `primary`
+ * (which is the panel's *act on this* colour, and there is nothing to act on).
+ * The `Globe` anchors it — the same subject the sections' `MapPin` /
+ * `MapPinCheck` mark, one scale up because this block is the panel's entire
+ * content.
+ *
+ * **All three region-lock surfaces speak in the `info` hue, at two volumes.**
+ * The refusal, the question and the confirmation are one subject told at three
+ * moments, so a parent who meets two of them in one visit — asked for a
+ * location, then told it fits — should recognise the second as the same voice
+ * as the first. The shared voice is the `info` border, an `info`-coloured
+ * lucide anchor and body text at full foreground weight. Volume follows
+ * stakes: this refusal replaces the form and is the one thing on the panel, so
+ * it alone fills its surface with the tint; the two in-form sections sit
+ * inside a form the parent is actively using, so they carry the hue on the
+ * border alone (the same quiet-info tier the enrollment card's "awaiting"
+ * state established) and leave the form the loudest thing on its own panel.
+ *
+ * The country is named, in the reader's own language and in the sentence's only
+ * weighted words: it is the one fact the reader needs and the one they will
+ * scan for. A refusal that will not say what it is refusing on leaves them with
+ * nothing to understand — and the lock is not a secret, it is where the product
+ * is sold. What the sentence pointedly does not do is mention that a location
+ * is a settings field they could change: the block is a statement about who the
+ * product is offered to, not a puzzle with a published solution.
+ *
+ * It keeps the panel's container geometry — one block in the slot the form
+ * occupied, no wider and no taller than its own content — so the rail around it
+ * is the rail every other state draws.
+ */
+function WrongCountryOverlay({
+  requiredCountry,
+  locale,
+}: {
+  requiredCountry: string;
+  locale: string;
+}) {
+  const t = useTranslations("productDetail.signupPanel");
+  return (
+    <div className="flex items-start gap-3 rounded-md border border-info/30 bg-info/10 p-4">
+      <Globe className="mt-0.5 h-5 w-5 shrink-0 text-info" />
+      <p className="text-sm text-foreground">
+        {t.rich("regionLock.wrongCountry", {
+          country: countryDisplayName(requiredCountry, locale),
+          name: (chunks) => <span className="font-semibold">{chunks}</span>,
+        })}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * The family's location is missing, and this is where they supply it.
+ *
+ * A section of the form like the picker and the rules, in the order the CTA
+ * names them: it sits between the two, so "Set your location" points at the
+ * thing directly above the button once a participant is chosen. It is a
+ * *question*, not a refusal — the form around it stays whole and every other
+ * step can still be finished first — which is why the copy asks where the
+ * family lives without naming the country that would unlock the page. Naming it
+ * would turn the question into a hint.
+ *
+ * The affordance is the picker's dashed add-a-gamer row, in the second place
+ * the panel needs the same grammar: a bordered, full-width, secondary-weight
+ * button that opens a dialog, sitting inside the section it is about rather
+ * than in the CTA.
+ *
+ * **It speaks in the refusal's hue at the quiet volume, because it is about
+ * the same thing.** The `info` border says "this product is a bit different
+ * and wants your attention" without ever saying anything is wrong — which is
+ * exactly the question being asked — while the default background keeps a
+ * section inside a working form from shouting over the form itself. The
+ * border is the whole change: the heading, the note and the button sit where
+ * they always sat, in the order they always sat in, so the section still
+ * reads as one step of the form rather than as an interruption of it.
+ *
+ * **The block's `MapPin` anchors the section, and the button's does not.** The
+ * heading carries an `info`-coloured pin, the way the refusal's `Globe` and the
+ * confirmation's `MapPinCheck` anchor theirs — that glyph is what makes the
+ * three read as one voice, and it belongs on the thing that is speaking. The
+ * pin inside the button is a second thing: it labels an action, so it inherits
+ * `currentColor` and rides the button's own muted→foreground hover with the
+ * label beside it. Leaving the family's hue on it would have painted the one
+ * actionable element in the section the colour that means "this is the region
+ * lock talking", and left the block itself unmarked.
+ */
+function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
+  const t = useTranslations("productDetail.signupPanel");
+  return (
+    <div className="rounded-md border border-info/40 p-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <MapPin className="h-4 w-4 shrink-0 text-info" />
+        {t("regionLock.heading")}
+      </h3>
+      {/* Indented to the heading's text, not its glyph: gap-2 (0.5rem) plus a
+          1rem icon is exactly pl-6, the same alignment the confirmation's
+          receipt line uses. */}
+      <p className="mt-1 pl-6 text-xs text-foreground">{t("regionLock.note")}</p>
+      <button
+        type="button"
+        onClick={onSetLocation}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+      >
+        <MapPin className="h-4 w-4" />
+        {t("regionLock.setLocation")}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * The family's location is known, and it is where this product is sold.
+ *
+ * The same slot the question occupied, answered — which is the point of putting
+ * it there. A parent who confirms a matching place in the dialog watches the
+ * section they were asked to fill in state the outcome in its place, which is
+ * how they learn the save worked without a toast or a reloaded page. The
+ * transform is the direct result of the confirm they just made, so the reflow
+ * below it is one the reader is braced for.
+ *
+ * **It says something worth saying to the people it is true for, in their own
+ * direction.** The refusal says the product is only offered somewhere else;
+ * this leads with the special-ness and lands on belonging — just for families
+ * in your country, and you are one. Same fact, two speech acts — and the
+ * exclusionary wording that is exactly right for the blocked reader reads as a
+ * hedge to the one who is already in, which is why they are two message keys
+ * rather than one shared string. Both name the country in *label* position,
+ * after a colon, because a display name inflected into a sentence would need an
+ * article in English and a case ending in Finnish that `Intl` does not supply.
+ * The receipt line
+ * beneath does the "that's you" work in the reader's own place name, which is
+ * what lets the sentence above it stay a short, warm fragment. What it does not
+ * do is invite an edit: there is no change-location control, because a parent
+ * halfway through a purchase should not be nudged into rewriting a profile
+ * field, and settings is where a location is changed. That absence is also what
+ * keeps this out of the CTA's checklist — an eligible family has nothing left to
+ * do here, so the button is untouched.
+ *
+ * **It carries the region-lock family's `info` surface, which is the one place
+ * this panel's "a border means you can act on it" rule is deliberately spent.**
+ * What is bought with it is not inactionability — the ask section wears the
+ * same border and holds a button — but *subject*: the info hue says "the region
+ * lock is speaking", and it says that about all three surfaces regardless of
+ * whether there is anything to do on them. Controls keep announcing themselves
+ * the way they do everywhere else on the panel, from inside the block: the ask
+ * section's affordance is a bordered, full-width button that looks exactly like
+ * the picker's add-a-gamer row, and its absence here is what tells a reader this
+ * block is a statement. So the two are told apart by what is *in* the block, not
+ * by whether the block has an edge — which is the trade this exception makes,
+ * and the reason a bordered statement in the slot a bordered *question*
+ * occupied a moment ago is the point rather than a cost: the question becoming
+ * its own answer in place is the whole transform. A borderless confirmation next
+ * to a bordered refusal and a bordered ask would have read as a third kind of
+ * thing.
+ */
+function RegionEligibleSection({
+  requiredCountry,
+  locationName,
+  locale,
+}: {
+  requiredCountry: string;
+  locationName: string | null;
+  locale: string;
+}) {
+  const t = useTranslations("productDetail.signupPanel");
+  return (
+    <div className="rounded-md border border-info/40 p-4">
+      <p className="flex items-start gap-2 text-sm text-foreground">
+        <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+        <span>
+          {t("regionLock.eligible", {
+            country: countryDisplayName(requiredCountry, locale),
+          })}
+        </span>
+      </p>
+      {/* Only when a name actually resolved. A line reading "Your family's
+          location:" with nothing after it would be worse than not saying where
+          they live. */}
+      {locationName !== null && (
+        <p className="mt-1 pl-6 text-xs text-muted-foreground">
+          {t("regionLock.eligibleLocation", { location: locationName })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SignupForm(
   props: FormOrAuthProps & {
     participants: readonly SignupParticipantChoice[];
@@ -455,12 +769,18 @@ function SignupForm(
   const selectedIsSelf =
     props.participants.find((p) => p.id === props.selectedParticipantId)
       ?.isSelf === true;
-  const formReady = props.selectedParticipantId !== null && props.agreed;
+  // Two of the four gate states put a section in the form, and only one of them
+  // stops the CTA. The wrong-country half never reaches this component — it
+  // replaced the form upstream — and `unlocked` renders nothing at all.
+  const needsLocation = props.regionGate?.gate.kind === "no_location";
+  const formReady =
+    props.selectedParticipantId !== null && props.agreed && !needsLocation;
   const clickable = formReady && props.active && !props.submitting;
 
   // The CTA doubles as the instruction for the parent's next step: while it's
   // disabled it names exactly what's still missing, in the order they can act
-  // on it (add a gamer → agree to the rules → wait for the window). The same
+  // on it (add a gamer → set your location → agree to the rules → wait for the
+  // window), which is the order the sections stand in on the page. The same
   // checklist runs whether or not registration is open, so a parent can finish
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
@@ -471,17 +791,23 @@ function SignupForm(
   // product — the reader already holds the one seat there is. The latter two
   // both land on ctaAllSet; the picker rows show each person's exact
   // seat/waitlist status in place.
+  //
+  // The location step is an instruction and nothing more — the button stays
+  // disabled and the section above it carries the action, per the grammar note
+  // by `FormOrAuth`.
   const ctaLabel = props.submitting
     ? t("ctaSubmitting")
     : props.selectedParticipantId === null
       ? canAddGamer
         ? t("ctaAddGamer")
         : t("ctaAllSet")
-      : !props.agreed
-        ? t("ctaAgreeRules")
-        : props.active
-          ? props.ctaLabelActive
-          : t("ctaReadyWaiting");
+      : needsLocation
+        ? t("regionLock.setLocation")
+        : !props.agreed
+          ? t("ctaAgreeRules")
+          : props.active
+            ? props.ctaLabelActive
+            : t("ctaReadyWaiting");
 
   return (
     <div className="space-y-4">
@@ -610,6 +936,25 @@ function SignupForm(
           )}
         </div>
       </div>
+
+      {/* One slot between the picker and the rules, which is where the CTA's
+          checklist names it, and which both locked-and-signed-in states share.
+          It is present from the panel's first paint and stays whatever it was:
+          the page either waits for the country before painting, or resolves the
+          gate without it and *latches* that — so a read landing late cannot
+          push this slot into existence, or out of it, under a reader who is
+          part-way through the form. The only later change is the question
+          becoming its own answer in place, which is a confirm they just made. */}
+      {needsLocation && props.regionGate !== undefined && (
+        <RegionLocationSection onSetLocation={props.regionGate.onSetLocation} />
+      )}
+      {props.regionGate?.gate.kind === "eligible" && (
+        <RegionEligibleSection
+          requiredCountry={props.regionGate.gate.requiredCountry}
+          locationName={props.regionGate.locationName ?? null}
+          locale={props.locale}
+        />
+      )}
 
       <RulesCheckbox
         productType={props.productType}

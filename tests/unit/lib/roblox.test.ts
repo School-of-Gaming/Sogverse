@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import {
-  isValidRobloxUsername,
   lookupRobloxUser,
   lookupRobloxProfile,
   resolveRobloxAvatarUrl,
@@ -8,6 +8,11 @@ import {
   resolveRobloxRenders,
   robloxRenderUrl,
 } from "@/lib/roblox";
+import {
+  INVISIBLE_ONLY_NAME,
+  RIGHT_TO_LEFT_OVERRIDE,
+  ZERO_WIDTH_SPACE,
+} from "../../helpers/invisible-characters";
 
 /**
  * A `fetch` stand-in. A real `Response` rather than a hand-shaped object, so the
@@ -30,50 +35,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-});
-
-describe("isValidRobloxUsername", () => {
-  // Rule 1 — 3 to 20 characters.
-  it("accepts the shortest and longest permitted names", () => {
-    expect(isValidRobloxUsername("abc")).toBe(true);
-    expect(isValidRobloxUsername("a".repeat(20))).toBe(true);
-  });
-
-  it("rejects names outside 3-20 characters", () => {
-    expect(isValidRobloxUsername("")).toBe(false);
-    expect(isValidRobloxUsername("ab")).toBe(false);
-    expect(isValidRobloxUsername("a".repeat(21))).toBe(false);
-  });
-
-  // Rule 2 — only a-z, A-Z, 0-9 and _.
-  it("accepts letters, digits and the underscore", () => {
-    expect(isValidRobloxUsername("Roblox")).toBe(true);
-    expect(isValidRobloxUsername("builderman")).toBe(true);
-    expect(isValidRobloxUsername("Elias_99")).toBe(true);
-    expect(isValidRobloxUsername("123")).toBe(true);
-  });
-
-  it("rejects every other character", () => {
-    expect(isValidRobloxUsername("Elias-99")).toBe(false);
-    expect(isValidRobloxUsername("Elias.99")).toBe(false);
-    expect(isValidRobloxUsername("Elias 99")).toBe(false);
-    expect(isValidRobloxUsername("Elias!")).toBe(false);
-    expect(isValidRobloxUsername("Ëlias")).toBe(false);
-  });
-
-  // Rule 3 — at most one underscore.
-  it("accepts exactly one underscore and rejects two", () => {
-    expect(isValidRobloxUsername("a_b")).toBe(true);
-    expect(isValidRobloxUsername("a_b_c")).toBe(false);
-    expect(isValidRobloxUsername("a__b")).toBe(false);
-  });
-
-  // Rule 4 — never at either end.
-  it("rejects a leading or trailing underscore", () => {
-    expect(isValidRobloxUsername("_abc")).toBe(false);
-    expect(isValidRobloxUsername("abc_")).toBe(false);
-    expect(isValidRobloxUsername("___")).toBe(false);
-  });
 });
 
 describe("lookupRobloxUser", () => {
@@ -115,9 +76,74 @@ describe("lookupRobloxUser", () => {
     await expect(lookupRobloxUser("definitelynobody")).resolves.toBeNull();
   });
 
-  it("returns null without calling out when the username is malformed", async () => {
-    await expect(lookupRobloxUser("_nope_")).resolves.toBeNull();
+  // The decision, at this layer: Roblox is the only authority on which handles
+  // exist on Roblox. Names its *current* signup validator would refuse are still
+  // asked about, because accounts predate that validator — and the ones this
+  // lookup used to answer "no" to on Roblox's behalf were real.
+  it.each([
+    ["a name with a space", "Old Timer"],
+    ["two underscores", "a_b_c"],
+    ["a leading underscore", "_nope"],
+    ["two characters", "ab"],
+    ["a non-ASCII letter", "Ëlias"],
+  ])("asks Roblox about %s rather than answering for it", async (_label, username) => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        data: [{ id: 42, name: username, displayName: username }],
+      }),
+    );
+
+    await expect(lookupRobloxUser(username)).resolves.toEqual({
+      username,
+      userId: 42,
+      displayName: username,
+    });
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
+      usernames: [username],
+      excludeBannedUsers: true,
+    });
+  });
+
+  // The one refusal left, and it is about our own request rather than about
+  // names: an unbounded string must not reach a third party's API, a JSON body
+  // or a text column.
+  it("returns null without calling out for an empty name or one past the length bound", async () => {
+    await expect(lookupRobloxUser("")).resolves.toBeNull();
+    await expect(
+      lookupRobloxUser("a".repeat(GAME_USERNAME_MAX_LENGTH + 1)),
+    ).resolves.toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // The other half of the transport rule, and the half `.trim()` cannot do:
+  // format characters are not whitespace, so a name made of nothing but them
+  // survives a trim and would spend a request against a shared per-IP budget
+  // asking about nothing.
+  it("returns null without calling out for a name of only invisible characters", async () => {
+    await expect(lookupRobloxUser(INVISIBLE_ONLY_NAME)).resolves.toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // And the layers have to agree: what the wire schema stores is the stripped
+  // name, so the stripped name is what has to be asked about. Asking with the
+  // character still in it would look up a handle nobody has.
+  it.each([
+    ["a zero-width space", ZERO_WIDTH_SPACE],
+    ["a right-to-left override", RIGHT_TO_LEFT_OVERRIDE],
+  ])("strips %s out of the name it asks Roblox about", async (_label, character) => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        data: [{ id: 42, name: "builderman", displayName: "builderman" }],
+      }),
+    );
+
+    await expect(
+      lookupRobloxUser(`builder${character}man`),
+    ).resolves.toMatchObject({ username: "builderman" });
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
+      usernames: ["builderman"],
+      excludeBannedUsers: true,
+    });
   });
 
   it("returns null on a non-ok response", async () => {

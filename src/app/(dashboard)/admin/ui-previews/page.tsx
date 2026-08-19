@@ -1,6 +1,9 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only index of fixture-driven preview scenes; every string here is scene metadata or an explanation of the mechanism, not user-facing copy that ships in any locale */
 import { buttonVariants } from "@/components/ui/button";
-import { PREVIEW_SCENES, previewSceneHref } from "@/components/preview/scenes";
+import {
+  PREVIEW_SCENE_LIST,
+  previewSceneHref,
+} from "@/components/preview/scenes";
 
 /**
  * **UI Previews** — the single home for the full-page preview scenes.
@@ -22,8 +25,8 @@ import { PREVIEW_SCENES, previewSceneHref } from "@/components/preview/scenes";
  * user-facing-shaped and goes through next-intl as usual.
  */
 export default function AdminUIPreviewsPage() {
-  const sceneCount = PREVIEW_SCENES.length;
-  const scenarioCount = PREVIEW_SCENES.reduce(
+  const sceneCount = PREVIEW_SCENE_LIST.length;
+  const scenarioCount = PREVIEW_SCENE_LIST.reduce(
     (total, scene) => total + scene.scenarios.length,
     0,
   );
@@ -49,7 +52,7 @@ export default function AdminUIPreviewsPage() {
       </div>
 
       <div className="space-y-6">
-        {PREVIEW_SCENES.map((scene) => (
+        {PREVIEW_SCENE_LIST.map((scene) => (
           <section
             key={scene.surface}
             className="space-y-3 rounded-lg border p-6"

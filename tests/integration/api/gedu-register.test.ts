@@ -63,8 +63,10 @@ vi.mock("@/lib/roblox", async (importOriginal) => {
 });
 
 import { POST } from "@/app/api/gedu/register/route";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { verifyEmailVerificationToken } from "@/lib/email-verification";
 import { asObject, getString } from "../../helpers/json";
+import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 const NEW_USER_ID = "99999999-9999-4999-8999-999999999999";
 
@@ -164,9 +166,35 @@ describe("POST /api/gedu/register", () => {
     expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for a malformed Minecraft username, before creating anything", async () => {
+  /**
+   * **The decision, on the public registration form: no handle is refused for
+   * its shape.** A name with spaces was a 400 here once, and Mojang has issued
+   * names our old rule called impossible — so an educator's real handle could
+   * block a registration that has nothing to do with Minecraft. Now the name is
+   * recorded either way; only its uuid depends on what Mojang says.
+   */
+  it("registers an educator whose Minecraft name our old format rule called impossible", async () => {
+    mockLookupMinecraftUser.mockResolvedValue(null);
+
     const response = await POST(
       registerRequest({ ...validBody, minecraftUsername: "no spaces allowed" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).toHaveBeenCalledWith("no spaces allowed");
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_minecraft_username).toBe("no spaces allowed");
+    expect(args.p_minecraft_uuid).toBe("");
+  });
+
+  // The one refusal left, and it still lands before `createUser` burns the email
+  // irreversibly — which is the whole reason the ordering matters.
+  it("returns 400 for a Minecraft username past the length bound, before creating anything", async () => {
+    const response = await POST(
+      registerRequest({
+        ...validBody,
+        minecraftUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+      }),
     );
 
     expect(response.status).toBe(400);
@@ -245,10 +273,29 @@ describe("POST /api/gedu/register", () => {
   // function's sentinel for every absent optional argument and a bigint
   // parameter could not carry it.
 
-  it("returns 400 for a malformed Roblox username, before creating anything", async () => {
+  // The Roblox half of the same decision: two underscores is something Roblox's
+  // signup page refuses today and its older accounts carry, so it is Roblox's
+  // answer that decides — and even that only decides the account id.
+  it("registers an educator whose Roblox handle our old format rule called impossible", async () => {
+    mockLookupRobloxProfile.mockResolvedValue(null);
+
     const response = await POST(
-      // Two underscores — Roblox permits at most one, never at either end.
       registerRequest({ ...validBody, robloxUsername: "a_b_c" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxProfile).toHaveBeenCalledWith("a_b_c");
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_roblox_username).toBe("a_b_c");
+    expect(args.p_roblox_user_id).toBe("");
+  });
+
+  it("returns 400 for a Roblox username past the length bound, before creating anything", async () => {
+    const response = await POST(
+      registerRequest({
+        ...validBody,
+        robloxUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+      }),
     );
 
     expect(response.status).toBe(400);
@@ -288,6 +335,39 @@ describe("POST /api/gedu/register", () => {
     expect(args.p_roblox_username).toBe("");
     expect(args.p_roblox_user_id).toBe("");
     expect(args.p_minecraft_username).toBe("");
+  });
+
+  /**
+   * **A field the educator opened and left blank registers no account at all,
+   * and that is the direction that changed.** A blank handle used to be refused
+   * by a format rule; it now means the same thing as a field never touched, so
+   * both spellings have to land on the RPC's empty sentinels — which is what
+   * makes the function skip the account row rather than insert an empty one —
+   * and neither may cost a call to a platform. The invisible case is the one
+   * `.trim()` alone would let through, and it would create a row holding a name
+   * that draws as nothing.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])("creates no game account row for %s in either field", async (_label, name) => {
+    const response = await POST(
+      registerRequest({
+        ...validBody,
+        minecraftUsername: name,
+        robloxUsername: name,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_minecraft_username).toBe("");
+    expect(args.p_minecraft_uuid).toBe("");
+    expect(args.p_roblox_username).toBe("");
+    expect(args.p_roblox_user_id).toBe("");
   });
 
   // -- Referral attribution --

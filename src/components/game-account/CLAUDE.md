@@ -10,13 +10,23 @@ child, a gedu editing a child on their own roster, and an admin editing anyone.
 The admin one is the widest and is the only one that can reach an account it has
 no relationship to — see "Wiring a save" for what authorizes it.
 
-**The gedu surface is Minecraft-only, and that is a gap rather than a decision.**
-Its write goes through an RPC that names Minecraft columns, so a gedu looking at
-a roster can fix a child's Minecraft handle and cannot touch their Roblox one —
-and the roster does not draw a Roblox figure either, because a list needs the
-batched by-id resolution rather than a lookup per row. Every other surface treats
-the two platforms identically. Closing it is tracked in `TODO.md`; until then,
-do not read "a gedu can edit a roster member's identity" as covering both.
+**The gedu surface covers both platforms, and *which* one it shows is the
+product's decision rather than the reader's.** A roster shows one identity for
+everybody on it, resolved from the product's topic: a Minecraft product's roster
+shows Minecraft handles, a Roblox product's shows Roblox ones, and a product
+about no single game account — which is most topics, since most name subject
+matter rather than one piece of software — shows no identity cell at all. There
+is one editor behind all three, taking the platform as a parameter, because the
+interaction is the one thing the platforms share exactly; everything they differ
+on already lives in the descriptor.
+
+**A roster with no identity cell is shorter, and reserves nothing.** The
+precedent is the adult seat, which has always rendered the same absence for the
+same reason: a blank cell beside a pencil that edits an account the product has
+no use for is an affordance pointing at nothing, and a slot held open for
+something that cannot appear while the page is open is dead space. Neither
+discriminator moves under the reader — a seat's holder and a product's topic both
+arrive with the payload — so the shorter row costs no layout stability.
 
 Both platforms are **persisted**, in one table each keyed by the profile
 (`minecraft_accounts`, `roblox_accounts`), and the two are independent
@@ -121,10 +131,54 @@ for a lookup a caller is running itself.
 
 ## Platform descriptors
 
-Everything a platform does differently lives in one descriptor: its username rule
-(imported from the module that also runs the lookup, so the field and the server
-agree by construction), its figure's width and drawn placeholder, and its verify
-adapter. Components are generic and render from it.
+Everything a platform does differently lives in one descriptor: its brand name,
+an example handle for the input's placeholder, its figure's width and drawn
+placeholder, and its verify adapter. Components are generic and render from it.
+
+**Rule: a platform is the only authority on which of its own names exist, and we
+hold no opinion about their shape.** There was a username rule on each
+descriptor, shared with the wire schemas so the field and the server agreed by
+construction — and they did agree, on something false. Both platforms issued
+accounts long before they had signup validators, so live handles carry spaces,
+run shorter than the modern minimum, and use characters the current rules refuse;
+a check written from those rules told real children their own handle could not
+exist, without ever asking. Agreeing by construction is worth nothing when what
+both ends agree on is wrong.
+
+**So the whole path is: normalize, bound the length, send it, let the platform
+answer.** A name that resolves lands verified with the account key beside it; a
+name that does not is stored unverified with the "couldn't find" sentence — which
+is also where a lookup during an outage lands, and where a name we would once
+have refused outright now lands too.
+
+**What survives is the transport rule, and every part of it is a statement about
+our own request and our own rendering rather than about names:**
+
+- **Strip the Unicode format characters (category `Cf`)** — zero-width spaces and
+  joiners, the BOM, the bidi controls. `.trim()` does not touch them, so without
+  this a handle of nothing but invisible characters is stored and draws a row
+  whose name looks blank, and an embedded `U+202E` visually reverses the span so
+  the name on screen is not the name in the column. Neither platform issues a
+  handle containing one, so nothing real is refused.
+- **Then trim**, so a value that was only invisible characters (with or without
+  spaces around them) comes out empty and is read as "no name here" — a clear,
+  exactly like a blank field.
+- **Then bound the length**: a cap generous enough that no real handle meets it,
+  existing so an unbounded string cannot be put into a URL, a JSON body and a
+  text column. One number, shared by both platforms. **Over it is the single
+  refusal left on this path**; the two steps above never refuse anything, they
+  only decide whether what is left is a name or a clear.
+
+The order is fixed — strip, trim, bound, collapse-to-null — because each step
+feeds the next, and it is restated identically in two layers: the wire schemas
+(both platforms' value *and* query schemas) and the cheap local check inside each
+lookup, which the write paths reach directly. The layers have to agree, or the
+name asked about is not the name stored. The username inputs carry the same
+length as a `maxLength`, so the bound is enforced before a name can be typed past
+it rather than only on save.
+
+The editor has no format branch either, for the same reason: every committed name
+goes to the lookup, and a miss lands exactly where a miss has always landed.
 
 **The figure is the only thing that says which platform a row is about.** There
 is no platform glyph beside the name — there was one, and once every row carried
@@ -175,9 +229,33 @@ whoever renders a list owns the lookup — and the naive shape of that is N
 requests against a thumbnails API rate-limited per IP across the whole serverless
 fleet, which a single roster can drain on its own. The API accepts many account
 ids per request (on the order of a hundred), so a roster resolves every render it
-needs in one call and hands each row its URL. The by-id route takes a list for
-exactly this reason even though today's callers each pass one; a per-row hook
-exists for the single-identity surfaces and **must not be mapped over a list**.
+needs in one call and hands each row its URL. A per-row hook exists for the
+single-identity surfaces and **must not be mapped over a list**.
+
+**A list whose membership changes while the page is open needs the other batch,
+and the two are not interchangeable.** The plain one is keyed by its whole id
+set, so a changed set is a different question and is asked from scratch — correct
+for a snapshot (the ids arrive with the page and the key collapses reorderings to
+one entry), and quadratic for a voice room, where each join would re-ask about
+everyone already resolved. The live one accumulates instead: an ever-seen set of
+ids beside the resolved map, one request per change and only about the ids that
+change brought, none at all for a change that brought no new verified account. An
+id is marked seen before its request is sent, so a second change asks only about
+its own newcomers while the first request is still in flight, and no two
+responses can ever name the same id. Neither shape is ever a hook per row.
+
+**The list's owner does the resolving, and on a page split into a data shell and
+a presentational body that is the shell.** The body takes the answers as a prop,
+keyed by account id, which is what lets the same body serve a live page and a
+fixture-driven scene: the live shell hands down what it resolved, and a scene
+hands down nothing, so a preview never reaches a third-party host on load. A body
+that fetched for itself would make that impossible and would put the request
+behind whichever surface happened to mount it.
+
+**An id the caller has no answer for yet is the silhouette, not a loading
+state.** A figure is decoration; the name and the tick are already on screen, the
+box is already at its final size, and nothing about a picture arriving later is
+worth a skeleton or a spinner.
 
 **Two properties of the batch are load-bearing and easy to lose.** An answer is
 matched to the id the *response* names, never to its position — the endpoint does
@@ -251,10 +329,11 @@ one could not have been looked up there.
 **Rule: a write path that names a target must authorize the target, not just the
 actor.** Three of the four write paths cannot name one at all — the self-serve
 routes derive the row from `auth.uid()`, which is most of what makes them safe —
-and the two that can (the gedu's Minecraft-only group-member edit, the admin's
-user edit) each
+and the two that can (the gedu's group-member edit, the admin's user edit) each
 answer it differently: the gedu's is settled inside the database by an RPC that
-re-derives what that caller may touch, and the admin's is settled in the route,
+re-derives what that caller may touch — one per platform, each naming that
+platform's columns and each carrying the same derivation — and the admin's is
+settled in the route,
 which refuses an id naming nobody and an id naming an account that cannot hold a
 game identity. **Only a gamer or a gedu can**, because those are exactly the
 roles the self-serve route is gated to; writing one onto a parent or an admin
@@ -275,6 +354,18 @@ make the value in the database depend on when the lookup last ran. A name the
 platform cannot resolve is stored all the same, with a null key — an unverified
 name is still the child's answer, which is the whole of why `unverified` is a
 state and a failed lookup is not.
+
+**One route predates that rule and still adopts the spelling its lookup returned
+— the gedu's Minecraft edit — and it is a known divergence rather than the
+pattern to copy.** Its own test pins the behaviour, so changing it is a decision
+with a test to rewrite; until somebody makes that decision, read the rule above
+as the one a new write path follows and this sentence as the exception it has.
+
+**A key the route did not obtain is *absent*, never a stand-in value.** Where an
+RPC defaults its key argument to SQL NULL, the argument is omitted; there is no
+number or string that means "not verified", and inventing one puts a value in a
+column that has no business holding it. The `unverified` state is the absence,
+which is the same thing the presence rule says from the other side.
 
 **Rule: a mutation invalidates the stored rows, never a platform's whole cache
 root.** The two branches under a platform's key hierarchy are not alike: one

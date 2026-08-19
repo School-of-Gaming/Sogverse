@@ -9,7 +9,12 @@
 // through t() (see product-form.tsx).
 
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
-import { isSupportedCurrency, SUPPORTED_CURRENCIES } from "@/lib/constants";
+import {
+  CURRENCY_CONFIG,
+  isSupportedCurrency,
+  SUPPORTED_CURRENCIES,
+} from "@/lib/constants";
+import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
   SUPPORTED_LOCALES,
@@ -63,9 +68,9 @@ export type ValidationKey =
   | "seatCountRequired"
   | "seatCountInvalid"
   | "priceSessionMissing"
-  | "priceSessionNegative"
+  | "priceSessionInvalid"
   | "priceMonthMissing"
-  | "priceMonthNegative"
+  | "priceMonthInvalid"
   | "primaryGeduFeeInvalid"
   | "assistantGeduFeeInvalid"
   | "municipalityFeeInvalid"
@@ -223,21 +228,41 @@ export function validate(
   if (showPricing) {
     // Each paid type collects a single price: `month` for the consumer-club
     // monthly subscription, `session` for the camp/event upfront total.
+    //
+    // A price is validated through the exact value the payload will store, and
+    // it must reach the currency's minimum charge at Stripe — a lower bound that
+    // subsumes the strictly-positive one the fees below hold. A paid product
+    // costing nothing is not a price, it is the free billing mode, chosen on the
+    // radio rather than typed as a zero; and a price under the minimum is a
+    // product the admin can save that no family can buy, since Stripe refuses it
+    // at checkout (see `minimumChargeCents` in lib/constants/currency.ts). Both
+    // failures share the one message, which names the minimum. A blank box keeps
+    // its own sentence: nothing was typed, so nothing is wrong with what was
+    // typed.
     const field = pricingShape === "monthly" ? "month" : "session";
     const missingKey =
       pricingShape === "monthly" ? "priceMonthMissing" : "priceSessionMissing";
-    const negativeKey =
-      pricingShape === "monthly" ? "priceMonthNegative" : "priceSessionNegative";
+    const invalidKey =
+      pricingShape === "monthly" ? "priceMonthInvalid" : "priceSessionInvalid";
     for (const currency of SUPPORTED_CURRENCIES) {
       const row = state.prices[currency];
       const currencyLabel = currency.toUpperCase();
+      const { minimumChargeCents } = CURRENCY_CONFIG[currency];
 
       const trimmed = row[field].trim();
       if (trimmed === "")
         return err(missingKey, { currency: currencyLabel });
-      const value = Number(trimmed);
-      if (!Number.isFinite(value) || value < 0)
-        return err(negativeKey, { currency: currencyLabel });
+      // The minimum travels as raw *cents*, not as a money string: this module
+      // is locale-free, and a formatted amount is a locale decision. The form
+      // turns the pair into the viewer's money string at the t() call site, the
+      // same shape translationIncomplete's language name uses.
+      const cents = decimalToCents(trimmed);
+      if (cents == null || cents < minimumChargeCents) {
+        return err(invalidKey, {
+          currency: currencyLabel,
+          minimum: minimumChargeCents,
+        });
+      }
     }
   }
 
@@ -248,20 +273,20 @@ export function validate(
   // otherwise and the value is forced to null at build time).
   if (
     state.primaryGeduFee.status === "fee" &&
-    !feeAmountValid(state.primaryGeduFee.amount)
+    !positiveAmountValid(state.primaryGeduFee.amount)
   ) {
     return err("primaryGeduFeeInvalid");
   }
   if (
     state.assistantGeduFee.status === "fee" &&
-    !feeAmountValid(state.assistantGeduFee.amount)
+    !positiveAmountValid(state.assistantGeduFee.amount)
   ) {
     return err("assistantGeduFeeInvalid");
   }
   if (
     config.productType === "municipality_club" &&
     state.municipalityFee.status === "fee" &&
-    !feeAmountValid(state.municipalityFee.amount)
+    !positiveAmountValid(state.municipalityFee.amount)
   ) {
     return err("municipalityFeeInvalid");
   }
@@ -285,8 +310,18 @@ function ageOrNull(value: string): number | null {
   return trimmed === "" ? null : Number(trimmed);
 }
 
-/** A "fee" amount is valid only as a real positive number of cents. */
-function feeAmountValid(amount: string): boolean {
+/**
+ * A typed fee is valid only as a real positive number of cents — judged through
+ * `decimalToCents`, the same conversion the payload stores, so a value that
+ * validates and a value that is written can never disagree. Zero is never a
+ * typed amount anywhere in this form: for a fee it is the separate "volunteer"
+ * status, for a price it is the free billing mode.
+ *
+ * Prices hold a *higher* bar than this and are checked inline against their
+ * currency's minimum charge — a fee is money we pay out of band, so nothing
+ * about a payment processor's floor applies to it.
+ */
+function positiveAmountValid(amount: string): boolean {
   const cents = decimalToCents(amount);
   return cents != null && cents > 0;
 }
@@ -477,6 +512,12 @@ function buildSharedFields(
     // Sending state's answer on every save, including the `null` that means
     // untagged, is what makes clearing something an admin chose.
     tag: state.tag,
+    // Same shape as the tag above — a `DEFAULT NULL` parameter that the RPC
+    // assigns on every call, so the answer has to travel on every save, `null`
+    // included. Forced to null for a type that offers no lock, so a draft
+    // carried across a type change (or a row locked before the flag existed)
+    // cannot leave a lock behind a field nobody can see.
+    region_lock_country: config.regionLockable ? state.regionLockCountry : null,
     spoken_language_code: state.spokenLanguageCode,
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
@@ -505,14 +546,21 @@ function buildSharedFields(
     prices: showPricing
       ? SUPPORTED_CURRENCIES.map((currency) => {
           const row = state.prices[currency];
-          // `validate()` blocks submit when the relevant field is
-          // blank/invalid, so the null fallback is unreachable in practice.
           // Consumer clubs charge the monthly price; camps/events the upfront
-          // total. Either way it's the single `price_cents`.
-          const priceCents =
-            pricingShape === "monthly"
-              ? (decimalToCents(row.month) ?? 0)
-              : (decimalToCents(row.session) ?? 0);
+          // total. Either way it's the single `price_cents`, and it is always
+          // strictly positive — a paid product costing nothing is the free
+          // billing mode, not a price. validate() rejects exactly that, and
+          // build only runs after it passes, so a blank or non-positive amount
+          // here is a broken invariant. We assert it rather than coercing to 0:
+          // a wrong price should never be invented from an invalid draft.
+          const priceCents = decimalToCents(
+            pricingShape === "monthly" ? row.month : row.session,
+          );
+          if (priceCents == null || priceCents <= 0) {
+            throw new Error(
+              `buildSharedFields called before validate(): ${currency} price is not a positive amount`,
+            );
+          }
           return {
             currency,
             price_cents: priceCents,
@@ -764,6 +812,20 @@ export function existingFormState(
     // Straight through: the column is already `ProductTag | null` and the
     // picker's "no tag" option *is* null, so there is nothing to translate.
     tag: product.tag,
+    // Nearly straight through — the column is already `string | null` and the
+    // picker's "not region locked" option *is* null. The one filter is a stored
+    // code the picker cannot offer (a country un-seeded since the lock was set,
+    // or one written before this field existed): it loads as *unlocked* rather
+    // than as a value with no matching option, because a select whose value
+    // matches nothing shows the admin the first option while state holds
+    // something else, and the write contract — which only admits seeded
+    // countries — would then refuse every save of the product with an error
+    // about a field they were never shown. Loading it as null is the same
+    // heal-on-write shape the uncapped-muni and locked-registration cases use:
+    // the next save of anything at all normalises the row, visibly.
+    regionLockCountry: isSeededCountry(product.region_lock_country)
+      ? product.region_lock_country
+      : null,
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,

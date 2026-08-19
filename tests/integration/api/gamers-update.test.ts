@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/gamers/[id]/route";
 import { NextResponse } from "next/server";
+import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
+import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 // --- Mocks ---
 
@@ -20,17 +22,14 @@ vi.mock("@/lib/supabase/admin", () => ({
   })),
 }));
 
+// Only the network hop is replaced. Neither platform module carries a format
+// rule any more — the wire schema is a trim and a length bound, and the platform
+// alone decides whether a name resolves.
 const mockLookupMinecraftUser = vi.fn();
-const mockIsValidMinecraftUsername = vi.fn();
 vi.mock("@/lib/mojang", () => ({
   lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
-  isValidMinecraftUsername: (...args: unknown[]) =>
-    mockIsValidMinecraftUsername(...args),
 }));
 
-// Only the network hop is replaced: `isValidRobloxUsername` is a pure regex the
-// body schema imports, and mocking it would stop the format rule this route
-// really enforces from being exercised here at all.
 const mockLookupRobloxProfile = vi.fn();
 vi.mock("@/lib/roblox", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/roblox")>();
@@ -176,9 +175,6 @@ function mockAdminSuccess(
 describe("PATCH /api/gamers/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsValidMinecraftUsername.mockImplementation(
-      (u: string) => /^[a-zA-Z0-9_]{3,16}$/.test(u),
-    );
   });
 
   // -- Auth & authorization --
@@ -425,17 +421,62 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
   });
 
-  it("should return 400 for invalid minecraft username format", async () => {
+  /**
+   * **The decision, on a parent's edit: no name is refused for its shape.** A
+   * two-character handle was a 400 here once and Mojang has issued them, so a
+   * parent typing their child's real name was told it could not exist. Now it
+   * goes to Mojang and a miss is stored unverified — the name is still the
+   * child's answer.
+   */
+  it("stores a name our old format rule called impossible, unverified", async () => {
+    mockAuthenticated("customer-123");
+    mockParentGamerLookup(true);
+    mockLookupMinecraftUser.mockResolvedValue(null);
+
+    const roleCheck = mockTargetProfile("gamer");
+    const mcUpsert = {
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const fetch = mockProfileFetch({
+      id: GAMER_ID,
+      first_name: "Existing",
+      role: "gamer",
+    });
+
+    let callCount = 0;
+    mockAdminFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return roleCheck;
+      if (callCount === 2) return mcUpsert;
+      return fetch;
+    });
+
+    const [req, ctx] = createRequest(GAMER_ID, { minecraftUsername: "ab" });
+    const response = await PATCH(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).toHaveBeenCalledWith("ab");
+    expect(mcUpsert.upsert).toHaveBeenCalledWith(
+      {
+        user_id: GAMER_ID,
+        minecraft_username: "ab",
+        minecraft_uuid: null,
+      },
+      { onConflict: "user_id" },
+    );
+  });
+
+  // The one refusal left: a bound on our own request, not a claim about names.
+  it("should return 400 for a minecraft username past the length bound", async () => {
     mockAuthenticated("customer-123");
 
     const [req, ctx] = createRequest(GAMER_ID, {
-      minecraftUsername: "ab",
+      minecraftUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
     });
     const response = await PATCH(req, ctx);
-    const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("Invalid Minecraft username");
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
   });
 
   // -- Roblox username --
@@ -566,15 +607,125 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
   });
 
-  it("should return 400 for invalid roblox username format", async () => {
+  /**
+   * **A blank field clears, and that is the direction that changed.** It used to
+   * be a 400 on both platforms; it now empties the child's stored account, so
+   * each spelling of "nothing here" has to be pinned as the destructive write it
+   * is — both columns null, no lookup — and not as a no-op leaving the old name
+   * in place. The invisible case is the one `.trim()` alone would let through.
+   */
+  it.each([
+    ["an empty string", ""],
+    ["a blank string", "   "],
+    ["only invisible characters", INVISIBLE_ONLY_NAME],
+  ])(
+    "clears both platforms' columns for %s, without a lookup",
+    async (_label, name) => {
+      for (const platform of ["minecraft", "roblox"] as const) {
+        vi.clearAllMocks();
+        mockAuthenticated("customer-123");
+        mockParentGamerLookup(true);
+
+        const roleCheck = mockTargetProfile("gamer");
+        const accountUpsert = {
+          upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+        };
+        const fetch = mockProfileFetch({
+          id: GAMER_ID,
+          first_name: "Existing",
+          role: "gamer",
+        });
+
+        let callCount = 0;
+        mockAdminFrom.mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) return roleCheck;
+          if (callCount === 2) return accountUpsert;
+          return fetch;
+        });
+
+        const [req, ctx] = createRequest(
+          GAMER_ID,
+          platform === "minecraft"
+            ? { minecraftUsername: name }
+            : { robloxUsername: name },
+        );
+        const response = await PATCH(req, ctx);
+
+        expect(response.status).toBe(200);
+        expect(accountUpsert.upsert).toHaveBeenCalledWith(
+          platform === "minecraft"
+            ? {
+                user_id: GAMER_ID,
+                minecraft_username: null,
+                minecraft_uuid: null,
+              }
+            : {
+                user_id: GAMER_ID,
+                roblox_username: null,
+                roblox_user_id: null,
+              },
+          { onConflict: "user_id" },
+        );
+        expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+        expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+      }
+    },
+  );
+
+  /**
+   * The Roblox half of the same decision. A handle with a space is the sharpest
+   * case: Roblox's signup validator refuses one today, and Roblox has had live
+   * accounts holding one for longer than that validator has existed.
+   */
+  it("stores a handle our old format rule called impossible, unverified", async () => {
+    mockAuthenticated("customer-123");
+    mockParentGamerLookup(true);
+    mockLookupRobloxProfile.mockResolvedValue(null);
+
+    const roleCheck = mockTargetProfile("gamer");
+    const robloxUpsert = {
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const fetch = mockProfileFetch({
+      id: GAMER_ID,
+      first_name: "Existing",
+      role: "gamer",
+    });
+
+    let callCount = 0;
+    mockAdminFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return roleCheck;
+      if (callCount === 2) return robloxUpsert;
+      return fetch;
+    });
+
+    const [req, ctx] = createRequest(GAMER_ID, { robloxUsername: "Old Timer" });
+    const response = await PATCH(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxProfile).toHaveBeenCalledWith("Old Timer");
+    expect(robloxUpsert.upsert).toHaveBeenCalledWith(
+      {
+        user_id: GAMER_ID,
+        roblox_username: "Old Timer",
+        roblox_user_id: null,
+      },
+      { onConflict: "user_id" },
+    );
+  });
+
+  // The one refusal left: a bound on our own request, not a claim about handles.
+  it("should return 400 for a roblox username past the length bound", async () => {
     mockAuthenticated("customer-123");
 
-    // Two underscores; Roblox allows at most one, never at either end.
-    const [req, ctx] = createRequest(GAMER_ID, { robloxUsername: "a_b_c" });
+    const [req, ctx] = createRequest(GAMER_ID, {
+      robloxUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
+    });
     const response = await PATCH(req, ctx);
-    const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("Invalid Roblox username");
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
   });
 });

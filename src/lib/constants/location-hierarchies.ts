@@ -166,6 +166,23 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   },
 ];
 
+/**
+ * The countries whose region/municipality rows actually exist — the `seeded`
+ * half of the list above, derived rather than restated so the two cannot drift.
+ *
+ * This is the set any feature should offer when it asks an admin or a family to
+ * *name a country we operate in*: an unseeded entry is a declared hierarchy with
+ * nothing under it, so choosing one produces a value no stored location could
+ * ever match. Order follows `SUPPORTED_COUNTRIES`.
+ */
+export const SEEDED_COUNTRIES: readonly CountryConfig[] =
+  SUPPORTED_COUNTRIES.filter((c) => c.seeded);
+
+/** Whether a country code names one of the seeded countries above. */
+export function isSeededCountry(code: string | null): boolean {
+  return SEEDED_COUNTRIES.some((c) => c.code === code);
+}
+
 const countriesByCode = new Map(SUPPORTED_COUNTRIES.map((c) => [c.code, c]));
 
 /** Get the country config for a country code, or null if unsupported. */

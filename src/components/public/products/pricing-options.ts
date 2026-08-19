@@ -9,7 +9,7 @@ import type { SupportedCurrency } from "@/lib/constants/currency";
 // Pure computation of the single price option a parent can buy for a product.
 // There is exactly one purchase option per type:
 //   consumer_club → flat monthly subscription
-//   camp / paid event → single upfront total
+//   paid camp / paid event → single upfront total
 //   municipality_club → external (invoiced off-site)
 //   free product → free
 // The detail page renders one row; the same `kind` flows through to the
@@ -54,7 +54,8 @@ export function buildPricingOption({
     return { kind: "subscription", totalCents: row.price_cents };
   }
 
-  // Camps and paid events are a single upfront total.
+  // Paid camps and paid events are a single upfront total. A free one of
+  // either type has no checkout at all and is left above as `free`.
   return { kind: "upfront", totalCents: row.price_cents };
 }
 

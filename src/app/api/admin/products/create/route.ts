@@ -133,6 +133,11 @@ export const POST = defineRoute({
       // DEFAULT NULL writes the null. What keeps the omission deliberate is the
       // contract schema, which requires the field and admits an explicit null.
       p_tag: body.tag ?? undefined,
+      // Unlocked is an omission for the same reason untagged is. The contract
+      // both requires the field and narrows it to a seeded country, so this is
+      // also the last place the code is checked — nothing downstream of here
+      // re-reads it, because the lock is enforced in the shop's UI alone.
+      p_region_lock_country: body.region_lock_country ?? undefined,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,
@@ -182,6 +187,17 @@ export const POST = defineRoute({
         .upload(uploadMeta.path, file, {
           contentType: uploadMeta.contentType,
           upsert: false,
+          // A year, because the path is a fresh UUID per upload and
+          // `upsert: false` above is what guarantees it: these bytes are
+          // immutable, and replacing the picture mints a different path.
+          // Storage otherwise defaults to an hour. This does not reach the
+          // image optimizer — that cache floors its TTL at
+          // `images.minimumCacheTTL` regardless of what the object stores —
+          // so what it buys is the paths that bypass the optimizer entirely:
+          // browser and Supabase-CDN caching of the raw original, fetched by
+          // link scrapers for og:image and by any direct bucket hit. Objects
+          // uploaded before this line was added keep their old header.
+          cacheControl: "31536000",
         });
 
       if (uploadError) {

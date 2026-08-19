@@ -560,6 +560,125 @@ describe("update_product", () => {
     expect(row?.tag).toBeNull();
   });
 
+  // Region lock (00193). Another nullable column on the defaulted tail, so it
+  // has the tag's three cases — set it, read it back, clear it by omission —
+  // plus one the tag cannot have: the column carries a CHECK, and a value that
+  // is not an alpha-2 code has to fail loudly rather than be stored.
+  it("round-trips a region lock through update_product", async () => {
+    await freshProduct();
+
+    const { error } = await adminAuth.rpc("update_product", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [{ locale: "en", name: "Locked", short_description: "" }],
+      p_topic: "minecraft_java",
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+      p_region_lock_country: "FI",
+    });
+    expect(error).toBeNull();
+
+    const { data: row } = await admin
+      .from("products")
+      .select("region_lock_country")
+      .eq("id", PRODUCT_ID)
+      .single();
+    expect(row?.region_lock_country).toBe("FI");
+  });
+
+  it("clears an existing region lock when p_region_lock_country is omitted", async () => {
+    // The tag's half-of-DEFAULT-NULL case again, with a louder consequence: an
+    // omitted argument does not leave the lock alone, it removes it and puts
+    // the product on sale everywhere. That is exactly how the admin form
+    // unlocks one (the route maps a null field to `undefined`); what stops it
+    // happening by accident is a wire schema that requires the field, and that
+    // guard lives in the contract, not here — this case is why it has to.
+    await freshProduct();
+    const seeded = await admin
+      .from("products")
+      .update({ region_lock_country: "SE" })
+      .eq("id", PRODUCT_ID);
+    expect(seeded.error).toBeNull();
+
+    const { error } = await adminAuth.rpc("update_product", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [
+        { locale: "en", name: "Unlocked", short_description: "" },
+      ],
+      p_topic: "minecraft_java",
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+      // p_region_lock_country deliberately absent.
+    });
+    expect(error).toBeNull();
+
+    const { data: row } = await admin
+      .from("products")
+      .select("region_lock_country")
+      .eq("id", PRODUCT_ID)
+      .single();
+    expect(row?.region_lock_country).toBeNull();
+  });
+
+  it("rejects a malformed region lock via the CHECK constraint", async () => {
+    await freshProduct();
+
+    // chk_products_region_lock_country_shape — the database holds the shape
+    // invariant only (two upper-case letters); WHICH countries may be chosen is
+    // application config and is enforced by the write contract. Both spellings
+    // below are things a hand-written call could produce and neither is a
+    // country code the shop could ever match, so the constraint has to refuse
+    // them rather than store a lock nobody can pass.
+    const throughRpc = await adminAuth.rpc("update_product", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [{ locale: "en", name: "Bad", short_description: "" }],
+      p_topic: "minecraft_java",
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+      p_region_lock_country: "Finland",
+    });
+    expect(throughRpc.error?.code).toBe("23514"); // check_violation
+
+    // Direct update — admin bypasses RLS but not the CHECK. Lower case is the
+    // dangerous near-miss: it is well-formed as text and matches nothing.
+    const direct = await admin
+      .from("products")
+      .update({ region_lock_country: "fi" })
+      .eq("id", PRODUCT_ID);
+    expect(direct.error?.code).toBe("23514"); // check_violation
+
+    // And the row is untouched by either attempt.
+    const { data: row } = await admin
+      .from("products")
+      .select("region_lock_country")
+      .eq("id", PRODUCT_ID)
+      .single();
+    expect(row?.region_lock_country).toBeNull();
+  });
+
   // -------------------------------------------------------------------------
   // 00171 — turning the waitlist off deletes the queue behind it
   // -------------------------------------------------------------------------

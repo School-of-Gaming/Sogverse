@@ -9,9 +9,9 @@
       "resetPassword": "Vaihda salasana",
       "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
-      "yty": "Yty – Sogversen voima",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
+      "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "parentDashboardDescription": "Hallitse pelaajiasi ja heidän ilmoittautumisiaan",
       "geduDashboard": "Oma SOG",
@@ -23,8 +23,6 @@
       "schools": "Kuntakerhot",
       "gamerDashboard": "Oma SOG",
       "gamerDashboardDescription": "Kerhosi, leirisi ja tapahtumasi Sogversessa",
-      "gamerGroups": "Omat ryhmät",
-      "gamerGroupDetails": "Ryhmän tiedot",
       "voiceSession": "Ääni-istunto",
       "unlockPin": "Syötä PIN",
       "resetPin": "Nollaa PIN",
@@ -76,12 +74,9 @@
     "createAccount": "Luo tili",
     "unexpectedError": "Odottamaton virhe tapahtui",
     "somethingWentWrong": "Jokin meni pieleen",
-    "noPermission": "Sinulla ei ole oikeutta tarkastella tätä sivua.",
-    "perSession": "per kerta",
     "minutes": "min",
     "ages": "Ikä {min}–{max}",
     "schedule": "Joka {day} klo {time} {tz}",
-    "duration": "{minutes} minuuttia",
     "email": "Sähköposti",
     "password": "Salasana",
     "confirmPassword": "Vahvista salasana",
@@ -99,10 +94,6 @@
     "backToLogin": "Takaisin kirjautumiseen",
     "passwordMinLength": "Vähintään {count} merkkiä",
     "forgotPassword": "Unohditko salasanan?",
-    "failedToLoad": "Tietojen lataaminen epäonnistui",
-    "alreadyEnrolled": "Jo ilmoittautunut",
-    "noRecentActivity": "Ei viimeaikaista toimintaa näytettäväksi.",
-    "recentActivity": "Viimeaikainen toiminta",
     "selectLanguage": "Valitse kieli",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
@@ -153,10 +144,6 @@
       "heading": "Vanhemmille",
       "paragraph1": "Vanhempien pelikasvatus on yhtä tärkeä osa toimintaamme kuin itse kerhot. Haluamme auttaa vanhempia pysymään mukana jatkuvasti muuttuvassa pelimaailmassa, jotta he voivat tukea lapsiaan luottavaisin mielin.",
       "paragraph2": "Sinä pidät langat käsissäsi — hallitset tilejä, ilmoittautumisia ja kulutusta — samalla kun lapsesi nauttii turvallisesta ympäristöstä, jota ohjaavat välittävät ammattilaiset."
-    },
-    "cta": {
-      "heading": "Liity yhteisöömme",
-      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattitaitoisen pelikasvattajan ohjaamana."
     }
   },
   "admin": {
@@ -290,8 +277,7 @@
         "label": "Kielet",
         "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty.",
         "addLocale": "+ Lisää kieli",
-        "removeLocale": "Poista {locale}",
-        "inlineCreateHint": "Tallennetaan kielellä {locale}. Muiden kielten käännökset voi lisätä myöhemmin aiheiden ja tunnisteiden hallinnasta."
+        "removeLocale": "Poista {locale}"
       },
       "newPage": {
         "back": "Takaisin: {plural}",
@@ -299,7 +285,6 @@
       },
       "detailsPage": {
         "notFound": "Tuotetta ei löytynyt.",
-        "locationMissing": "—",
         "uncapped": "Ei paikkarajaa",
         "listed": "Listattu julkisesti",
         "unlisted": "Ei listattu – vain suoralla linkillä",
@@ -314,7 +299,6 @@
         "fields": {
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
-          "locales": "Kielet",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
           "signupThreshold": "Ilmoittautumiskynnys",
@@ -329,6 +313,7 @@
           "municipalityFee": "Kunnan maksu / kerta",
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "tag": "Kenelle suunniteltu",
+          "regionLock": "Maakohtainen rajaus",
           "visibility": "Näkyvyys"
         }
       },
@@ -366,7 +351,7 @@
         "billingDescription": {
           "consumerClub": "Vanhemmat maksavat jokaisesta lapsen osallistumiskerrasta. Laskutus tapahtuu automaattisesti viikoittain.",
           "municipalityClub": "School of Gaming laskuttaa kuntaa suoraan. Vanhemmat ilmoittavat lapsensa maksutta paikkarajaan saakka.",
-          "camp": "Vanhemmat maksavat koko hinnan kerralla ilmoittautuessaan. Palautettavissa tiettyyn hetkeen asti.",
+          "camp": "Leirit voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja. Maksullisesta leiristä maksetaan koko hinta ilmoittautuessa, ja se on palautettavissa tiettyyn hetkeen asti.",
           "event": "Tapahtumat voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja."
         },
         "registration": "Ilmoittautumisaika",
@@ -382,11 +367,12 @@
         "materialUrl": "Oppimateriaalin osoite",
         "seatAudience": "Kuka voi ottaa paikan",
         "tag": "Kenelle suunniteltu",
+        "regionLock": "Maakohtainen rajaus",
         "forGamers": "Pelaajille",
         "forParents": "Vanhemmille",
         "minAge": "Alaikäraja",
         "maxAge": "Yläikäraja",
-        "deliveredIn": "Toteutuksen kieli",
+        "spokenLanguage": "Puhuttu kieli",
         "online": "Verkossa",
         "inPerson": "Paikan päällä",
         "municipality": "Mille kunnalle tämä on",
@@ -507,6 +493,9 @@
       "tagOptions": {
         "none": "Ei merkintää"
       },
+      "regionLock": {
+        "none": "Ei maakohtaista rajausta"
+      },
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Koko esittely, joka näkyy vain tuotteen tuotesivulla. Käytettävissä ovat otsikot, luettelot, korostukset ja linkit.",
@@ -516,7 +505,8 @@
         "forGamersHint": "Vanhempi ilmoittaa pelaajan, ja pelaaja ottaa paikan. Vaatii ala- ja yläikärajan.",
         "forParentsHint": "Vanhempi ottaa paikan itselleen ja osallistuu toimintaan. Ei ikärajoja – ikä koskee lapsia, ei aikuisia.",
         "tagHint": "Valinnainen. Perheet näkevät sen merkintänä selauskortissa ja tuotesivulla. Se kertoo, kenelle kerrat on suunniteltu – ei sitä, kuka voi ottaa paikan.",
-        "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
+        "regionLockHint": "Vain valitussa maassa asuvat perheet voivat ilmoittautua. Sijainti perustuu perheen omaan ilmoitukseen, joten tämä on kaupan opaste eikä ehdoton este – jo ilmoittautuneet säilyttävät paikkansa, vaikka muuttaisivat.",
+        "spokenLanguageHint": "Pääkieli, jota kerroilla puhutaan.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
@@ -528,7 +518,8 @@
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
         "billingHint": "Maksuttomilla tuotteilla on oletuksena paikkaraja, maksullisilla ei.",
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
-        "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
+        "paidDetailMonthly": "Veloitetaan kuukausittain tilauksena.",
+        "paidDetailUpfront": "Kertamaksu ilmoittautumisen yhteydessä.",
         "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
@@ -558,9 +549,9 @@
         "seatCountRequired": "Paikkamäärä vaaditaan",
         "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
         "priceSessionMissing": "Anna kertahinta valuutassa {currency}",
-        "priceSessionNegative": "Kertahinta valuutassa {currency} ei voi olla negatiivinen",
+        "priceSessionInvalid": "Kertahinnan on oltava vähintään {minimum}",
         "priceMonthMissing": "Anna kuukausihinta valuutassa {currency}",
-        "priceMonthNegative": "Kuukausihinta valuutassa {currency} ei voi olla negatiivinen",
+        "priceMonthInvalid": "Kuukausihinnan on oltava vähintään {minimum}",
         "primaryGeduFeeInvalid": "Anna vastaavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei tiedossa tai Vapaaehtoinen",
         "assistantGeduFeeInvalid": "Anna avustavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei ole tai Vapaaehtoinen",
         "municipalityFeeInvalid": "Anna kunnan maksu, joka on suurempi kuin 0, tai valitse Ei tiedossa",
@@ -815,9 +806,6 @@
       }
     },
     "locations": {
-      "title": "Sijainnit",
-      "description": "Hallitse maita, kaupunkeja ja toimipisteitä",
-      "searchPlaceholder": "Hae sijainteja...",
       "editName": "Muokkaa: {name}",
       "addChildUnder": "Lisää {type} kohteen {parent} alle",
       "location": "Sijainti",
@@ -826,16 +814,7 @@
       "enterTypeName": "Syötä {type} nimi",
       "enterName": "Syötä nimi",
       "adding": "Lisätään...",
-      "addType": "Lisää {type}",
-      "noLocationsYet": "Ei sijainteja vielä. Lisää maa aloittaaksesi.",
-      "noLocationsMatchSearch": "Hakuasi vastaavia sijainteja ei löytynyt."
-    },
-    "productLocation": {
-      "locationLabel": "Sijainti",
-      "remote": "Etänä",
-      "inPerson": "Paikan päällä",
-      "selectLevel": "Valitse {type}...",
-      "selectSiteHint": "Valitse tietty toimipiste jatkaaksesi."
+      "addType": "Lisää {type}"
     },
     "testing": {
       "title": "Testaus",
@@ -874,89 +853,6 @@
       "notDelivered": "Ei toimitettu",
       "today": "Tänään",
       "yesterday": "Eilen"
-    },
-    "groups": {
-      "pendingChanges": "{count, plural, one {# odottava muutos} other {# odottavaa muutosta}}",
-      "discard": "Hylkää",
-      "commitChanges": "Toteuta muutokset",
-      "confirmGroupChanges": "Vahvista ryhmämuutokset",
-      "changesWillBeApplied": "Seuraavat muutokset toteutetaan:",
-      "saving": "Tallennetaan...",
-      "applyingChanges": "Toteutetaan muutoksia",
-      "errorOccurred": "Toiminnon aikana tapahtui virhe.",
-      "allChangesApplied": "Kaikki muutokset on toteutettu onnistuneesti.",
-      "savingAndNotifying": "Tallennetaan muutoksia ja lähetetään ilmoituksia...",
-      "working": "Käsitellään...",
-      "serverError": "Palvelinvirhe ({status})",
-      "noResponseStream": "Palvelimelta ei saatu vastausvirtaa",
-      "failedToSaveChanges": "Muutosten tallentaminen epäonnistui",
-      "operationFailed": "Toiminto epäonnistui",
-      "networkError": "Verkkovirhe",
-      "geduGroups": "Gedu-ryhmät",
-      "addGroup": "Lisää ryhmä",
-      "noGroups": "Ei vielä Gedu-ryhmiä. Lisää ryhmä määrittääksesi Gedun.",
-      "selectGeduForGroup": "Valitse Gedu luodaksesi uuden ryhmän.",
-      "group": "Ryhmä",
-      "groupNumber": "Ryhmä {number}",
-      "groupDeleted": "{label} (poistettu)",
-      "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
-      "genderBoy": "Poika",
-      "genderGirl": "Tyttö",
-      "genderNonBinary": "Muunsukupuolinen",
-      "boyCount": "{count, plural, one {# poika} other {# poikaa}}",
-      "girlCount": "{count, plural, one {# tyttö} other {# tyttöä}}",
-      "nonBinaryCount": "{count, plural, one {# muunsukupuolinen} other {# muunsukupuolisia}}",
-      "ageRangeLabel": "ikähaarukka {range}",
-      "reassignGedu": "Vaihda Gedu",
-      "moveGamersFirst": "Siirrä kaikki pelaajat ensin pois",
-      "deleteGroup": "Poista ryhmä",
-      "markedForDeletion": "Merkitty poistettavaksi",
-      "noGamersEnrolled": "Ei ilmoittautuneita pelaajia. Raahaa pelaajia tähän.",
-      "new": "Uusi",
-      "deleteGroupConfirmTitle": "Poista {label}?",
-      "deleteGroupConfirmDescription": "Tämä poistaa ryhmän ja sen Gedu-määrityksen. Muutos astuu voimaan vasta, kun toteutat sen.",
-      "reassignGeduFor": "Vaihda Gedu ryhmälle {label}",
-      "selectDifferentGedu": "Valitse toinen Gedu tälle ryhmälle.",
-      "searchByNameOrEmail": "Hae nimellä tai sähköpostilla…",
-      "noGedusMatchSearch": "Hakuasi vastaavia Geduja ei löytynyt."
-    },
-    "forms": {
-      "nameLabel": "Nimi",
-      "namePlaceholder": "Tuotteen nimi",
-      "descriptionLabel": "Kuvaus",
-      "descriptionPlaceholder": "Kuvaile tuotettasi",
-      "approxPerSession": "≈ {amount} per kerta",
-      "imageLabel": "Kuva",
-      "preview": "Esikatselu",
-      "imagePickerHint": "Raahaa kuva tähän tai valitse tiedosto",
-      "imageChooseFile": "Valitse tiedosto",
-      "imageRemove": "Poista",
-      "imageRequired": "Tuotteen kuva vaaditaan",
-      "gameLabel": "Peli",
-      "newGameName": "Uuden pelin nimi",
-      "addButton": "Lisää",
-      "selectGame": "Valitse peli...",
-      "addNewGame": "Lisää uusi peli",
-      "dayOfWeekLabel": "Viikonpäivä",
-      "startTimeLabel": "Alkamisaika",
-      "startTimeHint": "Syötä aika Suomen aikaa (Europe/Helsinki). Vanhemmat näkevät tämän omassa aikavyöhykkeessään.",
-      "durationLabel": "Kesto (minuuttia)",
-      "minAgeLabel": "Vähimmäisikä",
-      "maxAgeLabel": "Enimmäisikä",
-      "nameRequired": "Tuotteen nimi on pakollinen",
-      "nameMaxLength": "Tuotteen nimi saa olla enintään 100 merkkiä",
-      "descriptionRequired": "Kuvaus on pakollinen",
-      "validUrl": "Syötä kelvollinen URL",
-      "gameRequired": "Peli on pakollinen",
-      "validTime": "Syötä kelvollinen aika",
-      "durationMin": "Keston pitää olla vähintään 1 minuutti",
-      "minAgeMin": "Vähimmäisiän pitää olla 0 tai enemmän",
-      "maxAgeMin": "Enimmäisiän pitää olla 0 tai enemmän",
-      "maxAgeGte": "Enimmäisiän pitää olla vähintään yhtä suuri kuin vähimmäisikä",
-      "failedToCreateGame": "Pelin luominen epäonnistui",
-      "spokenLanguageLabel": "Kerhon kieli",
-      "spokenLanguageRequired": "Valitse kieli, jolla kerho pidetään",
-      "locationRequired": "Valitse sijainti tai merkitse etäkerhoksi"
     }
   },
   "auth": {
@@ -1064,10 +960,6 @@
       "successDescription": "Vanhemman PIN on vaihdettu.",
       "backToSettings": "Takaisin asetuksiin"
     }
-  },
-  "checkout": {
-    "redirecting": "Ohjataan kassalle...",
-    "error": "Jokin meni pieleen kassalle siirryttäessä. <link>Palaa takaisin</link> ja yritä uudelleen."
   },
   "purchaseConfirmation": {
     "heading": "Valmista tuli!",
@@ -1231,9 +1123,7 @@
     "billing": "Laskutus",
     "help": "Apu",
     "yty": "Yty",
-    "settings": "Asetukset",
-    "instantVoiceRoom": "Pikaäänihuone",
-    "instantVoiceRoomShort": "Äänihuone",
+    "tools": "Työkalut",
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "family": {
@@ -1331,8 +1221,7 @@
       "chooseAreas": "Valitse alueet",
       "loading": "Ladataan sijainteja...",
       "save": "Tallenna",
-      "saving": "Tallennetaan...",
-      "saveError": "Tallennus epäonnistui"
+      "saving": "Tallennetaan..."
     },
     "sessionDetails": {
       "back": "Takaisin Omaan SOGiin",
@@ -1351,17 +1240,17 @@
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
       "genderNonBinary": "Muu",
-      "minecraftUsernameLabel": "Minecraft-käyttäjänimi",
-      "minecraftUsernamePlaceholder": "Minecraft-käyttäjänimi",
-      "minecraftUsernameSave": "Tallenna",
-      "minecraftUsernameCancel": "Peruuta",
-      "editMinecraftUsername": "Muokkaa pelaajan {name} Minecraft-käyttäjänimeä",
+      "gameUsernameLabel": "{platform}-käyttäjänimi",
+      "gameUsernamePlaceholder": "{platform}-käyttäjänimi",
+      "gameUsernameSave": "Tallenna",
+      "gameUsernameCancel": "Peruuta",
+      "editGameUsername": "Muokkaa pelaajan {name} {platform}-käyttäjänimeä",
       "copyContactEmail": "Kopioi yhteyssähköposti {email}",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllContactEmails": "Kopioi kaikki yhteyssähköpostit ({count})",
       "allEmailsCopied": "Kaikki yhteyssähköpostit kopioitu",
       "loadingWorkspace": "Ladataan tämän ryhmän kertoja.",
-      "minecraftSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
+      "gameSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
     },
     "sessionFeed": {
       "edit": "Muokkaa",
@@ -1443,32 +1332,12 @@
   "sessionFeed": {
     "readMore": "Lue lisää",
     "showLess": "Näytä vähemmän",
+    "lastEditedBy": "Muokannut {name}",
     "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}"
   },
   "groups": {
-    "title": "Ryhmät",
-    "backToGroups": "Takaisin ryhmiin",
-    "groupNotFound": "Ryhmää ei löytynyt.",
-    "live": "Live",
-    "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
-    "noGamersEnrolled": "Ei vielä ilmoittautuneita pelaajia.",
-    "age": "Ikä {age}",
-    "unenrollGamer": "Poista {name} kerhosta",
-    "noGroupsYet": "Ei vielä ryhmiä",
-    "nextSession": "Seuraava: {date}",
-    "startsIn": "(alkaa {countdown} kuluttua)",
-    "sessionInProgress": "Kerta käynnissä",
-    "everyDay": "Joka {day}",
-    "join": "Liity",
-    "alwaysOpen": "Aina auki",
-    "material": "Materiaalit",
     "materialAction": "Opetusmateriaalit",
-    "materialStaffOnly": "Vain Geduille — perheet eivät näe tätä linkkiä",
-    "myGroupsHeading": "Ryhmäni",
-    "myGroupsSubheading": "Ilmoittautuneet ryhmäsi ja tulevat äänikeskustelut.",
-    "myGroupsEmpty": "Et ole ilmoittautunut mihinkään ryhmään vielä.",
-    "currentGedu": "Nykyinen",
-    "assignedGedu": "Määrätty"
+    "materialStaffOnly": "Vain Geduille — perheet eivät näe tätä linkkiä"
   },
   "richText": {
     "bold": "Lihavointi",
@@ -1688,7 +1557,6 @@
       "audience": "Kohderyhmä",
       "language": "Kieli",
       "online": "Verkossa",
-      "atVenue": "Paikassa {venue}",
       "tbd": "Vahvistetaan myöhemmin"
     },
     "calendar": {
@@ -1759,10 +1627,21 @@
       "seatIsFor": "Kenelle paikka on",
       "selected": "Valittu",
       "agePill": "Ikä {age}",
-      "parentPill": "Vanhempi"
+      "parentPill": "Vanhempi",
+      "regionLock": {
+        "heading": "Sijaintisi",
+        "note": "Tätä tuotetta tarjotaan vain joissakin maissa. Ilmoita perheesi sijainti.",
+        "setLocation": "Lisää sijaintisi",
+        "wrongCountry": "Tätä tuotetta tarjotaan vain yhdessä maassa: <name>{country}</name>.",
+        "eligible": "Vain oman maasi perheille: {country}",
+        "eligibleLocation": "Perheesi sijainti: {location}",
+        "dialogTitle": "Missä perheesi asuu?",
+        "dialogDescription": "Tämän perusteella näemme, mitkä kerhot, leirit ja tapahtumat ovat tarjolla asuinpaikassasi. Voit vaihtaa sijainnin myöhemmin asetuksissa.",
+        "dialogField": "Sijaintisi",
+        "dialogSave": "Tallenna sijainti"
+      }
     },
     "pricing": {
-      "title": "Hinta",
       "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
       "free": "Maksuton",
       "freeHint": "Maksua ei tarvita.",
@@ -1779,25 +1658,10 @@
       "minutes": "min",
       "seconds": "s"
     },
-    "loading": "Ladataan…",
     "notFound": {
       "title": "Sivua ei löytynyt",
       "description": "Se on ehkä poistettu tai linkki on virheellinen. Selaa muita vaihtoehtoja alta.",
       "cta": "Takaisin selaamaan"
-    },
-    "geduGroups": {
-      "heading": "Ryhmät",
-      "yourGroupBadge": "Oma ryhmä",
-      "educatorsLabel": "Pelikasvattajat",
-      "noEducators": "Ei vielä pelikasvattajia.",
-      "gamersLabel": "Pelaajat",
-      "gamerCount": "{count, plural, =0 {0 pelaajaa} one {# pelaaja} other {# pelaajaa}}",
-      "emptyNoGamers": "Tässä ryhmässä ei ole vielä pelaajia.",
-      "emptyNoGroups": "Tälle tuotteelle ei ole vielä luotu ryhmiä.",
-      "age": "{age} v",
-      "genderBoy": "Poika",
-      "genderGirl": "Tyttö",
-      "genderNonBinary": "Muunsukupuolinen"
     }
   },
   "sidebar": {
@@ -1807,13 +1671,12 @@
     "municipalityClubs": "Kuntakerhot",
     "camps": "Leirit",
     "events": "Tapahtumat",
-    "locations": "Sijainnit",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
     "whatsapp": "WhatsApp",
     "testing": "Testaus",
     "settings": "Asetukset",
-    "voice": "Ääni",
+    "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki"
   },
@@ -1906,9 +1769,6 @@
     "saveFailed": "{platform}-käyttäjänimen päivittäminen epäonnistui."
   },
   "parent": {
-    "placeholders": {
-      "myGamersHint": "Valitse pelaaja hallitaksesi hänen tiliään."
-    },
     "waitlist": {
       "footerReassuranceCustomer": "Jonossa sijalla {position} — lähetämme sähköpostia heti, kun paikka vapautuu.",
       "footerReassuranceGamer": "Olet jonossa sijalla {position} — lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
@@ -2028,6 +1888,36 @@
     "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
     "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
   },
+  "tools": {
+    "uncertified": {
+      "title": "Odottaa hyväksyntää",
+      "body": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit avata äänihuoneita tai nollata Minecraft Education -salasanoja. Molemmat työkalut tulevat tähän näkyviin heti, kun tilisi on hyväksytty."
+    },
+    "minecraftPasswordReset": {
+      "title": "Minecraft Education -salasanat",
+      "description": "Vaihda jaetun Minecraft Education -tilin salasana ja lue uusi salasana suoraan näytöltä.",
+      "inputLabel": "Käyttäjätunnukset tai osoitteet",
+      "inputPlaceholder": "builder07, redstone12@gamer.sog.gg, creeper03",
+      "inputHint": "Yksi tai useampi – erota ne välilyönnillä, pilkulla tai rivinvaihdolla. Pelkät käyttäjätunnukset käyvät, samoin täydet osoitteet verkkotunnuksissa {domains}.",
+      "submit": "{count, plural, =0 {Vaihda salasanat} one {Vaihda 1 salasana} other {Vaihda # salasanaa}}",
+      "submitting": "Vaihdetaan…",
+      "unsupportedDomainEntries": "{count, plural, one {Tämä ei ole Minecraft Education -osoite, joten sitä ei lähetetä: {entries}. Käytä pelkkää käyttäjätunnusta tai osoitetta verkkotunnuksessa {domains}.} other {Nämä eivät ole Minecraft Education -osoitteita, joten niitä ei lähetetä: {entries}. Käytä pelkkiä käyttäjätunnuksia tai osoitteita verkkotunnuksissa {domains}.}}",
+      "tooMany": "Tunnuksia on {count} – vaihda enintään {max} salasanaa kerrallaan.",
+      "requestFailed": "Jokin meni pieleen. Yritä uudelleen.",
+      "resultsHeading": "Uudet salasanat",
+      "copyAll": "Kopioi kaikki {count}",
+      "copied": "Kopioitu",
+      "copyPasswordFor": "Kopioi tunnuksen {upn} uusi salasana",
+      "mustChangeOnFirstSignIn": "Vaihdettava ensimmäisellä kirjautumiskerralla",
+      "errors": {
+        "invalidUsername": "Kelvoton syöte. Anna pelkkä käyttäjätunnus tai täysi Minecraft Education -osoite.",
+        "unsupportedDomain": "Salasanan voi nollata vain verkkotunnuksissa {domains}.",
+        "notFound": "Tiliä ei löytynyt osoitteista {domains}.",
+        "azureAuth": "Microsoftiin ei saatu yhteyttä. Azure-tunnukset ovat ehkä vanhentuneet – ilmoita ylläpitäjälle.",
+        "graphError": "Microsoft ei hyväksynyt muutosta (virhe {status}). Yritä uudelleen."
+      }
+    }
+  },
   "verifyEmail": {
     "successTitle": "Sähköposti vahvistettu",
     "successDescription": "Kiitos – nyt tiedämme, että tämä osoite tavoittaa sinut, eikä mikään tärkeä jää saamatta.",
@@ -2049,7 +1939,6 @@
     "sharerScreen": "{name} näyttö",
     "stopSharing": "Lopeta jakaminen",
     "voiceRoom": "Äänihuone",
-    "spatialDescription": "Vedä avataristasi liikkuaksesi vyöhykkeiden välillä. Samalla vyöhykkeellä olevat osallistujat kuulevat toisensa.",
     "leave": "Poistu",
     "failedToJoinRoom": "Huoneeseen liittyminen epäonnistui",
     "sessionEnded": "Kerta on päättynyt",
@@ -2070,7 +1959,6 @@
     "joinZone": "Siirry alueelle {zone}",
     "zonesDescription": "Siirry alueelle napauttamalla tai vetämällä itsesi sille. Kuulet kaikki samalla alueella olevat.",
     "privateZone": "Yksityinen",
-    "privateZoneHint": "Tämä alue on yksityinen ja suojattu.",
     "newZone": "Uusi alue",
     "editZone": "Muokkaa aluetta",
     "createZone": "Luo alue",
@@ -2213,9 +2101,7 @@
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
-        "join": "Liity",
-        "uncertifiedTitle": "Odottaa hyväksyntää",
-        "uncertifiedBody": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on hyväksytty."
+        "join": "Liity"
       }
     }
   },
@@ -2263,10 +2149,6 @@
       "paragraph1": "Yty-pisteitä ansaitaan osallistumalla. Viikoittaiset kerhokerrat, tehtävien ja haasteiden suorittaminen, ystävällisyys kanssapelaajia kohtaan, yhteisötapahtumat ja leirit — kaikki nämä kartuttavat pelaajan Yty-pisteitä.",
       "paragraph2": "Kun pisteitä kertyy tiettyjen saavutusmerkkien alle, pelaajat etenevät tasoissa — pronssista hopeaan, kultaan, platinaan ja timanttiin. Jokainen piste syöttää myös pelaajan yleistä Yty-tasoa ja elementtiä, johon se kuuluu.",
       "paragraph3": "Eikä kyse ole vain pelaajista. Gedut, vanhemmat ja koko yhteisö voivat osallistua Sogversen Yty:n rakentamiseen tapahtumien ja yhteisten aktiviteettien kautta."
-    },
-    "cta": {
-      "heading": "Aloita matkasi",
-      "subheading": "Liity Sogverseen ja ala ansaita Yty-pisteitä. Jokainen kerta, jokainen ystävyys, jokainen ystävällinen teko tekee eron."
     }
   },
   "email": {
@@ -2290,77 +2172,6 @@
       "expiry": "Tämä linkki vanhenee 24 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"
-    },
-    "minecraft": {
-      "label": "Minecraft-käyttäjänimi:",
-      "verified": "{username} (vahvistettu)",
-      "unverified": "{username} (ei vielä vahvistettu)",
-      "notProvided": "Ei annettu"
-    },
-    "enrollmentParent": {
-      "subject": "{participantName} on nyt ilmoittautunut kerhoon {productName}",
-      "subjectSelf": "Sinut on nyt ilmoitettu toimintaan {productName}",
-      "heading": "Ilmoittautuminen vahvistettu",
-      "body": "Hei {parentName}, {participantName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa.",
-      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu toimintaan {productName}, pelikasvattajana Gedu {geduName}."
-    },
-    "enrollmentGedu": {
-      "subject": "{participantName} on liittynyt ryhmääsi – {productName}",
-      "heading": "Uusi osallistuja ryhmässäsi",
-      "body": "Hei {geduName}, {participantName} on liittynyt ryhmääsi kerhossa {productName}."
-    },
-    "unenrollmentParent": {
-      "subject": "{participantName} on poistettu kerhosta {productName}",
-      "subjectSelf": "Ilmoittautumisesi toimintaan {productName} on peruttu",
-      "heading": "Ilmoittautumisen peruutus vahvistettu",
-      "body": "Hei {parentName}, {participantName} on poistettu kerhosta {productName} (Gedu: {geduName}).",
-      "bodySelf": "Hei {parentName}, ilmoittautumisesi toimintaan {productName} on peruttu (Gedu: {geduName})."
-    },
-    "unenrollmentGedu": {
-      "subject": "{participantName} on poistunut ryhmästäsi – {productName}",
-      "heading": "Osallistuja poistunut ryhmästäsi",
-      "body": "Hei {geduName}, {participantName} on poistunut ryhmästäsi kerhossa {productName}."
-    },
-    "groupAdded": {
-      "subject": "Sinut on määrätty uuteen ryhmään – {productName}",
-      "heading": "Sinut on määrätty uuteen ryhmään",
-      "body": "Hei {geduName}, sinut on määrätty uuteen ryhmään kerhossa {productName}.",
-      "dashboardNote": "Näet tämän ryhmän Oma SOG -sivullasi pian."
-    },
-    "groupDeleted": {
-      "subject": "Ryhmäsi on poistettu – {productName}",
-      "heading": "Ryhmäsi on poistettu",
-      "body": "Hei {geduName}, ryhmäsi kerhossa {productName} on poistettu ylläpitäjän toimesta."
-    },
-    "groupReassignedOldGedu": {
-      "subject": "Ryhmäsi on siirretty toiselle – {productName}",
-      "heading": "Ryhmäsi on siirretty toiselle",
-      "body": "Hei {oldGeduName}, ryhmäsi kerhossa {productName} on siirretty Gedulle {newGeduName}."
-    },
-    "groupReassignedNewGedu": {
-      "subject": "Sinut on määrätty ryhmään – {productName}",
-      "heading": "Sinut on määrätty ryhmään",
-      "body": "Hei {newGeduName}, sinut on määrätty ryhmään kerhossa {productName} (aiemmin Gedun {oldGeduName} vetämä)."
-    },
-    "groupReassignedParent": {
-      "subject": "Gedun vaihto: {gamerName} – {productName}",
-      "heading": "Pelaajasi Gedu on vaihtunut",
-      "body": "Hei {parentName}, pelaajan {gamerName} ryhmän Gedu kerhossa {productName} on vaihtunut Gedusta {oldGeduName} Geduun {newGeduName}."
-    },
-    "gamerMovedParent": {
-      "subject": "{gamerName} on siirretty uuteen ryhmään – {productName}",
-      "heading": "Lapsesi on siirretty uuteen ryhmään",
-      "body": "Hei {parentName}, {gamerName} on siirretty Gedun {oldGeduName} ryhmästä Gedun {newGeduName} ryhmään kerhossa {productName}."
-    },
-    "gamerMovedOldGedu": {
-      "subject": "{gamerName} on siirretty ryhmästäsi – {productName}",
-      "heading": "Pelaaja on siirretty ryhmästäsi",
-      "body": "Hei {geduName}, {gamerName} on siirretty ryhmästäsi Gedun {newGeduName} ryhmään kerhossa {productName}."
-    },
-    "gamerMovedNewGedu": {
-      "subject": "{gamerName} on siirretty ryhmääsi – {productName}",
-      "heading": "Pelaaja on siirretty ryhmääsi",
-      "body": "Hei {geduName}, {gamerName} on siirretty ryhmääsi Gedun {oldGeduName} ryhmästä kerhossa {productName}."
     },
     "feedback": {
       "subject": "Palaute käyttäjältä {displayName} ({role})",

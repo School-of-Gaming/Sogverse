@@ -55,6 +55,10 @@ function row(
     starts_at: `${sessionDate}T14:30:00.000Z`,
     ends_at: `${sessionDate}T16:00:00.000Z`,
     report: null,
+    // The last-editor pair. Null together by default: this builder is about the
+    // calendar math, and every case here is indifferent to who touched the row.
+    updated_by: null,
+    updated_by_first_name: null,
     attendance: null,
     ...fields,
   };
@@ -239,6 +243,69 @@ describe("buildFamilySessionFeed — no write-up versus a write-up", () => {
     expect(
       byDate(build({ sessions: [row("2026-03-16", { report: "\n" })] }), "2026-03-16"),
     ).toMatchObject({ report: "\n" });
+  });
+});
+
+/**
+ * The last-editor pair, and the one rule over it: **both halves or nobody.**
+ *
+ * The id seeds an identicon and the name is what the chip says, so half a pair
+ * is not an attribution anyone can read — it is a face with no name or a name
+ * with a degenerate face. The builder therefore answers `null` for any row that
+ * does not carry both, and for every occurrence with no row behind it at all.
+ *
+ * Nothing here is about *who* the editor is. The column is the session's last
+ * editor rather than the report's author, which is a documented product
+ * decision the builder has no opinion about: it maps the pair through, and the
+ * card decides whether there is a write-up worth signing.
+ */
+describe("buildFamilySessionFeed — the last editor", () => {
+  const EDITOR = {
+    updated_by: "9f1c1a3f-1d4c-4a0b-9c6e-7f2a5f0e11aa",
+    updated_by_first_name: "Sanna",
+  };
+
+  it("maps the pair through when both halves are present", () => {
+    const entries = build({ sessions: [row("2026-03-16", EDITOR)] });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      lastEditedBy: { id: EDITOR.updated_by, firstName: "Sanna" },
+    });
+  });
+
+  it("carries it on a future entry too — a plan is the same field earlier", () => {
+    const entries = build({ sessions: [row("2026-03-23", EDITOR)] });
+    expect(byDate(entries, "2026-03-23")).toMatchObject({
+      kind: "future",
+      lastEditedBy: { id: EDITOR.updated_by, firstName: "Sanna" },
+    });
+  });
+
+  it("answers null when the id is there and the name is not", () => {
+    const entries = build({
+      sessions: [
+        row("2026-03-16", { ...EDITOR, updated_by_first_name: null }),
+      ],
+    });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      lastEditedBy: null,
+    });
+  });
+
+  it("answers null when the name is there and the id is not", () => {
+    const entries = build({
+      sessions: [row("2026-03-16", { ...EDITOR, updated_by: null })],
+    });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      lastEditedBy: null,
+    });
+  });
+
+  it("answers null on an occurrence with no stored row behind it", () => {
+    // Projected from the schedule alone — nothing has ever touched it, so there
+    // is nobody to name.
+    expect(byDate(build(), "2026-03-16")).toMatchObject({
+      lastEditedBy: null,
+    });
   });
 });
 

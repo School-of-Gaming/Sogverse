@@ -10,26 +10,108 @@ interface DialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * **Escape closes one dialog — the one on top.**
+ *
+ * Every open dialog listens on `document`, because a dialog is a portal and
+ * there is no focused subtree to hang the handler off. That is fine until two
+ * are open at once, and then one keypress reaches both listeners and closes
+ * both: a picker opened from inside a form dialog takes its host down with it,
+ * and the parent loses the half-finished thing they were standing in front of.
+ *
+ * So the open dialogs are held in a module-level register, and a keypress is
+ * answered by exactly one of them. Every other dialog sees the same event and
+ * declines it.
+ *
+ * **Which one is on top is read from the tree, not from mount order.** Each
+ * dialog publishes its nesting depth through context, so a dialog rendered
+ * inside another's children is deeper by construction. Registration order
+ * cannot answer this: React runs a child's effects before its parent's, so two
+ * dialogs opening in the same commit would register inner-first and hand the
+ * keypress to the outer one. Depth is a property of where the dialog *is*,
+ * which is the thing the reader can see. Ties — two independent dialogs at the
+ * same depth, which nothing in the app currently opens together — fall back to
+ * the most recently registered, since that is the one that arrived over the
+ * other.
+ *
+ * **Depth is not the same thing as paint order, and this is the one place that
+ * could show.** Both portals mount at `z-50` into `document.body`, so what
+ * paints on top is DOM insertion order — which for a *nested* pair agrees with
+ * depth, because the inner dialog can only exist once the outer one has. Every
+ * pair this app opens is nested, so the two orderings never disagree today. A
+ * root-level dialog opened *over* an already-open nested one would be the
+ * exception: it would paint on top and still not take Escape, because it is
+ * shallower. That is latent rather than broken — no such stacking exists — and
+ * it is deliberately not solved here, since comparing portal positions to
+ * decide a keypress is real machinery for a case with no caller. If such a
+ * stacking ever appears, this is the paragraph to come back to.
+ *
+ * A single dialog is unaffected: it is the only entry, so it is always the top.
+ */
+const DialogDepthContext = React.createContext(0);
+
+interface DialogStackEntry {
+  depth: number;
+  close: () => void;
+}
+
+const openDialogs: DialogStackEntry[] = [];
+
+function topmostDialog(): DialogStackEntry | null {
+  let top: DialogStackEntry | null = null;
+  // `>=` so a tie resolves to the last registered entry.
+  for (const entry of openDialogs) {
+    if (top === null || entry.depth >= top.depth) top = entry;
+  }
+  return top;
+}
+
 function Dialog({ open, onOpenChange, children }: DialogProps) {
+  const depth = React.useContext(DialogDepthContext);
+  // The register entry has to outlive a re-render with a new `onOpenChange`
+  // identity — re-registering would move this dialog to the end of the array
+  // and change who wins a tie, for no reason the reader could see. So the
+  // handler is read through a ref and the entry is created once per open.
+  const onOpenChangeRef = React.useRef(onOpenChange);
+  React.useEffect(() => {
+    onOpenChangeRef.current = onOpenChange;
+  });
+
   React.useEffect(() => {
     if (!open) return;
+    const entry: DialogStackEntry = {
+      depth,
+      close: () => onOpenChangeRef.current(false),
+    };
+    openDialogs.push(entry);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onOpenChange(false);
+      if (e.key !== "Escape") return;
+      if (topmostDialog() !== entry) return;
+      entry.close();
     };
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onOpenChange]);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      // By identity, not by popping: a dialog can close from the middle of the
+      // register (the host of an open picker unmounting, a route change), and
+      // popping would evict somebody else's entry.
+      const index = openDialogs.indexOf(entry);
+      if (index !== -1) openDialogs.splice(index, 1);
+    };
+  }, [open, depth]);
 
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => onOpenChange(false)}
-      />
-      <div className="relative z-50 w-full max-w-lg">{children}</div>
-    </div>,
+    <DialogDepthContext.Provider value={depth + 1}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={() => onOpenChange(false)}
+        />
+        <div className="relative z-50 w-full max-w-lg">{children}</div>
+      </div>
+    </DialogDepthContext.Provider>,
     document.body
   );
 }

@@ -45,6 +45,13 @@ export function PricingBlock({ shape, state, onChange }: PricingBlockProps) {
 
   const label = shape === "monthly" ? t("perMonthLabel") : t("totalLabel");
 
+  // The floor the validator enforces, in the decimal form the input speaks —
+  // derived from the same per-currency constant rather than restated, so the
+  // number the browser refuses and the number we refuse cannot drift apart.
+  const minimum = (
+    CURRENCY_CONFIG[DEFAULT_CURRENCY].minimumChargeCents / 100
+  ).toFixed(2);
+
   return (
     <Field label={label} htmlFor="price-eur">
       <div className="relative">
@@ -54,7 +61,11 @@ export function PricingBlock({ shape, state, onChange }: PricingBlockProps) {
         <Input
           id="price-eur"
           type="number"
-          min="0"
+          // A paid product's price starts at the currency's minimum charge at
+          // Stripe; "free" is the billing radio's answer, never a zero typed
+          // here, and anything under the minimum is a price no family could
+          // ever pay.
+          min={minimum}
           step="0.01"
           value={prices[DEFAULT_CURRENCY][field]}
           onChange={(e) => setRow(e.target.value)}

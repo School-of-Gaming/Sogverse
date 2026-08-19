@@ -9,6 +9,7 @@ import {
   siteNotesResult,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { groupMemberMinecraftResult } from "@/services/minecraft/minecraft.contracts";
+import { groupMemberRobloxResult } from "@/services/roblox/roblox.contracts";
 import {
   createAdminTestClient,
   createAnonTestClient,
@@ -35,7 +36,9 @@ import {
  *      and has no UI.
  *   2. **Assignment (the actor)** — a gedu may only touch groups they teach.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
- *      edit the Minecraft name of, children actually in that group. A test
+ *      edit a game username of, children actually in that group. Both platforms
+ *      are covered: `set_group_member_minecraft` and, since 00195, its Roblox
+ *      twin, which is the same guard over a bigint key instead of a text one. A test
  *      where the attacker fails the role check as well proves much less than
  *      one where only the target check stands between them and the row.
  *
@@ -72,6 +75,14 @@ const ALL_PRODUCTS = [PRODUCT_MINE, PRODUCT_OTHER, PRODUCT_SITE];
  */
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
+
+/**
+ * A Roblox account id for the write-path fixtures. Any positive int64 will do —
+ * the column is not unique and nothing joins on it — but it is a NUMBER rather
+ * than a string on purpose: the whole point of the assertions using it is that
+ * a bigint survives the round trip as a JSON number.
+ */
+const ROBLOX_USER_ID = 987654321;
 
 /** `YYYY-MM-DD`, `offset` days from today. The products all run in UTC. */
 function dayOffset(offset: number): string {
@@ -267,6 +278,12 @@ describe("gedu session feed", () => {
           p_minecraft_uuid: "",
         });
         expect(minecraft.error?.code).toBe("42501");
+
+        const roblox = await client.rpc("set_group_member_roblox", {
+          p_participant_id: TEST_IDS.GAMER,
+          p_roblox_username: "Defaced",
+        });
+        expect(roblox.error?.code).toBe("42501");
       }
     });
   });
@@ -371,6 +388,73 @@ describe("gedu session feed", () => {
       expect(written.minecraft_username).toBeNull();
       // A uuid with no name behind it is a verified link to nothing.
       expect(written.minecraft_uuid).toBeNull();
+    });
+
+    it("refuses a Roblox edit for a child the gedu does not teach", async () => {
+      const { error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER_2,
+        p_roblox_username: "Defaced",
+      });
+      expect(error?.code).toBe("42501");
+    });
+
+    it("allows a Roblox edit for a child on the gedu's own roster, and the feed carries it", async () => {
+      const { data, error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "FeedFixtureRBX",
+        p_roblox_user_id: ROBLOX_USER_ID,
+      });
+
+      expect(error).toBeNull();
+      const written = groupMemberRobloxResult.parse(data);
+      // Name and account id land TOGETHER, same as the Minecraft pair — that is
+      // what makes a gedu's save read as verified rather than pending. The id
+      // is a NUMBER on the wire, because the column is a bigint.
+      expect(written.roblox_username).toBe("FeedFixtureRBX");
+      expect(written.roblox_user_id).toBe(ROBLOX_USER_ID);
+
+      // The rendered roster comes from the feed, not from the write's echo, so
+      // a write nobody can read back is a write that did nothing useful.
+      const feed = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const entry = geduGroupFeed
+        .parse(feed.data)
+        .roster.find((r) => r.participant_id === TEST_IDS.GAMER);
+      expect(entry?.roblox_username).toBe("FeedFixtureRBX");
+      expect(entry?.roblox_user_id).toBe(ROBLOX_USER_ID);
+    });
+
+    it("stores an unverified Roblox handle with no account id beside it", async () => {
+      // The account id argument is simply OMITTED — which is how an unverified
+      // save is expressed, the bigint column having no '' sentinel to borrow
+      // from the Minecraft twin. The route stores the name it was sent and
+      // takes an id only from its own lookup, so a name Roblox could not
+      // resolve arrives here exactly like this.
+      const { data, error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "NoLookupRan",
+      });
+
+      expect(error).toBeNull();
+      const written = groupMemberRobloxResult.parse(data);
+      expect(written.roblox_username).toBe("NoLookupRan");
+      expect(written.roblox_user_id).toBeNull();
+    });
+
+    it("clearing the Roblox username clears the account id with it", async () => {
+      const { data, error } = await geduAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "",
+        p_roblox_user_id: ROBLOX_USER_ID,
+      });
+
+      expect(error).toBeNull();
+      const written = groupMemberRobloxResult.parse(data);
+      expect(written.roblox_username).toBeNull();
+      // An account id with no name behind it is a verified link to nothing —
+      // the id is discarded even though this call supplied one.
+      expect(written.roblox_user_id).toBeNull();
     });
   });
 
@@ -1203,6 +1287,171 @@ describe("gedu session feed", () => {
         .single();
       expect(row?.address).toBeNull();
       expect(row?.notes).toBe("First note at this building.");
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 10. The last editor, by id and by first name
+  // -------------------------------------------------------------------------
+  //
+  // The feed has always carried `updated_by`; 00194 put the first name beside
+  // it so a card can sign itself without a second lookup. What this block
+  // settles is the SEMANTIC, because it is the part a reader is most likely to
+  // guess wrong: the pair names whoever last touched the session in any
+  // recorded way, which is not necessarily whoever wrote the report.
+
+  describe("the session's last editor", () => {
+    /** A second gedu on the SAME group — the whole point of this block. */
+    let marker: SupabaseClient<Database>;
+    let markerId = "";
+    let markerFirstName = "";
+    let writerFirstName = "";
+
+    beforeAll(async () => {
+      // Unique per run: CI's database carries the seed fixtures AND whatever a
+      // previous run left behind, so a fixed address is a collision waiting to
+      // happen.
+      const email = `feed-marker-${Date.now()}@test.local`;
+      const { data, error } = await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Ruut", last_name: "Marker" },
+      });
+      expect(error).toBeNull();
+      markerId = data.user!.id;
+
+      // handle_new_user lands every signup as a customer; the gedu role and the
+      // extension row are an admin's doing, exactly as in the real flow.
+      await admin.from("profiles").update({ role: "gedu" }).eq("id", markerId);
+      await admin.from("customer_profiles").delete().eq("user_id", markerId);
+      await admin
+        .from("gedu_profiles")
+        .insert({ user_id: markerId, certified: true });
+
+      await admin.from("gedu_group_assignments").insert({
+        group_id: GROUP_MINE,
+        gedu_id: markerId,
+        product_id: PRODUCT_MINE,
+      });
+
+      marker = await createAuthenticatedClient(email, "testpassword123");
+
+      // Read both names from the database rather than restating them here: the
+      // assertion is "the feed hands back THIS person's first name", and a
+      // hardcoded copy would pass just as happily against the wrong person.
+      const { data: names } = await admin
+        .from("profiles")
+        .select("id, first_name")
+        .in("id", [TEST_IDS.GEDU, markerId]);
+      writerFirstName =
+        names?.find((p) => p.id === TEST_IDS.GEDU)?.first_name ?? "";
+      markerFirstName =
+        names?.find((p) => p.id === markerId)?.first_name ?? "";
+      expect(writerFirstName).toBeTruthy();
+      expect(markerFirstName).toBe("Ruut");
+    });
+
+    afterAll(async () => {
+      // The assignment FK onto profiles is ON DELETE RESTRICT, so the row has
+      // to go before the account does.
+      await admin
+        .from("gedu_group_assignments")
+        .delete()
+        .eq("gedu_id", markerId);
+      await admin.auth.admin.deleteUser(markerId);
+      // The rows this block materialized, mirroring the family suite's cleanup.
+      // A blanket delete over the group is safe here: the file-level beforeEach
+      // wipes these three groups before every test, so nothing downstream reads
+      // a session list this could shorten.
+      await admin.from("group_sessions").delete().eq("group_id", GROUP_MINE);
+    });
+
+    /** GROUP_MINE's session on `date`, straight off the feed. */
+    async function sessionOn(client: SupabaseClient<Database>, date: string) {
+      const { data, error } = await client.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(error).toBeNull();
+      return geduGroupFeed
+        .parse(data)
+        .sessions.find((s) => s.session_date === date);
+    }
+
+    it("leaves both halves null on a row no RPC stamped", async () => {
+      // Seeded straight through the service-role client, so nothing set
+      // `updated_by`. Null is the honest answer and the card renders no chip —
+      // which is why the contract wants BOTH halves before it names anyone.
+      // Asserted, not fired and forgotten: (group, date) is unique, so a row
+      // left behind by an earlier run would turn this into a silent no-op and
+      // the expectations below would be reading somebody else's leftovers.
+      const { error: seedError } = await admin.from("group_sessions").insert({
+        group_id: GROUP_MINE,
+        session_date: YESTERDAY,
+        starts_at: `${YESTERDAY}T23:00:00.000Z`,
+        ends_at: `${TODAY}T00:00:00.000Z`,
+        report: "Written by nobody in particular.",
+      });
+      expect(seedError).toBeNull();
+
+      const session = await sessionOn(geduAuth, YESTERDAY);
+      expect(session?.updated_by).toBeNull();
+      expect(session?.updated_by_first_name).toBeNull();
+    });
+
+    it("names the gedu who saved the report", async () => {
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the castle wall.",
+        p_gedu_note: "",
+      });
+
+      const session = await sessionOn(geduAuth, YESTERDAY);
+      expect(session?.updated_by).toBe(TEST_IDS.GEDU);
+      expect(session?.updated_by_first_name).toBe(writerFirstName);
+    });
+
+    /**
+     * **The documented semantic, asserted rather than assumed: this is the last
+     * TOUCHER of the session, not the author of the report.**
+     *
+     * One gedu writes the family-facing report; a different gedu then corrects
+     * a single attendance tick and nothing else. The pair now names the second
+     * gedu — on a write-up they did not type.
+     *
+     * That is accepted behaviour and not a bug to fix here. `updated_by` is
+     * stamped by every recorded touch (materialization, either written field,
+     * and each mark or unmark), and in practice the gedu who touches one part
+     * of a session touches all of it; a per-field author column was judged not
+     * worth the schema for this edge. The chip claims "last edited by", which
+     * is exactly what this test pins. If someone later makes this expectation
+     * fail by introducing a report-author column, that is a product decision
+     * being reversed, not a regression being repaired.
+     */
+    it("hands the attendance marker, not the report's writer, once someone else touches it", async () => {
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the castle wall.",
+        p_gedu_note: "",
+      });
+
+      const { error } = await marker.rpc("record_attendance", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.GAMER,
+        p_status: "present",
+      });
+      expect(error).toBeNull();
+
+      const session = await sessionOn(geduAuth, YESTERDAY);
+      // The report is untouched — only the register moved — and the last
+      // editor moved with it anyway.
+      expect(session?.report).toBe("We finished the castle wall.");
+      expect(session?.updated_by).toBe(markerId);
+      expect(session?.updated_by_first_name).toBe(markerFirstName);
+      expect(session?.updated_by).not.toBe(TEST_IDS.GEDU);
     });
   });
 });

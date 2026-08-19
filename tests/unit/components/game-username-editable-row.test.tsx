@@ -295,21 +295,53 @@ describe("GameUsernameEditableRow", () => {
     expect(onCommit).toHaveBeenLastCalledWith("zzqnotreal99812", null);
   });
 
-  // Nothing shaped like this can exist on the platform, so there is nothing to
-  // look up — but the answer is still saved rather than silently dropped.
-  it("skips the lookup for a name the platform could never have", () => {
-    const { onCommit, type, press, getByText } = setup({
+  /**
+   * **The decision, at the row: there is no name this component refuses to ask
+   * about.** There was a branch here that answered for the platform whenever its
+   * format rule said a name could not exist — and both platforms have live
+   * accounts that rule called impossible, so a child holding one was told their
+   * own handle did not exist without anyone ever asking. Now the lookup runs, and
+   * a miss lands where every miss lands: saved, unverified, with the sentence.
+   */
+  it.each([
+    ["a Roblox handle with a space", "roblox" as const, "Old Timer", "Roblox"],
+    ["a Roblox handle with two underscores", "roblox" as const, "a_b_c", "Roblox"],
+    ["a two-character Minecraft name", "minecraft" as const, "ab", "Minecraft"],
+  ])(
+    "sends %s to the platform and stores it unverified on a miss",
+    async (_label, platform, typed, name) => {
+      const { onCommit, type, press, getByText } = setup({
+        platform,
+        autoEdit: true,
+      });
+
+      type(typed);
+      press("Enter");
+
+      expect(mutateAsync).toHaveBeenCalledTimes(1);
+      expect(mutateAsync).toHaveBeenCalledWith(typed);
+
+      await act(async () => settle.reject(new Error("404")));
+
+      expect(getByText(`${name} account not found.`)).toBeTruthy();
+      expect(onCommit).toHaveBeenLastCalledWith(typed, null);
+    },
+  );
+
+  // The other half of the same decision: a name our old rule called impossible
+  // is *verified* when the platform says the account is real.
+  it("verifies a handle no format rule of ours would have allowed", async () => {
+    const { getByText, onCommit, type, press } = setup({
       platform: "roblox",
       autoEdit: true,
     });
 
-    // Two underscores: valid on Minecraft, impossible on Roblox.
-    type("a_b_c");
+    type("Old Timer");
     press("Enter");
+    await act(async () => settle.resolve(lookupResult("roblox", "Old Timer")));
 
-    expect(mutateAsync).not.toHaveBeenCalled();
-    expect(getByText("Roblox account not found.")).toBeTruthy();
-    expect(onCommit).toHaveBeenLastCalledWith("a_b_c", null);
+    expect(getByText("Old Timer")).toBeTruthy();
+    expect(onCommit).toHaveBeenLastCalledWith("Old Timer", 2207291);
   });
 
   it("commits null when the editor is cleared, and runs no lookup", () => {
@@ -389,9 +421,10 @@ describe("GameUsernameEditableRow", () => {
     expect(container.textContent).not.toContain("NewName");
   });
 
-  // Both paths that never reach a lookup used to leave the previous name on
-  // screen, because only the in-flight path put anything on hold.
-  it("shows a name the platform could never have, without waiting for the caller", () => {
+  // The committed name is on screen from the instant of the commit, on every
+  // path — including one still waiting on the platform. The clear below is the
+  // same property for the path that never reaches a lookup at all.
+  it("shows the committed name while the lookup is still out", () => {
     const { container, type, press } = setup({
       platform: "roblox",
       initialUsername: "builderman",
@@ -403,10 +436,10 @@ describe("GameUsernameEditableRow", () => {
     if (!pencil) throw new Error("the pencil never rendered");
     fireEvent.click(pencil);
 
-    type("a_b_c");
+    type("Old Timer");
     press("Enter");
 
-    expect(container.textContent).toContain("a_b_c");
+    expect(container.textContent).toContain("Old Timer");
     expect(container.textContent).not.toContain("builderman");
   });
 
