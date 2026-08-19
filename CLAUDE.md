@@ -86,6 +86,8 @@ The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/s
 
 **Rule: Never make Supabase data queries inside `onAuthStateChange` callbacks.** Only do synchronous React state updates in the callback.
 
+**Rule: Password changes go through the emailed reset flow.** Supabase dashboard config (not in this repo) sets `security_update_password_require_reauthentication = true`, and the gate keys on the session row's age, not token freshness — so a direct `updateUser({ password })` passes fresh-session testing and fails in production for any long-lived session. A completed reset also revokes every other session.
+
 ### Redirects & open-redirect safety
 
 **Rule: Any caller-supplied redirect target (a `?redirect=`/`?next=`/`?back=` param, or anything else deciding where to navigate) must be resolved through `resolveInternalPath()` (`src/lib/navigation/internal-path.ts`) before navigating. Never hand-roll the check.** String matching like `startsWith("/")` + `!startsWith("//")` always loses to a variant you didn't think of (`/\evil.com`, `https:/evil.com`, a stripped leading tab) — an open redirect off a logged-in page is a clean phishing vector. `resolveInternalPath` resolves against a sentinel origin with the URL parser and rejects anything that escapes it, covering every variant at once.

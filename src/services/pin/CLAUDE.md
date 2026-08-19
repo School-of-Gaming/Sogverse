@@ -24,7 +24,9 @@ not gate other roles, and do not gate per-route — gate the session state.
 1. **Pages — the proxy (`src/proxy.ts`).** A locked customer is redirected to
    the unlock gate (`/parent/unlock`) from every route, including public pages
    like `/shop`, except an explicit exempt set (the unlock gate,
-   `/select-profile`, the reset landing page, auth routes, `/api/*`). The role
+   `/select-profile`, the emailed-link landing pages — `/reset-pin`,
+   `/verify-email`, `/reset-password`, `/forgot-password` — auth routes,
+   `/api/*`). The role
    lookup is skipped when a valid unlock cookie is already present, so
    logged-out and already-unlocked traffic pays no extra query.
 2. **API — `requireRole()` in `src/lib/auth.ts`.** Where the gate bites for

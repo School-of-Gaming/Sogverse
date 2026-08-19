@@ -355,7 +355,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "public",
           reason:
-            "a password reset is requested by someone who cannot sign in. Always answers 200 regardless of whether the address exists, which is the enumeration defence",
+            "a password reset is requested by someone who cannot sign in — and, from the settings page, by someone who is signed in and wants a new password anyway; it is gateless because the first caller has no session to gate, not because the second is exempt from one. Always answers 200 regardless of whether the address exists, which is the enumeration defence",
         },
         body: {
           kind: "json",

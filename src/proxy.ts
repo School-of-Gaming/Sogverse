@@ -14,12 +14,26 @@ import {
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
 // sign-in/out flow; the rest are the gate itself, the profile chooser (where
-// they can drop to a gamer or choose to enter the PIN), and the two landing
-// pages an emailed link points at. `verifyEmail` is exempt for the same reason
+// they can drop to a gamer or choose to enter the PIN), and the landing pages
+// an emailed link points at. `verifyEmail` is exempt for the same reason
 // `resetPin` is: the signed token in the URL is the authorization, the page
 // grants nothing a parent's session would have granted, and bouncing a parent
 // who opened their inbox on a locked device to the PIN pad would just lose the
 // link.
+//
+// `resetPassword` and `forgotPassword` are exempt on exactly that reasoning,
+// and the "lose the link" half is literal rather than figurative here: the
+// bounce below redirects to the unlock gate carrying `?redirect=<pathname>`,
+// and a pathname has no query string — so `?token_hash=…` is dropped on the
+// way, and entering the PIN then lands the parent on a bare /reset-password
+// that can only tell them their link expired. The gate buys nothing in return.
+// Both pages are public, so a signed-out visitor walks onto them regardless,
+// and the reset is authorized by possession of the mailbox, not by the parent
+// session — a locked session reaching them is no more than a locked one
+// could already do by signing out first. The settings-page flow makes this the common
+// case rather than the edge one: the parent presses the button while unlocked,
+// then opens the mail an hour later, or on their phone, where the session has
+// re-locked or never existed.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
   if (pathname.startsWith("/api/") || isAuthRoute) return true;
   const exempt = [
@@ -27,13 +41,25 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
     ROUTES.selectProfile,
     ROUTES.resetPin,
     ROUTES.verifyEmail,
+    ROUTES.forgotPassword,
+    ROUTES.resetPassword,
   ];
   return exempt.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
 // Routes that don't require authentication
-// resetPassword is public (not an auth route) because the user arrives via an
-// email link with hash tokens — they aren't authenticated yet.
+// resetPassword is public (not an auth route) because the page is reached from
+// an emailed link carrying a single-use token, and the person holding that link
+// may be in EITHER auth state: signed out because they forgot their password,
+// or signed in because they asked for the mail from their own settings page. An
+// auth route bounces the signed-in half to their dashboard, which would eat the
+// token before the page read it.
+// forgotPassword is public for the second half of that same story: when a link
+// is expired or already used, the dead-link card sends the visitor here for a
+// fresh one, and a signed-in visitor bounced to their dashboard has no way to
+// ask for one. The form is harmless with a session — it only mails a link to
+// the address typed into it, and the route behind it answers the same 200 to
+// everyone regardless.
 // ROUTES.voice.prefix is public because instant voice rooms are share-via-link
 // by design — see src/components/voice/instant/CLAUDE.md. The authenticated group voice
 // room at /voice/group/[id] is carved back out below — it shares the prefix
@@ -48,7 +74,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // a signed-in visitor to their dashboard, and the person clicking a
 // verification link is very often already signed in — that bounce would eat the
 // token before the page ever read it.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.roblox, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on
@@ -63,7 +89,7 @@ const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, RO
 const AUTH_REQUIRED_VOICE_PREFIX = ROUTES.voice.groupSessionPrefix;
 
 // Routes for authentication (login, register, etc.)
-const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.registerGedu, ROUTES.forgotPassword];
+const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.registerGedu];
 
 /**
  * Build a Content-Security-Policy header value.

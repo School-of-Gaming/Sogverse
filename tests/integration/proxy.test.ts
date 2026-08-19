@@ -175,7 +175,7 @@ describe("proxy", () => {
   // --- Auth routes (unauthenticated → allow) ---
 
   describe("auth routes (unauthenticated)", () => {
-    it.each(["/login", "/register", "/forgot-password"])(
+    it.each(["/login", "/register", "/register-gedu"])(
       "passes through %s when not logged in",
       async (path) => {
         mockNoUser();
@@ -214,6 +214,43 @@ describe("proxy", () => {
       const response = await proxy(createNextRequest("/login"));
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/gamer");
+    });
+  });
+
+  // --- Forgot password (public in BOTH auth states) ---
+  //
+  // /forgot-password is a PUBLIC route, not an auth route, and the distinction
+  // is load-bearing in both directions. Signed out, it is the page's main
+  // audience — so it must not require a session. Signed in, it is where the
+  // dead-link card on /reset-password sends someone whose emailed link expired
+  // or was already used, and settings now mails those links to people who are
+  // signed in; an auth route would bounce them to their dashboard and leave
+  // them with no way to ask for a fresh one. Both halves are pinned, because
+  // only the pair says anything: putting the path in neither list passes the
+  // second assertion while locking every signed-out visitor out.
+
+  describe("forgot password route", () => {
+    it("passes through /forgot-password when not logged in", async () => {
+      mockNoUser();
+      const response = await proxy(createNextRequest("/forgot-password"));
+      expect(response.status).toBe(200);
+    });
+
+    it.each(["admin", "gedu", "gamer"])(
+      "does not bounce a signed-in %s away from /forgot-password",
+      async (role) => {
+        mockUser(role);
+        const response = await proxy(createNextRequest("/forgot-password"));
+        expect(response.status).toBe(200);
+      },
+    );
+
+    it("does not bounce an unlocked customer away from /forgot-password", async () => {
+      mockUser("customer");
+      const response = await proxy(
+        await unlockedCustomerRequest("/forgot-password"),
+      );
+      expect(response.status).toBe(200);
     });
   });
 
@@ -390,7 +427,13 @@ describe("proxy", () => {
       expect(getRedirectUrl(response).pathname).toBe("/parent/unlock");
     });
 
-    it.each(["/parent/unlock", "/select-profile", "/reset-pin"])(
+    it.each([
+      "/parent/unlock",
+      "/select-profile",
+      "/reset-pin",
+      "/forgot-password",
+      "/reset-password",
+    ])(
       "exempts %s so a locked customer is not trapped",
       async (path) => {
         mockUser("customer");
@@ -398,6 +441,27 @@ describe("proxy", () => {
         expect(response.status).toBe(200);
       },
     );
+
+    // The password pages are exempt for a sharper reason than "not trapped":
+    // the unlock bounce carries `?redirect=<pathname>`, and a pathname has no
+    // query string, so gating /reset-password would silently drop the
+    // single-use token_hash — the parent would enter their PIN and arrive at
+    // a bare reset page that could only tell them the link had expired. The
+    // it.each above pins the exemption itself; this pins its premise, on a
+    // path that IS still gated: the bounce really does lose the query. If
+    // this fails because the bounce learned to carry the search string, the
+    // exemption is no longer what protects the token — revisit the comment on
+    // isPinExemptPath rather than just updating the assertion.
+    it("drops the query string when bouncing a gated path to the unlock gate", async () => {
+      mockUser("customer");
+      const response = await proxy(
+        createNextRequest("/parent?token_hash=abc123&type=recovery"),
+      );
+      expect(response.status).toBe(307);
+      const redirect = getRedirectUrl(response);
+      expect(redirect.pathname).toBe("/parent/unlock");
+      expect(redirect.searchParams.get("redirect")).toBe("/parent");
+    });
 
     it("treats a cookie bound to a different session as locked (stale after switch/re-login)", async () => {
       mockUser("customer");

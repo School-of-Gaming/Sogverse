@@ -118,6 +118,57 @@ export function SettingsSectionContent({
   };
 
   // ---------------------------------------------------------------------
+  // Password reset
+  //
+  // The button sends the ordinary password-reset mail — the same route the
+  // public forgot-password form posts to — and says so inline. It navigates
+  // nowhere: the reset itself happens on /reset-password, which only works
+  // with the single-use token the mail carries, so walking someone there
+  // without one is a dead end (that was the bug this replaced).
+  //
+  // Gamers get no button at all. They sign in by account-switch from their
+  // parent, where the server mints the credential; they never type a password,
+  // their `@gamer.sogverse.internal` address is synthetic and reaches no
+  // inbox, so the mail could not arrive — and a child holding a password of
+  // their own would be a way into the account that does not pass through the
+  // parent. That is why this is gated on `isGamer` rather than on whether a
+  // deliverable address happens to exist.
+  // ---------------------------------------------------------------------
+  // Local and set synchronously before the request, for the same reason
+  // `sendingVerification` above is. Every outcome clears it: the user stays on
+  // this page, and asking for a second link — after a mail that never arrived,
+  // or once the first has expired — is a legitimate thing to want.
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(false);
+  // Two outcomes, not three. The forgot-password route enforces no rate limit
+  // and answers 200 whatever it finds — that uniform answer is its enumeration
+  // defence — so a server-side failure is indistinguishable from success here
+  // and reads as "sent". `failed` therefore only fires on a network or
+  // HTTP-level error, which is the accepted trade for not leaking which
+  // addresses have accounts.
+  const [passwordResetOutcome, setPasswordResetOutcome] = useState<
+    "sent" | "failed" | null
+  >(null);
+
+  const handleSendPasswordReset = async (email: string) => {
+    // Live before any render after the click — everything up to the first
+    // `await` runs synchronously inside the event handler.
+    setSendingPasswordReset(true);
+    setPasswordResetOutcome(null);
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setPasswordResetOutcome(response.ok ? "sent" : "failed");
+    } catch {
+      setPasswordResetOutcome("failed");
+    } finally {
+      setSendingPasswordReset(false);
+    }
+  };
+
+  // ---------------------------------------------------------------------
   // The parent's own location
   //
   // Stored as a single `locations` id on the profile. The row behind it —
@@ -216,10 +267,6 @@ export function SettingsSectionContent({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleChangePassword = () => {
-    router.push("/reset-password");
   };
 
   return (
@@ -394,27 +441,43 @@ export function SettingsSectionContent({
             {t('securityDescription')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            onClick={handleChangePassword}
-          >
-            {t('changePassword')}
-          </Button>
-          {profile?.role === "customer" && (
-            <Button
-              variant="outline"
-              onClick={() => router.push(ROUTES.customer.changePin)}
-            >
-              {t('changePin')}
-            </Button>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-3">
+            {/* See the password-reset block above for why gamers have none. */}
+            {profile && !isGamer && (
+              <Button
+                variant="outline"
+                onClick={() => handleSendPasswordReset(profile.email)}
+                disabled={sendingPasswordReset}
+              >
+                {sendingPasswordReset ? c('sending') : t('resetPassword')}
+              </Button>
+            )}
+            {profile?.role === "customer" && (
+              <Button
+                variant="outline"
+                onClick={() => router.push(ROUTES.customer.changePin)}
+              >
+                {t('changePin')}
+              </Button>
+            )}
+            <form action="/api/auth/signout" method="post">
+              <Button type="submit" variant="destructive">
+                <LogOut className="h-4 w-4" />
+                {c('signOut')}
+              </Button>
+            </form>
+          </div>
+          {passwordResetOutcome === "sent" && (
+            <p className="text-sm text-success">
+              {t('resetPasswordEmailSent', { email: profile?.email ?? "" })}
+            </p>
           )}
-          <form action="/api/auth/signout" method="post">
-            <Button type="submit" variant="destructive">
-              <LogOut className="h-4 w-4" />
-              {c('signOut')}
-            </Button>
-          </form>
+          {passwordResetOutcome === "failed" && (
+            <p className="text-sm text-destructive">
+              {t('resetPasswordEmailFailed')}
+            </p>
+          )}
         </CardContent>
       </Card>
 
