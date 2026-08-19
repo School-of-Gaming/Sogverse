@@ -910,6 +910,7 @@
       "requestNewLink": "Request a new link",
       "passwordsDoNotMatch": "The passwords you entered don’t match.",
       "updateFailed": "We couldn’t update your password. Please try again.",
+      "samePassword": "This is already your current password — you can keep signing in with it. If you’re trying to secure your account, choose a different password.",
       "successTitle": "Password updated",
       "successDescription": "Your password has been successfully updated."
     },

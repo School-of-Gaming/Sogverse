@@ -910,6 +910,7 @@
       "requestNewLink": "Begär en ny länk",
       "passwordsDoNotMatch": "Lösenorden du angav matchar inte.",
       "updateFailed": "Vi kunde inte uppdatera ditt lösenord. Försök igen.",
+      "samePassword": "Det här är redan ditt nuvarande lösenord – du kan fortsätta logga in med det. Om du vill skydda ditt konto väljer du ett annat lösenord.",
       "successTitle": "Lösenordet uppdaterat",
       "successDescription": "Ditt lösenord har uppdaterats."
     },

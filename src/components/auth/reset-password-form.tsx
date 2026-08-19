@@ -118,15 +118,23 @@ export function ResetPasswordForm() {
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
     if (updateError) {
-      // Session is valid but the update failed — let the user retry. We show a
-      // generic message rather than surfacing updateError.message: the realistic
-      // cause is Supabase's password policy rejecting the input (too weak, or
-      // "must differ from the old password"), whose messages are English-only and
-      // would break i18n if surfaced raw. The tradeoff: if Supabase's policy ever
-      // drifts stricter than the client's MIN_PASSWORD_LENGTH check, the user sees
-      // an unactionable message and can loop. Keep the two in sync so that stays a
-      // non-case; revisit (map known codes to translated copy) if it ever bites.
-      setError(t('resetPassword.updateFailed'));
+      // Session is valid but the update failed — let the user retry. Supabase
+      // rejects a password identical to the current one (code "same_password");
+      // that case gets its own copy because "try again" misdirects there — the
+      // fix is picking a different password (or realising you've remembered
+      // your current one and can just sign in). Everything else stays generic
+      // rather than surfacing updateError.message: the realistic remaining
+      // cause is Supabase's password policy rejecting a weak password, whose
+      // messages are English-only and would break i18n if surfaced raw. The
+      // tradeoff: if Supabase's policy ever drifts stricter than the client's
+      // MIN_PASSWORD_LENGTH check, the user sees an unactionable message and
+      // can loop. Keep the two in sync so that stays a non-case; revisit (map
+      // "weak_password" to translated copy) if it ever bites.
+      setError(
+        updateError.code === "same_password"
+          ? t('resetPassword.samePassword')
+          : t('resetPassword.updateFailed')
+      );
       setCommitting(false);
       return;
     }

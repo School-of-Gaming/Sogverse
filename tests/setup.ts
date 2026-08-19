@@ -33,6 +33,7 @@ const mockSupabaseClient = {
     })),
     resetPasswordForEmail: vi.fn(),
     updateUser: vi.fn(),
+    verifyOtp: vi.fn(),
   },
   from: vi.fn(() => ({
     select: vi.fn(() => ({

@@ -910,6 +910,7 @@
       "requestNewLink": "Demander un nouveau lien",
       "passwordsDoNotMatch": "Les mots de passe saisis ne correspondent pas.",
       "updateFailed": "Nous n’avons pas pu mettre à jour votre mot de passe. Veuillez réessayer.",
+      "samePassword": "C’est déjà votre mot de passe actuel — vous pouvez continuer à vous connecter avec. Si vous souhaitez sécuriser votre compte, choisissez un mot de passe différent.",
       "successTitle": "Mot de passe mis à jour",
       "successDescription": "Votre mot de passe a bien été mis à jour."
     },
