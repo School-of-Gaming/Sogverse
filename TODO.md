@@ -337,14 +337,6 @@ Owner-proposed, not designed. Gedus want to put pictures in a session report —
 - [ ] **Retention has to be decided before the first photo is stored,** not after. Photos of children are not the same class of data as a shop illustration, and "how long do we keep these, and who can see them" is an owner decision.
 - [ ] **Direct-to-storage upload past ~4 MB.** The same platform limit as above, met immediately here: a phone photo is over it before anyone tries.
 
-### Product image catalogue — follow-ups
-
-Deliberately not built in v1. Each is recorded so it is not lost and not built so it costs nothing yet.
-
-- [ ] **A standalone `/admin/product-images` page** — the same composition in a page shell, for curating without opening a product. With it: bulk remove of unused entries, filter chips, and search. The dialog is the feature; the page is the same pieces arranged for a different job.
-- [ ] **Multi-file upload with per-file outcomes.** One file at a time is the v1; several would need a result per file (added / already had it / refused, and why), which is a different surface rather than a bigger button.
-- [ ] **Remove-while-in-use could offer "give these products this picture instead."** Today removing an entry leaves every product that used it with no picture, and the admin then fixes each one. The confirm already knows the list; the missing half is choosing a replacement in the same gesture.
-
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
 Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
