@@ -8,6 +8,12 @@ import {
   PRODUCT_CONFIRMATION_MODES,
 } from "./product-confirmation";
 import { buildVerifyEmailEmail } from "./verify-email";
+import {
+  buildSessionReportEmail,
+  sessionReportSubject,
+  type SessionReportEmailOptions,
+} from "./session-report";
+import { SESSION_REPORT_SAMPLES } from "./fixtures/session-report-samples";
 import type { EmailTranslator } from "./translator";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SUPPORT_EMAIL } from "@/lib/constants";
@@ -28,7 +34,20 @@ interface SelectField {
   options: { label: string; value: string }[];
 }
 
-export type TemplateField = TextField | SelectField;
+/**
+ * A multi-line value — markdown, mostly. The testing page still falls back to
+ * the placeholder when the field is left empty, so a textarea whose empty
+ * state should *mean* empty (an override that is not in use) keeps its
+ * placeholder blank and explains itself in the label.
+ */
+interface TextareaField {
+  key: string;
+  label: string;
+  placeholder: string;
+  type: "textarea";
+}
+
+export type TemplateField = TextField | SelectField | TextareaField;
 
 // --- Template definition (shared by API route and testing UI) ---
 
@@ -76,8 +95,12 @@ function defineTemplate<P extends TemplateParams>(entry: {
   schema: z.ZodType<P>;
   /** Build the HTML email content from validated params. */
   build: (params: P, t: EmailTranslator, locale: string) => string;
-  /** Generate the email subject line from validated params and translator. */
-  subject: (params: P, t: EmailTranslator) => string;
+  /**
+   * Generate the email subject line from validated params and translator. The
+   * locale is there for a subject that prints a formatted value of its own —
+   * most subjects ignore it.
+   */
+  subject: (params: P, t: EmailTranslator, locale: string) => string;
   /**
    * Reply-To for this template, defaulting to the support inbox — which is the
    * answer for every mail we send *to* a family. Only a template whose real
@@ -94,7 +117,7 @@ function defineTemplate<P extends TemplateParams>(entry: {
     render: (rawParams, t, locale) => {
       const params = schema.parse(rawParams);
       return {
-        subject: subject(params, t),
+        subject: subject(params, t, locale),
         html: build(params, t, locale),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
       };
@@ -151,6 +174,53 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
   };
 }
 
+/**
+ * The session-report form picks one of the bundled sample reports and may
+ * paste a markdown body over it. Spike plumbing: there is no route sending
+ * this mail yet, so the fixture stands in for the session row a real send
+ * would read — and formats the session's instants in the *product's* zone for
+ * the chosen locale, because a fixture has no parent to format them for. The
+ * real feature formats in the parent's zone.
+ *
+ * The `sample` is posted as an id and resolved here rather than in
+ * `resolveParams`, because the formatting needs the locale and the resolver
+ * runs in the browser without one.
+ */
+const SESSION_REPORT_SAMPLE_OPTIONS = SESSION_REPORT_SAMPLES.map((sample) => ({
+  label: sample.label,
+  value: sample.id,
+}));
+
+function resolveSessionReport(
+  { sample: sampleId, reportMarkdown, ...rest }: SessionReportParams,
+  locale: string,
+): SessionReportEmailOptions {
+  const sample =
+    SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
+    SESSION_REPORT_SAMPLES[0];
+  const start = new Date(sample.startsAt);
+  const end = new Date(sample.endsAt);
+  // `dateStyle`/`timeStyle` cannot be mixed with component options, so the
+  // range is built from components; `hourCycle` mirrors the app's `formatTime`.
+  const sessionDate = new Intl.DateTimeFormat(locale, {
+    timeZone: sample.timezone,
+    dateStyle: "full",
+  }).format(start);
+  const sessionTime = new Intl.DateTimeFormat(locale, {
+    timeZone: sample.timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZoneName: "short",
+  }).formatRange(start, end);
+  return {
+    ...rest,
+    sessionDate,
+    sessionTime,
+    reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
+  };
+}
+
 // --- Zod schemas ---
 
 const passwordResetParamsSchema = z.object({
@@ -201,6 +271,23 @@ const verifyEmailParamsSchema = z.object({
   firstName: z.string().min(1),
   verificationUrl: z.string().url(),
 });
+
+const sessionReportParamsSchema = z.object({
+  gamerName: z.string().min(1),
+  geduName: z.string().min(1),
+  productName: z.string().min(1),
+  groupName: z.string().min(1),
+  sample: z
+    .string()
+    .refine((id) => SESSION_REPORT_SAMPLES.some((sample) => sample.id === id), {
+      message: "unknown sample report",
+    }),
+  /** Empty means "use the sample's own markdown". */
+  reportMarkdown: z.string(),
+  dashboardUrl: z.string().url(),
+});
+
+type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
 
 // --- Single source of truth for all email templates ---
 
@@ -295,5 +382,25 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: verifyEmailParamsSchema,
     build: (p, t, locale) => buildVerifyEmailEmail(t, locale, p),
     subject: (_p, t) => t("verifyEmail.subject"),
+  }),
+  sessionReport: defineTemplate({
+    label: "Session Report",
+    fields: [
+      { key: "gamerName", label: "Gamer Name", placeholder: "Aino" },
+      { key: "geduName", label: "Gedu Name", placeholder: "Marianne" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft: Cozy Adventures" },
+      { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
+      { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
+      {
+        key: "reportMarkdown",
+        label: "Report markdown (leave empty to send the sample; anything typed here replaces it)",
+        type: "textarea",
+        placeholder: "",
+      },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+    ],
+    schema: sessionReportParamsSchema,
+    build: (p, t, locale) => buildSessionReportEmail(t, locale, resolveSessionReport(p, locale)),
+    subject: (p, t, locale) => sessionReportSubject(t, resolveSessionReport(p, locale)),
   }),
 };

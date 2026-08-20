@@ -2274,6 +2274,16 @@
       "body": "Hej {firstName}, du bad oss bekräfta e-postadressen på ditt School of Gaming-konto. Använd knappen nedan för att bekräfta den.",
       "button": "Bekräfta din e-postadress",
       "ignore": "Om du inte bad om det här kan du bortse från mejlet. Ingenting ändras."
+    },
+    "sessionReport": {
+      "subject": "Rapport från passet – {productName}, {sessionDate}",
+      "title": "Rapport från passet",
+      "intro": "Hej! Här är {geduName}s rapport från {gamerName}s senaste pass i {productName}.",
+      "groupLabel": "Grupp",
+      "dateLabel": "Datum",
+      "timeLabel": "Tid",
+      "dashboardButton": "Öppna Min SOG",
+      "closing": "Alla rapporter finns i Min SOG, bredvid de kommande passen."
     }
   },
   "legal": {

@@ -162,6 +162,77 @@ describe("templateRegistry render()", () => {
 });
 
 /**
+ * The session-report entry is fixture-backed: the form posts a sample id and
+ * an optional markdown override, and the registry turns them into the dated,
+ * timed params the builder takes. What is pinned is the seam — the sample's
+ * date reaches the subject formatted for the locale, the sample's markdown
+ * reaches the body, and a typed override displaces the markdown and nothing
+ * else.
+ */
+describe("templateRegistry sessionReport", () => {
+  const params = {
+    gamerName: "Aino",
+    geduName: "Marianne",
+    productName: "Minecraft: Cozy Adventures",
+    groupName: "Usvalaakso: Kettukallio",
+    sample: "en",
+    reportMarkdown: "",
+    dashboardUrl: "https://sogverse.sog.gg/parent",
+  };
+
+  it("formats the sample's date and time in the product's zone for the locale", async () => {
+    const { subject, html } = templateRegistry.sessionReport.render(params, t, "en");
+    expect(subject).toBe("Session report – Minecraft: Cozy Adventures, Thursday, August 20, 2026");
+    expect(html).toContain("Thursday, August 20, 2026");
+    // 13:30Z is 16:30 in Helsinki summer time.
+    expect(html).toMatch(/16:30\s*–\s*18:00/);
+
+    const fi = await getEmailTranslator("fi");
+    const finnish = templateRegistry.sessionReport.render(params, fi, "fi");
+    expect(finnish.subject).toContain("torstai 20. elokuuta 2026");
+  });
+
+  it("sends the sample's own markdown when the override is empty", () => {
+    const { html } = templateRegistry.sessionReport.render(params, t, "en");
+    expect(html).toContain("Lanterns over the Harbour");
+  });
+
+  /**
+   * The report's language is the gedu's, the mail's is the parent's, and the
+   * two are independent: a Finnish report inside an English mail keeps its
+   * Finnish title while the chrome around it stays English.
+   */
+  it("keeps the report's own language whatever locale the mail is sent in", () => {
+    const { subject, html } = templateRegistry.sessionReport.render(
+      { ...params, sample: "fi" },
+      t,
+      "en",
+    );
+    expect(html).toContain("Lyhtyjä sataman ylle");
+    expect(html).toContain("Open My SOG");
+    expect(subject).toContain("Thursday, August 27, 2026");
+  });
+
+  it("lets a typed report replace the sample's markdown but keep its date", () => {
+    const { subject, html } = templateRegistry.sessionReport.render(
+      { ...params, reportMarkdown: "# Custom report\n\nTyped in the tool." },
+      t,
+      "en",
+    );
+    expect(html).toContain("Custom report");
+    expect(html).toContain("Typed in the tool.");
+    expect(html).not.toContain("Lanterns over the Harbour");
+    expect(subject).toContain("Thursday, August 20, 2026");
+  });
+
+  it("rejects a sample id it does not know", () => {
+    expect(() =>
+      templateRegistry.sessionReport.render({ ...params, sample: "1999-01-01" }, t, "en"),
+    ).toThrow();
+  });
+});
+
+/**
  * Every registered template, rendered in every locale we ship.
  *
  * The failure this catches is a key added to `en.json` and forgotten in one of
@@ -210,6 +281,15 @@ describe("every template renders in every locale", () => {
     verifyEmail: {
       firstName: "Marja",
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+    },
+    sessionReport: {
+      gamerName: "Aino",
+      geduName: "Marianne",
+      productName: "Minecraft: Cozy Adventures",
+      groupName: "Usvalaakso: Kettukallio",
+      sample: "en",
+      reportMarkdown: "",
+      dashboardUrl: "https://sogverse.sog.gg/parent",
     },
   };
 

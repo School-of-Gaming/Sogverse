@@ -422,6 +422,70 @@ describe("POST /api/admin/send-test-email", () => {
     );
   });
 
+  /**
+   * The session-report template carries a multi-line markdown param and a
+   * sample id; the wire schema has to let both through, and the harness has
+   * to render the sample when the markdown is left empty — which is what the
+   * testing page posts for an untouched textarea.
+   */
+  it("should render the session-report template from a bundled sample", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({
+      mode: "template",
+      toEmail: "test@example.com",
+      template: "sessionReport",
+      params: {
+        gamerName: "Aino",
+        geduName: "Marianne",
+        productName: "Minecraft: Cozy Adventures",
+        groupName: "Usvalaakso: Kettukallio",
+        sample: "en",
+        reportMarkdown: "",
+        dashboardUrl: "https://sogverse.sog.gg/parent",
+      },
+    }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.messageId).toBe("msg-123");
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: expect.stringContaining("Minecraft: Cozy Adventures"),
+        htmlContent: expect.stringContaining("Lanterns over the Harbour"),
+        replyToEmail: "help@sog.gg",
+      }),
+    );
+  });
+
+  it("should render typed markdown over the sample in the session-report template", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await POST(createRequest({
+      mode: "template",
+      toEmail: "test@example.com",
+      template: "sessionReport",
+      params: {
+        gamerName: "Aino",
+        geduName: "Marianne",
+        productName: "Minecraft: Cozy Adventures",
+        groupName: "Usvalaakso: Kettukallio",
+        sample: "en",
+        reportMarkdown: "# Typed title\n\nWith a [link](https://evil.example).",
+        dashboardUrl: "https://sogverse.sog.gg/parent",
+      },
+    }));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        htmlContent: expect.stringContaining("Typed title"),
+      }),
+    );
+    const [{ htmlContent }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(htmlContent).not.toContain("Lanterns over the Harbour");
+    expect(htmlContent).not.toContain("evil.example");
+  });
+
   it("should return 400 for missing mode field", async () => {
     mockAuthenticatedWithRole("admin");
 

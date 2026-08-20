@@ -2274,6 +2274,16 @@
       "body": "Hei {firstName}, vahvista School of Gaming -tilisi sähköpostiosoite alla olevalla painikkeella.",
       "button": "Vahvista sähköpostiosoitteesi",
       "ignore": "Jos et pyytänyt tätä viestiä, voit jättää sen huomiotta. Tiliisi ei tehdä muutoksia."
+    },
+    "sessionReport": {
+      "subject": "Raportti kerrasta – {productName}, {sessionDate}",
+      "title": "Raportti kerrasta",
+      "intro": "Hei! Tässä on tuorein raportti kerrasta, johon {gamerName} osallistui: {productName}. Raportin on kirjoittanut {geduName}.",
+      "groupLabel": "Ryhmä",
+      "dateLabel": "Päivä",
+      "timeLabel": "Aika",
+      "dashboardButton": "Avaa Oma SOG",
+      "closing": "Kaikki raportit löytyvät Oma SOG -sivulta tulevien kertojen vierestä."
     }
   },
   "legal": {

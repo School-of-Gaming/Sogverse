@@ -35,7 +35,11 @@ const selectClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 function isSelectField(field: TemplateField): field is Extract<TemplateField, { type: "select" }> {
-  return "type" in field;
+  return "type" in field && field.type === "select";
+}
+
+function isTextareaField(field: TemplateField): field is Extract<TemplateField, { type: "textarea" }> {
+  return "type" in field && field.type === "textarea";
 }
 
 // --- Page ---
@@ -266,6 +270,14 @@ export default function TestingPage() {
                               </option>
                             ))}
                           </select>
+                        ) : isTextareaField(field) ? (
+                          <Textarea
+                            id={`param-${field.key}`}
+                            rows={10}
+                            value={templateParams[field.key] ?? ""}
+                            onChange={(e) => updateParam(field.key, e.target.value)}
+                            placeholder={field.placeholder}
+                          />
                         ) : (
                           <Input
                             id={`param-${field.key}`}

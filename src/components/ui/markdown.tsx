@@ -96,8 +96,12 @@ interface MarkdownVariantStyle {
  * flatten on the first save anyway. **A childless element vanishes entirely** —
  * an `img` has no text to unwrap to, the one case where "unwrapped, not
  * dropped" saves nothing, and there is nothing to save.
+ *
+ * Exported because the email renderer under `lib/email-templates` emits the
+ * same subset from a string walker, and a unit test holds the two lists equal
+ * — a report has to read the same in the mail it is sent as.
  */
-const FEED_ELEMENTS = [
+export const FEED_ELEMENTS = [
   "p",
   "h1",
   "h2",
