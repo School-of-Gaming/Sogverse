@@ -129,10 +129,17 @@ function renderFeed({
 
 const copy = messages.gedu.sessionFeed;
 
-/** The button in its offer/sending state — the one that says "Send to parents". */
+/** The button in its offer state — the one that says "Send to parents". */
 function sendButton(): HTMLButtonElement {
   return screen.getByRole<HTMLButtonElement>("button", {
     name: copy.sendReportToParents,
+  });
+}
+
+/** The same button while the mail is going out — "Sending to parents…". */
+function sendingButton(): HTMLButtonElement {
+  return screen.getByRole<HTMLButtonElement>("button", {
+    name: copy.sendingReportToParents,
   });
 }
 
@@ -236,17 +243,21 @@ describe("SessionFeed — sending a report to the families", () => {
     });
 
     fireEvent.click(sendButton());
-    // Disabled before any render after the click could carry a second one, and
-    // the spinner is in the button's own slot rather than beside it.
-    expect(sendButton().disabled).toBe(true);
-    expect(spinning(sendButton())).toBe(true);
-    expectVariant(sendButton(), "secondary");
+    // Disabled before any render after the click could carry a second one, the
+    // label says what is happening, and the spinner is in the button's own
+    // slot rather than beside it.
+    expect(sendingButton().disabled).toBe(true);
+    expect(spinning(sendingButton())).toBe(true);
+    expectVariant(sendingButton(), "secondary");
+    expect(
+      screen.queryByRole("button", { name: copy.sendReportToParents }),
+    ).toBeNull();
 
     // Still disabled once the promise settles: nothing here re-enables it, and
     // on the live page the refetch is what moves it on.
     landed({ sent: 2, failed: 0, skipped: 1 });
     await settle();
-    expect(sendButton().disabled).toBe(true);
+    expect(sendingButton().disabled).toBe(true);
   });
 
   it("turns the same button into the sent state once the row comes back stamped", async () => {
@@ -329,6 +340,6 @@ describe("SessionFeed — sending a report to the families", () => {
     await settle();
 
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(sendButton().disabled).toBe(true);
+    expect(sendingButton().disabled).toBe(true);
   });
 });

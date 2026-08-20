@@ -123,9 +123,11 @@ export function SessionReportSend({
           ) : (
             <Mail className="h-3.5 w-3.5" aria-hidden />
           )}
-          {sentAtLabel === null
-            ? t("sendReportToParents")
-            : t("reportSentToParents", { sentAt: sentAtLabel })}
+          {sentAtLabel !== null
+            ? t("reportSentToParents", { sentAt: sentAtLabel })
+            : sending
+              ? t("sendingReportToParents")
+              : t("sendReportToParents")}
         </Button>
 
         {result !== null && result.failed > 0 && (
