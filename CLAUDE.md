@@ -41,7 +41,7 @@ branch to tearing the worktree down after the merge.
 - **React Query** for server state management
 - **Tailwind CSS 4** with class-variance-authority for component variants
 - **Stripe** for payments
-- **Brevo** (formerly Sendinblue) for transactional email via SMTP (configured in Supabase dashboard)
+- **Brevo** (formerly Sendinblue) for transactional email — every mail is composed in-repo and sent through Brevo's REST API (`src/lib/email-templates/`, sent via the single `sendTransactionalEmail()` wrapper). **Supabase Auth sends no email**: confirmations are off, and reset/verification links are minted with `generateLink` and sent by our own templates — so GoTrue's SMTP/mailer dashboard config (and its email rate limits) is unused and gates nothing. See `src/lib/email-templates/CLAUDE.md`.
 - **Daily.co** for real-time voice/video chat
 - **Vitest** + **Playwright** for testing
 
