@@ -53,6 +53,17 @@
  * being read and reported on*, and an unrecognised ref is treated as live
  * because nothing here can vouch for it.
  *
+ * **What that guard is and is not.** "The ref `.env.local` names" is read from
+ * `SUPABASE_PROJECT_REF` in the environment, which a shell export overrides
+ * exactly as it overrides the URL — so someone setting both can silence the
+ * flag. That is accepted: naming a project as your trusted one in the same
+ * breath as pointing the script at it is no weaker than typing `--live`, which
+ * is the very acknowledgement being skipped. The guard that does not bend is
+ * `SUPABASE_PROD_PROJECT_REF`, which is set in `.env.local`: production is
+ * recognised by name whatever `SUPABASE_PROJECT_REF` has been talked into
+ * saying, the banner reads `*** PRODUCTION ***`, and `--live` is required
+ * unconditionally.
+ *
  * ## The three modes
  *
  * **Link pass** (the default). For each distinct `products.image_path` that has
@@ -73,8 +84,11 @@
  * repairing around it.
  *
  * **`--backup`** downloads every object in the bucket to a dated folder outside
- * the repo, writes a manifest of byte lengths, re-reads each file from disk and
- * verifies its size. The bucket is the only copy of these pictures.
+ * the repo, then re-reads each written file from disk and checks both its
+ * length and its **sha256** against the bytes that were downloaded, aborting
+ * loudly on any disagreement. The manifest records name, size and hash. The
+ * bucket is the only copy of these pictures, and a `stat` agrees with a
+ * truncated write — the hash is what makes "verified" mean anything.
  *
  * **`--delete-legacy`** removes every object no catalogue row references. It
  * refuses without a manifest that still matches the bucket exactly, refuses
@@ -82,6 +96,12 @@
  * catalogue path, and skips anything uploaded in the last day. It prints what
  * it would remove and, with `--apply`, asks for the project ref to be typed
  * back before it removes anything.
+ *
+ * That manifest-versus-bucket check is **name and size only**, and cannot be
+ * more: the storage listing carries no content hash, so there is nothing to
+ * compare the manifest's hashes against on this side. The hashes are checked
+ * where they can be — against the files on disk, at `--backup` time — and here
+ * their presence is simply what marks a manifest as one a verifying run wrote.
  */
 
 import crypto from "node:crypto";
@@ -695,11 +715,20 @@ async function ensureDir(dir: string): Promise<void> {
   await fsp.mkdir(dir, { recursive: true });
 }
 
-/** Writes the bytes and reports what the filesystem says it stored. */
-async function writeAndMeasure(file: string, bytes: Buffer): Promise<number> {
+/**
+ * Writes the bytes, then reads the file back off the disk and reports what is
+ * actually there — length *and* content hash. A `stat` would agree with a
+ * truncated write, a half-flushed buffer or a disk that reported a success it
+ * had not performed; only the bytes themselves settle it, and this folder is
+ * about to be the sole copy of these pictures.
+ */
+async function writeAndReadBack(
+  file: string,
+  bytes: Buffer,
+): Promise<{ size: number; sha256: string }> {
   await fsp.writeFile(file, bytes);
-  const stat = await fsp.stat(file);
-  return stat.size;
+  const written = await fsp.readFile(file);
+  return { size: written.byteLength, sha256: sha256Of(written) };
 }
 
 async function writeText(file: string, text: string): Promise<void> {
@@ -738,7 +767,7 @@ function resolveBackupDir(options: Options): string {
   const dir = path.resolve(base, `product-images-backup-${stamp}`);
   const repo = path.resolve(process.cwd());
   const relative = path.relative(repo, dir);
-  if (relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative)) {
+  if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
     fail(
       `Refusing to write the backup inside the repository (${dir}). Pass --out with a directory outside the working tree.`,
     );
@@ -765,14 +794,22 @@ async function runBackup(admin: Admin, options: Options): Promise<void> {
         `${object.name}: bucket listing says ${object.bytes} bytes, download gave ${bytes.byteLength}`,
       );
     }
-    const written = await writeAndMeasure(path.join(dir, object.name), bytes);
-    if (written !== bytes.byteLength) {
+    const digest = sha256Of(bytes);
+    const written = await writeAndReadBack(path.join(dir, object.name), bytes);
+    if (written.size !== bytes.byteLength) {
       mismatches.push(
-        `${object.name}: wrote ${bytes.byteLength} bytes, re-read ${written}`,
+        `${object.name}: wrote ${bytes.byteLength} bytes, re-read ${written.size}`,
       );
     }
-    manifest.push({ name: object.name, bytes: bytes.byteLength });
-    console.log(`  saved ${object.name}  ${bytes.byteLength} bytes`);
+    if (written.sha256 !== digest) {
+      mismatches.push(
+        `${object.name}: downloaded bytes hash to ${digest}, the file on disk hashes to ${written.sha256}`,
+      );
+    }
+    manifest.push({ name: object.name, bytes: bytes.byteLength, sha256: digest });
+    console.log(
+      `  saved ${object.name}  ${bytes.byteLength} bytes  ${digest.slice(0, 12)}…`,
+    );
   }
 
   const manifestPath = path.join(dir, "manifest.json");
@@ -792,7 +829,9 @@ async function runBackup(admin: Admin, options: Options): Promise<void> {
 
   console.log("");
   if (mismatches.length > 0) {
-    console.error(`BACKUP FAILED — ${mismatches.length} size mismatch(es):`);
+    console.error(
+      `BACKUP FAILED — ${mismatches.length} verification failure(s):`,
+    );
     for (const line of mismatches) console.error(`  ${line}`);
     console.error(
       "Do not treat this folder as a backup, and do not run --delete-legacy against it.",
@@ -800,7 +839,7 @@ async function runBackup(admin: Admin, options: Options): Promise<void> {
     process.exit(1);
   }
   console.log(
-    `Backed up and verified ${manifest.length} object(s), ${manifest.reduce((n, o) => n + o.bytes, 0)} bytes total.`,
+    `Backed up ${manifest.length} object(s), ${manifest.reduce((n, o) => n + o.bytes, 0)} bytes total; every file re-read from disk and verified by sha256.`,
   );
   console.log(`Manifest: ${manifestPath}`);
 }
@@ -825,8 +864,18 @@ async function runDeleteLegacy(admin: Admin, options: Options): Promise<void> {
   }
   const parsed = backupManifest.safeParse(JSON.parse(await readText(manifestFile)));
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue.path.join(".");
     fail(
-      `REFUSING: ${manifestFile} is not a backup manifest this script wrote (${parsed.error.issues[0]?.message ?? "unparseable"}).`,
+      [
+        `REFUSING: ${manifestFile} is not a backup manifest this script wrote${where === "" ? "" : ` (at ${where})`}: ${issue.message}.`,
+        // The shape changed once, and this is the reading it will get: an
+        // older manifest recorded name and size only, so it fails on the
+        // missing hash. It was never a verified backup by today's meaning —
+        // nothing re-read those files — so the answer is a fresh --backup, not
+        // a way to accept it.
+        "A manifest from before this script recorded content hashes will fail here on a missing 'sha256'. Take a fresh --backup; a size-only manifest never proved the files on disk hold the bucket's bytes.",
+      ].join("\n"),
     );
   }
   const manifest = parsed.data;

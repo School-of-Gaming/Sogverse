@@ -16,20 +16,53 @@ import { z } from "zod";
  * under. Nothing is re-encoded, so the extension a file arrives with is the
  * extension it is stored with — `jpeg` normalises to `jpg` and is the only
  * pair that collapses.
+ *
+ * **A `Map`, not an object literal.** The key is a fragment of a filename the
+ * caller chose, and an object literal answers `constructor`, `__proto__`,
+ * `toString` and the rest of `Object.prototype` truthily — so a file named
+ * `castle.constructor` would pass the accept-list gate and be uploaded with a
+ * function where its content type belongs. A `Map` has no inherited keys, so
+ * the question cannot arise.
+ *
+ * **This is the single definition of the accept list.** The routes reach it
+ * through `resolveProductImageExtension` below, and the cleanup script under
+ * `scripts/` imports the same function rather than restating the pairs — one
+ * list, so the two ends cannot drift apart.
  */
-export const PRODUCT_IMAGE_EXT_TO_MIME: Readonly<Record<string, string>> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  avif: "image/avif",
-  svg: "image/svg+xml",
-};
+export const PRODUCT_IMAGE_MIME_BY_EXT: ReadonlyMap<string, string> = new Map([
+  ["jpg", "image/jpeg"],
+  ["jpeg", "image/jpeg"],
+  ["png", "image/png"],
+  ["webp", "image/webp"],
+  ["avif", "image/avif"],
+  ["svg", "image/svg+xml"],
+]);
 
 /** Value for a file input's `accept`, derived from the map above. */
-export const PRODUCT_IMAGE_ACCEPT = Object.entries(PRODUCT_IMAGE_EXT_TO_MIME)
-  .map(([ext]) => `.${ext}`)
+export const PRODUCT_IMAGE_ACCEPT = [...PRODUCT_IMAGE_MIME_BY_EXT.keys()]
+  .map((ext) => `.${ext}`)
   .join(",");
+
+export interface ProductImageExtension {
+  /** The canonical spelling an object is stored under — `jpeg` collapses to `jpg`. */
+  ext: string;
+  contentType: string;
+}
+
+/**
+ * The stored extension and content type for one raw extension, or `null` when
+ * it is outside the accept list. Callers pass the bare extension — whatever
+ * they carved off a filename or an object key — and this decides whether it is
+ * something we are willing to store, and under what type.
+ */
+export function resolveProductImageExtension(
+  rawExtension: string,
+): ProductImageExtension | null {
+  const raw = rawExtension.toLowerCase();
+  const contentType = PRODUCT_IMAGE_MIME_BY_EXT.get(raw);
+  if (contentType === undefined) return null;
+  return { ext: raw === "jpeg" ? "jpg" : raw, contentType };
+}
 
 /**
  * The upload cap, checked on both sides. Vercel's function request bodies stop
@@ -64,7 +97,7 @@ export const PRODUCT_IMAGE_FALLBACK_LABEL = "Image";
 export const PRODUCT_IMAGE_ERROR_CODES = {
   /** The file is over `PRODUCT_IMAGE_MAX_BYTES`. */
   tooLarge: "IMAGE_TOO_LARGE",
-  /** The file's extension is outside `PRODUCT_IMAGE_EXT_TO_MIME`. */
+  /** The file's extension is outside `PRODUCT_IMAGE_MIME_BY_EXT`. */
   unsupportedType: "IMAGE_UNSUPPORTED_TYPE",
 } as const;
 

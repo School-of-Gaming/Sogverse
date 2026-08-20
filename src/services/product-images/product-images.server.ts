@@ -4,11 +4,12 @@ import { NextResponse } from "next/server";
 import { ApiError } from "@/lib/api/api-error";
 import type { AppSupabaseClient, ProductImage } from "@/types";
 import {
-  PRODUCT_IMAGE_EXT_TO_MIME,
   PRODUCT_IMAGE_FALLBACK_LABEL,
   PRODUCT_IMAGE_LABEL_MAX_LENGTH,
   PRODUCT_IMAGE_MAX_BYTES,
+  resolveProductImageExtension,
 } from "./product-images.contracts";
+import type { ProductImageExtension } from "./product-images.contracts";
 
 /**
  * The find-or-create half of the catalogue, shared by the upload route and the
@@ -39,14 +40,15 @@ const ENTRY_COLUMNS = "id, label, sha256, path, created_at";
 /**
  * The stored extension for an upload, or null when the type is outside the
  * accept list. `jpeg` normalises to `jpg`; nothing else collapses.
+ *
+ * The lookup itself lives in the contracts module and is backed by a `Map`, so
+ * an upload named `castle.constructor` or `castle.__proto__` is refused here
+ * rather than inheriting an answer from `Object.prototype`.
  */
 export function resolveImageExtension(
   fileName: string,
-): { ext: string; contentType: string } | null {
-  const raw = (fileName.split(".").pop() ?? "").toLowerCase();
-  const contentType = PRODUCT_IMAGE_EXT_TO_MIME[raw];
-  if (!contentType) return null;
-  return { ext: raw === "jpeg" ? "jpg" : raw, contentType };
+): ProductImageExtension | null {
+  return resolveProductImageExtension(fileName.split(".").pop() ?? "");
 }
 
 /**

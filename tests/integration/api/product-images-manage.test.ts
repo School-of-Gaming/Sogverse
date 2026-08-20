@@ -197,6 +197,8 @@ describe("DELETE /api/admin/product-images/[id]", () => {
       postgrestJson([{ path: PATH }]),
       countResponse(22),
       postgrestJson([]),
+      // The re-check before the bucket is touched: no row names this path.
+      postgrestJson([]),
     );
 
     const response = await DELETE(...deleteRequest(ID));
@@ -216,7 +218,12 @@ describe("DELETE /api/admin/product-images/[id]", () => {
   it("still succeeds when the object removal fails after the row is gone", async () => {
     mockAdmin();
     mockRemove.mockResolvedValue({ error: { message: "storage unavailable" } });
-    respondWith(postgrestJson([{ path: PATH }]), countResponse(0), postgrestJson([]));
+    respondWith(
+      postgrestJson([{ path: PATH }]),
+      countResponse(0),
+      postgrestJson([]),
+      postgrestJson([]),
+    );
 
     const response = await DELETE(...deleteRequest(ID));
 
@@ -225,5 +232,48 @@ describe("DELETE /api/admin/product-images/[id]", () => {
     // next upload of those same bytes adopts it — its name IS their hash.
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ unlinked: 0 });
+  });
+
+  it("keeps the object when a concurrent upload has re-created a row on that path", async () => {
+    mockAdmin();
+    respondWith(
+      postgrestJson([{ path: PATH }]),
+      countResponse(3),
+      postgrestJson([]),
+      // Between the row delete and the removal, another admin uploaded the
+      // same picture: the key is the hash of the bytes, so their new entry
+      // names this very object. Removing it would break *their* entry.
+      postgrestJson([{ id: "0f0d3a3c-6a26-4a1e-9f0e-3a2c9b7d5e41" }]),
+    );
+
+    const response = await DELETE(...deleteRequest(ID));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ unlinked: 3 });
+    expect(mockRemove).not.toHaveBeenCalled();
+    // The re-check asks the table for that exact path, after the delete.
+    const recheck = fetchMock.mock.calls[3];
+    expect(requestedUrl(recheck[0]).searchParams.get("path")).toBe(`eq.${PATH}`);
+  });
+
+  it("keeps the object when the re-check itself fails", async () => {
+    mockAdmin();
+    respondWith(
+      postgrestJson([{ path: PATH }]),
+      countResponse(0),
+      postgrestJson([]),
+      postgrestJson(
+        { message: "connection lost", code: "08006", details: null, hint: null },
+        500,
+      ),
+    );
+
+    const response = await DELETE(...deleteRequest(ID));
+
+    // Unproven is treated as claimed: a surviving object costs bytes, a
+    // wrongly removed one costs somebody's picture.
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ unlinked: 0 });
+    expect(mockRemove).not.toHaveBeenCalled();
   });
 });

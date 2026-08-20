@@ -80,6 +80,14 @@ export function ImageActionConfirmDialog({
   const isReplace = action === "replace";
 
   async function handleConfirm() {
+    // Nothing to commit. The button is already disabled without a file, so this
+    // is unreachable through the UI — but the caller's replace path resolves
+    // without acting on a null file, and a flag set for a request nobody made
+    // would never be cleared: the dialog would sit behind a spinner with both
+    // its buttons dead. Returning before the flag is set is what makes that
+    // impossible rather than merely unlikely.
+    if (isReplace && file === null) return;
+
     // Set before the request, not inside its resolution: the flag has to be
     // live on the very next render or a fast second click fires the action
     // twice. It is cleared only on the paths where the admin has to try again;

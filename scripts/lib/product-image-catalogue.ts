@@ -12,46 +12,36 @@
 
 import { z } from "zod";
 
+import { resolveProductImageExtension } from "@/services/product-images/product-images.contracts";
+import type { ProductImageExtension } from "@/services/product-images/product-images.contracts";
+
 // ---------------------------------------------------------------------------
 // Objects and extensions
 // ---------------------------------------------------------------------------
 
 /**
- * The accept list the two admin product routes use today, restated rather than
- * imported: a Next route handler cannot be pulled into a `tsx` script, and this
- * script must agree with what those routes were willing to store. Nothing is
- * re-encoded, so nothing here is dropped — an extension outside this map is an
- * object the routes could not have written, and the script refuses rather than
- * guessing a type for it.
+ * The accept list is the app's own, imported rather than restated: the routes
+ * and this script have to agree about what may be stored, and two copies of one
+ * list is how they come to disagree. Nothing is re-encoded, so nothing is
+ * dropped — an extension outside it is an object the routes could not have
+ * written, and the script refuses rather than guessing a type for it.
  */
-const MIME_BY_EXT = new Map<string, string>([
-  ["jpg", "image/jpeg"],
-  ["jpeg", "image/jpeg"],
-  ["png", "image/png"],
-  ["webp", "image/webp"],
-  ["avif", "image/avif"],
-  ["svg", "image/svg+xml"],
-]);
-
-export interface ObjectExtension {
-  /** Canonical spelling stored in a catalogue path — `jpeg` collapses to `jpg`. */
-  ext: string;
-  contentType: string;
-}
+export type ObjectExtension = ProductImageExtension;
 
 /**
  * The extension a catalogue path should carry for a legacy object key, and the
  * content type to upload the copied bytes with. `null` for anything outside the
  * accept list.
+ *
+ * The key-splitting is this script's own (an object key may carry a prefix, and
+ * a leading-dot name has no extension at all); the accept list it consults is
+ * the shared one.
  */
 export function normaliseExtension(objectPath: string): ObjectExtension | null {
   const basename = objectPath.split("/").pop() ?? "";
   const dot = basename.lastIndexOf(".");
   if (dot <= 0) return null;
-  const raw = basename.slice(dot + 1).toLowerCase();
-  const contentType = MIME_BY_EXT.get(raw);
-  if (!contentType) return null;
-  return { ext: raw === "jpeg" ? "jpg" : raw, contentType };
+  return resolveProductImageExtension(basename.slice(dot + 1));
 }
 
 /**
@@ -377,9 +367,27 @@ export function describeAction(action: PathAction): string {
 // Backup manifests
 // ---------------------------------------------------------------------------
 
+/**
+ * The two things a bucket listing can tell you about an object. The manifest
+ * knows more (see below); the comparison between the two can only use this.
+ */
+export interface NamedSize {
+  name: string;
+  bytes: number;
+}
+
+/**
+ * One backed-up object. The hash is what makes the folder a *verified* backup
+ * rather than a folder of files of about the right length: a truncated write, a
+ * half-flushed buffer or a disk that lied would all still `stat` correctly, and
+ * only re-reading the bytes and hashing them catches it.
+ */
 export const manifestObject = z.object({
   name: z.string().min(1),
   bytes: z.number().int().nonnegative(),
+  sha256: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/, "sha256 must be 64 lowercase hex characters"),
 });
 
 export const backupManifest = z.object({
@@ -415,10 +423,16 @@ export function manifestDiffIsClean(diff: ManifestDiff): boolean {
  * symmetric on purpose: an object added since the backup is as disqualifying as
  * one that vanished, because the manifest is the claim "every byte in this
  * bucket is on disk somewhere else" and a newer object was never covered by it.
+ *
+ * **Name and size only, and that is a limit of the input, not a choice.** The
+ * storage listing carries no content hash, so there is nothing on this side to
+ * compare the manifest's hashes against. The hashes do their work at
+ * `--backup` time, against the files on disk; here they only prove the manifest
+ * came from a run that took them.
  */
 export function verifyManifest(
-  manifest: ManifestObject[],
-  bucket: ManifestObject[],
+  manifest: readonly NamedSize[],
+  bucket: readonly NamedSize[],
 ): ManifestDiff {
   const manifestByName = new Map(manifest.map((o) => [o.name, o.bytes]));
   const bucketByName = new Map(bucket.map((o) => [o.name, o.bytes]));
@@ -473,6 +487,11 @@ export interface DeletionPlan {
  * The age floor is the one guard that is not about correctness of the data but
  * about the clock — a run racing an admin's upload would otherwise delete bytes
  * whose row is a second away from being inserted.
+ *
+ * An object whose timestamp is missing or unparseable falls in on the *safe*
+ * side of that floor: with no age to judge, "too new to touch" is the only
+ * answer that cannot destroy a picture. The listing normally carries one, so an
+ * absent timestamp is a surprise, and a surprise is not a licence to delete.
  */
 export function planLegacyDeletion(
   objects: BucketObject[],
@@ -490,7 +509,8 @@ export function planLegacyDeletion(
       referenced.push(object);
       continue;
     }
-    if (Date.parse(object.createdAt) > cutoff) {
+    const createdAt = Date.parse(object.createdAt);
+    if (Number.isNaN(createdAt) || createdAt > cutoff) {
       tooNew.push(object);
       continue;
     }

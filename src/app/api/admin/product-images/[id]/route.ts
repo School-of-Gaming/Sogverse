@@ -55,7 +55,8 @@ export const PATCH = defineRoute({
  *
  * Hard delete of row *and* object, deliberately: bytes with no row is the
  * orphan state this design exists to exclude, and re-uploading the same file
- * recreates the entry byte for byte.
+ * recreates the entry byte for byte. The one thing that stays the object's is
+ * a key some *other* row has claimed in the meantime — see the removal itself.
  */
 export const DELETE = defineRoute({
   posture: "role-gated",
@@ -92,6 +93,30 @@ export const DELETE = defineRoute({
       .eq("id", id);
 
     if (deleteError) throw deleteError;
+
+    // The object is content-addressed, so between the delete above and the
+    // removal below another admin may have uploaded the very same picture and
+    // been handed this exact key back. That upload's row now names the object
+    // we were about to remove, and removing it would leave *their* entry
+    // pointing at nothing. Re-ask the table before touching the bucket, and
+    // treat a failed re-ask the same way as a hit: the bytes stay, and a
+    // surviving object is harmless because the next upload of them adopts it.
+    const { data: reclaimed, error: reclaimError } = await supabase
+      .from("product_images")
+      .select("id")
+      .eq("path", entry.path)
+      .maybeSingle();
+
+    if (reclaimError || reclaimed) {
+      console.warn(
+        "[product-images] object kept after row delete",
+        entry.path,
+        reclaimError
+          ? "could not confirm no row still names it"
+          : "another entry now names it",
+      );
+      return { unlinked: count ?? 0 };
+    }
 
     // Storage and the database are separate systems and the row is already
     // gone, so a failed removal is logged rather than rolled back. What it

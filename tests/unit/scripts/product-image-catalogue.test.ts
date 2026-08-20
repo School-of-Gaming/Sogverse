@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  backupManifest,
   computeLinkPlan,
   deriveLabel,
   looksLikeCataloguePath,
@@ -57,6 +58,14 @@ describe("normaliseExtension", () => {
     expect(normaliseExtension("x.heic")).toBeNull();
     expect(normaliseExtension("noextension")).toBeNull();
     expect(normaliseExtension(".png")).toBeNull();
+  });
+
+  it("rejects the names an object literal would have answered from its prototype", () => {
+    // The list is shared with the upload route and is a Map for exactly this
+    // reason — `x.constructor` is not an image type.
+    expect(normaliseExtension("x.constructor")).toBeNull();
+    expect(normaliseExtension("x.__proto__")).toBeNull();
+    expect(normaliseExtension("x.toString")).toBeNull();
   });
 });
 
@@ -216,6 +225,44 @@ describe("computeLinkPlan", () => {
   });
 });
 
+describe("backupManifest", () => {
+  const entry = { name: "a.png", bytes: 10, sha256: SHA_A };
+
+  it("accepts a manifest that records a content hash per object", () => {
+    const parsed = backupManifest.safeParse({
+      bucket: "product-images",
+      projectRef: "abc123",
+      generatedAt: "2026-08-20T12:00:00.000Z",
+      objects: [entry],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects a size-only manifest, naming the field it is missing", () => {
+    // The shape a pre-hash `--backup` wrote. It never proved the files on disk
+    // hold the bucket's bytes, so `--delete-legacy` must not accept it — and
+    // the operator has to be able to read why from the failure.
+    const parsed = backupManifest.safeParse({
+      bucket: "product-images",
+      projectRef: "abc123",
+      generatedAt: "2026-08-20T12:00:00.000Z",
+      objects: [{ name: "a.png", bytes: 10 }],
+    });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues[0].path).toEqual(["objects", 0, "sha256"]);
+  });
+
+  it("rejects a hash that is not 64 lowercase hex characters", () => {
+    const parsed = backupManifest.safeParse({
+      bucket: "product-images",
+      projectRef: "abc123",
+      generatedAt: "2026-08-20T12:00:00.000Z",
+      objects: [{ ...entry, sha256: SHA_A.toUpperCase() }],
+    });
+    expect(parsed.success).toBe(false);
+  });
+});
+
 describe("verifyManifest", () => {
   const manifest = [
     { name: "a.png", bytes: 10 },
@@ -266,6 +313,25 @@ describe("planLegacyDeletion", () => {
       { name: "edge.png", bytes: 1, createdAt: "2026-08-19T12:00:01Z" },
     ];
     expect(planLegacyDeletion(objects, new Set(), now).tooNew).toHaveLength(1);
+  });
+
+  it("treats an unusable timestamp as too new rather than as ancient", () => {
+    // `Date.parse` of nonsense is NaN, and every comparison against NaN is
+    // false — so an object with no usable age would have fallen straight into
+    // `remove`. With nothing to judge, the only safe side of the age floor is
+    // the one that keeps the bytes.
+    const objects = [
+      { name: "no-timestamp.png", bytes: 1, createdAt: "" },
+      { name: "nonsense.png", bytes: 2, createdAt: "not a date" },
+    ];
+
+    const plan = planLegacyDeletion(objects, new Set(), now);
+
+    expect(plan.tooNew.map((o) => o.name)).toEqual([
+      "no-timestamp.png",
+      "nonsense.png",
+    ]);
+    expect(plan.remove).toHaveLength(0);
   });
 });
 

@@ -6,16 +6,18 @@ export type {
 export {
   PRODUCT_IMAGE_ACCEPT,
   PRODUCT_IMAGE_ERROR_CODES,
-  PRODUCT_IMAGE_EXT_TO_MIME,
   PRODUCT_IMAGE_FALLBACK_LABEL,
   PRODUCT_IMAGE_LABEL_MAX_LENGTH,
   PRODUCT_IMAGE_MAX_BYTES,
+  PRODUCT_IMAGE_MIME_BY_EXT,
   productImageLabel,
   renameProductImageBody,
+  resolveProductImageExtension,
 } from "./product-images.contracts";
 export type {
   DeleteProductImageResult,
   ProductImageErrorCode,
+  ProductImageExtension,
   RenameProductImageBody,
   ReplaceProductImageResult,
   UploadProductImageResult,

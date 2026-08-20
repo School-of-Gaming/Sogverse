@@ -156,6 +156,23 @@ describe("POST /api/admin/product-images", () => {
     expect(mockUpload).not.toHaveBeenCalled();
   });
 
+  it("returns 415 for an extension that only exists on Object.prototype", async () => {
+    // The accept list used to be an object literal, which answers `constructor`
+    // and `__proto__` from its prototype chain — so these two names passed the
+    // gate and reached storage with a function where the content type belongs.
+    // The list is a Map now, and these are simply not in it.
+    for (const name of ["castle.constructor", "castle.__proto__", "castle.toString"]) {
+      vi.clearAllMocks();
+      mockAdmin();
+      const response = await POST(
+        createRequest({ file: new File([FILE_BYTES], name) }),
+      );
+      expect(response.status, name).toBe(415);
+      expect(mockUpload).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
+    }
+  });
+
   it("adds an entry named by the content hash when the bytes are new", async () => {
     mockAdmin();
     respondWith(postgrestJson([]), postgrestJson(ENTRY));

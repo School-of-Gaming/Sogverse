@@ -24,6 +24,10 @@ vi.mock("@/lib/auth", () => ({
 const mockUserRpc = vi.fn();
 const mockUserUpdate = vi.fn();
 const mockUserUpdateEq = vi.fn();
+// The link statement ends in `.select("id")`: the route reads the returned row
+// to know the write landed, because a filtered UPDATE that matches nothing
+// raises no error. This is what the handler actually awaits.
+const mockUserLinkSelect = vi.fn();
 
 // --- Helpers ---
 
@@ -46,7 +50,12 @@ function mockAuthenticatedAdmin() {
       from: vi.fn(() => ({
         update: (...args: unknown[]) => {
           mockUserUpdate(...args);
-          return { eq: mockUserUpdateEq };
+          return {
+            eq: (...eqArgs: unknown[]) => {
+              mockUserUpdateEq(...eqArgs);
+              return { select: mockUserLinkSelect };
+            },
+          };
         },
       })),
     },
@@ -117,7 +126,10 @@ describe("POST /api/admin/products/[id]/update", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUserRpc.mockResolvedValue({ data: PRODUCT_ID, error: null });
-    mockUserUpdateEq.mockResolvedValue({ error: null });
+    mockUserLinkSelect.mockResolvedValue({
+      data: [{ id: PRODUCT_ID }],
+      error: null,
+    });
   });
 
   // -- Auth --
@@ -339,9 +351,9 @@ describe("POST /api/admin/products/[id]/update", () => {
       order.push("rpc");
       return { data: PRODUCT_ID, error: null };
     });
-    mockUserUpdateEq.mockImplementation(async () => {
+    mockUserLinkSelect.mockImplementation(async () => {
       order.push("link");
-      return { error: null };
+      return { data: [{ id: PRODUCT_ID }], error: null };
     });
 
     const response = await POST(updateRequest(), { params });
@@ -409,7 +421,8 @@ describe("POST /api/admin/products/[id]/update", () => {
     // A saved product with an unapplied picture is a 200 with a warning, never
     // an error that would hide the save and never a bare 200.
     mockAuthenticatedAdmin();
-    mockUserUpdateEq.mockResolvedValue({
+    mockUserLinkSelect.mockResolvedValue({
+      data: null,
       error: { code: "23503", message: "violates foreign key constraint" },
     });
 
@@ -425,7 +438,8 @@ describe("POST /api/admin/products/[id]/update", () => {
 
   it("passes any other link failure through in the warning", async () => {
     mockAuthenticatedAdmin();
-    mockUserUpdateEq.mockResolvedValue({
+    mockUserLinkSelect.mockResolvedValue({
+      data: null,
       error: { code: "40001", message: "could not serialize access" },
     });
 
@@ -434,5 +448,21 @@ describe("POST /api/admin/products/[id]/update", () => {
 
     expect(response.status).toBe(200);
     expect(data.warning).toMatch(/could not serialize access/);
+  });
+
+  it("warns when the link statement matched no row at all", async () => {
+    // An UPDATE with a filter that matches nothing succeeds — no error, no
+    // rows. Without the returned row this route would answer a clean 200 for a
+    // picture it never applied, which is the one shape the design forbids.
+    mockAuthenticatedAdmin();
+    mockUserLinkSelect.mockResolvedValue({ data: [], error: null });
+
+    const response = await POST(updateRequest(), { params });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.product_id).toBe(PRODUCT_ID);
+    expect(data.warning).toMatch(/could not be found/);
+    expect(data.warning).toMatch(/edit page/);
   });
 });

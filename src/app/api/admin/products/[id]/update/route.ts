@@ -121,15 +121,28 @@ export const POST = defineRoute({
     // the create route uses, and unconditional for the same reason: `null` is
     // "this product has no picture", an answer the form always sends, so
     // skipping the write on null would make removal impossible.
-    const { error: linkError } = await supabase
+    //
+    // And the same `.select("id")` for the same reason: an UPDATE matching no
+    // row raises nothing, so without a returned row a vanished product would
+    // come back as a clean 200 with the picture silently unapplied.
+    const { data: linked, error: linkError } = await supabase
       .from("products")
       .update({ image_id: body.image_id })
-      .eq("id", productId);
+      .eq("id", productId)
+      .select("id");
 
     if (linkError) {
       return {
         product_id: productId,
         warning: imageLinkWarning(linkError),
+      };
+    }
+    if (linked.length === 0) {
+      return {
+        product_id: productId,
+        warning: imageLinkWarning({
+          message: "the product could not be found when the image was applied",
+        }),
       };
     }
 

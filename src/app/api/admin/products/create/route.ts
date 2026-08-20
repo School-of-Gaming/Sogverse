@@ -128,15 +128,29 @@ export const POST = defineRoute({
     // picture is a warning on a 200 rather than an error that hides a good
     // save. Written unconditionally — `null` is the ordinary "no picture"
     // answer, not an omission — and never as a bare 200 on failure.
-    const { error: linkError } = await supabase
+    //
+    // `.select("id")` is what makes "never a bare 200" structural rather than
+    // hopeful: a filtered UPDATE that matches no row is a perfectly successful
+    // statement with no error to catch, so the returned row is the only
+    // evidence the write landed.
+    const { data: linked, error: linkError } = await supabase
       .from("products")
       .update({ image_id: body.image_id })
-      .eq("id", productId);
+      .eq("id", productId)
+      .select("id");
 
     if (linkError) {
       return {
         product_id: productId,
         warning: imageLinkWarning(linkError),
+      };
+    }
+    if (linked.length === 0) {
+      return {
+        product_id: productId,
+        warning: imageLinkWarning({
+          message: "the product could not be found when the image was applied",
+        }),
       };
     }
 

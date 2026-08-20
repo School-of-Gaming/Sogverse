@@ -40,6 +40,10 @@ vi.mock("@/lib/auth", () => ({
 const mockUserRpc = vi.fn();
 const mockUserUpdate = vi.fn();
 const mockUserUpdateEq = vi.fn();
+// The link statement ends in `.select("id")`: the route reads the returned row
+// to know the write landed, because a filtered UPDATE that matches nothing
+// raises no error. This is what the handler actually awaits.
+const mockUserLinkSelect = vi.fn();
 
 // --- Helpers ---
 
@@ -57,7 +61,12 @@ function mockAuthenticatedAdmin() {
     from: vi.fn(() => ({
       update: (...args: unknown[]) => {
         mockUserUpdate(...args);
-        return { eq: mockUserUpdateEq };
+        return {
+          eq: (...eqArgs: unknown[]) => {
+            mockUserUpdateEq(...eqArgs);
+            return { select: mockUserLinkSelect };
+          },
+        };
       },
     })),
   };
@@ -136,7 +145,10 @@ describe("POST /api/admin/products/create", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUserRpc.mockResolvedValue({ data: "new-prod-id", error: null });
-    mockUserUpdateEq.mockResolvedValue({ error: null });
+    mockUserLinkSelect.mockResolvedValue({
+      data: [{ id: "new-prod-id" }],
+      error: null,
+    });
   });
 
   // Auth & authorization
@@ -382,7 +394,8 @@ describe("POST /api/admin/products/create", () => {
     // this form loading and this save. The product is fine, so this is a 200
     // with an explanation and never a bare 200.
     mockAuthenticatedAdmin();
-    mockUserUpdateEq.mockResolvedValue({
+    mockUserLinkSelect.mockResolvedValue({
+      data: null,
       error: { code: "23503", message: "violates foreign key constraint" },
     });
 
@@ -397,7 +410,8 @@ describe("POST /api/admin/products/create", () => {
 
   it("passes any other link failure through in the warning", async () => {
     mockAuthenticatedAdmin();
-    mockUserUpdateEq.mockResolvedValue({
+    mockUserLinkSelect.mockResolvedValue({
+      data: null,
       error: { code: "40001", message: "could not serialize access" },
     });
 
@@ -406,5 +420,20 @@ describe("POST /api/admin/products/create", () => {
     const json = await response.json();
     expect(json.product_id).toBe("new-prod-id");
     expect(json.warning).toMatch(/could not serialize access/);
+  });
+
+  it("warns when the link statement matched no row at all", async () => {
+    // An UPDATE with a filter that matches nothing succeeds — no error, no
+    // rows. The returned row is the only evidence the write landed, which is
+    // what keeps "never a bare 200" a property of the code rather than a hope.
+    mockAuthenticatedAdmin();
+    mockUserLinkSelect.mockResolvedValue({ data: [], error: null });
+
+    const response = await POST(createRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.product_id).toBe("new-prod-id");
+    expect(json.warning).toMatch(/could not be found/);
+    expect(json.warning).toMatch(/edit page/);
   });
 });

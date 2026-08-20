@@ -232,6 +232,18 @@ product routes writing `image_id` post-RPC and touching no storage.
   still succeeds**: the row is already gone, a retry would have nothing left to delete, and
   the leftover object is silently adopted by the next upload of those same bytes, because
   its name *is* their hash.
+- **Delete re-asks the table for the path before it touches the bucket.** Content
+  addressing makes a delete/upload race real: between the row delete and the object
+  removal another admin may upload the same picture and be handed the same key, so the
+  removal would break *their* entry. If any row still names the path — or if the re-ask
+  itself fails — the object stays and the reason is logged. Unproven is treated as
+  claimed, because a surviving object costs bytes and a wrongly removed one costs a
+  picture.
+- **The accept list is one definition, held as a `Map` in the contracts module** and
+  imported by the routes and by the cleanup script alike. An object literal answered
+  `constructor` and `__proto__` from its prototype chain, so a file named
+  `castle.constructor` passed the 415 gate; a `Map` has no inherited keys. Two copies of
+  one list was the other half of the defect and is gone with it.
 
 ### The product routes
 
@@ -264,6 +276,10 @@ product routes writing `image_id` post-RPC and touching no storage.
   RPC's assignment for a linked product, and the parameter's `DEFAULT NULL` is already the
   right answer for an unlinked one, so passing anything was noise. The RPC parameter itself
   still exists — dropping it stays a follow-up.
+- **The post-RPC link statement ends in `.select("id")` and treats zero rows as the
+  soft-warning path.** A filtered UPDATE that matches nothing is a successful statement
+  with no error to catch, so the returned row is the only evidence the write landed —
+  which is what makes "never a bare 200" a property of the code rather than a hope.
 - **The update route lost its 404.** The existence check was a side effect of the
   existing-path read-back; with that gone, an id that matches no row surfaces as the RPC's
   own refusal (400 with its message) like every other RPC failure. No caller distinguished
@@ -378,9 +394,11 @@ means something deleted a shared object. Idempotent; re-running changes nothing.
 imaged product row to be touched once (new URL, `updated_at` bumped; the optimizer cache goes
 cold for the shop once).
 
-**`--backup`** — downloads every object to a dated local folder with a manifest of byte
-lengths, re-reads each file and verifies its size, and aborts loudly on any mismatch. The
-bucket is the only copy of these pictures.
+**`--backup`** — downloads every object to a dated local folder, re-reads each written file
+from disk and verifies **both its length and its sha256** against the downloaded bytes,
+aborts loudly on any disagreement, and records name, size and hash per object in the
+manifest. The bucket is the only copy of these pictures, and a `stat` agrees with a
+truncated write — the hash is what makes "verified" mean anything.
 
 **`--delete-legacy`** — refuses without a verified manifest matching the current bucket
 listing, refuses while any product's `image_path` is not a catalogue path, refuses on any
@@ -418,6 +436,12 @@ app is live, relabel the heavily shared images through the dialog (≈44 renames
 - **An `image_path` whose extension is outside the accept list refuses the whole run**
   rather than being skipped: nothing is re-encoded, so there is no content type to store
   it under and no safe guess to make.
+- **The backup's manifest carries a sha256 per object, and `--delete-legacy`'s
+  manifest-versus-bucket check is name and size only.** The two are not in tension: the
+  hashes are verified where they can be, against the files on disk at `--backup` time,
+  and the storage listing carries no hash for the later comparison to use. A manifest
+  written before the hashes existed is refused outright, with a message saying so — it
+  never proved the files on disk held the bucket's bytes.
 - **After applying, the script re-reads and asserts the end state** — every imaged product
   linked, every `image_path` a catalogue path of `<sha256>.<ext>` shape — and exits
   non-zero if not, so a partial run cannot report success to the release that depends on
@@ -454,8 +478,11 @@ relinked, 0 missing objects; a second run reports nothing to do.
 - The sheet lazy-mount fix (gedu/participant pickers fetch on page mount). A `Dialog`
   scroll lock with gutter compensation, if a tall dialog needs it.
 - `og:image` width/height once dimensions are known. Drop `p_image_path` from the RPCs.
-- An FK from `image_path` to `product_images(path)` once no legacy path exists, which would
-  let Postgres own the invariant.
+- A second migration putting the design's invariants in the database rather than in
+  application code: a CHECK that `sha256` is 64 lowercase hex characters, a shape
+  constraint tying `path` to `sha256 || '.' || ext`, and — once no legacy path exists
+  anywhere — an FK from `products.image_path` to `product_images(path)`, which would let
+  Postgres own "a served path is a catalogue path".
 
 ## Rejected alternatives
 

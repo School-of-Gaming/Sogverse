@@ -36,6 +36,14 @@ failed removal is logged rather than retried — re-uploading the same file recr
 row over the surviving object, because the object's name is still the hash of those
 bytes.
 
+The one thing removal never deletes is an object some *other* row has come to name.
+Content addressing makes that a live race: between the row delete and the object removal
+another admin may upload the same picture and be handed the same key back, and removing
+it would break their entry instead. So the table is asked again for that path before the
+bucket is touched, and anything short of a clear "no row names this" — a hit, or a
+failure to ask — keeps the bytes. Bytes nothing references cost storage; bytes a row
+references are somebody's picture.
+
 ## Reads have no routes; writes have four
 
 Reads go through the injected client. The table is admin-only at the database, so an
@@ -73,6 +81,13 @@ instead of a network failure. The route checks again because a route never trust
 caller. Two refusals carry a stable code for the UI to translate — over the cap, and a
 type outside the accept list; everything else surfaces the route's own admin-facing
 English verbatim, as the neighbouring product routes do.
+
+**The accept list has exactly one definition**, held as a `Map` in the contracts module.
+The routes consult it and the cleanup script under `scripts/` imports the same function
+rather than restating the pairs. Both halves of that matter: two copies of one list drift,
+and an object literal keyed by a caller-supplied filename fragment answers `constructor`
+and `__proto__` from its prototype chain — which is how a file named `castle.constructor`
+once passed the 415 gate. A `Map` has no inherited keys.
 
 A new entry's label is the one supplied, else the upload filename's stem, else a plain
 fallback — trimmed and capped rather than refused, because throwing away the bytes over a

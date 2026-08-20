@@ -150,6 +150,26 @@ describe("the confirm in front of a shared verb", () => {
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
+  it("does not lock itself when confirmed with no file to give", () => {
+    // Unreachable through the UI — the button is disabled until a file is
+    // chosen — and pinned anyway, because the failure it guards is
+    // unrecoverable: the caller's replace path resolves without acting on a
+    // null file, so a committing flag set for a request nobody made would
+    // never be cleared and every button in the dialog would stay dead. The
+    // click is forced past the disabled attribute to reach the handler behind
+    // it.
+    const onReplace = vi.fn().mockResolvedValue(undefined);
+    renderView({ selectedId: SHARED.id, onReplace });
+
+    fireEvent.click(button("replace")!);
+    const confirm = button(`replaceConfirm.confirm count=${SHARED_COUNT}`)!;
+    confirm.disabled = false;
+    fireEvent.click(confirm);
+
+    expect(onReplace).not.toHaveBeenCalled();
+    expect(button("cancel")!.disabled).toBe(false);
+  });
+
   it("asks for the file after the list, and only enables the button once it has one", () => {
     renderView({ selectedId: SHARED.id });
 
