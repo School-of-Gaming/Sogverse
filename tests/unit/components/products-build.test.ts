@@ -1400,6 +1400,7 @@ function mockDetailRow(
     // The lesson link rides on its own staff-only row, not on the product.
     product_staff_details: { material_url: "https://drive.sog.gg/x" },
     image_path: "products/original.png",
+    image_id: null,
     start_date: "2026-09-01",
     end_date: null,
     signup_threshold: null,

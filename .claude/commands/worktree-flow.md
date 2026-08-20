@@ -180,6 +180,18 @@ and a diff against moved `dev` pollutes the review with other work inverted.
 Diff from the merge-base (`git merge-base dev HEAD`) instead; the review is of
 this branch's commits, not of the gap between two moving points.
 
+**A branch that is the last stage of a plan landed in stages is reviewed
+together with the stages before it.** The plan records each landed stage's
+commits (`docs/plans/CLAUDE.md`, "Landing in stages"); hand the reviewer this
+branch's diff *and* those commits as one change, named explicitly so a finding
+against an already-released stage is read as a follow-up rather than as this
+branch's defect. The merge-base is still the diff base — an earlier base drags
+in unrelated work that landed on `dev` between the stages. Without this, a
+staged feature is only ever read one piece at a time and nobody reviews it
+whole; the staging was forced by a release constraint and must not also cost
+the feature its one end-to-end read. Every stage's reviewer, first or last,
+gets the plan itself as context.
+
 **The review always runs in a subagent — every time, with no threshold and no
 exception, and for a different reason than Phase 2's delegation.** That rule is
 about context economy and admits a "trivial" carve-out. This one is about
@@ -224,6 +236,13 @@ instruction.
 
 **Only on the user's explicit instruction to merge.** Not when the work looks done,
 not when review comes back clean.
+
+**And never a branch whose plan says "merge to `dev` but do not release."** `dev`
+is released whole, so a merged stage that must not ship freezes it for every
+other piece of work. An operator step that has to run before the code goes live
+belongs *before* the merge, run against the branch's preview deployment
+(`docs/plans/CLAUDE.md`, "Landing in stages"). If the plan sequences it
+afterwards, stop and say so rather than landing the freeze.
 
 Order matters — several of these steps block the next one if skipped.
 

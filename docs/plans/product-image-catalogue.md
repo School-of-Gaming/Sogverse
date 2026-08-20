@@ -103,6 +103,31 @@ not dump or commit `supabase/schema.sql` on the branch.
 - **No RPC changes.** The routes write `image_id` in a second statement after the RPC, the
   image-last shape the create route already uses.
 
+**Deviations (step 1, as built — migration `00196_product_images_are_a_catalogue`)**
+
+- **The trigger raises rather than assigning NULL when the lookup finds nothing.** The
+  plan's `NEW.image_path := (SELECT path …)` would silently blank a picture on an empty
+  result. It does **not** rely on the FK to catch that: a BEFORE-row trigger runs strictly
+  before the FK, which is an AFTER-row constraint trigger fired at statement end, so this
+  lookup *pre-empts* the FK's own check. Its reachable cause is the ordinary one — the row
+  does not exist, because one admin saved a product pointing at an entry another admin had
+  just deleted. (RLS-invisibility is the other half of the message and the half the
+  migration header argues is unreachable: every writer is an admin or holds BYPASSRLS.)
+  Either way the statement fails rather than blanking a picture, with the FK's own
+  SQLSTATE because it is the FK's own claim made a moment earlier — the same shape
+  `validate_products_location` uses for a location it cannot resolve. The FK's remaining
+  runtime job is the `ON DELETE SET NULL` action.
+- **The trigger function is SECURITY INVOKER**, matching `validate_products_location`
+  rather than reaching for DEFINER. Verified on staging: `update_product` is owned by
+  `postgres` (BYPASSRLS), `create_product` runs as the signed-in admin, `service_role`
+  holds BYPASSRLS, the routes' own statements run on an admin session, and no non-admin
+  can write `products` at all. DEFINER would buy no reachability and add an escalation
+  surface.
+- **Names**: function `apply_product_image_path()`, trigger `trg_products_apply_image_path`
+  (sorts between the two existing BEFORE triggers on `products`, neither of which touches
+  `image_path`), index `idx_products_image_id` (plain, not partial — the cleanup script
+  asks `image_id IS NULL`). DB tests: `tests/db/product-images-trigger.test.ts`.
+
 ### Release order — and its mechanism
 
 The CI header is explicit that the migrations job and Vercel promotion race, so a migration
@@ -119,8 +144,19 @@ Running the cleanup first means no legacy product exists when the new code ships
    prod with the owner present. Prod runs the *old* code against relinked rows during this
    window; the old update route deletes the superseded object on an image change, and after
    relink that object may be shared — so the window is short, scheduled, and admins are
-   told not to change product images inside it.
-3. **Feature branch** (`feat/product-image-catalogue`): everything else. Merge, release.
+   told not to change product images inside it. Note what an image change inside the window
+   actually looks like, because it is worse than the shared-object deletion alone: the
+   route uploads the new object and writes the new path, the trigger immediately rewrites
+   `image_path` back to the linked entry's path, and the old object is deleted anyway. The
+   admin sees their change **silently not happen** while the picture other products depend
+   on is destroyed. "Do not change product images in this window" is therefore an
+   instruction with teeth, not a tidiness request.
+   **The prod link pass runs while the feature branch is still unmerged** — it needs only
+   the live schema and the old app, and the branch's preview deployment is how the result is
+   inspected. A "merge but do not release" stage would freeze `dev` for everyone
+   (`docs/plans/CLAUDE.md`, "Landing in stages").
+3. **Feature branch** (`feat/product-image-catalogue`): everything else. Merges and releases
+   like any other work, once the prod link pass is done.
 4. **Roll forward, never back.** A Vercel rollback past release 3 puts the old
    object-deleting routes live against shared objects. Written in the release PR.
 
@@ -336,6 +372,9 @@ app is live, relabel the heavily shared images through the dialog (≈44 renames
 1. **Migration branch** off latest `dev` via `/worktree-flow`: table, policy, grants,
    `image_id`, the trigger and its function grants. Push to staging, regenerate types,
    aliases. DB tests as listed; spine classification; write-IDOR. Merge; **release**.
+   Landed: `f03d25e0`, `6ac49fea` (plus the workflow-rule commit that followed them on the
+   same branch) — the feature branch's review covers these commits alongside its own diff,
+   so one reviewer reads the schema and the code as a single change.
 2. **Feature branch** off latest `dev` via `/worktree-flow`. Service, contracts, queries;
    the four routes; registry; integration tests.
 3. Product routes to JSON with `image_id` post-RPC and the soft-warning failure shape;
@@ -348,11 +387,13 @@ app is live, relabel the heavily shared images through the dialog (≈44 renames
    CI.
 6. Cleanup script (link pass, `--backup`, `--delete-legacy`, target guards); dry-run then
    `--apply` on staging; inspect through the branch preview.
-7. Docs and `TODO.md` edits; merge to `dev` with `--no-ff`; tear the worktree down. **Do not
-   release yet.**
-8. Operator: link pass on prod, owner present, inside a scheduled window. Then **release**
-   the feature. Then relabel; later `--backup` and `--delete-legacy` on both. Delete this
-   plan file when the feature release is out.
+7. Operator: link pass on prod, owner present, inside a scheduled window — **with the feature
+   branch still unmerged**, inspected through its preview deployment. Docs and `TODO.md`
+   edits meanwhile.
+8. Review the branch together with the landed migration commits (step 1); merge to `dev`
+   with `--no-ff`; tear the worktree down; **release** in the ordinary way. Then relabel;
+   later `--backup` and `--delete-legacy` on both. Delete this plan file when the feature
+   release is out.
 
 ## Acceptance criteria
 

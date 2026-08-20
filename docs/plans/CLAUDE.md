@@ -76,6 +76,49 @@ deviation in the plan file as they go — so the next reader sees a decision, no
 anything the plan marks as an owner decision, and anything touching money, auth, safeguarding
 or the deletion of data. Everything else is theirs.
 
+## Landing in stages
+
+**The default is one branch, one merge, one review, one release.** A plan splits its work
+into stages that land on `dev` separately only when a constraint forces it, and the plan
+names that constraint. The one that recurs here: the CI migrations job and the Vercel
+promotion race, so a migration and the code that depends on it are never in one release —
+a schema change the app needs goes first, alone. Two things follow, and both are rules
+because each was nearly got wrong the first time:
+
+- **Only what the constraint forces goes early; everything else stays on the feature
+  branch.** Releasing a stage releases all of `dev` — `/pr-dev-to-main` ships the branch
+  whole — so every early stage is a release of whatever else happens to be there. The plan
+  owns that cost by keeping the early stage to the minimum the constraint demands (the
+  migration and its tests, not the migration and the service that was convenient to write
+  beside it). When `dev` carries work that genuinely cannot ship, `/hotfix-to-main`
+  cherry-picks the stage alone; that is the escape hatch, not the routine.
+- **No stage is ever "merge to `dev` but do not release."** A merged, unreleasable stage
+  freezes `dev` for every other piece of work until it is cleared. When an operator step
+  (a data backfill, a link pass) must run before the new code goes live, it needs the live
+  schema and the *old* app — not the new code on `dev` — so sequence it *before* the
+  feature merges, and inspect it through the branch's preview deployment. The feature then
+  merges and releases like any other work.
+
+**Staging must not cost the feature its one whole-feature review.** A plan reviewed in
+stages is reviewed by people who each see one piece, and nobody reads it end to end unless
+the plan arranges for it. Two arrangements, both required:
+
+- **Every stage's reviewer gets the plan**, so the piece is judged against the routes, the
+  UI and the operations it will serve rather than in isolation. The design itself was
+  already reviewed whole, by the challenge and the cold-read above — a stage's reviewer is
+  checking a piece against a settled whole, not inventing the whole.
+- **The last stage's review covers the earlier stages too.** When a stage lands, the plan
+  records its commits (a line in **Steps**: "landed: `<hashes>`"). The final stage's
+  reviewer is handed its own diff *and* those commits as one change under review, so one
+  fresh reader sees migration, code and UI together. The branch's own merge-base stays the
+  diff base — reaching further back would drag in unrelated work that landed on `dev` in
+  between — and the earlier commits are named to the reviewer explicitly, so a finding
+  against one is read as a follow-up (the stage is already live) rather than as a defect of
+  the branch under review. That asymmetry is the real cost of staging: a defect found late
+  in a released schema is a second migration, not an edit. It is inherent in the constraint
+  that forced the split, which is exactly why the early stage gets the plan-stage reviews
+  and a plan-aware reviewer of its own.
+
 ## Review: proportional to blast radius, and capped
 
 Agent review is expensive, and its value falls off fast after the first pass. Size it:

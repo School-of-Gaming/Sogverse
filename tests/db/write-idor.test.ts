@@ -41,6 +41,9 @@ const ZONE = "00000000-0000-0000-0000-0000000005a6";
 const CALENDAR = "00000000-0000-0000-0000-0000000005a7";
 const HOLIDAY = "00000000-0000-0000-0000-0000000005a8";
 const SLOT = "00000000-0000-0000-0000-0000000005a9";
+// Outside the 5a4–5a9 block because it was full when the catalogue arrived;
+// registered in product-helpers.ts alongside it.
+const IMAGE = "00000000-0000-0000-0000-000000000637";
 const WHATSAPP_PHONE = "358900000005";
 
 const tableGrantRows = z.array(
@@ -111,6 +114,38 @@ const CASES: Record<string, IdorCase> = {
     remove: async (client) =>
       outcomeOf(
         await client.from("products").delete().eq("id", PRODUCT).select("id")
+      ),
+  },
+
+  product_images: {
+    attacker: "customer2",
+    why:
+      "the picture catalogue is admin-only, and every authenticated user holds " +
+      "the raw grant; a renamed entry is cosmetic but a deleted one unlinks " +
+      "every product showing that picture",
+    probe: async (admin) =>
+      (
+        await admin
+          .from("product_images")
+          .select("*")
+          .eq("id", IMAGE)
+          .maybeSingle()
+      ).data,
+    update: async (client) =>
+      outcomeOf(
+        await client
+          .from("product_images")
+          .update({ label: "Renamed by an outsider" })
+          .eq("id", IMAGE)
+          .select("id")
+      ),
+    remove: async (client) =>
+      outcomeOf(
+        await client
+          .from("product_images")
+          .delete()
+          .eq("id", IMAGE)
+          .select("id")
       ),
   },
 
@@ -635,8 +670,18 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     await deleteTestProducts(admin, [PRODUCT]);
     await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
+    await admin.from("product_images").delete().eq("id", IMAGE);
 
     await createTestProduct(admin, { id: PRODUCT, seatCount: null });
+
+    // `sha256` and `path` are UNIQUE table-wide, so these are shaped to be
+    // impossible for a real entry to hold: a real hash is 64 hex characters.
+    await admin.from("product_images").insert({
+      id: IMAGE,
+      label: "IDOR fixture",
+      sha256: "idor-fixture",
+      path: "idor-fixture.png",
+    });
 
     await admin
       .from("schedule_slots")
@@ -742,6 +787,7 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     await deleteTestProducts(admin, [PRODUCT]);
     await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
+    await admin.from("product_images").delete().eq("id", IMAGE);
     await admin
       .from("gedu_locations")
       .delete()

@@ -29,6 +29,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     region_lock_country: null,
     spoken_language_code: "en",
     image_path: "abc.png",
+    image_id: null,
     // Staff-only, so it arrives on its own embedded row rather than as a column
     // on the product. `null` is the ordinary case: no row means no lesson link.
     product_staff_details: null,
