@@ -358,6 +358,8 @@ export type Database = {
           group_id: string
           id: string
           report: string | null
+          report_emailed_at: string | null
+          report_emailed_by: string | null
           session_date: string
           starts_at: string
           updated_at: string
@@ -371,6 +373,8 @@ export type Database = {
           group_id: string
           id?: string
           report?: string | null
+          report_emailed_at?: string | null
+          report_emailed_by?: string | null
           session_date: string
           starts_at: string
           updated_at?: string
@@ -384,6 +388,8 @@ export type Database = {
           group_id?: string
           id?: string
           report?: string | null
+          report_emailed_at?: string | null
+          report_emailed_by?: string | null
           session_date?: string
           starts_at?: string
           updated_at?: string
@@ -409,6 +415,20 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_report_emailed_by_fkey"
+            columns: ["report_emailed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_report_emailed_by_fkey"
+            columns: ["report_emailed_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -1734,6 +1754,10 @@ export type Database = {
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
+        Returns: Json
+      }
+      claim_group_session_report_email: {
+        Args: { p_group_id: string; p_session_date: string }
         Returns: Json
       }
       confirm_paid_participation: {

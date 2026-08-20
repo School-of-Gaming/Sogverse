@@ -144,6 +144,17 @@ export const geduFeedSession = z.object({
    * report-author column.
    */
   updated_by_first_name: z.string().nullable(),
+  /**
+   * When this session's report was emailed to the group's families, and null
+   * until it has been. The card reads it twice over: it is what replaces the
+   * **Send to parents** button with the permanent sent line, and it is the
+   * third thing a session owes (see `geduAssignmentSummary` below).
+   *
+   * Its audit partner `report_emailed_by` is deliberately **not** on the wire.
+   * Nothing renders who pressed the button — the card's author chip is
+   * `updated_by_first_name` above — so the column stays in the database.
+   */
+  report_emailed_at: z.string().nullable(),
   attendance: z.record(z.string(), attendanceStatus),
 });
 
@@ -198,10 +209,15 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  *
  * `attention_count` is computed server-side against the same holiday-blind
  * weekday expansion the client uses, floored at `max(product start, epoch)`, and
- * counts a finished session until **both** halves are in: every current roster
- * member marked, and a non-empty report written. The dashboard deliberately
- * never fetches a feed to derive it — a page of cards would otherwise be a page
- * of history downloads.
+ * counts a finished session until **all three** parts are in: every current
+ * roster member marked, a non-empty report written, and that report emailed to
+ * the families. The dashboard deliberately never fetches a feed to derive it —
+ * a page of cards would otherwise be a page of history downloads.
+ *
+ * **This derivation exists twice and the two must agree** — here in SQL for the
+ * badge, and in TypeScript in the gedu feed's entry-state module for the card.
+ * A change to either half is a change to both, in the same commit, or the badge
+ * counts a session the card calls finished.
  */
 export const geduAssignmentSummary = z.object({
   product_id: z.string(),
@@ -263,3 +279,96 @@ export const siteNotesResult = z.object({
   public_note: z.string().nullable(),
   gedu_note: z.string().nullable(),
 });
+
+// ---------------------------------------------------------------------------
+// Emailing a session report to the families
+// ---------------------------------------------------------------------------
+
+/**
+ * The two SQLSTATEs `claim_group_session_report_email` refuses with, beside the
+ * `42501` every gedu RPC raises when the caller does not teach the group.
+ *
+ * They are **codes rather than messages** because the route turns each into a
+ * different answer, and a message is not a contract — a reworded `RAISE` would
+ * silently reclassify a refusal. Both are in Postgres's application-defined
+ * range and are declared here so the route matches a named value; the migration
+ * that raises them names this file in return.
+ */
+export const SESSION_REPORT_NO_REPORT_SQLSTATE = "P0021";
+
+/** @see SESSION_REPORT_NO_REPORT_SQLSTATE */
+export const SESSION_REPORT_ALREADY_SENT_SQLSTATE = "P0022";
+
+/**
+ * What `claim_group_session_report_email` hands back once the send is claimed.
+ *
+ * The claim is the **first** write of the send, not a record of one: it stamps
+ * the row and returns it, and only then does the route compose a single mail.
+ * So the `report` here is what the route mails — read back from what the claim
+ * committed rather than taken from the request — and `report_emailed_at` is the
+ * timestamp a total failure would release the claim against.
+ *
+ * Non-nullable `report` is the deliberate tightening: the RPC refuses with
+ * `SESSION_REPORT_NO_REPORT_SQLSTATE` when the report is empty after trimming,
+ * so a row that got this far has one. A parse failure here would mean that
+ * guard stopped holding, which is exactly the thing worth failing loudly over.
+ */
+export const sessionReportEmailClaim = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  session_date: z.string(),
+  starts_at: z.string(),
+  ends_at: z.string(),
+  report: z.string(),
+  report_emailed_at: z.string(),
+});
+
+export type SessionReportEmailClaim = z.infer<typeof sessionReportEmailClaim>;
+
+/**
+ * Request body of `POST /api/gedu/sessions/email-report`.
+ *
+ * The session is named by (group, date) rather than by row id, exactly as every
+ * other write on this surface names it: session rows are lazily materialized,
+ * so the id is not something a caller reliably holds, while the pair is the
+ * row's real identity and carries a unique constraint. Nothing else travels —
+ * who to mail and what to say are both resolved server-side from the claim.
+ */
+export const emailSessionReportBody = z.object({
+  groupId: z.string().uuid(),
+  /**
+   * The product-local calendar date, `YYYY-MM-DD`. A bare date with no zone and
+   * no clock face: which instants it covers is the session row's business, and
+   * re-anchoring it to anybody's timezone here would move it a day.
+   */
+  sessionDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "sessionDate must be a YYYY-MM-DD date"),
+});
+
+export type EmailSessionReportBody = z.infer<typeof emailSessionReportBody>;
+
+/**
+ * Response body of `POST /api/gedu/sessions/email-report` — the tally of one
+ * fan-out, counted in **participations**, which is the same unit the confirm
+ * dialog counts in so the two cannot disagree.
+ *
+ * `skipped` is a seat with no address to mail (neither a linked parent nor an
+ * adult holding their own seat). It is counted rather than treated as a failure
+ * because nothing went wrong with the send — there was nobody to send to — and
+ * the staff copy is how that gap reaches a human.
+ *
+ * A `200` carrying `failed > 0` is a **partial** success and the claim stands:
+ * the families who received the mail must not receive it twice. A fan-out where
+ * every send failed is not this shape at all — it releases the claim and answers
+ * an error, because nobody received anything and the gedu may retry.
+ */
+export const emailSessionReportResponse = z.object({
+  sent: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
+});
+
+export type EmailSessionReportResponse = z.infer<
+  typeof emailSessionReportResponse
+>;

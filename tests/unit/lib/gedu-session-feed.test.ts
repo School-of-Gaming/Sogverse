@@ -60,6 +60,9 @@ function row(
     // calendar math, and every case here is indifferent to who touched the row.
     updated_by: null,
     updated_by_first_name: null,
+    // Never emailed by default. The completeness derivation reads it, so a case
+    // about a finished session says so by overriding this.
+    report_emailed_at: null,
     attendance: {},
     ...fields,
   };

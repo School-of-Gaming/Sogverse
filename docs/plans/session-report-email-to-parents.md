@@ -409,6 +409,41 @@ line's shape; fallbacks when a first name is null; whether the spine entry needs
 - **Brevo's wrapper already supports `cc`**; no caller uses it yet, so the integration
   test is the first to assert it reaches the wrapper.
 
+## Implementation notes (steps 1–2, as built)
+
+Steps 1 and 2 are done. What a later step needs to know, and where the build
+diverged from the text above:
+
+- **Migration `00197_a_session_report_is_emailed_once.sql`**, applied to staging.
+  00196 was taken by a sibling branch on shared staging, so `db push` refused
+  until that branch's file was materialized locally for the push and deleted
+  again — the pathway `supabase/CLAUDE.md` describes. Nothing else about the
+  numbering moved.
+- **The SQLSTATEs are `P0021` (no report) and `P0022` (already sent)**, exported
+  from the contracts file as `SESSION_REPORT_NO_REPORT_SQLSTATE` and
+  `SESSION_REPORT_ALREADY_SENT_SQLSTATE`. The route matches those constants, not
+  literals and not messages.
+- **New schemas in `gedu-sessions.contracts.ts`:** `sessionReportEmailClaim`
+  (the RPC result), `emailSessionReportBody` (`{ groupId, sessionDate }`) and
+  `emailSessionReportResponse` (`{ sent, failed, skipped }`), plus
+  `report_emailed_at` on `geduFeedSession`. Step 3 needs no new contract of its
+  own; step 5's service parses `emailSessionReportResponse`.
+- **`sessionReportEmailClaim.report` is non-nullable**, a tightening the plan
+  did not spell out: the RPC refuses an empty report with `P0021`, so a row that
+  reaches the parse has one, and a parse failure would mean that guard stopped
+  holding.
+- **`src/types/database.types.ts` was regenerated against staging and then had
+  the sibling branch's `product_images` table, `products.image_id` and their
+  relationship rows removed.** Staging is shared, so a regeneration is the union
+  of everyone's in-flight work; what is committed here is what a generation
+  against this branch's migrations alone would produce.
+- **The gedu feed's unit fixture** (`tests/unit/lib/gedu-session-feed.test.ts`)
+  gained `report_emailed_at: null` in its row builder, because the contract
+  field is required. Step 6 owns the entry-state cases on top of it.
+- **The spine entry carries `permittedAlsoForbiddenOnNullArgs`**: the assignment
+  half of the gate refuses a NULL group with a second `42501`, exactly as the
+  session-notes writer's does.
+
 ## Follow-ups (to propose for `TODO.md`, not built here)
 
 - English zone labels: the `en` locale formats with US conventions, so a UK family reads
