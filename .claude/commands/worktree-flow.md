@@ -361,6 +361,12 @@ invisible unless you look.
 - **Never `cd` to the main checkout from inside a worktree.** The isolation guard
   refuses, and a failed `cd X && ...` chain leaves the shell's tracked directory
   somewhere unexpected. Use absolute paths, and run `cd` as its own command.
+  The guard checks where a command *starts*, not where it ends — so a chain
+  that begins inside the worktree and `cd`s out mid-way is allowed to run, and
+  from then on every command (Bash and PowerShell both, including a bare `cd`
+  back) is refused for starting in the shared checkout. **Recovery:** call
+  `EnterWorktree` with `path` set to the same worktree you are already in;
+  re-entering resets the tracked directory and both shells work again.
 - **Inside a worktree, keep shell commands plain.** The isolation guard refuses
   anything it cannot statically verify stays inside — heredocs, scripts piped to
   an interpreter, compound chains with redirects. That refusal is almost always a
