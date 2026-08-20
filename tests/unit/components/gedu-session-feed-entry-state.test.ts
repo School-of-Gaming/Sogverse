@@ -38,15 +38,15 @@ const EDITOR: SessionEditor = {
 };
 
 /**
- * Three seats, all of them mailable. `hasContact` is the count behind the send
- * dialog and nothing in this module reads it — what a session owes does not
- * change with who can be written to, deliberately, because a group nobody can
- * be mailed must not sit flagged for ever with nothing to do about it.
+ * Three seats. What a session owes does not change with who can be written to —
+ * deliberately, because a group nobody can be mailed must not sit flagged for
+ * ever with nothing to do about it — so a roster here is ids and names, exactly
+ * as the register needs them.
  */
 const ROSTER: SessionFeedGamer[] = [
-  { id: "a", firstName: "Aino", hasContact: true },
-  { id: "b", firstName: "Väinö", hasContact: true },
-  { id: "c", firstName: "Elias", hasContact: true },
+  { id: "a", firstName: "Aino" },
+  { id: "b", firstName: "Väinö" },
+  { id: "c", firstName: "Elias" },
 ];
 
 /**
@@ -450,7 +450,7 @@ describe("entryCompleteness", () => {
     expect(
       entryCompleteness(entry, [
         ...ROSTER,
-        { id: "d", firstName: "Linnéa", hasContact: true },
+        { id: "d", firstName: "Linnéa" },
       ]),
     ).toBe("needs_attention");
   });
@@ -575,7 +575,7 @@ describe("entryNeedsAttention", () => {
     const entry = sentPast("r");
     const grown = [
       ...ROSTER,
-      { id: "d", firstName: "Linnéa", hasContact: true },
+      { id: "d", firstName: "Linnéa" },
     ];
     expect(entryNeedsAttention(entry, ROSTER)).toBe(false);
     expect(entryNeedsAttention(entry, grown)).toBe(true);

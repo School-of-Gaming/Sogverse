@@ -40,7 +40,6 @@ import { GeduProductPageBody } from "./GeduProductPageBody";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
 import type { GroupNotesDraft } from "./GroupNotesPanel";
 import type { SiteNotesDraft } from "./SiteNotesPanel";
-import { rosterContactEmail } from "./types";
 
 /**
  * The data shell behind `/gedu/clubs|camps|events/[id]` — the gedu's group
@@ -251,19 +250,15 @@ function Workspace({
   // AttendanceRoster is the fix if it proves worth it); flagged so the lossy
   // map stays a choice rather than an oversight.
   //
-  // What is no longer lost is **whether the seat has anybody to write to**. The
-  // confirm dialog behind Send to parents has to say how many mails it is about
-  // to send, so the map carries that one boolean — resolved through the same
-  // helper the roster rail and the copy-all-addresses affordance use, which is
-  // also the order the route resolves it in, so the number promised and the
-  // number sent cannot come apart. The address itself deliberately stays here:
-  // a session card has no business holding a list of parents' mailboxes.
+  // Everything else about a seat stays on this side of the map, the contact
+  // address most deliberately of all: a session card has no business holding a
+  // list of parents' mailboxes, and who the report reaches is resolved
+  // server-side by the route that mails them.
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
         id: member.participant_id,
         firstName: member.first_name,
-        hasContact: rosterContactEmail(member) !== null,
       })),
     [feed.roster],
   );

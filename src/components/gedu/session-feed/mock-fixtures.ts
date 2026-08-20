@@ -86,24 +86,16 @@ export const SESSION_FEED_GAMER_IDS = {
  * the checklist while showing her on the rail roster would be rehearsing a
  * split the product does not have.
  */
-/**
- * Everyone here has somebody to write to, and that is not a convenience: the
- * roster fixture beside this one gives every child a parent's address and the
- * adult her own, so a seat with no contact would be a state the product cannot
- * produce and the two fixtures would disagree about the same nine people. The
- * send dialog therefore promises nine mails on this group, which is what the
- * roster panel above it shows.
- */
 export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
-  { id: SESSION_FEED_GAMER_IDS.aino, firstName: "Aino", hasContact: true },
-  { id: SESSION_FEED_GAMER_IDS.vaino, firstName: "Väinö", hasContact: true },
-  { id: SESSION_FEED_GAMER_IDS.elias, firstName: "Elias", hasContact: true },
-  { id: SESSION_FEED_GAMER_IDS.linnea, firstName: "Linnéa", hasContact: true },
-  { id: SESSION_FEED_GAMER_IDS.oskar, firstName: "Oskar", hasContact: true },
-  { id: SESSION_FEED_GAMER_IDS.siiri, firstName: "Siiri", hasContact: true },
-  { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil", hasContact: true },
-  { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda", hasContact: true },
-  { id: SESSION_FEED_ADULT_ID, firstName: "Marja", hasContact: true },
+  { id: SESSION_FEED_GAMER_IDS.aino, firstName: "Aino" },
+  { id: SESSION_FEED_GAMER_IDS.vaino, firstName: "Väinö" },
+  { id: SESSION_FEED_GAMER_IDS.elias, firstName: "Elias" },
+  { id: SESSION_FEED_GAMER_IDS.linnea, firstName: "Linnéa" },
+  { id: SESSION_FEED_GAMER_IDS.oskar, firstName: "Oskar" },
+  { id: SESSION_FEED_GAMER_IDS.siiri, firstName: "Siiri" },
+  { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil" },
+  { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda" },
+  { id: SESSION_FEED_ADULT_ID, firstName: "Marja" },
 ];
 
 /**

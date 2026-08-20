@@ -34,17 +34,17 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * turning into a finished one, and a part-marked one staying flagged, are the
  * two most important things to feel here. Nothing persists past a reload.
  *
- * **Emailing a report to the families is live too, and reaches nobody.** The
- * button, its confirm dialog with the group's headcount in it, and the
- * permanent sent line that replaces it are all here; what the confirmation runs
- * is a local stamp on the entry rather than a send. That stands in for the
- * refetched row the live page gets back, which is the only way the transition —
- * the flagged card turning finished as the button becomes a line — can be
- * looked at at all.
+ * **Emailing a report to the families is live too, and reaches nobody.** One
+ * press walks the button through all three of its states — send, sending, sent
+ * — because what the click runs is a delayed local stamp on the entry rather
+ * than a send. That stands in for the refetched row the live page gets back,
+ * which is the only way the transition — the flagged card turning finished as
+ * the button settles into the time it went — can be looked at at all.
  *
  * Every save resolves immediately, so the in-flight and failure states the live
- * page has are not what this scene is for; what it rehearses is the shape of
- * the page and the feel of the editors.
+ * page has are not what this scene is for; the send's own in-flight state is the
+ * single exception, and it is delayed precisely because it is the one frame of
+ * that sequence a screenshot cannot show.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state — rebuilding it on the 30-second tick would throw away whatever the
@@ -89,10 +89,11 @@ export function GeduProductPageScene({
   const platform = platformForTopic(fixture.data.product.topic);
 
   // Faked latency has to be cancellable, or a reviewer who navigates away
-  // mid-check leaves a timer setting state on an unmounted tree.
-  const pendingChecks = useRef(new Set<number>());
+  // mid-flight leaves a timer setting state on an unmounted tree. One set for
+  // both of the scene's delayed writes — the game-name check and the send.
+  const pendingTimers = useRef(new Set<number>());
   useEffect(() => {
-    const timers = pendingChecks.current;
+    const timers = pendingTimers.current;
     return () => {
       for (const timer of timers) window.clearTimeout(timer);
       timers.clear();
@@ -132,10 +133,15 @@ export function GeduProductPageScene({
    * The send itself is the one action on this page that would leave the
    * platform, so a scene must not make it. What it does instead is what the
    * live page's refetch does a round trip later: stamp the entry with the
-   * instant it went. That is what turns the button into the sent line and the
-   * amber card into a finished one, which is the whole thing worth reviewing
-   * here — a scene that resolved without stamping would leave a reviewer
-   * looking at a spinner that never ends.
+   * instant it went, which is what puts the button into its sent state and
+   * turns the amber card finished.
+   *
+   * **The stamp is deliberately delayed**, alone among this scene's writes. The
+   * button is one control in three states — send, sending, sent — and the
+   * middle one is the only part of that sequence a reviewer cannot see in a
+   * screenshot: whether the spinner lands in the same slot at the same height,
+   * and whether anything under the card moves as the label grows into the sent
+   * time. A stamp applied on the click would skip straight past it.
    *
    * The tally it answers with says every mail landed, because none of them
    * existed to fail. The card's partial-send notice therefore never shows here;
@@ -143,20 +149,25 @@ export function GeduProductPageScene({
    */
   const handleSendReport = (
     entryId: string,
-  ): Promise<SessionReportSendResult> => {
-    setEntries((prev) =>
-      prev.map((entry) =>
-        entry.id === entryId && entry.kind === "past"
-          ? { ...entry, reportEmailedAt: now }
-          : entry,
-      ),
-    );
-    return Promise.resolve({
-      sent: fixture.feedRoster.filter((gamer) => gamer.hasContact).length,
-      failed: 0,
-      skipped: 0,
+  ): Promise<SessionReportSendResult> =>
+    new Promise((resolve) => {
+      const timer = window.setTimeout(() => {
+        pendingTimers.current.delete(timer);
+        setEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === entryId && entry.kind === "past"
+              ? { ...entry, reportEmailedAt: now }
+              : entry,
+          ),
+        );
+        resolve({
+          sent: fixture.feedRoster.length,
+          failed: 0,
+          skipped: 0,
+        });
+      }, SIMULATED_SEND_MS);
+      pendingTimers.current.add(timer);
     });
-  };
 
   const handleSaveGroupNotes = (draft: GroupNotesDraft) => {
     setGroupNotes({
@@ -280,7 +291,7 @@ export function GeduProductPageScene({
           : { roblox_user_id: SIMULATED_CHECK_ROBLOX_ID },
       );
     }, SIMULATED_CHECK_MS);
-    pendingChecks.current.add(timer);
+    pendingTimers.current.add(timer);
   };
 
   return (
@@ -322,6 +333,15 @@ export function GeduProductPageScene({
  * thinks it has hung.
  */
 const SIMULATED_CHECK_MS = 800;
+
+/**
+ * Roughly what a fan-out of a dozen mails costs the live route, and longer than
+ * the lookup above for the same reason the real one is: the send waits on a
+ * provider accepting every address, not on one name being resolved. Long enough
+ * to watch the spinner sit in the button's own slot and see that nothing under
+ * the card moves when the label lands.
+ */
+const SIMULATED_SEND_MS = 1400;
 
 /**
  * The account key a passed check lands, one per platform, standing in for what

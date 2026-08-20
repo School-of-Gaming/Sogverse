@@ -99,17 +99,37 @@ mailable in order to keep agreeing with the client.
 
 **Rule: whether a report has been sent is read from the instant stored on the
 session row, never from the send that produced it.** That is what makes the
-sent state survive a reload, a second tab and a second assigned gedu, and it is
-why the affordance can be a button one moment and a permanent line the next
-without anything else on the card moving. Counts from a single send — how many
-mails went out, how many the provider refused — are the opposite kind of fact:
-they are a receipt for the send just made, not part of the record. A receipt has
-to survive long enough to be read, so it is held in the sending surface's own
-state for as long as the educator stays on the page — through the refetch that
-replaces the button with the sent line, which is the very moment they would
-otherwise vanish — and it is gone on a reload or a navigation, because nothing
-stores it. The line saying the report was sent is the record; the counts beside
-it never pretend to be.
+sent state survive a reload, a second tab and a second assigned gedu. Counts
+from a single send — how many mails went out, how many the provider refused —
+are the opposite kind of fact: they are a receipt for the send just made, not
+part of the record. A receipt has to survive long enough to be read, so it is
+held in the sending surface's own state for as long as the educator stays on the
+page — through the refetch that flips the affordance into its sent state, which
+is the very moment they would otherwise vanish — and it is gone on a reload or a
+navigation, because nothing stores it. What says the report was sent is the
+record; the counts beside it never pretend to be.
+
+**Rule: the send affordance is one control in three states, not a control
+replaced by a message.** Offer, in flight, and sent are the same button in the
+same slot — so its own height is the slot, nothing under it moves when a send
+lands, and no space has to be held open for a second element that could never
+share the row with it. The sent state is that button disabled, carrying the time
+the mail went and dropping to a lighter weight, because a finished action is a
+record rather than an invitation and must not go on drawing the eye of somebody
+scanning for the next thing to do.
+
+**Rule: the send is not confirmed, and its outcomes are quiet.** The server
+claims the session before it mails anybody, so at most one send exists however
+many times the button is pressed, from however many tabs — the guarantee is the
+route's and never the interface's. That leaves a dialog with nothing to add but
+a headcount nobody was deciding anything with, so pressing the button *is* the
+gesture. The same reasoning governs what is said afterwards: a send that lands
+says nothing beyond the button's own change of state, and being refused because
+the report has already gone says nothing at all, since the sent state that
+follows is both the news and the truth. Only a refusal that leaves the session
+genuinely unsent — nothing delivered, or no report left to deliver — hands the
+button back with one short line under it, cleared the moment the next attempt
+starts.
 
 **Rule: this derivation exists twice — in TypeScript for the card and in SQL for
 the dashboard badge — and a change to one is a change to both, in the same

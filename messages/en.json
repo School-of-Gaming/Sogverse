@@ -1282,12 +1282,8 @@
       "saveFailed": "This session didn’t save. Try again.",
       "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again.",
       "sendReportToParents": "Send to parents",
-      "reportSentToParents": "Sent to parents on {sentAt}",
+      "reportSentToParents": "Sent to parents · {sentAt}",
       "reportSendPartial": "{sent} sent, {failed} failed",
-      "sendReportConfirmTitle": "Send this report to parents",
-      "sendReportConfirmBody": "{count, plural, =0 {No one in this group has a contact address, so this will email nobody. The session is still marked as sent and the office is told.} one {Email this report to the family of # participant?} other {Email this report to the families of # participants?}}",
-      "sendReportConfirmCta": "Send",
-      "sendReportAlreadySent": "This report has already been emailed to the families. Reload the page to see when it went.",
       "sendReportNoReport": "This session no longer has a saved report to email. Reload the page to see what it says now.",
       "sendReportFailed": "The report couldn’t be emailed. No family received it — try again."
     },

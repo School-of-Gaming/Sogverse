@@ -86,9 +86,18 @@ export function useSetSessionNotes(groupId: string) {
  * send is the third thing a session owes, so it can be what clears the
  * session's alert — exactly as writing the report can — and the dashboard badge
  * counting that alert must not go on counting a session the card now calls
- * finished. The feed key is what turns the button into the permanent sent line,
- * because the sent state is rendered from the refetched row rather than from
- * the response.
+ * finished. The feed key is what puts the button into its sent state, because
+ * that state is rendered from the refetched row rather than from the response.
+ *
+ * **On settled rather than on success, alone among the mutations here**, and
+ * for a reason specific to this one: its refusals are *news about the row*. The
+ * route refuses a send because somebody else already made it, or because the
+ * report it was going to send is no longer there — in both cases the card in
+ * front of the gedu is out of date, and the refetch is the only thing that
+ * makes it tell the truth again. The already-sent refusal is the sharp case:
+ * the card says nothing about it and relies entirely on the refetched row
+ * arriving stamped, so invalidating only on success would leave a disabled
+ * button and no explanation until the next hard navigation.
  */
 export function useEmailSessionReport(groupId: string) {
   const queryClient = useQueryClient();
@@ -97,7 +106,7 @@ export function useEmailSessionReport(groupId: string) {
   return useMutation({
     mutationFn: (vars: { sessionDate: string }) =>
       service.emailSessionReport({ groupId, ...vars }),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({
         queryKey: geduSessionKeys.feed(groupId),
       });

@@ -1282,12 +1282,8 @@
       "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
       "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen.",
       "sendReportToParents": "Lähetä vanhemmille",
-      "reportSentToParents": "Lähetetty vanhemmille {sentAt}",
+      "reportSentToParents": "Lähetetty vanhemmille · {sentAt}",
       "reportSendPartial": "{sent} lähetetty, {failed} epäonnistui",
-      "sendReportConfirmTitle": "Lähetä raportti vanhemmille",
-      "sendReportConfirmBody": "{count, plural, =0 {Kenelläkään tässä ryhmässä ei ole yhteysosoitetta, joten viestiä ei mene kenellekään. Kerta merkitään silti lähetetyksi ja toimisto saa siitä tiedon.} one {Lähetetäänkö tämä raportti # osallistujan perheelle?} other {Lähetetäänkö tämä raportti # osallistujan perheille?}}",
-      "sendReportConfirmCta": "Lähetä",
-      "sendReportAlreadySent": "Tämä raportti on jo lähetetty perheille. Lataa sivu uudelleen nähdäksesi, milloin se lähti.",
       "sendReportNoReport": "Tällä kerralla ei ole enää tallennettua raporttia lähetettäväksi. Lataa sivu uudelleen nähdäksesi nykyisen sisällön.",
       "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen."
     },

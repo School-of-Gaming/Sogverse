@@ -45,9 +45,9 @@ import type {
 
 /** Real generated UUIDs: ids reaching an identicon must never be readable stubs. */
 const GAMERS: readonly SessionFeedGamer[] = [
-  { id: "26586f95-d91e-4cf3-ae9d-edf3e51d9e64", firstName: "Aino", hasContact: true },
-  { id: "c6f10c3a-972d-41bc-9413-c7f674afea3d", firstName: "Elias", hasContact: true },
-  { id: "cec00f11-094d-4b75-a5a4-828ca620d7cd", firstName: "Venla", hasContact: true },
+  { id: "26586f95-d91e-4cf3-ae9d-edf3e51d9e64", firstName: "Aino" },
+  { id: "c6f10c3a-972d-41bc-9413-c7f674afea3d", firstName: "Elias" },
+  { id: "cec00f11-094d-4b75-a5a4-828ca620d7cd", firstName: "Venla" },
 ];
 
 /** A camp day running 08:00–23:00 Helsinki on Monday 16 March 2026. */

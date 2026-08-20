@@ -19,28 +19,18 @@ import type { AttendanceMark } from "@/components/session-feed";
 
 /**
  * One person on the group's roster, as the workspace's session surfaces need
- * them: enough to take a register, and enough to say how many families a
- * report would reach.
+ * them: an id and a first name, which is exactly enough to take a register.
  *
- * It carried an id and a first name only, by a decision that accepted losing
- * the seat's contact signal here — the rail row beside it knows whether a seat
- * is an adult holding their own place or a child with a linked parent, and this
- * list did not. Emailing a report is what made that worth one boolean: the
- * confirm dialog has to say how many mails it is about to send, and it has to
- * count the seats the same way the send does, or the number on screen and the
- * number in the outbox disagree. The address itself deliberately stays out —
- * a roster of parents' mailboxes is not something a session card needs.
+ * The narrowness is the decision. The rail row beside this list knows a great
+ * deal more about each seat — whether it is an adult holding their own place or
+ * a child with a linked parent, and who there is to write to — and none of it
+ * belongs on a session card. A roster of parents' mailboxes in particular is
+ * not something an attendance checklist needs to be carrying, and who the send
+ * reaches is settled server-side by the route that mails them.
  */
 export interface SessionFeedGamer {
   id: string;
   firstName: string;
-  /**
-   * Whether this seat has somebody to write to: the participant themselves
-   * when they are the paying customer, otherwise their earliest-linked parent.
-   * Resolved by whoever builds this list, in the same order the send resolves
-   * it, so the count the dialog shows is the count the route mails.
-   */
-  hasContact: boolean;
 }
 
 interface SessionFeedEntryBase {
@@ -208,11 +198,10 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * When this session's report was emailed to the group's families, and `null`
    * until it has been.
    *
-   * It is read twice over. It is what replaces the **Send to parents** button
-   * with the permanent sent line — the instant comes from the stored row, so
-   * the sent state survives a reload, a second tab and another assigned gedu —
-   * and it is the third thing an owed session owes, beside the register and the
-   * report.
+   * It is read twice over. It is what turns the **Send to parents** button into
+   * its sent state — the instant comes from the stored row, so that state
+   * survives a reload, a second tab and another assigned gedu — and it is the
+   * third thing an owed session owes, beside the register and the report.
    *
    * A `future` entry has no such field, and that is not an omission: a session
    * that has not finished has nothing to send yet.

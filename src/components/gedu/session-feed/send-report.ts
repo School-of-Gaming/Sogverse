@@ -11,9 +11,8 @@
  */
 
 /**
- * What one fan-out did, counted in **participations** — the same unit the
- * confirm dialog counts in, so the number promised and the number reported
- * cannot disagree.
+ * What one fan-out did, counted in **participations**: one seat on the roster,
+ * one line in this tally, whoever the mail for it was addressed to.
  *
  * `skipped` is a seat with nobody to write to. It is not a failure: nothing
  * went wrong, there was simply no address. `failed` is a send the mail provider
@@ -27,17 +26,21 @@ export interface SessionReportSendResult {
 }
 
 /**
- * Why a send did not happen, in the three flavours the card renders
+ * Why a send did not happen, in the three flavours the card answers
  * differently.
  *
  * The first two are the session having moved on since this page loaded, and
  * neither can be retried into working — a refetch is what makes the card tell
- * the truth again. They are told apart because they are two different pieces of
- * news, and the gedu's next step differs: one report has reached the families
- * already, the other has nothing to reach them with.
+ * the truth again. They are still told apart, because the card does two
+ * genuinely different things with them.
  *
  * - `already_sent` — somebody else, or another tab, has already emailed it.
- * - `no_report` — the session no longer has a saved report to send.
+ *   **Nothing is said about this one.** The refetch puts the button into its
+ *   sent state, and that state *is* the news: an error line beside a button
+ *   saying the report went would be arguing with it. The reason still exists so
+ *   the card knows to keep the button disabled rather than hand it back.
+ * - `no_report` — the session no longer has a saved report to send. Worth
+ *   saying, because the report the gedu was looking at is not there any more.
  * - `failed` — nothing was delivered and the session stands unsent, so the
  *   button comes back and the gedu may try again.
  */

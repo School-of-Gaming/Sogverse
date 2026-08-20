@@ -59,8 +59,8 @@ interface SessionFacts {
 /**
  * The roster RPC's ordering when a child has several parent links: earliest
  * `created_at` with NULLs last, then the link row's id. Mirrored rather than
- * approximated — the gedu's roster is where the confirm dialog's count comes
- * from, and the two have to name the same person.
+ * approximated — the gedu's roster shows the contact each seat resolves to, and
+ * the mail has to reach the same person the roster names.
  */
 function earlierLink<T extends { created_at: string | null; id: string }>(
   a: T,
@@ -313,8 +313,8 @@ export const POST = defineRoute({
         // role check included. Id equality alone would let a row with a gamer's
         // id transposed into `customer_id` put the synthetic
         // `@gamer.sogverse.internal` handle — which is not a mailbox — in front
-        // of a family mail. The roster is also where the confirm dialog counts
-        // the seats it is about to mail, so the two resolutions have to be one.
+        // of a family mail. The roster also shows the gedu which contact each
+        // seat resolves to, so the two resolutions have to be one.
         const isSelfSeat =
           participation.participant_id === participation.customer_id &&
           participant.role === "customer";

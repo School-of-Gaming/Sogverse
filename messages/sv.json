@@ -1282,12 +1282,8 @@
       "saveFailed": "Tillfället sparades inte. Försök igen.",
       "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen.",
       "sendReportToParents": "Skicka till föräldrarna",
-      "reportSentToParents": "Skickad till föräldrarna {sentAt}",
+      "reportSentToParents": "Skickad till föräldrarna · {sentAt}",
       "reportSendPartial": "{sent} skickade, {failed} misslyckades",
-      "sendReportConfirmTitle": "Skicka rapporten till föräldrarna",
-      "sendReportConfirmBody": "{count, plural, =0 {Ingen i den här gruppen har en kontaktadress, så inget mejl går ut. Tillfället markeras ändå som skickat och kontoret får veta.} one {Mejla rapporten till familjen till # deltagare?} other {Mejla rapporten till familjerna till # deltagare?}}",
-      "sendReportConfirmCta": "Skicka",
-      "sendReportAlreadySent": "Rapporten har redan mejlats till familjerna. Ladda om sidan för att se när den gick.",
       "sendReportNoReport": "Det här tillfället har ingen sparad rapport att mejla längre. Ladda om sidan för att se vad som står där nu.",
       "sendReportFailed": "Rapporten kunde inte mejlas. Ingen familj fick den – försök igen."
     },

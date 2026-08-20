@@ -92,8 +92,6 @@ interface SessionFeedItemProps {
    * taking its dates as strings.
    */
   sentAtLabel: string | null;
-  /** How many families a send would reach: roster seats with a contact. */
-  recipientCount: number;
   /** Whether this entry's send is in flight. Owned by the feed, like the save. */
   sending: boolean;
   /** The counts the last send answered with — a receipt, not the record. */
@@ -162,9 +160,9 @@ interface SessionFeedItemProps {
  * nobody is owed one for.
  *
  * **A past session's write-up carries the one action on this card that leaves
- * the platform.** Under the report, and only there, sits the affordance that
- * emails it to the group's families — a button until it has gone, the
- * permanent line saying when it went afterwards. It is under the report rather
+ * the platform.** Under the report, and only there, sits the button that emails
+ * it to the group's families — the same button before, during and after the
+ * send, saying when it went once it has gone. It is under the report rather
  * than up in the header with Edit because it is about the report: it sends
  * that text, to those families, and a control in the corner would have been
  * one more thing in the row that already carries the state and the editor.
@@ -226,7 +224,6 @@ export function SessionFeedItem({
   committing,
   saveError,
   sentAtLabel,
-  recipientCount,
   sending,
   sendResult,
   sendError,
@@ -312,21 +309,21 @@ export function SessionFeedItem({
     !editing && hasReport(entry.report) ? entry.lastEditedBy : null;
 
   /**
-   * The send row, under the report it is about — and only where all three of
-   * its conditions hold: the session has finished, somebody has written it up,
-   * and the write-up has not already gone. A future or running session has
-   * nothing to send yet, and an unwritten one has nothing to say; both render
-   * no row at all rather than a disabled button, because a control that cannot
-   * be pressed on most of the feed is noise on every card it appears on.
+   * The send row, under the report it is about — and only where both of its
+   * conditions hold: the session has finished, and somebody has written it up.
+   * A future or running session has nothing to send yet, and an unwritten one
+   * has nothing to say; both render no row at all rather than a disabled
+   * button, because a control that cannot be pressed on most of the feed is
+   * noise on every card it appears on.
    *
-   * The sent line goes on rendering here after the send, which is why the whole
-   * block is gated on the report rather than on the button being available.
+   * Whether the report has *already* gone is not one of the conditions: the
+   * same button stays on the card afterwards to say so, which is why the block
+   * is gated on there being a report rather than on the send being available.
    */
   const reportSend =
     entry.kind === "past" && hasReport(entry.report) ? (
       <SessionReportSend
         sentAtLabel={sentAtLabel}
-        recipientCount={recipientCount}
         sending={sending}
         result={sendResult}
         error={sendError}
