@@ -12,7 +12,7 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
+const PRODUCT_URL = "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15";
 
 const base = {
   gamerName: "Aino",
@@ -22,7 +22,7 @@ const base = {
   sessionDate: "Thursday, 20 August 2026",
   sessionTime: "16:30–18:00 EEST",
   reportMarkdown: "# **Lanterns over the Harbour**\n\nToday we welcomed a new member.\n\n## Next week\n\nMore building.",
-  dashboardUrl: DASHBOARD_URL,
+  productUrl: PRODUCT_URL,
 };
 
 describe("buildSessionReportEmail", () => {
@@ -74,10 +74,22 @@ describe("buildSessionReportEmail", () => {
     expect(html).toContain("A &lt;b&gt;&amp;&lt;/b&gt; B");
   });
 
-  it("links My SOG", () => {
+  it("links the product's page in My SOG, where the reports live", () => {
     const html = buildSessionReportEmail(t, "en", base);
-    expect(html).toContain(`href="${DASHBOARD_URL}"`);
-    expect(html).toContain("Open My SOG");
+    expect(html).toContain(`href="${PRODUCT_URL}"`);
+    expect(html).toContain("View in My SOG");
+    expect(html).toContain("the earlier ones and the upcoming sessions");
+  });
+
+  /**
+   * Gmail flips a button label's colour by luminance and theme; the label
+   * carries a class the layout pins to one colour through the Gmail-only
+   * background-clip rule. Both halves have to be present for it to work.
+   */
+  it("pins the button label's colour against Gmail's theme rewriting", () => {
+    const html = buildSessionReportEmail(t, "en", base);
+    expect(html).toMatch(/<a href="[^"]+" target="_blank" class="cta-on-brand"/);
+    expect(html).toContain("u + .body .cta-on-brand");
   });
 
   it("keeps brand color out of the report body", () => {

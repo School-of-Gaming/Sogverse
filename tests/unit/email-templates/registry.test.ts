@@ -176,11 +176,12 @@ describe("templateRegistry sessionReport", () => {
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
     sample: "en",
+    viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
-    dashboardUrl: "https://sogverse.sog.gg/parent",
+    productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   };
 
-  it("formats the sample's date and time in the product's zone for the locale", async () => {
+  it("formats the sample's date and time in the parent's zone for the locale", async () => {
     const { subject, html } = templateRegistry.sessionReport.render(params, t, "en");
     expect(subject).toBe("Session report – Minecraft: Cozy Adventures, Thursday, August 20, 2026");
     expect(html).toContain("Thursday, August 20, 2026");
@@ -190,6 +191,25 @@ describe("templateRegistry sessionReport", () => {
     const fi = await getEmailTranslator("fi");
     const finnish = templateRegistry.sessionReport.render(params, fi, "fi");
     expect(finnish.subject).toContain("torstai 20. elokuuta 2026");
+  });
+
+  /**
+   * The zone is named only when the parent's differs from the product's: a
+   * Helsinki family reading about a Helsinki club sees a plain clock face, a
+   * London family sees the adjusted one with the zone that explains it.
+   */
+  it("names the zone only when the parent's zone differs from the product's", () => {
+    const home = templateRegistry.sessionReport.render(params, t, "en");
+    expect(home.html).toMatch(/16:30\s*–\s*18:00</);
+    expect(home.html).not.toContain("GMT");
+
+    const away = templateRegistry.sessionReport.render(
+      { ...params, viewerTimezone: "Europe/London" },
+      t,
+      "en",
+    );
+    expect(away.html).toMatch(/14:30\s*–\s*16:00 GMT\+1/);
+    expect(away.subject).toContain("Thursday, August 20, 2026");
   });
 
   it("sends the sample's own markdown when the override is empty", () => {
@@ -209,7 +229,7 @@ describe("templateRegistry sessionReport", () => {
       "en",
     );
     expect(html).toContain("Lyhtyjä sataman ylle");
-    expect(html).toContain("Open My SOG");
+    expect(html).toContain("View in My SOG");
     expect(subject).toContain("Thursday, August 27, 2026");
   });
 
@@ -288,8 +308,9 @@ describe("every template renders in every locale", () => {
       productName: "Minecraft: Cozy Adventures",
       groupName: "Usvalaakso: Kettukallio",
       sample: "en",
+      viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     },
   };
 

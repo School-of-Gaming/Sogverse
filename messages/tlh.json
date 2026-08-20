@@ -2326,8 +2326,8 @@
       "groupLabel": "ghom",
       "dateLabel": "jaj",
       "timeLabel": "poH",
-      "dashboardButton": "My SOG yIpoSmoH",
-      "closing": "Hoch ja’ghItlhmey My SOG-Daq bIH, poHmey veb retlhDaq."
+      "productButton": "My SOG-Daq yIlegh",
+      "closing": "ja’ghItlhvam, ja’ghItlhmey ngo’ je, poHmey veb je: Hoch {productName} DaqDaq My SOG-Daq."
     }
   },
   "roblox": {

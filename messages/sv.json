@@ -2282,8 +2282,8 @@
       "groupLabel": "Grupp",
       "dateLabel": "Datum",
       "timeLabel": "Tid",
-      "dashboardButton": "Öppna Min SOG",
-      "closing": "Alla rapporter finns i Min SOG, bredvid de kommande passen."
+      "productButton": "Öppna i Min SOG",
+      "closing": "Den här rapporten, de tidigare och de kommande passen finns alla på sidan för {productName} i Min SOG."
     }
   },
   "legal": {

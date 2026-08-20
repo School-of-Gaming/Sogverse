@@ -441,8 +441,9 @@ describe("POST /api/admin/send-test-email", () => {
         productName: "Minecraft: Cozy Adventures",
         groupName: "Usvalaakso: Kettukallio",
         sample: "en",
+        viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "",
-        dashboardUrl: "https://sogverse.sog.gg/parent",
+        productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
     }));
     const data = await response.json();
@@ -471,8 +472,9 @@ describe("POST /api/admin/send-test-email", () => {
         productName: "Minecraft: Cozy Adventures",
         groupName: "Usvalaakso: Kettukallio",
         sample: "en",
+        viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "# Typed title\n\nWith a [link](https://evil.example).",
-        dashboardUrl: "https://sogverse.sog.gg/parent",
+        productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
     }));
 

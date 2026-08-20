@@ -2282,8 +2282,8 @@
       "groupLabel": "Groupe",
       "dateLabel": "Date",
       "timeLabel": "Heure",
-      "dashboardButton": "Ouvrir Mon SOG",
-      "closing": "Tous les comptes rendus de session se trouvent dans Mon SOG, à côté des prochaines sessions."
+      "productButton": "Ouvrir dans Mon SOG",
+      "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG."
     }
   },
   "legal": {

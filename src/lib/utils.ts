@@ -88,24 +88,31 @@ export function formatTime(date: Date | string, locale: string, timeZone: string
 }
 
 /**
- * A start–end range — one session's clock face — in the viewer's zone, with the
- * zone's short name appended so a reader in another zone can see the
- * adjustment. Both ends are formatted from their own instants: the end is
- * never a duration string-added to the local start, which a DST transition
- * inside the session would corrupt (CLAUDE.md viewer-zone rule).
+ * A start–end range — one session's clock face — in the viewer's zone. Both
+ * ends are formatted from their own instants: the end is never a duration
+ * string-added to the local start, which a DST transition inside the session
+ * would corrupt (CLAUDE.md viewer-zone rule).
+ *
+ * The zone's short name is appended only when the viewer's zone differs from
+ * the zone the thing was authored in (`sourceTimeZone`) — that is when the
+ * clock face has been adjusted and the reader needs to see that it has. A
+ * family in Helsinki reading about a Helsinki club gets "16.30–18.00"; a family
+ * in London gets "14:30 – 16:00 GMT+1". Omit `sourceTimeZone` and the name is
+ * always shown.
  */
 export function formatTimeRange(
   start: Date | string,
   end: Date | string,
   locale: string,
-  timeZone: string,
+  { timeZone, sourceTimeZone }: { timeZone: string; sourceTimeZone?: string },
 ): string {
   const s = typeof start === "string" ? new Date(start) : start;
   const e = typeof end === "string" ? new Date(end) : end;
+  const showZone = sourceTimeZone === undefined || sourceTimeZone !== timeZone;
   return new Intl.DateTimeFormat(locale, {
     ...TIME_OF_DAY,
     timeZone,
-    timeZoneName: "short",
+    ...(showZone ? { timeZoneName: "short" } : {}),
   }).formatRange(s, e);
 }
 

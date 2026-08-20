@@ -2914,8 +2914,8 @@
       "groupLabel": "Group",
       "dateLabel": "Date",
       "timeLabel": "Time",
-      "dashboardButton": "Open My SOG",
-      "closing": "Every session report lives in My SOG, next to the upcoming sessions."
+      "productButton": "View in My SOG",
+      "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG."
     }
   },
   "legal": {

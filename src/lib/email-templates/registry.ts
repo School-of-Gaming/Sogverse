@@ -182,12 +182,13 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
 }
 
 /**
- * The session-report form picks one of the bundled sample reports and may
- * paste a markdown body over it. Spike plumbing: there is no route sending
- * this mail yet, so the fixture stands in for the session row a real send
- * would read — and formats the session's instants in the *product's* zone for
- * the chosen locale, because a fixture has no parent to format them for. The
- * real feature formats in the parent's zone.
+ * The session-report form picks one of the bundled sample reports, a zone to
+ * stand in for the parent's, and may paste a markdown body over the sample.
+ * Spike plumbing: there is no route sending this mail yet, so the fixture
+ * stands in for the session row a real send would read, and the select stands
+ * in for the parent's profile. The instants are formatted for the chosen
+ * locale in the chosen zone, with the zone named only when it differs from the
+ * product's — which is what the live send will do with the parent's own zone.
  *
  * The `sample` is posted as an id and resolved here rather than in
  * `resolveParams`, because the formatting needs the locale and the resolver
@@ -198,8 +199,17 @@ const SESSION_REPORT_SAMPLE_OPTIONS = SESSION_REPORT_SAMPLES.map((sample) => ({
   value: sample.id,
 }));
 
+/** Where a parent might be reading from; the first is the product's own zone. */
+const VIEWER_TIMEZONE_OPTIONS = [
+  { label: "Europe/Helsinki (the product's zone)", value: "Europe/Helsinki" },
+  { label: "Europe/Stockholm", value: "Europe/Stockholm" },
+  { label: "Europe/London", value: "Europe/London" },
+  { label: "Europe/Paris", value: "Europe/Paris" },
+  { label: "America/New_York", value: "America/New_York" },
+];
+
 function resolveSessionReport(
-  { sample: sampleId, reportMarkdown, ...rest }: SessionReportParams,
+  { sample: sampleId, viewerTimezone, reportMarkdown, ...rest }: SessionReportParams,
   locale: string,
 ): SessionReportEmailOptions {
   const sample =
@@ -208,10 +218,13 @@ function resolveSessionReport(
   return {
     ...rest,
     sessionDate: formatDate(sample.startsAt, locale, {
-      timeZone: sample.timezone,
+      timeZone: viewerTimezone,
       dateStyle: "full",
     }),
-    sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, sample.timezone),
+    sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, {
+      timeZone: viewerTimezone,
+      sourceTimeZone: sample.timezone,
+    }),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
   };
 }
@@ -277,9 +290,14 @@ const sessionReportParamsSchema = z.object({
     .refine((id) => SESSION_REPORT_SAMPLES.some((sample) => sample.id === id), {
       message: "unknown sample report",
     }),
+  viewerTimezone: z
+    .string()
+    .refine((zone) => VIEWER_TIMEZONE_OPTIONS.some((option) => option.value === zone), {
+      message: "unknown viewer timezone",
+    }),
   /** Empty means "use the sample's own markdown". */
   reportMarkdown: z.string(),
-  dashboardUrl: z.string().url(),
+  productUrl: z.string().url(),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -386,13 +404,18 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "productName", label: "Product Name", placeholder: "Minecraft: Cozy Adventures" },
       { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
+      { key: "viewerTimezone", label: "Parent's timezone", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {
         key: "reportMarkdown",
         label: "Report markdown",
         type: "textarea",
         placeholder: "Leave empty to send the selected sample. Anything typed here replaces it.",
       },
-      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+      {
+        key: "productUrl",
+        label: "Product page URL (My SOG)",
+        placeholder: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      },
     ],
     schema: sessionReportParamsSchema,
     build: (p, t, locale) => buildSessionReportEmail(t, locale, resolveSessionReport(p, locale)),

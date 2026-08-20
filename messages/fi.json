@@ -2282,8 +2282,8 @@
       "groupLabel": "Ryhmä",
       "dateLabel": "Päivä",
       "timeLabel": "Aika",
-      "dashboardButton": "Avaa Oma SOG",
-      "closing": "Kaikki raportit löytyvät Oma SOG -sivulta tulevien kertojen vierestä."
+      "productButton": "Avaa Oma SOG",
+      "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}."
     }
   },
   "legal": {
