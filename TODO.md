@@ -166,49 +166,6 @@ verification. Each has a surface that shows it; none has a surface that
 - [ ] Each entry links straight to the thing that needs fixing, so the surface is
   a work queue rather than a report.
 
-### Prod database backups — there are none today
-
-Investigated 2026-08-13. Both Supabase projects (prod `sogverse`, staging) are on the
-**free tier, which takes no automatic backups at all** — an accidental prod data loss
-today is unrecoverable except by reconstructing from secondary sources (Stripe has the
-billing side; profiles, participations and session reports live only in that one
-Postgres). The CLI's `backups list` showing `WALG: true` is just the infrastructure
-mode — PITR is off and both retention timestamps read 0. Deliberately deferred, not
-forgotten: the exposure is real but small (545 users), and the fix is cheap whenever
-it's picked up.
-
-Facts established, so they don't need re-deriving:
-
-- **Size is a non-issue.** Prod is 62 MB total, and over half is regenerable reference
-  data (`locations` 32 MB + `postal_codes` 7 MB); real user data is a few MB. A
-  compressed `pg_dump` lands around 5–15 MB, so even 90 days of daily dumps stays
-  under ~1.5 GB. Any dump must include the `auth` schema (users, identities) alongside
-  `public` — losing auth rows is the same disaster as losing profiles, and the
-  `postgres` role we connect with can read both.
-- **Supabase Pro** ($25/mo, org-based) buys daily backups with 7-day retention and
-  dashboard restore — but restore is all-or-nothing (whole DB, project down during),
-  physical backups aren't downloadable, and Storage-API objects aren't covered. Billing
-  wrinkle: all three projects (prod, staging, sandbox) share one org, and upgrading it
-  puts every project on paid compute (~$45/mo total). The standard dodge is **moving
-  prod to its own org** and upgrading only that ($25/mo flat, credits cover its Micro).
-  PITR (restore to the second) is a separate add-on at $100/mo per 7 days — overkill
-  at current scale.
-- **DIY option ($0): nightly GitHub Actions cron** running
-  `pg_dump | zstd | age -e -r <public key>`, uploading the *ciphertext* as a workflow
-  artifact (retention up to 90 days). The `age` private key stays offline with Kyle
-  (password manager), so GitHub only ever holds encrypted bytes — its US residency
-  stops mattering for GDPR. Unlike Supabase's physical backups, dumps are downloadable
-  and selective (restore one table / grep out three rows — what an "oops" recovery
-  actually needs). Alternatives if longer retention or GitHub-independence is ever
-  wanted: an S3 bucket in `eu-north-1` (same region, cents/month, lifecycle rules) or
-  a second dedicated Supabase project's Storage bucket — never the prod project itself.
-
-- [ ] Pick one (DIY dump job and Pro aren't redundant — the dump gives selective
-  restore and an offsite copy, Pro gives a zero-maintenance floor; the likely path is
-  the free dump job now, Pro when revenue justifies it) and build it. If the dump job:
-  workflow file, `age` keypair setup, DB password into GH secrets, and a **documented,
-  test-run restore procedure** — an untested backup is the other classic failure mode.
-
 ### Deferred billing for future-start clubs — the follow-ups
 
 Deferred-start billing itself (a future-start consumer club's sub first-charges at `subscription_data.billing_cycle_anchor` + `proration_behavior: 'none'` on the Checkout Session — the anchor is the club's start instant, clamped to ~1 month out for early buyers) is decided work. Two pieces were deliberately kept out of it:
