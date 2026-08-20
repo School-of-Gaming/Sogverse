@@ -62,22 +62,6 @@ notices:
   nothing in application code may write it and why the product RPCs take no image
   parameter at all.
 
-**There is deliberately no foreign key from `products.image_path` to
-`product_images(path)`, and adding one is a breaking change.** It looks like the missing
-half — let Postgres own "a served path is a catalogue path" — and it was written, applied
-to staging and reverted within the hour. PostgREST resolves an embed by finding *the*
-relationship between two tables; with two, it refuses the request with PGRST201 and every
-caller has to name the key it means. The admin product detail query embeds this table, so
-the observed effect was every admin product page reporting "product not found", caused by
-a migration alone. **Never add a second relationship between `products` and
-`product_images` without hinting every existing embed in the same change.** And the key
-would buy nothing here: the trigger above already is the guarantee.
-
-(It was tried once, on staging, for a quarter of an hour; production never had it. The
-one thing worth remembering from that: PostgREST's refusal is an HTTP 300, which browsers
-cache per URL, so a tab that saw the failure keeps showing it after the schema is fixed
-until its cache is emptied — a hard reload alone does not do it.)
-
 Should the bucket and the catalogue ever need reconciling, that is a join rather than a
 program: `product_images.path` against `storage.objects.name` for the `product-images`
 bucket, in both directions — a row with no object, and an object no row names.
