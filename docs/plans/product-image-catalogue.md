@@ -298,12 +298,15 @@ product routes writing `image_id` post-RPC and touching no storage.
 
 **The catalogue dialog**, opened by *Change image* on the product form. The shared `Dialog`
 caps width in two places (portal wrapper and `DialogContent`), so it gains a `size` prop —
-`"default"` is today's `max-w-lg`, `"wide"` is `max-w-4xl` — applied to both through
-context; every existing caller unchanged. (No body-scroll lock: that changes every dialog
-and shifts the page under the scrollbar; if the grid's own scroll container proves
-insufficient, it is a separate change.) The content is a fixed-height flex column
-(`h-[min(80vh,720px)]`): an **Upload** button in the header, then two thirds grid / one
-third reference column.
+`"default"` is today's `max-w-lg`, `"wide"` is `max-w-6xl` (widened from `max-w-4xl` on the
+owner's review of the preview: the grid shows four tiles across at desktop width) — applied
+to both through context; every existing caller unchanged. (No body-scroll lock: that changes
+every dialog and shifts the page under the scrollbar; if the grid's own scroll container
+proves insufficient, it is a separate change.) The content is a fixed-height flex column
+(`h-[min(85vh,880px)]`, likewise enlarged): an **Upload** button in the header, then two
+thirds grid / one third reference column. Both scroll regions carry their own edge padding
+and a stable scrollbar gutter, because the site's scrollbar is a solid 8px track and a
+region clipping flush against it cut tile borders and focus rings off.
 
 - **Tiles**: the shared product banner at thumbnail size (an owner rule: every surface
   paints a product picture through that one 3:2 frame), label, and a usage badge in a

@@ -116,7 +116,7 @@ export function ImageCatalogueView({
   }
 
   return (
-    <DialogContent className="flex h-[min(80vh,720px)] flex-col p-0">
+    <DialogContent className="flex h-[min(85vh,880px)] flex-col p-0">
       <DialogHeader className="flex-row items-start justify-between gap-4 space-y-0 border-b border-border p-6 pb-4">
         <div className="space-y-1.5">
           <DialogTitle>{t("title")}</DialogTitle>
@@ -161,13 +161,18 @@ export function ImageCatalogueView({
       <div className="flex min-h-0 flex-1 flex-col gap-4 p-6 pt-4 sm:flex-row">
         {/* Two thirds grid. The container has its final size before the rows
             land, so the arriving pictures fill it rather than growing it. */}
-        <div className="min-h-0 flex-1 overflow-y-auto sm:basis-2/3">
+        {/* The padding is the scroll region's own breathing room: the site's
+            scrollbar is a solid 8px track, and a container that clips flush
+            against it would cut a tile's border and focus ring off at the
+            edge. The stable gutter keeps the tiles the same width whether or
+            not the grid currently scrolls. */}
+        <div className="min-h-0 flex-1 overflow-y-auto py-1 pr-3 [scrollbar-gutter:stable] sm:basis-2/3">
           {images !== undefined && images.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               {t("emptyCatalogue")}
             </p>
           ) : (
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {(images ?? []).map((image) => {
                 const count = usage?.[image.id]?.length ?? 0;
                 const isSelected = image.id === selectedId;
@@ -213,7 +218,7 @@ export function ImageCatalogueView({
 
         {/* One third reference column, always present so the grid never
             reflows between "nothing selected" and "something selected". */}
-        <div className="min-h-0 shrink-0 overflow-y-auto border-border sm:basis-1/3 sm:border-l sm:pl-4">
+        <div className="min-h-0 shrink-0 overflow-y-auto border-border py-1 pr-3 [scrollbar-gutter:stable] sm:basis-1/3 sm:border-l sm:pl-4">
           {selected === null ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               {t("columnEmpty")}

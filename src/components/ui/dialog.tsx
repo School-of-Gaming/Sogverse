@@ -16,7 +16,7 @@ export type DialogSize = "default" | "wide";
 
 const DIALOG_SIZE_CLASS: Record<DialogSize, string> = {
   default: "max-w-lg",
-  wide: "max-w-4xl",
+  wide: "max-w-6xl",
 };
 
 /**
