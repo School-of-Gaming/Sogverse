@@ -1321,7 +1321,13 @@
       "attendanceMarkedCount": "{marked} of {total} marked",
       "attendanceForGamer": "Attendance for {name}",
       "saveFailed": "This session didn’t save. Try again.",
-      "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again."
+      "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again.",
+      "sendReportToParents": "Send to parents",
+      "sendingReportToParents": "Sending to parents…",
+      "reportSentToParents": "Sent to parents · {sentAt}",
+      "reportSendPartial": "{sent} sent, {failed} failed",
+      "sendReportNoReport": "This session no longer has a saved report to email. Reload the page to see what it says now.",
+      "sendReportFailed": "The report couldn’t be emailed. No family received it — try again."
     },
     "groupNotes": {
       "heading": "About this group",

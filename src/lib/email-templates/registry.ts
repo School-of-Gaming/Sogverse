@@ -184,9 +184,9 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
 /**
  * The session-report form picks one of the bundled sample reports, a zone to
  * stand in for the parent's, and may paste a markdown body over the sample.
- * Spike plumbing: there is no route sending this mail yet, so the fixture
- * stands in for the session row a real send would read, and the select stands
- * in for the zone the mail is formatted in. The instants are formatted for the
+ * Testing plumbing, not the live send: `POST /api/gedu/sessions/email-report`
+ * reads a real session row and formats in the product's zone, so here the
+ * fixture stands in for that row and the select stands in for that zone. The instants are formatted for the
  * chosen locale in the chosen zone with the zone always named — a mail is
  * rendered without the reader's own zone, so the live send formats in the
  * product's zone and names it; the select is here to see what each locale

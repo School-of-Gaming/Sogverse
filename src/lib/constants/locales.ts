@@ -73,6 +73,14 @@ interface LocaleDefinition {
  * locale-prefixed routing has to decide how the region appears in URLs. Decide
  * the scheme deliberately — do not add one incidentally.
  *
+ * A related but smaller open question: the bare `en` tag is also what `Intl`
+ * formats with, and bare `en` means US conventions — timezone names render as
+ * "GMT+3" / "GMT+1" where a Helsinki or UK reader expects "EEST" / "BST". The
+ * fit for that is a per-locale *formatting* tag in `LOCALE_CONFIG` (`en-GB`
+ * for `en`), which leaves the locale code, column, cookie and URLs alone; it
+ * is a site-wide decision about every date the app renders, tracked in
+ * `src/i18n/CLAUDE.md`.
+ *
  * Written out as a literal tuple rather than derived from `LOCALE_CONFIG`'s
  * keys: `Object.keys` is typed `string[]`, and narrowing it back to this tuple
  * would take exactly the kind of type assertion the lint config bans. The tuple

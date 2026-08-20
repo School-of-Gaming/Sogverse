@@ -133,6 +133,16 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "and no NULL child is on its roster. Positive path: " +
       "gedu-session-feed.test.ts.",
   },
+  // The send's claim (00197). Same two-part gate as the notes writer above, and
+  // the claim is the send's authorization in its own right: succeeding is what
+  // lets the route go on to resolve parents' addresses with the service role.
+  claim_group_session_report_email: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the assignment half of the gate refuses a NULL group with a second " +
+      "42501, before the body ever looks for a session to claim. Positive " +
+      "path: gedu-session-feed.test.ts.",
+  },
   set_group_notes: {
     permittedRoles: ["gedu"],
     permittedAlsoForbiddenOnNullArgs:

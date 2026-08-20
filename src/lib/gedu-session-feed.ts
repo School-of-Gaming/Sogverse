@@ -275,9 +275,24 @@ function toEntry(args: {
     owed: withinEnforcement,
     report: row?.report ?? null,
     staffNote: row?.gedu_note ?? null,
+    reportEmailedAt: toReportEmailedAt(row),
     attendance: row?.attendance ?? {},
     lastEditedBy: toLastEditedBy(row),
   };
+}
+
+/**
+ * When the row's report was emailed to the families, as an **instant**, or
+ * `null`.
+ *
+ * A Date rather than the stored string, so the card renders it in the viewer's
+ * zone through the same formatter every other clock face in the feed goes
+ * through. An occurrence with no row behind it answers the same as a row nobody
+ * has emailed, which is the truth in both cases: nothing has been sent.
+ */
+function toReportEmailedAt(row: GeduFeedSession | undefined): Date | null {
+  const stamped = row?.report_emailed_at ?? null;
+  return stamped === null ? null : new Date(stamped);
 }
 
 /**

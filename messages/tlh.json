@@ -1365,7 +1365,13 @@
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
       "attendanceForGamer": "{name} pawwI’",
       "saveFailed": "may’vam pollu’be’. yIboq.",
-      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq."
+      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq.",
+      "sendReportToParents": "vavpu’ SoSpu’ je yInob",
+      "sendingReportToParents": "vavpu’ SoSpu’ je vInobtaH…",
+      "reportSentToParents": "vavpu’ SoSpu’ je lunobta’ · {sentAt}",
+      "reportSendPartial": "{sent} lunobta’, {failed} luj",
+      "sendReportNoReport": "may’vamvaD ngeHmeH De’ polta’ tu’lu’be’ DaH. Hal yIchIDqa’ ’ej qonta’ yIlegh.",
+      "sendReportFailed": "De’ ngeHlu’laHbe’. pagh qorDu’ Suqta’ — yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",

@@ -1321,7 +1321,13 @@
       "attendanceMarkedCount": "{marked}/{total} merkitty",
       "attendanceForGamer": "{name} – läsnäolo",
       "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
-      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen."
+      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen.",
+      "sendReportToParents": "Lähetä vanhemmille",
+      "sendingReportToParents": "Lähetetään vanhemmille…",
+      "reportSentToParents": "Lähetetty vanhemmille · {sentAt}",
+      "reportSendPartial": "{sent} lähetetty, {failed} epäonnistui",
+      "sendReportNoReport": "Tällä kerralla ei ole enää tallennettua raporttia lähetettäväksi. Lataa sivu uudelleen nähdäksesi nykyisen sisällön.",
+      "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
