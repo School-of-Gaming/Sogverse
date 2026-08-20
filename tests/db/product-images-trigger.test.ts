@@ -477,9 +477,13 @@ describe("product_images and the image_path trigger", () => {
         );
       }
 
-      // The control: every extension the accept list stores is admitted.
-      for (const ext of ["jpg", "png", "webp", "avif", "svg"]) {
-        const good = hex(`7${ext.padEnd(3, "0")}abcd`.slice(0, 8));
+      // The control: every extension the accept list stores is admitted. The
+      // seed varies by index, not by the extension's letters — "jpg" is not
+      // hex, and a seed built from it would be refused by the sha256 CHECK
+      // before the path CHECK ever saw it, turning this control into a test
+      // of the wrong constraint.
+      for (const [i, ext] of ["jpg", "png", "webp", "avif", "svg"].entries()) {
+        const good = hex(`7ec0ffe${i}`);
         const { error } = await admin
           .from("product_images")
           .insert({ label: `Good ${ext}`, sha256: good, path: `${good}.${ext}` });

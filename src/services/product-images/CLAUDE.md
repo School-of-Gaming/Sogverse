@@ -73,6 +73,14 @@ a migration alone. **Never add a second relationship between `products` and
 `product_images` without hinting every existing embed in the same change.** And the key
 would buy nothing here: the trigger above already is the guarantee.
 
+A footnote from the same hour, for whoever debugs the next broken embed: PostgREST's
+refusal is an HTTP **300**, and browsers treat 300 as cacheable. A page that fetched the
+query while the embed was ambiguous keeps replaying the stored 300 from disk cache for
+that exact URL — reported as "(disk cache)" in the network panel — long after the schema is
+fixed, and Ctrl+Shift+R does not clear it, because it only bypasses the cache for the
+navigation itself, not for the `fetch()` calls the page makes afterwards. "Empty Cache and
+Hard Reload", or "Disable cache" in the network panel, is what clears it.
+
 Should the bucket and the catalogue ever need reconciling, that is a join rather than a
 program: `product_images.path` against `storage.objects.name` for the `product-images`
 bucket, in both directions — a row with no object, and an object no row names.
@@ -122,7 +130,7 @@ caller-supplied filename fragment answers `constructor` and `__proto__` from its
 prototype chain, which is how a file named `castle.constructor` once passed the 415 gate.
 A `Map` has no inherited keys.
 
-The database holds the only other copy, in the `path` CHECK described below, and the two
+The database holds the only other copy, in the `path` CHECK described above, and the two
 lists differ by exactly one entry on purpose: `jpeg` is accepted on upload and normalised
 to `jpg` before anything is stored, so it appears in the map and not in the CHECK.
 Widening one without the other is a defect in whichever direction you get it wrong.

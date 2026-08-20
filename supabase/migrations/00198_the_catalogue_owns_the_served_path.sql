@@ -536,7 +536,11 @@ COMMENT ON CONSTRAINT chk_product_images_path_matches_sha256 ON public.product_i
   'src/services/product-images/product-images.contracts.ts minus jpeg, which '
   'is accepted on upload and normalised to jpg before anything is stored — the '
   'two lists must be widened in the same change or an upload the route accepts '
-  'is a row this constraint refuses after the bytes are already in the bucket.';
+  'is a row this constraint refuses after the bytes are already in the bucket. '
+  'The pattern is built by concatenating the sha256 column into a regex, which '
+  'is only safe because chk_product_images_sha256_is_a_hash guarantees that '
+  'column holds no regex metacharacters — relax that constraint and this one '
+  'silently becomes a wildcard.';
 
 -- ---------------------------------------------------------------------------
 -- End state
