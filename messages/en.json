@@ -2906,6 +2906,16 @@
       "body": "Hi {firstName}, you asked us to verify the email address on your School of Gaming account. Use the button below to confirm it.",
       "button": "Verify your email address",
       "ignore": "If you didn’t ask for this, you can safely ignore this email. Nothing will change."
+    },
+    "sessionReport": {
+      "subject": "Session report – {productName}, {sessionDate}",
+      "title": "Session report",
+      "intro": "Hi! Here’s {geduName}’s report from {gamerName}’s {productName} session.",
+      "groupLabel": "Group",
+      "dateLabel": "Date",
+      "timeLabel": "Time",
+      "productButton": "View in My SOG",
+      "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG."
     }
   },
   "legal": {

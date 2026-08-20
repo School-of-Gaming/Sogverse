@@ -10,8 +10,14 @@ export function escapeHtml(str: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/**
+ * The body's text style, for any block that carries body copy — a paragraph,
+ * a list, a rendered markdown block. One string, so the three agree.
+ */
+export const BODY_TEXT_STYLE = `color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;`;
+
 export function paragraph(text: string): string {
-  return `<p style="margin:0 0 16px;color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">${text}</p>`;
+  return `<p style="margin:0 0 16px;${BODY_TEXT_STYLE}">${text}</p>`;
 }
 
 export function heading(text: string): string {

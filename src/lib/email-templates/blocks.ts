@@ -1,4 +1,5 @@
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { BODY_TEXT_STYLE } from "./utils";
 
 /**
  * Content blocks the link-carrying templates share: buttons, bulleted steps and
@@ -44,7 +45,20 @@ interface CtaButtonOptions {
  */
 type CtaWidth = "auto" | "half";
 
-/** The button's look, in one place, so a half-width one is the same button. */
+/**
+ * The button's look, in one place, so a half-width one is the same button.
+ *
+ * The label carries a class as well as its inline colour: `cta-on-brand` for
+ * the dark label on the brand fill, `cta-on-card` for the light label on the
+ * outlined button. Gmail's dark-theme rewriting flips a label's `color` by
+ * luminance — a dark label goes light and lands on the orange unreadable, and
+ * which way it flips depends on the reader's theme, so the same button reads
+ * black in one inbox and white in the next. The layout's `<style>` block pins
+ * each class to its colour through the Gmail-only `background-clip:text` rule
+ * (the same mechanism that keeps the header lockup brand-coloured), because
+ * Gmail rewrites `color` but leaves gradients alone. Every other client reads
+ * the inline colour. Keep the two class names in step with `layout.ts`.
+ */
 function buttonStyles(variant: CtaVariant, width: CtaWidth) {
   const isPrimary = variant === "primary";
   const isHalf = width === "half";
@@ -52,6 +66,7 @@ function buttonStyles(variant: CtaVariant, width: CtaWidth) {
     surface: isPrimary
       ? `background-color:${BRAND.primary};border-radius:8px;`
       : `border:1px solid ${DARK_THEME.border};border-radius:8px;`,
+    labelClass: isPrimary ? "cta-on-brand" : "cta-on-card",
     label: `display:${isHalf ? "block" : "inline-block"};padding:12px ${isHalf ? "8px" : "32px"};font-size:14px;font-weight:bold;color:${isPrimary ? DARK_THEME.bg : DARK_THEME.foreground};text-decoration:none;`,
   };
 }
@@ -61,7 +76,7 @@ function buttonStyles(variant: CtaVariant, width: CtaWidth) {
  * because that is the shape Outlook renders as a button.
  */
 export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions): string {
-  const { surface, label: labelStyle } = buttonStyles(variant, "auto");
+  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, "auto");
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px;">
       <tr>
@@ -69,7 +84,7 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td align="center" style="${surface}">
-                <a href="${href}" target="_blank" style="${labelStyle}">
+                <a href="${href}" target="_blank" class="${labelClass}" style="${labelStyle}">
                   ${label}
                 </a>
               </td>
@@ -119,9 +134,9 @@ export function ctaButtonRow(left: CtaButtonOptions, right: CtaButtonOptions): s
 
 /** One half of a `ctaButtonRow`: the row's own cell, painted as the button. */
 function halfButtonCell({ href, label, variant = "primary" }: CtaButtonOptions): string {
-  const { surface, label: labelStyle } = buttonStyles(variant, "half");
+  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, "half");
   return `<td width="50%" align="center" valign="middle" style="${surface}">
-          <a href="${href}" target="_blank" style="${labelStyle}">${label}</a>
+          <a href="${href}" target="_blank" class="${labelClass}" style="${labelStyle}">${label}</a>
         </td>`;
 }
 
@@ -144,7 +159,7 @@ export function bulletList(items: string[]): string {
   const rendered = items
     .map((item) => `<li style="margin:0 0 8px;">${item}</li>`)
     .join("");
-  return `<ul style="margin:0 0 16px;padding-left:20px;color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">${rendered}</ul>`;
+  return `<ul style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ul>`;
 }
 
 /** A bold lead-in above a list — a section label, not a second heading. */

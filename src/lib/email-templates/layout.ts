@@ -54,6 +54,23 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
       background-clip: text !important;
       color: transparent !important;
     }
+    /* Button labels, same mechanism. Gmail flips a label's "color" by luminance
+       and by the reader's theme, so the dark label on the brand fill came back
+       white in some inboxes and black in others. Pinning it through a gradient
+       gives one answer everywhere Gmail renders. The class names are emitted by
+       blocks.ts — keep them in step. */
+    u + .body .cta-on-brand {
+      background-image: linear-gradient(${DARK_THEME.bg}, ${DARK_THEME.bg}) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+    }
+    u + .body .cta-on-card {
+      background-image: linear-gradient(${DARK_THEME.foreground}, ${DARK_THEME.foreground}) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+    }
   </style>
 </head>
 <!-- "body" class is required for the "u + .body" Gmail-only selector in the style block above -->
