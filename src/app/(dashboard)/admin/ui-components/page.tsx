@@ -101,6 +101,14 @@ import {
   type GamePlatform,
 } from "@/components/game-account";
 import { useRobloxProfile } from "@/services/roblox";
+import { ImageCatalogueView } from "@/components/admin/products/image-catalogue-view";
+import { ImageActionConfirmDialog } from "@/components/admin/products/image-catalogue-confirm";
+import {
+  CATALOGUE_DEMO_IMAGES,
+  CATALOGUE_DEMO_SHARED_IMAGE_ID,
+  CATALOGUE_DEMO_UNUSED_IMAGE_ID,
+  CATALOGUE_DEMO_USAGE,
+} from "@/components/admin/products/image-catalogue-fixtures";
 import { ParticipantChip } from "@/components/admin/products/groups/participant-chip";
 import type { ChipGameIdentity } from "@/components/admin/products/groups/panel-rules";
 import { DndContext } from "@dnd-kit/core";
@@ -1356,6 +1364,105 @@ function ScenarioBrowseCard({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Product image catalogue                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The catalogue dialog's presentational core, driven entirely by fixtures.
+ *
+ * Every action resolves without touching anything: this demo exists to look at
+ * the layout, the reserved badge slot, the reference column and the two
+ * confirms, not to move data. The two confirms also have their own entry points
+ * because their interesting difference is the *count* — an unused picture is a
+ * plain yes/no, and one 22 products share is a list with a count-bearing button
+ * pinned under it.
+ */
+function ImageCatalogueDemo() {
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{
+    action: "replace" | "remove";
+    imageId: string;
+  } | null>(null);
+
+  const confirmImage = CATALOGUE_DEMO_IMAGES.find(
+    (image) => image.id === confirm?.imageId,
+  );
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Open catalogue
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() =>
+            setConfirm({
+              action: "remove",
+              imageId: CATALOGUE_DEMO_SHARED_IMAGE_ID,
+            })
+          }
+        >
+          Remove &mdash; 22 products
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() =>
+            setConfirm({
+              action: "replace",
+              imageId: CATALOGUE_DEMO_SHARED_IMAGE_ID,
+            })
+          }
+        >
+          Replace &mdash; 22 products
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() =>
+            setConfirm({
+              action: "remove",
+              imageId: CATALOGUE_DEMO_UNUSED_IMAGE_ID,
+            })
+          }
+        >
+          Remove &mdash; no products
+        </Button>
+      </div>
+
+      <Dialog open={open} size="wide" onOpenChange={setOpen}>
+        <ImageCatalogueView
+          images={CATALOGUE_DEMO_IMAGES}
+          usage={CATALOGUE_DEMO_USAGE}
+          selectedId={selectedId}
+          onSelectTile={setSelectedId}
+          onUse={() => setOpen(false)}
+          onUpload={() => Promise.resolve()}
+          onRename={() => Promise.resolve()}
+          onReplace={() => Promise.resolve()}
+          onRemove={() => Promise.resolve()}
+          onClose={() => setOpen(false)}
+        />
+      </Dialog>
+
+      {confirm && confirmImage && (
+        <ImageActionConfirmDialog
+          open
+          onOpenChange={(next) => !next && setConfirm(null)}
+          action={confirm.action}
+          label={confirmImage.label}
+          products={CATALOGUE_DEMO_USAGE[confirmImage.id] ?? []}
+          onConfirm={() => {
+            setConfirm(null);
+            return Promise.resolve();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -1957,6 +2064,23 @@ export default function AdminUIComponentsPage() {
           it.
         </p>
         <ProductsDemo />
+      </Section>
+
+      <Section title="Product Image Catalogue">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The dialog the product form&rsquo;s picture card opens. Pictures are{" "}
+          <strong>shared</strong>: one entry can be on many products, so
+          clicking a tile only fills the reference column &mdash; a separate
+          button commits the pick &mdash; and the column carries the entry&rsquo;s
+          name, everything it reaches, and the two verbs that reach all of them.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The badge under each tile sits in a <strong>reserved slot</strong>, so
+          the usage counts arriving after the pictures move nothing. Nothing
+          here writes anything &mdash; every action resolves against the
+          fixtures.
+        </p>
+        <ImageCatalogueDemo />
       </Section>
 
       <Section title="Family — Enrollment Card">

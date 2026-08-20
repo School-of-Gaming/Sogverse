@@ -603,12 +603,53 @@
       },
       "imagePicker": {
         "label": "Bild",
-        "previewAlt": "Förhandsgranskning",
-        "dropPrompt": "Släpp en bild här eller klicka för att välja.",
-        "formats": "JPG, PNG, WebP, AVIF eller SVG.",
+        "dropPrompt": "Släpp en fil här, eller välj en, så läggs den till och används för den här produkten.",
+        "formats": "JPG, PNG, WebP, AVIF eller SVG, upp till 4 MB.",
         "chooseFile": "Välj fil",
-        "remove": "Ta bort",
-        "hint": "Visas på produktkortet när föräldrar bläddrar. Bilden beskärs till en 3:2-ram, och förhandsgranskningen visar samma beskärning."
+        "uploading": "Lägger till…",
+        "change": "Byt bild",
+        "remove": "Ta bort från den här produkten",
+        "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
+        "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten.",
+        "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat."
+      },
+      "imageCatalogue": {
+        "title": "Produktbilder",
+        "description": "En bild kan användas av många produkter. Ditt val gäller bara den här produkten, men att ersätta eller ta bort en bild påverkar alla produkter som använder den.",
+        "upload": "Ladda upp",
+        "uploading": "Lägger till…",
+        "emptyCatalogue": "Inga bilder ännu. Ladda upp en för att börja.",
+        "usedBadge": "{count, plural, one {# produkt} other {# produkter}}",
+        "columnEmpty": "Välj en bild",
+        "use": "Använd den här bilden",
+        "nameLabel": "Bildens namn",
+        "rename": "Byt namn",
+        "usedBy": "Produkter som använder bilden",
+        "usedByNone": "Ingen produkt använder den här bilden.",
+        "live": "Publicerad",
+        "hidden": "Dold",
+        "replace": "Ersätt bild",
+        "remove": "Ta bort ur biblioteket",
+        "replaceConfirm": {
+          "title": "Ersätt ”{label}”",
+          "consequence": "{count, plural, one {Produkten nedan kommer att visa den nya bilden.} other {Alla # produkter nedan kommer att visa den nya bilden.}}",
+          "unused": "Ingen produkt använder den här bilden. Den nya tar dess plats i biblioteket.",
+          "choose": "Välj den nya bilden",
+          "confirm": "Ersätt på {count, plural, one {# produkt} other {# produkter}}",
+          "confirmUnused": "Ersätt bild"
+        },
+        "removeConfirm": {
+          "title": "Ta bort ”{label}”",
+          "consequence": "{count, plural, one {Produkten nedan blir utan bild tills du väljer en annan.} other {Alla # produkter nedan blir utan bild tills du väljer en annan.}}",
+          "unused": "Ingen produkt använder den här bilden. Den tas bort ur biblioteket för gott.",
+          "confirm": "Ta bort från {count, plural, one {# produkt} other {# produkter}}",
+          "confirmUnused": "Ta bort ur biblioteket"
+        },
+        "errors": {
+          "tooLarge": "Filen är för stor. Bilder får vara högst 4 MB.",
+          "unsupportedType": "Filtypen stöds inte. Använd JPG, PNG, WebP, AVIF eller SVG.",
+          "nameRequired": "Ge bilden ett namn på 1–120 tecken."
+        }
       },
       "filters": {
         "day": "Veckodag",

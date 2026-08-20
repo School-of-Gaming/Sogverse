@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { SpokenLanguage } from "@/types";
 
 /**
@@ -98,14 +99,22 @@ function paidClubState(month: string): FormState {
 
 function renderForm(month: string) {
   const onSubmit = vi.fn().mockResolvedValue(undefined);
+  // The picture card holds an upload mutation, so the form needs a query
+  // client the way the app gives it one. It issues no read — a drop is what
+  // sends anything anywhere — so an empty client is the whole requirement.
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+  });
   const view = render(
-    <ProductFormShell
-      productType="consumer_club"
-      initialFormState={paidClubState(month)}
-      submitLabel="Save"
-      onCancel={vi.fn()}
-      onSubmit={onSubmit}
-    />,
+    <QueryClientProvider client={queryClient}>
+      <ProductFormShell
+        productType="consumer_club"
+        initialFormState={paidClubState(month)}
+        submitLabel="Save"
+        onCancel={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    </QueryClientProvider>,
   );
   const form = view.container.querySelector("form");
   if (!form) throw new Error("no form");

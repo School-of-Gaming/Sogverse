@@ -415,7 +415,7 @@ function weekdayFromDateString(dateStr: string): number {
 function buildSharedFields(
   state: FormState,
   config: ProductTypeConfig,
-): Omit<UpdateProductInput, "image"> {
+): UpdateProductInput {
   const billingMode = effectiveBillingMode(config, state.paidMode);
   const pricingShape = effectivePricingShape(config);
   const usesDate = startModeUsesDate(state.startMode);
@@ -519,6 +519,11 @@ function buildSharedFields(
     // cannot leave a lock behind a field nobody can see.
     region_lock_country: config.regionLockable ? state.regionLockCountry : null,
     spoken_language_code: state.spokenLanguageCode,
+    // The catalogue entry, on every save including the `null` that means no
+    // picture — the route writes the column unconditionally, so an omission
+    // and a removal would be the same request. The served path is derived from
+    // this id by the database and is never built here.
+    image_id: state.imageId,
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
@@ -610,10 +615,6 @@ export function buildCreateInput(
     ...buildSharedFields(state, config),
     product_type: productType,
     status: "pending",
-    // Create form's initial state always seeds image as null, so the
-    // string variant of FormState.image (used on edit) is unreachable
-    // here. Narrow defensively for the typechecker.
-    image: state.image instanceof File ? state.image : null,
   };
 }
 
@@ -623,19 +624,12 @@ export function buildCreateInput(
  *   - `product_type` is fixed by the URL.
  *   - `status` is preserved by the RPC; effective status re-derives
  *     from the data fields this payload edits.
- *
- * Image passes through as `File | string | null`. The route uses the
- * value to decide what to do with the storage bucket — see comments in
- * `ProductsService.updateProduct`.
  */
 export function buildUpdateInput(
   state: FormState,
   config: ProductTypeConfig,
 ): UpdateProductInput {
-  return {
-    ...buildSharedFields(state, config),
-    image: state.image,
-  };
+  return buildSharedFields(state, config);
 }
 
 // ===== Reverse transform: ProductAdminDetailRow → FormState =====
@@ -801,7 +795,10 @@ export function existingFormState(
     // Staff-only, so it rides in on its own embedded row rather than on the
     // product itself. No row at all is the ordinary "no lesson link" case.
     materialUrl: product.product_staff_details?.material_url ?? "",
-    image: product.image_path ?? null,
+    // The id alone. The picture and its label ride in on the query's
+    // `product_images` embed and are handed to the form's image card
+    // separately, so nothing about the entry is copied into editable state.
+    imageId: product.image_id,
     forGamers: product.for_gamers,
     forParents: product.for_parents,
     // `String(null)` is the string "null", which the payload builder would then
@@ -866,10 +863,7 @@ export function existingFormState(
 /**
  * Map a fetched product into FormState for the *create* form, pre-filled as
  * a clone. Same as `existingFormState` (dates, schedule, prices, visibility
- * all copied verbatim) with two deliberate departures:
- *   - `image` is cleared. Cloned products must not share a bucket file —
- *     editing one would clobber the other's image — so the admin picks a
- *     fresh one. Mirrors the legacy clone flow in admin/products/add.
+ * all copied verbatim) with one deliberate departure:
  *   - Each translation's name gets `copySuffix` appended (e.g. " (Copy)"),
  *     localized by the caller, so the clone is distinguishable and the admin
  *     is nudged to rename. The suffix is applied to every locale's name using
@@ -878,6 +872,12 @@ export function existingFormState(
  * `status` is not represented in FormState; `buildCreateInput` always writes
  * `pending`, so a clone starts pending + (copied) visibility just like any
  * freshly created product.
+ *
+ * **The picture is copied**, along with everything else. It used to be cleared,
+ * because a picture was a file one product owned and editing one product's
+ * image deleted the other's; a picture is now a catalogue entry any number of
+ * products may point at, so sharing one is the ordinary case and a clone that
+ * dropped it would just make the admin re-pick what they already had.
  */
 export function cloneFormState(
   product: ProductAdminDetailRow,
@@ -892,5 +892,5 @@ export function cloneFormState(
     if (!draft) continue;
     translations[locale] = { ...draft, name: `${draft.name}${copySuffix}` };
   }
-  return { ...base, image: null, translations };
+  return { ...base, translations };
 }

@@ -67,11 +67,13 @@ const nextConfig: NextConfig = {
     // undercut. Next's own default is four hours, which would have the
     // optimizer re-fetching the bucket six times a day for bytes that cannot
     // have moved — exactly the Supabase egress this change exists to stop.
-    // Safe because a bucket path is immutable: both admin product routes mint
-    // a fresh `${randomUUID()}.${ext}` per upload with `upsert: false` and
-    // delete the superseded object, so a given URL's bytes never change.
-    // Replacing a product's picture produces a new URL, which is a cache miss
-    // by construction.
+    // Safe because a bucket path is immutable *by construction*: an object is
+    // named for the sha256 of its own bytes (`<sha256>.<ext>`), uploaded with
+    // `upsert: false`, and never written over — a URL whose bytes changed
+    // would be a URL that no longer matched its own name. Replacing a
+    // product's picture points it at a different object, which is a cache miss
+    // by construction; uploading the same file twice resolves to the object
+    // already there, which is a hit.
     minimumCacheTTL: 31_536_000,
   },
   async headers() {
