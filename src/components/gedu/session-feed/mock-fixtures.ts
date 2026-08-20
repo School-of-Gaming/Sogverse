@@ -126,6 +126,24 @@ export const SESSION_FEED_EDITORS = {
 export type SessionFeedCadence = "weekly" | "daily";
 
 /**
+ * What a scene's inert send should *do* for one unsent session — the fixture's
+ * half of the send's three outcomes.
+ *
+ * The button is one control the live route can answer three ways, and only one
+ * of them (`sent`) is reachable from a fixture that always succeeds. Naming the
+ * outcome per entry is what lets a scene put all three on screen at once, one
+ * card each, instead of a reviewer having to imagine the other two.
+ *
+ * - `sent` — every mail landed. The entry is stamped and the button settles.
+ * - `partial` — the provider refused one address. The entry is still stamped —
+ *   a partial send is a success, and the families who did get it must not get
+ *   it twice — and the tally carries the failure beside the sent button.
+ * - `fails` — nothing was delivered. Nothing is stamped, the button comes back,
+ *   and the card shows the retryable error line.
+ */
+export type SessionSendOutcome = "sent" | "partial" | "fails";
+
+/**
  * What each session is, newest first. Index 0 is the furthest-away future
  * session; the leading run of `future` specs is the feed's future horizon, the
  * last of them is the next session, and everything after that is the past.
@@ -217,6 +235,19 @@ export type EntrySpec =
        * like the moment the page was opened.
        */
       emailed?: boolean;
+      /**
+       * What the **send** does when a reviewer presses the button on this
+       * session, for the scenes whose send is inert. Defaults to `"sent"` —
+       * everything landed — which is what a fixture that only wants to see the
+       * happy path gets without saying anything.
+       *
+       * It is a property of the *week* rather than of the click for the same
+       * reason `emailed` is: a scene that decided at random, or on a counter,
+       * would show a reviewer a different page every time they opened it. Only
+       * a spec that is `emailed: false` can be pressed at all, so this is
+       * ignored anywhere else.
+       */
+      sendOutcome?: SessionSendOutcome;
       /**
        * Whether a write-up is **owed** for this session. Defaults to `true`,
        * which is what a session inside the enforcement window is.
@@ -448,6 +479,18 @@ export interface SessionFeedFixture {
   timeZone: string;
   roster: readonly SessionFeedGamer[];
   entries: SessionFeedEntry[];
+  /**
+   * What a send should do, per past entry id — the spec's `sendOutcome`
+   * carried onto the built feed so a scene can look one up by the id it is
+   * handed rather than re-deriving which week a card was.
+   *
+   * Every past entry is in here, defaulted, so the map answers for any card
+   * that can show the button; the future and pre-epoch lines are not, because
+   * there is nothing to send on one. A `Map` rather than a plain object so a
+   * miss reads as `undefined` at the call site instead of type-checking as an
+   * outcome that isn't there.
+   */
+  sendOutcomes: ReadonlyMap<string, SessionSendOutcome>;
 }
 
 export interface SessionFeedFixtureOptions {
@@ -494,12 +537,16 @@ export function buildSessionFeedFixture(
     futureCount: countLeadingFutureSpecs(specs),
   });
 
+  const sendOutcomes = new Map<string, SessionSendOutcome>();
   const entries = specs.map((spec, sessionsBack) => {
     const startsAt = starts[sessionsBack];
     const endsAt = new Date(startsAt.getTime() + durationMs);
     // Index-keyed rather than date-keyed so an entry keeps its identity across
     // the `useNow()` tick — callers hold edits in local state against these ids.
     const id = `mock-session-${sessionsBack}`;
+    if (spec.kind === "past") {
+      sendOutcomes.set(id, spec.sendOutcome ?? "sent");
+    }
     return toEntry(spec, { id, startsAt, endsAt });
   });
 
@@ -508,6 +555,7 @@ export function buildSessionFeedFixture(
     timeZone: TIMEZONE,
     roster: SESSION_FEED_ROSTER,
     entries,
+    sendOutcomes,
   };
 }
 

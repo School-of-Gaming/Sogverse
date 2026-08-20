@@ -8,6 +8,7 @@ import {
   applyPlanDraftToEntry,
   isEditableEntry,
   isPlannableEntry,
+  SessionReportSendError,
   type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionReportSendResult,
@@ -41,10 +42,18 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * which is the only way the transition — the flagged card turning finished as
  * the button settles into the time it went — can be looked at at all.
  *
+ * **And the send answers three different ways, one per unsent card**, because
+ * the fixture says per week what its send does: everything delivered, one
+ * address refused, or nothing delivered at all. The three sit within a screen
+ * of each other, so the sent line, the partial tally and the error line can be
+ * compared against each other in one pass. The failing one succeeds when it is
+ * pressed again — a failed send is the only one of the three that leaves a
+ * button to press, so the retry is part of what there is to look at.
+ *
  * Every save resolves immediately, so the in-flight and failure states the live
- * page has are not what this scene is for; the send's own in-flight state is the
- * single exception, and it is delayed precisely because it is the one frame of
- * that sequence a screenshot cannot show.
+ * page has are not what this scene is for; the send is the single exception on
+ * both counts, and its pause is there precisely because the in-flight frame is
+ * the one a screenshot cannot show.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state — rebuilding it on the 30-second tick would throw away whatever the
@@ -92,6 +101,16 @@ export function GeduProductPageScene({
   // mid-flight leaves a timer setting state on an unmounted tree. One set for
   // both of the scene's delayed writes — the game-name check and the send.
   const pendingTimers = useRef(new Set<number>());
+  /**
+   * What each past card's send does, seeded from the fixture and **mutated in
+   * place**: a week whose send fails is flipped to succeeding, so pressing the
+   * same card again shows the recovery rather than the same error forever.
+   *
+   * A ref rather than state because nothing renders from it — the outcome is
+   * only ever read inside the send, one tick after a click that already
+   * re-rendered the card.
+   */
+  const sendOutcomes = useRef(new Map(fixture.sendOutcomes));
   useEffect(() => {
     const timers = pendingTimers.current;
     return () => {
@@ -143,16 +162,34 @@ export function GeduProductPageScene({
    * and whether anything under the card moves as the label grows into the sent
    * time. A stamp applied on the click would skip straight past it.
    *
-   * The tally it answers with says every mail landed, because none of them
-   * existed to fail. The card's partial-send notice therefore never shows here;
-   * it belongs to a real provider refusing a real address.
+   * **Which of the three answers a press gets is the card's own**, read off the
+   * fixture by entry id. A scene that always succeeded could only ever show the
+   * happy path, and the other two are where the card actually has to do
+   * something: hold a tally beside a button that has already gone quiet, or
+   * hand the button back with a line under it. Keying it to the week rather
+   * than to the click is what keeps the page the same page every time it is
+   * opened.
+   *
+   * A failure is also the only outcome that leaves anything to press, so it
+   * flips itself to succeeding on the way out — the second press of that card
+   * is the recovery, which is the half of the failure worth reviewing.
    */
   const handleSendReport = (
     entryId: string,
   ): Promise<SessionReportSendResult> =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
       const timer = window.setTimeout(() => {
         pendingTimers.current.delete(timer);
+        const outcome = sendOutcomes.current.get(entryId) ?? "sent";
+
+        if (outcome === "fails") {
+          // Nothing delivered, so nothing is stamped: the card stays flagged
+          // and the button comes back, which is the whole point of this one.
+          sendOutcomes.current.set(entryId, "sent");
+          reject(new SessionReportSendError("failed"));
+          return;
+        }
+
         setEntries((prev) =>
           prev.map((entry) =>
             entry.id === entryId && entry.kind === "past"
@@ -160,11 +197,15 @@ export function GeduProductPageScene({
               : entry,
           ),
         );
-        resolve({
-          sent: fixture.feedRoster.length,
-          failed: 0,
-          skipped: 0,
-        });
+        // A partial send is still a send — the seats that got the mail must not
+        // get it twice — so the entry is stamped either way and only the tally
+        // differs.
+        const roster = fixture.feedRoster.length;
+        resolve(
+          outcome === "partial"
+            ? { sent: roster - 1, failed: 1, skipped: 0 }
+            : { sent: roster, failed: 0, skipped: 0 },
+        );
       }, SIMULATED_SEND_MS);
       pendingTimers.current.add(timer);
     });

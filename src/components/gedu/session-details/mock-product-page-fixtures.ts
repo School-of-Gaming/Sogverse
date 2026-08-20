@@ -9,6 +9,7 @@ import {
   buildSessionFeedFixture,
   type EntrySpec,
   type SessionFeedCadence,
+  type SessionSendOutcome,
 } from "@/components/gedu/session-feed/mock-fixtures";
 import type { SessionFeedEntry, SessionFeedGamer } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
@@ -100,6 +101,12 @@ export interface GeduProductPageFixture {
   entries: SessionFeedEntry[];
   /** The attendance roster, keyed to the same ids as the group roster. */
   feedRoster: readonly SessionFeedGamer[];
+  /**
+   * What a send does per entry id, for the scene whose send is inert — carried
+   * straight off the feed fixture so the scene looks an outcome up by the id it
+   * is handed rather than working out which week the card was.
+   */
+  sendOutcomes: ReadonlyMap<string, SessionSendOutcome>;
   /** The zone the schedule was authored in. */
   sourceTimeZone: string;
   /** Standing notes about the group, distinct from any one session's. */
@@ -499,10 +506,15 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  *   never written up. These used to be the silent middle of a three-rung ladder;
  *   they are amber now, because the report is what a family opens the page for
  *   and a week without one is a week they were told nothing about.
- * - *Needs attention, never sent* — one week marked off and written up whose
- *   report has not been emailed to the families. It is the only card here
+ * - *Needs attention, never sent* — three weeks marked off and written up whose
+ *   reports have not been emailed to the families. They are the only cards here
  *   showing the Send to parents button, and the only way to see on this page
- *   that a write-up nobody was told about is a write-up nobody reads.
+ *   that a write-up nobody was told about is a write-up nobody reads. There are
+ *   three because the send has three outcomes — everything delivered, one
+ *   address refused, nothing delivered — and one card each puts all of them on
+ *   the first screen: a reviewer clicks down the column and compares the sent
+ *   line, the partial tally and the error against each other, rather than
+ *   reloading the page twice and comparing from memory.
  * - *Complete* — the majority: marked off, reported and sent, wearing the green
  *   check and a sent line under each report.
  *
@@ -524,15 +536,26 @@ function yearlongSpecs(): readonly EntrySpec[] {
   const MARKED_BUT_NO_REPORT_AT = new Set([1, 9, 22, 37]);
   /**
    * Marked off, written up, and **not yet emailed to the families** — the third
-   * way to be flagged, and the only session on this page carrying the Send to
+   * way to be flagged, and the only sessions on this page carrying the Send to
    * parents button. Every other week here was sent the evening it was written,
    * which is what the sent line under each report says.
    *
-   * One, and deliberately near the top: it is the state a gedu meets on the
-   * session they have just finished writing up, so it belongs on the first
-   * screen of the feed rather than buried in the scrollback.
+   * Three of them, one per outcome the send can have, and deliberately near the
+   * top: this is the state a gedu meets on the session they have just finished
+   * writing up, so it belongs on the first screen of the feed rather than
+   * buried in the scrollback — and three cards within one screen of each other
+   * is what lets the outcomes be compared side by side instead of one reload at
+   * a time.
+   *
+   * Week 9 would have read better beside 5 and 7, but it is already a
+   * marked-off-never-reported week, so the third one is week 10 — the nearest
+   * index no other set had claimed.
    */
-  const WRITTEN_BUT_NOT_EMAILED_AT = new Set([5]);
+  const WRITTEN_BUT_NOT_EMAILED_AT = new Map<number, SessionSendOutcome>([
+    [5, "sent"],
+    [7, "fails"],
+    [10, "partial"],
+  ]);
   /**
    * The weeks Petra covered. Sanna has the group and writes most of it up; a
    * scattered handful are Petra's, which is what a regular-plus-stand-in group
@@ -578,12 +601,14 @@ function yearlongSpecs(): readonly EntrySpec[] {
       });
       continue;
     }
-    if (WRITTEN_BUT_NOT_EMAILED_AT.has(index)) {
+    const sendOutcome = WRITTEN_BUT_NOT_EMAILED_AT.get(index);
+    if (sendOutcome !== undefined) {
       past.push({
         kind: "past",
         allPresent: true,
         report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
         emailed: false,
+        sendOutcome,
         lastEditedBy: editorAt(index),
       });
       continue;
@@ -987,6 +1012,7 @@ export function buildGeduProductPageFixture(
     },
     entries: feed.entries,
     feedRoster: feed.roster,
+    sendOutcomes: feed.sendOutcomes,
     sourceTimeZone: feed.timeZone,
     groupNotes: config.groupNotes,
     site: config.site,
