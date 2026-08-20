@@ -198,6 +198,41 @@ Integration tests: upload `added` / `existing` / 413 / 415; replace same-entry n
 success with relinked count / label inheritance; delete's unlinked count; rename; both
 product routes writing `image_id` post-RPC and touching no storage.
 
+**Deviations (step 2, as built — service, routes, registry, integration tests)**
+
+- **The find-or-create half lives in a `.server.ts` module in the service directory and
+  takes both Supabase clients as arguments.** Two routes need it and it must not
+  construct the service-role client itself: the route-posture registry pins every file
+  that reaches for that client to a *route* entry, so a shared helper constructing one
+  would be an unpinned site. Each route constructs both clients and passes them in, which
+  also keeps the split visible where it is decided — storage on the admin client, the
+  catalogue table on the caller's own session.
+- **The 413/415 codes ride on the existing `ApiError.code` slot** rather than a new error
+  class. That slot exists for exactly this ("the stable machine-readable code a route may
+  attach to a user-actionable error"), and the UI branches on two exported constants.
+- **Usage is `Record<entryId, products[]>` with no counts map beside it** — a badge's
+  number is its list's length, because two derivations of one number is how they come to
+  disagree. The read is *walked* like the catalogue read (the products table only grows)
+  and filtered to imaged products, which is most of the payload saved. The name comes from
+  the shared locale resolver at the default locale rather than from an embed filtered to
+  one locale: a product need not carry an English translation, and filtering would blank
+  its name instead of falling back.
+- **Mutations invalidate the usage key explicitly**, alongside the catalogue list and the
+  products *list* keys. It lives under the products keys, so `productKeys.lists()` does not
+  reach it — and after a replace or a remove it is exactly the answer that changed. The
+  never-invalidate-detail rule is unchanged and is why all three keys are named
+  individually rather than swept with the parent.
+- **An upload's label is trimmed and capped rather than refused**; only the rename route,
+  where the label *is* the request, validates strictly. Refusing an upload over a cosmetic
+  field would throw away the bytes for no reason.
+- **`relinked` is the length of the ids the one `UPDATE … RETURNING id` gives back**, not a
+  separate count query — still one statement.
+- **Replace reads the entry (for its label, and to 404) before uploading**, so a picture
+  another admin has just deleted costs no upload. **Delete logs a failed object removal and
+  still succeeds**: the row is already gone, a retry would have nothing left to delete, and
+  the leftover object is silently adopted by the next upload of those same bytes, because
+  its name *is* their hash.
+
 ### The product routes
 
 - `file` and `clear_image` go away; the body carries `image_id: string | null` (required,
@@ -218,6 +253,30 @@ product routes writing `image_id` post-RPC and touching no storage.
   unit test inverts.
 - The update route's integration tests that pin upload ordering, UUID paths and
   superseded-blob deletion are deleted. `image_path` fixtures elsewhere are unchanged.
+
+**Deviations (step 3, as built)**
+
+- **The body schema is declared on the route primitive** rather than parsed by a hand-written
+  call in the handler. The primitive's body slot *is* the shared JSON parse, so this is the
+  same discipline with less code; the contract exports keep the names the registry already
+  records.
+- **`p_image_path` is no longer passed to the update RPC at all.** The trigger overwrites the
+  RPC's assignment for a linked product, and the parameter's `DEFAULT NULL` is already the
+  right answer for an unlinked one, so passing anything was noise. The RPC parameter itself
+  still exists — dropping it stays a follow-up.
+- **The update route lost its 404.** The existence check was a side effect of the
+  existing-path read-back; with that gone, an id that matches no row surfaces as the RPC's
+  own refusal (400 with its message) like every other RPC failure. No caller distinguished
+  the two.
+- **The service returns `{ product_id, warning? }`** instead of the id alone, so the soft
+  warning survives the client boundary at all — the old code parsed it off and dropped it.
+  Nothing renders it yet; the form navigates away on success, so showing it is part of the
+  form work and needs copy.
+- **The form card is a placeholder** with the seams named in its own comment: `imageId` in,
+  `onChange` out, and a derived `current` (label + path) supplied by whoever holds the product
+  read. `Change image` is inert until the dialog exists. It borrows the old picker's message
+  keys, which leaves `imagePicker.previewAlt`, `.dropPrompt` and `.formats` momentarily
+  unreferenced — the dialog's copy pass either uses them or deletes them.
 
 ### UX
 
@@ -300,6 +359,41 @@ references.
 Run: link pass on staging → inspect via the feature branch preview → link pass on prod →
 (release the app) → later, at leisure: `--backup`, then `--delete-legacy`, on both. After the
 app is live, relabel the heavily shared images through the dialog (≈44 renames).
+
+**Deviations (as built — `scripts/link-product-images.ts`, pure parts in
+`scripts/lib/product-image-catalogue.ts`)**
+
+- **`--live` is required for any ref that is not the one `.env.local` names**, in every
+  mode including the read-only ones — not only for a ref recognised as production.
+  Nothing in the environment can positively identify "prod", so the safe direction is to
+  vouch only for the one project the file names and treat everything else as live.
+- **`--delete-legacy` takes its manifest as `--manifest <file>` and additionally requires
+  `--apply`.** Without `--apply` it still runs every guard and prints exactly what it would
+  remove, then stops before the typed-ref prompt — so the guards can be exercised, and the
+  removal list read, without the deletion being one keystroke away.
+- **The backup folder defaults to the OS temp directory, not the working directory**, and
+  any `--out` resolving inside the repository is refused: the working directory *is* the
+  repo, and megabytes of PNGs in a tracked tree are one `git add .` from being committed.
+  Object keys are checked to be plain flat filenames before they become paths on disk.
+- **One row per distinct *bytes*, even across extensions.** `sha256` is UNIQUE, so two
+  legacy paths holding identical bytes under different extensions collapse into a single
+  entry; the extension of the earliest-created product's path decides the catalogue key,
+  which makes the answer independent of the order the walk met them in.
+- **`--apply` re-downloads and re-hashes the source object before uploading it** to its
+  content-addressed key, and refuses if the hash moved between plan and write. The key
+  *is* the bytes, so storing anything else under it would break the immutability the
+  one-year optimizer cache rests on.
+- **An `image_path` whose extension is outside the accept list refuses the whole run**
+  rather than being skipped: nothing is re-encoded, so there is no content type to store
+  it under and no safe guess to make.
+- **After applying, the script re-reads and asserts the end state** — every imaged product
+  linked, every `image_path` a catalogue path of `<sha256>.<ext>` shape — and exits
+  non-zero if not, so a partial run cannot report success to the release that depends on
+  it.
+
+**Staging result (2026-08-20)**: 17 imaged products over 15 distinct paths, 15 distinct
+images by bytes (no byte-level duplicates on staging), 15 rows created, 17 products
+relinked, 0 missing objects; a second run reports nothing to do.
 
 ### Follow-through
 

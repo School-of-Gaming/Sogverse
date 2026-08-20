@@ -28,8 +28,11 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     tag: null,
     region_lock_country: null,
     spoken_language_code: "en",
+    // The link is the id; `image_path` is the column the trigger derives from
+    // it, and the embed is what the form's image card paints from.
+    image_id: "3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43",
     image_path: "abc.png",
-    image_id: null,
+    product_images: { label: "Creeper art", path: "abc.png" },
     // Staff-only, so it arrives on its own embedded row rather than as a column
     // on the product. `null` is the ordinary case: no row means no lesson link.
     product_staff_details: null,
@@ -98,7 +101,8 @@ describe("existingFormState", () => {
     expect(state.startMode).toBe("date"); // start_date set, no threshold
     expect(state.signupThreshold).toBe("");
     expect(state.holidayCalendarIds).toEqual(new Set(["cal-1"]));
-    expect(state.image).toBe("abc.png");
+    // The id alone reaches form state; the label and the path stay derived.
+    expect(state.imageId).toBe("3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43");
     expect(state.forGamers).toBe(true);
     expect(state.forParents).toBe(false);
     // Untagged is the fixture's stored state and the picker's default, so the
@@ -252,7 +256,8 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.end_date).toBe(null);
     expect(input.signup_threshold).toBe(null);
     expect(input.holiday_calendar_ids).toEqual(["cal-1"]);
-    expect(input.image).toBe("abc.png");
+    // The link round-trips on every save, path never on the wire at all.
+    expect(input.image_id).toBe("3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43");
     // Consumer clubs charge a monthly subscription; the single price_cents
     // round-trips from the persisted row's monthly amount. EUR-only, so the
     // payload carries a single eur row even though the source had legacy

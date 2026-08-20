@@ -41,6 +41,10 @@ export function ProductFormEdit({
     <ProductFormShell
       productType={productType}
       initialFormState={initial}
+      // The catalogue entry the product points at, straight off the same read
+      // the form is seeded from — so the image card paints its picture and its
+      // label on the first frame, with no extra request.
+      initialImage={product.product_images}
       submitLabel={c("saveChanges")}
       onCancel={() => router.push(detailsHref)}
       onSubmit={async (state) => {

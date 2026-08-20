@@ -22,6 +22,7 @@ import { VisibilitySection } from "./sections/visibility-section";
 import { WhenSection } from "./sections/when-section";
 import { WhereSection } from "./sections/where-section";
 import { validate, type ValidationFailure } from "./product-build";
+import { type ProductImageSelection } from "./image-picker";
 import { type FormState } from "./product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -31,6 +32,11 @@ interface ProductFormShellProps {
   /** Pre-populated state. Create wrapper passes `initialState(...)`,
    *  edit wrapper passes `existingFormState(product, ...)`. */
   initialFormState: FormState;
+  /** The catalogue entry `initialFormState.imageId` points at, from the
+   *  product read's `product_images` embed. `null` for a product with no
+   *  picture, and on the empty create form. Derived data, so it is a prop
+   *  rather than form state — see `ImagePicker`. */
+  initialImage?: ProductImageSelection | null;
   /** Submit-button label, e.g. "Create club" or "Save changes". */
   submitLabel: string;
   /** Called when the admin clicks Cancel. Wrapper navigates from here. */
@@ -52,6 +58,7 @@ interface ProductFormShellProps {
 export function ProductFormShell({
   productType,
   initialFormState,
+  initialImage = null,
   submitLabel,
   onCancel,
   onSubmit,
@@ -139,6 +146,13 @@ export function ProductFormShell({
         setState={setState}
         config={config}
         uiLocale={uiLocale}
+        // Seam: while a pick can only be *removed*, the entry that loaded with
+        // the product is the only one this card can ever show, and the picker
+        // drops it on its own once `imageId` goes null. Selecting a different
+        // entry arrives with the catalogue surface, and this is the line that
+        // has to start tracking it — hold the chosen entry beside `imageId`
+        // and pass that instead.
+        currentImage={initialImage}
       />
       <AudienceSection state={state} setState={setState} config={config} />
       <WhereSection state={state} setState={setState} config={config} />

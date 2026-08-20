@@ -16,7 +16,10 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
 import { FormSection } from "../form-primitives";
-import { ImagePicker } from "../image-picker";
+import {
+  ImagePicker,
+  type ProductImageSelection,
+} from "../image-picker";
 import { LongDescriptionEditor } from "../long-description-editor";
 import {
   type FormState,
@@ -29,6 +32,10 @@ interface IdentitySectionProps {
   setState: React.Dispatch<React.SetStateAction<FormState>>;
   config: ProductTypeConfig;
   uiLocale: SupportedLocale;
+  /** The catalogue entry `state.imageId` points at, resolved by whoever holds
+   *  the product read. Derived, so it travels beside form state rather than
+   *  inside it. */
+  currentImage: ProductImageSelection | null;
 }
 
 export function IdentitySection({
@@ -36,6 +43,7 @@ export function IdentitySection({
   setState,
   config,
   uiLocale,
+  currentImage,
 }: IdentitySectionProps) {
   const t = useTranslations("admin.products");
   const topicLabel = useTopicLabel();
@@ -209,8 +217,9 @@ export function IdentitySection({
       </Field>
 
       <ImagePicker
-        value={state.image}
-        onChange={(v) => setState({ ...state, image: v })}
+        imageId={state.imageId}
+        current={currentImage}
+        onChange={(imageId) => setState({ ...state, imageId })}
       />
 
       <Field

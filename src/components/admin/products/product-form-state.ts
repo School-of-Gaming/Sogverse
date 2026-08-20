@@ -110,10 +110,13 @@ export interface FormState {
   // Lesson material for whoever teaches this product. Staff-facing: it is
   // rendered in the gedu group workspace and on no family surface at all.
   materialUrl: string;
-  // File   — newly picked replacement (admin uploaded a fresh image).
-  // string — existing image_path on the product (edit-mode load).
-  // null   — no image, or admin cleared the existing one.
-  image: File | string | null;
+  // The catalogue entry this product's picture comes from, or null for no
+  // picture. An **id and nothing else**: the entry's label and the picture
+  // itself are derived, never held here — at load from the admin detail read's
+  // `product_images` embed, and after that from whatever the catalogue surface
+  // last saw. Holding a copy is what would let a rename or a replace made
+  // elsewhere leave a stale label sitting in a half-filled form.
+  imageId: string | null;
 
   // Audience
   //
@@ -236,7 +239,7 @@ export function initialState(
     activeLocale: uiLocale,
     topic: "",
     materialUrl: "",
-    image: null,
+    imageId: null,
     // A new product is for children until somebody says otherwise — the shape
     // every product has today, and the only one the form can currently express.
     forGamers: true,

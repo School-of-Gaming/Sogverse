@@ -1,25 +1,10 @@
-import { NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
-import { parseBodyValue } from "@/lib/api/json-body.server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { updateProductData } from "@/services/products/products.contracts";
 import type { Database } from "@/types";
 
 type RpcArgs = Database["public"]["Functions"]["update_product"]["Args"];
-
-const EXT_TO_MIME: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  avif: "image/avif",
-  svg: "image/svg+xml",
-};
-
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 function friendlyRpcError(err: { code?: string; message: string }): string {
   switch (err.code) {
@@ -32,29 +17,37 @@ function friendlyRpcError(err: { code?: string; message: string }): string {
   }
 }
 
-function resolveUploadMeta(
-  file: File,
-): { path: string; contentType: string } | null {
-  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
-  const contentType = EXT_TO_MIME[ext];
-  if (!contentType) return null;
-  const normalised = ext === "jpeg" ? "jpg" : ext;
-  return { path: `${randomUUID()}.${normalised}`, contentType };
+/**
+ * The soft warning for a product that saved but whose picture did not get
+ * linked — the create route's shape, and the same reasoning: the foreign key
+ * is the case worth naming, because it means another admin removed the
+ * catalogue entry this form was holding between page load and save.
+ */
+function imageLinkWarning(err: { code?: string; message: string }): string {
+  const cause =
+    err.code === "23503"
+      ? "the catalogue entry no longer exists"
+      : err.message;
+  return `Product saved but its image was not applied: ${cause}. Retry from the edit page.`;
 }
 
 /**
- * POST /api/admin/products/[id]/update — multipart, same shape as the create
- * route: a JSON `data` field beside an optional image `file`.
+ * POST /api/admin/products/[id]/update — plain JSON, same shape as the create
+ * route and validated on the primitive against the contract schema.
  *
- * No body schema is declared on the primitive, which is what leaves the request
- * stream untouched so this handler can read the form itself; the `data` field
- * is then validated through the same contract schema a JSON route would use.
+ * No storage, no file, no path. A product's picture is a catalogue entry it
+ * points at, so the whole image half of this route is one `image_id` write
+ * after the RPC; a trigger on `products` derives the served `image_path` from
+ * it. That is also why `p_image_path` is not passed: for a linked product the
+ * RPC's assignment is overwritten by the trigger, and for an unlinked one the
+ * parameter's DEFAULT NULL is already the right answer.
  */
 export const POST = defineRoute({
   posture: "role-gated",
   roles: "admin",
   forbiddenMessage: "Only admins can update products",
   params: z.object({ id: z.string().uuid() }),
+  body: updateProductData,
 
   // Same shape as the create route: every database failure is turned into
   // admin-facing copy inside the handler, so the disclosure opt-in below only
@@ -62,118 +55,9 @@ export const POST = defineRoute({
   discloseErrorMessages:
     "update_product's own RAISE messages are the admin-facing explanation of a refused update, and the product form shows them verbatim; the two native codes it can also raise are given written explanations first",
 
-  handler: async ({ request, supabase, params }) => {
+  handler: async ({ body, supabase, params }) => {
     const { id } = params;
 
-    let formData: FormData;
-    try {
-      formData = await request.formData();
-    } catch {
-      return NextResponse.json(
-        { error: "Request must be multipart/form-data" },
-        { status: 400 },
-      );
-    }
-
-    const dataField = formData.get("data");
-    if (typeof dataField !== "string") {
-      return NextResponse.json(
-        { error: "Missing 'data' field" },
-        { status: 400 },
-      );
-    }
-
-    let raw: unknown;
-    try {
-      raw = JSON.parse(dataField);
-    } catch {
-      return NextResponse.json(
-        { error: "'data' field must be valid JSON" },
-        { status: 400 },
-      );
-    }
-    const body = parseBodyValue(raw, updateProductData);
-    if (body instanceof NextResponse) return body;
-
-    const file = formData.get("file");
-    const hasNewImage = file instanceof File;
-    if (hasNewImage && file.size > MAX_FILE_BYTES) {
-      return NextResponse.json(
-        { error: "Image must be 5 MB or smaller" },
-        { status: 413 },
-      );
-    }
-    const uploadMeta = hasNewImage ? resolveUploadMeta(file) : null;
-    if (hasNewImage && !uploadMeta) {
-      return NextResponse.json(
-        { error: "Unsupported file type. Use JPEG, PNG, WEBP, AVIF, or SVG." },
-        { status: 415 },
-      );
-    }
-
-    const clearImage = formData.get("clear_image") === "true";
-
-    // Read existing image_path so we know what blob (if any) to delete on a
-    // successful replace/clear. Doubles as a "does this product exist" check
-    // before we bother uploading anything.
-    const admin = createAdminClient();
-    const { data: existing, error: readError } = await admin
-      .from("products")
-      .select("image_path")
-      .eq("id", id)
-      .maybeSingle();
-    if (readError) {
-      console.error("[products/update] image_path read failed", readError);
-      throw new ApiError("Could not read the product. Please try again.", 500);
-    }
-    if (!existing) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
-    const existingPath = existing.image_path;
-
-    // Upload the new blob FIRST so the RPC can commit image_path atomically
-    // with the rest of the update. If the RPC then fails, we delete the
-    // newly-uploaded blob to avoid an orphan in the bucket.
-    if (hasNewImage && uploadMeta) {
-      const { error: uploadError } = await admin.storage
-        .from("product-images")
-        .upload(uploadMeta.path, file, {
-          contentType: uploadMeta.contentType,
-          upsert: false,
-          // A year — safe precisely because this route never writes over a
-          // path: it uploads a fresh UUID and deletes the superseded object
-          // once the RPC commits, so a URL's bytes never change. Storage
-          // otherwise defaults to an hour. This does not reach the image
-          // optimizer — that cache floors its TTL at
-          // `images.minimumCacheTTL` regardless of what the object stores —
-          // so what it buys is the paths that bypass the optimizer entirely:
-          // browser and Supabase-CDN caching of the raw original, fetched by
-          // link scrapers for og:image and by any direct bucket hit. Objects
-          // uploaded before this line was added keep their old header.
-          cacheControl: "31536000",
-        });
-      if (uploadError) {
-        console.error("[products/update] image upload failed", uploadError);
-        throw new ApiError(
-          "The image could not be uploaded. Please try again.",
-          500,
-        );
-      }
-    }
-
-    // Final image_path to commit. We deliberately don't trust any path string
-    // from the client — the existing path comes from the DB and the new path
-    // comes from the just-uploaded blob.
-    const finalImagePath: string | null = uploadMeta
-      ? uploadMeta.path
-      : clearImage
-        ? null
-        : existingPath;
-
-    // p_image_path's DEFAULT is NULL, so omitting it (undefined) and passing
-    // NULL produce the same effect — image_path is wiped. The cleared case
-    // (finalImagePath === null) and the "no DEFAULT for a nullable string"
-    // RpcArgs typing both land on undefined here.
     const rpcArgs: RpcArgs = {
       p_id: id,
       p_billing_mode: body.billing_mode,
@@ -205,7 +89,6 @@ export const POST = defineRoute({
       p_registration_opens_at: body.registration_opens_at,
       p_is_visible: body.is_visible,
       p_waitlist_enabled: body.waitlist_enabled,
-      p_image_path: finalImagePath ?? undefined,
       p_material_url: body.material_url ?? undefined,
       p_location_id: body.location_id ?? undefined,
       p_signup_threshold: body.signup_threshold ?? undefined,
@@ -228,24 +111,26 @@ export const POST = defineRoute({
     );
 
     if (rpcError) {
-      if (uploadMeta) {
-        await admin.storage.from("product-images").remove([uploadMeta.path]);
-      }
       throw new ApiError(friendlyRpcError(rpcError), 400);
     }
     if (!productId) {
-      if (uploadMeta) {
-        await admin.storage.from("product-images").remove([uploadMeta.path]);
-      }
       throw new ApiError("Failed to update product", 500);
     }
 
-    // Delete the old blob if its path is no longer referenced. Storage and DB
-    // are separate systems, so this cleanup happens after the RPC succeeds; if
-    // it fails we accept an orphan rather than rolling back the (now-committed)
-    // DB update.
-    if (existingPath && existingPath !== finalImagePath) {
-      await admin.storage.from("product-images").remove([existingPath]);
+    // The picture, in one statement, after the RPC — the same image-last shape
+    // the create route uses, and unconditional for the same reason: `null` is
+    // "this product has no picture", an answer the form always sends, so
+    // skipping the write on null would make removal impossible.
+    const { error: linkError } = await supabase
+      .from("products")
+      .update({ image_id: body.image_id })
+      .eq("id", productId);
+
+    if (linkError) {
+      return {
+        product_id: productId,
+        warning: imageLinkWarning(linkError),
+      };
     }
 
     return { product_id: productId };

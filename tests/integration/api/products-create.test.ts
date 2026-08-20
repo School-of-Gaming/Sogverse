@@ -1,32 +1,34 @@
 // @vitest-environment node
 //
-// Node environment so Request, FormData, and File are all undici/Node natives
-// from one realm: jsdom's FormData isn't serializable by undici's Request
-// (the body lands as text/plain and formData() rejects), and files parsed out
-// of a real multipart body would fail the route's `instanceof File` check
-// against jsdom's File. This test exercises a route handler only — no DOM.
+// Node environment because this exercises a route handler and nothing else —
+// no DOM, and Request/Response are the undici natives the runtime actually
+// hands the route.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/create/route";
 
-// Equivalent of the old `tests/integration/api/create-product.test.ts` for
-// the new v2 route. Two interesting things this route does:
+// The create route in one sentence: validate a JSON body, call create_product
+// on the caller's own client, then link the product's catalogue image in a
+// second statement. Three things that shape these tests:
 //
-//   1. **Image-last upload pattern.** The RPC creates the row first; if
-//      the upload or path-update then fails, the product still exists and
-//      the response carries a soft warning. No orphan-image cleanup is
-//      needed (mirror of the orphan-cleanup logic the old route had to do
-//      because it inserted *after* uploading).
+//   1. **Plain JSON.** No file rides along any more — a picture is a
+//      catalogue entry uploaded through its own route, and a product carries
+//      its id. `image_id` is required and nullable, so "I forgot the field"
+//      and "this product has no picture" cannot be the same request.
 //
-//   2. **Image is optional.** v2 lets admins create a product without
-//      an image, then add it later from the edit page.
+//   2. **Image-last.** The RPC creates the row first; if the link statement
+//      then fails the product still exists, so the response is a 200 carrying
+//      a soft warning rather than an error that would hide a good save. The
+//      realistic failure is a foreign-key violation — another admin removed
+//      the entry while this form was open — and that case gets named copy.
+//
+//   3. **No storage, ever.** This route touches no bucket and writes no path;
+//      `image_path` is derived from `image_id` by a database trigger.
 //
 // The route validates the body's *structure* against the contract schema
-// (products.contracts.ts); semantic rules (age ordering, translation
-// locales) stay in the RPC + form. These tests focus on auth, body
-// validation, file handling, RPC error surfacing, and the soft-warning
-// fallback paths.
+// (products.contracts.ts); semantic rules (age ordering, translation locales)
+// stay in the RPC + form.
 
 // --- Mocks ---
 
@@ -37,21 +39,7 @@ vi.mock("@/lib/auth", () => ({
 
 const mockUserRpc = vi.fn();
 const mockUserUpdate = vi.fn();
-
-const mockAdminUpload = vi.fn<
-  (
-    path: string,
-    file: File,
-    opts: { contentType: string; upsert: boolean },
-  ) => Promise<{ error: { message: string } | null }>
->();
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({
-    storage: {
-      from: vi.fn(() => ({ upload: mockAdminUpload })),
-    },
-  })),
-}));
+const mockUserUpdateEq = vi.fn();
 
 // --- Helpers ---
 
@@ -62,12 +50,15 @@ function mockUnauthenticated() {
 }
 
 function mockAuthenticatedAdmin() {
-  // The route uses the user-session client to call the RPC and the path
-  // update. Build a stub that records both.
+  // The route uses the user-session client for both statements: the RPC and
+  // the image link. Build a stub that records both.
   const supabase = {
     rpc: mockUserRpc,
     from: vi.fn(() => ({
-      update: vi.fn(() => ({ eq: mockUserUpdate })),
+      update: (...args: unknown[]) => {
+        mockUserUpdate(...args);
+        return { eq: mockUserUpdateEq };
+      },
     })),
   };
   mockRequireRole.mockResolvedValue({
@@ -86,6 +77,8 @@ function mockAuthenticatedNonAdmin() {
   );
 }
 
+const IMAGE_ID = "0f2c9d5e-6b41-4a7c-9f18-3d5e2a1b4c60";
+
 // Mirrors what the admin form actually sends: every CreateProductInput
 // field, with explicit nulls (the contract schema requires the full shape).
 const validBody = {
@@ -102,6 +95,7 @@ const validBody = {
   tag: null,
   region_lock_country: null,
   spoken_language_code: "en",
+  image_id: IMAGE_ID,
   material_url: null,
   location_id: null,
   is_remote: true,
@@ -122,31 +116,17 @@ const validBody = {
   municipality_fee_cents: null,
 };
 
-/**
- * Builds a real multipart Request — in the node environment Request/FormData/
- * File round-trip formData() natively. The route reads the parsed FormData
- * via request.formData().
- */
-function createRequest(opts: {
-  data?: unknown;
-  rawData?: string;
-  file?: File | null;
-} = {}): Request {
-  const fd = new FormData();
-  if (opts.rawData !== undefined) {
-    fd.append("data", opts.rawData);
-  } else if ("data" in opts) {
-    if (opts.data !== undefined) {
-      fd.append("data", JSON.stringify(opts.data));
-    }
-  } else {
-    fd.append("data", JSON.stringify(validBody));
-  }
-  const file = "file" in opts ? opts.file : new File(["bytes"], "test.jpg", { type: "image/jpeg" });
-  if (file) fd.append("file", file);
+function createRequest(
+  opts: { data?: unknown; rawBody?: string } = {},
+): Request {
+  const body =
+    opts.rawBody !== undefined
+      ? opts.rawBody
+      : JSON.stringify("data" in opts ? opts.data : validBody);
   return new Request("http://localhost/api/admin/products/create", {
     method: "POST",
-    body: fd,
+    headers: { "Content-Type": "application/json" },
+    body,
   });
 }
 
@@ -156,8 +136,7 @@ describe("POST /api/admin/products/create", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUserRpc.mockResolvedValue({ data: "new-prod-id", error: null });
-    mockAdminUpload.mockResolvedValue({ error: null });
-    mockUserUpdate.mockResolvedValue({ error: null });
+    mockUserUpdateEq.mockResolvedValue({ error: null });
   });
 
   // Auth & authorization
@@ -176,20 +155,11 @@ describe("POST /api/admin/products/create", () => {
 
   // Body parsing
 
-  it("returns 400 when the 'data' field is missing", async () => {
+  it("returns 400 when the body is not valid JSON", async () => {
     mockAuthenticatedAdmin();
-    const response = await POST(createRequest({ data: undefined }));
+    const response = await POST(createRequest({ rawBody: "{not-json" }));
     expect(response.status).toBe(400);
-    const json = await response.json();
-    expect(json.error).toMatch(/Missing 'data' field/);
-  });
-
-  it("returns 400 when 'data' isn't valid JSON", async () => {
-    mockAuthenticatedAdmin();
-    const response = await POST(createRequest({ rawData: "{not-json" }));
-    expect(response.status).toBe(400);
-    const json = await response.json();
-    expect(json.error).toMatch(/valid JSON/);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the body fails the contract schema", async () => {
@@ -213,43 +183,6 @@ describe("POST /api/admin/products/create", () => {
     expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when formData itself fails to parse", async () => {
-    mockAuthenticatedAdmin();
-    // A plain-text body with a multipart content type makes formData() reject.
-    const badRequest = new Request(
-      "http://localhost/api/admin/products/create",
-      {
-        method: "POST",
-        headers: { "content-type": "multipart/form-data; boundary=bad" },
-        body: "not a multipart body",
-      },
-    );
-    const response = await POST(badRequest);
-    expect(response.status).toBe(400);
-  });
-
-  // File handling
-
-  it("returns 415 for unsupported file extensions", async () => {
-    mockAuthenticatedAdmin();
-    const badFile = new File(["bytes"], "nope.gif", { type: "image/gif" });
-    const response = await POST(createRequest({ file: badFile }));
-    expect(response.status).toBe(415);
-    const json = await response.json();
-    expect(json.error).toMatch(/JPEG|PNG|WEBP|AVIF|SVG/);
-    // RPC should not have been called when file validation fails.
-    expect(mockUserRpc).not.toHaveBeenCalled();
-  });
-
-  it("returns 413 when file exceeds 5 MB", async () => {
-    mockAuthenticatedAdmin();
-    const bigBytes = new Uint8Array(5 * 1024 * 1024 + 1);
-    const bigFile = new File([bigBytes], "big.jpg", { type: "image/jpeg" });
-    const response = await POST(createRequest({ file: bigFile }));
-    expect(response.status).toBe(413);
-    expect(mockUserRpc).not.toHaveBeenCalled();
-  });
-
   it("returns 400 when the audience flags are missing", async () => {
     // They are non-defaulted RPC parameters precisely so that an omission
     // cannot be read as "gamers-only, presumably" — it has to fail, and it has
@@ -265,6 +198,56 @@ describe("POST /api/admin/products/create", () => {
     const json = await response.json();
     expect(json.error).toMatch(/for_gamers|for_parents/);
     expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  // The image link
+
+  it("returns 400 when image_id is missing", async () => {
+    // Required even though it is nullable, and this is the guard that makes
+    // the nullability safe: the route writes the column on every save, so a
+    // forgotten field would silently take a product's picture off.
+    mockAuthenticatedAdmin();
+    const { image_id: _img, ...noImage } = validBody;
+    const response = await POST(createRequest({ data: noImage }));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/image_id/);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when image_id is not a uuid", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, image_id: "abc.png" } }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("links the chosen entry in a second statement after the RPC", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(createRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.product_id).toBe("new-prod-id");
+    expect(json.warning).toBeUndefined();
+
+    expect(mockUserUpdate).toHaveBeenCalledWith({ image_id: IMAGE_ID });
+    expect(mockUserUpdateEq).toHaveBeenCalledWith("id", "new-prod-id");
+    // The served path is never on the wire and never written here — a trigger
+    // derives it from the id this statement just wrote.
+    expect(mockUserRpc.mock.calls[0][1]).not.toHaveProperty("p_image_path");
+  });
+
+  it("accepts a null image_id and still writes the column", async () => {
+    // Unconditional on purpose: null IS the answer for a product with no
+    // picture, so skipping the write would make "no picture" unrepresentable.
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, image_id: null } }),
+    );
+    expect(response.status).toBe(200);
+    expect(mockUserUpdate).toHaveBeenCalledWith({ image_id: null });
   });
 
   // RPC
@@ -370,78 +353,58 @@ describe("POST /api/admin/products/create", () => {
       data: null,
       error: { message: "min_age must be less than or equal to max_age" },
     });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
     const response = await POST(createRequest());
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toBe("min_age must be less than or equal to max_age");
-    // No upload should have happened — the row didn't get created.
-    expect(mockAdminUpload).not.toHaveBeenCalled();
+    // The row was never created, so nothing should have tried to link a
+    // picture to it.
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it("returns 500 when RPC succeeds but returns null product_id", async () => {
     mockAuthenticatedAdmin();
     mockUserRpc.mockResolvedValue({ data: null, error: null });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
     const response = await POST(createRequest());
     expect(response.status).toBe(500);
+    spy.mockRestore();
   });
 
-  // Successful creation
+  // The soft warning
 
-  it("creates the product and uploads the image with a UUID path", async () => {
+  it("names the removed entry when the link hits the foreign key", async () => {
+    // The realistic race: another admin deleted the catalogue entry between
+    // this form loading and this save. The product is fine, so this is a 200
+    // with an explanation and never a bare 200.
     mockAuthenticatedAdmin();
+    mockUserUpdateEq.mockResolvedValue({
+      error: { code: "23503", message: "violates foreign key constraint" },
+    });
+
     const response = await POST(createRequest());
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.product_id).toBe("new-prod-id");
-    expect(json.warning).toBeUndefined();
-
-    // Path is a UUID + jpg extension.
-    expect(mockAdminUpload).toHaveBeenCalledTimes(1);
-    const uploadedPath = mockAdminUpload.mock.calls[0][0];
-    expect(uploadedPath).toMatch(/^[0-9a-f-]{36}\.jpg$/);
-
-    // path-update gets the same path.
-    expect(mockUserUpdate).toHaveBeenCalledTimes(1);
+    expect(json.warning).toMatch(/catalogue entry no longer exists/);
+    expect(json.warning).toMatch(/edit page/);
+    expect(json.warning).not.toMatch(/foreign key/);
   });
 
-  it("normalises 'jpeg' extension to 'jpg'", async () => {
+  it("passes any other link failure through in the warning", async () => {
     mockAuthenticatedAdmin();
-    const file = new File(["x"], "thing.jpeg", { type: "image/jpeg" });
-    await POST(createRequest({ file }));
-    const uploadedPath = mockAdminUpload.mock.calls[0][0];
-    expect(uploadedPath).toMatch(/^[0-9a-f-]{36}\.jpg$/);
-  });
+    mockUserUpdateEq.mockResolvedValue({
+      error: { code: "40001", message: "could not serialize access" },
+    });
 
-  it("creates the product without an image when no file is provided", async () => {
-    mockAuthenticatedAdmin();
-    const response = await POST(createRequest({ file: null }));
-    expect(response.status).toBe(200);
-    const json = await response.json();
-    expect(json.product_id).toBe("new-prod-id");
-    expect(mockAdminUpload).not.toHaveBeenCalled();
-    expect(mockUserUpdate).not.toHaveBeenCalled();
-  });
-
-  // Soft-warning fallback paths — image-last semantics
-
-  it("returns the product_id with a warning when the upload fails", async () => {
-    mockAuthenticatedAdmin();
-    mockAdminUpload.mockResolvedValue({ error: { message: "bucket offline" } });
     const response = await POST(createRequest());
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.product_id).toBe("new-prod-id");
-    expect(json.warning).toMatch(/image upload failed.*bucket offline/);
-    expect(mockUserUpdate).not.toHaveBeenCalled();
-  });
-
-  it("returns the product_id with a warning when the path-update fails", async () => {
-    mockAuthenticatedAdmin();
-    mockUserUpdate.mockResolvedValue({ error: { message: "DB write failed" } });
-    const response = await POST(createRequest());
-    expect(response.status).toBe(200);
-    const json = await response.json();
-    expect(json.product_id).toBe("new-prod-id");
-    expect(json.warning).toMatch(/DB update failed.*DB write failed/);
+    expect(json.warning).toMatch(/could not serialize access/);
   });
 });

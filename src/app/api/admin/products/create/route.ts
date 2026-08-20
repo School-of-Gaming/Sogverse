@@ -1,24 +1,9 @@
-import { NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
-import { parseBodyValue } from "@/lib/api/json-body.server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createProductData } from "@/services/products/products.contracts";
 import type { Database } from "@/types";
 
 type RpcArgs = Database["public"]["Functions"]["create_product"]["Args"];
-
-const EXT_TO_MIME: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  avif: "image/avif",
-  svg: "image/svg+xml",
-};
-
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 function friendlyRpcError(err: { code?: string; message: string }): string {
   switch (err.code) {
@@ -34,28 +19,36 @@ function friendlyRpcError(err: { code?: string; message: string }): string {
   }
 }
 
-function resolveUploadMeta(
-  file: File,
-): { path: string; contentType: string } | null {
-  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
-  const contentType = EXT_TO_MIME[ext];
-  if (!contentType) return null;
-  const normalised = ext === "jpeg" ? "jpg" : ext;
-  return { path: `${randomUUID()}.${normalised}`, contentType };
+/**
+ * The soft warning for a product that saved but whose picture did not get
+ * linked. The foreign key is the case worth naming: it means the catalogue
+ * entry this form was holding has been removed since the page loaded, which is
+ * an ordinary race between two admins and not something the admin did wrong.
+ */
+function imageLinkWarning(err: { code?: string; message: string }): string {
+  const cause =
+    err.code === "23503"
+      ? "the catalogue entry no longer exists"
+      : err.message;
+  return `Product created but its image was not applied: ${cause}. Retry from the edit page.`;
 }
 
 /**
- * POST /api/admin/products/create — multipart: a JSON `data` field beside an
- * optional image `file`.
+ * POST /api/admin/products/create — plain JSON, validated on the primitive
+ * against the same contract schema the calling service builds its body from.
  *
- * No body schema is declared on the primitive, which is what leaves the request
- * stream untouched so this handler can read the form itself; the `data` field
- * is then validated through the same contract schema a JSON route would use.
+ * The picture is an id, not a file: catalogue entries are uploaded through
+ * their own route, and a product only ever points at one. `image_id` is
+ * written in a second statement after the RPC (the image-last pattern this
+ * route already used), and a database trigger derives the served `image_path`
+ * column from it — so nothing here touches storage and nothing here writes a
+ * path.
  */
 export const POST = defineRoute({
   posture: "role-gated",
   roles: "admin",
   forbiddenMessage: "Only admins can create products",
+  body: createProductData,
 
   // Every database failure here is turned into admin-facing copy before it
   // leaves the handler: the two native codes get written explanations, and our
@@ -65,53 +58,7 @@ export const POST = defineRoute({
   discloseErrorMessages:
     "create_product's own RAISE messages are the admin-facing explanation of a refused create, and the product form shows them verbatim; the two native codes it can also raise are given written explanations first",
 
-  handler: async ({ request, supabase }) => {
-    let formData: FormData;
-    try {
-      formData = await request.formData();
-    } catch {
-      return NextResponse.json(
-        { error: "Request must be multipart/form-data" },
-        { status: 400 },
-      );
-    }
-
-    const dataField = formData.get("data");
-    if (typeof dataField !== "string") {
-      return NextResponse.json(
-        { error: "Missing 'data' field" },
-        { status: 400 },
-      );
-    }
-
-    let raw: unknown;
-    try {
-      raw = JSON.parse(dataField);
-    } catch {
-      return NextResponse.json(
-        { error: "'data' field must be valid JSON" },
-        { status: 400 },
-      );
-    }
-    const body = parseBodyValue(raw, createProductData);
-    if (body instanceof NextResponse) return body;
-
-    const file = formData.get("file");
-    const hasImage = file instanceof File;
-    if (hasImage && file.size > MAX_FILE_BYTES) {
-      return NextResponse.json(
-        { error: "Image must be 5 MB or smaller" },
-        { status: 413 },
-      );
-    }
-    const uploadMeta = hasImage ? resolveUploadMeta(file) : null;
-    if (hasImage && !uploadMeta) {
-      return NextResponse.json(
-        { error: "Unsupported file type. Use JPEG, PNG, WEBP, AVIF, or SVG." },
-        { status: 415 },
-      );
-    }
-
+  handler: async ({ body, supabase }) => {
     // Build RPC args. Nullable fields go in as undefined so the RPC uses its
     // DEFAULT NULL. Semantic validation beyond the contract schema's shapes
     // lives in the DB (CHECK constraints + location trigger on products).
@@ -177,47 +124,20 @@ export const POST = defineRoute({
       throw new ApiError("Failed to create product", 500);
     }
 
-    // Image-last pattern: if the RPC succeeded but upload or path-update fails,
-    // we return a soft warning. The product exists and is editable — the admin
-    // can retry the image on the edit page. No orphan-image cleanup needed.
-    if (hasImage && uploadMeta) {
-      const admin = createAdminClient();
-      const { error: uploadError } = await admin.storage
-        .from("product-images")
-        .upload(uploadMeta.path, file, {
-          contentType: uploadMeta.contentType,
-          upsert: false,
-          // A year, because the path is a fresh UUID per upload and
-          // `upsert: false` above is what guarantees it: these bytes are
-          // immutable, and replacing the picture mints a different path.
-          // Storage otherwise defaults to an hour. This does not reach the
-          // image optimizer — that cache floors its TTL at
-          // `images.minimumCacheTTL` regardless of what the object stores —
-          // so what it buys is the paths that bypass the optimizer entirely:
-          // browser and Supabase-CDN caching of the raw original, fetched by
-          // link scrapers for og:image and by any direct bucket hit. Objects
-          // uploaded before this line was added keep their old header.
-          cacheControl: "31536000",
-        });
+    // Image-last: the product exists and is editable, so a failure to link its
+    // picture is a warning on a 200 rather than an error that hides a good
+    // save. Written unconditionally — `null` is the ordinary "no picture"
+    // answer, not an omission — and never as a bare 200 on failure.
+    const { error: linkError } = await supabase
+      .from("products")
+      .update({ image_id: body.image_id })
+      .eq("id", productId);
 
-      if (uploadError) {
-        return {
-          product_id: productId,
-          warning: `Product created but image upload failed: ${uploadError.message}. Retry from the edit page.`,
-        };
-      }
-
-      const { error: updateError } = await supabase
-        .from("products")
-        .update({ image_path: uploadMeta.path })
-        .eq("id", productId);
-
-      if (updateError) {
-        return {
-          product_id: productId,
-          warning: `Product created and image uploaded but DB update failed: ${updateError.message}. Retry from the edit page.`,
-        };
-      }
+    if (linkError) {
+      return {
+        product_id: productId,
+        warning: imageLinkWarning(linkError),
+      };
     }
 
     return { product_id: productId };

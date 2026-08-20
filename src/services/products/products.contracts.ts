@@ -7,12 +7,13 @@ import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 /**
  * Contracts for the admin product create/update routes.
  *
- * The `data` form field is JSON matching CreateProductInput /
- * UpdateProductInput (minus `image`, which travels as a separate form
- * field) — see products.service.ts. Validation here is structural only
- * (types and enums); semantic rules (age ranges, date ordering, the
- * at-least-one-en-or-fi-translation rule) stay in the RPCs' CHECKs and
- * RAISEs, same as before.
+ * Both routes take a plain JSON body matching CreateProductInput /
+ * UpdateProductInput — see products.service.ts. No file ever rides along:
+ * a product's picture is a catalogue entry it points at by id, uploaded
+ * through its own route long before a product is saved. Validation here is
+ * structural only (types and enums); semantic rules (age ranges, date
+ * ordering, the at-least-one-en-or-fi-translation rule) stay in the RPCs'
+ * CHECKs and RAISEs, same as before.
  */
 
 const productTranslationInput = z.object({
@@ -96,6 +97,18 @@ const productDataBase = z.object({
     })
     .nullable(),
   spoken_language_code: z.string(),
+  // The catalogue entry this product's picture comes from, or null for a
+  // product with no picture.
+  //
+  // Required-nullable, and required is the load-bearing half: the route writes
+  // this column on every save, so an omitted field and "remove the picture"
+  // would be the same request. Demanding it makes removal a deliberate null.
+  //
+  // The served column, `image_path`, is NOT on the wire at all and never is —
+  // a database trigger derives it from this id on every write to `products`,
+  // so no client can point a product at an arbitrary storage object and no app
+  // code writes a path.
+  image_id: z.string().uuid().nullable(),
   // Gedu/admin-only lesson-material link. It is a field of the product *form*
   // but not a column on `products` — the RPC files it under
   // `product_staff_details`, whose read grant no parent or anonymous visitor
@@ -124,7 +137,7 @@ const productDataBase = z.object({
   municipality_fee_cents: z.number().int().nullable(),
 });
 
-/** The `data` field of POST /api/admin/products/create. */
+/** The JSON body of POST /api/admin/products/create. */
 export const createProductData = productDataBase.extend({
   product_type: z.enum(Constants.public.Enums.product_type),
   // Optional: the RPC defaults it (p_status?) and the old route tolerated
@@ -132,10 +145,20 @@ export const createProductData = productDataBase.extend({
   status: z.enum(Constants.public.Enums.product_status).optional(),
 });
 
-/** The `data` field of POST /api/admin/products/[id]/update. */
+/** The JSON body of POST /api/admin/products/[id]/update. */
 export const updateProductData = productDataBase;
 
-/** Response of the admin product create/update routes. */
+/**
+ * Response of the admin product create/update routes.
+ *
+ * `warning` is the soft-warning half: the product was written, but the
+ * statement that linked its catalogue entry was not. The realistic cause is a
+ * race — another admin removed the entry between this form loading and this
+ * save — and the product itself is fine and editable, so answering with an
+ * error would throw away a good save to report a bad picture. The message is
+ * admin-facing English and says what to do (retry from the edit page).
+ */
 export const productIdResponse = z.object({
   product_id: z.string(),
+  warning: z.string().optional(),
 });

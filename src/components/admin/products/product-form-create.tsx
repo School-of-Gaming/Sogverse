@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useCreateProduct } from "@/services/products";
 import { buildCreateInput } from "./product-build";
+import { type ProductImageSelection } from "./image-picker";
 import { initialState, type FormState } from "./product-form-state";
 import { ProductFormShell } from "./product-form";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
@@ -18,11 +19,18 @@ interface ProductFormCreateProps {
    * the empty `initialState` so the create form opens already populated.
    */
   initialFormState?: FormState;
+  /**
+   * The catalogue entry that pre-filled state points at, for the same clone
+   * flow. A clone carries the source's picture, so the card has one to paint
+   * before the admin has touched anything.
+   */
+  initialImage?: ProductImageSelection | null;
 }
 
 export function ProductFormCreate({
   productType,
   initialFormState,
+  initialImage,
 }: ProductFormCreateProps) {
   const config = PRODUCT_TYPE_CONFIG[productType];
   const router = useRouter();
@@ -35,6 +43,7 @@ export function ProductFormCreate({
     <ProductFormShell
       productType={productType}
       initialFormState={initialFormState ?? initialState(config, uiLocale)}
+      initialImage={initialImage}
       submitLabel={t("actions.createLabel", { label: label.toLowerCase() })}
       onCancel={() => router.push(`/admin/${config.routeSlug}`)}
       onSubmit={async (state) => {
