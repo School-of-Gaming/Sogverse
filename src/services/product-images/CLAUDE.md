@@ -73,27 +73,10 @@ a migration alone. **Never add a second relationship between `products` and
 `product_images` without hinting every existing embed in the same change.** And the key
 would buy nothing here: the trigger above already is the guarantee.
 
-**What actually happened when it was tried, and its blast radius.** On 2026-08-20 a
-migration carrying the second key was pushed to **staging** for roughly fifteen minutes
-and then reverted. In that window, every browser running the app against staging —
-concretely, a developer's `localhost` dev server, which points at staging — got HTTP
-**300 PGRST201** from the admin product detail query and showed "product not found" on
-every admin product page. **Production was never affected**: prod never had the second
-key, and the migration was released without it, so no real admin or customer saw this.
-The database itself was never at risk either — nothing was lost or corrupted; the query
-was refused, not misanswered.
-
-The part that outlives the fix is a **browser** effect, not a server one. Browsers treat
-300 as a cacheable response, so a tab that ran the query during the window keeps replaying
-the stored 300 from its disk cache for that exact URL — the network panel shows the rows
-as "(disk cache)", 0 ms, with no request leaving the machine — after the schema is
-already correct. Ctrl+Shift+R does **not** clear it: a hard reload bypasses the cache only
-for the navigation itself, and these are `fetch()` calls the page makes afterwards.
-"Empty Cache and Hard Reload" (or "Disable cache" in the network panel, or clearing site
-data for the origin) is what clears it. This is why the rule above is stated so hard: if
-a second relationship ever reached production, every admin's browser would cache the
-failure per product page, and fixing the schema would not be enough to make the pages
-come back.
+(It was tried once, on staging, for a quarter of an hour; production never had it. The
+one thing worth remembering from that: PostgREST's refusal is an HTTP 300, which browsers
+cache per URL, so a tab that saw the failure keeps showing it after the schema is fixed
+until its cache is emptied — a hard reload alone does not do it.)
 
 Should the bucket and the catalogue ever need reconciling, that is a join rather than a
 program: `product_images.path` against `storage.objects.name` for the `product-images`

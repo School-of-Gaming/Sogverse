@@ -408,16 +408,22 @@ describe("product_images and the image_path trigger", () => {
       expect(error?.code).toBe("23505"); // unique_violation
     });
 
-    it("refuses a second row with the same path", async () => {
+    it("refuses a second row on an existing path, now by shape rather than by uniqueness", async () => {
       await seedEntries();
 
+      // Before the shape CHECK this was the path UNIQUE constraint's case
+      // (23505). Now a path can only ever be its own sha256 plus an
+      // extension, so "the same path under a different hash" is refused by
+      // the CHECK (23514) before uniqueness is consulted — and the same path
+      // under the same hash is the duplicate-sha256 case above. The UNIQUE
+      // on path is subsumed, kept only as belt and braces.
       const { error } = await admin.from("product_images").insert({
         label: "Same object, different hash",
         sha256: hex("eeee5555"),
         path: `${SHA_A}.png`,
       });
 
-      expect(error?.code).toBe("23505");
+      expect(error?.code).toBe("23514");
     });
 
     it("refuses an empty label and one over 120 characters", async () => {
