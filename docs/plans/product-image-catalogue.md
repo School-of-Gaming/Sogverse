@@ -329,6 +329,38 @@ and the count would cost a products read on every edit-page open.
 guide**: one section for the dialog with fixture entries — empty column / tile selected with
 usage / confirm at N = 0 and N = 22 side by side — fixture UUIDs hardcoded.
 
+**Deviations (step 4, as built — UI)**
+
+- **The soft warning renders in place and withholds the navigation**, because there is no
+  toast anywhere in this app to put it in (verified: the only three "toast" mentions in
+  `src/` are comments saying there isn't one). The form shell takes an optional warning
+  back from its submit callback, shows the route's English verbatim in a warning banner,
+  **keeps `committing` set** so the product cannot be saved twice, and offers one button
+  that performs the navigation the wrapper would have done. On create that button goes to
+  the **new product's edit page** rather than the list — the warning's own copy says to
+  retry from the edit page, and the id has just come back, so sending the admin anywhere
+  else would make them find the product again.
+- **`imagePicker.previewAlt` is deleted; `dropPrompt` and `formats` are used.** Every
+  product picture is painted through the shared banner, whose `alt` is empty by design
+  (the name is always beside it), so an alt-text key had nothing left to name.
+- **The card's picture and label live in the form shell**, beside `imageId`, rather than
+  inside the card: the shell already owns the seed from the product read, and one state
+  pair means the id the form saves and the picture the card paints cannot disagree. The
+  card's `onChange` therefore carries both halves.
+- **The linked-product list is one component**, shared by the reference column and both
+  confirms, so the two places that answer "which products" cannot come to answer it
+  differently.
+- **The style-guide section is one live dialog plus three direct confirm entry points**
+  rather than four states rendered side by side. A dialog is an overlay: two of them
+  cannot be laid out beside each other, and clicking between an empty column and a filled
+  one inside a single fixture-driven dialog is the comparison the "side by side" rule
+  wanted. The confirms keep their own buttons because their interesting difference is the
+  count, which is otherwise two clicks deep.
+- **"Use this picture" holds a local committing flag** even though the dialog closes on
+  the click — the flag has to survive the one render between the click and the unmount.
+- The pre-existing product-form unit test gained a `QueryClientProvider`: the card now
+  holds an upload mutation, which is a hook the form shell mounts on every render.
+
 ### The cleanup (operator-run, between the two releases)
 
 A script under `scripts/`, `npx tsx` with `@/` aliases, dry-run by default, `--apply` to

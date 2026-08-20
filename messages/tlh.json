@@ -651,12 +651,53 @@
       },
       "imagePicker": {
         "label": "nagh beQ",
-        "previewAlt": "leghpu’meH",
-        "dropPrompt": "nagh beQ pum, qoj wIv chu’wI’ lo’.",
-        "formats": "JPG, PNG, WebP, AVIF, qoj SVG.",
+        "dropPrompt": "naDev DocH yIpum, qoj yIwIv. qachDaq chellu’, ’ej DochvamvaD lo’lu’.",
+        "formats": "JPG, PNG, WebP, AVIF, qoj SVG. 4 MB nIvbe’nIS.",
         "chooseFile": "DocH yIwIv",
-        "remove": "yIteq",
-        "hint": "vavmey nej De’Daq DochlIj cha’. 3:2 ’echletvaD pe’lu’; leghmeH mIw rap cha’lu’."
+        "uploading": "chellu’taH…",
+        "change": "nagh beQ yIchoH",
+        "remove": "Dochvamvo’ yIteq",
+        "outcomeAdded": "qachDaq chellu’, ’ej DochvamvaD wIvlu’.",
+        "outcomeExisting": "qachDaq tu’lu’ — DochvamvaD wIvlu’.",
+        "hint": "vavmey nej De’Daq DochlIj cha’. 3:2 ’echletvaD pe’lu’. Hoch Dochmey nagh beQmey boSlu’, vaj naDev wIvlIj latlh Dochmey choHbe’."
+      },
+      "imageCatalogue": {
+        "title": "Doch nagh beQmey",
+        "description": "wa’ nagh beQ lo’laH law’ Dochmey. naDev wIvlIj Dochvam neH choH; ’ach nagh beQ DachoHchugh qoj DateqchughvaD, Hoch lo’bogh Dochmey luchoH.",
+        "upload": "yIchel",
+        "uploading": "chellu’taH…",
+        "emptyCatalogue": "nagh beQ tu’lu’be’. wa’ yIchel.",
+        "usedBadge": "{count, plural, one {# Doch} other {# Dochmey}}",
+        "columnEmpty": "nagh beQ yIwIv",
+        "use": "nagh beQvam yIlo’",
+        "nameLabel": "nagh beQ pong",
+        "rename": "yIpongqa’",
+        "usedBy": "nagh beQvam lo’bogh Dochmey",
+        "usedByNone": "nagh beQvam lo’ pagh Doch.",
+        "live": "cha’lu’",
+        "hidden": "So’lu’",
+        "replace": "nagh beQ yIchoH",
+        "remove": "qachvo’ yIteq",
+        "replaceConfirm": {
+          "title": "”{label}” yIchoH",
+          "consequence": "{count, plural, one {bIngDaq Doch nagh beQ chu’ cha’.} other {bIngDaq Hoch # Dochmey nagh beQ chu’ lucha’.}}",
+          "unused": "nagh beQvam lo’ pagh Doch. qachDaq DaqDaj tlhap chu’bogh.",
+          "choose": "nagh beQ chu’ yIwIv",
+          "confirm": "{count, plural, one {# DochDaq} other {# DochmeyDaq}} yIchoH",
+          "confirmUnused": "nagh beQ yIchoH"
+        },
+        "removeConfirm": {
+          "title": "”{label}” yIteq",
+          "consequence": "{count, plural, one {latlh DawIvpa’, bIngDaq Doch nagh beQ Hutlh.} other {latlh DawIvpa’, bIngDaq Hoch # Dochmey nagh beQ luHutlh.}}",
+          "unused": "nagh beQvam lo’ pagh Doch. qachvo’ reH teqlu’.",
+          "confirm": "{count, plural, one {# Dochvo’} other {# Dochmeyvo’}} yIteq",
+          "confirmUnused": "qachvo’ yIteq"
+        },
+        "errors": {
+          "tooLarge": "DocHvam tInqu’. 4 MB nIvbe’nIS nagh beQ.",
+          "unsupportedType": "DocH Segh luQaHbe’. JPG, PNG, WebP, AVIF, qoj SVG yIlo’.",
+          "nameRequired": "nagh beQvaD pong yInob — 1–120 ghItlh."
+        }
       },
       "filters": {
         "day": "jaj",

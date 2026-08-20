@@ -6,7 +6,7 @@ import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useCreateProduct } from "@/services/products";
 import { buildCreateInput } from "./product-build";
-import { type ProductImageSelection } from "./image-picker";
+import { type ProductImageSelection } from "./product-image-selection";
 import { initialState, type FormState } from "./product-form-state";
 import { ProductFormShell } from "./product-form";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
@@ -48,7 +48,18 @@ export function ProductFormCreate({
       onCancel={() => router.push(`/admin/${config.routeSlug}`)}
       onSubmit={async (state) => {
         const input = buildCreateInput(state, productType, config);
-        await createProduct.mutateAsync(input);
+        const { product_id, warning } = await createProduct.mutateAsync(input);
+        // The warning's own copy says to retry from the edit page, and the
+        // product that page belongs to has just been created — so continuing
+        // goes straight there rather than to the list, where the admin would
+        // have to find it again.
+        if (warning) {
+          return {
+            message: warning,
+            onContinue: () =>
+              router.push(`/admin/${config.routeSlug}/${product_id}/edit`),
+          };
+        }
         router.push(`/admin/${config.routeSlug}`);
       }}
     />

@@ -4,9 +4,39 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
+/**
+ * How wide a dialog is allowed to get.
+ *
+ * `default` is the width every dialog in the app had before there was a
+ * choice; `wide` is for a dialog whose content is a *layout* rather than a
+ * message — a browsing grid beside a reference column, where two thirds of a
+ * narrow box is two tiles across and unusable.
+ */
+export type DialogSize = "default" | "wide";
+
+const DIALOG_SIZE_CLASS: Record<DialogSize, string> = {
+  default: "max-w-lg",
+  wide: "max-w-4xl",
+};
+
+/**
+ * **The width is capped in two places, so it travels through context rather
+ * than through a prop.** The portal's positioning wrapper caps it (that is what
+ * centres the dialog and gives the backdrop something to sit behind) and
+ * `DialogContent` caps it again (so a caller composing its own content still
+ * gets the box). A `size` passed to one and not the other produces a dialog
+ * that is wide in its layout and narrow in its card, which is why the two read
+ * one value: `Dialog` publishes it and `DialogContent` consumes it. A caller
+ * that wants a one-off width still overrides `DialogContent`'s class, exactly
+ * as before — `cn` lets the later class win.
+ */
+const DialogSizeContext = React.createContext<DialogSize>("default");
+
 interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Width cap for both the portal wrapper and `DialogContent`. */
+  size?: DialogSize;
   children: React.ReactNode;
 }
 
@@ -66,7 +96,7 @@ function topmostDialog(): DialogStackEntry | null {
   return top;
 }
 
-function Dialog({ open, onOpenChange, children }: DialogProps) {
+function Dialog({ open, onOpenChange, size = "default", children }: DialogProps) {
   const depth = React.useContext(DialogDepthContext);
   // The register entry has to outlive a re-render with a new `onOpenChange`
   // identity — re-registering would move this dialog to the end of the array
@@ -104,13 +134,17 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return createPortal(
     <DialogDepthContext.Provider value={depth + 1}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-          onClick={() => onOpenChange(false)}
-        />
-        <div className="relative z-50 w-full max-w-lg">{children}</div>
-      </div>
+      <DialogSizeContext.Provider value={size}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => onOpenChange(false)}
+          />
+          <div className={cn("relative z-50 w-full", DIALOG_SIZE_CLASS[size])}>
+            {children}
+          </div>
+        </div>
+      </DialogSizeContext.Provider>
     </DialogDepthContext.Provider>,
     document.body
   );
@@ -121,10 +155,12 @@ function DialogContent({
   children,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
+  const size = React.useContext(DialogSizeContext);
   return (
     <div
       className={cn(
-        "w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg",
+        "w-full rounded-lg border border-border bg-card p-6 shadow-lg",
+        DIALOG_SIZE_CLASS[size],
         className
       )}
       {...props}

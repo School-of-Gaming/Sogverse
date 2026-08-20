@@ -603,12 +603,53 @@
       },
       "imagePicker": {
         "label": "Image",
-        "previewAlt": "Preview",
-        "dropPrompt": "Drop an image here or click to choose.",
-        "formats": "JPG, PNG, WebP, AVIF, or SVG.",
+        "dropPrompt": "Drop a file here, or choose one, to add it and use it for this product.",
+        "formats": "JPG, PNG, WebP, AVIF or SVG, up to 4 MB.",
         "chooseFile": "Choose file",
-        "remove": "Remove",
-        "hint": "Shown on the product card when parents are browsing. The image is cropped to a 3:2 frame, and the preview shows that same crop."
+        "uploading": "Adding…",
+        "change": "Change image",
+        "remove": "Remove from this product",
+        "outcomeAdded": "Added to the catalogue and selected for this product.",
+        "outcomeExisting": "Already in the catalogue — selected for this product.",
+        "hint": "Shown on the product card when parents are browsing, cropped to a 3:2 frame. Pictures are shared between products, so choosing one here changes nothing else."
+      },
+      "imageCatalogue": {
+        "title": "Product pictures",
+        "description": "One picture can be used by many products. Choosing one changes only this product; replacing or removing one changes every product using it.",
+        "upload": "Upload",
+        "uploading": "Adding…",
+        "emptyCatalogue": "No pictures yet. Upload one to start the catalogue.",
+        "usedBadge": "{count, plural, one {# product} other {# products}}",
+        "columnEmpty": "Select an image",
+        "use": "Use this picture",
+        "nameLabel": "Picture name",
+        "rename": "Rename",
+        "usedBy": "Products using this picture",
+        "usedByNone": "No product uses this picture.",
+        "live": "Live",
+        "hidden": "Hidden",
+        "replace": "Replace picture",
+        "remove": "Remove from catalogue",
+        "replaceConfirm": {
+          "title": "Replace “{label}”",
+          "consequence": "{count, plural, one {The product below will show the new picture.} other {All # products below will show the new picture.}}",
+          "unused": "No product uses this picture. The new one takes its place in the catalogue.",
+          "choose": "Choose the new picture",
+          "confirm": "Replace on {count, plural, one {# product} other {# products}}",
+          "confirmUnused": "Replace picture"
+        },
+        "removeConfirm": {
+          "title": "Remove “{label}”",
+          "consequence": "{count, plural, one {The product below will have no picture until you choose another.} other {All # products below will have no picture until you choose another.}}",
+          "unused": "No product uses this picture. It will be removed from the catalogue for good.",
+          "confirm": "Remove from {count, plural, one {# product} other {# products}}",
+          "confirmUnused": "Remove from catalogue"
+        },
+        "errors": {
+          "tooLarge": "That file is too large. Pictures must be 4 MB or smaller.",
+          "unsupportedType": "That file type is not supported. Use JPG, PNG, WebP, AVIF or SVG.",
+          "nameRequired": "Give the picture a name of 1–120 characters."
+        }
       },
       "filters": {
         "day": "Day",

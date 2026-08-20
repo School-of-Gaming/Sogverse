@@ -16,10 +16,8 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
 import { FormSection } from "../form-primitives";
-import {
-  ImagePicker,
-  type ProductImageSelection,
-} from "../image-picker";
+import { ImagePicker } from "../image-picker";
+import type { ProductImageSelection } from "../product-image-selection";
 import { LongDescriptionEditor } from "../long-description-editor";
 import {
   type FormState,
@@ -36,6 +34,11 @@ interface IdentitySectionProps {
    *  the product read. Derived, so it travels beside form state rather than
    *  inside it. */
   currentImage: ProductImageSelection | null;
+  /** The pick changed — id for form state, picture for the card, together. */
+  onImageChange: (
+    imageId: string | null,
+    image: ProductImageSelection | null,
+  ) => void;
 }
 
 export function IdentitySection({
@@ -44,6 +47,7 @@ export function IdentitySection({
   config,
   uiLocale,
   currentImage,
+  onImageChange,
 }: IdentitySectionProps) {
   const t = useTranslations("admin.products");
   const topicLabel = useTopicLabel();
@@ -219,7 +223,7 @@ export function IdentitySection({
       <ImagePicker
         imageId={state.imageId}
         current={currentImage}
-        onChange={(imageId) => setState({ ...state, imageId })}
+        onChange={onImageChange}
       />
 
       <Field

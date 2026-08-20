@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isSupportedCurrency } from "@/lib/constants";
 import {
@@ -22,7 +22,7 @@ import { VisibilitySection } from "./sections/visibility-section";
 import { WhenSection } from "./sections/when-section";
 import { WhereSection } from "./sections/where-section";
 import { validate, type ValidationFailure } from "./product-build";
-import { type ProductImageSelection } from "./image-picker";
+import { type ProductImageSelection } from "./product-image-selection";
 import { type FormState } from "./product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -45,8 +45,32 @@ interface ProductFormShellProps {
    *  the mutation, and navigates on success. Throws on error so the shell
    *  can render the message. The shell deliberately does NOT clear the
    *  committing flag on success — the wrapper's nav unmounts the page,
-   *  closing the click→action gap (see CLAUDE.md "Loading & Disabled State"). */
-  onSubmit: (state: FormState) => Promise<void>;
+   *  closing the click→action gap (see CLAUDE.md "Loading & Disabled State").
+   *
+   *  It may instead resolve with a **soft warning**: the product was saved and
+   *  something beside it was not. The wrapper does not navigate in that case —
+   *  it hands the warning back and the shell shows it (see below). */
+  onSubmit: (state: FormState) => Promise<ProductSaveWarning | void>;
+}
+
+/**
+ * A save that succeeded with something to say.
+ *
+ * The one case today is the picture: the product was written and the statement
+ * linking its catalogue entry was not, because another admin retired that entry
+ * between this form loading and this save. The product is fine, so this is not
+ * an error — but it must not be swallowed either, and there is no toast
+ * anywhere in this app to put it in. So the wrapper withholds the navigation
+ * and the shell shows the message where the admin is already looking, with the
+ * navigation as a button they press when they have read it.
+ *
+ * `message` is the route's own admin-facing English, shown verbatim: it names
+ * the cause, and an admin is the reader it was written for.
+ */
+export interface ProductSaveWarning {
+  message: string;
+  /** Go where the wrapper would have gone. Labelled by the shell. */
+  onContinue: () => void;
 }
 
 /**
@@ -71,8 +95,19 @@ export function ProductFormShell({
 
   const [state, setState] = useState<FormState>(initialFormState);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<ProductSaveWarning | null>(null);
   const [committing, setCommitting] = useState(false);
   const languageName = useLanguageNames();
+
+  /**
+   * The picture beside `state.imageId`. Derived data, so it lives outside form
+   * state — but it does have to be *state*, because the catalogue dialog can
+   * change it (a pick, a rename, a replace) and the card has to follow without
+   * anyone re-reading the product. Seeded from the read the form was seeded
+   * from, so the card paints on the first frame.
+   */
+  const [currentImage, setCurrentImage] =
+    useState<ProductImageSelection | null>(initialImage);
 
   /**
    * Turn a validation failure's interpolation values into the ones the message
@@ -132,7 +167,13 @@ export function ProductFormShell({
 
     setCommitting(true);
     try {
-      await onSubmit(state);
+      const result = await onSubmit(state);
+      // A warning means the save landed but the wrapper did not navigate, so
+      // this page stays up. `committing` deliberately stays set: the product
+      // exists now, and a second submit would either create a duplicate or
+      // re-save a form the admin has not touched since being told something
+      // went sideways. The way on is the warning's own button.
+      if (result) setWarning(result);
     } catch (err) {
       setCommitting(false);
       setError(err instanceof Error ? err.message : t("errors.createFailed"));
@@ -146,13 +187,11 @@ export function ProductFormShell({
         setState={setState}
         config={config}
         uiLocale={uiLocale}
-        // Seam: while a pick can only be *removed*, the entry that loaded with
-        // the product is the only one this card can ever show, and the picker
-        // drops it on its own once `imageId` goes null. Selecting a different
-        // entry arrives with the catalogue surface, and this is the line that
-        // has to start tracking it — hold the chosen entry beside `imageId`
-        // and pass that instead.
-        currentImage={initialImage}
+        currentImage={currentImage}
+        onImageChange={(imageId, image) => {
+          setState((s) => ({ ...s, imageId }));
+          setCurrentImage(image);
+        }}
       />
       <AudienceSection state={state} setState={setState} config={config} />
       <WhereSection state={state} setState={setState} config={config} />
@@ -165,6 +204,24 @@ export function ProductFormShell({
       {error && (
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {warning && (
+        <div className="rounded-md bg-warning/10 p-3 text-sm text-warning">
+          <p className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>{warning.message}</span>
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={warning.onContinue}
+          >
+            {c("continue")}
+          </Button>
         </div>
       )}
 

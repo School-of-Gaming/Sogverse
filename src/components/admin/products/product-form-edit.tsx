@@ -49,7 +49,11 @@ export function ProductFormEdit({
       onCancel={() => router.push(detailsHref)}
       onSubmit={async (state) => {
         const input = buildUpdateInput(state, config);
-        await updateProduct.mutateAsync(input);
+        const { warning } = await updateProduct.mutateAsync(input);
+        // A soft warning holds the navigation: the product saved, its picture
+        // did not take, and the admin is told so here rather than on a page
+        // they were bounced to. Continuing goes where the save would have.
+        if (warning) return { message: warning, onContinue: () => router.push(detailsHref) };
         router.push(detailsHref);
       }}
     />
