@@ -38,9 +38,8 @@ function imageLinkWarning(err: { code?: string; message: string }): string {
  * No storage, no file, no path. A product's picture is a catalogue entry it
  * points at, so the whole image half of this route is one `image_id` write
  * after the RPC; a trigger on `products` derives the served `image_path` from
- * it. That is also why `p_image_path` is not passed: for a linked product the
- * RPC's assignment is overwritten by the trigger, and for an unlinked one the
- * parameter's DEFAULT NULL is already the right answer.
+ * it, and since migration 00198 the RPC has no image parameter at all —
+ * nothing but that trigger writes the column.
  */
 export const POST = defineRoute({
   posture: "role-gated",

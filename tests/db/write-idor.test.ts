@@ -674,13 +674,18 @@ describe("write-path IDOR (§3.4 check 3)", () => {
 
     await createTestProduct(admin, { id: PRODUCT, seatCount: null });
 
-    // `sha256` and `path` are UNIQUE table-wide, so these are shaped to be
-    // impossible for a real entry to hold: a real hash is 64 hex characters.
+    // Since 00198 the table CHECKs the shape of both columns — `sha256` is 64
+    // lowercase hex characters and `path` is that hash plus a stored extension
+    // — so a readable stand-in no longer inserts. Both are UNIQUE table-wide,
+    // so the value is a hex word nothing real will collide with rather than
+    // something shaped differently from a hash.
+    const IDOR_SHA =
+      "1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f";
     await admin.from("product_images").insert({
       id: IMAGE,
       label: "IDOR fixture",
-      sha256: "idor-fixture",
-      path: "idor-fixture.png",
+      sha256: IDOR_SHA,
+      path: `${IDOR_SHA}.png`,
     });
 
     await admin
