@@ -33,8 +33,12 @@ import type { EmailTranslator } from "./translator";
  * browser cookie the server never sees), so it is formatted in the product's
  * zone and says so.
  *
- * Spike status: this template exists so the layout and the markdown rendering
- * can be iterated from the admin testing tool. No route sends it yet.
+ * Sent by `POST /api/gedu/sessions/email-report`, when a gedu presses **Send to
+ * parents** on a past session's card: one mail per active participation, plus
+ * one copy to the gedu with the admins in CC (that copy is the same template
+ * with the group's name in the child's slot). The admin testing tool at
+ * `/admin/testing` keeps its entry — it is still where the layout and the
+ * markdown rendering are iterated, against invented fixture reports.
  */
 
 export interface SessionReportEmailOptions {
