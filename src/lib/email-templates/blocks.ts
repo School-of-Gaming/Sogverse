@@ -1,4 +1,5 @@
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { BODY_TEXT_STYLE } from "./utils";
 
 /**
  * Content blocks the link-carrying templates share: buttons, bulleted steps and
@@ -144,7 +145,7 @@ export function bulletList(items: string[]): string {
   const rendered = items
     .map((item) => `<li style="margin:0 0 8px;">${item}</li>`)
     .join("");
-  return `<ul style="margin:0 0 16px;padding-left:20px;color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">${rendered}</ul>`;
+  return `<ul style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ul>`;
 }
 
 /** A bold lead-in above a list — a section label, not a second heading. */

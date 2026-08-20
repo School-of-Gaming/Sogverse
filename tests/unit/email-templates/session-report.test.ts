@@ -83,8 +83,13 @@ describe("buildSessionReportEmail", () => {
   it("keeps brand color out of the report body", () => {
     const html = buildSessionReportEmail(t, "en", base);
     // From the report's title to its last paragraph — the button below it is
-    // brand-filled by design.
-    const body = html.slice(html.indexOf("Lanterns over the Harbour"), html.indexOf("More building."));
+    // brand-filled by design. Both ends must be found, or the slice is empty
+    // and the assertion below passes on nothing.
+    const from = html.indexOf("Lanterns over the Harbour");
+    const to = html.indexOf("More building.");
+    expect(from).toBeGreaterThanOrEqual(0);
+    expect(to).toBeGreaterThan(from);
+    const body = html.slice(from, to);
     expect(body).not.toContain(BRAND.primary);
     expect(body).not.toContain(BRAND.secondary);
   });

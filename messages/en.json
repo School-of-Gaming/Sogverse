@@ -2910,7 +2910,7 @@
     "sessionReport": {
       "subject": "Session report – {productName}, {sessionDate}",
       "title": "Session report",
-      "intro": "Hi! Here’s {geduName}’s report from {gamerName}’s latest {productName} session.",
+      "intro": "Hi! Here’s {geduName}’s report from {gamerName}’s {productName} session.",
       "groupLabel": "Group",
       "dateLabel": "Date",
       "timeLabel": "Time",

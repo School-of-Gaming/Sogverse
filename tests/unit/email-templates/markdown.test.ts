@@ -28,13 +28,32 @@ describe("renderMarkdownForEmail", () => {
 
   it("renders bulleted and numbered lists", () => {
     const bullets = renderMarkdownForEmail("- one\n- two");
-    expect(bullets).toMatch(/<ul [^>]*padding-left:20px/);
+    // Indented by margin, not padding: Outlook ignores padding on lists.
+    expect(bullets).toMatch(/<ul [^>]*margin:0 0 0px 20px;padding:0;/);
     expect(bullets.match(/<li /g)).toHaveLength(2);
     expect(bullets).not.toContain("<p ");
 
     const numbered = renderMarkdownForEmail("1. one\n2. two");
     expect(numbered).toMatch(/<ol [^>]*>/);
     expect(numbered.match(/<li /g)).toHaveLength(2);
+  });
+
+  it("nests a sub-list inside its item", () => {
+    const html = renderMarkdownForEmail("- parent\n  - child\n- sibling");
+    expect(html).toMatch(/<li [^>]*>parent<ul [^>]*><li [^>]*>child<\/li><\/ul><\/li>/);
+    expect(html.match(/<ul /g)).toHaveLength(2);
+  });
+
+  it("wraps the items of a loose list in paragraphs, and not those of a tight one", () => {
+    const loose = renderMarkdownForEmail("- one\n\n- two");
+    expect(loose.match(/<li [^>]*><p /g)).toHaveLength(2);
+    const tight = renderMarkdownForEmail("- one\n- two");
+    expect(tight).not.toContain("<p ");
+  });
+
+  it("keeps a numbered list's starting number", () => {
+    expect(renderMarkdownForEmail("3. three\n4. four")).toContain('<ol start="3"');
+    expect(renderMarkdownForEmail("1. one\n2. two")).not.toContain("start=");
   });
 
   /**
@@ -47,6 +66,27 @@ describe("renderMarkdownForEmail", () => {
     expect(html).not.toContain("<a");
     expect(html).not.toContain("href");
     expect(html).not.toContain("evil.example");
+  });
+
+  /**
+   * The browser leaves a bare address as text; every mail client linkifies it.
+   * A word joiner after each dot keeps the words and defeats the pattern, for
+   * the autolink spelling and for an address simply typed into a sentence.
+   */
+  it("defuses address-shaped text so a mail client cannot linkify it", () => {
+    const html = renderMarkdownForEmail(
+      "Go to <https://evil.example/x>, or evil.example/y, or write to someone@example.com.",
+    );
+    for (const literal of ["evil.example", "example.com", "https://"]) {
+      expect(html).not.toContain(literal);
+    }
+    expect(html).toContain("https:&#8288;//evil.&#8288;example/x");
+    expect(html).toContain("someone@example.&#8288;com.</p>");
+    expect(html).not.toContain("<a");
+    // Ordinary prose is left alone.
+    expect(renderMarkdownForEmail("We met at 16.30, e.g. on Thursday.")).toBe(
+      renderMarkdownForEmail("We met at 16.30, e.g. on Thursday.").replace(/&#8288;/g, ""),
+    );
   });
 
   it("escapes text and never emits raw HTML from the source", () => {
@@ -104,7 +144,9 @@ describe("renderMarkdownForEmail", () => {
       "Para with **bold**, *em*, `code`, [link](https://a.example), ![img](https://a.example/i.png)  ",
       "hard break",
       "- a", "- b", "", "1. x", "2. y", "", "> quote", "", "---", "", "```", "fenced", "```",
-      "<div>raw</div>", "", "| a | b |", "|---|---|", "| 1 | 2 |",
+      "<div>raw</div>", "",
+      // Neither end enables GFM, so pipes are just text — kept here to prove it.
+      "| a | b |", "|---|---|", "| 1 | 2 |",
     ].join("\n");
     const emitted = tagsIn(renderMarkdownForEmail(everything));
     for (const tag of emitted) {

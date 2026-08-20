@@ -2,7 +2,7 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import type { List, ListItem, PhrasingContent, RootContent } from "mdast";
 import { DARK_THEME } from "@/lib/constants/colors";
-import { escapeHtml } from "./utils";
+import { BODY_TEXT_STYLE, escapeHtml } from "./utils";
 
 /**
  * Renders stored markdown — a gedu's session report — as the inline-styled HTML
@@ -15,15 +15,22 @@ import { escapeHtml } from "./utils";
  * component under `components/ui/`, and the parity test next to this file):
  * paragraphs, three heading levels, bold, italic, lists and line breaks.
  * Everything outside that set is **unwrapped to its text rather than dropped**,
- * which is the app's rule too — a pasted table still shows its words, a deeper
- * heading reads as a paragraph, a code span reads as plain text.
+ * which is the app's rule too — a deeper heading reads as a paragraph, a code
+ * span reads as plain text. Neither end enables GFM, so tables, strikethrough
+ * and footnotes never come out of the parser at all.
  *
- * **A link renders as its label and nothing else.** A report is written by a
- * gedu and read by a family, so a link in one is this platform pointing a
- * child's parent somewhere it does not control; the app refuses to render one,
- * and a mail that did would be the same sentence meaning two different things
- * depending on where it was read. Images have no text to unwrap to and vanish;
- * raw HTML in the source is never emitted.
+ * **A link renders as its label and nothing else — and nothing in the text is
+ * left for a mail client to turn into one.** A report is written by a gedu and
+ * read by a family, so a link in one is this platform pointing a child's parent
+ * somewhere it does not control; the app refuses to render one, and a mail that
+ * did would be the same sentence meaning two different things depending on
+ * where it was read. The inbox has a second way to grow a link that the browser
+ * does not: every major client linkifies anything *shaped* like an address in
+ * running text, so a bare `evil.example/x` or `someone@example.com` would come
+ * out clickable. Those runs are defused with a zero-width word joiner after
+ * each dot — the text reads identically, and no client's linkifier recognises
+ * it. Images have no text to unwrap to and vanish; raw HTML in the source is
+ * never emitted.
  *
  * **Every character of text is escaped.** The source is typed by a user, and
  * the output is spliced straight into the mail's HTML, so this is the one seam
@@ -54,8 +61,7 @@ export const EMAIL_MARKDOWN_ELEMENTS = [
 const parser = unified().use(remarkParse);
 
 export function renderMarkdownForEmail(markdown: string): string {
-  const tree = parser.parse(markdown);
-  return renderBlocks(tree.children);
+  return renderBlocks(parser.parse(markdown).children);
 }
 
 /**
@@ -68,8 +74,6 @@ interface Position {
   first: boolean;
   last: boolean;
 }
-
-const TEXT_STYLE = `color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;`;
 
 function margin(top: number, bottom: number, { first, last }: Position): string {
   return `margin:${first ? 0 : top}px 0 ${last ? 0 : bottom}px;`;
@@ -96,17 +100,19 @@ function flatten(nodes: RootContent[]): RootContent[] {
   );
 }
 
-/** Nodes with no text to unwrap to, so they leave no block behind. */
+/**
+ * Nodes that leave no block behind: raw HTML is dropped rather than rendered,
+ * and a rule, an image or a link definition has no words to keep. The one list
+ * of them — `renderBlock` consults it too, so a list item cannot emit an empty
+ * paragraph for a node the top level would have skipped.
+ */
 function emitsNothing(node: RootContent): boolean {
   switch (node.type) {
     case "html":
     case "thematicBreak":
     case "definition":
-    case "footnoteDefinition":
-    case "yaml":
     case "image":
     case "imageReference":
-    case "footnoteReference":
       return true;
     default:
       return false;
@@ -114,6 +120,7 @@ function emitsNothing(node: RootContent): boolean {
 }
 
 function renderBlock(node: RootContent, pos: Position): string {
+  if (emitsNothing(node)) return "";
   switch (node.type) {
     case "paragraph":
       return paragraph(renderInline(node.children), pos);
@@ -127,56 +134,27 @@ function renderBlock(node: RootContent, pos: Position): string {
     }
     case "list":
       return list(node, pos);
-    case "code":
-      return paragraph(escapeHtml(node.value), pos);
-    case "table":
-      // Not reachable from the editor (no GFM), kept for the unwrap rule: the
-      // cells' words survive, one row per line.
-      return paragraph(
-        node.children
-          .map((row) =>
-            row.children.map((cell) => renderInline(cell.children)).join(" "),
-          )
-          .join("<br />"),
-        pos,
-      );
-    case "listItem":
-    case "tableRow":
-    case "tableCell":
-      // Only meaningful inside their parents, which render them there; at the
-      // top level they have nothing to be part of, so their text is kept.
-      return paragraph(renderBlocksInline(node.children), pos);
     case "blockquote":
-      // Flattened away before this point; kept for exhaustiveness.
+      // Flattened away at the top level; this is a quote inside a list item.
       return renderBlocks(node.children);
-    case "html":
-    case "thematicBreak":
-    case "definition":
-    case "footnoteDefinition":
-    case "yaml":
-      return "";
+    case "code":
+      return paragraph(text(node.value), pos);
     default:
-      // A phrasing node at block level — the parser does not produce these, but
-      // the type admits them, and the unwrap rule says its text is kept.
-      return paragraph(renderInline([node]), pos);
+      // Anything else — a GFM construct neither end enables, a container with
+      // nothing to belong to — keeps its words, as the app does.
+      return paragraph(textOf(node), pos);
   }
 }
 
-/** Children of an orphaned container, rendered as one run of inline text. */
-function renderBlocksInline(nodes: RootContent[]): string {
-  return nodes
-    .map((child) =>
-      "children" in child
-        ? renderBlocksInline(child.children as RootContent[])
-        : "value" in child
-          ? escapeHtml(child.value)
-          : "",
-    )
-    .join(" ");
+/** The escaped text of any node, markup discarded. */
+function textOf(node: RootContent): string {
+  if ("children" in node) return node.children.map(textOf).join("");
+  if ("value" in node) return text(node.value);
+  return "";
 }
 
 function paragraph(inner: string, pos: Position): string {
-  return `<p style="${margin(0, 16, pos)}${TEXT_STYLE}">${inner}</p>`;
+  return `<p style="${margin(0, 16, pos)}${BODY_TEXT_STYLE}">${inner}</p>`;
 }
 
 /**
@@ -193,8 +171,10 @@ function heading(depth: 1 | 2 | 3, inner: string, pos: Position): string {
 }
 
 /**
- * Mirrors the shell's bullet-list helper: padding on the list so the markers
- * stay inside the card, and a small gap between items.
+ * The indent is a `margin-left`, not the `padding-left` the shell's flat
+ * bullet list uses: Outlook's Word engine ignores padding on list elements but
+ * honours margin, and this renderer emits *nested* lists, where an indent that
+ * does not happen turns the writer's structure into a flat one.
  *
  * A *tight* list (no blank lines between items) renders each item's paragraph
  * as bare text, the way the app does — wrapping it in `<p>` would give every
@@ -204,13 +184,13 @@ function list(node: List, pos: Position): string {
   const loose = node.spread || node.children.some((item) => item.spread);
   const tag = node.ordered ? "ol" : "ul";
   const start =
-    node.ordered && node.start !== null && node.start !== undefined && node.start !== 1
+    node.ordered && typeof node.start === "number" && node.start !== 1
       ? ` start="${node.start}"`
       : "";
   const items = node.children
     .map((item) => `<li style="margin:0 0 8px;">${listItem(item, loose)}</li>`)
     .join("");
-  return `<${tag}${start} style="${margin(0, 16, pos)}padding-left:20px;${TEXT_STYLE}">${items}</${tag}>`;
+  return `<${tag}${start} style="margin:0 0 ${pos.last ? 0 : 16}px 20px;padding:0;${BODY_TEXT_STYLE}">${items}</${tag}>`;
 }
 
 function listItem(item: ListItem, loose: boolean): string {
@@ -230,15 +210,14 @@ function renderInline(nodes: PhrasingContent[]): string {
 function renderPhrasing(node: PhrasingContent): string {
   switch (node.type) {
     case "text":
-      return escapeHtml(node.value);
+    case "inlineCode":
+      return text(node.value);
     case "strong":
       return `<strong>${renderInline(node.children)}</strong>`;
     case "emphasis":
       return `<em>${renderInline(node.children)}</em>`;
     case "break":
       return "<br />";
-    case "inlineCode":
-      return escapeHtml(node.value);
     case "link":
     case "linkReference":
     case "delete":
@@ -250,4 +229,28 @@ function renderPhrasing(node: PhrasingContent): string {
     case "html":
       return "";
   }
+}
+
+/** A run of text as it reaches the mail: escaped, and safe from linkifiers. */
+function text(value: string): string {
+  return defuseAutolinks(escapeHtml(value));
+}
+
+/**
+ * Anything a mail client might read as an address: a run with no whitespace
+ * containing a dot followed by two or more letters (`evil.example/x`,
+ * `https://www.evil.example`, `someone@example.com`). A word joiner (U+2060)
+ * goes in after every dot that a letter follows, and between the colon and the
+ * slashes of a scheme. It is zero-width, so the text reads the same; it breaks
+ * both the `.tld` and the `scheme://` patterns, so neither kind of linkifier
+ * matches. Prose is barely touched — `e.g.` has one letter after its dot,
+ * `klo 16.30` a digit, a sentence-ending dot nothing — and a `file.txt` that
+ * picks up a joiner loses nothing.
+ */
+const LINKIFIABLE_RUN = /\S+\.[A-Za-z]{2,}\S*/g;
+
+function defuseAutolinks(escaped: string): string {
+  return escaped.replace(LINKIFIABLE_RUN, (run) =>
+    run.replace(/\.(?=[A-Za-z])/g, ".&#8288;").replace(/:\/\//g, ":&#8288;//"),
+  );
 }

@@ -21,8 +21,6 @@ export interface SessionReportSample {
   id: string;
   /** Option label in the testing tool. */
   label: string;
-  /** Product-local calendar date, YYYY-MM-DD. */
-  sessionDate: string;
   /** ISO instant. */
   startsAt: string;
   /** ISO instant. */
@@ -37,7 +35,6 @@ export const SESSION_REPORT_SAMPLES: readonly SessionReportSample[] = [
   {
     id: "en",
     label: "English report – Lanterns over the Harbour",
-    sessionDate: "2026-08-20",
     startsAt: "2026-08-20T13:30:00+00:00",
     endsAt: "2026-08-20T15:00:00+00:00",
     timezone: "Europe/Helsinki",
@@ -76,7 +73,6 @@ export const SESSION_REPORT_SAMPLES: readonly SessionReportSample[] = [
   {
     id: "fi",
     label: "Finnish report – Lyhtyjä sataman ylle",
-    sessionDate: "2026-08-27",
     startsAt: "2026-08-27T13:30:00+00:00",
     endsAt: "2026-08-27T15:00:00+00:00",
     timezone: "Europe/Helsinki",

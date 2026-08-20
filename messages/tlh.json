@@ -2322,7 +2322,7 @@
     "sessionReport": {
       "subject": "poH ja’ghItlh – {productName}, {sessionDate}",
       "title": "poH ja’ghItlh",
-      "intro": "nuqneH! {productName} poH Qav {gamerName} ghompu’. {geduName} ja’ghItlh ghItlhpu’.",
+      "intro": "nuqneH! {productName} poH {gamerName} ghompu’. {geduName} ja’ghItlh ghItlhpu’.",
       "groupLabel": "ghom",
       "dateLabel": "jaj",
       "timeLabel": "poH",

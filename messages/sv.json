@@ -2278,7 +2278,7 @@
     "sessionReport": {
       "subject": "Rapport från passet – {productName}, {sessionDate}",
       "title": "Rapport från passet",
-      "intro": "Hej! Här är {geduName}s rapport från {gamerName}s senaste pass i {productName}.",
+      "intro": "Hej! Här är {geduName}s rapport från {gamerName}s pass i {productName}.",
       "groupLabel": "Grupp",
       "dateLabel": "Datum",
       "timeLabel": "Tid",

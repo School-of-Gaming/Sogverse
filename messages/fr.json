@@ -2278,7 +2278,7 @@
     "sessionReport": {
       "subject": "Compte rendu de la session – {productName}, {sessionDate}",
       "title": "Compte rendu de la session",
-      "intro": "Bonjour ! Voici le compte rendu de {geduName} sur la dernière session de {gamerName} dans {productName}.",
+      "intro": "Bonjour ! Voici le compte rendu de {geduName} sur la session de {gamerName} dans {productName}.",
       "groupLabel": "Groupe",
       "dateLabel": "Date",
       "timeLabel": "Heure",

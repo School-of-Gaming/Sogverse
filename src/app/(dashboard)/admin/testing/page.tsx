@@ -34,12 +34,20 @@ interface EmailResult {
 const selectClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-function isSelectField(field: TemplateField): field is Extract<TemplateField, { type: "select" }> {
-  return "type" in field && field.type === "select";
-}
-
-function isTextareaField(field: TemplateField): field is Extract<TemplateField, { type: "textarea" }> {
-  return "type" in field && field.type === "textarea";
+/**
+ * What an untouched field posts: a select its first option, a text input its
+ * placeholder — and a textarea whatever it holds, empty included, so its
+ * placeholder can be a hint and an empty value can mean "none".
+ */
+function fieldValue(field: TemplateField, typed: string | undefined): string {
+  switch (field.type) {
+    case "select":
+      return typed || field.options[0].value;
+    case "textarea":
+      return typed ?? "";
+    default:
+      return typed || field.placeholder;
+  }
 }
 
 // --- Page ---
@@ -116,10 +124,7 @@ export default function TestingPage() {
             locale: templateLocale,
             params: (() => {
               const raw = Object.fromEntries(
-                selectedTemplate.fields.map((f) => [
-                  f.key,
-                  templateParams[f.key] || (isSelectField(f) ? f.options[0].value : f.placeholder),
-                ]),
+                selectedTemplate.fields.map((f) => [f.key, fieldValue(f, templateParams[f.key])]),
               );
               return selectedTemplate.resolveParams ? selectedTemplate.resolveParams(raw) : raw;
             })(),
@@ -257,7 +262,7 @@ export default function TestingPage() {
                         label={field.label}
                         htmlFor={`param-${field.key}`}
                       >
-                        {isSelectField(field) ? (
+                        {field.type === "select" ? (
                           <select
                             id={`param-${field.key}`}
                             value={templateParams[field.key] ?? field.options[0].value}
@@ -270,7 +275,7 @@ export default function TestingPage() {
                               </option>
                             ))}
                           </select>
-                        ) : isTextareaField(field) ? (
+                        ) : field.type === "textarea" ? (
                           <Textarea
                             id={`param-${field.key}`}
                             rows={10}

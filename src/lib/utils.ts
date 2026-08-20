@@ -76,14 +76,37 @@ export function decimalToCents(value: string): number | null {
 // an explicit viewer zone, never the runtime default (CLAUDE.md viewer-zone
 // rule). The required `timeZone` is the type-level enforcement of that rule —
 // the compiler rejects a call that omits it, no lint heuristic needed.
+const TIME_OF_DAY: Intl.DateTimeFormatOptions = {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+};
+
 export function formatTime(date: Date | string, locale: string, timeZone: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat(locale, { ...TIME_OF_DAY, timeZone }).format(d);
+}
+
+/**
+ * A start–end range — one session's clock face — in the viewer's zone, with the
+ * zone's short name appended so a reader in another zone can see the
+ * adjustment. Both ends are formatted from their own instants: the end is
+ * never a duration string-added to the local start, which a DST transition
+ * inside the session would corrupt (CLAUDE.md viewer-zone rule).
+ */
+export function formatTimeRange(
+  start: Date | string,
+  end: Date | string,
+  locale: string,
+  timeZone: string,
+): string {
+  const s = typeof start === "string" ? new Date(start) : start;
+  const e = typeof end === "string" ? new Date(end) : end;
   return new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
+    ...TIME_OF_DAY,
     timeZone,
-  }).format(d);
+    timeZoneName: "short",
+  }).formatRange(s, e);
 }
 
 // `options` is required and must carry a `timeZone`: an instant always renders

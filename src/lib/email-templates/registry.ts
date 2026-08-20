@@ -15,16 +15,24 @@ import {
 } from "./session-report";
 import { SESSION_REPORT_SAMPLES } from "./fixtures/session-report-samples";
 import type { EmailTranslator } from "./translator";
+import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
 
 // --- Field types for the testing UI ---
 
+/**
+ * `type` is the discriminant of the field union, and a text field's is
+ * `undefined` — declared, so the union narrows on `field.type` everywhere
+ * rather than on whether the key happens to exist, which is what let a
+ * "has a type" guard claim the select *and* anything added after it.
+ */
 interface TextField {
   key: string;
   label: string;
   placeholder: string;
+  type?: undefined;
 }
 
 interface SelectField {
@@ -35,10 +43,9 @@ interface SelectField {
 }
 
 /**
- * A multi-line value — markdown, mostly. The testing page still falls back to
- * the placeholder when the field is left empty, so a textarea whose empty
- * state should *mean* empty (an override that is not in use) keeps its
- * placeholder blank and explains itself in the label.
+ * A multi-line value — markdown, mostly. Unlike a text input, an untouched
+ * textarea posts what it holds (empty included) rather than its placeholder,
+ * so the placeholder is a hint and an empty value can mean "none".
  */
 interface TextareaField {
   key: string;
@@ -198,25 +205,13 @@ function resolveSessionReport(
   const sample =
     SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
     SESSION_REPORT_SAMPLES[0];
-  const start = new Date(sample.startsAt);
-  const end = new Date(sample.endsAt);
-  // `dateStyle`/`timeStyle` cannot be mixed with component options, so the
-  // range is built from components; `hourCycle` mirrors the app's `formatTime`.
-  const sessionDate = new Intl.DateTimeFormat(locale, {
-    timeZone: sample.timezone,
-    dateStyle: "full",
-  }).format(start);
-  const sessionTime = new Intl.DateTimeFormat(locale, {
-    timeZone: sample.timezone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-    timeZoneName: "short",
-  }).formatRange(start, end);
   return {
     ...rest,
-    sessionDate,
-    sessionTime,
+    sessionDate: formatDate(sample.startsAt, locale, {
+      timeZone: sample.timezone,
+      dateStyle: "full",
+    }),
+    sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, sample.timezone),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
   };
 }
@@ -393,9 +388,9 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
       {
         key: "reportMarkdown",
-        label: "Report markdown (leave empty to send the sample; anything typed here replaces it)",
+        label: "Report markdown",
         type: "textarea",
-        placeholder: "",
+        placeholder: "Leave empty to send the selected sample. Anything typed here replaces it.",
       },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
     ],
