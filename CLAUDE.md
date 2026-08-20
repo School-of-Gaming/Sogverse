@@ -254,6 +254,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Email templates | `src/lib/email-templates/` |
 | Supabase clients & paged list reads | `src/lib/supabase/` |
 | Locations | `src/services/locations/` |
+| Product image catalogue | `src/services/product-images/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |

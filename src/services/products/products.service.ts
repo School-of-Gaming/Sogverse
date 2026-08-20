@@ -180,8 +180,8 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // relationship between these two tables. A second foreign key — an FK on the
 // derived `image_path` column is the tempting one — makes this embed ambiguous
 // and PostgREST refuses the whole query with PGRST201, which the admin product
-// page shows as "product not found". See the colocated
-// `src/services/product-images/CLAUDE.md`.
+// page shows as "product not found". The header of the migration that chose
+// not to add that key (supabase/migrations/00198) records the reasoning.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
