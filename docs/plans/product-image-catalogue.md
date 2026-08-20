@@ -454,6 +454,18 @@ app is live, relabel the heavily shared images through the dialog (≈44 renames
 images by bytes (no byte-level duplicates on staging), 15 rows created, 17 products
 relinked, 0 missing objects; a second run reports nothing to do.
 
+**Prod result (2026-08-20, ~15:50 UTC, owner present)**: 113 imaged products over 113
+distinct legacy paths (six products added since the 2026-08-19 audit), 44 distinct images
+by bytes — the two municipality-club pictures alone were stored 24 and 22 times — 44 rows
+created, 113 products relinked, 0 missing objects, 0 paths cleared. Verified by psql
+independently of the script: 44 entries each with an object, 113 linked, 0 legacy paths,
+0 products whose `image_path` disagrees with their entry; the bucket holds 157 objects
+(113 legacy awaiting `--delete-legacy` + 44 hash-named with the one-year cache header). A
+second run reports nothing to do. The last admin product edit before the run was 11:25
+UTC, four hours earlier. Labels came from the earliest-created product per image; eight
+distinct pictures share the label "Minecraft: Cozy Adventures" and one is "Testing Club
+(do not buy)" — the post-release relabel pass is real work, not a formality.
+
 ### Follow-through
 
 - **`TODO.md`**: rewrite the "Resize Product Images at Upload" item around content-addressed
