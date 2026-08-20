@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
@@ -186,6 +195,26 @@ function spinning(button: HTMLButtonElement): boolean {
 async function settle() {
   await act(async () => {});
 }
+
+/**
+ * The sent time is rendered in the viewer's zone, and the `TimezoneProvider`
+ * seed below is only the first render's answer: after mount the provider asks
+ * the runtime what zone it is really in and overrides the seed with that. On a
+ * Helsinki machine the two agree and the assertions on "20:30" pass for the
+ * wrong reason; on CI, which runs in UTC, the override wins and they fail. So
+ * the runtime zone is pinned for this file, the same way the other
+ * zone-sensitive unit tests do it — Node resets its default zone when
+ * `process.env.TZ` is assigned — and restored afterwards.
+ */
+let originalTZ: string | undefined;
+beforeAll(() => {
+  originalTZ = process.env.TZ;
+  process.env.TZ = "Europe/Helsinki";
+});
+afterAll(() => {
+  if (originalTZ === undefined) delete process.env.TZ;
+  else process.env.TZ = originalTZ;
+});
 
 beforeEach(() => {
   // The feed's shell reveals older history through an IntersectionObserver
