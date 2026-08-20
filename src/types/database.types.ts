@@ -1837,7 +1837,6 @@ export type Database = {
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
-          p_image_path?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -2144,7 +2143,6 @@ export type Database = {
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
           p_id: string
-          p_image_path?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string

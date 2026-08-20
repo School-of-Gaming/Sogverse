@@ -247,7 +247,9 @@ describe("POST /api/admin/products/create", () => {
     expect(mockUserUpdate).toHaveBeenCalledWith({ image_id: IMAGE_ID });
     expect(mockUserUpdateEq).toHaveBeenCalledWith("id", "new-prod-id");
     // The served path is never on the wire and never written here — a trigger
-    // derives it from the id this statement just wrote.
+    // derives it from the id this statement just wrote. Migration 00198 went
+    // further and dropped `p_image_path` from the RPC itself, so this now
+    // guards against reintroducing an argument the function no longer has.
     expect(mockUserRpc.mock.calls[0][1]).not.toHaveProperty("p_image_path");
   });
 

@@ -19,9 +19,11 @@ the only column an admin can edit.
 
 **`products.image_path` is derived by a database trigger and is never written by
 application code.** Application code writes `products.image_id`; the trigger fills the
-served path from the linked entry on every products write. Nothing here — no route, no
-service, no script — assigns a path to a product. If a path looks wrong, the link is
-wrong.
+served path from the linked entry on every products write, and NULLs it whenever
+`image_id` is NULL — on insert and update alike, whatever the statement said about the
+column. So "this product has no entry" and "this product has no picture" are the same
+sentence, and there is no third state. Nothing here — no route, no service, no script —
+assigns a path to a product. If a path looks wrong, the link is wrong.
 
 **Replace is a repoint, not an edit.** It resolves the new bytes to their entry
 (creating one if needed, inheriting the old entry's label) and then runs a single
@@ -43,6 +45,37 @@ it would break their entry instead. So the table is asked again for that path be
 bucket is touched, and anything short of a clear "no row names this" — a hit, or a
 failure to ask — keeps the bytes. Bytes nothing references cost storage; bytes a row
 references are somebody's picture.
+
+## The invariants live in the schema, not in the code that keeps them
+
+The rules above are not conventions this directory agrees to follow — each is enforced by
+the database, so code that gets one wrong fails loudly instead of leaving a row nobody
+notices:
+
+- **`sha256` is 64 lowercase hex characters** — a CHECK. The column *is* a picture's
+  identity, so a value that is not a hash is a row the bytes it claims to name can never
+  find again.
+- **`path` is exactly `<sha256>.<ext>`** — a CHECK, with `ext` from the accept list
+  described under "Uploads". The key cannot drift from the bytes it names.
+- **The trigger has no column list**, so no statement can name `image_path` and win — and
+  it derives the column on every write, so it is that column's *only* writer. This is why
+  nothing in application code may write it and why the product RPCs take no image
+  parameter at all.
+
+**There is deliberately no foreign key from `products.image_path` to
+`product_images(path)`, and adding one is a breaking change.** It looks like the missing
+half — let Postgres own "a served path is a catalogue path" — and it was written, applied
+to staging and reverted within the hour. PostgREST resolves an embed by finding *the*
+relationship between two tables; with two, it refuses the request with PGRST201 and every
+caller has to name the key it means. The admin product detail query embeds this table, so
+the observed effect was every admin product page reporting "product not found", caused by
+a migration alone. **Never add a second relationship between `products` and
+`product_images` without hinting every existing embed in the same change.** And the key
+would buy nothing here: the trigger above already is the guarantee.
+
+Should the bucket and the catalogue ever need reconciling, that is a join rather than a
+program: `product_images.path` against `storage.objects.name` for the `product-images`
+bucket, in both directions — a row with no object, and an object no row names.
 
 ## Reads have no routes; writes have four
 
@@ -82,12 +115,17 @@ caller. Two refusals carry a stable code for the UI to translate — over the ca
 type outside the accept list; everything else surfaces the route's own admin-facing
 English verbatim, as the neighbouring product routes do.
 
-**The accept list has exactly one definition**, held as a `Map` in the contracts module.
-The routes consult it and the cleanup script under `scripts/` imports the same function
-rather than restating the pairs. Both halves of that matter: two copies of one list drift,
-and an object literal keyed by a caller-supplied filename fragment answers `constructor`
-and `__proto__` from its prototype chain — which is how a file named `castle.constructor`
-once passed the 415 gate. A `Map` has no inherited keys.
+**The accept list has exactly one definition in this codebase**, held as a `Map` in the
+contracts module; every caller reaches it through the one resolver rather than restating
+the pairs. Two copies of one list drift — and an object literal keyed by a
+caller-supplied filename fragment answers `constructor` and `__proto__` from its
+prototype chain, which is how a file named `castle.constructor` once passed the 415 gate.
+A `Map` has no inherited keys.
+
+The database holds the only other copy, in the `path` CHECK described below, and the two
+lists differ by exactly one entry on purpose: `jpeg` is accepted on upload and normalised
+to `jpg` before anything is stored, so it appears in the map and not in the CHECK.
+Widening one without the other is a defect in whichever direction you get it wrong.
 
 A new entry's label is the one supplied, else the upload filename's stem, else a plain
 fallback — trimmed and capped rather than refused, because throwing away the bytes over a

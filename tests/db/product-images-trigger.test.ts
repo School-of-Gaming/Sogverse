@@ -6,10 +6,9 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * Coverage for the product image catalogue's schema half (migration 00196):
- * the `product_images` table, the `products.image_id` FK, and the
- * BEFORE INSERT OR UPDATE trigger that derives `products.image_path` from the
- * linked entry.
+ * Coverage for the product image catalogue's schema half — the `product_images`
+ * table (00196), the `products.image_id` FK and its trigger (00196), and the
+ * invariants 00198 moved out of application code and into the database.
  *
  * The single claim this file exists to prove is that **`image_path` cannot
  * disagree with `image_id`**. Everything downstream — every shop card, the
@@ -17,25 +16,43 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * `image_path` and knows nothing about the catalogue, so if that column can
  * drift from the link, the whole design is decorative.
  *
- * Four of the cases are the ordinary lifecycle (link, relink, unlink, and the
- * entry being deleted out from under a product). Two are the ones worth naming:
+ * Since 00198 the claim is total: `image_path` is the linked entry's path when
+ * there is a link and NULL when there is not, on INSERT and UPDATE alike, and
+ * whatever the statement itself said about the column. 00196 had one exception
+ * — a product with no entry kept whatever path it carried — because it shipped
+ * ahead of the code that created the links and had to leave ~110 pre-catalogue
+ * pictures alone. That fold-in is done, and the cases below assert the
+ * exception is gone rather than that it exists.
  *
- *   - **The FK's `SET NULL` fires the trigger.** A referential action is an
- *     ordinary UPDATE on the referencing table, so the trigger runs and blanks
- *     the path. That is load-bearing rather than incidental — "remove from
- *     catalogue" is implemented as a row delete and nothing else — and it is
- *     the kind of fact that is easier to assert than to argue about.
- *   - **An `update_product` call carrying a stale `p_image_path` is inert.**
- *     The RPC assigns `image_path` on every call and this migration does not
- *     touch it; the trigger's lack of a column list is what makes that
- *     assignment lose. If someone ever "tidies" the trigger by adding
- *     `UPDATE OF image_id`, this is the test that fails.
+ * Three of the cases are worth naming:
  *
- * And one case in the other direction: a product with **no** entry keeps
- * whatever `image_path` it carries. Every product in production is in that
- * state today, so the trigger not touching them is what makes this migration
- * safe to release on its own, ahead of any code.
+ *   - **The `image_id` FK's `SET NULL` fires the trigger.** A referential
+ *     action is an ordinary UPDATE on the referencing table, so the trigger
+ *     runs and blanks the path. That is load-bearing rather than incidental —
+ *     "remove from catalogue" is implemented as a row delete and nothing else.
+ *   - **`update_product` cannot influence `image_path` at all.** It used to
+ *     assign the column from a `p_image_path` parameter and lose to the
+ *     trigger; 00198 dropped both. The case below saves a linked product
+ *     through the RPC and requires its picture to survive untouched.
+ *   - **The table CHECKs its own shape.** `sha256` is 64 lowercase hex
+ *     characters and `path` is that hash plus a stored extension, so a row
+ *     whose key has drifted from the bytes it names cannot be written.
+ *
+ * **There is deliberately no foreign key on `products.image_path`, so there is
+ * no case asserting one.** `products` may have exactly one relationship to
+ * `product_images` — a second makes every PostgREST embed between them
+ * ambiguous (PGRST201) unless every caller hints it, and the admin product
+ * detail query embeds this table. The invariant such a key would enforce is
+ * carried by the trigger instead, which is sound because the trigger has no
+ * column list: every statement naming `image_path` is overwritten before any
+ * constraint could be consulted, with the entry's path for a linked product
+ * and with NULL for an unlinked one. The cases below are what prove that, and
+ * 00198's end-state block asserts the one-relationship rule when CI builds the
+ * database from `migrations/`.
  */
+
+/** A valid catalogue hash: 64 lowercase hex characters, from an 8-char seed. */
+const hex = (seed: string): string => seed.repeat(8);
 
 const LINKED_PRODUCT = "00000000-0000-0000-0000-000000000630";
 const RPC_PRODUCT = "00000000-0000-0000-0000-000000000631";
@@ -50,15 +67,26 @@ const PRODUCTS = [LINKED_PRODUCT, RPC_PRODUCT, LEGACY_PRODUCT];
 const ENTRIES = [ENTRY_A, ENTRY_B, ENTRY_DOOMED, ENTRY_RPC];
 
 /**
- * Catalogue fixtures. `sha256` and `path` are both UNIQUE table-wide, so these
- * values are shaped to be impossible for anything else to hold: a real hash is
- * 64 hex characters, and none of these is.
+ * Catalogue fixtures. `sha256` and `path` are both UNIQUE table-wide *and*
+ * CHECKed for shape since 00198, so these are real-shaped hashes built from
+ * repeating hex words — valid to the constraint, and not something a real
+ * file's digest will ever collide with.
  */
+const SHA_A = hex("aaaa1111");
+const SHA_B = hex("bbbb2222");
+const SHA_DOOMED = hex("cccc3333");
+const SHA_RPC = hex("dddd4444");
+
 const ENTRY_ROWS = [
-  { id: ENTRY_A, label: "Trigger fixture A", sha256: "fixture-a", path: "fixture-a.png" },
-  { id: ENTRY_B, label: "Trigger fixture B", sha256: "fixture-b", path: "fixture-b.png" },
-  { id: ENTRY_DOOMED, label: "Trigger fixture doomed", sha256: "fixture-doomed", path: "fixture-doomed.png" },
-  { id: ENTRY_RPC, label: "Trigger fixture rpc", sha256: "fixture-rpc", path: "fixture-rpc.png" },
+  { id: ENTRY_A, label: "Trigger fixture A", sha256: SHA_A, path: `${SHA_A}.png` },
+  { id: ENTRY_B, label: "Trigger fixture B", sha256: SHA_B, path: `${SHA_B}.png` },
+  {
+    id: ENTRY_DOOMED,
+    label: "Trigger fixture doomed",
+    sha256: SHA_DOOMED,
+    path: `${SHA_DOOMED}.png`,
+  },
+  { id: ENTRY_RPC, label: "Trigger fixture rpc", sha256: SHA_RPC, path: `${SHA_RPC}.png` },
 ];
 
 describe("product_images and the image_path trigger", () => {
@@ -118,15 +146,9 @@ describe("product_images and the image_path trigger", () => {
       await deleteTestProducts(admin, [LINKED_PRODUCT]);
       await createTestProduct(admin, { id: LINKED_PRODUCT });
 
-      // A product with no entry starts wherever it was put — the pre-catalogue
-      // state, and the baseline the link has to overwrite.
-      await admin
-        .from("products")
-        .update({ image_path: "legacy/before-the-catalogue.png" })
-        .eq("id", LINKED_PRODUCT);
       expect(await imageStateOf(LINKED_PRODUCT)).toEqual({
         image_id: null,
-        image_path: "legacy/before-the-catalogue.png",
+        image_path: null,
       });
 
       await admin
@@ -135,7 +157,7 @@ describe("product_images and the image_path trigger", () => {
         .eq("id", LINKED_PRODUCT);
       expect(await imageStateOf(LINKED_PRODUCT)).toEqual({
         image_id: ENTRY_A,
-        image_path: "fixture-a.png",
+        image_path: `${SHA_A}.png`,
       });
 
       await admin
@@ -144,7 +166,7 @@ describe("product_images and the image_path trigger", () => {
         .eq("id", LINKED_PRODUCT);
       expect(await imageStateOf(LINKED_PRODUCT)).toEqual({
         image_id: ENTRY_B,
-        image_path: "fixture-b.png",
+        image_path: `${SHA_B}.png`,
       });
 
       await admin
@@ -158,9 +180,10 @@ describe("product_images and the image_path trigger", () => {
     });
 
     it("ignores an image_path written alongside a live link", async () => {
-      // The direct-write version of the RPC case below: whatever a writer says
-      // about image_path, a linked product ends the statement on its entry's
-      // path. This is what the trigger's missing column list buys.
+      // Whatever a writer says about image_path, a linked product ends the
+      // statement on its entry's path. This is what the trigger's missing
+      // column list buys, and it is the whole of the guarantee — there is no
+      // constraint standing behind it.
       await deleteTestProducts(admin, [LINKED_PRODUCT]);
       await createTestProduct(admin, { id: LINKED_PRODUCT });
 
@@ -175,7 +198,7 @@ describe("product_images and the image_path trigger", () => {
         .eq("id", LINKED_PRODUCT);
       expect(await imageStateOf(LINKED_PRODUCT)).toEqual({
         image_id: ENTRY_A,
-        image_path: "fixture-a.png",
+        image_path: `${SHA_A}.png`,
       });
 
       // Even a statement that writes both at once, in the wrong order.
@@ -185,7 +208,7 @@ describe("product_images and the image_path trigger", () => {
         .eq("id", LINKED_PRODUCT);
       expect(await imageStateOf(LINKED_PRODUCT)).toEqual({
         image_id: ENTRY_B,
-        image_path: "fixture-b.png",
+        image_path: `${SHA_B}.png`,
       });
     });
 
@@ -217,52 +240,83 @@ describe("product_images and the image_path trigger", () => {
 
       expect(await imageStateOf(LEGACY_PRODUCT)).toEqual({
         image_id: ENTRY_A,
-        image_path: "fixture-a.png",
+        image_path: `${SHA_A}.png`,
       });
     });
+  });
 
-    it("leaves a product with no entry exactly as it was", async () => {
-      // The state every production row is in the moment this migration lands.
-      // If the trigger touched these, releasing it ahead of the app would blank
-      // ~107 pictures.
+  describe("a product with no entry has no picture", () => {
+    // 00196's one exception, inverted by 00198. It preserved an app-supplied
+    // path for an unlinked product so that pre-catalogue pictures survived a
+    // migration released ahead of the code that linked them; none is left, and
+    // the branch was the only way `image_path` could still hold something the
+    // catalogue does not name.
+
+    it("blanks a path written to an unlinked product on UPDATE", async () => {
       await deleteTestProducts(admin, [LEGACY_PRODUCT]);
       await createTestProduct(admin, { id: LEGACY_PRODUCT });
 
-      await admin
+      const written = await admin
         .from("products")
         .update({ image_path: "legacy/keep-me.png" })
         .eq("id", LEGACY_PRODUCT);
+      // Not an error — the write succeeds and is simply overruled. Nothing
+      // refuses a foreign path; the trigger replaces it.
+      expect(written.error).toBeNull();
+      expect(await imageStateOf(LEGACY_PRODUCT)).toEqual({
+        image_id: null,
+        image_path: null,
+      });
 
-      // An ordinary edit that names neither image column.
+      // And an ordinary edit that names neither image column leaves it NULL.
       await admin
         .from("products")
         .update({ seat_count: 12 })
         .eq("id", LEGACY_PRODUCT);
-
       expect(await imageStateOf(LEGACY_PRODUCT)).toEqual({
         image_id: null,
-        image_path: "legacy/keep-me.png",
+        image_path: null,
       });
+    });
 
-      // And an UPDATE that sets image_id to the NULL it already held is not an
-      // unlink — there was never a link to undo.
-      await admin
-        .from("products")
-        .update({ image_id: null })
-        .eq("id", LEGACY_PRODUCT);
+    it("blanks a path supplied on INSERT with no image_id", async () => {
+      await deleteTestProducts(admin, [LEGACY_PRODUCT]);
+
+      const { error } = await admin.from("products").insert({
+        id: LEGACY_PRODUCT,
+        product_type: "consumer_club",
+        billing_mode: "paid",
+        topic: "minecraft_java",
+        min_age: 8,
+        max_age: 18,
+        spoken_language_code: "en",
+        is_remote: true,
+        timezone: "UTC",
+        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        seat_count: 1,
+        waitlist_enabled: true,
+        is_visible: false,
+        status: "pending",
+        created_by: TEST_IDS.ADMIN,
+        image_id: null,
+        image_path: "legacy/before-the-catalogue.png",
+      });
+      expect(error).toBeNull();
 
       expect(await imageStateOf(LEGACY_PRODUCT)).toEqual({
         image_id: null,
-        image_path: "legacy/keep-me.png",
+        image_path: null,
       });
     });
   });
 
   it("nulls image_path when the entry itself is deleted", async () => {
-    // The FK is `ON DELETE SET NULL`, and a referential action is an ordinary
-    // UPDATE on the referencing table — so it fires the trigger like anything
-    // else. "Remove from catalogue" is a row delete and nothing more, so this
-    // is the whole of that feature's data path.
+    // The FK on image_id is `ON DELETE SET NULL`, and a referential action is
+    // an ordinary UPDATE on the referencing table — so it fires the trigger
+    // like anything else. "Remove from catalogue" is a row delete and nothing
+    // more, so this is the whole of that feature's data path — and it is the
+    // case that proves both columns end up NULL together, which is what makes
+    // "no entry" and "no picture" one state rather than two.
     await deleteTestProducts(admin, [LINKED_PRODUCT]);
     await createTestProduct(admin, { id: LINKED_PRODUCT });
     await seedEntries();
@@ -273,7 +327,7 @@ describe("product_images and the image_path trigger", () => {
       .eq("id", LINKED_PRODUCT);
     expect(await imageStateOf(LINKED_PRODUCT)).toEqual({
       image_id: ENTRY_DOOMED,
-      image_path: "fixture-doomed.png",
+      image_path: `${SHA_DOOMED}.png`,
     });
 
     const { error } = await admin
@@ -288,11 +342,12 @@ describe("product_images and the image_path trigger", () => {
     });
   });
 
-  it("keeps a linked product on its entry's path across an update_product call carrying a stale p_image_path", async () => {
-    // update_product assigns `image_path = p_image_path` on every call and this
-    // migration deliberately did not change it. The product form will keep
-    // sending whatever path it loaded, so for a linked product that value is
-    // always potentially stale — and has to lose.
+  it("leaves a linked product's picture untouched across an update_product call", async () => {
+    // update_product used to assign `image_path = p_image_path` on every call
+    // and lose to the trigger; 00198 dropped the parameter and the assignment
+    // together, so the RPC has no way to name the column at all. A product save
+    // that changes everything else therefore cannot move the picture — which is
+    // what the admin form relies on, since it sends no image field to the RPC.
     await deleteTestProducts(admin, [RPC_PRODUCT]);
     await seedEntries();
     await createTestProduct(admin, { id: RPC_PRODUCT });
@@ -315,7 +370,7 @@ describe("product_images and the image_path trigger", () => {
         {
           locale: "en",
           name: "Catalogue trigger fixture",
-          short_description: "Saved with a stale path",
+          short_description: "Saved without touching the picture",
         },
       ],
       p_topic: "minecraft_java",
@@ -328,13 +383,12 @@ describe("product_images and the image_path trigger", () => {
       p_timezone: "UTC",
       p_registration_opens_at: new Date().toISOString(),
       p_seat_count: 5,
-      p_image_path: "stale/what-the-form-loaded.png",
     });
     expect(error).toBeNull();
 
     expect(await imageStateOf(RPC_PRODUCT)).toEqual({
       image_id: ENTRY_RPC,
-      image_path: "fixture-rpc.png",
+      image_path: `${SHA_RPC}.png`,
     });
   });
 
@@ -347,8 +401,8 @@ describe("product_images and the image_path trigger", () => {
 
       const { error } = await admin.from("product_images").insert({
         label: "Same bytes, different name",
-        sha256: "fixture-a",
-        path: "fixture-a-duplicate.png",
+        sha256: SHA_A,
+        path: `${SHA_A}.webp`,
       });
 
       expect(error?.code).toBe("23505"); // unique_violation
@@ -359,23 +413,79 @@ describe("product_images and the image_path trigger", () => {
 
       const { error } = await admin.from("product_images").insert({
         label: "Same object, different hash",
-        sha256: "fixture-a-impostor",
-        path: "fixture-a.png",
+        sha256: hex("eeee5555"),
+        path: `${SHA_A}.png`,
       });
 
       expect(error?.code).toBe("23505");
     });
 
     it("refuses an empty label and one over 120 characters", async () => {
+      const sha = hex("0f0f0f0f");
       const empty = await admin
         .from("product_images")
-        .insert({ label: "", sha256: "fixture-empty-label", path: "fixture-empty-label.png" });
+        .insert({ label: "", sha256: sha, path: `${sha}.png` });
       expect(empty.error?.code).toBe("23514"); // check_violation
 
       const tooLong = await admin
         .from("product_images")
-        .insert({ label: "x".repeat(121), sha256: "fixture-long-label", path: "fixture-long-label.png" });
+        .insert({ label: "x".repeat(121), sha256: sha, path: `${sha}.png` });
       expect(tooLong.error?.code).toBe("23514");
+    });
+
+    it("refuses a sha256 that is not 64 lowercase hex characters", async () => {
+      // The column IS a picture's identity (00198). A value that is not a hash
+      // is a row the bytes it claims to name can never find again, which
+      // silently breaks dedup rather than breaking anything visible.
+      const cases = [
+        hex("AAAA1111"), // uppercase
+        "abc123", // too short
+        `${hex("aaaa1111")}0`, // too long
+        `${"z".repeat(8).repeat(8)}`, // not hex at all
+      ];
+
+      for (const sha256 of cases) {
+        const { error } = await admin
+          .from("product_images")
+          .insert({ label: "Bad hash", sha256, path: `${sha256}.png` });
+        expect(error?.code, `sha256 ${sha256} should have been refused`).toBe(
+          "23514",
+        );
+      }
+    });
+
+    it("refuses a path that is not its own sha256 plus a stored extension", async () => {
+      // The object key IS the bytes. A path that has drifted from the hash
+      // beside it is an entry pointing at somebody else's object — the one
+      // thing content addressing exists to make impossible.
+      const sha256 = hex("9999abcd");
+      const badPaths = [
+        "something-else.png", // unrelated key
+        sha256, // no extension
+        `${sha256}.gif`, // outside the accept list
+        `${sha256}.jpeg`, // accepted on upload, but normalised to .jpg first
+        `prefix/${sha256}.png`, // a folder is not part of the key
+        `${sha256}.png.png`,
+      ];
+
+      for (const path of badPaths) {
+        const { error } = await admin
+          .from("product_images")
+          .insert({ label: "Bad path", sha256, path });
+        expect(error?.code, `path ${path} should have been refused`).toBe(
+          "23514",
+        );
+      }
+
+      // The control: every extension the accept list stores is admitted.
+      for (const ext of ["jpg", "png", "webp", "avif", "svg"]) {
+        const good = hex(`7${ext.padEnd(3, "0")}abcd`.slice(0, 8));
+        const { error } = await admin
+          .from("product_images")
+          .insert({ label: `Good ${ext}`, sha256: good, path: `${good}.${ext}` });
+        expect(error, `extension .${ext} should be storable`).toBeNull();
+        await admin.from("product_images").delete().eq("sha256", good);
+      }
     });
 
     it("refuses an image_id with no catalogue entry behind it", async () => {

@@ -24,10 +24,14 @@ import { z } from "zod";
  * function where its content type belongs. A `Map` has no inherited keys, so
  * the question cannot arise.
  *
- * **This is the single definition of the accept list.** The routes reach it
- * through `resolveProductImageExtension` below, and the cleanup script under
- * `scripts/` imports the same function rather than restating the pairs — one
- * list, so the two ends cannot drift apart.
+ * **This is the single definition of the accept list in application code — and
+ * the database holds the other copy.** The routes reach it through
+ * `resolveProductImageExtension` below; a CHECK on `product_images.path`
+ * (migration 00198) requires the stored key to be `<sha256>.<ext>` with `ext`
+ * drawn from this same set *minus* `jpeg`, which is accepted on upload and
+ * normalised to `jpg` before anything is stored. The two must be widened in
+ * one change: an extension this map accepts and the CHECK refuses is an upload
+ * that fails after the bytes are already in the bucket.
  */
 export const PRODUCT_IMAGE_MIME_BY_EXT: ReadonlyMap<string, string> = new Map([
   ["jpg", "image/jpeg"],
