@@ -108,6 +108,13 @@ describe("Access Control", () => {
       // create_product alone now.) DELETE because clearing the link removes the
       // row rather than storing a NULL.
       ["product_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
+      // The picture catalogue (00196). Admin-only end to end: one FOR ALL
+      // policy on is_admin(), no anon grant and no anon policy, because nothing
+      // family-facing reads it — a product's picture is served from the derived
+      // products.image_path. The admin dialog uploads, renames, repoints and
+      // removes entries on the admin's own session client, which is why all
+      // four privileges are here rather than behind an RPC.
+      ["product_images", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],

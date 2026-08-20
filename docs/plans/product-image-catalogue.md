@@ -103,6 +103,28 @@ not dump or commit `supabase/schema.sql` on the branch.
 - **No RPC changes.** The routes write `image_id` in a second statement after the RPC, the
   image-last shape the create route already uses.
 
+**Deviations (step 1, as built — migration `00196_product_images_are_a_catalogue`)**
+
+- **The trigger raises rather than assigning NULL when the lookup finds nothing.** The
+  plan's `NEW.image_path := (SELECT path …)` has one failure mode worth closing: the FK
+  already guarantees the row exists, so an empty result can *only* mean the writer could
+  not see it through the table's admin-only RLS — and silently blanking a picture is the
+  worst available answer to that. The function raises with the FK's own SQLSTATE instead,
+  which is also what `validate_products_location` does for a location it cannot resolve.
+  It is unreachable for every writer that exists (all of them are admins or hold
+  BYPASSRLS; the migration header names them one by one), which is precisely why it can
+  be loud.
+- **The trigger function is SECURITY INVOKER**, matching `validate_products_location`
+  rather than reaching for DEFINER. Verified on staging: `update_product` is owned by
+  `postgres` (BYPASSRLS), `create_product` runs as the signed-in admin, `service_role`
+  holds BYPASSRLS, the routes' own statements run on an admin session, and no non-admin
+  can write `products` at all. DEFINER would buy no reachability and add an escalation
+  surface.
+- **Names**: function `apply_product_image_path()`, trigger `trg_products_apply_image_path`
+  (sorts between the two existing BEFORE triggers on `products`, neither of which touches
+  `image_path`), index `idx_products_image_id` (plain, not partial — the cleanup script
+  asks `image_id IS NULL`). DB tests: `tests/db/product-images-trigger.test.ts`.
+
 ### Release order — and its mechanism
 
 The CI header is explicit that the migrations job and Vercel promotion race, so a migration

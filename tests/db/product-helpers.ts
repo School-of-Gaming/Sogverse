@@ -53,6 +53,14 @@ import { TEST_IDS } from "./constants";
  *                  625, 628 — plus two groups 622/627 and a holiday calendar
  *                  626; one product per dashboard issue so a fixture built for
  *                  one cannot accidentally raise another)
+ *   630-636        product-images-trigger.test.ts (three products 630-632, and
+ *                  633-636 for the product_images entries it links them to —
+ *                  a different table, but kept in the one registry so nobody
+ *                  has to hold two allocation schemes in their head)
+ *   637            write-idor.test.ts's product_images entry. It sits outside
+ *                  that file's 5a4-5a9 block because the block was full when
+ *                  the catalogue arrived; the file is named twice here rather
+ *                  than the id being squeezed in somewhere it would collide.
  *   6ff            family-product-feed.test.ts's must-NOT-exist participation
  *                  id, backing the case that a nonexistent id is refused with
  *                  exactly the message someone else's id gets. Declared here
