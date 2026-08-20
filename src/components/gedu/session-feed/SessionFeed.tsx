@@ -125,7 +125,9 @@ interface SessionFeedProps {
  * because what replaces the button is the refetched row's own sent line. So the
  * in-flight flag is dropped on failure only — the successful path lets the
  * button unmount under it — and the counts the send answered with are held
- * beside it, for this render and no longer.
+ * beside it as a receipt for that one send: in this component's state for as
+ * long as the gedu stays on the page, across the refetch that puts the sent
+ * line up, and gone on a reload or a navigation.
  *
  * Which entry is open is the caller's state and persisting is the caller's
  * callback; whether a save is in flight and where focus lands afterwards are
@@ -169,9 +171,12 @@ export function SessionFeed({
    * going out and the line saying so in which a second send could be started.
    *
    * The counts are kept against an entry id so they cannot end up beside the
-   * wrong card, and they are deliberately **not** persisted: they are the
-   * receipt for one send, and a refetch or a reload is where they stop being
-   * true.
+   * wrong card, and they deliberately live here rather than being cleared by
+   * the refetch: the invalidation that follows a send lands almost at once, so
+   * anything cleared by it would be gone before it could be read. They are the
+   * receipt for one send — they stay for as long as this feed is mounted, and a
+   * reload or a navigation is where they stop existing, because nothing stores
+   * them.
    */
   const [sendingEntryId, setSendingEntryId] = useState<string | null>(null);
   const [sendResult, setSendResult] = useState<

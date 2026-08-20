@@ -202,6 +202,7 @@ interface AdminData {
   groupError?: { code: string; message: string } | null;
   admins?: { email: string }[];
   participations?: ParticipationFixture[];
+  participationsError?: { code: string; message: string } | null;
   parentLinks?: ParentLinkFixture[];
 }
 
@@ -211,12 +212,31 @@ const release: {
   filters: [string, unknown][];
 } = { patch: null, filters: [] };
 
+/**
+ * Every `(column, value)` the reads were filtered by, per table.
+ *
+ * Recorded rather than discarded because a filter is the whole meaning of these
+ * reads: a participations query that forgets `status` mails the families of
+ * seats that left the group, and a mock that swallowed the arguments would let
+ * that ship green. The route's own filters are asserted against these, so
+ * dropping one from the route fails a test rather than changing nothing.
+ */
+const reads: {
+  productGroups: [string, unknown][];
+  profiles: [string, unknown][];
+  participations: [string, unknown][];
+} = { productGroups: [], profiles: [], participations: [] };
+
+/** Every parent-link lookup the route made, so "none at all" can be asserted. */
+const parentLinkLookups: [string, string[]][] = [];
+
 function setupAdminClient(data: AdminData = {}) {
   const {
     group = GROUP_ROW,
     groupError = null,
     admins = ADMINS,
     participations = PARTICIPATIONS,
+    participationsError = null,
     parentLinks = PARENT_LINKS,
   } = data;
 
@@ -226,33 +246,51 @@ function setupAdminClient(data: AdminData = {}) {
     if (table === "product_groups") {
       return {
         select: () => ({
-          eq: () => ({
-            single: () =>
-              Promise.resolve({ data: groupError ? null : group, error: groupError }),
-          }),
+          eq: (column: string, value: unknown) => {
+            reads.productGroups.push([column, value]);
+            return {
+              single: () =>
+                Promise.resolve({ data: groupError ? null : group, error: groupError }),
+            };
+          },
         }),
       };
     }
     if (table === "profiles") {
       return {
         select: () => ({
-          eq: () => Promise.resolve({ data: admins, error: null }),
+          eq: (column: string, value: unknown) => {
+            reads.profiles.push([column, value]);
+            return Promise.resolve({ data: admins, error: null });
+          },
         }),
       };
     }
     if (table === "participations") {
       return {
         select: () => ({
-          eq: () => ({
-            eq: () => Promise.resolve({ data: participations, error: null }),
-          }),
+          eq: (columnA: string, valueA: unknown) => {
+            reads.participations.push([columnA, valueA]);
+            return {
+              eq: (columnB: string, valueB: unknown) => {
+                reads.participations.push([columnB, valueB]);
+                return Promise.resolve({
+                  data: participationsError ? null : participations,
+                  error: participationsError,
+                });
+              },
+            };
+          },
         }),
       };
     }
     if (table === "parent_gamer") {
       return {
         select: () => ({
-          in: () => Promise.resolve({ data: parentLinks, error: null }),
+          in: (column: string, values: string[]) => {
+            parentLinkLookups.push([column, values]);
+            return Promise.resolve({ data: parentLinks, error: null });
+          },
         }),
       };
     }
@@ -349,6 +387,10 @@ describe("POST /api/gedu/sessions/email-report", () => {
     vi.clearAllMocks();
     release.patch = null;
     release.filters = [];
+    reads.productGroups = [];
+    reads.profiles = [];
+    reads.participations = [];
+    parentLinkLookups.length = 0;
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
     mockGedu();
     claimSucceeds();
@@ -433,6 +475,36 @@ describe("POST /api/gedu/sessions/email-report", () => {
 
     expect(response.status).toBe(403);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  // -- What the reads are filtered by --
+  //
+  // A filter is the whole meaning of each of these reads, so each one is named
+  // here once. Drop one from the route and the matching case fails.
+
+  it("reads only this group's active participations", async () => {
+    await POST(createRequest());
+
+    // Both filters, in the order the route applies them. A read that forgot
+    // `status` would mail the families of children who have left the group.
+    expect(reads.participations).toEqual([
+      ["group_id", GROUP_ID],
+      ["status", "active"],
+    ]);
+  });
+
+  it("reads the group the claim named", async () => {
+    await POST(createRequest());
+
+    // The claim's own group id, not the body's: the claim is the authorization,
+    // so everything downstream is keyed by what it returned.
+    expect(reads.productGroups).toEqual([["id", CLAIM.group_id]]);
+  });
+
+  it("puts only admins in the staff copy's CC", async () => {
+    await POST(createRequest());
+
+    expect(reads.profiles).toEqual([["role", "admin"]]);
   });
 
   // -- The family fan-out --
@@ -607,6 +679,21 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(release.patch).toBeNull();
   });
 
+  it("asks for no parent links at all when the group has no active seats", async () => {
+    setupAdminClient({ participations: [], parentLinks: [] });
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ sent: 0, failed: 0, skipped: 0 });
+    // An `IN ()` over an empty list is a round trip whose answer is already
+    // known, so the empty roster makes no dependent read.
+    expect(parentLinkLookups).toEqual([]);
+    expect(familyMails()).toHaveLength(0);
+    expect(staffCopies()).toHaveLength(1);
+  });
+
   // -- The staff copy --
 
   it("sends exactly one staff copy, to the gedu with every admin in CC", async () => {
@@ -667,6 +754,33 @@ describe("POST /api/gedu/sessions/email-report", () => {
     });
     // Guarded on the stamp the claim wrote: a release must not undo a different
     // send that landed in between.
+    expect(release.filters).toEqual([
+      ["id", SESSION_ID],
+      ["report_emailed_at", CLAIMED_AT],
+    ]);
+  });
+
+  it("releases the claim and answers 500 when resolving the recipients fails", async () => {
+    // The claim commits before anything is sent, so every throw in the window
+    // between them would otherwise leave the session stamped as emailed with
+    // nobody mailed — and the next press told it had already gone out.
+    setupAdminClient({
+      participationsError: {
+        code: "57014",
+        message: "canceling statement due to statement timeout",
+      },
+    });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(500);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    expect(release.patch).toEqual({
+      report_emailed_at: null,
+      report_emailed_by: null,
+    });
+    // The same guard the every-send-failed path uses: a release must not undo a
+    // different send that landed in between.
     expect(release.filters).toEqual([
       ["id", SESSION_ID],
       ["report_emailed_at", CLAIMED_AT],

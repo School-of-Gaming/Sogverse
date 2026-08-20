@@ -30,10 +30,13 @@ interface SessionReportSendProps {
   /**
    * What the send that just happened did, or `null`.
    *
-   * Shown **once**, beside the sent line, and only when some of it failed — it
-   * comes from the response rather than from the row, so a refetch or a reload
-   * drops it, and a permanent-looking line that quietly disappears would be
-   * claiming to be a record when it is a receipt.
+   * A receipt for that one send, shown beside the sent line and only when some
+   * of it failed. It comes from the response rather than from the row, so the
+   * feed holds it in component state for as long as the gedu stays on the page
+   * — including across the refetch that swaps the button for the sent line,
+   * which is precisely what gives anybody the chance to read it — and it is
+   * gone on a reload or a navigation, because nothing about it is stored. The
+   * sent line is the record; these counts are not.
    */
   result: SessionReportSendResult | null;
   /** Why the last send was refused, or `null`. */
@@ -56,9 +59,10 @@ interface SessionReportSendProps {
  * therefore survives a reload, a second tab and another assigned gedu, which is
  * the whole point of recording the send on the row: the gedu who wonders
  * whether they already sent it can see that they did. The counts beside it are
- * the opposite kind of thing — a receipt for the send just made, held in memory
- * and gone on the next read — and they appear only when some of the mail did
- * not go out, because "6 sent, 0 failed" is what the line above already says.
+ * the opposite kind of thing — a receipt for the send just made, held in the
+ * feed's state while the gedu stays on the page and gone on a reload or a
+ * navigation — and they appear only when some of the mail did not go out,
+ * because "6 sent, 0 failed" is what the line above already says.
  *
  * **Confirming is deliberate friction.** The action mails every family in the
  * group and cannot be taken back, so it goes through a dialog that states the
@@ -81,12 +85,14 @@ export function SessionReportSend({
   return (
     <div className="space-y-1">
       {/* `min-h-9` is the small button's own height, so the sent line lands in
-          exactly the space the button vacated. */}
-      <div className="flex min-h-9 flex-wrap items-center gap-x-3 gap-y-1">
+          exactly the space the button vacated. Centered, because a button tucked
+          at the left edge under a long report read as part of the report's
+          furniture and was scrolled straight past. */}
+      <div className="flex min-h-9 flex-wrap items-center justify-center gap-x-3 gap-y-1">
         {sentAtLabel === null ? (
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             disabled={sending}
             onClick={() => setConfirming(true)}
@@ -117,7 +123,7 @@ export function SessionReportSend({
       </div>
 
       {error !== null && (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="text-center text-xs text-destructive">
           {error}
         </p>
       )}

@@ -25,6 +25,9 @@ import type { ProductType } from "@/types";
 
 const ROUTE_LABEL = "/api/gedu/sessions/email-report";
 
+/** The service-role client, named so the helpers below can take one. */
+type AdminClient = ReturnType<typeof createAdminClient>;
+
 /**
  * One recipient of one family mail — a seat resolved to somebody who can be
  * written to. `participationId` is what the link is keyed by and what a failure
@@ -72,6 +75,68 @@ function earlierLink<T extends { created_at: string | null; id: string }>(
 }
 
 /**
+ * Give the session back: clear the stamp the claim wrote, so the gedu's button
+ * returns and the send can be tried again.
+ *
+ * **Guarded on the exact timestamp that was claimed**, always — a release must
+ * never undo a *different* send that landed in between. Every path that
+ * abandons a claim goes through here, so there is one shape of the guard rather
+ * than one per exit. `group_sessions` grants nothing to `authenticated` and
+ * carries no policies, so this is the service-role client's to do.
+ *
+ * Its own failure is logged and swallowed: the caller is already on its way to
+ * an error answer, and a claim left standing is a stuck button rather than a
+ * lost mail.
+ */
+async function releaseClaim(
+  adminClient: AdminClient,
+  sessionId: string,
+  claimedAt: string,
+): Promise<void> {
+  const { error } = await adminClient
+    .from("group_sessions")
+    .update({ report_emailed_at: null, report_emailed_by: null })
+    .eq("id", sessionId)
+    .eq("report_emailed_at", claimedAt);
+
+  if (error) {
+    console.error(
+      `[${ROUTE_LABEL}] failed to release the claim on session ${sessionId}:`,
+      error,
+    );
+  }
+}
+
+/**
+ * The two fields a release needs, read off the raw RPC result without trusting
+ * the rest of it. Only reached when the claim's own schema has already refused
+ * the row: the stamp is written and committed by then, so the session has to be
+ * handed back with whatever can still be read safely.
+ */
+function readClaimStamp(
+  raw: unknown,
+): { id: string; reportEmailedAt: string } | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  if (!("id" in raw) || !("report_emailed_at" in raw)) return null;
+  const { id, report_emailed_at: claimedAt } = raw;
+  return typeof id === "string" && typeof claimedAt === "string"
+    ? { id, reportEmailedAt: claimedAt }
+    : null;
+}
+
+/**
+ * All a family-mail failure may say about itself in a log line.
+ *
+ * The Brevo wrapper throws `new Error(body.message)` and the provider's message
+ * can quote the address it rejected, so the reason is never passed through. The
+ * class name is a value this route controls; the provider's full reply is
+ * already logged, body and all, by the wrapper itself.
+ */
+function failureName(reason: unknown): string {
+  return reason instanceof Error ? reason.name : typeof reason;
+}
+
+/**
  * POST /api/gedu/sessions/email-report
  *
  * The gedu presses **Send to parents** on a past session's card, and this route
@@ -86,6 +151,14 @@ function earlierLink<T extends { created_at: string | null; id: string }>(
  * Succeeding proves the caller may do this, which is what lets the recipient
  * resolution below run on the admin client without a second gate; and because
  * the claim is one guarded UPDATE, two tabs cannot both send.
+ *
+ * **The claim is committed before anything is sent, so every way out of the
+ * window between them hands it back.** A group that will not read, an admin
+ * list that errors, a roster query that times out, a claim row that fails its
+ * own schema: each of those would otherwise leave a session stamped as emailed
+ * with not one family mailed, and the next press would be told it had already
+ * been sent. So the whole window is wrapped, and a throw releases the claim
+ * before it becomes the answer.
  *
  * **A send the user asked for is the outcome, so its failure is the answer.** If
  * every family mail fails, the claim is released and the route answers 502:
@@ -145,201 +218,229 @@ export const POST = defineRoute({
       throw claimError;
     }
 
-    const claim = sessionReportEmailClaim.parse(claimed);
-
-    // --- 2. Resolve the recipients -----------------------------------------
-    //
     // The service-role client from here down. What it reads is the group's
     // families' addresses and locales and every admin's address — none of it in
-    // an educator's own view, and none of it returned to them.
+    // an educator's own view, and none of it returned to them. Created before
+    // the parse because the parse is itself inside the claimed window: the row
+    // is already stamped, so even a shape this route cannot read has to be
+    // handed back.
     const adminClient = createAdminClient();
 
-    const { data: group, error: groupError } = await adminClient
-      .from("product_groups")
-      .select(
-        "name, product:products!inner(id, product_type, timezone, product_translations(locale, name))",
-      )
-      .eq("id", claim.group_id)
-      .single();
-
-    if (groupError) {
-      // The claim already proved this group exists and that the caller teaches
-      // it, so a miss here is a broken invariant rather than a bad request —
-      // a logged 500, not the 404 the shared table would give PGRST116.
-      throw new ApiError(
-        `claimed session ${claim.id} has no readable group: ${groupError.message}`,
-        500,
-      );
-    }
-
-    const { data: admins, error: adminsError } = await adminClient
-      .from("profiles")
-      .select("email")
-      .eq("role", "admin");
-
-    if (adminsError) throw adminsError;
-
-    const { data: participations, error: participationsError } =
-      await adminClient
-        .from("participations")
-        .select(
-          "id, participant_id, customer_id, participant:profiles!participations_participant_id_fkey!inner(first_name, email, role, locale)",
-        )
-        .eq("group_id", claim.group_id)
-        .eq("status", "active");
-
-    if (participationsError) throw participationsError;
-
-    // A seat whose holder is not their own paying customer belongs to somebody's
-    // child, and the contact is the parent linked earliest. Read for every seat
-    // in one trip rather than per seat — a group is a handful of rows.
-    const { data: parentLinks, error: parentLinksError } = await adminClient
-      .from("parent_gamer")
-      .select(
-        "id, gamer_id, created_at, parent:profiles!parent_gamer_parent_id_fkey!inner(email, locale)",
-      )
-      .in(
-        "gamer_id",
-        participations.map((participation) => participation.participant_id),
-      );
-
-    if (parentLinksError) throw parentLinksError;
-
-    const earliestParent = new Map<string, (typeof parentLinks)[number]>();
-    for (const link of parentLinks) {
-      const held = earliestParent.get(link.gamer_id);
-      earliestParent.set(
-        link.gamer_id,
-        held === undefined ? link : earlierLink(held, link),
-      );
-    }
-
-    const recipients: FamilyRecipient[] = [];
-    let skipped = 0;
-
-    for (const participation of participations) {
-      const participant = participation.participant;
-
-      // The roster RPC's exact test for "an adult holding their own seat", role
-      // check included. Id equality alone would let a row with a gamer's id
-      // transposed into `customer_id` put the synthetic
-      // `@gamer.sogverse.internal` handle — which is not a mailbox — in front of
-      // a family mail. The roster is also where the confirm dialog counts the
-      // seats it is about to mail, so the two resolutions have to be one.
-      const isSelfSeat =
-        participation.participant_id === participation.customer_id &&
-        participant.role === "customer";
-
-      const contact = isSelfSeat
-        ? { email: participant.email, locale: participant.locale }
-        : earliestParent.get(participation.participant_id)?.parent;
-
-      if (!contact) {
-        // Neither a linked parent nor an adult's own address. Counted, not
-        // failed: nothing went wrong with a send that never had a destination,
-        // and the staff copy is how that gap reaches a human.
-        skipped += 1;
-        continue;
-      }
-
-      recipients.push({
-        participationId: participation.id,
-        gamerName: participant.first_name,
-        email: contact.email,
-        locale: resolveLocale(contact.locale),
-      });
-    }
-
-    // --- 3. The family mails, all at once ----------------------------------
-    const facts: SessionFacts = {
-      sessionId: claim.id,
-      startsAt: claim.starts_at,
-      endsAt: claim.ends_at,
-      reportMarkdown: claim.report,
-      groupName: group.name,
-      geduName: profile.first_name,
-      productId: group.product.id,
-      productType: group.product.product_type,
-      productTimezone: group.product.timezone,
-      productTranslations: group.product.product_translations,
-      // The TRUSTED origin, never the raw Host header: these links go to
-      // families who have every reason to trust them.
-      origin: getOrigin(request),
-    };
-
-    // Settled together, so one rejection does not stop the rest and the whole
-    // fan-out costs one Brevo round trip of wall time rather than N.
-    const outcomes = await Promise.allSettled(
-      recipients.map((recipient) => sendFamilyMail(recipient, facts)),
-    );
-
-    let sent = 0;
-    let failed = 0;
-    outcomes.forEach((outcome, index) => {
-      if (outcome.status === "fulfilled") {
-        sent += 1;
-        return;
-      }
-      failed += 1;
-      // Ids, never addresses: the session and the seat are enough to find the
-      // family in the admin UI, and a log line is the wrong place for a mailbox.
-      console.error(
-        `[${ROUTE_LABEL}] family mail failed for session ${facts.sessionId}, participation ${recipients[index].participationId}:`,
-        outcome.reason,
-      );
-    });
-
-    // --- 4. Nobody got it → release the claim ------------------------------
-    if (sent === 0 && failed > 0) {
-      // Guarded on the timestamp the claim wrote, so a release can never undo a
-      // *different* send that landed in between. `group_sessions` grants nothing
-      // to `authenticated` and carries no policies, so this is the service-role
-      // client's to do.
-      const { error: releaseError } = await adminClient
-        .from("group_sessions")
-        .update({ report_emailed_at: null, report_emailed_by: null })
-        .eq("id", claim.id)
-        .eq("report_emailed_at", claim.report_emailed_at);
-
-      if (releaseError) {
+    const parsedClaim = sessionReportEmailClaim.safeParse(claimed);
+    if (!parsedClaim.success) {
+      const stamp = readClaimStamp(claimed);
+      if (stamp) {
+        await releaseClaim(adminClient, stamp.id, stamp.reportEmailedAt);
+      } else {
+        // Nothing to guard a release on. Logged loudly rather than guessed at:
+        // clearing the stamp unguarded could undo a send that did happen.
         console.error(
-          `[${ROUTE_LABEL}] failed to release the claim on session ${facts.sessionId}:`,
-          releaseError,
+          `[${ROUTE_LABEL}] the claim result carried no readable id and timestamp, so the stamp could not be released`,
+        );
+      }
+      throw parsedClaim.error;
+    }
+
+    const claim = parsedClaim.data;
+
+    try {
+      // --- 2. Resolve the recipients ---------------------------------------
+      const { data: group, error: groupError } = await adminClient
+        .from("product_groups")
+        .select(
+          "name, product:products!inner(id, product_type, timezone, product_translations(locale, name))",
+        )
+        .eq("id", claim.group_id)
+        .single();
+
+      if (groupError) {
+        // The claim already proved this group exists and that the caller teaches
+        // it, so a miss here is a broken invariant rather than a bad request —
+        // a logged 500, not the 404 the shared table would give PGRST116.
+        throw new ApiError(
+          `claimed session ${claim.id} has no readable group: ${groupError.message}`,
+          500,
         );
       }
 
-      return NextResponse.json(
-        {
-          error:
-            "No family received the report — every email failed to send. Nothing was recorded; please try again.",
-        },
-        { status: 502 },
-      );
-    }
+      const { data: admins, error: adminsError } = await adminClient
+        .from("profiles")
+        .select("email")
+        .eq("role", "admin");
 
-    // --- 5. The staff copy --------------------------------------------------
-    //
-    // One mail, not one per family: the gedu keeps a record of what went out and
-    // the admins can see reports reaching families, at a seventh of the inbox
-    // noise a BCC on every send would cost. Its failure is logged and changes
-    // nothing — the families are the outcome, this is the record.
-    try {
-      await sendStaffCopy({
-        facts,
-        geduEmail: profile.email,
-        geduLocale: resolveLocale(profile.locale),
-        adminEmails: admins.map((admin) => admin.email),
+      if (adminsError) throw adminsError;
+
+      const { data: participations, error: participationsError } =
+        await adminClient
+          .from("participations")
+          .select(
+            "id, participant_id, customer_id, participant:profiles!participations_participant_id_fkey!inner(first_name, email, role, locale)",
+          )
+          .eq("group_id", claim.group_id)
+          .eq("status", "active");
+
+      if (participationsError) throw participationsError;
+
+      // A seat whose holder is not their own paying customer belongs to
+      // somebody's child, and the contact is the parent linked earliest. Read
+      // for every seat in one trip rather than per seat — a group is a handful
+      // of rows — and not at all when there are no seats: an `IN ()` over an
+      // empty list is a round trip whose answer is already known.
+      const parentLinks =
+        participations.length === 0
+          ? []
+          : await readParentLinks(
+              adminClient,
+              participations.map((participation) => participation.participant_id),
+            );
+
+      const earliestParent = new Map<string, (typeof parentLinks)[number]>();
+      for (const link of parentLinks) {
+        const held = earliestParent.get(link.gamer_id);
+        earliestParent.set(
+          link.gamer_id,
+          held === undefined ? link : earlierLink(held, link),
+        );
+      }
+
+      const recipients: FamilyRecipient[] = [];
+      let skipped = 0;
+
+      for (const participation of participations) {
+        const participant = participation.participant;
+
+        // The roster RPC's exact test for "an adult holding their own seat",
+        // role check included. Id equality alone would let a row with a gamer's
+        // id transposed into `customer_id` put the synthetic
+        // `@gamer.sogverse.internal` handle — which is not a mailbox — in front
+        // of a family mail. The roster is also where the confirm dialog counts
+        // the seats it is about to mail, so the two resolutions have to be one.
+        const isSelfSeat =
+          participation.participant_id === participation.customer_id &&
+          participant.role === "customer";
+
+        const contact = isSelfSeat
+          ? { email: participant.email, locale: participant.locale }
+          : earliestParent.get(participation.participant_id)?.parent;
+
+        if (!contact) {
+          // Neither a linked parent nor an adult's own address. Counted, not
+          // failed: nothing went wrong with a send that never had a destination,
+          // and the staff copy is how that gap reaches a human.
+          skipped += 1;
+          continue;
+        }
+
+        recipients.push({
+          participationId: participation.id,
+          gamerName: participant.first_name,
+          email: contact.email,
+          locale: resolveLocale(contact.locale),
+        });
+      }
+
+      // --- 3. The family mails, all at once --------------------------------
+      const facts: SessionFacts = {
+        sessionId: claim.id,
+        startsAt: claim.starts_at,
+        endsAt: claim.ends_at,
+        reportMarkdown: claim.report,
+        groupName: group.name,
+        geduName: profile.first_name,
+        productId: group.product.id,
+        productType: group.product.product_type,
+        productTimezone: group.product.timezone,
+        productTranslations: group.product.product_translations,
+        // The TRUSTED origin, never the raw Host header: these links go to
+        // families who have every reason to trust them.
+        origin: getOrigin(request),
+      };
+
+      // Settled together, so one rejection does not stop the rest and the whole
+      // fan-out costs one Brevo round trip of wall time rather than N.
+      const outcomes = await Promise.allSettled(
+        recipients.map((recipient) => sendFamilyMail(recipient, facts)),
+      );
+
+      let sent = 0;
+      let failed = 0;
+      outcomes.forEach((outcome, index) => {
+        if (outcome.status === "fulfilled") {
+          sent += 1;
+          return;
+        }
+        failed += 1;
+        // Ids and a class name, never an address and never the provider's own
+        // words: the session and the seat are enough to find the family in the
+        // admin UI, and Brevo's message can quote the mailbox it rejected. The
+        // full provider reply is already in the log — the Brevo wrapper prints
+        // the response body itself before it throws.
+        console.error(
+          `[${ROUTE_LABEL}] family mail failed for session ${facts.sessionId}, participation ${recipients[index].participationId}: ${failureName(outcome.reason)}`,
+        );
       });
-    } catch (error) {
-      console.error(
-        `[${ROUTE_LABEL}] staff copy failed for session ${facts.sessionId}:`,
-        error,
-      );
-    }
 
-    return { sent, failed, skipped };
+      // --- 4. Nobody got it → release the claim ----------------------------
+      if (sent === 0 && failed > 0) {
+        await releaseClaim(adminClient, claim.id, claim.report_emailed_at);
+
+        return NextResponse.json(
+          {
+            error:
+              "No family received the report — every email failed to send. Nothing was recorded; please try again.",
+          },
+          { status: 502 },
+        );
+      }
+
+      // --- 5. The staff copy ------------------------------------------------
+      //
+      // One mail, not one per family: the gedu keeps a record of what went out
+      // and the admins can see reports reaching families, at a seventh of the
+      // inbox noise a BCC on every send would cost. Its failure is logged and
+      // changes nothing — the families are the outcome, this is the record.
+      try {
+        await sendStaffCopy({
+          facts,
+          geduEmail: profile.email,
+          geduLocale: resolveLocale(profile.locale),
+          adminEmails: admins.map((admin) => admin.email),
+        });
+      } catch (error) {
+        console.error(
+          `[${ROUTE_LABEL}] staff copy failed for session ${facts.sessionId}:`,
+          error,
+        );
+      }
+
+      return { sent, failed, skipped };
+    } catch (error) {
+      // Anything that threw between the stamp and the tally leaves a session
+      // marked as emailed with nobody mailed, so the claim goes back before the
+      // failure becomes the answer. The 502 above has already returned by this
+      // point, so a released claim is never released twice.
+      await releaseClaim(adminClient, claim.id, claim.report_emailed_at);
+      throw error;
+    }
   },
 });
+
+/**
+ * Every parent link for a set of children, with the parent profile embedded.
+ * A function rather than an inline read so the empty-roster case can skip it
+ * without the call site having to name the row shape the select produces.
+ */
+async function readParentLinks(adminClient: AdminClient, gamerIds: string[]) {
+  const { data, error } = await adminClient
+    .from("parent_gamer")
+    .select(
+      "id, gamer_id, created_at, parent:profiles!parent_gamer_parent_id_fkey!inner(email, locale)",
+    )
+    .in("gamer_id", gamerIds);
+
+  if (error) throw error;
+  return data;
+}
 
 /**
  * One family's mail. Everything locale-shaped is resolved here, per recipient:

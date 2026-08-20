@@ -103,8 +103,13 @@ sent state survive a reload, a second tab and a second assigned gedu, and it is
 why the affordance can be a button one moment and a permanent line the next
 without anything else on the card moving. Counts from a single send — how many
 mails went out, how many the provider refused — are the opposite kind of fact:
-they are a receipt, they are held for that render only, and they must not be
-dressed up as part of the record.
+they are a receipt for the send just made, not part of the record. A receipt has
+to survive long enough to be read, so it is held in the sending surface's own
+state for as long as the educator stays on the page — through the refetch that
+replaces the button with the sent line, which is the very moment they would
+otherwise vanish — and it is gone on a reload or a navigation, because nothing
+stores it. The line saying the report was sent is the record; the counts beside
+it never pretend to be.
 
 **Rule: this derivation exists twice — in TypeScript for the card and in SQL for
 the dashboard badge — and a change to one is a change to both, in the same

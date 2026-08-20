@@ -96,7 +96,7 @@ interface SessionFeedItemProps {
   recipientCount: number;
   /** Whether this entry's send is in flight. Owned by the feed, like the save. */
   sending: boolean;
-  /** The counts the last send answered with, shown once. `null` for none. */
+  /** The counts the last send answered with — a receipt, not the record. */
   sendResult: SessionReportSendResult | null;
   /** Why this entry's last send was refused, or `null`. */
   sendError: string | null;
