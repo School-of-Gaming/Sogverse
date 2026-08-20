@@ -12,6 +12,7 @@ import {
   type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
+  type SessionReportSendResult,
 } from "@/components/gedu/session-feed";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -195,6 +196,12 @@ interface GeduProductPageBodyProps {
     draft: SessionEntryDraft,
   ) => void | Promise<void>;
   /**
+   * Email one session's report to the group's families. **Awaited by the
+   * feed**, which disables the button before it runs and leaves it disabled
+   * until the sent line takes its place; a rejection is what hands it back.
+   */
+  onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
+  /**
    * Save a roster member's game username, on whichever platform this product's
    * topic is about. A gedu is the person who finds out a name is wrong —
    * mid-session, when the server doesn't recognise it — so the roster is where
@@ -253,6 +260,7 @@ export function GeduProductPageBody({
   editingEntryId,
   onEditEntry,
   onSaveEntry,
+  onSendReport,
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
@@ -446,6 +454,7 @@ export function GeduProductPageBody({
               editingEntryId={editingEntryId}
               onEditEntry={onEditEntry}
               onSaveEntry={onSaveEntry}
+              onSendReport={onSendReport}
             />
           ) : (
             <Card>

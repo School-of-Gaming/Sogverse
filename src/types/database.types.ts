@@ -358,6 +358,8 @@ export type Database = {
           group_id: string
           id: string
           report: string | null
+          report_emailed_at: string | null
+          report_emailed_by: string | null
           session_date: string
           starts_at: string
           updated_at: string
@@ -371,6 +373,8 @@ export type Database = {
           group_id: string
           id?: string
           report?: string | null
+          report_emailed_at?: string | null
+          report_emailed_by?: string | null
           session_date: string
           starts_at: string
           updated_at?: string
@@ -384,6 +388,8 @@ export type Database = {
           group_id?: string
           id?: string
           report?: string | null
+          report_emailed_at?: string | null
+          report_emailed_by?: string | null
           session_date?: string
           starts_at?: string
           updated_at?: string
@@ -409,6 +415,20 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_report_emailed_by_fkey"
+            columns: ["report_emailed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_report_emailed_by_fkey"
+            columns: ["report_emailed_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
           {
@@ -1770,6 +1790,10 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
+      claim_group_session_report_email: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: Json
+      }
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
@@ -1813,7 +1837,6 @@ export type Database = {
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
-          p_image_path?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -2120,7 +2143,6 @@ export type Database = {
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
           p_id: string
-          p_image_path?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string

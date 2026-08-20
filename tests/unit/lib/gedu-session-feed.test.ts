@@ -60,6 +60,9 @@ function row(
     // calendar math, and every case here is indifferent to who touched the row.
     updated_by: null,
     updated_by_first_name: null,
+    // Never emailed by default. The completeness derivation reads it, so a case
+    // about a finished session says so by overriding this.
+    report_emailed_at: null,
     attendance: {},
     ...fields,
   };
@@ -248,6 +251,48 @@ describe("buildGeduSessionFeed — the last editor", () => {
     const gap = byDate(entries, "2026-03-02");
     expect(gap?.kind).toBe("no_record");
     expect(gap).not.toHaveProperty("lastEditedBy");
+  });
+});
+
+/**
+ * The third thing a session owes travels through the merge as an **instant**,
+ * because the card renders it in the viewer's zone like every other clock face
+ * in the feed. Whether it is set is what decides between the Send to parents
+ * button and the permanent sent line, so a row that lost it on the way through
+ * would offer to mail a report the families already have.
+ */
+describe("buildGeduSessionFeed — the report's send", () => {
+  it("maps the stamp onto the past entry as an instant", () => {
+    const entries = build({
+      sessions: [
+        row("2026-03-16", {
+          report: "# Redstone",
+          report_emailed_at: "2026-03-16T18:00:00.000Z",
+        }),
+      ],
+    });
+    const entry = byDate(entries, "2026-03-16");
+    expect(entry).toMatchObject({ kind: "past" });
+    expect(
+      entry?.kind === "past" ? entry.reportEmailedAt?.toISOString() : null,
+    ).toBe("2026-03-16T18:00:00.000Z");
+  });
+
+  it("answers null for a row nobody has emailed", () => {
+    const entries = build({
+      sessions: [row("2026-03-16", { report: "# Redstone" })],
+    });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      reportEmailedAt: null,
+    });
+  });
+
+  it("answers null on an occurrence with no stored row behind it", () => {
+    // Nothing has been written, so nothing can have been sent — the same
+    // answer, by a different route.
+    expect(byDate(build(), "2026-03-16")).toMatchObject({
+      reportEmailedAt: null,
+    });
   });
 });
 

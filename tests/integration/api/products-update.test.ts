@@ -364,7 +364,9 @@ describe("POST /api/admin/products/[id]/update", () => {
     expect(mockUserUpdate).toHaveBeenCalledWith({ image_id: IMAGE_ID });
     expect(mockUserUpdateEq).toHaveBeenCalledWith("id", PRODUCT_ID);
     // The served column is derived by a database trigger, so the route neither
-    // sends a path to the RPC nor writes one itself.
+    // sends a path to the RPC nor writes one itself — and migration 00198
+    // dropped `p_image_path` from the RPC entirely, so this now guards against
+    // reintroducing an argument the function no longer has.
     expect(mockUserRpc.mock.calls[0][1]).not.toHaveProperty("p_image_path");
   });
 

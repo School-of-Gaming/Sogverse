@@ -43,6 +43,14 @@ export {
   PartialSessionSaveError,
   isPartialSessionSaveError,
 } from "./partial-save";
+export {
+  SessionReportSendError,
+  sessionReportSendFailure,
+} from "./send-report";
+export type {
+  SessionReportSendFailure,
+  SessionReportSendResult,
+} from "./send-report";
 export type {
   AttendanceMarks,
   FutureSessionFeedEntry,

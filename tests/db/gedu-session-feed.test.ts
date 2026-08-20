@@ -2,10 +2,13 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
+  SESSION_REPORT_ALREADY_SENT_SQLSTATE,
+  SESSION_REPORT_NO_REPORT_SQLSTATE,
   SUPPORTED_ATTENDANCE_STATUSES,
   attendanceMarkResult,
   geduAssignmentSummaries,
   geduGroupFeed,
+  sessionReportEmailClaim,
   siteNotesResult,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { groupMemberMinecraftResult } from "@/services/minecraft/minecraft.contracts";
@@ -41,6 +44,15 @@ import {
  *      twin, which is the same guard over a bigint key instead of a text one. A test
  *      where the attacker fails the role check as well proves much less than
  *      one where only the target check stands between them and the row.
+ *
+ * Since 00197 there is a fourth write on the surface and it is a different kind
+ * of thing: `claim_group_session_report_email` does not record what happened in
+ * the room, it CLAIMS the one send of the report to the group's families. It
+ * carries the same role and assignment gates as the rest, and two refusals of
+ * its own — no report to send, and already sent — each with its own SQLSTATE,
+ * because the route answers them differently. Claiming is also the third thing a
+ * session owes: the summaries block at the foot of this file is where that is
+ * pinned.
  *
  * Plus the two rules that are easy to state and easy to lose: attendance opens
  * at the session's scheduled start (roll call during the session, never
@@ -284,6 +296,12 @@ describe("gedu session feed", () => {
           p_roblox_username: "Defaced",
         });
         expect(roblox.error?.code).toBe("42501");
+
+        const claim = await client.rpc("claim_group_session_report_email", {
+          p_group_id: GROUP_MINE,
+          p_session_date: YESTERDAY,
+        });
+        expect(claim.error?.code).toBe("42501");
       }
     });
   });
@@ -314,6 +332,35 @@ describe("gedu session feed", () => {
         .select("*", { count: "exact", head: true })
         .eq("group_id", GROUP_OTHER);
       expect(count).toBe(0);
+    });
+
+    it("refuses a gedu claiming the send on a group they do not teach", async () => {
+      // The report exists and is perfectly sendable — what is missing is the
+      // assignment, which is the only thing standing between this caller and
+      // every family address on somebody else's roster. It is refused before
+      // the body looks for a session, so the answer is 42501 and not "no
+      // report", and the row is left unclaimed for the gedu who does teach it.
+      await admin.from("group_sessions").insert({
+        group_id: GROUP_OTHER,
+        session_date: YESTERDAY,
+        starts_at: `${YESTERDAY}T23:00:00Z`,
+        ends_at: `${TODAY}T00:00:00Z`,
+        report: "Not yours to send.",
+      });
+
+      const { error } = await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_OTHER,
+        p_session_date: YESTERDAY,
+      });
+      expect(error?.code).toBe("42501");
+
+      const { data: row } = await admin
+        .from("group_sessions")
+        .select("report_emailed_at")
+        .eq("group_id", GROUP_OTHER)
+        .eq("session_date", YESTERDAY)
+        .single();
+      expect(row?.report_emailed_at).toBeNull();
     });
 
     it("refuses site notes for a building the gedu runs nothing at", async () => {
@@ -781,6 +828,66 @@ describe("gedu session feed", () => {
       const session = feed.sessions.find((s) => s.session_date === YESTERDAY);
       expect(session?.report).toContain("castle");
       expect(session?.attendance[TEST_IDS.GAMER]).toBe("present");
+      // Written but not yet sent, which is the state the card offers the
+      // button in.
+      expect(session?.report_emailed_at).toBeNull();
+    });
+
+    it("carries the send marker once the report has been emailed", async () => {
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the clock tower.",
+        p_gedu_note: "",
+      });
+      await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+      });
+
+      const { data } = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const feed = geduGroupFeed.parse(data);
+      const session = feed.sessions.find((s) => s.session_date === YESTERDAY);
+
+      // The sent line renders from this and nothing else, so it has to survive
+      // the round trip — a reload, another tab and a second assigned gedu all
+      // read the same answer from here.
+      expect(session?.report_emailed_at).toBeTruthy();
+    });
+
+    it("never puts the sender on the wire", async () => {
+      // `report_emailed_by` is audit: the migration stamps it, nothing renders
+      // it, and the card's author chip is `updated_by_first_name`. The contract
+      // schema is not `.strict()`, so an unexpected key would parse silently —
+      // this reads the raw document instead.
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "We finished the clock tower.",
+        p_gedu_note: "",
+      });
+      await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+      });
+
+      const { data } = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+
+      expect(JSON.stringify(data)).not.toContain("report_emailed_by");
+
+      // And the column really was written — otherwise the assertion above
+      // would pass on a feature that never happened.
+      const { data: row } = await admin
+        .from("group_sessions")
+        .select("report_emailed_by")
+        .eq("group_id", GROUP_MINE)
+        .eq("session_date", YESTERDAY)
+        .single();
+      expect(row?.report_emailed_by).toBe(TEST_IDS.GEDU);
     });
 
     it("returns an empty session list and a real roster before anything is recorded", async () => {
@@ -849,6 +956,161 @@ describe("gedu session feed", () => {
 
       expect(feed.product.material_url).toBeNull();
       expect(feed.product.id).toBe(PRODUCT_MINE);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 6b. Claiming the send to the families
+  // -------------------------------------------------------------------------
+
+  /**
+   * The claim is the FIRST write of the send, and it is what makes the send
+   * happen at most once: it takes the row's lock, tests the marker under it and
+   * stamps it, all before a single mail is composed. So these tests are about
+   * the two things it refuses and the one thing it hands back — the route's
+   * whole authorization and its whole idempotency live here.
+   */
+  describe("claim_group_session_report_email", () => {
+    /** Save a report on GROUP_MINE for `date`, through the real write path. */
+    async function writeReport(date: string, report: string): Promise<void> {
+      const { error } = await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: date,
+        p_report: report,
+        p_gedu_note: "",
+      });
+      expect(error).toBeNull();
+    }
+
+    it("claims a reported session once and hands back the row it claimed", async () => {
+      await writeReport(YESTERDAY, "We built a clock tower.");
+
+      const { data, error } = await geduAuth.rpc(
+        "claim_group_session_report_email",
+        { p_group_id: GROUP_MINE, p_session_date: YESTERDAY },
+      );
+      expect(error).toBeNull();
+
+      const claim = sessionReportEmailClaim.parse(data);
+      expect(claim.group_id).toBe(GROUP_MINE);
+      expect(claim.session_date).toBe(YESTERDAY);
+      // The route mails what the CLAIM committed rather than what the client
+      // believed was saved, so the report has to travel back with it.
+      expect(claim.report).toBe("We built a clock tower.");
+      expect(claim.report_emailed_at).toBeTruthy();
+
+      // And the stamp landed on the row, with the caller recorded beside it.
+      const { data: row } = await admin
+        .from("group_sessions")
+        .select("report_emailed_at, report_emailed_by")
+        .eq("id", claim.id)
+        .single();
+      expect(row?.report_emailed_at).toBe(claim.report_emailed_at);
+      expect(row?.report_emailed_by).toBe(TEST_IDS.GEDU);
+    });
+
+    it("refuses a second claim and leaves the first one's stamp alone", async () => {
+      await writeReport(YESTERDAY, "We built a clock tower.");
+      const first = await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+      });
+      const claimed = sessionReportEmailClaim.parse(first.data);
+
+      const { error } = await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+      });
+      expect(error?.code).toBe(SESSION_REPORT_ALREADY_SENT_SQLSTATE);
+
+      // The refusal must not have moved the timestamp: the route releases a
+      // claim by comparing against the value it was handed, so a second call
+      // that re-stamped the row would quietly break that guard.
+      const { data: row } = await admin
+        .from("group_sessions")
+        .select("report_emailed_at")
+        .eq("id", claimed.id)
+        .single();
+      expect(row?.report_emailed_at).toBe(claimed.report_emailed_at);
+    });
+
+    it("refuses a session that was never materialized", async () => {
+      // Rows are lazily created, so "nothing has been recorded here" is the
+      // ordinary state of a date, not an anomaly — and it is the same answer as
+      // a row with a blank report, because in both cases there is nothing to
+      // send.
+      const { error } = await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: TWO_DAYS_AGO,
+      });
+      expect(error?.code).toBe(SESSION_REPORT_NO_REPORT_SQLSTATE);
+    });
+
+    it("refuses a session that has attendance but no report", async () => {
+      const { error: markError } = await geduAuth.rpc("record_attendance", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.GAMER,
+        p_status: "present",
+      });
+      expect(markError).toBeNull();
+
+      const { error } = await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+      });
+      expect(error?.code).toBe(SESSION_REPORT_NO_REPORT_SQLSTATE);
+    });
+
+    /**
+     * The trimmed test, not a NULL test — 00150 exists because a whitespace-only
+     * report once counted as one. The write path collapses such a value back to
+     * NULL, so the row has to be planted with the service role; the two rows
+     * cover different whitespace classes for the same reason the summaries test
+     * does, since bare `btrim()` strips spaces alone.
+     */
+    it("refuses a whitespace-only report, and claims nothing", async () => {
+      for (const blank of ["   ", "\n\t\n"]) {
+        await writeReport(YESTERDAY, "placeholder");
+        await admin
+          .from("group_sessions")
+          .update({ report: blank })
+          .eq("group_id", GROUP_MINE)
+          .eq("session_date", YESTERDAY);
+
+        const { error } = await geduAuth.rpc(
+          "claim_group_session_report_email",
+          { p_group_id: GROUP_MINE, p_session_date: YESTERDAY },
+        );
+        expect(error?.code).toBe(SESSION_REPORT_NO_REPORT_SQLSTATE);
+
+        const { data: row } = await admin
+          .from("group_sessions")
+          .select("report_emailed_at")
+          .eq("group_id", GROUP_MINE)
+          .eq("session_date", YESTERDAY)
+          .single();
+        expect(row?.report_emailed_at).toBeNull();
+
+        await admin
+          .from("group_sessions")
+          .delete()
+          .eq("group_id", GROUP_MINE)
+          .eq("session_date", YESTERDAY);
+      }
+    });
+
+    it("has no epoch floor of its own", async () => {
+      // The epoch decides what the platform ASKS for, never what it permits —
+      // the same rule the write validator follows. A gedu catching up on last
+      // term may still mail that report.
+      await writeReport(dayOffset(-20), "Late, but sent.");
+
+      const { error } = await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: dayOffset(-20),
+      });
+      expect(error).toBeNull();
     });
   });
 
@@ -956,7 +1218,15 @@ describe("gedu session feed", () => {
       ).toBe(2);
     });
 
-    it("stops counting a session once it is both marked and reported", async () => {
+    /**
+     * The third half, added in 00197, and the one this block used to end on.
+     *
+     * A session marked to the last child and written up in full is still not
+     * finished: a report nobody was told about is a report nobody reads, which
+     * is the entire problem the send exists to solve. So marking and reporting
+     * together move nothing, exactly as marking alone moved nothing before.
+     */
+    it("keeps counting a marked, reported session that was never emailed", async () => {
       await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
       for (const date of [TWO_DAYS_AGO, YESTERDAY]) {
         await geduAuth.rpc("set_group_session_notes", {
@@ -974,7 +1244,46 @@ describe("gedu session feed", () => {
 
       expect(
         summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(0);
+      ).toBe(2);
+    });
+
+    it("stops counting a session once it is marked, reported and emailed", async () => {
+      await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
+      for (const date of [TWO_DAYS_AGO, YESTERDAY]) {
+        await geduAuth.rpc("set_group_session_notes", {
+          p_group_id: GROUP_MINE,
+          p_session_date: date,
+          p_report: "We built a clock tower.",
+          p_gedu_note: "",
+        });
+      }
+
+      // Claim one of the two first: the count has to fall by exactly one, or
+      // the third question is being answered for the group rather than per
+      // session.
+      await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: TWO_DAYS_AGO,
+      });
+
+      async function count(): Promise<number | undefined> {
+        const { data } = await geduAuth.rpc(
+          "get_my_gedu_assignment_summaries",
+          { p_epoch_date: TWO_DAYS_AGO },
+        );
+        return geduAssignmentSummaries
+          .parse(data)
+          .find((s) => s.group_id === GROUP_MINE)?.attention_count;
+      }
+
+      expect(await count()).toBe(1);
+
+      await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+      });
+
+      expect(await count()).toBe(0);
     });
 
     /**

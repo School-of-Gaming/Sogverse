@@ -103,6 +103,12 @@ function renderFeed({
             editingEntryId={editingEntryId}
             onEditEntry={() => {}}
             onSaveEntry={() => {}}
+            // Never reached: this suite is about which editor a live session
+            // opens, and only a past session with a written report offers a
+            // send at all.
+            onSendReport={() =>
+              Promise.resolve({ sent: 0, failed: 0, skipped: 0 })
+            }
           />
         </NowProvider>
       </TimezoneProvider>

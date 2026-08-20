@@ -163,6 +163,8 @@ const TESTS = {
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
+  geduSessionEmailReport:
+    "tests/integration/api/gedu-session-email-report.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftPasswordReset:
@@ -710,6 +712,30 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "registerGeduBody" },
         test: TESTS.geduRegister,
+      },
+    },
+  },
+
+  // --- Educator sessions ---------------------------------------------------
+
+  // Mailing every family in a group is a trust boundary, so the gate asks for a
+  // certified educator on top of the role — group assignment already implies
+  // certification, so this declares the posture rather than narrowing who
+  // passes. WHICH group may be mailed is decided by the claim RPC underneath,
+  // which re-derives the caller from auth.uid(), refuses a group they do not
+  // teach, and refuses a session with no report or one already sent.
+  "src/app/api/gedu/sessions/email-report/route.ts": {
+    adminClient:
+      "the claim runs on the user client and is the authorization; the admin client resolves parents' addresses and locales and the admin list, which are not in the gedu's view and are never returned",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          roles: ["gedu"],
+          requireCertifiedGedu: true,
+        },
+        body: { kind: "json", schema: "emailSessionReportBody" },
+        test: TESTS.geduSessionEmailReport,
       },
     },
   },

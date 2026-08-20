@@ -1321,7 +1321,13 @@
       "attendanceMarkedCount": "{marked} av {total} markerade",
       "attendanceForGamer": "Närvaro för {name}",
       "saveFailed": "Tillfället sparades inte. Försök igen.",
-      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen."
+      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen.",
+      "sendReportToParents": "Skicka till föräldrarna",
+      "sendingReportToParents": "Skickar till föräldrarna…",
+      "reportSentToParents": "Skickad till föräldrarna · {sentAt}",
+      "reportSendPartial": "{sent} skickade, {failed} misslyckades",
+      "sendReportNoReport": "Det här tillfället har ingen sparad rapport att mejla längre. Ladda om sidan för att se vad som står där nu.",
+      "sendReportFailed": "Rapporten kunde inte mejlas. Ingen familj fick den – försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",

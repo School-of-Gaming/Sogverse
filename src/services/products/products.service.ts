@@ -175,6 +175,13 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // so it arrives as `null` for a product with no picture. Family surfaces never
 // need it: they read the derived `image_path` column, which is what the
 // catalogue table exists to feed.
+//
+// It is unhinted, and it can only stay unhinted while `image_id` is the ONLY
+// relationship between these two tables. A second foreign key — an FK on the
+// derived `image_path` column is the tempting one — makes this embed ambiguous
+// and PostgREST refuses the whole query with PGRST201, which the admin product
+// page shows as "product not found". The header of the migration that chose
+// not to add that key (supabase/migrations/00198) records the reasoning.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
