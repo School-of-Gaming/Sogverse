@@ -9,7 +9,8 @@ Write → implement → **delete the plan file**.
 
 A plan sitting here means the work is still open. An empty directory means nothing is pending.
 Never tick a plan off, mark it "done", or keep it around as a record — git history and the
-code/docs the work produced are the record. Deleting is the completion step.
+code/docs the work produced are the record. Deleting is the completion step — and the plan's
+follow-ups are deleted with it unless the owner names one to keep (see "Scope" below).
 
 ## Not TODO.md
 
@@ -42,9 +43,18 @@ asking the question before the reviewer does.
 
 What earns a place: a stated intent, a constraint that is true today, a rule in a `CLAUDE.md`
 file, or a fact discovered in the code that the simple shape collides with. Everything else
-becomes a named follow-up in `TODO.md`, written down so it is not lost and not built so it
-does not cost anything yet. A plan should be able to list its follow-ups; a plan with none
-has probably absorbed them.
+is cut, and listed in the plan's own **Follow-ups** section — so the challenge review can see
+the cut was a decision and the implementer does not rebuild it. A plan should be able to
+list its follow-ups; a plan with none has probably absorbed them.
+
+**A cut is not a backlog item.** `TODO.md` is the owner's list of where the project's
+attention goes, and an idea cut from a plan has, by construction, been asked for by nobody
+— it was in the plan because it was adjacent to the work, not because anyone wanted it.
+So a plan's follow-ups live and die with the plan file: when the plan is deleted at
+completion, they are **proposed to the owner by headline, and only the ones the owner
+names are written into `TODO.md`**; the default for the rest is that they go with the
+plan. Writing them into `TODO.md` wholesale "so they are not lost" was tried once and
+produced a seventeen-item backlog the owner deleted on sight.
 
 ## What a plan must contain
 
