@@ -17,10 +17,30 @@
 
 import type { AttendanceMark } from "@/components/session-feed";
 
-/** One child on the group's roster, as the attendance editor needs them. */
+/**
+ * One person on the group's roster, as the workspace's session surfaces need
+ * them: enough to take a register, and enough to say how many families a
+ * report would reach.
+ *
+ * It carried an id and a first name only, by a decision that accepted losing
+ * the seat's contact signal here — the rail row beside it knows whether a seat
+ * is an adult holding their own place or a child with a linked parent, and this
+ * list did not. Emailing a report is what made that worth one boolean: the
+ * confirm dialog has to say how many mails it is about to send, and it has to
+ * count the seats the same way the send does, or the number on screen and the
+ * number in the outbox disagree. The address itself deliberately stays out —
+ * a roster of parents' mailboxes is not something a session card needs.
+ */
 export interface SessionFeedGamer {
   id: string;
   firstName: string;
+  /**
+   * Whether this seat has somebody to write to: the participant themselves
+   * when they are the paying customer, otherwise their earliest-linked parent.
+   * Resolved by whoever builds this list, in the same order the send resolves
+   * it, so the count the dialog shows is the count the route mails.
+   */
+  hasContact: boolean;
 }
 
 interface SessionFeedEntryBase {
@@ -142,13 +162,14 @@ export interface SessionEditor {
  * An empty map is a session nobody has started on; a map marking every roster
  * member "absent" is the very different claim that nobody turned up.
  *
- * **Two of the three fields are owed, and the gedu note is the odd one out.**
- * Attendance doubles as the gedu's confirmation that they ran the session, which
- * is what they are paid on; the report is what the families open their page to
- * read, so an owed session without one has told them nothing. Both have to be
- * there before the entry is finished. The gedu note is a message to a colleague
- * that nobody outside staff ever sees, so it is genuinely optional and is no
- * part of the answer.
+ * **Three things are owed, and the gedu note is the odd one out.** Attendance
+ * doubles as the gedu's confirmation that they ran the session, which is what
+ * they are paid on; the report is what the families open their page to read, so
+ * an owed session without one has told them nothing; and the report has to
+ * actually reach them, because a write-up nobody was told about is one nobody
+ * reads. All three have to be there before the entry is finished. The gedu note
+ * is a message to a colleague that nobody outside staff ever sees, so it is
+ * genuinely optional and is no part of the answer.
  */
 export interface PastSessionFeedEntry extends SessionFeedEntryBase {
   kind: "past";
@@ -183,6 +204,20 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * sheet, write the report, and it is earned.
    */
   owed: boolean;
+  /**
+   * When this session's report was emailed to the group's families, and `null`
+   * until it has been.
+   *
+   * It is read twice over. It is what replaces the **Send to parents** button
+   * with the permanent sent line — the instant comes from the stored row, so
+   * the sent state survives a reload, a second tab and another assigned gedu —
+   * and it is the third thing an owed session owes, beside the register and the
+   * report.
+   *
+   * A `future` entry has no such field, and that is not an omission: a session
+   * that has not finished has nothing to send yet.
+   */
+  reportEmailedAt: Date | null;
   /** Who last touched this session — see the type's own note. */
   lastEditedBy: SessionEditor | null;
 }

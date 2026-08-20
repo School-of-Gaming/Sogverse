@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +24,10 @@ import {
   planEditorStateFromEntry,
   type SessionCompleteness,
 } from "./entry-state";
+import type { SessionReportSendResult } from "./send-report";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
+import { SessionReportSend } from "./SessionReportSend";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   SessionEntryDraft,
@@ -81,6 +83,25 @@ interface SessionFeedItemProps {
   committing: boolean;
   /** Why this entry's last save was refused, or `null`. */
   saveError: string | null;
+  /**
+   * When this session's report was emailed to the families, formatted in the
+   * viewer's zone — `null` until it has been.
+   *
+   * Formatted by the feed rather than here, alongside every other clock face on
+   * the card, so one place owns the viewer's zone and this component keeps
+   * taking its dates as strings.
+   */
+  sentAtLabel: string | null;
+  /** How many families a send would reach: roster seats with a contact. */
+  recipientCount: number;
+  /** Whether this entry's send is in flight. Owned by the feed, like the save. */
+  sending: boolean;
+  /** The counts the last send answered with, shown once. `null` for none. */
+  sendResult: SessionReportSendResult | null;
+  /** Why this entry's last send was refused, or `null`. */
+  sendError: string | null;
+  /** Email this session's report to the families. */
+  onSendReport: () => void;
   /**
    * Hand the Edit button up to the feed as it mounts.
    *
@@ -140,6 +161,14 @@ interface SessionFeedItemProps {
  * session, a pre-epoch gap, a session still running, an unfinished session
  * nobody is owed one for.
  *
+ * **A past session's write-up carries the one action on this card that leaves
+ * the platform.** Under the report, and only there, sits the affordance that
+ * emails it to the group's families — a button until it has gone, the
+ * permanent line saying when it went afterwards. It is under the report rather
+ * than up in the header with Edit because it is about the report: it sends
+ * that text, to those families, and a control in the corner would have been
+ * one more thing in the row that already carries the state and the editor.
+ *
  * **The report counts as owed work, and that reverses an earlier call.** A
  * marked-off session with nothing written used to be deliberately silent, on the
  * argument that the report was optional and a badge would nag for work nobody
@@ -196,6 +225,12 @@ export function SessionFeedItem({
   editing,
   committing,
   saveError,
+  sentAtLabel,
+  recipientCount,
+  sending,
+  sendResult,
+  sendError,
+  onSendReport,
   registerEditButton,
   onToggleEdit,
   onCancelEdit,
@@ -276,6 +311,29 @@ export function SessionFeedItem({
   const signedBy =
     !editing && hasReport(entry.report) ? entry.lastEditedBy : null;
 
+  /**
+   * The send row, under the report it is about — and only where all three of
+   * its conditions hold: the session has finished, somebody has written it up,
+   * and the write-up has not already gone. A future or running session has
+   * nothing to send yet, and an unwritten one has nothing to say; both render
+   * no row at all rather than a disabled button, because a control that cannot
+   * be pressed on most of the feed is noise on every card it appears on.
+   *
+   * The sent line goes on rendering here after the send, which is why the whole
+   * block is gated on the report rather than on the button being available.
+   */
+  const reportSend =
+    entry.kind === "past" && hasReport(entry.report) ? (
+      <SessionReportSend
+        sentAtLabel={sentAtLabel}
+        recipientCount={recipientCount}
+        sending={sending}
+        result={sendResult}
+        error={sendError}
+        onSend={onSendReport}
+      />
+    ) : null;
+
   const card = (
     <Card
       className={cn(
@@ -348,6 +406,7 @@ export function SessionFeedItem({
           roster={roster}
           live={live}
           clampReport={clampReport}
+          reportAction={reportSend}
         />
       </CollapsibleRegion>
 
@@ -425,12 +484,19 @@ function SessionEntryBody({
   roster,
   live,
   clampReport,
+  reportAction,
 }: {
   entry: SessionFeedEntry;
   roster: readonly SessionFeedGamer[];
   /** Whether this is the session in progress — see the attendance note below. */
   live: boolean;
   clampReport: boolean;
+  /**
+   * What hangs under the report, or `null`. Today that is the send row on a
+   * past session; a future one is handed nothing, because there is nothing to
+   * send about a session that has not happened.
+   */
+  reportAction: ReactNode;
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
@@ -499,7 +565,11 @@ function SessionEntryBody({
       return (
         <div className="space-y-3 pb-1 pt-3">
           <AttendanceSummary roster={roster} attendance={entry.attendance} />
-          <WrittenFields entry={entry} clampReport={clampReport} />
+          <WrittenFields
+            entry={entry}
+            clampReport={clampReport}
+            reportAction={reportAction}
+          />
         </div>
       );
 
@@ -518,20 +588,26 @@ function SessionEntryBody({
  * about Monday are the same field at two moments, and the display used to say so
  * twice in byte-identical markup. A future entry's "nothing written yet" line is
  * not here, because a past entry says the same thing a different way — the
- * missing report is one of the two gaps its header is already alerting on, and a
+ * missing report is one of the gaps its header is already alerting on, and a
  * second line in the body restating it would be the same nag twice.
  */
 function WrittenFields({
   entry,
   clampReport,
+  reportAction = null,
 }: {
   entry: Extract<SessionFeedEntry, { kind: "future" | "past" }>;
   clampReport: boolean;
+  /** Rendered inside the report block, under the write-up itself. */
+  reportAction?: ReactNode;
 }) {
   return (
     <>
       {hasText(entry.report) && (
-        <SessionReport markdown={entry.report} clamped={clampReport} />
+        <div className="space-y-2">
+          <SessionReport markdown={entry.report} clamped={clampReport} />
+          {reportAction}
+        </div>
       )}
       {hasText(entry.staffNote) && (
         <StaffNoteBlock>

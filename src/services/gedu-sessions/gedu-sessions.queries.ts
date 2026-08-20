@@ -79,6 +79,35 @@ export function useSetSessionNotes(groupId: string) {
   });
 }
 
+/**
+ * Email one session's report to the group's families.
+ *
+ * Both keys are invalidated, and the summaries one is not an afterthought: the
+ * send is the third thing a session owes, so it can be what clears the
+ * session's alert — exactly as writing the report can — and the dashboard badge
+ * counting that alert must not go on counting a session the card now calls
+ * finished. The feed key is what turns the button into the permanent sent line,
+ * because the sent state is rendered from the refetched row rather than from
+ * the response.
+ */
+export function useEmailSessionReport(groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new GeduSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: { sessionDate: string }) =>
+      service.emailSessionReport({ groupId, ...vars }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: geduSessionKeys.feed(groupId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: geduSessionKeys.summaries(),
+      });
+    },
+  });
+}
+
 export function useRecordAttendance(groupId: string) {
   const queryClient = useQueryClient();
   const service = new GeduSessionsService(getClient());

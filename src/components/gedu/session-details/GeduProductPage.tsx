@@ -6,15 +6,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import {
   PartialSessionSaveError,
+  SessionReportSendError,
   type SessionEntryDraft,
   type SessionFeedGamer,
+  type SessionReportSendFailure,
+  type SessionReportSendResult,
 } from "@/components/gedu/session-feed";
+import { ApiError } from "@/lib/api/api-error";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { sessionEntryId } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {
+  SESSION_REPORT_ALREADY_SENT_SQLSTATE,
+  SESSION_REPORT_NO_REPORT_SQLSTATE,
+  useEmailSessionReport,
   useGeduGroupFeed,
   useRecordAttendance,
   useSetGroupNotes,
@@ -33,6 +40,7 @@ import { GeduProductPageBody } from "./GeduProductPageBody";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
 import type { GroupNotesDraft } from "./GroupNotesPanel";
 import type { SiteNotesDraft } from "./SiteNotesPanel";
+import { rosterContactEmail } from "./types";
 
 /**
  * The data shell behind `/gedu/clubs|camps|events/[id]` — the gedu's group
@@ -162,6 +170,7 @@ function Workspace({
   const platform = platformForTopic(product.product.topic);
 
   const setSessionNotes = useSetSessionNotes(groupId);
+  const emailSessionReport = useEmailSessionReport(groupId);
   const recordAttendance = useRecordAttendance(groupId);
   const setGroupNotes = useSetGroupNotes(groupId);
   const setSiteNotes = useSetSiteNotes(groupId);
@@ -233,19 +242,28 @@ function Workspace({
     setEditingEntryId(entryId);
   };
 
-  // The attendance checklist takes only id + first name, so an adult on the
-  // roster loses the participant_email signal here and shows a bare name where
-  // the rail row beside it badges "Parent". Attendance itself is correct — the
-  // mark is participant-keyed and role-blind — so this is an identification
-  // asymmetry, not a marking bug: a gedu can tell the adult apart in the rail
-  // but not in the checklist. Accepted as a minor gap for now (carrying an
-  // isAdult flag into SessionFeedGamer + AttendanceRoster is the fix if it
-  // proves worth it); flagged so the lossy map is a choice, not an oversight.
+  // The attendance checklist takes id + first name, so an adult on the roster
+  // still shows a bare name where the rail row beside it badges "Parent".
+  // Attendance itself is correct — the mark is participant-keyed and role-blind
+  // — so this is an identification asymmetry, not a marking bug: a gedu can
+  // tell the adult apart in the rail but not in the checklist. Accepted as a
+  // minor gap for now (carrying an isAdult flag into SessionFeedGamer +
+  // AttendanceRoster is the fix if it proves worth it); flagged so the lossy
+  // map stays a choice rather than an oversight.
+  //
+  // What is no longer lost is **whether the seat has anybody to write to**. The
+  // confirm dialog behind Send to parents has to say how many mails it is about
+  // to send, so the map carries that one boolean — resolved through the same
+  // helper the roster rail and the copy-all-addresses affordance use, which is
+  // also the order the route resolves it in, so the number promised and the
+  // number sent cannot come apart. The address itself deliberately stays here:
+  // a session card has no business holding a list of parents' mailboxes.
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
         id: member.participant_id,
         firstName: member.first_name,
+        hasContact: rosterContactEmail(member) !== null,
       })),
     [feed.roster],
   );
@@ -377,6 +395,36 @@ function Workspace({
     );
   };
 
+  /**
+   * Email one session's report to the group's families.
+   *
+   * **Nothing is decided here.** Who gets the mail, what it says and whether
+   * the send is allowed at all are the route's, because the claim it makes
+   * first is both the at-most-once guard and the authorization — so this hands
+   * over the session's identity and passes the tally back.
+   *
+   * The one translation it does make is of the refusal. The service throws with
+   * the status and, on the two refusals the claim raises, the SQLSTATE behind
+   * it; the feed picks a line and must not know what either of those is. So the
+   * codes — the same constants the migration raises and the route matches — are
+   * mapped here into the three things the card can say. Anything else is the
+   * retryable failure, which is the right answer for a network drop as much as
+   * for a mail provider refusing every address.
+   */
+  const handleSendReport = async (
+    entryId: string,
+  ): Promise<SessionReportSendResult> => {
+    try {
+      return await emailSessionReport.mutateAsync({
+        sessionDate: sessionDateOf(entryId, groupId),
+      });
+    } catch (error) {
+      throw new SessionReportSendError(sendFailureOf(error), {
+        cause: error,
+      });
+    }
+  };
+
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
     await setGroupNotes.mutateAsync({
       publicNote: draft.publicNote,
@@ -494,6 +542,7 @@ function Workspace({
       editingEntryId={editingEntryId}
       onEditEntry={handleEditEntry}
       onSaveEntry={handleSaveEntry}
+      onSendReport={handleSendReport}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
@@ -511,4 +560,19 @@ function Workspace({
  */
 function sessionDateOf(entryId: string, groupId: string): string {
   return entryId.slice(sessionEntryId(groupId, "").length);
+}
+
+/**
+ * Which of the card's three send messages a caught failure calls for.
+ *
+ * Keyed on the code the route attaches to the two refusals a gedu can act on,
+ * never on the status or the message: the two share a `409`, and the message is
+ * English written for a log. Everything else — a `403`, a `500`, the `502` that
+ * says every mail was refused, a dropped connection — is the retryable failure.
+ */
+function sendFailureOf(error: unknown): SessionReportSendFailure {
+  if (!(error instanceof ApiError)) return "failed";
+  if (error.code === SESSION_REPORT_ALREADY_SENT_SQLSTATE) return "already_sent";
+  if (error.code === SESSION_REPORT_NO_REPORT_SQLSTATE) return "no_report";
+  return "failed";
 }

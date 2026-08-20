@@ -10,6 +10,7 @@ import {
   isPlannableEntry,
   type SessionEntryDraft,
   type SessionFeedEntry,
+  type SessionReportSendResult,
 } from "@/components/gedu/session-feed";
 import { GeduProductPageBody } from "@/components/gedu/session-details/GeduProductPageBody";
 import type { GroupNotesDraft } from "@/components/gedu/session-details/GroupNotesPanel";
@@ -32,6 +33,14 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * names, or not at all on the one topic that names none. A flagged session
  * turning into a finished one, and a part-marked one staying flagged, are the
  * two most important things to feel here. Nothing persists past a reload.
+ *
+ * **Emailing a report to the families is live too, and reaches nobody.** The
+ * button, its confirm dialog with the group's headcount in it, and the
+ * permanent sent line that replaces it are all here; what the confirmation runs
+ * is a local stamp on the entry rather than a send. That stands in for the
+ * refetched row the live page gets back, which is the only way the transition —
+ * the flagged card turning finished as the button becomes a line — can be
+ * looked at at all.
  *
  * Every save resolves immediately, so the in-flight and failure states the live
  * page has are not what this scene is for; what it rehearses is the shape of
@@ -115,6 +124,38 @@ export function GeduProductPageScene({
           : entry;
       }),
     );
+  };
+
+  /**
+   * Email a report to the families — locally, and to nobody.
+   *
+   * The send itself is the one action on this page that would leave the
+   * platform, so a scene must not make it. What it does instead is what the
+   * live page's refetch does a round trip later: stamp the entry with the
+   * instant it went. That is what turns the button into the sent line and the
+   * amber card into a finished one, which is the whole thing worth reviewing
+   * here — a scene that resolved without stamping would leave a reviewer
+   * looking at a spinner that never ends.
+   *
+   * The tally it answers with says every mail landed, because none of them
+   * existed to fail. The card's partial-send notice therefore never shows here;
+   * it belongs to a real provider refusing a real address.
+   */
+  const handleSendReport = (
+    entryId: string,
+  ): Promise<SessionReportSendResult> => {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === entryId && entry.kind === "past"
+          ? { ...entry, reportEmailedAt: now }
+          : entry,
+      ),
+    );
+    return Promise.resolve({
+      sent: fixture.feedRoster.filter((gamer) => gamer.hasContact).length,
+      failed: 0,
+      skipped: 0,
+    });
   };
 
   const handleSaveGroupNotes = (draft: GroupNotesDraft) => {
@@ -263,6 +304,7 @@ export function GeduProductPageScene({
       editingEntryId={editingEntryId}
       onEditEntry={setEditingEntryId}
       onSaveEntry={handleSave}
+      onSendReport={handleSendReport}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       // Deliberately not passed. A Roblox render can only be resolved by

@@ -37,10 +37,16 @@ const EDITOR: SessionEditor = {
   firstName: "Sanna",
 };
 
+/**
+ * Three seats, all of them mailable. `hasContact` is the count behind the send
+ * dialog and nothing in this module reads it — what a session owes does not
+ * change with who can be written to, deliberately, because a group nobody can
+ * be mailed must not sit flagged for ever with nothing to do about it.
+ */
 const ROSTER: SessionFeedGamer[] = [
-  { id: "a", firstName: "Aino" },
-  { id: "b", firstName: "Väinö" },
-  { id: "c", firstName: "Elias" },
+  { id: "a", firstName: "Aino", hasContact: true },
+  { id: "b", firstName: "Väinö", hasContact: true },
+  { id: "c", firstName: "Elias", hasContact: true },
 ];
 
 /**
@@ -48,6 +54,16 @@ const ROSTER: SessionFeedGamer[] = [
  * On its own it no longer clears the alert; a report has to land as well.
  */
 const ALL_MARKED = { a: "present", b: "absent", c: "present" } as const;
+
+/**
+ * The evening a report went out to the families — the third thing an owed
+ * session owes.
+ *
+ * The `past` fixture below leaves it **null**, which is the state every session
+ * starts in, so a case expecting the green check has to say all three parts out
+ * loud rather than inheriting two of them.
+ */
+const EMAILED_AT = new Date("2026-03-02T19:00:00.000Z");
 
 const START = new Date("2026-03-02T14:30:00.000Z");
 const END = new Date("2026-03-02T16:00:00.000Z");
@@ -73,6 +89,9 @@ function past(
     staffNote: null,
     attendance: {},
     owed: true,
+    // Never emailed by default: a session that has not been written up cannot
+    // have been sent, and a case about the check says so itself.
+    reportEmailedAt: null,
     // Unsigned by default: these derivations are about what a session owes and
     // what its editors do, none of which turns on who last touched it.
     lastEditedBy: null,
@@ -99,6 +118,20 @@ function unowedPast(
 }
 function noRecord(id: string): NoRecordSessionFeedEntry {
   return { kind: "no_record", id, ...WHEN };
+}
+/** A session finished on all three parts: marked off, written up, and sent. */
+function sentPast(
+  id: string,
+  fields: Partial<
+    Omit<PastSessionFeedEntry, "kind" | "id" | "startsAt" | "endsAt">
+  > = {},
+): PastSessionFeedEntry {
+  return past(id, {
+    attendance: ALL_MARKED,
+    report: "# Redstone week",
+    reportEmailedAt: EMAILED_AT,
+    ...fields,
+  });
 }
 function future(
   id: string,
@@ -284,22 +317,56 @@ describe("entryCompleteness", () => {
     expect(
       entryCompleteness(past("c", { report: "# Redstone week" }), ROSTER),
     ).toBe("needs_attention");
-    // Both.
+    // Written up and never sent — the third gap, and the one this feature
+    // added. The families have a report on their page and were told nothing
+    // about it, which is a session that has not finished doing its job.
     expect(
       entryCompleteness(
         past("d", { attendance: ALL_MARKED, report: "# Redstone week" }),
         ROSTER,
       ),
+    ).toBe("needs_attention");
+    // All three.
+    expect(entryCompleteness(sentPast("e"), ROSTER)).toBe("complete");
+  });
+
+  /**
+   * The email half, on its own, in both directions.
+   *
+   * It is the only one of the three that is gated on the session being owed:
+   * this branch has no epoch floor, so asking it of everything would have
+   * stripped the check off every finished session in history and made it
+   * re-earnable only by mailing a months-old write-up to families.
+   */
+  it("asks an owed session for the send, and a pre-epoch one for nothing", () => {
+    const parts = { attendance: ALL_MARKED, report: "# Redstone week" };
+    expect(entryCompleteness(past("owed", parts), ROSTER)).toBe(
+      "needs_attention",
+    );
+    expect(
+      entryCompleteness(
+        past("sent", { ...parts, reportEmailedAt: EMAILED_AT }),
+        ROSTER,
+      ),
     ).toBe("complete");
+    // Before the epoch: nothing was ever asked for, so the two parts somebody
+    // did go back and complete earn the check without a send.
+    expect(entryCompleteness(unowedPast("old", parts), ROSTER)).toBe(
+      "complete",
+    );
   });
 
   it("keeps a half-marked register flagged even with a report on it", () => {
-    // Neither half buys off the other, in either direction.
+    // No part buys off another, in any direction — a session sent to every
+    // family with half its register unmarked is still unfinished.
     expect(
       entryCompleteness(
         past("e", { attendance: { a: "present" }, report: "# Redstone week" }),
         ROSTER,
       ),
+    ).toBe("needs_attention");
+    expect(
+      entryCompleteness(sentPast("f", { attendance: { a: "present" } }), ROSTER),
     ).toBe("needs_attention");
   });
 
@@ -308,7 +375,7 @@ describe("entryCompleteness", () => {
     // cannot be what discharges the write-up they are owed.
     expect(
       entryCompleteness(
-        past("f", { attendance: ALL_MARKED, staffNote: "Watch Siiri." }),
+        past("note", { attendance: ALL_MARKED, staffNote: "Watch Siiri." }),
         ROSTER,
       ),
     ).toBe("needs_attention");
@@ -319,16 +386,10 @@ describe("entryCompleteness", () => {
     // holding one space is not a write-up. Both are the same answer as null,
     // and the SQL behind the dashboard badge trims for the same reason.
     expect(
-      entryCompleteness(
-        past("g", { attendance: ALL_MARKED, report: "" }),
-        ROSTER,
-      ),
+      entryCompleteness(sentPast("g", { report: "" }), ROSTER),
     ).toBe("needs_attention");
     expect(
-      entryCompleteness(
-        past("h", { attendance: ALL_MARKED, report: "  \n " }),
-        ROSTER,
-      ),
+      entryCompleteness(sentPast("h", { report: "  \n " }), ROSTER),
     ).toBe("needs_attention");
   });
 
@@ -373,41 +434,49 @@ describe("entryCompleteness", () => {
     // Only the warning is suppressed. A week finished while the group still had
     // children in it keeps its check after the last of them leaves, rather than
     // a year of history going grey the day a club empties out.
-    expect(entryCompleteness(past("j", { report: "# Week" }), [])).toBe(
-      "complete",
-    );
+    expect(
+      entryCompleteness(
+        past("j", { report: "# Week", reportEmailedAt: EMAILED_AT }),
+        [],
+      ),
+    ).toBe("complete");
   });
 
   it("reopens when a child joins the group after the sheet was finished", () => {
     // Measured against the *current* roster, never the stored map's keys —
     // nobody has yet said whether the new child was there.
-    const entry = past("k", { attendance: ALL_MARKED, report: "# Week" });
+    const entry = sentPast("k");
     expect(entryCompleteness(entry, ROSTER)).toBe("complete");
     expect(
-      entryCompleteness(entry, [...ROSTER, { id: "d", firstName: "Linnéa" }]),
+      entryCompleteness(entry, [
+        ...ROSTER,
+        { id: "d", firstName: "Linnéa", hasContact: true },
+      ]),
     ).toBe("needs_attention");
   });
 });
 
 describe("entryIsComplete", () => {
   it("is the target state and nothing else", () => {
-    expect(
-      entryIsComplete(
-        past("a", { attendance: ALL_MARKED, report: "# Week" }),
-        ROSTER,
-      ),
-    ).toBe(true);
+    expect(entryIsComplete(sentPast("a"), ROSTER)).toBe(true);
     expect(entryIsComplete(past("b", { attendance: ALL_MARKED }), ROSTER)).toBe(
       false,
     );
-    expect(entryIsComplete(past("c"), ROSTER)).toBe(false);
+    // Written up, never sent: two parts of three.
+    expect(
+      entryIsComplete(
+        past("c", { attendance: ALL_MARKED, report: "# Week" }),
+        ROSTER,
+      ),
+    ).toBe(false);
+    expect(entryIsComplete(past("d"), ROSTER)).toBe(false);
   });
 
   it("is never true at the same time as needing attention", () => {
     const entries: SessionFeedEntry[] = [
       past("a"),
       past("b", { attendance: ALL_MARKED }),
-      past("c", { attendance: ALL_MARKED, report: "# Week" }),
+      sentPast("c"),
       past("d", { report: "# Week" }),
       future("u"),
       noRecord("n"),
@@ -424,12 +493,7 @@ describe("entryIsComplete", () => {
 describe("entryNeedsAttention", () => {
   it("is exactly: a finished session missing its register, its report, or both", () => {
     expect(entryNeedsAttention(past("g"), ROSTER)).toBe(true);
-    expect(
-      entryNeedsAttention(
-        past("r", { attendance: ALL_MARKED, report: "# Week" }),
-        ROSTER,
-      ),
-    ).toBe(false);
+    expect(entryNeedsAttention(sentPast("r"), ROSTER)).toBe(false);
     expect(entryNeedsAttention(noRecord("n"), ROSTER)).toBe(false);
     expect(entryNeedsAttention(future("f"), ROSTER)).toBe(false);
   });
@@ -461,13 +525,19 @@ describe("entryNeedsAttention", () => {
     ).toBe(true);
   });
 
-  it("clears once the write-up lands on top of a finished register", () => {
+  it("keeps flagging a finished write-up until it has been emailed", () => {
+    // The third part, in the order a gedu meets it: the register is done, the
+    // report is written, and the families have not been told it exists.
     expect(
       entryNeedsAttention(
         past("t", { attendance: ALL_MARKED, report: "# Redstone week" }),
         ROSTER,
       ),
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it("clears once the write-up has been sent as well", () => {
+    expect(entryNeedsAttention(sentPast("t"), ROSTER)).toBe(false);
   });
 
   it("keeps flagging a partially-marked session", () => {
@@ -490,7 +560,7 @@ describe("entryNeedsAttention", () => {
     // on it too, the entry is done.
     expect(
       entryNeedsAttention(
-        past("r", {
+        sentPast("r", {
           attendance: { a: "absent", b: "absent", c: "absent" },
           report: "# Nobody came",
         }),
@@ -502,8 +572,11 @@ describe("entryNeedsAttention", () => {
   it("reopens when a child joins the group after the session was marked", () => {
     // Measured against the *current* roster: nobody has said whether the new
     // child was there, so the honest answer is that the sheet is unfinished.
-    const entry = past("r", { attendance: ALL_MARKED, report: "# Week" });
-    const grown = [...ROSTER, { id: "d", firstName: "Linnéa" }];
+    const entry = sentPast("r");
+    const grown = [
+      ...ROSTER,
+      { id: "d", firstName: "Linnéa", hasContact: true },
+    ];
     expect(entryNeedsAttention(entry, ROSTER)).toBe(false);
     expect(entryNeedsAttention(entry, grown)).toBe(true);
   });
@@ -546,6 +619,11 @@ describe("entryNeedsAttention", () => {
     // otherwise manufacture one alert per week for ever.
     expect(entryNeedsAttention(past("g"), [])).toBe(false);
     expect(entryNeedsAttention(past("r", { report: "# Week" }), [])).toBe(false);
+    // Not even for the send, which is the one part an empty group could in
+    // principle still be asked for — there is nobody to send to.
+    expect(
+      entryNeedsAttention(past("s", { attendance: ALL_MARKED }), []),
+    ).toBe(false);
   });
 });
 
@@ -561,12 +639,14 @@ describe("countEntriesNeedingAttention", () => {
       past("g3", { attendance: { a: "present" } }),
       // A finished register and no report — counted now, silent before.
       past("g4", { attendance: ALL_MARKED }),
-      // Both halves in: the only past entry here that is not work.
-      past("done", { attendance: ALL_MARKED, report: "# Week" }),
+      // Marked off and written up, never emailed — counted for the third gap.
+      past("g5", { attendance: ALL_MARKED, report: "# Week" }),
+      // All three parts in: the only past entry here that is not work.
+      sentPast("done"),
       unowedPast("o"),
       noRecord("n"),
     ];
-    expect(countEntriesNeedingAttention(entries, ROSTER)).toBe(4);
+    expect(countEntriesNeedingAttention(entries, ROSTER)).toBe(5);
   });
 
   it("is zero for an empty feed", () => {
@@ -893,6 +973,9 @@ describe("applyDraftToEntry", () => {
       // Carried through untouched: saving a session does not change whether it
       // was ever asked for.
       owed: true,
+      // Untouched as well: saving a report is not sending one, and the stamp
+      // is the database's to write.
+      reportEmailedAt: null,
       report: "Redstone week.",
       // An emptied note collapses to null so its block stops rendering.
       staffNote: null,
@@ -918,13 +1001,29 @@ describe("applyDraftToEntry", () => {
     expect(entryNeedsAttention(saved, ROSTER)).toBe(true);
   });
 
-  it("clears the alert once the same save carries a report", () => {
+  it("leaves the alert up when the save carries a report — it is unsent", () => {
+    // Writing the report is two parts of three. What clears the alert is the
+    // send, which happens after the save and stamps the row server-side.
     const saved = applyDraftToEntry(past("g"), {
       kind: "past",
       attendance: ALL_MARKED,
       report: "# Redstone week",
       staffNote: "",
     });
+    expect(entryNeedsAttention(saved, ROSTER)).toBe(true);
+  });
+
+  it("carries an existing send through a later edit of the report", () => {
+    // A gedu fixing a typo after the mail went out does not un-send it: the
+    // stamp is the database's, this function has no idea what was sent, and
+    // dropping it would offer a Send button on a session already emailed.
+    const saved = applyDraftToEntry(sentPast("g"), {
+      kind: "past",
+      attendance: ALL_MARKED,
+      report: "# Redstone week, corrected",
+      staffNote: "",
+    });
+    expect(saved).toMatchObject({ reportEmailedAt: EMAILED_AT });
     expect(entryNeedsAttention(saved, ROSTER)).toBe(false);
   });
 
@@ -974,7 +1073,13 @@ describe("applyDraftToEntry", () => {
       report: "# From memory",
       staffNote: "",
     });
-    expect(saved).toMatchObject({ kind: "past", lastEditedBy: null });
+    // Unsent for the same reason it is unsigned: a gap has no stored row, so
+    // there is nothing behind it that could have been emailed.
+    expect(saved).toMatchObject({
+      kind: "past",
+      lastEditedBy: null,
+      reportEmailedAt: null,
+    });
   });
 
   it("round-trips a finished entry through the editor without losing anything", () => {

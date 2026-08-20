@@ -1324,7 +1324,16 @@
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
       "attendanceForGamer": "{name} pawwI’",
       "saveFailed": "may’vam pollu’be’. yIboq.",
-      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq."
+      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq.",
+      "sendReportToParents": "vavpu’ SoSpu’ je yInob",
+      "reportSentToParents": "vavpu’ SoSpu’ je lunobta’: {sentAt}",
+      "reportSendPartial": "{sent} lunobta’, {failed} luj",
+      "sendReportConfirmTitle": "vavpu’ SoSpu’ je De’vam yInob",
+      "sendReportConfirmBody": "{count, plural, =0 {ghom’a’vamDaq Se’ ghajbe’ Hoch. vaj pagh laDlu’. ’ach may’ nobta’ ponglu’ ’ej yaS luja’lu’.} one {# QujwI’ qorDu’vaD De’vam vIngeH’a’?} other {# QujwI’pu’ qorDu’pu’vaD De’vam vIngeH’a’?}}",
+      "sendReportConfirmCta": "yIngeH",
+      "sendReportAlreadySent": "qorDu’pu’vaD De’vam ngeHta’ vay’. Hal yIchIDqa’ ’ej ngeHpu’ poH yIlegh.",
+      "sendReportNoReport": "may’vamvaD ngeHmeH De’ polta’ tu’lu’be’ DaH. Hal yIchIDqa’ ’ej qonta’ yIlegh.",
+      "sendReportFailed": "De’ ngeHlu’laHbe’. pagh qorDu’ Suqta’ — yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",

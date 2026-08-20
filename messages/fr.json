@@ -1280,7 +1280,16 @@
       "attendanceMarkedCount": "{marked} sur {total} renseignés",
       "attendanceForGamer": "Présence de {name}",
       "saveFailed": "Cette séance n’a pas été enregistrée. Réessayez.",
-      "savePartiallyFailed": "Certaines modifications de cette séance n’ont pas été enregistrées — vérifiez la feuille de présence et réessayez."
+      "savePartiallyFailed": "Certaines modifications de cette séance n’ont pas été enregistrées — vérifiez la feuille de présence et réessayez.",
+      "sendReportToParents": "Envoyer aux parents",
+      "reportSentToParents": "Envoyé aux parents le {sentAt}",
+      "reportSendPartial": "{sent} envoyés, {failed} en échec",
+      "sendReportConfirmTitle": "Envoyer ce compte rendu aux parents",
+      "sendReportConfirmBody": "{count, plural, =0 {Personne dans ce groupe n’a d’adresse de contact : aucun message ne partira. La séance sera tout de même marquée comme envoyée et le bureau en sera informé.} one {Envoyer ce compte rendu à la famille de # participant ?} other {Envoyer ce compte rendu aux familles de # participants ?}}",
+      "sendReportConfirmCta": "Envoyer",
+      "sendReportAlreadySent": "Ce compte rendu a déjà été envoyé aux familles. Rechargez la page pour voir quand il est parti.",
+      "sendReportNoReport": "Cette séance n’a plus de compte rendu enregistré à envoyer. Rechargez la page pour voir ce qu’elle contient maintenant.",
+      "sendReportFailed": "Le compte rendu n’a pas pu être envoyé. Aucune famille ne l’a reçu — réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",

@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTimezone } from "@/providers";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import {
   SessionFeedShell,
   editToggleAnchor,
@@ -14,6 +14,11 @@ import {
 import { SessionFeedItem } from "./SessionFeedItem";
 import { entryCompleteness, type SessionCompleteness } from "./entry-state";
 import { isPartialSessionSaveError } from "./partial-save";
+import {
+  sessionReportSendFailure,
+  type SessionReportSendFailure,
+  type SessionReportSendResult,
+} from "./send-report";
 import type {
   SessionEntryDraft,
   SessionFeedEntry,
@@ -70,6 +75,16 @@ interface SessionFeedProps {
     entryId: string,
     draft: SessionEntryDraft,
   ) => void | Promise<void>;
+  /**
+   * Email one session's report to the group's families. **Awaited**, and the
+   * contract is the mirror image of the save's: the feed disables the button
+   * before this runs and keeps it disabled until the refetched row turns it
+   * into the sent line, so the only outcome that hands the button back is a
+   * rejection. Resolve with the counts — the card shows them once when some of
+   * the mail did not go out — and reject with a `SessionReportSendError` to
+   * choose which of the three refusal messages the gedu reads.
+   */
+  onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
   className?: string;
 }
 
@@ -105,6 +120,13 @@ interface SessionFeedProps {
  * refused write closes nothing at all: the sheet, both notes and the error line
  * stay where the gedu can retry them.
  *
+ * **The send is awaited on the same terms, and asymmetrically on purpose.** A
+ * save that lands closes its editor here; a send that lands closes nothing,
+ * because what replaces the button is the refetched row's own sent line. So the
+ * in-flight flag is dropped on failure only — the successful path lets the
+ * button unmount under it — and the counts the send answered with are held
+ * beside it, for this render and no longer.
+ *
  * Which entry is open is the caller's state and persisting is the caller's
  * callback; whether a save is in flight and where focus lands afterwards are
  * this component's own. Nothing here fetches, mutates, or sorts.
@@ -117,6 +139,7 @@ export function SessionFeed({
   editingEntryId,
   onEditEntry,
   onSaveEntry,
+  onSendReport,
   className,
 }: SessionFeedProps) {
   const t = useTranslations("gedu.sessionFeed");
@@ -132,6 +155,31 @@ export function SessionFeed({
    */
   const [committingEntryId, setCommittingEntryId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  /**
+   * The send in the air, the counts the last one answered with, and why the
+   * last one was refused — one of each, for the same reason the save keeps one
+   * of each: a send is confirmed through a modal dialog, so two of them cannot
+   * be in flight at once.
+   *
+   * **The in-flight id is cleared only on failure.** A send that lands is
+   * followed by a refetch that swaps the button for the sent line, so the
+   * disabled button unmounts rather than being re-enabled — which is exactly
+   * the gap this pattern exists to close: there is no frame between the mail
+   * going out and the line saying so in which a second send could be started.
+   *
+   * The counts are kept against an entry id so they cannot end up beside the
+   * wrong card, and they are deliberately **not** persisted: they are the
+   * receipt for one send, and a refetch or a reload is where they stop being
+   * true.
+   */
+  const [sendingEntryId, setSendingEntryId] = useState<string | null>(null);
+  const [sendResult, setSendResult] = useState<
+    { entryId: string; result: SessionReportSendResult } | null
+  >(null);
+  const [sendError, setSendError] = useState<
+    { entryId: string; message: string } | null
+  >(null);
 
   // This feed's own anchor, for the editor toggle; the shell keeps a separate
   // one for the divider's reveal. Two are safe because a capture is made in a
@@ -160,6 +208,16 @@ export function SessionFeed({
         entries.map((entry) => [entry.id, entryCompleteness(entry, roster)]),
       ),
     [entries, roster],
+  );
+
+  /**
+   * How many families a send would reach — the seats with somebody to write to,
+   * counted once for the whole feed because every card asks about the same
+   * roster.
+   */
+  const recipientCount = useMemo(
+    () => roster.filter((gamer) => gamer.hasContact).length,
+    [roster],
   );
 
   if (entries.length === 0) {
@@ -233,6 +291,36 @@ export function SessionFeed({
   };
 
   /**
+   * Email one entry's report, holding its button disabled from the click all
+   * the way to the line that replaces it.
+   *
+   * `sendingEntryId` is set **synchronously, before the caller's mutation is
+   * reached**, so no render between the confirmation and the disabled button
+   * can carry a second click. On success it stays set: the refetch that follows
+   * turns the button into the sent line, and clearing the flag first would put
+   * a live button back on screen for the frames in between. Only a refusal
+   * clears it, which is precisely where the gedu needs it back.
+   */
+  const sendReport = async (entryId: string) => {
+    setSendError(null);
+    setSendResult(null);
+    setSendingEntryId(entryId);
+    try {
+      const result = await onSendReport(entryId);
+      setSendResult({ entryId, result });
+    } catch (error) {
+      const failure = sessionReportSendFailure(error);
+      // Which message, and only that, is the thrown error's to decide. Two of
+      // the three say the session moved on since this page loaded — the report
+      // has already gone, or there is no longer one to send — and neither is
+      // worth pressing again; the third is a failure a second press genuinely
+      // might get past.
+      setSendingEntryId(null);
+      setSendError({ entryId, message: t(SEND_ERROR_KEY[failure]) });
+    }
+  };
+
+  /**
    * The rail marker for one row: its tone from what the session still owes, and
    * the quiet size on a placeholder line so the dot sits against its own text
    * rather than against a card that isn't there.
@@ -282,6 +370,35 @@ export function SessionFeed({
             editing={editing}
             committing={committingEntryId === entry.id}
             saveError={editing ? saveError : null}
+            sentAtLabel={
+              entry.kind === "past" && entry.reportEmailedAt !== null
+                ? // The viewer's zone and locale, like every other clock face
+                  // on this feed: the send happened at an instant, and the gedu
+                  // reading it may be nowhere near the club's own zone. The
+                  // fields are spelled out rather than taken from a date/time
+                  // style because a style would give an English reader a
+                  // 12-hour clock beside the 24-hour session times two lines
+                  // above it.
+                  formatDate(entry.reportEmailedAt, locale, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                    timeZone,
+                  })
+                : null
+            }
+            recipientCount={recipientCount}
+            sending={sendingEntryId === entry.id}
+            sendResult={
+              sendResult?.entryId === entry.id ? sendResult.result : null
+            }
+            sendError={
+              sendError?.entryId === entry.id ? sendError.message : null
+            }
+            onSendReport={() => void sendReport(entry.id)}
             registerEditButton={(node) => {
               if (node === null) editButtons.current.delete(entry.id);
               else editButtons.current.set(entry.id, node);
@@ -346,3 +463,14 @@ function markerTone(
       return "bg-muted-foreground/25";
   }
 }
+
+/**
+ * The line each refusal reads as. A total map rather than a chain of ternaries,
+ * so a fourth kind of refusal cannot be added without the compiler asking what
+ * it says.
+ */
+const SEND_ERROR_KEY = {
+  already_sent: "sendReportAlreadySent",
+  no_report: "sendReportNoReport",
+  failed: "sendReportFailed",
+} as const satisfies Record<SessionReportSendFailure, string>;

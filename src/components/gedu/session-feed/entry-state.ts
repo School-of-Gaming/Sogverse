@@ -128,12 +128,13 @@ export function isPlannableEntry(
  *
  * Two states, because two is how many a card can usefully wear:
  *
- * - `needs_attention` — the session is **owed** and one of its two halves is
+ * - `needs_attention` — the session is **owed** and one of the things it owes is
  *   missing. Amber, and the count behind every alert badge.
- * - `complete` — every child on the current roster has an answer *and* a report
- *   has been written for the families. The target state, and the green check.
+ * - `complete` — every child on the current roster has an answer, a report has
+ *   been written for the families, *and* (on an owed session) that report has
+ *   been emailed to them. The target state, and the green check.
  *
- * **Both halves are owed work, and that is a deliberate reversal.** The report
+ * **Every part is owed work, and that is a deliberate reversal.** The report
  * used to be optional: a session marked off with nothing written sat on a silent
  * middle rung, on the argument that a badge there would nag somebody for work
  * they did not owe. The family surfaces settled that argument the other way. The
@@ -186,6 +187,21 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * actually happened is the gedu's professional responsibility (owner decision,
  * 2026-08-05). What the machine asks after is the field being non-empty;
  * what fills it honestly is the job.
+ *
+ * **The third part — the report reaching the families — is asked of owed
+ * sessions only, and the asymmetry is deliberate.** This branch has no epoch
+ * floor of its own (only the warning below has one), so asking it of everything
+ * would strip the green check from every finished session in history and let it
+ * be earned back only by mailing a months-old write-up to families. A session
+ * the platform never asked for stays finished on the parts it was actually
+ * asked for. The dashboard's SQL twin already floors at the epoch, so it needs
+ * no equivalent guard and the two still agree.
+ *
+ * **There is no "nobody to mail" exemption.** A group whose seats carry no
+ * contact is still sent to — mailing nobody, and telling staff so — because the
+ * send is also what finishes the session: carving it out here would leave such
+ * a session flagged for ever with nothing the gedu could do about it, and would
+ * force the SQL twin to grow its own notion of mailability to agree.
  */
 export function entryCompleteness(
   entry: SessionFeedEntry,
@@ -193,7 +209,9 @@ export function entryCompleteness(
 ): SessionCompleteness | null {
   if (entry.kind !== "past") return null;
   const finished =
-    attendanceTally(roster, entry.attendance).complete && hasReport(entry.report);
+    attendanceTally(roster, entry.attendance).complete &&
+    hasReport(entry.report) &&
+    (!entry.owed || entry.reportEmailedAt !== null);
   if (finished) return "complete";
   return entry.owed && roster.length > 0 ? "needs_attention" : null;
 }
@@ -203,10 +221,12 @@ export function entryCompleteness(
  * stored.
  *
  * It means exactly one thing: **a session that has finished, dated on or after
- * the enforcement epoch, whose register is unfinished or whose report has not
- * been written.** Either gap on its own is enough, so an entry carrying a full
- * report with half a roster unmarked is flagged, and so is one marked off to the
- * last child with nothing written for the families. A session older than the
+ * the enforcement epoch, whose register is unfinished, whose report has not
+ * been written, or whose report has not been emailed to the families.** Any one
+ * gap on its own is enough, so an entry carrying a full report with half a
+ * roster unmarked is flagged, so is one marked off to the last child with
+ * nothing written for the families, and so is one written up and never sent —
+ * a write-up nobody was told about is one nobody reads. A session older than the
  * epoch is never flagged however little is on it, which is the whole of what the
  * epoch does — and a session still under way is not flagged either, because the
  * hour it would be nagging about has not run out yet.
@@ -226,7 +246,10 @@ export function entryNeedsAttention(
   return entryCompleteness(entry, roster) === "needs_attention";
 }
 
-/** Whether an entry has reached the target state — marked off *and* reported. */
+/**
+ * Whether an entry has reached the target state — marked off, reported, and
+ * (where it was owed) the report sent to the families.
+ */
 export function entryIsComplete(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
@@ -419,6 +442,12 @@ export function applyDraftToEntry(
     startsAt,
     endsAt,
     owed: entry.kind === "past" ? entry.owed : false,
+    // Carried through untouched, for the same reason the last editor is: the
+    // stamp belongs to the database. Saving a report cannot have emailed it,
+    // and a gap saved into has never been emailed at all — so folding a draft
+    // in locally must not invent, or drop, the one fact that decides whether
+    // the card offers a Send button or a sent line.
+    reportEmailedAt: entry.kind === "past" ? entry.reportEmailedAt : null,
     ...written,
   };
 }

@@ -254,6 +254,48 @@ describe("buildGeduSessionFeed — the last editor", () => {
   });
 });
 
+/**
+ * The third thing a session owes travels through the merge as an **instant**,
+ * because the card renders it in the viewer's zone like every other clock face
+ * in the feed. Whether it is set is what decides between the Send to parents
+ * button and the permanent sent line, so a row that lost it on the way through
+ * would offer to mail a report the families already have.
+ */
+describe("buildGeduSessionFeed — the report's send", () => {
+  it("maps the stamp onto the past entry as an instant", () => {
+    const entries = build({
+      sessions: [
+        row("2026-03-16", {
+          report: "# Redstone",
+          report_emailed_at: "2026-03-16T18:00:00.000Z",
+        }),
+      ],
+    });
+    const entry = byDate(entries, "2026-03-16");
+    expect(entry).toMatchObject({ kind: "past" });
+    expect(
+      entry?.kind === "past" ? entry.reportEmailedAt?.toISOString() : null,
+    ).toBe("2026-03-16T18:00:00.000Z");
+  });
+
+  it("answers null for a row nobody has emailed", () => {
+    const entries = build({
+      sessions: [row("2026-03-16", { report: "# Redstone" })],
+    });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      reportEmailedAt: null,
+    });
+  });
+
+  it("answers null on an occurrence with no stored row behind it", () => {
+    // Nothing has been written, so nothing can have been sent — the same
+    // answer, by a different route.
+    expect(byDate(build(), "2026-03-16")).toMatchObject({
+      reportEmailedAt: null,
+    });
+  });
+});
+
 describe("buildGeduSessionFeed — records beat projections", () => {
   it("lays a row over the occurrence it shares a date with", () => {
     const entries = build({

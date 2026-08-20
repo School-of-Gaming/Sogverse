@@ -1,13 +1,19 @@
+import { z } from "zod";
+import { ApiError } from "@/lib/api/api-error";
+import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import { SESSION_RECORDING_EPOCH } from "@/lib/constants";
 import type { AppSupabaseClient } from "@/types";
 import {
   attendanceMarkResult,
+  emailSessionReportResponse,
   geduAssignmentSummaries,
   geduGroupFeed,
   groupNotesResult,
   groupSessionNotesResult,
   siteNotesResult,
   type AttendanceStatus,
+  type EmailSessionReportBody,
+  type EmailSessionReportResponse,
   type GeduAssignmentSummary,
   type GeduGroupFeed,
 } from "./gedu-sessions.contracts";
@@ -15,12 +21,19 @@ import {
 /**
  * Reads and writes for the gedu session feed.
  *
- * Every method here is an `.rpc()` call: the two new tables grant nothing to
- * `authenticated`, so the SECURITY DEFINER functions are the only way in and
+ * Almost every method here is an `.rpc()` call: the two new tables grant nothing
+ * to `authenticated`, so the SECURITY DEFINER functions are the only way in and
  * the authorization lives in one place rather than being re-derived per call
- * site. That also means there are no API routes to write for these — the
- * Minecraft edit is the single exception, and it lives in the Minecraft service
- * because it needs a server-side Mojang lookup before it can write.
+ * site.
+ *
+ * **Two methods stand outside that**, and both for the same reason — a write
+ * that needs a server-side secret before it can happen. Correcting a game
+ * username needs the platform's own lookup and lives in the Minecraft service;
+ * emailing a session report needs the mail provider, the families' addresses
+ * and the admin list, none of which a browser may hold, so it posts to a route.
+ * The route's own first act is still an RPC — the claim that stamps the row is
+ * both the at-most-once guard and the authorization — so the rule above is bent
+ * rather than broken.
  *
  * Every RPC raises `42501` when the caller is not a gedu assigned to the group
  * in question. The reads surface that as `null` so a route can render a clean
@@ -130,6 +143,55 @@ export class GeduSessionsService {
     return attendanceMarkResult.parse(data);
   }
 
+  /**
+   * Email one session's report to every family in the group, once.
+   *
+   * **The route is the whole operation, not a wrapper around one.** It claims
+   * the send first — a single stamping UPDATE that two tabs cannot both win —
+   * and only then resolves the recipients and fans the mail out, which is why
+   * there is nothing to send from here but the session's identity. The session
+   * is named by (group, date) like every other write on this surface, because
+   * rows are lazily materialized and the pair is the row's real identity.
+   *
+   * **A refusal is the answer, never a swallowed failure.** This is a send the
+   * gedu explicitly asked for, so the refusal travels out on an `ApiError`
+   * carrying both the status and — on the two the gedu can act on — the
+   * SQLSTATE the claim refused with. The surface above branches on that
+   * **code**, never on the message: the route's message is raw English written
+   * for a log, and a reworded `RAISE` must not be able to reclassify a refusal
+   * or silently change what a gedu is told.
+   */
+  async emailSessionReport(args: {
+    groupId: string;
+    sessionDate: string;
+  }): Promise<EmailSessionReportResponse> {
+    const response = await fetch("/api/gedu/sessions/email-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // `satisfies` rather than a bare literal: the route parses this body
+      // through the same schema, so the compiler is what keeps the two ends in
+      // step instead of a second parse on the way out.
+      body: JSON.stringify({
+        groupId: args.groupId,
+        sessionDate: args.sessionDate,
+      } satisfies EmailSessionReportBody),
+    });
+
+    if (!response.ok) {
+      // One body, two things wanted out of it, and a stream that may only be
+      // read once — so the message helper is handed the clone and the code is
+      // read from the original.
+      const code = await readErrorCode(response.clone());
+      throw new ApiError(
+        await readErrorMessage(response, "Failed to email the session report"),
+        response.status,
+        code,
+      );
+    }
+
+    return parseJsonResponse(response, emailSessionReportResponse);
+  }
+
   /** Write the group's standing family-facing and gedu notes. */
   async setGroupNotes(args: {
     groupId: string;
@@ -174,4 +236,22 @@ export class GeduSessionsService {
     if (error) throw error;
     return siteNotesResult.parse(data);
   }
+}
+
+/**
+ * The machine-readable code an error body may carry beside its message.
+ *
+ * A route attaches one where the caller has to *branch* rather than merely
+ * report — here, the two refusals the claim raises share a `409` and mean
+ * different things to the gedu. Absent on everything else, which is why this
+ * answers `undefined` rather than throwing: a body with no code, a body that is
+ * not JSON, and a route that never had one are the same answer.
+ */
+const errorCodeBody = z.object({ code: z.string() });
+
+async function readErrorCode(response: Response): Promise<string | undefined> {
+  const parsed = errorCodeBody.safeParse(
+    await response.json().catch(() => null),
+  );
+  return parsed.success ? parsed.data.code : undefined;
 }

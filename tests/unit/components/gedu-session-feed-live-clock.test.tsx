@@ -45,9 +45,9 @@ import type {
 
 /** Real generated UUIDs: ids reaching an identicon must never be readable stubs. */
 const GAMERS: readonly SessionFeedGamer[] = [
-  { id: "26586f95-d91e-4cf3-ae9d-edf3e51d9e64", firstName: "Aino" },
-  { id: "c6f10c3a-972d-41bc-9413-c7f674afea3d", firstName: "Elias" },
-  { id: "cec00f11-094d-4b75-a5a4-828ca620d7cd", firstName: "Venla" },
+  { id: "26586f95-d91e-4cf3-ae9d-edf3e51d9e64", firstName: "Aino", hasContact: true },
+  { id: "c6f10c3a-972d-41bc-9413-c7f674afea3d", firstName: "Elias", hasContact: true },
+  { id: "cec00f11-094d-4b75-a5a4-828ca620d7cd", firstName: "Venla", hasContact: true },
 ];
 
 /** A camp day running 08:00–23:00 Helsinki on Monday 16 March 2026. */
@@ -103,6 +103,12 @@ function renderFeed({
             editingEntryId={editingEntryId}
             onEditEntry={() => {}}
             onSaveEntry={() => {}}
+            // Never reached: this suite is about which editor a live session
+            // opens, and only a past session with a written report offers a
+            // send at all.
+            onSendReport={() =>
+              Promise.resolve({ sent: 0, failed: 0, skipped: 0 })
+            }
           />
         </NowProvider>
       </TimezoneProvider>

@@ -499,7 +499,12 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  *   never written up. These used to be the silent middle of a three-rung ladder;
  *   they are amber now, because the report is what a family opens the page for
  *   and a week without one is a week they were told nothing about.
- * - *Complete* — the majority: marked off and reported, wearing the green check.
+ * - *Needs attention, never sent* — one week marked off and written up whose
+ *   report has not been emailed to the families. It is the only card here
+ *   showing the Send to parents button, and the only way to see on this page
+ *   that a write-up nobody was told about is a write-up nobody reads.
+ * - *Complete* — the majority: marked off, reported and sent, wearing the green
+ *   check and a sent line under each report.
  *
  * Plus a pre-epoch tail: one session somebody went back and wrote up (an
  * ordinary past entry that never turns amber, and the only place on this page
@@ -517,6 +522,17 @@ function yearlongSpecs(): readonly EntrySpec[] {
   // the feed and again deep into the scrollback, sitting beside the
   // unmarked-register cases it must not be mistaken for.
   const MARKED_BUT_NO_REPORT_AT = new Set([1, 9, 22, 37]);
+  /**
+   * Marked off, written up, and **not yet emailed to the families** — the third
+   * way to be flagged, and the only session on this page carrying the Send to
+   * parents button. Every other week here was sent the evening it was written,
+   * which is what the sent line under each report says.
+   *
+   * One, and deliberately near the top: it is the state a gedu meets on the
+   * session they have just finished writing up, so it belongs on the first
+   * screen of the feed rather than buried in the scrollback.
+   */
+  const WRITTEN_BUT_NOT_EMAILED_AT = new Set([5]);
   /**
    * The weeks Petra covered. Sanna has the group and writes most of it up; a
    * scattered handful are Petra's, which is what a regular-plus-stand-in group
@@ -558,6 +574,16 @@ function yearlongSpecs(): readonly EntrySpec[] {
       past.push({
         kind: "past",
         report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+        lastEditedBy: editorAt(index),
+      });
+      continue;
+    }
+    if (WRITTEN_BUT_NOT_EMAILED_AT.has(index)) {
+      past.push({
+        kind: "past",
+        allPresent: true,
+        report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+        emailed: false,
         lastEditedBy: editorAt(index),
       });
       continue;
