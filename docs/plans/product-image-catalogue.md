@@ -198,6 +198,53 @@ Integration tests: upload `added` / `existing` / 413 / 415; replace same-entry n
 success with relinked count / label inheritance; delete's unlinked count; rename; both
 product routes writing `image_id` post-RPC and touching no storage.
 
+**Deviations (step 2, as built — service, routes, registry, integration tests)**
+
+- **The find-or-create half lives in a `.server.ts` module in the service directory and
+  takes both Supabase clients as arguments.** Two routes need it and it must not
+  construct the service-role client itself: the route-posture registry pins every file
+  that reaches for that client to a *route* entry, so a shared helper constructing one
+  would be an unpinned site. Each route constructs both clients and passes them in, which
+  also keeps the split visible where it is decided — storage on the admin client, the
+  catalogue table on the caller's own session.
+- **The 413/415 codes ride on the existing `ApiError.code` slot** rather than a new error
+  class. That slot exists for exactly this ("the stable machine-readable code a route may
+  attach to a user-actionable error"), and the UI branches on two exported constants.
+- **Usage is `Record<entryId, products[]>` with no counts map beside it** — a badge's
+  number is its list's length, because two derivations of one number is how they come to
+  disagree. The read is *walked* like the catalogue read (the products table only grows)
+  and filtered to imaged products, which is most of the payload saved. The name comes from
+  the shared locale resolver at the default locale rather than from an embed filtered to
+  one locale: a product need not carry an English translation, and filtering would blank
+  its name instead of falling back.
+- **Mutations invalidate the usage key explicitly**, alongside the catalogue list and the
+  products *list* keys. It lives under the products keys, so `productKeys.lists()` does not
+  reach it — and after a replace or a remove it is exactly the answer that changed. The
+  never-invalidate-detail rule is unchanged and is why all three keys are named
+  individually rather than swept with the parent.
+- **An upload's label is trimmed and capped rather than refused**; only the rename route,
+  where the label *is* the request, validates strictly. Refusing an upload over a cosmetic
+  field would throw away the bytes for no reason.
+- **`relinked` is the length of the ids the one `UPDATE … RETURNING id` gives back**, not a
+  separate count query — still one statement.
+- **Replace reads the entry (for its label, and to 404) before uploading**, so a picture
+  another admin has just deleted costs no upload. **Delete logs a failed object removal and
+  still succeeds**: the row is already gone, a retry would have nothing left to delete, and
+  the leftover object is silently adopted by the next upload of those same bytes, because
+  its name *is* their hash.
+- **Delete re-asks the table for the path before it touches the bucket.** Content
+  addressing makes a delete/upload race real: between the row delete and the object
+  removal another admin may upload the same picture and be handed the same key, so the
+  removal would break *their* entry. If any row still names the path — or if the re-ask
+  itself fails — the object stays and the reason is logged. Unproven is treated as
+  claimed, because a surviving object costs bytes and a wrongly removed one costs a
+  picture.
+- **The accept list is one definition, held as a `Map` in the contracts module** and
+  imported by the routes and by the cleanup script alike. An object literal answered
+  `constructor` and `__proto__` from its prototype chain, so a file named
+  `castle.constructor` passed the 415 gate; a `Map` has no inherited keys. Two copies of
+  one list was the other half of the defect and is gone with it.
+
 ### The product routes
 
 - `file` and `clear_image` go away; the body carries `image_id: string | null` (required,
@@ -219,16 +266,47 @@ product routes writing `image_id` post-RPC and touching no storage.
 - The update route's integration tests that pin upload ordering, UUID paths and
   superseded-blob deletion are deleted. `image_path` fixtures elsewhere are unchanged.
 
+**Deviations (step 3, as built)**
+
+- **The body schema is declared on the route primitive** rather than parsed by a hand-written
+  call in the handler. The primitive's body slot *is* the shared JSON parse, so this is the
+  same discipline with less code; the contract exports keep the names the registry already
+  records.
+- **`p_image_path` is no longer passed to the update RPC at all.** The trigger overwrites the
+  RPC's assignment for a linked product, and the parameter's `DEFAULT NULL` is already the
+  right answer for an unlinked one, so passing anything was noise. The RPC parameter itself
+  still exists — dropping it stays a follow-up.
+- **The post-RPC link statement ends in `.select("id")` and treats zero rows as the
+  soft-warning path.** A filtered UPDATE that matches nothing is a successful statement
+  with no error to catch, so the returned row is the only evidence the write landed —
+  which is what makes "never a bare 200" a property of the code rather than a hope.
+- **The update route lost its 404.** The existence check was a side effect of the
+  existing-path read-back; with that gone, an id that matches no row surfaces as the RPC's
+  own refusal (400 with its message) like every other RPC failure. No caller distinguished
+  the two.
+- **The service returns `{ product_id, warning? }`** instead of the id alone, so the soft
+  warning survives the client boundary at all — the old code parsed it off and dropped it.
+  Nothing renders it yet; the form navigates away on success, so showing it is part of the
+  form work and needs copy.
+- **The form card is a placeholder** with the seams named in its own comment: `imageId` in,
+  `onChange` out, and a derived `current` (label + path) supplied by whoever holds the product
+  read. `Change image` is inert until the dialog exists. It borrows the old picker's message
+  keys, which leaves `imagePicker.previewAlt`, `.dropPrompt` and `.formats` momentarily
+  unreferenced — the dialog's copy pass either uses them or deletes them.
+
 ### UX
 
 **The catalogue dialog**, opened by *Change image* on the product form. The shared `Dialog`
 caps width in two places (portal wrapper and `DialogContent`), so it gains a `size` prop —
-`"default"` is today's `max-w-lg`, `"wide"` is `max-w-4xl` — applied to both through
-context; every existing caller unchanged. (No body-scroll lock: that changes every dialog
-and shifts the page under the scrollbar; if the grid's own scroll container proves
-insufficient, it is a separate change.) The content is a fixed-height flex column
-(`h-[min(80vh,720px)]`): an **Upload** button in the header, then two thirds grid / one
-third reference column.
+`"default"` is today's `max-w-lg`, `"wide"` is `max-w-6xl` (widened from `max-w-4xl` on the
+owner's review of the preview: the grid shows four tiles across at desktop width) — applied
+to both through context; every existing caller unchanged. (No body-scroll lock: that changes
+every dialog and shifts the page under the scrollbar; if the grid's own scroll container
+proves insufficient, it is a separate change.) The content is a fixed-height flex column
+(`h-[min(85vh,880px)]`, likewise enlarged): an **Upload** button in the header, then two
+thirds grid / one third reference column. Both scroll regions carry their own edge padding
+and a stable scrollbar gutter, because the site's scrollbar is a solid 8px track and a
+region clipping flush against it cut tile borders and focus rings off.
 
 - **Tiles**: the shared product banner at thumbnail size (an owner rule: every surface
   paints a product picture through that one 3:2 frame), label, and a usage badge in a
@@ -270,6 +348,38 @@ and the count would cost a products read on every edit-page open.
 guide**: one section for the dialog with fixture entries — empty column / tile selected with
 usage / confirm at N = 0 and N = 22 side by side — fixture UUIDs hardcoded.
 
+**Deviations (step 4, as built — UI)**
+
+- **The soft warning renders in place and withholds the navigation**, because there is no
+  toast anywhere in this app to put it in (verified: the only three "toast" mentions in
+  `src/` are comments saying there isn't one). The form shell takes an optional warning
+  back from its submit callback, shows the route's English verbatim in a warning banner,
+  **keeps `committing` set** so the product cannot be saved twice, and offers one button
+  that performs the navigation the wrapper would have done. On create that button goes to
+  the **new product's edit page** rather than the list — the warning's own copy says to
+  retry from the edit page, and the id has just come back, so sending the admin anywhere
+  else would make them find the product again.
+- **`imagePicker.previewAlt` is deleted; `dropPrompt` and `formats` are used.** Every
+  product picture is painted through the shared banner, whose `alt` is empty by design
+  (the name is always beside it), so an alt-text key had nothing left to name.
+- **The card's picture and label live in the form shell**, beside `imageId`, rather than
+  inside the card: the shell already owns the seed from the product read, and one state
+  pair means the id the form saves and the picture the card paints cannot disagree. The
+  card's `onChange` therefore carries both halves.
+- **The linked-product list is one component**, shared by the reference column and both
+  confirms, so the two places that answer "which products" cannot come to answer it
+  differently.
+- **The style-guide section is one live dialog plus three direct confirm entry points**
+  rather than four states rendered side by side. A dialog is an overlay: two of them
+  cannot be laid out beside each other, and clicking between an empty column and a filled
+  one inside a single fixture-driven dialog is the comparison the "side by side" rule
+  wanted. The confirms keep their own buttons because their interesting difference is the
+  count, which is otherwise two clicks deep.
+- **"Use this picture" holds a local committing flag** even though the dialog closes on
+  the click — the flag has to survive the one render between the click and the unmount.
+- The pre-existing product-form unit test gained a `QueryClientProvider`: the card now
+  holds an upload mutation, which is a hook the form shell mounts on every render.
+
 ### The cleanup (operator-run, between the two releases)
 
 A script under `scripts/`, `npx tsx` with `@/` aliases, dry-run by default, `--apply` to
@@ -287,9 +397,11 @@ means something deleted a shared object. Idempotent; re-running changes nothing.
 imaged product row to be touched once (new URL, `updated_at` bumped; the optimizer cache goes
 cold for the shop once).
 
-**`--backup`** — downloads every object to a dated local folder with a manifest of byte
-lengths, re-reads each file and verifies its size, and aborts loudly on any mismatch. The
-bucket is the only copy of these pictures.
+**`--backup`** — downloads every object to a dated local folder, re-reads each written file
+from disk and verifies **both its length and its sha256** against the downloaded bytes,
+aborts loudly on any disagreement, and records name, size and hash per object in the
+manifest. The bucket is the only copy of these pictures, and a `stat` agrees with a
+truncated write — the hash is what makes "verified" mean anything.
 
 **`--delete-legacy`** — refuses without a verified manifest matching the current bucket
 listing, refuses while any product's `image_path` is not a catalogue path, refuses on any
@@ -300,6 +412,59 @@ references.
 Run: link pass on staging → inspect via the feature branch preview → link pass on prod →
 (release the app) → later, at leisure: `--backup`, then `--delete-legacy`, on both. After the
 app is live, relabel the heavily shared images through the dialog (≈44 renames).
+
+**Deviations (as built — `scripts/link-product-images.ts`, pure parts in
+`scripts/lib/product-image-catalogue.ts`)**
+
+- **`--live` is required for any ref that is not the one `.env.local` names**, in every
+  mode including the read-only ones — not only for a ref recognised as production.
+  Nothing in the environment can positively identify "prod", so the safe direction is to
+  vouch only for the one project the file names and treat everything else as live.
+- **`--delete-legacy` takes its manifest as `--manifest <file>` and additionally requires
+  `--apply`.** Without `--apply` it still runs every guard and prints exactly what it would
+  remove, then stops before the typed-ref prompt — so the guards can be exercised, and the
+  removal list read, without the deletion being one keystroke away.
+- **The backup folder defaults to the OS temp directory, not the working directory**, and
+  any `--out` resolving inside the repository is refused: the working directory *is* the
+  repo, and megabytes of PNGs in a tracked tree are one `git add .` from being committed.
+  Object keys are checked to be plain flat filenames before they become paths on disk.
+- **One row per distinct *bytes*, even across extensions.** `sha256` is UNIQUE, so two
+  legacy paths holding identical bytes under different extensions collapse into a single
+  entry; the extension of the earliest-created product's path decides the catalogue key,
+  which makes the answer independent of the order the walk met them in.
+- **`--apply` re-downloads and re-hashes the source object before uploading it** to its
+  content-addressed key, and refuses if the hash moved between plan and write. The key
+  *is* the bytes, so storing anything else under it would break the immutability the
+  one-year optimizer cache rests on.
+- **An `image_path` whose extension is outside the accept list refuses the whole run**
+  rather than being skipped: nothing is re-encoded, so there is no content type to store
+  it under and no safe guess to make.
+- **The backup's manifest carries a sha256 per object, and `--delete-legacy`'s
+  manifest-versus-bucket check is name and size only.** The two are not in tension: the
+  hashes are verified where they can be, against the files on disk at `--backup` time,
+  and the storage listing carries no hash for the later comparison to use. A manifest
+  written before the hashes existed is refused outright, with a message saying so — it
+  never proved the files on disk held the bucket's bytes.
+- **After applying, the script re-reads and asserts the end state** — every imaged product
+  linked, every `image_path` a catalogue path of `<sha256>.<ext>` shape — and exits
+  non-zero if not, so a partial run cannot report success to the release that depends on
+  it.
+
+**Staging result (2026-08-20)**: 17 imaged products over 15 distinct paths, 15 distinct
+images by bytes (no byte-level duplicates on staging), 15 rows created, 17 products
+relinked, 0 missing objects; a second run reports nothing to do.
+
+**Prod result (2026-08-20, ~15:50 UTC, owner present)**: 113 imaged products over 113
+distinct legacy paths (six products added since the 2026-08-19 audit), 44 distinct images
+by bytes — the two municipality-club pictures alone were stored 24 and 22 times — 44 rows
+created, 113 products relinked, 0 missing objects, 0 paths cleared. Verified by psql
+independently of the script: 44 entries each with an object, 113 linked, 0 legacy paths,
+0 products whose `image_path` disagrees with their entry; the bucket holds 157 objects
+(113 legacy awaiting `--delete-legacy` + 44 hash-named with the one-year cache header). A
+second run reports nothing to do. The last admin product edit before the run was 11:25
+UTC, four hours earlier. Labels came from the earliest-created product per image; eight
+distinct pictures share the label "Minecraft: Cozy Adventures" and one is "Testing Club
+(do not buy)" — the post-release relabel pass is real work, not a formality.
 
 ### Follow-through
 
@@ -328,8 +493,11 @@ app is live, relabel the heavily shared images through the dialog (≈44 renames
 - The sheet lazy-mount fix (gedu/participant pickers fetch on page mount). A `Dialog`
   scroll lock with gutter compensation, if a tall dialog needs it.
 - `og:image` width/height once dimensions are known. Drop `p_image_path` from the RPCs.
-- An FK from `image_path` to `product_images(path)` once no legacy path exists, which would
-  let Postgres own the invariant.
+- A second migration putting the design's invariants in the database rather than in
+  application code: a CHECK that `sha256` is 64 lowercase hex characters, a shape
+  constraint tying `path` to `sha256 || '.' || ext`, and — once no legacy path exists
+  anywhere — an FK from `products.image_path` to `product_images(path)`, which would let
+  Postgres own "a served path is a catalogue path".
 
 ## Rejected alternatives
 

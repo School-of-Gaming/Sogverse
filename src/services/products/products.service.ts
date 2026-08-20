@@ -168,11 +168,18 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // family-facing queries above deliberately do not embed it: `products` is
 // anon-readable and the whole point of the separate table is that a `select=*`
 // against it cannot reach the link.
+//
+// `product_images(label, path)` is the second admin-only embed, and it is what
+// lets the form's image card paint the selected entry — its picture and the
+// name an admin gave it — from the read the page already makes. A nullable FK,
+// so it arrives as `null` for a product with no picture. Family surfaces never
+// need it: they read the derived `image_path` column, which is what the
+// catalogue table exists to feed.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -262,9 +269,21 @@ export type PriceInput = {
   price_cents: number;
 };
 
-// Shape accepted by /api/admin/products/create. Mirrors create_product()
-// RPC args, minus the image (uploaded separately as the last step so a failed
-// insert never leaves an orphan in the bucket — see docs/products-architecture.md).
+/**
+ * What the create/update routes answer with. `product_id` is the write; a
+ * `warning` beside it means the product was saved and its picture was not
+ * linked (see products.contracts.ts). Both are returned rather than the id
+ * alone so a caller can tell the admin their picture did not take — the save
+ * itself succeeded, so this is never an error.
+ */
+export type ProductWriteResult = {
+  product_id: string;
+  warning?: string;
+};
+
+// Shape accepted by /api/admin/products/create. Mirrors create_product() RPC
+// args, plus `image_id` — which the route writes in a second statement after
+// the RPC rather than through it (see docs/products-architecture.md).
 //
 // `translations` must contain at least one entry, and at least one of those
 // entries must have locale 'en' or 'fi'. The RPC enforces the same rule;
@@ -336,7 +355,17 @@ export type CreateProductInput = {
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;
   municipality_fee_cents: number | null;
-  image: File | null;
+  /**
+   * The catalogue entry this product's picture comes from, or `null` for a
+   * product with no picture. Required and nullable for the same reason `tag`
+   * is: the route writes the column on every save, so an omitted field would
+   * be indistinguishable from "remove the picture".
+   *
+   * Never a file and never a path. Entries are uploaded through the catalogue's
+   * own route before a product is saved, and the served `image_path` column is
+   * derived from this id by a database trigger.
+   */
+  image_id: string | null;
 };
 
 // Shape accepted by /api/admin/products/[id]/update. Mirrors
@@ -344,11 +373,6 @@ export type CreateProductInput = {
 //   - no `product_type` (immutable; URL-locked)
 //   - no `status` (preserved by the RPC; effective status re-derives
 //     from the data fields this input edits)
-//   - `image` accepts `string` ("keep existing path") in addition to
-//     `File` (replace) and `null` (clear). The route reads the existing
-//     `image_path` from the DB to decide what to do — string values
-//     from the client are *not* trusted as-is; the route preserves the
-//     existing path on its own when the client signals "no change."
 export type UpdateProductInput = {
   billing_mode: BillingMode;
   translations: ProductTranslationInput[];
@@ -391,7 +415,10 @@ export type UpdateProductInput = {
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;
   municipality_fee_cents: number | null;
-  image: File | string | null;
+  /** Catalogue entry id, or `null` for no picture — see CreateProductInput.
+   *  Required and nullable on the update half too, and that is the
+   *  load-bearing one: the route writes the column on every save. */
+  image_id: string | null;
 };
 
 export class ProductsService {
@@ -475,18 +502,16 @@ export class ProductsService {
     return { ...data, holidays };
   }
 
-  async createProduct(input: CreateProductInput): Promise<string> {
-    const { image, ...metadata } = input;
-
-    const formData = new FormData();
-    formData.append("data", JSON.stringify(metadata));
-    if (image) {
-      formData.append("file", image);
-    }
-
+  // Plain JSON both ways. The picture travels as the id of a catalogue entry
+  // that already exists, so there is no file on this request and no multipart
+  // encoding to arrange.
+  async createProduct(
+    input: CreateProductInput,
+  ): Promise<ProductWriteResult> {
     const response = await fetch("/api/admin/products/create", {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
     });
 
     if (!response.ok) {
@@ -495,8 +520,7 @@ export class ProductsService {
       );
     }
 
-    const { product_id } = await parseJsonResponse(response, productIdResponse);
-    return product_id;
+    return parseJsonResponse(response, productIdResponse);
   }
 
   // Admin-only single-product fetch. Same join shape as getDetailById, read
@@ -513,27 +537,14 @@ export class ProductsService {
     return data;
   }
 
-  async updateProduct(id: string, input: UpdateProductInput): Promise<string> {
-    const { image, ...metadata } = input;
-
-    const formData = new FormData();
-    formData.append("data", JSON.stringify(metadata));
-    // File = admin picked a new image to replace the current one.
-    // null when there used to be an image but the admin cleared it OR
-    //   when the product never had an image: the route distinguishes
-    //   via the `clear_image` field below + the existing DB row.
-    // string = "keep the existing path" — the route preserves it without
-    //   trusting the string value (it re-reads the existing path from
-    //   the DB and uses that).
-    if (image instanceof File) {
-      formData.append("file", image);
-    } else if (image === null) {
-      formData.append("clear_image", "true");
-    }
-
+  async updateProduct(
+    id: string,
+    input: UpdateProductInput,
+  ): Promise<ProductWriteResult> {
     const response = await fetch(`/api/admin/products/${id}/update`, {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
     });
 
     if (!response.ok) {
@@ -542,7 +553,6 @@ export class ProductsService {
       );
     }
 
-    const { product_id } = await parseJsonResponse(response, productIdResponse);
-    return product_id;
+    return parseJsonResponse(response, productIdResponse);
   }
 }

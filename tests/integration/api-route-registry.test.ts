@@ -170,6 +170,9 @@ const TESTS = {
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
+  productImagesManage: "tests/integration/api/product-images-manage.test.ts",
+  productImagesReplace: "tests/integration/api/product-images-replace.test.ts",
+  productImagesUpload: "tests/integration/api/product-images-upload.test.ts",
   productsCreate: "tests/integration/api/products-create.test.ts",
   productsGroupsApply: "tests/integration/api/products-groups-apply.test.ts",
   productsParticipations: "tests/integration/api/products-participations.test.ts",
@@ -272,25 +275,77 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  "src/app/api/admin/products/[id]/update/route.ts": {
+  // The catalogue routes. All three write the `product_images` table on the
+  // caller's own session — an admin-only RLS policy is what decides there — and
+  // reach for the service-role client for the storage bucket alone, which has
+  // no policies at all.
+  "src/app/api/admin/product-images/route.ts": {
     adminClient:
-      "privileged-bucket storage writes only (image upload plus deletes of superseded images); the data writes run on the user client",
+      "privileged-bucket storage upload only (the bucket carries no policies); the catalogue row is inserted on the user client",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "multipart", schema: "updateProductData" },
+        body: {
+          kind: "multipart",
+          schema:
+            "inline: one `file` plus an optional `label`, read by readImageUpload — no JSON field, and the label is capped rather than refused (productImageLabel governs the rename route, where the label is the request)",
+        },
+        test: TESTS.productImagesUpload,
+      },
+    },
+  },
+
+  "src/app/api/admin/product-images/[id]/route.ts": {
+    adminClient:
+      "privileged-bucket object removal only; the row delete and the linked-product count run on the user client",
+    handlers: {
+      PATCH: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "renameProductImageBody" },
+        test: TESTS.productImagesManage,
+      },
+      DELETE: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.productImagesManage,
+      },
+    },
+  },
+
+  "src/app/api/admin/product-images/[id]/replace/route.ts": {
+    adminClient:
+      "privileged-bucket storage upload only (the bucket carries no policies); the catalogue row and the one-statement repoint of every linked product run on the user client",
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: {
+          kind: "multipart",
+          schema:
+            "inline: one `file`, read by readImageUpload — the replaced entry supplies the label, so the form carries nothing else",
+        },
+        test: TESTS.productImagesReplace,
+      },
+    },
+  },
+
+  // Both product routes became plain JSON when a product's picture became a
+  // catalogue entry it points at: no file rides along any more, so there is no
+  // multipart form to read and no storage for these routes to touch.
+  "src/app/api/admin/products/[id]/update/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "updateProductData" },
         test: TESTS.productsUpdate,
       },
     },
   },
 
   "src/app/api/admin/products/create/route.ts": {
-    adminClient:
-      "privileged-bucket storage upload only; the data writes run on the user client",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "multipart", schema: "createProductData" },
+        body: { kind: "json", schema: "createProductData" },
         test: TESTS.productsCreate,
       },
     },

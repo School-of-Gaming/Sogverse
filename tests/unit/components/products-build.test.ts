@@ -1373,8 +1373,8 @@ describe("waitlist_enabled is derived from the cap, not copied", () => {
 
 // A fully-populated detail row to clone from. Visible, with an image, two
 // locale names, prices, a schedule, and a real start date — so the clone's
-// "copy everything except the image, append the suffix to names" contract
-// can be checked against verbatim copies.
+// "copy everything, append the suffix to names" contract can be checked
+// against verbatim copies.
 function mockDetailRow(
   overrides: Partial<ProductAdminDetailRow> = {},
 ): ProductAdminDetailRow {
@@ -1399,8 +1399,12 @@ function mockDetailRow(
     spoken_language_code: "en",
     // The lesson link rides on its own staff-only row, not on the product.
     product_staff_details: { material_url: "https://drive.sog.gg/x" },
+    // The picture, as it really arrives: an id, and the catalogue entry it
+    // points at embedded beside it. `image_path` is the derived column the
+    // family surfaces read — the trigger writes it, nothing here does.
+    image_id: "6f0f5e6c-1a4d-4b8a-9f27-2f6a0e5c9d31",
     image_path: "products/original.png",
-    image_id: null,
+    product_images: { label: "Original art", path: "products/original.png" },
     start_date: "2026-09-01",
     end_date: null,
     signup_threshold: null,
@@ -1442,14 +1446,18 @@ function mockDetailRow(
 }
 
 describe("cloneFormState", () => {
-  it("clears the image so the clone can't share the source's bucket file", () => {
+  it("carries the source's picture, which two products may now share", () => {
+    // The inverse of the old rule, and the point of the catalogue: a picture
+    // is an entry any number of products point at, so cloning one no longer
+    // risks one product's edit clobbering another's file — and a clone that
+    // dropped it would only make the admin re-pick what they already had.
     const state = cloneFormState(
       mockDetailRow(),
       consumerConfig,
       "en",
       " (Copy)",
     );
-    expect(state.image).toBeNull();
+    expect(state.imageId).toBe("6f0f5e6c-1a4d-4b8a-9f27-2f6a0e5c9d31");
   });
 
   it("appends the suffix to every locale's name, leaving descriptions intact", () => {
@@ -1488,8 +1496,7 @@ describe("cloneFormState", () => {
     expect(state.isVisible).toBe(true);
   });
 
-  // A tag is data, not identity: nothing about it is bound to the one bucket
-  // file the way the image is, so a clone carries the source's tag like it
+  // A tag is data, not identity, so a clone carries the source's tag like it
   // carries the dates and the schedule.
   it("copies the source's tag", () => {
     const state = cloneFormState(
@@ -1514,7 +1521,7 @@ describe("cloneFormState", () => {
     expect(state.isVisible).toBe(false);
   });
 
-  it("round-trips into a create payload that drops the image", () => {
+  it("round-trips into a create payload that keeps the image", () => {
     const state = cloneFormState(
       mockDetailRow(),
       consumerConfig,
@@ -1522,7 +1529,7 @@ describe("cloneFormState", () => {
       " (Copy)",
     );
     const out = buildCreateInput(state, "consumer_club", consumerConfig);
-    expect(out.image).toBeNull();
+    expect(out.image_id).toBe("6f0f5e6c-1a4d-4b8a-9f27-2f6a0e5c9d31");
     expect(out.status).toBe("pending");
     expect(out.translations).toContainEqual({
       locale: "en",

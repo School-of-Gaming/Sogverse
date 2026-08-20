@@ -9,6 +9,7 @@ export type {
   PriceInput,
   CreateProductInput,
   UpdateProductInput,
+  ProductWriteResult,
 } from "./products.service";
 export {
   productKeys,

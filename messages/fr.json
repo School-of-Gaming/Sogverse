@@ -603,12 +603,53 @@
       },
       "imagePicker": {
         "label": "Image",
-        "previewAlt": "Aperçu",
-        "dropPrompt": "Déposez une image ici ou cliquez pour en choisir une.",
-        "formats": "JPG, PNG, WebP, AVIF ou SVG.",
+        "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour l’ajouter et l’utiliser pour ce produit.",
+        "formats": "JPG, PNG, WebP, AVIF ou SVG, jusqu’à 4 Mo.",
         "chooseFile": "Choisir un fichier",
-        "remove": "Retirer",
-        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue. L'image est recadrée au format 3:2, et l'aperçu montre ce même recadrage."
+        "uploading": "Ajout en cours…",
+        "change": "Changer d’image",
+        "remove": "Retirer de ce produit",
+        "outcomeAdded": "Ajoutée au catalogue et sélectionnée pour ce produit.",
+        "outcomeExisting": "Déjà dans le catalogue — sélectionnée pour ce produit.",
+        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue, recadrée au format 3:2. Les images sont partagées entre les produits, donc votre choix ici ne modifie rien d’autre."
+      },
+      "imageCatalogue": {
+        "title": "Images des produits",
+        "description": "Une même image peut servir à plusieurs produits. Votre choix ne concerne que ce produit, mais remplacer ou retirer une image touche tous les produits qui l’utilisent.",
+        "upload": "Ajouter une image",
+        "uploading": "Ajout en cours…",
+        "emptyCatalogue": "Aucune image pour l’instant. Ajoutez-en une pour commencer.",
+        "usedBadge": "{count, plural, one {# produit} other {# produits}}",
+        "columnEmpty": "Sélectionnez une image",
+        "use": "Utiliser cette image",
+        "nameLabel": "Nom de l’image",
+        "rename": "Renommer",
+        "usedBy": "Produits utilisant cette image",
+        "usedByNone": "Aucun produit n’utilise cette image.",
+        "live": "En ligne",
+        "hidden": "Masqué",
+        "replace": "Remplacer l’image",
+        "remove": "Retirer du catalogue",
+        "replaceConfirm": {
+          "title": "Remplacer « {label} »",
+          "consequence": "{count, plural, one {Le produit ci-dessous affichera la nouvelle image.} other {Les # produits ci-dessous afficheront tous la nouvelle image.}}",
+          "unused": "Aucun produit n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+          "choose": "Choisir la nouvelle image",
+          "confirm": "Remplacer sur {count, plural, one {# produit} other {# produits}}",
+          "confirmUnused": "Remplacer l’image"
+        },
+        "removeConfirm": {
+          "title": "Retirer « {label} »",
+          "consequence": "{count, plural, one {Le produit ci-dessous restera sans image jusqu’à ce que vous en choisissiez une autre.} other {Les # produits ci-dessous resteront sans image jusqu’à ce que vous en choisissiez une autre.}}",
+          "unused": "Aucun produit n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+          "confirm": "Retirer de {count, plural, one {# produit} other {# produits}}",
+          "confirmUnused": "Retirer du catalogue"
+        },
+        "errors": {
+          "tooLarge": "Ce fichier est trop volumineux. Les images ne doivent pas dépasser 4 Mo.",
+          "unsupportedType": "Ce type de fichier n’est pas pris en charge. Utilisez JPG, PNG, WebP, AVIF ou SVG.",
+          "nameRequired": "Donnez à l’image un nom de 1 à 120 caractères."
+        }
       },
       "filters": {
         "day": "Jour",

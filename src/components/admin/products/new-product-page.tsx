@@ -104,6 +104,9 @@ export function NewProductPage({
             uiLocale,
             t("clonePage.copySuffix"),
           )}
+          // A clone carries the source's catalogue entry, so it carries the
+          // entry's label and picture too.
+          initialImage={source.product_images}
         />
       )}
     </div>

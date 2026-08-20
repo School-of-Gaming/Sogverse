@@ -603,12 +603,53 @@
       },
       "imagePicker": {
         "label": "Kuva",
-        "previewAlt": "Esikatselu",
-        "dropPrompt": "Pudota kuva tähän tai napsauta valitaksesi.",
-        "formats": "JPG, PNG, WebP, AVIF tai SVG.",
+        "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
+        "formats": "JPG, PNG, WebP, AVIF tai SVG, enintään 4 Mt.",
         "chooseFile": "Valitse tiedosto",
-        "remove": "Poista",
-        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen, ja esikatselu näyttää saman rajauksen."
+        "uploading": "Lisätään…",
+        "change": "Vaihda kuva",
+        "remove": "Poista tästä tuotteesta",
+        "outcomeAdded": "Lisätty kirjastoon ja valittu tähän tuotteeseen.",
+        "outcomeExisting": "Kuva on jo kirjastossa – valittu tähän tuotteeseen.",
+        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen. Kuvat ovat tuotteiden yhteisiä, joten valinta tässä ei muuta muita tuotteita."
+      },
+      "imageCatalogue": {
+        "title": "Tuotekuvat",
+        "description": "Sama kuva voi olla monessa tuotteessa. Valinta koskee vain tätä tuotetta, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä tuotteita.",
+        "upload": "Lisää kuva",
+        "uploading": "Lisätään…",
+        "emptyCatalogue": "Kirjastossa ei ole vielä kuvia. Lisää ensimmäinen.",
+        "usedBadge": "{count, plural, one {# tuote} other {# tuotetta}}",
+        "columnEmpty": "Valitse kuva",
+        "use": "Käytä tätä kuvaa",
+        "nameLabel": "Kuvan nimi",
+        "rename": "Nimeä uudelleen",
+        "usedBy": "Kuvaa käyttävät tuotteet",
+        "usedByNone": "Mikään tuote ei käytä tätä kuvaa.",
+        "live": "Julkaistu",
+        "hidden": "Piilotettu",
+        "replace": "Korvaa kuva",
+        "remove": "Poista kirjastosta",
+        "replaceConfirm": {
+          "title": "Korvaa ”{label}”",
+          "consequence": "{count, plural, one {Alla oleva tuote näyttää jatkossa uuden kuvan.} other {Kaikki # alla olevaa tuotetta näyttävät jatkossa uuden kuvan.}}",
+          "unused": "Mikään tuote ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+          "choose": "Valitse uusi kuva",
+          "confirm": "Korvaa {count, plural, one {# tuotteessa} other {# tuotteessa}}",
+          "confirmUnused": "Korvaa kuva"
+        },
+        "removeConfirm": {
+          "title": "Poista ”{label}”",
+          "consequence": "{count, plural, one {Alla oleva tuote jää ilman kuvaa, kunnes valitset uuden.} other {Kaikki # alla olevaa tuotetta jäävät ilman kuvaa, kunnes valitset uuden.}}",
+          "unused": "Mikään tuote ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+          "confirm": "Poista {count, plural, one {# tuotteesta} other {# tuotteesta}}",
+          "confirmUnused": "Poista kirjastosta"
+        },
+        "errors": {
+          "tooLarge": "Tiedosto on liian suuri. Kuvan enimmäiskoko on 4 Mt.",
+          "unsupportedType": "Tiedostomuotoa ei tueta. Käytä muotoa JPG, PNG, WebP, AVIF tai SVG.",
+          "nameRequired": "Anna kuvalle nimi, jossa on 1–120 merkkiä."
+        }
       },
       "filters": {
         "day": "Viikonpäivä",
