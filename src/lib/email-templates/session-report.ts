@@ -23,12 +23,15 @@ import type { EmailTranslator } from "./translator";
  * nested card spent another 24px, leaving the gedu's paragraphs a column too
  * narrow to read without wrapping every few words.
  *
- * **Names and times arrive formatted, in the parent's locale and zone.** The
- * caller knows which locale the parent reads in and which zone they live in;
- * this builder only has a translator and a string template. So the product
- * name is the translation for the parent's locale (falling back to the default
- * locale) — the subject names the product the way the parent knows it — and
- * the date and the time range come in as the strings they will be printed as.
+ * **Names and times arrive formatted, in the parent's locale.** The caller
+ * knows which locale the parent reads in; this builder only has a translator
+ * and a string template. So the product name is the translation for the
+ * parent's locale (falling back to the default locale) — the subject names the
+ * product the way the parent knows it — and the date and the time range come
+ * in as the strings they will be printed as. The time range always names its
+ * zone: a mail is rendered without the reader's own zone (that lives in a
+ * browser cookie the server never sees), so it is formatted in the product's
+ * zone and says so.
  *
  * Spike status: this template exists so the layout and the markdown rendering
  * can be iterated from the admin testing tool. No route sends it yet.
@@ -44,7 +47,7 @@ export interface SessionReportEmailOptions {
   groupName: string;
   /** Already formatted for the parent's locale and zone, e.g. "Thursday, 20 August 2026". */
   sessionDate: string;
-  /** Already formatted in the parent's zone, e.g. "16:30–18:00" or "14:30 – 16:00 GMT+1". */
+  /** Already formatted, zone named, e.g. "16:30 – 18:00 GMT+3" or "16.30–18.00 UTC+3". */
   sessionTime: string;
   /** The report exactly as stored. */
   reportMarkdown: string;

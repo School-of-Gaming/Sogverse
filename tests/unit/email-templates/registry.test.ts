@@ -194,14 +194,12 @@ describe("templateRegistry sessionReport", () => {
   });
 
   /**
-   * The zone is named only when the parent's differs from the product's: a
-   * Helsinki family reading about a Helsinki club sees a plain clock face, a
-   * London family sees the adjusted one with the zone that explains it.
+   * The zone is always named: a mail is rendered without the reader's own zone,
+   * so the reader has to be able to see which zone the clock face is in.
    */
-  it("names the zone only when the parent's zone differs from the product's", () => {
+  it("always names the zone the times are formatted in", () => {
     const home = templateRegistry.sessionReport.render(params, t, "en");
-    expect(home.html).toMatch(/16:30\s*–\s*18:00</);
-    expect(home.html).not.toContain("GMT");
+    expect(home.html).toMatch(/16:30\s*–\s*18:00 GMT\+3/);
 
     const away = templateRegistry.sessionReport.render(
       { ...params, viewerTimezone: "Europe/London" },

@@ -88,31 +88,30 @@ export function formatTime(date: Date | string, locale: string, timeZone: string
 }
 
 /**
- * A start–end range — one session's clock face — in the viewer's zone. Both
- * ends are formatted from their own instants: the end is never a duration
- * string-added to the local start, which a DST transition inside the session
- * would corrupt (CLAUDE.md viewer-zone rule).
+ * A start–end range — one session's clock face — in the given zone, with the
+ * zone's short name appended ("16:30 – 18:00 GMT+3"). Both ends are formatted
+ * from their own instants: the end is never a duration string-added to the
+ * local start, which a DST transition inside the session would corrupt
+ * (CLAUDE.md viewer-zone rule).
  *
- * The zone's short name is appended only when the viewer's zone differs from
- * the zone the thing was authored in (`sourceTimeZone`) — that is when the
- * clock face has been adjusted and the reader needs to see that it has. A
- * family in Helsinki reading about a Helsinki club gets "16.30–18.00"; a family
- * in London gets "14:30 – 16:00 GMT+1". Omit `sourceTimeZone` and the name is
- * always shown.
+ * The zone is always named because this is what goes into a mail, and a mail
+ * is rendered without the reader's zone: the app can label a time in the
+ * viewer's own zone and omit the name when nothing was adjusted, but a mail can
+ * only use the product's zone, and the reader has to be able to see which zone
+ * that is.
  */
 export function formatTimeRange(
   start: Date | string,
   end: Date | string,
   locale: string,
-  { timeZone, sourceTimeZone }: { timeZone: string; sourceTimeZone?: string },
+  timeZone: string,
 ): string {
   const s = typeof start === "string" ? new Date(start) : start;
   const e = typeof end === "string" ? new Date(end) : end;
-  const showZone = sourceTimeZone === undefined || sourceTimeZone !== timeZone;
   return new Intl.DateTimeFormat(locale, {
     ...TIME_OF_DAY,
     timeZone,
-    ...(showZone ? { timeZoneName: "short" } : {}),
+    timeZoneName: "short",
   }).formatRange(s, e);
 }
 

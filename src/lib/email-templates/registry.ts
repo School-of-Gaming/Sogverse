@@ -186,9 +186,11 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
  * stand in for the parent's, and may paste a markdown body over the sample.
  * Spike plumbing: there is no route sending this mail yet, so the fixture
  * stands in for the session row a real send would read, and the select stands
- * in for the parent's profile. The instants are formatted for the chosen
- * locale in the chosen zone, with the zone named only when it differs from the
- * product's — which is what the live send will do with the parent's own zone.
+ * in for the zone the mail is formatted in. The instants are formatted for the
+ * chosen locale in the chosen zone with the zone always named — a mail is
+ * rendered without the reader's own zone, so the live send formats in the
+ * product's zone and names it; the select is here to see what each locale
+ * calls a zone.
  *
  * The `sample` is posted as an id and resolved here rather than in
  * `resolveParams`, because the formatting needs the locale and the resolver
@@ -199,7 +201,7 @@ const SESSION_REPORT_SAMPLE_OPTIONS = SESSION_REPORT_SAMPLES.map((sample) => ({
   value: sample.id,
 }));
 
-/** Where a parent might be reading from; the first is the product's own zone. */
+/** Zones to format the mail in; the first is what the live send uses (the product's). */
 const VIEWER_TIMEZONE_OPTIONS = [
   { label: "Europe/Helsinki (the product's zone)", value: "Europe/Helsinki" },
   { label: "Europe/Stockholm", value: "Europe/Stockholm" },
@@ -221,10 +223,7 @@ function resolveSessionReport(
       timeZone: viewerTimezone,
       dateStyle: "full",
     }),
-    sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, {
-      timeZone: viewerTimezone,
-      sourceTimeZone: sample.timezone,
-    }),
+    sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, viewerTimezone),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
   };
 }
@@ -404,7 +403,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "productName", label: "Product Name", placeholder: "Minecraft: Cozy Adventures" },
       { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
-      { key: "viewerTimezone", label: "Parent's timezone", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
+      { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {
         key: "reportMarkdown",
         label: "Report markdown",
