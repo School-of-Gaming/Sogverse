@@ -810,6 +810,85 @@ $$;
 
 
 --
+-- Name: claim_group_session_report_email(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_row public.group_sessions;
+BEGIN
+  -- The same two-part gate every write on this surface opens with: the role
+  -- first, then the assignment. Guard-first is what the authorization spine
+  -- reads, and the assignment half is what makes a NULL group a refusal rather
+  -- than a lookup.
+  PERFORM public.assert_role('gedu');
+
+  IF NOT public.gedu_teaches_group(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- FOR UPDATE is the whole of the concurrency argument. Two gedus (or one
+  -- gedu with two tabs) serialize here; the second reads the marker the first
+  -- committed and is refused below rather than claiming a second time.
+  SELECT * INTO v_row
+    FROM public.group_sessions s
+   WHERE s.group_id     = p_group_id
+     AND s.session_date = p_session_date
+     FOR UPDATE;
+
+  -- A session row is lazily materialized, so "no row" and "a row with a blank
+  -- report" are the same answer to the only question that matters: there is
+  -- nothing here to send. The character list matches the summaries SQL exactly
+  -- — bare btrim() strips spaces only, and a report of one newline is not a
+  -- report.
+  IF NOT FOUND
+     OR btrim(COALESCE(v_row.report, ''), E' \t\r\n\v\f') = '' THEN
+    RAISE EXCEPTION 'No report to email for group % on %', p_group_id, p_session_date
+      USING ERRCODE = 'P0021';
+  END IF;
+
+  IF v_row.report_emailed_at IS NOT NULL THEN
+    RAISE EXCEPTION 'The report for group % on % was already emailed at %',
+                    p_group_id, p_session_date, v_row.report_emailed_at
+      USING ERRCODE = 'P0022';
+  END IF;
+
+  -- `updated_by` is deliberately NOT stamped: claiming the send is not an edit
+  -- of the write-up, and moving the author chip onto whoever pressed the button
+  -- would misattribute somebody else's report. The updated_at trigger still
+  -- fires, which is the honest record that the row changed.
+  UPDATE public.group_sessions
+     SET report_emailed_at = now(),
+         report_emailed_by = (SELECT auth.uid())
+   WHERE id = v_row.id
+  RETURNING * INTO v_row;
+
+  -- The report travels back so the route composes the mail from what the claim
+  -- committed, not from what the client believed was saved.
+  RETURN jsonb_build_object(
+    'id',                v_row.id,
+    'group_id',          v_row.group_id,
+    'session_date',      v_row.session_date,
+    'starts_at',         v_row.starts_at,
+    'ends_at',           v_row.ends_at,
+    'report',            v_row.report,
+    'report_emailed_at', v_row.report_emailed_at
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION claim_group_session_report_email(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Gedu-gated on the group assignment, exactly as the session-notes writer is. Takes the row''s lock, then refuses with SQLSTATE P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller teaches the group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed.';
+
+
+--
 -- Name: confirm_paid_participation(uuid, uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2181,6 +2260,15 @@ BEGIN
         'updated_at',       s.updated_at,
         'created_by',       s.created_by,
         'updated_by',       s.updated_by,
+        -- When this session's report was mailed to the group's families, and
+        -- NULL until it has been (00197). The card renders the sent line from
+        -- it and decides whether to offer the button, so it has to travel with
+        -- the session rather than be read separately.
+        --
+        -- Its partner column `report_emailed_by` deliberately stays OFF the
+        -- wire: it is an audit trail for staff, nothing renders it, and the
+        -- card's author chip is `updated_by_first_name` above.
+        'report_emailed_at', s.report_emailed_at,
         -- The last editor's first name, for the author chip on the card.
         --
         -- 00194's field, carried through verbatim — see this migration's
@@ -2228,7 +2316,7 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox).';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Each session row carries report_emailed_at since 00197 — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere.';
 
 
 --
@@ -2693,8 +2781,14 @@ BEGIN
                AND (p.start_date IS NULL OR gs.session_date >= p.start_date)
           ) AS occurrence
          WHERE roster.roster_size > 0
-           -- "Needs attention" is two questions joined by OR, and either one
+           -- "Needs attention" is THREE questions joined by OR, and any one
            -- alone keeps the session on the list.
+           --
+           -- This derivation has a TWIN IN TYPESCRIPT — the gedu feed's
+           -- entry-state module, which decides the same thing for the card
+           -- from the feed document — and the two must agree, or the dashboard
+           -- badge counts a session the card calls finished. Changing either
+           -- half means changing both, in the same commit.
            AND (
              -- (1) Some of the CURRENT roster has no answer yet. Measured
              -- against the current roster, never against the stored map's keys
@@ -2723,6 +2817,21 @@ BEGIN
                   AND gs3.session_date = occurrence.session_date
                   AND btrim(COALESCE(gs3.report, ''), E' \t\r\n\v\f') <> ''
              )
+             -- (3) The families have not been told it is there (00197).
+             -- Writing the report is half the job; a report nobody was mailed
+             -- about is a report nobody reads, so a session stays owed until
+             -- the send has been claimed.
+             --
+             -- NOT EXISTS again, for the same reason as (2): a date with no
+             -- materialized row is the same answer as a row that was never
+             -- mailed, and neither is a LEFT JOIN's three-valued NULL test.
+             OR NOT EXISTS (
+               SELECT 1
+                 FROM public.group_sessions gs4
+                WHERE gs4.group_id     = g.id
+                  AND gs4.session_date = occurrence.session_date
+                  AND gs4.report_emailed_at IS NOT NULL
+             )
            )
       ) AS owed ON true
 
@@ -2736,7 +2845,7 @@ $$;
 -- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (renamed from group_gamer_count in 00175 — an active seat may be held by an adult since 00173), the venue name on in-person products, and how many past sessions still owe a register or a family-facing report. A finished session on or after the epoch counts until BOTH are in. The enforcement epoch travels in as an argument because it is a code constant, not a column.';
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (renamed from group_gamer_count in 00175 — an active seat may be held by an adult since 00173), the venue name on in-person products, and how many past sessions still owe a register, a family-facing report, or the mail that tells the families it is there. A finished session on or after the epoch counts until ALL THREE are in (the third since 00197). The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together.';
 
 
 --
@@ -5297,6 +5406,8 @@ CREATE TABLE public.group_sessions (
     updated_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    report_emailed_at timestamp with time zone,
+    report_emailed_by uuid,
     CONSTRAINT chk_group_sessions_ends_after_starts CHECK ((ends_at > starts_at))
 );
 
@@ -5306,6 +5417,20 @@ CREATE TABLE public.group_sessions (
 --
 
 COMMENT ON TABLE public.group_sessions IS 'Lazily materialized session records: one row per (group, product-local date), written only when a report, a note or an attendance mark needs somewhere to live. starts_at/ends_at are a snapshot of the schedule at materialization and are never re-derived.';
+
+
+--
+-- Name: COLUMN group_sessions.report_emailed_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.group_sessions.report_emailed_at IS 'When this session''s report was emailed to the group''s families, and NULL until it has been — the AT-MOST-ONCE MARKER for that mail. Set by claim_group_session_report_email before any mail is composed, which is what makes two concurrent sends impossible; cleared again only by the route, and only when EVERY send failed and therefore no family received anything. A partial failure keeps it set on purpose. Never cleared by an edit to the report: there is no resend, and a gedu fixing a typo afterwards does not get to mail the families a second version.';
+
+
+--
+-- Name: COLUMN group_sessions.report_emailed_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.group_sessions.report_emailed_by IS 'The gedu whose click sent the report, stamped alongside report_emailed_at. Audit only — it is on neither feed and nothing renders it; the card''s author chip reads updated_by. ON DELETE SET NULL, so a departed gedu leaves the send recorded without the name.';
 
 
 --
@@ -7134,6 +7259,14 @@ ALTER TABLE ONLY public.group_sessions
 
 
 --
+-- Name: group_sessions group_sessions_report_emailed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_sessions
+    ADD CONSTRAINT group_sessions_report_emailed_by_fkey FOREIGN KEY (report_emailed_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
 -- Name: group_sessions group_sessions_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8414,6 +8547,15 @@ GRANT ALL ON FUNCTION public.can_read_product(p_product_id uuid) TO service_role
 
 REVOKE ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) TO service_role;
+
+
+--
+-- Name: FUNCTION claim_group_session_report_email(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) TO authenticated;
+GRANT ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) TO service_role;
 
 
 --
