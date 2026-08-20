@@ -2318,6 +2318,16 @@
       "body": "nuqneH {firstName}! School of Gaming patlhlIjDaq QIn Daq chelmeH Datlhobpu’. ’uSDaq yIqIp.",
       "button": "QIn DaqlIj yIchel",
       "ignore": "Datlhobbe’chugh, QIn yIleghQo’. pagh choHlu’."
+    },
+    "sessionReport": {
+      "subject": "poH ja’ghItlh – {productName}, {sessionDate}",
+      "title": "poH ja’ghItlh",
+      "intro": "nuqneH! {productName} poH {gamerName} ghompu’. {geduName} ja’ghItlh ghItlhpu’.",
+      "groupLabel": "ghom",
+      "dateLabel": "jaj",
+      "timeLabel": "poH",
+      "productButton": "My SOG-Daq yIlegh",
+      "closing": "ja’ghItlhvam, ja’ghItlhmey ngo’ je, poHmey veb je: Hoch {productName} DaqDaq My SOG-Daq."
     }
   },
   "roblox": {

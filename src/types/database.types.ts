@@ -829,6 +829,30 @@ export type Database = {
           },
         ]
       }
+      product_images: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          path: string
+          sha256: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          path: string
+          sha256: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          path?: string
+          sha256?: string
+        }
+        Relationships: []
+      }
       product_prices: {
         Row: {
           created_at: string
@@ -999,6 +1023,7 @@ export type Database = {
           for_gamers: boolean
           for_parents: boolean
           id: string
+          image_id: string | null
           image_path: string | null
           is_remote: boolean
           is_visible: boolean
@@ -1030,6 +1055,7 @@ export type Database = {
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
+          image_id?: string | null
           image_path?: string | null
           is_remote: boolean
           is_visible?: boolean
@@ -1061,6 +1087,7 @@ export type Database = {
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
+          image_id?: string | null
           image_path?: string | null
           is_remote?: boolean
           is_visible?: boolean
@@ -1096,6 +1123,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "product_images"
             referencedColumns: ["id"]
           },
           {

@@ -2274,6 +2274,16 @@
       "body": "Bonjour {firstName}, vous avez demandé à confirmer l’adresse e-mail de votre compte School of Gaming. Utilisez le bouton ci-dessous.",
       "button": "Confirmer votre adresse e-mail",
       "ignore": "Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer cet e-mail. Rien ne changera."
+    },
+    "sessionReport": {
+      "subject": "Compte rendu de la session – {productName}, {sessionDate}",
+      "title": "Compte rendu de la session",
+      "intro": "Bonjour ! Voici le compte rendu de {geduName} sur la session de {gamerName} dans {productName}.",
+      "groupLabel": "Groupe",
+      "dateLabel": "Date",
+      "timeLabel": "Heure",
+      "productButton": "Ouvrir dans Mon SOG",
+      "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG."
     }
   },
   "legal": {

@@ -608,6 +608,59 @@ $$;
 
 
 --
+-- Name: apply_product_image_path(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.apply_product_image_path() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_path text;
+BEGIN
+  IF NEW.image_id IS NOT NULL THEN
+    SELECT path INTO v_path
+      FROM public.product_images
+     WHERE id = NEW.image_id;
+
+    -- This runs BEFORE the FK — which is an AFTER-row constraint trigger fired
+    -- at statement end — so it pre-empts the FK's own check rather than relying
+    -- on it. The reachable cause of an empty lookup is that the row is gone
+    -- (another admin removed the entry between this admin loading the form and
+    -- saving it); RLS hiding it is the other half of the message and the half
+    -- the header argues cannot happen. Blanking the picture silently would be
+    -- the worst possible answer to either; raise instead, with the SQLSTATE the
+    -- FK itself would have used, because it is the same claim made earlier.
+    IF v_path IS NULL THEN
+      RAISE EXCEPTION 'product_images row % does not exist or is not visible to this writer', NEW.image_id
+        USING ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    NEW.image_path := v_path;
+
+  -- An unlink: image_id went from something to nothing, so the picture goes
+  -- with it. Guarded on TG_OP because OLD does not exist on INSERT — and an
+  -- INSERT with no image_id is a product with no picture yet, not an unlink.
+  ELSIF TG_OP = 'UPDATE' AND OLD.image_id IS NOT NULL THEN
+    NEW.image_path := NULL;
+  END IF;
+
+  -- Everything else — a product that never had an entry — keeps whatever
+  -- image_path it was given. That is the legacy state, and this trigger is not
+  -- what ends it; the cleanup script is.
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION apply_product_image_path(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.apply_product_image_path() IS 'BEFORE INSERT OR UPDATE on products: derives image_path from the linked product_images entry, blanks it on an unlink, and leaves it alone for a product with no entry. Carries no column list on the trigger deliberately, so that every writer of image_path — including update_product''s own p_image_path assignment — is inert for a linked product.';
+
+
+--
 -- Name: assert_admin(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5492,6 +5545,42 @@ CREATE TABLE public.product_holiday_calendars (
 
 
 --
+-- Name: product_images; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_images (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    label text NOT NULL,
+    sha256 text NOT NULL,
+    path text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_product_images_label_length CHECK (((length(label) >= 1) AND (length(label) <= 120))),
+    CONSTRAINT chk_product_images_path_not_empty CHECK ((path <> ''::text))
+);
+
+
+--
+-- Name: TABLE product_images; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.product_images IS 'The catalogue of pictures admins pick from for a product. One row per distinct image, identified by the sha256 of its bytes; the object key is <sha256>.<ext> in the public product-images bucket. A row is immutable except for its label — the bytes behind a path never change, which is what makes the image optimizer''s one-year cache floor safe. Admin-only: no anon grant and no anon policy, because nothing family-facing reads this table. Products reference it by products.image_id; products.image_path is derived from it by trg_products_apply_image_path and is what every reader still reads.';
+
+
+--
+-- Name: COLUMN product_images.sha256; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_images.sha256 IS 'Lowercase hex sha256 of the stored bytes. UNIQUE, and that uniqueness IS the dedup mechanism: uploading the same file twice resolves to this row.';
+
+
+--
+-- Name: COLUMN product_images.path; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_images.path IS 'Object key in the public product-images bucket, <sha256>.<ext>. Never changes for a given row, and no object is ever overwritten.';
+
+
+--
 -- Name: product_prices; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -5613,6 +5702,7 @@ CREATE TABLE public.products (
     for_parents boolean DEFAULT false NOT NULL,
     tag public.product_tag,
     region_lock_country text,
+    image_id uuid,
     CONSTRAINT chk_products_age_range CHECK (((min_age IS NULL) OR (max_age IS NULL) OR (max_age >= min_age))),
     CONSTRAINT chk_products_ages_iff_for_gamers CHECK (
 CASE
@@ -5642,6 +5732,13 @@ END),
 
 
 --
+-- Name: COLUMN products.image_path; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.products.image_path IS 'The object key every reader paints. DERIVED: whenever image_id is set, trg_products_apply_image_path overwrites this with the linked entry''s path on every write, so an app-supplied value is inert for a linked product. Rows with a NULL image_id keep whatever path they carry — the pre-catalogue state, which the cleanup script folds in between this release and the feature''s.';
+
+
+--
 -- Name: COLUMN products.for_gamers; Type: COMMENT; Schema: public; Owner: -
 --
 
@@ -5667,6 +5764,13 @@ COMMENT ON COLUMN public.products.tag IS 'Optional design tag, NULL meaning unta
 --
 
 COMMENT ON COLUMN public.products.region_lock_country IS 'Optional ISO 3166-1 alpha-2 country code this product is locked to; NULL (the state of every row before 00193) means not locked, and is the ordinary case. ENFORCEMENT IS UI-ONLY BY DESIGN: nothing in this database refuses a participation on a locked product. A family''s location is self-attested and editable by them at any time, so a server-side block would check a value the blocked party can rewrite — an obstacle, never a guarantee. The shop''s signup panel reads this column and tells a parent outside the country that the product is not for them; that is the whole mechanism. Two accepted consequences: a determined parent can restate their location and enrol, and a parent who moves after enroling keeps their seat, because the lock gates the enrolment decision and is never re-run against an existing one. The CHECK constrains the shape only (two uppercase letters). WHICH countries may be chosen is the seeded half of SUPPORTED_COUNTRIES in the application config, enforced by the write contract and the admin picker, because that list changes as location rows are seeded and an enum here would both need a migration per country and turn an already-stored lock into a violation the day one is un-seeded. Unrelated to the municipality-club country binding, which constrains a muni club''s location pickers and says nothing about who may enrol.';
+
+
+--
+-- Name: COLUMN products.image_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.products.image_id IS 'The catalogue entry this product shows, or NULL for no picture. Anon-readable like the rest of products (it is a UUID and reveals nothing), but only admins can resolve it against product_images. Writing it is what changes a product''s picture — image_path is derived and must not be written directly.';
 
 
 --
@@ -6123,6 +6227,30 @@ ALTER TABLE ONLY public.product_holiday_calendars
 
 
 --
+-- Name: product_images product_images_path_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_images
+    ADD CONSTRAINT product_images_path_key UNIQUE (path);
+
+
+--
+-- Name: product_images product_images_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_images
+    ADD CONSTRAINT product_images_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: product_images product_images_sha256_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_images
+    ADD CONSTRAINT product_images_sha256_key UNIQUE (sha256);
+
+
+--
 -- Name: product_prices product_prices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -6487,6 +6615,13 @@ CREATE INDEX idx_product_translations_locale ON public.product_translations USIN
 
 
 --
+-- Name: idx_products_image_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_products_image_id ON public.products USING btree (image_id);
+
+
+--
 -- Name: idx_products_location; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6778,6 +6913,13 @@ CREATE TRIGGER trg_participations_refresh_counts_ins AFTER INSERT ON public.part
 --
 
 CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
+
+
+--
+-- Name: products trg_products_apply_image_path; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_products_apply_image_path BEFORE INSERT OR UPDATE ON public.products FOR EACH ROW EXECUTE FUNCTION public.apply_product_image_path();
 
 
 --
@@ -7152,6 +7294,14 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: products products_image_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT products_image_id_fkey FOREIGN KEY (image_id) REFERENCES public.product_images(id) ON DELETE SET NULL;
+
+
+--
 -- Name: products products_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -7434,6 +7584,13 @@ CREATE POLICY admin_full_access_product_groups ON public.product_groups TO authe
 --
 
 CREATE POLICY admin_full_access_product_holiday_calendars ON public.product_holiday_calendars TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: product_images admin_full_access_product_images; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_product_images ON public.product_images TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -7831,6 +7988,12 @@ ALTER TABLE public.product_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.product_holiday_calendars ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: product_images; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.product_images ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: product_prices; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -8199,6 +8362,14 @@ GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_par
 REVOKE ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO service_role;
+
+
+--
+-- Name: FUNCTION apply_product_image_path(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.apply_product_image_path() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.apply_product_image_path() TO service_role;
 
 
 --
@@ -9061,6 +9232,14 @@ GRANT SELECT ON TABLE public.product_groups TO authenticated;
 GRANT SELECT ON TABLE public.product_holiday_calendars TO anon;
 GRANT ALL ON TABLE public.product_holiday_calendars TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_holiday_calendars TO authenticated;
+
+
+--
+-- Name: TABLE product_images; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_images TO authenticated;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_images TO service_role;
 
 
 --

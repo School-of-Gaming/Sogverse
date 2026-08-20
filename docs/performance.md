@@ -6,7 +6,14 @@ Findings (`F`) describe what we've observed and the root cause. Improvements (`I
 
 **Standing goal: a Claude-rated A+ verdict.** Each Speed Insights snapshot (see Real-user data) gets a letter-grade verdict with its reasoning recorded next to it, graded fresh from the numbers by whoever (or whatever) does the pull — the open findings are the path from the current grade to A+.
 
-## Per-request server stack
+## Current infrastructure (as of 2026-08-20)
+
+The hardware every finding below runs on. Update this section when a tier changes.
+
+- **Supabase org (School of Gaming): Pro plan.** Prod `sogverse` runs **Small** compute (2 GB RAM, 2 shared ARM cores); staging `sogverse-staging` runs **Micro** (1 GB). Compute is billed hourly and a resize restarts the instance (~1–2 min). On a paid org, Nano is billed at the Micro price, so never park a project on Nano here — the resize to Micro is free performance.
+- Both projects ran free-plan Nano (428 MB) until 2026-08-20. That box could not hold the platform stack resident: chronic swap thrash (~4 TB lifetime) depleted the disk IO burst budget and caused the Aug 19–20 all-services health flap, while the app workload itself measured healthy (64 MB database, 100% cache hit, ~63 s of query time/day). Upgraded four days ahead of the 2026-08-24 Helsinki municipal registration opening (~43 clubs × 15 seats at one instant).
+- **Brevo: paid subscription, 5,000 emails/month** (upgraded 2026-08-20 from the free 300/day tier). Over-cap sends are **rejected by Brevo, not queued** — the send wrapper logs and swallows the failure, so a cap overrun means silently undelivered mail.
+- **Backups: Pro daily physical backups on prod, 7-day retention — verified active 2026-08-20** (nightly ~02:00 UTC, listed via the Management API `database/backups` endpoint). Restore is dashboard-only and **all-or-nothing**: the whole database, project down during. PITR is deliberately off ($100/mo add-on, overkill at current scale), and Storage-API objects (product images) are **not** covered. A DIY encrypted `pg_dump` job (selective restore, downloadable offsite copy) was considered and declined once Pro landed; if ever revisited, a dump must include the `auth` schema alongside `public` — losing auth rows is the same disaster as losing profiles.
 
 Every protected request — page load, API call, and every RSC prefetch — verifies the caller's identity at three layers:
 

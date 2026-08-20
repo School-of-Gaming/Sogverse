@@ -1356,6 +1356,10 @@ function buildBaseProduct(
     // untouched, so a fixture needs no image seam anywhere. Null renders the
     // wordmark banner.
     image_path: SCENARIO_ART[slug] ?? null,
+    // Null on every scenario: a preview scene's art is a file in `public/`, not
+    // an object in the catalogue bucket, and nothing family-facing resolves the
+    // link anyway — `image_path` is what these surfaces paint.
+    image_id: null,
     // Fixed product_topic enum; the label is resolved via PRODUCT_TOPICS, so
     // the value just needs to be valid. Events get Fortnite, the rest
     // Minecraft Java — unless the scenario names one, which is how the

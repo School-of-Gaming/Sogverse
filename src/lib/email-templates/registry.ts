@@ -8,17 +8,31 @@ import {
   PRODUCT_CONFIRMATION_MODES,
 } from "./product-confirmation";
 import { buildVerifyEmailEmail } from "./verify-email";
+import {
+  buildSessionReportEmail,
+  sessionReportSubject,
+  type SessionReportEmailOptions,
+} from "./session-report";
+import { SESSION_REPORT_SAMPLES } from "./fixtures/session-report-samples";
 import type { EmailTranslator } from "./translator";
+import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
 
 // --- Field types for the testing UI ---
 
+/**
+ * `type` is the discriminant of the field union, and a text field's is
+ * `undefined` — declared, so the union narrows on `field.type` everywhere
+ * rather than on whether the key happens to exist, which is what let a
+ * "has a type" guard claim the select *and* anything added after it.
+ */
 interface TextField {
   key: string;
   label: string;
   placeholder: string;
+  type?: undefined;
 }
 
 interface SelectField {
@@ -28,7 +42,19 @@ interface SelectField {
   options: { label: string; value: string }[];
 }
 
-export type TemplateField = TextField | SelectField;
+/**
+ * A multi-line value — markdown, mostly. Unlike a text input, an untouched
+ * textarea posts what it holds (empty included) rather than its placeholder,
+ * so the placeholder is a hint and an empty value can mean "none".
+ */
+interface TextareaField {
+  key: string;
+  label: string;
+  placeholder: string;
+  type: "textarea";
+}
+
+export type TemplateField = TextField | SelectField | TextareaField;
 
 // --- Template definition (shared by API route and testing UI) ---
 
@@ -76,8 +102,12 @@ function defineTemplate<P extends TemplateParams>(entry: {
   schema: z.ZodType<P>;
   /** Build the HTML email content from validated params. */
   build: (params: P, t: EmailTranslator, locale: string) => string;
-  /** Generate the email subject line from validated params and translator. */
-  subject: (params: P, t: EmailTranslator) => string;
+  /**
+   * Generate the email subject line from validated params and translator. The
+   * locale is there for a subject that prints a formatted value of its own —
+   * most subjects ignore it.
+   */
+  subject: (params: P, t: EmailTranslator, locale: string) => string;
   /**
    * Reply-To for this template, defaulting to the support inbox — which is the
    * answer for every mail we send *to* a family. Only a template whose real
@@ -94,7 +124,7 @@ function defineTemplate<P extends TemplateParams>(entry: {
     render: (rawParams, t, locale) => {
       const params = schema.parse(rawParams);
       return {
-        subject: subject(params, t),
+        subject: subject(params, t, locale),
         html: build(params, t, locale),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
       };
@@ -151,6 +181,53 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
   };
 }
 
+/**
+ * The session-report form picks one of the bundled sample reports, a zone to
+ * stand in for the parent's, and may paste a markdown body over the sample.
+ * Spike plumbing: there is no route sending this mail yet, so the fixture
+ * stands in for the session row a real send would read, and the select stands
+ * in for the zone the mail is formatted in. The instants are formatted for the
+ * chosen locale in the chosen zone with the zone always named — a mail is
+ * rendered without the reader's own zone, so the live send formats in the
+ * product's zone and names it; the select is here to see what each locale
+ * calls a zone.
+ *
+ * The `sample` is posted as an id and resolved here rather than in
+ * `resolveParams`, because the formatting needs the locale and the resolver
+ * runs in the browser without one.
+ */
+const SESSION_REPORT_SAMPLE_OPTIONS = SESSION_REPORT_SAMPLES.map((sample) => ({
+  label: sample.label,
+  value: sample.id,
+}));
+
+/** Zones to format the mail in; the first is what the live send uses (the product's). */
+const VIEWER_TIMEZONE_OPTIONS = [
+  { label: "Europe/Helsinki (the product's zone)", value: "Europe/Helsinki" },
+  { label: "Europe/Stockholm", value: "Europe/Stockholm" },
+  { label: "Europe/London", value: "Europe/London" },
+  { label: "Europe/Paris", value: "Europe/Paris" },
+  { label: "America/New_York", value: "America/New_York" },
+];
+
+function resolveSessionReport(
+  { sample: sampleId, viewerTimezone, reportMarkdown, ...rest }: SessionReportParams,
+  locale: string,
+): SessionReportEmailOptions {
+  const sample =
+    SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
+    SESSION_REPORT_SAMPLES[0];
+  return {
+    ...rest,
+    sessionDate: formatDate(sample.startsAt, locale, {
+      timeZone: viewerTimezone,
+      dateStyle: "full",
+    }),
+    sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, viewerTimezone),
+    reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
+  };
+}
+
 // --- Zod schemas ---
 
 const passwordResetParamsSchema = z.object({
@@ -201,6 +278,28 @@ const verifyEmailParamsSchema = z.object({
   firstName: z.string().min(1),
   verificationUrl: z.string().url(),
 });
+
+const sessionReportParamsSchema = z.object({
+  gamerName: z.string().min(1),
+  geduName: z.string().min(1),
+  productName: z.string().min(1),
+  groupName: z.string().min(1),
+  sample: z
+    .string()
+    .refine((id) => SESSION_REPORT_SAMPLES.some((sample) => sample.id === id), {
+      message: "unknown sample report",
+    }),
+  viewerTimezone: z
+    .string()
+    .refine((zone) => VIEWER_TIMEZONE_OPTIONS.some((option) => option.value === zone), {
+      message: "unknown viewer timezone",
+    }),
+  /** Empty means "use the sample's own markdown". */
+  reportMarkdown: z.string(),
+  productUrl: z.string().url(),
+});
+
+type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
 
 // --- Single source of truth for all email templates ---
 
@@ -295,5 +394,30 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: verifyEmailParamsSchema,
     build: (p, t, locale) => buildVerifyEmailEmail(t, locale, p),
     subject: (_p, t) => t("verifyEmail.subject"),
+  }),
+  sessionReport: defineTemplate({
+    label: "Session Report",
+    fields: [
+      { key: "gamerName", label: "Gamer Name", placeholder: "Aino" },
+      { key: "geduName", label: "Gedu Name", placeholder: "Marianne" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft: Cozy Adventures" },
+      { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
+      { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
+      { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
+      {
+        key: "reportMarkdown",
+        label: "Report markdown",
+        type: "textarea",
+        placeholder: "Leave empty to send the selected sample. Anything typed here replaces it.",
+      },
+      {
+        key: "productUrl",
+        label: "Product page URL (My SOG)",
+        placeholder: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      },
+    ],
+    schema: sessionReportParamsSchema,
+    build: (p, t, locale) => buildSessionReportEmail(t, locale, resolveSessionReport(p, locale)),
+    subject: (p, t, locale) => sessionReportSubject(t, resolveSessionReport(p, locale)),
   }),
 };

@@ -180,6 +180,18 @@ and a diff against moved `dev` pollutes the review with other work inverted.
 Diff from the merge-base (`git merge-base dev HEAD`) instead; the review is of
 this branch's commits, not of the gap between two moving points.
 
+**A branch that is the last stage of a plan landed in stages is reviewed
+together with the stages before it.** The plan records each landed stage's
+commits (`docs/plans/CLAUDE.md`, "Landing in stages"); hand the reviewer this
+branch's diff *and* those commits as one change, named explicitly so a finding
+against an already-released stage is read as a follow-up rather than as this
+branch's defect. The merge-base is still the diff base — an earlier base drags
+in unrelated work that landed on `dev` between the stages. Without this, a
+staged feature is only ever read one piece at a time and nobody reviews it
+whole; the staging was forced by a release constraint and must not also cost
+the feature its one end-to-end read. Every stage's reviewer, first or last,
+gets the plan itself as context.
+
 **The review always runs in a subagent — every time, with no threshold and no
 exception, and for a different reason than Phase 2's delegation.** That rule is
 about context economy and admits a "trivial" carve-out. This one is about
@@ -224,6 +236,13 @@ instruction.
 
 **Only on the user's explicit instruction to merge.** Not when the work looks done,
 not when review comes back clean.
+
+**And never a branch whose plan says "merge to `dev` but do not release."** `dev`
+is released whole, so a merged stage that must not ship freezes it for every
+other piece of work. An operator step that has to run before the code goes live
+belongs *before* the merge, run against the branch's preview deployment
+(`docs/plans/CLAUDE.md`, "Landing in stages"). If the plan sequences it
+afterwards, stop and say so rather than landing the freeze.
 
 Order matters — several of these steps block the next one if skipped.
 
@@ -361,6 +380,12 @@ invisible unless you look.
 - **Never `cd` to the main checkout from inside a worktree.** The isolation guard
   refuses, and a failed `cd X && ...` chain leaves the shell's tracked directory
   somewhere unexpected. Use absolute paths, and run `cd` as its own command.
+  The guard checks where a command *starts*, not where it ends — so a chain
+  that begins inside the worktree and `cd`s out mid-way is allowed to run, and
+  from then on every command (Bash and PowerShell both, including a bare `cd`
+  back) is refused for starting in the shared checkout. **Recovery:** call
+  `EnterWorktree` with `path` set to the same worktree you are already in;
+  re-entering resets the tracked directory and both shells work again.
 - **Inside a worktree, keep shell commands plain.** The isolation guard refuses
   anything it cannot statically verify stays inside — heredocs, scripts piped to
   an interpreter, compound chains with redirects. That refusal is almost always a
