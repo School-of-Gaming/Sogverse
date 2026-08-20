@@ -379,8 +379,18 @@ describe("product_images and the image_path trigger", () => {
     });
 
     it("refuses an image_id with no catalogue entry behind it", async () => {
-      // Shaped to be impossible rather than merely unlikely: an all-f UUID is
-      // not something gen_random_uuid() will hand out.
+      // The id is shaped to be impossible rather than merely unlikely: an all-f
+      // UUID is not something gen_random_uuid() will hand out.
+      //
+      // The **trigger** is what refuses this, not the FK. A BEFORE-row trigger
+      // runs strictly before the FK's AFTER-row constraint check, so the lookup
+      // gets there first and raises with the SQLSTATE the FK would have used —
+      // which is why the message is asserted as well as the code. On the code
+      // alone this test would go on passing if someone deleted the raise and
+      // let a live picture blank instead, since the FK would then produce the
+      // same 23503 from one statement later. The FK's only remaining runtime
+      // job is the ON DELETE SET NULL action, covered by the entry-delete case
+      // above.
       await deleteTestProducts(admin, [LEGACY_PRODUCT]);
       await createTestProduct(admin, { id: LEGACY_PRODUCT });
 
@@ -390,6 +400,7 @@ describe("product_images and the image_path trigger", () => {
         .eq("id", LEGACY_PRODUCT);
 
       expect(error?.code).toBe("23503"); // foreign_key_violation
+      expect(error?.message).toContain("does not exist or is not visible");
       expect(await imageStateOf(LEGACY_PRODUCT)).toMatchObject({
         image_id: null,
       });

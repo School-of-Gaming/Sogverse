@@ -27,13 +27,23 @@
 -- ENTRIES ARE IMMUTABLE EXCEPT FOR THEIR LABEL
 --
 -- A row's bytes never change, so its `path` never changes, so a bucket URL's
--- bytes never change — which is the contract the one-year `minimumCacheTTL`
--- floor in `next.config.ts` has been quietly relying on and could not previously
--- guarantee. The object key is `<sha256>.<ext>`, so uploading the same file
--- twice finds the same object and the same row; that identity IS the dedup
--- mechanism, which is why `sha256` is UNIQUE and why "replace this picture"
--- will mean "repoint the products at a different entry" rather than
--- "overwrite these bytes".
+-- bytes never change — the contract the one-year `minimumCacheTTL` floor in
+-- `next.config.ts` rests on. That contract is not broken today, and this
+-- migration should not be read as repairing it: the product routes already mint
+-- a random UUID per upload with `upsert: false`, so no existing URL's bytes
+-- move. What content addressing changes is that the contract stops being a
+-- convention two route handlers happen to keep and becomes a property of the
+-- key itself.
+--
+-- What the catalogue actually fixes is the other half: one image arriving at
+-- dozens of URLs, so every cache downstream pays for it once per copy — and the
+-- update route deleting the superseded object, which is only safe for as long
+-- as no two products can share one.
+--
+-- The object key is `<sha256>.<ext>`, so uploading the same file twice finds
+-- the same object and the same row; that identity IS the dedup mechanism, which
+-- is why `sha256` is UNIQUE and why "replace this picture" will mean "repoint
+-- the products at a different entry" rather than "overwrite these bytes".
 --
 -- WHY THE COLUMN LIST IS SO SHORT
 --
@@ -95,11 +105,26 @@
 --     which reads nothing.
 --
 -- So SECURITY DEFINER would buy no reachability and would add a
--- privilege-escalation surface for nothing. The one failure mode invoker
--- rights could introduce — a writer who cannot see the entry, silently
--- getting a NULL path — is closed by raising instead: the FK already
--- guarantees the row exists, so a lookup that comes back empty can only mean
--- RLS hid it, and that must be loud rather than a quietly blanked picture.
+-- privilege-escalation surface for nothing. The one failure mode invoker rights
+-- could introduce — a writer who cannot see the entry, silently getting a NULL
+-- path — is closed by raising rather than assigning.
+--
+-- THE RAISE PRE-EMPTS THE FK; IT DOES NOT LEAN ON IT
+--
+-- A BEFORE-row trigger runs strictly before the foreign key, which is an
+-- AFTER-row constraint trigger fired at statement end. So this lookup gets there
+-- first, and the FK is not standing behind it waiting to catch a bad id — the
+-- trigger is what raises. That matters for what the message says: the reachable
+-- cause is the ordinary one, that the row DOES NOT EXIST, because one admin
+-- saved a product pointing at an entry another admin had just deleted. RLS
+-- invisibility is the second half of the message and the half the list above
+-- argues is unreachable. Either cause must fail the statement rather than blank
+-- a picture, and it fails with the FK's own SQLSTATE because it is making the
+-- FK's own claim a moment earlier.
+--
+-- The FK's remaining runtime job is the one the trigger cannot do: the
+-- `ON DELETE SET NULL` action that unlinks every product when an entry is
+-- removed.
 --
 -- NOTE ON TRIGGER-FUNCTION GRANTS: PostgreSQL checks EXECUTE on a trigger
 -- function when the trigger is CREATED, not when it fires, so the
@@ -192,12 +217,16 @@ BEGIN
       FROM public.product_images
      WHERE id = NEW.image_id;
 
-    -- The FK guarantees the row exists, so an empty lookup can only mean the
-    -- writer could not see it through RLS. Blanking the picture silently would
-    -- be the worst possible answer to that; raise instead. Same SQLSTATE the
-    -- FK itself would use, because it is the same claim.
+    -- This runs BEFORE the FK — which is an AFTER-row constraint trigger fired
+    -- at statement end — so it pre-empts the FK's own check rather than relying
+    -- on it. The reachable cause of an empty lookup is that the row is gone
+    -- (another admin removed the entry between this admin loading the form and
+    -- saving it); RLS hiding it is the other half of the message and the half
+    -- the header argues cannot happen. Blanking the picture silently would be
+    -- the worst possible answer to either; raise instead, with the SQLSTATE the
+    -- FK itself would have used, because it is the same claim made earlier.
     IF v_path IS NULL THEN
-      RAISE EXCEPTION 'product_images row % is not visible to this writer', NEW.image_id
+      RAISE EXCEPTION 'product_images row % does not exist or is not visible to this writer', NEW.image_id
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
@@ -254,6 +283,21 @@ BEGIN
      WHERE schemaname = 'public' AND tablename = 'product_images'
   ) <> 1 THEN
     RAISE EXCEPTION 'product_images should carry exactly one policy';
+  END IF;
+
+  -- Counting the policies says nothing about what the one policy allows: a
+  -- single `USING (true)` would pass the check above and hand the catalogue to
+  -- every signed-in customer. Both predicates have to name the admin gate, and
+  -- both halves are checked because a `USING`-only policy with a permissive
+  -- `WITH CHECK` is a write hole rather than a read one.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+     WHERE schemaname = 'public'
+       AND tablename = 'product_images'
+       AND qual ILIKE '%is_admin%'
+       AND with_check ILIKE '%is_admin%'
+  ) THEN
+    RAISE EXCEPTION 'product_images'' policy does not gate both USING and WITH CHECK on is_admin()';
   END IF;
 
   IF NOT has_table_privilege('authenticated', 'public.product_images', 'SELECT')

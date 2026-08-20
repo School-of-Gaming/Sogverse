@@ -106,14 +106,17 @@ not dump or commit `supabase/schema.sql` on the branch.
 **Deviations (step 1, as built — migration `00196_product_images_are_a_catalogue`)**
 
 - **The trigger raises rather than assigning NULL when the lookup finds nothing.** The
-  plan's `NEW.image_path := (SELECT path …)` has one failure mode worth closing: the FK
-  already guarantees the row exists, so an empty result can *only* mean the writer could
-  not see it through the table's admin-only RLS — and silently blanking a picture is the
-  worst available answer to that. The function raises with the FK's own SQLSTATE instead,
-  which is also what `validate_products_location` does for a location it cannot resolve.
-  It is unreachable for every writer that exists (all of them are admins or hold
-  BYPASSRLS; the migration header names them one by one), which is precisely why it can
-  be loud.
+  plan's `NEW.image_path := (SELECT path …)` would silently blank a picture on an empty
+  result. It does **not** rely on the FK to catch that: a BEFORE-row trigger runs strictly
+  before the FK, which is an AFTER-row constraint trigger fired at statement end, so this
+  lookup *pre-empts* the FK's own check. Its reachable cause is the ordinary one — the row
+  does not exist, because one admin saved a product pointing at an entry another admin had
+  just deleted. (RLS-invisibility is the other half of the message and the half the
+  migration header argues is unreachable: every writer is an admin or holds BYPASSRLS.)
+  Either way the statement fails rather than blanking a picture, with the FK's own
+  SQLSTATE because it is the FK's own claim made a moment earlier — the same shape
+  `validate_products_location` uses for a location it cannot resolve. The FK's remaining
+  runtime job is the `ON DELETE SET NULL` action.
 - **The trigger function is SECURITY INVOKER**, matching `validate_products_location`
   rather than reaching for DEFINER. Verified on staging: `update_product` is owned by
   `postgres` (BYPASSRLS), `create_product` runs as the signed-in admin, `service_role`
@@ -141,7 +144,13 @@ Running the cleanup first means no legacy product exists when the new code ships
    prod with the owner present. Prod runs the *old* code against relinked rows during this
    window; the old update route deletes the superseded object on an image change, and after
    relink that object may be shared — so the window is short, scheduled, and admins are
-   told not to change product images inside it.
+   told not to change product images inside it. Note what an image change inside the window
+   actually looks like, because it is worse than the shared-object deletion alone: the
+   route uploads the new object and writes the new path, the trigger immediately rewrites
+   `image_path` back to the linked entry's path, and the old object is deleted anyway. The
+   admin sees their change **silently not happen** while the picture other products depend
+   on is destroyed. "Do not change product images in this window" is therefore an
+   instruction with teeth, not a tidiness request.
 3. **Feature branch** (`feat/product-image-catalogue`): everything else. Merge, release.
 4. **Roll forward, never back.** A Vercel rollback past release 3 puts the old
    object-deleting routes live against shared objects. Written in the release PR.
