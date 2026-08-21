@@ -392,12 +392,12 @@ describe("POST /api/gamers/create — Roblox linking", () => {
   });
 });
 
-describe("POST /api/gamers/create — v1 minimal body (auto-generated credentials, optional gender)", () => {
+describe("POST /api/gamers/create — v1 minimal body (auto-generated email, passwordless, optional gender)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("accepts a body with only firstName + dateOfBirth and auto-generates credentials", async () => {
+  it("accepts a body with only firstName + dateOfBirth and creates a passwordless auth user", async () => {
     mockAuthenticated();
     mockPreCreateChecks({ emailExists: false });
     // Stop the flow at createUser so we can inspect what got passed.
@@ -412,14 +412,16 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
     const callArg = z
       .object({
         email: z.string(),
-        password: z.string(),
       })
       .parse(mockCreateUser.mock.calls[0][0]);
     // Opaque internal email local-part shape: "g" + 16 hex chars.
     expect(callArg.email).toMatch(/^g[0-9a-f]{16}@gamer\.sogverse\.internal$/);
-    // Auto-generated password is a non-empty random string.
-    expect(typeof callArg.password).toBe("string");
-    expect(callArg.password.length).toBeGreaterThanOrEqual(16);
+    // No password, and not merely an undefined one: the key is absent, because
+    // a gamer signs in only through the parent's account switch (a server-side
+    // magic-link OTP), never with a credential anyone types. A password here
+    // would be unreadable and unusable, and would buy a bcrypt hash on the
+    // registration path for nothing.
+    expect(mockCreateUser.mock.calls[0][0]).not.toHaveProperty("password");
   });
 
   it("rejects an invalid gender value", async () => {
