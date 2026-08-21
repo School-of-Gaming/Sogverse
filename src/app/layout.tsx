@@ -80,7 +80,7 @@ export default async function RootLayout({
     (await getMessages()) as Record<string, unknown>;
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale}>
       <body
         className={`${pressStart2P.variable} antialiased bg-background text-foreground`}
       >
