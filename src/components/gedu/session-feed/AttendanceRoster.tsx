@@ -97,8 +97,8 @@ export function AttendanceRoster({
                 // to *read* as chosen, though — a plain `bg-muted` pill sitting
                 // on a muted row was near-invisible, so the selected state is a
                 // foreground-tinted fill behind a full-strength foreground
-                // outline, which lands as unmistakably filled in both themes
-                // without borrowing an alarm colour it hasn't earned.
+                // outline, which lands as unmistakably filled without
+                // borrowing an alarm colour it hasn't earned.
                 pressedClassName="border-foreground bg-foreground/15 text-foreground"
               />
             </div>

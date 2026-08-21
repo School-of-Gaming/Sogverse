@@ -289,9 +289,8 @@ function RobloxBustPlaceholder() {
  * the features are drawn at full strength.
  *
  * If either of these is ever restyled, the thing to preserve is legibility at
- * 32px against `bg-muted` in **both** themes — the box is lighter than the page
- * in dark mode and darker in light, so a stand-in that leans on one of those
- * disappears in the other.
+ * 32px against `bg-muted`, which sits a step lighter than the page — so a
+ * stand-in that leans on the page being darker than the box disappears.
  */
 
 /**

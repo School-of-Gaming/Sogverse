@@ -180,7 +180,8 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 **Rule: No emoji in `messages/` files** — they're untranslatable copy that can't be themed or recolored. When a string needs a glyph (warning triangle, checkmark, arrow), render a `lucide-react` icon next to the translated text in the component instead.
 
 ### Styling
-- Dark mode is default (class-based via next-themes)
+
+**Rule: there is exactly one theme and it is dark — never write a light-mode fallback.** Tokens are defined once on `:root` in `src/app/globals.css`; there is no theme provider, no theme switcher, no `.dark` or `.light` selector, and no `dark:` variants anywhere in the codebase. So a `dark:` class never activates, a second palette can never be selected, and a comment reasoning about how something reads "in both themes" is describing a situation that cannot arise. All three are dead weight that still has to be maintained and still misleads the next reader into tuning a value nobody will see. If a light theme is ever wanted it is a project, not a fallback bolted onto one component: `color-scheme: dark` on `:root`, the email templates' `supported-color-schemes`, and every token's tuning all assume the dark ground.
 
 **Rule: Never use hardcoded colors or raw Tailwind color classes (e.g. `text-sky-400`, `bg-red-500`).** All colors must come from CSS custom properties defined in `src/app/globals.css` and referenced via semantic Tailwind classes (`text-primary`, `bg-destructive`, etc.). For non-CSS contexts (email templates, canvas), use the hex constants in `src/lib/constants/colors.ts`. This ensures a single source of truth for colors and brand identity.
 
