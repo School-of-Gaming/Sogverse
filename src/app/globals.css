@@ -19,8 +19,8 @@
      sign-in email/password fields), native dropdowns, and scrollbars. Without
      this the UA defaults to light rendering — a black calendar glyph that
      vanishes against our dark input, and a white autofill background — even
-     though our own tokens (bg-background, etc.) are dark. Paired with
-     `color-scheme: light` on `.light` below. */
+     though our own tokens (bg-background, etc.) are dark. There is one
+     theme, so this is stated once and never switched. */
   color-scheme: dark;
 
   /* Background colors */
@@ -101,58 +101,6 @@
   --sidebar-accent: 0 0% 15%;
   --sidebar-accent-foreground: 0 0% 93%;
   --sidebar-border: 0 0% 20%;
-  --sidebar-ring: 42 98% 49%;
-}
-
-/* Light theme override */
-.light {
-  color-scheme: light;
-
-  --background: 0 0% 98%;
-  --foreground: 0 0% 7%;
-
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 7%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 7%;
-
-  --primary: 42 98% 49%;
-  --primary-foreground: 0 0% 7%;
-
-  --secondary: 276 100% 44%;
-  --secondary-foreground: 0 0% 100%;
-
-  --muted: 0 0% 93%;
-  --muted-foreground: 0 0% 40%;
-
-  --accent: 0 0% 96%;
-  --accent-foreground: 0 0% 7%;
-
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-
-  --success: 160 60% 40%;
-  --success-foreground: 0 0% 100%;
-
-  --info: 210 80% 50%;
-  --info-foreground: 0 0% 100%;
-
-  --warning: 45 93% 47%;
-  --warning-foreground: 0 0% 7%;
-
-  --border: 0 0% 85%;
-  --input: 0 0% 85%;
-  --ring: 42 98% 49%;
-
-  --sidebar-background: 0 0% 96%;
-  --sidebar-foreground: 0 0% 7%;
-  --sidebar-primary: 42 98% 49%;
-  --sidebar-primary-foreground: 0 0% 7%;
-  --sidebar-accent: 0 0% 90%;
-  --sidebar-accent-foreground: 0 0% 7%;
-  --sidebar-border: 0 0% 85%;
-  --sidebar-ring: 42 98% 49%;
 }
 
 @theme inline {
@@ -193,7 +141,6 @@
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
   /* YTY Element colors */
   --color-yty-harmony: #34d399;
   --color-yty-glow: #fbbf24;
@@ -207,8 +154,7 @@
      near a fixed Yty element color (harmony/glow/valor/wit above), which is
      fine — the Yty zones are their own zones, so a custom zone sharing a
      similar hue doesn't collide. Lightness sits ~L55-70% so each reads as a
-     glyph on both themes (yellow/amber nudged a touch darker for light-theme
-     contrast). */
+     glyph on the dark ground. */
   --color-zone-red: #f4504e;
   --color-zone-orange: #fb8b3c;
   --color-zone-amber: #f7a31f;
@@ -308,23 +254,6 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-/* Utility classes for brand colors */
-.text-brand-purple {
-  color: hsl(276 100% 44%);
-}
-
-.text-brand-yellow {
-  color: hsl(42 98% 49%);
-}
-
-.bg-brand-purple {
-  background-color: hsl(276 100% 44%);
-}
-
-.bg-brand-yellow {
-  background-color: hsl(42 98% 49%);
-}
-
 /* Frosted-glass surface — a translucent background plus a backdrop blur, shared
    by every floating/overlay chrome that sits over scrolling content: the sticky
    site header, the home section pill, and the voice control dock. Defined once
@@ -356,15 +285,6 @@ body {
    fields in src/lib/constants/voice-zones.ts). */
 .zone-glow {
   box-shadow: inset 0 0 1.25rem -0.25rem var(--glow-color, transparent);
-}
-
-/* Gaming-inspired glow effects */
-.glow-purple {
-  box-shadow: 0 0 20px hsla(276, 100%, 44%, 0.5);
-}
-
-.glow-yellow {
-  box-shadow: 0 0 20px hsla(42, 98%, 49%, 0.5);
 }
 
 /* Shake — wrong-PIN feedback on the PIN pad (src/components/pin). Plays once
