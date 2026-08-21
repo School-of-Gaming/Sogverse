@@ -8,15 +8,12 @@ import { lookupRobloxProfile } from "@/lib/roblox";
 import { createGamerBody } from "@/services/gamers/gamers.contracts";
 import type { GenderType } from "@/types";
 
-// Local part of the gamer's synthetic email + password. Opaque on purpose:
-// the parent never sees either (gamer login is via account-switching from the
-// parent, not credentials they type).
+// Local part of the gamer's synthetic email. Opaque on purpose: the parent
+// never sees it and nobody ever types it — a gamer is switched into from the
+// parent's account, so the address exists only to give the auth user the
+// identifier GoTrue insists on.
 function generateGamerEmailLocalPart(): string {
   return "g" + randomBytes(8).toString("hex");
-}
-
-function generateOpaqueGamerPassword(): string {
-  return randomBytes(24).toString("base64url");
 }
 
 /**
@@ -64,8 +61,6 @@ export const POST = defineRoute({
       providedGender === ""
         ? null
         : providedGender;
-
-    const password = generateOpaqueGamerPassword();
 
     // Belt-and-braces: 64 bits of entropy means collisions are vanishingly
     // improbable, but check once and retry once just in case.
@@ -120,10 +115,23 @@ export const POST = defineRoute({
       .join(" ");
 
     // Step 1: Create auth user — trigger assigns customer role by default.
+    //
+    // Deliberately passwordless: no `password` field at all. A gamer never
+    // authenticates with a typed credential — the parent switches into the
+    // child account, and that route mints a magic-link OTP for this user
+    // server-side and verifies it immediately, which GoTrue issues for a
+    // passwordless user exactly as it does for one with a password — create,
+    // generateLink and verifyOtp were all run against staging GoTrue in
+    // 2026-08 and the last of them returned a real session. That is a fact
+    // about GoTrue's behaviour rather than a guarantee it owes us, so it is
+    // worth re-checking if account switching ever breaks. A random
+    // password here would be a value nobody can ever read, use or reset, and it
+    // would cost a bcrypt hash on the same VM that runs Postgres, on the
+    // request path of every family registration. (GoTrue can add a password to
+    // a passwordless user later, so nothing is closed off by omitting it.)
     const { data: authData, error: authError } =
       await admin.auth.admin.createUser({
         email: syntheticEmail,
-        password,
         email_confirm: true,
         user_metadata: {
           first_name: firstName,

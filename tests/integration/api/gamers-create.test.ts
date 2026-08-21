@@ -392,12 +392,12 @@ describe("POST /api/gamers/create — Roblox linking", () => {
   });
 });
 
-describe("POST /api/gamers/create — v1 minimal body (auto-generated credentials, optional gender)", () => {
+describe("POST /api/gamers/create — v1 minimal body (auto-generated email, passwordless, optional gender)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("accepts a body with only firstName + dateOfBirth and auto-generates credentials", async () => {
+  it("accepts a body with only firstName + dateOfBirth and creates a passwordless auth user", async () => {
     mockAuthenticated();
     mockPreCreateChecks({ emailExists: false });
     // Stop the flow at createUser so we can inspect what got passed.
@@ -412,14 +412,19 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
     const callArg = z
       .object({
         email: z.string(),
-        password: z.string(),
       })
       .parse(mockCreateUser.mock.calls[0][0]);
     // Opaque internal email local-part shape: "g" + 16 hex chars.
     expect(callArg.email).toMatch(/^g[0-9a-f]{16}@gamer\.sogverse\.internal$/);
-    // Auto-generated password is a non-empty random string.
-    expect(typeof callArg.password).toBe("string");
-    expect(callArg.password.length).toBeGreaterThanOrEqual(16);
+    // Absence, not an undefined value: vitest's toHaveProperty checks
+    // hasOwnProperty first, so `password: undefined` would read as present and
+    // fail this — which is what we want, since sending the key at all is the
+    // regression. The reason there is no password lives at the route.
+    expect(mockCreateUser.mock.calls[0][0]).not.toHaveProperty("password");
+    // With the password gone this is the last field in the call that the
+    // account depends on: without it the gamer is created unconfirmed and the
+    // parent's switch into them fails.
+    expect(mockCreateUser.mock.calls[0][0]).toMatchObject({ email_confirm: true });
   });
 
   it("rejects an invalid gender value", async () => {
