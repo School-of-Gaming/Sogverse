@@ -701,7 +701,15 @@
         "chip": {
           "age": "{age}v",
           "parent": "Vanhempi: {name}",
-          "participantEmail": "Yhteystieto: {email}"
+          "participantEmail": "Yhteystieto: {email}",
+          "detailsAria": "Tiedot: {name}",
+          "details": {
+            "age": "Ikä",
+            "gender": "Sukupuoli",
+            "parent": "Huoltaja",
+            "contact": "Yhteystieto",
+            "openUser": "Avaa käyttäjäsivu"
+          }
         },
         "unassigned": {
           "title": "Nimeämättömät",
@@ -788,6 +796,99 @@
           "standard": "Kerhot ja maksulliset tapahtumat myydään Suomen yleisellä verokannalla. Kanta määräytyy tuotetyypin mukaan, eikä sitä voi muuttaa täällä."
         },
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
+      },
+      "catalogue": {
+        "title": "Tuotteet",
+        "subtitle": "Kaikki alustan kerhot, leirit ja tapahtumat.",
+        "searchPlaceholder": "Hae nimellä…",
+        "searchLabel": "Hae tuotteita nimellä",
+        "emptyTitle": "Ei vielä tuotteita",
+        "emptyDescription": "Luo kerho, leiri tai tapahtuma päästäksesi alkuun.",
+        "noMatches": "Yksikään tuote ei vastaa hakua ja suodattimia.",
+        "online": "Etänä",
+        "noGedu": "Ei Gedua",
+        "seatsOf": "{filled} / {total}",
+        "seatsUncapped": "{filled} ilmoittautunutta",
+        "waitingCount": "{count} jonossa",
+        "unplacedCount": "{count} ilman ryhmää",
+        "filters": {
+          "active": "Käynnissä",
+          "format": {
+            "online": "Etänä",
+            "in_person": "Paikan päällä"
+          }
+        },
+        "columns": {
+          "type": "Tyyppi",
+          "name": "Nimi",
+          "status": "Tila",
+          "when": "Milloin",
+          "where": "Missä",
+          "gedus": "Gedut",
+          "seats": "Paikat",
+          "attention": "Vaatii huomiota"
+        },
+        "attention": {
+          "no_gedu": "Gedua ei ole nimetty",
+          "unplaced": "Joku on ilmoittautunut mutta ei ole missään ryhmässä",
+          "missing_gedu_fee": "Gedun palkkiota ei ole asetettu",
+          "missing_municipality_fee": "Kunnan maksua ei ole asetettu",
+          "unwritten_session": "Menneestä tapaamisesta puuttuu raportti"
+        }
+      },
+      "detail": {
+        "backToCatalogue": "Kaikki tuotteet",
+        "sectionNavAria": "Tuotteen osiot",
+        "sections": {
+          "at-a-glance": "Yhdellä silmäyksellä",
+          "as-sold": "Myyntisivu",
+          "how-it-runs": "Käytännöt",
+          "money": "Talous",
+          "people": "Osallistujat",
+          "sessions": "Tapaamiset"
+        },
+        "copyLink": "Kopioi julkinen linkki",
+        "noNextSession": "Ei tapaamisia jäljellä",
+        "liveNow": "Käynnissä",
+        "sessionsRunOpenEnded": "{run} pidetty",
+        "sessionsRunOf": "{run} pidetty, {remaining} jäljellä",
+        "writtenUpOf": "{written} / {run} raportoitu",
+        "emailedCount": "{count} lähetetty",
+        "seatsFilledFree": "{filled} varattu, {free} vapaana",
+        "byWhoWhen": "{name} · {when}",
+        "asSoldCaption": "Näin perhe näkee tuotteen julkisella sivulla.",
+        "noCalendars": "Ei lomakalenteria",
+        "noThreshold": "Ei aloitusrajaa",
+        "thresholdValue": "{count, plural, one {# ilmoittautuminen} other {# ilmoittautumista}}",
+        "fields": {
+          "publicLink": "Julkinen linkki",
+          "nextSession": "Seuraava tapaaminen",
+          "term": "Kausi",
+          "writeUps": "Raportit",
+          "statusReason": "Tilan syy",
+          "created": "Luotu",
+          "updated": "Päivitetty",
+          "contacts": "Yhteystiedot",
+          "slots": "Aikataulu",
+          "timezone": "Aikavyöhyke",
+          "dates": "Alku / loppu",
+          "where": "Paikka"
+        },
+        "people": {
+          "notesCaption": "Ryhmän pysyvät muistiinpanot. Henkilökunnan muistiinpanon näkevät vain Gedut ja ylläpitäjät."
+        },
+        "sessions": {
+          "noGroups": "Tuotteessa ei ole vielä ryhmiä, joten näytettävää ei ole.",
+          "groupSelectorAria": "Valitse ryhmä",
+          "ledger": {
+            "run": "Pidetyt tapaamiset",
+            "writtenUp": "Raportoitu",
+            "emailed": "Lähetetty",
+            "present": "Paikalla",
+            "absent": "Poissa",
+            "unmarked": "Ei merkitty"
+          }
+        }
       }
     },
     "users": {
@@ -1305,9 +1406,9 @@
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
       "unmarkedLabel": "Ei merkintää",
-      "staffNoteLabel": "Vain Geduille",
+      "staffNoteLabel": "Gedut ja ylläpitäjät",
       "familyNoteLabel": "Perheet näkevät tämän",
-      "staffNoteTitle": "Muistiinpano kerrasta – vain Geduille",
+      "staffNoteTitle": "Muistiinpano kerrasta – Gedut ja ylläpitäjät",
       "staffNoteHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
       "staffNotePlaceholder": "Mitä toisen Gedun on hyvä tietää – ja mitä sinun on tarpeen kirjata luottamuksellisesti: välikohtaus, kiusaaminen tai huoli pelaajasta.",
       "attendanceLegend": "Läsnäolo",

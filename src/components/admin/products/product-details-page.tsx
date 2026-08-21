@@ -43,6 +43,7 @@ import {
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import { GroupsPanel } from "./groups/groups-panel";
+import { ProductStatusChip } from "./product-status-chip";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
 
@@ -50,17 +51,6 @@ interface ProductDetailsPageProps {
   productType: ProductType;
   productId: string;
 }
-
-// Keyed by the effective status, exhaustively: the compiler is what guarantees
-// every member has a chip style, so there is no fallback to reach for and no
-// way to add a status without being asked what colour it wears.
-const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
-  pending: "bg-primary/20 text-primary",
-  running: "bg-primary text-primary-foreground",
-  completed: "bg-muted text-muted-foreground",
-  cancelled: "bg-destructive/20 text-destructive",
-  expired: "bg-muted text-muted-foreground",
-};
 
 export function ProductDetailsPage({
   productType,
@@ -147,7 +137,6 @@ export function ProductDetailsPage({
         title={tr?.name ?? t("list.untitled")}
         description={tr?.short_description ?? null}
         statusKey={status}
-        statusLabel={t(`status.${status}`)}
         isVisible={product.is_visible}
         listedLabel={t("detailsPage.listed")}
         unlistedLabel={t("detailsPage.unlisted")}
@@ -199,7 +188,6 @@ function HeaderCard({
   title,
   description,
   statusKey,
-  statusLabel,
   isVisible,
   listedLabel,
   unlistedLabel,
@@ -213,7 +201,6 @@ function HeaderCard({
   title: string;
   description: string | null;
   statusKey: EffectiveProductStatus;
-  statusLabel: string;
   isVisible: boolean;
   listedLabel: string;
   unlistedLabel: string;
@@ -248,11 +235,7 @@ function HeaderCard({
             </p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[statusKey]}`}
-            >
-              {statusLabel}
-            </span>
+            <ProductStatusChip status={statusKey} />
             <Badge variant={isVisible ? "default" : "secondary"}>
               {isVisible ? listedLabel : unlistedLabel}
             </Badge>

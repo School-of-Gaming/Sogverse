@@ -17,11 +17,8 @@ import { productImageSrc } from "@/lib/images/product-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
-import {
-  effectiveStatus,
-  pendingHintKey,
-  type EffectiveProductStatus,
-} from "@/lib/products/effective-status";
+import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
+import { ProductStatusChip } from "./product-status-chip";
 import {
   formatProductSchedule,
   joinScheduleGroups,
@@ -30,17 +27,6 @@ import {
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
-
-// Keyed by the effective status, exhaustively: the compiler is what guarantees
-// every member has a chip style, so there is no fallback to reach for and no
-// way to add a status without being asked what colour it wears.
-const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
-  pending: "bg-primary/20 text-primary",
-  running: "bg-primary text-primary-foreground",
-  completed: "bg-muted text-muted-foreground",
-  cancelled: "bg-destructive/20 text-destructive",
-  expired: "bg-muted text-muted-foreground",
-};
 
 // `pendingHintKey` lives in effective-status.ts (UI-free decision tree). This
 // thin wrapper formats the values for display: dates go through the user's
@@ -178,11 +164,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   <span className="truncate font-medium">
                     {tr?.name ?? t("list.untitled")}
                   </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[status]}`}
-                  >
-                    {t(`status.${status}`)}
-                  </span>
+                  <ProductStatusChip status={status} />
                   {!p.is_visible && (
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                       {t("list.unlisted")}

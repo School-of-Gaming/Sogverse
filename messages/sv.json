@@ -701,7 +701,15 @@
         "chip": {
           "age": "{age}å",
           "parent": "Förälder: {name}",
-          "participantEmail": "Kontakt: {email}"
+          "participantEmail": "Kontakt: {email}",
+          "detailsAria": "Uppgifter om {name}",
+          "details": {
+            "age": "Ålder",
+            "gender": "Kön",
+            "parent": "Vårdnadshavare",
+            "contact": "Kontakt",
+            "openUser": "Öppna användarsidan"
+          }
         },
         "unassigned": {
           "title": "Otilldelade",
@@ -788,6 +796,99 @@
           "standard": "Klubbar och avgiftsbelagda evenemang säljs med Finlands allmänna momssats. Satsen följer av produkttypen och kan inte ändras här."
         },
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
+      },
+      "catalogue": {
+        "title": "Produkter",
+        "subtitle": "Alla klubbar, läger och evenemang på plattformen.",
+        "searchPlaceholder": "Sök på namn…",
+        "searchLabel": "Sök produkter på namn",
+        "emptyTitle": "Inga produkter ännu",
+        "emptyDescription": "Skapa en klubb, ett läger eller ett evenemang för att komma igång.",
+        "noMatches": "Ingen produkt matchar sökningen och filtren.",
+        "online": "På distans",
+        "noGedu": "Ingen Gedu",
+        "seatsOf": "{filled} / {total}",
+        "seatsUncapped": "{filled} anmälda",
+        "waitingCount": "{count} i kö",
+        "unplacedCount": "{count} utan grupp",
+        "filters": {
+          "active": "Pågående",
+          "format": {
+            "online": "På distans",
+            "in_person": "På plats"
+          }
+        },
+        "columns": {
+          "type": "Typ",
+          "name": "Namn",
+          "status": "Status",
+          "when": "När",
+          "where": "Var",
+          "gedus": "Geduer",
+          "seats": "Platser",
+          "attention": "Kräver uppmärksamhet"
+        },
+        "attention": {
+          "no_gedu": "Ingen Gedu tilldelad",
+          "unplaced": "Någon är anmäld men står utan grupp",
+          "missing_gedu_fee": "Gedu-arvodet är inte satt",
+          "missing_municipality_fee": "Kommunavgiften är inte satt",
+          "unwritten_session": "En genomförd session saknar rapport"
+        }
+      },
+      "detail": {
+        "backToCatalogue": "Alla produkter",
+        "sectionNavAria": "Produktens avsnitt",
+        "sections": {
+          "at-a-glance": "En överblick",
+          "as-sold": "Så säljs den",
+          "how-it-runs": "Så fungerar den",
+          "money": "Ekonomi",
+          "people": "Deltagare",
+          "sessions": "Sessioner"
+        },
+        "copyLink": "Kopiera den publika länken",
+        "noNextSession": "Inga sessioner kvar",
+        "liveNow": "Pågår nu",
+        "sessionsRunOpenEnded": "{run} genomförda",
+        "sessionsRunOf": "{run} genomförda, {remaining} kvar",
+        "writtenUpOf": "{written} av {run} rapporterade",
+        "emailedCount": "{count} skickade",
+        "seatsFilledFree": "{filled} tagna, {free} lediga",
+        "byWhoWhen": "{name} · {when}",
+        "asSoldCaption": "Så här ser en familj produkten på den publika sidan.",
+        "noCalendars": "Ingen lovkalender",
+        "noThreshold": "Ingen tröskel",
+        "thresholdValue": "{count, plural, one {# anmälan} other {# anmälningar}}",
+        "fields": {
+          "publicLink": "Publik länk",
+          "nextSession": "Nästa session",
+          "term": "Termin",
+          "writeUps": "Rapporter",
+          "statusReason": "Därför denna status",
+          "created": "Skapad",
+          "updated": "Senast ändrad",
+          "contacts": "Kontakter",
+          "slots": "Schema",
+          "timezone": "Tidszon",
+          "dates": "Start / slut",
+          "where": "Plats"
+        },
+        "people": {
+          "notesCaption": "Gruppens stående anteckningar. Personalanteckningen läses bara av Geduer och administratörer."
+        },
+        "sessions": {
+          "noGroups": "Produkten har inga grupper ännu, så det finns inget att visa.",
+          "groupSelectorAria": "Välj grupp",
+          "ledger": {
+            "run": "Genomförda sessioner",
+            "writtenUp": "Rapporterade",
+            "emailed": "Skickade",
+            "present": "Närvarande",
+            "absent": "Frånvarande",
+            "unmarked": "Inte markerad"
+          }
+        }
       }
     },
     "users": {
@@ -1305,9 +1406,9 @@
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
       "unmarkedLabel": "Inte markerad",
-      "staffNoteLabel": "Endast Gedus",
+      "staffNoteLabel": "Gedus och administratörer",
       "familyNoteLabel": "Familjer ser det här",
-      "staffNoteTitle": "Anteckning om tillfället – endast Gedus",
+      "staffNoteTitle": "Anteckning om tillfället – Gedus och administratörer",
       "staffNoteHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffNotePlaceholder": "Allt en annan Gedu bör veta – och allt du behöver få nedskrivet privat: en incident, mobbning eller oro för en spelare.",
       "attendanceLegend": "Närvaro",

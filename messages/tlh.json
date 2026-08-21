@@ -749,7 +749,15 @@
         "chip": {
           "age": "{age} DIS",
           "parent": "vavnI’: {name}",
-          "participantEmail": "QInHom: {email}"
+          "participantEmail": "QInHom: {email}",
+          "detailsAria": "{name} De'",
+          "details": {
+            "age": "ben",
+            "gender": "loD/be'",
+            "parent": "SoS/vav",
+            "contact": "ghojmeH De'",
+            "openUser": "nuv HaSta poSmoH"
+          }
         },
         "unassigned": {
           "title": "ngu’be’pu’",
@@ -836,6 +844,99 @@
           "standard": "ghomHom Qu’mey je Huch nob motlh lo’. Segh ngu’ nob, vaj naDev choHlaH pagh."
         },
         "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
+      },
+      "catalogue": {
+        "title": "may' ngoQmey",
+        "subtitle": "Hoch ghom, raQ, qep je 'oH naDev.",
+        "searchPlaceholder": "pong nej…",
+        "searchLabel": "pong lo'taHvIS ngoQ nej",
+        "emptyTitle": "pagh ngoQ",
+        "emptyDescription": "ghom, raQ, qep joq chenmoH — vaj taghlaH may'.",
+        "noMatches": "nejwI' ghaj pagh ngoQ.",
+        "online": "HeHDaq",
+        "noGedu": "Gedu Hutlh",
+        "seatsOf": "{filled} / {total}",
+        "seatsUncapped": "{filled} SuvwI'",
+        "waitingCount": "{count} loStaH",
+        "unplacedCount": "{count} ghom Hutlh",
+        "filters": {
+          "active": "SuvtaH",
+          "format": {
+            "online": "HeHDaq",
+            "in_person": "qamDu'Daq"
+          }
+        },
+        "columns": {
+          "type": "Segh",
+          "name": "pong",
+          "status": "Dotlh",
+          "when": "ghorgh",
+          "where": "nuqDaq",
+          "gedus": "Gedupu'",
+          "seats": "quS",
+          "attention": "buSlu'nIS"
+        },
+        "attention": {
+          "no_gedu": "Gedu wIvbe'lu'",
+          "unplaced": "SuvwI' ghajlu' 'ach ghom ghajbe'",
+          "missing_gedu_fee": "Gedu pop wIvbe'lu'",
+          "missing_municipality_fee": "veng DIl wIvbe'lu'",
+          "unwritten_session": "may' ret ghItlhbe'lu'"
+        }
+      },
+      "detail": {
+        "backToCatalogue": "Hoch ngoQmey",
+        "sectionNavAria": "ngoQ 'ay'mey",
+        "sections": {
+          "at-a-glance": "wa' legh",
+          "as-sold": "ngevlu'bogh",
+          "how-it-runs": "chay' qaSbe'",
+          "money": "Huch",
+          "people": "nuvpu'",
+          "sessions": "may'mey"
+        },
+        "copyLink": "Hev ngeH vI'ang",
+        "noNextSession": "may' pIm tu'lu'be'",
+        "liveNow": "DaH qaS",
+        "sessionsRunOpenEnded": "{run} qaSpu'",
+        "sessionsRunOf": "{run} qaSpu', {remaining} qaSbe'",
+        "writtenUpOf": "{run} vo' {written} ghItlhlu'pu'",
+        "emailedCount": "{count} ngeHlu'pu'",
+        "seatsFilledFree": "{filled} teblu', {free} chIm",
+        "byWhoWhen": "{name} · {when}",
+        "asSoldCaption": "qorDu' legh 'e' vI'ang.",
+        "noCalendars": "leS jaj tetlh tu'lu'be'",
+        "noThreshold": "veH tu'lu'be'",
+        "thresholdValue": "{count, plural, one {# SuvwI'} other {# SuvwI'pu'}}",
+        "fields": {
+          "publicLink": "Hoch vI'ang",
+          "nextSession": "may' veb",
+          "term": "poH",
+          "writeUps": "ghItlhmey",
+          "statusReason": "Dotlh meq",
+          "created": "chenmoHlu'pu'",
+          "updated": "choHlu'pu'",
+          "contacts": "ghojmeH De'",
+          "slots": "jaj tetlh",
+          "timezone": "poH Sep",
+          "dates": "tagh / van",
+          "where": "Daq"
+        },
+        "people": {
+          "notesCaption": "ghom qawHaqmey. Gedupu' 'ej che'wI'pu' neH lulaD."
+        },
+        "sessions": {
+          "noGroups": "ngoQvamvaD ghom tu'lu'be', vaj pagh 'ang.",
+          "groupSelectorAria": "ghom wIv",
+          "ledger": {
+            "run": "may'mey qaSpu'",
+            "writtenUp": "ghItlhlu'pu'",
+            "emailed": "ngeHlu'pu'",
+            "present": "pawpu'",
+            "absent": "pawbe'",
+            "unmarked": "DelHa'lu'"
+          }
+        }
       }
     },
     "users": {
@@ -1349,9 +1450,9 @@
       "presentLabel": "pawpu’",
       "absentLabel": "pawbe’",
       "unmarkedLabel": "ngu’lu’be’",
-      "staffNoteLabel": "Gedupu’ neH",
+      "staffNoteLabel": "Gedupu’ che’wI’pu’ je",
       "familyNoteLabel": "qorDu’pu’ lulaD",
-      "staffNoteTitle": "may’ qonta’ — Gedupu’ neH",
+      "staffNoteTitle": "may’ qonta’ — Gedupu’ che’wI’pu’ je",
       "staffNoteHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffNotePlaceholder": "latlh Gedu Sovnis Hoch — ’ej pegh qonnIS Hoch: wanI’ qab, joy’taHghach, QujwI’ Daqelbogh je.",
       "attendanceLegend": "pawwI’pu’",

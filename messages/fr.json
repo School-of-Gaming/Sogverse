@@ -701,7 +701,15 @@
         "chip": {
           "age": "{age} ans",
           "parent": "Parent : {name}",
-          "participantEmail": "Contact : {email}"
+          "participantEmail": "Contact : {email}",
+          "detailsAria": "Détails de {name}",
+          "details": {
+            "age": "Âge",
+            "gender": "Genre",
+            "parent": "Parent",
+            "contact": "Contact",
+            "openUser": "Ouvrir la fiche utilisateur"
+          }
         },
         "unassigned": {
           "title": "Sans groupe",
@@ -788,6 +796,99 @@
           "standard": "Les clubs et les événements payants sont vendus au taux normal finlandais. Le taux découle du type de produit et ne se modifie pas ici."
         },
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
+      },
+      "catalogue": {
+        "title": "Produits",
+        "subtitle": "Tous les clubs, stages et événements de la plateforme.",
+        "searchPlaceholder": "Rechercher par nom…",
+        "searchLabel": "Rechercher un produit par son nom",
+        "emptyTitle": "Aucun produit pour l’instant",
+        "emptyDescription": "Créez un club, un stage ou un événement pour commencer.",
+        "noMatches": "Aucun produit ne correspond à la recherche et aux filtres.",
+        "online": "En ligne",
+        "noGedu": "Aucun Gedu",
+        "seatsOf": "{filled} / {total}",
+        "seatsUncapped": "{filled} inscrits",
+        "waitingCount": "{count} en attente",
+        "unplacedCount": "{count} sans groupe",
+        "filters": {
+          "active": "En cours",
+          "format": {
+            "online": "En ligne",
+            "in_person": "En présentiel"
+          }
+        },
+        "columns": {
+          "type": "Type",
+          "name": "Nom",
+          "status": "Statut",
+          "when": "Quand",
+          "where": "Où",
+          "gedus": "Gedus",
+          "seats": "Places",
+          "attention": "À traiter"
+        },
+        "attention": {
+          "no_gedu": "Aucun Gedu affecté",
+          "unplaced": "Quelqu’un est inscrit sans groupe",
+          "missing_gedu_fee": "Rémunération du Gedu non définie",
+          "missing_municipality_fee": "Montant facturé à la commune non défini",
+          "unwritten_session": "Une séance passée n’a pas de compte rendu"
+        }
+      },
+      "detail": {
+        "backToCatalogue": "Tous les produits",
+        "sectionNavAria": "Sections du produit",
+        "sections": {
+          "at-a-glance": "En un coup d’œil",
+          "as-sold": "Vu du public",
+          "how-it-runs": "Fonctionnement",
+          "money": "Finances",
+          "people": "Participants",
+          "sessions": "Séances"
+        },
+        "copyLink": "Copier le lien public",
+        "noNextSession": "Plus aucune séance",
+        "liveNow": "En cours",
+        "sessionsRunOpenEnded": "{run} séances passées",
+        "sessionsRunOf": "{run} passées, {remaining} à venir",
+        "writtenUpOf": "{written} sur {run} rédigées",
+        "emailedCount": "{count} envoyées",
+        "seatsFilledFree": "{filled} occupées, {free} libres",
+        "byWhoWhen": "{name} · {when}",
+        "asSoldCaption": "Ce qu’une famille voit sur la page publique.",
+        "noCalendars": "Aucun calendrier de vacances",
+        "noThreshold": "Aucun seuil",
+        "thresholdValue": "{count, plural, one {# inscription} other {# inscriptions}}",
+        "fields": {
+          "publicLink": "Lien public",
+          "nextSession": "Prochaine séance",
+          "term": "Trimestre",
+          "writeUps": "Comptes rendus",
+          "statusReason": "Raison du statut",
+          "created": "Créé",
+          "updated": "Dernière modification",
+          "contacts": "Contacts",
+          "slots": "Horaires",
+          "timezone": "Fuseau de référence",
+          "dates": "Début / fin",
+          "where": "Lieu"
+        },
+        "people": {
+          "notesCaption": "Notes permanentes du groupe. La note interne n’est lue que par les Gedus et les administrateurs."
+        },
+        "sessions": {
+          "noGroups": "Ce produit n’a pas encore de groupe, il n’y a donc rien à afficher.",
+          "groupSelectorAria": "Choisir un groupe",
+          "ledger": {
+            "run": "Séances passées",
+            "writtenUp": "Rédigées",
+            "emailed": "Envoyées",
+            "present": "Présent",
+            "absent": "Absent",
+            "unmarked": "Non renseigné"
+          }
+        }
       }
     },
     "users": {
@@ -1305,9 +1406,9 @@
       "presentLabel": "Présent",
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",
-      "staffNoteLabel": "Gedus uniquement",
+      "staffNoteLabel": "Gedus et admins",
       "familyNoteLabel": "Visible par les familles",
-      "staffNoteTitle": "Note de séance — Gedus uniquement",
+      "staffNoteTitle": "Note de séance — Gedus et admins",
       "staffNoteHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffNotePlaceholder": "Tout ce qu’un autre Gedu devrait savoir — et tout ce que vous devez consigner en privé : un incident, du harcèlement, une inquiétude au sujet d’un gamer.",
       "attendanceLegend": "Présences",
