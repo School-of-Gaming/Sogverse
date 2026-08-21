@@ -65,7 +65,7 @@ import {
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
 import { useNow, useTimezone } from "@/providers";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { computeGlowStyle } from "@/lib/voice/glow";
 import { composeZones } from "@/lib/voice/zone-composition";
@@ -113,6 +113,10 @@ import { ParticipantChip } from "@/components/admin/products/groups/participant-
 import type { ChipGameIdentity } from "@/components/admin/products/groups/panel-rules";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
+import {
+  PRODUCT_TYPE_ORDER,
+  PRODUCT_TYPE_PRESENTATION,
+} from "@/components/admin/dashboard/product-type-presentation";
 import { cn } from "@/lib/utils";
 
 /**
@@ -1466,6 +1470,121 @@ function ImageCatalogueDemo() {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Product type colours                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The product-type mark: the sidebar's glyph for a type, tinted with that
+ * type's colour.
+ *
+ * **It is here rather than only in the dashboard's preview scene because no one
+ * page owns it.** The mark is spoken by the key rail, the schedule chips, the
+ * attention cards and the coming-up feed, and by any admin surface that later
+ * needs to say "this is a camp" — so the four colours have nowhere else they
+ * can be seen together, at the sizes they are actually drawn, without a page's
+ * own composition getting in the way.
+ *
+ * **The second row is the reason the section is worth its space.** The type
+ * glyphs sit directly above the state marks they share rows with on the live
+ * page, so the question a categorical palette exists to answer — can any of
+ * these four be mistaken for "something is wrong here" — is settled by looking
+ * down rather than by remembering. A hue that drifts toward warning amber or
+ * success green shows up here before it shows up in front of an admin.
+ */
+function ProductTypePaletteDemo() {
+  const tType = useTranslations("admin.products.types");
+
+  return (
+    <Section title="Product Type Colours">
+      <SubSection title="The mark, at the size the key draws it">
+        <ul className="flex flex-wrap gap-x-6 gap-y-2">
+          {PRODUCT_TYPE_ORDER.map((productType) => {
+            const presentation = PRODUCT_TYPE_PRESENTATION[productType];
+            const Icon = presentation.icon;
+            return (
+              <li
+                key={productType}
+                className="flex items-center gap-2 text-xs leading-tight"
+              >
+                {/* Tile and glyph are one mark, not a swatch beside an icon —
+                    two elements would say the same thing twice and imply they
+                    were two facts. */}
+                <span
+                  className={cn(
+                    "grid h-7 w-7 shrink-0 place-items-center rounded-md",
+                    presentation.tint,
+                  )}
+                >
+                  <Icon
+                    className={cn("h-4 w-4", presentation.text)}
+                    aria-hidden
+                  />
+                </span>
+                <span className="min-w-0">
+                  {tType(`${presentation.i18nKey}.plural`)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </SubSection>
+
+      <SubSection title="Against the state marks it shares a row with">
+        <div className="space-y-2">
+          {/* Chip size — the size the mark is drawn at everywhere it is dense. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            {PRODUCT_TYPE_ORDER.map((productType) => {
+              const presentation = PRODUCT_TYPE_PRESENTATION[productType];
+              const Icon = presentation.icon;
+              return (
+                <span
+                  key={productType}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                >
+                  <Icon
+                    className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}
+                    aria-hidden
+                  />
+                  {tType(`${presentation.i18nKey}.label`)}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* The four state colours at the same size, wearing the glyphs the
+              live page gives them. Not a simulation of that page — just the
+              colours, close enough to compare against the row above. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <AlertTriangle
+                className="h-3.5 w-3.5 shrink-0 text-destructive"
+                aria-hidden
+              />
+              Needs attention
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <AlertTriangle
+                className="h-3.5 w-3.5 shrink-0 text-warning"
+                aria-hidden
+              />
+              Open issue
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
+              All clear
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Info className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
+              Information
+            </span>
+          </div>
+        </div>
+      </SubSection>
+    </Section>
+  );
+}
+
 export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
@@ -1523,6 +1642,8 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
       </Section>
+
+      <ProductTypePaletteDemo />
 
       <Section title="Button">
         <SubSection title="Variants">

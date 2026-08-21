@@ -75,12 +75,20 @@
   --input: 0 0% 20%;
   --ring: 42 98% 49%;
 
-  /* Chart colors */
-  --chart-1: 42 98% 49%;
-  --chart-2: 276 100% 44%;
-  --chart-3: 160 60% 45%;
-  --chart-4: 200 80% 50%;
-  --chart-5: 340 75% 55%;
+  /* Product-type categorical palette — the four admin product types, as a
+     colour each. The reasoning that placed them, and the rule that a surface
+     naming a type inherits both its glyph and its colour from one map, live
+     with that map in src/components/admin/dashboard/. What matters here is
+     that these are the palette's own tokens rather than borrowed ramp entries:
+     they are placed to clear the hues admin surfaces actually spend, so that no
+     categorical colour can be mistaken for a state colour. Saturation and
+     lightness are tuned per hue for roughly equal apparent brightness on the
+     dark ground rather than being numerically equal, the same way the
+     voice-zone ring below is tuned. */
+  --product-consumer-club: 191 82% 52%;      /* #20C4E9 cyan */
+  --product-municipality-club: 313 75% 68%;  /* #EB70D0 magenta */
+  --product-camp: 95 55% 50%;                /* #74C639 lime */
+  --product-event: 243 85% 76%;              /* #938EF6 indigo */
 
   /* Radius */
   --radius: 0.5rem;
@@ -173,11 +181,11 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
+  /* Product-type categorical palette — see :root above. */
+  --color-product-consumer-club: hsl(var(--product-consumer-club));
+  --color-product-municipality-club: hsl(var(--product-municipality-club));
+  --color-product-camp: hsl(var(--product-camp));
+  --color-product-event: hsl(var(--product-event));
   --color-sidebar-background: hsl(var(--sidebar-background));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-primary: hsl(var(--sidebar-primary));

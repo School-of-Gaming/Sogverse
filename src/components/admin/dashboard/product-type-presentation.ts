@@ -31,22 +31,32 @@ import type { ProductType } from "@/types";
  * — so a chip, a product card, a filter chip, a feed row and the key itself all
  * carry the same tinted glyph, and none of them carries a bare swatch.
  *
- * **`chart-1` is deliberately unused.** It is `42 98% 49%` — the same hue as
- * `--primary` and two degrees off `--warning` (`45 93% 47%`) — so a type accent
- * painted with it sat a few pixels from the warning-amber attention dot on the
- * very same chip. A categorical colour that can be mistaken for a state colour
- * is worse than no colour at all, because the reader has to check which of the
- * two they are looking at every time. Excluding it leaves exactly four tokens
- * for four types, so the assignment below is forced in its membership and only
- * its ordering is a choice: violet, blue, green, pink, none within sixty degrees
- * of amber. The two *club* types take the pair furthest apart, because they are
- * the two that co-occur most in a dense week row and are therefore the pair it
- * matters most to tell apart at a glance.
+ * **The four colours are the palette's own, named for the concept** — the
+ * `--product-*` tokens in `globals.css` — rather than drawn from a
+ * general-purpose ramp. A ramp promises nothing about what its entries mean, so
+ * an entry picked for one slot of it is free to hold the same value as a state
+ * colour, and a categorical colour a reader can mistake for a state colour is
+ * worse than no colour at all: they have to check which of the two they are
+ * looking at every time. A chart that later wants a ramp declares its own for
+ * the same reason — an unnamed palette sitting in the stylesheet is one nobody
+ * can tell they are misusing.
+ *
+ * **The hues clear what admin surfaces actually spend.** Destructive, primary
+ * and warning, and success are used heavily across `admin/` and are cleared by
+ * 25–30°; info appears four times in the whole of it and is treated as cheap
+ * ground to sit beside. Saturation and lightness are tuned per hue for roughly
+ * equal apparent brightness on the dark background rather than being
+ * numerically equal — the hues that are dark by nature carry more of both — so
+ * no one type's glyph reads fainter than the rest at a glance.
+ *
+ * **Only the ordering is a choice.** The two *club* types take the pair
+ * furthest apart, because they are the two that co-occur most in a dense week
+ * row and are therefore the pair it matters most to tell apart at a glance.
  *
  * **Every class is written out in full.** Tailwind scans source text for
- * complete class names, so a template-built `bg-chart-${n}` compiles to nothing
- * at all — the map has to hold the literal strings even though that makes it
- * repetitive.
+ * complete class names, so a template-built `bg-product-${type}` compiles to
+ * nothing at all — the map has to hold the literal strings even though that
+ * makes it repetitive.
  */
 /**
  * The message-catalog name of a product type, under `admin.products.types`.
@@ -80,26 +90,26 @@ export const PRODUCT_TYPE_PRESENTATION: Record<
   consumer_club: {
     i18nKey: "consumerClub",
     icon: Joystick,
-    text: "text-chart-2",
-    tint: "bg-chart-2/15",
+    text: "text-product-consumer-club",
+    tint: "bg-product-consumer-club/15",
   },
   municipality_club: {
     i18nKey: "municipalityClub",
     icon: School,
-    text: "text-chart-4",
-    tint: "bg-chart-4/15",
+    text: "text-product-municipality-club",
+    tint: "bg-product-municipality-club/15",
   },
   camp: {
     i18nKey: "camp",
     icon: Tent,
-    text: "text-chart-3",
-    tint: "bg-chart-3/15",
+    text: "text-product-camp",
+    tint: "bg-product-camp/15",
   },
   event: {
     i18nKey: "event",
     icon: CalendarDays,
-    text: "text-chart-5",
-    tint: "bg-chart-5/15",
+    text: "text-product-event",
+    tint: "bg-product-event/15",
   },
 };
 
