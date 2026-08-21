@@ -416,12 +416,15 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
       .parse(mockCreateUser.mock.calls[0][0]);
     // Opaque internal email local-part shape: "g" + 16 hex chars.
     expect(callArg.email).toMatch(/^g[0-9a-f]{16}@gamer\.sogverse\.internal$/);
-    // No password, and not merely an undefined one: the key is absent, because
-    // a gamer signs in only through the parent's account switch (a server-side
-    // magic-link OTP), never with a credential anyone types. A password here
-    // would be unreadable and unusable, and would buy a bcrypt hash on the
-    // registration path for nothing.
+    // Absence, not an undefined value: vitest's toHaveProperty checks
+    // hasOwnProperty first, so `password: undefined` would read as present and
+    // fail this — which is what we want, since sending the key at all is the
+    // regression. The reason there is no password lives at the route.
     expect(mockCreateUser.mock.calls[0][0]).not.toHaveProperty("password");
+    // With the password gone this is the last field in the call that the
+    // account depends on: without it the gamer is created unconfirmed and the
+    // parent's switch into them fails.
+    expect(mockCreateUser.mock.calls[0][0]).toMatchObject({ email_confirm: true });
   });
 
   it("rejects an invalid gender value", async () => {

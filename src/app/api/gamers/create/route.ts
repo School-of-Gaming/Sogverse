@@ -120,7 +120,11 @@ export const POST = defineRoute({
     // authenticates with a typed credential — the parent switches into the
     // child account, and that route mints a magic-link OTP for this user
     // server-side and verifies it immediately, which GoTrue issues for a
-    // passwordless user exactly as it does for one with a password. A random
+    // passwordless user exactly as it does for one with a password — create,
+    // generateLink and verifyOtp were all run against staging GoTrue in
+    // 2026-08 and the last of them returned a real session. That is a fact
+    // about GoTrue's behaviour rather than a guarantee it owes us, so it is
+    // worth re-checking if account switching ever breaks. A random
     // password here would be a value nobody can ever read, use or reset, and it
     // would cost a bcrypt hash on the same VM that runs Postgres, on the
     // request path of every family registration. (GoTrue can add a password to
