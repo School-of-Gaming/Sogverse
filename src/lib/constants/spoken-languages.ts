@@ -47,9 +47,10 @@ export const SPOKEN_LANGUAGES: readonly SpokenLanguageCode[] =
 
 /**
  * Whether an arbitrary string is a spoken-language code — the guard a URL param
- * or any other untrusted string is narrowed through, so a hand-edited or stale
- * `?lang=` term resolves to no selection rather than narrowing a grid to
- * nothing.
+ * or any other untrusted string is narrowed through, so a hand-edited, typo'd
+ * or stale `?lang=` term resolves to no selection rather than narrowing a grid
+ * to nothing. Not a retirement case: the enum's vocabulary only ever grows, so
+ * the string this rejects is one nobody ever offered.
  *
  * Compared value-by-value rather than by `includes`, so the caller's plain
  * `string` needs no cast to be checked against the generated literal union.

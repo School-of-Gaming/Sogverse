@@ -27,12 +27,14 @@ export async function generateMetadata(): Promise<Metadata> {
  * The filter strip's Language row is deliberately absent from this: its
  * vocabulary is the `spoken_language` enum, a compile-time constant since
  * 00199, so the row is complete before any request is made. It used to be a
- * third read here, and the whole reason this function catches — see below.
+ * third read here, and is one no longer.
  *
- * Wrapped in try/catch with empty fallbacks (mirroring `parent/page.tsx`): on
- * any failure the page still renders and the client hooks refetch on mount.
- * Counts run after products because the count query is keyed on the product
- * ids.
+ * Both remaining reads sit inside one try/catch with empty fallbacks (mirroring
+ * `parent/page.tsx`): on any failure the page still renders and the client
+ * hooks refetch on mount, so a prefetch that misses costs the first frame's
+ * data rather than the page. Counts run after products because the count query
+ * is keyed on the product ids — which is also why one catch covers both: a
+ * failed product read leaves nothing to count.
  */
 async function getInitialShopData(): Promise<{
   products: ProductBrowseRow[];

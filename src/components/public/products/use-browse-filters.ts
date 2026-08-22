@@ -72,10 +72,12 @@ function parseTags(raw: string | null): ProductTag[] {
 }
 
 // The language chips, on the same terms as the tags: deduped and narrowed to
-// the `spoken_language` enum through its guard, so `?lang=de` — or a link
-// written before a language was retired — reads as no selection instead of
-// emptying the grid. This is the one place a raw string becomes a language code
-// on this surface; everything downstream carries the type.
+// the `spoken_language` enum through its guard, so a hand-edited, typo'd or
+// stale `?lang=de` reads as no selection instead of emptying the grid. Unlike
+// the tags above, a retired value is not among the cases: an enum's vocabulary
+// only grows, so what this rejects was never on offer. This is the one place a
+// raw string becomes a language code on this surface; everything downstream
+// carries the type.
 function parseLanguages(raw: string | null): SpokenLanguageCode[] {
   const seen = new Set<SpokenLanguageCode>();
   for (const value of parseList(raw)) {

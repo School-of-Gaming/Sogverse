@@ -191,6 +191,7 @@ export function GeduPickerSheet({
                 <GeduRow
                   key={g.id}
                   gedu={g}
+                  languageName={languageName}
                   isCurrent={isCurrent}
                   isAssigned={isAssigned}
                   isUncertified={isUncertified}
@@ -217,6 +218,13 @@ export function GeduPickerSheet({
 
 interface GeduRowProps {
   gedu: Profile;
+  /**
+   * Threaded down rather than taken from the hook here. Every call to
+   * `useLanguageNames` constructs an `Intl.DisplayNames`, and this list is
+   * uncapped — a row-level hook builds one per gedu the moment the sheet opens.
+   * The parent already holds one for the filter chips, so the rows share it.
+   */
+  languageName: ReturnType<typeof useLanguageNames>;
   isCurrent: boolean;
   isAssigned: boolean;
   isUncertified: boolean;
@@ -226,6 +234,7 @@ interface GeduRowProps {
 
 function GeduRow({
   gedu,
+  languageName,
   isCurrent,
   isAssigned,
   isUncertified,
@@ -233,7 +242,6 @@ function GeduRow({
   onClick,
 }: GeduRowProps) {
   const t = useTranslations("admin.products.geduPicker");
-  const languageName = useLanguageNames();
   return (
     <button
       type="button"

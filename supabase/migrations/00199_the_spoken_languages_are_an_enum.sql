@@ -25,6 +25,18 @@
 -- becomes a Record keyed by the enum, so a value added without its flag fails
 -- to compile rather than rendering nothing.
 --
+-- WHAT THIS TRADES AWAY, KNOWINGLY: the vocabulary can only grow. A language is
+-- added with ALTER TYPE ... ADD VALUE, and PostgreSQL has no statement that
+-- removes one — so retiring a language is strictly harder than it was when it
+-- was a row you could delete. Doing it honestly means recreating the type and
+-- repointing every column, view, trigger and function that names it. That cost
+-- is accepted rather than unnoticed: this set is four languages, it has never
+-- shrunk, and a platform serving more families gains languages rather than
+-- losing them. The house precedent is public.participation_status, whose
+-- COMMENT ON TYPE names a value retired in 00139 and records that it remains
+-- listed because an enum value cannot be dropped — a spoken language would be
+-- retired the same way, by no longer offering it, with the value left standing.
+--
 -- This is deliberately NOT the locations pattern, and deliberately not merged
 -- with the UI locale: a spoken language is a human language a family speaks,
 -- a locale is which translation of the app they see, and the relationship
@@ -69,7 +81,7 @@
 
 CREATE TYPE public.spoken_language AS ENUM ('fi', 'sv', 'en', 'fr');
 
-COMMENT ON TYPE public.spoken_language IS 'A human language a club is delivered in, or that a person speaks. Distinct from profiles.locale, which is which translation of the app someone sees: a Finnish-speaking parent may read the app in Finnish and want their child in an English club. Display names are never stored — the UI asks Intl.DisplayNames for the name in the reader''s own locale — so this type carries codes and nothing else. Adding a value is a code change as well as a migration: the flag map in src/components/ui/language-flag.tsx is keyed by this enum and will not compile without an entry.';
+COMMENT ON TYPE public.spoken_language IS 'A human language a club is delivered in, or that a person speaks. Distinct from profiles.locale, which is which translation of the app someone sees: a Finnish-speaking parent may read the app in Finnish and want their child in an English club. Display names are never stored — the UI asks Intl.DisplayNames for the name in the reader''s own locale — so this type carries codes and nothing else. Adding a value is a code change as well as a migration: the flag map in src/components/ui/language-flag.tsx is keyed by this enum and will not compile without an entry. The vocabulary only grows: a language is added with ALTER TYPE ... ADD VALUE, but PostgreSQL cannot drop an enum value, so one we stop delivering in is retired by no longer offering it and remains listed here.';
 
 -- ---------------------------------------------------------------------------
 -- 2. The columns
@@ -691,6 +703,17 @@ BEGIN
     RAISE EXCEPTION 'update_product is not executable by authenticated';
   END IF;
 
+  -- The other half of that: PUBLIC includes anon, so a REVOKE that was typed
+  -- against the old signature would leave both product writers callable by a
+  -- signed-out visitor. assert_admin() would still refuse them, but a function
+  -- an anonymous caller can reach at all is not a state to discover later.
+  IF has_function_privilege('anon', 'public.create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, public.product_status, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text, public.product_tag, text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'create_product is executable by anon';
+  END IF;
+  IF has_function_privilege('anon', 'public.update_product(uuid, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text, public.product_tag, text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'update_product is executable by anon';
+  END IF;
+
   -- --- The view came back the way it went ----------------------------------
   IF NOT EXISTS (
     SELECT 1 FROM pg_class c
@@ -706,19 +729,36 @@ BEGIN
     RAISE EXCEPTION 'user_search_index lost its SELECT grant to authenticated';
   END IF;
 
+  -- Both grants, because a dropped view comes back with none and the two are
+  -- restated separately above: service_role is how the admin-client reads of
+  -- this view reach it, and losing that grant fails as permission denied in a
+  -- place far from here.
+  IF NOT has_table_privilege('service_role', 'public.user_search_index', 'SELECT') THEN
+    RAISE EXCEPTION 'user_search_index lost its SELECT grant to service_role';
+  END IF;
+
   -- --- The settings page's own write ---------------------------------------
   IF NOT has_column_privilege('authenticated', 'public.profiles', 'spoken_languages', 'UPDATE') THEN
     RAISE EXCEPTION 'authenticated lost UPDATE on profiles.spoken_languages';
   END IF;
 
-  -- --- The trigger is back on profiles -------------------------------------
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_trigger
-     WHERE tgrelid = 'public.profiles'::regclass
-       AND tgname = 'trg_validate_profile_spoken_languages'
-       AND NOT tgisinternal
-  ) THEN
+  -- --- The trigger is back on profiles, with its timing and its column ------
+  -- Existence is the cheap half. A hand-retyped CREATE TRIGGER is exactly where
+  -- a BEFORE becomes an AFTER (which cannot reject the row it is judging) or
+  -- the UPDATE OF list loses the one column that makes it fire at all — either
+  -- way the duplicate check is still installed and silently never runs, so the
+  -- whole definition is compared rather than just the name.
+  SELECT pg_get_triggerdef(t.oid)
+    INTO v_offend
+    FROM pg_trigger t
+   WHERE t.tgrelid = 'public.profiles'::regclass
+     AND t.tgname = 'trg_validate_profile_spoken_languages'
+     AND NOT t.tgisinternal;
+  IF v_offend IS NULL THEN
     RAISE EXCEPTION 'trg_validate_profile_spoken_languages is gone from profiles';
+  END IF;
+  IF v_offend NOT LIKE '%BEFORE INSERT OR UPDATE OF spoken_languages ON public.profiles%' THEN
+    RAISE EXCEPTION 'trg_validate_profile_spoken_languages is not BEFORE INSERT OR UPDATE OF spoken_languages: %', v_offend;
   END IF;
 END
 $assert$;
