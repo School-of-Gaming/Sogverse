@@ -19,16 +19,12 @@ import type { LocationPick } from "@/components/locations/location-picker-panel"
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import {
-  useUpdateProfile,
-  useSendVerificationEmail,
-  useSpokenLanguages,
-} from "@/services/users";
+import { useUpdateProfile, useSendVerificationEmail } from "@/services/users";
 import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
-import { isGamerProfile, type ProfileUpdate, type SpokenLanguage } from "@/types";
+import { isGamerProfile, type ProfileUpdate, type SpokenLanguageCode } from "@/types";
 
 /**
  * A keyed location read, as the picker's own value shape. The two are already
@@ -40,11 +36,7 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
   return { location: row, ancestors: row.ancestors };
 }
 
-export function SettingsSectionContent({
-  initialSpokenLanguages,
-}: {
-  initialSpokenLanguages: SpokenLanguage[];
-}) {
+export function SettingsSectionContent() {
   const t = useTranslations('settings');
   const c = useTranslations('common');
   const { user, profile, refreshProfile } = useAuth();
@@ -60,14 +52,13 @@ export function SettingsSectionContent({
   const updateMyMc = useUpdateMyMinecraft();
   const { data: robloxAccount } = useMyRobloxAccount();
   const updateMyRoblox = useUpdateMyRoblox();
-  const { data: availableLanguages } = useSpokenLanguages({
-    initialData: initialSpokenLanguages,
-  });
 
   const [firstName, setFirstName] = useState(profile?.first_name ?? "");
   const [lastName, setLastName] = useState(profile?.last_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ? `+${profile.phone}` : "");
-  const [spokenLanguages, setSpokenLanguages] = useState<string[]>(profile?.spoken_languages ?? []);
+  const [spokenLanguages, setSpokenLanguages] = useState<SpokenLanguageCode[]>(
+    profile?.spoken_languages ?? [],
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -353,7 +344,6 @@ export function SettingsSectionContent({
           </Field>
 
           <SpokenLanguageCheckboxes
-            spokenLanguages={availableLanguages ?? []}
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
           />

@@ -47,7 +47,6 @@ vi.mock("@/providers", () => ({
 vi.mock("@/services/users", () => ({
   useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
   useSendVerificationEmail: () => ({ mutate: vi.fn() }),
-  useSpokenLanguages: () => ({ data: [] }),
 }));
 vi.mock("@/services/locations", () => ({
   useLocationsByIds: () => ({ data: undefined }),
@@ -82,7 +81,7 @@ const SENDING = messages.common.sending;
 function renderSettings() {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <SettingsSectionContent initialSpokenLanguages={[]} />
+      <SettingsSectionContent />
     </NextIntlClientProvider>,
   );
 }

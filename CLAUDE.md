@@ -171,7 +171,7 @@ This is a deliberate, in-progress shift, and only the *lockups* are finished —
 **Rule: Use *locale* for the UI translation system and *spoken language* for human languages.** They are deliberately named differently because they are distinct concepts.
 
 - **Locale** — which translation of the web app the user sees. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LocaleProvider`, `LocalePicker`), backed by `profiles.locale`. This is what next-intl's `useLocale()` returns.
-- **Spoken language** — the human languages a user speaks / a club is delivered in. Owned by the `spoken_languages` reference table and `profiles.spoken_languages` array. UI lives in `src/components/ui/spoken-language-checkboxes.tsx` and `useSpokenLanguages()`.
+- **Spoken language** — the human languages a user speaks / a club is delivered in. The `spoken_language` Postgres enum, owned by `src/lib/constants/spoken-languages.ts` (`SPOKEN_LANGUAGES`, `isSpokenLanguageCode`, both derived from codegen), backed by `products.spoken_language_code` and the `profiles.spoken_languages` array. UI lives in `src/components/ui/spoken-language-checkboxes.tsx`.
 
 A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them.
 

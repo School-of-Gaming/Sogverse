@@ -15,9 +15,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useUsersByRole, useSpokenLanguages } from "@/services/users";
+import { useUsersByRole } from "@/services/users";
 import { useGeduCertificationMap } from "@/services/gedu";
 import { useLanguageNames } from "@/hooks/use-language-names";
+import {
+  SPOKEN_LANGUAGES,
+  type SpokenLanguageCode,
+} from "@/lib/constants/spoken-languages";
 import { cn, matchesAllTerms, searchTerms } from "@/lib/utils";
 import type { Profile } from "@/types";
 
@@ -75,11 +79,11 @@ export function GeduPickerSheet({
 }: GeduPickerSheetProps) {
   const t = useTranslations("admin.products.geduPicker");
   const [search, setSearch] = useState("");
-  const [languageFilter, setLanguageFilter] = useState<string | null>(null);
+  const [languageFilter, setLanguageFilter] =
+    useState<SpokenLanguageCode | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const { data: gedus } = useUsersByRole("gedu");
-  const { data: spokenLanguages } = useSpokenLanguages();
   const certification = useGeduCertificationMap();
   const languageName = useLanguageNames();
 
@@ -144,23 +148,21 @@ export function GeduPickerSheet({
             >
               {t("any")}
             </button>
-            {spokenLanguages?.map((lang) => (
+            {SPOKEN_LANGUAGES.map((code) => (
               <button
-                key={lang.code}
+                key={code}
                 type="button"
                 onClick={() =>
-                  setLanguageFilter((prev) =>
-                    prev === lang.code ? null : lang.code
-                  )
+                  setLanguageFilter((prev) => (prev === code ? null : code))
                 }
                 className={cn(
                   "rounded-full border px-2 py-0.5 transition-colors",
-                  languageFilter === lang.code
+                  languageFilter === code
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-input text-muted-foreground hover:text-foreground"
                 )}
               >
-                {languageName(lang.code, lang.name)}
+                {languageName(code)}
               </button>
             ))}
           </div>
@@ -189,7 +191,6 @@ export function GeduPickerSheet({
                 <GeduRow
                   key={g.id}
                   gedu={g}
-                  spokenLanguages={spokenLanguages ?? []}
                   isCurrent={isCurrent}
                   isAssigned={isAssigned}
                   isUncertified={isUncertified}
@@ -216,7 +217,6 @@ export function GeduPickerSheet({
 
 interface GeduRowProps {
   gedu: Profile;
-  spokenLanguages: { code: string; name: string }[];
   isCurrent: boolean;
   isAssigned: boolean;
   isUncertified: boolean;
@@ -226,7 +226,6 @@ interface GeduRowProps {
 
 function GeduRow({
   gedu,
-  spokenLanguages,
   isCurrent,
   isAssigned,
   isUncertified,
@@ -234,6 +233,7 @@ function GeduRow({
   onClick,
 }: GeduRowProps) {
   const t = useTranslations("admin.products.geduPicker");
+  const languageName = useLanguageNames();
   return (
     <button
       type="button"
@@ -273,18 +273,14 @@ function GeduRow({
         )}
         {gedu.spoken_languages.length > 0 && (
           <div className="mt-1.5 flex gap-1">
-            {gedu.spoken_languages.map((code) => {
-              const name =
-                spokenLanguages.find((l) => l.code === code)?.name ?? code;
-              return (
-                <span
-                  key={code}
-                  className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                >
-                  {name}
-                </span>
-              );
-            })}
+            {gedu.spoken_languages.map((code) => (
+              <span
+                key={code}
+                className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+              >
+                {languageName(code)}
+              </span>
+            ))}
           </div>
         )}
       </div>

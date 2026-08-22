@@ -6,6 +6,7 @@ import type {
   ProductTag,
   ProductTopic,
   ProductType,
+  SpokenLanguageCode,
 } from "@/types";
 
 // Row factory — only the fields filterProducts() looks at are overridable;
@@ -16,7 +17,7 @@ function row(overrides: {
   topic: ProductTopic;
   productType?: ProductType;
   isRemote?: boolean;
-  spokenLanguageCode?: string;
+  spokenLanguageCode?: SpokenLanguageCode;
   // Null on both is the adults-only shape: a product with no gamer audience
   // carries no age range at all.
   minAge?: number | null;
@@ -272,7 +273,7 @@ describe("filterProducts", () => {
     const base = {
       topics: [] as string[],
       format: null,
-      languages: [] as string[],
+      languages: [] as SpokenLanguageCode[],
       audiences: [],
       tags: [],
       days: [] as number[],
@@ -444,7 +445,7 @@ describe("filterProducts", () => {
     const base = {
       topics: [] as string[],
       format: null,
-      languages: [] as string[],
+      languages: [] as SpokenLanguageCode[],
       tags: [] as ProductTag[],
       age: null,
       days: [] as number[],
@@ -574,7 +575,7 @@ describe("filterProducts", () => {
     const base = {
       topics: [] as string[],
       format: null,
-      languages: [] as string[],
+      languages: [] as SpokenLanguageCode[],
       audiences: [],
       age: null,
       days: [] as number[],

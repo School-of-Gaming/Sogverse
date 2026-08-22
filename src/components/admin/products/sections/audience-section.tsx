@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useSpokenLanguages } from "@/services/users";
 import { Field } from "@/components/ui/field";
 import { TagGlyph } from "@/components/public/products/product-chips";
 import {
@@ -48,7 +47,6 @@ export function AudienceSection({
   // parent will read on the card. Resolved through the tag module's key map, not
   // by spelling the message key from the enum value.
   const tTag = useTranslations("productTag");
-  const { data: spokenLanguages } = useSpokenLanguages();
 
   // The two audience flags as one list, so the pair renders from a single card
   // body and the "at least one" rule is counted once instead of mirrored per
@@ -290,7 +288,6 @@ export function AudienceSection({
       >
         {({ hintId, labelId }) => (
           <SpokenLanguageRadios
-            spokenLanguages={spokenLanguages ?? []}
             value={state.spokenLanguageCode}
             onChange={(code) =>
               setState({ ...state, spokenLanguageCode: code })

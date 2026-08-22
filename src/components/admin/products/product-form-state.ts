@@ -1,6 +1,6 @@
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { ProductTag, ProductTopic } from "@/types";
+import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
 import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
@@ -158,7 +158,10 @@ export interface FormState {
   // because the lock gates future enrolments and never revisits a held seat, and
   // enforced by the shop UI alone (a family's location is self-attested).
   regionLockCountry: string | null;
-  spokenLanguageCode: string;
+  // The spoken_language enum, with the same `""` unselected sentinel `topic`
+  // above uses — a new product starts with no language chosen, and validate()
+  // is what turns that into an error rather than a silent default.
+  spokenLanguageCode: SpokenLanguageCode | "";
 
   // Where
   isRemote: boolean;

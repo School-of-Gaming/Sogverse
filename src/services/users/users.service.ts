@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Profile, ProfileUpdate, UserRole, ParentGamer, SpokenLanguage, AppSupabaseClient } from "@/types";
+import type { Profile, ProfileUpdate, UserRole, ParentGamer, AppSupabaseClient } from "@/types";
 import { escapeLikePattern, searchTerms } from "@/lib/utils";
 import { walkPages } from "@/lib/supabase/paging";
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
@@ -147,21 +147,6 @@ export class UsersService {
     }
 
     return "sent";
-  }
-
-  /**
-   * Reference set of spoken (human) languages from the `spoken_languages`
-   * table. Public reference data — used by the shop's language filter (anon-
-   * readable). Distinct from the UI locale (see CLAUDE.md "Locale vs. Spoken
-   * Language").
-   */
-  async getSpokenLanguages(): Promise<SpokenLanguage[]> {
-    const { data, error } = await this.supabase
-      .from("spoken_languages")
-      .select("code, name");
-
-    if (error) throw error;
-    return data;
   }
 
   async getProfile(userId: string): Promise<Profile> {

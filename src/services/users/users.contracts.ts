@@ -36,7 +36,7 @@ export const searchedProfile = z.object({
   home_location_id: z.string().nullable(),
   referral_code: z.string().nullable(),
   locale: z.string().nullable(),
-  spoken_languages: z.array(z.string()),
+  spoken_languages: z.array(z.enum(Constants.public.Enums.spoken_language)),
   created_at: z.string(),
   updated_at: z.string(),
 }) satisfies z.ZodType<Profile>;

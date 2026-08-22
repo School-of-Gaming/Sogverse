@@ -7,7 +7,7 @@ import {
   useParticipationCounts,
   type ParticipationCounts,
 } from "@/services/participations";
-import type { ProductBrowseRow, SpokenLanguage } from "@/types";
+import type { ProductBrowseRow } from "@/types";
 import {
   CATEGORY_TYPE,
   SHOP_PRODUCT_TYPES,
@@ -24,8 +24,6 @@ interface ProductBrowsePageProps {
   initialProducts: ProductBrowseRow[];
   /** Server-prefetched seat counts keyed on the prefetched products' ids. */
   initialCounts: ParticipationCounts[];
-  /** Server-prefetched spoken-language reference set for the filter strip. */
-  initialSpokenLanguages: SpokenLanguage[];
 }
 
 // Section heading copy lives under productBrowse.sections, keyed on the shop
@@ -78,7 +76,6 @@ export function ProductBrowsePage({
   categories,
   initialProducts,
   initialCounts,
-  initialSpokenLanguages,
 }: ProductBrowsePageProps) {
   const t = useTranslations("productBrowse");
 
@@ -123,7 +120,6 @@ export function ProductBrowsePage({
     <ProductBrowseBody
       sections={sections}
       counts={counts ?? []}
-      filters={{ initialSpokenLanguages }}
       // From the un-narrowed fetch: `sections` only cover the selected
       // categories, and an empty catalog must not be conflated with a Type
       // selection the catalog lacks.

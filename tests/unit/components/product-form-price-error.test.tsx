@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { SpokenLanguage } from "@/types";
 
 /**
  * **The price-floor refusal as the admin actually reads it.**
@@ -36,15 +35,6 @@ vi.mock("next-intl", () => ({
       : key,
   useLocale: () => "en",
   useFormatter: () => ({ number: (value: number) => String(value) }),
-}));
-
-const LANGUAGES: SpokenLanguage[] = [
-  { code: "fi", name: "Finnish" },
-  { code: "en", name: "English" },
-];
-
-vi.mock("@/services/users", () => ({
-  useSpokenLanguages: () => ({ data: LANGUAGES }),
 }));
 
 vi.mock("@/services/products", () => ({

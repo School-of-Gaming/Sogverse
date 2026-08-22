@@ -12,7 +12,6 @@ export {
   useUpdateUserGameAccount,
   useParentGamerLinks,
   useSendVerificationEmail,
-  useSpokenLanguages,
 } from "./users.queries";
 export {
   adminGameAccountBody,

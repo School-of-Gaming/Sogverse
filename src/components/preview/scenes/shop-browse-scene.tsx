@@ -19,28 +19,7 @@ import {
   type ShopCategory,
 } from "@/components/public/products/shop-categories";
 import { useShopCategories } from "@/components/public/products/use-shop-categories";
-import type { SpokenLanguage } from "@/types";
 import { previewSceneHref } from "../href";
-
-/**
- * The reference set the Language chip row paints from.
- *
- * Passed as `initialData` exactly as the live page passes its server-prefetched
- * copy, so the row is on screen in the first frame instead of appearing after
- * its own fetch — which is the layout behaviour being judged.
- *
- * This list mirrors the `spoken_languages` reference table and has to track
- * it: it was once authored as fi/en/sv, the DB later gained French, and the
- * scene's filter row silently fell out of step with the live shop's until
- * someone compared them side by side. When a language is added to the table,
- * add it here in the same change.
- */
-const SPOKEN_LANGUAGES: SpokenLanguage[] = [
-  { code: "fi", name: "Finnish" },
-  { code: "en", name: "English" },
-  { code: "sv", name: "Swedish" },
-  { code: "fr", name: "French" },
-];
 
 /**
  * Which category a product type belongs under. Read from `CATEGORY_TYPE`
@@ -141,7 +120,6 @@ export function ShopBrowseScene() {
     <ProductBrowseBody
       sections={sections}
       counts={counts}
-      filters={{ initialSpokenLanguages: SPOKEN_LANGUAGES }}
       scopeHasProducts
       productHref={productHref}
     />
