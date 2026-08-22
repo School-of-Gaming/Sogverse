@@ -1,58 +1,62 @@
 /**
- * The face — six expressions, two kinds of head, three levels of detail.
+ * The face — six expressions as one symbol system.
  *
- * ## What round two changed, and why
+ * ## The grammar
  *
- * Round one's faces were called creepy and soulless, and the diagnosis was
- * narrow: **the eyes and the mouth**, on every species except Konsu, and
- * worst on the two expressions the product would use most. Two mechanisms did
- * all the damage.
+ * Every part of this face is a **flat primitive that means something only
+ * through its geometry**. There are no rendered surfaces, no light sources and
+ * no material cues anywhere on an eye or a mouth. An expression is not a
+ * drawing; it is four dials set to different values:
  *
- * **A big pale sclera with a small pupil in it is a stare.** It is how a face
- * looks when it is frightened, or when it is not looking at anything. Cartoon
- * faces that read as warm show almost no white — the eye is one dark shape
- * with a highlight on it, and everything the eye communicates comes from the
- * *shape* of that shape.
+ * 1. **Eye size and shape** — how big the white ellipse is, or whether it has
+ *    stopped being an ellipse at all (a shut eye is an arc).
+ * 2. **Pupil position** — centred, or off to one side.
+ * 3. **Brow angle and presence** — one short line whose slope does the work,
+ *    drawn only when the mood needs it.
+ * 4. **Mouth shape** — a small curve, or a small solid glyph with no interior.
  *
- * **A wide rigid grin does not read as happy on a still face.** It reads as a
- * held expression. When the mouth is the only thing carrying the emotion and
- * the eyes are two unchanging discs above it, the two halves disagree, and
- * that disagreement is precisely the uncanny sensation.
+ * The same four dials produce all six moods, which is what makes them read as
+ * one character changing its mind rather than as six separate drawings.
  *
- * Konsu was the counter-example that proved both: its screen face is lit
- * shapes on a dark panel with no sclera at all, its "mouth" is a small curve,
- * and nobody found it unsettling. So the rules here generalise Konsu:
+ * ## What was wrong before, twice
  *
- * 1. **No sclera.** Every eye is a solid dark shape with a highlight.
- * 2. **The eyes carry the mood.** Squint for happy, wide and sparkling for
- *    excited, shut arcs for laughing, narrowed for focused.
- * 3. **Mouths are small.** The widest one here is two thirds of the width of
- *    round one's, and the everyday `happy` mouth is a short curve, not a grin.
- * 4. **Highlights survive down to `simple`.** They are not filigree — a solid
- *    dark eye without a highlight is a hole, and the highlight is what makes
- *    it a living eye rather than a dot.
+ * Round one had this grammar and only used it for half the set. Thinking,
+ * Surprised and Focused were pure symbol faces and they worked. Happy, Excited
+ * and Laughing broke the grammar by adding **detail instead of changing
+ * shape**: a specular highlight on each eye, sparkles beside them, cheek
+ * blush, and a wide mouth with an interior — tongue, lip line, the lot. Every
+ * one of those is a *realism* cue. Stacked on a face made of flat symbols they
+ * have nothing to agree with, and the result is the uncanny valley: an eye
+ * rendered like a wet sphere that still says nothing, under a mouth that is
+ * shouting. That is what "soulless" was describing.
  *
- * Round one's face is still in `face-legacy.tsx` so the exploration page can
- * show the two side by side; both go when the exploration does.
+ * Round two accepted the diagnosis and removed the wrong thing. It deleted the
+ * white sclera — the part that already worked — and kept the highlight, which
+ * was the actual realism cue. Removing the white also deleted a whole dial:
+ * with no ellipse, a pupil has nothing to be positioned *inside*, so Thinking
+ * lost the single gesture that made it Thinking. That version survives in
+ * `face-warm.tsx` for the comparison strip and for nothing else.
  *
- * ## The rest of the contract, unchanged
+ * ## So, round three
  *
- * An expression is only ever an eye swap plus a mouth swap. Nothing else in
- * the character moves, which is the whole reason a model can edit this file
- * safely: adding a seventh expression means adding two small shapes to two
- * switch statements, not redrawing a head.
+ * The white ellipse is back for every species that had one, and every realism
+ * cue is gone from every expression: no highlights, no sparkles, no blush, no
+ * teeth, no tongue, no lip or lid lines, no shading. Where a mood used to be
+ * expressed by adding detail it is now expressed by moving a dial.
  *
  * "Screen" mode is the second kind of head — a face that is a lit display
- * rather than a pair of eyes. It needs different eye shapes (a display draws
- * glyphs, not spheres) but the same expression vocabulary, so it lives here as
- * a mode rather than as a separate component that would drift. It also keeps
- * the legacy mouth, because none of the criticism above applied to it.
+ * rather than a pair of eyes. It needs different primitives (a display draws
+ * glyphs, not spheres) but it already obeys this grammar: lit flat shapes on a
+ * dark panel, no interior detail, meaning carried entirely by outline. It is
+ * therefore untouched, and it is the thing the rest of the set was rebuilt to
+ * match.
  */
 
 import type { ReactElement } from "react";
 
-import { featureScale, showsFiligree, type DetailLevel } from "./detail";
+import { featureScale, type DetailLevel } from "./detail";
 import { LegacyEyeballs, LegacyMouth } from "./face-legacy";
+import { WARM_BLUSHING, WarmBlush, WarmEyes, WarmMouth } from "./face-warm";
 import { MASCOT_INK, type Colorway } from "./palette";
 import type { Rig } from "./rig";
 import type { ExpressionId } from "./vocabulary";
@@ -61,11 +65,20 @@ import type { ExpressionId } from "./vocabulary";
 export type FaceMode = "eyes" | "screen";
 
 /**
- * Which face design. `warm` is the one; `legacy` exists only so the two can be
- * compared on the exploration page and disappears with it.
+ * Which face design.
+ *
+ * `symbol` is the one. The other two exist so the three rounds can be put next
+ * to each other on the exploration page, and they are deleted with it — along
+ * with this union, which then collapses to nothing.
  */
-export const FACE_STYLES = ["warm", "legacy"] as const;
+export const FACE_STYLES = ["symbol", "warm", "legacy"] as const;
 export type FaceStyle = (typeof FACE_STYLES)[number];
+
+export const FACE_STYLE_LABELS: Record<FaceStyle, string> = {
+  symbol: "Round 3 — symbol",
+  warm: "Round 2 — warm",
+  legacy: "Round 1 — original",
+};
 
 type FaceProps = {
   rig: Rig;
@@ -86,19 +99,11 @@ type EyeProps = {
   expression: ExpressionId;
   r: number;
   filigree: boolean;
-  /** Highlights are not filigree — see the note at the top. */
   highlights: boolean;
 };
 
 /** Expressions whose eyes are already shut have nothing to blink with. */
 const BLINKLESS: ReadonlySet<ExpressionId> = new Set<ExpressionId>(["laughing"]);
-
-/** Expressions warm enough to earn cheeks. A surprised blush reads as a rash. */
-const BLUSHING: ReadonlySet<ExpressionId> = new Set<ExpressionId>([
-  "happy",
-  "excited",
-  "laughing",
-]);
 
 /** The two eye centres, viewer-left first. */
 function eyeCentres(rig: Rig): EyeCentre[] {
@@ -108,114 +113,75 @@ function eyeCentres(rig: Rig): EyeCentre[] {
   ];
 }
 
-/** The one highlight every open eye gets, from a light up and to the left. */
-function Highlight({ x, y, r, scale = 1 }: { x: number; y: number; r: number; scale?: number }) {
-  return (
-    <circle cx={x - r * 0.3} cy={y - r * 0.38} r={r * 0.3 * scale} fill={MASCOT_INK.paper} />
-  );
-}
-
-/** A four-point star, for the eyes that are meant to be sparkling. */
-function Sparkle({ x, y, r }: { x: number; y: number; r: number }) {
-  return (
-    <path
-      d={`M ${x} ${y - r} Q ${x + r * 0.22} ${y - r * 0.22} ${x + r} ${y} Q ${x + r * 0.22} ${y + r * 0.22} ${x} ${y + r} Q ${x - r * 0.22} ${y + r * 0.22} ${x - r} ${y} Q ${x - r * 0.22} ${y - r * 0.22} ${x} ${y - r} Z`}
-      fill={MASCOT_INK.paper}
-      opacity={0.9}
-    />
-  );
-}
-
-function WarmEyes({ centres, colors, expression, r, filigree, highlights }: EyeProps): ReactElement {
-  const ink = colors.pupil;
+/**
+ * Dials one and two: the white ellipse, and where the pupil sits in it.
+ *
+ * Every case here is two flat shapes and nothing else. If a future expression
+ * seems to need a third shape to say what it means, the right move is a
+ * different ellipse — not a third shape.
+ */
+function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement {
   return (
     <>
       {centres.map(({ x, y, side }) => {
         switch (expression) {
-          // A soft squint: full curve on top, the lower lid pushed up. This is
-          // the shape a face makes when it means it, and it is doing the work
-          // the wide grin used to do badly.
+          // The default face. The Thinking eye with the pupil brought back to
+          // centre: looking straight at you, and nothing added to say so.
           case "happy":
             return (
               <g key={side}>
-                <path
-                  d={`M ${x - r * 0.94} ${y + r * 0.26} Q ${x} ${y - r * 1.34} ${x + r * 0.94} ${y + r * 0.26} Q ${x} ${y + r * 0.66} ${x - r * 0.94} ${y + r * 0.26} Z`}
-                  fill={ink}
-                />
-                {highlights && <Highlight x={x} y={y - r * 0.12} r={r} />}
+                <circle cx={x} cy={y} r={r} fill={colors.sclera} />
+                <circle cx={x} cy={y} r={r * 0.56} fill={colors.pupil} />
               </g>
             );
-          // Wide, round and lit up. Dark, so it is delight rather than alarm.
+          // The same eye, bigger and rounder, with a bigger pupil. Open wide
+          // with plenty of pupil reads as delight; open wide with a small
+          // pupil — two cases down — reads as shock. That difference is the
+          // whole of it.
           case "excited":
             return (
               <g key={side}>
-                <circle cx={x} cy={y} r={r * 1.02} fill={ink} />
-                {highlights && (
-                  <>
-                    <Highlight x={x} y={y} r={r} scale={1.15} />
-                    <circle cx={x + r * 0.32} cy={y + r * 0.36} r={r * 0.16} fill={MASCOT_INK.paper} />
-                  </>
-                )}
-                {filigree && <Sparkle x={x + side * r * 1.7} y={y - r * 1.1} r={r * 0.5} />}
+                <circle cx={x} cy={y} r={r * 1.22} fill={colors.sclera} />
+                <circle cx={x} cy={y} r={r * 0.7} fill={colors.pupil} />
               </g>
             );
-          // Squeezed shut and curving up.
+          // A shape change rather than added detail, which is why it is
+          // allowed: the eye has closed, so there is no ellipse and no pupil.
           case "laughing":
             return (
-              <g key={side}>
-                <path
-                  d={`M ${x - r} ${y + r * 0.42} Q ${x} ${y - r * 1.05} ${x + r} ${y + r * 0.42}`}
-                  fill="none"
-                  stroke={ink}
-                  strokeWidth={r * 0.5}
-                  strokeLinecap="round"
-                />
-                {filigree && (
-                  <path
-                    d={`M ${x + side * r * 1.5} ${y - r * 0.5} l ${side * r * 0.5} ${-r * 0.32}`}
-                    fill="none"
-                    stroke={ink}
-                    strokeWidth={r * 0.24}
-                    strokeLinecap="round"
-                    opacity={0.65}
-                  />
-                )}
-              </g>
+              <path
+                key={side}
+                d={`M ${x - r} ${y + r * 0.35} Q ${x} ${y - r * 0.95} ${x + r} ${y + r * 0.35}`}
+                fill="none"
+                stroke={colors.pupil}
+                strokeWidth={r * 0.46}
+                strokeLinecap="round"
+              />
             );
-          // Looking up and away, and a touch smaller — the eye of someone whose
-          // attention is somewhere else in the room.
+          // Dial two, on its own: same ellipse, pupil up and to the side.
           case "thinking":
             return (
               <g key={side}>
-                <ellipse
-                  cx={x + r * 0.18}
-                  cy={y - r * 0.12}
-                  rx={r * 0.78}
-                  ry={r * 0.92}
-                  fill={ink}
-                />
-                {highlights && <Highlight x={x + r * 0.18} y={y - r * 0.12} r={r} scale={0.9} />}
+                <circle cx={x} cy={y} r={r} fill={colors.sclera} />
+                <circle cx={x + r * 0.34} cy={y - r * 0.32} r={r * 0.56} fill={colors.pupil} />
               </g>
             );
           case "surprised":
             return (
               <g key={side}>
-                <circle cx={x} cy={y} r={r * 1.14} fill={ink} />
-                {highlights && <Highlight x={x} y={y} r={r} scale={1.05} />}
+                <circle cx={x} cy={y} r={r * 1.16} fill={colors.sclera} />
+                <circle cx={x} cy={y} r={r * 0.4} fill={colors.pupil} />
               </g>
             );
-          // Narrowed to a lens. Lids from both sides, not a lowered brow — a
-          // brow does that job separately just above.
+          // Narrowed: the ellipse squeezed into a lens. Still two shapes.
           case "focused":
             return (
               <g key={side}>
                 <path
-                  d={`M ${x - r} ${y} Q ${x} ${y - r * 0.98} ${x + r} ${y} Q ${x} ${y + r * 0.56} ${x - r} ${y} Z`}
-                  fill={ink}
+                  d={`M ${x - r} ${y + r * 0.05} Q ${x} ${y - r * 1.05} ${x + r} ${y + r * 0.05} Q ${x} ${y + r * 0.62} ${x - r} ${y + r * 0.05} Z`}
+                  fill={colors.sclera}
                 />
-                {highlights && (
-                  <circle cx={x - r * 0.3} cy={y - r * 0.18} r={r * 0.2} fill={MASCOT_INK.paper} />
-                )}
+                <circle cx={x} cy={y - r * 0.05} r={r * 0.46} fill={colors.pupil} />
               </g>
             );
         }
@@ -308,6 +274,11 @@ function ScreenEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
   );
 }
 
+/**
+ * Dial three. One short line per eye whose angle carries the meaning, drawn
+ * only for the moods that need it — Happy and Laughing say everything with the
+ * other three dials, and a brow they do not need would be decoration.
+ */
 function Brows({
   centres,
   expression,
@@ -319,7 +290,7 @@ function Brows({
 }): ReactElement | null {
   const stroke = {
     stroke: MASCOT_INK.line,
-    strokeWidth: Math.max(2.4, r * 0.34),
+    strokeWidth: Math.max(2.4, r * 0.36),
     strokeLinecap: "round" as const,
     fill: "none",
   };
@@ -330,7 +301,7 @@ function Brows({
           {centres.map(({ x, y, side }) => (
             <path
               key={side}
-              d={`M ${x - r * 0.9} ${y - r * 1.7} Q ${x} ${y - r * 2.35} ${x + r * 0.9} ${y - r * 1.7}`}
+              d={`M ${x - r * 0.9} ${y - r * 1.55} Q ${x} ${y - r * 2.2} ${x + r * 0.9} ${y - r * 1.55}`}
               {...stroke}
             />
           ))}
@@ -342,7 +313,7 @@ function Brows({
           {centres.map(({ x, y, side }) => (
             <path
               key={side}
-              d={`M ${x - r} ${y - r * 2} Q ${x} ${y - r * 2.65} ${x + r} ${y - r * 2}`}
+              d={`M ${x - r} ${y - r * 1.9} Q ${x} ${y - r * 2.55} ${x + r} ${y - r * 1.9}`}
               {...stroke}
             />
           ))}
@@ -354,7 +325,7 @@ function Brows({
           {centres.map(({ x, y, side }) => (
             <path
               key={side}
-              d={`M ${x + side * r} ${y - r * 1.75} L ${x - side * r} ${y - r * 1.05}`}
+              d={`M ${x + side * r} ${y - r * 1.8} L ${x - side * r} ${y - r * 1.1}`}
               {...stroke}
             />
           ))}
@@ -366,7 +337,7 @@ function Brows({
           {centres.map(({ x, y, side }) => (
             <path
               key={side}
-              d={`M ${x - r} ${y - r * (side === 1 ? 2.05 : 1.5)} L ${x + r} ${y - r * (side === 1 ? 1.7 : 1.6)}`}
+              d={`M ${x - r} ${y - r * (side === 1 ? 2.15 : 1.55)} L ${x + r} ${y - r * (side === 1 ? 1.75 : 1.65)}`}
               {...stroke}
             />
           ))}
@@ -378,15 +349,18 @@ function Brows({
   }
 }
 
-/** The warm mouth set: short curves, and nothing wider than a third of a head. */
-function WarmMouth({
+/**
+ * Dial four. Four of the six are one open curve; the other two are one solid
+ * glyph. Nothing here has an inside — no tongue, no teeth, no lip line, no
+ * second colour. Round two was right that the mouths had grown too wide, and
+ * these keep its narrower widths.
+ */
+function SymbolMouth({
   rig,
-  colors,
   expression,
   detail,
 }: {
   rig: Rig;
-  colors: Colorway;
   expression: ExpressionId;
   detail: DetailLevel;
 }): ReactElement {
@@ -396,25 +370,18 @@ function WarmMouth({
   const line = {
     fill: "none",
     stroke: ink,
-    strokeWidth: detail === "icon" ? 4.4 : 3.4,
+    strokeWidth: detail === "icon" ? 5 : 3.6,
     strokeLinecap: "round" as const,
   };
   switch (expression) {
     case "happy":
       return <path d={`M ${x - 8} ${y - 1} Q ${x} ${y + 8} ${x + 8} ${y - 1}`} {...line} />;
     case "excited":
-      return <path d={`M ${x - 8.5} ${y - 2} Q ${x} ${y + 12} ${x + 8.5} ${y - 2} Z`} fill={ink} />;
+      return <path d={`M ${x - 12} ${y - 3} Q ${x} ${y + 16} ${x + 12} ${y - 3}`} {...line} />;
     case "laughing":
-      return (
-        <>
-          <path d={`M ${x - 11} ${y - 3} Q ${x} ${y + 16} ${x + 11} ${y - 3} Z`} fill={ink} />
-          {showsFiligree(detail) && (
-            <path d={`M ${x - 5.5} ${y + 6} Q ${x} ${y + 14} ${x + 5.5} ${y + 6} Z`} fill={colors.blush} />
-          )}
-        </>
-      );
+      return <path d={`M ${x - 11} ${y - 2} Q ${x} ${y + 15} ${x + 11} ${y - 2} Z`} fill={ink} />;
     case "thinking":
-      return <path d={`M ${x - 3} ${y + 1} Q ${x + 4} ${y + 6} ${x + 10} ${y - 1}`} {...line} />;
+      return <path d={`M ${x - 3} ${y + 1} Q ${x + 4} ${y + 6} ${x + 11} ${y - 1}`} {...line} />;
     case "focused":
       return <path d={`M ${x - 9} ${y} Q ${x} ${y + 5} ${x + 9} ${y - 2}`} {...line} />;
     case "surprised":
@@ -428,11 +395,11 @@ export function Face({
   expression,
   mode,
   detail,
-  style = "warm",
+  style = "symbol",
   blinkClass,
 }: FaceProps): ReactElement {
   const r = rig.eyeR * featureScale(detail);
-  const filigree = showsFiligree(detail);
+  const filigree = detail === "full";
   const centres = eyeCentres(rig);
   const canBlink = blinkClass !== "" && !BLINKLESS.has(expression);
   const eyeProps: EyeProps = {
@@ -447,10 +414,13 @@ export function Face({
   let eyes: ReactElement;
   if (mode === "screen") eyes = <ScreenEyes {...eyeProps} />;
   else if (style === "legacy") eyes = <LegacyEyeballs {...eyeProps} />;
-  else eyes = <WarmEyes {...eyeProps} />;
+  else if (style === "warm") eyes = <WarmEyes {...eyeProps} />;
+  else eyes = <SymbolEyes {...eyeProps} />;
 
-  const mouth =
-    mode === "screen" ? (
+  let mouth: ReactElement;
+  if (mode === "screen") {
+    // A lit outline on a dark panel. Already symbol grammar; left alone.
+    mouth = (
       <LegacyMouth
         rig={rig}
         colors={colors}
@@ -459,7 +429,9 @@ export function Face({
         soft={false}
         detail={detail}
       />
-    ) : style === "legacy" ? (
+    );
+  } else if (style === "legacy") {
+    mouth = (
       <LegacyMouth
         rig={rig}
         colors={colors}
@@ -468,32 +440,22 @@ export function Face({
         soft
         detail={detail}
       />
-    ) : (
-      <WarmMouth rig={rig} colors={colors} expression={expression} detail={detail} />
     );
+  } else if (style === "warm") {
+    mouth = <WarmMouth rig={rig} colors={colors} expression={expression} detail={detail} />;
+  } else {
+    mouth = <SymbolMouth rig={rig} expression={expression} detail={detail} />;
+  }
+
+  // Cheeks are a realism cue and the symbol face has none. The two comparison
+  // styles keep theirs, because the point of keeping them is to show what they
+  // did.
+  const blushing =
+    mode === "eyes" && filigree && style !== "symbol" && WARM_BLUSHING.has(expression);
 
   return (
     <g>
-      {mode === "eyes" && filigree && BLUSHING.has(expression) && (
-        <>
-          <ellipse
-            cx={rig.head.x - rig.eyeDx - rig.eyeR * 0.85}
-            cy={rig.eyeY + rig.eyeR * 1.8}
-            rx={6.4}
-            ry={3.8}
-            fill={colors.blush}
-            opacity={0.6}
-          />
-          <ellipse
-            cx={rig.head.x + rig.eyeDx + rig.eyeR * 0.85}
-            cy={rig.eyeY + rig.eyeR * 1.8}
-            rx={6.4}
-            ry={3.8}
-            fill={colors.blush}
-            opacity={0.6}
-          />
-        </>
-      )}
+      {blushing && <WarmBlush rig={rig} colors={colors} />}
       {canBlink ? (
         <g className={blinkClass} style={{ transformBox: "fill-box", transformOrigin: "center" }}>
           {eyes}

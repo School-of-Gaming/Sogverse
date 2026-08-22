@@ -842,8 +842,8 @@ const BUNNY_EARS: AccessoryDef = {
       <g>
         <ellipse cx={x - 12} cy={y - 22} rx={7} ry={20} fill={colors.clothing} {...OUTLINE} />
         <ellipse cx={x + 12} cy={y - 22} rx={7} ry={20} fill={colors.clothing} {...OUTLINE} />
-        <ellipse cx={x - 12} cy={y - 22} rx={3.2} ry={13} fill={colors.blush} />
-        <ellipse cx={x + 12} cy={y - 22} rx={3.2} ry={13} fill={colors.blush} />
+        <ellipse cx={x - 12} cy={y - 22} rx={3.2} ry={13} fill={colors.clothingAccent} />
+        <ellipse cx={x + 12} cy={y - 22} rx={3.2} ry={13} fill={colors.clothingAccent} />
         <rect x={x - 16} y={y - 4} width={32} height={7} rx={3.5} fill={colors.clothingAccent} {...OUTLINE} />
       </g>
     );

@@ -61,7 +61,15 @@ export type Colorway = {
   sclera: string;
   /** Pupils. On a screen face this is the dark screen behind them. */
   pupil: string;
-  /** Cheek blush. */
+  /**
+   * Cheek blush.
+   *
+   * **Nothing live uses this any more.** Blush is a realism cue, and the
+   * round-three face is a system of flat symbols with no realism cues on it at
+   * all. The slot survives only because the two comparison face renderers on
+   * the exploration page have to keep drawing what they drew, and it should be
+   * deleted from this type in the same change that deletes them.
+   */
   blush: string;
   /** The main garment colour — what a hoodie, tee, scarf or hat is dyed. */
   clothing: string;

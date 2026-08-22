@@ -195,23 +195,16 @@ function Muzzle({
     <g>
       <ellipse cx={x} cy={y} rx={rx} ry={ry} fill={colors.panel} />
       <ellipse cx={x} cy={y - ry * 0.55} rx={noseRx} ry={noseRx * 0.72} fill={MASCOT_INK.line} />
+      {/* The philtrum, and nothing else. A glint on the nose is the same
+          specular cue the face rules threw out — the fact that it was on a
+          muzzle rather than on an eye did not make it a different mistake. */}
       {showsFiligree(detail) && (
-        <>
-          <path
-            d={`M ${x} ${y - ry * 0.2} L ${x} ${y + ry * 0.15}`}
-            stroke={MASCOT_INK.line}
-            strokeWidth={2}
-            strokeLinecap="round"
-          />
-          <ellipse
-            cx={x - noseRx * 0.35}
-            cy={y - ry * 0.75}
-            rx={noseRx * 0.28}
-            ry={noseRx * 0.2}
-            fill={MASCOT_INK.paper}
-            opacity={0.7}
-          />
-        </>
+        <path
+          d={`M ${x} ${y - ry * 0.2} L ${x} ${y + ry * 0.15}`}
+          stroke={MASCOT_INK.line}
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
       )}
     </g>
   );
@@ -309,13 +302,11 @@ function Head(props: PartProps): ReactElement {
           <ellipse cx={x - 14} cy={y - 54} rx={4.5} ry={21} fill={colors.panel} transform={`rotate(-8 ${x - 14} ${y - 54})`} />
           <ellipse cx={x + 14} cy={y - 54} rx={4.5} ry={21} fill={colors.panel} transform={`rotate(8 ${x + 14} ${y - 54})`} />
           <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
+          {/* No buck teeth. They were the hare's one bit of charm and they
+              were also teeth sitting on top of the mouth glyph, which is the
+              exact detail cue the face rules exist to keep off. The ears do
+              the identifying anyway. */}
           <Muzzle x={x} y={y + 17} rx={14} ry={10} noseRx={5} colors={colors} detail={detail} />
-          {showsFiligree(detail) && (
-            <>
-              <rect x={x - 5} y={y + 22} width={4.5} height={8} rx={1.5} fill={MASCOT_INK.paper} />
-              <rect x={x + 0.5} y={y + 22} width={4.5} height={8} rx={1.5} fill={MASCOT_INK.paper} />
-            </>
-          )}
         </g>
       );
     case "seal":

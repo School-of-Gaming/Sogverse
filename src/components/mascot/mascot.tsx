@@ -162,7 +162,7 @@ export function Mascot({
   animated = true,
   look,
   now,
-  faceStyle = "warm",
+  faceStyle = "symbol",
   limbStyle = "current",
   silhouette = false,
   label,

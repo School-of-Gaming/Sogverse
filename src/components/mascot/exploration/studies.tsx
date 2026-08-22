@@ -17,10 +17,18 @@ import { KAVERI_FORMS } from "../concepts/kaveri";
 import { OTSO_FORMS } from "../concepts/otso";
 import { Mascot } from "../mascot";
 import { lookForDate, MASCOT_LOOKS, SEASONS } from "../seasons";
+import { FACE_STYLE_LABELS, type FaceStyle } from "../face";
 import { EXPRESSION_LABELS, POSE_LABELS, type ExpressionId, type PoseId } from "../vocabulary";
 import { ChipRow, Rubric, Tile, type Choice } from "./controls";
 
 /** The species a study offers when it needs one picked. */
+/** One line per round on what it was trying to do. */
+const FACE_ROUND_NOTES: Record<FaceStyle, string> = {
+  symbol: "Live. Four dials, zero detail on any eye or mouth.",
+  warm: "Dropped the white eye and kept the highlight — removed the half that worked.",
+  legacy: "Symbol grammar for three moods, realism cues stacked on the other three.",
+};
+
 const STUDY_SPECIES: Choice<ConceptId>[] = [
   { id: "kaveri", label: "Kaveri" },
   { id: "otso", label: "Otso" },
@@ -56,8 +64,17 @@ function Panel({
 
 // --- 1. faces -------------------------------------------------------------
 
-const WARM_TROUBLE: ExpressionId[] = ["happy", "excited", "laughing"];
-const WARM_REST: ExpressionId[] = ["thinking", "surprised", "focused"];
+const ALL_EXPRESSIONS: ExpressionId[] = [
+  "happy",
+  "excited",
+  "laughing",
+  "thinking",
+  "surprised",
+  "focused",
+];
+
+/** Newest first, so the eye lands on the live one before the two dead ones. */
+const FACE_ROUNDS: FaceStyle[] = ["symbol", "warm", "legacy"];
 
 export function FaceStudy(): ReactElement {
   const [concept, setConcept] = useState<ConceptId>("kaveri");
@@ -65,27 +82,10 @@ export function FaceStudy(): ReactElement {
   const def = getConcept(concept);
   const activeForm = def.forms?.some((f) => f.id === form) === true ? form : undefined;
 
-  const strip = (list: ExpressionId[], style: "warm" | "legacy") => (
-    <div className="flex flex-wrap gap-3">
-      {list.map((expression) => (
-        <Tile key={`${style}-${expression}`} caption={EXPRESSION_LABELS[expression]}>
-          <Mascot
-            concept={concept}
-            {...(activeForm === undefined ? {} : { form: activeForm })}
-            expression={expression}
-            crop="bust"
-            size={132}
-            faceStyle={style}
-          />
-        </Tile>
-      ))}
-    </div>
-  );
-
   return (
     <Panel
-      title="Faces — what was creepy, and what fixed it"
-      lede="Round one's faces read as unsettling, and the cause was narrow: a big pale sclera with a small pupil in it is a stare, and a wide filled grin under two unmoving discs is a held expression. Konsu was the exception and the clue — lit shapes on a dark panel, no whites at all, a small mouth. The new set generalises Konsu: no sclera anywhere, the mood carried by the eye shape, and no mouth wider than a third of a head."
+      title="Faces — three goes at the same problem"
+      lede="A face here is a symbol system: every part is a flat primitive that means something only through its geometry. An eye is a white ellipse and a pupil, and the mood is the ellipse's size and where the pupil sits in it. A brow is one line doing its work by angle. A mouth is a small curve or a small solid glyph with no interior. Round one had that grammar and only obeyed it for half the set; round two removed the wrong half of what broke it. Round three deletes every realism cue instead."
     >
       <div className="space-y-2">
         <ChipRow label="Species" options={STUDY_SPECIES} value={concept} onChange={setConcept} />
@@ -98,31 +98,62 @@ export function FaceStudy(): ReactElement {
           />
         )}
       </div>
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="rounded-lg border border-primary/40 bg-background p-4">
-          <Rubric title="New — warm" note="The three that were worst." />
-          {strip(WARM_TROUBLE, "warm")}
+      <div className="space-y-4">
+        {FACE_ROUNDS.map((style) => (
+          <div
+            key={style}
+            className={`rounded-lg border p-4 ${
+              style === "symbol" ? "border-primary/50 bg-background" : "border-border bg-muted/30"
+            }`}
+          >
+            <Rubric
+              title={FACE_STYLE_LABELS[style]}
+              note={FACE_ROUND_NOTES[style]}
+            />
+            <div className="flex flex-wrap gap-3">
+              {ALL_EXPRESSIONS.map((expression) => (
+                <Tile key={expression} caption={EXPRESSION_LABELS[expression]}>
+                  <Mascot
+                    concept={concept}
+                    {...(activeForm === undefined ? {} : { form: activeForm })}
+                    expression={expression}
+                    crop="bust"
+                    size={132}
+                    faceStyle={style}
+                  />
+                </Tile>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-md border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
+          <p className="mb-2 font-semibold text-foreground">The four dials, and nothing else</p>
+          <p>
+            <strong className="text-foreground">Happy</strong> — the Thinking eye with the pupil
+            centred; small upward curve; no brow. This is the default face.{" "}
+            <strong className="text-foreground">Excited</strong> — the same eye bigger and rounder
+            with a bigger pupil, raised arc brows, a bigger open curve.{" "}
+            <strong className="text-foreground">Laughing</strong> — eyes closed to two arcs, which
+            is a shape change rather than added detail, and one solid mouth glyph.{" "}
+            <strong className="text-foreground">Thinking</strong>, {" "}
+            <strong className="text-foreground">Surprised</strong> and{" "}
+            <strong className="text-foreground">Focused</strong> are round one&rsquo;s, unchanged,
+            because they were already doing exactly this.
+          </p>
         </div>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <Rubric title="Old — round one" note="Same three, same character." />
-          {strip(WARM_TROUBLE, "legacy")}
-        </div>
-        <div className="rounded-lg border border-primary/40 bg-background p-4">
-          <Rubric title="New — the other three" note="These were already fine; they moved anyway." />
-          {strip(WARM_REST, "warm")}
-        </div>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <Rubric title="Old — the other three" note="Kept whole so the change is judged as a set." />
-          {strip(WARM_REST, "legacy")}
+        <div className="rounded-md border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
+          <p className="mb-2 font-semibold text-foreground">What came off</p>
+          <p>
+            Eye highlights, eye sparkles, cheek blush, the tongue inside the open mouths, and every
+            second colour on a mouth. Each one is a cue that says the thing you are looking at is a
+            surface catching light, and there is no light in this drawing for it to catch. Konsu is
+            untouched: a screen face is lit flat shapes with no interior, which is the grammar
+            everything else was rebuilt to match.
+          </p>
         </div>
       </div>
-      <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-        The three that were fine moved too, and deliberately. Mixing eye kinds inside one
-        character — solid dark for a smile, a white eyeball for a thought — would make the
-        species change anatomy with its mood, which is a stranger effect than the one being
-        fixed. Konsu is untouched: a screen face has no sclera to remove and none of the
-        criticism applied to it, so it still draws the round-one mouth.
-      </p>
     </Panel>
   );
 }
