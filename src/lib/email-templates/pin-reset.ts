@@ -1,5 +1,5 @@
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { wrapInLayout } from "./layout";
+import { ctaButton } from "./blocks";
 import { heading, paragraph } from "./utils";
 import type { EmailTranslator } from "./translator";
 
@@ -14,22 +14,12 @@ export function buildPinResetEmail(t: EmailTranslator, resetLink: string, locale
     ${paragraph(t("pinReset.body"))}
     ${paragraph(t("pinReset.expiry"))}
     ${paragraph(t("pinReset.ignore"))}
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;">
-      <tr>
-        <td align="center">
-          <table role="presentation" cellpadding="0" cellspacing="0">
-            <tr>
-              <td align="center" style="background-color:${BRAND.primary};border-radius:8px;">
-                <!-- resetLink is an app-generated URL, safe to embed unescaped -->
-                <a href="${resetLink}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:14px;font-weight:bold;color:${DARK_THEME.bg};text-decoration:none;">
-                  ${t("pinReset.button")}
-                </a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>`;
+    ${ctaButton({
+      // resetLink is an app-generated URL, safe to embed unescaped.
+      href: resetLink,
+      label: t("pinReset.button"),
+    })}
+  `;
 
   return wrapInLayout({ title: t("pinReset.heading"), content, locale, t });
 }

@@ -97,6 +97,61 @@ describe("buildWelcomeParentEmail", () => {
   });
 
   /**
+   * The outlined buttons' labels carry no class, and that is the fix rather
+   * than an omission. They used to carry a `background-clip:text` pin, which is
+   * what broke them: the pin restates a text colour as a background colour, and
+   * a client's dark theme darkens light backgrounds — so protecting `#ededed`
+   * fed it to the one pass that exists to darken `#ededed`. Measured on Gmail
+   * Android by the colour-fidelity check; a class reappearing here is that bug
+   * coming back.
+   */
+  it("leaves the outlined buttons' light labels unpinned", () => {
+    const html = buildWelcomeParentEmail(t, "en", params);
+    const outlinedAnchors = [...html.matchAll(/<td width="50%"[^>]*>\s*<a ([^>]*)>/g)].map(
+      (match) => match[1],
+    );
+    expect(outlinedAnchors).toHaveLength(2);
+    for (const attrs of outlinedAnchors) {
+      expect(attrs).toContain("color:#ededed");
+      expect(attrs).not.toContain("class=");
+    }
+    expect(html).not.toContain("cta-on-card");
+  });
+
+  /**
+   * The dark label keeps its pin, and the asymmetry is the point: `#121212` is
+   * dark enough that a dark theme leaves it alone as a background, so the same
+   * mechanism that destroys the light label carries this one intact. It fixed a
+   * real fault — the label used to arrive white in one inbox and black in the
+   * next — so removing it would undo that.
+   */
+  it("keeps the pin on the filled button's dark label", () => {
+    const html = buildWelcomeParentEmail(t, "en", params);
+    expect(html).toContain('class="cta-on-brand"');
+    expect(html).toContain("u + .body .cta-on-brand");
+    expect(html).toContain(
+      "background-color:#FAA901;background-image:linear-gradient(#FAA901,#FAA901)",
+    );
+  });
+
+  /**
+   * Both surfaces still declare a fill twice. Unproven as a fix on its own, but
+   * it is half of the configuration that measured clean (the check's V2), so it
+   * stays until something measures it away.
+   */
+  it("declares every button fill as a colour and a flat gradient", () => {
+    const html = buildWelcomeParentEmail(t, "en", params);
+    const outlined = [...html.matchAll(/<td width="50%"[^>]*style="([^"]*)"/g)].map(
+      (match) => match[1],
+    );
+    expect(outlined).toHaveLength(2);
+    for (const style of outlined) {
+      expect(style).toContain("background-color:#1a1a1a");
+      expect(style).toContain("background-image:linear-gradient(#1a1a1a,#1a1a1a)");
+    }
+  });
+
+  /**
    * Verifying is optional, and the copy has to say so or it reads as a gate —
    * and the word that says where to do it later is the link, so the sentence
    * teaches the settings page without spending a fourth button on it.

@@ -8,6 +8,7 @@ import {
   PRODUCT_CONFIRMATION_MODES,
 } from "./product-confirmation";
 import { buildVerifyEmailEmail } from "./verify-email";
+import { buildComponentsReferenceEmail } from "./components-reference";
 import {
   buildSessionReportEmail,
   sessionReportSubject,
@@ -304,6 +305,25 @@ type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
 // --- Single source of truth for all email templates ---
 
 export const templateRegistry: Record<string, TemplateDefinition> = {
+  /**
+   * The reference every other entry in this registry is measured against —
+   * `/admin/ui-components` for mail. It is first in the list because that is
+   * what it is for: whoever opens this page to test a template should meet the
+   * house style before they meet their own mail.
+   *
+   * It takes no params and ignores the locale for its own copy (see the builder
+   * for why it is the one untranslated one). A registry entry rather than a
+   * page because it has to be *sent* to be worth anything — a reference for
+   * email that can only be viewed in a browser is describing a rendering nobody
+   * receives.
+   */
+  componentsReference: defineTemplate({
+    label: "Email components (reference)",
+    fields: [],
+    schema: z.object({}),
+    build: (_p, _t, locale) => buildComponentsReferenceEmail(locale),
+    subject: () => "Email components",
+  }),
   passwordReset: defineTemplate({
     label: "Password Reset",
     fields: [

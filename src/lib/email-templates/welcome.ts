@@ -65,8 +65,8 @@ export function buildWelcomeParentEmail(
       }),
     )}
     ${ctaButtonRow(
-      { href: shopUrl, label: t("welcomeParent.shopButton"), variant: "secondary" },
-      { href: dashboardUrl, label: t("welcomeParent.dashboardButton"), variant: "secondary" },
+      { href: shopUrl, label: t("welcomeParent.shopButton"), variant: "outline" },
+      { href: dashboardUrl, label: t("welcomeParent.dashboardButton"), variant: "outline" },
     )}
     ${ctaButton({ href: verificationUrl, label: t("welcomeParent.verifyButton") })}
   `;
@@ -107,7 +107,7 @@ export function buildWelcomeGeduEmail(
       }),
     )}
     ${ctaButton({ href: verificationUrl, label: t("welcomeGedu.verifyButton") })}
-    ${ctaButton({ href: dashboardUrl, label: t("welcomeGedu.dashboardButton"), variant: "secondary" })}
+    ${ctaButton({ href: dashboardUrl, label: t("welcomeGedu.dashboardButton"), variant: "outline" })}
   `;
   return wrapInLayout({ title: t("welcomeGedu.heading"), content, locale, t });
 }

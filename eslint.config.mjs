@@ -131,6 +131,43 @@ const eslintConfig = defineConfig([
       }],
     },
   },
+  // The email house style, made mechanical at the point of typing. Colours and
+  // corners in a mail come from the modules that mirror globals.css — an email
+  // cannot use a Tailwind class, so a literal is the easy path and the whole
+  // reason the mail and the app drifted apart in the first place. Two radii and
+  // a footer grey diverged this way and nobody could see it, because a number
+  // typed into markup cannot disagree with anything.
+  //
+  // This catches the literal as it is written, with a pointer to the constant.
+  // It does not catch a template that bypasses the helpers entirely — those
+  // arrive through legitimate constants and are caught by the rendered-output
+  // sweep in tests/unit/email-templates/house-style.test.ts. The two are
+  // complementary, and neither replaces the other.
+  {
+    files: ["src/lib/email-templates/**/*.ts"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        {
+          // Prose in comments is untouched — ESLint sees nodes, not comments —
+          // so the directory's many explanatory hexes stay free. The word
+          // boundary keeps `&#8288;` and friends from tripping it.
+          selector: "Literal[value=/#[0-9a-fA-F]{3,8}\b/]",
+          message:
+            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
+        },
+        {
+          selector: "TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\b/]",
+          message:
+            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
+        },
+        {
+          selector: "TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]",
+          message:
+            "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
