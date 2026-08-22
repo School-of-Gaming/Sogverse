@@ -223,6 +223,19 @@ export const ROUTES = {
    */
   robloxSafeguarding: "/roblox/safeguarding",
   /**
+   * A temporary design-review surface for the logo and favicon work: the two
+   * decided mark variants, plus the favicon candidates still in the running,
+   * shown at true 16px in a simulated tab strip. Public only so the link can go
+   * to people without accounts, and it shares `/roblox`'s undiscoverable
+   * posture — noindex, no sitemap entry, no nav link.
+   *
+   * **Delete this route, `public/logo/` and `src/app/(public)/logo/` together
+   * once the favicon decision lands.** It is a working artefact, not a page:
+   * its copy is literal English rather than translated, on the same reasoning
+   * as the preview scenes, because nothing here is ever shown to a family.
+   */
+  logo: "/logo",
+  /**
    * The Programme's own terms, supplementing the platform ones at
    * `/terms-and-conditions`. Same posture as `robloxPrivacy` above — noindex,
    * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
