@@ -1,6 +1,7 @@
 /**
  * The pose table: one entry per pose, giving where the hands go, how the legs
- * stand, and what the character is holding if the caller does not say.
+ * stand, how far off the ground the whole figure sits, and what the character
+ * is holding if the caller does not say.
  *
  * Hand positions are **absolute viewBox coordinates**, not offsets from the
  * shoulder, and that is the deliberate choice that makes the fleet
@@ -9,6 +10,12 @@
  * whichever character is holding it — the arm simply comes out a little longer
  * or shorter to reach it. Offsets would have put the prop somewhere different
  * for every species and made a lineup impossible to align.
+ *
+ * There is no elbow data here. Round one carried a `bow` per arm that decided
+ * which way the curve bulged, and it was wrong in every pose where the hand
+ * left the character's side. The limb renderer now derives the joint from the
+ * geometry — outboard of the centre line — so a pose says where the hand is
+ * and nothing about how the arm gets there.
  */
 
 import type { Point } from "./rig";
@@ -23,16 +30,22 @@ export type LegStyle =
   /** Both feet off the ground and kicked outward. */
   | "jump"
   /** Planted but braced apart — the stance you take to do something. */
-  | "wide";
+  | "wide"
+  /** Thighs forward, shins down: sitting on something. */
+  | "sit";
 
 export type PoseSpec = {
   grip: Grip;
   legs: LegStyle;
   handL: Point;
   handR: Point;
-  /** Elbow bend for each arm; sign picks which way the curve bows. */
-  bowL: number;
-  bowR: number;
+  /**
+   * How far the whole figure sits off its default baseline, positive up. Round
+   * one's jump lifted the legs and left the body where it was, which reads as
+   * a star jump rather than as air; a jump is a pose whose body is *higher*,
+   * and a seat is one whose body is lower.
+   */
+  lift: number;
   /** What lands in the hands when the caller passes no prop and no role. */
   defaultProp: PropId;
   /**
@@ -43,12 +56,6 @@ export type PoseSpec = {
    * something they had just thrown.
    */
   freeHand: boolean;
-  /**
-   * Which arm, if either, gets the idle wave rotation. Only ever set on poses
-   * whose hand is empty and free — rotating an arm that is gripping something
-   * tears the prop away from the hand.
-   */
-  waveArm?: "L" | "R";
 };
 
 export const POSES: Record<PoseId, PoseSpec> = {
@@ -57,8 +64,7 @@ export const POSES: Record<PoseId, PoseSpec> = {
     legs: "stand",
     handL: { x: 66, y: 148 },
     handR: { x: 134, y: 148 },
-    bowL: 9,
-    bowR: -9,
+    lift: 0,
     defaultProp: "none",
     freeHand: true,
   },
@@ -66,20 +72,17 @@ export const POSES: Record<PoseId, PoseSpec> = {
     grip: "side",
     legs: "stand",
     handL: { x: 68, y: 148 },
-    handR: { x: 154, y: 62 },
-    bowL: 8,
-    bowR: -14,
+    handR: { x: 156, y: 58 },
+    lift: 0,
     defaultProp: "none",
     freeHand: false,
-    waveArm: "R",
   },
   "point-left": {
     grip: "side",
     legs: "stand",
-    handL: { x: 32, y: 84 },
+    handL: { x: 34, y: 88 },
     handR: { x: 132, y: 150 },
-    bowL: 12,
-    bowR: -8,
+    lift: 0,
     defaultProp: "none",
     freeHand: true,
   },
@@ -87,9 +90,8 @@ export const POSES: Record<PoseId, PoseSpec> = {
     grip: "side",
     legs: "stand",
     handL: { x: 68, y: 150 },
-    handR: { x: 168, y: 84 },
-    bowL: 8,
-    bowR: -12,
+    handR: { x: 166, y: 88 },
+    lift: 0,
     defaultProp: "none",
     freeHand: false,
   },
@@ -97,19 +99,17 @@ export const POSES: Record<PoseId, PoseSpec> = {
     grip: "up",
     legs: "stand",
     handL: { x: 72, y: 150 },
-    handR: { x: 150, y: 76 },
-    bowL: 8,
-    bowR: -12,
+    handR: { x: 146, y: 74 },
+    lift: 0,
     defaultProp: "sign",
     freeHand: false,
   },
   controller: {
     grip: "front",
     legs: "wide",
-    handL: { x: 76, y: 138 },
-    handR: { x: 124, y: 138 },
-    bowL: 8,
-    bowR: -8,
+    handL: { x: 78, y: 136 },
+    handR: { x: 122, y: 136 },
+    lift: 0,
     defaultProp: "controller",
     freeHand: false,
   },
@@ -118,8 +118,7 @@ export const POSES: Record<PoseId, PoseSpec> = {
     legs: "wide",
     handL: { x: 80, y: 150 },
     handR: { x: 126, y: 150 },
-    bowL: 6,
-    bowR: -6,
+    lift: 0,
     defaultProp: "keyboard-mouse",
     freeHand: false,
   },
@@ -128,39 +127,44 @@ export const POSES: Record<PoseId, PoseSpec> = {
     legs: "stand",
     handL: { x: 74, y: 126 },
     handR: { x: 126, y: 126 },
-    bowL: 9,
-    bowR: -9,
+    lift: 0,
     defaultProp: "book",
     freeHand: false,
   },
   laptop: {
     grip: "desk",
     legs: "wide",
-    handL: { x: 76, y: 146 },
-    handR: { x: 118, y: 138 },
-    bowL: 7,
-    bowR: -5,
+    handL: { x: 78, y: 144 },
+    handR: { x: 120, y: 140 },
+    lift: 0,
     defaultProp: "laptop",
     freeHand: false,
   },
   walking: {
     grip: "side",
     legs: "stride",
-    handL: { x: 58, y: 130 },
-    handR: { x: 142, y: 152 },
-    bowL: 10,
-    bowR: -10,
+    handL: { x: 60, y: 132 },
+    handR: { x: 142, y: 150 },
+    lift: 0,
     defaultProp: "none",
     freeHand: true,
   },
   jumping: {
     grip: "side",
     legs: "jump",
-    handL: { x: 42, y: 54 },
-    handR: { x: 158, y: 54 },
-    bowL: 14,
-    bowR: -14,
+    handL: { x: 44, y: 52 },
+    handR: { x: 156, y: 52 },
+    lift: 22,
     defaultProp: "none",
+    freeHand: false,
+  },
+  seated: {
+    grip: "desk",
+    legs: "sit",
+    handL: { x: 80, y: 142 },
+    handR: { x: 124, y: 142 },
+    lift: -6,
+    defaultProp: "keyboard-mouse",
     freeHand: false,
   },
 };

@@ -1,19 +1,48 @@
 /**
  * The skeleton every mascot concept hangs off.
  *
- * All five concepts draw into the same `0 0 200 200` viewBox with the same
- * ground line, so a Ytymo and a Kaveri are drop-in replacements for each other
- * in any layout — same footprint, same optical size, same baseline. What
- * differs between them is where the joints sit, and that is exactly what a
- * `Rig` records. Poses, props, expressions and role costumes all read their
+ * All concepts draw into the same `0 0 200 200` viewBox with the same ground
+ * line, so a Ytymo and a Kaveri are drop-in replacements for each other in any
+ * layout — same footprint, same optical size, same baseline. What differs
+ * between them is where the joints sit, and that is exactly what a `Rig`
+ * records. Poses, props, expressions and role costumes all read their
  * positions from the rig rather than from constants of their own, which is why
- * one pose table drives five different bodies.
+ * one pose table drives every body.
+ *
+ * A rig is not always a per-species constant. A concept may vary it per
+ * *form* — an adult Kaveri is taller and smaller-headed than a kid one, a moose
+ * carries antlers where a seal carries nothing — which is why everything
+ * downstream takes the rig as an argument rather than importing one.
  */
 
 export type Point = { x: number; y: number };
 
 /** How a concept's feet are drawn — a paw/nub, or a boot/shoe. */
 export type FootStyle = "round" | "boot";
+
+/**
+ * How a limb gets from its socket to its hand.
+ *
+ * Round one drew both as a single curved stroke, and it broke exactly where an
+ * arm has to *do* something: a wave, a point and a hold-up all read as a
+ * boneless hose flung at the target, because a quadratic curve has no elbow
+ * and bows the wrong way the moment the hand leaves the character's side.
+ * Both styles here are two straight tapered segments meeting at a joint; they
+ * differ only in where that joint is put.
+ *
+ * - `jointed` solves the elbow by two-bone inverse kinematics and puts it
+ *   *outboard* — away from the body's centre line, the way a real arm folds.
+ *   The bend is sharp and anatomical, which is what a person, a robot or a
+ *   folded plane wants.
+ * - `tapered` puts the joint on the straight line's midpoint, nudged sideways.
+ *   There is no anatomy in it: it is a soft noodle limb with a suggestion of a
+ *   shoulder, which is what a droplet or a round animal wants — those have no
+ *   visible elbow and would look wrong given one.
+ *
+ * Both taper from socket to wrist and cap with a disc at each end, so a limb
+ * still reads as a limb at 24 pixels rather than as a line.
+ */
+export type LimbStyle = "jointed" | "tapered";
 
 export type Rig = {
   /** The ground shadow ellipse. Outside the bob animation so it stays put. */
@@ -37,8 +66,8 @@ export type Rig = {
   /**
    * Where a hat sits, and how wide the head is at that height. Kept as its own
    * pair rather than derived from `head` because the top of a silhouette is
-   * rarely a circle's north pole — a droplet tapers, a hexagon comes to a
-   * point, and a bear has ears in the way.
+   * rarely a circle's north pole — a spark comes to a point, a hexagon has a
+   * corner there, and a bear has ears in the way.
    */
   crown: Point;
   crownW: number;
@@ -55,9 +84,19 @@ export type Rig = {
    * or a wide species points off the edge of the canvas.
    */
   reach: number;
-  /** Stroke width of a limb, and the radius of the hand on the end of it. */
+  /** Limb width at the socket, and the radius of the hand on the end of it. */
   limbW: number;
   handR: number;
+  /** How this species' arms and legs bend. */
+  limbStyle: LimbStyle;
+  /**
+   * Total straight length of an arm and of a leg. The inverse-kinematic solve
+   * needs a bone length; without one there is no elbow to place. Set it a
+   * little longer than the furthest the pose table reaches, or the arm locks
+   * straight in the poses that stretch hardest.
+   */
+  armLen: number;
+  legLen: number;
   /** The chest box a badge, lanyard or cardigan is fitted to. */
   torso: { x: number; y: number; w: number; h: number };
   /**
@@ -69,25 +108,70 @@ export type Rig = {
 };
 
 /** Two decimals is plenty at this scale and keeps the exported markup small. */
-function n(value: number): string {
+export function n(value: number): string {
   return String(Math.round(value * 100) / 100);
 }
 
 /**
- * A limb, as one quadratic curve from socket to hand. `bow` bends it sideways
- * off the straight line — positive bows one way, negative the other — which is
- * the whole of the elbow model. It is enough because the arms are thick
- * rounded strokes: a real two-segment elbow would add joints to every pose
- * entry and read as a crease nobody asked for.
+ * Where the joint of a two-segment limb lands.
+ *
+ * "Outward" is the sign convention nobody has to think about: whichever of the
+ * two IK solutions puts the joint further from the body's centre line wins.
+ * That is right for every pose in the table at once — an arm hanging at the
+ * side bows out at the elbow, a raised waving arm bows out and down, a
+ * pointing arm is nearly straight so the choice barely matters — and it means
+ * the pose table carries no elbow data at all.
  */
-export function limbPath(from: Point, to: Point, bow: number): string {
-  const mx = (from.x + to.x) / 2;
-  const my = (from.y + to.y) / 2;
+export function jointFor(
+  style: LimbStyle,
+  from: Point,
+  to: Point,
+  totalLen: number,
+  centreX: number,
+): Point {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
-  const len = Math.hypot(dx, dy);
-  const scale = len === 0 ? 0 : bow / len;
-  return `M ${n(from.x)} ${n(from.y)} Q ${n(mx - dy * scale)} ${n(my + dx * scale)} ${n(to.x)} ${n(to.y)}`;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 0.001) return { x: from.x, y: from.y };
+  const ux = dx / dist;
+  const uy = dy / dist;
+  // Perpendicular to the socket-to-hand line. Which side counts as outward is
+  // decided below by distance from the centre line, so handedness is free.
+  const px = -uy;
+  const py = ux;
+
+  if (style === "tapered") {
+    // No anatomy: a soft bend at the midpoint, always away from the centre.
+    const away = from.x + dx / 2 < centreX ? -1 : 1;
+    const bend = Math.min(7, dist * 0.16);
+    return { x: from.x + dx / 2 + px * bend * away, y: from.y + dy / 2 + py * bend * away };
+  }
+
+  // `totalLen` is how long this species' arm *is*, but it is only an upper
+  // bound on how long it is allowed to look. A pose that puts the hand close
+  // to the shoulder — a wave, a hand on a desk — would otherwise have to fold
+  // the whole surplus into one elbow and come out as a folded deckchair. So
+  // the bone length is clamped to a fixed slack over the distance actually
+  // being covered: always some bend, never a huge one, and the number in the
+  // rig stops being a value anybody has to tune per pose.
+  const effective = Math.max(dist * 1.06, Math.min(totalLen, dist * 1.22));
+  const upper = effective * 0.52;
+  const fore = effective * 0.48;
+  const reachable = Math.min(dist, upper + fore - 0.01);
+  // Standard two-bone solve: how far along the line the joint projects, and
+  // how far off that line it sits.
+  const along = (upper * upper - fore * fore + reachable * reachable) / (2 * reachable);
+  const off = Math.sqrt(Math.max(0, upper * upper - along * along));
+  const baseX = from.x + ux * along;
+  const baseY = from.y + uy * along;
+  const a = { x: baseX + px * off, y: baseY + py * off };
+  const b = { x: baseX - px * off, y: baseY - py * off };
+  return Math.abs(a.x - centreX) >= Math.abs(b.x - centreX) ? a : b;
+}
+
+/** Midpoint of two points — where a two-handed prop wants to sit. */
+export function midpoint(a: Point, b: Point): Point {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }
 
 /** Beyond this horizontal distance from the centre, a hand is already out. */
@@ -100,11 +184,6 @@ export function reachedHand(rig: Rig, hand: Point): Point {
   return { x: hand.x + Math.sign(dx) * rig.reach, y: hand.y };
 }
 
-/** Midpoint of two points — where a two-handed prop wants to sit. */
-export function midpoint(a: Point, b: Point): Point {
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-}
-
 /** Formats a point pair for a `transform-origin` in user (viewBox) units. */
 export function originOf(p: Point): string {
   return `${n(p.x)}px ${n(p.y)}px`;
@@ -114,3 +193,5 @@ export function originOf(p: Point): string {
 export const MASCOT_VIEWBOX = "0 0 200 200";
 /** The bottom of the character, used as the origin of the breathe scale. */
 export const MASCOT_BASELINE: Point = { x: 100, y: 182 };
+/** The vertical centre line every "outward" decision is measured against. */
+export const MASCOT_CENTRE_X = 100;

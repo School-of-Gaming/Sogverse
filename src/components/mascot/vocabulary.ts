@@ -31,6 +31,7 @@ export const MASCOT_POSES = [
   "laptop",
   "walking",
   "jumping",
+  "seated",
 ] as const;
 export type PoseId = (typeof MASCOT_POSES)[number];
 
@@ -82,6 +83,7 @@ export const POSE_LABELS: Record<PoseId, string> = {
   laptop: "Laptop",
   walking: "Walking",
   jumping: "Jumping",
+  seated: "Seated at a desk",
 };
 
 export const EXPRESSION_LABELS: Record<ExpressionId, string> = {
