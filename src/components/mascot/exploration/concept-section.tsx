@@ -149,15 +149,23 @@ export function ConceptSection({ def }: { def: ConceptDef }): ReactElement {
           />
           <div className="flex flex-wrap gap-4">
             {OUTFIT_PRESETS.map((preset) => {
-              const skipped = Object.values(preset.outfit).filter((id) => {
+              // A species that cannot wear part of a look says why, rather than
+              // silently rendering a look that is missing a piece.
+              const refused = Object.values(preset.outfit).flatMap((id) => {
                 const item = accessory(id);
-                return item !== undefined && !accessoryFits(item, def.id);
+                return item !== undefined && !accessoryFits(item, def.id) ? [item] : [];
               });
               return (
                 <Tile
                   key={preset.id}
                   caption={preset.label}
-                  sub={skipped.length > 0 ? `cannot wear: ${skipped.join(", ")}` : undefined}
+                  sub={
+                    refused.length > 0
+                      ? refused
+                          .map((item) => `no ${item.label.toLowerCase()} — ${item.incapableBecause ?? ""}`)
+                          .join(" ")
+                      : undefined
+                  }
                 >
                   <Mascot
                     concept={def.id}
