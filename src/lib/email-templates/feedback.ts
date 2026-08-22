@@ -33,7 +33,13 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
   const gamerNote = opts.isGamer && opts.parentEmail
     ? `<tr>
         <td style="padding:12px 0 0;color:${DARK_THEME.mutedFg};font-size:13px;font-style:italic;">
-          ${t("feedback.gamerNote", { parentEmail: escapeHtml(opts.parentEmail) })}
+          ${t("feedback.gamerNote", {
+            // Defused like the sender's address above: a displayed address that a
+            // client turns into its own link is a link we did not write, in a
+            // colour we did not choose. This one is a parent's, in a mail about
+            // their child, which makes it the worse of the two to get wrong.
+            parentEmail: defuseAutolinks(escapeHtml(opts.parentEmail)),
+          })}
         </td>
       </tr>`
     : "";

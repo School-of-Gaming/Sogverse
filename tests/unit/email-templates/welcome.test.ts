@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "@/lib/email-templates/welcome";
+import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 
 let t: EmailTranslator;
@@ -102,7 +103,7 @@ describe("buildWelcomeParentEmail", () => {
    * what broke them: the pin restates a text colour as a background colour, and
    * a client's dark theme darkens light backgrounds — so protecting `#ededed`
    * fed it to the one pass that exists to darken `#ededed`. Measured on Gmail
-   * Android by the colour-fidelity check; a class reappearing here is that bug
+   * Android against the shipping markup; a class reappearing here is that bug
    * coming back.
    */
   it("leaves the outlined buttons' light labels unpinned", () => {
@@ -112,7 +113,7 @@ describe("buildWelcomeParentEmail", () => {
     );
     expect(outlinedAnchors).toHaveLength(2);
     for (const attrs of outlinedAnchors) {
-      expect(attrs).toContain("color:#ededed");
+      expect(attrs).toContain(`color:${DARK_THEME.foreground}`);
       expect(attrs).not.toContain("class=");
     }
     expect(html).not.toContain("cta-on-card");
@@ -130,7 +131,7 @@ describe("buildWelcomeParentEmail", () => {
     expect(html).toContain('class="cta-on-brand"');
     expect(html).toContain("u + .body .cta-on-brand");
     expect(html).toContain(
-      "background-color:#FAA901;background-image:linear-gradient(#FAA901,#FAA901)",
+      `background-color:${BRAND.primary};background-image:linear-gradient(${BRAND.primary},${BRAND.primary})`,
     );
   });
 
@@ -146,8 +147,10 @@ describe("buildWelcomeParentEmail", () => {
     );
     expect(outlined).toHaveLength(2);
     for (const style of outlined) {
-      expect(style).toContain("background-color:#1a1a1a");
-      expect(style).toContain("background-image:linear-gradient(#1a1a1a,#1a1a1a)");
+      expect(style).toContain(`background-color:${DARK_THEME.card}`);
+      expect(style).toContain(
+        `background-image:linear-gradient(${DARK_THEME.card},${DARK_THEME.card})`,
+      );
     }
   });
 

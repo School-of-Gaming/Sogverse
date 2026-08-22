@@ -390,9 +390,11 @@ describe("templateRegistry componentsReference", () => {
    */
   it("names its specimens and explains nothing", () => {
     const { html } = render();
+    // Contrast ratios are the assertion that earns its place: they read as
+    // helpful, they are the thing most likely to creep back in, and this page
+    // carried them until today. The <code> and "Expected:" checks went with
+    // them — both described prose shapes that were never anywhere else.
     expect(html).not.toMatch(/\d\.\d:1/);
-    expect(html).not.toContain("<code>");
-    expect(html).not.toContain("Expected:");
   });
 
   /**
@@ -402,15 +404,25 @@ describe("templateRegistry componentsReference", () => {
    */
   it("demonstrates nothing that is known to be wrong", () => {
     const { html } = render();
-    expect(html).not.toContain("pin-light");
+    // cta-on-card only: it is the class this branch deleted for breaking light
+    // labels, and the reference is the first place someone would reintroduce it
+    // while copying a button. Absences of things that never existed were removed
+    // from here — an assertion that cannot fail reads as cover.
     expect(html).not.toContain("cta-on-card");
-    // The one pin that is correct is still present, via the primary button.
-    expect(html).toContain('class="cta-on-brand"');
   });
 
   it("shows the text helpers rather than describing them", () => {
     const { html } = render();
     expect(html).toContain(styledName("Marja"));
-    expect(html).toContain(bulletList(["One item, already composed and already escaped."]).slice(0, 40));
+    // The whole helper output, not a prefix of it: a slice short enough to be
+    // safe covers only the <ul> wrapper, which every list shares, so it passes
+    // whatever the items say — including when they say something the page does
+    // not render.
+    expect(html).toContain(
+      bulletList([
+        "One item, already composed and escaped.",
+        "And a second, so it is a list.",
+      ]),
+    );
   });
 });

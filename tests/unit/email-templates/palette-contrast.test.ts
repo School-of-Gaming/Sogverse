@@ -29,8 +29,10 @@ function contrast(a: string, b: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+// One threshold, because every pair below is used at body size somewhere. A
+// large-text exemption with no pair claiming it is an escape hatch sitting in
+// reach of whoever next needs a failing pair to pass.
 const AA_BODY = 4.5;
-const AA_LARGE = 3;
 
 /**
  * Every foreground/background pair a mail is permitted to produce.
@@ -39,7 +41,7 @@ const AA_LARGE = 3;
  * emit, and adding one means measuring it. `large` marks the pairs only ever
  * used at 18px bold or above, where AA's threshold is lower.
  */
-const PAIRS: { name: string; fg: string; bg: string; large?: boolean }[] = [
+const PAIRS: { name: string; fg: string; bg: string }[] = [
   { name: "body text on the message panel", fg: DARK_THEME.foreground, bg: DARK_THEME.card },
   { name: "muted text on the message panel", fg: DARK_THEME.mutedFg, bg: DARK_THEME.card },
   { name: "footer text on the ground", fg: DARK_THEME.mutedFg, bg: DARK_THEME.bg },
@@ -53,14 +55,13 @@ const PAIRS: { name: string; fg: string; bg: string; large?: boolean }[] = [
 ];
 
 describe("every colour pair a mail may emit is legible", () => {
-  it.each(PAIRS)("$name", ({ fg, bg, large }) => {
+  it.each(PAIRS)("$name", ({ fg, bg }) => {
     const ratio = contrast(fg, bg);
-    const floor = large ? AA_LARGE : AA_BODY;
     expect(
       ratio,
-      `${fg} on ${bg} is ${ratio.toFixed(2)}:1, below the ${floor}:1 floor. ` +
+      `${fg} on ${bg} is ${ratio.toFixed(2)}:1, below the ${AA_BODY}:1 floor. ` +
         "A client rendering this perfectly still leaves it unreadable.",
-    ).toBeGreaterThanOrEqual(floor);
+    ).toBeGreaterThanOrEqual(AA_BODY);
   });
 });
 

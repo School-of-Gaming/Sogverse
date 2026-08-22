@@ -88,10 +88,11 @@ interface RowButtonOptions extends CtaButtonOptions {
  * backgrounds alone while darkening light ones — that is the one thing dark
  * mode is for. So the same mechanism that protects `#121212` destroys
  * `#ededed`: the pin hands a near-white value to precisely the pass that exists
- * to darken near-white values, and the label arrives dark. The colour-fidelity
- * check measured this directly (V1/V4/V6 against V2), and it is the reason the
- * rule below is about luminance rather than about which element is being
- * styled.
+ * to darken near-white values, and the label arrives dark. Measured against
+ * the client rather than reasoned about: the same colour pinned three
+ * different ways came back wrong every time, and unpinned came back right.
+ * That is why the rule below is about luminance rather than about which
+ * element is being styled.
  *
  * **Rule: never pin a light colour through `background-clip:text`.** The pin is
  * safe only for a colour dark enough that a client's dark theme would not
@@ -223,10 +224,15 @@ function halfButtonCell({ href, label, variant }: RowButtonOptions): string {
  * case ending on the word ("asetuksissa") keeps it inside the link text.
  */
 export function inlineLink(href: string, label: string): string {
-  // Same class styledName carries. Both paint brand orange, so both need the
-  // pin — otherwise a name and a link in one sentence arrive as two different
-  // oranges in any client that rewrites the colour property.
-  return `<a href="${href}" target="_blank" class="brand-primary" style="color:${BRAND.primary};text-decoration:underline;">${label}</a>`;
+  // Deliberately unpinned, unlike styledName, which paints the same colour.
+  // The pin works by setting `color: transparent` and painting the glyphs out of a
+  // background — and `text-decoration-color` defaults to `currentColor`, so a
+  // pinned anchor keeps its colour and loses its underline. A span has no
+  // decoration to lose, which is why the same class is right on a name and
+  // wrong here. The underline is the affordance that says "link", so it
+  // outranks matching the name's orange exactly; that mismatch is real, and it
+  // is the cheaper of the two faults until a screenshot settles a fix for it.
+  return `<a href="${href}" target="_blank" style="color:${BRAND.primary};text-decoration:underline;">${label}</a>`;
 }
 
 /** A bulleted list of already-composed (and already-escaped) HTML snippets. */

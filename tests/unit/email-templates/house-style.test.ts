@@ -142,10 +142,11 @@ function allMails(): [string, string][] {
   return Object.values(MAILS).flatMap((render) => render());
 }
 
-/** Every `style="…"` value in a document, with the tag it sits on. */
-function styleAttributes(html: string): { tag: string; style: string }[] {
-  return [...html.matchAll(/<(\w+)\b[^>]*?\sstyle="([^"]*)"/g)].map((m) => ({
+/** Every `style="…"` value in a document, with the whole opening tag it sits on. */
+function styleAttributes(html: string): { tag: string; openingTag: string; style: string }[] {
+  return [...html.matchAll(/<(\w+)\b[^>]*?\sstyle="([^"]*)"[^>]*>/g)].map((m) => ({
     tag: m[1],
+    openingTag: m[0],
     style: m[2],
   }));
 }
@@ -266,12 +267,12 @@ describe("house style, over every mail we can send", () => {
       // The hero's gradient is applied by class, deliberately: Gmail rewrites an
       // inline linear-gradient() into url(linear-gradient(...)) and breaks it,
       // so those elements carry their background-image in the style block.
-      const heroTags = [...html.matchAll(/<(\w+)\b[^>]*class="[^"]*hero-gradient/g)].map(
-        (m) => m[1],
-      );
-      for (const { tag, style } of styleAttributes(html)) {
-        const fill = /background-color:(#[0-9a-fA-F]{3,8})/.exec(style);
-        if (!fill || heroTags.includes(tag)) continue;
+      // Keyed on the element's own opening tag, not its tag *name* — the hero
+      // class sits on a <table>, and exempting by name handed every future table
+      // the same pass.
+      for (const { openingTag, style } of styleAttributes(html)) {
+        const fill = /background-color:\s*(#[0-9a-fA-F]{3,8})/.exec(style);
+        if (!fill || openingTag.includes("hero-gradient")) continue;
         const hex = fill[1];
         expect(
           style.includes(`background-image:linear-gradient(${hex},${hex})`),
@@ -289,7 +290,7 @@ describe("house style, over every mail we can send", () => {
   it("pairs every brand fill with its own foreground", () => {
     for (const [name, html] of allMails()) {
       for (const cell of [...html.matchAll(/<td[^>]*style="([^"]*)"[^>]*>([\s\S]*?)<\/td>/g)]) {
-        const fill = /background-color:(#[0-9a-fA-F]{6})/.exec(cell[1])?.[1]?.toLowerCase();
+        const fill = /background-color:\s*(#[0-9a-fA-F]{6})/.exec(cell[1])?.[1]?.toLowerCase();
         const legal = fill && LEGAL_ON_FILL[fill];
         if (!legal) continue;
         const label = /<a\b[^>]*style="[^"]*color:(#[0-9a-fA-F]{6})/.exec(cell[2])?.[1];
@@ -314,7 +315,7 @@ describe("house style, over every mail we can send", () => {
 
   it("emits no corner outside the app's radius scale", () => {
     for (const [name, html] of allMails()) {
-      for (const radius of html.matchAll(/border-radius:(\d+px)/g)) {
+      for (const radius of html.matchAll(/border-radius:\s*(\d+px)/g)) {
         expect(RADII, `${name}: border-radius ${radius[1]} is not in RADIUS`).toContain(radius[1]);
       }
     }
@@ -358,18 +359,27 @@ describe("every pinned colour has been verified, not reasoned about", () => {
   }
 
   it("pins only colours on the verified list, and none lighter", () => {
-    const [, html] = allMails()[0];
+    // Every document, not the first: a template may inject its own rules into
+    // its own head, and a new, untried pin arriving that way is exactly the
+    // case that has to be screenshot-gated rather than the one to skip.
+    for (const [mail, html] of allMails()) {
     const style = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? "";
     const pinned = [
       ...style.matchAll(
         /\.([\w-]+)\s*\{[^}]*?linear-gradient\((#[0-9a-fA-F]{6})[^)]*\)[^}]*?background-clip:\s*text/g,
       ),
     ];
-    expect(pinned.length, "no pinned classes found — has the style block moved?").toBeGreaterThan(0);
+    expect(
+      pinned.length,
+      `${mail}: no pinned classes found — has the style block moved?`,
+    ).toBeGreaterThan(0);
 
-    const ceiling = Math.max(
-      ...Object.values(VERIFIED_PINS).map((entry) => luminance(entry.hex)),
-    );
+    // Written down, not derived. A ceiling taken as the max over the same list
+    // the loop is checking is satisfied by construction — every value reaching
+    // it is one of the values the max was taken over — so it read as a guard
+    // while asserting nothing. This is brand orange's luminance, the lightest
+    // colour anyone has watched survive a pin, rounded up a hair.
+    const VERIFIED_CEILING = 0.49;
 
     for (const [, className, hex] of pinned) {
       const verified = VERIFIED_PINS[className];
@@ -385,8 +395,9 @@ describe("every pinned colour has been verified, not reasoned about", () => {
       );
       expect(
         luminance(hex),
-        `.${className} pins ${hex}, lighter than anything verified to survive a pin`,
-      ).toBeLessThanOrEqual(ceiling);
+        `.${className} pins ${hex}, lighter than anything anyone has watched survive`,
+      ).toBeLessThanOrEqual(VERIFIED_CEILING);
+      }
     }
   });
 

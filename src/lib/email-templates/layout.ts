@@ -9,19 +9,6 @@ interface LayoutOptions {
   content: string;
   locale?: string;
   t?: EmailTranslator;
-  /**
-   * Extra CSS for this one mail's `<style>` block, appended after the shared
-   * rules so it can build on them.
-   *
-   * It exists for the colour-fidelity check, whose whole job is to carry
-   * techniques that are *not* in production yet — a candidate has to be rendered by the
-   * real shell, in the real head, to be worth anything, but putting it in the
-   * shared block would ship untried CSS in every mail and spend Gmail's
-   * `<style>` budget on rules nothing else emits. A technique that wins moves
-   * into the shared block above; until then it lives with the template that is
-   * testing it. Product templates pass nothing.
-   */
-  extraStyles?: string;
 }
 
 /** Hero gradient: vertical fade over a horizontal brand-color glow. */
@@ -37,7 +24,7 @@ const HERO_GRADIENT = `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.b
  * - Brand text colors use background-clip:text (via "u + .body" Gmail-only selector)
  *   because Gmail Android dark mode shifts the "color" property but preserves gradients.
  */
-export function wrapInLayout({ title, content, locale = "en", t, extraStyles }: LayoutOptions): string {
+export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions): string {
   const footerText = t
     ? t("footer", { year: String(new Date().getFullYear()) })
     : `\u00a9 ${new Date().getFullYear()} Sogverse. All rights reserved.`;
@@ -90,7 +77,6 @@ export function wrapInLayout({ title, content, locale = "en", t, extraStyles }: 
       background-clip: text !important;
       color: transparent !important;
     }
-${extraStyles ?? ""}
   </style>
 </head>
 <!-- "body" class is required for the "u + .body" Gmail-only selector in the style block above -->
