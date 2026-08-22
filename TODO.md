@@ -535,3 +535,50 @@ those reasons; treat any logo as a by-product.
 Neither Outlook.com nor Apple Mail is addressable here: both draw the sender
 avatar from the *recipient's* own contacts, so there is nothing on our side to
 set.
+
+## The filled button on Gmail iOS is unverified, and it is the one that matters
+
+Everything else about how our mail renders is now either machine-checked or has
+been looked at on a real client. This has been neither, and it is the highest-
+stakes surface we have: the filled brand button is what password reset and
+email verification ask the reader to press.
+
+The mechanism is known even though the outcome is not. The pin that keeps that
+label near-black is scoped to a selector that reaches Gmail's web and Android
+clients and **not** its iOS one, so on an iPhone the label falls back to its
+inline colour with nothing defending it. If that client flips label colours the
+way Android did — the original "sometimes white, sometimes black" fault — the
+arithmetic is unforgiving:
+
+| | contrast |
+|---|---|
+| `#121212` on brand orange, as authored | 9.58:1 |
+| `#ffffff` on brand orange, if flipped | **1.96:1** |
+
+At 1.96:1 the label is not hard to read, it is absent. **No label colour
+survives that flip** — the two candidates are 9.58 and 1.96, with nothing usable
+between them — so this cannot be designed around from here. It has to be seen
+first.
+
+- [ ] **Get one screenshot of the components reference from any iPhone.** Send
+  it from `/admin/testing` to anyone who has one. The controls at the top of that
+  mail are what make a single photo conclusive: if the filled button's label is
+  black, the exposure was theoretical and this item closes with a note saying so;
+  if it is white, we have a live fault on the two mails that recover an account.
+
+Worth being clear that this is **not a regression** — it predates the house-style
+work, which neither introduced nor fixed it, and it improved iOS in three other
+ways along the way (the footer's contrast, both panels' declared fills, and the
+addresses clients were linkifying). What changed is that the risk is now written
+down instead of unnoticed.
+
+A second, looser worry rides along: Gmail iOS is reported to full-invert email
+that is already dark. If our card inverts to light, brand orange sits at
+1.67–1.96:1 against it, which would take the header lockup with it. The selector
+fact and the contrast figures above are solid; that behaviour is reported rather
+than measured, and the same screenshot settles it.
+
+Apple Mail is expected to be fine and for a real reason rather than luck: the
+shell sets `color-scheme` and `supported-color-schemes`, which is exactly the
+mechanism Apple Mail honours to skip its own adjustment. Gmail ignores those
+tags, which is the whole story.
