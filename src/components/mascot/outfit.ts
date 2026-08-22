@@ -24,7 +24,7 @@ import type { ColorOverride } from "./palette";
 import type { Rig } from "./rig";
 import type { MascotRole } from "./vocabulary";
 
-export const OUTFIT_SLOTS = ["hat", "face", "torso", "back", "extra"] as const;
+export const OUTFIT_SLOTS = ["hat", "face", "torso", "back", "extra", "scene"] as const;
 export type OutfitSlot = (typeof OUTFIT_SLOTS)[number];
 
 export const SLOT_LABELS: Record<OutfitSlot, string> = {
@@ -33,6 +33,7 @@ export const SLOT_LABELS: Record<OutfitSlot, string> = {
   torso: "Torso",
   back: "Back",
   extra: "Extra",
+  scene: "Scene",
 };
 
 /** What is worn in each slot. Every slot is optional; an empty outfit is fine. */
@@ -57,7 +58,19 @@ export type Anchors = {
   back: { x: number; y: number; w: number; drop: number };
   /** The ground, just off the character's left foot. */
   extra: { x: number; y: number };
+  /**
+   * The furniture line: where a desk surface sits and how wide it runs.
+   *
+   * Deliberately *not* derived from the rig. A desk is a thing in the world
+   * rather than a thing worn on a body, so it has to stand in the same place
+   * whichever species is sitting at it — a bear and a Kaveri share a desk, and
+   * a desk that moved with the shoulders would be a very strange desk.
+   */
+  scene: { x: number; y: number; w: number };
 };
+
+/** The one place the furniture line is written down. */
+export const SCENE_LINE = { x: 100, y: 156, w: 168 } as const;
 
 export function anchorsFor(rig: Rig): Anchors {
   return {
@@ -71,6 +84,7 @@ export function anchorsFor(rig: Rig): Anchors {
       drop: rig.footY - rig.shoulderL.y - 12,
     },
     extra: { x: rig.shadow.cx - rig.shadow.rx - 4, y: rig.footY + 4 },
+    scene: SCENE_LINE,
   };
 }
 

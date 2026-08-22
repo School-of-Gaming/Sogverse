@@ -3,20 +3,21 @@
 /**
  * `<Mascot>` — one component, every character.
  *
- * It assembles a picture out of six independent tables: a concept (the base
- * model), a colourway, a pose, an expression, an outfit and a prop. None of
- * them knows about the others, which is what keeps the combinatorics free:
- * eleven poses times six expressions times sixteen accessories is not
- * something anyone drew, it is something the assembly produces.
+ * It assembles a picture out of seven independent tables: a concept (the base
+ * model), a form (which build of it), a colourway, a pose, an expression, an
+ * outfit and a prop. None of them knows about the others, which is what keeps
+ * the combinatorics free: twelve poses times six expressions times two dozen
+ * accessories is not something anyone drew, it is something the assembly
+ * produces.
  *
- * Three properties are load-bearing and worth stating plainly.
+ * Four properties are load-bearing and worth stating plainly.
  *
  * **The picture never depends on the app's CSS.** Every fill, stroke and
- * coordinate is an SVG attribute. The only stylesheet involved is the tiny one
- * this component writes *inside* the SVG for the idle animation, so lifting
- * the rendered `outerHTML` out of the page gives a standalone `.svg` file that
- * needs no build step, and stripping the animation leaves the identical
- * still image an email or a rasteriser will see.
+ * coordinate is an SVG attribute. The only stylesheet involved is the small
+ * one this component writes *inside* the SVG for the motion, so lifting the
+ * rendered `outerHTML` out of the page gives a standalone `.svg` file that
+ * needs no build step, and stripping the animation leaves the identical still
+ * image an email or a rasteriser will see.
  *
  * **Identity is not customisable.** The outfit layer adds and repaints
  * garments; it cannot touch the body, head, eyes or species accent. That is a
@@ -28,13 +29,20 @@
  * ninety pixels the filigree stops rendering and below forty the props and the
  * small face items go too, so the character gets *simpler* as it gets smaller
  * rather than muddier.
+ *
+ * **Motion is on by default and belongs to the pose.** Round one shared one
+ * near-invisible idle loop across every pose, which read as a glitch rather
+ * than as a decision. Now walking walks, a jump has anticipation and a
+ * landing, thumbs tap on a controller and fingers move on a keyboard — and
+ * `animated={false}` still gives the identical still image, standing on the
+ * pose's own key frame, which is what an email and a rasteriser will see.
  */
 
 import { useId, type CSSProperties, type ReactElement } from "react";
 
 import { accessory, accessoryFits, accessoryVisible } from "./accessories";
-import { animationClasses, animationCss, safeId, seedFrom } from "./animation";
-import type { ConceptId, LimbPaint } from "./concept";
+import { motionClasses, motionCss, motionPlan, safeId, seedFrom } from "./animation";
+import { defaultForm, rigOf, type ConceptId, type LimbPaint } from "./concept";
 import { getConcept } from "./concepts";
 import {
   detailForSize,
@@ -42,11 +50,13 @@ import {
   type DetailLevel,
   type MascotCrop,
 } from "./detail";
-import { Face } from "./face";
+import { Face, type FaceStyle } from "./face";
 import { ArmLimb, Hand, Legs } from "./limbs";
+import { LEGACY_BOWS, LegacyArm, LegacyLegs } from "./limbs-legacy";
 import { anchorsFor, ROLE_OUTFITS, type Outfit, type OutfitSlot } from "./outfit";
 import { MASCOT_INK, type ColorOverride, type Colorway } from "./palette";
 import { POSES, propAnchor } from "./poses";
+import { lookById, lookForDate } from "./seasons";
 import { HeldProp } from "./props";
 import { MASCOT_BASELINE, MASCOT_VIEWBOX, originOf, reachedHand } from "./rig";
 import {
@@ -62,6 +72,8 @@ import {
 export type MascotProps = {
   /** Which base model. */
   concept: ConceptId;
+  /** Which build of it — the species in an animal family, the age in a human one. */
+  form?: string;
   /** Which of that concept's colourways. Falls back to its first. */
   variant?: string;
   pose?: PoseId;
@@ -80,8 +92,32 @@ export type MascotProps = {
   detail?: DetailLevel;
   /** Framing. `bust` and `head` are the avatar crops. */
   crop?: MascotCrop;
-  /** Idle motion. Off gives the exact same picture, standing still. */
+  /**
+   * Idle and pose motion. Off gives the exact same picture, standing still on
+   * the pose's own key frame.
+   */
   animated?: boolean;
+  /**
+   * A seasonal or holiday look, layered under whatever the caller asks for
+   * explicitly. `"auto"` means "dress for today", which is the whole point —
+   * a product surface says that once and never thinks about the calendar
+   * again.
+   */
+  look?: string;
+  /**
+   * The instant `look="auto"` resolves against. Pass a request-stable value on
+   * any surface that server-renders, or a render straddling Helsinki midnight
+   * will hydrate into a different outfit than it painted.
+   */
+  now?: Date;
+  /** Which face design. Only the exploration page has any reason to pass this. */
+  faceStyle?: FaceStyle;
+  /**
+   * Which limb renderer. `legacy` is round one's single bowed stroke, kept so
+   * the arm rework can be shown next to what it replaced; it goes with the
+   * exploration page.
+   */
+  limbStyle?: "current" | "legacy";
   /**
    * Flattens the whole character to one colour. A design has to survive as a
    * silhouette or its identity is living in the detail, so this is a test
@@ -109,6 +145,7 @@ const GROUND_SLOTS: readonly OutfitSlot[] = ["extra"];
 
 export function Mascot({
   concept,
+  form,
   variant,
   pose = "idle",
   expression = "happy",
@@ -120,19 +157,30 @@ export function Mascot({
   detail,
   crop = "full",
   animated = true,
+  look,
+  now,
+  faceStyle = "warm",
+  limbStyle = "current",
   silhouette = false,
   label,
   className,
 }: MascotProps): ReactElement {
   const def = getConcept(concept);
   const uid = safeId(useId());
-  const cls = animationClasses(uid);
   const level = detail ?? detailForSize(size);
 
+  const activeForm =
+    form !== undefined && def.forms?.some((f) => f.id === form) === true ? form : defaultForm(def);
+  const rig = rigOf(def, activeForm);
+
+  // A look is the weakest layer: the season dresses the character, and any
+  // outfit or colour the caller names overrides it.
+  const dressed =
+    look === undefined ? undefined : look === "auto" ? lookForDate(now ?? new Date()) : lookById(look);
+
   const chosen = def.variants.find((v) => v.id === variant) ?? def.variants[0];
-  const palette: Colorway = { ...chosen.colors, ...colorOverride };
+  const palette: Colorway = { ...chosen.colors, ...dressed?.colors, ...colorOverride };
   const paint: LimbPaint = def.limbs(palette);
-  const rig = def.rig;
   const spec = POSES[pose];
   const anchors = anchorsFor(rig);
   // The pose table speaks in one canonical body's coordinates; a wide species
@@ -141,18 +189,39 @@ export function Mascot({
   const handL = reachedHand(rig, spec.handL);
   const handR = reachedHand(rig, spec.handR);
 
+  // A silhouette is a shape test; motion on a flattened figure tells you
+  // nothing and still costs a repaint per frame.
+  const moving = animated && !silhouette;
+  const plan = moving ? motionPlan(pose, expression) : {};
+  const cls = motionClasses(uid, plan);
+
   // A role dresses the character; an explicit outfit is layered over the top,
   // so a caller can put a party hat on a gedu without losing the lanyard.
-  const worn: Outfit = { ...ROLE_OUTFITS[role], ...outfit };
+  const worn: Outfit = { ...ROLE_OUTFITS[role], ...dressed?.outfit, ...outfit };
 
   // The pose picks the prop when it implies one (a reading pose needs a book);
   // otherwise the role fills an idle hand, but only when that hand is free.
   const roleProp = spec.freeHand ? ROLE_DEFAULT_PROP[role] : "none";
   const heldProp = prop ?? (spec.defaultProp === "none" ? roleProp : spec.defaultProp);
 
-  const parts = { rig, colors: palette, variantId: chosen.id, detail: level };
-  const floatClass = animated ? cls.float : "";
-  const waving = animated && spec.waveArm === "R";
+  const parts = {
+    rig,
+    colors: palette,
+    variantId: chosen.id,
+    form: activeForm,
+    detail: level,
+    floatClass: cls.float ?? "",
+  };
+
+  const sceneItem = (() => {
+    const id = worn.scene;
+    if (id === undefined) return undefined;
+    const item = accessory(id);
+    if (item === undefined) return undefined;
+    if (!accessoryFits(item, def.id) || !accessoryVisible(item, level)) return undefined;
+    return item;
+  })();
+  const ctx = { anchors, rig, colors: palette, detail: level };
 
   const drawSlots = (slots: readonly OutfitSlot[]): ReactElement[] =>
     slots.flatMap((slot) => {
@@ -161,9 +230,7 @@ export function Mascot({
       const item = accessory(id);
       if (item === undefined) return [];
       if (!accessoryFits(item, def.id) || !accessoryVisible(item, level)) return [];
-      return [
-        <g key={slot}>{item.render({ anchors, rig, colors: palette, detail: level })}</g>,
-      ];
+      return [<g key={slot}>{item.render(ctx)}</g>];
     });
 
   const described =
@@ -173,6 +240,15 @@ export function Mascot({
   const flatten: CSSProperties | undefined = silhouette
     ? { filter: "brightness(0)" }
     : undefined;
+
+  const armGroup = (side: "armL" | "armR", shoulder: { x: number; y: number }, children: ReactElement) =>
+    cls[side] === undefined ? (
+      children
+    ) : (
+      <g className={cls[side]} style={{ transformOrigin: originOf(shoulder) }}>
+        {children}
+      </g>
+    );
 
   return (
     <svg
@@ -184,8 +260,8 @@ export function Mascot({
       aria-label={described}
       className={className}
     >
-      {animated && <style>{animationCss(uid, seedFrom(uid))}</style>}
-      {!silhouette && (
+      {moving && <style>{motionCss(uid, seedFrom(uid), plan)}</style>}
+      {!silhouette && sceneItem === undefined && (
         <ellipse
           cx={rig.shadow.cx}
           cy={rig.shadow.cy}
@@ -195,49 +271,78 @@ export function Mascot({
           opacity={0.45}
         />
       )}
-      <g className={animated ? cls.bob : undefined} style={flatten}>
+      {/* Furniture is drawn outside every motion group. A desk that breathed
+          with the person sitting at it would be a very strange desk. */}
+      {sceneItem?.renderBehind !== undefined && <g style={flatten}>{sceneItem.renderBehind(ctx)}</g>}
+      <g className={cls.body} style={{ ...flatten, transformOrigin: originOf(MASCOT_BASELINE) }}>
         <g
-          className={animated ? cls.breathe : undefined}
+          className={cls.breathe}
           style={{ transformOrigin: originOf(MASCOT_BASELINE) }}
         >
-          {drawSlots(BEHIND_SLOTS)}
-          <Legs rig={rig} paint={paint} legs={spec.legs} />
-          <def.Body {...parts} floatClass={floatClass} />
-          {drawSlots(TORSO_SLOTS)}
-          <g
-            className={animated && !rig.fusedHead ? cls.tilt : undefined}
-            style={rig.fusedHead ? undefined : { transformOrigin: originOf({ x: rig.head.x, y: rig.head.y + rig.head.r * 0.9 }) }}
-          >
-            <def.Head {...parts} floatClass={floatClass} />
-            {def.Crown !== undefined && <def.Crown {...parts} floatClass={floatClass} />}
-            <Face
-              rig={rig}
-              colors={palette}
-              expression={expression}
-              mode={def.faceMode}
-              detail={level}
-              blinkClass={animated ? cls.blink : ""}
-            />
-            {drawSlots(HEAD_SLOTS)}
-          </g>
-          <ArmLimb rig={rig} paint={paint} from={rig.shoulderL} to={handL} bow={spec.bowL} />
-          {!waving && (
-            <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={handR} bow={spec.bowR} />
-          )}
-          {showsProps(level) && (
-            <HeldProp prop={heldProp} at={propAnchor(spec.grip, handL, handR)} colors={palette} />
-          )}
-          <Hand rig={rig} paint={paint} at={handL} />
-          {!waving && <Hand rig={rig} paint={paint} at={handR} />}
-          {waving && (
-            <g className={cls.wave} style={{ transformOrigin: originOf(rig.shoulderR) }}>
-              <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={handR} bow={spec.bowR} />
-              <Hand rig={rig} paint={paint} at={handR} />
+          <g transform={spec.lift === 0 ? undefined : `translate(0 ${-spec.lift})`}>
+            {drawSlots(BEHIND_SLOTS)}
+            {limbStyle === "legacy" ? (
+              <LegacyLegs rig={rig} paint={paint} legs={spec.legs} />
+            ) : (
+              <Legs rig={rig} paint={paint} legs={spec.legs} classL={cls.legL} classR={cls.legR} />
+            )}
+            <def.Body {...parts} />
+            {drawSlots(TORSO_SLOTS)}
+            <g
+              className={rig.fusedHead ? undefined : cls.head}
+              style={
+                rig.fusedHead
+                  ? undefined
+                  : { transformOrigin: originOf({ x: rig.head.x, y: rig.head.y + rig.head.r * 0.9 }) }
+              }
+            >
+              <def.Head {...parts} />
+              {def.Crown !== undefined && <def.Crown {...parts} />}
+              <Face
+                rig={rig}
+                colors={palette}
+                expression={expression}
+                mode={def.faceMode}
+                detail={level}
+                style={faceStyle}
+                blinkClass={cls.blink ?? ""}
+              />
+              {drawSlots(HEAD_SLOTS)}
             </g>
-          )}
-          {drawSlots(GROUND_SLOTS)}
+            {armGroup(
+              "armL",
+              rig.shoulderL,
+              limbStyle === "legacy" ? (
+                <LegacyArm rig={rig} paint={paint} from={rig.shoulderL} to={handL} bow={LEGACY_BOWS[pose].l} />
+              ) : (
+                <ArmLimb rig={rig} paint={paint} from={rig.shoulderL} to={handL} />
+              ),
+            )}
+            {armGroup(
+              "armR",
+              rig.shoulderR,
+              limbStyle === "legacy" ? (
+                <LegacyArm rig={rig} paint={paint} from={rig.shoulderR} to={handR} bow={LEGACY_BOWS[pose].r} />
+              ) : (
+                <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={handR} />
+              ),
+            )}
+            {showsProps(level) && (
+              <g className={cls.prop} style={{ transformBox: "fill-box", transformOrigin: "center" }}>
+                <HeldProp prop={heldProp} at={propAnchor(spec.grip, handL, handR)} colors={palette} />
+              </g>
+            )}
+            {/* The hands repeat their arm's class rather than living inside the
+                arm group, so that a held object still sits between the arm and
+                the hand that is gripping it. Same keyframes and same delay, so
+                they move as one. */}
+            {armGroup("armL", rig.shoulderL, <Hand rig={rig} paint={paint} at={handL} />)}
+            {armGroup("armR", rig.shoulderR, <Hand rig={rig} paint={paint} at={handR} />)}
+            {drawSlots(GROUND_SLOTS)}
+          </g>
         </g>
       </g>
+      {sceneItem !== undefined && <g style={flatten}>{sceneItem.render(ctx)}</g>}
     </svg>
   );
 }
