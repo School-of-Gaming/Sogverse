@@ -29,38 +29,38 @@ import type { Rig } from "../rig";
 
 const RIG: Rig = {
   shadow: { cx: 100, cy: 186, rx: 34, ry: 6 },
-  hip: { x: 100, y: 154 },
-  hipSpread: 13,
+  hip: { x: 100, y: 160 },
+  hipSpread: 11,
   footY: 180,
   footStyle: "boot",
-  shoulderL: { x: 74, y: 128 },
-  shoulderR: { x: 126, y: 128 },
-  head: { x: 100, y: 68, r: 42 },
-  eyeDx: 17,
-  eyeY: 70,
-  eyeR: 8.6,
-  mouthY: 94,
-  crown: { x: 100, y: 26 },
-  crownW: 64,
+  shoulderL: { x: 78, y: 138 },
+  shoulderR: { x: 122, y: 138 },
+  head: { x: 100, y: 72, r: 48 },
+  eyeDx: 19,
+  eyeY: 74,
+  eyeR: 9.6,
+  mouthY: 102,
+  crown: { x: 100, y: 22 },
+  crownW: 70,
   reach: 0,
   limbW: 10,
   handR: 9,
   limbStyle: "jointed",
-  armLen: 42,
-  legLen: 26,
-  torso: { x: 76, y: 122, w: 48, h: 36 },
+  armLen: 38,
+  legLen: 20,
+  torso: { x: 80, y: 132, w: 40, h: 30 },
   fusedHead: false,
 };
 
 function Body({ colors, detail }: PartProps): ReactElement {
   return (
     <g>
-      <path d="M 100 118 L 126 128 L 122 156 L 100 164 L 78 156 L 74 128 Z" fill={colors.bodyTop} />
-      <path d="M 100 118 L 126 128 L 122 156 L 100 164 Z" fill={colors.bodyBottom} />
-      <path d="M 100 132 L 108 140 L 100 149 L 92 140 Z" fill={colors.panel} />
+      <path d="M 100 128 L 122 137 L 119 162 L 100 169 L 81 162 L 78 137 Z" fill={colors.bodyTop} />
+      <path d="M 100 128 L 122 137 L 119 162 L 100 169 Z" fill={colors.bodyBottom} />
+      <path d="M 100 140 L 107 147 L 100 155 L 93 147 Z" fill={colors.panel} />
       {showsFiligree(detail) && (
         <path
-          d="M 75 129 L 100 138 L 125 129"
+          d="M 79 138 L 100 146 L 121 138"
           fill="none"
           stroke={colors.spark}
           strokeWidth={1.6}
@@ -76,12 +76,12 @@ function Head({ colors, detail }: PartProps): ReactElement {
     <g>
       {/* A wide, squat hexagon — the same six sides as a Taitto, turned so the
           long axis runs across rather than down. */}
-      <path d="M 100 26 L 142 50 L 142 88 L 100 110 L 58 88 L 58 50 Z" fill={colors.bodyTop} />
-      <path d="M 100 26 L 142 50 L 100 74 L 58 50 Z" fill={colors.spark} opacity={0.28} />
-      <path d="M 142 50 L 142 88 L 100 110 L 100 74 Z" fill={colors.bodyBottom} opacity={0.42} />
+      <path d="M 100 22 L 148 48 L 148 96 L 100 122 L 52 96 L 52 48 Z" fill={colors.bodyTop} />
+      <path d="M 100 22 L 148 48 L 100 74 L 52 48 Z" fill={colors.spark} opacity={0.28} />
+      <path d="M 148 48 L 148 96 L 100 122 L 100 74 Z" fill={colors.bodyBottom} opacity={0.42} />
       {showsFiligree(detail) && (
         <path
-          d="M 58 50 L 100 74 L 142 50"
+          d="M 52 48 L 100 74 L 148 48"
           fill="none"
           stroke={colors.limb}
           strokeWidth={1.6}
@@ -94,9 +94,9 @@ function Head({ colors, detail }: PartProps): ReactElement {
 
 function Crown({ colors, floatClass }: PartProps): ReactElement {
   return (
-    <g className={floatClass} style={{ transformBox: "view-box", transformOrigin: "100px 26px" }}>
-      <path d="M 100 26 L 86 6 L 114 12 Z" fill={colors.limb} />
-      <path d="M 100 26 L 114 12 L 107 22 Z" fill={colors.panel} opacity={0.75} />
+    <g className={floatClass} style={{ transformBox: "view-box", transformOrigin: "100px 22px" }}>
+      <path d="M 100 22 L 86 2 L 114 8 Z" fill={colors.limb} />
+      <path d="M 100 22 L 114 8 L 107 18 Z" fill={colors.panel} opacity={0.75} />
     </g>
   );
 }

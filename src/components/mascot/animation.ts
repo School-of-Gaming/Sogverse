@@ -398,8 +398,13 @@ export function motionCss(uid: string, seed: number, plan: MotionPlan): string {
     }
     const cls = `m-${channel}-${uid}`;
     const delay = (-phase * kf.dur).toFixed(2);
+    // A floating crown is the one channel with no rig point to turn about: it
+    // is whatever shape the species hangs over its head, so it spins about its
+    // own centre. Every other channel is anchored to a joint by an inline
+    // `transform-origin`, which wins over this rule where a concept sets one.
+    const box = channel === "float" ? "transform-box:fill-box;transform-origin:center;" : "";
     rules.push(
-      `.${cls}{animation:k-${id}-${uid} ${kf.dur}s ${kf.ease} ${delay}s infinite}`,
+      `.${cls}{${box}animation:k-${id}-${uid} ${kf.dur}s ${kf.ease} ${delay}s infinite}`,
     );
   }
 

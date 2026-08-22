@@ -76,7 +76,6 @@ export function FaceStudy(): ReactElement {
             crop="bust"
             size={132}
             faceStyle={style}
-            animated={false}
           />
         </Tile>
       ))}
@@ -146,7 +145,7 @@ export function ArmStudy(): ReactElement {
           <div className="flex flex-wrap gap-3">
             {ARM_POSES.map((pose) => (
               <Tile key={pose} caption={POSE_LABELS[pose]}>
-                <Mascot concept={concept} pose={pose} size={150} animated={false} />
+                <Mascot concept={concept} pose={pose} size={150} />
               </Tile>
             ))}
           </div>
@@ -156,7 +155,7 @@ export function ArmStudy(): ReactElement {
           <div className="flex flex-wrap gap-3">
             {ARM_POSES.map((pose) => (
               <Tile key={pose} caption={POSE_LABELS[pose]}>
-                <Mascot concept={concept} pose={pose} size={150} animated={false} limbStyle="legacy" />
+                <Mascot concept={concept} pose={pose} size={150} limbStyle="legacy" />
               </Tile>
             ))}
           </div>
@@ -199,7 +198,7 @@ export function TaittoBranches(): ReactElement {
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               {BRANCH_POSES.map((pose) => (
-                <Mascot key={pose} concept={def.id} pose={pose} size={92} animated={false} />
+                <Mascot key={pose} concept={def.id} pose={pose} size={92} />
               ))}
               <Mascot concept={def.id} pose="idle" size={92} silhouette animated={false} />
             </div>

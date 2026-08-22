@@ -132,8 +132,11 @@ export type MascotProps = {
 /** Head-and-shoulders framings, as viewBox windows onto the same drawing. */
 function viewBoxFor(crop: MascotCrop, headX: number, headY: number, headR: number): string {
   if (crop === "full") return MASCOT_VIEWBOX;
-  const side = crop === "bust" ? headR * 3.2 : headR * 2.6;
-  const cy = crop === "bust" ? headY + headR * 0.62 : headY + headR * 0.12;
+  // Wide enough that whatever a species carries above its head — antlers,
+  // hare ears, a witch hat — is inside the frame. A portrait that crops the
+  // one feature telling two species apart is a portrait of neither.
+  const side = crop === "bust" ? headR * 3.6 : headR * 2.9;
+  const cy = crop === "bust" ? headY + headR * 0.5 : headY + headR * 0.05;
   return `${headX - side / 2} ${cy - side / 2} ${side} ${side}`;
 }
 
