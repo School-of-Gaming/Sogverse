@@ -454,6 +454,22 @@ export const PALETTE_PRESETS: readonly PalettePreset[] = [
   },
 ];
 
+/** The four elements in their canonical order, for anything that lists them. */
+export const YTY_ORDER = ["harmony", "glow", "valor", "wit"] as const;
+export type YtyPip = (typeof YTY_ORDER)[number];
+
+/**
+ * The element colours as flat pips — a small lit dot or diamond a character
+ * can wear as part of its own body rather than as a garment.
+ *
+ * This is the one exception to "an outfit repaints, a body does not", and it
+ * earns it: the four elements are the piece of iconography the product owns
+ * outright, so a concept that wants to be unmistakably *ours* rather than
+ * generically nice has these to reach for. They are the lore's colours, not
+ * the caller's, which is why they are a constant here and not a colourway slot.
+ */
+export const YTY_PIPS: Record<YtyPip, string> = YTY_ELEMENT;
+
 /**
  * The four elements as wardrobe tints, so any concept can be dressed in an
  * element without becoming a Ytymo. This is the cheap way to get element

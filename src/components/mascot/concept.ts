@@ -1,13 +1,31 @@
 /**
  * What a base model is, as a type.
  *
- * A concept supplies four things and inherits everything else: a rig (where
- * its joints are), a set of colourways, a body and a head. Poses, expressions,
- * props and role costumes are shared machinery that reads the rig, so a new
- * species is roughly a hundred lines and immediately has eleven poses, six
- * expressions, twelve props and three costumes. That ratio is the point of the
- * whole directory — it is what makes a fleet maintainable by a model editing
- * TSX rather than by an illustrator redrawing sheets.
+ * A concept supplies a rig, a set of colourways, a body and a head, and
+ * inherits everything else. Poses, expressions, props and role costumes are
+ * shared machinery that reads the rig, so a new species is roughly a hundred
+ * lines and immediately has twelve poses, six expressions, a dozen props and
+ * three costumes. That ratio is the point of the whole directory — it is what
+ * makes a fleet maintainable by a model editing TSX rather than by an
+ * illustrator redrawing sheets.
+ *
+ * ## Forms: the third axis
+ *
+ * Round two asked two questions that turned out to be the same question. Could
+ * Kaveri be a whole family — a kid who reads girl-ish, one who reads boy-ish,
+ * one who reads as neither, and the three adults to match? And could Otso be
+ * more than a bear, without committing to seven pose sheets?
+ *
+ * Both are answered by a **form**: a named variation of one concept that may
+ * change the rig and the drawing, but shares the pose table, the expression
+ * set, the wardrobe and the animation. A form is not a colourway (that is
+ * `variant`, and it only repaints) and it is not a costume (that is `outfit`,
+ * and it only adds layers). It is the *build* — proportions, head shape, the
+ * silhouette's own features.
+ *
+ * The cost is one switch statement inside the concept's `Head`, and the reward
+ * is that six Kaveris and seven Finnish animals cost about as much as one of
+ * each did.
  */
 
 import type { ReactElement } from "react";
@@ -19,15 +37,34 @@ import type { Rig } from "./rig";
 import type { OutfitSlot } from "./outfit";
 import type { ExpressionId, MascotRole, PoseId, PropId } from "./vocabulary";
 
-export const CONCEPT_IDS = ["ytymo", "konsu", "otso", "kaveri", "taitto"] as const;
+export const CONCEPT_IDS = [
+  "ytymo",
+  "konsu",
+  "otso",
+  "kaveri",
+  "taitto",
+  "kaari",
+  "kide",
+  "nappi",
+] as const;
 export type ConceptId = (typeof CONCEPT_IDS)[number];
+
+/** A named build of one concept. See the note about forms above. */
+export type FormDef = {
+  id: string;
+  label: string;
+  /** One line on what this build is for. */
+  note: string;
+};
 
 /** What every concept-supplied part receives. */
 export type PartProps = {
   rig: Rig;
   colors: Colorway;
-  /** Which colourway is in play — the only thing a part may branch on. */
+  /** Which colourway is in play. */
   variantId: string;
+  /** Which build is in play. Always a real id — the concept's first by default. */
+  form: string;
   /** Class for the gentle float, or empty string when static. */
   floatClass: string;
   /**
@@ -52,6 +89,7 @@ export type FleetMember = {
   /** The job they do on the site. */
   job: string;
   variantId: string;
+  form?: string;
   role: MascotRole;
   pose: PoseId;
   expression: ExpressionId;
@@ -67,6 +105,8 @@ export type ConceptDef = {
   kind: string;
   /** Whether it extends the existing Yty lore or starts clean. */
   origin: "yty" | "fresh";
+  /** Where this one came from, when it is a branch off another concept. */
+  branchOf?: ConceptId;
   /** The pitch — who it wins over and why it is not like the others. */
   pitch: string;
   /** Honest limitations, shown next to the pitch. */
@@ -77,7 +117,12 @@ export type ConceptDef = {
   slots: readonly OutfitSlot[];
   /** What it cannot wear, and why. Empty when it can wear everything. */
   wardrobeLimit: string;
+  /** The default build's skeleton. */
   rig: Rig;
+  /** The named builds, when a concept has more than one. */
+  forms?: readonly FormDef[];
+  /** The skeleton for a given build. Defaults to `rig` for every form. */
+  rigFor?: (form: string) => Rig;
   faceMode: FaceMode;
   variants: readonly VariantDef[];
   limbs: (colors: Colorway) => LimbPaint;
@@ -87,3 +132,13 @@ export type ConceptDef = {
   Crown?: (props: PartProps) => ReactElement | null;
   fleet: readonly FleetMember[];
 };
+
+/** The build a concept uses when the caller does not name one. */
+export function defaultForm(def: ConceptDef): string {
+  return def.forms?.[0]?.id ?? "default";
+}
+
+/** The skeleton for a concept in a given build. */
+export function rigOf(def: ConceptDef, form: string): Rig {
+  return def.rigFor?.(form) ?? def.rig;
+}

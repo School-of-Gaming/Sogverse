@@ -1,5 +1,5 @@
 /**
- * Taitto — the folded one.
+ * Taitto — the folded one. The original, unchanged in kind.
  *
  * "Taitto" is Finnish for a fold. A Taitto is a being made of flat planes
  * creased into a shape, like a paper model that got up and walked off — every
@@ -11,6 +11,11 @@
  * without breaking anything. It is also the most graphic: at icon size the
  * hexagonal head and the chevron torso are two hard shapes that nothing else
  * in the fleet resembles.
+ *
+ * Round two's verdict was that this is the most interesting direction and that
+ * it "leans a tad too hard on geometry". Rather than soften this one and lose
+ * what made it sharp, three branches sit beside it — Kaari, Kide and Nappi —
+ * each conceding curvature somewhere different. This file is the control.
  */
 
 import type { ReactElement } from "react";
@@ -38,6 +43,11 @@ const RIG: Rig = {
   reach: 0,
   limbW: 8,
   handR: 7.5,
+  // Hard angles all the way down: a folded plane bends at a crease, and an
+  // IK elbow is exactly that.
+  limbStyle: "jointed",
+  armLen: 62,
+  legLen: 40,
   torso: { x: 70, y: 98, w: 60, h: 52 },
   fusedHead: false,
 };
@@ -104,13 +114,13 @@ export const TAITTO: ConceptDef = {
   kind: "Geometric being — folded planes, no curve anywhere",
   origin: "fresh",
   pitch:
-    "The one that looks designed rather than drawn. \"Taitto\" is a fold; a Taitto is a creature creased out of flat planes, and every colour on it is a facet catching different light. It is the most graphic of the five and the only one that would work as a logo, a loading shape and a character at the same time. Kids read it as a papercraft they could make. Parents read it as a considered brand rather than a cartoon. Gedus, who spend their evenings explaining polygon budgets, will get it immediately.",
+    "The one that looks designed rather than drawn. \"Taitto\" is a fold; a Taitto is a creature creased out of flat planes, and every colour on it is a facet catching different light. It is the most graphic thing here and the only one that would work as a logo, a loading shape and a character at the same time. Kids read it as a papercraft they could make. Parents read it as a considered brand rather than a cartoon. Gedus, who spend their evenings explaining polygon budgets, will get it immediately.",
   caveat:
-    "The coldest. Hard edges are the opposite of cuddly, and a folded plane cannot look worried, apologetic or proud of you — it is the weakest concept for the emotional half of the job, which is most of what a parent-facing mascot is for.",
+    "The coldest, and knowingly so. Hard edges are the opposite of cuddly, and a folded plane cannot look worried, apologetic or proud of you — the emotional half of the job is most of what a parent-facing mascot is for. The three branches exist because that trade is worth testing rather than accepting.",
   landmark: "A hexagonal head plate and a chevron torso — two hard shapes nothing else here has.",
-  slots: ["hat", "face", "torso", "back", "extra"],
+  slots: ["hat", "face", "torso", "back", "extra", "scene"],
   wardrobeLimit:
-    "Anything soft fights the folds. Capes, party hats and shades work because they are planes too; a knitted beanie on origami reads as a rendering fault rather than a hat.",
+    "Anything soft fights the folds. Capes, party hats and shades work because they are planes too; a knitted beanie on origami reads as a rendering fault rather than as a hat.",
   rig: RIG,
   faceMode: "eyes",
   variants: TAITTO_VARIANTS,
@@ -133,7 +143,7 @@ export const TAITTO: ConceptDef = {
       job: "Gamer helper — club pages, achievements, leaderboards",
       variantId: "ember",
       role: "gamer",
-      pose: "controller",
+      pose: "seated",
       expression: "focused",
       blurb: "\"Kulma\" is a corner or an angle. The sharp one, permanently three frames ahead of you.",
     },

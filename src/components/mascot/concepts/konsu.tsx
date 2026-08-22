@@ -6,17 +6,48 @@
  * expressions are drawn as lit glyphs rather than as eyeballs: it is not
  * pretending to have a face, it is displaying one.
  *
- * That also makes it the most brand-native of the five. The lit colour is the
+ * That also makes it the most brand-native concept here. The lit colour is the
  * brand amber or the brand purple, glowing out of a dark chassis on a dark
  * page — the same two colours the product already uses, doing the job they are
  * best at.
+ *
+ * ## What round two changed, and why it is a small change
+ *
+ * The criticism was fair and narrow: a cool tech vibe, but a *generic* robot —
+ * it could be anyone's. So two things were added, both of which only this
+ * product could put on a machine, and nothing was taken away:
+ *
+ * - **A carry handle**, replacing the antenna. A handheld console with a
+ *   handle is a thing you take to a club rather than a thing that lives in a
+ *   server rack, and a robot that carries itself is a silhouette nobody else
+ *   in this space has. It also settles the round-one complaint that a hat and
+ *   the antenna competed for the same space: a hat now sits *under* the handle
+ *   and both survive.
+ * - **The four Yty elements**, as a lit marquee strip above the screen and as
+ *   a single element pip on the chest. The elements are the one piece of
+ *   iconography this product owns outright — a rival could copy a screen face,
+ *   and could not copy Harmony, Glow, Valor and Wit in a row.
+ *
+ * Whether that is enough to make it ownable is exactly the thing to look at on
+ * the page. It is a small change on purpose: round two's judgement was that
+ * Konsu is not where the effort should go.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, PartProps } from "../concept";
 import { showsFiligree } from "../detail";
-import { KONSU_VARIANTS, MASCOT_INK } from "../palette";
+import { KONSU_VARIANTS, MASCOT_INK, YTY_ORDER, YTY_PIPS } from "../palette";
+
+/**
+ * Which element a chassis belongs to. Arbitrary, and deliberately so — the
+ * point is that every Konsu has one, not that amber implies Glow.
+ */
+const ELEMENT_FOR_VARIANT: Record<string, (typeof YTY_ORDER)[number]> = {
+  amber: "glow",
+  violet: "wit",
+  mint: "harmony",
+};
 import type { Rig } from "../rig";
 
 const RIG: Rig = {
@@ -37,11 +68,16 @@ const RIG: Rig = {
   reach: 8,
   limbW: 10,
   handR: 9,
+  // A machine's arm folds at a hinge, and a hinge is exactly what the IK
+  // solve draws.
+  limbStyle: "jointed",
+  armLen: 54,
+  legLen: 36,
   torso: { x: 64, y: 106, w: 72, h: 52 },
   fusedHead: false,
 };
 
-function Body({ colors, detail }: PartProps): ReactElement {
+function Body({ colors, variantId, detail }: PartProps): ReactElement {
   return (
     <g>
       <rect x={62} y={104} width={76} height={58} rx={20} fill={colors.bodyTop} />
@@ -51,6 +87,13 @@ function Body({ colors, detail }: PartProps): ReactElement {
       <rect x={86.5} y={123.5} width={6} height={17} rx={3} fill={colors.accent} />
       <circle cx={114} cy={128} r={4.6} fill={colors.accent} />
       <circle cx={123} cy={137} r={4.6} fill={colors.spark} />
+      {/* The element pip: one diamond in one of the four lore colours. Which
+          one is a property of the chassis, so a Konsu belongs to an element
+          the way a gamer does. */}
+      <path
+        d={`M 100 118 L 106 126 L 100 134 L 94 126 Z`}
+        fill={YTY_PIPS[ELEMENT_FOR_VARIANT[variantId] ?? "glow"]}
+      />
       {showsFiligree(detail) && (
         <>
           <rect x={107} y={144} width={16} height={3} rx={1.5} fill={colors.spark} opacity={0.45} />
@@ -67,10 +110,24 @@ function Head({ colors, detail }: PartProps): ReactElement {
       <rect x={49} y={54} width={11} height={24} rx={5.5} fill={colors.limb} />
       <rect x={140} y={54} width={11} height={24} rx={5.5} fill={colors.limb} />
       <rect x={57} y={30} width={86} height={70} rx={24} fill={colors.bodyTop} />
-      <rect x={65} y={38} width={70} height={56} rx={18} fill={colors.panel} />
+      {/* The marquee: four lit element pips in a row, the way an arcade
+          cabinet wears its name. */}
+      <rect x={68} y={35} width={64} height={9} rx={4.5} fill={colors.panel} />
+      {YTY_ORDER.map((element, i) => (
+        <rect
+          key={element}
+          x={74 + i * 14}
+          y={37.5}
+          width={9}
+          height={4}
+          rx={2}
+          fill={YTY_PIPS[element]}
+        />
+      ))}
+      <rect x={65} y={47} width={70} height={47} rx={16} fill={colors.panel} />
       {showsFiligree(detail) && (
         <path
-          d="M 72 92 L 92 40 L 102 40 L 82 92 Z"
+          d="M 72 90 L 90 49 L 100 49 L 82 90 Z"
           fill={colors.sclera}
           opacity={0.08}
         />
@@ -79,27 +136,29 @@ function Head({ colors, detail }: PartProps): ReactElement {
   );
 }
 
-function Crown({ colors, floatClass }: PartProps): ReactElement {
+/**
+ * The carry handle. Drawn as a static part rather than a floating one — a
+ * handle that bobbed independently of the machine it is bolted to would read
+ * as broken, which is the opposite of what a solid grab handle is for.
+ */
+function Crown({ colors }: PartProps): ReactElement {
   return (
-    <g
-      className={floatClass}
-      style={{ transformBox: "view-box", transformOrigin: "100px 32px" }}
-    >
+    <g>
       <path
-        d="M 100 32 L 100 17"
-        stroke={colors.limb}
-        strokeWidth={5}
-        strokeLinecap="round"
+        d="M 74 34 L 74 20 Q 74 10 86 10 L 114 10 Q 126 10 126 20 L 126 34"
         fill="none"
+        stroke={colors.limb}
+        strokeWidth={8}
+        strokeLinecap="round"
       />
-      <circle
-        cx={100}
-        cy={12}
-        r={6.5}
-        fill={colors.accent}
-        stroke={MASCOT_INK.line}
-        strokeWidth={2}
+      <path
+        d="M 84 17 L 116 17"
+        stroke={colors.accent}
+        strokeWidth={3.4}
+        strokeLinecap="round"
       />
+      <circle cx={74} cy={33} r={5} fill={colors.bodyBottom} stroke={MASCOT_INK.line} strokeWidth={1.6} />
+      <circle cx={126} cy={33} r={5} fill={colors.bodyBottom} stroke={MASCOT_INK.line} strokeWidth={1.6} />
     </g>
   );
 }
@@ -107,16 +166,16 @@ function Crown({ colors, floatClass }: PartProps): ReactElement {
 export const KONSU: ConceptDef = {
   id: "konsu",
   species: "Konsu",
-  kind: "Robot / gadget — a handheld console that grew limbs",
+  kind: "Robot / gadget — a portable console with a carry handle",
   origin: "fresh",
   pitch:
     "The nerdiest of the five and the most obviously ours. Konsu's face is a screen, so its expressions are lit pixels rather than eyeballs — which means the brand amber and the brand purple are doing the emoting, glowing out of a dark chassis on a dark page. Kids read it as a device that came alive. Parents read it as a product, not a cartoon animal, which is exactly right on a billing page. Gedus find it funny because it is unmistakably the class pet of a games club.",
   caveat:
-    "Hardest of the five to make warm. A machine consoling a worried parent is a tonal risk, and the screen face means it cannot blush its way out of a difficult message. It is also the concept most likely to date, because it looks like hardware.",
-  landmark: "The rounded-rectangle head with a dark screen and two lit eyes; the antenna ball.",
-  slots: ["hat", "face", "torso", "back", "extra"],
+    "Hardest here to make warm. A machine consoling a worried parent is a tonal risk, and the screen face means it cannot blush its way out of a difficult message. It is also the concept most likely to date, because it looks like hardware — and the handle and the element pips make it *ours* without making it any less a robot, which was the actual complaint.",
+  landmark: "A carry handle over a dark screen with two lit eyes, and four element pips under it.",
+  slots: ["hat", "face", "torso", "back", "extra", "scene"],
   wardrobeLimit:
-    "Wears everything, and everything reads as a costume rather than as clothing — which is half the charm and half the problem. A hat also hides the antenna, so the two identity cues compete.",
+    "Wears everything, and everything reads as a costume rather than as clothing — which is half the charm and half the problem. The handle sits above the hat line, so unlike round one's antenna it survives being given a beanie.",
   rig: RIG,
   faceMode: "screen",
   variants: KONSU_VARIANTS,
