@@ -1,3 +1,8 @@
+/// <reference types="vite/client" />
+// Declared here rather than in tsconfig's `types`: `import.meta.glob` is Vite's,
+// and this is the only file in the repo that uses it. A project-wide types entry
+// would put Vite's ambient declarations in front of every source file to serve
+// one test.
 import { describe, it, expect, beforeAll } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
