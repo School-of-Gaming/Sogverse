@@ -488,11 +488,17 @@ function buildSharedFields(
     });
   }
 
-  // validate() guarantees a non-empty topic before we ever build a payload;
-  // the "" sentinel only exists pre-validation, so reaching it here is a bug.
-  const { topic } = state;
+  // validate() guarantees a non-empty topic and language before we ever build a
+  // payload; the "" sentinel only exists pre-validation, so reaching either here
+  // is a bug.
+  const { topic, spokenLanguageCode } = state;
   if (topic === "") {
     throw new Error("buildSharedFields called before validate(): topic is unset");
+  }
+  if (spokenLanguageCode === "") {
+    throw new Error(
+      "buildSharedFields called before validate(): spoken language is unset",
+    );
   }
 
   return {
@@ -518,7 +524,7 @@ function buildSharedFields(
     // carried across a type change (or a row locked before the flag existed)
     // cannot leave a lock behind a field nobody can see.
     region_lock_country: config.regionLockable ? state.regionLockCountry : null,
-    spoken_language_code: state.spokenLanguageCode,
+    spoken_language_code: spokenLanguageCode,
     // The catalogue entry, on every save including the `null` that means no
     // picture — the route writes the column unconditionally, so an omission
     // and a removal would be the same request. The served path is derived from

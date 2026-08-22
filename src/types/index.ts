@@ -73,11 +73,6 @@ export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissi
 // because the DB test asserts against the row shape.
 export type VerificationEmailRequest = Database["public"]["Tables"]["verification_email_requests"]["Row"];
 
-// spoken_languages (reference table — the human languages a person speaks /
-// a club is delivered in). Distinct from `locale` (UI translation), which
-// has no DB table and is constrained by SUPPORTED_LOCALES in code.
-export type SpokenLanguage = Database["public"]["Tables"]["spoken_languages"]["Row"];
-
 // locations
 /**
  * A `locations` row as the application sees it: every column that any surface
@@ -141,6 +136,13 @@ export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 // the tag module under src/components/public/products/ re-exports it and owns the
 // label-key resolution.
 export type ProductTag = Database["public"]["Enums"]["product_tag"];
+// A human language a club is delivered in / a person speaks — the value in
+// `products.spoken_language_code` and each entry of `profiles.spoken_languages`.
+// Deliberately NOT the UI locale, which is which translation of the app someone
+// sees and is constrained by SUPPORTED_LOCALES in code; see the "Locale vs.
+// Spoken Language" rule in CLAUDE.md. The ordered value list and the string
+// guard live in src/lib/constants/spoken-languages.ts.
+export type SpokenLanguageCode = Database["public"]["Enums"]["spoken_language"];
 
 // products
 export type Product = Database["public"]["Tables"]["products"]["Row"];

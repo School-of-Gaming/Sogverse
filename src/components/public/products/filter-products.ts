@@ -1,4 +1,5 @@
 import type { AgeBand } from "@/lib/constants/gamer-age";
+import type { SpokenLanguageCode } from "@/lib/constants/spoken-languages";
 import type { ProductBrowseRow } from "@/types";
 import {
   matchesAudienceFilter,
@@ -15,9 +16,9 @@ import type { ProductTag } from "./product-tag";
 // - `format`: "online" / "in_person" / null. Maps directly to
 //   `products.is_remote`. Null means "no preference" and skips the
 //   filter. Single-valued — a product is one or the other, never both.
-// - `languages`: list of spoken-language codes (`fi`, `en`, `sv`).
-//   Single-valued on a product (`spoken_language_code`) — a product passes
-//   when its language is in the selected set. OR semantics across the set.
+// - `languages`: list of `spoken_language` enum values. Single-valued on a
+//   product (`spoken_language_code`, the same enum) — a product passes when its
+//   language is in the selected set. OR semantics across the set.
 // - `audiences`: list of audience values (`parents`, `families`) the parent
 //   has selected. A chip is the badge: each matches exactly the products
 //   wearing that label (`parents` = parents-only, `families` = the both-flags
@@ -51,16 +52,17 @@ import type { ProductTag } from "./product-tag";
 // Filters AND together: a product must pass every active filter.
 // Empty filter values are no-ops, so unset filters always pass.
 //
-// Lowercase invariant: incoming topic/language values are pre-lowercased by
-// `use-browse-filters.ts`; the product_topic enum values are already
-// lowercase, as are spoken-language codes in the DB.
+// Lowercase invariant: incoming topic values are pre-lowercased by
+// `use-browse-filters.ts` and the product_topic enum values are already
+// lowercase. Languages need no such care — both sides are the same generated
+// enum, so the comparison is between two members of one literal union.
 
 export type ProductFormat = "online" | "in_person";
 
 export interface BrowseFilters {
   topics: string[];
   format: ProductFormat | null;
-  languages: string[];
+  languages: SpokenLanguageCode[];
   audiences: AudienceFilterValue[];
   tags: ProductTag[];
   age: AgeBand | null;
@@ -91,9 +93,7 @@ export function filterProducts(
       if (filters.format === "in_person" && isOnline) return false;
     }
     if (filters.languages.length > 0) {
-      if (!filters.languages.includes(p.spoken_language_code.toLowerCase())) {
-        return false;
-      }
+      if (!filters.languages.includes(p.spoken_language_code)) return false;
     }
     if (!matchesAudienceFilter(p, filters.audiences)) return false;
     if (filters.tags.length > 0) {

@@ -10,6 +10,10 @@ import {
   type AudienceFilterValue,
 } from "./product-audience";
 import { isProductTag, type ProductTag } from "./product-tag";
+import {
+  isSpokenLanguageCode,
+  type SpokenLanguageCode,
+} from "@/lib/constants/spoken-languages";
 import { CATEGORY_PARAM } from "./shop-categories";
 
 const TOPIC_PARAM = "topic";
@@ -67,6 +71,21 @@ function parseTags(raw: string | null): ProductTag[] {
   return [...seen];
 }
 
+// The language chips, on the same terms as the tags: deduped and narrowed to
+// the `spoken_language` enum through its guard, so a hand-edited, typo'd or
+// stale `?lang=de` reads as no selection instead of emptying the grid. Unlike
+// the tags above, a retired value is not among the cases: an enum's vocabulary
+// only grows, so what this rejects was never on offer. This is the one place a
+// raw string becomes a language code on this surface; everything downstream
+// carries the type.
+function parseLanguages(raw: string | null): SpokenLanguageCode[] {
+  const seen = new Set<SpokenLanguageCode>();
+  for (const value of parseList(raw)) {
+    if (isSpokenLanguageCode(value)) seen.add(value);
+  }
+  return [...seen];
+}
+
 function parseFormat(raw: string | null): ProductFormat | null {
   if (raw === "online" || raw === "in_person") return raw;
   return null;
@@ -111,7 +130,7 @@ export function useBrowseFilters() {
     [searchParams],
   );
   const languages = useMemo(
-    () => parseList(searchParams.get(LANGUAGE_PARAM)),
+    () => parseLanguages(searchParams.get(LANGUAGE_PARAM)),
     [searchParams],
   );
   const audiences = useMemo(
@@ -148,7 +167,7 @@ export function useBrowseFilters() {
       next: {
         topics?: string[];
         format?: ProductFormat | null;
-        languages?: string[];
+        languages?: SpokenLanguageCode[];
         audiences?: AudienceFilterValue[];
         tags?: ProductTag[];
         age?: AgeBand | null;
@@ -228,12 +247,13 @@ export function useBrowseFilters() {
     [format, writeNext],
   );
 
+  // The caller is the chip row, which enumerates the enum, so there is no
+  // case-folding to do here: the value arrives already being one of the codes.
   const toggleLanguage = useCallback(
-    (code: string) => {
-      const lower = code.toLowerCase();
-      const next = languages.includes(lower)
-        ? languages.filter((l) => l !== lower)
-        : [...languages, lower];
+    (code: SpokenLanguageCode) => {
+      const next = languages.includes(code)
+        ? languages.filter((l) => l !== code)
+        : [...languages, code];
       writeNext({ languages: next });
     },
     [languages, writeNext],

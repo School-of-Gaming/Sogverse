@@ -226,7 +226,7 @@ describe("product audience", () => {
         is_remote: true,
         is_visible: false,
         timezone: "UTC",
-        spoken_language_code: "en",
+        spoken_language_code: "en" as const,
         registration_opens_at: new Date().toISOString(),
         created_by: TEST_IDS.ADMIN,
         ...fields,

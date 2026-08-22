@@ -24,9 +24,8 @@ import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useReferralCode } from "@/providers";
-import { useSpokenLanguages } from "@/services/users";
 import { readErrorMessage } from "@/lib/api/json-response";
-import type { SpokenLanguage } from "@/types";
+import type { SpokenLanguageCode } from "@/types";
 
 /**
  * Literals rather than `useId()`s, because the other fields on this form name
@@ -46,13 +45,7 @@ const registerGeduSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export function RegisterGeduForm({
-  initialSpokenLanguages,
-  redirect,
-}: {
-  initialSpokenLanguages: SpokenLanguage[];
-  redirect: string | null;
-}) {
+export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   const t = useTranslations("auth");
   const g = useTranslations("gameAccount");
   const c = useTranslations("common");
@@ -71,7 +64,7 @@ export function RegisterGeduForm({
   const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
   const [robloxUsername, setRobloxUsername] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
-  const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
+  const [spokenLanguages, setSpokenLanguages] = useState<SpokenLanguageCode[]>([]);
   /**
    * Coverage claims, keyed by `locations.id`. The picker browses the table
    * itself — which anonymous callers may read, `locations` being public
@@ -85,7 +78,6 @@ export function RegisterGeduForm({
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
-  const { data: availableLanguages } = useSpokenLanguages({ initialData: initialSpokenLanguages });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -292,7 +284,6 @@ export function RegisterGeduForm({
             />
           </Field>
           <SpokenLanguageCheckboxes
-            spokenLanguages={availableLanguages ?? []}
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
             disabled={isLoading}

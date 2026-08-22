@@ -1,7 +1,7 @@
 import "server-only";
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, ProductType } from "@/types";
+import type { Database, ProductType, SpokenLanguageCode } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -27,7 +27,7 @@ interface ProductPrice {
 export interface StripeProductSource {
   id: string;
   product_type: ProductType;
-  spoken_language_code: string;
+  spoken_language_code: SpokenLanguageCode;
   /**
    * Bare `date` columns, already `YYYY-MM-DD` and UTC-pinned. They travel to
    * Stripe verbatim — re-anchoring a zoneless date to anyone's timezone shifts
