@@ -229,6 +229,13 @@ export const ROUTES = {
    * flips to published in the same change that publishes `/roblox`.
    */
   robloxTerms: "/roblox/terms",
+  /**
+   * Throwaway design-exploration page for the mascot fleet. Public so it can
+   * be opened without a login while a direction is being picked, noindex via
+   * its own metadata, absent from the sitemap, and linked from nowhere. Delete
+   * this entry together with the page once a concept is chosen.
+   */
+  mascot: "/mascot",
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",
