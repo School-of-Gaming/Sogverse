@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
+import { BRAND } from "@/lib/constants/colors";
+import { styledName } from "@/lib/email-templates/utils";
+import { bulletList } from "@/lib/email-templates/blocks";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 
@@ -267,6 +270,7 @@ describe("every template renders in every locale", () => {
    * skipping the sweep.
    */
   const TEMPLATE_PARAMS: Record<string, Record<string, string | boolean | null>> = {
+    componentsReference: {},
     passwordReset: { resetLink: "https://sogverse.sog.gg/reset-password?code=abc123" },
     feedback: {
       userName: "Marja Virtanen",
@@ -332,5 +336,93 @@ describe("every template renders in every locale", () => {
       expect(html).not.toContain(`email.${key}`);
       expect(replyTo).toContain("@");
     });
+  });
+});
+
+/**
+ * The reference earns assertions because its one claim is that it is built from
+ * the real helpers. A specimen that drifted into hand-written markup would still
+ * look right in a screenshot while having stopped describing the components —
+ * which is the exact failure a reference page exists to prevent, so it is the
+ * thing pinned here.
+ */
+describe("templateRegistry componentsReference", () => {
+  function render() {
+    return templateRegistry.componentsReference.render({}, translatorStub, "en");
+  }
+
+  let translatorStub: EmailTranslator;
+
+  beforeAll(async () => {
+    translatorStub = await getEmailTranslator("en");
+  });
+
+  it("shows every button variant, rendered by the shared helper", () => {
+    const { html } = render();
+    // One filled cell per variant, each carrying that variant's own fill.
+    expect(html).toContain(`background-color:${BRAND.primary};background-image:linear-gradient(${BRAND.primary},${BRAND.primary})`);
+    expect(html).toContain(`background-color:${BRAND.secondary};background-image:linear-gradient(${BRAND.secondary},${BRAND.secondary})`);
+    expect(html).toContain(`color:${BRAND.primaryForeground}`);
+    expect(html).toContain(`color:${BRAND.secondaryForeground}`);
+    // The two-up row is the helper's, not a hand-built pair of cells.
+    expect([...html.matchAll(/width="50%"/g)]).toHaveLength(2);
+  });
+
+  it("carries the whole palette, each swatch as a real background", () => {
+    const { html } = render();
+    for (const hex of [BRAND.primary, BRAND.secondary]) {
+      expect(html).toContain(`background-image:linear-gradient(${hex},${hex})`);
+    }
+    expect(html).toContain("BRAND.secondary");
+  });
+
+  /**
+   * The rendered mail is the work and the code is the placard, so the page
+   * shows components and names them and explains nothing. Usage prose in the
+   * output competes with the specimen it describes, is read by nobody at the
+   * moment they need it, and is the half that rots — the specimen regenerates
+   * on every send and the sentence about it does not.
+   *
+   * Asserted on contrast ratios in particular because they are the most
+   * tempting thing to print: they read as helpful and they are a claim the
+   * reader cannot check from the mail. `palette-contrast.test.ts` holds them
+   * instead, where being wrong fails the build.
+   */
+  it("names its specimens and explains nothing", () => {
+    const { html } = render();
+    // Contrast ratios are the assertion that earns its place: they read as
+    // helpful, they are the thing most likely to creep back in, and this page
+    // carried them until today. The <code> and "Expected:" checks went with
+    // them — both described prose shapes that were never anywhere else.
+    expect(html).not.toMatch(/\d\.\d:1/);
+  });
+
+  /**
+   * A reference that shows a broken example teaches it. The ruled-out
+   * techniques live in this directory's CLAUDE.md instead, and this is what
+   * stops one drifting back onto the page.
+   */
+  it("demonstrates nothing that is known to be wrong", () => {
+    const { html } = render();
+    // cta-on-card only: it is the class this branch deleted for breaking light
+    // labels, and the reference is the first place someone would reintroduce it
+    // while copying a button. Absences of things that never existed were removed
+    // from here — an assertion that cannot fail reads as cover.
+    expect(html).not.toContain("cta-on-card");
+  });
+
+  it("shows the text helpers rather than describing them", () => {
+    const { html } = render();
+    expect(html).toContain(styledName("Marja"));
+    // The whole helper output, not a prefix of it: a slice short enough to be
+    // safe covers only the <ul> wrapper, which every list shares, so it passes
+    // whatever the items say — including when they say something the page does
+    // not render.
+    expect(html).toContain(
+      bulletList([
+        "One item, already composed and escaped.",
+        "And a second, so it is a list.",
+      ]),
+    );
   });
 });

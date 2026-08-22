@@ -1,5 +1,7 @@
 import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
 import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
+import { RADIUS } from "@/lib/constants/radius";
+import { pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -58,15 +60,19 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
        and by the reader's theme, so the dark label on the brand fill came back
        white in some inboxes and black in others. Pinning it through a gradient
        gives one answer everywhere Gmail renders. The class names are emitted by
-       blocks.ts — keep them in step. */
+       blocks.ts — keep them in step.
+
+       Only the dark label is pinned, and only because it is dark. There was a
+       matching rule for the outlined button's near-white label; it was the
+       cause of that button's bug, not its cure. background-clip:text restates a
+       text colour as a background colour, and a dark theme darkens light
+       backgrounds — so pinning the body foreground fed it to the exact pass
+       that darkens near-white. Measured against a client, not reasoned. Never
+       add a rule here for a colour a dark theme would lighten or darken as a
+       background; those colours are already safe inline, and the pinned ones
+       are listed with their evidence in the house-style test. */
     u + .body .cta-on-brand {
       background-image: linear-gradient(${DARK_THEME.bg}, ${DARK_THEME.bg}) !important;
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      color: transparent !important;
-    }
-    u + .body .cta-on-card {
-      background-image: linear-gradient(${DARK_THEME.foreground}, ${DARK_THEME.foreground}) !important;
       -webkit-background-clip: text !important;
       background-clip: text !important;
       color: transparent !important;
@@ -97,9 +103,14 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
               <span class="brand-primary" style="font-size:24px;font-weight:bold;color:${BRAND.primary};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
             </td>
           </tr>
-          <!-- Card -->
+          <!-- The message panel: the app's Card, rendered in a table cell. It
+               takes the same three tokens the component does — the card fill,
+               the border, and rounded-lg — because a parent meets this surface
+               on the site before they meet it in their inbox. It sat at 12px
+               for a while, which is a step the app uses twice and never on a
+               card; that is what a literal drifting unnoticed looks like. -->
           <tr>
-            <td style="background-color:${DARK_THEME.card};border:1px solid ${DARK_THEME.border};border-radius:12px;padding:32px;">
+            <td style="${pinnedFill(DARK_THEME.card)}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};padding:32px;">
               <div style="color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
                 ${content}
               </div>
@@ -107,7 +118,7 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
           </tr>
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding-top:24px;color:${DARK_THEME.footerText};font-size:12px;">
+            <td align="center" style="padding-top:24px;color:${DARK_THEME.mutedFg};font-size:12px;">
               ${footerText}
             </td>
           </tr>
