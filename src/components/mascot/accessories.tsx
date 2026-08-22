@@ -110,20 +110,20 @@ const BEANIE: AccessoryDef = {
     return (
       <g>
         <path
-          d={`M ${x - w / 2} ${y + 8} Q ${x} ${y - 26} ${x + w / 2} ${y + 8} Z`}
+          d={`M ${x - w / 2} ${y + 8} Q ${x} ${y - 40} ${x + w / 2} ${y + 8} Z`}
           fill={colors.clothing}
           {...OUTLINE}
         />
         <rect
           x={x - w / 2 - 4}
-          y={y + 3}
+          y={y + 2}
           width={w + 8}
-          height={11}
-          rx={5.5}
+          height={12}
+          rx={6}
           fill={colors.clothingAccent}
           {...OUTLINE}
         />
-        <circle cx={x} cy={y - 20} r={7.5} fill={colors.clothingAccent} {...OUTLINE} />
+        <circle cx={x} cy={y - 26} r={8} fill={colors.clothingAccent} {...OUTLINE} />
       </g>
     );
   },
@@ -286,9 +286,34 @@ const SHADES: AccessoryDef = {
     const h = r * 1.7;
     return (
       <g>
-        <rect x={x - dx - w / 2} y={y - h / 2} width={w} height={h} rx={h * 0.35} fill={MASCOT_INK.line} />
-        <rect x={x + dx - w / 2} y={y - h / 2} width={w} height={h} rx={h * 0.35} fill={MASCOT_INK.line} />
-        <rect x={x - dx / 2} y={y - 2.4} width={dx} height={4.8} rx={2.4} fill={MASCOT_INK.line} />
+        <rect
+          x={x - dx - w / 2}
+          y={y - h / 2}
+          width={w}
+          height={h}
+          rx={h * 0.35}
+          fill={MASCOT_INK.line}
+          stroke={colors.clothingAccent}
+          strokeWidth={2.4}
+        />
+        <rect
+          x={x + dx - w / 2}
+          y={y - h / 2}
+          width={w}
+          height={h}
+          rx={h * 0.35}
+          fill={MASCOT_INK.line}
+          stroke={colors.clothingAccent}
+          strokeWidth={2.4}
+        />
+        <rect
+          x={x - dx / 2}
+          y={y - 2.6}
+          width={dx}
+          height={5.2}
+          rx={2.6}
+          fill={colors.clothingAccent}
+        />
         <path
           d={`M ${x - dx - w / 2} ${y} L ${x - rig.head.r} ${y - 4}`}
           stroke={MASCOT_INK.line}

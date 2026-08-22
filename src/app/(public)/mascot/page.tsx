@@ -114,26 +114,38 @@ export default function MascotExplorationPage() {
             </Note>
             <Note title="Ranked on surviving 24 pixels">
               <p>
-                <strong className="text-foreground">1. Konsu.</strong> Hard rectangle head, two
-                lit blocks on a dark screen — the highest contrast in the set and readable at 16.
+                First, the finding that applies to all five:{" "}
+                <strong className="text-foreground">no full-body figure works below about
+                48px.</strong> A whole person rendered 24 pixels tall gives the head six of
+                them, and no amount of level-of-detail tuning fixes that — it is arithmetic.
+                Every small use is therefore an <em>avatar crop</em>, and the ladders below are
+                there to show you where each one gives up. Ranked on the crop, which is the case
+                that matters:
               </p>
               <p>
-                <strong className="text-foreground">2. Otso.</strong> Two ear circles do the
-                whole job. Unmistakable as a flat shape.
+                <strong className="text-foreground">1. Otso.</strong> Two ear circles do the
+                whole job. The only one still unmistakable as a 24px full body, and the
+                strongest silhouette in the set.
               </p>
               <p>
-                <strong className="text-foreground">3. Ytymo.</strong> The egg survives; the
-                thing that tells the four apart (the sign overhead) is small, so at icon size
-                they differ only by hue.
+                <strong className="text-foreground">2. Konsu.</strong> Hard rectangle head, two
+                lit blocks on a dark screen — the highest contrast here. Reads at 32 full-body,
+                and its head crop is the cleanest of the five.
               </p>
               <p>
-                <strong className="text-foreground">4. Taitto.</strong> Great shapes, but the
-                facets are close in value, so below ~32px it flattens into one blob.
+                <strong className="text-foreground">3. Ytymo.</strong> The egg plus the sign
+                overhead is a surprisingly good small shape — the sign is the bit that survives
+                and it is also the bit that tells the four elements apart, which is lucky.
               </p>
               <p>
-                <strong className="text-foreground">5. Kaveri.</strong> The weakest, honestly. A
-                small human head is a small circle and the hair is carrying it. Below 48px it
-                needs the bust crop, which is why that crop exists.
+                <strong className="text-foreground">4. Kaveri.</strong> Fails full-body early
+                and recovers completely in the bust crop, where the hair silhouette and the
+                hood do the identifying. Acceptable, because avatars are the only small use.
+              </p>
+              <p>
+                <strong className="text-foreground">5. Taitto.</strong> Last, and it surprised
+                me: the facets are close in value, so below ~32px the whole figure flattens to
+                one amber lozenge. Its head crop is excellent — the problem is only the body.
               </p>
             </Note>
             <Note title="Ranked on how much dressing-up they can carry">

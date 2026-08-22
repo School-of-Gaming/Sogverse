@@ -32,6 +32,7 @@ const RIG: Rig = {
   mouthY: 91,
   crown: { x: 100, y: 44 },
   crownW: 58,
+  reach: 6,
   limbW: 12,
   handR: 10,
   torso: { x: 68, y: 112, w: 64, h: 46 },
@@ -92,7 +93,7 @@ export const OTSO: ConceptDef = {
   rig: RIG,
   faceMode: "eyes",
   variants: OTSO_VARIANTS,
-  limbs: (c) => ({ arm: c.limb, leg: c.limb, hand: c.bodyBottom, foot: c.bodyBottom }),
+  limbs: (c) => ({ arm: c.bodyBottom, leg: c.bodyBottom, hand: c.panel, foot: c.panel }),
   Body,
   Head,
   fleet: [

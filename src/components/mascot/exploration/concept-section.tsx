@@ -177,7 +177,7 @@ export function ConceptSection({ def }: { def: ConceptDef }): ReactElement {
         <section>
           <Rubric
             title="Scale ladder"
-            note="Detail drops out as the render shrinks: filigree below 96px, props and small face items below 40px."
+            note="Detail drops out as the render shrinks: filigree below 96px, props and small face items below 40px. Note where the whole figure stops working — that is what the avatar crop beside it is for."
           />
           <div className="flex flex-wrap items-end gap-5 rounded-lg border border-border bg-background p-4">
             {LADDER.map((size) => (

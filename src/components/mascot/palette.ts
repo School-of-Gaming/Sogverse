@@ -29,6 +29,15 @@ export const MASCOT_INK = {
   paper: "#FFF7EA",
   /** The ground shadow. Darker than the darkest app surface so it reads on one. */
   shadow: "#050505",
+  /**
+   * Dark plastic. Every device a character holds is moulded out of this rather
+   * than out of the character's own colourway — a controller tinted to match a
+   * mint blob is a mint controller on a mint belly, which is no controller at
+   * all. Only the buttons and keys take the character's accent, which is
+   * enough to keep the object part of the same illustration.
+   */
+  device: "#39324D",
+  deviceLight: "#514868",
 } as const;
 
 /**
@@ -96,7 +105,7 @@ export const YTYMO_VARIANTS: readonly VariantDef[] = [
       spark: "#0E7C58",
       ...YTYMO_FACE,
       blush: "#FF9BB0",
-      clothing: "#0B6B4C",
+      clothing: BRAND.primary,
       clothingAccent: MASCOT_INK.paper,
     },
   },
@@ -113,7 +122,7 @@ export const YTYMO_VARIANTS: readonly VariantDef[] = [
       spark: "#A85F00",
       ...YTYMO_FACE,
       blush: "#FF8F6E",
-      clothing: "#9C5B00",
+      clothing: BRAND.secondary,
       clothingAccent: MASCOT_INK.paper,
     },
   },
@@ -130,7 +139,7 @@ export const YTYMO_VARIANTS: readonly VariantDef[] = [
       spark: "#9E1F3C",
       ...YTYMO_FACE,
       blush: "#FF7C9A",
-      clothing: "#941B39",
+      clothing: BRAND.primary,
       clothingAccent: MASCOT_INK.paper,
     },
   },
@@ -147,7 +156,7 @@ export const YTYMO_VARIANTS: readonly VariantDef[] = [
       spark: "#5326B5",
       ...YTYMO_FACE,
       blush: "#FF9BC8",
-      clothing: "#4C1FA8",
+      clothing: BRAND.primary,
       clothingAccent: MASCOT_INK.paper,
     },
   },
@@ -175,8 +184,8 @@ export const KONSU_VARIANTS: readonly VariantDef[] = [
       sclera: BRAND.primary,
       pupil: "#0D101B",
       blush: "#FF8F6E",
-      clothing: "#26223A",
-      clothingAccent: BRAND.primary,
+      clothing: BRAND.primary,
+      clothingAccent: "#FFF0C6",
     },
   },
   {
@@ -193,8 +202,8 @@ export const KONSU_VARIANTS: readonly VariantDef[] = [
       sclera: "#C77DFF",
       pupil: "#0B0914",
       blush: "#FF7CC4",
-      clothing: "#221E36",
-      clothingAccent: "#C77DFF",
+      clothing: BRAND.secondary,
+      clothingAccent: "#EBD6FF",
     },
   },
   {
@@ -211,8 +220,8 @@ export const KONSU_VARIANTS: readonly VariantDef[] = [
       sclera: "#5FF0DA",
       pupil: "#07120F",
       blush: "#6EE7F5",
-      clothing: "#1A2733",
-      clothingAccent: "#3DD9C4",
+      clothing: "#3DD9C4",
+      clothingAccent: "#E4FFFA",
     },
   },
 ];
@@ -293,14 +302,14 @@ export const KAVERI_VARIANTS: readonly VariantDef[] = [
       bodyTop: "#D6BBF5",
       bodyBottom: "#B694E0",
       limb: "#2F2A47",
-      panel: "#6B00A8",
+      panel: "#B558F0",
       accent: BRAND.secondary,
       spark: BRAND.primary,
       sclera: MASCOT_INK.paper,
       pupil: MASCOT_INK.line,
       blush: "#FF93B4",
-      clothing: BRAND.secondary,
-      clothingAccent: BRAND.primary,
+      clothing: BRAND.primary,
+      clothingAccent: "#FFF0C6",
     },
   },
   {
@@ -311,14 +320,14 @@ export const KAVERI_VARIANTS: readonly VariantDef[] = [
       bodyTop: "#9FE3D8",
       bodyBottom: "#71C4B7",
       limb: "#23303B",
-      panel: "#12707F",
+      panel: "#3FCADD",
       accent: "#1F97A8",
       spark: BRAND.primary,
       sclera: MASCOT_INK.paper,
       pupil: MASCOT_INK.line,
       blush: "#FF9A8B",
-      clothing: "#12707F",
-      clothingAccent: BRAND.primary,
+      clothing: BRAND.primary,
+      clothingAccent: "#FFF0C6",
     },
   },
   {
@@ -329,14 +338,14 @@ export const KAVERI_VARIANTS: readonly VariantDef[] = [
       bodyTop: "#FFB4A2",
       bodyBottom: "#E8917C",
       limb: "#33263A",
-      panel: "#C24B6A",
+      panel: "#F5849A",
       accent: "#E0567B",
       spark: BRAND.secondary,
       sclera: MASCOT_INK.paper,
       pupil: MASCOT_INK.line,
       blush: "#FF7F94",
-      clothing: "#C24B6A",
-      clothingAccent: BRAND.secondary,
+      clothing: BRAND.secondary,
+      clothingAccent: "#EBD6FF",
     },
   },
 ];
@@ -411,6 +420,14 @@ export const TAITTO_VARIANTS: readonly VariantDef[] = [
  */
 export type ColorOverride = Partial<Colorway>;
 
+/**
+ * A preset only ever names `clothing` and `clothingAccent`. That is not a
+ * convention, it is the guarantee: those two slots are the only ones no
+ * concept's *body* is painted from, so a season can repaint every garment in
+ * the fleet and cannot repaint a single character. An earlier draft of these
+ * presets also set `accent`, which quietly recoloured one concept's hoodie and
+ * proved the point.
+ */
 export type PalettePreset = { id: string; label: string; colors: ColorOverride };
 
 export const PALETTE_PRESETS: readonly PalettePreset[] = [
@@ -418,22 +435,22 @@ export const PALETTE_PRESETS: readonly PalettePreset[] = [
   {
     id: "winter",
     label: "Winter",
-    colors: { clothing: "#B23A48", clothingAccent: "#FFFFFF", accent: "#E4F1FB" },
+    colors: { clothing: "#B23A48", clothingAccent: "#FFFFFF" },
   },
   {
     id: "summer",
     label: "Summer",
-    colors: { clothing: "#2AB6A6", clothingAccent: "#FFF7DC", accent: "#FFE58A" },
+    colors: { clothing: "#2AB6A6", clothingAccent: "#FFF7DC" },
   },
   {
     id: "halloween",
     label: "Halloween",
-    colors: { clothing: "#2A1B3D", clothingAccent: "#FF8A2B", accent: "#FF8A2B" },
+    colors: { clothing: "#2A1B3D", clothingAccent: "#FF8A2B" },
   },
   {
     id: "brand",
     label: "Brand",
-    colors: { clothing: BRAND.secondary, clothingAccent: BRAND.primary, accent: BRAND.primary },
+    colors: { clothing: BRAND.secondary, clothingAccent: BRAND.primary },
   },
 ];
 
@@ -443,8 +460,8 @@ export const PALETTE_PRESETS: readonly PalettePreset[] = [
  * flavour onto a fleet whose lore is otherwise fresh.
  */
 export const YTY_WARDROBE: Record<keyof typeof YTY_ELEMENT, ColorOverride> = {
-  harmony: { clothing: YTY_ELEMENT.harmony, clothingAccent: "#DFFBEE", accent: YTY_ELEMENT.harmony },
-  glow: { clothing: YTY_ELEMENT.glow, clothingAccent: "#FFF7DC", accent: YTY_ELEMENT.glow },
-  valor: { clothing: YTY_ELEMENT.valor, clothingAccent: "#FFEAEE", accent: YTY_ELEMENT.valor },
-  wit: { clothing: YTY_ELEMENT.wit, clothingAccent: "#F1EAFF", accent: YTY_ELEMENT.wit },
+  harmony: { clothing: YTY_ELEMENT.harmony, clothingAccent: "#DFFBEE" },
+  glow: { clothing: YTY_ELEMENT.glow, clothingAccent: "#FFF7DC" },
+  valor: { clothing: YTY_ELEMENT.valor, clothingAccent: "#FFEAEE" },
+  wit: { clothing: YTY_ELEMENT.wit, clothingAccent: "#F1EAFF" },
 };

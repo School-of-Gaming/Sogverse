@@ -42,6 +42,19 @@ export type Rig = {
    */
   crown: Point;
   crownW: number;
+  /**
+   * How far this species' hands are pushed out from the centre line, in
+   * viewBox units. A wide body swallows its own arms — a hand that the pose
+   * table puts at the hip lands *inside* a droplet or a chassis, and the arm
+   * disappears into the silhouette. Rather than fork the pose table per
+   * species, a wide concept declares how much further out its hands need to be
+   * and every pose gets the correction for free.
+   *
+   * It applies only to hands that are already close to the body. A pointing
+   * arm or a star jump is deliberately far out and must not be pushed further,
+   * or a wide species points off the edge of the canvas.
+   */
+  reach: number;
   /** Stroke width of a limb, and the radius of the hand on the end of it. */
   limbW: number;
   handR: number;
@@ -75,6 +88,16 @@ export function limbPath(from: Point, to: Point, bow: number): string {
   const len = Math.hypot(dx, dy);
   const scale = len === 0 ? 0 : bow / len;
   return `M ${n(from.x)} ${n(from.y)} Q ${n(mx - dy * scale)} ${n(my + dx * scale)} ${n(to.x)} ${n(to.y)}`;
+}
+
+/** Beyond this horizontal distance from the centre, a hand is already out. */
+const REACH_CUTOFF = 55;
+
+/** Applies a species' reach correction to one pose-supplied hand position. */
+export function reachedHand(rig: Rig, hand: Point): Point {
+  const dx = hand.x - 100;
+  if (rig.reach === 0 || Math.abs(dx) >= REACH_CUTOFF) return hand;
+  return { x: hand.x + Math.sign(dx) * rig.reach, y: hand.y };
 }
 
 /** Midpoint of two points — where a two-handed prop wants to sit. */

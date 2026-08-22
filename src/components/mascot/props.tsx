@@ -29,30 +29,30 @@ const OUTLINE = {
 function Sign({ at, colors }: PropProps): ReactElement {
   return (
     <g>
-      <rect x={at.x - 3} y={at.y - 20} width={6} height={24} rx={3} fill={MASCOT_INK.lineSoft} />
+      <rect x={at.x - 3} y={at.y - 18} width={6} height={22} rx={3} fill={MASCOT_INK.lineSoft} />
       <rect
-        x={at.x - 40}
-        y={at.y - 66}
-        width={80}
-        height={48}
+        x={at.x - 48}
+        y={at.y - 62}
+        width={74}
+        height={46}
         rx={9}
         fill={MASCOT_INK.paper}
         {...OUTLINE}
       />
-      <rect x={at.x - 28} y={at.y - 54} width={56} height={7} rx={3.5} fill={colors.accent} />
+      <rect x={at.x - 38} y={at.y - 51} width={54} height={7} rx={3.5} fill={colors.accent} />
       <rect
-        x={at.x - 28}
-        y={at.y - 41}
-        width={40}
+        x={at.x - 38}
+        y={at.y - 39}
+        width={38}
         height={6}
         rx={3}
         fill={MASCOT_INK.lineSoft}
         opacity={0.45}
       />
       <rect
-        x={at.x - 28}
-        y={at.y - 31}
-        width={28}
+        x={at.x - 38}
+        y={at.y - 29}
+        width={26}
         height={6}
         rx={3}
         fill={MASCOT_INK.lineSoft}
@@ -68,7 +68,7 @@ function Controller({ at, colors }: PropProps): ReactElement {
     <g>
       <path
         d={`M ${x - 34} ${y - 6} C ${x - 34} ${y - 17} ${x - 22} ${y - 17} ${x - 14} ${y - 13} L ${x + 14} ${y - 13} C ${x + 22} ${y - 17} ${x + 34} ${y - 17} ${x + 34} ${y - 6} C ${x + 34} ${y + 13} ${x + 24} ${y + 17} ${x + 18} ${y + 10} L ${x + 10} ${y + 2} L ${x - 10} ${y + 2} L ${x - 18} ${y + 10} C ${x - 24} ${y + 17} ${x - 34} ${y + 13} ${x - 34} ${y - 6} Z`}
-        fill={colors.panel}
+        fill={MASCOT_INK.device}
         {...OUTLINE}
       />
       <rect x={x - 26} y={y - 7} width={15} height={5} rx={2.5} fill={colors.accent} />
@@ -85,7 +85,7 @@ function KeyboardMouse({ at, colors }: PropProps): ReactElement {
   return (
     <g>
       <rect x={x - 54} y={y + 9} width={108} height={7} rx={3.5} fill={MASCOT_INK.lineSoft} />
-      <rect x={x - 46} y={y - 9} width={64} height={19} rx={4} fill={colors.panel} {...OUTLINE} />
+      <rect x={x - 46} y={y - 9} width={64} height={19} rx={4} fill={MASCOT_INK.device} {...OUTLINE} />
       {keys.map((i) => (
         <rect
           key={`a${i}`}
@@ -112,7 +112,7 @@ function KeyboardMouse({ at, colors }: PropProps): ReactElement {
       ))}
       <path
         d={`M ${x + 36} ${y + 10} C ${x + 27} ${y + 10} ${x + 27} ${y - 9} ${x + 36} ${y - 9} C ${x + 45} ${y - 9} ${x + 45} ${y + 10} ${x + 36} ${y + 10} Z`}
-        fill={colors.panel}
+        fill={MASCOT_INK.deviceLight}
         {...OUTLINE}
       />
       <path
@@ -165,7 +165,7 @@ function Laptop({ at, colors }: PropProps): ReactElement {
   return (
     <g>
       <g transform={`rotate(-7 ${x} ${y})`}>
-        <rect x={x - 30} y={y - 38} width={60} height={40} rx={5} fill={colors.panel} {...OUTLINE} />
+        <rect x={x - 30} y={y - 38} width={60} height={40} rx={5} fill={MASCOT_INK.device} {...OUTLINE} />
         <rect
           x={x - 25}
           y={y - 33}
@@ -175,11 +175,11 @@ function Laptop({ at, colors }: PropProps): ReactElement {
           fill={colors.sclera}
           opacity={0.85}
         />
-        <rect x={x - 20} y={y - 27} width={26} height={4} rx={2} fill={colors.pupil} opacity={0.5} />
-        <rect x={x - 20} y={y - 19} width={36} height={4} rx={2} fill={colors.pupil} opacity={0.35} />
-        <rect x={x - 20} y={y - 11} width={20} height={4} rx={2} fill={colors.pupil} opacity={0.35} />
+        <rect x={x - 20} y={y - 27} width={26} height={4} rx={2} fill={MASCOT_INK.line} opacity={0.5} />
+        <rect x={x - 20} y={y - 19} width={36} height={4} rx={2} fill={MASCOT_INK.line} opacity={0.35} />
+        <rect x={x - 20} y={y - 11} width={20} height={4} rx={2} fill={MASCOT_INK.line} opacity={0.35} />
       </g>
-      <rect x={x - 36} y={y + 1} width={72} height={10} rx={5} fill={colors.limb} {...OUTLINE} />
+      <rect x={x - 36} y={y + 1} width={72} height={10} rx={5} fill={MASCOT_INK.deviceLight} {...OUTLINE} />
       <rect x={x - 8} y={y + 4} width={16} height={3} rx={1.5} fill={MASCOT_INK.lineSoft} />
     </g>
   );

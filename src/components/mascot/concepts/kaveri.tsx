@@ -25,41 +25,42 @@ const RIG: Rig = {
   hipSpread: 14,
   footY: 178,
   footStyle: "boot",
-  shoulderL: { x: 74, y: 98 },
-  shoulderR: { x: 126, y: 98 },
-  head: { x: 100, y: 56, r: 26 },
-  eyeDx: 11.5,
+  shoulderL: { x: 72, y: 100 },
+  shoulderR: { x: 128, y: 100 },
+  head: { x: 100, y: 55, r: 28 },
+  eyeDx: 12.5,
   eyeY: 57,
-  eyeR: 5.8,
-  mouthY: 70,
-  crown: { x: 100, y: 34 },
-  crownW: 50,
+  eyeR: 6.2,
+  mouthY: 72,
+  crown: { x: 100, y: 31 },
+  crownW: 54,
+  reach: 0,
   limbW: 11,
   handR: 8,
-  torso: { x: 74, y: 92, w: 52, h: 54 },
+  torso: { x: 72, y: 94, w: 56, h: 52 },
   fusedHead: false,
 };
 
 function Body({ colors, detail }: PartProps): ReactElement {
   return (
     <g>
-      <rect x={93} y={74} width={14} height={20} rx={5} fill={colors.bodyBottom} />
+      <rect x={92} y={76} width={16} height={20} rx={5} fill={colors.bodyBottom} />
       <path
-        d="M 74 100 C 74 90 84 86 100 86 C 116 86 126 90 126 100 L 126 144 C 126 150 118 152 100 152 C 82 152 74 150 74 144 Z"
+        d="M 72 102 C 72 91 82 87 100 87 C 118 87 128 91 128 102 L 128 145 C 128 151 119 153 100 153 C 81 153 72 151 72 145 Z"
         fill={colors.accent}
       />
-      <ellipse cx={100} cy={91} rx={24} ry={9} fill={colors.panel} />
-      <rect x={86} y={120} width={28} height={17} rx={8} fill={colors.panel} opacity={0.6} />
+      <ellipse cx={100} cy={93} rx={26} ry={10} fill={colors.panel} />
+      <rect x={84} y={122} width={32} height={18} rx={9} fill={colors.panel} opacity={0.55} />
       {showsFiligree(detail) && (
         <>
           <path
-            d="M 93 96 L 92 110"
+            d="M 93 99 L 92 113"
             stroke={colors.panel}
             strokeWidth={3}
             strokeLinecap="round"
           />
           <path
-            d="M 107 96 L 108 108"
+            d="M 107 99 L 108 111"
             stroke={colors.panel}
             strokeWidth={3}
             strokeLinecap="round"
@@ -73,24 +74,24 @@ function Body({ colors, detail }: PartProps): ReactElement {
 function Head({ colors, detail }: PartProps): ReactElement {
   return (
     <g>
-      <circle cx={75} cy={60} r={6.5} fill={colors.bodyBottom} />
-      <circle cx={125} cy={60} r={6.5} fill={colors.bodyBottom} />
-      <rect x={76} y={30} width={48} height={52} rx={22} fill={colors.bodyTop} />
+      <circle cx={73} cy={60} r={7} fill={colors.bodyBottom} />
+      <circle cx={127} cy={60} r={7} fill={colors.bodyBottom} />
+      <rect x={74} y={26} width={52} height={58} rx={24} fill={colors.bodyTop} />
       <path
-        d="M 75 58 C 75 27 125 27 125 58 C 119 44 111 39 100 39 C 88 39 81 46 75 58 Z"
+        d="M 73 57 C 73 22 127 22 127 53 C 127 46 124 41 118 40 C 106 38 96 44 86 46 C 79 47 75 50 73 57 Z"
         fill={colors.limb}
       />
       {showsFiligree(detail) && (
         <g fill={colors.bodyBottom} opacity={0.55}>
-          <circle cx={88} cy={66} r={1.5} />
-          <circle cx={93} cy={69} r={1.3} />
-          <circle cx={112} cy={66} r={1.5} />
-          <circle cx={107} cy={69} r={1.3} />
+          <circle cx={86} cy={68} r={1.6} />
+          <circle cx={91} cy={71} r={1.4} />
+          <circle cx={114} cy={68} r={1.6} />
+          <circle cx={109} cy={71} r={1.4} />
         </g>
       )}
       {detail !== "icon" && (
         <path
-          d="M 82 33 C 90 27 110 27 118 33"
+          d="M 80 30 C 89 24 111 24 120 30"
           fill="none"
           stroke={MASCOT_INK.line}
           strokeWidth={2}
@@ -118,7 +119,7 @@ export const KAVERI: ConceptDef = {
   rig: RIG,
   faceMode: "eyes",
   variants: KAVERI_VARIANTS,
-  limbs: (c) => ({ arm: c.accent, leg: c.limb, hand: c.bodyTop, foot: c.pupil }),
+  limbs: (c) => ({ arm: c.panel, leg: c.limb, hand: c.bodyTop, foot: c.pupil }),
   Body,
   Head,
   fleet: [

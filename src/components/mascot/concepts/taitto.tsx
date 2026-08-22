@@ -35,6 +35,7 @@ const RIG: Rig = {
   mouthY: 79,
   crown: { x: 100, y: 42 },
   crownW: 54,
+  reach: 0,
   limbW: 8,
   handR: 7.5,
   torso: { x: 70, y: 98, w: 60, h: 52 },
@@ -73,7 +74,7 @@ function Head({ colors, detail }: PartProps): ReactElement {
   return (
     <g>
       <path d="M 100 30 L 131 47 L 131 79 L 100 96 L 69 79 L 69 47 Z" fill={colors.bodyTop} />
-      <path d="M 100 30 L 131 47 L 100 64 L 69 47 Z" fill={colors.spark} opacity={0.45} />
+      <path d="M 100 30 L 131 47 L 100 64 L 69 47 Z" fill={colors.spark} opacity={0.3} />
       <path d="M 131 47 L 131 79 L 100 96 L 100 64 Z" fill={colors.bodyBottom} opacity={0.5} />
       {showsFiligree(detail) && (
         <path

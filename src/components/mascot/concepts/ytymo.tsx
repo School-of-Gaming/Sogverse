@@ -25,18 +25,19 @@ const RIG: Rig = {
   hipSpread: 20,
   footY: 178,
   footStyle: "round",
-  shoulderL: { x: 54, y: 112 },
-  shoulderR: { x: 146, y: 112 },
-  head: { x: 100, y: 92, r: 50 },
+  shoulderL: { x: 62, y: 118 },
+  shoulderR: { x: 138, y: 118 },
+  head: { x: 100, y: 86, r: 50 },
   eyeDx: 19,
-  eyeY: 94,
+  eyeY: 87,
   eyeR: 9.5,
-  mouthY: 118,
+  mouthY: 111,
   crown: { x: 100, y: 48 },
   crownW: 60,
-  limbW: 9,
-  handR: 8.5,
-  torso: { x: 72, y: 118, w: 56, h: 34 },
+  reach: 16,
+  limbW: 11,
+  handR: 9.5,
+  torso: { x: 74, y: 130, w: 52, h: 30 },
   fusedHead: true,
 };
 
@@ -53,7 +54,7 @@ function Body({ colors, detail }: PartProps): ReactElement {
         fill={colors.bodyBottom}
         opacity={0.55}
       />
-      <ellipse cx={100} cy={140} rx={31} ry={17} fill={colors.panel} opacity={0.6} />
+      <ellipse cx={100} cy={138} rx={30} ry={16} fill={colors.panel} opacity={0.55} />
       {showsFiligree(detail) && (
         <ellipse
           cx={76}
@@ -165,7 +166,7 @@ export const YTYMO: ConceptDef = {
   rig: RIG,
   faceMode: "eyes",
   variants: YTYMO_VARIANTS,
-  limbs: (c) => ({ arm: c.limb, leg: c.limb, hand: c.limb, foot: c.bodyBottom }),
+  limbs: (c) => ({ arm: c.spark, leg: c.spark, hand: c.spark, foot: c.spark }),
   Body,
   Head,
   Crown,

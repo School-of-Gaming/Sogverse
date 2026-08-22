@@ -97,7 +97,7 @@ export const POSES: Record<PoseId, PoseSpec> = {
     grip: "up",
     legs: "stand",
     handL: { x: 72, y: 150 },
-    handR: { x: 146, y: 56 },
+    handR: { x: 150, y: 76 },
     bowL: 8,
     bowR: -12,
     defaultProp: "sign",
@@ -106,8 +106,8 @@ export const POSES: Record<PoseId, PoseSpec> = {
   controller: {
     grip: "front",
     legs: "wide",
-    handL: { x: 84, y: 132 },
-    handR: { x: 116, y: 132 },
+    handL: { x: 76, y: 138 },
+    handR: { x: 124, y: 138 },
     bowL: 8,
     bowR: -8,
     defaultProp: "controller",
@@ -116,8 +116,8 @@ export const POSES: Record<PoseId, PoseSpec> = {
   "keyboard-mouse": {
     grip: "desk",
     legs: "wide",
-    handL: { x: 86, y: 148 },
-    handR: { x: 124, y: 148 },
+    handL: { x: 80, y: 150 },
+    handR: { x: 126, y: 150 },
     bowL: 6,
     bowR: -6,
     defaultProp: "keyboard-mouse",
@@ -136,8 +136,8 @@ export const POSES: Record<PoseId, PoseSpec> = {
   laptop: {
     grip: "desk",
     legs: "wide",
-    handL: { x: 80, y: 142 },
-    handR: { x: 114, y: 136 },
+    handL: { x: 76, y: 146 },
+    handR: { x: 118, y: 138 },
     bowL: 7,
     bowR: -5,
     defaultProp: "laptop",
@@ -166,19 +166,20 @@ export const POSES: Record<PoseId, PoseSpec> = {
 };
 
 /**
- * Where the held object sits, derived from the grip rather than stored
- * per-pose. Storing it would be a second place for the same fact and would
- * let a pose move its hands without moving what is in them.
+ * Where the held object sits, derived from the grip and from the hands as they
+ * finally landed — after the species' reach correction, not before. Storing an
+ * anchor per pose would be a second place for the same fact, and would let a
+ * wide character's hands move without the thing they are holding following.
  */
-export function propAnchor(pose: PoseSpec): Point {
-  switch (pose.grip) {
+export function propAnchor(grip: Grip, handL: Point, handR: Point): Point {
+  switch (grip) {
     case "front":
-      return { x: (pose.handL.x + pose.handR.x) / 2, y: (pose.handL.y + pose.handR.y) / 2 - 4 };
+      return { x: (handL.x + handR.x) / 2, y: (handL.y + handR.y) / 2 - 4 };
     case "desk":
-      return { x: (pose.handL.x + pose.handR.x) / 2, y: (pose.handL.y + pose.handR.y) / 2 + 2 };
+      return { x: (handL.x + handR.x) / 2, y: (handL.y + handR.y) / 2 + 2 };
     case "up":
-      return pose.handR;
+      return handR;
     case "side":
-      return pose.handR;
+      return handR;
   }
 }

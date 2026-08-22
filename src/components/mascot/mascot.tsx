@@ -48,7 +48,7 @@ import { anchorsFor, ROLE_OUTFITS, type Outfit, type OutfitSlot } from "./outfit
 import { MASCOT_INK, type ColorOverride, type Colorway } from "./palette";
 import { POSES, propAnchor } from "./poses";
 import { HeldProp } from "./props";
-import { MASCOT_BASELINE, MASCOT_VIEWBOX, originOf } from "./rig";
+import { MASCOT_BASELINE, MASCOT_VIEWBOX, originOf, reachedHand } from "./rig";
 import {
   POSE_LABELS,
   ROLE_DEFAULT_PROP,
@@ -135,6 +135,11 @@ export function Mascot({
   const rig = def.rig;
   const spec = POSES[pose];
   const anchors = anchorsFor(rig);
+  // The pose table speaks in one canonical body's coordinates; a wide species
+  // corrects them once, here, so that everything downstream — arms, hands and
+  // whatever is held between them — agrees about where the hands ended up.
+  const handL = reachedHand(rig, spec.handL);
+  const handR = reachedHand(rig, spec.handR);
 
   // A role dresses the character; an explicit outfit is layered over the top,
   // so a caller can put a party hat on a gedu without losing the lanyard.
@@ -215,19 +220,19 @@ export function Mascot({
             />
             {drawSlots(HEAD_SLOTS)}
           </g>
-          <ArmLimb rig={rig} paint={paint} from={rig.shoulderL} to={spec.handL} bow={spec.bowL} />
+          <ArmLimb rig={rig} paint={paint} from={rig.shoulderL} to={handL} bow={spec.bowL} />
           {!waving && (
-            <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={spec.handR} bow={spec.bowR} />
+            <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={handR} bow={spec.bowR} />
           )}
           {showsProps(level) && (
-            <HeldProp prop={heldProp} at={propAnchor(spec)} colors={palette} />
+            <HeldProp prop={heldProp} at={propAnchor(spec.grip, handL, handR)} colors={palette} />
           )}
-          <Hand rig={rig} paint={paint} at={spec.handL} />
-          {!waving && <Hand rig={rig} paint={paint} at={spec.handR} />}
+          <Hand rig={rig} paint={paint} at={handL} />
+          {!waving && <Hand rig={rig} paint={paint} at={handR} />}
           {waving && (
             <g className={cls.wave} style={{ transformOrigin: originOf(rig.shoulderR) }}>
-              <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={spec.handR} bow={spec.bowR} />
-              <Hand rig={rig} paint={paint} at={spec.handR} />
+              <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={handR} bow={spec.bowR} />
+              <Hand rig={rig} paint={paint} at={handR} />
             </g>
           )}
           {drawSlots(GROUND_SLOTS)}
