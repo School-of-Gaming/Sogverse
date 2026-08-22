@@ -6,8 +6,9 @@ import type { ReactElement } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
-import type { ConceptDef } from "../concept";
 import { accessory, accessoryFits } from "../accessories";
+import type { ConceptId } from "../concept";
+import { getConcept } from "../concepts";
 import { Mascot } from "../mascot";
 import { OUTFIT_PRESETS } from "../outfit";
 import { PALETTE_PRESETS } from "../palette";
@@ -30,7 +31,14 @@ function paletteFor(id: string) {
   return PALETTE_PRESETS.find((p) => p.id === id)?.colors ?? {};
 }
 
-export function ConceptSection({ def }: { def: ConceptDef }): ReactElement {
+/**
+ * Takes the concept *id*, not its definition: the page is a server component
+ * and a definition carries React components (`Body`, `Head`, `Crown`), which
+ * cannot cross the server→client boundary. The lookup happens here, on the
+ * client, against the same registry.
+ */
+export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactElement {
+  const def = getConcept(conceptId);
   const primary = def.variants[0];
   return (
     <Card id={def.id} className="scroll-mt-24 overflow-hidden">

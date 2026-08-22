@@ -88,7 +88,7 @@ export default function MascotExplorationPage() {
       <section className="mb-12 space-y-8">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">The five concepts</h2>
         {CONCEPTS.map((def) => (
-          <ConceptSection key={def.id} def={def} />
+          <ConceptSection key={def.id} conceptId={def.id} />
         ))}
       </section>
 
