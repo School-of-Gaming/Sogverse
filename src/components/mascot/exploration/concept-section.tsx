@@ -41,7 +41,7 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
   const def = getConcept(conceptId);
   const primary = def.variants[0];
   return (
-    <Card id={def.id} className="scroll-mt-24 overflow-hidden">
+    <Card id={def.id} className="scroll-mt-24 overflow-hidden border-0">
       <CardContent className="space-y-10 p-6">
         {/* --- identity ------------------------------------------------- */}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
@@ -60,6 +60,9 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
               <Badge variant={def.origin === "yty" ? "secondary" : "outline"}>
                 {def.origin === "yty" ? "Yty-compatible" : "Fresh lore"}
               </Badge>
+              {def.branchOf !== undefined && (
+                <Badge variant="secondary">Branch off {getConcept(def.branchOf).species}</Badge>
+              )}
             </div>
             <p className="text-sm font-medium text-primary">{def.kind}</p>
             <p className="text-sm leading-relaxed text-foreground/90">{def.pitch}</p>
@@ -86,6 +89,23 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
           </div>
         </div>
 
+        {/* --- builds ----------------------------------------------------- */}
+        {def.forms !== undefined && (
+          <section>
+            <Rubric
+              title="Builds"
+              note="One concept, several bodies. A build may change the rig and the drawing; it shares the pose table, the expressions, the wardrobe and the animation."
+            />
+            <div className="flex flex-wrap gap-3">
+              {def.forms.map((form) => (
+                <Tile key={form.id} caption={form.label} sub={form.note}>
+                  <Mascot concept={def.id} form={form.id} pose="idle" size={140} />
+                </Tile>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* --- colourways ----------------------------------------------- */}
         <section>
           <Rubric
@@ -105,12 +125,17 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
         <section>
           <Rubric
             title="Pose sheet"
-            note="One shared pose table drives all five species — these are the same eleven entries."
+            note="One shared pose table drives every species — these are the same twelve entries, and each one carries its own animation."
           />
           <div className="flex flex-wrap gap-3">
             {MASCOT_POSES.map((pose) => (
               <Tile key={pose} caption={POSE_LABELS[pose]}>
-                <Mascot concept={def.id} pose={pose} size={116} />
+                <Mascot
+                  concept={def.id}
+                  pose={pose}
+                  {...(pose === "seated" ? { outfit: { scene: "desk" } } : {})}
+                  size={116}
+                />
               </Tile>
             ))}
           </div>
@@ -271,10 +296,12 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
                 <Mascot
                   concept={def.id}
                   variant={member.variantId}
+                  {...(member.form === undefined ? {} : { form: member.form })}
                   role={member.role}
                   pose={member.pose}
                   expression={member.expression}
                   prop={member.prop}
+                  {...(member.pose === "seated" ? { outfit: { scene: "desk" } } : {})}
                   size={132}
                 />
                 <p className="text-base font-semibold text-foreground">{member.name}</p>

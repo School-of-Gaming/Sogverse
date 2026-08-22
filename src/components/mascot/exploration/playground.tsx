@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { accessoriesForSlot, accessoryFits } from "../accessories";
 import { CONCEPT_IDS, type ConceptId } from "../concept";
 import { getConcept } from "../concepts";
+import { MASCOT_LOOKS } from "../seasons";
 import { DETAIL_LABELS, DETAIL_LEVELS, detailForSize, type DetailLevel } from "../detail";
 import { OUTFIT_SLOTS, SLOT_LABELS, type Outfit, type OutfitSlot } from "../outfit";
 import { PALETTE_PRESETS } from "../palette";
@@ -53,6 +54,21 @@ const DETAIL_CHOICES: Choice<DetailLevel | typeof AUTO>[] = [
   ...DETAIL_LEVELS.map((id) => ({ id, label: DETAIL_LABELS[id] })),
 ];
 const PALETTE_CHOICES: Choice<string>[] = PALETTE_PRESETS.map((p) => ({ id: p.id, label: p.label }));
+const LOOK_CHOICES: Choice<string>[] = [
+  { id: NONE, label: "None" },
+  { id: "auto", label: "Auto (today)" },
+  ...MASCOT_LOOKS.map((look) => ({ id: look.id, label: look.label })),
+];
+/**
+ * Which slots hold something the garment colours actually paint. The palette
+ * control was reported as doing nothing in round one, and it was right: the
+ * presets only ever touch `clothing` and `clothingAccent`, and a character
+ * wearing nothing has no surface painted from either. Rather than let the
+ * presets reach into the identity core — which is the one thing customisation
+ * must never do — the control now says what it colours and says so out loud
+ * when there is nothing on to colour.
+ */
+const PAINTED_SLOTS: readonly OutfitSlot[] = ["hat", "torso", "back", "extra", "scene"];
 const CROP_CHOICES: Choice<"full" | "bust" | "head">[] = [
   { id: "full", label: "Full body" },
   { id: "bust", label: "Bust" },
@@ -65,13 +81,17 @@ const TOGGLE_CHOICES: Choice<"on" | "off">[] = [
 
 export function Playground(): ReactElement {
   const [concept, setConcept] = useState<ConceptId>("kaveri");
+  const [form, setForm] = useState<string>("kid-b");
   const [variant, setVariant] = useState<string>("lilac");
   const [palette, setPalette] = useState<string>("native");
-  const [pose, setPose] = useState<PoseId>("controller");
+  const [look, setLook] = useState<string>(NONE);
+  const [pose, setPose] = useState<PoseId>("seated");
   const [expression, setExpression] = useState<ExpressionId>("excited");
   const [role, setRole] = useState<MascotRole>("gamer");
   const [prop, setProp] = useState<PropId | typeof AUTO>(AUTO);
-  const [outfit, setOutfit] = useState<Outfit>({});
+  // Starts wearing something, on purpose: an empty outfit is the state in
+  // which the palette control looks broken.
+  const [outfit, setOutfit] = useState<Outfit>({ torso: "hoodie", scene: "desk" });
   const [size, setSize] = useState(240);
   const [detail, setDetail] = useState<DetailLevel | typeof AUTO>(AUTO);
   const [crop, setCrop] = useState<"full" | "bust" | "head">("full");
@@ -90,8 +110,10 @@ export function Playground(): ReactElement {
   // leave the stored id orphaned. Resolving here rather than resetting on
   // change means switching to a species and back keeps your colourway.
   const activeVariant = def.variants.find((v) => v.id === variant)?.id ?? def.variants[0].id;
+  const activeForm = def.forms?.find((f) => f.id === form)?.id ?? def.forms?.[0]?.id;
   const paletteColors = PALETTE_PRESETS.find((p) => p.id === palette)?.colors ?? {};
   const effectiveDetail = detail === AUTO ? detailForSize(size) : detail;
+  const wearingSomethingPainted = PAINTED_SLOTS.some((slot) => outfit[slot] !== undefined);
 
   function setSlot(slot: OutfitSlot, id: string): void {
     setOutfit((current) => ({ ...current, [slot]: id === NONE ? undefined : id }));
@@ -99,8 +121,10 @@ export function Playground(): ReactElement {
 
   const configKey = JSON.stringify([
     concept,
+    activeForm,
     activeVariant,
     palette,
+    look,
     pose,
     expression,
     role,
@@ -139,8 +163,10 @@ export function Playground(): ReactElement {
           >
             <Mascot
               concept={concept}
+              {...(activeForm === undefined ? {} : { form: activeForm })}
               variant={activeVariant}
               colors={paletteColors}
+              {...(look === NONE ? {} : { look })}
               pose={pose}
               expression={expression}
               role={role}
@@ -187,6 +213,14 @@ export function Playground(): ReactElement {
 
         <div className="space-y-3">
           <ChipRow label="Species" options={CONCEPT_CHOICES} value={concept} onChange={setConcept} />
+          {def.forms !== undefined && (
+            <ChipRow
+              label="Build"
+              options={def.forms.map((f) => ({ id: f.id, label: f.label }))}
+              value={activeForm ?? def.forms[0].id}
+              onChange={setForm}
+            />
+          )}
           <ChipRow
             label="Colourway"
             options={def.variants.map((v) => ({ id: v.id, label: v.label }))}
@@ -194,6 +228,12 @@ export function Playground(): ReactElement {
             onChange={setVariant}
           />
           <ChipRow label="Palette" options={PALETTE_CHOICES} value={palette} onChange={setPalette} />
+          <p className="pl-[5.75rem] text-[11px] leading-tight text-muted-foreground">
+            {wearingSomethingPainted
+              ? "Paints the garment slots only — hats, tops, scarves, capes, ground props and the desk trim. It cannot reach the body, the head or the eyes, by design."
+              : "Nothing is on that takes a garment colour, so this control has nothing to paint. Put something in a Hat, Torso, Back, Extra or Scene slot below and it will."}
+          </p>
+          <ChipRow label="Look" options={LOOK_CHOICES} value={look} onChange={setLook} />
           <ChipRow label="Pose" options={POSE_CHOICES} value={pose} onChange={setPose} />
           <ChipRow
             label="Face"

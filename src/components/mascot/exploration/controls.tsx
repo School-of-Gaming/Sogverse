@@ -1,6 +1,7 @@
+/* eslint-disable i18next/no-literal-string -- throwaway developer-facing design-exploration surface; every string here is a control label on a page no user will ever see and that gets deleted with the exploration */
 "use client";
 
-import type { ReactElement, ReactNode } from "react";
+import { useState, type ReactElement, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -84,6 +85,44 @@ export function Rubric({ title, note }: { title: string; note?: string }): React
     <div className="mb-3 flex flex-wrap items-baseline gap-x-3">
       <h4 className="text-sm font-semibold uppercase tracking-wide text-foreground">{title}</h4>
       {note !== undefined && <p className="text-xs text-muted-foreground">{note}</p>}
+    </div>
+  );
+}
+
+/**
+ * A section that does not render its contents until it is opened.
+ *
+ * Not a styling choice: the deep dives below hold forty-odd mascots each, and
+ * eight of them open at once is a page nobody scrolls to the bottom of. The
+ * children sit behind a conditional rather than behind `hidden`, so a closed
+ * section costs one button and nothing else.
+ */
+export function Collapsible({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={() => {
+          setOpen((current) => !current);
+        }}
+        className="flex w-full items-baseline gap-3 px-5 py-4 text-left transition-colors hover:bg-accent/40"
+      >
+        <span className="text-lg font-semibold text-foreground">{title}</span>
+        {subtitle !== undefined && <span className="text-xs text-muted-foreground">{subtitle}</span>}
+        <span className="ml-auto text-xs uppercase tracking-wide text-primary">
+          {open ? "Close" : "Open"}
+        </span>
+      </button>
+      {open && <div className="border-t border-border">{children}</div>}
     </div>
   );
 }
