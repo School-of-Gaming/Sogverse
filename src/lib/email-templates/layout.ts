@@ -79,10 +79,11 @@ export function wrapInLayout({ title, content, locale = "en", t, extraStyles }: 
        matching rule for the outlined button's near-white label; it was the
        cause of that button's bug, not its cure. background-clip:text restates a
        text colour as a background colour, and a dark theme darkens light
-       backgrounds — so pinning #ededed fed it to the exact pass that darkens
-       #ededed. Measured, not reasoned: see the colour-fidelity check. Never add
-       a rule here for a colour a dark theme would lighten or darken as a
-       background; those colours are already safe inline. */
+       backgrounds — so pinning the body foreground fed it to the exact pass
+       that darkens near-white. Measured against a client, not reasoned. Never
+       add a rule here for a colour a dark theme would lighten or darken as a
+       background; those colours are already safe inline, and the pinned ones
+       are listed with their evidence in the house-style test. */
     u + .body .cta-on-brand {
       background-image: linear-gradient(${DARK_THEME.bg}, ${DARK_THEME.bg}) !important;
       -webkit-background-clip: text !important;

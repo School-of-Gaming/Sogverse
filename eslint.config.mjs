@@ -146,22 +146,30 @@ const eslintConfig = defineConfig([
   {
     files: ["src/lib/email-templates/**/*.ts"],
     rules: {
+      // String.raw, not a plain string: a selector is a JS string literal that
+      // esquery then parses, so `"\b"` reaches it as a backspace character and
+      // `"\s"` collapses to a bare `s`. Both spellings compile to a regex that
+      // is syntactically fine and matches nothing anyone would ever write, which
+      // is the worst failure mode available — the rule reports no errors and
+      // reads as a rule that is holding. It shipped that way once; a lint guard
+      // is only worth what a deliberately-bad line proves it catches.
       "no-restricted-syntax": ["error",
         {
-          // Prose in comments is untouched — ESLint sees nodes, not comments —
-          // so the directory's many explanatory hexes stay free. The word
-          // boundary keeps `&#8288;` and friends from tripping it.
-          selector: "Literal[value=/#[0-9a-fA-F]{3,8}\b/]",
+          // 3, 4, 6 or 8 hex digits, which is every shape a CSS colour comes in.
+          // The lookbehind is what keeps `&#8288;` — the word joiner that defuses
+          // a client's autolinker — from reading as a four-digit colour. Comments
+          // are not nodes, so the directory's explanatory hexes are untouched.
+          selector: String.raw`Literal[value=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
           message:
             "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
         },
         {
-          selector: "TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\b/]",
+          selector: String.raw`TemplateElement[value.raw=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
           message:
             "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
         },
         {
-          selector: "TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]",
+          selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
           message:
             "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
         },
