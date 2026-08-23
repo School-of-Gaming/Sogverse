@@ -137,7 +137,7 @@ export const LEGACY_ITEMS: readonly LegacyItem[] = [
       concept: "silmu",
       variant: "emerald",
       pose: "idle",
-      expression: "happy",
+      expression: "surprised",
       outfit: { hat: "beret" },
       colors: garment("pink"),
     },

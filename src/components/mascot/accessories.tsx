@@ -27,7 +27,14 @@ import type { ReactElement } from "react";
 import type { ConceptId } from "./concept";
 import { showsFiligree, type DetailLevel } from "./detail";
 import type { Anchors, OutfitSlot } from "./outfit";
-import { MASCOT_INK, MASCOT_SCENERY, shadeHex, swatchHex, type Colorway } from "./palette";
+import {
+  MASCOT_INK,
+  MASCOT_SCENERY,
+  shadeHex,
+  swatchHex,
+  tintHex,
+  type Colorway,
+} from "./palette";
 import type { Rig } from "./rig";
 
 export type AccessoryContext = {
@@ -831,14 +838,18 @@ const EARFLAP_HAT: AccessoryDef = {
           fill={colors.clothingAccent}
           {...OUTLINE}
         />
+        {/* The flaps are the hat, not its trim. `clothingAccent` is derived as
+            a near-white tint of the garment wherever a row or a fleet member
+            sets one, so painting them with it left four fifths of the hat pale
+            and the dome stranded as the only coloured part of its own hat. */}
         <path
           d={`M ${x - half - 5} ${y + 14} q -3 14 3 20 q 6 3 8 -3`}
-          fill={colors.clothingAccent}
+          fill={colors.clothing}
           {...OUTLINE}
         />
         <path
           d={`M ${x + half + 5} ${y + 14} q 3 14 -3 20 q -6 3 -8 -3`}
-          fill={colors.clothingAccent}
+          fill={colors.clothing}
           {...OUTLINE}
         />
         <circle cx={x} cy={y - 26} r={6} fill={colors.clothingAccent} {...OUTLINE} />
@@ -1819,6 +1830,296 @@ const SIGN_PAINTING: AccessoryDef = {
   renderBehind: (ctx) => <PaintBoard {...ctx} />,
 };
 
+// --- the engineer's kit ---------------------------------------------------
+
+/**
+ * Goggles pushed up onto the forehead.
+ *
+ * Worn *up* rather than over the eyes, and that is the whole character note:
+ * a person with goggles down is doing the dangerous bit right now, a person
+ * with goggles up has just finished doing it and is talking to you. The face
+ * stays the face, which also means this can be a `hat` rather than a `face`
+ * item - it attaches at the crown, so every species in the set wears it
+ * without a line of per-species code, including the one-eyed one where a pair
+ * of lenses across the eye line would have been nonsense.
+ *
+ * The two hazards, both caught by rasterising:
+ *
+ * **Size.** `crownW` runs from 36 units on a narrow-headed animal to 96 on
+ * Silmu, whose crown is most of its body. Lenses sized as a fraction of it
+ * come out as swimming goggles on one and a monocle on the other, so the
+ * radius is a fraction *clamped* to 8-15 units and the separation is derived
+ * from the radius rather than from the head. The pair is therefore about the
+ * same real size on everything, which is what an object worn on a face
+ * actually is.
+ *
+ * **Not being eyes.** Two discs above two eyes is a four-eyed creature. The
+ * defences are that the glass is a saturated cyan rather than white, that
+ * there is no pupil in it, that a visible bridge joins the two, and that the
+ * frames are the *same* colour as the strap they sit on - an eye in this
+ * system is a white ellipse with a black pupil, so a pair of coloured discs
+ * inside one continuous band does not collide with it. The first raster had
+ * pale rims, which made two light rings with dark centres directly above two
+ * light eyes with dark pupils, and the bear wearing them had four eyes. One
+ * band, two lenses, is the shape that cannot be misread.
+ *
+ * The glass takes a fixed swatch instead of a garment slot, the way the
+ * gardener's sprout takes the product's green: glass is a material, not
+ * clothing, and a customiser dyeing a strap should not be able to dye the
+ * lenses. The strap and the frames are garment colours, so the goggles still
+ * belong to whoever is wearing them.
+ */
+const GOGGLE_GLASS = shadeHex(swatchHex('cyan'), 0.28);
+
+const GOGGLES: AccessoryDef = {
+  id: 'goggles',
+  label: 'Goggles',
+  slot: 'hat',
+  minLevel: 'icon',
+  render: ({ anchors, colors, detail }) => {
+    const { x, y, w } = anchors.hat;
+    const half = w / 2;
+    const r = Math.min(Math.max(w * 0.2, 8), 13);
+    const gap = Math.max(r + 2.5, Math.min(half * 0.42, r + 6));
+    const lensY = y + r * 0.75 + 2;
+    // The strap is nearly flat rather than arched over the crown. An arched
+    // one disappeared behind its own lenses and left two gold crumbs at the
+    // temples; flat, it reads as one band crossing the head with the lenses
+    // set into it, which is the read that survives a 28-pixel portrait.
+    return (
+      <g>
+        <path
+          d={`M ${x - half * 1.04} ${lensY + 3} Q ${x} ${lensY - r * 0.25} ${x + half * 1.04} ${lensY + 3}`}
+          fill="none"
+          stroke={shadeHex(colors.clothing, 0.22)}
+          strokeWidth={r * 0.8}
+          strokeLinecap="round"
+        />
+        <rect
+          x={x - gap}
+          y={lensY - r * 0.28}
+          width={gap * 2}
+          height={r * 0.56}
+          fill={colors.clothing}
+        />
+        {[-gap, gap].map((dx) => (
+          <g key={dx}>
+            <circle
+              cx={x + dx}
+              cy={lensY}
+              r={r}
+              fill={colors.clothing}
+              stroke={MASCOT_INK.line}
+              strokeWidth={1.8}
+            />
+            <circle cx={x + dx} cy={lensY} r={r * 0.62} fill={GOGGLE_GLASS} />
+          </g>
+        ))}
+        {showsFiligree(detail) && (
+          <g fill={colors.clothingAccent}>
+            <rect x={x - half * 0.94} y={lensY - 1.5} width={7} height={5} rx={2.5} />
+            <rect x={x + half * 0.94 - 7} y={lensY - 1.5} width={7} height={5} rx={2.5} />
+          </g>
+        )}
+      </g>
+    );
+  },
+};
+
+/**
+ * A tool belt: a band at the hip, a buckle, a pouch and a hanging spanner.
+ *
+ * The cheapest item in this registry - the torso anchor already gives a box
+ * and every other torso garment is drawn from the same four numbers - and it
+ * earns its place by being the one costume cue that says *builder* below the
+ * neck. It drops out at icon size, where it would be a two-pixel line across
+ * a body, which is the same call the lanyard makes.
+ *
+ * The hanging tools are scenery metal rather than a garment colour, matching
+ * the props they are copies of: the spanner in the character's hand and the
+ * spanner on their hip have to be the same steel or the belt reads as
+ * decoration.
+ */
+const TOOL_BELT: AccessoryDef = {
+  id: 'tool-belt',
+  label: 'Tool belt',
+  slot: 'torso',
+  minLevel: 'simple',
+  render: ({ anchors, colors, detail }) => {
+    const t = anchors.torso;
+    const cx = t.x + t.w / 2;
+    const beltY = t.y + t.h * 0.72;
+    return (
+      <g>
+        <rect
+          x={cx - t.w * 0.52}
+          y={beltY}
+          width={t.w * 1.04}
+          height={10}
+          rx={3}
+          fill={colors.clothing}
+          {...OUTLINE}
+        />
+        <rect
+          x={cx - t.w * 0.42}
+          y={beltY + 8}
+          width={16}
+          height={14}
+          rx={3}
+          fill={shadeHex(colors.clothing, 0.28)}
+          {...OUTLINE}
+        />
+        <rect x={cx - 6} y={beltY - 2} width={12} height={14} rx={2.5} fill={colors.clothingAccent} {...OUTLINE} />
+        {showsFiligree(detail) && (
+          <>
+            <rect
+              x={cx + t.w * 0.26}
+              y={beltY + 8}
+              width={6}
+              height={17}
+              rx={3}
+              fill={MASCOT_SCENERY.stone}
+              {...OUTLINE}
+            />
+            <rect
+              x={cx - t.w * 0.39}
+              y={beltY + 12}
+              width={10}
+              height={3}
+              rx={1.5}
+              fill={colors.clothingAccent}
+              opacity={0.7}
+            />
+          </>
+        )}
+      </g>
+    );
+  },
+};
+
+// --- scene: the engine room -----------------------------------------------
+
+/**
+ * The engine room: a reactor column, pipes, gauges and a console.
+ *
+ * The composition follows the desk's rule and the door's arithmetic. The
+ * widest bodies in the set run from x=48 to x=152, so the two things that
+ * have to be seen whole - the column and the instrument panel - live outside
+ * that band, and everything that runs the full width of the canvas (the
+ * ceiling pipe, the floor pipes, the floor itself) is either above the head
+ * or behind the feet. The console is the one piece deliberately allowed to
+ * touch the character: it is drawn in the near layer from x=118, so a wide
+ * species overlaps it slightly and the room gains a depth cue that a
+ * side-by-side arrangement cannot give.
+ *
+ * Its top is at y=156, below the y=148 the standing poses put the free hand
+ * at. An earlier version had the surface at the hand line, which looked
+ * correct in the coordinates and rasterised as a console eating the hand and
+ * whatever it was holding.
+ *
+ * **The glow is three flat rectangles, not a filter.** Every accessory here
+ * has to render inside an email, where a blur is either dropped or turns the
+ * whole illustration into a raster; and a soft-edged bright column with
+ * nothing else in it is a lava lamp. So the core is a hard-edged stack -
+ * dark cyan, cyan, and a pale centre strip - inside a straight metal casing
+ * with a cap, a base and three bands across it. The bands are what stop it
+ * reading as liquid: light in a tube climbs, and a tube with steel rings
+ * around it is a machine.
+ *
+ * Cyan comes from the swatch list rather than from the wearer, for the reason
+ * furniture always does: a reactor tinted to match a mint bear is a mint
+ * reactor. Only the console's own readouts take the character's colours,
+ * which is exactly the split the desk already makes.
+ */
+const CORE_DEEP = shadeHex(swatchHex('cyan'), 0.55);
+const CORE_MID = swatchHex('cyan');
+const CORE_HOT = tintHex(swatchHex('cyan'), 0.68);
+/** Where the column stands, and how wide. Clear of every body in the set. */
+const COLUMN_X = 8;
+const COLUMN_W = 50;
+const RING_YS = [44, 92, 140];
+
+function EngineRoom({ colors, detail }: AccessoryContext): ReactElement {
+  return (
+    <g>
+      {/* floor, then the shadow on it: a scene suppresses the character's own */}
+      <rect x={0} y={STEP_Y} width={200} height={9} fill={MASCOT_SCENERY.stone} />
+      <rect x={0} y={162} width={200} height={11} rx={5.5} fill={MASCOT_SCENERY.stone} />
+      <rect x={0} y={169} width={200} height={4} fill={MASCOT_SCENERY.stoneDark} />
+      <rect x={64} y={159} width={9} height={17} rx={2} fill={MASCOT_SCENERY.stoneDark} />
+      <rect x={146} y={159} width={9} height={17} rx={2} fill={MASCOT_SCENERY.stoneDark} />
+      <rect x={0} y={176} width={200} height={7} rx={3.5} fill={MASCOT_SCENERY.stoneDark} />
+      <ellipse cx={100} cy={186} rx={44} ry={7} fill={MASCOT_INK.shadow} opacity={0.4} />
+
+      {/* the ceiling run, off the top of the column */}
+      <rect x={COLUMN_X + 4} y={6} width={200 - COLUMN_X - 4} height={11} rx={5.5} fill={MASCOT_SCENERY.stone} />
+      <rect x={170} y={14} width={9} height={30} rx={4} fill={MASCOT_SCENERY.stoneDark} />
+
+      {/* the reactor column */}
+      <rect x={COLUMN_X - 5} y={166} width={COLUMN_W + 10} height={19} rx={4} fill={MASCOT_SCENERY.stoneDark} />
+      <rect x={COLUMN_X} y={14} width={COLUMN_W} height={157} rx={6} fill={MASCOT_INK.device} />
+      <rect x={COLUMN_X + 9} y={22} width={COLUMN_W - 18} height={143} rx={4} fill={CORE_DEEP} />
+      <rect x={COLUMN_X + 14} y={22} width={COLUMN_W - 28} height={143} rx={3} fill={CORE_MID} />
+      <rect x={COLUMN_X + 20} y={22} width={COLUMN_W - 40} height={143} rx={3} fill={CORE_HOT} />
+      {RING_YS.map((ry) => (
+        <g key={ry}>
+          <rect x={COLUMN_X - 6} y={ry} width={COLUMN_W + 12} height={13} rx={4} fill={MASCOT_INK.deviceLight} />
+          <rect x={COLUMN_X - 6} y={ry + 9} width={COLUMN_W + 12} height={4} rx={2} fill={MASCOT_SCENERY.stoneDark} />
+        </g>
+      ))}
+      <rect x={COLUMN_X - 5} y={4} width={COLUMN_W + 10} height={16} rx={4} fill={MASCOT_SCENERY.stone} />
+
+      {/* the instrument panel, on the wall above the console */}
+      <rect x={150} y={44} width={46} height={40} rx={4} fill={MASCOT_INK.device} />
+      <circle cx={166} cy={62} r={11} fill={MASCOT_INK.paper} stroke={MASCOT_SCENERY.stone} strokeWidth={3.4} />
+      <path
+        d={`M 166 62 L ${166 - 6} ${62 - 7}`}
+        stroke={colors.accent}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+      />
+      <circle cx={186} cy={70} r={7} fill={MASCOT_INK.paper} stroke={MASCOT_SCENERY.stone} strokeWidth={3} />
+      <path d="M 186 70 L 190 66" stroke={colors.accent} strokeWidth={2} strokeLinecap="round" />
+      {showsFiligree(detail) && (
+        <g fill={MASCOT_INK.lineSoft} opacity={0.5}>
+          <rect x={165} y={52} width={2} height={4} rx={1} />
+          <rect x={156} y={61} width={4} height={2} rx={1} />
+          <rect x={172} y={61} width={4} height={2} rx={1} />
+        </g>
+      )}
+    </g>
+  );
+}
+
+const ENGINE_ROOM: AccessoryDef = {
+  id: 'engine-room',
+  label: 'Engine room',
+  slot: 'scene',
+  minLevel: 'simple',
+  render: ({ colors, detail }) => (
+    <g>
+      <rect x={118} y={156} width={80} height={10} rx={3} fill={MASCOT_INK.deviceLight} />
+      <rect x={122} y={163} width={74} height={22} rx={3} fill={MASCOT_INK.device} />
+      <rect x={128} y={167} width={30} height={14} rx={2} fill={colors.panel} />
+      <rect x={131} y={170} width={18} height={2.6} rx={1.3} fill={MASCOT_INK.line} opacity={0.45} />
+      <rect x={131} y={175} width={12} height={2.6} rx={1.3} fill={MASCOT_INK.line} opacity={0.3} />
+      <circle cx={168} cy={171} r={4} fill={colors.accent} />
+      <circle cx={180} cy={171} r={4} fill={colors.spark} />
+      <circle cx={168} cy={180} r={3.4} fill={colors.clothingAccent} opacity={0.75} />
+      <circle cx={180} cy={180} r={3.4} fill={colors.accent} opacity={0.6} />
+      {showsFiligree(detail) && (
+        <g>
+          <rect x={190} y={148} width={4} height={9} rx={2} fill={MASCOT_SCENERY.stoneDark} />
+          <rect x={185} y={144} width={14} height={5} rx={2.5} fill={colors.accent} />
+        </g>
+      )}
+      <rect x={0} y={STEP_Y + 7} width={200} height={2} fill={MASCOT_INK.shadow} opacity={0.35} />
+      <rect x={0} y={STEP_Y + 8} width={200} height={9} fill={MASCOT_SCENERY.stoneDark} />
+    </g>
+  ),
+  renderBehind: (ctx) => <EngineRoom {...ctx} />,
+};
+
 export const ACCESSORIES: readonly AccessoryDef[] = [
   HEADSET,
   BEANIE,
@@ -1860,6 +2161,9 @@ export const ACCESSORIES: readonly AccessoryDef[] = [
   STORY_SPROUT,
   DOOR,
   SIGN_PAINTING,
+  GOGGLES,
+  TOOL_BELT,
+  ENGINE_ROOM,
 ];
 
 const BY_ID = new Map(ACCESSORIES.map((a) => [a.id, a]));

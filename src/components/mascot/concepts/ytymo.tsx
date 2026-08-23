@@ -58,6 +58,11 @@ const RIG: Rig = {
   legLen: 28,
   torso: { x: 74, y: 132, w: 52, h: 30 },
   fusedHead: true,
+  // The one concept here that is not standing on the ground in the first
+  // place. It is condensed element with a face, its own sign already floats
+  // over its head, and the feet under it are a courtesy rather than anatomy —
+  // so it keeps a float at rest where every animal and every person loses one.
+  hovers: true,
 };
 
 /**

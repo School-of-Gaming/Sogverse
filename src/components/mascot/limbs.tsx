@@ -5,11 +5,12 @@
  * disc at each end and at the joint itself. Three properties come out of that
  * shape and all three were missing from round one's single curved stroke:
  *
- * - **It has an elbow.** A waving arm folds, a pointing arm extends, a hand
- *   held overhead has something under it. Where the joint goes is `jointFor`'s
- *   problem, and the two styles it supports (`jointed`, `tapered`) are what
- *   lets a person and a droplet share this renderer without either looking
- *   wrong.
+ * - **It has an elbow, unless its species says otherwise.** A waving arm folds,
+ *   a pointing arm extends, a hand held overhead has something under it. Where
+ *   the joint goes is `jointFor`'s problem, and the styles it supports are what
+ *   let a person, a droplet, a stack of cubes and a one-eyed bean share this
+ *   renderer without any of them looking wrong — the last of those asks for
+ *   `straight`, which puts the joint on the line and leaves it there.
  * - **It tapers.** A limb that is the same width at the wrist as at the
  *   shoulder reads as a pipe. Narrowing to about seventy percent is enough to
  *   read as an arm and cheap enough to cost nothing.
@@ -176,12 +177,12 @@ function Foot({ rig, at, fill }: { rig: Rig; at: Point; fill: string }): ReactEl
     // it is 62 px long and 49 px tall, so the lobe is about 1.9 leg-widths
     // long and 1.5 tall, overhanging on one side only.
     //
-    // Which side is a decision rather than a reading. The source is *not*
-    // symmetric — both feet point the same way in every file, viewer-right in
-    // `eteen`/`alas` and viewer-left in `Minion_Red` — but a pair that both
-    // lean one way reads as a character mid-turn, which is wrong for a
-    // standing idle and worse at avatar size. Both lobes therefore swell
-    // outward, away from the centre line.
+    // Which side each lobe swells to is a decision, because the source does not
+    // agree with itself: `Minion_Pink` and `Minion_Green` swell outward and
+    // symmetrically, `eteen` and `alas` point both feet viewer-right, and
+    // `Minion_Red` points both viewer-left. A pair that leans one way reads as
+    // a character mid-turn, which is wrong under a standing idle and worse at
+    // avatar size, so both lobes here swell outward, away from the centre.
     const len = rig.limbW * 1.9;
     const h = rig.limbW * 1.5;
     const outward = at.x < rig.hip.x ? -1 : 1;

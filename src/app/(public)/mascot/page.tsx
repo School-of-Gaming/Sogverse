@@ -22,9 +22,11 @@ import { ConceptSection } from "@/components/mascot/exploration/concept-section"
 import { Collapsible } from "@/components/mascot/exploration/controls";
 import { LegacySection } from "@/components/mascot/exploration/legacy";
 import { Playground } from "@/components/mascot/exploration/playground";
+import { SilmuRainbow } from "@/components/mascot/exploration/silmu-rainbow";
 import {
   AnimalLineup,
   ArmStudy,
+  ChiefEngineerIdeas,
   DeskScene,
   FaceStudy,
   GardenerSpotlight,
@@ -52,6 +54,7 @@ function Note({ title, children }: { title: string; children: React.ReactNode })
 const JUMPS: readonly { id: string; label: string }[] = [
   { id: "faces", label: "Faces" },
   { id: "legacy", label: "Legacy" },
+  { id: "rainbow", label: "Silmu rainbow" },
   { id: "motion", label: "Motion" },
   { id: "arms", label: "Arms" },
   { id: "taitto", label: "Taitto branches" },
@@ -117,6 +120,10 @@ export default function MascotExplorationPage() {
           <LegacySection />
         </section>
 
+        <section id="rainbow" className="scroll-mt-24">
+          <SilmuRainbow />
+        </section>
+
         <section id="motion" className="scroll-mt-24">
           <MotionRow />
         </section>
@@ -139,6 +146,7 @@ export default function MascotExplorationPage() {
 
         <section id="team" className="scroll-mt-24 space-y-6">
           <GardenerSpotlight />
+          <ChiefEngineerIdeas />
         </section>
 
         <section id="desk" className="scroll-mt-24">

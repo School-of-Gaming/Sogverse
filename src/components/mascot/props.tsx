@@ -14,7 +14,14 @@
 
 import type { ReactElement } from "react";
 
-import { MASCOT_INK, MASCOT_SCENERY, type Colorway } from "./palette";
+import {
+  MASCOT_INK,
+  MASCOT_SCENERY,
+  shadeHex,
+  swatchHex,
+  tintHex,
+  type Colorway,
+} from "./palette";
 import type { Point } from "./rig";
 import type { PropId } from "./vocabulary";
 
@@ -493,6 +500,231 @@ function WateringCan({ at, colors }: PropProps): ReactElement {
   );
 }
 
+/**
+ * The engineer's kit - four objects that say "the person who makes the thing
+ * work", drawn to be told apart from each other and from what this table
+ * already holds.
+ *
+ * They share one decision. A tool is *metal*, so the shafts and jaws take the
+ * scenery neutrals rather than the device plastic every gadget here is
+ * moulded from - a spanner the colour of a controller reads as a toy - and
+ * only the grip takes the character's own accent, which is the same split the
+ * controller already makes between its shell and its buttons.
+ */
+
+/**
+ * A combination spanner: an open jaw at one end, a ring at the other.
+ *
+ * Held at a tilt for the reason the brush is: a tool pointing straight up is
+ * an object being presented rather than one being used. The tilt is shallower
+ * than the brush's because a spanner is half as long again, and a steep one
+ * puts its ring end through the character's own foot.
+ *
+ * It leans the *opposite* way to the brush, and that is not a taste call. The
+ * brush is drawn at the up-left grip, out in clear canvas; a spanner hangs at
+ * the side grip, where the hand sits about fifteen units off the body's own
+ * edge. Rasterising the first version settled it: tilted anticlockwise, the
+ * jaw swung inboard and spent its whole length behind the torso, leaving a
+ * grey stub and a ring. Leaning outboard puts every part of it against the
+ * page. Any long prop drawn for this grip has to lean away from the body.
+ *
+ * The jaw is **one path with a slot cut into it**, not a shoulder with two
+ * prongs stacked on it. Three overlapping rounded rectangles each carrying
+ * the shared outline rasterised as a lumpy grey mass with seams through it;
+ * a single U-shaped outline with a nine-unit slot is legible at a glance,
+ * and the slot shows the page through it, which is the thing that says tool
+ * rather than lollipop. The ring end is a *stroked* circle for the same
+ * reason - a stroke has a hole down the middle of it, and nothing else this
+ * module may reach for does (there are no clip paths and no masks anywhere in
+ * this art, because the markup has to stand alone inside an email).
+ *
+ * The character's own colour goes on a collar under the jaw rather than on
+ * the grip, which is where a hand-held tool would really carry it. The grip
+ * is exactly where the hand is drawn, so an accent there is a colour nobody
+ * ever sees; the collar sits in clear air above the fist.
+ */
+function Wrench({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  const steel = tintHex(MASCOT_SCENERY.stone, 0.22);
+  return (
+    <g transform={`rotate(26 ${x} ${y})`}>
+      <rect x={x - 5} y={y - 16} width={10} height={30} rx={5} fill={steel} {...OUTLINE} />
+      <path
+        d={[
+          `M ${x - 13} ${y - 10}`,
+          `L ${x - 13} ${y - 34}`,
+          `L ${x - 4.5} ${y - 34}`,
+          `L ${x - 4.5} ${y - 24}`,
+          `L ${x + 4.5} ${y - 24}`,
+          `L ${x + 4.5} ${y - 34}`,
+          `L ${x + 13} ${y - 34}`,
+          `L ${x + 13} ${y - 10}`,
+          'Z',
+        ].join(' ')}
+        fill={steel}
+        {...OUTLINE}
+      />
+      <rect x={x - 12} y={y - 14} width={24} height={7} rx={3} fill={colors.accent} />
+      <circle cx={x} cy={y + 22} r={7} fill="none" stroke={steel} strokeWidth={6} />
+      <circle cx={x} cy={y + 22} r={10} fill="none" stroke={MASCOT_INK.line} strokeWidth={1.8} />
+      <circle cx={x} cy={y + 22} r={4} fill="none" stroke={MASCOT_INK.line} strokeWidth={1.8} />
+    </g>
+  );
+}
+
+/**
+ * A rolled drawing, carried at the character's side.
+ *
+ * It is the one prop here painted from a *fixed* swatch rather than from the
+ * character's colourway, and the name is the reason: a blueprint that is not
+ * blue is a poster. The band keeping it rolled is a tint of the same blue
+ * rather than a garment colour, so the object stays one material - a paper
+ * tube with a paper band, not a tube with a ribbon round it.
+ *
+ * Slender and long rather than fat and short, which the first raster decided:
+ * at sixteen units across with a pale band round its waist it was a vacuum
+ * flask. Paper rolls tightly, so thirteen across and sixty-two long is the
+ * proportion, and the band sits high on it like the elastic that is actually
+ * holding it shut rather than centred like a label.
+ *
+ * The near end is three shapes, and each one is load-bearing. A single
+ * ellipse is a capsule end and reads as a baguette; a darker ellipse inside
+ * it is the hole down the middle, which is the whole difference between a
+ * tube and a stick; and a short light arc across the mouth is the free edge
+ * of the sheet, which is the difference between a tube and a pipe. A hairline
+ * run down the side is the same free edge seen along the roll - without it a
+ * blue capsule with a white collar is a torch, and a torch is what the first
+ * two rasters both showed.
+ *
+ * It leans outboard for the same reason the spanner does - see there.
+ */
+function Blueprint({ at }: PropProps): ReactElement {
+  const { x, y } = at;
+  const paper = swatchHex("blue");
+  const band = tintHex(paper, 0.62);
+  return (
+    <g transform={`rotate(24 ${x} ${y})`}>
+      <rect x={x - 6.5} y={y - 34} width={13} height={62} rx={6.5} fill={paper} {...OUTLINE} />
+      <rect x={x - 8.5} y={y - 22} width={17} height={11} rx={3} fill={band} {...OUTLINE} />
+      <ellipse cx={x} cy={y - 34} rx={6.5} ry={2.9} fill={band} {...OUTLINE} />
+      <ellipse cx={x} cy={y - 34} rx={2.4} ry={1.1} fill={shadeHex(paper, 0.45)} />
+      <path
+        d={`M ${x + 3.4} ${y - 30} L ${x + 3.4} ${y + 23}`}
+        stroke={band}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        opacity={0.6}
+      />
+      <path
+        d={`M ${x - 5} ${y - 36.5} Q ${x} ${y - 39} ${x + 5} ${y - 36.5}`}
+        fill="none"
+        stroke={band}
+        strokeWidth={2.2}
+        strokeLinecap="round"
+      />
+    </g>
+  );
+}
+
+/**
+ * A conical flask with something in it.
+ *
+ * Drawn as a cone rather than as the straight-sided cylinder its name says,
+ * because this table already contains a `mug`: at the size a held prop is
+ * actually seen, a cylinder with liquid in it *is* the mug, and two props
+ * that render the same shape are one prop with two names. The cone is the
+ * silhouette that says laboratory, so the cone is what it gets.
+ *
+ * The liquid is a second path repeating the cone's own side lines rather than
+ * a rectangle behind a clip. Its top corners are the cone's half-width at the
+ * fill line, interpolated between the shoulder and the base: 5.5 units across
+ * at y-10 and 17 at y+18, so 10.4 at a surface sitting at y+2.
+ *
+ * It is held upright while the spanner and the roll are tilted, which is the
+ * only reason three longish objects in one hand are still three objects.
+ */
+function Beaker({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  const cone = `M ${x - 5.5} ${y - 10} L ${x - 17} ${y + 14} Q ${x - 17} ${y + 19} ${x - 12} ${y + 19} L ${x + 12} ${y + 19} Q ${x + 17} ${y + 19} ${x + 17} ${y + 14} L ${x + 5.5} ${y - 10} Z`;
+  return (
+    <g>
+      <path d={cone} fill={MASCOT_INK.paper} opacity={0.22} />
+      <path
+        d={`M ${x - 10.4} ${y + 2} L ${x + 10.4} ${y + 2} L ${x + 17} ${y + 14} Q ${x + 17} ${y + 19} ${x + 12} ${y + 19} L ${x - 12} ${y + 19} Q ${x - 17} ${y + 19} ${x - 17} ${y + 14} Z`}
+        fill={colors.accent}
+      />
+      <path d={cone} fill="none" {...OUTLINE} />
+      <rect x={x - 5.5} y={y - 24} width={11} height={15} fill={MASCOT_INK.paper} opacity={0.22} />
+      <rect x={x - 5.5} y={y - 24} width={11} height={15} fill="none" {...OUTLINE} />
+      <rect
+        x={x - 7.5}
+        y={y - 27}
+        width={15}
+        height={5.5}
+        rx={2.5}
+        fill={MASCOT_INK.paper}
+        {...OUTLINE}
+      />
+      <circle cx={x - 1.5} cy={y - 14} r={2.2} fill={colors.accent} opacity={0.8} />
+      <circle cx={x + 1.8} cy={y - 19} r={1.5} fill={colors.accent} opacity={0.6} />
+    </g>
+  );
+}
+
+/**
+ * A handheld reader: a landscape slab with a small screen and three readouts.
+ *
+ * Every choice in it is about not being the `phone` five entries above. That
+ * one is portrait, taller than it is wide, and its screen is nearly the whole
+ * face. This one is landscape, has its screen in one corner with instrument
+ * readouts beside it, a grip on the near edge and a sensor nub on top. Those
+ * are the cues that survive being small; a different tint on the same rounded
+ * rectangle is not.
+ *
+ * It carries no mark of any kind - no badge, no insignia, no name plate. A
+ * generic instrument is the point: the character is a person who measures
+ * things, not a person out of a particular fiction.
+ */
+function Scanner({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  return (
+    <g>
+      <rect
+        x={x + 10}
+        y={y - 22}
+        width={11}
+        height={7}
+        rx={3}
+        fill={MASCOT_INK.deviceLight}
+        {...OUTLINE}
+      />
+      <circle cx={x + 15.5} cy={y - 19} r={2.4} fill={colors.spark} />
+      <rect
+        x={x - 28}
+        y={y - 7}
+        width={6}
+        height={15}
+        rx={3}
+        fill={MASCOT_INK.deviceLight}
+        {...OUTLINE}
+      />
+      <rect x={x - 24} y={y - 16} width={48} height={32} rx={6} fill={MASCOT_INK.device} {...OUTLINE} />
+      <rect x={x - 19} y={y - 11} width={24} height={19} rx={2.5} fill={colors.panel} />
+      <path
+        d={`M ${x - 15} ${y + 3} L ${x - 9} ${y - 4} L ${x - 4} ${y} L ${x + 1} ${y - 7}`}
+        fill="none"
+        stroke={MASCOT_INK.line}
+        strokeWidth={2}
+        strokeLinecap="round"
+        opacity={0.55}
+      />
+      <rect x={x + 9} y={y - 10} width={12} height={4} rx={2} fill={colors.accent} />
+      <rect x={x + 9} y={y - 2} width={12} height={4} rx={2} fill={colors.spark} />
+      <rect x={x + 9} y={y + 6} width={7} height={4} rx={2} fill={colors.accent} opacity={0.6} />
+    </g>
+  );
+}
+
 export function HeldProp({
   prop,
   at,
@@ -533,5 +765,13 @@ export function HeldProp({
       return <Briefcase at={at} colors={colors} />;
     case "watering-can":
       return <WateringCan at={at} colors={colors} />;
+    case "wrench":
+      return <Wrench at={at} colors={colors} />;
+    case "blueprint":
+      return <Blueprint at={at} colors={colors} />;
+    case "beaker":
+      return <Beaker at={at} colors={colors} />;
+    case "scanner":
+      return <Scanner at={at} colors={colors} />;
   }
 }

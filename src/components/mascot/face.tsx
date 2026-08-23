@@ -109,7 +109,14 @@ type FaceProps = {
   style?: FaceStyle;
   /** Where the eyes point. See `pupilOffset` for how it composes with mood. */
   gaze?: GazeId;
-  /** Empty string when the mascot is static. */
+  /**
+   * The blink loop's class, or the empty string when the mascot is static.
+   *
+   * One wrapper around whichever eyes this face mode drew, which is what makes
+   * the blink work the same on two eyes, on a cyclops and on a pair of voxel
+   * blocks without any of those knowing it exists. See the note above the
+   * wrapper itself for why it is a squash rather than a lid.
+   */
   blinkClass: string;
 };
 
@@ -597,11 +604,13 @@ function CyclopsMouth({
     case "happy":
       return null;
     case "excited":
-      return grin(r * 1.1, r * 1.15);
+      return grin(r * 0.98, r * 0.9);
     case "laughing":
-      return grin(r * 0.95, r * 1.05);
+      return grin(r * 0.86, r * 0.82);
     case "surprised":
-      return <ellipse cx={x} cy={y + 1} rx={r * 0.26} ry={r * 0.34} fill={ink} />;
+      // Round rather than tall. An oval under a big round eye reads as a drip
+      // coming off it; a circle reads as a mouth.
+      return <circle cx={x} cy={y + 1} r={r * 0.34} fill={ink} />;
     case "thinking":
       return (
         <path
@@ -737,6 +746,21 @@ export function Face({
   return (
     <g>
       {blushing && <WarmBlush rig={rig} colors={colors} />}
+      {/* The blink, and the reason it is one wrapper rather than three
+          implementations. A blink here is a *shape change* — the white
+          squashes to a line about its own middle and springs back — so it is
+          the same operation whatever the eye is made of, and the group that
+          gets squashed is whichever eyes this mode already drew. There is no
+          lid line and there will not be one: a stroke drawn across the eye is
+          a second grammar for something the shape already says, and it would
+          need a colour that works on every body in the fleet.
+
+          `fill-box` is load-bearing. The squash has to happen about the
+          rendered eyes' own middle, and that is not a coordinate anything here
+          knows: a cyclops eye cut flat across the top has its visual centre
+          below the eye row, and a `focused` lens is half the height of a
+          `surprised` circle. Asking the box rather than the rig gets all of
+          those right and none of them written down twice. */}
       {canBlink ? (
         <g className={blinkClass} style={{ transformBox: "fill-box", transformOrigin: "center" }}>
           {eyes}

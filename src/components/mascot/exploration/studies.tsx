@@ -16,9 +16,17 @@ import { getConcept, TAITTO_FAMILY } from "../concepts";
 import { KAVERI_FORMS } from "../concepts/kaveri";
 import { OTSO_FORMS } from "../concepts/otso";
 import { Mascot } from "../mascot";
+import type { Outfit } from "../outfit";
+import { swatchHex, tintHex } from "../palette";
 import { lookForDate, MASCOT_LOOKS, SEASONS } from "../seasons";
 import { FACE_STYLE_LABELS, type FaceStyle } from "../face";
-import { EXPRESSION_LABELS, POSE_LABELS, type ExpressionId, type PoseId } from "../vocabulary";
+import {
+  EXPRESSION_LABELS,
+  POSE_LABELS,
+  type ExpressionId,
+  type PoseId,
+  type PropId,
+} from "../vocabulary";
 import { ChipRow, Rubric, Tile, type Choice } from "./controls";
 
 /** The species a study offers when it needs one picked. */
@@ -567,6 +575,178 @@ export function GardenerSpotlight(): ReactElement {
             </figure>
           ))}
         </div>
+      </div>
+    </Panel>
+  );
+}
+
+
+// --- 10. Chief Engineer Kyle ----------------------------------------------
+
+/**
+ * Three candidates for a character that has never existed, side by side.
+ *
+ * This section is a *question*, not an answer, which is why it is built the
+ * way it is. Three species can each carry the same idea - the CTO, the person
+ * in the engine room - and none of them is obviously right, so the only
+ * useful thing to render is all three under identical conditions and let the
+ * choice be made by looking.
+ *
+ * "Identical conditions" is doing real work here. Everything that is *not*
+ * the character is pinned: the same pose, the same mood, the same size, the
+ * same empty ground, the same engineering-gold garment, the same goggles. A
+ * comparison where one candidate is mid-wave and grinning and another is
+ * standing still is a comparison of two performances, and whichever one wins
+ * will have won for the wrong reason.
+ *
+ * What each candidate *is* comes from its own fleet entry, looked up by name
+ * rather than restated here, so a change to the character lands in this
+ * section without anybody remembering to update it. The fallbacks exist for
+ * one narrow case - a species whose entry has not been written yet - and are
+ * deliberately the same kit, so a missing entry degrades to a placeholder
+ * that still compares fairly rather than to a hole in the row.
+ *
+ * The avatar crops under each are not decoration. Nearly every use of a
+ * character in this product is a portrait at 64px or less, and the goggles
+ * are exactly the kind of prop that reads beautifully at 240 and is three
+ * grey pixels at 28. A candidate that cannot survive that row cannot have the
+ * job.
+ */
+
+const ENGINEER_NAME = "Chief Engineer Kyle";
+const ENGINEER_POSE: PoseId = "idle";
+const ENGINEER_MOOD: ExpressionId = "focused";
+
+type EngineerIdea = {
+  id: ConceptId;
+  /** What this candidate is proposing, in one line. */
+  caption: string;
+  /** Used only until that species' fleet entry exists. */
+  fallback: {
+    form?: string;
+    variantId: string;
+    outfit: Outfit;
+    prop: PropId;
+    garment: string;
+  };
+};
+
+const ENGINEER_IDEAS: readonly EngineerIdea[] = [
+  {
+    id: "otso",
+    caption:
+      "The beaver — the one animal whose whole reputation is that it builds the thing it lives in.",
+    fallback: {
+      form: "beaver",
+      variantId: "honey",
+      outfit: { hat: "goggles" },
+      prop: "wrench",
+      garment: "amber",
+    },
+  },
+  {
+    id: "kaveri",
+    caption:
+      "The person — a colleague you can stand next to a gedu and a gamer in the same diagram.",
+    fallback: {
+      form: "adult-b",
+      variantId: "teal",
+      outfit: { hat: "goggles", torso: "hoodie" },
+      prop: "blueprint",
+      garment: "amber",
+    },
+  },
+  {
+    id: "silmu",
+    caption:
+      "The legacy mascot — one eye, one hat, one tool: the oldest shape School of Gaming owns.",
+    fallback: {
+      variantId: "musta",
+      outfit: { hat: "goggles", torso: "tool-belt" },
+      prop: "wrench",
+      garment: "amber",
+    },
+  },
+];
+
+/**
+ * Everything about a candidate except how it is posed and how big it is.
+ *
+ * The `scene` slot is deliberately dropped. One of these fleet entries stands
+ * in the engine room, which is the right way for that character to arrive on
+ * its own page and the wrong way for it to arrive in a row of three: a
+ * candidate with a whole room behind it and two candidates on bare ground is
+ * not a comparison of three characters. The room gets its own card below,
+ * where it is the thing being looked at.
+ */
+function engineerLook(idea: EngineerIdea): {
+  concept: ConceptId;
+  variant: string;
+  form?: string;
+  outfit: Outfit;
+  prop: PropId;
+  colors: { clothing: string; clothingAccent: string };
+} {
+  const member = getConcept(idea.id).fleet.find((m) => m.name === ENGINEER_NAME);
+  const form = member?.form ?? idea.fallback.form;
+  const garment = swatchHex(member?.garment ?? idea.fallback.garment);
+  const { scene: _room, ...worn } = member?.outfit ?? idea.fallback.outfit;
+  return {
+    concept: idea.id,
+    variant: member?.variantId ?? idea.fallback.variantId,
+    ...(form === undefined ? {} : { form }),
+    outfit: worn,
+    prop: member?.prop ?? idea.fallback.prop,
+    colors: { clothing: garment, clothingAccent: tintHex(garment, 0.84) },
+  };
+}
+
+const AVATAR_SIZES = [64, 40, 28];
+
+export function ChiefEngineerIdeas(): ReactElement {
+  const beaver = engineerLook(ENGINEER_IDEAS[0]);
+  return (
+    <Panel
+      title="Chief Engineer Kyle — ideas, not an answer"
+      lede="The CTO has never had a character. Three species can carry the idea and none of them is obviously right, so all three are here under identical conditions — same pose, same mood, same size, same ground, same engineering-gold garment, same goggles pushed up — and the only thing that varies is the species. Under each is the row that decides it: the portrait crops at 64, 40 and 28 pixels, where nearly every real use of a character lives. No Star Trek anywhere in it — no insignia, no uniform, no borrowed vocabulary. A glowing column and a gold hoodie are what an engine room looks like."
+    >
+      <div className="flex flex-wrap items-end justify-center gap-8 rounded-xl border border-border bg-background p-5">
+        {ENGINEER_IDEAS.map((idea) => {
+          const look = engineerLook(idea);
+          return (
+            <figure key={idea.id} className="flex w-[15rem] flex-col items-center gap-3">
+              <Mascot {...look} pose={ENGINEER_POSE} expression={ENGINEER_MOOD} size={240} />
+              <div className="flex items-end gap-3">
+                {AVATAR_SIZES.map((size) => (
+                  <div key={size} className="flex flex-col items-center gap-1">
+                    <Mascot {...look} crop="bust" size={size} animated={false} />
+                    <span className="font-mono text-[10px] text-muted-foreground">{size}px</span>
+                  </div>
+                ))}
+              </div>
+              <figcaption className="text-center text-xs leading-relaxed text-muted-foreground">
+                <span className="block text-sm font-semibold text-foreground">
+                  {getConcept(idea.id).species}
+                </span>
+                {idea.caption}
+              </figcaption>
+            </figure>
+          );
+        })}
+        <figure className="flex w-[22rem] flex-col items-center gap-3">
+          <Mascot
+            {...beaver}
+            outfit={{ ...beaver.outfit, scene: "engine-room" }}
+            pose={ENGINEER_POSE}
+            expression={ENGINEER_MOOD}
+            size={320}
+          />
+          <figcaption className="text-center text-xs leading-relaxed text-muted-foreground">
+            <span className="block text-sm font-semibold text-foreground">The engine room</span>
+            A place rather than a costume — the reactor column, the pipes, the gauges and a console
+            to stand at, composable onto whichever candidate wins.
+          </figcaption>
+        </figure>
       </div>
     </Panel>
   );

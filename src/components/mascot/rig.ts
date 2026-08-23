@@ -149,6 +149,22 @@ export type Rig = {
   /** What the arms end in. Absent means `disc`, which is what everything was. */
   handStyle?: HandStyle;
   /**
+   * True when this species leaves the ground at rest **on purpose**.
+   *
+   * The idle is grounded for everything else: a character standing in a scene
+   * breathes and shifts its weight with its soles where they were, because
+   * lifting the whole figure and setting it back down reads as hovering and a
+   * hovering character is pasted onto the scene rather than standing in it.
+   * That makes hovering a statement about the species rather than a default of
+   * the rig — a spark of condensed element, a winged bug — so it is declared
+   * here, once, and only the concepts that fly turn it on.
+   *
+   * It lives on the rig rather than on the concept because it is a property of
+   * the *build*: an animal family has one form with wings and a dozen without,
+   * and those share everything else.
+   */
+  hovers?: boolean;
+  /**
    * True when this species only has arms while it is *using* them.
    *
    * Most concepts have arms the way a person does: always there, hanging at
@@ -253,6 +269,34 @@ export function reachedHand(rig: Rig, hand: Point): Point {
   return { x: hand.x + Math.sign(dx) * rig.reach, y: hand.y };
 }
 
+/**
+ * How far below `footY` each foot style's sole actually reaches, as a multiple
+ * of `limbW`.
+ *
+ * `footY` is where a foot is *anchored*, which is its middle rather than its
+ * underside, so it is the wrong line to turn a breath about — a body scaled
+ * about it slides its own soles a fraction of a unit every cycle. These are
+ * the bottom edges of the four foot shapes drawn in `limbs.tsx`; change one
+ * there and change it here, because the drawing and the motion are two
+ * questions about the same four numbers and only one of them can be measured
+ * at render time.
+ */
+export const SOLE_DEPTH: Record<FootStyle, number> = {
+  round: 0.56,
+  boot: 0.62,
+  block: 0.7,
+  stem: 0.75,
+};
+
+/**
+ * The ground line: the y the soles rest on, and therefore the origin every
+ * grounded idle turns about. A scale or a shear anchored here cannot move a
+ * sole, which is the whole property the idle is built on.
+ */
+export function groundY(rig: Rig): number {
+  return rig.footY + rig.limbW * SOLE_DEPTH[rig.footStyle];
+}
+
 /** Formats a point pair for a `transform-origin` in user (viewBox) units. */
 export function originOf(p: Point): string {
   return `${n(p.x)}px ${n(p.y)}px`;
@@ -260,7 +304,11 @@ export function originOf(p: Point): string {
 
 /** The canonical drawing surface. Every concept, every pose, every prop. */
 export const MASCOT_VIEWBOX = "0 0 200 200";
-/** The bottom of the character, used as the origin of the breathe scale. */
+/**
+ * The nominal bottom of the character — the line every concept arranges its
+ * feet around. The motion does not use it: a breath has to turn about the
+ * species' own soles, which is `groundY` and is a unit or two lower.
+ */
 export const MASCOT_BASELINE: Point = { x: 100, y: 182 };
 /** The vertical centre line every "outward" decision is measured against. */
 export const MASCOT_CENTRE_X = 100;

@@ -499,5 +499,23 @@ export const KAVERI: ConceptDef = {
       prop: "clipboard",
       blurb: "Specs, lanyard, clipboard. The educator in every diagram that needs one.",
     },
+    {
+      // Shares Eero's build on purpose. The two are told apart by complexion,
+      // by what is on the head and by what is in the hands - which is the
+      // claim this concept makes about itself, and the fleet is where it
+      // either holds or does not.
+      name: "Chief Engineer Kyle",
+      job: "CTO — the engine room; scientist, builder, architect, engineer",
+      variantId: "teal",
+      form: "adult-b",
+      role: "none",
+      pose: "idle",
+      expression: "focused",
+      prop: "blueprint",
+      outfit: { hat: "goggles", torso: "hoodie" },
+      garment: "amber",
+      blurb:
+        "Goggles pushed up, an engineering-gold hoodie and a rolled drawing under his arm. The human read of the idea: the person who designed the thing you are standing in.",
+    },
   ],
 };

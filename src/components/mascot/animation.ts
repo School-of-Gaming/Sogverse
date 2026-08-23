@@ -21,6 +21,23 @@
  * jump has anticipation, squash and a landing, typing fingers move, a page
  * gets turned, a laptop screen pulses.
  *
+ * ## Round three anchored the feet
+ *
+ * Round two's amplitudes were legible and one of them was wrong: every
+ * standing pose translated the whole figure four pixels up and back down, so
+ * the entire fleet — every species, every mood — hovered a little, all the
+ * time. A character whose soles leave the ground is not standing in the scene,
+ * it is pasted onto it, and the ground shadow sitting still underneath made it
+ * worse rather than better.
+ *
+ * So the resting loops were rebuilt on primitives that *cannot* move a sole,
+ * both anchored at the species' own ground line: a scale for the breath and a
+ * shear for the weight shift. The character still rises — the breath grows it
+ * in y by two and a half percent, which lifts the head about four pixels, the
+ * same distance the bob used to travel — but it rises out of its own feet
+ * instead of off the floor. Leaving the ground is now something a species opts
+ * into (`rig.hovers`) or an action asks for (`walking`, `jumping`).
+ *
  * There is no `prefers-reduced-motion` gate, by explicit product decision.
  *
  * ## One economy, kept because it costs nothing
@@ -39,9 +56,12 @@ import type { ExpressionId, PoseId } from "./vocabulary";
  * animation, so the class name can simply be the channel.
  */
 export const MOTION_CHANNELS = [
-  /** The whole figure: bob, bounce, walk lift, the jump arc. */
+  /**
+   * The whole figure, anchored at the ground line: the weight shift, the walk
+   * lift, the jump arc, and — for a species that flies — the hover.
+   */
   "body",
-  /** The chest, scaled about the baseline. */
+  /** The chest, scaled about the ground line so the soles do not move. */
   "breathe",
   /** The head group — tilt, look-around, nod. */
   "head",
@@ -74,21 +94,48 @@ type Keyframe = {
  */
 const KEYFRAMES = {
   // --- whole-body ---------------------------------------------------------
-  bob: {
-    frames: "0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}",
-    dur: 2.8,
+  // The weight shift, and the reason the idle no longer floats.
+  //
+  // Every keyframe on the `body` and `breathe` channels is anchored at the
+  // species' own ground line, and the two primitives used there are chosen for
+  // one property: neither can move a sole. A scale about the ground line pins
+  // y = ground; a **shear** pins it too, and pins x as well — `skewX` maps
+  // (x, y) to (x + (y - ground)·tan θ, y), so the head leans by three pixels,
+  // the hips by one and a half, and the feet by nothing at all. A rotation was
+  // the obvious alternative and is the one thing that does not work: turning
+  // the figure a degree and a half about the centre of the foot line lifts the
+  // outboard foot half a pixel off the ground, every cycle, forever.
+  weight: {
+    frames: "0%,100%{transform:skewX(-1.6deg)}50%{transform:skewX(1.6deg)}",
+    dur: 5.2,
     ease: "ease-in-out",
   },
-  bounce: {
+  // Excitement, without leaving the ground. Round two spent it as a nine-pixel
+  // hop of the whole rigid figure — legs included, and the legs did not move,
+  // which is what a hover looks like. The same energy read as a knee bend: a
+  // fast crouch into a stretch, anchored at the soles, so the head still
+  // travels about eight pixels and the feet still travel none.
+  springUp: {
     frames:
-      "0%,100%{transform:translateY(0) scale(1,1)}12%{transform:translateY(1.5px) scale(1.04,0.96)}45%{transform:translateY(-9px) scale(0.97,1.03)}70%{transform:translateY(-2px) scale(1,1)}",
+      "0%,100%{transform:scale(1,1)}12%{transform:scale(1.05,0.94)}45%{transform:scale(0.96,1.07)}70%{transform:scale(1.01,0.99)}",
     dur: 1.5,
     ease: "ease-in-out",
   },
+  // A laugh is a body shaking, not a body rising. The rock is a shear so the
+  // feet stay put, and the small vertical pump under it is the breath the
+  // laughing plan drops.
   laugh: {
     frames:
-      "0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-3px) rotate(-2deg)}50%{transform:translateY(-1px) rotate(0)}75%{transform:translateY(-3px) rotate(2deg)}",
+      "0%,100%{transform:skewX(0) scale(1,1)}25%{transform:skewX(-2.4deg) scale(1.01,0.985)}50%{transform:skewX(0) scale(0.995,1.012)}75%{transform:skewX(2.4deg) scale(1.01,0.985)}",
     dur: 0.85,
+    ease: "ease-in-out",
+  },
+  // The one loop that is *allowed* to leave the ground, and only for a species
+  // whose rig says it flies. Rise slower than it settles, so it reads as being
+  // held up rather than as being thrown.
+  hover: {
+    frames: "0%,100%{transform:translateY(0)}46%{transform:translateY(-7px)}",
+    dur: 3.6,
     ease: "ease-in-out",
   },
   walkbob: {
@@ -105,13 +152,18 @@ const KEYFRAMES = {
     dur: 1.9,
     ease: "ease-in-out",
   },
+  // Anchored at the ground line, so growing in y raises the head and the
+  // shoulders and leaves the soles where they are — which is what replaced the
+  // bob. Round two squashed instead (y *down*, x up), which cost the figure
+  // height on the inhale and is why the bob had to exist to put it back.
+  // Slightly less in x than in y: a chest deepens more than it widens.
   breathe: {
-    frames: "0%,100%{transform:scale(1,1)}50%{transform:scale(1.025,0.975)}",
+    frames: "0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,1.026)}",
     dur: 3.4,
     ease: "ease-in-out",
   },
   breatheSlow: {
-    frames: "0%,100%{transform:scale(1,1)}50%{transform:scale(1.014,0.988)}",
+    frames: "0%,100%{transform:scale(1,1)}50%{transform:scale(1.008,1.014)}",
     dur: 5,
     ease: "ease-in-out",
   },
@@ -133,9 +185,22 @@ const KEYFRAMES = {
     dur: 3.2,
     ease: "ease-in-out",
   },
+  // A blink is short and it is a *shape*: the white squashes to a line about
+  // its own middle and comes back, with nothing drawn over it. Timed in real
+  // units rather than in percentages that happened to look right — over a 4.6
+  // second loop, 60ms to close, 120ms shut, 60ms to open. Round two spent
+  // 180ms closing and 216ms opening, which is a slow deliberate wink; this is
+  // a blink. The period sits inside the 3-6s a resting face blinks at, and
+  // the per-instance phase offset means no two characters blink together.
+  //
+  // The floor is a fraction rather than a thickness because one keyframe is
+  // shared by every instance, and eyes here differ by more than three to one
+  // — a 13-unit pair on a person, a 42-unit disc on a cyclops. Eight percent
+  // leaves the smallest of them about a unit thick, which still paints a line
+  // at avatar size rather than an eye that briefly vanishes.
   blink: {
-    frames: "0%,92%,100%{transform:scaleY(1)}95%,96.4%{transform:scaleY(0.08)}",
-    dur: 6,
+    frames: "0%,92%,97.3%,100%{transform:scaleY(1)}93.3%,96%{transform:scaleY(0.08)}",
+    dur: 4.6,
     ease: "linear",
   },
   float: {
@@ -261,10 +326,21 @@ export type KeyframeId = keyof typeof KEYFRAMES;
 /** What a given pose moves, and with which keyframe. */
 export type MotionPlan = Partial<Record<MotionChannel, KeyframeId>>;
 
+/**
+ * What each pose moves.
+ *
+ * **A standing or seated pose never translates the whole figure.** The `body`
+ * channel it uses is a shear about the ground line and the `breathe` under it
+ * is a scale about the same line, so a character at rest expands, settles and
+ * leans with its soles exactly where the still frame put them. The two poses
+ * that *do* translate are the two whose subject is leaving the ground —
+ * `walking` lifts over each planted leg while the legs swing under it, and
+ * `jumping` is an arc — and those move the feet because the action does.
+ */
 const POSE_MOTION: Record<PoseId, MotionPlan> = {
-  idle: { body: "bob", breathe: "breathe", head: "look", blink: "blink", float: "float" },
+  idle: { body: "weight", breathe: "breathe", head: "look", blink: "blink", float: "float" },
   wave: {
-    body: "bob",
+    body: "weight",
     breathe: "breathe",
     head: "tilt",
     blink: "blink",
@@ -272,7 +348,7 @@ const POSE_MOTION: Record<PoseId, MotionPlan> = {
     armR: "wave",
   },
   "point-left": {
-    body: "bob",
+    body: "weight",
     breathe: "breathe",
     head: "tilt",
     blink: "blink",
@@ -280,7 +356,7 @@ const POSE_MOTION: Record<PoseId, MotionPlan> = {
     armL: "pointL",
   },
   "point-right": {
-    body: "bob",
+    body: "weight",
     breathe: "breathe",
     head: "tilt",
     blink: "blink",
@@ -288,7 +364,7 @@ const POSE_MOTION: Record<PoseId, MotionPlan> = {
     armR: "pointR",
   },
   "hold-up": {
-    body: "bob",
+    body: "weight",
     breathe: "breathe",
     blink: "blink",
     float: "float",
@@ -355,7 +431,7 @@ function moodOverride(plan: MotionPlan, expression: ExpressionId): MotionPlan {
   if (plan.body === undefined) return plan;
   switch (expression) {
     case "excited":
-      return { ...plan, body: "bounce" };
+      return { ...plan, body: "springUp" };
     case "laughing": {
       const { breathe: _breathe, ...rest } = plan;
       return { ...rest, body: "laugh" };
@@ -372,8 +448,29 @@ function moodOverride(plan: MotionPlan, expression: ExpressionId): MotionPlan {
   }
 }
 
-export function motionPlan(pose: PoseId, expression: ExpressionId): MotionPlan {
-  return moodOverride(POSE_MOTION[pose], expression);
+/**
+ * The one place a species is allowed to leave the ground at rest.
+ *
+ * It swaps exactly the weight shift, which is the loop a *standing* character
+ * runs, and nothing else. A flying species walking, jumping or hunched over a
+ * keyboard is doing something specific with its body, and a hover laid over
+ * that would be two ideas about the same figure at once; excitement and
+ * laughter already own the channel and keep it. So the substitution is written
+ * as "wherever this plan says stand, say float instead", and a pose added
+ * later inherits the right answer with nobody editing this.
+ */
+function hoverOverride(plan: MotionPlan, hovers: boolean): MotionPlan {
+  if (!hovers || plan.body !== "weight") return plan;
+  return { ...plan, body: "hover" };
+}
+
+export function motionPlan(
+  pose: PoseId,
+  expression: ExpressionId,
+  /** `rig.hovers` — true only for a species that flies and means to. */
+  hovers: boolean,
+): MotionPlan {
+  return hoverOverride(moodOverride(POSE_MOTION[pose], expression), hovers);
 }
 
 /**

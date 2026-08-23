@@ -231,6 +231,8 @@ function rigFor(form: string): Rig {
     case "bug":
       return {
         ...BASE,
+        // Four wings. It hovers at rest for the same reason a bug does.
+        hovers: true,
         head: { x: 100, y: 70, r: 36 },
         // The one form whose eyes are the head rather than features on it.
         eyeDx: 19,
@@ -243,6 +245,8 @@ function rigFor(form: string): Rig {
     case "monster":
       return {
         ...BASE,
+        // A pair of small wings, and no interest in using the floor.
+        hovers: true,
         head: { x: 100, y: 70, r: 37 },
         eyeDx: 17,
         eyeY: 64,
@@ -1077,13 +1081,21 @@ export const OTSO: ConceptDef = {
       variantId: "majava",
       form: "beaver",
       role: "none",
-      pose: "hold-up",
+      // Idle rather than the raised arm this entry started with, because the
+      // scene decides the pose once there is one: `hold-up` puts the hand at
+      // head height on the viewer's right, which is precisely where the room
+      // hangs its gauges, and the spanner came out on top of them. Standing
+      // puts the free hand at the console instead.
+      pose: "idle",
       expression: "focused",
-      // TODO(orchestrator): an engineer agent is adding a `wrench` prop and a
-      // `goggles` hat; swap the laptop and the specs for them when they land.
-      prop: "laptop",
-      outfit: { face: "specs" },
-      blurb: "The animal that builds things, dams the river and keeps the water where it should be, which is close enough to a job description. No Star Trek anywhere on him: the gold is engineering gold and the title is his own handle. The paddle tail is what keeps him from being a brown bear.",
+      prop: "wrench",
+      // The goggles and the belt-and-braces gold both come off the `amber`
+      // swatch rather than off this coat, whose garment slot is teal: the
+      // goggle frames are painted from `clothing`, and teal frames around
+      // cyan glass are one colour pretending to be two.
+      outfit: { hat: "goggles", scene: "engine-room" },
+      garment: "amber",
+      blurb: "The animal that builds things, dams the river and keeps the water where it should be, which is close enough to a job description. Goggles pushed up, a spanner in hand and the reactor column behind him. No Star Trek anywhere on him: the gold is engineering gold, the column is a column, and the title is his own handle. The paddle tail is what keeps him from being a brown bear.",
     },
     {
       name: "Repo",

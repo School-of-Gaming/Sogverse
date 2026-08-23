@@ -124,8 +124,8 @@ import type { Rig } from "../rig";
  * | --------------------------- | -------------- | ----- | --------------- |
  * | body, without the legs      | 283 × 282      | 1.00  | 120 × 121       |
  * | widest point, down the body | at y 172 / 282 | 0.54  | y 91            |
- * | legs, body-bottom to sole   | 80 of 282      | 0.28  | 34              |
- * | leg column width            | 32 of 283      | 0.113 | `limbW` 13      |
+ * | legs, body-bottom to sole   | 80 of 282      | 0.28  | 37              |
+ * | leg column width            | 32 of 283      | 0.113 | `limbW` 14      |
  * | leg pair, centre to centre  | 67 of 283      | 0.237 | `hipSpread` 14  |
  * | foot lobe, long axis        | 62 of 283      | 0.219 | 1.9 × `limbW`   |
  * | eye centre, down the body   | 105 of 282     | 0.37  | `eyeY` 72       |
@@ -162,12 +162,13 @@ const RIG: Rig = {
   // bottom of the foot on the same ground line as every other species.
   footY: 173,
   footStyle: "stem",
-  // Sockets on the flank, low and just inside the edge. They are what the
-  // three poses with arms hang off; the other nine draw none at all, so these
-  // do not have to be a compromise between "invisible at rest" and "clear of
-  // the body when waving" the way they did before `armsOnDemand`.
-  shoulderL: { x: 52, y: 112 },
-  shoulderR: { x: 148, y: 112 },
+  // Sockets a dozen units inside the flank, at the height the legacy arms
+  // leave the body. They are what the three poses with arms hang off; the
+  // other nine draw none at all, so they no longer have to be a compromise
+  // between "invisible at rest" and "clear of the body when waving" the way
+  // they were before `armsOnDemand`.
+  shoulderL: { x: 52, y: 108 },
+  shoulderR: { x: 148, y: 108 },
   // `head` on a fused body is not a head — it is the window the bust crop
   // takes and the size every worn thing scales against. Both jobs pull it in
   // opposite directions: a small radius crops a tight portrait and shrinks the
@@ -179,11 +180,11 @@ const RIG: Rig = {
   eyeDx: 0,
   eyeY: 72,
   eyeR: 21,
-  mouthY: 108,
+  mouthY: 111,
   crown: { x: 100, y: 31 },
   crownW: 96,
   reach: 4,
-  limbW: 13,
+  limbW: 14,
   handR: 8,
   // Straight, because the legacy arms are: one wedge from shoulder to mitten
   // with no bend in it, and legs that are vertical columns rather than a
@@ -366,7 +367,7 @@ export const SILMU: ConceptDef = {
   pitch:
     "The only concept here that School of Gaming has already run for five years. One eye the size of a fist, a bean you could draw from memory, two stubby feet, and a hat doing all the work — which is why the fleet is a hat rack rather than five drawings. Kids get a shape they can draw themselves in one stroke. Parents who have been with us since the old site recognise it before they have read anything. Gedus get the joke that the whole cast is one guy in different hats.",
   caveat:
-    "The original is pure black on white paper and this site is nearly black, so the faithful colourway needs a charcoal body and a light contour to exist here at all. Every other one solves that by not being black — twenty-four swatch bodies, which is a larger departure from the artwork than the contour ever was, and the honest reading is that a coloured Silmu is a new character wearing the old one's shape. The fused body still cannot wear anything tailored or turn to look at something, and it has one expression channel where every other concept has two: with a single eye there is no pair to disagree, so an asymmetric brow is the only asymmetry available.",
+    "The original is pure black on white paper and this site is nearly black, so the faithful colourway needs a charcoal body and a light contour to exist here at all. Every other one solves that by not being black — twenty-four swatch bodies, which is a larger departure from the artwork than the contour ever was, and the honest reading is that a coloured Silmu is a new character wearing the old one's shape. The fused body still cannot wear anything tailored or turn to look at something, and it has fewer expression channels than anything else here: no brow, no second eye to disagree with the first, and no mouth at all on the resting face. Everything a mood has to say goes into how the one white is cut and where the pupil sits in it, which is enough for six and would not obviously be enough for ten. The shared pose table also puts a waving hand four units inside this body’s own widest point, so a waving Silmu holds its arm against its belly rather than clear of it — fixable only in the pose table or in the reach cutoff, neither of which belongs to this species.",
   landmark: "One enormous eye in the top third of a chunky bean, under whichever hat it is wearing.",
   slots: ["hat", "face", "torso", "back", "extra", "scene"],
   wardrobeLimit:
@@ -408,7 +409,7 @@ export const SILMU: ConceptDef = {
       variantId: "musta",
       role: "none",
       pose: "painting",
-      expression: "happy",
+      expression: "focused",
       prop: "paintbrush",
       outfit: { hat: "painter-cap", extra: "paint-bucket" },
       garment: "purple",
@@ -439,6 +440,25 @@ export const SILMU: ConceptDef = {
       garment: "red",
       blurb:
         "A tonttu is the Finnish Christmas elf, and this one is free: the seasons module already puts a santa hat and a scarf on every species between 20 and 26 December, so `look=\"auto\"` produces him without anybody asking.",
+    },
+    {
+      // The second black body in this fleet, and the only other one that
+      // earns it. Every other member takes a swatch because the hat is what
+      // tells them apart; these two are the ones whose *job* is the black
+      // bean itself - the painter, because paint has to be the loud thing on
+      // him, and this one, because the whole reason to consider Silmu for the
+      // engineer is that it is the shape School of Gaming already owns.
+      name: "Chief Engineer Kyle",
+      job: "CTO — the engine room; scientist, builder, architect, engineer",
+      variantId: "musta",
+      role: "none",
+      pose: "idle",
+      expression: "focused",
+      prop: "wrench",
+      outfit: { hat: "goggles", torso: "tool-belt" },
+      garment: "amber",
+      blurb:
+        "Goggles pushed up on the forehead, a tool belt round the middle and a spanner in hand, all in engineering gold on the original black body. He is also the fleet's answer to whether this species can wear a thing that is not a hat: a belt is a band rather than a sleeve, so it fits a body with no shoulders.",
     },
   ],
 };

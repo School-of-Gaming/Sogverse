@@ -93,6 +93,10 @@ export const MASCOT_PROPS = [
   "paintbrush",
   "briefcase",
   "watering-can",
+  "wrench",
+  "blueprint",
+  "beaker",
+  "scanner",
 ] as const;
 export type PropId = (typeof MASCOT_PROPS)[number];
 
@@ -155,6 +159,10 @@ export const PROP_LABELS: Record<PropId, string> = {
   paintbrush: "Paintbrush",
   briefcase: "Briefcase",
   "watering-can": "Watering can",
+  wrench: "Wrench",
+  blueprint: "Blueprint",
+  beaker: "Beaker",
+  scanner: "Scanner",
 };
 
 export const ROLE_LABELS: Record<MascotRole, string> = {

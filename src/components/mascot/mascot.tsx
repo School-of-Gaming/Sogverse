@@ -30,6 +30,14 @@
  * small face items go too, so the character gets *simpler* as it gets smaller
  * rather than muddier.
  *
+ * **The feet are the anchor.** A resting character breathes, blinks and shifts
+ * its weight; it does not float. Both resting loops are anchored at the
+ * species' ground line and use only transforms that cannot move a sole, so the
+ * figure grows and leans out of its own feet. The exceptions are declared
+ * rather than accidental: a pose whose subject is leaving the ground
+ * (`walking`, `jumping`) moves the feet because the action does, and a species
+ * whose rig says `hovers` floats because it flies.
+ *
  * **Motion is on by default and belongs to the pose.** Round one shared one
  * near-invisible idle loop across every pose, which read as a glitch rather
  * than as a decision. Now walking walks, a jump has anticipation and a
@@ -59,7 +67,7 @@ import { POSES, propAnchor } from "./poses";
 import { lookById, lookForDate } from "./seasons";
 import { HeldProp } from "./props";
 import {
-  MASCOT_BASELINE,
+  groundY,
   MASCOT_CENTRE_X,
   MASCOT_VIEWBOX,
   originOf,
@@ -215,8 +223,15 @@ export function Mascot({
   // A silhouette is a shape test; motion on a flattened figure tells you
   // nothing and still costs a repaint per frame.
   const moving = animated && !silhouette;
-  const plan = moving ? motionPlan(pose, expression) : {};
+  const plan = moving ? motionPlan(pose, expression, rig.hovers === true) : {};
   const cls = motionClasses(uid, plan);
+  // Both resting loops turn about the line the soles rest on, which is what
+  // makes them incapable of moving a foot: a scale anchored there pins y at
+  // the ground, and a shear anchored there pins y everywhere. It is the
+  // species' own line rather than the canvas's nominal baseline, because those
+  // differ by up to three units and three units of drift is exactly the
+  // "hovering" this replaced.
+  const ground = originOf({ x: MASCOT_CENTRE_X, y: groundY(rig) });
 
   // A role dresses the character; an explicit outfit is layered over the top,
   // so a caller can put a party hat on a gedu without losing the lanyard.
@@ -311,11 +326,8 @@ export function Mascot({
       {/* Furniture is drawn outside every motion group. A desk that breathed
           with the person sitting at it would be a very strange desk. */}
       {sceneItem?.renderBehind !== undefined && <g style={flatten}>{sceneItem.renderBehind(ctx)}</g>}
-      <g className={cls.body} style={{ ...flatten, transformOrigin: originOf(MASCOT_BASELINE) }}>
-        <g
-          className={cls.breathe}
-          style={{ transformOrigin: originOf(MASCOT_BASELINE) }}
-        >
+      <g className={cls.body} style={{ ...flatten, transformOrigin: ground }}>
+        <g className={cls.breathe} style={{ transformOrigin: ground }}>
           <g transform={spec.lift === 0 ? undefined : `translate(0 ${-spec.lift})`}>
             {drawSlots(BEHIND_SLOTS)}
             {limbStyle === "legacy" ? (
