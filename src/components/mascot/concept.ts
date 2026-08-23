@@ -34,7 +34,7 @@ import type { DetailLevel } from "./detail";
 import type { FaceMode } from "./face";
 import type { Colorway, VariantDef } from "./palette";
 import type { Rig } from "./rig";
-import type { OutfitSlot } from "./outfit";
+import type { Outfit, OutfitSlot } from "./outfit";
 import type { ExpressionId, MascotRole, PoseId, PropId } from "./vocabulary";
 
 export const CONCEPT_IDS = [
@@ -46,6 +46,8 @@ export const CONCEPT_IDS = [
   "kaari",
   "kide",
   "nappi",
+  "silmu",
+  "palikka",
 ] as const;
 export type ConceptId = (typeof CONCEPT_IDS)[number];
 
@@ -94,6 +96,31 @@ export type FleetMember = {
   pose: PoseId;
   expression: ExpressionId;
   prop?: PropId;
+  /**
+   * Worn items, for a species whose fleet is told apart by what it has on.
+   *
+   * Most concepts leave this alone: their members differ by build and
+   * colourway, and the role already dresses them. It exists for the species
+   * where the *hat is the character* — the legacy SOG mascot was one black
+   * blob and nine hats, and a fleet built on that base model with no way to
+   * name a hat would be nine identical drawings.
+   */
+  outfit?: Outfit;
+  /**
+   * Which swatch this member's garments are painted from — a `MASCOT_SWATCHES`
+   * id, resolved wherever the fleet is rendered.
+   *
+   * A colourway paints the *body*, and on a species whose members share one
+   * body it therefore cannot tell them apart. The legacy SOG cast was five
+   * files named after their hats, so what separates one member from the next
+   * there is the garment colour and nothing else; without this they would be
+   * five identical black blobs in five identically-coloured hats.
+   *
+   * It is a swatch id rather than a hex on purpose: the same closed list of
+   * colours the product already owns, so a fleet cannot quietly introduce a
+   * twenty-fifth green.
+   */
+  garment?: string;
   blurb: string;
 };
 

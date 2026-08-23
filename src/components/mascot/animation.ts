@@ -173,6 +173,15 @@ const KEYFRAMES = {
     dur: 2.6,
     ease: "ease-in-out",
   },
+  // A brush stroke: down the surface a little slower than it comes back up,
+  // because paint is applied on the way down. Smaller than a wave on purpose -
+  // the arm is resting against something, not signalling across a room.
+  brush: {
+    frames:
+      "0%,100%{transform:rotate(-7deg)}45%{transform:rotate(6deg)}70%{transform:rotate(-1deg)}",
+    dur: 1.35,
+    ease: "ease-in-out",
+  },
   swingF: {
     frames: "0%,100%{transform:rotate(13deg)}50%{transform:rotate(-13deg)}",
     dur: 1.1,
@@ -322,6 +331,16 @@ const POSE_MOTION: Record<PoseId, MotionPlan> = {
     blink: "blink",
     armL: "typeA",
     armR: "typeB",
+  },
+  // No body bob. The stroke is the whole point of this pose and a figure
+  // bobbing under it would move the brush twice, in two rhythms, which reads
+  // as a wobble rather than as work.
+  painting: {
+    breathe: "breathe",
+    head: "nod",
+    blink: "blink",
+    float: "float",
+    armL: "brush",
   },
 };
 

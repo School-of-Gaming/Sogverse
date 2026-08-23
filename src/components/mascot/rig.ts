@@ -17,8 +17,20 @@
 
 export type Point = { x: number; y: number };
 
-/** How a concept's feet are drawn — a paw/nub, or a boot/shoe. */
-export type FootStyle = "round" | "boot";
+/**
+ * How a concept's feet are drawn — a paw/nub, a boot/shoe, or a square-cornered
+ * block for a species whose whole body is cubes and on which a rounded sole
+ * would be the only curve in the drawing.
+ */
+/**
+ * How a concept's feet are drawn — a paw/nub, a boot/shoe, a voxel block, or a
+ * `stem` foot: a straight leg ending in a rounded lobe that swells to one side
+ * only, so the pair reads as a lowercase `d` and `b`. That last one is traced
+ * off the legacy SOG mascot, where the leg is a constant-width column about a
+ * ninth of the body's width and the foot under it is a lobe about a fifth of it
+ * across — see the measurements at the top of `concepts/silmu.tsx`.
+ */
+export type FootStyle = "round" | "boot" | "block" | "stem";
 
 /**
  * How a limb gets from its socket to its hand.
@@ -41,8 +53,37 @@ export type FootStyle = "round" | "boot";
  *
  * Both taper from socket to wrist and cap with a disc at each end, so a limb
  * still reads as a limb at 24 pixels rather than as a line.
+ *
+ * - `blocky` is `jointed`'s geometry with the drawing squared off: the elbow
+ *   is solved the same anatomical way, but the segments keep one width instead
+ *   of tapering and every cap is a square instead of a disc. It exists because
+ *   a species made of cubes cannot have the only round things on it be its own
+ *   arms — the taper and the three discs are precisely the cues that say
+ *   "drawn with a brush", and they fight a body that says "stacked out of
+ *   blocks". It shares `jointed`'s solve rather than inventing one, so it
+ *   inherits every pose in the table with no elbow data of its own.
+ *
+ * - `straight` has no joint at all: the limb is one tapered wedge from socket
+ *   to hand, and the "joint" is simply the point halfway along that line with
+ *   nothing done to it. It is not a simplification of the others — it is what
+ *   the legacy SOG mascot's arms actually are, in the three files that have
+ *   any (`maalari`, `hello_minion_SOG@2x`, `back_minion`): a wide wedge
+ *   leaving the body and narrowing to a mitten, dead straight, with no bend
+ *   anywhere along it. Even `tapered`'s soft midpoint nudge is wrong for that,
+ *   because a seven-unit bow on a short arm reads as a bent one.
  */
-export type LimbStyle = "jointed" | "tapered";
+export type LimbStyle = "jointed" | "tapered" | "blocky" | "straight";
+
+/**
+ * What is on the end of an arm.
+ *
+ * `disc` is the default and is what every concept had before there was a
+ * choice. `mitten` adds one small circle for a thumb, on the *inner* side of
+ * the hand — towards the body's centre line — which is where the legacy
+ * mascot's arms put theirs and is the whole of what makes a black blob on the
+ * end of a black wedge read as a hand rather than as a knob.
+ */
+export type HandStyle = "disc" | "mitten";
 
 export type Rig = {
   /** The ground shadow ellipse. Outside the bob animation so it stays put. */
@@ -105,6 +146,28 @@ export type Rig = {
    * and rotating the face alone slides it off its own body.
    */
   fusedHead: boolean;
+  /** What the arms end in. Absent means `disc`, which is what everything was. */
+  handStyle?: HandStyle;
+  /**
+   * True when this species only has arms while it is *using* them.
+   *
+   * Most concepts have arms the way a person does: always there, hanging at
+   * the side when idle. The legacy SOG mascot does not — thirteen of its
+   * sixteen files have no arms at all, and the three that do are painting,
+   * waving hello, or reaching up. Arms on that body are not anatomy, they are
+   * something it grows to do a job and puts away afterwards, and drawing two
+   * stubs at its hips in every idle render is both wrong about the character
+   * and, at 150 pixels, competing with the one eye that is supposed to be the
+   * whole design.
+   *
+   * The renderer decides "using them" from the pose the caller asked for
+   * rather than from a list kept here: a pose whose hands both sit at the hip
+   * line is a rest pose, and a pose holding a prop needs hands whatever its
+   * hands' coordinates say. That keeps the pose table free of a per-species
+   * flag and means a pose added later — one holding a paintbrush, say — gets
+   * the right answer without anybody remembering this exists.
+   */
+  armsOnDemand?: boolean;
 };
 
 /** Two decimals is plenty at this scale and keeps the exported markup small. */
@@ -139,6 +202,12 @@ export function jointFor(
   // decided below by distance from the centre line, so handedness is free.
   const px = -uy;
   const py = ux;
+
+  // No joint: the midpoint of the line, untouched. Both segments are then
+  // collinear and the limb is one straight wedge.
+  if (style === "straight") {
+    return { x: from.x + dx / 2, y: from.y + dy / 2 };
+  }
 
   if (style === "tapered") {
     // No anatomy: a soft bend at the midpoint, always away from the centre.

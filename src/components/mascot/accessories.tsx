@@ -25,9 +25,9 @@
 import type { ReactElement } from "react";
 
 import type { ConceptId } from "./concept";
-import type { DetailLevel } from "./detail";
+import { showsFiligree, type DetailLevel } from "./detail";
 import type { Anchors, OutfitSlot } from "./outfit";
-import { MASCOT_INK, type Colorway } from "./palette";
+import { MASCOT_INK, MASCOT_SCENERY, shadeHex, swatchHex, type Colorway } from "./palette";
 import type { Rig } from "./rig";
 
 export type AccessoryContext = {
@@ -263,16 +263,36 @@ const SPECS: AccessoryDef = {
   label: "Specs",
   slot: "face",
   minLevel: "simple",
-  render: ({ anchors, rig, detail }) => {
+  render: ({ anchors, colors, rig, detail }) => {
     const { x, y, dx, r } = anchors.face;
+    // Specs are the one item in this registry made of nothing but line, so
+    // they are the one item a near-black body swallows whole. A colourway
+    // that declares an inverted ink gets it here too — everywhere else the
+    // fallback is the shared ink these have always been drawn in.
+    const stroke = {
+      fill: "none" as const,
+      stroke: colors.ink ?? MASCOT_INK.line,
+      strokeWidth: detail === "icon" ? 4 : 2.8,
+      strokeLinecap: "round" as const,
+    };
+    // A one-eyed head reports no eye separation, and a pair of specs drawn on
+    // it would be two coincident lenses with a bridge straight across the
+    // middle of them — a line through the eye rather than between two. One
+    // eye gets one lens, sized up to sit around a big single eye, and keeps
+    // both arms so it still reads as a pair of glasses rather than a monocle.
+    if (dx < 0.5) {
+      const lens = r * 1.36;
+      return (
+        <g {...stroke}>
+          <circle cx={x} cy={y} r={lens} />
+          <path d={`M ${x - lens} ${y} L ${x - rig.head.r} ${y - 3}`} />
+          <path d={`M ${x + lens} ${y} L ${x + rig.head.r} ${y - 3}`} />
+        </g>
+      );
+    }
     const lens = r * 1.75;
     return (
-      <g
-        fill="none"
-        stroke={MASCOT_INK.line}
-        strokeWidth={detail === "icon" ? 4 : 2.8}
-        strokeLinecap="round"
-      >
+      <g {...stroke}>
         <circle cx={x - dx} cy={y} r={lens} />
         <circle cx={x + dx} cy={y} r={lens} />
         <path d={`M ${x - dx + lens} ${y} L ${x + dx - lens} ${y}`} />
@@ -290,6 +310,46 @@ const SHADES: AccessoryDef = {
   minLevel: "icon",
   render: ({ anchors, rig, colors }) => {
     const { x, y, dx, r } = anchors.face;
+    // Same story as the specs: with one eye there is one lens, and it is one
+    // wide visor rather than two overlapping rectangles with a bridge drawn
+    // across the middle of them.
+    if (dx < 0.5) {
+      const vw = r * 2.6;
+      const vh = r * 1.9;
+      return (
+        <g>
+          <rect
+            x={x - vw / 2}
+            y={y - vh / 2}
+            width={vw}
+            height={vh}
+            rx={vh * 0.4}
+            fill={MASCOT_INK.line}
+            stroke={colors.clothingAccent}
+            strokeWidth={2.4}
+          />
+          <path
+            d={`M ${x - vw / 2} ${y} L ${x - rig.head.r} ${y - 4}`}
+            stroke={MASCOT_INK.line}
+            strokeWidth={4}
+            strokeLinecap="round"
+          />
+          <path
+            d={`M ${x + vw / 2} ${y} L ${x + rig.head.r} ${y - 4}`}
+            stroke={MASCOT_INK.line}
+            strokeWidth={4}
+            strokeLinecap="round"
+          />
+          <path
+            d={`M ${x - vw * 0.3} ${y + vh * 0.26} L ${x - vw * 0.06} ${y - vh * 0.3}`}
+            stroke={colors.clothingAccent}
+            strokeWidth={3}
+            strokeLinecap="round"
+            opacity={0.8}
+          />
+        </g>
+      );
+    }
     const w = r * 2.1;
     const h = r * 1.7;
     return (
@@ -1107,6 +1167,658 @@ const BALLOONS: AccessoryDef = {
   },
 };
 
+
+// --- the legacy SOG hats --------------------------------------------------
+
+/**
+ * The four hats the old School of Gaming mascot was told apart by.
+ *
+ * That mascot was one black blob wearing nine different things, and the hat
+ * was not decoration on it — it *was* the character. Which is exactly the
+ * argument for bringing them in as accessories rather than as part of a
+ * species: a hat that carried a whole identity for five years will carry one
+ * on a bear or on a folded plane too, and the moment it lives in this
+ * registry every concept inherits all four.
+ *
+ * They are drawn from the `hat` anchor like everything else here, so they
+ * scale with whatever head they land on and know nothing about the pose.
+ */
+
+/**
+ * The signature: a soft cap whose peak sweeps a whole head's width to the
+ * viewer's left and turns up at the tip.
+ *
+ * The peak is the entire point of this hat and it is the part that is easy to
+ * get wrong. Two things make it read: the top edge is *concave* — it dips
+ * where it leaves the dome and lifts again at the tip, which is what makes it
+ * look blown back rather than merely long — and it tapers to an actual point
+ * rather than to a rounded end. Its length is a fraction of the head's own
+ * width so it stays in proportion on a narrow head, and then capped, because
+ * on the widest head in the set an unbounded sweep runs off the canvas.
+ */
+const SWEPT_CAP: AccessoryDef = {
+  id: 'swept-cap',
+  label: 'Swept cap',
+  slot: 'hat',
+  minLevel: 'icon',
+  render: ({ anchors, colors }) => {
+    const { x, y, w } = anchors.hat;
+    const half = w / 2;
+    // How far past the head the peak reaches. A fraction of the head so it
+    // stays in proportion, then capped, because the canvas has an edge and
+    // the widest head in the set would otherwise sweep straight off it.
+    const len = Math.min(w * 0.52, 44);
+    const tip = x - half - len;
+    return (
+      <g fill={colors.clothing}>
+        {/* The peak, drawn first so the dome's edge closes over its root. */}
+        <path
+          d={[
+            `M ${x - half * 0.85} ${y - 3}`,
+            `C ${x - half * 1.18} ${y + 1} ${tip + len * 0.28} ${y + 13} ${tip} ${y + 2}`,
+            `C ${tip + len * 0.22} ${y + 15} ${x - half * 1.06} ${y + 22} ${x - half * 0.78} ${y + 15}`,
+            'Z',
+          ].join(' ')}
+        />
+        <path
+          d={[
+            `M ${x - half * 1.02} ${y + 10}`,
+            `C ${x - half * 1.06} ${y - 18} ${x - half * 0.5} ${y - 36} ${x + half * 0.14} ${y - 31}`,
+            `C ${x + half * 0.78} ${y - 26} ${x + half * 1.06} ${y - 6} ${x + half} ${y + 11}`,
+            'Z',
+          ].join(' ')}
+        />
+      </g>
+    );
+  },
+};
+
+/**
+ * A single tapered blade rising off the crown, with one leaflet at its base.
+ *
+ * A sprout rather than a tuft of hair: it widens slightly on the way up and
+ * rounds off, which is what a growing shoot does and what a hair tuft never
+ * does. On the species named after a bud it is the identity landmark; on
+ * anything else it is the cheapest possible "this one is the plant one".
+ */
+const SPROUT: AccessoryDef = {
+  id: 'sprout',
+  label: 'Sprout',
+  slot: 'hat',
+  minLevel: 'icon',
+  render: ({ anchors, colors }) => {
+    const { x, y } = anchors.hat;
+    return (
+      <g fill={colors.clothing}>
+        {/* The leaflet, under the blade so their join disappears. */}
+        <path
+          d={`M ${x - 11} ${y + 2} C ${x - 23} ${y - 1} ${x - 30} ${y - 8} ${x - 31} ${y - 16} C ${x - 20} ${y - 15} ${x - 12} ${y - 9} ${x - 8} ${y - 1} Z`}
+        />
+        <path
+          d={[
+            `M ${x - 12} ${y + 6}`,
+            `C ${x - 15} ${y - 9} ${x - 15} ${y - 24} ${x - 8} ${y - 32}`,
+            `C ${x} ${y - 41} ${x + 14} ${y - 35} ${x + 11} ${y - 21}`,
+            `C ${x + 9} ${y - 12} ${x + 9} ${y - 3} ${x + 11} ${y + 6}`,
+            'Z',
+          ].join(' ')}
+        />
+      </g>
+    );
+  },
+};
+
+/**
+ * A beret: a soft disc pulled down on one side, with the little stalk on top.
+ *
+ * The stalk is what stops it reading as a pancake. It is drawn in the trim
+ * colour so it survives being the same hue as the cap on a flat render.
+ */
+const BERET: AccessoryDef = {
+  id: 'beret',
+  label: 'Beret',
+  slot: 'hat',
+  minLevel: 'icon',
+  render: ({ anchors, colors }) => {
+    const { x, y, w } = anchors.hat;
+    const half = w / 2;
+    return (
+      <g>
+        {/* The stalk. Short, and rooted under the dome — a long one reads as
+            an aerial, and one that starts outside the dome floats. */}
+        <path
+          d={`M ${x + half * 0.06} ${y - 24} L ${x + half * 0.24} ${y - 36} L ${x + half * 0.34} ${y - 20} Z`}
+          fill={colors.clothing}
+        />
+        <path
+          d={[
+            `M ${x - half * 0.92} ${y + 6}`,
+            `C ${x - half} ${y - 16} ${x - half * 0.3} ${y - 27} ${x + half * 0.28} ${y - 24}`,
+            `C ${x + half * 0.88} ${y - 21} ${x + half * 1.08} ${y - 4} ${x + half * 0.88} ${y + 7}`,
+            `C ${x + half * 0.4} ${y + 16} ${x - half * 0.4} ${y + 16} ${x - half * 0.92} ${y + 6}`,
+            'Z',
+          ].join(' ')}
+          fill={colors.clothing}
+        />
+      </g>
+    );
+  },
+};
+
+/**
+ * A painter's cap: a big soft dome that overhangs the head, gathered into a
+ * scalloped lower edge, with a button where the panels meet.
+ *
+ * Deliberately larger and looser than the beret, because on a fleet where two
+ * characters wear a soft round hat the only thing telling them apart at
+ * portrait size is how far the hat overhangs.
+ */
+const PAINTER_CAP: AccessoryDef = {
+  id: 'painter-cap',
+  label: "Painter's cap",
+  slot: 'hat',
+  minLevel: 'icon',
+  render: ({ anchors, colors }) => {
+    const { x, y, w } = anchors.hat;
+    const half = w / 2;
+    return (
+      <g>
+        <path
+          d={[
+            `M ${x - half * 1.04} ${y + 2}`,
+            `C ${x - half * 1.1} ${y - 26} ${x - half * 0.6} ${y - 42} ${x + half * 0.08} ${y - 40}`,
+            `C ${x + half * 0.76} ${y - 38} ${x + half * 1.12} ${y - 18} ${x + half * 1.06} ${y + 3}`,
+            `q ${-half * 0.26} 9 ${-half * 0.52} 1`,
+            `q ${-half * 0.26} 9 ${-half * 0.52} 1`,
+            `q ${-half * 0.26} 9 ${-half * 0.52} 1`,
+            `q ${-half * 0.26} 9 ${-half * 0.52} -6`,
+            'Z',
+          ].join(' ')}
+          fill={colors.clothing}
+        />
+        <circle cx={x - half * 0.24} cy={y - 25} r={7} fill={colors.clothingAccent} />
+      </g>
+    );
+  },
+};
+
+// --- the school's own hats ------------------------------------------------
+
+/**
+ * A soft cap with a short peak and a blank front panel.
+ *
+ * The legacy headmaster wears one and so does half of School of Gaming, which
+ * makes it the one piece of clothing in this registry that is *uniform*
+ * rather than costume - so it deliberately carries no mark. A blank panel is
+ * a cap a brand could put something on; a panel with letters drawn into it is
+ * a logo baked into an illustration, which is the thing a design system
+ * spends its life trying not to own.
+ *
+ * It is not the `swept-cap`, and the difference is the whole reason both
+ * exist: that one's peak sweeps a full head's width and is the character's
+ * signature, this one's is a stub. Two soft caps in one fleet have to be
+ * distinguishable at portrait size, and peak length is the only cue that
+ * survives there.
+ */
+const CAP: AccessoryDef = {
+  id: 'cap',
+  label: 'Cap',
+  slot: 'hat',
+  minLevel: 'icon',
+  render: ({ anchors, colors }) => {
+    const { x, y, w } = anchors.hat;
+    const half = w / 2;
+    const peak = Math.min(w * 0.32, 24);
+    return (
+      <g>
+        {/* The peak first, so the band closes over where it is sewn on. */}
+        <path
+          d={[
+            `M ${x - half * 0.9} ${y + 2}`,
+            `C ${x - half - peak * 0.6} ${y + 1} ${x - half - peak} ${y + 6} ${x - half - peak} ${y + 10}`,
+            `C ${x - half - peak * 0.5} ${y + 15} ${x - half * 0.6} ${y + 15} ${x - half * 0.35} ${y + 10}`,
+            'Z',
+          ].join(' ')}
+          fill={colors.clothingAccent}
+        />
+        <path
+          d={[
+            `M ${x - half * 1.02} ${y + 8}`,
+            `C ${x - half * 1.08} ${y - 30} ${x + half * 1.08} ${y - 30} ${x + half * 1.02} ${y + 8}`,
+            'Z',
+          ].join(' ')}
+          fill={colors.clothing}
+        />
+        <rect
+          x={x - half * 1.03}
+          y={y + 3}
+          width={half * 2.06}
+          height={8}
+          rx={4}
+          fill={colors.clothingAccent}
+        />
+        <rect
+          x={x - half * 0.46}
+          y={y - 14}
+          width={half * 0.92}
+          height={14}
+          rx={3.5}
+          fill={MASCOT_INK.paper}
+        />
+        <rect
+          x={x - half * 0.3}
+          y={y - 10}
+          width={half * 0.6}
+          height={6}
+          rx={3}
+          fill={colors.accent}
+        />
+      </g>
+    );
+  },
+};
+
+/**
+ * A straw hat: a brim wider than any other hat here, a low crown, a band.
+ *
+ * The brim is the entire identity and it has to be *implausibly* wide, because
+ * at portrait size a brim only a little wider than the head reads as a bucket
+ * hat. Nothing else in the registry is allowed to be this wide, which is what
+ * makes it nameable at a glance.
+ *
+ * Straw is `clothing` rather than a fixed colour, like every other garment
+ * here - the gardener's own straw hue is set where she is dressed, not
+ * hard-coded into the hat, so the same shape can be a sun hat in whatever
+ * colour a season asks for.
+ *
+ * The brim is drawn a step darker than the crown, which the first raster
+ * showed is not optional. One flat colour across both makes the crown
+ * disappear into the brim and the whole thing reads as a ring balanced on the
+ * head - a hat needs a top, and on a flat drawing the only way to say a
+ * surface is turned away from you is to paint it darker.
+ */
+const STRAW_HAT: AccessoryDef = {
+  id: 'straw-hat',
+  label: 'Straw hat',
+  slot: 'hat',
+  minLevel: 'icon',
+  render: ({ anchors, colors, detail }) => {
+    const { x, y, w } = anchors.hat;
+    const brim = w * 0.95;
+    return (
+      <g>
+        <ellipse cx={x} cy={y + 7} rx={brim} ry={11} fill={shadeHex(colors.clothing, 0.2)} {...OUTLINE} />
+        {showsFiligree(detail) && (
+          <g stroke={MASCOT_INK.line} strokeWidth={1.2} opacity={0.26} fill="none">
+            <path d={`M ${x - brim * 0.92} ${y + 7} L ${x + brim * 0.92} ${y + 7}`} />
+            <path d={`M ${x - brim * 0.66} ${y + 12} L ${x + brim * 0.66} ${y + 12}`} />
+          </g>
+        )}
+        <path
+          d={`M ${x - w * 0.44} ${y + 8} C ${x - w * 0.46} ${y - 34} ${x + w * 0.46} ${y - 34} ${x + w * 0.44} ${y + 8} Z`}
+          fill={colors.clothing}
+          {...OUTLINE}
+        />
+        <rect
+          x={x - w * 0.43}
+          y={y - 2}
+          width={w * 0.86}
+          height={9}
+          rx={4.5}
+          fill={colors.clothingAccent}
+        />
+      </g>
+    );
+  },
+};
+
+// --- the ground, when something is standing on it -------------------------
+
+/**
+ * The painter's bucket, off `maalari`.
+ *
+ * It is an `extra` and not part of the brush prop, which is the one decision
+ * in it worth writing down. A held prop is drawn inside a group the pose may
+ * rotate - `hold-up` sways whatever is in the hand by three degrees about its
+ * own bounding box - and a bucket sharing that box would slide across the
+ * floor twice a second. The ground does not move, so a bucket standing on it
+ * behaves like a bucket.
+ *
+ * It is also the one ground item that stands on the *right*. Everything else
+ * in this slot uses the ground anchor, which is off the character's left
+ * foot; that is exactly where the `painting` pose puts the working arm and
+ * where both painting scenes put the surface being painted, so the bucket
+ * would be underneath the brush. It mirrors the anchor rather than inventing
+ * a position, so it lands the same distance out on every species.
+ *
+ * The paint is `clothing`, the same slot the brush's bristles take, so the
+ * two are dyed by one value and cannot come out as two different colours of
+ * the same paint. That it is a garment slot is the point: a fleet member's
+ * swatch and a strip row's garment both land there, so the paint is always
+ * one of the product's own colours and never reaches the identity core.
+ */
+const PAINT_BUCKET: AccessoryDef = {
+  id: 'paint-bucket',
+  label: 'Paint bucket',
+  slot: 'extra',
+  minLevel: 'simple',
+  render: ({ anchors, rig, colors }) => {
+    const x = 2 * rig.shadow.cx - anchors.extra.x;
+    const y = anchors.extra.y;
+    const top = y - 25;
+    return (
+      <g>
+        <path
+          d={`M ${x - 15} ${top + 3} C ${x - 24} ${top - 5} ${x + 24} ${top - 5} ${x + 15} ${top + 3}`}
+          fill="none"
+          stroke={MASCOT_INK.lineSoft}
+          strokeWidth={2.4}
+          strokeLinecap="round"
+        />
+        <path
+          d={`M ${x - 14} ${top} L ${x + 14} ${top} L ${x + 11} ${y + 1} L ${x - 11} ${y + 1} Z`}
+          fill={MASCOT_SCENERY.stone}
+          {...OUTLINE}
+        />
+        <ellipse cx={x} cy={top} rx={14} ry={4.4} fill={colors.clothing} {...OUTLINE} />
+        <rect x={x - 12.6} y={top + 12} width={25} height={6} rx={3} fill={colors.clothing} />
+        <path d={`M ${x + 9} ${top + 4} q 5 8 0 14 q -5 -6 0 -14 Z`} fill={colors.clothing} />
+        <ellipse cx={x + 21} cy={y + 1} rx={8} ry={3} fill={colors.clothing} opacity={0.85} />
+      </g>
+    );
+  },
+};
+
+/**
+ * A book lying open on the ground with a shoot growing out of its pages.
+ *
+ * The gardener of a games club does not tend a flowerbed, she tends the
+ * stories, and this is that sentence drawn rather than captioned. It sits at
+ * her feet rather than in her hands on purpose: a thing you are holding is a
+ * thing you are using, and a thing planted beside you is a thing you are
+ * looking after.
+ *
+ * The leaves are the product's own green rather than a garment slot. A sprout
+ * is green the way the bucket's tin is metal - it is scenery, not clothing,
+ * and a gamer dyeing their hat should not be able to dye a plant.
+ */
+const STORY_SPROUT: AccessoryDef = {
+  id: 'story-sprout',
+  label: 'Book with a sprout',
+  slot: 'extra',
+  minLevel: 'simple',
+  render: ({ anchors, colors, detail }) => {
+    const { x, y } = anchors.extra;
+    const stem = swatchHex('green');
+    const leaf = swatchHex('emerald');
+    return (
+      <g>
+        <path
+          d={`M ${x - 21} ${y + 1} L ${x} ${y - 8} L ${x} ${y + 1} L ${x - 21} ${y + 9} Z`}
+          fill={MASCOT_INK.paper}
+          {...OUTLINE}
+        />
+        <path
+          d={`M ${x + 21} ${y + 1} L ${x} ${y - 8} L ${x} ${y + 1} L ${x + 21} ${y + 9} Z`}
+          fill={MASCOT_INK.paper}
+          {...OUTLINE}
+        />
+        <path
+          d={`M ${x - 21} ${y + 5} L ${x} ${y - 3} L ${x + 21} ${y + 5} L ${x + 21} ${y + 9} L ${x} ${y + 1} L ${x - 21} ${y + 9} Z`}
+          fill={colors.accent}
+        />
+        {showsFiligree(detail) && (
+          <g fill={MASCOT_INK.lineSoft} opacity={0.4}>
+            <rect x={x - 17} y={y - 2} width={12} height={2.4} rx={1.2} />
+            <rect x={x + 5} y={y - 2} width={12} height={2.4} rx={1.2} />
+          </g>
+        )}
+        <path
+          d={`M ${x} ${y - 5} C ${x + 2} ${y - 14} ${x - 2} ${y - 21} ${x} ${y - 28}`}
+          fill="none"
+          stroke={stem}
+          strokeWidth={2.6}
+          strokeLinecap="round"
+        />
+        <path
+          d={`M ${x - 1} ${y - 20} C ${x - 13} ${y - 23} ${x - 14} ${y - 32} ${x - 3} ${y - 30} Z`}
+          fill={leaf}
+        />
+        <path
+          d={`M ${x + 1} ${y - 26} C ${x + 13} ${y - 29} ${x + 14} ${y - 38} ${x + 3} ${y - 36} Z`}
+          fill={stem}
+        />
+      </g>
+    );
+  },
+};
+
+// --- scenes: the door, and the board it was painted on --------------------
+
+/**
+ * The school door, off `ovi` - a plank door with a poster on it and a step at
+ * its foot.
+ *
+ * The composition is the whole problem and it is deliberately not the legacy
+ * one. That drawing has a door filling the frame and a very small mascot at
+ * the bottom left; ours are drawn at a fixed size in the middle of the canvas
+ * and stand nearly as tall as it, so a door that filled the frame would come
+ * out about as wide as it is tall - a hatch, not a door. A door reads at
+ * roughly two and a half times its own width, which at this height leaves
+ * seventy units. So it stands to the viewer's left with the character at its
+ * foot, overlapping its right edge, and the proportion survives.
+ *
+ * That also settles where everything on the leaf goes. Only the strip left of
+ * about x=48 is clear of every species in the set (the widest bodies here run
+ * 48 to 152), so the poster and the handle live in it, and the hinges - the
+ * parts nobody needs to see whole - take the edge the character stands over.
+ * The handle is therefore on the far side from the hinges, mirroring the
+ * original; the alternative put a brass knob permanently behind a shoulder.
+ *
+ * The poster carries no lettering. It is SOG purple and SOG orange in blocks
+ * with grey bars where words would be, which is how the `sign` prop already
+ * draws copy - an illustration that spells out a wordmark is a logo somebody
+ * will one day have to re-render.
+ */
+const DOOR_LEFT = 4;
+const DOOR_W = 70;
+const DOOR_TOP = 10;
+/** Where the doorstep's top surface is, and therefore where the door ends. */
+const STEP_Y = 185;
+
+function Doorway({ colors, detail }: AccessoryContext): ReactElement {
+  const leafX = DOOR_LEFT + 6;
+  const leafW = DOOR_W - 12;
+  const leafY = DOOR_TOP + 6;
+  const seams = [0.25, 0.5, 0.75].map((f) => leafX + leafW * f);
+  const posterX = DOOR_LEFT + 9;
+  const posterY = 38;
+  const posterW = 46;
+  const posterH = 48;
+  return (
+    <g>
+      <rect x={0} y={STEP_Y} width={200} height={9} fill={MASCOT_SCENERY.stone} />
+      <rect
+        x={DOOR_LEFT}
+        y={DOOR_TOP}
+        width={DOOR_W}
+        height={STEP_Y - DOOR_TOP}
+        rx={4}
+        fill={MASCOT_SCENERY.woodDark}
+      />
+      <rect x={leafX} y={leafY} width={leafW} height={STEP_Y - leafY} fill={MASCOT_SCENERY.wood} />
+      <g stroke={MASCOT_SCENERY.woodLine} strokeWidth={1.8} opacity={0.75}>
+        {seams.map((sx) => (
+          <path key={sx} d={`M ${sx} ${leafY} L ${sx} ${STEP_Y}`} />
+        ))}
+      </g>
+      {showsFiligree(detail) && (
+        <g stroke={MASCOT_SCENERY.woodLine} strokeWidth={1.1} fill="none" opacity={0.4}>
+          <path d={`M ${leafX + 5} ${leafY + 26} q 4 16 0 32`} />
+          <path d={`M ${leafX + 22} ${leafY + 96} q 5 14 1 28`} />
+          <path d={`M ${leafX + 40} ${leafY + 40} q -4 18 0 34`} />
+        </g>
+      )}
+      {/* Hinges on the edge the character stands over - the half of the door
+          that can afford to be hidden. */}
+      <rect x={leafX + leafW - 17} y={leafY + 26} width={17} height={7} rx={2} fill={MASCOT_INK.line} />
+      <rect x={leafX + leafW - 17} y={STEP_Y - 48} width={17} height={7} rx={2} fill={MASCOT_INK.line} />
+      <circle cx={leafX + 10} cy={112} r={6} fill={swatchHex('amber')} {...OUTLINE} />
+      <rect x={leafX + 6.5} y={120} width={7.5} height={12} rx={3.5} fill={swatchHex('amber')} />
+      <circle cx={leafX + 10.2} cy={125} r={1.8} fill={MASCOT_INK.line} />
+      <g transform={`rotate(-4 ${posterX + posterW / 2} ${posterY + posterH / 2})`}>
+        <rect
+          x={posterX}
+          y={posterY}
+          width={posterW}
+          height={posterH}
+          rx={1.5}
+          fill={MASCOT_INK.paper}
+          stroke={MASCOT_INK.lineSoft}
+          strokeWidth={1.4}
+        />
+        <rect x={posterX + 5} y={posterY + 6} width={24} height={15} rx={3} fill={swatchHex('purple')} />
+        <circle cx={posterX + 37} cy={posterY + 13} r={7} fill={swatchHex('orange')} />
+        <g fill={MASCOT_INK.lineSoft} opacity={0.45}>
+          <rect x={posterX + 5} y={posterY + 27} width={36} height={4} rx={2} />
+          <rect x={posterX + 5} y={posterY + 35} width={28} height={4} rx={2} />
+          <rect x={posterX + 5} y={posterY + 43} width={20} height={4} rx={2} />
+        </g>
+        <circle
+          cx={posterX + posterW / 2}
+          cy={posterY + 2.5}
+          r={2.6}
+          fill={colors.clothingAccent}
+          stroke={MASCOT_INK.line}
+          strokeWidth={1.2}
+        />
+      </g>
+    </g>
+  );
+}
+
+const DOOR: AccessoryDef = {
+  id: 'door',
+  label: 'At the door',
+  slot: 'scene',
+  minLevel: 'simple',
+  // The front of the step, and nothing else. It sits entirely below the soles,
+  // so it closes the slab into a solid block of stone without cutting a single
+  // foot in half - the desk's trick, at a height where there is nothing to
+  // occlude.
+  render: () => (
+    <g>
+      <rect x={0} y={STEP_Y + 7} width={200} height={2} fill={MASCOT_INK.shadow} opacity={0.35} />
+      <rect x={0} y={STEP_Y + 8} width={200} height={9} fill={MASCOT_SCENERY.stoneDark} />
+    </g>
+  ),
+  renderBehind: (ctx) => <Doorway {...ctx} />,
+};
+
+/**
+ * A board half-painted: the thing the painter is actually working on.
+ *
+ * The legacy `ovi` is not a door with a mascot standing near it. It is a
+ * mascot who has *just painted the poster on it* - the brush is still
+ * dripping and the bucket is still open at his feet - and that is the idea
+ * worth keeping, because it says the characters make the things on this site
+ * rather than decorate them.
+ *
+ * A door is a specific place, so it can only ever mean the school. A blank
+ * board can mean anything a product surface needs it to: a page still being
+ * built, an empty list, a club with nothing in it yet. So the mark on it is
+ * unfinished on purpose - two strokes down and the third not started - and it
+ * is painted from the same `clothing` slot the brush and the bucket take, so
+ * the paint on the board is visibly the paint in the tin.
+ *
+ * It stands on the same side as the door and for the same reason: that is the
+ * strip of canvas no species' body reaches into.
+ */
+function PaintBoard({ colors, detail }: AccessoryContext): ReactElement {
+  const boardX = 6;
+  const boardY = 30;
+  const boardW = 68;
+  const boardH = 116;
+  const midX = boardX + boardW / 2;
+  return (
+    <g>
+      <ellipse cx={100} cy={186} rx={46} ry={7} fill={MASCOT_INK.shadow} opacity={0.4} />
+      <path
+        d={`M ${boardX + 12} ${boardY + boardH} L ${boardX + 2} 186`}
+        stroke={MASCOT_SCENERY.woodDark}
+        strokeWidth={6}
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${boardX + boardW - 12} ${boardY + boardH} L ${boardX + boardW - 2} 186`}
+        stroke={MASCOT_SCENERY.woodDark}
+        strokeWidth={6}
+        strokeLinecap="round"
+      />
+      <rect x={boardX} y={boardY} width={boardW} height={boardH} rx={3} fill={MASCOT_SCENERY.wood} />
+      <rect
+        x={boardX + 5}
+        y={boardY + 5}
+        width={boardW - 10}
+        height={boardH - 10}
+        rx={2}
+        fill={MASCOT_INK.paper}
+      />
+      {/* Two strokes down, the third not started. */}
+      <path
+        d={`M ${midX - 14} ${boardY + 30} L ${midX - 14} ${boardY + 82}`}
+        stroke={colors.clothing}
+        strokeWidth={11}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d={`M ${midX - 6} ${boardY + 28} C ${midX + 22} ${boardY + 32} ${midX + 22} ${boardY + 80} ${midX - 6} ${boardY + 84}`}
+        stroke={colors.clothing}
+        strokeWidth={11}
+        strokeLinecap="round"
+        fill="none"
+      />
+      {showsFiligree(detail) && (
+        <path
+          d={`M ${midX - 14} ${boardY + 82} q -1 11 1 17`}
+          stroke={colors.clothing}
+          strokeWidth={3.4}
+          strokeLinecap="round"
+          fill="none"
+          opacity={0.85}
+        />
+      )}
+      <path
+        d={`M ${midX - 20} ${boardY + 96} L ${midX + 10} ${boardY + 96}`}
+        stroke={MASCOT_INK.lineSoft}
+        strokeWidth={4}
+        strokeLinecap="round"
+        opacity={0.22}
+        fill="none"
+      />
+    </g>
+  );
+}
+
+const SIGN_PAINTING: AccessoryDef = {
+  id: 'sign-painting',
+  label: 'Half-painted board',
+  slot: 'scene',
+  minLevel: 'simple',
+  // Spilt paint, in front of the feet. It is the only part of the scene that
+  // belongs on the near side of the character, and it is what stops the board
+  // reading as a poster hung on a wall behind someone.
+  render: ({ colors }) => (
+    <g fill={colors.clothing}>
+      <ellipse cx={78} cy={190} rx={11} ry={3.4} opacity={0.9} />
+      <ellipse cx={92} cy={195} rx={5} ry={2.2} opacity={0.75} />
+      <circle cx={66} cy={194} r={2.4} opacity={0.7} />
+    </g>
+  ),
+  renderBehind: (ctx) => <PaintBoard {...ctx} />,
+};
+
 export const ACCESSORIES: readonly AccessoryDef[] = [
   HEADSET,
   BEANIE,
@@ -1138,6 +1850,16 @@ export const ACCESSORIES: readonly AccessoryDef[] = [
   CANDLES,
   EGG,
   BALLOONS,
+  SWEPT_CAP,
+  SPROUT,
+  BERET,
+  PAINTER_CAP,
+  CAP,
+  STRAW_HAT,
+  PAINT_BUCKET,
+  STORY_SPROUT,
+  DOOR,
+  SIGN_PAINTING,
 ];
 
 const BY_ID = new Map(ACCESSORIES.map((a) => [a.id, a]));

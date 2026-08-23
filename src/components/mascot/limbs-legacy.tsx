@@ -37,6 +37,8 @@ export const LEGACY_BOWS: Record<PoseId, { l: number; r: number }> = {
   jumping: { l: 14, r: -14 },
   // Round one had no seated pose; this is what it would have been given.
   seated: { l: 6, r: -6 },
+  // Nor a painting one. Same treatment.
+  painting: { l: 11, r: -9 },
 };
 
 function legacyPath(from: Point, to: Point, bow: number): string {

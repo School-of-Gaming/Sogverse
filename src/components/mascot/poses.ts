@@ -167,6 +167,27 @@ export const POSES: Record<PoseId, PoseSpec> = {
     defaultProp: "keyboard-mouse",
     freeHand: false,
   },
+  /**
+   * At work on a surface beside them: brush hand up and out to the viewer's
+   * left at head height, the other hand down at the hip.
+   *
+   * The hand is at x=44 rather than a rounder number for a reason worth
+   * knowing about before moving it. `reachedHand` pushes any hand within 55
+   * units of the centre line further out by the species' reach, so that a
+   * wide body does not swallow its own arm; a painting hand at, say, 50 would
+   * be *corrected* on Silmu and Konsu and land somewhere different on them
+   * than on Kaveri, which is exactly the thing a scene beside the character
+   * cannot survive. Past the cutoff every species agrees.
+   */
+  painting: {
+    grip: "up-left",
+    legs: "stand",
+    handL: { x: 44, y: 84 },
+    handR: { x: 134, y: 148 },
+    lift: 0,
+    defaultProp: "paintbrush",
+    freeHand: false,
+  },
 };
 
 /**
@@ -183,6 +204,8 @@ export function propAnchor(grip: Grip, handL: Point, handR: Point): Point {
       return { x: (handL.x + handR.x) / 2, y: (handL.y + handR.y) / 2 + 2 };
     case "up":
       return handR;
+    case "up-left":
+      return handL;
     case "side":
       return handR;
   }

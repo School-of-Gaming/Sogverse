@@ -7,6 +7,7 @@
  *
  * When a direction is chosen: delete this route, delete the concepts that
  * lost, delete `ROUTES.mascot` and its entry in the proxy's `PUBLIC_ROUTES`,
+ * delete `public/mascot-legacy/` and the legacy comparison section,
  * delete the `-legacy` comparison modules and the `faceStyle` / `limbStyle`
  * props that only exist to feed them, and promote the survivor out of
  * `src/components/mascot/concepts/` into the real product surfaces.
@@ -19,12 +20,14 @@ import { CONCEPTS } from "@/components/mascot";
 import { AvatarStudy } from "@/components/mascot/exploration/avatars";
 import { ConceptSection } from "@/components/mascot/exploration/concept-section";
 import { Collapsible } from "@/components/mascot/exploration/controls";
+import { LegacySection } from "@/components/mascot/exploration/legacy";
 import { Playground } from "@/components/mascot/exploration/playground";
 import {
   AnimalLineup,
   ArmStudy,
   DeskScene,
   FaceStudy,
+  GardenerSpotlight,
   KaveriFamily,
   MotionRow,
   SeasonStrip,
@@ -48,11 +51,13 @@ function Note({ title, children }: { title: string; children: React.ReactNode })
 
 const JUMPS: readonly { id: string; label: string }[] = [
   { id: "faces", label: "Faces" },
+  { id: "legacy", label: "Legacy" },
   { id: "motion", label: "Motion" },
   { id: "arms", label: "Arms" },
   { id: "taitto", label: "Taitto branches" },
   { id: "kaveri", label: "Kaveri family" },
   { id: "animals", label: "Animals" },
+  { id: "team", label: "The team" },
   { id: "desk", label: "Desk" },
   { id: "seasons", label: "Seasons" },
   { id: "avatars", label: "Avatars" },
@@ -108,6 +113,10 @@ export default function MascotExplorationPage() {
           <FaceStudy />
         </section>
 
+        <section id="legacy" className="scroll-mt-24">
+          <LegacySection />
+        </section>
+
         <section id="motion" className="scroll-mt-24">
           <MotionRow />
         </section>
@@ -126,6 +135,10 @@ export default function MascotExplorationPage() {
 
         <section id="animals" className="scroll-mt-24">
           <AnimalLineup />
+        </section>
+
+        <section id="team" className="scroll-mt-24 space-y-6">
+          <GardenerSpotlight />
         </section>
 
         <section id="desk" className="scroll-mt-24">

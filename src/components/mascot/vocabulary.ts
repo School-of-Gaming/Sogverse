@@ -17,7 +17,18 @@ export type Grip =
   /** One hand raised overhead. */
   | "up"
   /** Both hands low and forward, over a surface. */
-  | "desk";
+  | "desk"
+  /**
+   * One hand raised to the character's *left*, at head height, working on
+   * something beside them.
+   *
+   * The mirror of `up` and not a rounding error. Every other raised-hand pose
+   * in the table works to the viewer's right because that is the side a
+   * right-handed reading of a page expects; painting works to the left
+   * because that is the side both painting scenes put the surface on, which
+   * is in turn the only strip of canvas no species' body reaches into.
+   */
+  | "up-left";
 
 export const MASCOT_POSES = [
   "idle",
@@ -32,6 +43,7 @@ export const MASCOT_POSES = [
   "walking",
   "jumping",
   "seated",
+  "painting",
 ] as const;
 export type PoseId = (typeof MASCOT_POSES)[number];
 
@@ -44,6 +56,26 @@ export const MASCOT_EXPRESSIONS = [
   "focused",
 ] as const;
 export type ExpressionId = (typeof MASCOT_EXPRESSIONS)[number];
+
+/**
+ * Where the eyes are pointed, independent of the mood.
+ *
+ * The legacy SOG mascot shipped five sprites — *eteen, ylos, alas, oikealle,
+ * vasemmalle* — that were the identical character with only the pupil moved,
+ * and treating that as a *dial* rather than as five drawings is the cheapest
+ * useful thing in this whole module. A gaze is one translation applied to
+ * whatever pupil the expression already drew, so it composes with all six
+ * moods on every species and needs no animation to be worth having: a mascot
+ * beside a call to action can look at the call to action, and one beside a
+ * form field can look at the field.
+ *
+ * Directions are the **viewer's**, not the character's. A mascot standing to
+ * the left of a button looks `right` to look at it, which is what anyone
+ * placing one on a page will reach for; "the character's own left" would be
+ * correct anatomy and wrong every single time it was typed.
+ */
+export const MASCOT_GAZES = ["forward", "up", "down", "left", "right"] as const;
+export type GazeId = (typeof MASCOT_GAZES)[number];
 
 export const MASCOT_PROPS = [
   "none",
@@ -58,6 +90,9 @@ export const MASCOT_PROPS = [
   "pointer",
   "dumbbell",
   "trophy",
+  "paintbrush",
+  "briefcase",
+  "watering-can",
 ] as const;
 export type PropId = (typeof MASCOT_PROPS)[number];
 
@@ -84,6 +119,7 @@ export const POSE_LABELS: Record<PoseId, string> = {
   walking: "Walking",
   jumping: "Jumping",
   seated: "Seated at a desk",
+  painting: "Painting",
 };
 
 export const EXPRESSION_LABELS: Record<ExpressionId, string> = {
@@ -93,6 +129,14 @@ export const EXPRESSION_LABELS: Record<ExpressionId, string> = {
   laughing: "Laughing",
   surprised: "Surprised",
   focused: "Focused",
+};
+
+export const GAZE_LABELS: Record<GazeId, string> = {
+  forward: "Forward",
+  up: "Up",
+  down: "Down",
+  left: "Left",
+  right: "Right",
 };
 
 export const PROP_LABELS: Record<PropId, string> = {
@@ -108,6 +152,9 @@ export const PROP_LABELS: Record<PropId, string> = {
   pointer: "Pointer",
   dumbbell: "Dumbbell",
   trophy: "Trophy",
+  paintbrush: "Paintbrush",
+  briefcase: "Briefcase",
+  "watering-can": "Watering can",
 };
 
 export const ROLE_LABELS: Record<MascotRole, string> = {

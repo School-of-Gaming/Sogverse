@@ -43,7 +43,7 @@ import type { ReactElement } from "react";
 
 import type { ConceptDef, FormDef, PartProps } from "../concept";
 import { showsFiligree } from "../detail";
-import { KAVERI_VARIANTS } from "../palette";
+import { KAVERI_VARIANTS, MASCOT_INK, mixHex, shadeHex } from "../palette";
 import type { Rig } from "../rig";
 
 export const KAVERI_FORMS: readonly FormDef[] = [
@@ -53,7 +53,31 @@ export const KAVERI_FORMS: readonly FormDef[] = [
   { id: "adult-a", label: "Adult — long hair", note: "Leans woman-ish. A parent or a gedu." },
   { id: "adult-b", label: "Adult — short hair", note: "Leans man-ish. Broader shoulders." },
   { id: "adult-c", label: "Adult — bob", note: "Reads as neither. The middle build." },
+  {
+    id: "elder-a",
+    label: "Elder — curls",
+    note: "White curls under a headband. Narrow shoulders.",
+  },
+  {
+    id: "elder-b",
+    label: "Elder — beard",
+    note: "White hair and a full beard. The broadest build here.",
+  },
 ];
+
+/**
+ * White hair, which is not white.
+ *
+ * Every complexion in this concept is a pastel, and off-white hair on a pastel
+ * head is two light values with nothing between them - at portrait size the
+ * hair stops being a silhouette and the build cue that tells the elders apart
+ * from the adults goes with it. So the hair is the shared paper mixed a sixth
+ * of the way towards the soft line colour: still unmistakably white hair
+ * against the dark page, with just enough grey in it to hold an edge against
+ * a lilac, a teal or a coral face.
+ */
+const ELDER_HAIR = mixHex(MASCOT_INK.paper, MASCOT_INK.lineSoft, 0.17);
+const ELDER_HAIR_SHADE = shadeHex(ELDER_HAIR, 0.12);
 
 const KID: Rig = {
   shadow: { cx: 100, cy: 186, rx: 34, ry: 6 },
@@ -132,13 +156,24 @@ function rigFor(form: string): Rig {
       return withShoulders(ADULT, 33);
     case "adult-c":
       return withShoulders(ADULT, 30);
+    // The two elders differ from each other by more shoulder than any other
+    // pair in the family, because they are the two builds whose hair reads
+    // most alike at a distance: both are a pale mass on a pastel head, so the
+    // body has to do the work the hair cannot.
+    case "elder-a":
+      return withShoulders(ADULT, 26);
+    case "elder-b":
+      return withShoulders(ADULT, 34);
     case "kid-a":
     default:
       return withShoulders(KID, 28);
   }
 }
 
-const ADULT_FORMS = new Set(["adult-a", "adult-b", "adult-c"]);
+const ADULT_FORMS = new Set(["adult-a", "adult-b", "adult-c", "elder-a", "elder-b"]);
+
+/** The two builds that wear their hair white. */
+const ELDER_FORMS = new Set(["elder-a", "elder-b"]);
 
 function Body({ rig, colors, form, detail }: PartProps): ReactElement {
   const t = rig.torso;
@@ -218,7 +253,7 @@ function Body({ rig, colors, form, detail }: PartProps): ReactElement {
  */
 function Hair({ rig, colors, form }: PartProps): ReactElement {
   const { x, y, r } = rig.head;
-  const hair = colors.limb;
+  const hair = ELDER_FORMS.has(form) ? ELDER_HAIR : colors.limb;
 
   /**
    * The cap. Every build starts from the same solid shape over the crown and
@@ -281,6 +316,56 @@ function Hair({ rig, colors, form }: PartProps): ReactElement {
         <g fill={hair}>
           <path d={cap(-0.32)} />
           {locks(0.82, 0.34, -0.32)}
+        </g>
+      );
+    case "elder-a":
+      // A bouffant of white curls with a headband across it. Wider and taller
+      // than any other build's hair, because volume is what makes a head of
+      // hair read as *old* rather than merely pale - and the band is the one
+      // piece of the legacy clerk that survives at portrait size.
+      return (
+        <g>
+          <g fill={hair}>
+            <path
+              d={`M ${x - r * 1.14} ${y + r * 0.08} C ${x - r * 1.44} ${y - r * 1.86} ${x + r * 1.44} ${y - r * 1.86} ${x + r * 1.14} ${y + r * 0.08} Z`}
+            />
+            <circle cx={x - r * 1.06} cy={y - r * 0.34} r={r * 0.36} />
+            <circle cx={x + r * 1.06} cy={y - r * 0.34} r={r * 0.36} />
+          </g>
+          <path
+            d={`M ${x - r * 1.2} ${y - r * 0.46} Q ${x} ${y - r * 0.96} ${x + r * 1.2} ${y - r * 0.46} L ${x + r * 1.2} ${y - r * 0.18} Q ${x} ${y - r * 0.68} ${x - r * 1.2} ${y - r * 0.18} Z`}
+            fill={colors.accent}
+          />
+        </g>
+      );
+    case "elder-b":
+      // Hair and a full beard, which is one shape drawn as two: the cap comes
+      // down past the ear into a sideburn, and the beard picks it up there.
+      // The join is what stops a beard reading as a bib.
+      //
+      // The beard starts below the eye row and not a unit higher. The face is
+      // drawn on top of the head by a renderer that knows nothing about what a
+      // concept put under it, so a beard reaching the eye line would simply
+      // have eyes on it.
+      return (
+        <g fill={hair}>
+          <path d={cap(-0.5)} />
+          {locks(0.46, 0.2, -0.5)}
+          <path
+            d={[
+              `M ${x - r * 1.0} ${y + r * 0.42}`,
+              `C ${x - r * 1.16} ${y + r * 1.1} ${x - r * 0.6} ${y + r * 1.94} ${x} ${y + r * 1.9}`,
+              `C ${x + r * 0.6} ${y + r * 1.94} ${x + r * 1.16} ${y + r * 1.1} ${x + r * 1.0} ${y + r * 0.42}`,
+              'Z',
+            ].join(' ')}
+          />
+          <path
+            d={`M ${x - r * 0.46} ${y + r * 0.5} Q ${x} ${y + r * 0.78} ${x + r * 0.46} ${y + r * 0.5}`}
+            fill="none"
+            stroke={ELDER_HAIR_SHADE}
+            strokeWidth={r * 0.11}
+            strokeLinecap="round"
+          />
         </g>
       );
     case "kid-a":
@@ -375,6 +460,33 @@ export const KAVERI: ConceptDef = {
       expression: "happy",
       prop: "mug",
       blurb: "Scarf and a mug. Turns up wherever a parent is being asked to read something carefully.",
+    },
+    {
+      name: "Reksi — the Princi-Pal",
+      job: "Principal gamer — the headmaster's voice: welcomes, announcements, the dad joke",
+      variantId: "lilac",
+      form: "elder-b",
+      role: "none",
+      pose: "idle",
+      expression: "happy",
+      prop: "briefcase",
+      outfit: { hat: "cap", face: "shades" },
+      garment: "purple",
+      blurb:
+        "White hair, a full beard, shades he does not take off indoors, a purple cap and a briefcase — the legacy REKSI, rebuilt. He also turns up as a T-rex, which is the same character and the same title: the Princi-Pal is the principal gamer.",
+    },
+    {
+      name: "Kanslisti",
+      job: "The school office — enrolment, invoices, and every form nobody enjoys",
+      variantId: "coral",
+      form: "elder-a",
+      role: "none",
+      pose: "wave",
+      expression: "happy",
+      outfit: { face: "specs", torso: "scarf" },
+      garment: "amber",
+      blurb:
+        "The clerk, straight off the legacy sheet: white curls, a headband, round glasses and a knitted scarf. She is the fleet's other announcement voice — where Reksi welcomes you, she is the one who tells you what is actually happening on Tuesday.",
     },
     {
       name: "Eero",

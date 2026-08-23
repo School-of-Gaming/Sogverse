@@ -56,13 +56,33 @@ import type { ReactElement } from "react";
 
 import { featureScale, type DetailLevel } from "./detail";
 import { LegacyEyeballs, LegacyMouth } from "./face-legacy";
+import { VoxelBrows, VoxelEyes, VoxelMouth } from "./face-voxel";
 import { WARM_BLUSHING, WarmBlush, WarmEyes, WarmMouth } from "./face-warm";
 import { MASCOT_INK, type Colorway } from "./palette";
 import type { Rig } from "./rig";
-import type { ExpressionId } from "./vocabulary";
+import type { ExpressionId, GazeId } from "./vocabulary";
 
-/** Whether the head has eyes on it or a display in it. */
-export type FaceMode = "eyes" | "screen";
+/**
+ * Whether the head has eyes on it, one eye on it, or a display in it.
+ *
+ * `cyclops` keeps the four dials and changes which primitives they turn: one
+ * white on the head's centre line, one pupil in it, **no brow at all**, and a
+ * mouth only on the moods that open one. Dial three moves into the white
+ * itself, which gets cut by a straight chord whose height and tilt do what a
+ * brow's slope did on a paired face. It is not a reduced face — a single big
+ * eye turns every dial *harder*, because there is nothing for the viewer's
+ * attention to split between. It exists because the mascot School of Gaming
+ * actually shipped for years was a one-eyed blob, and a cyclops drawn as two
+ * eyes minus one is not the same thing as a cyclops drawn as a cyclops.
+ *
+ * `voxel` is the same grammar with every primitive squared off — see
+ * `face-voxel.tsx`. It exists for the species built out of cubes: a smooth
+ * ellipse on a face made of flat rectangles does not read as that character's
+ * eye, it reads as something stuck on afterwards. Like `screen`, it is a
+ * property of the *head*, not a face design a caller picks, so it overrides
+ * the comparison-strip `style` exactly as the screen face does.
+ */
+export type FaceMode = "eyes" | "screen" | "cyclops" | "voxel";
 
 /**
  * Which face design.
@@ -87,6 +107,8 @@ type FaceProps = {
   mode: FaceMode;
   detail: DetailLevel;
   style?: FaceStyle;
+  /** Where the eyes point. See `pupilOffset` for how it composes with mood. */
+  gaze?: GazeId;
   /** Empty string when the mascot is static. */
   blinkClass: string;
 };
@@ -97,7 +119,15 @@ type EyeProps = {
   centres: EyeCentre[];
   colors: Colorway;
   expression: ExpressionId;
+  gaze: GazeId;
   r: number;
+  /**
+   * The line colour. Only the shut eye needs it — every other expression's
+   * eye is a white shape with a pupil cut into it, and a cut-out reads on any
+   * body. A shut eye is a *stroke on the silhouette*, which is why it belongs
+   * to the same family as the brow and the mouth rather than to the pupil.
+   */
+  ink: string;
   filigree: boolean;
   highlights: boolean;
 };
@@ -114,16 +144,72 @@ function eyeCentres(rig: Rig): EyeCentre[] {
 }
 
 /**
+ * The one eye centre of a cyclops head — on the centre line, ignoring
+ * `eyeDx`, which such a rig sets to zero anyway so that anything reading the
+ * face anchor (glasses, a visor) is told the truth about the head it is on.
+ */
+function cyclopsCentre(rig: Rig): EyeCentre[] {
+  return [{ x: rig.head.x, y: rig.eyeY, side: 1 }];
+}
+
+/**
+ * Dial two, as a single vector: where the pupil sits relative to the middle
+ * of its own white.
+ *
+ * **Gaze and expression both want this dial, so the precedence is written
+ * down here rather than guessed at each call site: an explicit gaze wins.**
+ * `forward` is the default and means "whatever the mood already decided",
+ * which is how Thinking keeps the one gesture that makes it Thinking — the
+ * pupil up and away. Any other gaze *replaces* that offset rather than adding
+ * to it, because adding them is how a Thinking mascot asked to look right
+ * ends up with its pupil outside its own eye. One dial, one value, the
+ * caller who asked for something specific wins.
+ *
+ * The amounts are fractions of the eye radius, chosen so the pupil stays
+ * inside the white for every expression that has one: the widest pupil is
+ * Excited's at 0.7r inside a 1.22r white, leaving 0.52r of slack against the
+ * 0.4r spent here. Focused is the exception — its white is squeezed into a
+ * lens with very little vertical room — so it looks up and down half as far.
+ */
+function pupilOffset(
+  expression: ExpressionId,
+  gaze: GazeId,
+  r: number,
+): { dx: number; dy: number } {
+  if (gaze === "forward") {
+    return expression === "thinking" ? { dx: r * 0.34, dy: -r * 0.32 } : { dx: 0, dy: 0 };
+  }
+  const across = r * 0.4;
+  const down = r * (expression === "focused" ? 0.17 : 0.34);
+  switch (gaze) {
+    case "up":
+      return { dx: 0, dy: -down };
+    case "down":
+      return { dx: 0, dy: down };
+    case "left":
+      return { dx: -across, dy: 0 };
+    case "right":
+      return { dx: across, dy: 0 };
+  }
+}
+
+/**
  * Dials one and two: the white ellipse, and where the pupil sits in it.
  *
  * Every case here is two flat shapes and nothing else. If a future expression
  * seems to need a third shape to say what it means, the right move is a
  * different ellipse — not a third shape.
  */
-function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement {
+function SymbolEyes({ centres, colors, expression, gaze, r, ink }: EyeProps): ReactElement {
+  const off = pupilOffset(expression, gaze, r);
   return (
     <>
       {centres.map(({ x, y, side }) => {
+        // Every case below draws its white about (x, y) and its pupil about
+        // (px, py). The two coincide exactly when the mood and the gaze both
+        // have nothing to say, which is the default face.
+        const px = x + off.dx;
+        const py = y + off.dy;
         switch (expression) {
           // The default face. The Thinking eye with the pupil brought back to
           // centre: looking straight at you, and nothing added to say so.
@@ -131,7 +217,7 @@ function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
             return (
               <g key={side}>
                 <circle cx={x} cy={y} r={r} fill={colors.sclera} />
-                <circle cx={x} cy={y} r={r * 0.56} fill={colors.pupil} />
+                <circle cx={px} cy={py} r={r * 0.56} fill={colors.pupil} />
               </g>
             );
           // The same eye, bigger and rounder, with a bigger pupil. Open wide
@@ -142,7 +228,7 @@ function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
             return (
               <g key={side}>
                 <circle cx={x} cy={y} r={r * 1.22} fill={colors.sclera} />
-                <circle cx={x} cy={y} r={r * 0.7} fill={colors.pupil} />
+                <circle cx={px} cy={py} r={r * 0.7} fill={colors.pupil} />
               </g>
             );
           // A shape change rather than added detail, which is why it is
@@ -153,7 +239,7 @@ function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
                 key={side}
                 d={`M ${x - r} ${y + r * 0.35} Q ${x} ${y - r * 0.95} ${x + r} ${y + r * 0.35}`}
                 fill="none"
-                stroke={colors.pupil}
+                stroke={ink}
                 strokeWidth={r * 0.46}
                 strokeLinecap="round"
               />
@@ -163,14 +249,14 @@ function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
             return (
               <g key={side}>
                 <circle cx={x} cy={y} r={r} fill={colors.sclera} />
-                <circle cx={x + r * 0.34} cy={y - r * 0.32} r={r * 0.56} fill={colors.pupil} />
+                <circle cx={px} cy={py} r={r * 0.56} fill={colors.pupil} />
               </g>
             );
           case "surprised":
             return (
               <g key={side}>
                 <circle cx={x} cy={y} r={r * 1.16} fill={colors.sclera} />
-                <circle cx={x} cy={y} r={r * 0.4} fill={colors.pupil} />
+                <circle cx={px} cy={py} r={r * 0.4} fill={colors.pupil} />
               </g>
             );
           // Narrowed: the ellipse squeezed into a lens. Still two shapes.
@@ -181,7 +267,7 @@ function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
                   d={`M ${x - r} ${y + r * 0.05} Q ${x} ${y - r * 1.05} ${x + r} ${y + r * 0.05} Q ${x} ${y + r * 0.62} ${x - r} ${y + r * 0.05} Z`}
                   fill={colors.sclera}
                 />
-                <circle cx={x} cy={y - r * 0.05} r={r * 0.46} fill={colors.pupil} />
+                <circle cx={px} cy={py - r * 0.05} r={r * 0.46} fill={colors.pupil} />
               </g>
             );
         }
@@ -190,9 +276,16 @@ function SymbolEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
   );
 }
 
-function ScreenEyes({ centres, colors, expression, r }: EyeProps): ReactElement {
+/**
+ * A display has no pupil to move, so a gaze moves the whole lit glyph inside
+ * the panel instead — a screen that looks left is a screen whose picture has
+ * slid left. Less travel than an eyeball gets, because the glyph is much
+ * bigger than a pupil and the panel it sits in has hard edges.
+ */
+function ScreenEyes({ centres, colors, expression, gaze, r }: EyeProps): ReactElement {
   const lit = colors.sclera;
-  return (
+  const off = pupilOffset(expression, gaze, r);
+  const glyphs = (
     <>
       {centres.map(({ x, y, side }) => {
         switch (expression) {
@@ -272,6 +365,8 @@ function ScreenEyes({ centres, colors, expression, r }: EyeProps): ReactElement 
       })}
     </>
   );
+  if (gaze === "forward") return glyphs;
+  return <g transform={`translate(${off.dx * 0.7} ${off.dy * 0.7})`}>{glyphs}</g>;
 }
 
 /**
@@ -283,13 +378,15 @@ function Brows({
   centres,
   expression,
   r,
+  ink,
 }: {
   centres: EyeCentre[];
   expression: ExpressionId;
   r: number;
+  ink: string;
 }): ReactElement | null {
   const stroke = {
-    stroke: MASCOT_INK.line,
+    stroke: ink,
     strokeWidth: Math.max(2.4, r * 0.36),
     strokeLinecap: "round" as const,
     fill: "none",
@@ -350,6 +447,174 @@ function Brows({
 }
 
 /**
+ * The one-eyed face, which is a different symbol system on the same four dials.
+ *
+ * A cyclops is not a two-eyed head with an eye removed, and the first pass
+ * treated it as one: it borrowed the paired eyes, the paired mouths and the
+ * paired brows, and scaled them. Two of those do not survive the trip.
+ *
+ * **There is no brow.** Not "no brow on the moods that do not need one" — none,
+ * ever. The legacy SOG mascot has sixteen files and not one of them draws a
+ * line above the eye, and the reason is structural rather than stylistic: a
+ * paired brow says what it says by disagreeing with the other one, and a lone
+ * brow on a head with no other feature reads as a mark left on the character
+ * rather than as part of its face. What the brow was doing moves into the eye,
+ * which on this species is big enough to carry it — the white gets **cut** by a
+ * straight chord, and the height and angle of that cut is the dial the brow
+ * used to be. `Minion_Red` is the whole argument: its eye is a full circle with
+ * the top sliced off just above centre and the pupil sitting under the slice,
+ * and it reads as unmistakably wary without a stroke anywhere near it.
+ *
+ * **The mouth is optional.** Nine of the sixteen files have no mouth at all,
+ * including every one of the five gaze sprites, and the face they make is not
+ * blank — it is composed. So the resting mood draws no mouth, and a mouth
+ * appears when the mood is one that opens it. (The tidier form of this is a
+ * shared `content` expression every species could use; it is not done here
+ * because adding a member to `ExpressionId` breaks the exhaustive switches in
+ * four face modules this change does not own.)
+ */
+
+/**
+ * A disc with its top cut off by a straight chord, as one path.
+ *
+ * `cut` is where the chord sits, in radii above the centre: 1 leaves the whole
+ * circle, 0 halves it, and a negative value cuts below the centre. Drawn as a
+ * true circular segment rather than as a rectangle of body colour laid over the
+ * white, because a shape that is *actually* that shape needs no second colour
+ * to be right and cannot come apart from the body it sits on.
+ */
+function cutDisc(x: number, y: number, r: number, cut: number): string {
+  const c = Math.min(0.999, cut);
+  const half = r * Math.sqrt(Math.max(0, 1 - c * c));
+  const chord = y - r * c;
+  // Sweep 0 takes the arc through the bottom of the circle; the large-arc flag
+  // is set whenever that bottom arc is more than a semicircle, which is
+  // whenever the chord sits above the centre.
+  return `M ${x - half} ${chord} A ${r} ${r} 0 ${c >= 0 ? 1 : 0} 0 ${x + half} ${chord} Z`;
+}
+
+/**
+ * One eye per mood: how big the white is, where its chord falls and how far the
+ * chord is tilted, and how much of the white the pupil takes.
+ *
+ * The two ratios come off the source rather than off taste. In `eteen`, `alas`
+ * and `Minion_Blue` alike the white is 96 px across on a body 280 px wide — a
+ * shade over a third — and the pupil inside it is 33 px, which is a third
+ * again. A pupil at the house's usual 0.56 of the white looks right on a
+ * seven-unit eye and looks like a dinner plate on a twenty-one-unit one.
+ */
+const CYCLOPS_EYES: Record<
+  ExpressionId,
+  { white: number; cut: number; tilt: number; pupil: number }
+> = {
+  // The resting face: a full circle and a small pupil, which is what all five
+  // of the gaze sprites are.
+  happy: { white: 1, cut: 1, tilt: 0, pupil: 0.36 },
+  // Wide open. `Minion_Blue`, which is the file the old site put everywhere.
+  excited: { white: 1.12, cut: 1, tilt: 0, pupil: 0.4 },
+  // Wider still with less pupil in it — the same trade the paired face makes
+  // between delight and shock.
+  surprised: { white: 1.16, cut: 1, tilt: 0, pupil: 0.28 },
+  // A shallow chord, tilted, so one end of the cut sits lower than the other:
+  // barely a fifth of a radius comes off the top, which narrows the eye without
+  // closing it. This is the asymmetry a single eye is allowed, and the only one
+  // it has. `Minion_Orange` is the reference — a nearly-round eye, a pupil
+  // looking off, and a small smile.
+  thinking: { white: 1, cut: 0.8, tilt: -18, pupil: 0.36 },
+  // `Minion_Red`: cut flat just above the centre, pupil under the cut.
+  focused: { white: 1, cut: 0.2, tilt: 0, pupil: 0.36 },
+  // Shut, and therefore a stroke rather than a shape, as in the paired face.
+  laughing: { white: 1, cut: 1, tilt: 0, pupil: 0 },
+};
+
+function CyclopsEye({ centres, colors, expression, gaze, r, ink }: EyeProps): ReactElement {
+  const { x, y } = centres[0];
+  if (expression === "laughing") {
+    return (
+      <path
+        d={`M ${x - r} ${y + r * 0.35} Q ${x} ${y - r * 0.95} ${x + r} ${y + r * 0.35}`}
+        fill="none"
+        stroke={ink}
+        strokeWidth={r * 0.42}
+        strokeLinecap="round"
+      />
+    );
+  }
+  const spec = CYCLOPS_EYES[expression];
+  const rw = r * spec.white;
+  const off = pupilOffset(expression, gaze, rw);
+  // A cut eye keeps its pupil under the cut rather than half-hidden by it. The
+  // pupil is small enough that sliding it down by a third of what the chord
+  // took off is the difference between "looking out from under" and "sawn in
+  // half".
+  const sink = spec.cut >= 0.999 ? 0 : rw * (1 - spec.cut) * 0.32;
+  return (
+    <g transform={spec.tilt === 0 ? undefined : `rotate(${spec.tilt} ${x} ${y})`}>
+      <path d={cutDisc(x, y, rw, spec.cut)} fill={colors.sclera} />
+      <circle cx={x + off.dx} cy={y + off.dy + sink} r={rw * spec.pupil} fill={colors.pupil} />
+    </g>
+  );
+}
+
+/**
+ * The mouths this species has, and the mood that has none.
+ *
+ * `Minion_Blue`'s grin is a solid shape with a flat top and a round bottom — a
+ * D on its back — and it is *enormous*: 137 px across a 280 px body, very
+ * nearly half its width. Everything here is scaled off the eye rather than off
+ * a constant, so it stays in proportion to the one feature this face is built
+ * around.
+ */
+function CyclopsMouth({
+  rig,
+  expression,
+  ink,
+}: {
+  rig: Rig;
+  expression: ExpressionId;
+  ink: string;
+}): ReactElement | null {
+  const x = rig.head.x;
+  const y = rig.mouthY;
+  const r = rig.eyeR;
+  const line = {
+    fill: "none",
+    stroke: ink,
+    strokeWidth: Math.max(3, r * 0.19),
+    strokeLinecap: "round" as const,
+  };
+  // The open grin, as one filled shape: flat across the top, half an ellipse
+  // hung under it.
+  const grin = (w: number, h: number): ReactElement => (
+    <path
+      d={`M ${x - w} ${y - h * 0.3} L ${x + w} ${y - h * 0.3} A ${w} ${h} 0 0 1 ${x - w} ${y - h * 0.3} Z`}
+      fill={ink}
+    />
+  );
+  switch (expression) {
+    // No mouth. A Silmu standing there with one eye and nothing else is not
+    // missing a feature; it is the face nine of the sixteen source files draw.
+    case "happy":
+      return null;
+    case "excited":
+      return grin(r * 1.1, r * 1.15);
+    case "laughing":
+      return grin(r * 0.95, r * 1.05);
+    case "surprised":
+      return <ellipse cx={x} cy={y + 1} rx={r * 0.26} ry={r * 0.34} fill={ink} />;
+    case "thinking":
+      return (
+        <path
+          d={`M ${x - r * 0.16} ${y + 1} Q ${x + r * 0.2} ${y + r * 0.3} ${x + r * 0.55} ${y - 1}`}
+          {...line}
+        />
+      );
+    case "focused":
+      return <path d={`M ${x - r * 0.5} ${y} Q ${x} ${y + r * 0.28} ${x + r * 0.5} ${y - 1}`} {...line} />;
+  }
+}
+
+/**
  * Dial four. Four of the six are one open curve; the other two are one solid
  * glyph. Nothing here has an inside — no tongue, no teeth, no lip line, no
  * second colour. Round two was right that the mouths had grown too wide, and
@@ -359,14 +624,15 @@ function SymbolMouth({
   rig,
   expression,
   detail,
+  ink,
 }: {
   rig: Rig;
   expression: ExpressionId;
   detail: DetailLevel;
+  ink: string;
 }): ReactElement {
   const x = rig.head.x;
   const y = rig.mouthY;
-  const ink = MASCOT_INK.line;
   const line = {
     fill: "none",
     stroke: ink,
@@ -396,23 +662,34 @@ export function Face({
   mode,
   detail,
   style = "symbol",
+  gaze = "forward",
   blinkClass,
 }: FaceProps): ReactElement {
   const r = rig.eyeR * featureScale(detail);
   const filigree = detail === "full";
-  const centres = eyeCentres(rig);
+  const centres = mode === "cyclops" ? cyclopsCentre(rig) : eyeCentres(rig);
   const canBlink = blinkClass !== "" && !BLINKLESS.has(expression);
+  // The brow and the mouth are the only parts of this face drawn *on* the
+  // body rather than cut out of it, so they are the only parts a near-black
+  // silhouette can swallow. A colourway that knows it is dark says so; every
+  // other one gets the shared ink it has always had.
+  const ink = colors.ink ?? MASCOT_INK.line;
   const eyeProps: EyeProps = {
     centres,
     colors,
     expression,
+    gaze,
     r,
+    ink,
     filigree,
     highlights: detail !== "icon",
   };
 
   let eyes: ReactElement;
   if (mode === "screen") eyes = <ScreenEyes {...eyeProps} />;
+  else if (mode === "voxel")
+    eyes = <VoxelEyes {...eyeProps} pupil={pupilOffset(expression, gaze, r)} />;
+  else if (mode === "cyclops") eyes = <CyclopsEye {...eyeProps} />;
   else if (style === "legacy") eyes = <LegacyEyeballs {...eyeProps} />;
   else if (style === "warm") eyes = <WarmEyes {...eyeProps} />;
   else eyes = <SymbolEyes {...eyeProps} />;
@@ -430,6 +707,8 @@ export function Face({
         detail={detail}
       />
     );
+  } else if (mode === "voxel") {
+    mouth = <VoxelMouth rig={rig} expression={expression} detail={detail} ink={ink} />;
   } else if (style === "legacy") {
     mouth = (
       <LegacyMouth
@@ -443,8 +722,10 @@ export function Face({
     );
   } else if (style === "warm") {
     mouth = <WarmMouth rig={rig} colors={colors} expression={expression} detail={detail} />;
+  } else if (mode === "cyclops") {
+    mouth = <CyclopsMouth rig={rig} expression={expression} ink={ink} />;
   } else {
-    mouth = <SymbolMouth rig={rig} expression={expression} detail={detail} />;
+    mouth = <SymbolMouth rig={rig} expression={expression} detail={detail} ink={ink} />;
   }
 
   // Cheeks are a realism cue and the symbol face has none. The two comparison
@@ -463,9 +744,16 @@ export function Face({
       ) : (
         eyes
       )}
-      {mode === "eyes" && detail !== "icon" && (
-        <Brows centres={centres} expression={expression} r={r} />
-      )}
+      {/* No brow on a one-eyed head, at any detail level — see `CyclopsEye`.
+          What it used to say is said by the cut across the white instead. */}
+      {mode !== "screen" &&
+        mode !== "cyclops" &&
+        detail !== "icon" &&
+        (mode === "voxel" ? (
+          <VoxelBrows centres={centres} expression={expression} r={r} ink={ink} />
+        ) : (
+          <Brows centres={centres} expression={expression} r={r} ink={ink} />
+        ))}
       {mouth}
     </g>
   );

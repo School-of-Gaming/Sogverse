@@ -42,15 +42,18 @@
 import type { ConceptId } from "./concept";
 import type { DetailLevel } from "./detail";
 import type { Outfit } from "./outfit";
-import type { ColorOverride } from "./palette";
+import { MASCOT_SWATCHES, type ColorOverride } from "./palette";
 
 /**
  * The species a default avatar can be, as (concept, form) pairs.
  *
  * This is deliberately *not* every concept. Ytymo has no head to crop to and
  * Konsu's screen face has one expression's worth of range, so neither makes a
- * good portrait; the three families that survive a head-and-shoulders crop are
- * the people, the animals and the folds.
+ * good portrait; the families that survive a head-and-shoulders crop are the
+ * people, the animals, the folds — and the one-eyed bean, which turns out to
+ * be the best portrait in the set for the reason it was always going to be:
+ * a bust crop of a fused body is mostly *eye*, and one eye at 28 pixels is
+ * four times the pupil of two.
  *
  * APPEND ONLY — see the note at the top of the file.
  */
@@ -74,6 +77,10 @@ export const AVATAR_FIGURES: readonly AvatarFigure[] = [
   { concept: "kaari", label: "Kaari" },
   { concept: "kide", label: "Kide" },
   { concept: "nappi", label: "Nappi" },
+  { concept: "silmu", label: "Silmu" },
+  { concept: "palikka", form: "trex", label: "Palikka — T-rex" },
+  { concept: "palikka", form: "hippo", label: "Palikka — virtahepo" },
+  { concept: "palikka", form: "hirvi", label: "Palikka — hirvi" },
 ];
 
 /**
@@ -96,6 +103,10 @@ export const AVATAR_HATS = [
   "party-hat",
   "flower-crown",
   "student-cap",
+  "swept-cap",
+  "sprout",
+  "beret",
+  "painter-cap",
 ] as const;
 
 /**
@@ -109,26 +120,24 @@ export const AVATAR_HATS = [
 export const AVATAR_FACES = ["", "specs", "shades"] as const;
 
 /**
- * Garment colours. Nine hues far enough apart to be named — "the red one",
- * "the green one" — rather than nine points on a gradient.
+ * Garment colours: the product's own swatch list, in its own order.
  *
- * These are illustration colours in the mascot palette's carve-out, not theme
- * tokens: an avatar is a drawing that has to survive being rendered into an
- * email where no CSS custom property exists.
+ * This used to be nine hand-picked hexes that lived only here, which meant a
+ * gamer picking an avatar colour and a gamer picking a voice-zone colour were
+ * choosing from two different palettes that nearly matched — the worst of both
+ * options. It is now `MASCOT_SWATCHES`: the sixteen voice-zone hues, the four
+ * Yty elements and the four admin product types, all already tuned to read on
+ * the dark ground and all already meaningful somewhere else in the app.
  *
- * APPEND ONLY.
+ * **The append-only rule has moved with the list.** It now binds
+ * `MASCOT_SWATCHES` (and, upstream of it, `VOICE_ZONE_COLOR_KEYS`), because
+ * that is where reordering would silently reassign every default avatar. This
+ * one reset was free and will not be again: nothing stores an avatar yet, so
+ * there is no user whose face changed. See the note in the report about
+ * storing a swatch *id* rather than a hex, which is the change that would make
+ * a future retune of a zone hue survivable.
  */
-export const AVATAR_CLOTHING = [
-  "#E5484D",
-  "#F2A93B",
-  "#F6C744",
-  "#4FB477",
-  "#2AB6A6",
-  "#3E8FD6",
-  "#7C5CE0",
-  "#D95BA6",
-  "#8C6A4F",
-] as const;
+export const AVATAR_CLOTHING: readonly string[] = MASCOT_SWATCHES.map((s) => s.hex);
 
 /** The trim, kept light so it always reads against the garment. */
 export const AVATAR_ACCENTS = ["#FFF7EA", "#FFE0A3", "#CFE8FF", "#FFD3E4", "#D8F5D0"] as const;
@@ -155,6 +164,13 @@ export const AVATAR_VARIANTS: Record<string, readonly string[]> = {
   kaari: ["prism", "aurora", "ember"],
   kide: ["prism", "aurora", "ember"],
   nappi: ["prism", "aurora", "ember"],
+  // The one-eyed bean is painted from the shared swatch table rather than from
+  // colourways of its own, so its list is that table plus the faithful black.
+  // Deriving it rather than transcribing it keeps the two from drifting, and
+  // the append-only rule that governs the list has moved with it, onto
+  // `MASCOT_SWATCHES` — where `AVATAR_CLOTHING` already put it.
+  silmu: ["musta", ...MASCOT_SWATCHES.map((s) => s.id)],
+  palikka: ["oliivi", "violetti", "ruska", "sammal", "routa"],
 };
 
 /**

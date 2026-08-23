@@ -58,12 +58,19 @@ import { MASCOT_INK, type ColorOverride, type Colorway } from "./palette";
 import { POSES, propAnchor } from "./poses";
 import { lookById, lookForDate } from "./seasons";
 import { HeldProp } from "./props";
-import { MASCOT_BASELINE, MASCOT_VIEWBOX, originOf, reachedHand } from "./rig";
+import {
+  MASCOT_BASELINE,
+  MASCOT_CENTRE_X,
+  MASCOT_VIEWBOX,
+  originOf,
+  reachedHand,
+} from "./rig";
 import {
   POSE_LABELS,
   ROLE_DEFAULT_PROP,
   ROLE_LABELS,
   type ExpressionId,
+  type GazeId,
   type MascotRole,
   type PoseId,
   type PropId,
@@ -78,6 +85,18 @@ export type MascotProps = {
   variant?: string;
   pose?: PoseId;
   expression?: ExpressionId;
+  /**
+   * Where the character is looking, in the viewer's directions.
+   *
+   * Independent of the mood, static, and free: it moves a pupil and nothing
+   * else, so it needs no animation and survives every crop and detail level.
+   * It is the prop a product surface reaches for — a mascot beside a button
+   * looks at the button — and it is worth stating that the expression's own
+   * pupil position loses to it. Anything but `forward` overrides the mood's
+   * gaze rather than adding to it; `forward` leaves the mood alone, which is
+   * why Thinking still looks away by default.
+   */
+  gaze?: GazeId;
   /** A role is a saved outfit plus a default prop. */
   role?: MascotRole;
   /** Worn items, merged over whatever the role already put on. */
@@ -152,6 +171,7 @@ export function Mascot({
   variant,
   pose = "idle",
   expression = "happy",
+  gaze = "forward",
   role = "none",
   outfit,
   colors: colorOverride,
@@ -206,6 +226,20 @@ export function Mascot({
   // otherwise the role fills an idle hand, but only when that hand is free.
   const roleProp = spec.freeHand ? ROLE_DEFAULT_PROP[role] : "none";
   const heldProp = prop ?? (spec.defaultProp === "none" ? roleProp : spec.defaultProp);
+
+  // Whether this pose is one the character is *resting* in, decided from where
+  // the pose puts the hands rather than from a list of pose ids: both hands
+  // down at the hip line and inside the body's own width is a stand, and
+  // anything reaching, pointing, waving or jumping is not. Kept here rather
+  // than in the pose table because it is a question only a species with
+  // `armsOnDemand` ever asks, and because deriving it means a pose added later
+  // answers it without anybody editing this file.
+  const resting = [handL, handR].every(
+    (h) => h.y >= rig.hip.y - 8 && Math.abs(h.x - MASCOT_CENTRE_X) <= 50,
+  );
+  // A held object needs a hand whatever the hands' coordinates say — a seated
+  // pose puts them on a desk, which is at the hip line and is not a rest.
+  const showsArms = rig.armsOnDemand !== true || !resting || heldProp !== "none";
 
   const parts = {
     rig,
@@ -308,28 +342,31 @@ export function Mascot({
                 mode={def.faceMode}
                 detail={level}
                 style={faceStyle}
+                gaze={gaze}
                 blinkClass={cls.blink ?? ""}
               />
               {drawSlots(HEAD_SLOTS)}
             </g>
-            {armGroup(
-              "armL",
-              rig.shoulderL,
-              limbStyle === "legacy" ? (
-                <LegacyArm rig={rig} paint={paint} from={rig.shoulderL} to={handL} bow={LEGACY_BOWS[pose].l} />
-              ) : (
-                <ArmLimb rig={rig} paint={paint} from={rig.shoulderL} to={handL} />
-              ),
-            )}
-            {armGroup(
-              "armR",
-              rig.shoulderR,
-              limbStyle === "legacy" ? (
-                <LegacyArm rig={rig} paint={paint} from={rig.shoulderR} to={handR} bow={LEGACY_BOWS[pose].r} />
-              ) : (
-                <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={handR} />
-              ),
-            )}
+            {showsArms &&
+              armGroup(
+                "armL",
+                rig.shoulderL,
+                limbStyle === "legacy" ? (
+                  <LegacyArm rig={rig} paint={paint} from={rig.shoulderL} to={handL} bow={LEGACY_BOWS[pose].l} />
+                ) : (
+                  <ArmLimb rig={rig} paint={paint} from={rig.shoulderL} to={handL} />
+                ),
+              )}
+            {showsArms &&
+              armGroup(
+                "armR",
+                rig.shoulderR,
+                limbStyle === "legacy" ? (
+                  <LegacyArm rig={rig} paint={paint} from={rig.shoulderR} to={handR} bow={LEGACY_BOWS[pose].r} />
+                ) : (
+                  <ArmLimb rig={rig} paint={paint} from={rig.shoulderR} to={handR} />
+                ),
+              )}
             {showsProps(level) && (
               <g className={cls.prop} style={{ transformBox: "fill-box", transformOrigin: "center" }}>
                 <HeldProp prop={heldProp} at={propAnchor(spec.grip, handL, handR)} colors={palette} />
@@ -339,8 +376,8 @@ export function Mascot({
                 arm group, so that a held object still sits between the arm and
                 the hand that is gripping it. Same keyframes and same delay, so
                 they move as one. */}
-            {armGroup("armL", rig.shoulderL, <Hand rig={rig} paint={paint} at={handL} />)}
-            {armGroup("armR", rig.shoulderR, <Hand rig={rig} paint={paint} at={handR} />)}
+            {showsArms && armGroup("armL", rig.shoulderL, <Hand rig={rig} paint={paint} at={handL} />)}
+            {showsArms && armGroup("armR", rig.shoulderR, <Hand rig={rig} paint={paint} at={handR} />)}
             {drawSlots(GROUND_SLOTS)}
           </g>
         </g>

@@ -46,6 +46,29 @@ function segment(from: Point, to: Point, r1: number, r2: number): string {
 }
 
 /**
+ * A limb's end and joint caps: a disc normally, a square for a blocky species.
+ *
+ * The cap is what stops a two-segment limb showing a notch at its own elbow,
+ * so it cannot simply be dropped — it has to become the right shape instead.
+ * A square of the same half-extent fills the corner at least as well as a disc
+ * and leaves nothing round on a body that has no curves anywhere else.
+ */
+function Cap({ at, r, blocky }: { at: Point; r: number; blocky: boolean }): ReactElement {
+  return blocky ? (
+    <rect x={at.x - r} y={at.y - r} width={r * 2} height={r * 2} />
+  ) : (
+    <circle cx={at.x} cy={at.y} r={r} />
+  );
+}
+
+/** Segment half-widths at socket, joint and wrist. A blocky limb never tapers. */
+function widths(style: LimbStyle, width: number): [number, number, number] {
+  return style === "blocky"
+    ? [width / 2, width / 2, width / 2]
+    : [width / 2, width * 0.43, width * 0.35];
+}
+
+/**
  * The whole limb as one filled group. Drawn as separate shapes rather than one
  * path because overlapping fills of the same colour are indistinguishable from
  * a union and need no boolean geometry to compute.
@@ -66,16 +89,15 @@ export function Limb({
   fill: string;
 }): ReactElement {
   const joint = jointFor(style, from, to, totalLen, MASCOT_CENTRE_X);
-  const r1 = width / 2;
-  const rm = width * 0.43;
-  const r2 = width * 0.35;
+  const [r1, rm, r2] = widths(style, width);
+  const blocky = style === "blocky";
   return (
     <g fill={fill}>
       <path d={segment(from, joint, r1, rm)} />
       <path d={segment(joint, to, rm, r2)} />
-      <circle cx={from.x} cy={from.y} r={r1} />
-      <circle cx={joint.x} cy={joint.y} r={rm} />
-      <circle cx={to.x} cy={to.y} r={r2} />
+      <Cap at={from} r={r1} blocky={blocky} />
+      <Cap at={joint} r={rm} blocky={blocky} />
+      <Cap at={to} r={r2} blocky={blocky} />
     </g>
   );
 }
@@ -124,6 +146,17 @@ function footTargets(rig: Rig, legs: LegStyle): [LegTarget, LegTarget] {
 }
 
 function Foot({ rig, at, fill }: { rig: Rig; at: Point; fill: string }): ReactElement {
+  if (rig.footStyle === "block") {
+    return (
+      <rect
+        x={at.x - rig.limbW * 1.16}
+        y={at.y - rig.limbW * 0.62}
+        width={rig.limbW * 2.32}
+        height={rig.limbW * 1.32}
+        fill={fill}
+      />
+    );
+  }
   if (rig.footStyle === "boot") {
     return (
       <rect
@@ -134,6 +167,27 @@ function Foot({ rig, at, fill }: { rig: Rig; at: Point; fill: string }): ReactEl
         rx={rig.limbW * 0.5}
         fill={fill}
       />
+    );
+  }
+  if (rig.footStyle === "stem") {
+    // A lobe that swells to one side of the leg and is flush with it on the
+    // other — the `d` and `b` the legacy mascot's feet make. Measured off
+    // `alas.png`: the leg column is 32 px of a 283 px body and the foot under
+    // it is 62 px long and 49 px tall, so the lobe is about 1.9 leg-widths
+    // long and 1.5 tall, overhanging on one side only.
+    //
+    // Which side is a decision rather than a reading. The source is *not*
+    // symmetric — both feet point the same way in every file, viewer-right in
+    // `eteen`/`alas` and viewer-left in `Minion_Red` — but a pair that both
+    // lean one way reads as a character mid-turn, which is wrong for a
+    // standing idle and worse at avatar size. Both lobes therefore swell
+    // outward, away from the centre line.
+    const len = rig.limbW * 1.9;
+    const h = rig.limbW * 1.5;
+    const outward = at.x < rig.hip.x ? -1 : 1;
+    const left = outward === 1 ? at.x - rig.limbW / 2 : at.x + rig.limbW / 2 - len;
+    return (
+      <rect x={left} y={at.y - h / 2} width={len} height={h} rx={h / 2} fill={fill} />
     );
   }
   return (
@@ -159,9 +213,8 @@ function Leg({
   socket: Point;
   target: LegTarget;
 }): ReactElement {
-  const r1 = rig.limbW / 2;
-  const rm = rig.limbW * 0.43;
-  const r2 = rig.limbW * 0.35;
+  const [r1, rm, r2] = widths(rig.limbStyle, rig.limbW);
+  const blocky = rig.limbStyle === "blocky";
   return (
     <g>
       {target.knee === undefined ? (
@@ -177,9 +230,9 @@ function Leg({
         <g fill={paint.leg}>
           <path d={segment(socket, target.knee, r1, rm)} />
           <path d={segment(target.knee, target.foot, rm, r2)} />
-          <circle cx={socket.x} cy={socket.y} r={r1} />
-          <circle cx={target.knee.x} cy={target.knee.y} r={rm} />
-          <circle cx={target.foot.x} cy={target.foot.y} r={r2} />
+          <Cap at={socket} r={r1} blocky={blocky} />
+          <Cap at={target.knee} r={rm} blocky={blocky} />
+          <Cap at={target.foot} r={r2} blocky={blocky} />
         </g>
       )}
       <Foot rig={rig} at={target.foot} fill={paint.foot} />
@@ -202,9 +255,15 @@ export function Legs({
   classR?: string;
 }): ReactElement {
   const targets = footTargets(rig, legs);
+  // Most bodies want the legs to splay a little between hip and sole, which is
+  // what the 0.55 does. A species whose limbs are declared `straight` is asking
+  // for the opposite: sockets directly above the soles, so a standing leg is a
+  // vertical column rather than a shallow V. Nothing else uses `straight`, so
+  // every other species keeps the splay it had.
+  const spread = rig.limbStyle === "straight" ? rig.hipSpread : rig.hipSpread * 0.55;
   const sockets: [Point, Point] = [
-    { x: rig.hip.x - rig.hipSpread * 0.55, y: rig.hip.y },
-    { x: rig.hip.x + rig.hipSpread * 0.55, y: rig.hip.y },
+    { x: rig.hip.x - spread, y: rig.hip.y },
+    { x: rig.hip.x + spread, y: rig.hip.y },
   ];
   const classes = [classL, classR];
   return (
@@ -254,5 +313,33 @@ export function Hand({
   paint: LimbPaint;
   at: Point;
 }): ReactElement {
+  if (rig.limbStyle === "blocky") {
+    return (
+      <rect
+        x={at.x - rig.handR}
+        y={at.y - rig.handR}
+        width={rig.handR * 2}
+        height={rig.handR * 2}
+        fill={paint.hand}
+      />
+    );
+  }
+  if (rig.handStyle === "mitten") {
+    // One disc and one much smaller one for the thumb, on the inner side and
+    // a little above — the arrangement `back_minion` and `maalari` use. It
+    // stays a thumb rather than becoming fingers because a mitten is what
+    // reads at 24 pixels, and because the source has nothing else on it.
+    const inward = at.x > MASCOT_CENTRE_X ? -1 : 1;
+    return (
+      <g fill={paint.hand}>
+        <circle cx={at.x} cy={at.y} r={rig.handR} />
+        <circle
+          cx={at.x + inward * rig.handR * 0.82}
+          cy={at.y - rig.handR * 0.62}
+          r={rig.handR * 0.44}
+        />
+      </g>
+    );
+  }
   return <circle cx={at.x} cy={at.y} r={rig.handR} fill={paint.hand} />;
 }

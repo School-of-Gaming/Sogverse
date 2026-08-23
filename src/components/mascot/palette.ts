@@ -13,7 +13,8 @@
  * rather than a copy that happens to match today.
  */
 
-import { BRAND, YTY_ELEMENT } from "@/lib/constants/colors";
+import { BRAND, PRODUCT_TYPE_COLOR, YTY_ELEMENT, ZONE_HUE } from "@/lib/constants/colors";
+import { VOICE_ZONE_COLOR_KEYS } from "@/lib/constants/voice-zones";
 
 /**
  * The linework and face neutrals shared by every concept. Kept out of the
@@ -61,6 +62,21 @@ export type Colorway = {
   sclera: string;
   /** Pupils. On a screen face this is the dark screen behind them. */
   pupil: string;
+  /**
+   * The line colour the face's *drawn* parts take — brows and the mouth glyph.
+   *
+   * Optional, and omitted by every colourway whose body is light enough for
+   * the shared ink to read on: the face renderer falls back to
+   * `MASCOT_INK.line`, which is what a character that never sets this has
+   * always been drawn with.
+   *
+   * It exists because a near-black body has no such colour. The legacy SOG
+   * mascot drew its mouth as a *light* shape cut out of a black blob, and any
+   * concept dark enough to need that has to be able to say so — inverting the
+   * ink is the only way a glyph mouth survives on a dark silhouette, and it is
+   * still one flat shape with no interior, so the face grammar is untouched.
+   */
+  ink?: string;
   /**
    * Cheek blush.
    *
@@ -417,6 +433,382 @@ export const TAITTO_VARIANTS: readonly VariantDef[] = [
   },
 ];
 
+// --- The shared swatch list ----------------------------------------------
+
+/**
+ * The colours the product already owns, offered to the mascot art as one list.
+ *
+ * Round three's colourways were each invented in place: a concept picked a
+ * hue it liked and mixed four more off it by eye. That is how a fleet ends up
+ * with five purples that are all *nearly* the app's purple, and it throws away
+ * something the product has already done properly three times over. There are
+ * exactly three families of categorical colour in this codebase, all of them
+ * already tuned to read as a glyph on the #121212 ground:
+ *
+ * - the **sixteen voice-zone hues**, an even sweep of the wheel that a gamer
+ *   already picks from when they name a zone;
+ * - the **four Yty elements**, the piece of iconography this product owns
+ *   outright;
+ * - the **four admin product-type hues**, placed to clear the state colours.
+ *
+ * Twenty-four named colours is more than a fleet needs, and every one of them
+ * is a colour a user can already meet somewhere else in the app. So a mascot
+ * colourway now starts from a swatch and mixes off it, rather than starting
+ * from a hex somebody typed.
+ *
+ * The hexes live in `@/lib/constants/colors` rather than here, because the
+ * CSS tokens they mirror are the source of truth and the mirror belongs next
+ * to the other mirrors.
+ */
+export type SwatchSource = "zone" | "yty" | "product";
+
+export type MascotSwatch = {
+  /** Stable id — the zone key, the element id, or the product-type slug. */
+  id: string;
+  label: string;
+  hex: string;
+  source: SwatchSource;
+};
+
+const ZONE_SWATCH_LABELS: Record<string, string> = {
+  red: "Red",
+  orange: "Orange",
+  amber: "Amber",
+  yellow: "Yellow",
+  lime: "Lime",
+  green: "Green",
+  emerald: "Emerald",
+  teal: "Teal",
+  cyan: "Cyan",
+  sky: "Sky",
+  blue: "Blue",
+  indigo: "Indigo",
+  violet: "Violet",
+  purple: "Purple",
+  fuchsia: "Fuchsia",
+  pink: "Pink",
+};
+
+export const MASCOT_SWATCHES: readonly MascotSwatch[] = [
+  ...VOICE_ZONE_COLOR_KEYS.map((key) => ({
+    id: key,
+    label: ZONE_SWATCH_LABELS[key] ?? key,
+    hex: ZONE_HUE[key],
+    source: "zone" as const,
+  })),
+  { id: "harmony", label: "Harmony", hex: YTY_ELEMENT.harmony, source: "yty" },
+  { id: "glow", label: "Glow", hex: YTY_ELEMENT.glow, source: "yty" },
+  { id: "valor", label: "Valor", hex: YTY_ELEMENT.valor, source: "yty" },
+  { id: "wit", label: "Wit", hex: YTY_ELEMENT.wit, source: "yty" },
+  {
+    id: "consumer-club",
+    label: "Club cyan",
+    hex: PRODUCT_TYPE_COLOR.consumerClub,
+    source: "product",
+  },
+  {
+    id: "municipality-club",
+    label: "Kunta magenta",
+    hex: PRODUCT_TYPE_COLOR.municipalityClub,
+    source: "product",
+  },
+  { id: "camp", label: "Camp lime", hex: PRODUCT_TYPE_COLOR.camp, source: "product" },
+  { id: "event", label: "Event indigo", hex: PRODUCT_TYPE_COLOR.event, source: "product" },
+];
+
+const SWATCH_BY_ID = new Map(MASCOT_SWATCHES.map((s) => [s.id, s]));
+
+export function swatch(id: string): MascotSwatch | undefined {
+  return SWATCH_BY_ID.get(id);
+}
+
+/** The hex for a swatch id, falling back to the first swatch. */
+export function swatchHex(id: string): string {
+  return SWATCH_BY_ID.get(id)?.hex ?? MASCOT_SWATCHES[0].hex;
+}
+
+// --- Mixing --------------------------------------------------------------
+
+/**
+ * Where a shaded colour is mixed *towards*, and where a tinted one is.
+ *
+ * Not black and white. Mixing a hue towards pure black kills its chroma faster
+ * than its lightness and the underside comes out grey; mixing towards a deep
+ * violet keeps the shadow coloured, which is what every hand-authored
+ * colourway in this file was already doing by eye (Harmony's `#0E7C58`,
+ * Wit's `#5326B5`). Tinting towards the shared paper rather than white keeps
+ * the highlight the same warm off-white as the eye it sits beside.
+ */
+const SHADE_TOWARDS = "#1A1030";
+
+function channels(hex: string): [number, number, number] {
+  const v = hex.replace("#", "");
+  const full =
+    v.length === 3 ? v.split("").map((c) => c + c).join("") : v.padEnd(6, "0").slice(0, 6);
+  return [
+    Number.parseInt(full.slice(0, 2), 16),
+    Number.parseInt(full.slice(2, 4), 16),
+    Number.parseInt(full.slice(4, 6), 16),
+  ];
+}
+
+/** Linear mix of two hexes, `t` of the way from `a` to `b`. */
+export function mixHex(a: string, b: string, t: number): string {
+  const [ar, ag, ab] = channels(a);
+  const [br, bg, bb] = channels(b);
+  const k = Math.min(1, Math.max(0, t));
+  const to = (x: number, y: number): string =>
+    Math.round(x + (y - x) * k)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${to(ar, br)}${to(ag, bg)}${to(ab, bb)}`;
+}
+
+/** Darker, and still the same hue. */
+export function shadeHex(hex: string, amount: number): string {
+  return mixHex(hex, SHADE_TOWARDS, amount);
+}
+
+/** Paler, towards the shared paper rather than towards white. */
+export function tintHex(hex: string, amount: number): string {
+  return mixHex(hex, MASCOT_INK.paper, amount);
+}
+
+/**
+ * A whole colourway mixed off one swatch.
+ *
+ * Every slot is derived, so a concept adding a colourway names a swatch and a
+ * garment pair and is done — and two concepts painted from the same swatch
+ * agree about what its underside looks like, which is the thing five
+ * hand-mixed purples could never do.
+ *
+ * The proportions are the ones the hand-authored Ytymo colourways landed on
+ * after two rounds, read back out of their hexes: the underside about a third
+ * of the way to the shadow, the limb a little less, the panel well towards
+ * paper, and the spark almost all the way there.
+ */
+export function colorwayFromSwatch(
+  hex: string,
+  garment: { clothing: string; clothingAccent: string },
+  overrides?: Partial<Colorway>,
+): Colorway {
+  return {
+    bodyTop: hex,
+    bodyBottom: shadeHex(hex, 0.34),
+    limb: shadeHex(hex, 0.16),
+    panel: tintHex(hex, 0.62),
+    accent: tintHex(hex, 0.86),
+    spark: shadeHex(hex, 0.52),
+    sclera: MASCOT_INK.paper,
+    pupil: MASCOT_INK.line,
+    blush: tintHex("#FF7C9A", 0.1),
+    clothing: garment.clothing,
+    clothingAccent: garment.clothingAccent,
+    ...overrides,
+  };
+}
+
+// --- Silmu: the one-eyed bean --------------------------------------------
+
+/**
+ * The legacy mascot's own colours, and the one honest problem with them.
+ *
+ * The old School of Gaming minion was `#141414` — pure black to within two
+ * points — and this site's background is `#121212`. On the page it would be
+ * publishing a hole. Nothing about the character is broken; the ground it
+ * used to stand on was white and now is not.
+ *
+ * Three ways out were drawn and looked at on the real background (see the
+ * species' own file for what the rasters showed): a body lightened to a
+ * charcoal, a near-black body with a light contour, and leaning on the eye,
+ * the feet and the hat to carry it with no help from the body at all. The
+ * third loses the silhouette, which is the thing the whole design rests on.
+ * `musta` takes both of the first two, because they solve different halves —
+ * the charcoal makes the mass visible and the contour makes the *edge*
+ * visible, and a shape with mass but no edge on a dark ground reads as a
+ * smudge rather than as a body.
+ *
+ * The `ink` slot is what tells the rest of the module this body is dark.
+ * A brow and a mouth are the only parts of the face drawn *on* the
+ * silhouette rather than cut out of it, so they invert to the paper colour
+ * here, exactly as the legacy art drew its grin as a white shape rather than
+ * as a black line.
+ *
+ * The colour variants are the other half of the legacy idea. That mascot was
+ * one body and nine hats, and its files were named for the *hat* colour —
+ * Blue, Green, Orange, Pink, Red. So the colourways here take the hats'
+ * hues onto the body and let the garment slot carry the contrast, which is
+ * the same trick turned inside out, and every one of them is a swatch the
+ * product already owns rather than a hex invented for a mascot.
+ */
+const SILMU_GARMENT_LIGHT = { clothing: swatchHex("sky"), clothingAccent: MASCOT_INK.paper };
+
+export const SILMU_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "musta",
+    label: "Musta",
+    note: "The faithful one — charcoal and a contour, because pure black is a hole",
+    colors: {
+      bodyTop: "#22222A",
+      bodyBottom: "#191920",
+      // A step *lighter* than the body, which the original never had to be:
+      // black arms on white paper read against the paper, and black arms on a
+      // black page read against nothing. A raised waving arm crossing its own
+      // body is invisible at the legacy value, so the limbs are lifted just
+      // far enough to separate from both the body and the ground.
+      limb: "#34343F",
+      panel: "#2A2A33",
+      accent: swatchHex("sky"),
+      // Doubles as the contour: see the species' Body.
+      spark: "#5C566B",
+      sclera: MASCOT_INK.paper,
+      pupil: MASCOT_INK.line,
+      ink: MASCOT_INK.paper,
+      blush: "#FF9BB0",
+      ...SILMU_GARMENT_LIGHT,
+    },
+  },
+  {
+    id: "luumu",
+    label: "Luumu",
+    note: "Zone purple — the old SOG brand colour, at a lightness that survives #121212",
+    colors: colorwayFromSwatch(swatchHex("purple"), {
+      clothing: swatchHex("amber"),
+      clothingAccent: MASCOT_INK.paper,
+    }),
+  },
+  {
+    id: "hehku",
+    label: "Hehku",
+    note: "Zone amber — the other old brand colour, and the closest swatch to the legacy orange",
+    colors: colorwayFromSwatch(swatchHex("amber"), {
+      clothing: swatchHex("purple"),
+      clothingAccent: MASCOT_INK.paper,
+    }),
+  },
+  {
+    id: "oras",
+    label: "Oras",
+    note: "Zone green — the sprout one, after the legacy green tuft",
+    colors: colorwayFromSwatch(swatchHex("green"), {
+      clothing: swatchHex("amber"),
+      clothingAccent: MASCOT_INK.paper,
+    }),
+  },
+  {
+    id: "taivas",
+    label: "Taivas",
+    note: "Zone sky — the signature cap's own blue, worn as a body",
+    colors: colorwayFromSwatch(swatchHex("sky"), {
+      clothing: swatchHex("amber"),
+      clothingAccent: MASCOT_INK.paper,
+    }),
+  },
+];
+
+// --- Palikka: the voxel animals ------------------------------------------
+
+/**
+ * A cube needs three tones, and this is where the third one comes from.
+ *
+ * Every other species in this directory is drawn with one lit surface and one
+ * shaded one, which the `bodyTop` / `bodyBottom` pair covers exactly. A block
+ * has a *front*, a *top* and a *right*, and the whole reason a stack of blocks
+ * reads as solid rather than as a flat mosaic is that those three faces are
+ * three different values of the same hue. So Palikka spends one more slot:
+ *
+ * - `bodyTop` — the **front** face, the one the eyes and mouth land on.
+ * - `bodyBottom` — the **right** face, the shaded one.
+ * - `spark` — the **top** face, the lit one.
+ *
+ * `spark` is the honest choice for it (its own doc calls it "a third colour,
+ * used sparingly, for facets") but it is the one slot `colorwayFromSwatch`
+ * derives *darker* than the body, so **every Palikka colourway has to override
+ * it**, and a swatch-derived one that forgets will come out with its lit face
+ * darker than its shaded one. There is no way for the concept to detect that
+ * and no reason for it to try: the list is right here, it is five entries
+ * long, and each of them says `spark` out loud.
+ *
+ * The two faithful colourways are read straight off the legacy artwork —
+ * `hipponen.png` and `treksi.png` — one hex per cube face, which is what those
+ * two files literally are. Sampling them was worth doing: the hippo's three
+ * purples turn out to be almost exactly a 20% tint and a 30% shade of its
+ * front face, which is the ratio the derived colourways now use, so the
+ * legacy art and a swatch-derived one shade themselves the same way.
+ */
+const PALIKKA_SWATCH_GARMENT = { clothing: swatchHex("purple"), clothingAccent: MASCOT_INK.paper };
+
+export const PALIKKA_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "oliivi",
+    label: "Oliivi",
+    note: "Treksi's own olive, sampled face by face off the legacy file",
+    colors: {
+      bodyTop: "#a99c34",
+      bodyBottom: "#7c7325",
+      limb: "#8f852c",
+      // The cream belly, which is the legacy T-rex's second-strongest landmark
+      // after the head.
+      panel: "#f9efdb",
+      // The dark red the legacy file spends on the mouth block. Here it is the
+      // brow ridge instead — the mouth is the face grammar's glyph and takes
+      // the shared ink like every other species' does.
+      accent: "#99261a",
+      spark: "#c6b842",
+      sclera: MASCOT_INK.paper,
+      pupil: MASCOT_INK.line,
+      blush: "#FF9BB0",
+      clothing: swatchHex("purple"),
+      clothingAccent: MASCOT_INK.paper,
+    },
+  },
+  {
+    id: "violetti",
+    label: "Violetti",
+    note: "Hipponen's purple, likewise sampled — front, top and side as delivered",
+    colors: {
+      bodyTop: "#ab4a9c",
+      bodyBottom: "#86328c",
+      limb: "#702c8d",
+      panel: "#c07fbc",
+      accent: "#5f2379",
+      spark: "#a967aa",
+      sclera: MASCOT_INK.paper,
+      pupil: MASCOT_INK.line,
+      blush: "#FF9BB0",
+      clothing: swatchHex("amber"),
+      clothingAccent: MASCOT_INK.paper,
+    },
+  },
+  {
+    id: "ruska",
+    label: "Ruska",
+    note: "Zone amber — the autumn one, for the antlered build",
+    colors: colorwayFromSwatch(swatchHex("amber"), PALIKKA_SWATCH_GARMENT, {
+      spark: tintHex(swatchHex("amber"), 0.24),
+    }),
+  },
+  {
+    id: "sammal",
+    label: "Sammal",
+    note: "Zone lime — moss, and the closest swatch to the legacy olive",
+    colors: colorwayFromSwatch(swatchHex("lime"), PALIKKA_SWATCH_GARMENT, {
+      spark: tintHex(swatchHex("lime"), 0.24),
+    }),
+  },
+  {
+    id: "routa",
+    label: "Routa",
+    note: "Zone sky — ground frost, the cold end of the range",
+    colors: colorwayFromSwatch(swatchHex("sky"), {
+      clothing: swatchHex("amber"),
+      clothingAccent: MASCOT_INK.paper,
+    }, {
+      spark: tintHex(swatchHex("sky"), 0.24),
+    }),
+  },
+];
+
 // --- Colour presets ------------------------------------------------------
 
 /**
@@ -489,3 +881,228 @@ export const YTY_WARDROBE: Record<keyof typeof YTY_ELEMENT, ColorOverride> = {
   valor: { clothing: YTY_ELEMENT.valor, clothingAccent: "#FFEAEE" },
   wit: { clothing: YTY_ELEMENT.wit, clothingAccent: "#F1EAFF" },
 };
+
+// --- scenery: the materials a scene is built out of ----------------------
+
+/**
+ * Wood, stone and leather.
+ *
+ * `MASCOT_INK` covers the two neutrals every *device* is moulded out of, and
+ * that was enough while the only furniture in the system was a desk and a
+ * gaming chair — both of which are plastic. A door is not. Nor is a
+ * briefcase, and a paint bucket is neither: they are the materials a world is
+ * made of rather than the materials a gadget is made of, and painting them
+ * out of the device neutrals would give the school a plastic door.
+ *
+ * They are their own export rather than more keys on `MASCOT_INK` for the
+ * same reason the device neutrals are not a colourway: nothing here is ever
+ * repainted. A character's colours change per member and per season; the wood
+ * a door is made of does not, and a scene that re-tinted its own timber to
+ * match whoever was standing at it would stop reading as a place.
+ *
+ * Every value is warm rather than grey — the same reason `SHADE_TOWARDS` is a
+ * deep violet and not black. A neutral brown on a near-black page reads as
+ * dirt; these keep enough chroma to look like material under a light.
+ */
+export const MASCOT_SCENERY = {
+  /** The lit face of a plank. */
+  wood: "#9C6B3A",
+  /** The shaded face, and the gap between two planks. */
+  woodDark: "#754E28",
+  /** The grain and the plank seams — a line, not a fill. */
+  woodLine: "#4E321A",
+  /** A doorstep, a kerb, the metal of a paint can. */
+  stone: "#6E6A78",
+  stoneDark: "#4C4956",
+  /** A briefcase, a satchel, a strap. */
+  leather: "#A9713C",
+  leatherDark: "#7A4E27",
+} as const;
+
+// --- Otso, second cohort: the legacy cast's animals -----------------------
+
+/**
+ * Seven more Otso coats, for the forms rebuilt out of the old SOG cast.
+ *
+ * They live down here rather than beside `OTSO_VARIANTS` for a dull reason
+ * that is worth writing down once: the swatch list and the mixers are defined
+ * *below* that array, so a colourway up there that called `swatchHex()` would
+ * read a `const` inside its own temporal dead zone and throw at module load.
+ * Anything derived from a swatch has to be declared after the swatch table.
+ * The concept spreads the two arrays together, `OTSO_VARIANTS` first, so the
+ * cub's honey coat is still the family's default.
+ *
+ * Every one of these is mixed off `MASCOT_SWATCHES` rather than picked by eye,
+ * which is the standing ruling: a mascot may not introduce a hue the product
+ * does not already own. Two of them need a colour the swatch list has no name
+ * for — a grey and a soot — and both get there by *mixing* swatches rather
+ * than by inventing a hex, which is written out at each one.
+ */
+
+/**
+ * A neutral grey with no swatch of its own.
+ *
+ * Indigo and lime sit far enough apart on the wheel that a half-and-half mix
+ * cancels most of the chroma, and tinting the result towards paper lifts it
+ * clear of the page's own near-black. The point of doing it this way rather
+ * than typing `#A9B3A7` is that the grey moves if the zone hues are ever
+ * retuned, instead of quietly drifting away from them.
+ */
+const RAT_GREY = tintHex(mixHex(swatchHex("indigo"), swatchHex("lime"), 0.5), 0.25);
+
+export const OTSO_CAST_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "rosvo",
+    label: "Rosvo",
+    note: "R Osmo's own two colours — an orange coat under a purple bandit mask",
+    colors: colorwayFromSwatch(
+      swatchHex("orange"),
+      { clothing: swatchHex("purple"), clothingAccent: MASCOT_INK.paper },
+      // `spark` is the slot the animal family paints its dark markings from —
+      // a raccoon's mask, a tit's cap, a leopard's rosettes. Here it is the
+      // legacy character's purple rather than a shade of his own orange,
+      // because the mask being a *different* colour from the coat is the whole
+      // joke: rosvo means bandit.
+      { spark: shadeHex(swatchHex("purple"), 0.22) },
+    ),
+  },
+  {
+    id: "taika",
+    label: "Taika",
+    note: "Hulmu's white-and-violet — a pale coat with the mane and tail left saturated",
+    colors: colorwayFromSwatch(
+      tintHex(swatchHex("violet"), 0.72),
+      { clothing: swatchHex("amber"), clothingAccent: MASCOT_INK.paper },
+      {
+        // The one colourway where `bodyBottom` is *louder* than `bodyTop`
+        // rather than darker. On every other form that slot is the underside;
+        // on the unicorn it is the mane and the tail, which are the two parts
+        // anyone actually looks at.
+        bodyBottom: swatchHex("violet"),
+        limb: tintHex(swatchHex("violet"), 0.5),
+        accent: swatchHex("amber"),
+        spark: shadeHex(swatchHex("violet"), 0.3),
+      },
+    ),
+  },
+  {
+    id: "ruusu",
+    label: "Ruusu",
+    note: "Taply's pink, with the rosettes in a deeper fuchsia",
+    colors: colorwayFromSwatch(
+      swatchHex("pink"),
+      { clothing: swatchHex("lime"), clothingAccent: MASCOT_INK.paper },
+      { spark: shadeHex(swatchHex("fuchsia"), 0.18) },
+    ),
+  },
+  {
+    id: "noki",
+    label: "Noki",
+    note: "Nörtti's soot — dark enough to be the fuzzy one, light enough not to be a hole",
+    colors: {
+      // The same problem the one-eyed species had and the same answer: the
+      // legacy drawing is pure black on white paper, and pure black on a
+      // #121212 page is not a character, it is a gap. Lifted to a charcoal
+      // with a violet cast so the mass is visible, and `spark` sits a step
+      // lighter again to serve as the contour that makes the *edge* visible.
+      bodyTop: "#38304A",
+      bodyBottom: "#2A2338",
+      limb: "#4B4066",
+      panel: "#443A5C",
+      // The wings and the antenna knobs. Pink, as delivered.
+      accent: swatchHex("pink"),
+      spark: "#6E6288",
+      sclera: MASCOT_INK.paper,
+      pupil: MASCOT_INK.line,
+      // A brow and a mouth are drawn *on* this silhouette rather than cut out
+      // of it, so they invert to paper. Same reason as the black bean's.
+      ink: MASCOT_INK.paper,
+      blush: "#FF9BB0",
+      clothing: swatchHex("amber"),
+      clothingAccent: MASCOT_INK.paper,
+    },
+  },
+  {
+    id: "tiainen",
+    label: "Tiainen",
+    note: "Great tit — yellow front, olive back, near-black cap, and a blue hat to wear",
+    colors: colorwayFromSwatch(
+      swatchHex("yellow"),
+      { clothing: swatchHex("blue"), clothingAccent: swatchHex("red") },
+      {
+        // A great tit is three colours and the bird is unreadable without all
+        // three: the olive back, the cream cheek (which is `panel`, already
+        // derived) and the cap, which has to be near-black rather than a
+        // shade of yellow or the bird turns into a duckling.
+        bodyBottom: shadeHex(swatchHex("lime"), 0.28),
+        spark: "#2A2438",
+      },
+    ),
+  },
+  {
+    id: "rotta",
+    label: "Rotta",
+    note: "MoodyRat's coat — a mixed grey with the ears, muzzle, paws and tail left pink",
+    colors: colorwayFromSwatch(
+      RAT_GREY,
+      // Straw and a green band: the Gardener's hat is the one garment this
+      // coat has to look right in, and a straw hat dyed lime is a lime hat.
+      { clothing: swatchHex("amber"), clothingAccent: swatchHex("lime") },
+      {
+        // `panel` is the pale-inset slot every form already paints its muzzle
+        // and belly from, which on a rat happens to be exactly the set of
+        // parts that are bare skin. So the faithful grey-and-pink read costs
+        // one override rather than a new slot.
+        panel: tintHex(swatchHex("pink"), 0.42),
+        accent: tintHex(swatchHex("pink"), 0.16),
+        spark: shadeHex(RAT_GREY, 0.45),
+      },
+    ),
+  },
+  {
+    id: "majava",
+    label: "Majava",
+    note: "Beaver brown — orange taken down to a warm timber, tail a shade darker",
+    colors: colorwayFromSwatch(shadeHex(swatchHex("orange"), 0.46), {
+      clothing: swatchHex("teal"),
+      clothingAccent: MASCOT_INK.paper,
+    }),
+  },
+];
+
+/**
+ * The colour a **dark marking** is painted in — a raccoon's bandit mask, a
+ * great tit's cap, a leopard's rosettes, the bands on a ringed tail.
+ *
+ * `spark` looks like the slot for this and is only half of one. It was
+ * defined as "a third colour, used sparingly, for facets and highlights" back
+ * when no species had markings, so the hand-authored colourways put a
+ * near-white there — and a raccoon painted from one of those came out with a
+ * pale bandit mask, which is not a bandit mask. The colourways mixed later by
+ * `colorwayFromSwatch` derive `spark` as a *shade*, so the same slot means
+ * opposite things depending on which era a coat comes from.
+ *
+ * Rather than redefine the slot under the coats that already use it, this
+ * reads it and checks: a marking is *by definition* darker than the coat, so
+ * a `spark` that is darker wins — which is how a colourway asks for a marking
+ * in a deliberately different hue, the way the raccoon's own coat asks for
+ * purple — and a `spark` that is lighter is a highlight, not a marking, so
+ * the underside is taken down a step instead. Every coat then works on every
+ * form, which is the property the family rests on.
+ */
+export function markingHex(colors: Colorway): string {
+  return relLuma(colors.spark) < relLuma(colors.bodyTop) - 0.05
+    ? colors.spark
+    : shadeHex(colors.bodyBottom, 0.34);
+}
+
+/**
+ * Rough perceptual luminance, 0–1. Not sRGB-correct and does not need to be:
+ * the only question asked of it is "is this one darker than that one", and
+ * the two colours being compared are always far apart when the answer
+ * matters.
+ */
+function relLuma(hex: string): number {
+  const [r, g, b] = channels(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}

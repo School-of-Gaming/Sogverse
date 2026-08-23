@@ -14,7 +14,7 @@
 
 import type { ReactElement } from "react";
 
-import { MASCOT_INK, type Colorway } from "./palette";
+import { MASCOT_INK, MASCOT_SCENERY, type Colorway } from "./palette";
 import type { Point } from "./rig";
 import type { PropId } from "./vocabulary";
 
@@ -331,6 +331,168 @@ function Trophy({ at, colors }: PropProps): ReactElement {
   );
 }
 
+/**
+ * The painter's brush, off `maalari`.
+ *
+ * Held at an angle rather than upright, because a brush pointing straight up
+ * is a lollipop: the diagonal is what says *in use*. The handle is wood
+ * rather than a device neutral, because a brush is a tool and not a gadget.
+ *
+ * The paint is `clothing`, which is the slot a fleet member's `garment`
+ * swatch and the legacy strip's own garment helper both write a real swatch
+ * hex into. `clothingAccent` was the other candidate and is wrong for this
+ * one job: both of those derive it as a pale tint of the garment, so five
+ * painters carrying five different swatches would come out holding five
+ * near-white brushes.
+ *
+ * One swatch therefore dyes the cap, the bristles, the drips and the tin at
+ * once, which is the point rather than a compromise. The old mascot was one
+ * body told apart by its hat; a fleet of painters is one body told apart by
+ * which of the product's own colours it is painting in today.
+ *
+ * The drips hang outside the rotated group so they fall straight down.
+ * Gravity does not tilt with the brush, and two drops that leaned would read
+ * as bristles rather than as paint coming off. Their x and y are the rotation
+ * applied to the bristle tip by hand rather than by a transform, for exactly
+ * that reason: the drops have to know where the tip ended up without
+ * inheriting the tilt that put it there. Rasterising the first version caught
+ * this - drops left at the anchor landed on the character's own body a head's
+ * width from the brush, and read as a stain rather than as paint falling.
+ */
+const BRUSH_TILT = (-26 * Math.PI) / 180;
+const BRUSH_TIP = 37;
+
+function Paintbrush({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  const tipX = x + Math.sin(BRUSH_TILT) * BRUSH_TIP;
+  const tipY = y - Math.cos(BRUSH_TILT) * BRUSH_TIP;
+  return (
+    <g>
+      <g transform={`rotate(-26 ${x} ${y})`}>
+        <rect
+          x={x - 4.5}
+          y={y - 4}
+          width={9}
+          height={30}
+          rx={4.5}
+          fill={MASCOT_SCENERY.wood}
+          {...OUTLINE}
+        />
+        <rect
+          x={x - 7}
+          y={y - 17}
+          width={14}
+          height={14}
+          rx={2.5}
+          fill={MASCOT_INK.deviceLight}
+          {...OUTLINE}
+        />
+        <path
+          d={`M ${x - 8.5} ${y - 16} L ${x + 8.5} ${y - 16} L ${x + 7} ${y - 35} Q ${x} ${y - 39} ${x - 7} ${y - 35} Z`}
+          fill={colors.clothing}
+          {...OUTLINE}
+        />
+      </g>
+      <ellipse cx={tipX + 1} cy={tipY + 9} rx={2.8} ry={4} fill={colors.clothing} />
+      <circle cx={tipX + 3} cy={tipY + 19} r={2.2} fill={colors.clothing} opacity={0.8} />
+    </g>
+  );
+}
+
+/**
+ * The headmaster's briefcase, off `REKSI`.
+ *
+ * Drawn hanging *below* the anchor with its handle looped over it, because
+ * every other prop in this table sits centred on the hand and a case that did
+ * that would be gripped through its middle. The handle is the part that has
+ * to land on the hand; the weight goes underneath, which is also what stops
+ * it colliding with the character's own legs at the side grip.
+ */
+function Briefcase({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  const top = y + 4;
+  return (
+    <g>
+      <path
+        d={`M ${x - 8} ${top + 2} C ${x - 8} ${y - 9} ${x + 8} ${y - 9} ${x + 8} ${top + 2}`}
+        fill="none"
+        stroke={MASCOT_SCENERY.leatherDark}
+        strokeWidth={3.4}
+        strokeLinecap="round"
+      />
+      <rect
+        x={x - 20}
+        y={top}
+        width={40}
+        height={29}
+        rx={4}
+        fill={MASCOT_SCENERY.leather}
+        {...OUTLINE}
+      />
+      <rect x={x - 20} y={top + 8} width={40} height={5} rx={2.5} fill={MASCOT_SCENERY.leatherDark} />
+      <rect x={x - 5} y={top + 6} width={10} height={9} rx={2} fill={colors.accent} {...OUTLINE} />
+      <circle cx={x - 13} cy={top + 22} r={2.4} fill={MASCOT_SCENERY.leatherDark} />
+      <circle cx={x + 13} cy={top + 22} r={2.4} fill={MASCOT_SCENERY.leatherDark} />
+    </g>
+  );
+}
+
+/**
+ * The gardener's watering can.
+ *
+ * The rose (the sprinkler head) is the whole silhouette - a can without one
+ * is a kettle - so it is drawn large and angled up, and the spout is a thick
+ * taper rather than a stroke so it survives being small. The first version
+ * was a third of this size and rasterised as a lunchbox with a wire on it:
+ * at the sizes a fleet card and an avatar crop actually use, a prop that is
+ * merely *correct* is not yet legible.
+ *
+ * The drops are drawn at every detail level rather than behind a filigree
+ * check, because a held prop is already gone by icon size: the component
+ * stops drawing props below forty pixels, so there is no size at which these
+ * are three grey specks. They are the only thing that says the can is *being
+ * used* rather than carried.
+ */
+function WateringCan({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  return (
+    <g>
+      <path
+        d={`M ${x - 2} ${y - 2} L ${x - 27} ${y - 19} L ${x - 33} ${y - 9} L ${x - 8} ${y + 8} Z`}
+        fill={MASCOT_INK.deviceLight}
+        {...OUTLINE}
+      />
+      <path
+        d={`M ${x - 24} ${y - 32} L ${x - 43} ${y - 21} L ${x - 36} ${y - 4} L ${x - 18} ${y - 15} Z`}
+        fill={MASCOT_INK.device}
+        {...OUTLINE}
+      />
+      <rect
+        x={x - 8}
+        y={y - 16}
+        width={36}
+        height={32}
+        rx={7}
+        fill={colors.accent}
+        {...OUTLINE}
+      />
+      <path
+        d={`M ${x + 3} ${y - 16} C ${x + 3} ${y - 34} ${x + 25} ${y - 34} ${x + 25} ${y - 16}`}
+        fill="none"
+        stroke={colors.accent}
+        strokeWidth={5}
+        strokeLinecap="round"
+      />
+      <rect x={x - 5} y={y - 9} width={30} height={5} rx={2.5} fill={colors.spark} opacity={0.5} />
+      <g fill={colors.sclera} opacity={0.75}>
+        <ellipse cx={x - 40} cy={y + 3} rx={2} ry={2.8} />
+        <ellipse cx={x - 33} cy={y + 11} rx={1.8} ry={2.6} />
+        <ellipse cx={x - 25} cy={y + 16} rx={1.5} ry={2.3} />
+      </g>
+    </g>
+  );
+}
+
 export function HeldProp({
   prop,
   at,
@@ -365,5 +527,11 @@ export function HeldProp({
       return <Dumbbell at={at} colors={colors} />;
     case "trophy":
       return <Trophy at={at} colors={colors} />;
+    case "paintbrush":
+      return <Paintbrush at={at} colors={colors} />;
+    case "briefcase":
+      return <Briefcase at={at} colors={colors} />;
+    case "watering-can":
+      return <WateringCan at={at} colors={colors} />;
   }
 }

@@ -12,11 +12,13 @@ import { getConcept } from "../concepts";
 import { MASCOT_LOOKS } from "../seasons";
 import { DETAIL_LABELS, DETAIL_LEVELS, detailForSize, type DetailLevel } from "../detail";
 import { OUTFIT_SLOTS, SLOT_LABELS, type Outfit, type OutfitSlot } from "../outfit";
-import { PALETTE_PRESETS } from "../palette";
+import { MASCOT_SWATCHES, PALETTE_PRESETS, tintHex } from "../palette";
 import { Mascot } from "../mascot";
 import {
   EXPRESSION_LABELS,
+  GAZE_LABELS,
   MASCOT_EXPRESSIONS,
+  MASCOT_GAZES,
   MASCOT_POSES,
   MASCOT_PROPS,
   MASCOT_ROLES,
@@ -24,6 +26,7 @@ import {
   PROP_LABELS,
   ROLE_LABELS,
   type ExpressionId,
+  type GazeId,
   type MascotRole,
   type PoseId,
   type PropId,
@@ -44,7 +47,22 @@ const EXPRESSION_CHOICES: Choice<ExpressionId>[] = MASCOT_EXPRESSIONS.map((id) =
   id,
   label: EXPRESSION_LABELS[id],
 }));
+const GAZE_CHOICES: Choice<GazeId>[] = MASCOT_GAZES.map((id) => ({ id, label: GAZE_LABELS[id] }));
 const ROLE_CHOICES: Choice<MascotRole>[] = MASCOT_ROLES.map((id) => ({ id, label: ROLE_LABELS[id] }));
+/**
+ * The product's own colours, offered as garment paint.
+ *
+ * Only the garment slots, and that is not a limitation of the control — it is
+ * the palette module's rule showing through. A preset may repaint what a
+ * character is *wearing* and may never repaint the character, so a swatch
+ * that could reach `bodyTop` would be a customiser able to turn one species
+ * into another. A body painted from a swatch is a *colourway*, declared by
+ * the concept, and it appears on the Colourway row above.
+ */
+const SWATCH_CHOICES: Choice<string>[] = [
+  { id: NONE, label: "None" },
+  ...MASCOT_SWATCHES.map((sw) => ({ id: sw.id, label: sw.label })),
+];
 const PROP_CHOICES: Choice<PropId | typeof AUTO>[] = [
   { id: AUTO, label: "Auto" },
   ...MASCOT_PROPS.map((id) => ({ id, label: PROP_LABELS[id] })),
@@ -87,6 +105,8 @@ export function Playground(): ReactElement {
   const [look, setLook] = useState<string>(NONE);
   const [pose, setPose] = useState<PoseId>("seated");
   const [expression, setExpression] = useState<ExpressionId>("excited");
+  const [gaze, setGaze] = useState<GazeId>("forward");
+  const [swatchId, setSwatchId] = useState<string>(NONE);
   const [role, setRole] = useState<MascotRole>("gamer");
   const [prop, setProp] = useState<PropId | typeof AUTO>(AUTO);
   // Starts wearing something, on purpose: an empty outfit is the state in
@@ -112,6 +132,11 @@ export function Playground(): ReactElement {
   const activeVariant = def.variants.find((v) => v.id === variant)?.id ?? def.variants[0].id;
   const activeForm = def.forms?.find((f) => f.id === form)?.id ?? def.forms?.[0]?.id;
   const paletteColors = PALETTE_PRESETS.find((p) => p.id === palette)?.colors ?? {};
+  const swatchHit = MASCOT_SWATCHES.find((sw) => sw.id === swatchId);
+  const swatchColors =
+    swatchHit === undefined
+      ? {}
+      : { clothing: swatchHit.hex, clothingAccent: tintHex(swatchHit.hex, 0.84) };
   const effectiveDetail = detail === AUTO ? detailForSize(size) : detail;
   const wearingSomethingPainted = PAINTED_SLOTS.some((slot) => outfit[slot] !== undefined);
 
@@ -124,9 +149,11 @@ export function Playground(): ReactElement {
     activeForm,
     activeVariant,
     palette,
+    swatchId,
     look,
     pose,
     expression,
+    gaze,
     role,
     prop,
     outfit,
@@ -165,10 +192,11 @@ export function Playground(): ReactElement {
               concept={concept}
               {...(activeForm === undefined ? {} : { form: activeForm })}
               variant={activeVariant}
-              colors={paletteColors}
+              colors={{ ...paletteColors, ...swatchColors }}
               {...(look === NONE ? {} : { look })}
               pose={pose}
               expression={expression}
+              gaze={gaze}
               role={role}
               outfit={outfit}
               prop={prop === AUTO ? undefined : prop}
@@ -228,6 +256,12 @@ export function Playground(): ReactElement {
             onChange={setVariant}
           />
           <ChipRow label="Palette" options={PALETTE_CHOICES} value={palette} onChange={setPalette} />
+          <ChipRow label="Swatch" options={SWATCH_CHOICES} value={swatchId} onChange={setSwatchId} />
+          <p className="pl-[5.75rem] text-[11px] leading-tight text-muted-foreground">
+            The twenty-four colours the product already owns — the sixteen voice-zone hues, the
+            four Yty elements and the four admin product types. Paints the garment slots, over
+            whatever the Palette row chose.
+          </p>
           <p className="pl-[5.75rem] text-[11px] leading-tight text-muted-foreground">
             {wearingSomethingPainted
               ? "Paints the garment slots only — hats, tops, scarves, capes, ground props and the desk trim. It cannot reach the body, the head or the eyes, by design."
@@ -241,6 +275,13 @@ export function Playground(): ReactElement {
             value={expression}
             onChange={setExpression}
           />
+          <ChipRow label="Gaze" options={GAZE_CHOICES} value={gaze} onChange={setGaze} />
+          <p className="pl-[5.75rem] text-[11px] leading-tight text-muted-foreground">
+            Where the pupils point, in the viewer&apos;s directions, independent of the mood — put
+            one of these next to a button and it looks at the button. Anything but Forward
+            overrides the expression&apos;s own pupil position, which is why Thinking stops looking
+            away.
+          </p>
           <ChipRow label="Role" options={ROLE_CHOICES} value={role} onChange={setRole} />
           <ChipRow label="Holding" options={PROP_CHOICES} value={prop} onChange={setProp} />
 

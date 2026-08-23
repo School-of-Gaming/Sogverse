@@ -11,7 +11,7 @@ import type { ConceptId } from "../concept";
 import { getConcept } from "../concepts";
 import { Mascot } from "../mascot";
 import { OUTFIT_PRESETS } from "../outfit";
-import { PALETTE_PRESETS } from "../palette";
+import { PALETTE_PRESETS, swatchHex, tintHex } from "../palette";
 import {
   EXPRESSION_LABELS,
   MASCOT_EXPRESSIONS,
@@ -286,7 +286,10 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
 
         {/* --- the fleet -------------------------------------------------- */}
         <section>
-          <Rubric title="The fleet" note="Four named characters off one base model." />
+          <Rubric
+            title="The fleet"
+            note={`${def.fleet.length} named characters off one base model.`}
+          />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {def.fleet.map((member) => (
               <div
@@ -301,7 +304,18 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
                   pose={member.pose}
                   expression={member.expression}
                   prop={member.prop}
-                  {...(member.pose === "seated" ? { outfit: { scene: "desk" } } : {})}
+                  colors={
+                    member.garment === undefined
+                      ? {}
+                      : {
+                          clothing: swatchHex(member.garment),
+                          clothingAccent: tintHex(swatchHex(member.garment), 0.84),
+                        }
+                  }
+                  outfit={{
+                    ...member.outfit,
+                    ...(member.pose === "seated" ? { scene: "desk" } : {}),
+                  }}
                   size={132}
                 />
                 <p className="text-base font-semibold text-foreground">{member.name}</p>

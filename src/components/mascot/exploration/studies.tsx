@@ -518,3 +518,56 @@ export function MotionRow(): ReactElement {
     </Panel>
   );
 }
+
+// --- 9. the Gardener ------------------------------------------------------
+
+/**
+ * One character, at the four sizes she has to survive.
+ *
+ * She is a special rather than a study, which is why she gets a section of
+ * her own: the kit is three new pieces (a straw hat, a watering can, and a
+ * book on the ground with a shoot coming out of its pages) and the whole
+ * point of them is that they say "gardener" together and none of them says it
+ * alone. Beside the full figure are the three avatar sizes, because the kit
+ * is exactly the kind of thing that reads at 240 pixels and is gone by 28 —
+ * what has to survive down there is the rat.
+ *
+ * Everything drawn here is read off the fleet entry rather than restated, so
+ * this section cannot drift from the character it is showing.
+ */
+export function GardenerSpotlight(): ReactElement {
+  const member = getConcept("otso").fleet.find((m) => m.form === "rat");
+  const shared = {
+    concept: "otso" as const,
+    form: member?.form ?? "fox",
+    variant: member?.variantId ?? "honey",
+  };
+  const outfit = member?.outfit ?? { hat: "straw-hat", extra: "story-sprout" };
+  return (
+    <Panel
+      title="MoodyRat — the Gardener"
+      lede="She tends the stories."
+    >
+      <div className="flex flex-wrap items-end justify-center gap-8 rounded-xl border border-border bg-background p-4">
+        <Mascot
+          {...shared}
+          pose={member?.pose ?? "reading"}
+          expression={member?.expression ?? "thinking"}
+          prop={member?.prop ?? "watering-can"}
+          outfit={outfit}
+          size={240}
+        />
+        <div className="flex items-end gap-4">
+          {[64, 40, 28].map((size) => (
+            <figure key={size} className="flex flex-col items-center gap-1">
+              <Mascot {...shared} outfit={outfit} crop="bust" size={size} animated={false} />
+              <figcaption className="font-mono text-[10px] text-muted-foreground">
+                {size}px
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </Panel>
+  );
+}
