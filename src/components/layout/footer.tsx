@@ -13,12 +13,12 @@ export function Footer() {
     <footer className="border-t border-border bg-card">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-center">
-          {/* The monochrome colourway, and smaller than the header's: down here
-              the mark is a sign-off rather than an entrance, and the yellow
-              badge at this size would pull the eye past the links it sits
-              above. The "SCHOOL OF GAMING" line is small at this height on
-              purpose — the copyright row below spells the name out in text, so
-              the mark is carrying the shape, not the words. Same two-file
+          {/* The monochrome colourway — a yellow badge down here would pull the
+              eye past the links it sits above. Sized so the mark's own
+              "SCHOOL OF GAMING" line is legible: that line is ~13% of the
+              badge's height, so it needs roughly 80px of mark to clear ~10px
+              of text. The footer has the vertical room the header does not,
+              which is why the two ended up different sizes. Same two-file
               split, same intrinsic dimensions, as the header. */}
           <div className="flex items-center">
             <Image
@@ -34,7 +34,7 @@ export function Footer() {
               alt={SENDER_NAME}
               width={379}
               height={207.5}
-              className="hidden h-10 w-auto sm:block"
+              className="hidden h-20 w-auto sm:block"
               unoptimized
             />
           </div>
