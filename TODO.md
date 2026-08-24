@@ -513,20 +513,24 @@ supported fix is BIMI, and it is priced for a different kind of company: Gmail
 will not show a logo without a certificate, and the cheapest one that skips the
 registered-trademark requirement still runs ~$650/yr. Not worth it for an avatar.
 
-One free thing remains worth doing, and one is a licensed experiment in flight:
+The Gmail half is done: `sogverse@sog.gg` became a real Workspace user
+(2026-08-24, display name "School of Gaming", one license), the circle-safe
+photo was uploaded by an admin, and the avatar verified in a real external
+Gmail the same day — the org-managed "people you interact with" visibility
+turned out to be enough, no profile-editing unlock needed. Brevo sending was
+untouched throughout (it authenticates via DNS, not the mailbox). What remains:
 
-- [ ] **The Workspace profile-photo experiment is running — verify it.**
-  `sogverse@sog.gg` turned out not to be a real Workspace user (checked
-  2026-08-24), so a user was created for it the same day — display name
-  "School of Gaming", one license. Google documents no external-recipient
-  guarantee for the photo, which is why this is an experiment: upload the
-  circle-safe photo with visibility "Anyone", confirm replies to the address
-  still reach whoever watched them before (the old alias/group's delivery
-  re-routed to the new mailbox — forwarding or delegation covers it), then
-  mail a personal Gmail and judge the avatar after a day or two, not an hour.
-  If the letter tile persists, delete the user, recreate the old alias/group,
-  reclaim the license, and fall back to the BIMI path below. Brevo's sending
-  is untouched either way — it authenticates via DNS, not via the mailbox.
+- [ ] **Confirm replies to `sogverse@sog.gg` still reach a human.** Creating
+  the user re-pointed the address's inbound delivery from whatever alias/group
+  held it before into the new mailbox — set forwarding or delegation from the
+  new mailbox to whoever watched those replies, and send one test reply to
+  prove the path.
+- [ ] **Publish a self-asserted BIMI record** (SVG Tiny PS + `default._bimi`
+  TXT, no certificate). Free, and it covers Yahoo and Fastmail, which honour
+  BIMI without one. It does nothing for Gmail — now covered by the profile
+  photo above — so it is only worth the DNS work once the DMARC prerequisite
+  below is done for its own reasons. The art is settled: the definitive
+  gem-square (`src/assets/brand/`) is the source to convert when the day comes.
 - [ ] **Publish a self-asserted BIMI record** (SVG Tiny PS + `default._bimi` TXT,
   no certificate). Free, and it covers Yahoo and Fastmail, which honour BIMI
   without one. It does nothing for Gmail, so it is only worth the DNS work once
