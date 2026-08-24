@@ -513,17 +513,21 @@ supported fix is BIMI, and it is priced for a different kind of company: Gmail
 will not show a logo without a certificate, and the cheapest one that skips the
 registered-trademark requirement still runs ~$650/yr. Not worth it for an avatar.
 
-Two free things are worth doing instead, and they cover different inboxes:
+One free thing remains worth doing, and one looked free but is not:
 
-- [ ] **Set a profile photo on the `sogverse@sog.gg` Google Workspace account.**
-  This is the Gmail half, and Gmail is where our families are. Costs minutes,
-  needs the address to be a real Workspace user rather than a send-only alias.
-  Google documents no guarantee for external recipients, so treat it as worth
-  trying rather than as a solution — verify by mailing a personal Gmail account.
+- **The Workspace profile-photo route is dead — checked 2026-08-24.**
+  `sogverse@sog.gg` is not a real Workspace user, so the photo needs a paid
+  license first, for an outcome Google documents no external-recipient guarantee
+  on — the same priced-for-someone-else shape as the certificate above. Decided
+  not to pursue. (If a real `sogverse@` support mailbox is ever wanted for its
+  own sake, the photo experiment rides along free — check what the address
+  delivers to before converting it, so replies don't silently re-route.)
 - [ ] **Publish a self-asserted BIMI record** (SVG Tiny PS + `default._bimi` TXT,
   no certificate). Free, and it covers Yahoo and Fastmail, which honour BIMI
   without one. It does nothing for Gmail, so it is only worth the DNS work once
-  the DMARC prerequisite below is done for its own reasons.
+  the DMARC prerequisite below is done for its own reasons. The art is settled:
+  the definitive gem-square (`src/assets/brand/`) is the source to convert when
+  the day comes.
 
 Both are blocked on nothing except the second one's prerequisite: **DMARC at
 enforcement** (`p=quarantine` or `p=reject`). That work is worth doing on its own
