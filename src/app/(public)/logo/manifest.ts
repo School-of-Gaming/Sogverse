@@ -35,6 +35,28 @@ export const MARKS = [
 /** The heights the Roblox lockup actually renders at (h-14, sm:h-20), plus the small end. */
 export const MARK_LADDER = [80, 56, 40, 28] as const;
 
+/**
+ * The same size rungs as the gem ladder, in the squarer container.
+ *
+ * The square holds the S about 7.5 units wider at any given clearance, so the
+ * ladder runs one rung past where the gem stops: 84 is the gem's ceiling, 92 is
+ * the square's. The 76 rung is SC2 itself rather than a copy of it, so the
+ * container ladder and this one cannot drift apart.
+ */
+const SQUARE_SIZE: Group = {
+  title: "Size in the squarer gem",
+  blurb:
+    "SC2's container held constant, S width the only thing moving. The first four rungs are the gem " +
+    "ladder's exactly, so the two compare rung for rung; the fifth is room the gem does not have.",
+  items: [
+    c("SQ1", "SQ1-size-60.svg", "60."),
+    c("SQ2", "SQ2-size-68.svg", "68."),
+    c("SC2", "SC2-gem-square.svg", "76 — SC2 as it stands, the value the container ladder holds every shape at."),
+    c("SQ4", "SQ4-size-84.svg", "84 — SZ4's value, which was the gem's ceiling. The square still has room."),
+    c("SQ5", "SQ5-size-92.svg", "92 — the square's own ceiling; here the S's corners reach its taper."),
+  ],
+};
+
 /** Route 1 — the true letterform, black on yellow per rule 3. */
 export const ROUTE_1: readonly Group[] = [
   {
@@ -61,6 +83,7 @@ export const ROUTE_1: readonly Group[] = [
       c("SZ4", "SZ4-size-84.svg", "84 — about the gem's limit; the S's corners reach the taper."),
     ],
   },
+  SQUARE_SIZE,
 ];
 
 /** Route 2 — no letter. Down to one direction. */
@@ -118,6 +141,9 @@ export const CHEVRON: readonly Group[] = [
 /** The head-to-head the strip carries: one container ladder from each route. */
 export const STRIP_ITEMS: readonly Candidate[] = [...ROUTE_1[0].items, ...CHEVRON[2].items];
 
+/** The size ladder gets its own strip: 16px is where a size decision is actually made. */
+export const SQUARE_STRIP_ITEMS: readonly Candidate[] = SQUARE_SIZE.items;
+
 /** Kept so nobody re-proposes them. */
 export const RULED_OUT: readonly Candidate[] = [
   c("SX1", "SX1-yellow-on-dark.svg", "Rule 3: yellow S on dark."),
@@ -140,6 +166,53 @@ export const RULED_OUT: readonly Candidate[] = [
   c("X8", "X8-double-taper.svg", "Count."),
   c("X9", "X9-through.svg", "Cuts through the badge; loses the silhouette."),
 ];
+
+/**
+ * Monochrome lockups, for the legacy footer treatment.
+ *
+ * The mark in sog.gg's footer is a single black compound path with the letters
+ * cut out as holes — there is no white anywhere in that file. On a white page
+ * the holes read as white text, which is where "black mark, white text" comes
+ * from; on our #121212 ground the same file paints a near-black badge and fills
+ * its letters with the page behind it. So it is not a file that can be reused
+ * here, and inverting it is not a colour swap: it is making both colours
+ * explicit, which our own two marks already do.
+ *
+ * These are therefore generated from `sog-logo-clean.svg` and
+ * `sog-badge-mark-filled.svg` by swapping those two explicit fills, and
+ * nothing else. Named for the ground they sit on, because that is the thing a
+ * caller has to pick.
+ */
+export const MONO = [
+  {
+    id: "M1",
+    file: "M1-full-on-light.svg",
+    from: "sog-logo-clean.svg",
+    ground: "light" as const,
+    note: "The legacy footer treatment, reproduced with real colour: dark badge, white letters.",
+  },
+  {
+    id: "M2",
+    file: "M2-full-on-dark.svg",
+    from: "sog-logo-clean.svg",
+    ground: "dark" as const,
+    note: "The inversion — white badge, dark letters. The one that would go in our own footer.",
+  },
+  {
+    id: "M3",
+    file: "M3-simple-on-light.svg",
+    from: "sog-badge-mark-filled.svg",
+    ground: "light" as const,
+    note: "Same treatment on the tagline-less mark.",
+  },
+  {
+    id: "M4",
+    file: "M4-simple-on-dark.svg",
+    from: "sog-badge-mark-filled.svg",
+    ground: "dark" as const,
+    note: "Same again, inverted.",
+  },
+] as const;
 
 export const RULES = [
   {

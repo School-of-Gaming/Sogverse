@@ -5,10 +5,12 @@ import {
   CONTRAST,
   MARKS,
   MARK_LADDER,
+  MONO,
   RULED_OUT,
   RULES,
   ROUTE_1,
   ROUTE_2,
+  SQUARE_STRIP_ITEMS,
   STRIP_ITEMS,
   type Candidate,
   type Group,
@@ -80,10 +82,10 @@ function DecoyTab({ index, theme }: { index: number; theme: ChromeTheme }) {
 }
 
 /** One row per candidate, fresh neighbours each time, SOG tab in a moving slot. */
-function FindYours({ theme }: { theme: ChromeTheme }) {
+function FindYours({ theme, items }: { theme: ChromeTheme; items: readonly Candidate[] }) {
   return (
     <div className="space-y-2">
-      {STRIP_ITEMS.map((item, row) => {
+      {items.map((item, row) => {
         const next = makeDealer(101 + row * 37);
         const at = 2 + (row % 5);
         const slots = Array.from({ length: 8 }, (_, i) => {
@@ -117,10 +119,10 @@ function FindYours({ theme }: { theme: ChromeTheme }) {
 }
 
 /** Everything in one strip, for direct side-by-side comparison. */
-function FullStrip({ theme }: { theme: ChromeTheme }) {
+function FullStrip({ theme, items }: { theme: ChromeTheme; items: readonly Candidate[] }) {
   const next = makeDealer(7);
   const cells: React.ReactNode[] = [];
-  STRIP_ITEMS.forEach((item, i) => {
+  items.forEach((item, i) => {
     cells.push(<DecoyTab key={`d${i}a`} index={DECOYS.indexOf(next())} theme={theme} />);
     if (i % 3 === 1) cells.push(<DecoyTab key={`d${i}b`} index={DECOYS.indexOf(next())} theme={theme} />);
     cells.push(
@@ -137,6 +139,43 @@ function FullStrip({ theme }: { theme: ChromeTheme }) {
       {cells.map((cell, i) => (
         <div key={i} className="w-[158px]">
           {cell}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MonoCard({ item }: { item: (typeof MONO)[number] }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="text-xs">
+        <span className="mr-1.5 font-semibold text-primary">{item.id}</span>
+        <code className="font-mono text-xs text-muted-foreground">{item.file.replace(".svg", "")}</code>
+      </div>
+      <p className="mb-1 mt-1 text-xs text-muted-foreground">{item.note}</p>
+      <p className="mb-3 font-mono text-[11px] text-muted-foreground">from {item.from}</p>
+      {/* Both grounds every time: the failure is the whole point, and it is only
+          visible on the ground the variant was not drawn for. The two grounds are
+          a white page and our own background, so they are the existing classes
+          rather than literal hex — unlike CHROME, neither is a picture of some
+          external UI. */}
+      {([
+        { key: "light", label: "on white", cls: "bg-white" },
+        { key: "dark", label: "on our background", cls: "bg-background" },
+      ] as const).map((g) => (
+        <div key={g.key} className="mb-2">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="font-mono text-[10px] text-muted-foreground">{g.label}</span>
+            {g.key === item.ground ? (
+              <span className="rounded-full border border-success/40 bg-success/10 px-2 text-[10px] text-success">
+                its ground
+              </span>
+            ) : null}
+          </div>
+          <div className={`flex justify-center rounded-lg border border-border p-4 ${g.cls}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- SVG, fixed height, no optimisation wanted */}
+            <img src={`/logo/${item.file}`} alt="" width={379} height={207.5} style={{ height: 74, width: "auto" }} />
+          </div>
         </div>
       ))}
     </div>
@@ -258,6 +297,36 @@ export default function LogoExplorationsPage() {
         ))}
       </div>
 
+      <SectionHeading>Monochrome — the legacy footer treatment</SectionHeading>
+      <p className="mb-3 max-w-[84ch] text-sm text-muted-foreground">
+        The mark in sog.gg&apos;s footer is a single black compound path with the letters cut out as{" "}
+        <em>holes</em> — there is no white anywhere in that file. On a white page the holes show the page, which
+        is where &ldquo;black mark, white text&rdquo; comes from. On our ground the same file would paint a
+        near-black badge and fill its letters with the #121212 behind them: a black mark with black text.
+      </p>
+      <p className="mb-4 max-w-[84ch] text-sm text-muted-foreground">
+        So it is not a file we can reuse, and inverting it is not a colour swap — it is making both colours
+        explicit, which our own two marks already do. These four are exactly that: the same geometry with the
+        badge fill and the letterform fill set to a mono pair, generated from the two marks above and nothing
+        else. Each is shown on both grounds, because the failure is only visible on the wrong one.
+      </p>
+      <div className="mb-4 rounded-r-lg border-l-[3px] border-primary bg-card p-3 px-4">
+        <p className="max-w-[84ch] text-[13px] text-muted-foreground">
+          <span className="font-semibold text-primary">Worth deciding before any of these ship.</span> Rule 3
+          says an S is always a black letter on a yellow ground, and none of these have any yellow in them — so
+          a mono lockup is either an exception to that rule or outside its scope, and that is a brand call
+          rather than a rendering one. It is also worth asking whether our footer needs mono at all: the full
+          colour mark is yellow on dark at 9.58:1, which is the strongest pairing we have, and the section
+          above shows it holding up on both grounds already. Mono earns its place where colour is not available
+          — one-colour print, embroidery, a partner&apos;s mono logo row — rather than in our own footer.
+        </p>
+      </div>
+      <div className="grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
+        {MONO.map((item) => (
+          <MonoCard key={item.id} item={item} />
+        ))}
+      </div>
+
       <SectionHeading>Find yours — fresh neighbours each row</SectionHeading>
       <p className="mb-4 max-w-[84ch] text-sm text-muted-foreground">
         One row per candidate, each with a different set of real tabs around it and the SOG tab in a different
@@ -266,9 +335,9 @@ export default function LogoExplorationsPage() {
         companies&apos; marks, drawn only so the test has realistic noise.
       </p>
       <h3 className="mb-2 mt-6 text-sm font-semibold">Light</h3>
-      <FindYours theme="light" />
+      <FindYours theme="light" items={STRIP_ITEMS} />
       <h3 className="mb-2 mt-6 text-sm font-semibold">Dark</h3>
-      <FindYours theme="dark" />
+      <FindYours theme="dark" items={STRIP_ITEMS} />
 
       <SectionHeading>In one strip — true 16px</SectionHeading>
       <p className="mb-4 max-w-[84ch] text-sm text-muted-foreground">
@@ -277,8 +346,23 @@ export default function LogoExplorationsPage() {
         ), in the same six containers.
       </p>
       <div className="space-y-4">
-        <FullStrip theme="light" />
-        <FullStrip theme="dark" />
+        <FullStrip theme="light" items={STRIP_ITEMS} />
+        <FullStrip theme="dark" items={STRIP_ITEMS} />
+      </div>
+
+      <SectionHeading>SC2 at size — true 16px</SectionHeading>
+      <p className="mb-4 max-w-[84ch] text-sm text-muted-foreground">
+        The squarer gem&apos;s size ladder in the place the size call actually gets made. 76 is what SC2 renders
+        at today, 84 is the value the plain gem could not exceed, and 92 is the square&apos;s own ceiling. The
+        question at 16px is whether the extra width buys legibility or just closes the counters.
+      </p>
+      <h3 className="mb-2 mt-6 text-sm font-semibold">Light</h3>
+      <FindYours theme="light" items={SQUARE_STRIP_ITEMS} />
+      <h3 className="mb-2 mt-6 text-sm font-semibold">Dark</h3>
+      <FindYours theme="dark" items={SQUARE_STRIP_ITEMS} />
+      <div className="mt-4 space-y-4">
+        <FullStrip theme="light" items={SQUARE_STRIP_ITEMS} />
+        <FullStrip theme="dark" items={SQUARE_STRIP_ITEMS} />
       </div>
 
       <SectionHeading>Route 1 — the true letterform</SectionHeading>
