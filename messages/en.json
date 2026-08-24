@@ -238,6 +238,19 @@
         "heading": "Product types"
       }
     },
+    "geduContract": {
+      "heading": "Gedu contract",
+      "accepted": "Contract accepted",
+      "acceptedDetail": "Version {version}, accepted on {date}",
+      "notAccepted": "Has not accepted the Gedu contract",
+      "notCurrentVersion": "Has not accepted the contract in force ({version})",
+      "previousVersion": "Previously accepted version {version} on {date}.",
+      "queueAccepted": "Contract accepted {date}",
+      "queueNotAccepted": "Contract not accepted",
+      "confirmTitle": "Certify without an accepted contract?",
+      "confirmBody": "This Gedu has not accepted the contract that is in force. Accepting it blocks nothing, so you can certify them anyway — but they will be assignable to groups before they have agreed to the terms they work under.",
+      "confirmAction": "Certify anyway"
+    },
     "products": {
       "types": {
         "consumerClub": {

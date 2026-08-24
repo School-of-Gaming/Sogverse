@@ -642,6 +642,7 @@ describe("the certification queue", () => {
       ],
       "en",
       NOW,
+      HELSINKI,
     );
 
     // The relative phrase and nothing else: `Intl` formats it per locale, and
@@ -666,9 +667,48 @@ describe("the certification queue", () => {
       ],
       "en",
       NOW,
+      HELSINKI,
     );
 
     expect(queue[0].name).toBeNull();
+  });
+
+  it("dates an acceptance in the viewer's zone, and says nothing where there is none", () => {
+    // 00:40 on the 16th in Helsinki is still 17:40 on the 15th in Los Angeles.
+    // An acceptance is an instant, so it converts — a queue that rendered the
+    // stored date as itself would put a signature on the wrong day for every
+    // reader west of the product.
+    const candidates = [
+      {
+        id: "38763617-b031-49af-9fd4-3320e7509019",
+        first_name: "Venla",
+        last_name: "Salminen",
+        created_at: "2026-08-15T09:20:00+03:00",
+        contract_accepted_at: "2026-08-16T00:40:00+03:00",
+      },
+      {
+        id: "4889fea4-0602-438f-adfe-2cef72d485ff",
+        first_name: "Helmi",
+        last_name: "Koskinen",
+        created_at: "2026-06-17T09:20:00+03:00",
+        contract_accepted_at: null,
+      },
+    ];
+
+    const helsinki = buildCertificationQueue(candidates, "en", NOW, HELSINKI);
+    expect(helsinki[0].contractAcceptedOn).toBe("Aug 16, 2026");
+    // Never signed, and "signed a version that has since been superseded", are
+    // the same null on the wire and the same silence here: the question is
+    // standing under the terms in force today.
+    expect(helsinki[1].contractAcceptedOn).toBeNull();
+
+    const losAngeles = buildCertificationQueue(
+      candidates,
+      "en",
+      NOW,
+      LOS_ANGELES,
+    );
+    expect(losAngeles[0].contractAcceptedOn).toBe("Aug 15, 2026");
   });
 });
 
@@ -677,7 +717,7 @@ describe("an empty platform", () => {
     const data = build(snapshot());
 
     expect(data.products).toEqual([]);
-    expect(buildCertificationQueue([], "en", NOW)).toEqual([]);
+    expect(buildCertificationQueue([], "en", NOW, HELSINKI)).toEqual([]);
     expect(data.comingUp).toEqual([]);
     expect(data.weeks.length).toBeGreaterThan(0);
     expect(data.weeks.every((entry) => entry.chips.length === 0)).toBe(true);

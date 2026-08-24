@@ -238,6 +238,19 @@
         "heading": "Types de produit"
       }
     },
+    "geduContract": {
+      "heading": "Contrat Gedu",
+      "accepted": "Contrat accepté",
+      "acceptedDetail": "Version {version}, acceptée le {date}",
+      "notAccepted": "N’a pas accepté le contrat Gedu",
+      "notCurrentVersion": "N’a pas accepté le contrat en vigueur ({version})",
+      "previousVersion": "A accepté auparavant la version {version} le {date}.",
+      "queueAccepted": "Contrat accepté le {date}",
+      "queueNotAccepted": "Contrat non accepté",
+      "confirmTitle": "Certifier sans contrat accepté ?",
+      "confirmBody": "Ce Gedu n’a pas accepté le contrat en vigueur. Cette acceptation ne bloque rien : vous pouvez donc le certifier quand même — mais il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
+      "confirmAction": "Certifier quand même"
+    },
     "products": {
       "types": {
         "consumerClub": {

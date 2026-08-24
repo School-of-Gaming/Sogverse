@@ -238,6 +238,19 @@
         "heading": "Produkttyper"
       }
     },
+    "geduContract": {
+      "heading": "Gedu-avtal",
+      "accepted": "Avtalet godkänt",
+      "acceptedDetail": "Version {version}, godkänt {date}",
+      "notAccepted": "Har inte godkänt Gedu-avtalet",
+      "notCurrentVersion": "Har inte godkänt det gällande avtalet ({version})",
+      "previousVersion": "Godkände tidigare version {version} den {date}.",
+      "queueAccepted": "Avtalet godkänt {date}",
+      "queueNotAccepted": "Avtalet inte godkänt",
+      "confirmTitle": "Certifiera utan godkänt avtal?",
+      "confirmBody": "Den här Gedun har inte godkänt det gällande avtalet. Godkännandet blockerar ingenting, så du kan certifiera hen ändå — men hen kan då tilldelas grupper innan hen har godkänt villkoren hen arbetar under.",
+      "confirmAction": "Certifiera ändå"
+    },
     "products": {
       "types": {
         "consumerClub": {

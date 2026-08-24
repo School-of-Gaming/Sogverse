@@ -286,6 +286,19 @@
         "heading": "De’ Seghmey"
       }
     },
+    "geduContract": {
+      "heading": "Gedu quv chut",
+      "accepted": "chut qonlu’pu’",
+      "acceptedDetail": "mIw {version}, qonlu’pu’ {date}",
+      "notAccepted": "Gedu quv chut qonbe’taH",
+      "notCurrentVersion": "chut ratlhbogh ({version}) qonbe’taH",
+      "previousVersion": "wa’Hu’ mIw {version} qonpu’: {date}.",
+      "queueAccepted": "chut qonlu’pu’ {date}",
+      "queueNotAccepted": "chut qonlu’be’",
+      "confirmTitle": "chut qonbe’pu’ — patlh yInob ’e’ DaHech’a’?",
+      "confirmBody": "chut ratlhbogh qonbe’taH Geduvam. chut botbe’ — vaj patlh Danob laH. ’ach chut HarchoHpa’, ghob je’lu’ net chaw’.",
+      "confirmAction": "patlh yInob ’e’ yIruch"
+    },
     "products": {
       "types": {
         "consumerClub": {

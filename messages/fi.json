@@ -238,6 +238,19 @@
         "heading": "Tuotetyypit"
       }
     },
+    "geduContract": {
+      "heading": "Gedu-sopimus",
+      "accepted": "Sopimus hyväksytty",
+      "acceptedDetail": "Versio {version}, hyväksytty {date}",
+      "notAccepted": "Ei ole hyväksynyt Gedu-sopimusta",
+      "notCurrentVersion": "Ei ole hyväksynyt voimassa olevaa sopimusta ({version})",
+      "previousVersion": "Hyväksynyt aiemmin version {version} {date}.",
+      "queueAccepted": "Sopimus hyväksytty {date}",
+      "queueNotAccepted": "Sopimusta ei ole hyväksytty",
+      "confirmTitle": "Hyväksytäänkö ilman hyväksyttyä sopimusta?",
+      "confirmBody": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Sopimuksen hyväksyminen ei estä mitään, joten voit silti hyväksyä hänet — mutta hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
+      "confirmAction": "Hyväksy silti"
+    },
     "products": {
       "types": {
         "consumerClub": {

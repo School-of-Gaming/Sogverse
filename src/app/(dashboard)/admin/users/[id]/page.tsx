@@ -23,7 +23,11 @@ import { RobloxService } from "@/services/roblox";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
 import { GeduProfilesService, type GeduCertification } from "@/services/gedu/gedu-profiles.service";
-import type { ParticipationStatus, ProductType } from "@/types";
+// Imported from the service module rather than the package index because that
+// index re-exports `"use client"` query hooks, which a server component would
+// pull in as client references.
+import { GeduContractService } from "@/services/gedu/gedu-contract.service";
+import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
 const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
@@ -144,6 +148,7 @@ export default async function AdminUserDetailPage({
     minecraftAccount,
     robloxAccount,
     geduCertification,
+    geduAcceptances,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -163,6 +168,14 @@ export default async function AdminUserDetailPage({
     isGedu
       ? new GeduProfilesService(supabase).getOne(userId).catch(() => null)
       : Promise.resolve<GeduCertification | null>(null),
+    // Every contract version this educator has accepted, newest first — a
+    // bounded set (at most one row per version ever published) read by
+    // primary-key prefix, so it costs this page nothing to fetch alongside the
+    // certification row it is going to be read next to. Admin RLS permits the
+    // cross-user read; the card compares them against the version in force.
+    isGedu
+      ? new GeduContractService(supabase).getAcceptances(userId).catch(() => null)
+      : Promise.resolve<GeduContractAcceptance[] | null>(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -431,7 +444,13 @@ export default async function AdminUserDetailPage({
       )}
 
       {/* Gedu certification + coverage areas (substitute matching) */}
-      {isGedu && <GeduCertificationCard geduId={userId} initial={geduCertification} />}
+      {isGedu && (
+        <GeduCertificationCard
+          geduId={userId}
+          initial={geduCertification}
+          initialAcceptances={geduAcceptances}
+        />
+      )}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
     </div>
   );
