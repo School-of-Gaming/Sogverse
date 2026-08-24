@@ -426,20 +426,7 @@
       "locationPicker": {
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",
-        "edit": "Redigera",
         "noVenueHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
-        "memberNotesLabel": "Medlemssynliga anteckningar",
-        "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
-        "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
-        "memberNotesHint": "Visas för föräldrar och spelare på produktsidan.",
-        "staffNotesLabel": "Personalanteckningar (endast admin + Gedu)",
-        "staffNotesFieldLabel": "Endast personal",
-        "staffNotesPlaceholder": "Portkoder, baksidesinformation, rumsnycklar, vem man frågar i receptionen.",
-        "staffNotesHint": "Visas aldrig för föräldrar eller spelare.",
-        "addressLabel": "Adress",
-        "addressPlaceholder": "Gata, postnummer, ort",
-        "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
-        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
         "chooseMunicipality": "Välj en kommun",
         "municipalityPickerTitle": "Välj en kommun",
         "chooseVenue": "Välj en lokal",
@@ -707,15 +694,7 @@
         "chip": {
           "age": "{age}å",
           "parent": "Förälder: {name}",
-          "participantEmail": "Kontakt: {email}",
-          "detailsAria": "Uppgifter om {name}",
-          "details": {
-            "age": "Ålder",
-            "gender": "Kön",
-            "parent": "Vårdnadshavare",
-            "contact": "Kontakt",
-            "openUser": "Öppna användarsidan"
-          }
+          "participantEmail": "Kontakt: {email}"
         },
         "unassigned": {
           "title": "Otilldelade",
@@ -803,98 +782,17 @@
         },
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
       },
-      "catalogue": {
-        "title": "Produkter",
-        "subtitle": "Alla klubbar, läger och evenemang på plattformen.",
-        "searchPlaceholder": "Sök på namn…",
-        "searchLabel": "Sök produkter på namn",
-        "emptyTitle": "Inga produkter ännu",
-        "emptyDescription": "Skapa en klubb, ett läger eller ett evenemang för att komma igång.",
-        "noMatches": "Ingen produkt matchar sökningen och filtren.",
-        "online": "På distans",
-        "noGedu": "Ingen Gedu",
-        "seatsOf": "{filled} / {total}",
-        "seatsUncapped": "{filled} anmälda",
-        "waitingCount": "{count} i kö",
-        "unplacedCount": "{count} utan grupp",
-        "filters": {
-          "active": "Pågående",
-          "format": {
-            "online": "På distans",
-            "in_person": "På plats"
-          }
-        },
-        "columns": {
-          "type": "Typ",
-          "name": "Namn",
-          "status": "Status",
-          "when": "När",
-          "where": "Var",
-          "gedus": "Geduer",
-          "seats": "Platser",
-          "attention": "Kräver uppmärksamhet"
-        },
-        "attention": {
-          "no_gedu": "Ingen Gedu tilldelad",
-          "unplaced": "Någon är anmäld men står utan grupp",
-          "missing_gedu_fee": "Gedu-arvodet är inte satt",
-          "missing_municipality_fee": "Kommunavgiften är inte satt",
-          "unwritten_session": "En genomförd session saknar rapport"
-        }
-      },
-      "detail": {
-        "backToCatalogue": "Alla produkter",
-        "sectionNavAria": "Produktens avsnitt",
-        "sections": {
-          "at-a-glance": "En överblick",
-          "as-sold": "Så säljs den",
-          "how-it-runs": "Så fungerar den",
-          "money": "Ekonomi",
-          "people": "Deltagare",
-          "sessions": "Sessioner"
-        },
-        "copyLink": "Kopiera den publika länken",
-        "noNextSession": "Inga sessioner kvar",
-        "liveNow": "Pågår nu",
-        "sessionsRunOpenEnded": "{run} genomförda",
-        "sessionsRunOf": "{run} genomförda, {remaining} kvar",
-        "writtenUpOf": "{written} av {run} rapporterade",
-        "emailedCount": "{count} skickade",
-        "seatsFilledFree": "{filled} tagna, {free} lediga",
-        "byWhoWhen": "{name} · {when}",
-        "asSoldCaption": "Så här ser en familj produkten på den publika sidan.",
-        "noCalendars": "Ingen lovkalender",
-        "noThreshold": "Ingen tröskel",
-        "thresholdValue": "{count, plural, one {# anmälan} other {# anmälningar}}",
-        "fields": {
-          "publicLink": "Publik länk",
-          "nextSession": "Nästa session",
-          "term": "Termin",
-          "writeUps": "Rapporter",
-          "statusReason": "Därför denna status",
-          "created": "Skapad",
-          "updated": "Senast ändrad",
-          "contacts": "Kontakter",
-          "slots": "Schema",
-          "timezone": "Tidszon",
-          "dates": "Start / slut",
-          "where": "Plats"
-        },
-        "people": {
-          "notesCaption": "Gruppens stående anteckningar. Personalanteckningen läses bara av Geduer och administratörer."
-        },
-        "sessions": {
-          "noGroups": "Produkten har inga grupper ännu, så det finns inget att visa.",
-          "groupSelectorAria": "Välj grupp",
-          "ledger": {
-            "run": "Genomförda sessioner",
-            "writtenUp": "Rapporterade",
-            "emailed": "Skickade",
-            "present": "Närvarande",
-            "absent": "Frånvarande",
-            "unmarked": "Inte markerad"
-          }
-        }
+      "sessions": {
+        "title": "Tillfällen",
+        "groupSelectorAria": "Välj en grupp",
+        "untitledGroup": "Namnlös grupp",
+        "noGroups": "Den här produkten har inga grupper än, så ingenting är dokumenterat.",
+        "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
+        "loading": "Laddar dokumentationen av produktens tillfällen.",
+        "addressLabel": "Platsens adress",
+        "addressPlaceholder": "Gata, postnummer, stad",
+        "addAddress": "Lägg till adress",
+        "editAddress": "Redigera adress"
       }
     },
     "users": {

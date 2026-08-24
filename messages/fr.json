@@ -426,20 +426,7 @@
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
-        "edit": "Modifier",
         "noVenueHint": "Aucun lieu physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
-        "memberNotesLabel": "Notes visibles par les membres",
-        "memberNotesFieldLabel": "Notes affichées aux parents et aux joueurs",
-        "memberNotesPlaceholder": "Détails d’adresse, stationnement, accessibilité — tout ce que les parents doivent savoir.",
-        "memberNotesHint": "Affichées aux parents et aux joueurs sur la page de détail du produit.",
-        "staffNotesLabel": "Notes internes (admin et Gedu uniquement)",
-        "staffNotesFieldLabel": "Notes réservées à l’équipe",
-        "staffNotesPlaceholder": "Codes de portail, entrée de service, clés des salles, à qui s’adresser à l’accueil.",
-        "staffNotesHint": "Jamais affichées aux parents ni aux joueurs.",
-        "addressLabel": "Adresse",
-        "addressPlaceholder": "Rue, code postal, ville",
-        "noMemberNotes": "Aucune note visible par les membres pour ce site.",
-        "noStaffNotes": "Aucune note interne pour ce site.",
         "chooseMunicipality": "Choisir une commune",
         "municipalityPickerTitle": "Choisir une commune",
         "chooseVenue": "Choisir un site",
@@ -707,15 +694,7 @@
         "chip": {
           "age": "{age} ans",
           "parent": "Parent : {name}",
-          "participantEmail": "Contact : {email}",
-          "detailsAria": "Détails de {name}",
-          "details": {
-            "age": "Âge",
-            "gender": "Genre",
-            "parent": "Parent",
-            "contact": "Contact",
-            "openUser": "Ouvrir la fiche utilisateur"
-          }
+          "participantEmail": "Contact : {email}"
         },
         "unassigned": {
           "title": "Sans groupe",
@@ -803,98 +782,17 @@
         },
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
       },
-      "catalogue": {
-        "title": "Produits",
-        "subtitle": "Tous les clubs, stages et événements de la plateforme.",
-        "searchPlaceholder": "Rechercher par nom…",
-        "searchLabel": "Rechercher un produit par son nom",
-        "emptyTitle": "Aucun produit pour l’instant",
-        "emptyDescription": "Créez un club, un stage ou un événement pour commencer.",
-        "noMatches": "Aucun produit ne correspond à la recherche et aux filtres.",
-        "online": "En ligne",
-        "noGedu": "Aucun Gedu",
-        "seatsOf": "{filled} / {total}",
-        "seatsUncapped": "{filled} inscrits",
-        "waitingCount": "{count} en attente",
-        "unplacedCount": "{count} sans groupe",
-        "filters": {
-          "active": "En cours",
-          "format": {
-            "online": "En ligne",
-            "in_person": "En présentiel"
-          }
-        },
-        "columns": {
-          "type": "Type",
-          "name": "Nom",
-          "status": "Statut",
-          "when": "Quand",
-          "where": "Où",
-          "gedus": "Gedus",
-          "seats": "Places",
-          "attention": "À traiter"
-        },
-        "attention": {
-          "no_gedu": "Aucun Gedu affecté",
-          "unplaced": "Quelqu’un est inscrit sans groupe",
-          "missing_gedu_fee": "Rémunération du Gedu non définie",
-          "missing_municipality_fee": "Montant facturé à la commune non défini",
-          "unwritten_session": "Une séance passée n’a pas de compte rendu"
-        }
-      },
-      "detail": {
-        "backToCatalogue": "Tous les produits",
-        "sectionNavAria": "Sections du produit",
-        "sections": {
-          "at-a-glance": "En un coup d’œil",
-          "as-sold": "Vu du public",
-          "how-it-runs": "Fonctionnement",
-          "money": "Finances",
-          "people": "Participants",
-          "sessions": "Séances"
-        },
-        "copyLink": "Copier le lien public",
-        "noNextSession": "Plus aucune séance",
-        "liveNow": "En cours",
-        "sessionsRunOpenEnded": "{run} séances passées",
-        "sessionsRunOf": "{run} passées, {remaining} à venir",
-        "writtenUpOf": "{written} sur {run} rédigées",
-        "emailedCount": "{count} envoyées",
-        "seatsFilledFree": "{filled} occupées, {free} libres",
-        "byWhoWhen": "{name} · {when}",
-        "asSoldCaption": "Ce qu’une famille voit sur la page publique.",
-        "noCalendars": "Aucun calendrier de vacances",
-        "noThreshold": "Aucun seuil",
-        "thresholdValue": "{count, plural, one {# inscription} other {# inscriptions}}",
-        "fields": {
-          "publicLink": "Lien public",
-          "nextSession": "Prochaine séance",
-          "term": "Trimestre",
-          "writeUps": "Comptes rendus",
-          "statusReason": "Raison du statut",
-          "created": "Créé",
-          "updated": "Dernière modification",
-          "contacts": "Contacts",
-          "slots": "Horaires",
-          "timezone": "Fuseau de référence",
-          "dates": "Début / fin",
-          "where": "Lieu"
-        },
-        "people": {
-          "notesCaption": "Notes permanentes du groupe. La note interne n’est lue que par les Gedus et les administrateurs."
-        },
-        "sessions": {
-          "noGroups": "Ce produit n’a pas encore de groupe, il n’y a donc rien à afficher.",
-          "groupSelectorAria": "Choisir un groupe",
-          "ledger": {
-            "run": "Séances passées",
-            "writtenUp": "Rédigées",
-            "emailed": "Envoyées",
-            "present": "Présent",
-            "absent": "Absent",
-            "unmarked": "Non renseigné"
-          }
-        }
+      "sessions": {
+        "title": "Séances",
+        "groupSelectorAria": "Choisir un groupe",
+        "untitledGroup": "Groupe sans titre",
+        "noGroups": "Ce produit n’a pas encore de groupe, il n’y a donc rien d’enregistré.",
+        "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
+        "loading": "Chargement du suivi des séances de ce produit.",
+        "addressLabel": "Adresse du lieu",
+        "addressPlaceholder": "Rue, code postal, ville",
+        "addAddress": "Ajouter une adresse",
+        "editAddress": "Modifier l’adresse"
       }
     },
     "users": {

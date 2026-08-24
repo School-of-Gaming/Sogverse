@@ -474,20 +474,7 @@
       "locationPicker": {
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
         "change": "choH",
-        "edit": "choH",
         "noVenueHint": "Daq pagh. veng vavmey neH luleghlu’.",
-        "memberNotesLabel": "ghom De’ (vavmey je ghItlh)",
-        "memberNotesFieldLabel": "vavmey je ghItlh De’",
-        "memberNotesPlaceholder": "Daq mIw, mIv pa’, baH — vavmey poQ.",
-        "memberNotesHint": "tuq ’ej ghom lu’leghlu’.",
-        "staffNotesLabel": "Qu’ De’ (ra’wI’ je Gedu neH)",
-        "staffNotesFieldLabel": "Qu’ neH",
-        "staffNotesPlaceholder": "lojmIt nguq, lojmIt rIm, pa’ nguq, ’Iv tlhob.",
-        "staffNotesHint": "vavmey ’ej ghom luleghbe’.",
-        "addressLabel": "Daq mIw",
-        "addressPlaceholder": "He, postnumber, veng",
-        "noMemberNotes": "ghom De’ pagh.",
-        "noStaffNotes": "Qu’ De’ pagh.",
         "chooseMunicipality": "veng yIwIv",
         "municipalityPickerTitle": "veng yIwIv",
         "chooseVenue": "Daq yIwIv",
@@ -755,15 +742,7 @@
         "chip": {
           "age": "{age} DIS",
           "parent": "vavnI’: {name}",
-          "participantEmail": "QInHom: {email}",
-          "detailsAria": "{name} De'",
-          "details": {
-            "age": "ben",
-            "gender": "loD/be'",
-            "parent": "SoS/vav",
-            "contact": "ghojmeH De'",
-            "openUser": "nuv HaSta poSmoH"
-          }
+          "participantEmail": "QInHom: {email}"
         },
         "unassigned": {
           "title": "ngu’be’pu’",
@@ -851,98 +830,17 @@
         },
         "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
       },
-      "catalogue": {
-        "title": "may' ngoQmey",
-        "subtitle": "Hoch ghom, raQ, qep je 'oH naDev.",
-        "searchPlaceholder": "pong nej…",
-        "searchLabel": "pong lo'taHvIS ngoQ nej",
-        "emptyTitle": "pagh ngoQ",
-        "emptyDescription": "ghom, raQ, qep joq chenmoH — vaj taghlaH may'.",
-        "noMatches": "nejwI' ghaj pagh ngoQ.",
-        "online": "HeHDaq",
-        "noGedu": "Gedu Hutlh",
-        "seatsOf": "{filled} / {total}",
-        "seatsUncapped": "{filled} SuvwI'",
-        "waitingCount": "{count} loStaH",
-        "unplacedCount": "{count} ghom Hutlh",
-        "filters": {
-          "active": "SuvtaH",
-          "format": {
-            "online": "HeHDaq",
-            "in_person": "qamDu'Daq"
-          }
-        },
-        "columns": {
-          "type": "Segh",
-          "name": "pong",
-          "status": "Dotlh",
-          "when": "ghorgh",
-          "where": "nuqDaq",
-          "gedus": "Gedupu'",
-          "seats": "quS",
-          "attention": "buSlu'nIS"
-        },
-        "attention": {
-          "no_gedu": "Gedu wIvbe'lu'",
-          "unplaced": "SuvwI' ghajlu' 'ach ghom ghajbe'",
-          "missing_gedu_fee": "Gedu pop wIvbe'lu'",
-          "missing_municipality_fee": "veng DIl wIvbe'lu'",
-          "unwritten_session": "may' ret ghItlhbe'lu'"
-        }
-      },
-      "detail": {
-        "backToCatalogue": "Hoch ngoQmey",
-        "sectionNavAria": "ngoQ 'ay'mey",
-        "sections": {
-          "at-a-glance": "wa' legh",
-          "as-sold": "ngevlu'bogh",
-          "how-it-runs": "chay' qaSbe'",
-          "money": "Huch",
-          "people": "nuvpu'",
-          "sessions": "may'mey"
-        },
-        "copyLink": "Hev ngeH vI'ang",
-        "noNextSession": "may' pIm tu'lu'be'",
-        "liveNow": "DaH qaS",
-        "sessionsRunOpenEnded": "{run} qaSpu'",
-        "sessionsRunOf": "{run} qaSpu', {remaining} qaSbe'",
-        "writtenUpOf": "{run} vo' {written} ghItlhlu'pu'",
-        "emailedCount": "{count} ngeHlu'pu'",
-        "seatsFilledFree": "{filled} teblu', {free} chIm",
-        "byWhoWhen": "{name} · {when}",
-        "asSoldCaption": "qorDu' legh 'e' vI'ang.",
-        "noCalendars": "leS jaj tetlh tu'lu'be'",
-        "noThreshold": "veH tu'lu'be'",
-        "thresholdValue": "{count, plural, one {# SuvwI'} other {# SuvwI'pu'}}",
-        "fields": {
-          "publicLink": "Hoch vI'ang",
-          "nextSession": "may' veb",
-          "term": "poH",
-          "writeUps": "ghItlhmey",
-          "statusReason": "Dotlh meq",
-          "created": "chenmoHlu'pu'",
-          "updated": "choHlu'pu'",
-          "contacts": "ghojmeH De'",
-          "slots": "jaj tetlh",
-          "timezone": "poH Sep",
-          "dates": "tagh / van",
-          "where": "Daq"
-        },
-        "people": {
-          "notesCaption": "ghom qawHaqmey. Gedupu' 'ej che'wI'pu' neH lulaD."
-        },
-        "sessions": {
-          "noGroups": "ngoQvamvaD ghom tu'lu'be', vaj pagh 'ang.",
-          "groupSelectorAria": "ghom wIv",
-          "ledger": {
-            "run": "may'mey qaSpu'",
-            "writtenUp": "ghItlhlu'pu'",
-            "emailed": "ngeHlu'pu'",
-            "present": "pawpu'",
-            "absent": "pawbe'",
-            "unmarked": "DelHa'lu'"
-          }
-        }
+      "sessions": {
+        "title": "may’mey",
+        "groupSelectorAria": "ghom’a’ yIwIv",
+        "untitledGroup": "ghom’a’ pong Hutlh",
+        "noGroups": "ngIq vamvaD ghommey tu’lu’be’, vaj qonta’ghach tu’lu’be’.",
+        "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
+        "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
+        "addressLabel": "Daq ngu’wI’",
+        "addressPlaceholder": "He, mI’, veng",
+        "addAddress": "Daq ngu’wI’ yIchel",
+        "editAddress": "Daq ngu’wI’ yIchoH"
       }
     },
     "users": {

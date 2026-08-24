@@ -1,9 +1,8 @@
 "use client";
 
-import { memo, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { memo } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { ExternalLink, GripVertical, Mail, User } from "lucide-react";
+import { GripVertical, Mail, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -172,41 +171,10 @@ const ChipContent = memo(function ChipContent({
   );
 });
 
-/**
- * What a chip opens when it is clicked, and the *only* reason a chip is
- * clickable at all.
- *
- * A chip is a name and a face in a rail of forty — deliberately too small to
- * carry a seat's whole story — so the story lives one click away instead of
- * being crammed in or, as it was until now, being nowhere. An admin answering a
- * parent who has written in needs the child's age, who stands behind the seat,
- * how to reach them and which game handle to check, and every one of those was a
- * trip to a different page.
- *
- * Omitted on a panel whose chips are not inspectable — the drag overlay above
- * all, where a popover would open under the pointer mid-drag.
- */
-export interface ParticipantChipDetails {
-  /**
-   * The address to answer on: the adult's own on an adult seat, the linked
-   * parent's on a child's. `null` where none is recorded.
-   *
-   * It is resolved by the caller rather than read off the participation, because
-   * the groups snapshot carries a parent's *name* and not their address — see
-   * the panel's own note. A shell that cannot resolve one passes `null` and the
-   * line is simply absent.
-   */
-  contactEmail: string | null;
-  /** The admin user page for this participant. */
-  adminUserHref: string;
-}
-
 interface ParticipantChipProps extends ContentProps {
   participationId: string;
   /** A move for this seat is saving — greyed out and undraggable until it settles. */
   isPending?: boolean;
-  /** Present makes the chip clickable; absent leaves it a plain draggable. */
-  details?: ParticipantChipDetails;
 }
 
 export function ParticipantChip({
@@ -223,220 +191,44 @@ export function ParticipantChip({
   gameAvatarUrl,
   participantEmail,
   isPending,
-  details,
 }: ParticipantChipProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `participation-${participationId}`,
     data: { participationId, participantId, firstName },
     disabled: isPending,
   });
-  const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  // Close on an outside press or Escape — the two gestures every transient
-  // overlay in this app answers to. Only mounted while the popover is open, so a
-  // rail of forty chips adds no listeners at rest.
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (target instanceof Node && wrapperRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  const inspectable = details !== undefined && isPending !== true;
-
-  return (
-    // The positioning context for the popover, and nothing else: `relative` on
-    // a wrapper rather than on the chip itself, because the chip is what
-    // dnd-kit transforms during a drag and a popover anchored to a moving box
-    // would travel with it.
-    <div ref={wrapperRef} className="relative">
-      <div
-        ref={setNodeRef}
-        {...listeners}
-        {...attributes}
-        aria-disabled={isPending || undefined}
-        aria-expanded={inspectable ? open : undefined}
-        onClick={inspectable ? () => setOpen((was) => !was) : undefined}
-        onKeyDown={
-          inspectable
-            ? (event) => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                setOpen((was) => !was);
-              }
-            : undefined
-        }
-        className={cn(
-          // `py-2` rather than `py-1.5`: the chip carries a picture now, and the
-          // extra 2px a side is what keeps the stack from touching its own border.
-          "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors",
-          isPending
-            ? "cursor-progress border-border bg-muted text-foreground opacity-50"
-            : // Shared drag-cursor class (globals.css): grab on hover. The grabbing
-              // cursor while dragging comes from the DragOverlay's `drag-ghost`.
-              "drag-handle border-border bg-muted text-foreground",
-          isDragging && "opacity-50",
-          open && "border-primary",
-        )}
-      >
-        <ChipContent
-          participantId={participantId}
-          firstName={firstName}
-          dateOfBirth={dateOfBirth}
-          gender={gender}
-          parentFirstName={parentFirstName}
-          parentLastName={parentLastName}
-          gamePlatform={gamePlatform}
-          gameUsername={gameUsername}
-          gameExternalId={gameExternalId}
-          gameAvatarUrl={gameAvatarUrl}
-          participantEmail={participantEmail}
-        />
-      </div>
-
-      {open && details !== undefined && (
-        <ParticipantChipPopover
-          participantId={participantId}
-          firstName={firstName}
-          dateOfBirth={dateOfBirth}
-          gender={gender}
-          parentFirstName={parentFirstName}
-          parentLastName={parentLastName}
-          gamePlatform={gamePlatform}
-          gameUsername={gameUsername}
-          gameExternalId={gameExternalId}
-          gameAvatarUrl={gameAvatarUrl}
-          participantEmail={participantEmail}
-          details={details}
-        />
-      )}
-    </div>
-  );
-}
-
-/**
- * The seat's whole story, opened from its chip.
- *
- * It is an overlay rather than an expansion of the chip: chips sit in a wrapping
- * flex rail, so growing one would reflow every chip after it and push the
- * columns below down the page — a change on nobody's schedule but the reader's
- * own click, which is permitted, but which would move forty other chips to show
- * one. Floating above costs nothing and moves nothing.
- */
-function ParticipantChipPopover({
-  participantId,
-  firstName,
-  dateOfBirth,
-  gender,
-  parentFirstName,
-  parentLastName,
-  gamePlatform,
-  gameUsername,
-  gameExternalId,
-  gameAvatarUrl,
-  participantEmail,
-  details,
-}: ContentProps & { details: ParticipantChipDetails }) {
-  const t = useTranslations("admin.products.groupsPanel");
-  const c = useTranslations("common");
-  const timeZone = useTimezone();
-
-  const isAdult = participantEmail !== null;
-  const parentName = [parentFirstName, parentLastName].filter(Boolean).join(" ");
-  const contactEmail = participantEmail ?? details.contactEmail;
 
   return (
     <div
-      role="dialog"
-      aria-label={t("chip.detailsAria", { name: firstName })}
-      className="absolute left-0 top-full z-30 mt-1.5 w-72 rounded-lg border border-border bg-popover p-3 text-xs font-normal shadow-lg"
-    >
-      <div className="flex items-center gap-2">
-        <Avatar className="h-9 w-9">
-          <Identicon id={participantId} size={36} />
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{firstName}</p>
-          {isAdult && (
-            <Badge
-              className={cn(
-                ROLE_BADGE_STYLES.customer,
-                "px-1 py-0 text-[9px] font-normal leading-tight",
-              )}
-            >
-              {c(ROLE_LABEL_KEYS.customer)}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      <dl className="mt-3 space-y-1.5">
-        {dateOfBirth !== null && (
-          <DetailRow label={t("chip.details.age")}>
-            {t("chip.age", { age: computeAge(dateOfBirth, timeZone) })}
-          </DetailRow>
-        )}
-        {gender !== null && (
-          <DetailRow label={t("chip.details.gender")}>
-            {t(GENDER_KEY[gender])}
-          </DetailRow>
-        )}
-        {!isAdult && parentName !== "" && (
-          <DetailRow label={t("chip.details.parent")}>{parentName}</DetailRow>
-        )}
-        {contactEmail !== null && (
-          <DetailRow label={t("chip.details.contact")}>
-            <span className="break-all">{contactEmail}</span>
-          </DetailRow>
-        )}
-      </dl>
-
-      {gamePlatform !== null && (
-        <div className="mt-3 border-t border-border pt-3">
-          <GameUsernameRow
-            platform={gamePlatform}
-            username={gameUsername}
-            externalId={gameExternalId}
-            avatarUrl={gameAvatarUrl}
-            figure="head"
-          />
-        </div>
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      aria-disabled={isPending || undefined}
+      className={cn(
+        // `py-2` rather than `py-1.5`: the chip carries a picture now, and the
+        // extra 2px a side is what keeps the stack from touching its own border.
+        "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors",
+        isPending
+          ? "cursor-progress border-border bg-muted text-foreground opacity-50"
+          // Shared drag-cursor class (globals.css): grab on hover. The grabbing
+          // cursor while dragging comes from the DragOverlay's `drag-ghost`.
+          : "drag-handle border-border bg-muted text-foreground",
+        isDragging && "opacity-50",
       )}
-
-      <Link
-        href={details.adminUserHref}
-        className="mt-3 inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline"
-      >
-        <ExternalLink aria-hidden className="h-3 w-3" />
-        {t("chip.details.openUser")}
-      </Link>
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex gap-2">
-      <dt className="w-20 shrink-0 text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 flex-1">{children}</dd>
+    >
+      <ChipContent
+        participantId={participantId}
+        firstName={firstName}
+        dateOfBirth={dateOfBirth}
+        gender={gender}
+        parentFirstName={parentFirstName}
+        parentLastName={parentLastName}
+        gamePlatform={gamePlatform}
+        gameUsername={gameUsername}
+        gameExternalId={gameExternalId}
+        gameAvatarUrl={gameAvatarUrl}
+        participantEmail={participantEmail}
+      />
     </div>
   );
 }

@@ -426,20 +426,7 @@
       "locationPicker": {
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",
-        "edit": "Muokkaa",
         "noVenueHint": "Ei fyysistä toimipaikkaa. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
-        "memberNotesLabel": "Jäsenille näkyvät tiedot",
-        "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
-        "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
-        "memberNotesHint": "Näkyvät vanhemmille ja pelaajille tuotesivulla.",
-        "staffNotesLabel": "Henkilökunnan tiedot (vain ylläpitäjä + Gedu)",
-        "staffNotesFieldLabel": "Vain henkilökunnalle",
-        "staffNotesPlaceholder": "Porttikoodit, takaoven yksityiskohdat, huoneavaimet, keneltä kysyä neuvontatiskillä.",
-        "staffNotesHint": "Ei koskaan näytetä vanhemmille tai pelaajille.",
-        "addressLabel": "Osoite",
-        "addressPlaceholder": "Katu, postinumero, kaupunki",
-        "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
-        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle.",
         "chooseMunicipality": "Valitse kunta",
         "municipalityPickerTitle": "Valitse kunta",
         "chooseVenue": "Valitse toimipiste",
@@ -707,15 +694,7 @@
         "chip": {
           "age": "{age}v",
           "parent": "Vanhempi: {name}",
-          "participantEmail": "Yhteystieto: {email}",
-          "detailsAria": "Tiedot: {name}",
-          "details": {
-            "age": "Ikä",
-            "gender": "Sukupuoli",
-            "parent": "Huoltaja",
-            "contact": "Yhteystieto",
-            "openUser": "Avaa käyttäjäsivu"
-          }
+          "participantEmail": "Yhteystieto: {email}"
         },
         "unassigned": {
           "title": "Nimeämättömät",
@@ -803,98 +782,17 @@
         },
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
       },
-      "catalogue": {
-        "title": "Tuotteet",
-        "subtitle": "Kaikki alustan kerhot, leirit ja tapahtumat.",
-        "searchPlaceholder": "Hae nimellä…",
-        "searchLabel": "Hae tuotteita nimellä",
-        "emptyTitle": "Ei vielä tuotteita",
-        "emptyDescription": "Luo kerho, leiri tai tapahtuma päästäksesi alkuun.",
-        "noMatches": "Yksikään tuote ei vastaa hakua ja suodattimia.",
-        "online": "Etänä",
-        "noGedu": "Ei Gedua",
-        "seatsOf": "{filled} / {total}",
-        "seatsUncapped": "{filled} ilmoittautunutta",
-        "waitingCount": "{count} jonossa",
-        "unplacedCount": "{count} ilman ryhmää",
-        "filters": {
-          "active": "Käynnissä",
-          "format": {
-            "online": "Etänä",
-            "in_person": "Paikan päällä"
-          }
-        },
-        "columns": {
-          "type": "Tyyppi",
-          "name": "Nimi",
-          "status": "Tila",
-          "when": "Milloin",
-          "where": "Missä",
-          "gedus": "Gedut",
-          "seats": "Paikat",
-          "attention": "Vaatii huomiota"
-        },
-        "attention": {
-          "no_gedu": "Gedua ei ole nimetty",
-          "unplaced": "Joku on ilmoittautunut mutta ei ole missään ryhmässä",
-          "missing_gedu_fee": "Gedun palkkiota ei ole asetettu",
-          "missing_municipality_fee": "Kunnan maksua ei ole asetettu",
-          "unwritten_session": "Menneestä tapaamisesta puuttuu raportti"
-        }
-      },
-      "detail": {
-        "backToCatalogue": "Kaikki tuotteet",
-        "sectionNavAria": "Tuotteen osiot",
-        "sections": {
-          "at-a-glance": "Yhdellä silmäyksellä",
-          "as-sold": "Myyntisivu",
-          "how-it-runs": "Käytännöt",
-          "money": "Talous",
-          "people": "Osallistujat",
-          "sessions": "Tapaamiset"
-        },
-        "copyLink": "Kopioi julkinen linkki",
-        "noNextSession": "Ei tapaamisia jäljellä",
-        "liveNow": "Käynnissä",
-        "sessionsRunOpenEnded": "{run} pidetty",
-        "sessionsRunOf": "{run} pidetty, {remaining} jäljellä",
-        "writtenUpOf": "{written} / {run} raportoitu",
-        "emailedCount": "{count} lähetetty",
-        "seatsFilledFree": "{filled} varattu, {free} vapaana",
-        "byWhoWhen": "{name} · {when}",
-        "asSoldCaption": "Näin perhe näkee tuotteen julkisella sivulla.",
-        "noCalendars": "Ei lomakalenteria",
-        "noThreshold": "Ei aloitusrajaa",
-        "thresholdValue": "{count, plural, one {# ilmoittautuminen} other {# ilmoittautumista}}",
-        "fields": {
-          "publicLink": "Julkinen linkki",
-          "nextSession": "Seuraava tapaaminen",
-          "term": "Kausi",
-          "writeUps": "Raportit",
-          "statusReason": "Tilan syy",
-          "created": "Luotu",
-          "updated": "Päivitetty",
-          "contacts": "Yhteystiedot",
-          "slots": "Aikataulu",
-          "timezone": "Aikavyöhyke",
-          "dates": "Alku / loppu",
-          "where": "Paikka"
-        },
-        "people": {
-          "notesCaption": "Ryhmän pysyvät muistiinpanot. Henkilökunnan muistiinpanon näkevät vain Gedut ja ylläpitäjät."
-        },
-        "sessions": {
-          "noGroups": "Tuotteessa ei ole vielä ryhmiä, joten näytettävää ei ole.",
-          "groupSelectorAria": "Valitse ryhmä",
-          "ledger": {
-            "run": "Pidetyt tapaamiset",
-            "writtenUp": "Raportoitu",
-            "emailed": "Lähetetty",
-            "present": "Paikalla",
-            "absent": "Poissa",
-            "unmarked": "Ei merkitty"
-          }
-        }
+      "sessions": {
+        "title": "Kerrat",
+        "groupSelectorAria": "Valitse ryhmä",
+        "untitledGroup": "Nimetön ryhmä",
+        "noGroups": "Tällä tuotteella ei ole vielä ryhmiä, joten mitään ei ole kirjattu.",
+        "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+        "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
+        "addressLabel": "Toimipaikan osoite",
+        "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
+        "addAddress": "Lisää osoite",
+        "editAddress": "Muokkaa osoitetta"
       }
     },
     "users": {

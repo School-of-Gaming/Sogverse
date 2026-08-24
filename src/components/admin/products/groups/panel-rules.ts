@@ -303,19 +303,11 @@ const NO_GAME_IDENTITY: ChipGameIdentity = {
  * over whatever the batch found, and the placeholder in every other case: an
  * unverified handle has no id to ask about, and resolving the *name* would draw
  * whichever stranger owns it beside a child's.
- *
- * **`deriveAvatars: false` is what a fixture-driven surface passes**, and it
- * exists for the Minecraft half alone. Leaving the URL off is a *network
- * request* on that platform, which is exactly right on a live panel and exactly
- * wrong in a preview scene: forty chips would each reach a third-party skin host
- * the moment the page opened. Roblox needs no such flag — nothing there is
- * derivable, so a scene that hands over no renders already draws the stand-in.
  */
 export function chipGameIdentity(
   participation: GroupParticipationDetail,
   platform: GamePlatform | null,
   renders: RobloxRenderMap | undefined,
-  deriveAvatars = true,
 ): ChipGameIdentity {
   if (platform === null) return NO_GAME_IDENTITY;
 
@@ -324,9 +316,8 @@ export function chipGameIdentity(
       gamePlatform: "minecraft",
       gameUsername: participation.participant_minecraft_username,
       gameExternalId: participation.participant_minecraft_uuid,
-      // Omitted on purpose — see the type's note. `null` where the caller has
-      // said not to go looking, which draws the bundled stand-in instead.
-      gameAvatarUrl: deriveAvatars ? undefined : null,
+      // Omitted on purpose — see the type's note.
+      gameAvatarUrl: undefined,
     };
   }
 

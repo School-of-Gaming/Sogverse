@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
-import { ParticipantChip, type ParticipantChipDetails } from "./participant-chip";
+import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { chipGameIdentity } from "./panel-rules";
 
@@ -21,14 +21,6 @@ interface WaitlistCardProps {
   gamePlatform: GamePlatform | null;
   /** The panel's one batched Roblox lookup; undefined until it lands. */
   robloxRenders: RobloxRenderMap | undefined;
-  /** What a chip opens when clicked, or omitted for uninspectable chips. */
-  chipDetails?: (participation: GroupParticipationDetail) => ParticipantChipDetails;
-  /**
-   * Let a platform derive a chip's figure from the username, as the live panel
-   * does. A fixture-driven surface passes `false`, which draws the bundled
-   * stand-in instead of reaching a third-party skin host on load.
-   */
-  deriveAvatars?: boolean;
 }
 
 /**
@@ -49,8 +41,6 @@ export function WaitlistCard({
   pendingChipIds,
   gamePlatform,
   robloxRenders,
-  chipDetails,
-  deriveAvatars,
 }: WaitlistCardProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { setNodeRef, isOver } = useDroppable({
@@ -102,8 +92,7 @@ export function WaitlistCard({
                   gender={p.participant_gender}
                   parentFirstName={p.parent_first_name}
                   parentLastName={p.parent_last_name}
-                  {...chipGameIdentity(p, gamePlatform, robloxRenders, deriveAvatars)}
-                  details={chipDetails?.(p)}
+                  {...chipGameIdentity(p, gamePlatform, robloxRenders)}
                   isPending={pendingChipIds.has(p.id)}
                 />
               </li>

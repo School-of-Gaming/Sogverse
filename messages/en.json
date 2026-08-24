@@ -426,20 +426,7 @@
       "locationPicker": {
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",
-        "edit": "Edit",
         "noVenueHint": "No physical venue. Parents in this municipality will see the club when they browse.",
-        "memberNotesLabel": "Member-visible notes",
-        "memberNotesFieldLabel": "Notes shown to parents and gamers",
-        "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
-        "memberNotesHint": "Shown to parents and gamers on the product detail page.",
-        "staffNotesLabel": "Staff notes (admin + Gedu only)",
-        "staffNotesFieldLabel": "Staff-only notes",
-        "staffNotesPlaceholder": "Gate codes, back-entrance details, room keys, who to ask at the front desk.",
-        "staffNotesHint": "Never shown to parents or gamers.",
-        "addressLabel": "Address",
-        "addressPlaceholder": "Street, postal code, city",
-        "noMemberNotes": "No member-visible notes for this site.",
-        "noStaffNotes": "No staff notes for this site.",
         "chooseMunicipality": "Choose a municipality",
         "municipalityPickerTitle": "Choose a municipality",
         "chooseVenue": "Choose a venue",
@@ -707,15 +694,7 @@
         "chip": {
           "age": "{age}y",
           "parent": "Parent: {name}",
-          "participantEmail": "Contact: {email}",
-          "detailsAria": "Details for {name}",
-          "details": {
-            "age": "Age",
-            "gender": "Gender",
-            "parent": "Parent",
-            "contact": "Contact",
-            "openUser": "Open user page"
-          }
+          "participantEmail": "Contact: {email}"
         },
         "unassigned": {
           "title": "Unassigned",
@@ -803,98 +782,17 @@
         },
         "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
       },
-      "catalogue": {
-        "title": "Products",
-        "subtitle": "Every club, camp and event on the platform.",
-        "searchPlaceholder": "Search by name…",
-        "searchLabel": "Search products by name",
-        "emptyTitle": "No products yet",
-        "emptyDescription": "Create a club, camp or event to get started.",
-        "noMatches": "No products match the current search and filters.",
-        "online": "Online",
-        "noGedu": "No Gedu",
-        "seatsOf": "{filled} / {total}",
-        "seatsUncapped": "{filled} enrolled",
-        "waitingCount": "{count} waiting",
-        "unplacedCount": "{count} unplaced",
-        "filters": {
-          "active": "Active",
-          "format": {
-            "online": "Online",
-            "in_person": "In person"
-          }
-        },
-        "columns": {
-          "type": "Type",
-          "name": "Name",
-          "status": "Status",
-          "when": "When",
-          "where": "Where",
-          "gedus": "Gedus",
-          "seats": "Seats",
-          "attention": "Needs attention"
-        },
-        "attention": {
-          "no_gedu": "No Gedu assigned",
-          "unplaced": "Someone is enrolled but in no group",
-          "missing_gedu_fee": "Gedu fee not set",
-          "missing_municipality_fee": "Municipality fee not set",
-          "unwritten_session": "A past session has no write-up"
-        }
-      },
-      "detail": {
-        "backToCatalogue": "All products",
-        "sectionNavAria": "Product sections",
-        "sections": {
-          "at-a-glance": "At a glance",
-          "as-sold": "As sold",
-          "how-it-runs": "How it runs",
-          "money": "Money",
-          "people": "People",
-          "sessions": "Sessions"
-        },
-        "copyLink": "Copy public link",
-        "noNextSession": "No sessions left",
-        "liveNow": "In progress",
-        "sessionsRunOpenEnded": "{run} run so far",
-        "sessionsRunOf": "{run} run, {remaining} to go",
-        "writtenUpOf": "{written} of {run} written up",
-        "emailedCount": "{count} emailed",
-        "seatsFilledFree": "{filled} taken, {free} free",
-        "byWhoWhen": "{name} · {when}",
-        "asSoldCaption": "What a family sees on the public page.",
-        "noCalendars": "No holiday calendar",
-        "noThreshold": "No threshold",
-        "thresholdValue": "{count, plural, one {# sign-up} other {# sign-ups}}",
-        "fields": {
-          "publicLink": "Public link",
-          "nextSession": "Next session",
-          "term": "Term",
-          "writeUps": "Write-ups",
-          "statusReason": "Why this status",
-          "created": "Created",
-          "updated": "Last updated",
-          "contacts": "Contacts",
-          "slots": "Schedule",
-          "timezone": "Authored in",
-          "dates": "Start / end",
-          "where": "Where"
-        },
-        "people": {
-          "notesCaption": "Standing notes for this group. The staff note is read by Gedus and admins only."
-        },
-        "sessions": {
-          "noGroups": "This product has no groups yet, so there is nothing to show.",
-          "groupSelectorAria": "Choose a group",
-          "ledger": {
-            "run": "Sessions run",
-            "writtenUp": "Written up",
-            "emailed": "Emailed",
-            "present": "Present",
-            "absent": "Absent",
-            "unmarked": "Not marked"
-          }
-        }
+      "sessions": {
+        "title": "Sessions",
+        "groupSelectorAria": "Choose a group",
+        "untitledGroup": "Untitled group",
+        "noGroups": "This product has no groups yet, so there is nothing recorded against it.",
+        "loadFailed": "The session record could not be loaded. Reload the page to try again.",
+        "loading": "Loading this product's session record.",
+        "addressLabel": "Venue address",
+        "addressPlaceholder": "Street, postal code, city",
+        "addAddress": "Add address",
+        "editAddress": "Edit address"
       }
     },
     "users": {

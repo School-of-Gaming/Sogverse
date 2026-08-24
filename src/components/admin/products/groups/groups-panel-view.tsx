@@ -19,7 +19,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { BlockedMoveDialog } from "./blocked-move-dialog";
-import { ParticipantChip, type ParticipantChipDetails } from "./participant-chip";
+import { ParticipantChip } from "./participant-chip";
 import { GroupColumn } from "./group-column";
 import {
   canCompEnroll,
@@ -39,7 +39,6 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupPending } from "@/services/groups";
 import type {
   BillingMode,
-  GroupParticipationDetail,
   ProductGroupsSnapshot,
   ProductTopic,
   ProductType,
@@ -99,19 +98,6 @@ interface GroupsPanelViewProps {
   opensTime: string;
   /** The shell's one batched Roblox lookup; undefined until (or unless) it lands. */
   robloxRenders?: RobloxRenderMap;
-  /**
-   * Let a platform derive a chip's figure from the username, as the live panel
-   * does. A fixture-driven shell passes `false`: on Minecraft, *not* supplying a
-   * URL is what sends the row off to a third-party skin host, and forty chips
-   * doing that on load is exactly what a preview must not do.
-   */
-  deriveAvatars?: boolean;
-  /**
-   * What a chip opens when it is clicked, or omitted for a panel whose chips are
-   * not inspectable. A function rather than a map so the caller composes each
-   * chip's answer from the row it already has.
-   */
-  chipDetails?: (participation: GroupParticipationDetail) => ParticipantChipDetails;
   actions: GroupsPanelActions;
   /**
    * The shell's own overlays — the participant and gedu pickers.
@@ -135,12 +121,10 @@ function DragOverlayContent({
   snapshot,
   gamePlatform,
   robloxRenders,
-  deriveAvatars,
 }: {
   snapshot: ProductGroupsSnapshot | undefined;
   gamePlatform: GamePlatform | null;
   robloxRenders: RobloxRenderMap | undefined;
-  deriveAvatars: boolean | undefined;
 }) {
   const { active } = useDndContext();
 
@@ -175,7 +159,7 @@ function DragOverlayContent({
         parentLastName={overlay.parent_last_name}
         // The lifted chip is the same chip: same identity, resolved from the
         // same batch, so nothing about it changes as it leaves the column.
-        {...chipGameIdentity(overlay, gamePlatform, robloxRenders, deriveAvatars)}
+        {...chipGameIdentity(overlay, gamePlatform, robloxRenders)}
       />
     </div>
   );
@@ -244,8 +228,6 @@ export function GroupsPanelView({
   opensDate,
   opensTime,
   robloxRenders,
-  deriveAvatars,
-  chipDetails,
   actions,
   overlays,
 }: GroupsPanelViewProps) {
@@ -445,8 +427,6 @@ export function GroupsPanelView({
             pendingChipIds={busyChipIds}
             gamePlatform={gamePlatform}
             robloxRenders={robloxRenders}
-            deriveAvatars={deriveAvatars}
-            chipDetails={chipDetails}
           />
 
           {hasGroups ? (
@@ -457,8 +437,6 @@ export function GroupsPanelView({
                 pending={pending}
                 gamePlatform={gamePlatform}
                 robloxRenders={robloxRenders}
-                deriveAvatars={deriveAvatars}
-                chipDetails={chipDetails}
                 voiceAvailable={voiceAvailable}
                 voiceIsOpen={voiceIsOpen}
                 opensDate={opensDate}
@@ -500,8 +478,6 @@ export function GroupsPanelView({
               pendingChipIds={busyChipIds}
               gamePlatform={gamePlatform}
               robloxRenders={robloxRenders}
-              deriveAvatars={deriveAvatars}
-              chipDetails={chipDetails}
             />
           )}
         </div>
@@ -511,7 +487,6 @@ export function GroupsPanelView({
             snapshot={snapshot}
             gamePlatform={gamePlatform}
             robloxRenders={robloxRenders}
-            deriveAvatars={deriveAvatars}
           />
         </DragOverlay>
       </DndContext>

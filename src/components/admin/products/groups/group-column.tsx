@@ -14,11 +14,8 @@ import { cn } from "@/lib/utils";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupPending } from "@/services/groups";
-import type {
-  GroupParticipationDetail,
-  ProductGroupWithDetails,
-} from "@/types";
-import { ParticipantChip, type ParticipantChipDetails } from "./participant-chip";
+import type { ProductGroupWithDetails } from "@/types";
+import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
@@ -30,14 +27,6 @@ interface GroupColumnProps {
   gamePlatform: GamePlatform | null;
   /** The panel's one batched Roblox lookup; undefined until it lands. */
   robloxRenders: RobloxRenderMap | undefined;
-  /** What a chip opens when clicked, or omitted for uninspectable chips. */
-  chipDetails?: (participation: GroupParticipationDetail) => ParticipantChipDetails;
-  /**
-   * Let a platform derive a chip's figure from the username, as the live panel
-   * does. A fixture-driven surface passes `false`, which draws the bundled
-   * stand-in instead of reaching a third-party skin host on load.
-   */
-  deriveAvatars?: boolean;
   /**
    * True when this product has a joinable voice room: remote, with a session
    * still ahead. False for in-person and completed products — no Join button.
@@ -60,8 +49,6 @@ export function GroupColumn({
   pending,
   gamePlatform,
   robloxRenders,
-  chipDetails,
-  deriveAvatars,
   voiceAvailable,
   voiceIsOpen,
   opensDate,
@@ -287,8 +274,7 @@ export function GroupColumn({
                     gender={p.participant_gender}
                     parentFirstName={p.parent_first_name}
                     parentLastName={p.parent_last_name}
-                    {...chipGameIdentity(p, gamePlatform, robloxRenders, deriveAvatars)}
-                    details={chipDetails?.(p)}
+                    {...chipGameIdentity(p, gamePlatform, robloxRenders)}
                     isPending={pending.moves.has(p.id) || pending.removes.has(p.id)}
                   />
                 ))}

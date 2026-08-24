@@ -1,9 +1,12 @@
 # Session feeds — the shared machinery
 
-The role-agnostic core of the session timeline that two surfaces render: the gedu
+The role-agnostic core of the session timeline that two *renderers* draw: the gedu
 workspace feed (`src/components/gedu/session-feed/`) and the family club-page feed
 (`src/components/family/product-page/`). This module owns everything both feeds must do
 identically; the gedu module keeps everything that makes its feed a *workspace*.
+
+Three audiences, two renderers — because the **admin** surface is not a third one. See
+the admin rule below.
 
 ## The dividing line
 
@@ -34,8 +37,9 @@ hours calling the session in progress history and naming tomorrow as next.
 **Rule: a feed takes its `now` as a prop from whoever owns its entries — it must not call
 `useNow()` inside itself.** Entry kind, the live tag and editor selection are all derived
 from the clock, so the entries and every derivation over them have to answer off *one*
-instant. The gedu workspace **freezes** that instant while a session editor is open,
-precisely so nothing can be reclassified under somebody typing into it; a feed component
+instant. Every surface that opens a session editor — the gedu workspace, and the admin
+product page that reuses it — **freezes** that instant while one is open, precisely so
+nothing can be reclassified under somebody typing into it; a feed component
 reading the ticking provider itself would step straight around that freeze. The entries
 would stay frozen while liveness advanced, and at the session's `endsAt` the mounted
 record editor would be swapped for the notes-only one — destroying an unsaved register
@@ -65,10 +69,32 @@ anything a family renders, and the family entry types additionally have no field
 data could arrive in. Widening this module is how a new shared need gets met — never by a
 family module reaching into the gedu tree.
 
+**Rule: the admin session surface renders the gedu components themselves — the same
+feed, the same editors, the same notes panels — never an admin-styled copy of them.** An
+admin sees the gedu presentation with a group selector in front of it, and that is the
+whole of the difference. A parallel admin renderer would be a second skin over the same
+rows whose only job is to look like the first, and it rots the day somebody changes what
+a card says: one of the two surfaces goes on saying the old thing, silently, and nobody
+finds out until an admin and a gedu disagree about the same session. So the admin path
+adds no component to this module and none to the gedu one — it composes what is there,
+and a gedu feature is an admin feature the moment it ships. The admin *tree* is
+deliberately **outside** the family-privacy import zone above, which is what makes
+reaching into `components/gedu/` from admin code allowed rather than a hole: the zone
+exists to keep staff-only data away from families, and an admin is staff.
+
+**Corollary: the gedu components' own strings travel with them.** A string rendered by a
+reused gedu component stays in the namespace that component reads, because there is one
+component and one copy of the string — moving it to a shared namespace would buy nothing
+and cost a rename. That is not in tension with the namespace rule below, which is about
+two *different* renderers of one string.
+
 **Rule: a string both feeds render lives in a shared namespace, never under a role's.**
 `sessionFeed`, `sessionBadge`, `productType`, `activityCard` exist for this. A shared
 string under `gedu.*` means a copy edit for the workspace silently rewrites what a parent
-reads — that bug shipped once; the namespaces are the fix.
+reads — that bug shipped once; the namespaces are the fix. New strings a *surface* owns
+(a panel heading, a selector's accessible name) belong to that surface's namespace
+instead — an admin panel's chrome is not a shared string just because it sits above a
+shared feed.
 
 ## What a session owes
 

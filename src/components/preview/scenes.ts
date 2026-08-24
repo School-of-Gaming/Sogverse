@@ -322,52 +322,6 @@ export const PREVIEW_SCENES = [
       },
     ],
   },
-  {
-    surface: "admin-products",
-    title: "Admin product catalogue (draft redesign)",
-    description:
-      "One list for all four product types over fixtures, replacing the four per-type pages: search, filters, and a sortable table. Every control is live; rows link at the real admin details route.",
-    chrome: "admin",
-    scenarios: [
-      {
-        slug: "populated",
-        label: "Full catalogue",
-        description:
-          "Thirty products across every type, status and format — including clubs that differ only by weekday.",
-      },
-      {
-        slug: "empty",
-        label: "Nothing created yet",
-        description: "A platform with no products, which a full list cannot show.",
-      },
-    ],
-  },
-  {
-    surface: "admin-product",
-    title: "Admin product page (draft redesign)",
-    description:
-      "One product end to end over fixtures: derived facts, the shop's own view of it, its whole configuration, the seating panel, and — new — each group's notes and session feed. Seating, notes and every session editor work against local state.",
-    chrome: "admin",
-    scenarios: [
-      {
-        slug: "muni-club",
-        label: "Municipality club — in person",
-        description:
-          "The kitchen sink: a venue, three groups (one unstaffed), a waitlist, an unplaced seat and a term of mixed session states.",
-      },
-      {
-        slug: "online-club",
-        label: "Consumer club — remote, session in progress",
-        description:
-          "The subscription shape, and the only open voice room.",
-      },
-      {
-        slug: "camp",
-        label: "Camp — bounded, not started",
-        description: "A run with no history at all, which a mid-term club cannot show.",
-      },
-    ],
-  },
 ] as const satisfies readonly PreviewSceneMeta[];
 
 export type PreviewScene = (typeof PREVIEW_SCENES)[number];

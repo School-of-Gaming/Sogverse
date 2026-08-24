@@ -721,17 +721,25 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // Mailing every family in a group is a trust boundary, so the gate asks for a
   // certified educator on top of the role — group assignment already implies
   // certification, so this declares the posture rather than narrowing who
-  // passes. WHICH group may be mailed is decided by the claim RPC underneath,
-  // which re-derives the caller from auth.uid(), refuses a group they do not
-  // teach, and refuses a session with no report or one already sent.
+  // passes, and the gate applies that test only to a caller whose role is
+  // `gedu`, so the admin below is unaffected by it. WHICH group may be mailed is
+  // decided by the claim RPC underneath, which re-derives the caller from
+  // auth.uid(), refuses a gedu a group they do not teach, and refuses anybody a
+  // session with no report or one already sent.
+  //
+  // `admin` joined the roles in 00200, when the same session panel arrived on
+  // the admin product page over the same feed component and the same claim. The
+  // claim is still the authorization: an admin passes its group half by role,
+  // exactly as they now do on the four other session writers, and every other
+  // refusal binds them identically.
   "src/app/api/gedu/sessions/email-report/route.ts": {
     adminClient:
-      "the claim runs on the user client and is the authorization; the admin client resolves parents' addresses and locales and the admin list, which are not in the gedu's view and are never returned",
+      "the claim runs on the user client and is the authorization; the admin client resolves parents' addresses and locales and the admin list, which are not in a gedu's view and are never returned to either role",
     handlers: {
       POST: {
         posture: {
           kind: "role-gated",
-          roles: ["gedu"],
+          roles: ["gedu", "admin"],
           requireCertifiedGedu: true,
         },
         body: { kind: "json", schema: "emailSessionReportBody" },
