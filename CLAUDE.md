@@ -166,6 +166,14 @@ This is a deliberate, in-progress shift, and only the *lockups* are finished —
 - **The sub-page title template and `og:site_name`** (`src/app/layout.tsx`) are platform-only: every page but the root renders as `<page> | Sogverse`, and a shared link names Sogverse alone. That is more cold-contact title surface than the root title this rule already governs. Changing it is an SEO and information-architecture decision, not a typo fix, which is why it is still open rather than quietly done.
 - **Prose.** `messages/` mentions "Sogverse" around fifty times in English alone, and each is its own judgment about whether the reader is being introduced to the company (brand) or is already inside the product (platform). Migrate those as you touch them rather than in a sweep, and don't read an un-migrated one as the precedent.
 
+### Partner brands: Roblox and Lynx Educate
+
+**Rule: every placement of a partner's logo needs that partner's sign-off, and an approval covers the placement it was given for — not the mark.** Roblox has approved the three-way lockup in the `/roblox` hero; that placement is the whole of what is approved. Any *new* surface carrying the Roblox mark — another page, an email, an OG image, a social card, a deck — is a fresh request that has to be flagged and reviewed before it ships, however small the addition looks. Meeting the mark's own usage constraints (clearspace, minimum size, no recolouring, the required trademark notice — all in `src/assets/partners/CLAUDE.md`) is not approval and does not substitute for it.
+
+**Rule: School of Gaming *collaborates with* Roblox and *partners with* Lynx Educate — the two words name two different relationships and are never swapped.** "In collaboration with" is what Roblox asked for and the only phrasing their name may appear in; "in partnership with" is Lynx's. Getting this backwards is not a style slip, it is a claim about a legal relationship neither party has agreed to. It binds every locale — `en` "in collaboration with" / "a collaboration between", `fr` "en collaboration avec" / "une collaboration entre", `fi` "yhteistyössä", `sv` "i samarbete med" — so a new Roblox string is not done until all of them read that way. Klingon builds both senses on the one root `boq` and cannot draw the distinction, so `tlh` is exempt.
+
+This is Roblox's constraint on their own name, not a house-style ban on the word: copy about municipalities, schools and every other partner is unaffected and goes on saying "partnership". **It also binds internal vocabulary here** — component names, code comments, route notes — which is the one place this rule departs from "dashboard" vs "My SOG" above. There the internal word is a *different*, more precise word; here it is the forbidden one, sitting one copy-paste away from a string.
+
 ### Locale vs. Spoken Language
 
 **Rule: Use *locale* for the UI translation system and *spoken language* for human languages.** They are deliberately named differently because they are distinct concepts.
@@ -249,6 +257,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 |---|---|
 | Layout & scrolling | `src/components/layout/` |
 | Game accounts (Minecraft, Roblox) | `src/components/game-account/` |
+| Partner brand assets (Roblox, Lynx marks) | `src/assets/partners/` |
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | i18n | `src/i18n/` |

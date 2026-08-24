@@ -1,12 +1,16 @@
 # Partner brand assets
 
-Third-party logos used in partnership lockups. **Vendored deliberately** rather than
-served from the `product-images` Supabase bucket: that bucket holds *content* an admin
-uploads at runtime and references by a DB path, whereas these are *code* — they change
-only when we deploy, they are identical for every visitor, and a revision should be
-reviewable in a PR diff. They are imported statically so the bundler content-hashes them
-and hands the intrinsic dimensions to `next/image`, which is what keeps a lockup from
-reflowing once it has painted.
+Third-party logos used in the `/roblox` lockup. The two relationships they stand for are
+not the same and the copy beside them must not blur them: School of Gaming **partners
+with** Lynx Educate, and **collaborates with** Roblox — see the partner-brand rules in
+the root `CLAUDE.md`.
+
+**Vendored deliberately** rather than served from the `product-images` Supabase bucket:
+that bucket holds *content* an admin uploads at runtime and references by a DB path,
+whereas these are *code* — they change only when we deploy, they are identical for every
+visitor, and a revision should be reviewable in a PR diff. They are imported statically
+so the bundler content-hashes them and hands the intrinsic dimensions to `next/image`,
+which is what keeps a lockup from reflowing once it has painted.
 
 SVG on purpose: each mark is 2–15KB of text (so git delta-compresses revisions, unlike a
 binary), and a wordmark rendered at a few hundred CSS px stays crisp at any density —
@@ -51,7 +55,9 @@ around the mark so nothing encroaches; never go below 20px; and never recolour, 
 adjust transparency, add a stroke or shadow, scale parts independently, skew, rotate,
 vertically stack, or place it over a busy background. Their pack also supplies approved
 boilerplate copy describing Roblox, and requires a trademark notice wherever the mark
-appears. Using the mark to represent a partnership needs Roblox's approval, which we have.
+appears. Meeting all of that is still not permission to place the mark: Roblox signs off
+per placement, and the `/roblox` hero lockup is the one placement they have approved —
+see the partner-brand rules in the root `CLAUDE.md` before putting the mark anywhere new.
 
 **Lynx Educate** — see "The derived Lynx mark" above. Their trademark is used with
 permission; the reversal is our own and needs confirming.
