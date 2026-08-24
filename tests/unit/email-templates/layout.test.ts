@@ -164,6 +164,22 @@ describe("the mark's origin", () => {
       expect(html).toContain(BRAND_LOCKUP.slice(-8));
     }
   });
+
+  /**
+   * A loopback origin is unreachable by construction for every recipient, and a
+   * *failed* fetch is worse than a blocked one: Gmail's proxy draws its
+   * broken-image glyph inside the reserved box (observed in a real inbox, from
+   * a dev-machine send via the admin testing tool). So localhost takes the
+   * no-origin branch and a dev-sent mail degrades to the clean text header.
+   */
+  it("treats a loopback origin as no origin", () => {
+    for (const value of ["http://localhost:3000", "http://127.0.0.1:3000"]) {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", value);
+      const html = render();
+      expect(markTag(html), `origin ${JSON.stringify(value)} produced an image`).toBeNull();
+      expect(html).toContain(BRAND_LOCKUP.slice(-8));
+    }
+  });
 });
 
 /**

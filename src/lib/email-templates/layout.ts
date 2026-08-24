@@ -75,12 +75,25 @@ export const BRAND_MARK = {
  * degradation as a blocked image, one level up, and it is why unit tests that do
  * not stub the env still render — and still assert — the header as it has always
  * been.
+ *
+ * **A loopback origin counts as no origin.** A mail sent from a dev machine
+ * (the admin testing tool runs locally too) would otherwise carry a
+ * `localhost` src that no recipient's client can ever fetch — and a *failed*
+ * fetch is worse than a blocked one: Gmail's proxy draws its broken-image
+ * glyph inside the reserved box, which is exactly the nasty render the whole
+ * design exists to avoid, and it was observed doing so in a real inbox. An
+ * unreachable-by-construction src is morally a malformed one, so it takes the
+ * same branch.
  */
 function brandMarkSrc(): string | null {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!siteUrl) return null;
   try {
-    return new URL(BRAND_MARK.path, siteUrl).toString();
+    const url = new URL(BRAND_MARK.path, siteUrl);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      return null;
+    }
+    return url.toString();
   } catch {
     return null;
   }
