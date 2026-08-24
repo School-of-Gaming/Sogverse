@@ -48,12 +48,21 @@ export const adminDashboardUserStat = z.object({
  * A gedu account waiting on a certification decision. `created_at` is sent
  * rather than a wait in days because "registered 12 days ago" is relative-time
  * copy, and where the clock for that comes from is the page's business.
+ *
+ * `contract_accepted_at` is when this candidate accepted the *current* contract
+ * version, or null. Null covers two situations the queue does not tell apart on
+ * purpose — never signed anything, and signed an older version — because what an
+ * admin is deciding against is the terms in force today, and both answers to
+ * that are "not yet". It informs the decision and gates nothing: certification
+ * remains the platform's only blocking lever over an educator, and an unsigned
+ * candidate is still certifiable.
  */
 export const adminDashboardCertificationCandidate = z.object({
   id: z.string(),
   first_name: z.string(),
   last_name: z.string(),
   created_at: z.string(),
+  contract_accepted_at: z.string().nullable(),
 });
 
 /** A group with members and nobody teaching it. */

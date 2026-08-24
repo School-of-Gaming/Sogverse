@@ -628,12 +628,16 @@ describe("the certification queue", () => {
           first_name: "Venla",
           last_name: "Salminen",
           created_at: "2026-08-15T09:20:00+03:00",
+          // One candidate has signed the current contract and one has not, so
+          // the fixture pair covers both standings a queue card can show.
+          contract_accepted_at: "2026-08-16T10:00:00+03:00",
         },
         {
           id: "4889fea4-0602-438f-adfe-2cef72d485ff",
           first_name: "Helmi",
           last_name: "Koskinen",
           created_at: "2026-06-17T09:20:00+03:00",
+          contract_accepted_at: null,
         },
       ],
       "en",
@@ -657,6 +661,7 @@ describe("the certification queue", () => {
           first_name: "",
           last_name: "   ",
           created_at: "2026-08-15T09:20:00+03:00",
+          contract_accepted_at: null,
         },
       ],
       "en",

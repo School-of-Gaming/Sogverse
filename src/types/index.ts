@@ -50,6 +50,17 @@ export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"][
 export type GeduProfile = Database["public"]["Tables"]["gedu_profiles"]["Row"];
 export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["Update"];
 
+// gedu_contract_versions / gedu_contract_acceptances
+//
+// No Insert/Update aliases for either: neither table carries a write grant for
+// any Data API role. Versions arrive by migration, and an acceptance is written
+// only by the RPC that stamps it, so an Insert type here would name a statement
+// nothing in the app is allowed to make.
+export type GeduContractVersion =
+  Database["public"]["Tables"]["gedu_contract_versions"]["Row"];
+export type GeduContractAcceptance =
+  Database["public"]["Tables"]["gedu_contract_acceptances"]["Row"];
+
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];

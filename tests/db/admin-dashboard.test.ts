@@ -21,6 +21,8 @@ import {
  *   - a stat that is NULL because it has no meaning for a role, versus 0
  *   - an uncertified gedu queued, and a gedu with no `gedu_profiles` row NOT
  *     queued (a data error is excluded, never silently read as uncertified)
+ *   - a queued gedu's contract standing against the CURRENT version, where
+ *     "accepted an older version" reads the same as "never accepted"
  *   - the five product issues, each flagged only in the situation it names — a
  *     gedu fee of *zero* is a volunteer session, not a missing fee, and an empty
  *     group is not a group without an educator
@@ -45,6 +47,21 @@ const P_CLEAN = "00000000-0000-0000-0000-000000000625";
 const CALENDAR = "00000000-0000-0000-0000-000000000626";
 const GROUP_EMPTY = "00000000-0000-0000-0000-000000000627";
 const P_ENDED = "00000000-0000-0000-0000-000000000628";
+
+/**
+ * A contract version this file adds so it can seed an acceptance of something
+ * that is NOT current. Its `created_at` is the epoch, which is what keeps it
+ * from becoming the current version for every other test running against the
+ * same database — current is the greatest `created_at`, and nothing is older
+ * than this. The label is shape-impossible for the same reason the fixture ids
+ * are: the whitelist holds document labels, and no document is labelled this.
+ */
+const OLD_CONTRACT_VERSION = "not-a-version-1970-0000";
+const OLD_CONTRACT_CREATED_AT = "1970-01-01T00:00:00Z";
+
+/** The moments the two seeded acceptances carry, chosen so they cannot tie. */
+const SIGNED_CURRENT_AT = "2026-03-04T09:15:00Z";
+const SIGNED_OLD_AT = "2025-05-06T11:30:00Z";
 
 const ALL_PRODUCTS = [
   P_UNASSIGNED,
@@ -76,10 +93,14 @@ describe("get_admin_dashboard", () => {
   let customer: SupabaseClient<Database>;
   let snapshot: AdminDashboardSnapshot;
 
-  /** The uncertified gedu that must appear in the queue. */
+  /** The uncertified gedu that must appear in the queue. Has signed nothing. */
   let queuedGeduId: string | null = null;
   /** A gedu whose `gedu_profiles` row is missing — a data error, not a queue entry. */
   let orphanGeduId: string | null = null;
+  /** Queued, and has accepted the version in force today. */
+  let signedGeduId: string | null = null;
+  /** Queued, and has accepted only a version that is no longer current. */
+  let staleGeduId: string | null = null;
 
   function attention(productId: string) {
     return snapshot.attention_products.find((p) => p.id === productId);
@@ -279,6 +300,51 @@ describe("get_admin_dashboard", () => {
     // --- gedus --------------------------------------------------------------
     queuedGeduId = await createGedu("queued", true);
     orphanGeduId = await createGedu("orphan", false);
+    signedGeduId = await createGedu("signed", true);
+    staleGeduId = await createGedu("stale", true);
+
+    // --- contract standing --------------------------------------------------
+    //
+    // Seeded through the service-role client rather than by calling the RPC as
+    // each gedu, because what is under test here is the dashboard's derivation
+    // of "current", and that wants acceptances with chosen timestamps and a
+    // chosen version. The RPC's own behaviour is gedu-contract.test.ts's job.
+    const current = await admin
+      .from("gedu_contract_versions")
+      .select("version")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    expect(current.error).toBeNull();
+    const currentVersion = current.data!.version;
+
+    await admin
+      .from("gedu_contract_versions")
+      .delete()
+      .eq("version", OLD_CONTRACT_VERSION);
+    const oldVersion = await admin.from("gedu_contract_versions").insert({
+      version: OLD_CONTRACT_VERSION,
+      created_at: OLD_CONTRACT_CREATED_AT,
+    });
+    expect(oldVersion.error).toBeNull();
+
+    // The stale gedu signs BOTH an old version and nothing current, which is
+    // the case a naive "has this gedu accepted anything" read gets wrong.
+    const acceptances = await admin.from("gedu_contract_acceptances").insert([
+      {
+        gedu_id: signedGeduId,
+        contract_version: currentVersion,
+        accepted_at: SIGNED_CURRENT_AT,
+        signed_name: "Dash signed",
+      },
+      {
+        gedu_id: staleGeduId,
+        contract_version: OLD_CONTRACT_VERSION,
+        accepted_at: SIGNED_OLD_AT,
+        signed_name: "Dash stale",
+      },
+    ]);
+    expect(acceptances.error).toBeNull();
 
     // One read, after everything is in place. Through the admin's own session:
     // the service-role client has no profiles row, so assert_admin refuses it.
@@ -292,6 +358,15 @@ describe("get_admin_dashboard", () => {
     await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     if (queuedGeduId) await admin.auth.admin.deleteUser(queuedGeduId);
     if (orphanGeduId) await admin.auth.admin.deleteUser(orphanGeduId);
+    // Acceptances cascade with the account; the fixture version does not, and
+    // leaving it behind would put a nonsense label in every later read of the
+    // whitelist.
+    if (signedGeduId) await admin.auth.admin.deleteUser(signedGeduId);
+    if (staleGeduId) await admin.auth.admin.deleteUser(staleGeduId);
+    await admin
+      .from("gedu_contract_versions")
+      .delete()
+      .eq("version", OLD_CONTRACT_VERSION);
   });
 
   it("refuses a non-admin caller", async () => {
@@ -328,12 +403,12 @@ describe("get_admin_dashboard", () => {
       }
     });
 
-    it("counts this file's two new gedus", () => {
+    it("counts this file's new gedus", () => {
       const gedus = snapshot.users.find((u) => u.role === "gedu");
-      // Both were created above and neither is certified, so the platform holds
-      // at least two — a relative claim, because CI's database also carries
+      // Four were created above and none is certified, so the platform holds at
+      // least four — a relative claim, because CI's database also carries
       // seed.sql and whatever other files have seeded alongside this one.
-      expect(gedus?.total).toBeGreaterThanOrEqual(2);
+      expect(gedus?.total).toBeGreaterThanOrEqual(4);
     });
   });
 
@@ -357,6 +432,37 @@ describe("get_admin_dashboard", () => {
         (g) => g.id === orphanGeduId,
       );
       expect(entry).toBeUndefined();
+    });
+
+    it("carries the moment a candidate accepted the current contract", () => {
+      const entry = snapshot.certification_queue.find(
+        (g) => g.id === signedGeduId,
+      );
+      expect(entry).toBeDefined();
+      // Parsed rather than string-compared: PostgREST renders a timestamptz with
+      // a `+00:00` offset, which is the same instant written differently.
+      expect(Date.parse(entry!.contract_accepted_at!)).toBe(
+        Date.parse(SIGNED_CURRENT_AT),
+      );
+    });
+
+    it("says nothing for a candidate who has signed nothing", () => {
+      const entry = snapshot.certification_queue.find(
+        (g) => g.id === queuedGeduId,
+      );
+      expect(entry?.contract_accepted_at).toBeNull();
+    });
+
+    it("says nothing for a candidate whose acceptance is of an older version", () => {
+      // The queue is about standing against the terms in force TODAY, so an
+      // out-of-date signature reads the same as no signature. A read that asked
+      // "has this gedu accepted anything" would show a date here and tell an
+      // admin the opposite of the truth.
+      const entry = snapshot.certification_queue.find(
+        (g) => g.id === staleGeduId,
+      );
+      expect(entry).toBeDefined();
+      expect(entry?.contract_accepted_at).toBeNull();
     });
   });
 
