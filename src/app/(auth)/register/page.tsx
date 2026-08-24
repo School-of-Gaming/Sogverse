@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("createAccount"),
     description: "Create your Sogverse parent account",
     openGraph: {
-      title: "Join Sogverse",
+      title: "Join School of Gaming",
       description: "Create your Sogverse parent account and enroll your child in Minecraft clubs led by professional game educators.",
     },
   };

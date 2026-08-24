@@ -67,6 +67,13 @@ word, and appears in public prose only where the copy introduces it with a gloss
 — a Game Educator"). A public string using it cold has leaked in-house vocabulary at the
 one moment the reader cannot decode it.
 
+**One public surface is carved out: `/register-gedu`** (owner ruling, 2026-08). Nobody
+arrives at the Gedu registration page by browsing — they were pointed at it by School of
+Gaming, and anyone who got that far knows us well enough to have already been told what a
+Gedu is — so its title may use the word cold, and the `en` and `fr` titles do. The
+carve-out is that page and nothing adjacent to it: every other public surface still
+introduces the word with a gloss or reaches for the role name instead.
+
 **Rule: wherever `Gedu` is not the word, each locale has exactly one word for the role.**
 Chosen by native speakers, 2026-08-13:
 

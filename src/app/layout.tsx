@@ -21,10 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
   // Both names, brand first — and not a translated string. It was one in every
   // locale file and identical in all five, which is what a mark being copied
-  // rather than translated looks like; locales localise the copy around it. The
-  // sub-page template below and `og:site_name` still say Sogverse alone, which
-  // is an open information-architecture question rather than an oversight — see
-  // the brand-vs-platform rule in the root CLAUDE.md.
+  // rather than translated looks like; locales localise the copy around it.
+  // The root title is the one place with room for the lockup; the sub-page
+  // template and `og:site_name` below carry the brand alone, because a tab is
+  // read while scanning a row of them for the name the reader came looking for
+  // (CLAUDE.md § Brand vs. Platform).
   const title = BRAND_LOCKUP;
   const description = t("description");
 
@@ -32,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
     title: {
       default: title,
-      template: "%s | Sogverse",
+      template: "%s | School of Gaming",
     },
     // One description, everywhere. This used to be the short line — the brand
     // name and the tagline joined by an en dash — which spent a search snippet
@@ -44,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: ["gaming", "education", "learning", "kids", "games"],
     openGraph: {
       type: "website",
-      siteName: "Sogverse",
+      siteName: "School of Gaming",
       title,
       description,
     },

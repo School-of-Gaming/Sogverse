@@ -26,8 +26,8 @@ import { ROBLOX_OG_DESCRIPTION, ROBLOX_OG_TITLE } from "./metadata-copy";
 
 export function generateMetadata(): Metadata {
   return {
-    // French for every locale, and absolute so the `%s | Sogverse` template in
-    // the root layout does not append the platform name to it: this is the
+    // French for every locale, and absolute so the `%s | School of Gaming`
+    // template in the root layout does not append anything to it: this is the
     // string a recipient sees on the preview card, and it has to be exactly the
     // one that was signed off. `metadata-copy.ts` next door explains why the
     // programme's card does not follow the viewer's locale; `openGraph` and

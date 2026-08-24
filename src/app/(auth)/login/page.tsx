@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("signIn"),
     description: "Sign in to your Sogverse account",
     openGraph: {
-      title: "Sign In to Sogverse",
+      title: "Sign in to School of Gaming",
       description: "Sign in to your Sogverse account to manage clubs, gamers, and more.",
     },
   };
