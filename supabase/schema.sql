@@ -375,6 +375,90 @@ COMMENT ON FUNCTION public._list_views() IS 'Every view-shaped relation in the p
 
 
 --
+-- Name: accept_gedu_contract(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.accept_gedu_contract(p_version text) RETURNS timestamp with time zone
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid         uuid := (SELECT auth.uid());
+  v_accepted_at timestamptz;
+  v_signed_name text;
+BEGIN
+  -- Guard-first, in the one shape the authorization spine reads. A gedu is the
+  -- only role with a contract to accept; everyone else is refused with 42501 on
+  -- the first statement. The FK to gedu_profiles stands behind this as the
+  -- schema's own claim — a profile that says 'gedu' with no gedu_profiles row is
+  -- a data error, and the insert below fails loudly rather than writing an
+  -- acceptance for an educator record that does not exist.
+  PERFORM public.assert_role('gedu');
+
+  -- Pre-empt the foreign key so the refusal names the real cause: a version the
+  -- platform has never heard of, which is what a stale client sends after a new
+  -- version ships. A NULL p_version lands here too — nothing matches it — which
+  -- is the right answer to "accept nothing".
+  IF NOT EXISTS (
+    SELECT 1 FROM public.gedu_contract_versions v WHERE v.version = p_version
+  ) THEN
+    RAISE EXCEPTION 'accept_gedu_contract: % is not a contract version this platform knows', p_version
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  -- Idempotent by design: accepting the same version twice is the same fact, so
+  -- the first acceptance stands and its stamp is the answer. Re-stamping would
+  -- quietly rewrite the legal record every time somebody reloaded the page.
+  SELECT ca.accepted_at
+    INTO v_accepted_at
+    FROM public.gedu_contract_acceptances ca
+   WHERE ca.gedu_id = v_uid
+     AND ca.contract_version = p_version;
+
+  IF FOUND THEN
+    RETURN v_accepted_at;
+  END IF;
+
+  -- The identity snapshot. Both columns are NOT NULL on profiles (last_name
+  -- defaults to the empty string), so the concatenation cannot be NULL and the
+  -- btrim is what keeps a gedu with no surname from signing as "Aino ".
+  SELECT btrim(pr.first_name || ' ' || pr.last_name)
+    INTO v_signed_name
+    FROM public.profiles pr
+   WHERE pr.id = v_uid;
+
+  INSERT INTO public.gedu_contract_acceptances (
+    gedu_id, contract_version, accepted_at, signed_name
+  )
+  VALUES (v_uid, p_version, now(), v_signed_name)
+  ON CONFLICT (gedu_id, contract_version) DO NOTHING
+  RETURNING accepted_at INTO v_accepted_at;
+
+  -- DO NOTHING fired, which means a concurrent call — the same gedu's second
+  -- click — committed the row between the read above and this insert. The row
+  -- that landed IS the acceptance, so read its stamp rather than raising: the
+  -- caller asked for a fact to be true and it is.
+  IF v_accepted_at IS NULL THEN
+    SELECT ca.accepted_at
+      INTO v_accepted_at
+      FROM public.gedu_contract_acceptances ca
+     WHERE ca.gedu_id = v_uid
+       AND ca.contract_version = p_version;
+  END IF;
+
+  RETURN v_accepted_at;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION accept_gedu_contract(p_version text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.accept_gedu_contract(p_version text) IS 'Record that the CALLER accepted one version of the gedu contract, and return the acceptance timestamp. Gedu-only, guard-first on assert_role. There is no target parameter: the row is keyed to auth.uid(), so a caller cannot accept on anyone else''s behalf, and accepted_at and signed_name are both stamped server-side — the name as a snapshot taken from profiles at this moment, because a profile name is editable and the legal record must not drift. p_version is checked against gedu_contract_versions and refused with foreign_key_violation if unknown. Idempotent: accepting the same version twice returns the first acceptance''s stamp and writes nothing, including when the duplicate arrives concurrently. Accepting gates nothing — admin certification remains the only blocking lever over an educator.';
+
+
+--
 -- Name: admin_enroll_participant(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1718,6 +1802,11 @@ BEGIN
   -- putting a broken account in a queue whose only action (certify) writes to the
   -- row that is not there. Missing means excluded; the queue is for accounts that
   -- exist and are waiting.
+  --
+  -- `contract_accepted_at` (00201) is the candidate's standing against the
+  -- CURRENT contract version, or NULL. It informs the certification decision and
+  -- does not gate it — an unsigned candidate is still certifiable, and the admin
+  -- is the one who decides what to make of the gap.
   -- ---------------------------------------------------------------------------
   SELECT COALESCE(
            jsonb_agg(
@@ -1725,7 +1814,18 @@ BEGIN
                'id',         pr.id,
                'first_name', pr.first_name,
                'last_name',  pr.last_name,
-               'created_at', pr.created_at
+               'created_at', pr.created_at,
+               'contract_accepted_at', (
+                 SELECT ca.accepted_at
+                   FROM public.gedu_contract_acceptances ca
+                  WHERE ca.gedu_id = pr.id
+                    AND ca.contract_version = (
+                          SELECT v.version
+                            FROM public.gedu_contract_versions v
+                           ORDER BY v.created_at DESC, v.version DESC
+                           LIMIT 1
+                        )
+               )
              )
              ORDER BY pr.created_at, pr.id
            ),
@@ -1939,7 +2039,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the CURRENT gedu contract version, or NULL — which informs the certification decision without gating it. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
@@ -5541,6 +5641,86 @@ CREATE TABLE public.gamer_profiles (
 
 
 --
+-- Name: gedu_contract_acceptances; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gedu_contract_acceptances (
+    gedu_id uuid NOT NULL,
+    contract_version text NOT NULL,
+    accepted_at timestamp with time zone DEFAULT now() NOT NULL,
+    signed_name text NOT NULL,
+    CONSTRAINT chk_gedu_contract_acceptances_signed_name_not_empty CHECK ((btrim(signed_name) <> ''::text))
+);
+
+
+--
+-- Name: TABLE gedu_contract_acceptances; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.gedu_contract_acceptances IS 'One row per (gedu, contract version) accepted: the whole of what the platform records about a gedu agreeing to the contract. The primary key is what makes acceptance idempotent — a gedu accepting the same version twice is the same fact, not a second one — and version-keyed, so a new version leaves the old row standing and re-prompts. Carries no write grant for any Data API role: every field a forger would want is stamped server-side by accept_gedu_contract, which is the only way in, the same arrangement gedu_profiles and set_gedu_certified have. Acceptance gates NOTHING — admin certification is the only blocking lever over an educator; this table informs that decision and does not pre-empt it.';
+
+
+--
+-- Name: COLUMN gedu_contract_acceptances.gedu_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_contract_acceptances.gedu_id IS 'The educator who accepted. References gedu_profiles rather than profiles because only a gedu has a contract to accept, so the FK states that rather than leaving it to the RPC alone. ON DELETE CASCADE: an account that is gone has no contract standing.';
+
+
+--
+-- Name: COLUMN gedu_contract_acceptances.contract_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_contract_acceptances.contract_version IS 'Which version was accepted, FK into the whitelist. Not free text: the version decides whether the gedu is re-prompted, so a value the platform does not know about would be unanswerable rather than merely wrong.';
+
+
+--
+-- Name: COLUMN gedu_contract_acceptances.accepted_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_contract_acceptances.accepted_at IS 'When the acceptance was recorded, stamped by the server inside accept_gedu_contract. A client never supplies it — a timestamp the signer chooses proves nothing about when they signed.';
+
+
+--
+-- Name: COLUMN gedu_contract_acceptances.signed_name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_contract_acceptances.signed_name IS 'The signer''s full name AS IT STOOD when they signed, snapshotted from profiles by the RPC. Deliberately not a join: a profile name is editable by its owner, so resolving it at read time would answer what this person is called today when the question is who signed this. It is the identity half of the legal record and must not drift.';
+
+
+--
+-- Name: gedu_contract_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gedu_contract_versions (
+    version text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_gedu_contract_versions_version_not_empty CHECK ((btrim(version) <> ''::text))
+);
+
+
+--
+-- Name: TABLE gedu_contract_versions; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.gedu_contract_versions IS 'Every version of the gedu contract (Pelikasvattajan sopimusehdot) the platform knows about, one row each. Rows arrive by MIGRATION only — there is no write grant for any Data API role — because a version is a document that was drafted and published, not a value an app invents. The CURRENT version is the row with the greatest created_at, and that derivation is what makes acceptance version-keyed: a gedu whose accepted version is not the current one is re-prompted. Readable by every signed-in role, because a gedu needs to know what they are signing and an admin needs to know what "current" means.';
+
+
+--
+-- Name: COLUMN gedu_contract_versions.version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_contract_versions.version IS 'The version label as the document itself carries it, e.g. 2026-2027. The primary key, and the value gedu_contract_acceptances stores.';
+
+
+--
+-- Name: COLUMN gedu_contract_versions.created_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_contract_versions.created_at IS 'When this version was added to the platform. Ordering key and nothing else: the greatest created_at IS the current version, which is the one question anything asks of this table.';
+
+
+--
 -- Name: gedu_group_assignments; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -6411,6 +6591,22 @@ ALTER TABLE ONLY public.feedback_submissions
 
 ALTER TABLE ONLY public.gamer_profiles
     ADD CONSTRAINT gamer_profiles_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: gedu_contract_acceptances gedu_contract_acceptances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_contract_acceptances
+    ADD CONSTRAINT gedu_contract_acceptances_pkey PRIMARY KEY (gedu_id, contract_version);
+
+
+--
+-- Name: gedu_contract_versions gedu_contract_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_contract_versions
+    ADD CONSTRAINT gedu_contract_versions_pkey PRIMARY KEY (version);
 
 
 --
@@ -7384,6 +7580,22 @@ ALTER TABLE ONLY public.gamer_profiles
 
 
 --
+-- Name: gedu_contract_acceptances gedu_contract_acceptances_contract_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_contract_acceptances
+    ADD CONSTRAINT gedu_contract_acceptances_contract_version_fkey FOREIGN KEY (contract_version) REFERENCES public.gedu_contract_versions(version);
+
+
+--
+-- Name: gedu_contract_acceptances gedu_contract_acceptances_gedu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_contract_acceptances
+    ADD CONSTRAINT gedu_contract_acceptances_gedu_id_fkey FOREIGN KEY (gedu_id) REFERENCES public.gedu_profiles(user_id) ON DELETE CASCADE;
+
+
+--
 -- Name: gedu_group_assignments gedu_group_assignments_gedu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8002,6 +8214,13 @@ CREATE POLICY admin_manage_locations ON public.locations TO authenticated USING 
 
 
 --
+-- Name: gedu_contract_acceptances admins_read_gedu_contract_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_gedu_contract_acceptances ON public.gedu_contract_acceptances FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
 -- Name: locations anon_read_locations; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -8137,6 +8356,18 @@ CREATE POLICY gamers_view_parent_links ON public.parent_gamer FOR SELECT TO auth
 
 
 --
+-- Name: gedu_contract_acceptances; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.gedu_contract_acceptances ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: gedu_contract_versions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.gedu_contract_versions ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: gedu_group_assignments; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -8189,6 +8420,13 @@ CREATE POLICY gedus_read_assigned_groups ON public.product_groups FOR SELECT TO 
 --
 
 CREATE POLICY gedus_read_own_assignments ON public.gedu_group_assignments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gedu'::public.user_role) AND (gedu_id = ( SELECT auth.uid() AS uid))));
+
+
+--
+-- Name: gedu_contract_acceptances gedus_read_own_contract_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY gedus_read_own_contract_acceptances ON public.gedu_contract_acceptances FOR SELECT TO authenticated USING ((gedu_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -8418,6 +8656,13 @@ ALTER TABLE public.schedule_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.session_attendance ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: gedu_contract_versions signed_in_reads_gedu_contract_versions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY signed_in_reads_gedu_contract_versions ON public.gedu_contract_versions FOR SELECT TO authenticated USING (true);
+
+
+--
 -- Name: site_details; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -8637,6 +8882,14 @@ GRANT ALL ON FUNCTION public._list_tables_without_rls() TO service_role;
 
 REVOKE ALL ON FUNCTION public._list_views() FROM PUBLIC;
 GRANT ALL ON FUNCTION public._list_views() TO service_role;
+
+
+--
+-- Name: FUNCTION accept_gedu_contract(p_version text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.accept_gedu_contract(p_version text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.accept_gedu_contract(p_version text) TO authenticated;
 
 
 --
@@ -9438,6 +9691,22 @@ GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 GRANT SELECT ON TABLE public.gamer_profiles TO anon;
 GRANT ALL ON TABLE public.gamer_profiles TO service_role;
 GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
+
+
+--
+-- Name: TABLE gedu_contract_acceptances; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.gedu_contract_acceptances TO authenticated;
+GRANT ALL ON TABLE public.gedu_contract_acceptances TO service_role;
+
+
+--
+-- Name: TABLE gedu_contract_versions; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.gedu_contract_versions TO authenticated;
+GRANT ALL ON TABLE public.gedu_contract_versions TO service_role;
 
 
 --
