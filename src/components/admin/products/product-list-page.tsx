@@ -12,7 +12,7 @@ import { filterProductsBySearch } from "./product-name-search";
 import { ProductListResults } from "./product-list-results";
 import {
   PRODUCT_LIST_PARAMS,
-  useUrlParamState,
+  useDebouncedUrlParamState,
 } from "./product-list-url-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -31,11 +31,18 @@ export function ProductListPage({ productType }: ProductListPageProps) {
   // The search box is owned here rather than by the club filter bar because it
   // is the one narrowing control all four types get. Clubs AND it with their
   // own filters (the bar takes it as a prop); camps and events narrow by it
-  // alone. Its value lives in the URL so Back restores it — see the hook.
-  const [searchParam, setSearchParam] = useUrlParamState(
+  // alone. The value is local and the list narrows on it per keystroke; the URL
+  // is mirrored a moment behind so Back restores it — see the hook.
+  const [search, setSearch, flushSearch] = useDebouncedUrlParamState(
     PRODUCT_LIST_PARAMS.search,
   );
-  const search = searchParam ?? "";
+
+  // One gesture with one value, so the URL takes it immediately rather than
+  // waiting out a delay meant for typing.
+  const clearSearch = () => {
+    setSearch("");
+    flushSearch();
+  };
 
   // Clubs get the day / educator / language|municipality filter bar; camps and
   // events render the plain list.
@@ -103,7 +110,10 @@ export function ProductListPage({ productType }: ProductListPageProps) {
             <Input
               type="search"
               value={search}
-              onChange={(event) => setSearchParam(event.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
+              // Leaving the field settles the URL at once, so a click straight
+              // from the box into a product row cannot outrun the mirror.
+              onBlur={flushSearch}
               placeholder={t("filters.searchPlaceholder")}
               aria-label={t("filters.search")}
               className="pl-9"
@@ -115,7 +125,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
               productType={productType}
               products={products}
               search={search}
-              onClearSearch={() => setSearchParam(null)}
+              onClearSearch={clearSearch}
             />
           ) : (
             <ProductListResults
@@ -124,7 +134,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
               productType={productType}
               plural={plural}
               narrowed={search.trim() !== ""}
-              onClear={() => setSearchParam(null)}
+              onClear={clearSearch}
             />
           )}
         </div>

@@ -70,17 +70,31 @@ data could arrive in. Widening this module is how a new shared need gets met —
 family module reaching into the gedu tree.
 
 **Rule: the admin session surface renders the gedu components themselves — the same
-feed, the same editors, the same notes panels — never an admin-styled copy of them.** An
-admin sees the gedu presentation with a group selector in front of it, and that is the
-whole of the difference. A parallel admin renderer would be a second skin over the same
-rows whose only job is to look like the first, and it rots the day somebody changes what
-a card says: one of the two surfaces goes on saying the old thing, silently, and nobody
-finds out until an admin and a gedu disagree about the same session. So the admin path
-adds no component to this module and none to the gedu one — it composes what is there,
-and a gedu feature is an admin feature the moment it ships. The admin *tree* is
-deliberately **outside** the family-privacy import zone above, which is what makes
-reaching into `components/gedu/` from admin code allowed rather than a hole: the zone
-exists to keep staff-only data away from families, and an admin is staff.
+feed, the same editors, the same notes panels — never an admin-styled copy of them, and
+the same goes for what those editors' Save and Send buttons *do*.** An admin sees the
+gedu presentation with a group selector in front of it, and that is the whole of the
+difference. A parallel admin renderer would be a second skin over the same rows whose
+only job is to look like the first, and it rots the day somebody changes what a card
+says: one of the two surfaces goes on saying the old thing, silently, and nobody finds
+out until an admin and a gedu disagree about the same session. So the admin path adds no
+component to this module and none to the gedu one — it composes what is there, and a
+gedu feature is an admin feature the moment it ships.
+
+**The composition runs one layer deeper than the components: the save orchestration is
+shared too.** What a session editor's Save does between the draft it is handed and the
+writes it makes — which marks count as changed, that the two written fields go before any
+mark, that the marks settle rather than race to the first refusal, and which mixtures of
+outcome count as a partial save rather than a failed one — is a rule about the integrity
+of the record, not about who is looking at it. The two surfaces differ only in which
+mutations they bind (one keyed by group and refreshing the gedu feed, one keyed by product
+and refreshing the product document), so the orchestration takes those mutations as
+arguments and lives once, in the gedu session-details module, with both containers calling
+it. A copy on the admin side would be free to drift, and the drift would be invisible until
+an admin and a gedu saving the same sheet got different answers out of it.
+
+The admin *tree* is deliberately **outside** the family-privacy import zone above, which
+is what makes reaching into `components/gedu/` from admin code allowed rather than a hole:
+the zone exists to keep staff-only data away from families, and an admin is staff.
 
 **Corollary: the gedu components' own strings travel with them.** A string rendered by a
 reused gedu component stays in the namespace that component reads, because there is one

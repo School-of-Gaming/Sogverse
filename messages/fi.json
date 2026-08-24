@@ -793,7 +793,8 @@
         "addressLabel": "Toimipaikan osoite",
         "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
         "addAddress": "Lisää osoite",
-        "editAddress": "Muokkaa osoitetta"
+        "editAddress": "Muokkaa osoitetta",
+        "addressSaveFailed": "Osoitteen tallennus epäonnistui. Yritä uudelleen."
       }
     },
     "users": {

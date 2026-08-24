@@ -77,9 +77,13 @@ const ALL_PRODUCTS = [PRODUCT, DECOY_PRODUCT];
  *
  * **Late in the day on purpose**, for the reason the gedu feed's fixtures give:
  * a 23:00 start with a one-hour duration means today's session ends at
- * tomorrow's midnight and so has not finished at any hour CI might run, while
- * yesterday's always has. It is also what makes the roll-call boundary testable
- * — today's session has not started yet whatever the clock says.
+ * tomorrow's midnight and so has not *finished* at any hour CI might run, while
+ * yesterday's always has.
+ *
+ * What that slot does **not** give is a session that has not *started*: from
+ * 23:00 UTC onwards today's is under way and its register is legitimately open.
+ * So the roll-call boundary is asked of TOMORROW, which is ahead of its own
+ * start whatever the clock says.
  */
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
@@ -91,8 +95,8 @@ function dayOffset(offset: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-const TODAY = dayOffset(0);
 const YESTERDAY = dayOffset(-1);
+const TOMORROW = dayOffset(1);
 
 describe("admin product sessions", () => {
   let admin: SupabaseClient<Database>;
@@ -535,11 +539,13 @@ describe("admin product sessions", () => {
     });
 
     it("refuses an admin the register before the session has started", async () => {
-      // Today's slot starts at 23:00 and the row is materialized from it, so
-      // this is "not started yet" at every hour CI could run.
+      // Tomorrow's occurrence, because today's 23:00 one has genuinely started
+      // once the clock passes 23:00 UTC — and a register that is open is not
+      // the boundary this case is about. Tomorrow's is ahead of its own start
+      // at every hour CI could run.
       const { error } = await adminAuth.rpc("record_attendance", {
         p_group_id: GROUP_A,
-        p_session_date: TODAY,
+        p_session_date: TOMORROW,
         p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });

@@ -67,9 +67,11 @@ interface GroupsPanelProps {
  *
  * Everything visual moved next door to `GroupsPanelView`, which takes the
  * snapshot and an `actions` object. The split is not cosmetic: this component
- * bound eleven hooks inside itself, which made the seating panel impossible to
- * render from fixtures and therefore impossible to put in a preview scene — the
- * exact coupling a scene is supposed to smoke out. Behaviour is unchanged; what
+ * bound eleven hooks inside itself, so the seating panel could not be rendered
+ * from plain data at all — every state it can be in was reachable only by
+ * driving the live app into it. With the hooks held on this side, the view is a
+ * function of its props, which is what makes those states inspectable and what
+ * would let a fixture-fed shell mount it later. Behaviour is unchanged; what
  * moved is only which side of the boundary each piece sits on.
  *
  * The two picker sheets stay here, because they are the only parts that read

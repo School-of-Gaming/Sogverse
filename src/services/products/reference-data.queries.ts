@@ -6,13 +6,9 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
+import { adminSessionKeys } from "@/services/admin-sessions";
 import { updateSiteNotesResponse } from "./reference-data.contracts";
-import type {
-  CalendarHoliday,
-  HolidayCalendar,
-  SiteDetails,
-  SiteStaffDetails,
-} from "@/types";
+import type { CalendarHoliday, HolidayCalendar } from "@/types";
 
 export type HolidayCalendarWithDates = HolidayCalendar & {
   calendar_holidays: Pick<CalendarHoliday, "date" | "reason">[];
@@ -20,13 +16,6 @@ export type HolidayCalendarWithDates = HolidayCalendar & {
 
 export const referenceKeys = {
   holidayCalendars: ["products", "holiday-calendars"] as const,
-  siteDetails: (locationId: string) =>
-    ["products", "site-details", locationId] as const,
-};
-
-export type SiteDetailsBundle = {
-  member: SiteDetails | null;
-  staff: SiteStaffDetails | null;
 };
 
 export function useHolidayCalendars() {
@@ -45,44 +34,32 @@ export function useHolidayCalendars() {
   });
 }
 
-/**
- * Fetch both the member-visible and admin+gedu notes for a site location.
- * Either row may be missing (sites without any extra details return
- * `{ member: null, staff: null }`). RLS decides whether staff notes come
- * back non-null for the caller — admin sees them, other roles get null.
- */
-export function useSiteDetails(locationId: string | null) {
-  const supabase = getClient();
-
-  return useQuery<SiteDetailsBundle>({
-    queryKey: referenceKeys.siteDetails(locationId ?? ""),
-    enabled: !!locationId,
-    queryFn: async () => {
-      const [member, staff] = await Promise.all([
-        supabase
-          .from("site_details")
-          .select("*")
-          .eq("location_id", locationId!)
-          .maybeSingle(),
-        supabase
-          .from("site_staff_details")
-          .select("*")
-          .eq("location_id", locationId!)
-          .maybeSingle(),
-      ]);
-      if (member.error) throw member.error;
-      if (staff.error) throw staff.error;
-      return { member: member.data, staff: staff.data };
-    },
-  });
-}
-
 export interface UpdateSiteNotesInput {
   location_id: string;
   member?: { address?: string | null; notes?: string | null };
   staff?: { notes?: string | null };
 }
 
+/**
+ * Write a site's member-visible address/notes and its staff notes.
+ *
+ * **The only read that carries any of this into a page is the admin product's
+ * session document**, so that is what the write invalidates — the invalidation
+ * belongs on the mutation rather than on whichever component happened to fire
+ * it. The gedu group feed carries the same site fields, but it is not
+ * invalidated here and must not be: this route is admin-only, so a client that
+ * can reach this mutation has never held a gedu feed, and invalidating one
+ * would be a no-op dressed up as thoroughness.
+ *
+ * Keyed at every product rather than one: a site is shared by every product at
+ * the building, and this mutation is not told which of them is on screen. Only
+ * mounted queries refetch, and exactly one product document is ever mounted.
+ *
+ * The invalidation is **returned** rather than fired and forgotten, so the
+ * promise the caller awaits does not settle until the refetched address is in
+ * the cache — an editor closing on the value it just wrote rather than on the
+ * one it replaced.
+ */
 export function useUpdateSiteNotes() {
   const queryClient = useQueryClient();
 
@@ -100,10 +77,9 @@ export function useUpdateSiteNotes() {
       }
       return parseJsonResponse(res, updateSiteNotesResponse);
     },
-    onSuccess: (_, vars) => {
+    onSuccess: () =>
       queryClient.invalidateQueries({
-        queryKey: referenceKeys.siteDetails(vars.location_id),
-      });
-    },
+        queryKey: adminSessionKeys.products(),
+      }),
   });
 }

@@ -793,7 +793,8 @@
         "addressLabel": "Adresse du lieu",
         "addressPlaceholder": "Rue, code postal, ville",
         "addAddress": "Ajouter une adresse",
-        "editAddress": "Modifier l’adresse"
+        "editAddress": "Modifier l’adresse",
+        "addressSaveFailed": "L’adresse n’a pas été enregistrée. Réessayez."
       }
     },
     "users": {

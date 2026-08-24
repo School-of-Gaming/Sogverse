@@ -210,9 +210,11 @@ function HeaderParticipantAction({ onAdd }: { onAdd: () => void }) {
  * It owns everything about how seating looks and how a drag resolves — the
  * columns, the inbox, the waitlist, the drag overlay, the refusal dialog and the
  * removal confirm — and nothing about where the data came from or what a
- * confirmed action writes. Two shells mount it: the live panel beside it, which
- * binds every action to its mutation hook, and a preview scene, which points the
- * pure-UI ones at local state and lets the rest do nothing.
+ * confirmed action writes. That is what makes it renderable from plain data: a
+ * snapshot and a set of callbacks are the whole of its input, so any state it
+ * can be in can be constructed rather than driven to. Today one shell mounts it
+ * — the live panel beside it, which binds every action to its mutation hook —
+ * and a fixture-fed one is left for whenever the design next needs iterating on.
  */
 export function GroupsPanelView({
   snapshot,

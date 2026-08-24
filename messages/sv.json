@@ -793,7 +793,8 @@
         "addressLabel": "Platsens adress",
         "addressPlaceholder": "Gata, postnummer, stad",
         "addAddress": "Lägg till adress",
-        "editAddress": "Redigera adress"
+        "editAddress": "Redigera adress",
+        "addressSaveFailed": "Adressen sparades inte. Försök igen."
       }
     },
     "users": {

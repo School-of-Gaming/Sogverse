@@ -841,7 +841,8 @@
         "addressLabel": "Daq ngu’wI’",
         "addressPlaceholder": "He, mI’, veng",
         "addAddress": "Daq ngu’wI’ yIchel",
-        "editAddress": "Daq ngu’wI’ yIchoH"
+        "editAddress": "Daq ngu’wI’ yIchoH",
+        "addressSaveFailed": "Daq ngu’wI’ pollu’be’. yIboq."
       }
     },
     "users": {

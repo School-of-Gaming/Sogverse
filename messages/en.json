@@ -793,7 +793,8 @@
         "addressLabel": "Venue address",
         "addressPlaceholder": "Street, postal code, city",
         "addAddress": "Add address",
-        "editAddress": "Edit address"
+        "editAddress": "Edit address",
+        "addressSaveFailed": "The address didn’t save. Try again."
       }
     },
     "users": {

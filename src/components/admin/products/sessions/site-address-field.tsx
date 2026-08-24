@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { adminSessionKeys } from "@/services/admin-sessions";
 import { useUpdateSiteNotes } from "@/services/products";
 
 /**
@@ -33,18 +31,15 @@ import { useUpdateSiteNotes } from "@/services/products";
  * for some viewers would mean two different things depending on who opened it.
  */
 export function SiteAddressField({
-  productId,
   locationId,
   address,
 }: {
-  productId: string;
   locationId: string;
   /** What is stored, seeded into the draft. `null` when nobody has filled one in. */
   address: string | null;
 }) {
   const t = useTranslations("admin.products.sessions");
   const c = useTranslations("common");
-  const queryClient = useQueryClient();
   const update = useUpdateSiteNotes();
 
   const [editing, setEditing] = useState(false);
@@ -67,19 +62,19 @@ export function SiteAddressField({
     setError(null);
     setCommitting(true);
     try {
+      // Resolves only once the product document carrying this address has been
+      // refetched — the mutation owns that invalidation — so the editor closes
+      // over the value it just wrote rather than the one it replaced.
       await update.mutateAsync({
         location_id: locationId,
         member: { address: draft },
       });
-      // The product document is what carries the address onto this page, so it
-      // is what has to refetch — the reference cache the mutation invalidates
-      // on its own is a different key that nothing here reads.
-      await queryClient.invalidateQueries({
-        queryKey: adminSessionKeys.byProduct(productId),
-      });
       setEditing(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : c("unexpectedError"));
+    } catch {
+      // The thrown message is English server text written for a log, exactly
+      // as the notes panel beside this one treats its own refusals: one
+      // translated line, and the draft left where it is for the retry.
+      setError(t("addressSaveFailed"));
     } finally {
       // Cleared on both outcomes: success swaps back to the resting control
       // rather than unmounting it, so a flag left set would strand the button.

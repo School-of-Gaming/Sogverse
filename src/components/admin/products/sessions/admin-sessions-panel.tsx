@@ -4,21 +4,15 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { GroupNotesPanel } from "@/components/gedu/session-details/GroupNotesPanel";
+import { createSessionEntrySaves } from "@/components/gedu/session-details/session-entry-saves";
 import { SiteNotesPanel } from "@/components/gedu/session-details/SiteNotesPanel";
 import type { GroupNotesDraft } from "@/components/gedu/session-details/GroupNotesPanel";
 import type { SiteNotesDraft } from "@/components/gedu/session-details/SiteNotesPanel";
 import {
-  PartialSessionSaveError,
   SessionFeed,
-  SessionReportSendError,
-  type SessionEntryDraft,
   type SessionFeedGamer,
-  type SessionReportSendFailure,
-  type SessionReportSendResult,
 } from "@/components/gedu/session-feed";
-import { ApiError } from "@/lib/api/api-error";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
-import { sessionEntryId } from "@/lib/session-occurrence";
 import { cn } from "@/lib/utils";
 import { useNow } from "@/providers";
 import {
@@ -31,10 +25,6 @@ import {
   type AdminProductSessions,
   type AdminSessionGroup,
 } from "@/services/admin-sessions";
-import {
-  SESSION_REPORT_ALREADY_SENT_SQLSTATE,
-  SESSION_REPORT_NO_REPORT_SQLSTATE,
-} from "@/services/gedu-sessions";
 import { SiteAddressField } from "./site-address-field";
 
 /**
@@ -44,11 +34,12 @@ import { SiteAddressField } from "./site-address-field";
  *
  * **It is the gedu's own components, not an admin-styled copy of them.** The
  * feed, the two note panels, the editors and the send button are imported
- * whole; an admin sees the gedu presentation with a group selector in front of
- * it. A parallel admin renderer would be a second skin over the same rows whose
- * only job would be to look like the first one, and it would rot the way every
- * parallel renderer rots — the day somebody changes what a card says about an
- * unsent report, one of the two surfaces would go on saying the old thing.
+ * whole — and so is what their Save and Send buttons *do*; an admin sees the
+ * gedu presentation with a group selector in front of it. A parallel admin
+ * renderer would be a second skin over the same rows whose only job would be to
+ * look like the first one, and it would rot the way every parallel renderer
+ * rots — the day somebody changes what a card says about an unsent report, one
+ * of the two surfaces would go on saying the old thing.
  * (The *family* feed stays separate for a reason that is not effort: a family
  * may not see a staff note, and the split is what makes that a compile-time
  * fact rather than a promise.) Admin components are deliberately outside the
@@ -221,102 +212,23 @@ function LoadedSessions({
   };
 
   /**
-   * Persist one session's edit.
+   * Save and Send for one session card, bound to the selected group's entries
+   * and this surface's product-keyed mutations.
    *
-   * The two written fields go in one call, because they are one row.
-   * Attendance goes one call per changed mark, because that is what stops two
-   * people marking different children in the same session from overwriting
-   * each other — and only the marks that actually changed are sent.
-   *
-   * **The order is what makes the failure reporting honest, so it is fixed.**
-   * Notes first, alone: refused there, no mark has been attempted and the save
-   * really did nothing. Then the marks under `allSettled` rather than `all`,
-   * because `all` rejects on the first refusal while the rest are still in the
-   * air and would report total failure over a session that is now partly
-   * written.
+   * **The same implementation the gedu workspace runs**, imported rather than
+   * reproduced: the attendance diff, the notes-before-marks ordering and the
+   * partial-failure classification are rules about the record, not about who is
+   * looking at it, and a second copy here would be free to drift from the one a
+   * gedu saving the very same sheet gets.
    */
-  const handleSaveEntry = async (entryId: string, draft: SessionEntryDraft) => {
-    const entry = entries.find((candidate) => candidate.id === entryId);
-    if (entry === undefined) return;
-    const sessionDate = sessionDateOf(entryId, selected.id);
-
-    const currentReport = entry.kind === "no_record" ? null : entry.report;
-    const currentNote = entry.kind === "no_record" ? null : entry.staffNote;
-
-    const notesChanged =
-      draft.report !== (currentReport ?? "") ||
-      draft.staffNote !== (currentNote ?? "");
-
-    if (notesChanged) {
-      await setSessionNotes.mutateAsync({
-        sessionDate,
-        report: draft.report,
-        geduNote: draft.staffNote,
-      });
-    }
-
-    if (draft.kind !== "past") return;
-
-    // A live entry carries marks too — it is a `future` entry whose register is
-    // already open — so the diff has to read them. Treating them as `{}` would
-    // resend every mark and, worse, silently swallow an *unmark*.
-    const current =
-      entry.kind === "past" || entry.kind === "future" ? entry.attendance : {};
-    const changed = feedRoster.filter(
-      (gamer) => draft.attendance[gamer.id] !== current[gamer.id],
-    );
-
-    const settled = await Promise.allSettled(
-      changed.map((gamer) =>
-        recordAttendance.mutateAsync({
-          sessionDate,
-          participantId: gamer.id,
-          status: draft.attendance[gamer.id] ?? null,
-        }),
-      ),
-    );
-
-    const firstRejection = settled.find(
-      (result): result is PromiseRejectedResult => result.status === "rejected",
-    );
-    if (firstRejection === undefined) return;
-
-    const failed = changed.filter(
-      (_, index) => settled[index].status === "rejected",
-    );
-
-    // "Partial" has to mean something actually landed, or the copy is its own
-    // small lie.
-    const somethingLanded =
-      notesChanged || settled.some((result) => result.status === "fulfilled");
-    if (!somethingLanded) throw firstRejection.reason;
-
-    throw new PartialSessionSaveError(
-      failed.map((gamer) => gamer.id),
-      { cause: firstRejection.reason },
-    );
-  };
-
-  /**
-   * Email one session's report to the group's families.
-   *
-   * Nothing is decided here: who gets the mail and whether the send is allowed
-   * at all are the route's, because the claim it makes first is both the
-   * at-most-once guard and the authorization. The one translation this makes is
-   * of the refusal — the card branches on which of three things happened and
-   * must not know a SQLSTATE.
-   */
-  const handleSendReport = async (
-    entryId: string,
-  ): Promise<SessionReportSendResult> => {
-    try {
-      return await emailSessionReport.mutateAsync({
-        sessionDate: sessionDateOf(entryId, selected.id),
-      });
-    } catch (error) {
-      throw new SessionReportSendError(sendFailureOf(error), { cause: error });
-    }
-  };
+  const { saveEntry, sendReport } = createSessionEntrySaves({
+    groupId,
+    entries,
+    roster: feedRoster,
+    setSessionNotes,
+    recordAttendance,
+    emailSessionReport,
+  });
 
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
     await setGroupNotes.mutateAsync({
@@ -393,7 +305,6 @@ function LoadedSessions({
                     editor at a time rather than two competing Save buttons. */}
                 {!siteNotesEditing && (
                   <SiteAddressField
-                    productId={productId}
                     locationId={data.site.location_id}
                     address={data.site.address}
                   />
@@ -417,8 +328,8 @@ function LoadedSessions({
         sourceTimeZone={data.product.timezone}
         editingEntryId={editingEntryId}
         onEditEntry={handleEditEntry}
-        onSaveEntry={handleSaveEntry}
-        onSendReport={handleSendReport}
+        onSaveEntry={saveEntry}
+        onSendReport={sendReport}
       />
     </div>
   );
@@ -509,30 +420,4 @@ function SessionsSkeleton() {
       </div>
     </div>
   );
-}
-
-/**
- * The product-local date an entry id names.
- *
- * Read back off the id rather than re-derived from the entry's instant, because
- * the id is what the row is keyed by in Postgres: the two agree by construction
- * this way and cannot drift if a snapshot's instant ever disagrees with the
- * date it was filed under.
- */
-function sessionDateOf(entryId: string, groupId: string): string {
-  return entryId.slice(sessionEntryId(groupId, "").length);
-}
-
-/**
- * Which of the card's three send messages a caught failure calls for.
- *
- * Keyed on the code the route attaches to the two refusals somebody can act on,
- * never on the status or the message: the two share a `409`, and the message is
- * English written for a log.
- */
-function sendFailureOf(error: unknown): SessionReportSendFailure {
-  if (!(error instanceof ApiError)) return "failed";
-  if (error.code === SESSION_REPORT_ALREADY_SENT_SQLSTATE) return "already_sent";
-  if (error.code === SESSION_REPORT_NO_REPORT_SQLSTATE) return "no_report";
-  return "failed";
 }
