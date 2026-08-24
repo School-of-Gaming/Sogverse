@@ -47,6 +47,7 @@ export function GeduContractScene({
       signerName={fixture.signerName}
       committing={false}
       acceptFailed={false}
+      onSignOpen={noop}
       onAccept={noop}
     />
   );

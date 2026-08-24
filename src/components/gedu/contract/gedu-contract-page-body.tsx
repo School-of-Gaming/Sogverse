@@ -36,6 +36,7 @@ export function GeduContractPageBody({
   signerName,
   committing,
   acceptFailed,
+  onSignOpen,
   onAccept,
 }: {
   contract: GeduContractDocument;
@@ -50,6 +51,12 @@ export function GeduContractPageBody({
   signerName: string;
   committing: boolean;
   acceptFailed: boolean;
+  /**
+   * The ceremony is opening. The host's failure flag outlives the dialog that
+   * raised it, so this is where it gets cleared — a reopened ceremony must not
+   * start under the last attempt's error.
+   */
+  onSignOpen: () => void;
   onAccept: () => void;
 }) {
   const t = useTranslations("gedu.contract");
@@ -89,9 +96,18 @@ export function GeduContractPageBody({
           <div />
         ) : acceptance === null ? (
           <Card>
-            <CardContent className="space-y-4 p-6">
+            {/* Centred: the panel is a single invitation, and under a column of
+                left-set legal text a centred close is what reads as "the
+                document ends here; this is what you do about it". */}
+            <CardContent className="space-y-4 p-6 text-center">
               <p className="text-sm text-muted-foreground">{t("acceptLead")}</p>
-              <Button size="lg" onClick={() => setSigning(true)}>
+              <Button
+                size="lg"
+                onClick={() => {
+                  onSignOpen();
+                  setSigning(true);
+                }}
+              >
                 <FileSignature className="h-4 w-4" />
                 {t("acceptCta")}
               </Button>
@@ -127,7 +143,8 @@ export function GeduContractPageBody({
         )}
       </div>
 
-      {/* Only while open, so every opening starts from an unsigned line. On the
+      {/* Only while open, so every opening starts from an unsigned line — and
+          from a clean failure flag, which the host clears as this opens. On the
           success path the acceptance lands, the panel above swaps to the record
           card and this unmounts with it — which is why the committing flag is
           never cleared on success. */}

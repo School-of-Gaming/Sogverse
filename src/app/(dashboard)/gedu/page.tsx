@@ -3,7 +3,10 @@ import { getTranslations } from "next-intl/server";
 import { GeduDashboardPage } from "@/components/gedu/GeduDashboardPage";
 import { GEDU_CONTRACT_CURRENT_VERSION } from "@/components/gedu/contract/documents";
 import { createClient } from "@/lib/supabase/server";
-import { GeduContractService } from "@/services/gedu";
+// Imported from the service module rather than the package index because that
+// index re-exports `"use client"` query hooks, which a server component would
+// pull in as client references.
+import { GeduContractService } from "@/services/gedu/gedu-contract.service";
 import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 import {
   AssignmentsService,

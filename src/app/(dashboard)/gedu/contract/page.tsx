@@ -8,7 +8,10 @@ import {
 } from "@/components/gedu/contract/documents";
 import { ROUTES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
-import { GeduContractService } from "@/services/gedu";
+// Imported from the service module rather than the package index because that
+// index re-exports `"use client"` query hooks, which a server component would
+// pull in as client references.
+import { GeduContractService } from "@/services/gedu/gedu-contract.service";
 import type { AppSupabaseClient, GeduContractAcceptance } from "@/types";
 
 export async function generateMetadata(): Promise<Metadata> {

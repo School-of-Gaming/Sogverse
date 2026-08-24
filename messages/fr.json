@@ -248,7 +248,7 @@
       "queueAccepted": "Contrat accepté le {date}",
       "queueNotAccepted": "Contrat non accepté",
       "confirmTitle": "Certifier sans contrat accepté ?",
-      "confirmBody": "Ce Gedu n’a pas accepté le contrat en vigueur. Cette acceptation ne bloque rien : vous pouvez donc le certifier quand même — mais il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
+      "confirmBody": "Ce Gedu n’a pas accepté le contrat en vigueur. La certification n’exige pas de contrat accepté : vous pouvez donc le certifier quand même — mais il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
       "confirmAction": "Certifier quand même"
     },
     "products": {

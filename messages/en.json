@@ -248,7 +248,7 @@
       "queueAccepted": "Contract accepted {date}",
       "queueNotAccepted": "Contract not accepted",
       "confirmTitle": "Certify without an accepted contract?",
-      "confirmBody": "This Gedu has not accepted the contract that is in force. Accepting it blocks nothing, so you can certify them anyway — but they will be assignable to groups before they have agreed to the terms they work under.",
+      "confirmBody": "This Gedu has not accepted the contract that is in force. Certification does not require an accepted contract, so you can certify them anyway — but they will be assignable to groups before they have agreed to the terms they work under.",
       "confirmAction": "Certify anyway"
     },
     "products": {

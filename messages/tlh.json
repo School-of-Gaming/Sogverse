@@ -296,7 +296,7 @@
       "queueAccepted": "chut qonlu’pu’ {date}",
       "queueNotAccepted": "chut qonlu’be’",
       "confirmTitle": "chut qonbe’pu’ — patlh yInob ’e’ DaHech’a’?",
-      "confirmBody": "chut ratlhbogh qonbe’taH Geduvam. chut botbe’ — vaj patlh Danob laH. ’ach chut HarchoHpa’, ghob je’lu’ net chaw’.",
+      "confirmBody": "chut ratlhbogh qonbe’taH Geduvam. patlh nobmeH chut qonlu’pu’bogh poQlu’be’ — vaj patlh Danob laH. ’ach chut HarchoHpa’, ghob je’lu’ net chaw’.",
       "confirmAction": "patlh yInob ’e’ yIruch"
     },
     "products": {

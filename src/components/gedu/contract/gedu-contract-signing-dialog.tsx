@@ -36,7 +36,15 @@ import { useNow, useTimezone } from "@/providers";
  * **Mounted per opening rather than held across one.** The host renders this
  * only while its dialog is open, so each opening starts unsigned and undated
  * with no reset effect to forget — and closing a half-finished ceremony
- * genuinely abandons it, which is what a reader who backed out expects.
+ * genuinely abandons it, which is what a reader who backed out expects. The
+ * failure flag is the one piece of ceremony state that is *not* local, so the
+ * host clears it as this opens; nothing here has to remember the last attempt.
+ *
+ * **A signer with no name cannot start.** The signature is the profile's name
+ * and nothing else, so an absent profile would fill the rule with an empty
+ * string and leave a signed-looking line with nothing on it. The write itself is
+ * safe either way — the RPC reads the name server-side — but the ceremony is a
+ * display of what is being agreed to, and a blank display agrees to nothing.
  */
 export function GeduContractSigningDialog({
   signerName,
@@ -74,6 +82,8 @@ export function GeduContractSigningDialog({
   const [signedDate, setSignedDate] = useState<string | null>(null);
 
   const ready = signature !== null && signedDate !== null;
+  /** Nothing to put on the line means there is no signing step to offer. */
+  const canSign = signerName.trim().length > 0;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -91,13 +101,16 @@ export function GeduContractSigningDialog({
             // Generous, because a signature is meant to look like one — and the
             // cursive face is the only place in the app it is used.
             valueClassName="font-cursive text-3xl leading-none sm:text-4xl"
+            disabled={!canSign}
             onFill={() => setSignature(signerName)}
           />
           <CeremonyLine
             label={t("dateLabel")}
             actionLabel={t("dateAction")}
             value={signedDate}
-            valueClassName="font-cursive text-2xl leading-none sm:text-3xl"
+            // The ordinary text face, deliberately: cursive is the signature's
+            // and only the signature's — a date is filled in, not signed.
+            valueClassName="text-lg leading-none sm:text-xl"
             onFill={() =>
               setSignedDate(
                 formatDate(now, locale, { dateStyle: "long", timeZone }),
@@ -138,18 +151,24 @@ export function GeduContractSigningDialog({
  * value the next click puts there, so the slot is never dead space, and the
  * Accept button below cannot move out from under the cursor between signing and
  * dating.
+ *
+ * `disabled` is for a line that has no value to fill itself with — the
+ * invitation stays on screen so the ceremony keeps its shape, but it cannot be
+ * taken, and the Accept button stays out of reach behind it.
  */
 function CeremonyLine({
   label,
   actionLabel,
   value,
   valueClassName,
+  disabled = false,
   onFill,
 }: {
   label: string;
   actionLabel: string;
   value: string | null;
   valueClassName: string;
+  disabled?: boolean;
   onFill: () => void;
 }) {
   return (
@@ -162,7 +181,8 @@ function CeremonyLine({
           <button
             type="button"
             onClick={onFill}
-            className="flex h-full w-full items-center gap-2 rounded-t-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            disabled={disabled}
+            className="flex h-full w-full items-center gap-2 rounded-t-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
           >
             <PenLine className="h-4 w-4 shrink-0" aria-hidden />
             {actionLabel}

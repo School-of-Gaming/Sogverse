@@ -63,6 +63,17 @@ export function GeduContractPage({
     .filter(Boolean)
     .join(" ");
 
+  /**
+   * A failure belongs to the attempt that produced it. The dialog is mounted per
+   * opening, so a flag left set outlives the ceremony it was raised in and the
+   * next one opens with the last one's error already on screen — before the
+   * reader has done anything at all. Cleared on the way *in* rather than on the
+   * way out, because that is the moment the message stops being true.
+   */
+  const handleSignOpen = () => {
+    setAcceptFailed(false);
+  };
+
   const handleAccept = () => {
     setCommitting(true);
     setAcceptFailed(false);
@@ -86,6 +97,7 @@ export function GeduContractPage({
       signerName={signerName}
       committing={committing}
       acceptFailed={acceptFailed}
+      onSignOpen={handleSignOpen}
       onAccept={handleAccept}
     />
   );

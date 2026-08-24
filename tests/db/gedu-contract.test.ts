@@ -122,7 +122,10 @@ describe("gedu contract acceptance", () => {
       expect(currentVersion).toBeTruthy();
     });
 
-    it("is readable by a signed-in gedu and not by anyone with no account", async () => {
+    it("is readable by a signed-in gedu", async () => {
+      // The other half — that `anon` cannot read it at all — is asserted by
+      // migration 00201's own DO block, which raises if the role ever holds
+      // SELECT on either contract table. No anon client is built here.
       const readable = await gedu
         .from("gedu_contract_versions")
         .select("version");

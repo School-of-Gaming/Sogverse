@@ -257,6 +257,10 @@ export function GeduCertificationCard({
         title={ct("confirmTitle")}
         description={ct("confirmBody")}
         confirmLabel={ct("confirmAction")}
+        // Not destructive: certifying an unsigned educator is a supported
+        // outcome the admin is being asked to register, not damage they are
+        // being warned off. A red button would say the opposite of the copy.
+        confirmVariant="default"
         onConfirm={() => certify(true)}
       />
     </Card>

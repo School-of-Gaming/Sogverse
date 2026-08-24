@@ -162,7 +162,7 @@ function GeduRow({
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border px-3 py-2">
       <Link
         href={ROUTES.admin.user(gedu.id)}
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-md transition-opacity hover:opacity-80"
+        className="flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded-md transition-opacity hover:opacity-80"
       >
         <PersonChip id={gedu.id} name={gedu.name ?? t("unnamed")} />
         <span className="truncate text-xs text-muted-foreground">
@@ -174,7 +174,14 @@ function GeduRow({
             glyph is its own — a shield is certification and a mail check is a
             confirmed address, and neither may stand for a signature. Only the
             unsigned state is tinted, because it is the one worth catching an eye
-            that is scanning a column of rows. */}
+            that is scanning a column of rows.
+
+            It keeps its full width and takes a line of its own when the row runs
+            out of room — the desk layout puts all three on one line, and at 360
+            in the longest locale ("Sopimusta ei ole hyväksytty") the standing
+            drops below the name rather than shrinking the row past the viewport.
+            Truncating a contract standing to "Sopimusta ei…" would leave the
+            admin reading half of the fact they are deciding on. */}
         <span
           className={cn(
             "flex shrink-0 items-center gap-1 text-xs",
@@ -216,6 +223,10 @@ function GeduRow({
         title={contract("confirmTitle")}
         description={contract("confirmBody")}
         confirmLabel={contract("confirmAction")}
+        // Not destructive: certifying an unsigned educator is a supported
+        // outcome the admin is being asked to register, not damage they are
+        // being warned off. A red button would say the opposite of the copy.
+        confirmVariant="default"
         onConfirm={certify}
       />
     </div>

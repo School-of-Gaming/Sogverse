@@ -248,7 +248,7 @@
       "queueAccepted": "Sopimus hyväksytty {date}",
       "queueNotAccepted": "Sopimusta ei ole hyväksytty",
       "confirmTitle": "Hyväksytäänkö ilman hyväksyttyä sopimusta?",
-      "confirmBody": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Sopimuksen hyväksyminen ei estä mitään, joten voit silti hyväksyä hänet — mutta hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
+      "confirmBody": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Gedun hyväksyminen ei edellytä hyväksyttyä sopimusta, joten voit hyväksyä hänet silti — mutta hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
       "confirmAction": "Hyväksy silti"
     },
     "products": {
