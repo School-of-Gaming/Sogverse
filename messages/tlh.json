@@ -944,8 +944,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Sogverse bIghoS, SuvwI’!",
-      "description": "accountlIj yI’el",
+      "welcomeTitle": "noH Quj yejHaD bIghoS, SuvwI’!",
       "noAccountSignUp": "account DaHutlh’a’? <link>DachenmoH</link>",
       "signingIn": "bI’el...",
       "emailPlaceholder": "SoH@example.com",
@@ -2250,17 +2249,17 @@
     "roleGamer": "toy’wI’",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Sogverse mu’mey yIchoH",
+      "subject": "noH Quj yejHaD mu’mey yIchoH",
       "heading": "mu’mey yIchoH",
-      "body": "Sogverse mu’mey chovmoH tlhob Suqlu’. mu’mey chu’ yIwIv.",
+      "body": "noH Quj yejHaD mu’mey chovmoH tlhob Suqlu’. mu’mey chu’ yIwIv.",
       "expiry": "ngeH wa’ rep Qav.",
       "ignore": "mu’mey chovmoH DatlhobHa’chugh, QIn yIleghQo’. mu’mey choHbe’lu’.",
       "button": "mu’mey yIchoH"
     },
     "pinReset": {
-      "subject": "Sogverse vavpu’ PIN yIchoH",
+      "subject": "noH Quj yejHaD vavpu’ PIN yIchoH",
       "heading": "vavpu’ PIN yIchoH",
-      "body": "Sogverse vavpu’ PIN chovmoH tlhob Suqlu’. PIN chu’ (loS mI’) yIwIv.",
+      "body": "noH Quj yejHaD vavpu’ PIN chovmoH tlhob Suqlu’. PIN chu’ (loS mI’) yIwIv.",
       "expiry": "ngeH cha’maH loS rep Qav.",
       "ignore": "PIN chovmoH DatlhobHa’chugh, QIn yIleghQo’. PIN choHbe’lu’.",
       "button": "PIN yIchoH"

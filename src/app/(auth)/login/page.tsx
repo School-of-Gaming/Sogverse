@@ -6,10 +6,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return {
     title: t("signIn"),
-    description: "Sign in to your Sogverse account",
+    description: "Sign in to your School of Gaming account",
     openGraph: {
       title: "Sign in to School of Gaming",
-      description: "Sign in to your Sogverse account to manage clubs, gamers, and more.",
+      description: "Sign in to your School of Gaming account to manage clubs, gamers, and more.",
     },
   };
 }

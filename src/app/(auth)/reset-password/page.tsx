@@ -4,7 +4,7 @@ import { ResetPasswordForm } from "@/components/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("resetPassword"), description: "Set a new password for your Sogverse account" };
+  return { title: t("resetPassword"), description: "Set a new password for your School of Gaming account" };
 }
 
 export default function ResetPasswordPage() {

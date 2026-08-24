@@ -896,8 +896,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Bienvenue dans le Sogverse",
-      "description": "Connectez-vous à votre compte",
+      "welcomeTitle": "Bienvenue chez School of Gaming",
       "noAccountSignUp": "Vous n’avez pas de compte ? <link>Inscrivez-vous</link>",
       "signingIn": "Connexion...",
       "emailPlaceholder": "vous@exemple.com",
@@ -2206,17 +2205,17 @@
     "roleGamer": "Joueur",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Réinitialisez votre mot de passe Sogverse",
+      "subject": "Réinitialisez le mot de passe de votre compte School of Gaming",
       "heading": "Réinitialisez votre mot de passe",
-      "body": "Nous avons reçu une demande de réinitialisation de votre mot de passe Sogverse. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
+      "body": "Nous avons reçu une demande de réinitialisation du mot de passe de votre compte School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
       "expiry": "Ce lien expirera dans 1 heure.",
       "ignore": "Si vous n’avez pas demandé de réinitialisation de mot de passe, vous pouvez ignorer cet e-mail sans crainte. Votre mot de passe ne sera pas modifié.",
       "button": "Réinitialiser le mot de passe"
     },
     "pinReset": {
-      "subject": "Réinitialisez votre code PIN parent Sogverse",
+      "subject": "Réinitialisez le code PIN de votre compte parent School of Gaming",
       "heading": "Réinitialisez votre code PIN parent",
-      "body": "Nous avons reçu une demande de réinitialisation du code PIN de votre compte parent Sogverse. Cliquez sur le bouton ci-dessous pour choisir un nouveau code PIN à 4 chiffres.",
+      "body": "Nous avons reçu une demande de réinitialisation du code PIN de votre compte parent School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau code PIN à 4 chiffres.",
       "expiry": "Ce lien expirera dans 24 heures.",
       "ignore": "Si vous n’avez pas demandé de réinitialisation du code PIN, vous pouvez ignorer cet e-mail sans crainte. Votre code PIN ne sera pas modifié.",
       "button": "Réinitialiser le code PIN"

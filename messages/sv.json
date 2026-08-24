@@ -896,8 +896,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Välkommen till Sogverse",
-      "description": "Logga in på ditt konto",
+      "welcomeTitle": "Välkommen till School of Gaming",
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
       "emailPlaceholder": "du@example.com",
@@ -2206,17 +2205,17 @@
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Återställ ditt Sogverse-lösenord",
+      "subject": "Återställ lösenordet till ditt School of Gaming-konto",
       "heading": "Återställ ditt lösenord",
-      "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
+      "body": "Vi har mottagit en begäran om att återställa lösenordet till ditt School of Gaming-konto. Klicka på knappen nedan för att välja ett nytt lösenord.",
       "expiry": "Denna länk upphör att gälla om 1 timme.",
       "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
       "button": "Återställ lösenord"
     },
     "pinReset": {
-      "subject": "Återställ PIN-koden för ditt Sogverse-föräldrakonto",
+      "subject": "Återställ PIN-koden för ditt föräldrakonto hos School of Gaming",
       "heading": "Återställ din PIN-kod",
-      "body": "Vi har mottagit en begäran om att återställa PIN-koden för ditt Sogverse-föräldrakonto. Klicka på knappen nedan för att välja en ny fyrsiffrig PIN-kod.",
+      "body": "Vi har mottagit en begäran om att återställa PIN-koden för ditt föräldrakonto hos School of Gaming. Klicka på knappen nedan för att välja en ny fyrsiffrig PIN-kod.",
       "expiry": "Denna länk upphör att gälla om 24 timmar.",
       "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
       "button": "Återställ PIN-kod"
