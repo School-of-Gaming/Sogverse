@@ -81,7 +81,7 @@ export function ProductDetailsPage({
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-reserve-scroll-gutter>
         <Link
           href={listHref}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -97,7 +97,7 @@ export function ProductDetailsPage({
 
   if (!product) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-reserve-scroll-gutter>
         <Link
           href={listHref}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -115,7 +115,7 @@ export function ProductDetailsPage({
   }
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
-  const status = effectiveStatus(product, new Date(), 0);
+  const status = effectiveStatus(product, now, 0);
   // Every group on the product shares one schedule, so resolve the voice
   // window once here and thread it into each group's Join button. `useNow`
   // ticks so the live/locked flip happens without a reload. A room only
@@ -128,7 +128,7 @@ export function ProductDetailsPage({
   const topicName = topicLabel(product.topic);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-reserve-scroll-gutter>
       <Link
         href={listHref}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
