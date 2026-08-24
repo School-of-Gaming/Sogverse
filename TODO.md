@@ -506,49 +506,6 @@ its leave affordance has a backend. One open question remains:
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
 
-## Sender avatar in the inbox
-
-Gmail shows a generic letter tile for our mail, in a colour we did not pick. The
-supported fix is BIMI, and it is priced for a different kind of company: Gmail
-will not show a logo without a certificate, and the cheapest one that skips the
-registered-trademark requirement still runs ~$650/yr. Not worth it for an avatar.
-
-The Gmail half is done: `sogverse@sog.gg` became a real Workspace user
-(2026-08-24, display name "School of Gaming", one license), the circle-safe
-photo was uploaded by an admin, and the avatar verified in a real external
-Gmail the same day — the org-managed "people you interact with" visibility
-turned out to be enough, no profile-editing unlock needed. Brevo sending was
-untouched throughout (it authenticates via DNS, not the mailbox). What remains:
-
-- [ ] **Confirm replies to `sogverse@sog.gg` still reach a human.** Creating
-  the user re-pointed the address's inbound delivery from whatever alias/group
-  held it before into the new mailbox — set forwarding or delegation from the
-  new mailbox to whoever watched those replies, and send one test reply to
-  prove the path.
-- [ ] **Publish a self-asserted BIMI record** (SVG Tiny PS + `default._bimi`
-  TXT, no certificate). Free, and it covers Yahoo and Fastmail, which honour
-  BIMI without one. It does nothing for Gmail — now covered by the profile
-  photo above — so it is only worth the DNS work once the DMARC prerequisite
-  below is done for its own reasons. The art is settled: the definitive
-  gem-square (`src/assets/brand/`) is the source to convert when the day comes.
-- [ ] **Publish a self-asserted BIMI record** (SVG Tiny PS + `default._bimi` TXT,
-  no certificate). Free, and it covers Yahoo and Fastmail, which honour BIMI
-  without one. It does nothing for Gmail, so it is only worth the DNS work once
-  the DMARC prerequisite below is done for its own reasons. The art is settled:
-  the definitive gem-square (`src/assets/brand/`) is the source to convert when
-  the day comes.
-
-Both are blocked on nothing except the second one's prerequisite: **DMARC at
-enforcement** (`p=quarantine` or `p=reject`). That work is worth doing on its own
-merits — deliverability, and stopping anyone spoofing us to the families whose
-children we hold accounts for — and it is a staged rollout with monitoring, not a
-DNS edit, because every system sending as `sog.gg` has to align first. Do it for
-those reasons; treat any logo as a by-product.
-
-Neither Outlook.com nor Apple Mail is addressable here: both draw the sender
-avatar from the *recipient's* own contacts, so there is nothing on our side to
-set.
-
 ## The filled button on Gmail iOS is unverified, and it is the one that matters
 
 Everything else about how our mail renders is now either machine-checked or has

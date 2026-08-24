@@ -94,6 +94,12 @@ Templates that are *not* exposed to the testing UI (currently the PIN-reset emai
 
 **No origin, no image — never a half-built `src`.** An unset or malformed env yields the text-only header rather than an `undefined/email/…` that resolves to nothing and paints the broken box the whole design exists to avoid. That is the same degradation as a blocked image, one level up.
 
+## The sender's inbox avatar lives in Google, and it mirrors the favicon by hand
+
+The avatar Gmail shows beside our mail is not anything in this repo: it is the Google Workspace profile photo of the `sogverse@sog.gg` account (a real, licensed Workspace user since 2026-08-24 — created for exactly this). The photo is the favicon's gem-square art, re-rendered circle-safe: a 512px square on the app's dark ground with the art at ~72%, because Gmail crops avatars to a circle and the raw favicon would lose the squircle's left and right points to it. The org-managed "visible to people you interact with" setting proved sufficient for external recipients — no per-user visibility unlock was needed, and Brevo's sending is unrelated to the mailbox (it authenticates via DNS).
+
+**Rule: the Workspace photo and the gem-square favicon are one mark and must be kept in parity by hand.** The photo lives in Google Admin, outside this repo, so no test can catch it drifting: any change to the gem-square art (`src/assets/brand/`, mirrored byte-for-byte by the app's icon file) is not done until the Workspace profile photo is re-rendered and re-uploaded in the same piece of work — circle-safe, per the shape above.
+
 **The asset and the markup are one decision, and `layout.test.ts` is where they are held together.** A file served straight from `public/` is invisible to the build, so nothing else would notice it going missing, being regenerated at the wrong size, or losing its transparency. The same file asserts the property that matters most and cannot be seen by reading the markup: lift the image's row out of a rendered mail and what remains is byte-for-byte the mail sent without one.
 
 ## Layout gotchas (Gmail Android)
