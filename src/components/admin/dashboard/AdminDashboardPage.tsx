@@ -112,7 +112,9 @@ export function AdminDashboardPage({
    * one `Intl` format — and neither is a midnight fact:
    *
    * - "registered 3 minutes ago" has to become "an hour ago" while the page
-   *   sits open.
+   *   sits open. A candidate's contract-acceptance date rides along in that same
+   *   map — it is not a ticking fact, but re-deriving it in a second place to
+   *   keep this list pure would buy nothing and cost the queue a second source.
    * - a zone's abbreviation turns over *inside* a day. Helsinki becomes EEST at
    *   03:00 on the last Sunday in March, and a schedule sampled at midnight
    *   would go on saying EET beside times it had already moved.
@@ -131,6 +133,7 @@ export function AdminDashboardPage({
         snapshot.certification_queue,
         locale,
         now,
+        timeZone,
       ),
     }),
     [

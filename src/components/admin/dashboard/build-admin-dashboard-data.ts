@@ -3,6 +3,7 @@ import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
+import { formatDate } from "@/lib/utils";
 import type {
   AdminDashboardAttentionProduct,
   AdminDashboardCertificationCandidate,
@@ -265,14 +266,22 @@ function toProductAttention(
  * has to become "an hour ago" while the page sits open — so it is exported
  * separately, and the shell re-runs this cheap map against the live clock while
  * the expensive half is memoised on the calendar day.
+ *
+ * It also carries each candidate's standing under the contract, which is the one
+ * value here that is a *date* rather than a gap and so wants the viewer's zone
+ * as well as their locale. That standing informs the decision and gates nothing:
+ * certification is the platform's only blocking lever, and an unsigned candidate
+ * is still certifiable — over a confirmation the queue asks for first.
  */
 export function buildCertificationQueue(
   candidates: readonly AdminDashboardCertificationCandidate[],
   locale: SupportedLocale,
   now: Date,
+  /** The viewer's zone — an acceptance is an instant, so it converts. */
+  viewerTimeZone: string,
 ): UncertifiedGedu[] {
   return candidates.map((candidate) =>
-    toUncertifiedGedu(candidate, locale, now),
+    toUncertifiedGedu(candidate, locale, now, viewerTimeZone),
   );
 }
 
@@ -280,6 +289,7 @@ function toUncertifiedGedu(
   candidate: AdminDashboardCertificationCandidate,
   locale: SupportedLocale,
   now: Date,
+  viewerTimeZone: string,
 ): UncertifiedGedu {
   const name = [candidate.first_name, candidate.last_name]
     .filter((part) => part.trim().length > 0)
@@ -292,6 +302,16 @@ function toUncertifiedGedu(
     // stand-in wording belongs to the card, so the absence travels as `null`.
     name: name.length > 0 ? name : null,
     registeredAgo: relativeWait(candidate.created_at, now, locale),
+    // The wire's null already means "not standing under the terms in force",
+    // whether that is because nothing was ever signed or because what was
+    // signed has been superseded. Nothing here re-derives that distinction.
+    contractAcceptedOn:
+      candidate.contract_accepted_at === null
+        ? null
+        : formatDate(candidate.contract_accepted_at, locale, {
+            dateStyle: "medium",
+            timeZone: viewerTimeZone,
+          }),
   };
 }
 

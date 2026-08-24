@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { BadgeCheck, Clock } from "lucide-react";
+import { BadgeCheck, Clock, FileCheck, FileWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CertifyWithoutContractDialog } from "@/components/admin/certify-without-contract-dialog";
 import { PersonChip } from "@/components/ui/person-chip";
 import { ROUTES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { UncertifiedGedu } from "./admin-dashboard-data";
 
 /**
@@ -114,6 +116,15 @@ export function GeduCertificationQueue({
  * which is exactly long enough for a second click to certify somebody twice. It
  * is cleared only where the admin has something left to do — a failed write,
  * where the row stays and has to be retried.
+ *
+ * **A candidate who has not accepted the contract in force is certified over a
+ * confirmation, and the flag is set inside the confirm rather than at the first
+ * click.** Opening a dialog promises nothing, so there is nothing to hold the
+ * button disabled for while it is up; the click that *does* promise the write is
+ * the one in the dialog, and `ConfirmDialog` runs `onConfirm` before it closes
+ * itself, so the flag is live in the same tick the dialog goes away. Nothing is
+ * gated on the answer — acceptance blocks nobody — the admin is only asked to
+ * say they meant it.
  */
 function GeduRow({
   gedu,
@@ -123,10 +134,14 @@ function GeduRow({
   onCertify: () => Promise<void>;
 }) {
   const t = useTranslations("admin.dashboard.certification");
+  const contract = useTranslations("admin.geduContract");
   const [committing, setCommitting] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
-  function handleCertify() {
+  const acceptedOn = gedu.contractAcceptedOn;
+
+  function certify() {
     setCommitting(true);
     setFailed(false);
     void onCertify().catch(() => {
@@ -135,16 +150,52 @@ function GeduRow({
     });
   }
 
+  function handleCertify() {
+    if (acceptedOn === null) {
+      setConfirming(true);
+      return;
+    }
+    certify();
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border px-3 py-2">
       <Link
         href={ROUTES.admin.user(gedu.id)}
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-md transition-opacity hover:opacity-80"
+        className="flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded-md transition-opacity hover:opacity-80"
       >
         <PersonChip id={gedu.id} name={gedu.name ?? t("unnamed")} />
         <span className="truncate text-xs text-muted-foreground">
           <Clock className="mr-1 inline h-3 w-3 align-[-1px]" aria-hidden />
           {t("registered", { when: gedu.registeredAgo })}
+        </span>
+        {/* The other half of what an admin is deciding on, at the density the
+            rest of the row reads at: one glyph and a few words. The document
+            glyph is its own — a shield is certification and a mail check is a
+            confirmed address, and neither may stand for a signature. Only the
+            unsigned state is tinted, because it is the one worth catching an eye
+            that is scanning a column of rows.
+
+            It keeps its full width and takes a line of its own when the row runs
+            out of room — the desk layout puts all three on one line, and at 360
+            in the longest locale ("Sopimusta ei ole hyväksytty") the standing
+            drops below the name rather than shrinking the row past the viewport.
+            Truncating a contract standing to "Sopimusta ei…" would leave the
+            admin reading half of the fact they are deciding on. */}
+        <span
+          className={cn(
+            "flex shrink-0 items-center gap-1 text-xs",
+            acceptedOn === null ? "text-warning" : "text-muted-foreground",
+          )}
+        >
+          {acceptedOn === null ? (
+            <FileWarning className="h-3 w-3" aria-hidden />
+          ) : (
+            <FileCheck className="h-3 w-3" aria-hidden />
+          )}
+          {acceptedOn === null
+            ? contract("queueNotAccepted")
+            : contract("queueAccepted", { date: acceptedOn })}
         </span>
       </Link>
       {/* Only rendered once a write has failed, and it takes the full row width
@@ -165,6 +216,12 @@ function GeduRow({
       >
         {committing ? t("certifying") : t("certify")}
       </Button>
+
+      <CertifyWithoutContractDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        onConfirm={certify}
+      />
     </div>
   );
 }

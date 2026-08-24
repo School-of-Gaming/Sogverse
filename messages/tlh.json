@@ -27,7 +27,8 @@
       "resetPin": "PIN yIchu’qa’",
       "verifyEmail": "QIn Daq yIngu’",
       "changePin": "PIN yIchoH",
-      "roblox": "Roblox qetlh chenmoHmeH ghojmoH"
+      "roblox": "Roblox qetlh chenmoHmeH ghojmoH",
+      "geduContract": "Gedu quv chut"
     }
   },
   "notFound": {
@@ -284,6 +285,20 @@
         "label": "De’ Segh ngoq",
         "heading": "De’ Seghmey"
       }
+    },
+    "geduContract": {
+      "heading": "Gedu quv chut",
+      "accepted": "chut qonlu’pu’",
+      "acceptedDetail": "mIw {version}, qonlu’pu’ {date}",
+      "notAccepted": "Gedu quv chut qonbe’taH",
+      "notCurrentVersion": "chut ratlhbogh ({version}) qonbe’taH",
+      "previousVersion": "wa’Hu’ mIw {version} qonpu’: {date}.",
+      "queueAccepted": "chut qonlu’pu’ {date}",
+      "queueNotAccepted": "chut qonlu’be’",
+      "confirmTitle": "chut qonbe’pu’ — patlh yInob ’e’ DaHech’a’?",
+      "confirmBody": "patlh nobmeH chut qonlu’pu’bogh poQlu’be’ — vaj patlh Danob laH.",
+      "confirmWarning": "chut ratlhbogh qonbe’taH Geduvam. patlh ghajDI’, chut HarchoHpa’ ghob je’lu’ net chaw’.",
+      "confirmAction": "patlh yInob ’e’ yIruch"
     },
     "products": {
       "types": {
@@ -1410,6 +1425,41 @@
       "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS.",
       "saveFailed": "Daq qonta’ pollu’be’. yIboq."
+    },
+    "contract": {
+      "back": "jIH SOGDaq yIchegh",
+      "pageTitle": "Gedu quv chut",
+      "intro": "quv chutmey bIH. Suomi Hol chenmoHlu’ — chut Hol wa’ neH tu’lu’, ’ej pagh choHlu’. yIlaD!",
+      "acceptLead": "ponglIj DaqonDI’, chutmey DalaDpu’ ’ej DaHarpu’ ’e’ Daper. wa’ mIw, wa’ jaj, wa’ pong — latlh pagh vIqon.",
+      "acceptCta": "yIqon, jaj yIper, yIHar",
+      "acceptedTitle": "chutmey Daqonpu’ — batlh Duquv!",
+      "dialog": {
+        "title": "yIqon ’ej yIHar",
+        "description": "ponglIj yIqon, DaHjaj yIper, ghIq chut yIHar.",
+        "signatureLabel": "pong",
+        "signAction": "qonmeH yI’uy",
+        "dateLabel": "jaj",
+        "dateAction": "jaj permeH yI’uy",
+        "cancel": "yImev",
+        "confirm": "chut yIHar",
+        "error": "Qapbe’! rIvSo’lIj yIqel ’ej yInIDqa’."
+      },
+      "notice": {
+        "title": "Gedu quv chut DaHarbe’taH!",
+        "body": "chut DalaD ’ej DaHar ’e’ DapoQ — ra’wI’ ra’. cha’ tup neH ngeHlu’.",
+        "action": "chut yIlaD ’ej yIHar"
+      },
+      "settings": {
+        "title": "Gedu quv chut",
+        "description": "Gedu SoH; chutmeyvam bIvang.",
+        "acceptedTitle": "qonlu’pu’",
+        "acceptedDetail": "mIw {version}, qonlu’pu’ {date}",
+        "notAcceptedTitle": "wej qonlu’",
+        "notAcceptedBody": "chut ratlhbogh DaHarbe’taH. DalaD ’ej DaHar ’e’ DapoQ.",
+        "readAndAccept": "yIlaD ’ej yIHar",
+        "view": "chut yIlegh"
+      },
+      "acceptedMeta": "mIw {version}, qonlu’pu’ {date}"
     }
   },
   "productType": {

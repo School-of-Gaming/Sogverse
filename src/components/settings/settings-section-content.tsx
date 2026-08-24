@@ -14,6 +14,7 @@ import { GameAccountCard } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
+import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
@@ -516,6 +517,15 @@ export function SettingsSectionContent() {
           />
         </>
       )}
+
+      {/* Last on the page, and that is a layout decision rather than a ranking
+          one. This is the only card here whose body is decided by a read the
+          server did not seed, so it is the only one that can grow after the
+          first paint — and at the foot of the page there is nothing under it
+          to push down when it does. Anywhere higher it would have to hold a
+          slot open at the taller of its two states, leaving a visible hole in
+          the shorter one. */}
+      {isGedu && user && <GeduContractSettingsCard geduId={user.id} />}
     </div>
   );
 }

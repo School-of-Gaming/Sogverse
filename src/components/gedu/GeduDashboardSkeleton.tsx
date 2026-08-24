@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { GeduContractNotice } from "./gedu-contract-notice";
 
 /**
  * The gedu dashboard while its assignment summaries are still in the air.
@@ -22,7 +23,18 @@ import { useTranslations } from "next-intl";
  * rules forbid: text a reader could already be reading, moving on the data's
  * own schedule.
  */
-export function GeduDashboardSkeleton() {
+export function GeduDashboardSkeleton({
+  /**
+   * The one thing on this page that is *not* waiting on a network call, so it
+   * is drawn for real rather than ghosted — the reader can read the notice and
+   * click through to sign while the summaries are still in the air. It is first
+   * in both this and the loaded body, so it lands in the same place across the
+   * swap and moves nothing.
+   */
+  contractAccepted,
+}: {
+  contractAccepted: boolean;
+}) {
   const t = useTranslations("dashboardSections");
 
   return (
@@ -31,6 +43,8 @@ export function GeduDashboardSkeleton() {
       <p role="status" className="sr-only">
         {t("loadingAssignments")}
       </p>
+
+      {!contractAccepted && <GeduContractNotice />}
 
       {/* The section pill's bar, at the height the real one occupies. */}
       <div

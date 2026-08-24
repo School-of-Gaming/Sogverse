@@ -209,6 +209,57 @@ export type Database = {
           },
         ]
       }
+      gedu_contract_acceptances: {
+        Row: {
+          accepted_at: string
+          contract_version: string
+          gedu_id: string
+          signed_name: string
+        }
+        Insert: {
+          accepted_at?: string
+          contract_version: string
+          gedu_id: string
+          signed_name: string
+        }
+        Update: {
+          accepted_at?: string
+          contract_version?: string
+          gedu_id?: string
+          signed_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_contract_acceptances_contract_version_fkey"
+            columns: ["contract_version"]
+            isOneToOne: false
+            referencedRelation: "gedu_contract_versions"
+            referencedColumns: ["version"]
+          },
+          {
+            foreignKeyName: "gedu_contract_acceptances_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "gedu_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      gedu_contract_versions: {
+        Row: {
+          created_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       gedu_group_assignments: {
         Row: {
           created_at: string
@@ -1739,6 +1790,7 @@ export type Database = {
           view_name: string
         }[]
       }
+      accept_gedu_contract: { Args: { p_version: string }; Returns: string }
       admin_enroll_participant: {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json

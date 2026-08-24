@@ -48,6 +48,10 @@ function dashboardHtml(assignments: readonly GeduAssignmentCardData[]): string {
           <GeduDashboardPageBody
             assignments={assignments}
             certified
+            // Signed, so the contract band is off the page: this file is about
+            // how the activity sections are composed, and a band above them is
+            // one more thing in the markup it asserts against.
+            contractAccepted
             toolsCard={<div />}
             instantRoomCard={<div />}
           />

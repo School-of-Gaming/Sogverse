@@ -97,6 +97,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
+  // Accepting the gedu contract (00201). Role-gated rather than self-scoping
+  // despite naming no subject: its first statement is the gedu role guard, which
+  // is what check 1 reads, and the two classifications are exclusive. The
+  // scoping property is still real and is enforced elsewhere — the row is keyed
+  // to auth.uid() inside the body, and there is no argument that could aim it.
+  // The positive half of the matrix IS assertable with no fixture: a gedu passes
+  // the guard and is then refused by the version whitelist (a NULL version
+  // matches nothing), which is 23503 rather than 42501.
+  accept_gedu_contract: { permittedRoles: ["gedu"] },
   get_gedu_assigned_product: {
     permittedRoles: ["gedu"],
     permittedAlsoForbiddenOnNullArgs:

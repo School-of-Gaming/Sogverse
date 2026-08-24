@@ -1,5 +1,6 @@
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { formatDate } from "@/lib/utils";
 import type { ProductStatus, ProductType } from "@/types";
 import type {
   AdminDashboardData,
@@ -757,37 +758,54 @@ const PRODUCT_ISSUE_SPECS: readonly {
  * thing distinguishing one row from another, and a queue where every row had
  * waited the same length would say nothing about whether the design makes a
  * two-month-old registration stand out from this morning's.
+ *
+ * **Both contract standings are present, and the mix is not even.** Two rows
+ * have accepted the terms in force and three have not, because the unsigned
+ * state is the one the row's tint and its confirm dialog are drawn for and a
+ * scene with one of each would only show whether the two are distinguishable —
+ * not whether a column of them is scannable.
  */
 const UNCERTIFIED_GEDU_SPECS: readonly {
   id: string;
   name: string;
   /** When they registered — aged against the pinned clock, never pre-worded. */
   registeredAt: string;
+  /**
+   * When they accepted the version in force, or `null` for the ones who have
+   * not. Never later than the pinned clock: an acceptance dated in the scene's
+   * own future would be a fact the live page could not produce.
+   */
+  acceptedAt: string | null;
 }[] = [
   {
     id: PERSON_IDS.venlaSalminen,
     name: "Venla Salminen",
     registeredAt: "2026-08-15T09:20:00+03:00",
+    acceptedAt: "2026-08-16T18:40:00+03:00",
   },
   {
     id: PERSON_IDS.topiasJarvinen,
     name: "Topias Järvinen",
     registeredAt: "2026-08-12T09:20:00+03:00",
+    acceptedAt: null,
   },
   {
     id: PERSON_IDS.iidaLehtonen,
     name: "Iida Lehtonen",
     registeredAt: "2026-08-08T09:20:00+03:00",
+    acceptedAt: "2026-08-08T11:05:00+03:00",
   },
   {
     id: PERSON_IDS.onniRantanen,
     name: "Onni Rantanen",
     registeredAt: "2026-07-27T09:20:00+03:00",
+    acceptedAt: null,
   },
   {
     id: PERSON_IDS.helmiKoskinen,
     name: "Helmi Koskinen",
     registeredAt: "2026-06-17T09:20:00+03:00",
+    acceptedAt: null,
   },
 ];
 
@@ -799,6 +817,15 @@ function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
     // the same pinned instant — so the wait reads in the previewer's own
     // language rather than in whatever language the fixture was typed in.
     registeredAgo: relativeWait(spec.registeredAt, ADMIN_DASHBOARD_NOW, locale),
+    // Formatted the same way and for the same reason, in the one zone this
+    // fixture is both authored and read in.
+    contractAcceptedOn:
+      spec.acceptedAt === null
+        ? null
+        : formatDate(spec.acceptedAt, locale, {
+            dateStyle: "medium",
+            timeZone: ADMIN_DASHBOARD_TIMEZONE,
+          }),
   }));
 }
 

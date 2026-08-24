@@ -34,7 +34,8 @@
       "roblox": "Roblox Game Design Programme",
       "robloxPrivacy": "Roblox Programme Privacy Policy",
       "robloxSafeguarding": "Roblox Programme Child Safeguarding Policy",
-      "robloxTerms": "Roblox Programme Terms & Conditions"
+      "robloxTerms": "Roblox Programme Terms & Conditions",
+      "geduContract": "Gedu contract"
     }
   },
   "notFound": {
@@ -236,6 +237,20 @@
         "label": "Product type key",
         "heading": "Product types"
       }
+    },
+    "geduContract": {
+      "heading": "Gedu contract",
+      "accepted": "Contract accepted",
+      "acceptedDetail": "Version {version}, accepted on {date}",
+      "notAccepted": "Has not accepted the Gedu contract",
+      "notCurrentVersion": "Has not accepted the contract in force ({version})",
+      "previousVersion": "Previously accepted version {version} on {date}.",
+      "queueAccepted": "Contract accepted {date}",
+      "queueNotAccepted": "Contract not accepted",
+      "confirmTitle": "Certify without an accepted contract?",
+      "confirmBody": "Certification does not require an accepted contract, so you can certify them anyway.",
+      "confirmWarning": "This Gedu has not accepted the contract that is in force. Certified, they can be assigned to groups before they have agreed to the terms they work under.",
+      "confirmAction": "Certify anyway"
     },
     "products": {
       "types": {
@@ -1366,6 +1381,41 @@
       "staffHint": "Only Gedus and admins can see this. Families never do.",
       "staffPlaceholder": "Keys, kit, room quirks — what the next Gedu at this site needs to know.",
       "saveFailed": "These site notes didn’t save. Try again."
+    },
+    "contract": {
+      "back": "Back to My SOG",
+      "pageTitle": "Your Gedu contract",
+      "intro": "These are the terms you work under as a Game Educator for School of Gaming. The contract is binding in Finnish, so it is shown exactly as written whatever language you read the rest of the app in.",
+      "acceptLead": "By signing below you confirm that you have read these terms and accept them as they stand. We record which version you accepted, when, and the name you signed under — nothing else.",
+      "acceptCta": "Sign, date and accept",
+      "acceptedTitle": "You have accepted these terms",
+      "dialog": {
+        "title": "Sign and accept",
+        "description": "Put your name and today’s date on the lines below, then accept.",
+        "signatureLabel": "Signature",
+        "signAction": "Click to sign",
+        "dateLabel": "Date",
+        "dateAction": "Click to date",
+        "cancel": "Cancel",
+        "confirm": "Accept the contract",
+        "error": "That didn’t go through. Check your connection and try again."
+      },
+      "notice": {
+        "title": "You haven’t accepted your Gedu contract",
+        "body": "Reading and accepting the terms you work under is mandatory. It takes a couple of minutes.",
+        "action": "Read and accept the contract"
+      },
+      "settings": {
+        "title": "Gedu contract",
+        "description": "The terms you work under as a Game Educator.",
+        "acceptedTitle": "Accepted",
+        "acceptedDetail": "version {version}, accepted on {date}",
+        "notAcceptedTitle": "Not accepted yet",
+        "notAcceptedBody": "You haven’t accepted the contract that is in force. Reading and accepting it is mandatory.",
+        "readAndAccept": "Read and accept",
+        "view": "View the contract"
+      },
+      "acceptedMeta": "Version {version}, accepted on {date}"
     }
   },
   "productType": {
