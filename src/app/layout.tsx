@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import { Press_Start_2P } from "next/font/google";
+import { Dancing_Script, Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
@@ -15,6 +15,18 @@ const pressStart2P = Press_Start_2P({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-press-start-2p",
+});
+
+// The hand-written face a signature renders in. `latin-ext` is not optional:
+// the names it draws are Finnish ones, and without that subset every ä and ö
+// falls back to the body font mid-name.
+const dancingScript = Dancing_Script({
+  weight: "600",
+  subsets: ["latin", "latin-ext"],
+  // The face's own variable; `--font-cursive` in globals.css points at it, the
+  // same indirection `--font-display` uses for Press Start 2P, so a component
+  // asks for "the cursive font" and never for a specific family.
+  variable: "--font-dancing-script",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -88,7 +100,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${pressStart2P.variable} antialiased bg-background text-foreground`}
+        className={`${pressStart2P.variable} ${dancingScript.variable} antialiased bg-background text-foreground`}
       >
         <Providers
           initialUser={userWithProfile?.user ?? null}

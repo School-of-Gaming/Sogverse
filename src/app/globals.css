@@ -182,6 +182,10 @@
      system stack is what every page has ever rendered. The OG image fetches
      Inter independently and still uses it.) */
   --font-display: var(--font-press-start-2p);
+  /* Handwriting, for a signature and nothing else — a name typed into a
+     signing field, rendered the way it would be signed. Not a body or display
+     face: anything longer than a name in it is unreadable. */
+  --font-cursive: var(--font-dancing-script);
 }
 
 * {
