@@ -309,6 +309,7 @@
         "empty": "{plural} pagh. {label} chu’ yIchu’.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
+        "online": "HeHDaq",
         "unlisted": "tetlhDaq pagh",
         "untitled": "(pong pagh)",
         "missingGeduFee": "Gedu Huch Hutlh",
@@ -345,6 +346,7 @@
           "external_contract": "DIvI’ qaSpu’qa’ (veng)"
         },
         "fields": {
+          "publicUrl": "Hoch He",
           "topic": "Doch",
           "materialUrl": "ghojmoHmeH De’",
           "startDate": "tagh jaj",
@@ -363,7 +365,9 @@
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
           "visibility": "leghlu"
-        }
+        },
+        "copyLink": "Hoch He yIghItlhqa'",
+        "copied": "ghItlhqa'lu'ta'"
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
@@ -709,9 +713,11 @@
         "searchGedu": "Gedu yISam…",
         "searchMunicipality": "veng yISam…",
         "noResults": "pagh SammoHlu’.",
+        "search": "pong lo'taHvIS ngoQ nej",
+        "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
-        "clear": "wIvmey yIteq",
-        "noMatches": "wIvpu’bogh DaqmeyvaD pagh {plural} tu’lu’."
+        "clear": "yIteq",
+        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!"
       },
       "geduPicker": {
         "searchPlaceholder": "pong, qoj ’ehmaH yInej…",

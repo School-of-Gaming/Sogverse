@@ -261,6 +261,7 @@
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
+        "online": "En ligne",
         "unlisted": "hors catalogue",
         "untitled": "(sans titre)",
         "missingGeduFee": "Rémunération Gedu manquante",
@@ -297,6 +298,7 @@
           "external_contract": "Contrat externe (commune)"
         },
         "fields": {
+          "publicUrl": "Lien public",
           "topic": "Thème",
           "materialUrl": "Matériel pédagogique",
           "startDate": "Date de début",
@@ -315,7 +317,9 @@
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
           "visibility": "Visibilité"
-        }
+        },
+        "copyLink": "Copier le lien public",
+        "copied": "Copié"
       },
       "editPage": {
         "back": "Retour au produit",
@@ -661,9 +665,11 @@
         "searchGedu": "Rechercher des Gedus…",
         "searchMunicipality": "Rechercher des communes…",
         "noResults": "Aucun résultat.",
+        "search": "Rechercher un produit par son nom",
+        "searchPlaceholder": "Rechercher par nom…",
         "showing": "Affichage de {count} sur {total}",
-        "clear": "Effacer les filtres",
-        "noMatches": "Pas de {plural} correspondant aux filtres sélectionnés."
+        "clear": "Effacer",
+        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés."
       },
       "geduPicker": {
         "searchPlaceholder": "Rechercher un nom ou un e-mail…",

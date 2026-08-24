@@ -261,6 +261,7 @@
         "empty": "No {plural} yet. Click New {label} to create one.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
+        "online": "Online",
         "unlisted": "unlisted",
         "untitled": "(untitled)",
         "missingGeduFee": "Gedu fee missing",
@@ -297,6 +298,7 @@
           "external_contract": "External contract (municipality)"
         },
         "fields": {
+          "publicUrl": "Public link",
           "topic": "Topic",
           "materialUrl": "Lesson material",
           "startDate": "Start date",
@@ -315,7 +317,9 @@
           "tag": "Designed for",
           "regionLock": "Region lock",
           "visibility": "Visibility"
-        }
+        },
+        "copyLink": "Copy public link",
+        "copied": "Copied"
       },
       "editPage": {
         "back": "Back to product",
@@ -661,9 +665,11 @@
         "searchGedu": "Search Gedus…",
         "searchMunicipality": "Search municipalities…",
         "noResults": "No matches.",
+        "search": "Search products by name",
+        "searchPlaceholder": "Search by name…",
         "showing": "Showing {count} of {total}",
-        "clear": "Clear filters",
-        "noMatches": "No {plural} match the selected filters."
+        "clear": "Clear",
+        "noMatches": "No {plural} match the current search and filters."
       },
       "geduPicker": {
         "searchPlaceholder": "Search name or email…",

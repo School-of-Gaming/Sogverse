@@ -261,6 +261,7 @@
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
+        "online": "Etänä",
         "unlisted": "ei listattu",
         "untitled": "(nimetön)",
         "missingGeduFee": "Gedun palkkio puuttuu",
@@ -297,6 +298,7 @@
           "external_contract": "Ulkoinen sopimus (kunta)"
         },
         "fields": {
+          "publicUrl": "Julkinen linkki",
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
           "startDate": "Alkamispäivä",
@@ -315,7 +317,9 @@
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
           "visibility": "Näkyvyys"
-        }
+        },
+        "copyLink": "Kopioi julkinen linkki",
+        "copied": "Kopioitu"
       },
       "editPage": {
         "back": "Takaisin tuotteeseen",
@@ -661,9 +665,11 @@
         "searchGedu": "Hae Geduja…",
         "searchMunicipality": "Hae kuntia…",
         "noResults": "Ei osumia.",
+        "search": "Hae tuotteita nimellä",
+        "searchPlaceholder": "Hae nimellä…",
         "showing": "Näytetään {count} / {total}",
-        "clear": "Tyhjennä suodattimet",
-        "noMatches": "{plural} eivät vastaa valittuja suodattimia."
+        "clear": "Tyhjennä",
+        "noMatches": "{plural} eivät vastaa hakua ja valittuja suodattimia."
       },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",

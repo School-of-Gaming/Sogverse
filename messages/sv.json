@@ -261,6 +261,7 @@
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
+        "online": "På distans",
         "unlisted": "olistad",
         "untitled": "(utan titel)",
         "missingGeduFee": "Gedu-arvode saknas",
@@ -297,6 +298,7 @@
           "external_contract": "Externt avtal (kommun)"
         },
         "fields": {
+          "publicUrl": "Publik länk",
           "topic": "Ämne",
           "materialUrl": "Lektionsmaterial",
           "startDate": "Startdatum",
@@ -315,7 +317,9 @@
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
           "visibility": "Synlighet"
-        }
+        },
+        "copyLink": "Kopiera den publika länken",
+        "copied": "Kopierad"
       },
       "editPage": {
         "back": "Tillbaka till produkten",
@@ -661,9 +665,11 @@
         "searchGedu": "Sök Geduer…",
         "searchMunicipality": "Sök kommuner…",
         "noResults": "Inga träffar.",
+        "search": "Sök produkter på namn",
+        "searchPlaceholder": "Sök på namn…",
         "showing": "Visar {count} av {total}",
-        "clear": "Rensa filter",
-        "noMatches": "Inga {plural} matchar de valda filtren."
+        "clear": "Rensa",
+        "noMatches": "Inga {plural} matchar sökningen och de valda filtren."
       },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",
