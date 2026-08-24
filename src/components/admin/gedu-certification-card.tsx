@@ -37,7 +37,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CertifyWithoutContractDialog } from "@/components/admin/certify-without-contract-dialog";
 import { GEDU_CONTRACT_CURRENT_VERSION } from "@/components/gedu/contract/documents";
 import {
   useGeduContractAcceptances,
@@ -247,20 +247,13 @@ export function GeduCertificationCard({
       </CardContent>
 
       {/* Asked only on the way *in* to certification, and only of an educator
-          who has not signed the terms in force. `ConfirmDialog` runs `onConfirm`
+          who has not signed the terms in force. The dialog runs `onConfirm`
           and then closes itself, so `committing` is set in the same tick the
           dialog goes away and the button underneath is disabled by the time it
           is reachable again. */}
-      <ConfirmDialog
+      <CertifyWithoutContractDialog
         open={confirming}
         onOpenChange={setConfirming}
-        title={ct("confirmTitle")}
-        description={ct("confirmBody")}
-        confirmLabel={ct("confirmAction")}
-        // Not destructive: certifying an unsigned educator is a supported
-        // outcome the admin is being asked to register, not damage they are
-        // being warned off. A red button would say the opposite of the copy.
-        confirmVariant="default"
         onConfirm={() => certify(true)}
       />
     </Card>

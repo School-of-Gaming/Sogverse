@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { GeduContractPageBody } from "@/components/gedu/contract/gedu-contract-page-body";
 import { getGeduContractDocument, GEDU_CONTRACT_CURRENT_VERSION } from "@/components/gedu/contract/documents";
+import type { GeduContractDocument } from "@/components/gedu/contract/contract-document";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";
 
@@ -26,8 +27,12 @@ import type { GeduContractAcceptance } from "@/types";
 
 const NOW = new Date("2026-08-24T12:00:00Z");
 
-const contract = getGeduContractDocument(GEDU_CONTRACT_CURRENT_VERSION, "fi");
-if (contract === undefined) throw new Error("current contract document missing");
+const maybeContract = getGeduContractDocument(GEDU_CONTRACT_CURRENT_VERSION, "fi");
+if (maybeContract === undefined)
+  throw new Error("current contract document missing");
+// Rebound where the narrowing holds: TS does not carry module-level control
+// flow into the render closure below, but an assignment here does.
+const contract: GeduContractDocument = maybeContract;
 
 const ACCEPTANCE: GeduContractAcceptance = {
   gedu_id: "b3e2f1d0-0000-4000-8000-000000000001",

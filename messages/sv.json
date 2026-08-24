@@ -248,7 +248,8 @@
       "queueAccepted": "Avtalet godkänt {date}",
       "queueNotAccepted": "Avtalet inte godkänt",
       "confirmTitle": "Certifiera utan godkänt avtal?",
-      "confirmBody": "Den här Gedun har inte godkänt det gällande avtalet. Certifieringen kräver inget godkänt avtal, så du kan certifiera hen ändå — men hen kan då tilldelas grupper innan hen har godkänt villkoren hen arbetar under.",
+      "confirmBody": "Certifieringen kräver inget godkänt avtal, så du kan certifiera hen ändå.",
+      "confirmWarning": "Den här Gedun har inte godkänt det gällande avtalet. Som certifierad kan hen tilldelas grupper innan hen har godkänt villkoren hen arbetar under.",
       "confirmAction": "Certifiera ändå"
     },
     "products": {
