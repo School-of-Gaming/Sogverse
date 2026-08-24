@@ -138,17 +138,31 @@ export function GeduContractPageBody({
                   }),
                 })}
               </p>
+              {/* The reader who just signed is at the foot of a long document;
+                  the way back belongs where the errand ended, not only at the
+                  top of the page they'd have to scroll to. Same key as the top
+                  link — one phrase, one destination. */}
+              <Link
+                href={ROUTES.gedu.dashboard}
+                className="inline-flex items-center gap-1.5 pt-1 text-sm font-medium transition-colors hover:text-success"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t("back")}
+              </Link>
             </CardContent>
           </Card>
         )}
       </div>
 
       {/* Only while open, so every opening starts from an unsigned line — and
-          from a clean failure flag, which the host clears as this opens. On the
-          success path the acceptance lands, the panel above swaps to the record
-          card and this unmounts with it — which is why the committing flag is
-          never cleared on success. */}
-      {signing && (
+          from a clean failure flag, which the host clears as this opens. The
+          `acceptance === null` half is the success path's close: the write
+          lands, the refetched row arrives, and the ceremony unmounts over the
+          record card it produced. `signing` alone cannot do that — it is this
+          component's own state and no success handler reaches it — which is
+          also why the committing flag is never cleared on success: the unmount
+          is what retires it. */}
+      {signing && acceptance === null && (
         <GeduContractSigningDialog
           signerName={signerName}
           committing={committing}
