@@ -15,6 +15,112 @@ interface LayoutOptions {
 const HERO_GRADIENT = `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 70%), linear-gradient(to right, ${GRADIENT.primaryGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.secondaryGlow})`;
 
 /**
+ * The brand mark above the lockup — the one image in any mail this codebase
+ * sends, and it is built so that a reader who never sees it loses nothing.
+ *
+ * **It supplements the text header; it does not replace it.** The lockup below
+ * it still names both the brand and the platform, so the mail that arrives with
+ * images blocked — the default in a good share of inboxes, and the one a reader
+ * has already chosen when it happens — is exactly the mail we sent before this
+ * existed: complete, headed, branded, with no hole where something was supposed
+ * to be. That ordering is the whole design. An image carrying the header on its
+ * own would make every blocked-image render a broken one, which is the failure
+ * mode that made every company mail with a red X in the corner look cheap.
+ *
+ * **A hosted PNG, and none of the three alternatives.** Clients do not render
+ * SVG; Gmail strips `data:` URIs out of `src`; a CID attachment turns every mail
+ * into a multipart one with a paperclip on it and costs deliverability. A URL to
+ * a file this app already serves is the only form that reaches all of them.
+ *
+ * The file is **2× the size it is displayed at** (248×136 for a 124×68 box), so
+ * a retina reader gets a sharp mark and everyone else gets a downscale. It is
+ * regenerated from the brand SVG — no hand-editing the PNG — with:
+ *
+ *     node -e "require('sharp')('src/assets/brand/sog-logo-simple.svg',{density:600})\
+ *       .resize({width:248}).png({compressionLevel:9})\
+ *       .toFile('public/email/sog-logo-simple.png')"
+ *
+ * `sog-logo-simple` rather than the full lockup mark because this is small: the
+ * badge holds its shape at 124px wide where a wordmark would turn to mush. The
+ * PNG keeps its alpha, so the transparent ground around the badge shows the
+ * hero gradient rather than a rectangle cut out of it — and the badge itself is
+ * opaque, so the mark still reads if a client drops our background entirely.
+ */
+export const BRAND_MARK = {
+  path: "/email/sog-logo-simple.png",
+  /** Display size. The file is twice this in each dimension. */
+  width: 124,
+  height: 68,
+} as const;
+
+/**
+ * The mark's absolute URL, or `null` when we cannot build one.
+ *
+ * **The origin is the canonical `NEXT_PUBLIC_SITE_URL` rather than a per-request
+ * one**, and that is a deliberate departure from how a *link* in a mail gets its
+ * origin. A link is resolved from the incoming request through `getOrigin()`
+ * because it has to land the reader back where they came from, and because the
+ * `Host` it is derived from is attacker-controllable — which is why that helper
+ * exists and why it falls back to this same value the moment the header is not
+ * one it trusts. An image src needs neither half of that: it carries no token,
+ * it is not somewhere a reader is being sent, and a builder here never sees a
+ * request in the first place (they take composed URLs as params, by rule). What
+ * is left is the requirement that staging mail point at staging and production
+ * mail at production, and the canonical per-environment URL is precisely that
+ * value — the one `getOrigin` itself treats as the safe answer.
+ *
+ * **No origin, no image, no broken `src`.** An unset or malformed env yields the
+ * text-only header rather than an `undefined/email/…` that resolves to nothing
+ * and paints the exact broken box this feature exists to avoid. It is the same
+ * degradation as a blocked image, one level up, and it is why unit tests that do
+ * not stub the env still render — and still assert — the header as it has always
+ * been.
+ */
+function brandMarkSrc(): string | null {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) return null;
+  try {
+    return new URL(BRAND_MARK.path, siteUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The mark's row, or nothing at all.
+ *
+ * Everything on the `<img>` is there for the render where the file does not
+ * arrive. `width`/`height` as attributes *and* in the inline style hold the box
+ * open, so nothing below it shifts when the image loads or fails to. `alt` is
+ * **empty on purpose**: the real text lockup sits directly beneath this image,
+ * so the mark is decorative — a blocked render shows exactly the pre-mark
+ * header with no stray repeated name, and a screen reader is not told
+ * "School of Gaming" twice in a row. `border:0` and
+ * `text-decoration:none` kill the frame and underline Outlook and Gmail
+ * respectively draw around a missing image, and `display:block` kills the
+ * baseline gap under it that would otherwise show as a seam.
+ */
+function brandMarkRow(): string {
+  const src = brandMarkSrc();
+  if (!src) return "";
+  const style = [
+    "display:block",
+    "margin:0 auto",
+    `width:${BRAND_MARK.width}px`,
+    `height:${BRAND_MARK.height}px`,
+    "border:0",
+    "outline:none",
+    "text-decoration:none",
+  ].join(";");
+  return `<tr>
+            <td align="center" style="padding-bottom:12px;">
+              <img src="${src}" width="${BRAND_MARK.width}" height="${BRAND_MARK.height}" alt="" style="${style};" />
+            </td>
+          </tr>
+          `;
+}
+
+/**
  * Wraps email content in a branded dark-theme layout.
  * Table-based with all inline CSS for email client compatibility.
  *
@@ -89,7 +195,12 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-          <!-- Lockup: brand first, platform second, spaced en dash between them.
+          <!-- The brand mark, above the lockup and never instead of it. Its row
+               is absent entirely when no origin can be built, so this header
+               has exactly two shapes: mark-over-lockup, and the lockup alone
+               that every mail carried before the mark existed. See BRAND_MARK
+               and brandMarkRow() for why an image here is allowed to vanish. -->
+          ${brandMarkRow()}<!-- Lockup: brand first, platform second, spaced en dash between them.
                "brand-primary" is what puts the brand half through the Gmail
                background-clip rule above — this header is one of the two places
                brand color still survives Gmail's dark-theme rewriting (the other
