@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { Header, type HeaderLogoTreatment } from "@/components/layout/header";
 import { AuthContext } from "@/providers/auth-provider";
 import type { AuthenticatedUser, Profile } from "@/types";
+import type { LogoGlowScenario } from "./logo-glow-scenarios";
 
 /**
  * **TEMP: logo-glow exploration — strip before merge.**
@@ -33,15 +34,6 @@ import type { AuthenticatedUser, Profile } from "@/types";
  * The whole file is temporary. So is the `preview` prop on `Header`, the
  * treatment table beside it, and the `AuthContext` export this leans on.
  */
-
-/** TEMP: logo-glow exploration — strip before merge. */
-export const LOGO_GLOW_SCENARIOS = ["signed-out", "parent"] as const;
-export type LogoGlowScenario = (typeof LOGO_GLOW_SCENARIOS)[number];
-
-/** TEMP: logo-glow exploration — strip before merge. */
-export function isLogoGlowScenario(value: string): value is LogoGlowScenario {
-  return (LOGO_GLOW_SCENARIOS as readonly string[]).includes(value);
-}
 
 /**
  * A real generated UUID, hardcoded — the header's identicon derives its pattern

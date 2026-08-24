@@ -20,11 +20,9 @@ import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
-// TEMP: logo-glow exploration — strip before merge.
-import {
-  LogoGlowScene,
-  isLogoGlowScenario,
-} from "./scenes/logo-glow-scene";
+// TEMP: logo-glow exploration — strip before merge (both imports).
+import { LogoGlowScene } from "./scenes/logo-glow-scene";
+import { isLogoGlowScenario } from "./scenes/logo-glow-scenarios";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
