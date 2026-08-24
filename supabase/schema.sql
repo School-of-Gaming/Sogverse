@@ -843,15 +843,17 @@ BEGIN
   -- The same two-part gate every write on this surface opens with: the role
   -- first, then the assignment. Guard-first is what the authorization spine
   -- reads, and the assignment half is what makes a NULL group a refusal rather
-  -- than a lookup.
-  PERFORM public.assert_role('gedu');
+  -- than a lookup — for a gedu. An admin passes the second half by role.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
-  IF NOT public.gedu_teaches_group(p_group_id) THEN
+  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  -- FOR UPDATE is the whole of the concurrency argument. Two gedus (or one
-  -- gedu with two tabs) serialize here; the second reads the marker the first
+  -- FOR UPDATE is the whole of the concurrency argument. Two writers (or one
+  -- writer with two tabs) serialize here; the second reads the marker the first
   -- committed and is refused below rather than claiming a second time.
   SELECT * INTO v_row
     FROM public.group_sessions s
@@ -905,7 +907,7 @@ $$;
 -- Name: FUNCTION claim_group_session_report_email(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Gedu-gated on the group assignment, exactly as the session-notes writer is. Takes the row''s lock, then refuses with SQLSTATE P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller teaches the group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed.';
+COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Open to an ADMIN or to the gedu assigned to the group (00200), exactly as the session-notes writer is. Takes the row''s lock, then refuses with SQLSTATE P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set — both bind an admin identically; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller may send for this group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed.';
 
 
 --
@@ -1938,6 +1940,154 @@ $$;
 --
 
 COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+
+
+--
+-- Name: get_admin_product_sessions(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_admin_product_sessions(p_product_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product jsonb;
+  v_site    jsonb;
+  v_groups  jsonb;
+BEGIN
+  PERFORM public.assert_admin();
+
+  IF NOT EXISTS (SELECT 1 FROM public.products p WHERE p.id = p_product_id) THEN
+    RAISE EXCEPTION 'Product not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- The schedule parameters and nothing else. The page already holds the
+  -- product row from the admin product read; what it cannot get from there is
+  -- the slot list in the shape the client's calendar walk takes, which is why
+  -- these four fields travel and the rest do not.
+  SELECT jsonb_build_object(
+    'id',         p.id,
+    'timezone',   p.timezone,
+    'start_date', p.start_date,
+    'end_date',   p.end_date,
+    'is_remote',  p.is_remote,
+    'schedule_slots', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'weekday',          ss.weekday,
+               'start_time',       to_char(ss.start_time, 'HH24:MI:SS'),
+               'duration_minutes', ss.duration_minutes
+             ) ORDER BY ss.weekday, ss.start_time)
+        FROM public.schedule_slots ss WHERE ss.product_id = p.id
+    ), '[]'::jsonb)
+  )
+  INTO v_product
+  FROM public.products p
+  WHERE p.id = p_product_id;
+
+  -- The venue, on in-person products only — the same test
+  -- `get_gedu_group_feed` makes, and for the same reason: a remote municipality
+  -- club carries a location_id (a municipality, by CHECK), so "has a location"
+  -- would put a door code and a caretaker's name on a club with no building.
+  SELECT jsonb_build_object(
+    'location_id', l.id,
+    'name',        l.name,
+    'address',     sd.address,
+    'public_note', sd.notes,
+    'gedu_note',   ssd.notes
+  )
+  INTO v_site
+  FROM public.products p
+  JOIN public.locations l ON l.id = p.location_id
+  LEFT JOIN public.site_details sd        ON sd.location_id  = l.id
+  LEFT JOIN public.site_staff_details ssd ON ssd.location_id = l.id
+  WHERE p.id = p_product_id
+    AND p.is_remote = false;
+
+  -- Ordered by (created_at, id), which is the order the groups panel on the
+  -- same page lists them in. The group selector sits directly above that panel;
+  -- two orders on one page would be a bug the reader has to notice.
+  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'created_at', entry->>'id'), '[]'::jsonb)
+    INTO v_groups
+    FROM (
+      SELECT jsonb_build_object(
+        'id',          g.id,
+        'name',        g.name,
+        'created_at',  g.created_at,
+        'public_note', g.public_note,
+        'gedu_note',   g.gedu_note,
+
+        -- Register-shaped and nothing more: who may be marked, and what to call
+        -- them. See this migration's header for why it is not the group feed's
+        -- roster.
+        'roster', COALESCE((
+          SELECT jsonb_agg(jsonb_build_object(
+                   'participant_id', part.participant_id,
+                   'first_name',     gmp.first_name
+                 ) ORDER BY gmp.first_name)
+            FROM public.participations part
+            JOIN public.profiles gmp ON gmp.id = part.participant_id
+           WHERE part.group_id = g.id
+             AND part.status   = 'active'::public.participation_status
+        ), '[]'::jsonb),
+
+        -- Every stored row for the group, in the SAME shape
+        -- `get_gedu_group_feed` emits — the two are read by one card component
+        -- and must not disagree about what a session is. An orphan the schedule
+        -- no longer projects is history and travels too.
+        'sessions', COALESCE((
+          SELECT jsonb_agg(jsonb_build_object(
+                   'id',                s.id,
+                   'session_date',      s.session_date,
+                   'starts_at',         s.starts_at,
+                   'ends_at',           s.ends_at,
+                   'report',            s.report,
+                   'gedu_note',         s.gedu_note,
+                   'created_at',        s.created_at,
+                   'updated_at',        s.updated_at,
+                   'created_by',        s.created_by,
+                   'updated_by',        s.updated_by,
+                   -- When the report was mailed to the families, NULL until it
+                   -- was. Its audit partner `report_emailed_by` stays off the
+                   -- wire here exactly as it does on the gedu feed.
+                   'report_emailed_at', s.report_emailed_at,
+                   -- The session's LAST EDITOR, not the report's author. An
+                   -- admin who corrects one tick is named here, which is what
+                   -- the chip on the card claims and is true.
+                   'updated_by_first_name', (
+                     SELECT pr.first_name
+                       FROM public.profiles pr
+                      WHERE pr.id = s.updated_by
+                   ),
+                   -- Sparse map keyed by participant id. A roster member absent
+                   -- from it is UNMARKED, which is not 'absent'.
+                   'attendance', COALESCE((
+                     SELECT jsonb_object_agg(a.participant_id, a.status)
+                       FROM public.session_attendance a
+                      WHERE a.session_id = s.id
+                   ), '{}'::jsonb)
+                 ) ORDER BY s.session_date DESC)
+            FROM public.group_sessions s
+           WHERE s.group_id = g.id
+        ), '[]'::jsonb)
+      ) AS entry
+        FROM public.product_groups g
+       WHERE g.product_id = p_product_id
+    ) AS group_rows;
+
+  RETURN jsonb_build_object(
+    'product', v_product,
+    'site',    v_site,
+    'groups',  v_groups
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_admin_product_sessions(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Contains no schedule expansion — the client owns the calendar math, exactly as it does for the gedu feed. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is; the ROSTER deliberately is not — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are.';
 
 
 --
@@ -3922,16 +4072,20 @@ DECLARE
   v_status     text := NULLIF(btrim(COALESCE(p_status, '')), '');
   v_uid        uuid := (SELECT auth.uid());
 BEGIN
-  PERFORM public.assert_role('gedu');
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
-  IF NOT public.gedu_teaches_group(p_group_id) THEN
+  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
   -- Authorize the TARGET as well as the actor: the person must actually be on
   -- this group's roster. Without this, an assigned gedu could aim a mark at any
-  -- profile id in the system. The predicate has never cared who the participant
-  -- is, which is why an adult seat is markable with no branch here.
+  -- profile id in the system. It binds an ADMIN identically — the privilege
+  -- granted above is a gedu's, not a licence to write a record a gedu could
+  -- not. The predicate has never cared who the participant is, which is why an
+  -- adult seat is markable with no branch here.
   IF NOT EXISTS (
     SELECT 1
       FROM public.participations part
@@ -3955,7 +4109,8 @@ BEGIN
   -- The roll-call boundary: marks open the moment the session's scheduled
   -- start passes. A session under way takes attendance — that is when the gedu
   -- can see who is in the room — while a session that has not started cannot,
-  -- because there is nothing yet to have attended.
+  -- because there is nothing yet to have attended. An admin is bound by it too:
+  -- it is a fact about the record, not about who is writing it.
   IF v_starts_at > now() THEN
     RAISE EXCEPTION 'Attendance can only be recorded once the session has started'
       USING ERRCODE = 'check_violation';
@@ -4000,7 +4155,7 @@ $$;
 -- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE participant''s attendance mark for one session. Per-mark so concurrent gedus cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before; authorizes both the calling gedu and the target. The target is whoever holds the seat — a gedu marks an adult present exactly as they mark a child, with no branch for it.';
+COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE participant''s attendance mark for one session. Per-mark so concurrent writers cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before. Open to an ADMIN or to the gedu assigned to the group (00200) — the guard admits either role and only the assignment half of the gate is skipped for an admin. The TARGET check is not: both callers must aim the mark at somebody who actually holds an active seat in the group, and both are refused before the session starts. The target is whoever holds the seat — an adult is marked present exactly as a child is, with no branch for it.';
 
 
 --
@@ -4530,9 +4685,11 @@ CREATE FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_ge
 DECLARE
   v_row public.product_groups;
 BEGIN
-  PERFORM public.assert_role('gedu');
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
-  IF NOT public.gedu_teaches_group(p_group_id) THEN
+  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
@@ -4555,7 +4712,7 @@ $$;
 -- Name: FUNCTION set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text) IS 'Write a group''s standing family-facing and gedu notes. Gedu-gated on the group assignment. Last-write-wins.';
+COMMENT ON FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text) IS 'Write a group''s standing family-facing and gedu notes. Open to an ADMIN or to the gedu assigned to the group (00200) — the guard admits either role and only the assignment half of the gate is skipped for an admin. Last-write-wins.';
 
 
 --
@@ -4571,9 +4728,15 @@ DECLARE
   v_uid        uuid := (SELECT auth.uid());
   v_row        public.group_sessions;
 BEGIN
-  PERFORM public.assert_role('gedu');
+  -- An admin, or a gedu. Written as one guard call rather than a branch around
+  -- one so the authorization spine can read it — see the migration header.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
-  IF NOT public.gedu_teaches_group(p_group_id) THEN
+  -- The assignment half of the gate, which is what an admin is exempt from.
+  -- Everything below it applies to both callers identically.
+  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
@@ -4608,7 +4771,7 @@ $$;
 -- Name: FUNCTION set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) IS 'Write the family-facing report and the gedu note for one session, materializing the row if needed. Gedu-gated on the group assignment. Last-write-wins.';
+COMMENT ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) IS 'Write the family-facing report and the gedu note for one session, materializing the row if needed. Open to an ADMIN or to the gedu assigned to the group (00200): the guard admits either role, and the assignment half of the gate is skipped for an admin only. Everything else is unchanged for both — an unscheduled date is still refused with check_violation, and updated_by is still stamped with the caller, so an admin''s edit is attributed to the admin. Last-write-wins.';
 
 
 --
@@ -4708,9 +4871,13 @@ DECLARE
   v_gedu_note   text;
   v_address     text;
 BEGIN
-  PERFORM public.assert_role('gedu');
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
-  IF NOT EXISTS (
+  -- "You run something at this building" — the site-scoped analogue of the
+  -- assignment check, and the half an admin is exempt from.
+  IF NOT public.is_admin() AND NOT EXISTS (
     SELECT 1
       FROM public.gedu_group_assignments ga
       JOIN public.products p ON p.id = ga.product_id
@@ -4751,7 +4918,7 @@ $$;
 -- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit. Authorized by the caller teaching a group on an in-person product at that site. Last-write-wins on the notes, across products.';
+COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who teaches on an in-person product at that site (00200). Last-write-wins on the notes, across products.';
 
 
 --
@@ -8657,6 +8824,15 @@ GRANT ALL ON FUNCTION public.gedu_teaches_group(p_group_id uuid) TO service_role
 REVOKE ALL ON FUNCTION public.get_admin_dashboard() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_admin_dashboard() TO authenticated;
 GRANT ALL ON FUNCTION public.get_admin_dashboard() TO service_role;
+
+
+--
+-- Name: FUNCTION get_admin_product_sessions(p_product_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) TO service_role;
 
 
 --
