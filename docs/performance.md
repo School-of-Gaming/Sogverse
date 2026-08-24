@@ -159,7 +159,25 @@ The 43-club / 645-seat Helsinki municipal opening, watched live on prod at Small
 
 **Planning rule this establishes: model an opening by its *pre-registered share*, not by its family count.** The same 800 families are a non-event or a tip-over depending entirely on how many arrive holding a session, and that variable is the one we can actually influence — telling families to make an account before the doors open is simultaneously the fairest and the cheapest intervention available. A cohort with no run-up (short notice, no weekend, a school that did not forward the message) is a materially different load shape from this one and must not be planned against these numbers.
 
-> **The watcher's JSONL lands in `scripts/output/`, which is gitignored — so this section is the durable record, not the log.** Re-derive nothing from a file that only exists on one machine; if a future opening needs comparison, capture its numbers here the same way.
+**The minute-by-minute, kept because it cannot be reconstructed.** Prod idled at load 0–1 with 1034–1192 MB free through the 100 minutes before the doors opened (and 0–17 registrations/min of ordinary pre-registration traffic). Then:
+
+| Minute | load1 | mem MB | reg/min | signin/min | seats | waitlist |
+|---|---|---|---|---|---|---|
+| 09:00 | 1.00 | 1075 | 15 | 37 | 127 | 0 |
+| 09:01 | **10.90** | **507** | 34 | 56 | 284 | 29 |
+| 09:02 | 8.82 | 582 | 41 | 40 | 321 | 35 |
+| 09:03 | 4.53 | 550 | 32 | 53 | 351 | 47 |
+| 09:04 | 3.65 | 525 | 31 | 38 | 373 | 50 |
+| 09:05 | 2.39 | 545 | 19 | 20 | 394 | 56 |
+| 09:06 | 2.39 | 545 | 14 | 27 | 405 | 60 |
+| 09:07 | 1.98 | 506 | 16 | 29 | 417 | 62 |
+| 09:08 | 1.86 | 500 | 11 | 15 | 423 | 67 |
+| 09:09 | 1.64 | 512 | 11 | 8 | 432 | 73 |
+| 09:10 | 1.35 | 517 | 10 | 12 | 435 | 78 |
+
+Read the load column against 2 cores: the whole excursion above 2.0 lasted **about six minutes**, and memory never came near exhaustion. Note also that `reg/min` *peaks at 09:02* — a minute after the seat rush — because cold families were still completing signups while the pre-registered had already claimed and left.
+
+> **The watcher's JSONL was gitignored, local to one machine, and has been deleted — this section is the record.** That is deliberate: a raw log nobody can reach is worse than a summary everybody can, because it invites re-derivation that will never happen. A future opening captures its numbers here the same way, and the two are then comparable in one place.
 
 ## Recommended improvements
 
