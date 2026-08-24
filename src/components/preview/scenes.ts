@@ -302,24 +302,31 @@ export const PREVIEW_SCENES = [
       { slug: "active-club", label: "Club — remote, session in progress" },
     ],
   },
-  // TEMP: logo-glow exploration — strip before merge (this whole entry).
+  // TEMP: header-nav exploration — strip before merge (this whole entry).
   {
-    surface: "logo-glow",
-    title: "Header logo — “you are here” treatments",
+    surface: "header-nav",
+    title: "Header nav — the labelled way to My SOG",
     description:
-      "One real header per candidate treatment for the logo's on-its-own-target state, stacked at full width: nothing, two glows, a radial backdrop, and two non-glow rhymes of the nav's active state. Temporary — this scene goes when the treatment is picked.",
+      "Three arrangements of a worded My SOG item against today's header, crossed with three ways of drawing the brand, over five locales and four widths. Temporary — this scene goes when an arrangement is picked and wired for real.",
     chrome: "public",
     scenarios: [
       {
-        slug: "signed-out",
-        label: "Signed-out visitor, home page",
-        description: "The bare strip, where the mark has the left end to itself.",
+        slug: "full-width",
+        label: "Desktop — every option, every brand",
+        description:
+          "Where the design is judged: the arrangements and the three brand treatments at your own width, signed in and out.",
       },
       {
-        slug: "parent",
-        label: "Signed-in parent, My SOG",
+        slug: "phone-widths",
+        label: "320 and 390 px, every locale",
         description:
-          "The busier strip, with a cog and an identicon competing for the same eye.",
+          "Where the fit is judged: whether five locales' words survive a phone, clipped exactly as a phone clips them.",
+      },
+      {
+        slug: "sm-breakpoint",
+        label: "640 and 768 px — the tight desktop band",
+        description:
+          "Where the brand's cost is judged: the desktop layout at the narrowest width it is asked to hold, in the widest locale.",
       },
     ],
   },

@@ -33,7 +33,7 @@ interface AuthContextType {
   unfreezeAuthState: () => void;
 }
 
-// TEMP: logo-glow exploration — strip before merge (back to a module-private
+// TEMP: header-nav exploration — strip before merge (back to a module-private
 // `const AuthContext = ...`). Exported so an admin-only preview scene can wrap
 // the real Header in a fixture auth value and render it as a signed-out visitor
 // or as a parent, neither of whom the admin viewing the scene actually is.
