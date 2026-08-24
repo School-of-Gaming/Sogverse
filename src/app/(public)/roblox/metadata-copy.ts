@@ -21,3 +21,24 @@ export const ROBLOX_OG_TITLE = "SOG x Lynx – Crée ton propre jeu Roblox";
 
 export const ROBLOX_OG_DESCRIPTION =
   "Programme gratuit pour les jeunes, animé par de vrais Game Educators. Par Lynx Educate et School of Gaming, en collaboration avec Roblox.";
+
+/**
+ * The trademark notice Roblox requires on any surface carrying their mark, in
+ * the approved French wording.
+ *
+ * **This must equal `roblox.legal.roblox` in `messages/fr.json`, verbatim.**
+ * The page renders that key; the Open Graph card cannot, because next/og bakes
+ * its text into a PNG at build time with no request and therefore no locale to
+ * translate against. So the card needs a literal, and a literal beside a
+ * message key is a copy that drifts — a re-worded notice landing in the catalog
+ * would leave the card asserting the old one, on the one surface a partner's
+ * legal team is most likely to see. `tests/unit/roblox-og-copy.test.ts` reads
+ * the catalog and fails the build if the two ever disagree.
+ *
+ * Unlike the title and description above, this is not an exception to the
+ * translation rule: the notice *is* translated, five ways, in `messages/`. This
+ * constant only pins the French one, because French is the language the whole
+ * card is set in.
+ */
+export const ROBLOX_TRADEMARK_NOTICE =
+  "© 2024 Roblox Corporation. Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.";

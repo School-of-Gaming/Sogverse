@@ -43,9 +43,17 @@ const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
  * that is genuinely hard to hit. It costs nothing visible — the strip is 64px
  * tall and `items-center` keeps the text on the same baseline it was on — and
  * `px-2` widens the target so two adjacent links stop sharing an edge.
+ *
+ * `whitespace-nowrap` picks the failure mode for the 360px floor. The strip has
+ * single-digit slack there in the widest locale (see the regrouping note below),
+ * so a longer word in some future translation will overrun it — and a link
+ * allowed to wrap absorbs that silently, breaking to two lines inside a 44px box
+ * that then reads as a misaligned smudge nobody reports. Held on one line, the
+ * same overrun is a visible overflow: obvious in the widest-locale check, and
+ * fixed once rather than lived with.
  */
 const NAV_LINK_CLASS =
-  "inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium transition-colors hover:text-primary";
+  "inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-2 text-sm font-medium transition-colors hover:text-primary";
 
 export function Header() {
   const pathname = usePathname();
@@ -90,6 +98,18 @@ export function Header() {
     logoHref === ROUTES.home
       ? isHome
       : pathname === logoHref || pathname.startsWith(logoHref + "/");
+  // What the logo's destination is called — "Dashboard" for the admin, whose
+  // panel is genuinely an admin panel, and "My SOG" for every other role.
+  const dashboardLabel =
+    profile?.role === "admin" ? c("dashboard") : d("pageTitle");
+  // The logo link's accessible name, which has to name where it goes rather
+  // than what it is a picture of. Signed out it goes home and the brand is the
+  // name of that destination; signed in it goes to the role's dashboard, so it
+  // is called what the dashboard is called — the same string the visible word
+  // beside it sets, and the same shape the avatar link's `aria-label` uses.
+  // This is what stops a phone-width signed-in header, where that word is
+  // `hidden`, from announcing a link to the dashboard as "School of Gaming".
+  const logoLabel = logoHref === ROUTES.home ? SENDER_NAME : dashboardLabel;
 
   // Avatar destination:
   //   - while auth is resolving, the slot stays non-interactive (a span);
@@ -172,28 +192,25 @@ export function Header() {
           : "text-muted-foreground group-hover:text-primary",
       )}
     >
-      {profile?.role === "admin" ? c("dashboard") : d("pageTitle")}
+      {dashboardLabel}
     </span>
   );
 
-  // Logo content is shared between the loading (non-clickable span) and
-  // resolved (Link) branches — same className on the wrapper, identical inner
-  // markup, so no layout shift when one swaps for the other.
-  const logoClassName = "group flex shrink-0 items-center";
   const logoBody = (
     // The badge is the one constant: same file, same size in every state, so it
-    // never moves or resizes. It carries the brand name as its `alt` — the
-    // constant rather than a message key, since this is a name and a locale
-    // translates the copy around a name rather than the name itself. The true
-    // viewBox goes in as width/height, which is what lets `w-auto` reserve the
-    // right box before the file lands.
+    // never moves or resizes. Its `alt` is empty because the link around it
+    // carries the accessible name (`logoLabel`) — the badge is not a second
+    // thing to announce, and naming it "School of Gaming" beside a link that
+    // goes to the dashboard would name the picture instead of the destination.
+    // The true viewBox goes in as width/height, which is what lets `w-auto`
+    // reserve the right box before the file lands.
     //
     // `gap-2` costs nothing when nothing is set beside it: a `display: none`
     // (or absent) flex item creates no gap.
     <span className="flex items-center gap-2">
       <Image
         src={sogLogoSimple}
-        alt={SENDER_NAME}
+        alt=""
         width={LOGO_INTRINSIC.width}
         height={LOGO_INTRINSIC.height}
         className="h-9 w-auto sm:h-11"
@@ -206,33 +223,40 @@ export function Header() {
   return (
     <SiteHeaderShell>
       <nav className="container mx-auto flex h-full items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
-        {isLoading ? (
-          // Auth-loading window: hold the logo as inert text so a hurried
-          // click can't fire while logoHref hasn't been resolved yet (it
-          // would default to "/" and misroute a signed-in parent/gamer
-          // away from their dashboard). Same pattern the avatar uses.
-          <span className={logoClassName}>{logoBody}</span>
-        ) : (
-          <Link
-            href={logoHref}
-            className={logoClassName}
-            aria-current={isOnLogoTarget ? "page" : undefined}
-            onClick={() => {
-              // The logo routes every signed-in role to its dashboard — record
-              // which path they chose. Signed-out visitors have no role and
-              // their logo goes home, so nothing fires.
-              if (profile?.role) {
-                trackDashboardNav({
-                  role: profile.role,
-                  method: "logo",
-                  from: pathname,
-                });
-              }
-            }}
-          >
-            {logoBody}
-          </Link>
-        )}
+        {/*
+          Always a link, in every auth state — including while auth is still
+          resolving, which is not a hazard here the way it is for the avatar.
+          `isLoading` is seeded `!initialUser`, so a loading render is by
+          construction one the *server* saw no session on: `user` is null,
+          `logoHref` is necessarily home, and a hurried click goes exactly where
+          the signed-out lockup beside it says it will. There is nothing to
+          protect against, and holding the mark inert cost the two things that
+          matter most on a public page — the logo is dead to the one visitor
+          most likely to click it, and a crawler reading server HTML finds no
+          link home at all. The analytics call is already gated on
+          `profile?.role`, which is null in that window, so it cannot misfire
+          either.
+        */}
+        <Link
+          href={logoHref}
+          className="group flex shrink-0 items-center"
+          aria-label={logoLabel}
+          aria-current={isOnLogoTarget ? "page" : undefined}
+          onClick={() => {
+            // The logo routes every signed-in role to its dashboard — record
+            // which path they chose. Signed-out visitors have no role and
+            // their logo goes home, so nothing fires.
+            if (profile?.role) {
+              trackDashboardNav({
+                role: profile.role,
+                method: "logo",
+                from: pathname,
+              });
+            }
+          }}
+        >
+          {logoBody}
+        </Link>
 
         {/*
           Two groups, not three: the logo, then everything else as one
@@ -244,11 +268,18 @@ export function Header() {
           have slid sideways as that resolved; anchored to the right edge, the
           links and the account cluster cannot move at all.
 
-          Every link carries its own 44px-tall, `px-2` touch target. The group's
-          `-ml-2` hands that outer padding back to the space on the logo's side,
-          which is what keeps the strip's total width exactly what it was before
-          the regrouping — the 360px floor has no room to spare in French. The
-          padding on the *right* is deliberately kept: it separates the last
+          Every link carries its own 44px-tall, `px-2` touch target, and the
+          group's `-ml-2` hands the outermost 8px of that padding back to the
+          space on the logo's side. That does not make the touch targets free,
+          and it would be wrong to say it did: two links at `px-2` add 16px
+          each, `-ml-2` returns 8 of the 32, and the `gap-2` holding this group
+          off the account cluster is fixed — so a phone-width strip is roughly
+          24px wider than it was. The 360px floor still clears in the widest
+          locale, but with single-digit slack, which is what `NAV_LINK_CLASS`'s
+          `whitespace-nowrap` is there for: the next word that does not fit
+          overflows visibly instead of wrapping quietly inside its own box.
+
+          The padding on the *right* is deliberately kept: it separates the last
           link from the cog by the gap plus 8px, so the nav words and the
           account chrome don't read as one run.
         */}

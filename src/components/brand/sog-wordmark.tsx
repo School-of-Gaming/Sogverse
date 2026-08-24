@@ -40,8 +40,9 @@ export function SogWordmark({
       width={Math.round(height * ASPECT_RATIO * 100) / 100}
       height={height}
       fill="currentColor"
-      // The badge beside this carries the brand name as its `alt`, so a screen
-      // reader announcing it twice inside one link would be noise.
+      // The link this sits inside carries the brand name as its `aria-label`
+      // (the badge beside it is decorative, with an empty `alt`), so a screen
+      // reader announcing the name twice inside one link would be noise.
       aria-hidden
       focusable="false"
       className={className}

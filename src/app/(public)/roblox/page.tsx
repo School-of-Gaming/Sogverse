@@ -35,11 +35,29 @@ export function generateMetadata(): Metadata {
     // drift from the tab.
     title: { absolute: ROBLOX_OG_TITLE },
     description: ROBLOX_OG_DESCRIPTION,
+    // `type` and `siteName` are restated, not inherited, and `card` with them:
+    // Next *assigns* a child's `openGraph` and `twitter` blocks over the
+    // parent's rather than merging them, so declaring either block at all
+    // discards every key the root set. Omitting these three would silently drop
+    // `og:type`, `og:site_name` and `twitter:card` from exactly the page that
+    // exists to be shared by URL. They are verbatim copies of the root layout's
+    // values, not a second decision — the repetition is what Next's merge
+    // costs, so keep them in step. The same restatement is documented at length
+    // in `src/lib/products/product-metadata.ts`.
+    //
+    // **No `images` in either block** — deliberately absent rather than
+    // `undefined`. The file-based `opengraph-image.tsx` next door is only merged
+    // in when the child's `openGraph` has no own `images` property, and
+    // `{ images: undefined }` has one; spelling it out would leave this page
+    // with no card image whatsoever.
     openGraph: {
+      type: "website",
+      siteName: "School of Gaming",
       title: ROBLOX_OG_TITLE,
       description: ROBLOX_OG_DESCRIPTION,
     },
     twitter: {
+      card: "summary_large_image",
       title: ROBLOX_OG_TITLE,
       description: ROBLOX_OG_DESCRIPTION,
     },

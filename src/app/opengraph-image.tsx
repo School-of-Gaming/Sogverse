@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { DARK_THEME, BRAND, GRADIENT } from "@/lib/constants/colors";
 import { BRAND_LOCKUP } from "@/lib/constants";
 import { SogMark } from "@/components/og/marks";
+import { interFonts } from "@/components/og/fonts";
 
 export const alt = BRAND_LOCKUP;
 export const size = { width: 1200, height: 630 };
@@ -25,14 +26,7 @@ export const contentType = "image/png";
  * number, because the click has to still be worth having once they arrive.
  */
 export default async function Image() {
-  const [interRegular, interSemiBold] = await Promise.all([
-    fetch(
-      "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.ttf"
-    ).then((res) => res.arrayBuffer()),
-    fetch(
-      "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuGKYMZg.ttf"
-    ).then((res) => res.arrayBuffer()),
-  ]);
+  const fonts = await interFonts();
 
   return new ImageResponse(
     (
@@ -88,22 +82,6 @@ export default async function Image() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        {
-          name: "Inter",
-          data: interSemiBold,
-          style: "normal",
-          weight: 600,
-        },
-        {
-          name: "Inter",
-          data: interRegular,
-          style: "normal",
-          weight: 400,
-        },
-      ],
-    }
+    { ...size, fonts }
   );
 }
