@@ -4,7 +4,7 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 
 ## Architecture
 
-- **`layout.ts`** — `wrapInLayout({ title, content, locale, t })`: the branded dark-theme HTML shell every email uses. Table-based, inline CSS. `content` is your inner HTML.
+- **`layout.ts`** — `wrapInLayout({ title, content, locale, t })`: the branded dark-theme HTML shell every email uses. Table-based, inline CSS. `content` is your inner HTML. It is also the only file that emits an image — the header's brand mark, above the lockup and never instead of it (see "The one image" below).
 - **`utils.ts`** — building blocks every template uses: `escapeHtml()`, `paragraph()`, `heading()`, `styledName()`, `styledProductName()`. Use these instead of hand-writing styled markup.
 - **`blocks.ts`** — the blocks only a mail that sends the reader somewhere needs: `ctaButton()` (`primary` brand orange, `secondary` brand purple, `outline` bordered), `ctaButtonRow()` (two non-primary buttons side by side in a fixed 50/50 split, compact padding so both fit a mobile-width cell), `inlineLink()`, `bulletList()`, `sectionLabel()`. Every `href` they take is embedded unescaped, so they take app-generated URLs and nothing else. A mail with two buttons has one action it is actually asking for — that one is primary, the other outlined.
 - **`markdown.ts`** — `renderMarkdownForEmail(markdown)`: stored markdown (a gedu's session report) to an inline-styled HTML fragment. It parses with the same parser the in-app `Markdown` component uses and emits exactly that component's `feed` subset — paragraphs, three heading levels, bold, italic, lists, line breaks — with everything else unwrapped to its text; a unit test holds the two element lists equal. Links render as their label only (the no-links rule for staff-authored, family-read copy is the field's, not the surface's) and address-shaped text gets a zero-width word joiner after each dot, because a mail client linkifies `evil.example/x` where a browser does not; every text node is escaped, and it is a string walker rather than a React render because the registry it sits behind is imported by a client page.
@@ -84,6 +84,24 @@ When a template should be testable from `/admin/testing` and sendable via the te
 
 Templates that are *not* exposed to the testing UI (currently the PIN-reset email) just export a builder and are sent directly from their API route — they don't need a registry entry.
 
+## The one image, and why it is allowed to vanish
+
+**Rule: the brand mark in the header supplements the text lockup and never replaces it.** The shell emits one image — the SOG badge, above the lockup — and the mail that arrives with it missing is the mail this directory sent before it existed: complete, headed, branded, with no hole where something was meant to be. Images are off by default in a large share of inboxes, so the blocked render is not an edge case, it is a normal one; a header carried *by* a picture makes every one of those renders look broken, which is how a company's mail ends up with a red X where its name should be. The badge is the right art for that job precisely because it duplicates nothing: it is the gem and the monogram, with no "School of Gaming" in the drawing to sit above the same words in the lockup. Its `alt` is empty for the same reason — the lockup right beneath it is the accessible name, so the blocked render carries no stray repeated word and a screen reader hears the name once.
+
+**It is a hosted PNG, and the three alternatives are all wrong here.** Clients do not render SVG; Gmail strips `data:` URIs out of `src`; a CID attachment makes every mail multipart, hangs a paperclip on it and costs deliverability. A URL to a file the app already serves out of `public/` is the only form that reaches all of them. The file is 2× its display box so a retina reader gets a sharp mark, it keeps its alpha so the hero gradient shows through the badge's transparent corners, and it is **regenerated from the brand SVG with sharp, never hand-edited** — the command is in `layout.ts`'s doc comment beside the constant, and it reproduces the committed file byte for byte.
+
+**Its origin is the canonical `NEXT_PUBLIC_SITE_URL`, which is a deliberate departure from how a *link* gets one.** A link in a mail is resolved from the incoming request through `getOrigin()`, because it has to land the reader back where they came from and because the `Host` behind it is attacker-controllable. An image `src` needs neither half of that: it carries no token, it is not somewhere a reader is being sent, and a builder here never sees a request in the first place — by rule, they take composed URLs as params. What is left is the requirement that staging mail point at staging and production mail at production, and the per-environment canonical URL is exactly that value; it is also what `getOrigin` itself falls back to. The `NEXT_PUBLIC_` prefix is load-bearing rather than incidental: this module is reachable from a client page through the registry, so a server-only var would be `undefined` in that bundle.
+
+**No origin, no image — never a half-built `src`.** An unset or malformed env yields the text-only header rather than an `undefined/email/…` that resolves to nothing and paints the broken box the whole design exists to avoid. That is the same degradation as a blocked image, one level up.
+
+## The sender's inbox avatar lives in Google, and it mirrors the favicon by hand
+
+The avatar Gmail shows beside our mail is not anything in this repo: it is the Google Workspace profile photo of the `sogverse@sog.gg` account (a real, licensed Workspace user since 2026-08-24 — created for exactly this). The photo is the favicon's gem-square art, re-rendered circle-safe: a 512px square on the app's dark ground with the art at ~72%, because Gmail crops avatars to a circle and the raw favicon would lose the squircle's left and right points to it. The org-managed "visible to people you interact with" setting proved sufficient for external recipients — no per-user visibility unlock was needed, and Brevo's sending is unrelated to the mailbox (it authenticates via DNS).
+
+**Rule: the Workspace photo and the gem-square favicon are one mark and must be kept in parity by hand.** The photo lives in Google Admin, outside this repo, so no test can catch it drifting: any change to the gem-square art (`src/assets/brand/`, mirrored byte-for-byte by the app's icon file) is not done until the Workspace profile photo is re-rendered and re-uploaded in the same piece of work — circle-safe, per the shape above.
+
+**The asset and the markup are one decision, and `layout.test.ts` is where they are held together.** A file served straight from `public/` is invisible to the build, so nothing else would notice it going missing, being regenerated at the wrong size, or losing its transparency. The same file asserts the property that matters most and cannot be seen by reading the markup: lift the image's row out of a rendered mail and what remains is byte-for-byte the mail sent without one.
+
 ## Layout gotchas (Gmail Android)
 
 `layout.ts` carries a few non-obvious workarounds. Preserve them when editing the shell:
@@ -146,6 +164,13 @@ a mail is a property of what leaves the building.
   carries its own foreground; every colour is in the palette; every corner is in `RADIUS`;
   and every `background-clip:text` pin is on a colour **verified by screenshot**, listed
   with its evidence and date.
+- **`tests/unit/email-templates/layout.test.ts`** — the shell itself: the header's two
+  invariants, which no per-template test can see. That the lockup's two coloured spans
+  still read as `BRAND_LOCKUP` exactly, and that the brand mark is additive — the image
+  row lifted back out leaves the mail that was sent before it existed, the box is held
+  open by attributes a client honours before it has fetched anything, and no origin
+  yields no image rather than a broken one. It also reads the PNG off disk, because a
+  file served out of `public/` is invisible to every other check we have.
 - **The completeness pair.** The suite discovers builders through `import.meta.glob`
   rather than naming them, and fails both ways: a builder nothing renders, and an entry
   whose builder is gone. This is the keystone — the bug lived in the file nothing

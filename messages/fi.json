@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattitaitoisten pelikasvattajien johdolla.",
-    "shortDescription": "School of Gaming – Kun ruutuajasta tulee laatuaikaa",
     "pages": {
       "signIn": "Kirjaudu sisään",
       "createAccount": "Luo tili",
@@ -68,6 +67,8 @@
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
+    "goToMySog": "Avaa Oma SOG",
+    "goToDashboard": "Avaa hallintapaneeli",
     "viewDetails": "Näytä tiedot",
     "learnMore": "Lue lisää",
     "exploreClubs": "Tutustu kerhoihin",
@@ -898,8 +899,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Tervetuloa Sogverseen",
-      "description": "Kirjaudu tilillesi",
+      "welcomeTitle": "Tervetuloa School of Gamingiin",
       "noAccountSignUp": "Eikö sinulla ole tiliä? <link>Rekisteröidy</link>",
       "signingIn": "Kirjaudutaan...",
       "emailPlaceholder": "sinä@example.com",
@@ -956,7 +956,7 @@
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
     "registerGedu": {
-      "title": "Luo Sogverse-pelikasvattajatilisi",
+      "title": "Luo School of Gaming -pelikasvattajatilisi",
       "certificationAlertTitle": "Tilisi on hyväksyttävä",
       "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
@@ -1414,11 +1414,16 @@
   },
   "help": {
     "title": "Apu",
-    "intro": "Vastauksia yleisimpiin Sogversea koskeviin kysymyksiin.",
+    "intro": "Vastauksia yleisimpiin School of Gamingia koskeviin kysymyksiin.",
     "contact": {
       "heading": "Tarvitsetko apua?",
-      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin Sogversen toimintaan liittyvissä kysymyksissä.",
+      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin School of Gamingin toimintaan liittyvissä kysymyksissä.",
       "emailLabel": "Sähköpostimme"
+    },
+    "about": {
+      "heading": "Mikä School of Gaming on?",
+      "body": "Tutustu kerhojen takana oleviin ihmisiin, lue ajatuksemme pelaamisesta ja oppimisesta sekä katso, miten tapaaminen käytännössä sujuu.",
+      "linkLabel": "Lue lisää meistä"
     },
     "faq": {
       "heading": "Usein kysytyt kysymykset",
@@ -2202,23 +2207,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Kaikki oikeudet pidätetään.",
+    "footer": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Nollaa Sogverse-salasanasi",
+      "subject": "Nollaa School of Gaming -salasanasi",
       "heading": "Nollaa salasanasi",
-      "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
+      "body": "Saimme pyynnön nollata School of Gaming -salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
       "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
       "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
       "button": "Nollaa salasana"
     },
     "pinReset": {
-      "subject": "Nollaa Sogverse-vanhempaintilin PIN-koodi",
+      "subject": "Nollaa School of Gaming -vanhempaintilin PIN-koodi",
       "heading": "Nollaa vanhempaintilin PIN-koodi",
-      "body": "Saimme pyynnön nollata Sogverse-vanhempaintilisi PIN-koodi. Napsauta alla olevaa painiketta valitaksesi uuden nelinumeroisen PIN-koodin.",
+      "body": "Saimme pyynnön nollata School of Gaming -vanhempaintilisi PIN-koodi. Napsauta alla olevaa painiketta valitaksesi uuden nelinumeroisen PIN-koodin.",
       "expiry": "Tämä linkki vanhenee 24 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"

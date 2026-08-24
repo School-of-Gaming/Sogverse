@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Where screen time becomes quality time through Minecraft clubs led by professional Game Educators.",
-    "shortDescription": "School of Gaming – Where screen time becomes quality time",
     "pages": {
       "signIn": "Sign In",
       "createAccount": "Create Account",
@@ -68,6 +67,8 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",
+    "goToMySog": "Go to My SOG",
+    "goToDashboard": "Go to Dashboard",
     "viewDetails": "View Details",
     "learnMore": "Learn More",
     "exploreClubs": "Explore Clubs",
@@ -898,8 +899,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Welcome to the Sogverse",
-      "description": "Sign in to your account",
+      "welcomeTitle": "Welcome to School of Gaming",
       "noAccountSignUp": "Don’t have an account? <link>Sign up</link>",
       "signingIn": "Signing in...",
       "emailPlaceholder": "you@example.com",
@@ -956,7 +956,7 @@
       "successDescription": "Your password has been successfully updated."
     },
     "registerGedu": {
-      "title": "Create your Sogverse Gedu account",
+      "title": "Create your School of Gaming Gedu account",
       "certificationAlertTitle": "Your account needs to be certified",
       "certificationAlertDescription": "You can sign in right away, but an admin needs to certify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you work?",
@@ -1414,11 +1414,16 @@
   },
   "help": {
     "title": "Help",
-    "intro": "Answers to common questions about Sogverse.",
+    "intro": "Answers to common questions about School of Gaming.",
     "contact": {
       "heading": "Need a hand?",
-      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how Sogverse works.",
+      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how School of Gaming works.",
       "emailLabel": "Email us at"
+    },
+    "about": {
+      "heading": "Who is School of Gaming?",
+      "body": "Meet the people behind the clubs, read what we believe about play and learning, and see how a session actually runs.",
+      "linkLabel": "Learn about us"
     },
     "faq": {
       "heading": "Frequently asked questions",
@@ -2834,23 +2839,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. All rights reserved.",
+    "footer": "© {year} School of Gaming. All rights reserved.",
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Reset your Sogverse password",
+      "subject": "Reset your School of Gaming password",
       "heading": "Reset Your Password",
-      "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
+      "body": "We received a request to reset your School of Gaming password. Click the button below to choose a new password.",
       "expiry": "This link will expire in 1 hour.",
       "ignore": "If you didn’t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
     "pinReset": {
-      "subject": "Reset your Sogverse parent PIN",
+      "subject": "Reset your School of Gaming parent PIN",
       "heading": "Reset Your Parent PIN",
-      "body": "We received a request to reset the PIN for your Sogverse parent account. Click the button below to choose a new 4-digit PIN.",
+      "body": "We received a request to reset the PIN for your School of Gaming parent account. Click the button below to choose a new 4-digit PIN.",
       "expiry": "This link will expire in 24 hours.",
       "ignore": "If you didn’t request a PIN reset, you can safely ignore this email. Your PIN will not be changed.",
       "button": "Reset PIN"

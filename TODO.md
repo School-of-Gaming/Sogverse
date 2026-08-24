@@ -506,36 +506,6 @@ its leave affordance has a backend. One open question remains:
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
 
-## Sender avatar in the inbox
-
-Gmail shows a generic letter tile for our mail, in a colour we did not pick. The
-supported fix is BIMI, and it is priced for a different kind of company: Gmail
-will not show a logo without a certificate, and the cheapest one that skips the
-registered-trademark requirement still runs ~$650/yr. Not worth it for an avatar.
-
-Two free things are worth doing instead, and they cover different inboxes:
-
-- [ ] **Set a profile photo on the `sogverse@sog.gg` Google Workspace account.**
-  This is the Gmail half, and Gmail is where our families are. Costs minutes,
-  needs the address to be a real Workspace user rather than a send-only alias.
-  Google documents no guarantee for external recipients, so treat it as worth
-  trying rather than as a solution — verify by mailing a personal Gmail account.
-- [ ] **Publish a self-asserted BIMI record** (SVG Tiny PS + `default._bimi` TXT,
-  no certificate). Free, and it covers Yahoo and Fastmail, which honour BIMI
-  without one. It does nothing for Gmail, so it is only worth the DNS work once
-  the DMARC prerequisite below is done for its own reasons.
-
-Both are blocked on nothing except the second one's prerequisite: **DMARC at
-enforcement** (`p=quarantine` or `p=reject`). That work is worth doing on its own
-merits — deliverability, and stopping anyone spoofing us to the families whose
-children we hold accounts for — and it is a staged rollout with monitoring, not a
-DNS edit, because every system sending as `sog.gg` has to align first. Do it for
-those reasons; treat any logo as a by-product.
-
-Neither Outlook.com nor Apple Mail is addressable here: both draw the sender
-avatar from the *recipient's* own contacts, so there is nothing on our side to
-set.
-
 ## The filled button on Gmail iOS is unverified, and it is the one that matters
 
 Everything else about how our mail renders is now either machine-checked or has

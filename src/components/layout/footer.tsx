@@ -1,21 +1,42 @@
+import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
+import sogLogoFullMono from "@/assets/brand/sog-logo-full-mono.svg";
+import sogLogoSimpleMono from "@/assets/brand/sog-logo-simple-mono.svg";
 import { Copyright } from "./copyright";
-import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { ROUTES, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 
 export function Footer() {
   const t = useTranslations('footer');
-  const c = useTranslations('common');
 
   return (
     <footer className="border-t border-border bg-card">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex items-center gap-2">
-            <span className="font-display text-xl font-bold text-primary">
-              SOG
-            </span>
-            <span className="text-lg font-semibold">{c('appName')}</span>
+          {/* The monochrome colourway — a yellow badge down here would pull the
+              eye past the links it sits above. Sized so the mark's own
+              "SCHOOL OF GAMING" line is legible: that line is ~13% of the
+              badge's height, so it needs roughly 80px of mark to clear ~10px
+              of text. The footer has the vertical room the header does not,
+              which is why the two ended up different sizes. Same two-file
+              split, same intrinsic dimensions, as the header. */}
+          <div className="flex items-center">
+            <Image
+              src={sogLogoSimpleMono}
+              alt={SENDER_NAME}
+              width={379}
+              height={207.5}
+              className="h-9 w-auto sm:hidden"
+              unoptimized
+            />
+            <Image
+              src={sogLogoFullMono}
+              alt={SENDER_NAME}
+              width={379}
+              height={207.5}
+              className="hidden h-20 w-auto sm:block"
+              unoptimized
+            />
           </div>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}

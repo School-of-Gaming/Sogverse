@@ -6,10 +6,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return {
     title: t("createAccount"),
-    description: "Create your Sogverse parent account",
+    description: "Create your School of Gaming parent account",
     openGraph: {
-      title: "Join Sogverse",
-      description: "Create your Sogverse parent account and enroll your child in Minecraft clubs led by professional game educators.",
+      title: "Join School of Gaming",
+      description: "Create your School of Gaming parent account and enroll your child in Minecraft clubs led by professional game educators.",
     },
   };
 }

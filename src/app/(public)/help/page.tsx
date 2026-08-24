@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Mail } from "lucide-react";
+import { Info, Mail } from "lucide-react";
 import { getUser } from "@/lib/supabase/server";
 import { FeedbackSectionContent } from "@/components/feedback/feedback-section-content";
 import { Card, CardContent } from "@/components/ui/card";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -48,6 +49,32 @@ export default async function HelpPage() {
               >
                 {SUPPORT_EMAIL}
               </a>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/*
+        The signposted way back to the front page. It reads as a question a
+        parent actually has — who are these people — rather than as navigation,
+        because for one group of readers it is the only route there at all: the
+        header's mark links a signed-in visitor to their own dashboard, and on a
+        phone the header sets no other word beside it. Help is where someone
+        goes when they cannot find something, so this is where it belongs.
+      */}
+      <Card className="mt-4">
+        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:gap-4">
+          <Info className="h-6 w-6 shrink-0 text-primary" />
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold">{t("about.heading")}</h2>
+            <p className="text-sm text-muted-foreground">{t("about.body")}</p>
+            <p className="text-sm">
+              <Link
+                href={ROUTES.home}
+                className="font-medium text-primary hover:underline"
+              >
+                {t("about.linkLabel")}
+              </Link>
             </p>
           </div>
         </CardContent>

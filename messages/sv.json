@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "När skärmtid blir kvalitetstid – Minecraft-klubbar ledda av professionella spelfostrare.",
-    "shortDescription": "School of Gaming – När skärmtid blir kvalitetstid",
     "pages": {
       "signIn": "Logga in",
       "createAccount": "Skapa konto",
@@ -68,6 +67,8 @@
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
+    "goToMySog": "Gå till Min SOG",
+    "goToDashboard": "Gå till översikten",
     "viewDetails": "Visa detaljer",
     "learnMore": "Läs mer",
     "exploreClubs": "Utforska klubbar",
@@ -898,8 +899,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Välkommen till Sogverse",
-      "description": "Logga in på ditt konto",
+      "welcomeTitle": "Välkommen till School of Gaming",
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
       "emailPlaceholder": "du@example.com",
@@ -956,7 +956,7 @@
       "successDescription": "Ditt lösenord har uppdaterats."
     },
     "registerGedu": {
-      "title": "Skapa ditt Sogverse-spelfostrarkonto",
+      "title": "Skapa ditt spelfostrarkonto hos School of Gaming",
       "certificationAlertTitle": "Ditt konto måste certifieras",
       "certificationAlertDescription": "Du kan logga in direkt, men en administratör måste certifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du arbeta?",
@@ -1414,11 +1414,16 @@
   },
   "help": {
     "title": "Hjälp",
-    "intro": "Svar på vanliga frågor om Sogverse.",
+    "intro": "Svar på vanliga frågor om School of Gaming.",
     "contact": {
       "heading": "Behöver du hjälp?",
-      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur Sogverse fungerar.",
+      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur School of Gaming fungerar.",
       "emailLabel": "Mejla oss på"
+    },
+    "about": {
+      "heading": "Vilka är School of Gaming?",
+      "body": "Lär känna människorna bakom klubbarna, läs vad vi tror om spel och lärande, och se hur en träff faktiskt går till.",
+      "linkLabel": "Läs mer om oss"
     },
     "faq": {
       "heading": "Vanliga frågor",
@@ -2202,23 +2207,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Alla rättigheter förbehållna.",
+    "footer": "© {year} School of Gaming. Alla rättigheter förbehållna.",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Återställ ditt Sogverse-lösenord",
+      "subject": "Återställ lösenordet till ditt School of Gaming-konto",
       "heading": "Återställ ditt lösenord",
-      "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
+      "body": "Vi har mottagit en begäran om att återställa lösenordet till ditt School of Gaming-konto. Klicka på knappen nedan för att välja ett nytt lösenord.",
       "expiry": "Denna länk upphör att gälla om 1 timme.",
       "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
       "button": "Återställ lösenord"
     },
     "pinReset": {
-      "subject": "Återställ PIN-koden för ditt Sogverse-föräldrakonto",
+      "subject": "Återställ PIN-koden för ditt föräldrakonto hos School of Gaming",
       "heading": "Återställ din PIN-kod",
-      "body": "Vi har mottagit en begäran om att återställa PIN-koden för ditt Sogverse-föräldrakonto. Klicka på knappen nedan för att välja en ny fyrsiffrig PIN-kod.",
+      "body": "Vi har mottagit en begäran om att återställa PIN-koden för ditt föräldrakonto hos School of Gaming. Klicka på knappen nedan för att välja en ny fyrsiffrig PIN-kod.",
       "expiry": "Denna länk upphör att gälla om 24 timmar.",
       "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
       "button": "Återställ PIN-kod"

@@ -91,11 +91,16 @@ export async function buildProductMetadata(
   );
   if (!product || !translation) return PRODUCT_ROBOTS_ONLY;
 
-  // Absolute, so it bypasses the root layout's `%s | Sogverse` template: a
-  // shared product link is cold contact, and the brand is the name a parent
-  // recognises (CLAUDE.md § Brand vs. Platform). The platform name would be
-  // the half of the lockup that survives truncation otherwise.
-  const title = `${translation.name} | School of Gaming`;
+  // The product's name and nothing else. It used to be an absolute
+  // `… | School of Gaming` string built by hand to bypass a root template that
+  // said `%s | Sogverse` — a shared product link is cold contact, and the brand
+  // is the name a parent recognises. The template says the brand on every page
+  // now (CLAUDE.md § Brand vs. Platform), so the document title arrives at the
+  // same words by inheriting it, and the hand-built version has nothing left to
+  // fix. The Open Graph and Twitter cards take this name bare, because there the
+  // brand has its own field — `og:site_name` below — and a card whose site and
+  // title both say "School of Gaming" spends its widest line saying it twice.
+  const title = translation.name;
   // `short_description` is plain text (it renders into a bare <p> on the page
   // body), and it is sent whole — unfurl surfaces clip to their own widths and
   // there is nothing here to choose a better break than they will. An empty
@@ -126,17 +131,16 @@ export async function buildProductMetadata(
 
   return {
     ...PRODUCT_ROBOTS_ONLY,
-    title: { absolute: title },
+    title,
     description,
     // `siteName` is restated, not inherited: a child `openGraph` replaces the
     // root's block wholesale, so leaving it out would silently drop
-    // `og:site_name` from exactly the pages most likely to be shared. Whether
-    // that tag should say "Sogverse" at all is the open question CLAUDE.md
-    // flags under § Brand vs. Platform — this repeats today's answer rather
-    // than deciding it here as a side effect.
+    // `og:site_name` from exactly the pages most likely to be shared. It is a
+    // verbatim copy of the root's value, not a second decision — the repetition
+    // is what Next's merge costs, so keep the two in step.
     openGraph: {
       type: "website",
-      siteName: "Sogverse",
+      siteName: "School of Gaming",
       title,
       description,
       images,

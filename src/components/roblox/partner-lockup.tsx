@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import lynxEducate from "@/assets/partners/lynx-educate-reversed.svg";
 import robloxWordmark from "@/assets/partners/roblox-wordmark-white.svg";
-import sogBadge from "@/assets/partners/sog-badge-yellow.svg";
+import sogLogo from "@/assets/brand/sog-logo-full.svg";
 
 /**
  * The three-way lockup: School of Gaming, Lynx Educate — who we partner
@@ -10,9 +10,10 @@ import sogBadge from "@/assets/partners/sog-badge-yellow.svg";
  * interchangeable; see the partner-brand rules in the root CLAUDE.md.
  *
  * Sits directly on the page background with no card behind it. Each mark is in
- * its dark-surface colourway — Roblox's own white wordmark, our yellow badge,
- * and a reversed Lynx mark (see src/assets/partners/CLAUDE.md for why that one
- * is derived rather than supplied). An earlier version put the whole lockup on
+ * its dark-surface colourway — Roblox's own white wordmark, our own yellow mark
+ * (which lives in `src/assets/brand/` — the partners directory holds only other
+ * people's marks), and a reversed Lynx mark (see src/assets/partners/CLAUDE.md
+ * for why that one is derived rather than supplied). An earlier version put the whole lockup on
  * a light plate to accommodate Lynx's black-only mark, which honoured every
  * guideline but looked like a foreign object pasted onto a dark page.
  *
@@ -53,7 +54,7 @@ export function PartnerLockup() {
             `dangerouslyAllowSVG`, and these are trusted first-party bundled
             files that need no resizing pass anyway. */}
         <Image
-          src={sogBadge}
+          src={sogLogo}
           alt={t("sogAlt")}
           width={379}
           height={207.5}

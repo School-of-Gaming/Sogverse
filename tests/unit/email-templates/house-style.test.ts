@@ -3,7 +3,7 @@
 // and this is the only file in the repo that uses it. A project-wide types entry
 // would put Vite's ambient declarations in front of every source file to serve
 // one test.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
@@ -103,6 +103,20 @@ let t: EmailTranslator;
 
 beforeAll(async () => {
   t = await getEmailTranslator("en");
+  // The shell's brand mark is emitted only when an origin can be built for it,
+  // and no env is configured for the unit run — locally or in CI. Without this
+  // stub every mail swept below renders in its no-origin shape, and the one
+  // image any mail carries is the one piece of markup none of these checks ever
+  // look at. Stubbing it here is what puts the mark inside the sweep: its
+  // colour has to be in the palette and its markup has to obey the same rules
+  // as everything else. The mark's own behaviour is `layout.test.ts`'s subject;
+  // this line only decides which of the header's two shapes gets swept, and it
+  // picks the one with more in it.
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+});
+
+afterAll(() => {
+  vi.unstubAllEnvs();
 });
 
 function fromRegistry(key: string): [string, string][] {

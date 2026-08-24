@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return {
     title: t("registerGedu"),
-    description: "Create your Sogverse game educator account",
+    description: "Create your School of Gaming game educator account",
   };
 }
 
