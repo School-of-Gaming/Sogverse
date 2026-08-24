@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import {
   ArrowRight,
   Cpu,
@@ -24,16 +25,16 @@ import { ProgrammeCta } from "@/components/roblox/programme-cta";
 import { UpcomingEvents } from "@/components/roblox/upcoming-events";
 import { ROBLOX_OG_DESCRIPTION, ROBLOX_OG_TITLE } from "./metadata-copy";
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
   return {
-    // French for every locale, and absolute so the `%s | School of Gaming`
-    // template in the root layout does not append anything to it: this is the
-    // string a recipient sees on the preview card, and it has to be exactly the
-    // one that was signed off. `metadata-copy.ts` next door explains why the
-    // programme's card does not follow the viewer's locale; `openGraph` and
-    // `twitter` restate both fields rather than inheriting, so the card cannot
-    // drift from the tab.
-    title: { absolute: ROBLOX_OG_TITLE },
+    // The tab title follows the viewer's locale like every other page — the
+    // page body is fully localised, and a tab is read by the viewer, not by a
+    // share recipient. The FRENCH strings below are the *card's*: a preview
+    // card is composed for the programme's French audience, and `openGraph`
+    // and `twitter` carry them regardless of who shared the link.
+    // `metadata-copy.ts` next door explains the deliberate French in full.
+    title: t("roblox"),
     description: ROBLOX_OG_DESCRIPTION,
     // `type` and `siteName` are restated, not inherited, and `card` with them:
     // Next *assigns* a child's `openGraph` and `twitter` blocks over the
