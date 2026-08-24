@@ -68,6 +68,9 @@ vi.mock("@/components/game-account", () => ({
 vi.mock("@/components/gedu/gedu-coverage-editor", () => ({
   GeduCoverageEditor: () => <div data-testid="gedu-coverage-editor" />,
 }));
+vi.mock("@/components/gedu/contract/gedu-contract-settings-card", () => ({
+  GeduContractSettingsCard: () => <div data-testid="gedu-contract-card" />,
+}));
 vi.mock("@/components/locations/home-location-field", () => ({
   HomeLocationField: () => <div data-testid="home-location-field" />,
 }));

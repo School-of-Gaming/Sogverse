@@ -34,7 +34,8 @@
       "roblox": "Roblox-speldesignprogram",
       "robloxPrivacy": "Integritetspolicy för Roblox-programmet",
       "robloxSafeguarding": "Barnskyddspolicy för Roblox-programmet",
-      "robloxTerms": "Användarvillkor för Roblox-programmet"
+      "robloxTerms": "Användarvillkor för Roblox-programmet",
+      "geduContract": "Gedu-avtal"
     }
   },
   "notFound": {
@@ -1366,6 +1367,41 @@
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
       "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
+    },
+    "contract": {
+      "back": "Tillbaka till Min SOG",
+      "pageTitle": "Ditt Gedu-avtal",
+      "intro": "Det här är villkoren du arbetar under som spelfostrare för School of Gaming. Avtalet är bindande på finska, så det visas ordagrant oavsett vilket språk du läser resten av appen på.",
+      "acceptLead": "Genom att signera nedan bekräftar du att du har läst villkoren och godkänner dem som de står. Vi sparar vilken version du godkände, när du gjorde det och namnet du signerade med — inget annat.",
+      "acceptCta": "Signera, datera och godkänn",
+      "acceptedTitle": "Du har godkänt de här villkoren",
+      "dialog": {
+        "title": "Signera och godkänn",
+        "description": "Skriv ditt namn och dagens datum på raderna nedan och godkänn sedan.",
+        "signatureLabel": "Signatur",
+        "signAction": "Klicka för att signera",
+        "dateLabel": "Datum",
+        "dateAction": "Klicka för att datera",
+        "cancel": "Avbryt",
+        "confirm": "Godkänn avtalet",
+        "error": "Det gick inte igenom. Kontrollera din anslutning och försök igen."
+      },
+      "notice": {
+        "title": "Du har inte godkänt ditt Gedu-avtal",
+        "body": "Att läsa och godkänna villkoren du arbetar under är obligatoriskt. Det tar ett par minuter.",
+        "action": "Läs och godkänn avtalet"
+      },
+      "settings": {
+        "title": "Gedu-avtal",
+        "description": "Villkoren du arbetar under som spelfostrare.",
+        "acceptedTitle": "Godkänt",
+        "acceptedDetail": "version {version}, godkänt {date}",
+        "notAcceptedTitle": "Inte godkänt än",
+        "notAcceptedBody": "Du har inte godkänt det gällande avtalet. Att läsa och godkänna det är obligatoriskt.",
+        "readAndAccept": "Läs och godkänn",
+        "view": "Visa avtalet"
+      },
+      "acceptedMeta": "Version {version}, godkänt {date}"
     }
   },
   "productType": {

@@ -312,6 +312,8 @@ export const ROUTES = {
   },
   gedu: {
     dashboard: "/gedu",
+    /** The terms a Game Educator works under, and where they are accepted. */
+    contract: "/gedu/contract",
     assignedProduct: geduAssignedProductHref,
   },
 } as const;

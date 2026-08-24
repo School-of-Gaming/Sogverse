@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { GeduDashboardPage } from "@/components/gedu/GeduDashboardPage";
+import { GEDU_CONTRACT_CURRENT_VERSION } from "@/components/gedu/contract/documents";
 import { createClient } from "@/lib/supabase/server";
+import { GeduContractService } from "@/services/gedu";
 import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 import {
   AssignmentsService,
@@ -82,18 +84,50 @@ async function getIsCertified(): Promise<boolean> {
   }
 }
 
+/**
+ * Has this gedu accepted the contract version in force? Read here rather than
+ * from the browser because the notice it decides sits above every section of
+ * the page: an answer arriving after the first paint would push the whole
+ * dashboard down under a reader who had already started on it.
+ *
+ * **Fails toward showing the notice.** The two ways to be wrong are not
+ * symmetrical: a signed gedu shown the band clicks through and is told plainly
+ * that they have already signed, while an unsigned one shown nothing never
+ * learns that anything is owed. The contract page is the authority in both
+ * cases, and it reads its own answer.
+ */
+async function getHasAcceptedContract(): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    const userId = data?.claims.sub;
+    if (!userId) return false;
+    const acceptances = await new GeduContractService(supabase).getAcceptances(
+      userId,
+    );
+    return acceptances.some(
+      (row) => row.contract_version === GEDU_CONTRACT_CURRENT_VERSION,
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default async function GeduDashboardRoute() {
-  const [initialRows, initialSummaries, certified] = await Promise.all([
-    getInitialAssignmentRows(),
-    getInitialAssignmentSummaries(),
-    getIsCertified(),
-  ]);
+  const [initialRows, initialSummaries, certified, contractAccepted] =
+    await Promise.all([
+      getInitialAssignmentRows(),
+      getInitialAssignmentSummaries(),
+      getIsCertified(),
+      getHasAcceptedContract(),
+    ]);
 
   return (
     <GeduDashboardPage
       initialRows={initialRows}
       initialSummaries={initialSummaries}
       certified={certified}
+      contractAccepted={contractAccepted}
     />
   );
 }

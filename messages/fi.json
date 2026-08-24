@@ -34,7 +34,8 @@
       "roblox": "Roblox-pelisuunnitteluohjelma",
       "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste",
       "robloxSafeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
-      "robloxTerms": "Roblox-ohjelman käyttöehdot"
+      "robloxTerms": "Roblox-ohjelman käyttöehdot",
+      "geduContract": "Gedu-sopimus"
     }
   },
   "notFound": {
@@ -1366,6 +1367,41 @@
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
       "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
       "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
+    },
+    "contract": {
+      "back": "Takaisin Omaan SOGiin",
+      "pageTitle": "Gedu-sopimuksesi",
+      "intro": "Nämä ovat ehdot, joiden mukaisesti työskentelet pelikasvattajana School of Gamingille. Sopimus on sitova suomeksi, joten se näytetään sellaisenaan riippumatta siitä, millä kielellä luet muuta sovellusta.",
+      "acceptLead": "Allekirjoittamalla vahvistat, että olet lukenut nämä ehdot ja hyväksyt ne sellaisinaan. Tallennamme vain sen, minkä version hyväksyit, milloin hyväksyit sen ja millä nimellä allekirjoitit.",
+      "acceptCta": "Allekirjoita, päivää ja hyväksy",
+      "acceptedTitle": "Olet hyväksynyt nämä ehdot",
+      "dialog": {
+        "title": "Allekirjoita ja hyväksy",
+        "description": "Lisää nimesi ja tämän päivän päivämäärä alla oleville riveille ja hyväksy sitten sopimus.",
+        "signatureLabel": "Allekirjoitus",
+        "signAction": "Allekirjoita napsauttamalla",
+        "dateLabel": "Päiväys",
+        "dateAction": "Päivää napsauttamalla",
+        "cancel": "Peruuta",
+        "confirm": "Hyväksy sopimus",
+        "error": "Hyväksyntä ei mennyt läpi. Tarkista yhteytesi ja yritä uudelleen."
+      },
+      "notice": {
+        "title": "Et ole vielä hyväksynyt Gedu-sopimustasi",
+        "body": "Työehtojesi lukeminen ja hyväksyminen on pakollista. Se vie pari minuuttia.",
+        "action": "Lue ja hyväksy sopimus"
+      },
+      "settings": {
+        "title": "Gedu-sopimus",
+        "description": "Ehdot, joiden mukaisesti työskentelet pelikasvattajana.",
+        "acceptedTitle": "Hyväksytty",
+        "acceptedDetail": "versio {version}, hyväksytty {date}",
+        "notAcceptedTitle": "Ei vielä hyväksytty",
+        "notAcceptedBody": "Et ole hyväksynyt voimassa olevaa sopimusta. Sen lukeminen ja hyväksyminen on pakollista.",
+        "readAndAccept": "Lue ja hyväksy",
+        "view": "Näytä sopimus"
+      },
+      "acceptedMeta": "Versio {version}, hyväksytty {date}"
     }
   },
   "productType": {

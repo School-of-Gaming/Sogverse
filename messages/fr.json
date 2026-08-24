@@ -34,7 +34,8 @@
       "roblox": "Programme de création de jeux Roblox",
       "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
       "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
-      "robloxTerms": "Conditions générales du Programme Roblox"
+      "robloxTerms": "Conditions générales du Programme Roblox",
+      "geduContract": "Contrat Gedu"
     }
   },
   "notFound": {
@@ -1366,6 +1367,41 @@
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
       "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
+    },
+    "contract": {
+      "back": "Retour à Mon SOG",
+      "pageTitle": "Votre contrat Gedu",
+      "intro": "Voici les conditions qui encadrent votre travail d’animation pour School of Gaming. Le contrat fait foi en finnois : il s’affiche donc tel quel, quelle que soit la langue dans laquelle vous lisez le reste de l’application.",
+      "acceptLead": "En signant ci-dessous, vous confirmez avoir lu ces conditions et les accepter telles quelles. Nous enregistrons la version acceptée, la date et le nom signé — rien d’autre.",
+      "acceptCta": "Signer, dater et accepter",
+      "acceptedTitle": "Vous avez accepté ces conditions",
+      "dialog": {
+        "title": "Signer et accepter",
+        "description": "Inscrivez votre nom et la date du jour sur les lignes ci-dessous, puis acceptez.",
+        "signatureLabel": "Signature",
+        "signAction": "Cliquez pour signer",
+        "dateLabel": "Date",
+        "dateAction": "Cliquez pour dater",
+        "cancel": "Annuler",
+        "confirm": "Accepter le contrat",
+        "error": "L’envoi a échoué. Vérifiez votre connexion et réessayez."
+      },
+      "notice": {
+        "title": "Vous n’avez pas accepté votre contrat Gedu",
+        "body": "Lire et accepter les conditions qui encadrent votre travail est obligatoire. Cela prend deux minutes.",
+        "action": "Lire et accepter le contrat"
+      },
+      "settings": {
+        "title": "Contrat Gedu",
+        "description": "Les conditions qui encadrent votre travail d’animation.",
+        "acceptedTitle": "Accepté",
+        "acceptedDetail": "version {version}, accepté le {date}",
+        "notAcceptedTitle": "Pas encore accepté",
+        "notAcceptedBody": "Vous n’avez pas accepté le contrat en vigueur. Le lire et l’accepter est obligatoire.",
+        "readAndAccept": "Lire et accepter",
+        "view": "Voir le contrat"
+      },
+      "acceptedMeta": "Version {version}, accepté le {date}"
     }
   },
   "productType": {

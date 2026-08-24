@@ -201,26 +201,45 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The body /gedu renders, over fixtures: one roll-up card per group, grouped by type noun, with the Tools section beneath. Badge counts are counted out of the feed each card links to.",
+      "The body /gedu renders, over fixtures: the unsigned-contract band, one roll-up card per group grouped by type noun, and the Tools section beneath. Badge counts are counted out of the feed each card links to.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "default",
         label: "Working dashboard",
         description:
-          "The working dashboard: all three type nouns and every card state that can share a page.",
+          "The working dashboard: all three type nouns and every card state that can share a page, under an unsigned contract band.",
       },
       {
         slug: "clubs-only",
         label: "Clubs only",
         description:
-          "The single-noun composition, at the card count where the grid wraps.",
+          "The single-noun composition, at the card count where the grid wraps — and the page with the band signed away.",
       },
       {
         slug: "uncertified",
         label: "Awaiting certification",
         description:
           "An account awaiting approval, which by definition has no assignments.",
+      },
+    ],
+  },
+  {
+    surface: "gedu-contract",
+    title: "Gedu contract",
+    description:
+      "The page a Game Educator reads and signs their contract on: the Finnish terms verbatim, with the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "unaccepted",
+        label: "Not signed yet",
+        description: "The prompt, and the signing ceremony behind it.",
+      },
+      {
+        slug: "accepted",
+        label: "Signed",
+        description: "The record that stands in place of the prompt.",
       },
     ],
   },
