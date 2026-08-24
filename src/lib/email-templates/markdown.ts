@@ -2,7 +2,7 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import type { List, ListItem, PhrasingContent, RootContent } from "mdast";
 import { DARK_THEME } from "@/lib/constants/colors";
-import { BODY_TEXT_STYLE, escapeHtml } from "./utils";
+import { BODY_TEXT_STYLE, defuseAutolinks, escapeHtml } from "./utils";
 
 /**
  * Renders stored markdown — a gedu's session report — as the inline-styled HTML
@@ -236,21 +236,3 @@ function text(value: string): string {
   return defuseAutolinks(escapeHtml(value));
 }
 
-/**
- * Anything a mail client might read as an address: a run with no whitespace
- * containing a dot followed by two or more letters (`evil.example/x`,
- * `https://www.evil.example`, `someone@example.com`). A word joiner (U+2060)
- * goes in after every dot that a letter follows, and between the colon and the
- * slashes of a scheme. It is zero-width, so the text reads the same; it breaks
- * both the `.tld` and the `scheme://` patterns, so neither kind of linkifier
- * matches. Prose is barely touched — `e.g.` has one letter after its dot,
- * `klo 16.30` a digit, a sentence-ending dot nothing — and a `file.txt` that
- * picks up a joiner loses nothing.
- */
-const LINKIFIABLE_RUN = /\S+\.[A-Za-z]{2,}\S*/g;
-
-function defuseAutolinks(escaped: string): string {
-  return escaped.replace(LINKIFIABLE_RUN, (run) =>
-    run.replace(/\.(?=[A-Za-z])/g, ".&#8288;").replace(/:\/\//g, ":&#8288;//"),
-  );
-}

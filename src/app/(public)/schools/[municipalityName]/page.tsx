@@ -8,7 +8,6 @@ import {
   ParticipationsService,
   type ParticipationCounts,
 } from "@/services/participations";
-import { UsersService } from "@/services/users";
 import {
   buildMunicipalityEntries,
   findMunicipalityBySlug,
@@ -17,7 +16,7 @@ import {
   type MunicipalityEntry,
 } from "@/lib/schools/municipalities";
 import { MunicipalityClubsBrowse } from "@/components/public/schools/municipality-clubs-browse";
-import type { ProductBrowseRow, SpokenLanguage } from "@/types";
+import type { ProductBrowseRow } from "@/types";
 
 interface PageProps {
   params: Promise<{ municipalityName: string }>;
@@ -30,7 +29,6 @@ interface MunicipalityPageData {
   allClubs: ProductBrowseRow[];
   /** Seat counts for this municipality's clubs only. */
   counts: ParticipationCounts[];
-  spokenLanguages: SpokenLanguage[];
 }
 
 /**
@@ -74,12 +72,8 @@ interface MunicipalityPageData {
 const loadMunicipality = cache(
   async (slug: string, locale: string): Promise<MunicipalityPageData | null> => {
     const supabase = await createClient();
-    // The spoken languages ride in this group rather than the next one: the
-    // filter strip's language options depend on nothing the slug resolves to,
-    // so waiting for the clubs would be a round trip spent on nothing.
-    const [allClubs, spokenLanguages] = await Promise.all([
-      new ProductsService(supabase).listVisibleByTypes(["municipality_club"]),
-      new UsersService(supabase).getSpokenLanguages(),
+    const allClubs = await new ProductsService(supabase).listVisibleByTypes([
+      "municipality_club",
     ]);
 
     const entries = buildMunicipalityEntries(
@@ -96,7 +90,7 @@ const loadMunicipality = cache(
       supabase,
     ).getParticipationCounts(muniClubs.map((c) => c.id));
 
-    return { municipality, allClubs, counts, spokenLanguages };
+    return { municipality, allClubs, counts };
   },
 );
 
@@ -127,7 +121,6 @@ export default async function MunicipalityClubsPage({ params }: PageProps) {
       municipalityName={data.municipality.name}
       initialProducts={data.allClubs}
       initialCounts={data.counts}
-      initialSpokenLanguages={data.spokenLanguages}
     />
   );
 }

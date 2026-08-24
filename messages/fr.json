@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
-    "shortDescription": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir",
     "pages": {
       "signIn": "Connexion",
       "createAccount": "Créer un compte",
@@ -68,6 +67,8 @@
     "signIn": "Connexion",
     "signOut": "Déconnexion",
     "getStarted": "C’est parti !",
+    "goToMySog": "Accéder à Mon SOG",
+    "goToDashboard": "Accéder au tableau de bord",
     "viewDetails": "Voir les détails",
     "learnMore": "En savoir plus",
     "exploreClubs": "Découvrir les clubs",
@@ -903,8 +904,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Bienvenue dans le Sogverse",
-      "description": "Connectez-vous à votre compte",
+      "welcomeTitle": "Bienvenue chez School of Gaming",
       "noAccountSignUp": "Vous n’avez pas de compte ? <link>Inscrivez-vous</link>",
       "signingIn": "Connexion...",
       "emailPlaceholder": "vous@exemple.com",
@@ -961,7 +961,7 @@
       "successDescription": "Votre mot de passe a bien été mis à jour."
     },
     "registerGedu": {
-      "title": "Créez votre compte Gedu Sogverse",
+      "title": "Créez votre compte Gedu chez School of Gaming",
       "certificationAlertTitle": "Votre compte doit être certifié",
       "certificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit certifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
@@ -1419,11 +1419,16 @@
   },
   "help": {
     "title": "Aide",
-    "intro": "Réponses aux questions fréquentes sur Sogverse.",
+    "intro": "Réponses aux questions fréquentes sur School of Gaming.",
     "contact": {
       "heading": "Besoin d’un coup de main ?",
-      "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de Sogverse.",
+      "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de School of Gaming.",
       "emailLabel": "Écrivez-nous à"
+    },
+    "about": {
+      "heading": "Qui est School of Gaming ?",
+      "body": "Découvrez les personnes derrière les clubs, notre vision du jeu et de l’apprentissage, et le déroulement concret d’une session.",
+      "linkLabel": "En savoir plus sur nous"
     },
     "faq": {
       "heading": "Questions fréquentes",
@@ -2207,23 +2212,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Tous droits réservés.",
+    "footer": "© {year} School of Gaming. Tous droits réservés.",
     "roleAdmin": "Administrateur",
     "roleParent": "Parent",
     "roleGamer": "Joueur",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Réinitialisez votre mot de passe Sogverse",
+      "subject": "Réinitialisez le mot de passe de votre compte School of Gaming",
       "heading": "Réinitialisez votre mot de passe",
-      "body": "Nous avons reçu une demande de réinitialisation de votre mot de passe Sogverse. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
+      "body": "Nous avons reçu une demande de réinitialisation du mot de passe de votre compte School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
       "expiry": "Ce lien expirera dans 1 heure.",
       "ignore": "Si vous n’avez pas demandé de réinitialisation de mot de passe, vous pouvez ignorer cet e-mail sans crainte. Votre mot de passe ne sera pas modifié.",
       "button": "Réinitialiser le mot de passe"
     },
     "pinReset": {
-      "subject": "Réinitialisez votre code PIN parent Sogverse",
+      "subject": "Réinitialisez le code PIN de votre compte parent School of Gaming",
       "heading": "Réinitialisez votre code PIN parent",
-      "body": "Nous avons reçu une demande de réinitialisation du code PIN de votre compte parent Sogverse. Cliquez sur le bouton ci-dessous pour choisir un nouveau code PIN à 4 chiffres.",
+      "body": "Nous avons reçu une demande de réinitialisation du code PIN de votre compte parent School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau code PIN à 4 chiffres.",
       "expiry": "Ce lien expirera dans 24 heures.",
       "ignore": "Si vous n’avez pas demandé de réinitialisation du code PIN, vous pouvez ignorer cet e-mail sans crainte. Votre code PIN ne sera pas modifié.",
       "button": "Réinitialiser le code PIN"
@@ -2662,11 +2667,11 @@
   "roblox": {
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
-      "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en partenariat avec Roblox.",
+      "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
       "cta": "Inscrivez-vous"
     },
     "lockup": {
-      "heading": "Un partenariat entre",
+      "heading": "Une collaboration entre",
       "sogAlt": "School of Gaming",
       "lynxAlt": "Lynx Educate",
       "robloxAlt": "Roblox"

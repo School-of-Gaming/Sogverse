@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { FilterCombobox } from "@/components/ui/filter-combobox";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { useSpokenLanguages, useUsersByRole } from "@/services/users";
+import { useUsersByRole } from "@/services/users";
 import {
   municipalityOf,
   type EmbeddedLocationNode,
@@ -24,6 +24,7 @@ import {
   PRODUCT_LIST_PARAMS,
   useUrlParamState,
 } from "./product-list-url-state";
+import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
@@ -75,13 +76,11 @@ export function ClubProductFilters({
     PRODUCT_LIST_PARAMS.municipality,
   );
 
-  // Both reference queries fire for both club types even though each page only
-  // reads one: consumer clubs ignore nothing here, municipality clubs ignore
-  // `spokenLanguages`. Left unconditional on purpose — the queries are cheap
-  // and cached, and gating them would mean splitting the municipality-only work
-  // into a child component that only mounts for `isMunicipality`.
+  // Fires for both club types even though only the municipality page reads it.
+  // Left unconditional on purpose — the query is cheap and cached, and gating
+  // it would mean splitting the municipality-only work into a child component
+  // that only mounts for `isMunicipality`.
   const { data: gedus } = useUsersByRole("gedu");
-  const { data: spokenLanguages } = useSpokenLanguages();
 
   const languageName = useLanguageNames();
 
@@ -130,26 +129,21 @@ export function ClubProductFilters({
 
   const languageOptions = useMemo(() => {
     if (!isConsumer) return [];
-    const present = new Set<string>();
-    for (const p of products)
-      if (p.spoken_language_code) present.add(p.spoken_language_code);
-    // Order by the canonical spoken-language reference order (same as the
-    // spoken-language checkboxes), not alphabetically — language lists have a
-    // conventional ordering. Any present code missing from the reference list
-    // is appended defensively.
-    const ordered = (spokenLanguages ?? [])
-      .map((l) => l.code)
-      .filter((code) => present.has(code));
-    for (const code of present) if (!ordered.includes(code)) ordered.push(code);
-    return ordered.map((code) => {
-      const name = languageName(code, code.toUpperCase());
+    const present = new Set(products.map((p) => p.spoken_language_code));
+    // Ordered by the enum's own declaration order — the same sequence every
+    // other language control renders — rather than alphabetically by a name
+    // that changes with the viewer's locale. Only languages some club is
+    // actually delivered in are offered: a filter chip matching nothing is a
+    // control that can only empty the table.
+    return SPOKEN_LANGUAGES.filter((code) => present.has(code)).map((code) => {
+      const name = languageName(code);
       return {
         value: code,
         label: name,
         adornment: <LanguageFlag code={code} showCode={false} title={name} />,
       };
     });
-  }, [products, spokenLanguages, languageName, isConsumer]);
+  }, [products, languageName, isConsumer]);
 
   const municipalityOptions = useMemo(() => {
     if (!isMunicipality) return [];

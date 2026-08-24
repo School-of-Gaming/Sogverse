@@ -7,13 +7,13 @@ This directory holds the next-intl request wiring. The i18n system spans the who
 Two different concepts that English would both call "language" — deliberately named differently. Do not conflate them.
 
 - **Locale** (`locale`) — which translation of the web app the user sees. Backed by `profiles.locale`, the `locale` cookie, the LocalePicker, and next-intl's `useLocale()`/`getTranslations()`/`useTranslations()`. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LOCALE_CONFIG`, detection/validation helpers).
-- **Spoken language** (`spoken_languages`) — the human languages a user speaks / a club is delivered in, used to match gamers to gedus. Backed by the `spoken_languages` reference table and the `profiles.spoken_languages` array. UI lives in the spoken-language checkboxes component under `components/ui/`.
+- **Spoken language** (`spoken_language`) — the human languages a user speaks / a club is delivered in, used to match gamers to gedus. A Postgres enum, backed by `products.spoken_language_code` and the `profiles.spoken_languages` array, with the ordered value list and the string guard in `src/lib/constants/spoken-languages.ts`. UI lives in the spoken-language checkboxes component under `components/ui/`.
 
 The two are fully independent: a Finnish-speaking parent can have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child in English-speaking clubs).
 
 **Rule: Use the word *locale* for the UI translation system and *spoken language* for human fluency. Never name one after the other.**
 
-**Rule: A language's display name always comes from the shared language-name hook (`useLanguageNames`, `src/hooks/`), never from `spoken_languages.name` or `LOCALE_CONFIG.label` directly.** Those two are English *fallbacks*, not display strings — rendering them raw ships English names to every non-English viewer (this happened on three admin surfaces at once). The hook resolves any code via `Intl.DisplayNames` in the viewer's locale and takes the English value as its fallback argument.
+**Rule: A language's display name always comes from the shared language-name hook (`useLanguageNames`, `src/hooks/`), never from `LOCALE_CONFIG.label` directly.** That label is an English *fallback*, not a display string — rendering it raw ships English names to every non-English viewer (this happened on three admin surfaces at once). The hook resolves any tag via `Intl.DisplayNames` in the viewer's locale and takes the English value as its fallback argument. The fallback is for the locale side only: `Intl` has no name for `tlh`, and has a name for every spoken language in every locale we ship, so a spoken-language caller passes no fallback at all. No display name is ever stored — the retired reference table's single English `name` column is exactly the thing this rule was written against.
 
 ## Files in this directory
 
@@ -66,6 +66,13 @@ signed-in product (dashboards, voice, admin, email), where the reader already kn
 word, and appears in public prose only where the copy introduces it with a gloss ("a Gedu
 — a Game Educator"). A public string using it cold has leaked in-house vocabulary at the
 one moment the reader cannot decode it.
+
+**One public surface is carved out: `/register-gedu`** (owner ruling, 2026-08). Nobody
+arrives at the Gedu registration page by browsing — they were pointed at it by School of
+Gaming, and anyone who got that far knows us well enough to have already been told what a
+Gedu is — so its title may use the word cold, and the `en` and `fr` titles do. The
+carve-out is that page and nothing adjacent to it: every other public surface still
+introduces the word with a gloss or reaches for the role name instead.
 
 **Rule: wherever `Gedu` is not the word, each locale has exactly one word for the role.**
 Chosen by native speakers, 2026-08-13:
@@ -156,7 +163,9 @@ All other namespaces (role/feature pages, public pages, feature components, layo
 2. Register its flag in `src/components/ui/flags.ts` (a named per-country import — never the barrel). `country` is typed against that registry, so an unregistered flag fails the build.
 3. Add its loader to the `messageLoaders` map in `messages.ts`.
 4. Create `messages/<code>.json` by copying `en.json` and translating every value.
-5. **Give it a matching spoken language** — a data-only migration inserting the code into the `spoken_languages` reference table, and its country in the spoken-language → flag map under `components/ui/`. Shipping a UI locale says we serve families who speak that language, so a club has to be offerable in it the same day, and `products.spoken_language_code` can only reference a row in that table. **Novelty locales are exempt** (Klingon is an easter egg, not a language a club is delivered in). A CI db test asserts this parity, so skipping it fails the build rather than shipping a dead language option. This is a parity requirement between the two systems, not a merge — locale and spoken language stay distinct everywhere else.
+5. **Give it a matching spoken language** — a migration adding the code to the `spoken_language` enum, and its country in the spoken-language → flag map under `components/ui/`. Shipping a UI locale says we serve families who speak that language, so a club has to be offerable in it the same day, and `products.spoken_language_code` can only hold an enum value. **Novelty locales are exempt** (Klingon is an easter egg, not a language a club is delivered in). A unit test asserts this parity — the values reach TypeScript through codegen, so skipping the migration fails the fast suite rather than shipping a dead language option — and the flag map is keyed by the enum, so it fails to compile until it has an entry. This is a parity requirement between the two systems, not a merge: locale and spoken language stay distinct everywhere else, and the requirement runs one way only (a spoken language with no UI locale is perfectly ordinary).
+
+   Two things about that migration are easy to get wrong. **Declaration order is what renders**: every picker and the shop's Language filter row read the values in the order the enum declares them — Finland's two national languages first, then the rest — and no call site sorts, so a new language lands last unless the migration says otherwise with `ALTER TYPE … ADD VALUE 'xx' BEFORE '…'` (or `AFTER '…'`). And **a value added by `ALTER TYPE … ADD VALUE` cannot be used in the same transaction that adds it** — `supabase db push` runs each migration file as one transaction, so a migration must not add the value and then write a row carrying it; that write is a second migration.
 6. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
 7. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
 8. Produce the native-speaker review handoff for the new translation — see the

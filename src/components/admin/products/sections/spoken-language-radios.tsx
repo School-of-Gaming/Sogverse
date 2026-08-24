@@ -22,42 +22,40 @@
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { cn } from "@/lib/utils";
-import type { SpokenLanguage } from "@/types";
+import {
+  SPOKEN_LANGUAGES,
+  type SpokenLanguageCode,
+} from "@/lib/constants/spoken-languages";
 
 export function SpokenLanguageRadios({
-  spokenLanguages,
   value,
   onChange,
   labelId,
   hintId,
 }: {
-  spokenLanguages: SpokenLanguage[];
   /** The selected language code, or `""` for the unanswered new-product state. */
-  value: string;
-  onChange: (code: string) => void;
+  value: SpokenLanguageCode | "";
+  onChange: (code: SpokenLanguageCode) => void;
   labelId: string;
   hintId: string | undefined;
 }) {
   const languageName = useLanguageNames();
 
   return (
-    // The reference set is a bounded, near-instant read, so the row renders at
-    // its final height from the first frame (`min-h-9` matches a pill) and the
-    // languages land inside it — nothing below moves when the query resolves.
     // `radiogroup` + the field's own ids because a row of loose pills is named
     // and described by nothing otherwise.
     <div
       role="radiogroup"
       aria-labelledby={labelId}
       aria-describedby={hintId}
-      className="flex min-h-9 flex-wrap gap-2"
+      className="flex flex-wrap gap-2"
     >
-      {spokenLanguages.map((lang) => {
-        const selected = value === lang.code;
-        const displayName = languageName(lang.code, lang.name);
+      {SPOKEN_LANGUAGES.map((code) => {
+        const selected = value === code;
+        const displayName = languageName(code);
         return (
           <label
-            key={lang.code}
+            key={code}
             className={cn(
               "inline-flex cursor-pointer items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors",
               selected
@@ -75,13 +73,13 @@ export function SpokenLanguageRadios({
               className="h-3.5 w-3.5"
               checked={selected}
               required
-              onChange={() => onChange(lang.code)}
+              onChange={() => onChange(code)}
             />
             {/* Decorative, exactly as the region-lock card's glyph slot is:
                 every pill's language is already written next to it in words,
                 so a titled flag would announce the same name twice. */}
             <span aria-hidden className="flex shrink-0 items-center">
-              <LanguageFlag code={lang.code} showCode={false} />
+              <LanguageFlag code={code} showCode={false} />
             </span>
             <span className="font-medium">{displayName}</span>
           </label>

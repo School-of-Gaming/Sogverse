@@ -7,8 +7,8 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { TOPIC_FILTER_CHIPS } from "@/lib/products/topics";
 import { PRODUCT_AGE_BANDS } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { useSpokenLanguages } from "@/services/users";
-import type { SpokenLanguage } from "@/types";
+import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { cn } from "@/lib/utils";
 import { TagGlyph } from "./product-chips";
 import { PRODUCT_TAG_VALUES, productTagLabelKey } from "./product-tag";
@@ -50,9 +50,6 @@ const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 // information at a glance, and surfacing a count next to a "Clear"
 // button made the meta row's height jump when the button appeared.
 interface ProductBrowseFiltersProps {
-  /** Server-prefetched spoken-language set so the Language row paints with the
-   *  rest of the filters instead of popping in after its own fetch resolves. */
-  initialSpokenLanguages: SpokenLanguage[];
   /** Lead with the Clubs|Camps|Events Type row — and, by owner decision, with
    *  the Audience row that shares its guard. The shop shows both; the
    *  per-municipality page hides them, because there both have one answer
@@ -65,7 +62,6 @@ interface ProductBrowseFiltersProps {
 }
 
 export function ProductBrowseFilters({
-  initialSpokenLanguages,
   showTypeFilter = true,
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
@@ -78,9 +74,12 @@ export function ProductBrowseFilters({
   const tTag = useTranslations("productTag");
   const locale = useLocale();
   const topicLabel = useTopicLabel();
-  const { data: spokenLanguages } = useSpokenLanguages({
-    initialData: initialSpokenLanguages,
-  });
+  // The Language row's vocabulary is the `spoken_language` enum — a constant, so
+  // the row is complete in the first frame with nothing to await. It used to be
+  // a query, and the row was rendered only once that query had answered: a
+  // failed prefetch hid it and a later refetch put it back, moving every row
+  // below on data's own schedule.
+  const languageName = useLanguageNames();
   // Product category (Clubs | Camps | Events) leads the filter card as the
   // "Type" row. Unlike the other filters it lives in its own URL param
   // (useShopCategories) and drives which sections render rather than which
@@ -106,8 +105,6 @@ export function ProductBrowseFilters({
     toggleDay,
     clear,
   } = useBrowseFilters();
-
-  const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
 
   // The button shows exactly when clearing would change something the user can
   // see, so it spans both state owners: `hasAny` covers the chip filters, the
@@ -268,19 +265,20 @@ export function ProductBrowseFilters({
           />
         </FilterRow>
 
-        {hasLanguageRow && (
-          <FilterRow label={t("language")}>
-            {spokenLanguages!.map((lang) => (
+        <FilterRow label={t("language")}>
+          {SPOKEN_LANGUAGES.map((code) => {
+            const name = languageName(code);
+            return (
               <Chip
-                key={lang.code}
-                icon={<LanguageFlag code={lang.code} showCode={false} title={lang.name} />}
-                label={lang.code.toUpperCase()}
-                active={selectedLanguages.includes(lang.code.toLowerCase())}
-                onToggle={() => toggleLanguage(lang.code)}
+                key={code}
+                icon={<LanguageFlag code={code} showCode={false} title={name} />}
+                label={code.toUpperCase()}
+                active={selectedLanguages.includes(code)}
+                onToggle={() => toggleLanguage(code)}
               />
-            ))}
-          </FilterRow>
-        )}
+            );
+          })}
+        </FilterRow>
 
         {/* Age is single-valued — like the Format row, tapping the active chip
             clears it back to "any age". The chips are the coarse age bands from

@@ -6,7 +6,7 @@ import { UsersService } from "./users.service";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { robloxKeys } from "@/services/roblox/roblox.queries";
 import type { AdminGameAccountBody } from "./users.contracts";
-import type { ProfileUpdate, UserRole, SpokenLanguage } from "@/types";
+import type { ProfileUpdate, UserRole } from "@/types";
 
 const userKeys = {
   all: ["users"] as const,
@@ -16,7 +16,6 @@ const userKeys = {
   detail: (id: string) => [...userKeys.details(), id] as const,
   byRole: (role: UserRole) => [...userKeys.all, "role", role] as const,
   parentGamerLinks: () => [...userKeys.all, "parent-gamer-links"] as const,
-  spokenLanguages: () => [...userKeys.all, "spoken-languages"] as const,
 };
 
 export function useProfile(userId: string) {
@@ -140,28 +139,5 @@ export function useParentGamerLinks() {
   return useQuery({
     queryKey: userKeys.parentGamerLinks(),
     queryFn: () => service.getAllParentGamerLinks(),
-  });
-}
-
-/**
- * Fetch the reference set of spoken languages (human languages) from the
- * `spoken_languages` table. Distinct from `useLocaleControl` (UI locale).
- *
- * `initialData` (optional) is the server-prefetched set from a page's Server
- * Component (see `shop/page.tsx`). When present the language filter row paints
- * with the rest of the page on the first frame instead of popping in after its
- * own client fetch resolves (CLAUDE.md layout-shift rule); the hook still
- * refetches on mount.
- */
-export function useSpokenLanguages(options?: {
-  initialData?: SpokenLanguage[];
-}) {
-  const supabase = getClient();
-  const service = new UsersService(supabase);
-
-  return useQuery({
-    queryKey: userKeys.spokenLanguages(),
-    queryFn: () => service.getSpokenLanguages(),
-    initialData: options?.initialData,
   });
 }

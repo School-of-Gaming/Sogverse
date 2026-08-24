@@ -11,9 +11,9 @@
 //
 // **Not the same as spoken languages.** "Spoken languages" are the human
 // languages a user speaks / a club is delivered in (Finnish, English, Swedish,
-// ...) — stored in the `spoken_languages` reference table and the
-// `profiles.spoken_languages` array. For that, see
-// src/components/ui/spoken-language-checkboxes.tsx.
+// ...) — the `spoken_language` enum, stored in `products.spoken_language_code`
+// and the `profiles.spoken_languages` array. That system is owned by
+// ./spoken-languages.ts, this file's sibling.
 //
 // We use the word **locale** for UI translation (matches next-intl's
 // `useLocale()` and Unicode/ICU terminology) and **spoken language** for human

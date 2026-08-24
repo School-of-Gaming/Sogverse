@@ -13,24 +13,33 @@ import { useTranslations } from "next-intl";
 import { Check, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface FilterDropdownOption {
-  value: string;
+/**
+ * One row of a filter control.
+ *
+ * The value is parameterised so a caller whose vocabulary is a literal union —
+ * a generated enum, typically — keeps that type across the control instead of
+ * widening to `string` on the way in and needing an assertion on the way back
+ * out. A caller filtering on ids or stringified numbers infers `string` and
+ * reads exactly as it did before.
+ */
+export interface FilterDropdownOption<T extends string = string> {
+  value: T;
   label: string;
   /** Optional leading visual (e.g. a language flag). Rendered in both the
    *  trigger when selected and the option row. */
   adornment?: ReactNode;
 }
 
-interface FilterDropdownProps {
+interface FilterDropdownProps<T extends string> {
   /** Field label rendered above the control. */
   label: string;
   /** Muted text shown when nothing is selected — i.e. the unfiltered "all"
    *  state. There is no "all" row in the list; clearing is done with the X. */
   allLabel: string;
-  options: FilterDropdownOption[];
+  options: FilterDropdownOption<T>[];
   /** Selected option value, or `null` for the "all" state. */
-  value: string | null;
-  onChange: (value: string | null) => void;
+  value: T | null;
+  onChange: (value: T | null) => void;
 }
 
 // Single-select dropdown for short, fixed option sets (day, language) — a
@@ -39,13 +48,13 @@ interface FilterDropdownProps {
 // absence of a selection: no value shows `allLabel` as muted placeholder text,
 // and a clear (X) button resets a selection back to it. Closes on outside
 // click / Escape.
-export function FilterDropdown({
+export function FilterDropdown<T extends string>({
   label,
   allLabel,
   options,
   value,
   onChange,
-}: FilterDropdownProps) {
+}: FilterDropdownProps<T>) {
   const c = useTranslations("common");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,7 +86,7 @@ export function FilterDropdown({
     };
   }, [open, close]);
 
-  function select(next: string | null) {
+  function select(next: T | null) {
     onChange(next);
     close();
   }

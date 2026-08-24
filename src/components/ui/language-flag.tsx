@@ -1,22 +1,24 @@
 "use client";
 
 import { FLAGS, type FlagCountry } from "@/components/ui/flags";
+import type { SpokenLanguageCode } from "@/types";
 import { cn } from "@/lib/utils";
 
-// Spoken-language → country code mapping for flag display. Update when
-// adding new languages to the `spoken_languages` reference table.
+// Spoken-language → country code mapping for flag display.
 //
 // Single source of truth — the spoken-language pickers
 // (src/components/ui/spoken-language-checkboxes.tsx) and product
 // surfaces (browse card, filters, detail page) all read from here.
 //
-// Values are typed against `FlagCountry`, the flag registry in flags.ts, so a
-// country whose flag was never imported fails the build instead of silently
-// rendering nothing — the same compile-time obligation the locale config has.
-// The value side stays `| undefined` because the key side is an arbitrary
-// language code: without `noUncheckedIndexedAccess` a bare
-// `Record<string, FlagCountry>` would type a miss as a hit.
-export const SPOKEN_LANG_TO_COUNTRY: Record<string, FlagCountry | undefined> = {
+// Two compile-time obligations meet in this one declaration. The key side is
+// `SpokenLanguageCode`, the generated enum, so a language added by migration
+// fails the build here until someone decides which flag it wears — the map
+// cannot silently fall behind the database. The value side is `FlagCountry`,
+// the flag registry in flags.ts, so a country whose flag was never imported
+// fails the build too, rather than rendering nothing. Neither side admits
+// `undefined`: a finite key union is not an index signature, so every lookup
+// below is a hit by construction.
+export const SPOKEN_LANG_TO_COUNTRY: Record<SpokenLanguageCode, FlagCountry> = {
   fi: "FI",
   sv: "SE",
   en: "GB",
@@ -25,17 +27,16 @@ export const SPOKEN_LANG_TO_COUNTRY: Record<string, FlagCountry | undefined> = {
 
 export type SpokenLanguageFlag = (typeof FLAGS)[keyof typeof FLAGS];
 
-/** Lookup the flag component for a spoken-language code, or undefined.
- *  Suitable for callers that pass it as a prop into a JSX element — see
- *  `<FlagLabel>` in spoken-language-checkboxes.tsx. The product surfaces
- *  use `<LanguageFlag>` instead, which renders inline. */
-export function getSpokenLanguageFlag(code: string): SpokenLanguageFlag | undefined {
-  const country = SPOKEN_LANG_TO_COUNTRY[code];
-  return country ? FLAGS[country] : undefined;
+/** The flag component for a spoken-language code. Suitable for callers that
+ *  pass it as a prop into a JSX element — see `<FlagLabel>` in
+ *  spoken-language-checkboxes.tsx. The product surfaces use `<LanguageFlag>`
+ *  instead, which renders inline. */
+export function getSpokenLanguageFlag(code: SpokenLanguageCode): SpokenLanguageFlag {
+  return FLAGS[SPOKEN_LANG_TO_COUNTRY[code]];
 }
 
 interface LanguageFlagProps {
-  code: string;
+  code: SpokenLanguageCode;
   /** When true (default) shows the uppercase code next to the flag. */
   showCode?: boolean;
   /** Accessible label — usually the language's display name. */
@@ -58,8 +59,7 @@ export function LanguageFlag({
   className,
 }: LanguageFlagProps) {
   const upper = code.toUpperCase();
-  const country = SPOKEN_LANG_TO_COUNTRY[code];
-  const Flag = country ? FLAGS[country] : undefined;
+  const Flag = FLAGS[SPOKEN_LANG_TO_COUNTRY[code]];
   return (
     <span
       className={cn(
@@ -67,11 +67,9 @@ export function LanguageFlag({
         className,
       )}
     >
-      {Flag && (
-        <span className="h-3 w-[18px] overflow-hidden rounded-[1px] [&>svg]:h-full [&>svg]:w-full">
-          <Flag title={title ?? upper} />
-        </span>
-      )}
+      <span className="h-3 w-[18px] overflow-hidden rounded-[1px] [&>svg]:h-full [&>svg]:w-full">
+        <Flag title={title ?? upper} />
+      </span>
       {showCode && <span>{upper}</span>}
     </span>
   );

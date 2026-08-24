@@ -252,7 +252,11 @@ export default function TestingPage() {
                   </Field>
                 </div>
 
-                <div className="space-y-3 rounded-md border border-border p-4">
+                {/* A template with no parameters gets no panel: an empty bordered
+                    box under a "parameters" heading reads as a form that failed
+                    to load, rather than as a template that takes none. */}
+                {selectedTemplate.fields.length > 0 && (
+                  <div className="space-y-3 rounded-md border border-border p-4">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {t('templateParameters')}
                     </p>
@@ -294,6 +298,7 @@ export default function TestingPage() {
                       </Field>
                     ))}
                   </div>
+                )}
               </>
             )}
 

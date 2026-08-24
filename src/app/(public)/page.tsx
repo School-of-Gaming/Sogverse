@@ -4,6 +4,7 @@ import { ArrowRight, Shield, Users, Sparkles, Gamepad2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AboutSection } from "@/components/home/about-section";
+import { HomeCtaLink } from "@/components/home/cta-link";
 import { SectionPill } from "@/components/home/section-pill";
 import { YtySection } from "@/components/home/yty-section";
 import { ROUTES } from "@/lib/constants";
@@ -44,13 +45,13 @@ export default function HomePage() {
                 {t('hero.subtitle')}
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link
-                  href={ROUTES.register}
+                <HomeCtaLink
+                  signedOutHref={ROUTES.register}
+                  signedOutLabel={c('getStarted')}
                   className={buttonVariants({ size: "lg", className: "gap-2" })}
                 >
-                  {c('getStarted')}
                   <ArrowRight className="h-4 w-4" />
-                </Link>
+                </HomeCtaLink>
               </div>
             </div>
           </div>
@@ -152,12 +153,11 @@ export default function HomePage() {
               >
                 {c('exploreClubs')}
               </Link>
-              <Link
-                href={ROUTES.register}
+              <HomeCtaLink
+                signedOutHref={ROUTES.register}
+                signedOutLabel={t('cta.createFreeAccount')}
                 className={buttonVariants({ size: "lg" })}
-              >
-                {t('cta.createFreeAccount')}
-              </Link>
+              />
             </div>
           </CardContent>
         </Card>

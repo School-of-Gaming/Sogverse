@@ -167,7 +167,7 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
 /** A custom-zone color, expressed as five literal class strings (never built by
  *  string templating, so Tailwind's source scanner can see every utility):
  *  - `tile`  — soft-tint background for the zone-card icon tile (`bg-zone-X/15`)
- *  - `glyph` — the icon color (`text-zone-X`), readable on both themes
+ *  - `glyph` — the icon color (`text-zone-X`), readable on the dark ground
  *  - `ring`  — the picker's selection ring (`ring-zone-X`)
  *  - `glow`  — the active-zone treatment: the shared `.zone-glow` class (the
  *              inset-shadow geometry, defined once in globals.css) plus an
@@ -285,8 +285,8 @@ export interface VirtualZonePresentation {
 }
 
 /** Lobby / Clubhouse — the default "home" zone. A neutral white-ish identity
- *  (the theme `foreground`: near-white on dark, near-black on light) so it reads
- *  as the calm home base and stays distinct from all 16 colorful custom zones. */
+ *  (the theme `foreground`, near-white on our dark ground) so it reads as the
+ *  calm home base and stays distinct from all 16 colorful custom zones. */
 export const LOBBY_PRESENTATION: VirtualZonePresentation = {
   id: LOBBY_ZONE_ID,
   nameKey: "voice.zoneLobby",

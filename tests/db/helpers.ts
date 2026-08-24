@@ -70,7 +70,7 @@ export async function accessTokenFor(
 }
 
 /** What PostgREST said: the HTTP status plus the PostgreSQL SQLSTATE, if any. */
-export interface RawRpcResult {
+export interface RawRestResult {
   status: number;
   /** SQLSTATE from the PostgREST error body — `null` when the call succeeded. */
   code: string | null;
@@ -91,7 +91,7 @@ export async function callRpcRaw(
   accessToken: string,
   functionName: string,
   args: Record<string, unknown>
-): Promise<RawRpcResult> {
+): Promise<RawRestResult> {
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
     method: "POST",
     headers: {
@@ -102,6 +102,44 @@ export async function callRpcRaw(
     body: JSON.stringify(args),
   });
 
+  return readRestResult(response);
+}
+
+/**
+ * PATCHes rows over PostgREST with an arbitrary body, for the same reason
+ * `callRpcRaw` exists one function up: some values a test has to send are ones
+ * the generated types forbid, and that prohibition is frequently the very
+ * guarantee under test.
+ *
+ * An enum column is the clearest case. Since 00199 the compiler will not let
+ * `profiles.spoken_languages` be written with a language we do not offer — but
+ * `authenticated` holds a column-level UPDATE grant on it, so a hand-written
+ * request is a real path a real caller has, and proving the *database* refuses
+ * needs a request built without the generated types rather than a cast around
+ * them.
+ *
+ * `path` is everything after `/rest/v1/`, filter included — e.g.
+ * `profiles?id=eq.<uuid>`.
+ */
+export async function patchRaw(
+  accessToken: string,
+  path: string,
+  body: Record<string, unknown>
+): Promise<RawRestResult> {
+  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+    method: "PATCH",
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  return readRestResult(response);
+}
+
+async function readRestResult(response: Response): Promise<RawRestResult> {
   if (response.ok) {
     return { status: response.status, code: null, message: null };
   }

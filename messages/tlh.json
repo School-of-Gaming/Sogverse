@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "nuqDaq Qapla’ ’oH? Minecraft ghom’a’Daq. Gedu’pu’ Dun chaH — toy’wI’pu’ tIqhommoH, jIH mevbe’.",
-    "shortDescription": "noH Quj yejHaD – DaH yIQam, batlh yIghoS",
     "pages": {
       "signIn": "yI’el",
       "createAccount": "Account yIchenmoH",
@@ -61,6 +60,8 @@
     "signIn": "yI’el",
     "signOut": "yImej",
     "getStarted": "DaH yIqet",
+    "goToMySog": "jIH SOG yIghoS",
+    "goToDashboard": "QaD yIghoS",
     "viewDetails": "tIqel",
     "learnMore": "bIghojnIS",
     "exploreClubs": "ghom’a’mey tIghoS",
@@ -951,8 +952,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Sogverse bIghoS, SuvwI’!",
-      "description": "accountlIj yI’el",
+      "welcomeTitle": "noH Quj yejHaD bIghoS, SuvwI’!",
       "noAccountSignUp": "account DaHutlh’a’? <link>DachenmoH</link>",
       "signingIn": "bI’el...",
       "emailPlaceholder": "SoH@example.com",
@@ -1009,7 +1009,7 @@
       "successDescription": "mu’mey chu’moHlu’. Qapla’!"
     },
     "registerGedu": {
-      "title": "Sogverse Gedu account yIchenmoH",
+      "title": "noH Quj yejHaD Gedu account yIchenmoH",
       "certificationAlertTitle": "patlh DaghajnIS",
       "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
@@ -1463,11 +1463,16 @@
   },
   "help": {
     "title": "boQ",
-    "intro": "Sogverse SeghHommey jatlhlu’.",
+    "intro": "noH Quj yejHaD SeghHommey jatlhlu’.",
     "contact": {
       "heading": "boQ DaneH’a’?",
-      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej Sogverse mIw qaSchugh, maHvaD bIjatlh.",
+      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej noH Quj yejHaD mIw qaSchugh, maHvaD bIjatlh.",
       "emailLabel": "naDev SeH wIje’"
+    },
+    "about": {
+      "heading": "’Iv ghaH noH Quj yejHaD’e’?",
+      "body": "ghom’a’mey luchenmoHbogh nuvpu’ tISov. Quj ghojmoH je wIHarbogh yIlaD. ’ej chay’ qaS qep, yIleghqu’.",
+      "linkLabel": "maH yISov"
     },
     "faq": {
       "heading": "qaSchuq SeghHommey",
@@ -2251,23 +2256,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Hoch batlh.",
+    "footer": "© {year} noH Quj yejHaD. Hoch batlh.",
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
     "roleGamer": "toy’wI’",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Sogverse mu’mey yIchoH",
+      "subject": "noH Quj yejHaD mu’mey yIchoH",
       "heading": "mu’mey yIchoH",
-      "body": "Sogverse mu’mey chovmoH tlhob Suqlu’. mu’mey chu’ yIwIv.",
+      "body": "noH Quj yejHaD mu’mey chovmoH tlhob Suqlu’. mu’mey chu’ yIwIv.",
       "expiry": "ngeH wa’ rep Qav.",
       "ignore": "mu’mey chovmoH DatlhobHa’chugh, QIn yIleghQo’. mu’mey choHbe’lu’.",
       "button": "mu’mey yIchoH"
     },
     "pinReset": {
-      "subject": "Sogverse vavpu’ PIN yIchoH",
+      "subject": "noH Quj yejHaD vavpu’ PIN yIchoH",
       "heading": "vavpu’ PIN yIchoH",
-      "body": "Sogverse vavpu’ PIN chovmoH tlhob Suqlu’. PIN chu’ (loS mI’) yIwIv.",
+      "body": "noH Quj yejHaD vavpu’ PIN chovmoH tlhob Suqlu’. PIN chu’ (loS mI’) yIwIv.",
       "expiry": "ngeH cha’maH loS rep Qav.",
       "ignore": "PIN chovmoH DatlhobHa’chugh, QIn yIleghQo’. PIN choHbe’lu’.",
       "button": "PIN yIchoH"

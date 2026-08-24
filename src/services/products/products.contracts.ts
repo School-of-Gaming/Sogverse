@@ -96,7 +96,7 @@ const productDataBase = z.object({
       message: "Not a country products can be locked to",
     })
     .nullable(),
-  spoken_language_code: z.string(),
+  spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
   // The catalogue entry this product's picture comes from, or null for a
   // product with no picture.
   //

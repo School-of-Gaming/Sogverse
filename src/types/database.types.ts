@@ -1057,7 +1057,7 @@ export type Database = {
           registration_opens_at: string
           seat_count: number | null
           signup_threshold: number | null
-          spoken_language_code: string
+          spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           start_date: string | null
           status: Database["public"]["Enums"]["product_status"]
           tag: Database["public"]["Enums"]["product_tag"] | null
@@ -1089,7 +1089,7 @@ export type Database = {
           registration_opens_at: string
           seat_count?: number | null
           signup_threshold?: number | null
-          spoken_language_code: string
+          spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           tag?: Database["public"]["Enums"]["product_tag"] | null
@@ -1121,7 +1121,7 @@ export type Database = {
           registration_opens_at?: string
           seat_count?: number | null
           signup_threshold?: number | null
-          spoken_language_code?: string
+          spoken_language_code?: Database["public"]["Enums"]["spoken_language"]
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           tag?: Database["public"]["Enums"]["product_tag"] | null
@@ -1159,13 +1159,6 @@ export type Database = {
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "products_spoken_language_code_fkey"
-            columns: ["spoken_language_code"]
-            isOneToOne: false
-            referencedRelation: "spoken_languages"
-            referencedColumns: ["code"]
-          },
         ]
       }
       profiles: {
@@ -1182,7 +1175,7 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
-          spoken_languages: string[]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
         }
         Insert: {
@@ -1198,7 +1191,7 @@ export type Database = {
           phone?: string | null
           referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          spoken_languages?: string[]
+          spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
         }
         Update: {
@@ -1214,7 +1207,7 @@ export type Database = {
           phone?: string | null
           referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          spoken_languages?: string[]
+          spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
         }
         Relationships: [
@@ -1421,21 +1414,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      spoken_languages: {
-        Row: {
-          code: string
-          name: string
-        }
-        Insert: {
-          code: string
-          name: string
-        }
-        Update: {
-          code?: string
-          name?: string
-        }
-        Relationships: []
       }
       verification_email_requests: {
         Row: {
@@ -1686,7 +1664,9 @@ export type Database = {
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           search_blob: string | null
-          spoken_languages: string[] | null
+          spoken_languages:
+            | Database["public"]["Enums"]["spoken_language"][]
+            | null
           updated_at: string | null
         }
         Relationships: [
@@ -1852,7 +1832,7 @@ export type Database = {
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
-          p_spoken_language_code: string
+          p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_status?: Database["public"]["Enums"]["product_status"]
           p_tag?: Database["public"]["Enums"]["product_tag"]
@@ -1925,7 +1905,7 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
-          spoken_languages: string[]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
         }[]
         SetofOptions: {
@@ -1954,7 +1934,7 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
-          spoken_languages: string[]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
         }[]
         SetofOptions: {
@@ -2072,7 +2052,7 @@ export type Database = {
           p_phone: string
           p_roblox_user_id: string
           p_roblox_username: string
-          p_spoken_languages: string[]
+          p_spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           p_user_id: string
         }
         Returns: undefined
@@ -2161,7 +2141,7 @@ export type Database = {
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
-          p_spoken_language_code: string
+          p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_tag?: Database["public"]["Enums"]["product_tag"]
           p_timezone: string
@@ -2205,6 +2185,7 @@ export type Database = {
         | "esports"
         | "game_studio"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
+      spoken_language: "fi" | "sv" | "en" | "fr"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -2367,6 +2348,7 @@ export const Constants = {
         "game_studio",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
+      spoken_language: ["fi", "sv", "en", "fr"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },
