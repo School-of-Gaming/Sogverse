@@ -34,7 +34,13 @@ export async function generateMetadata(): Promise<Metadata> {
       default: title,
       template: "%s | Sogverse",
     },
-    description: t("shortDescription"),
+    // One description, everywhere. This used to be the short line — the brand
+    // name and the tagline joined by an en dash — which spent a search snippet
+    // restating what the title above it already says, and borrowed the shape of
+    // the `School of Gaming – Sogverse` lockup for something that is not one.
+    // The longer sentence is the one that tells a stranger what we actually run,
+    // which is the job of both a snippet and a link preview, so both get it.
+    description,
     keywords: ["gaming", "education", "learning", "kids", "games"],
     openGraph: {
       type: "website",

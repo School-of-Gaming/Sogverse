@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import {
   ArrowRight,
@@ -23,11 +22,27 @@ import { ROUTES } from "@/lib/constants/routes";
 import { RobloxHero } from "@/components/roblox/roblox-hero";
 import { ProgrammeCta } from "@/components/roblox/programme-cta";
 import { UpcomingEvents } from "@/components/roblox/upcoming-events";
+import { ROBLOX_OG_DESCRIPTION, ROBLOX_OG_TITLE } from "./metadata-copy";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+export function generateMetadata(): Metadata {
   return {
-    title: t("roblox"),
+    // French for every locale, and absolute so the `%s | Sogverse` template in
+    // the root layout does not append the platform name to it: this is the
+    // string a recipient sees on the preview card, and it has to be exactly the
+    // one that was signed off. `metadata-copy.ts` next door explains why the
+    // programme's card does not follow the viewer's locale; `openGraph` and
+    // `twitter` restate both fields rather than inheriting, so the card cannot
+    // drift from the tab.
+    title: { absolute: ROBLOX_OG_TITLE },
+    description: ROBLOX_OG_DESCRIPTION,
+    openGraph: {
+      title: ROBLOX_OG_TITLE,
+      description: ROBLOX_OG_DESCRIPTION,
+    },
+    twitter: {
+      title: ROBLOX_OG_TITLE,
+      description: ROBLOX_OG_DESCRIPTION,
+    },
     // Copy is still pending SOG and Roblox signoff, so the page is shared by URL
     // rather than published. This tag is what actually keeps it out of search
     // results; the route is deliberately absent from sitemap.ts and has no nav
