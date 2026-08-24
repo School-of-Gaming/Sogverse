@@ -5,11 +5,13 @@ import robloxWordmark from "@/assets/partners/roblox-wordmark-white.svg";
 import sogBadge from "@/assets/partners/sog-badge-yellow.svg";
 
 /**
- * The three-way partnership lockup: School of Gaming x Lynx Educate x Roblox.
+ * The three-way lockup: School of Gaming, Lynx Educate — who we partner
+ * with — and Roblox, who we collaborate with. The two words are not
+ * interchangeable; see the partner-brand rules in the root CLAUDE.md.
  *
  * Sits directly on the page background with no card behind it. Each mark is in
  * its dark-surface colourway — Roblox's own white wordmark, our yellow badge,
- * and a reversed Lynx mark (see src/assets/partners/README.md for why that one
+ * and a reversed Lynx mark (see src/assets/partners/CLAUDE.md for why that one
  * is derived rather than supplied). An earlier version put the whole lockup on
  * a light plate to accommodate Lynx's black-only mark, which honoured every
  * guideline but looked like a foreign object pasted onto a dark page.

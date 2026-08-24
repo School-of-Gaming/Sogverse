@@ -21,7 +21,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
 import { RobloxHero } from "@/components/roblox/roblox-hero";
-import { PartnershipCta } from "@/components/roblox/partnership-cta";
+import { ProgrammeCta } from "@/components/roblox/programme-cta";
 import { UpcomingEvents } from "@/components/roblox/upcoming-events";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -200,7 +200,7 @@ export default function RobloxPage() {
         </div>
       </section>
 
-      <PartnershipCta />
+      <ProgrammeCta />
 
       {/* Trademark attribution. Required wherever the Roblox mark appears, and
           the courteous equivalent for Lynx. Small and quiet, but on the page —

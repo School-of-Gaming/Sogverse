@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 /**
- * Closing call-to-action for the partnership page — the second of the two
+ * Closing call-to-action for the programme page — the second of the two
  * "start here" prompts, repeating the hero's for anyone who read to the bottom
  * before deciding.
  *
@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
  * The button is deliberately inert while the copy is unsigned — see the note on
  * the hero CTA in the page for why nothing here navigates yet.
  */
-export function PartnershipCta() {
+export function ProgrammeCta() {
   const t = useTranslations("roblox.cta");
 
   return (
