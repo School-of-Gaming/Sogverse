@@ -513,15 +513,20 @@ supported fix is BIMI, and it is priced for a different kind of company: Gmail
 will not show a logo without a certificate, and the cheapest one that skips the
 registered-trademark requirement still runs ~$650/yr. Not worth it for an avatar.
 
-One free thing remains worth doing, and one looked free but is not:
+One free thing remains worth doing, and one is a licensed experiment in flight:
 
-- **The Workspace profile-photo route is dead — checked 2026-08-24.**
-  `sogverse@sog.gg` is not a real Workspace user, so the photo needs a paid
-  license first, for an outcome Google documents no external-recipient guarantee
-  on — the same priced-for-someone-else shape as the certificate above. Decided
-  not to pursue. (If a real `sogverse@` support mailbox is ever wanted for its
-  own sake, the photo experiment rides along free — check what the address
-  delivers to before converting it, so replies don't silently re-route.)
+- [ ] **The Workspace profile-photo experiment is running — verify it.**
+  `sogverse@sog.gg` turned out not to be a real Workspace user (checked
+  2026-08-24), so a user was created for it the same day — display name
+  "School of Gaming", one license. Google documents no external-recipient
+  guarantee for the photo, which is why this is an experiment: upload the
+  circle-safe photo with visibility "Anyone", confirm replies to the address
+  still reach whoever watched them before (the old alias/group's delivery
+  re-routed to the new mailbox — forwarding or delegation covers it), then
+  mail a personal Gmail and judge the avatar after a day or two, not an hour.
+  If the letter tile persists, delete the user, recreate the old alias/group,
+  reclaim the license, and fall back to the BIMI path below. Brevo's sending
+  is untouched either way — it authenticates via DNS, not via the mailbox.
 - [ ] **Publish a self-asserted BIMI record** (SVG Tiny PS + `default._bimi` TXT,
   no certificate). Free, and it covers Yahoo and Fastmail, which honour BIMI
   without one. It does nothing for Gmail, so it is only worth the DNS work once
