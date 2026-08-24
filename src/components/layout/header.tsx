@@ -1,15 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Settings } from "lucide-react";
+import sogLogoFull from "@/assets/brand/sog-logo-full.svg";
+import sogLogoSimple from "@/assets/brand/sog-logo-simple.svg";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { UnknownAvatar } from "@/components/ui/unknown-avatar";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
+import {
+  ROLE_DASHBOARD_PATHS,
+  ROUTES,
+  SENDER_NAME,
+  type UserRole,
+} from "@/lib/constants";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 import { trackDashboardNav } from "@/lib/analytics";
@@ -26,8 +34,66 @@ const DASHBOARD_PREFIXES = ["/admin", "/parent", "/gamer", "/gedu"];
 // logo.
 const SELECTOR_ROLES = new Set<UserRole>(["customer", "gamer"]);
 
-export function Header() {
-  const pathname = usePathname();
+/** The mark's true viewBox, handed to `next/image` so it reserves the right box. */
+const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
+
+// TEMP: logo-glow exploration — strip before merge.
+// Which "you are here" treatment the logo wears when the header is already on
+// the page the logo links to. `"none"` is what ships; the rest exist so the
+// /preview/logo-glow scene can put them side by side.
+export type HeaderLogoTreatment =
+  | "none"
+  | "tight-glow"
+  | "soft-halo"
+  | "radial-backdrop"
+  | "underline"
+  | "chip";
+
+// TEMP: logo-glow exploration — strip before merge.
+// The class each treatment adds to the logo's wrapper. Only applied while the
+// logo is on its own target — an inactive logo is always bare.
+const LOGO_TREATMENT_CLASS: Record<HeaderLogoTreatment, string> = {
+  none: "",
+  // The shape the old text logo used, aimed at the mark instead: a tight
+  // primary-coloured bloom hugging the badge's silhouette.
+  "tight-glow": "drop-shadow-[0_0_12px_hsl(var(--primary))]",
+  // Same idea, spread wide and dropped in opacity so it reads as light around
+  // the badge rather than as the badge being out of focus.
+  "soft-halo": "drop-shadow-[0_0_26px_hsl(var(--primary)/0.5)]",
+  // Light *behind* the mark rather than bleeding out of it: a radial wash on a
+  // layer underneath, so the badge's own edges stay crisp.
+  "radial-backdrop":
+    "before:absolute before:-inset-x-4 before:-inset-y-3 before:-z-10 before:rounded-full before:bg-[radial-gradient(closest-side,hsl(var(--primary)/0.38),transparent)] before:content-['']",
+  // Not a glow at all — the tab-indicator rhyme. The nav links say "here" by
+  // turning primary; a mark that is already primary says it with a rule under
+  // it instead.
+  underline:
+    "after:absolute after:inset-x-0 after:-bottom-1.5 after:h-0.5 after:rounded-full after:bg-primary after:content-['']",
+  // The other non-glow rhyme: the "current" chip. The plate needs padding to be
+  // a plate, and the negative margin gives that padding straight back to the
+  // layout — so the mark itself sits in exactly the same place as it does in
+  // every other row here, and as it would unlit.
+  chip: "-mx-2 px-2 py-1 bg-primary/10 ring-1 ring-primary/30",
+};
+
+// TEMP: logo-glow exploration — strip before merge.
+// Fixture overrides the /preview/logo-glow scene passes in. The live app never
+// passes this, so the header behaves exactly as it did before.
+export interface HeaderPreviewOverrides {
+  /** Stands in for `usePathname()`, so a scene can put the header on any page. */
+  pathname: string;
+  /** Which "you are here" treatment to render on the logo. */
+  logoTreatment: HeaderLogoTreatment;
+}
+
+export function Header({
+  preview,
+}: {
+  preview?: HeaderPreviewOverrides;
+} = {}) {
+  const livePathname = usePathname();
+  // TEMP: logo-glow exploration — strip before merge (keep `usePathname()`).
+  const pathname = preview?.pathname ?? livePathname;
   const { user, profile, isLoading } = useAuth();
   const t = useTranslations("header");
   const c = useTranslations("common");
@@ -109,21 +175,47 @@ export function Header() {
   // Logo content is shared between the loading (non-clickable span) and
   // resolved (Link) branches — same className on the wrapper, identical inner
   // markup, so no layout shift when one swaps for the other.
-  const logoClassName = "flex shrink-0 items-center gap-2";
+  const logoClassName = "flex shrink-0 items-center";
   const logoBody = (
-    <>
-      <span
-        className={cn(
-          "font-display text-xl font-bold text-primary transition-all duration-300",
-          isOnLogoTarget && "drop-shadow-[0_0_12px_currentColor]",
-        )}
-      >
-        SOG
-      </span>
-      <span className="hidden text-lg font-semibold sm:inline-block">
-        {c("appName")}
-      </span>
-    </>
+    // The mark carries the brand name as artwork, so nothing is set beside it —
+    // "Sogverse" is deliberately not in the header. Two files rather than one
+    // responsive SVG: below `sm` the phone has no room for the "SCHOOL OF
+    // GAMING" line under the letters, and the simple mark is the same badge
+    // with that line dropped, so the badge doesn't change size at the
+    // breakpoint. Both carry the true viewBox as width/height, which is what
+    // lets `w-auto` reserve the right box before the file lands.
+    //
+    // The alt is the brand constant, not a message key: this is a name, and a
+    // locale translates the copy around a name rather than the name itself.
+    // Only one of the two is ever displayed, so assistive tech reads it once.
+    <span
+      className={cn(
+        "relative flex items-center rounded-lg transition-all duration-300",
+        // TEMP: logo-glow exploration — strip before merge (leaving the two
+        // <Image>s and this wrapper behind). The shipped header has no "you are
+        // here" treatment on the logo at all — every treatment is opt-in from
+        // the preview scene, so this resolves to nothing in the live app.
+        isOnLogoTarget &&
+          LOGO_TREATMENT_CLASS[preview?.logoTreatment ?? "none"],
+      )}
+    >
+      <Image
+        src={sogLogoSimple}
+        alt={SENDER_NAME}
+        width={LOGO_INTRINSIC.width}
+        height={LOGO_INTRINSIC.height}
+        className="h-9 w-auto sm:hidden"
+        unoptimized
+      />
+      <Image
+        src={sogLogoFull}
+        alt={SENDER_NAME}
+        width={LOGO_INTRINSIC.width}
+        height={LOGO_INTRINSIC.height}
+        className="hidden h-11 w-auto sm:block"
+        unoptimized
+      />
+    </span>
   );
 
   return (

@@ -5,6 +5,16 @@ not the same and the copy beside them must not blur them: School of Gaming **par
 with** Lynx Educate, and **collaborates with** Roblox — see the partner-brand rules in
 the root `CLAUDE.md`.
 
+**This directory holds only other people's marks.** Our own logo lives in
+`src/assets/brand/` (`sog-logo-full.svg`, `sog-logo-simple.svg`, their `-mono`
+colourways, and the `sog-gem-square.svg` favicon art), and the `/roblox` lockup imports
+its School of Gaming mark from there like every other surface does. A copy of our mark
+kept here alongside the partner files is how one surface ends up on a stale version of
+the brand while the rest of the app has moved on — so if you need our mark, reach for
+`src/assets/brand/`, and never re-vendor it into this folder. The two constraints below
+are the partners' own and do not apply to our mark; the placement rules in the root
+`CLAUDE.md` do.
+
 **Vendored deliberately** rather than served from the `product-images` Supabase bucket:
 that bucket holds *content* an admin uploads at runtime and references by a DB path,
 whereas these are *code* — they change only when we deploy, they are identical for every
@@ -12,7 +22,7 @@ visitor, and a revision should be reviewable in a PR diff. They are imported sta
 so the bundler content-hashes them and hands the intrinsic dimensions to `next/image`,
 which is what keeps a lockup from reflowing once it has painted.
 
-SVG on purpose: each mark is 2–15KB of text (so git delta-compresses revisions, unlike a
+SVG on purpose: each mark is a few KB of text (so git delta-compresses revisions, unlike a
 binary), and a wordmark rendered at a few hundred CSS px stays crisp at any density —
 which is also what the Roblox guidelines require ("always at full resolution").
 
@@ -23,7 +33,6 @@ which is also what the Roblox guidelines require ("always at full resolution").
 | `roblox-wordmark-white.svg` | Official Roblox press kit → "Roblox Logo" pack, `about.roblox.com/press-kit` |
 | `lynx-educate.svg` | `lynxeducate.com/wp-content/uploads/2023/10/logo.svg` — as supplied, unmodified |
 | `lynx-educate-reversed.svg` | **Derived by us** from the file above — see below |
-| `sog-badge-yellow.svg` | Our own badge, from the sog.gg Webflow CDN |
 
 The Roblox pack also ships the black wordmark and both Tilt colourways, plus the brand
 guidelines PDF. Only the white wordmark is vendored because the app renders dark-only
