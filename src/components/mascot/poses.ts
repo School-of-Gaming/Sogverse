@@ -25,9 +25,41 @@ import type { Grip, PoseId, PropId } from "./vocabulary";
 export type LegStyle =
   /** Planted, both soles down. */
   | "stand"
-  /** Mid-step: one foot forward, one trailing. */
+  /**
+   * The walk stance: both feet on the ground line and directly under their own
+   * hip sockets, knees carrying a shallow outward bow.
+   *
+   * It looks like a narrow stand and that is the point. Every concept here is
+   * drawn front-on, so a stride cannot be shown by putting one foot in front of
+   * the other — there is no "in front" on this canvas. The old geometry moved
+   * the feet fifteen units apart in x and then the walk cycle rotated each leg
+   * about its hip, which swings a foot sideways: two legs scissoring outward
+   * and back is a jumping jack, not a walk. The gait is in the animation
+   * instead, as a per-leg vertical foreshortening about the hip — the stepping
+   * leg at full extension with its sole on the ground line, the trailing one
+   * shortened with its sole lifted — which is what a leg going away from the
+   * viewer actually does to a front-on drawing. A leg scaled in y about its own
+   * socket cannot move its foot in x, so the scissor is structurally impossible
+   * rather than merely tuned away.
+   */
   | "stride"
-  /** Both feet off the ground and kicked outward. */
+  /**
+   * The hop stance: feet under the hips and on the ground line, knees bowed.
+   *
+   * It is drawn *standing* on purpose, even though the pose it belongs to is
+   * airborne, and the reason is that one shared keyframe cannot pin two things
+   * at once. The body keyframe translates the whole figure by a fixed number
+   * of viewBox units, so it can put the soles on the ground line or the body
+   * back at its standing height, and it can only do both if the feet are drawn
+   * where a standing figure's feet go. An earlier pass drew them ten units up,
+   * which landed the soles perfectly and sank a bear's belly seven units
+   * through the floor.
+   *
+   * The tuck is the animation's, not the drawing's: the legs run their own
+   * keyframe that folds them while the figure is in the air and returns to
+   * *identity* — no transform at all — for the takeoff and landing frames, so
+   * the exactness costs nothing and the tuck comes free.
+   */
   | "jump"
   /** Planted but braced apart — the stance you take to do something. */
   | "wide"
@@ -140,20 +172,56 @@ export const POSES: Record<PoseId, PoseSpec> = {
     defaultProp: "laptop",
     freeHand: false,
   },
+  /**
+   * Out for a walk, coming towards you.
+   *
+   * Both hands hang at the hip, and symmetrically, which is a change from the
+   * asymmetric reach round two used to suggest a stride. Two things wanted it.
+   * The swing belongs to the animation — an arm counter-swinging about its own
+   * shoulder says "walking" and a hand parked forward in the still does not —
+   * and a species with `armsOnDemand` reads a pair of hands at the hip line as
+   * a rest and grows no arms at all, which is the correct answer for an
+   * armless Silmu out for a stroll: it walks on its legs and its lean.
+   */
   walking: {
     grip: "side",
     legs: "stride",
-    handL: { x: 60, y: 132 },
-    handR: { x: 142, y: 150 },
+    handL: { x: 66, y: 146 },
+    handR: { x: 134, y: 146 },
     lift: 0,
     defaultProp: "none",
     freeHand: true,
   },
+  /**
+   * The jumppa hop — the register here is the mid-club exercise break, where a
+   * room of kids gets off the computers and jumps about for two minutes, not a
+   * weightless video-game leap. Snappy, physical and cheerful: the still frame
+   * is the apex, arms thrown up and feet tucked, and the animation around it is
+   * crouch, pop, hang, land.
+   *
+   * `lift` is how far the figure has to come back down to stand on the ground
+   * line and the jump keyframe is written from it, so raising the apex is a
+   * one-number change here. Mind the canvas when doing it: the still frame is
+   * the apex, and a tall hat on a tall build is already near the top edge.
+   *
+   * The hands are eight units lower than round two put them, and no further in,
+   * and both halves of that are about the *swing* rather than the still. The
+   * arms come all the way down to the sides on the ground frames — a rotation
+   * of about a hundred and forty degrees about the shoulder — and a rotation
+   * is a circle of whatever radius the pose asked for, so a long reach put a
+   * bear's paw below the ground line at the bottom of it. Dropping the hands
+   * shortens that radius. Pulling them *inward* would shorten it further and
+   * is the thing not to do: past x=44 they cross the reach cutoff, so a wide
+   * species has them nudged outward again by its own reach — a different
+   * answer per species — and on the widest of them the whole arm ends up
+   * drawn inside the body's own silhouette, which is an armless jump with the
+   * cost of two arms.
+   */
   jumping: {
     grip: "side",
     legs: "jump",
-    handL: { x: 44, y: 52 },
-    handR: { x: 156, y: 52 },
+    handL: { x: 44, y: 60 },
+    handR: { x: 156, y: 60 },
     lift: 22,
     defaultProp: "none",
     freeHand: false,
@@ -189,6 +257,18 @@ export const POSES: Record<PoseId, PoseSpec> = {
     freeHand: false,
   },
 };
+
+/**
+ * How far the jump keyframe must translate the whole figure to stand it back
+ * on the ground.
+ *
+ * The pose draws the apex, so the ground is `lift` below where the still frame
+ * puts it — in viewBox units, identically for every species, because the legs
+ * are drawn standing. Read from the table rather than typed into the keyframe,
+ * because a keyframe carrying a hand-copied 22 is a keyframe that silently
+ * stops touching the floor the day somebody raises the hop.
+ */
+export const JUMP_GROUND_DROP = POSES.jumping.lift;
 
 /**
  * Where the held object sits, derived from the grip and from the hands as they

@@ -1106,3 +1106,1123 @@ function relLuma(hex: string): number {
   const [r, g, b] = channels(hex);
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
+
+// --- Porukka: the flat-yellow people -------------------------------------
+
+/**
+ * One skin for the whole cast, and where the number comes from.
+ *
+ * The reference (`huhtala.png`) uses `#ffc61c` and its sibling picture
+ * `#fdc445` — a saturated golden yellow that is not any human complexion and
+ * is not trying to be. That unreality is the safeguard, not a stylisation: a
+ * cast that all shares one impossible skin carries its difference in hair and
+ * clothes and never in ethnicity, which is the same guarantee Kaveri's lilac
+ * and teal give from the other direction.
+ *
+ * It is *derived* rather than transcribed. Mixing the amber and yellow zone
+ * hues and lifting the result a tenth of the way towards the shared paper
+ * lands on a warm gold within a couple of points of the reference, and does it
+ * out of colours the product already owns — so a retune of the zone palette
+ * reaches the mascot's skin instead of leaving one orphan hex behind.
+ */
+export const PORUKKA_SKIN = tintHex(mixHex(swatchHex("amber"), swatchHex("yellow"), 0.45), 0.1);
+
+/**
+ * The one darker tone the reference puts under a hairline, kept in
+ * `bodyBottom` and drawn by nothing.
+ *
+ * The simplicity ruling takes shading off a base form, so this is not on the
+ * character. The slot survives because it is where a *second complexion*
+ * would go if the fleet ever ships more than one — that is a real decision
+ * somebody may want to take, and it should not require a new colourway shape
+ * to take it.
+ */
+const PORUKKA_SKIN_DEEP = shadeHex(PORUKKA_SKIN, 0.14);
+
+/**
+ * The nose dot's pink, from the pink zone hue tinted well back.
+ *
+ * The reference's is `#f3a4ca`. A flat dot of it is a *symbol* for a nose in
+ * the same sense the mouth glyph is a symbol for a mouth — it is not a
+ * highlight and claims nothing about a light source, which is what the face
+ * grammar's ban on nose glints is actually about.
+ */
+const PORUKKA_NOSE = tintHex(swatchHex("pink"), 0.42);
+
+/**
+ * A Porukka colourway: constant skin, a hair colour, and two garments.
+ *
+ * Hair goes in `limb` (the concept's arms are sleeves and its legs trousers,
+ * so the slot was free) and is always a *deep* mix of a swatch rather than the
+ * swatch itself — an unshaded zone hue on top of a head reads as a hat, and
+ * hair has to read as hair even when its colour is invented. `panel` is the
+ * shoe, taken a long way down from the trouser so a sole separates from a leg
+ * on a dark page.
+ */
+function porukkaColorway(hair: string, top: string, bottom: string): Colorway {
+  return {
+    bodyTop: PORUKKA_SKIN,
+    bodyBottom: PORUKKA_SKIN_DEEP,
+    limb: hair,
+    panel: shadeHex(bottom, 0.2),
+    accent: tintHex(top, 0.7),
+    spark: PORUKKA_NOSE,
+    sclera: MASCOT_INK.paper,
+    pupil: MASCOT_INK.line,
+    blush: PORUKKA_NOSE,
+    clothing: top,
+    clothingAccent: bottom,
+  };
+}
+
+/**
+ * Five colourways, named for the hair, because on a cast with one skin the
+ * hair is the first thing anybody uses to tell two people apart.
+ *
+ * The garment pairs are deliberately not tonal: a top from one swatch and a
+ * bottom from a different one is what the reference does (mint over dark
+ * green, striped blue over royal blue) and it is what keeps a figure from
+ * reading as a single-colour cut-out at small sizes.
+ */
+export const PORUKKA_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "noki",
+    label: "Noki",
+    note: "Soot — indigo taken almost all the way down, which is the black that still has a hue in it",
+    colors: porukkaColorway(
+      shadeHex(swatchHex("indigo"), 0.7),
+      swatchHex("emerald"),
+      shadeHex(swatchHex("emerald"), 0.3),
+    ),
+  },
+  {
+    id: "ruis",
+    label: "Ruis",
+    // Blond has to be *lighter* than the skin, not a shade of it. The
+    // reference is unambiguous: its blond is `#ffe978` against `#ffc61c`
+    // skin, and a first pass that shaded the amber swatch towards brown
+    // produced a head where the hairline vanished at every size.
+    note: "Rye — a pale straw blond, which is the one hair colour that has to sit lighter than the skin",
+    colors: porukkaColorway(
+      tintHex(swatchHex("yellow"), 0.5),
+      swatchHex("sky"),
+      shadeHex(swatchHex("blue"), 0.26),
+    ),
+  },
+  {
+    id: "kupari",
+    label: "Kupari",
+    note: "Copper — the orange hue shaded to auburn, over violet",
+    colors: porukkaColorway(
+      shadeHex(swatchHex("orange"), 0.46),
+      swatchHex("violet"),
+      shadeHex(swatchHex("violet"), 0.34),
+    ),
+  },
+  {
+    id: "usva",
+    label: "Usva",
+    note: "Mist — the elder's silver, which is paper mixed a fifth towards the soft line so it holds an edge on a yellow head",
+    colors: porukkaColorway(
+      mixHex(MASCOT_INK.paper, MASCOT_INK.lineSoft, 0.2),
+      swatchHex("teal"),
+      shadeHex(swatchHex("teal"), 0.34),
+    ),
+  },
+  {
+    id: "puola",
+    label: "Puola",
+    note: "Lingonberry — the red hue shaded to a dark berry, over camp lime",
+    colors: porukkaColorway(
+      shadeHex(swatchHex("red"), 0.62),
+      swatchHex("camp"),
+      shadeHex(swatchHex("camp"), 0.32),
+    ),
+  },
+];
+
+// --- Stadi: the inked humanoid --------------------------------------------
+
+/**
+ * The one line colour the Helsinki-ink species is drawn with, and the honest
+ * reason it is not black.
+ *
+ * The idiom this concept is derived from puts a thick near-black contour
+ * around every shape, and it works because every one of those pictures sits on
+ * a *light* ground: white paper, a yellow field, a green field. The line there
+ * is the darkest thing in the frame and it separates the figure from the page.
+ *
+ * This site's page is `#121212`, so the line would be the *same* thing as the
+ * page. Measured against it: pure black is 1.12:1 and the shared
+ * `MASCOT_INK.line` is 1.14:1 — an outer contour drawn in either is not a
+ * faint line, it is no line at all, and the silhouette simply shrinks by one
+ * stroke width. Going the other way is no better: an ink lifted far enough to
+ * be comfortable on the page (`#5C566B`, 2.67:1) drops to 1.66:1 against a
+ * brick-red complexion and stops reading as black *inside* the drawing, which
+ * is where nearly all of this idiom's line actually lives.
+ *
+ * `#3A3350` is where those two failures cross. It is 1.58:1 on the page —
+ * enough that the outer contour is a visible edge rather than nothing — and
+ * 11.2:1 on paper, 7.7:1 on the pale sky complexion and 2.8:1 on the brick
+ * one, so against every fill in the species it is still unmistakably the black
+ * line. It is a violet-leaning near-black rather than a neutral one for the
+ * same reason `SHADE_TOWARDS` is: a grey line beside these fills reads as
+ * washed out, and the shared ink is already a plum.
+ *
+ * The rasters behind those numbers, and what they showed at 200px and 40px,
+ * are written up at the top of `concepts/stadi.tsx`.
+ */
+export const STADI_INK = {
+  /** Every contour, every interior stroke, the hair, and the inked garments. */
+  line: "#3A3350",
+} as const;
+
+/**
+ * Four unreal complexions, and the palette discipline that goes with them.
+ *
+ * The rule taken from the sources is exact and was measured rather than
+ * guessed: sampling a whole panel of the reference material returns a *ground*
+ * colour, one or two figure colours, black and white, and nothing else — one
+ * collage half comes back as literally mint, black and white. So every
+ * colourway here is **two swatch colours plus the line and the paper**: one
+ * spent on the complexion, one on the garment. There is no third hue and no
+ * shading anywhere, which is why `bodyBottom` is the same value as `bodyTop`
+ * — this species has no second plane, and a slot it does not use is set to
+ * the value that makes that visible rather than to a shade nobody will draw.
+ *
+ * The complexions are deliberately impossible for the same reason Kaveri's
+ * are, and the sources agree: the reference trio is pale blue, the collage's
+ * people are peach, brick and white. A skin colour that could be read as a
+ * real one invites the question of which child this is meant to be.
+ */
+function stadiColorway(
+  skin: string,
+  garment: string,
+  hair: string,
+  garmentTrim: string,
+): Colorway {
+  return {
+    bodyTop: skin,
+    // No second plane. See the note above.
+    bodyBottom: skin,
+    // The trousers: the garment mixed a third of the way to paper, which is
+    // the only place this species spends a second *value* of anything. It is
+    // not a third colour — it is the one the sources use when a figure's top
+    // and bottom are the same garment hue at two weights — and it exists
+    // because the shared limb renderer draws no line of its own, so a leg and
+    // the torso above it can only be told apart by value.
+    limb: tintHex(garment, 0.3),
+    // The collar block cut into the garment.
+    panel: garmentTrim,
+    // The garment itself — the one big colour block under the head, and the
+    // sleeves, which are the same cloth.
+    accent: garment,
+    // The hair mass: the line colour by default, one swatch where a colourway
+    // wants to spend its second colour there instead.
+    spark: hair,
+    sclera: MASCOT_INK.paper,
+    pupil: STADI_INK.line,
+    // The mouth and brows are drawn *on* the complexion, which is light in
+    // every colourway here, so they take the same line as everything else.
+    ink: STADI_INK.line,
+    blush: MASCOT_INK.paper,
+    clothing: garment,
+    clothingAccent: garmentTrim,
+  };
+}
+
+export const STADI_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "taivas",
+    label: "Taivas",
+    note: "Pale sky skin over amber — the reference trio's complexion, and the cyclist's warm garment",
+    colors: stadiColorway(
+      tintHex(swatchHex("sky"), 0.55),
+      swatchHex("amber"),
+      STADI_INK.line,
+      MASCOT_INK.paper,
+    ),
+  },
+  {
+    id: "tiili",
+    label: "Tiili",
+    note: "Brick skin over sky — the collage's terracotta people, with the blue moved onto the clothes",
+    colors: stadiColorway(
+      shadeHex(swatchHex("orange"), 0.3),
+      swatchHex("sky"),
+      STADI_INK.line,
+      MASCOT_INK.paper,
+    ),
+  },
+  {
+    id: "okra",
+    label: "Okra",
+    note: "Pale yellow skin over green — the yellow field and the green field, worn instead of printed",
+    colors: stadiColorway(
+      tintHex(swatchHex("yellow"), 0.52),
+      swatchHex("green"),
+      STADI_INK.line,
+      MASCOT_INK.paper,
+    ),
+  },
+  {
+    id: "paperi",
+    label: "Paperi",
+    note: "Paper skin, paper cloth, and nothing else — the whole figure is the line, which is the register the reference sheet's self-portrait is drawn in",
+    colors: stadiColorway(
+      MASCOT_INK.paper,
+      MASCOT_INK.paper,
+      STADI_INK.line,
+      swatchHex("emerald"),
+    ),
+  },
+  {
+    id: "ratikka",
+    label: "Ratikka",
+    note: "Pale sky skin, tram green, and the one colourway that spends its second colour on the hair instead of leaving it black",
+    colors: stadiColorway(
+      tintHex(swatchHex("sky"), 0.55),
+      swatchHex("green"),
+      swatchHex("green"),
+      MASCOT_INK.paper,
+    ),
+  },
+];
+
+// --- Metsänväki: the pen line on a night ground --------------------------
+
+/**
+ * The one pen this species is drawn with, and why it is a single value.
+ *
+ * The reference sheets (`jansson/j2.jpg`, `jansson/j3.jpg` in the working
+ * folder — the same two figures drawn seventeen years apart) were measured
+ * rather than eyeballed: the ink line is a constant three pixels on a figure
+ * two hundred and ninety pixels tall, it is the *same* three pixels on the
+ * four-hundred-and-thirty-pixel figure beside it, and it is the same again on
+ * the interior marks. Line weight there is a property of the pen, not of the
+ * drawing — a small creature does not get a thinner line — so this is one
+ * constant and every form uses it at one width.
+ *
+ * It is a blue-black rather than the shared plum `MASCOT_INK.line`, because
+ * this species is nocturnal by construction and its line has to sit on a page
+ * that is already dark. Deriving it from the indigo swatch keeps it inside the
+ * product's own palette rather than inventing a mascot black.
+ *
+ * Distinct on purpose from `STADI_INK`, which is the *other* ink species here:
+ * that one is a thick brush contour around flat colour, this one is a thin
+ * even nib around a wash. Two Finnish idioms, and the difference between them
+ * is entirely in the line.
+ */
+export const METSA_INK = {
+  /** The nib. Every contour, every limb, every face mark in a wash colourway. */
+  pen: shadeHex(swatchHex("indigo"), 0.78),
+  /** The paper a wash is tinted towards, and the line an inverted one is drawn in. */
+  paper: MASCOT_INK.paper,
+} as const;
+
+/**
+ * How dark a wash gets to be. A pale figure on a dark page is the only thing
+ * carrying the silhouette below about sixty pixels, where the line has stopped
+ * existing, so the wash cannot be a whisper: two thirds of the way to paper is
+ * the point where the raster still reads as one shape at forty pixels and the
+ * pen line still reads as a line at two hundred.
+ */
+const METSA_WASH = 0.66;
+
+/**
+ * One colourway, in one of the two registers the raster comparison left
+ * standing. See the top of `concepts/metsa.tsx` for what each one showed.
+ *
+ * - `wash` is ink on paper with the paper tinted: a pale figure, drawn round
+ *   with the dark nib. This is the shipped register.
+ * - `night` is the same drawing inverted — a body barely above the page and a
+ *   pale line round it. Kept as one colourway rather than as a whole set,
+ *   because it is genuinely the more atmospheric of the two at large sizes and
+ *   genuinely illegible at small ones, and a species that ships both registers
+ *   is two species.
+ *
+ * Either way there is exactly **one** hue and no second plane: `bodyBottom`
+ * repeats `bodyTop` rather than holding a shade nothing draws, which is the
+ * same admission the flat-colour species makes for the same reason.
+ */
+function metsaColorway(hex: string, register: "wash" | "night"): Colorway {
+  const fill = register === "wash" ? tintHex(hex, METSA_WASH) : shadeHex(hex, 0.76);
+  const line = register === "wash" ? METSA_INK.pen : tintHex(hex, 0.84);
+  return {
+    bodyTop: fill,
+    // No second plane — one wash, as the register says.
+    bodyBottom: fill,
+    // A limb here is a pen stroke, not a painted arm, so it takes the line.
+    limb: line,
+    // The one interior block a form is allowed: a muzzle against a face, a
+    // face against a spined back. A value rather than a line, so it survives
+    // the sizes the line does not.
+    panel: register === "wash" ? tintHex(hex, 0.88) : shadeHex(hex, 0.6),
+    // The single loud note — a leaf, a berry, a lantern flame — at full
+    // strength, because there is only ever a few square units of it.
+    accent: hex,
+    spark: register === "wash" ? shadeHex(hex, 0.3) : tintHex(hex, 0.6),
+    // The eye is a pale disc with a dark centre in a wash colourway and a pale
+    // ring round a dark centre in a night one — which is the same two circles,
+    // and in both cases is what the reference draws.
+    sclera: register === "wash" ? MASCOT_INK.paper : line,
+    pupil: register === "wash" ? METSA_INK.pen : fill,
+    // The mouth is one short unclosed stroke drawn *on* the body, so it is the
+    // pen, whichever way round the pen is.
+    ink: line,
+    blush: MASCOT_INK.paper,
+    clothing: hex,
+    clothingAccent: tintHex(hex, 0.7),
+  };
+}
+
+/**
+ * Six washes and one night, named for what they are washes *of*. Every hue is
+ * a swatch the product already owns; the Finnish names are the point of the
+ * species, not decoration on it.
+ */
+export const METSA_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "kuu",
+    label: "Kuu",
+    note: "Moon — the palest wash, and the one the whole species defaults to",
+    colors: metsaColorway(swatchHex("sky"), "wash"),
+  },
+  {
+    id: "sammal",
+    label: "Sammal",
+    note: "Moss — the forest floor, and the warmest of the greens",
+    colors: metsaColorway(swatchHex("green"), "wash"),
+  },
+  {
+    id: "puolukka",
+    label: "Puolukka",
+    note: "Lingonberry — the one red in a set that is otherwise all cold",
+    colors: metsaColorway(swatchHex("red"), "wash"),
+  },
+  {
+    id: "usva",
+    label: "Usva",
+    note: "Mist — the wash that reads as almost no colour at all",
+    colors: metsaColorway(swatchHex("cyan"), "wash"),
+  },
+  {
+    id: "tuohi",
+    label: "Tuohi",
+    note: "Birch bark — the only warm neutral, and the closest to real paper",
+    colors: metsaColorway(swatchHex("amber"), "wash"),
+  },
+  {
+    id: "havu",
+    label: "Havu",
+    note: "Spruce — the deepest wash that still holds its shape at forty pixels",
+    colors: metsaColorway(swatchHex("emerald"), "wash"),
+  },
+  {
+    id: "hamara",
+    label: "Hämärä",
+    note: "Dusk — the drawing inverted: a pale nib on a body barely above the page. Beautiful large, illegible small",
+    colors: metsaColorway(swatchHex("indigo"), "night"),
+  },
+];
+
+// --- Kylä: the village animals -------------------------------------------
+
+/**
+ * Six coats for the village, and the one rule that makes them a village.
+ *
+ * The Kunnas pages this concept studies (`kunnas/k3.jpg`, `k4.jpg`, `k5.jpg`)
+ * are not painted in saturated colour. Sampling them gives four to six hues
+ * per page — an ochre, a terracotta, a brick red, one olive, one dusty blue —
+ * every one of them sitting well short of full chroma, on warm paper. Black
+ * appears only as punctuation: a nose, a shoe, a spilled inkwell.
+ *
+ * So every value here is a swatch **muted towards the shared paper** before it
+ * is used, rather than the swatch itself. `tintHex` mixes towards
+ * `MASCOT_INK.paper` — a warm off-white rather than a neutral one — which is
+ * exactly the "watercolour on warm stock" move, done with the product's own
+ * colours instead of with invented ones. A coat comes out roughly a third of
+ * the way to paper and a garment a fifth, which keeps the garment the louder
+ * of the two: the fur is the ground and the clothes are the figure, which is
+ * the way round a dressed animal has to read.
+ *
+ * The collar is not a slot here at all: it is `MASCOT_INK.paper` at the
+ * drawing, the same warm off-white the `village` scene paints its window
+ * frames and corner boards with. White trim on a coloured board is the most
+ * Finnish thing in this palette — it is what every red farmhouse in the
+ * country does — and holding it as a constant rather than as a per-member
+ * colour is what makes a villager and the house behind them look like one
+ * picture instead of two.
+ */
+function kylaColorway(
+  coatSwatch: string,
+  garmentSwatch: string,
+  accentSwatch: string,
+  options?: { coatMute?: number },
+): Colorway {
+  const coat = tintHex(swatchHex(coatSwatch), options?.coatMute ?? 0.34);
+  const garment = tintHex(swatchHex(garmentSwatch), 0.2);
+  return {
+    bodyTop: coat,
+    // Horns, a beard, the underside of a tail: one step down from the coat,
+    // never a shading pass on it.
+    bodyBottom: shadeHex(coat, 0.24),
+    // Unused by this species — every limb is painted from a garment slot, so
+    // this is set to the coat rather than to a colour nobody will ever see.
+    limb: coat,
+    // The snout block and the inside of an ear. Well towards paper, because
+    // the black nose has to be the darkest thing on the face by a mile.
+    panel: tintHex(coat, 0.52),
+    // The one loud colour per character — a comb, a beak, a wattle.
+    accent: tintHex(swatchHex(accentSwatch), 0.12),
+    // The boots. A dark version of the garment rather than a leather brown, so
+    // a villager's shoes belong to their clothes and not to the scenery.
+    spark: shadeHex(garment, 0.52),
+    sclera: MASCOT_INK.paper,
+    pupil: MASCOT_INK.line,
+    blush: MASCOT_INK.paper,
+    clothing: garment,
+    // The trousers: the coat's own colour taken down a step. One garment hue
+    // per villager, in three values - coat, hose, boot - rather than three
+    // hues, because a fleet told apart by *which* colour cannot also be told
+    // apart by how many.
+    clothingAccent: shadeHex(garment, 0.3),
+  };
+}
+
+export const KYLA_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "okra",
+    label: "Okra",
+    note: "Ochre fur under a blue coat — the village's default, and the closest thing here to a working day",
+    colors: kylaColorway("amber", "blue", "red"),
+  },
+  {
+    id: "savi",
+    label: "Savi",
+    note: "Clay — the terracotta the reference pages spend most of their floor on",
+    colors: kylaColorway("orange", "green", "amber"),
+  },
+  {
+    id: "kaura",
+    label: "Kaura",
+    note: "Oat — the palest coat, for the villager who has to read against a dark doorway",
+    colors: kylaColorway("yellow", "red", "teal", { coatMute: 0.52 }),
+  },
+  {
+    id: "sammal",
+    label: "Sammal",
+    note: "Moss — a coat no real animal has, which is the point: colour tells two of them apart, not detail",
+    colors: kylaColorway("emerald", "amber", "red"),
+  },
+  {
+    id: "karpalo",
+    label: "Karpalo",
+    note: "Cranberry — the pink end of the set, and the one the pig was always going to take",
+    colors: kylaColorway("pink", "teal", "amber"),
+  },
+  {
+    id: "tervas",
+    label: "Tervas",
+    note: "Tar pine — the one cool coat in a warm set, lifted further towards paper than the rest because a genuinely dark villager on a near-black page is a hole rather than a character",
+    colors: kylaColorway("indigo", "amber", "orange", { coatMute: 0.42 }),
+  },
+];
+
+// --- Jalo: the brand mark, and the brand's own corner rounding ------------
+
+/**
+ * The wordmark's corner radius, as a fraction of the segment it is cut into.
+ *
+ * Measured off `sog-logo-clean.svg` rather than chosen. The S of the SOG
+ * lockup is built from bars 13.35 units tall (the top bar runs y 55.9 to 69.2;
+ * the O's stroke is 13.4 thick, which is the same number twice), and every
+ * corner on them is an arc of radius 5.1 — fitted from the path's own cubics:
+ * the right end cap turns 90 degrees over a 7.1-unit chord, which is a circle
+ * of r 5.13, and the four chamfer corners turn 45 degrees over 3.9-unit
+ * chords, which is r 5.10. 5.1 / 13.35 = 0.38.
+ *
+ * **Which shapes should share it:** flat rectangular *plates* the characters
+ * carry or stand a mark on — a held sign's board, the half-painted board in
+ * the sign-painting scene, a plaque, a badge face, a button a mascot is
+ * pointing at. Those are the shapes a viewer reads as "a piece of School of
+ * Gaming", and giving them one rounding rule is what makes a prop look like it
+ * came out of the same box as the logo.
+ *
+ * **Which should not:** anything that is not a plate. A device (a controller,
+ * a laptop, a phone) is moulded plastic and has its own vocabulary; a body, a
+ * limb or a hat is anatomy; and a *long* plate does not want a radius of 0.38
+ * of its long side — the ratio is against the shape's **shorter** dimension,
+ * which is what "segment height" means on a bar, and it is a cap rather than a
+ * target: on a plate much longer than it is wide the rounding is applied to
+ * the short side and the long side keeps its straight run, exactly as the
+ * wordmark's own bars do.
+ */
+export const BRAND_RADIUS = 0.38;
+
+/** The corner radius a brand-shaped plate of these dimensions takes. */
+export function brandRadius(width: number, height: number): number {
+  return Math.min(width, height) * BRAND_RADIUS;
+}
+
+/**
+ * The two brand pairs, as bodies.
+ *
+ * Jalo is the mark with a face, so its first colourway is not a mascot colour
+ * at all: it is `BRAND.primary` under `BRAND.primaryForeground`, which is the
+ * exact pair the favicon cuts its chevron with and the pair the product's own
+ * buttons already use. The second is the white-on-purple candidate — the
+ * secondary brand colour with its own foreground as the face's ink.
+ *
+ * Both come from the brand constants rather than from the swatch table on
+ * purpose. The zone amber (`#f7a31f`) and the brand amber (`#FAA901`) are
+ * three points apart and would look identical in a lineup, but only one of
+ * them is the logo, and a mascot whose whole pitch is "this is the mark" has
+ * to be painted with the mark's own value so a retune of the brand reaches it.
+ *
+ * The limbs go the opposite way on the two of them, which is the same rule the
+ * species applies to every swatch body: deepen a light body's stems, lift a
+ * dark one's, because a stem has to separate from the body above it and from
+ * the page behind it at once.
+ */
+export const JALO_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "jalo",
+    label: "Jalo",
+    note: "The favicon's own pair — brand amber under the near-black its chevron is cut in",
+    colors: colorwayFromSwatch(
+      BRAND.primary,
+      { clothing: BRAND.secondary, clothingAccent: MASCOT_INK.paper },
+      {
+        limb: shadeHex(BRAND.primary, 0.28),
+        pupil: BRAND.primaryForeground,
+        ink: BRAND.primaryForeground,
+      },
+    ),
+  },
+  {
+    id: "secondary",
+    label: "Secondary purple",
+    note: "The white-on-purple mark (SX2) — brand purple with its own foreground as the ink",
+    colors: colorwayFromSwatch(
+      BRAND.secondary,
+      { clothing: BRAND.primary, clothingAccent: MASCOT_INK.paper },
+      { limb: tintHex(BRAND.secondary, 0.22), ink: BRAND.secondaryForeground },
+    ),
+  },
+];
+
+// --- Lohi: the cute dragon cast ------------------------------------------
+
+/**
+ * The river colours.
+ *
+ * *Lohikäärme* is the Finnish for dragon and *lohi* on its own is a salmon, so
+ * the species is named for the fish, its members are named for the rivers the
+ * fish runs up, and its flagship body is salmon-pink. That last one is the only
+ * colour in this file that is a *mix* of two swatches rather than one of them:
+ * neither the zone pink (`#f767a8`, too magenta) nor the zone red (`#f4504e`,
+ * too tomato) is a salmon on its own, and the point of naming a species after a
+ * fish is lost if the fish's own colour is the one thing the palette cannot
+ * make. Halfway between them, lifted an eighth towards the shared paper, is
+ * the colour — and it is still two swatches and two helpers rather than a hex
+ * somebody typed.
+ *
+ * The other four are single swatches, one per hue family, so a cast of five
+ * standing together is five different animals rather than five shades of one:
+ * a cyan, a deep indigo-blue, a warm orange and a green. Every garment pair is
+ * another swatch, and every limb is deepened a little past what
+ * `colorwayFromSwatch` gives on its own, because a dragon's legs are drawn
+ * against its own belly plane rather than against open space.
+ */
+const LOHI_SALMON = tintHex(mixHex(swatchHex("pink"), swatchHex("red"), 0.5), 0.12);
+
+/** One river colourway: a body swatch, a garment swatch, deepened limbs. */
+function lohiColorway(body: string, garment: string): Colorway {
+  return colorwayFromSwatch(
+    body,
+    { clothing: garment, clothingAccent: tintHex(garment, 0.84) },
+    {
+      limb: shadeHex(body, 0.26),
+      // The `spark` slot is the species' one loud colour, and on this species
+      // it is literally a spark: the puff of flame an excited Lohi lets out.
+      // It is the same amber on all five rivers rather than a shade of each
+      // body, for two reasons. Fire is amber whatever is breathing it — a
+      // green flame off the reed-green one would be a colourway artefact, not
+      // a decision — and the derived default (`shadeHex(hex, 0.52)`) is a
+      // *darker* version of the body, which is exactly the wrong value for the
+      // one mark in this drawing that floats in open air on a near-black page.
+      spark: swatchHex("amber"),
+    },
+  );
+}
+
+export const LOHI_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "lohi",
+    label: "Lohi",
+    note: "The flagship — salmon, halfway between the zone pink and the zone red",
+    colors: lohiColorway(LOHI_SALMON, swatchHex("teal")),
+  },
+  {
+    id: "koski",
+    label: "Koski",
+    note: "Rapids — the zone cyan, the brightest water in the table",
+    colors: lohiColorway(swatchHex("cyan"), swatchHex("amber")),
+  },
+  {
+    id: "virta",
+    label: "Virta",
+    note: "The deep current — zone indigo under engineering gold",
+    colors: lohiColorway(swatchHex("indigo"), swatchHex("amber")),
+  },
+  {
+    id: "nuotio",
+    label: "Nuotio",
+    note: "Campfire — the zone orange, for the one dragon that admits to the fire",
+    colors: lohiColorway(swatchHex("orange"), swatchHex("sky")),
+  },
+  {
+    id: "kaisla",
+    label: "Kaisla",
+    note: "Reed — the zone emerald, the riverbank one",
+    colors: lohiColorway(swatchHex("emerald"), swatchHex("purple")),
+  },
+];
+
+// --- Marja: the berries --------------------------------------------------
+
+/**
+ * The one green this species owns.
+ *
+ * A berry's leaf, its calyx, its stalk and its two stem legs are all the same
+ * plant, so they are all the same colour — one flat green shared by every
+ * form and every colourway, against a body that changes. That is the
+ * simplicity ruling applied to a whole species at once: the *berry* is the
+ * variable and everything botanical about it is the constant, so a viewer
+ * learns one shape language and reads five characters out of it.
+ *
+ * Shaded off the zone green rather than invented, and only a fifth of the way,
+ * because it has to stay visible as a twenty-unit leaf on a `#121212` page.
+ */
+export const MARJA_LEAF = shadeHex(swatchHex("green"), 0.22);
+
+/**
+ * Five berries, four of which are a form's own colour.
+ *
+ * The colourway is where a berry's identity actually lives — a blueberry that
+ * is not blue is not a blueberry — so unlike every other species here the
+ * variant and the form are a *matched pair* rather than two free axes. They
+ * are still two axes, because the machinery has no way to say otherwise and
+ * because the pairing being breakable is what lets the fleet field a second
+ * strawberry in a different red without a second form. But the fleet names
+ * both, always, and anything generated (an avatar) should too.
+ *
+ * The two reds are the honest problem in the set and are separated by
+ * measurement rather than by name: a lingonberry is a deeper, browner crimson
+ * than a strawberry, so `puolukka` is the zone red taken a quarter of the way
+ * to the shadow and `mansikka` is the zone red untouched. Held side by side at
+ * 40px they are two different berries; held alone, either reads as "red
+ * berry", which is the correct answer for both.
+ *
+ * `ink` is set by luminance on the same rule Silmu uses: a body under about a
+ * third of the page's brightness swallows the shared near-black, so the mouth
+ * glyph and the brows flip to paper. Four of these five are under it, which is
+ * what a species made of saturated fruit colours looks like.
+ */
+const MARJA_GARMENT = { clothing: swatchHex("teal"), clothingAccent: MASCOT_INK.paper };
+
+export const MARJA_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "mustikka",
+    label: "Mustikka",
+    note: "Blueberry — the zone indigo taken towards the shadow, which is where a bilberry lives",
+    colors: colorwayFromSwatch(shadeHex(swatchHex("indigo"), 0.3), MARJA_GARMENT, {
+      limb: MARJA_LEAF,
+      ink: MASCOT_INK.paper,
+    }),
+  },
+  {
+    id: "puolukka",
+    label: "Puolukka",
+    note: "Lingonberry — the zone red a quarter of the way down, the deeper of the two reds",
+    colors: colorwayFromSwatch(shadeHex(swatchHex("red"), 0.24), MARJA_GARMENT, {
+      limb: MARJA_LEAF,
+      ink: MASCOT_INK.paper,
+    }),
+  },
+  {
+    id: "lakka",
+    label: "Lakka",
+    note: "Cloudberry — the zone amber, the only body here light enough to keep the shared ink",
+    colors: colorwayFromSwatch(swatchHex("amber"), MARJA_GARMENT, { limb: MARJA_LEAF }),
+  },
+  {
+    id: "mansikka",
+    label: "Mansikka",
+    note: "Strawberry — the zone red untouched, the brighter of the two",
+    colors: colorwayFromSwatch(swatchHex("red"), MARJA_GARMENT, {
+      limb: MARJA_LEAF,
+      ink: MASCOT_INK.paper,
+    }),
+  },
+  {
+    id: "vadelma",
+    label: "Vadelma",
+    note: "Raspberry — the zone pink; a colourway with no form of its own, so the species can recolour",
+    colors: colorwayFromSwatch(swatchHex("pink"), MARJA_GARMENT, { limb: MARJA_LEAF }),
+  },
+];
+
+// --- Sieni: the mushrooms ------------------------------------------------
+
+/**
+ * The one cream this species owns.
+ *
+ * Every mushroom here has the same stem, and that is the whole design: the
+ * *cap* carries identity and the stem is a constant, so four characters are
+ * told apart by one block of colour at the top of the silhouette and by
+ * nothing else. It is the same trick the berries play with their green,
+ * turned upside down — there, the botany is the constant and the fruit varies;
+ * here the flesh is the constant and the cap varies.
+ *
+ * Tinted two thirds of the way off the zone yellow rather than taken from the
+ * shared paper, and the exact fraction is a legibility measurement rather than
+ * a taste. The first pass tinted 0.86 and landed on `#fcf0ce`, three points
+ * from the shared paper the eye whites are drawn in — so on the raster the
+ * whites vanished into the stem and every mushroom in the family had two black
+ * dots for a face. At 0.68 the cream is a warm `#f8e7ad`, which still reads as
+ * mushroom flesh and leaves the eye somewhere to be.
+ */
+export const SIENI_CREAM = tintHex(swatchHex("yellow"), 0.68);
+
+/**
+ * Four caps.
+ *
+ * `tatti` is the one colour in this module that is not a swatch and not a
+ * brand value: there is no brown in the product's palette, and a porcini that
+ * is not brown is not a porcini. It is the zone orange taken half way to the
+ * shadow, which is a derivation rather than an invention — the same operation
+ * every other body in this file goes through, just further along it — and it
+ * means a retune of the orange still reaches it.
+ *
+ * `panel` is the stem and is overridden to the shared cream on three of the
+ * four. The chanterelle keeps its derived tint instead, because a chanterelle
+ * really is one colour from cap to foot and giving it a cream stem would have
+ * made it a small tatti in a yellow hat.
+ *
+ * No `ink` override anywhere, which is the quiet reward for putting the face
+ * on the stem rather than on the cap: the face is always drawn on the same
+ * pale block whatever the cap is doing, so the shared near-black always reads
+ * and a mood never has to be re-tuned per colourway.
+ */
+const SIENI_GARMENT = { clothing: swatchHex("emerald"), clothingAccent: MASCOT_INK.paper };
+
+export const SIENI_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "kantarelli",
+    label: "Kantarelli",
+    note: "Chanterelle — the zone amber, cap and stem both, because the real one has no join",
+    colors: colorwayFromSwatch(swatchHex("amber"), SIENI_GARMENT, {
+      panel: tintHex(swatchHex("amber"), 0.28),
+      limb: shadeHex(swatchHex("amber"), 0.22),
+    }),
+  },
+  {
+    id: "vahvero",
+    label: "Vahvero",
+    note: "The pale chanterelle — the same cap tinted, on the shared cream stem",
+    colors: colorwayFromSwatch(tintHex(swatchHex("amber"), 0.42), SIENI_GARMENT, {
+      panel: SIENI_CREAM,
+      limb: shadeHex(SIENI_CREAM, 0.16),
+    }),
+  },
+  {
+    id: "tatti",
+    label: "Tatti",
+    note: "Porcini — the zone orange half way to the shadow, the only brown the palette can make",
+    colors: colorwayFromSwatch(shadeHex(swatchHex("orange"), 0.5), SIENI_GARMENT, {
+      panel: SIENI_CREAM,
+      limb: shadeHex(SIENI_CREAM, 0.16),
+    }),
+  },
+  {
+    id: "karpassieni",
+    label: "Kärpässieni",
+    note: "Fly agaric — the zone red under its own white dots, which are the form rather than the colourway",
+    colors: colorwayFromSwatch(swatchHex("red"), SIENI_GARMENT, {
+      panel: SIENI_CREAM,
+      limb: shadeHex(SIENI_CREAM, 0.16),
+    }),
+  },
+];
+
+/**
+ * The brand's amber, named for the art that has to be *gold* rather than
+ * merely warm.
+ *
+ * The swatch table's amber (`#f7a31f`) and this (`#FAA901`) are three points
+ * apart and indistinguishable side by side, so most drawings should keep
+ * using the swatch: a hat, a garment or a body is a mascot colour and belongs
+ * on the mascot palette. This is for the handful of marks that are *the
+ * company's* rather than the character's — a crown that is somebody's
+ * landmark, a badge patch carrying the stripe-S — where the value has to
+ * follow the brand if the brand is ever retuned.
+ */
+export const BRAND_GOLD = BRAND.primary;
+
+// --- Galaksi: the alien crew ---------------------------------------------
+
+/**
+ * Six skins, all from the cold half of the wheel.
+ *
+ * The species is an alien crew and the one thing every drawn alien in the
+ * world agrees about is that its skin is a colour no mammal is. The swatch
+ * table has eight of those and this takes six — teal, cyan, sky, indigo,
+ * violet and lime — which is a whole fleet that is unmistakably *not people*
+ * without a single hex being invented for it. The warm half is deliberately
+ * absent: an amber or a red body is a mammal, a berry or a fire, and the
+ * moment one stands in this lineup the group stops reading as a crew.
+ *
+ * Garments go the other way on purpose. Every one of them is a warm swatch,
+ * because the only garments this species wears are a helmet rim and a suit
+ * band, and a cool trim on a cool skin is a band nobody can see at 40 pixels.
+ * One warm ring around a cold head is also, usefully, exactly what a space
+ * helmet looks like.
+ *
+ * `ink` follows the same measured rule the bean uses: a body under about a
+ * third of the page's brightness swallows the shared near-black, so the mouth
+ * glyph and the brows flip to paper there. Measured, the six are teal 0.53,
+ * lime 0.51, cyan 0.51, sky 0.40, violet 0.25 and indigo 0.23 — so it is the
+ * last two that flip, and the gap either side of the line is wide enough that
+ * nobody has to re-tune it when a zone hue moves.
+ */
+function galaksiColorway(body: string, garment: string, paperInk = false): Colorway {
+  return colorwayFromSwatch(
+    body,
+    { clothing: garment, clothingAccent: tintHex(garment, 0.82) },
+    {
+      // Much deeper than the helper's own limb, because this species spends
+      // three values on a figure and this is the third: a bright cranium, a
+      // mid body, and limbs darker than either. Its arms hang *against* that
+      // body and its legs stand *against* the page, so a limb one step off
+      // the skin — the helper's default — disappears into one or the other.
+      limb: shadeHex(body, 0.42),
+      ...(paperInk ? { ink: MASCOT_INK.paper } : {}),
+    },
+  );
+}
+
+export const GALAKSI_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "revontuli",
+    label: "Revontuli",
+    note: "Aurora — the zone teal, the flagship skin",
+    colors: galaksiColorway(swatchHex("teal"), swatchHex("amber")),
+  },
+  {
+    id: "komeetta",
+    label: "Komeetta",
+    note: "Comet — the zone cyan, the brightest of the six",
+    colors: galaksiColorway(swatchHex("cyan"), swatchHex("orange")),
+  },
+  {
+    id: "tahtisumu",
+    label: "Tähtisumu",
+    note: "Nebula — the zone violet; dark enough that the face flips to paper",
+    colors: galaksiColorway(swatchHex("violet"), swatchHex("amber"), true),
+  },
+  {
+    id: "plasma",
+    label: "Plasma",
+    note: "Plasma — the zone lime, the one skin in the set that is nearly warm",
+    colors: galaksiColorway(swatchHex("lime"), swatchHex("purple")),
+  },
+  {
+    id: "kiertorata",
+    label: "Kiertorata",
+    note: "Orbit — the zone sky, the calm one",
+    colors: galaksiColorway(swatchHex("sky"), swatchHex("red")),
+  },
+  {
+    id: "syvyys",
+    label: "Syvyys",
+    note: "The deep — the zone indigo, the darkest body here and the second on paper ink",
+    colors: galaksiColorway(swatchHex("indigo"), swatchHex("yellow"), true),
+  },
+];
+
+// --- Reksi: the T-rex Princi-Pal's own slate ------------------------------
+
+/**
+ * The grey-blue the legacy sog.gg site draws Reksi's T-rex in.
+ *
+ * Sampled off `scratchpad/sogg-zoom.png` at working size, five points across
+ * the figure: cheek and thigh `#749ea1`, tail shadow `#42595b`, belly
+ * `#c2e1e3`, toes `#ddf0f4`. It is a desaturated cyan-blue — a slate with the
+ * chroma mostly taken out of it — which is not a colour the twenty-four
+ * swatches contain and is not a colour anybody should type in either.
+ *
+ * So it is mixed, the way the rat's grey is: `sky` knocked down with `amber`,
+ * its near-complement, cancels almost all the chroma and leaves the hue where
+ * the sample has it, and a light shade lands the value. The mix comes out at
+ * `#739fa1` against the sampled `#749ea1` — within two points on every
+ * channel, and it moves if the zone hues are ever retuned instead of quietly
+ * drifting away from them.
+ */
+export const REKSI_SLATE = shadeHex(mixHex(swatchHex("sky"), swatchHex("amber"), 0.35), 0.08);
+
+/**
+ * The pale underside: belly, muzzle, toes.
+ *
+ * `colorwayFromSwatch` would derive this by tinting the body, and on a colour
+ * this close to neutral that produces a warm grey — the sample is distinctly
+ * *blue* (`#c2e1e3`), because on the legacy drawing the belly is the one place
+ * the coat's own hue is allowed to show. Tinting the untouched `sky` instead
+ * keeps that.
+ */
+const REKSI_PALE = tintHex(swatchHex("sky"), 0.72);
+
+/**
+ * Reksi's coat, and only his.
+ *
+ * A single-member colourway is unusual in this file and is the point: the
+ * whole species is a fleet of animals told apart by colour, and this is the
+ * one animal in it that is a named person. The garment pair is the purple
+ * jacket and the amber of the SOG badge from `REKSI.png`, which is the same
+ * pair his human build already wears.
+ */
+export const REKSI_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "reksi",
+    label: "Reksi",
+    note: "The Princi-Pal's slate — sky knocked down with amber, off the legacy sog.gg T-rex",
+    colors: colorwayFromSwatch(
+      REKSI_SLATE,
+      { clothing: swatchHex("purple"), clothingAccent: swatchHex("amber") },
+      {
+        panel: REKSI_PALE,
+        // The back ridge and the tail's far edge. A shade of the body rather
+        // than the derived `spark` (which lands near-white here and would make
+        // a row of pale blobs along the back), so `markingHex` reads it as a
+        // marking and every form in the family that paints from `spark` keeps
+        // working on this coat.
+        spark: shadeHex(REKSI_SLATE, 0.42),
+      },
+    ),
+  },
+];
+
+// --- Otso, the cute-animal round: penguin, otter, hedgehog ----------------
+
+/**
+ * Three more Otso coats, for the round Kyle asked for by name — "penguin,
+ * otter, or hedgehog — those are all cute animals that deserve their own
+ * mascot / character ideas."
+ *
+ * Same rules as the cast cohort above: every value is mixed off
+ * `MASCOT_SWATCHES`, and the two colours the swatch list has no name for — a
+ * blue-black and a river brown — are reached by mixing swatches rather than
+ * by typing a hex, so they move if the zone hues are ever retuned.
+ *
+ * The one thing worth knowing before reading them: this family paints hands
+ * and feet from `panel`, the same slot a muzzle and a belly come out of. On
+ * these three that is exactly right twice (a hedgehog's paws and an otter's
+ * are the pale of its muzzle) and one shade off once — the legacy penguin has
+ * *pink* feet under a yellow belly, and giving him those would mean a
+ * per-form limb paint, which is a change to `ConceptDef` and to every concept
+ * in the directory rather than a colour. The beak carries the pink instead.
+ */
+
+/**
+ * The penguin's back, hood and flippers: a blue-black.
+ *
+ * Sampled off `scratchpad/polonski-zoom.png`, the legacy drawing is scribbled
+ * pure black on white paper — the same problem the one-eyed bean and the soot
+ * monster have, and the same answer: pure black on a `#121212` page is a hole
+ * rather than a character. `indigo` and `blue` are the two swatches nearest
+ * the blue-black a penguin's back actually is; mixed and taken most of the way
+ * down they land dark enough to read as the dark half of a two-block animal
+ * and light enough to have an edge against the page.
+ */
+const PINGVIINI_SLATE = shadeHex(mixHex(swatchHex("indigo"), swatchHex("blue"), 0.5), 0.72);
+
+/**
+ * The otter's coat: a river brown, and deliberately not the beaver's.
+ *
+ * Two brown round animals in one family is a colour problem before it is a
+ * drawing problem — `majava` is `orange` taken down to a warm timber, so this
+ * one goes the other way round the wheel: `amber` pulled towards `violet`
+ * kills the orange in it and leaves a cool mahogany that reads as *wet*, which
+ * is the one thing an otter is and a beaver, drawn dry on a riverbank, is not.
+ */
+const SAUKKO_BROWN = shadeHex(mixHex(swatchHex("amber"), swatchHex("violet"), 0.3), 0.58);
+
+/**
+ * The hedgehog's spines and coat: a warm taupe.
+ *
+ * `amber` knocked a third of the way towards `indigo` cancels most of the
+ * chroma without going grey, and `colorwayFromSwatch` then derives the two
+ * tones the form needs from it in the usual proportions: the mantle is the
+ * shade, the face and belly are the tint. No override at all — this is the
+ * only coat in the round that the standard mixer gets right on its own.
+ */
+const SIILI_TAN = mixHex(swatchHex("amber"), swatchHex("indigo"), 0.36);
+
+export const OTSO_CUTE_VARIANTS: readonly VariantDef[] = [
+  {
+    id: "pingviini",
+    label: "Pingviini",
+    note: "Polonski's own two blocks — a blue-black hood over a butter-yellow front",
+    colors: colorwayFromSwatch(
+      PINGVIINI_SLATE,
+      // The green sweater is the legacy character's, and it is the one thing
+      // about him nobody has to be told twice.
+      { clothing: swatchHex("green"), clothingAccent: MASCOT_INK.paper },
+      {
+        // The front is yellow rather than white, because the drawing's is:
+        // the face and belly are one continuous `#f9e04b`-ish block and the
+        // black is only ever a frame around it. Taken half way to paper so it
+        // stays a *pale* front — a saturated yellow belly under a black hood
+        // is a chick, not a penguin.
+        panel: tintHex(swatchHex("yellow"), 0.5),
+        // The beak, and the only loud colour on the animal. Measured off the
+        // reference at working size: the beak is a 33px triangle on a 418px
+        // face, so eight per cent of the head's width, in the same magenta as
+        // the feet.
+        accent: swatchHex("pink"),
+        // The flippers and the tail wedge. A step under the back rather than
+        // the mixer's third-of-the-way-to-shadow, which on a colour this dark
+        // already lands at the page's own black.
+        bodyBottom: shadeHex(PINGVIINI_SLATE, 0.18),
+        limb: PINGVIINI_SLATE,
+      },
+    ),
+  },
+  {
+    id: "saukko",
+    label: "Saukko",
+    note: "River brown — amber pulled towards violet and taken down, with a wheat muzzle",
+    colors: colorwayFromSwatch(
+      SAUKKO_BROWN,
+      { clothing: swatchHex("cyan"), clothingAccent: MASCOT_INK.paper },
+      {
+        // The muzzle, the throat and the belly. Tinting the *coat* the way the
+        // mixer would gives a mauve-grey, because this brown has violet in it
+        // on purpose; tinting the untouched `amber` instead keeps the pale
+        // block warm, which is what separates the muzzle from the coat at
+        // portrait size.
+        panel: tintHex(swatchHex("amber"), 0.72),
+      },
+    ),
+  },
+  {
+    id: "siili",
+    label: "Siili",
+    note: "Spine taupe — amber knocked towards indigo, the mantle one shade under the coat",
+    colors: colorwayFromSwatch(SIILI_TAN, {
+      clothing: swatchHex("emerald"),
+      clothingAccent: MASCOT_INK.paper,
+    }),
+  },
+];

@@ -437,21 +437,29 @@ export const LEGACY_ITEMS: readonly LegacyItem[] = [
     file: "polonski.png",
     legacyName: "polonski",
     caption:
-      "Round yellow bird-thing in a green sweater, glasses and headphones.",
+      "Black-backed penguin with a yellow face and belly, in a green sweater and orange glasses.",
     strip: "cast",
-    // The tit form beat the Ytymo stand-in beside this file: what makes
-    // polonski polonski is that he is a round yellow *bird* in a jumper, and
-    // the Ytymo had the yellow and none of the bird.
+    // **Polonski is not a bird-in-general and he is not the great tit.** Kyle's
+    // ruling, made looking at this file trimmed and blown up to 700px: black
+    // back plumage and flipper-arms, a yellow face and belly, a small pink
+    // triangular beak, pink webbed feet — a penguin. The tit was chosen here
+    // when the only thing anybody had said about the file was "round yellow
+    // bird in a jumper", and a great tit is exactly what that description
+    // builds: a yellow front under a black cap. Held beside the source at
+    // working size the difference is not subtle — the tit's cap sits *on top
+    // of* a small round head with cream cheeks, and this drawing's black is a
+    // hood *around* one big pale face with a beak in the middle of it.
     //
-    // `happy` rather than the legacy drawing's squeezed-shut smile: a shut eye
-    // is a *stroke in the ink colour* rather than a white shape with a pupil
-    // cut into it, and the tit wears a near-black cap across its eye line, so
-    // Laughing draws two dark arcs on a dark cap and disappears. Same family
-    // as the known "a low hat hides the Excited brow" issue.
+    // `happy` rather than the drawing's squeezed-shut smile, for a reason that
+    // survived the species change: a shut eye is a stroke in the ink colour,
+    // and Laughing on any form draws two arcs plus a solid half-ellipse where
+    // this face wants its two round pupils. The penguin's pale face would
+    // carry a shut eye better than the tit's dark cap did, so this one is now
+    // a preference rather than a workaround.
     counterpart: {
       concept: "otso",
-      form: "tit",
-      variant: "tiainen",
+      form: "penguin",
+      variant: "pingviini",
       pose: "idle",
       expression: "happy",
       outfit: { face: "specs", torso: "tee" },
@@ -670,7 +678,17 @@ function Strip({ strip }: { strip: LegacyItem["strip"] }): ReactElement {
   );
 }
 
-export function LegacySection(): ReactElement {
+/**
+ * The framing: what the old set contained, what was carried over and why, and
+ * the trademark problem that forced the rename.
+ *
+ * Split from the two strips on purpose. The strips are evidence for two
+ * different arguments on this page — the Minion files belong beside the Silmu
+ * rebuild and the pun cast belongs beside the animal family — so each one is
+ * rendered where its argument is being made, and this card holds the part
+ * that is about the set as a whole.
+ */
+export function LegacyOverview(): ReactElement {
   return (
     <div className="space-y-4">
       <div>
@@ -684,9 +702,10 @@ export function LegacySection(): ReactElement {
           was the mascot proper, and a{" "}
           <strong className="text-foreground">cast of Finnish puns</strong> —
           lukukettu, esport-pöllö, tietopöllönen — plus a handful of pieces that
-          are not characters at all. Every one of them is below, on the white
-          ground it was drawn for, with the slot for its rebuilt counterpart
-          next to it.
+          are not characters at all. Every one of them appears on this page, on
+          the white ground it was drawn for, with the slot for its rebuilt
+          counterpart beside it — the Minion files in the Silmu section and the
+          cast in the animals section, each next to the work that replaced it.
         </p>
       </div>
       <Card>
@@ -768,22 +787,36 @@ export function LegacySection(): ReactElement {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
 
-      <section>
+/** The fifteen Minion files, beside the Silmu build each one maps to. */
+export function LegacyMinionStrip(): ReactElement {
+  return (
+    <Card>
+      <CardContent className="p-6">
         <Rubric
-          title="The Minion"
+          title="The originals, beside the rebuild"
           note="One body, one eye, two stubby feet. Fifteen files: nine hats, a rear view, and the five-file gaze dial where only the pupil moves."
         />
         <Strip strip="minion" />
-      </section>
+      </CardContent>
+    </Card>
+  );
+}
 
-      <section>
+/** The pun cast and the brand furniture, beside whatever now stands for each. */
+export function LegacyCastStrip(): ReactElement {
+  return (
+    <Card>
+      <CardContent className="p-6">
         <Rubric
-          title="The cast"
+          title="The originals, beside the rebuild"
           note="The Finnish puns, the two voxel animals and the brand furniture. A tile with words in it is a piece that is not being carried over, and says why."
         />
         <Strip strip="cast" />
-      </section>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

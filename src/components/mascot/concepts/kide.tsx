@@ -19,12 +19,26 @@
  * applied colour. It is the one feature here that would make a Kide instantly
  * recognisable in silhouette-plus-one-colour, and it is also the natural place
  * to hang a Yty element without turning the species into a Ytymo.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** the refraction lines off the core, the crease strokes across the
+ * chest, the brow and down the face, and the shard's second facet — all
+ * hairline strokes behind `showsFiligree`, none of them present at 40px. And
+ * the core's *second, smaller* diamond: this concept's own `landmark` says
+ * "one lit diamond at the chest", and it was drawing two.
+ *
+ * **Kept as identity:** the prism planes, on the head and on the body. They
+ * are flat colour blocks and they are the entire species — a Kide with one
+ * flat colour on it is a hexagon. And the core, now a single diamond in the
+ * accent: it is the idea, and one shape says it better than two nested ones
+ * did, because at 40px the inner one was two pixels of a colour nobody could
+ * name.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
 import { TAITTO_VARIANTS } from "../palette";
 import type { Rig } from "../rig";
 
@@ -53,56 +67,25 @@ const RIG: Rig = {
   fusedHead: false,
 };
 
-function Body({ colors, detail }: PartProps): ReactElement {
+function Body({ colors }: PartProps): ReactElement {
   return (
     <g>
       {/* Two long planes meeting at a ridge, narrowing to the waist. */}
       <path d="M 100 84 L 122 96 L 116 142 L 100 152 L 84 142 L 78 96 Z" fill={colors.bodyTop} />
       <path d="M 100 84 L 122 96 L 116 142 L 100 152 Z" fill={colors.bodyBottom} />
-      {/* The core: the one lit thing on the character. */}
-      <path d="M 100 104 L 110 116 L 100 130 L 90 116 Z" fill={colors.panel} />
-      <path d="M 100 110 L 105 116 L 100 123 L 95 116 Z" fill={colors.accent} />
-      {showsFiligree(detail) && (
-        <>
-          <path
-            d="M 90 116 L 78 112 M 110 116 L 122 112 M 100 130 L 100 146"
-            fill="none"
-            stroke={colors.accent}
-            strokeWidth={1.4}
-            opacity={0.6}
-          />
-          <path
-            d="M 78 96 L 100 106 L 122 96"
-            fill="none"
-            stroke={colors.spark}
-            strokeWidth={1.6}
-            opacity={0.65}
-          />
-        </>
-      )}
+      {/* The core: the one lit thing on the character, and one shape. */}
+      <path d="M 100 104 L 110 116 L 100 130 L 90 116 Z" fill={colors.accent} />
     </g>
   );
 }
 
-function Head({ colors, detail }: PartProps): ReactElement {
+function Head({ colors }: PartProps): ReactElement {
   return (
     <g>
       {/* A tall prism rather than a squat hexagon: six sides, longer axis up. */}
       <path d="M 100 24 L 124 40 L 124 68 L 100 80 L 76 68 L 76 40 Z" fill={colors.bodyTop} />
       <path d="M 100 24 L 124 40 L 100 54 L 76 40 Z" fill={colors.spark} opacity={0.32} />
       <path d="M 124 40 L 124 68 L 100 80 L 100 54 Z" fill={colors.bodyBottom} opacity={0.45} />
-      {showsFiligree(detail) && (
-        <>
-          <path
-            d="M 76 40 L 100 54 L 124 40"
-            fill="none"
-            stroke={colors.limb}
-            strokeWidth={1.4}
-            opacity={0.5}
-          />
-          <path d="M 100 54 L 100 80" stroke={colors.limb} strokeWidth={1.2} opacity={0.35} />
-        </>
-      )}
     </g>
   );
 }
@@ -111,7 +94,6 @@ function Crown({ colors, floatClass }: PartProps): ReactElement {
   return (
     <g className={floatClass} style={{ transformBox: "view-box", transformOrigin: "100px 24px" }}>
       <path d="M 100 4 L 108 16 L 100 24 L 92 16 Z" fill={colors.accent} />
-      <path d="M 100 4 L 108 16 L 100 20 Z" fill={colors.panel} opacity={0.8} />
     </g>
   );
 }

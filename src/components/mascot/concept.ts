@@ -48,6 +48,15 @@ export const CONCEPT_IDS = [
   "nappi",
   "silmu",
   "palikka",
+  "porukka",
+  "stadi",
+  "metsa",
+  "kyla",
+  "jalo",
+  "marja",
+  "sieni",
+  "lohi",
+  "galaksi",
 ] as const;
 export type ConceptId = (typeof CONCEPT_IDS)[number];
 
@@ -67,6 +76,13 @@ export type PartProps = {
   variantId: string;
   /** Which build is in play. Always a real id — the concept's first by default. */
   form: string;
+  /**
+   * The mood being worn. Most concepts never read it — the face machinery does
+   * the expressing — but a species may key one drawing of its own on it (a
+   * dragon's excited flame). Anything drawn from it must stay inside the face
+   * grammar's bans and the simplicity rule.
+   */
+  expression: ExpressionId;
   /** Class for the gentle float, or empty string when static. */
   floatClass: string;
   /**

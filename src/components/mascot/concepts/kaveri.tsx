@@ -37,13 +37,33 @@
  * The adults differ from the kids in **proportion** rather than in detail: a
  * smaller head against a longer body is the whole of what makes a drawn figure
  * read as grown up, and it is worth more than any amount of costume.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** the freckles (four dots a face, filigree), the two hoodie seams
+ * down the chest (filigree), the adult placket strip, the pocket, and the
+ * shaded crease across the elder's beard. The first three were literally the
+ * examples in the ruling — freckles, hairlines, stitched trims — and none of
+ * them exists below 96px, so none of them is in the 40px picture to begin with.
+ * The pocket and the placket did survive to 40px, as a smudge and a hair: a
+ * pocket is what a garment has, not what a person is, and the same reasoning
+ * that killed the beard's crease killed the placket's, because both were
+ * drawing a line where two blocks already meet.
+ *
+ * **Kept as identity, because the six builds live or die on it:** the hair
+ * silhouette (the cap and the locks — that is *the whole family system*, and it
+ * is a flat colour block against a flat colour head, so it survives every
+ * scale), the collar shape (a hood ellipse on a kid, a V and lapels on an
+ * adult — the one cue that is not hair and not shoulder width, and the one that
+ * still reads at 40px), the ear discs, and the neck. Nothing here changed to
+ * colour: every job a removed detail was doing was already being done by a
+ * block next to it.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, FormDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
-import { KAVERI_VARIANTS, MASCOT_INK, mixHex, shadeHex } from "../palette";
+import { KAVERI_VARIANTS, MASCOT_INK, mixHex } from "../palette";
 import type { Rig } from "../rig";
 
 export const KAVERI_FORMS: readonly FormDef[] = [
@@ -77,7 +97,6 @@ export const KAVERI_FORMS: readonly FormDef[] = [
  * a lilac, a teal or a coral face.
  */
 const ELDER_HAIR = mixHex(MASCOT_INK.paper, MASCOT_INK.lineSoft, 0.17);
-const ELDER_HAIR_SHADE = shadeHex(ELDER_HAIR, 0.12);
 
 const KID: Rig = {
   shadow: { cx: 100, cy: 186, rx: 34, ry: 6 },
@@ -175,7 +194,7 @@ const ADULT_FORMS = new Set(["adult-a", "adult-b", "adult-c", "elder-a", "elder-
 /** The two builds that wear their hair white. */
 const ELDER_FORMS = new Set(["elder-a", "elder-b"]);
 
-function Body({ rig, colors, form, detail }: PartProps): ReactElement {
+function Body({ rig, colors, form }: PartProps): ReactElement {
   const t = rig.torso;
   const adult = ADULT_FORMS.has(form);
   const midX = rig.head.x;
@@ -196,50 +215,17 @@ function Body({ rig, colors, form, detail }: PartProps): ReactElement {
         fill={colors.accent}
       />
       {adult ? (
-        // A collar and a placket: the cut that reads as a grown-up's clothes.
-        <>
-          <path
-            d={`M ${midX - 13} ${t.y - 5} L ${midX} ${t.y + 13} L ${midX + 13} ${t.y - 5} L ${midX + 6} ${t.y - 8} L ${midX} ${t.y + 2} L ${midX - 6} ${t.y - 8} Z`}
-            fill={colors.panel}
-          />
-          <rect
-            x={midX - 2}
-            y={t.y + 12}
-            width={4}
-            height={t.h - 24}
-            rx={2}
-            fill={colors.panel}
-            opacity={0.6}
-          />
-        </>
+        // A collar: the cut that reads as a grown-up's clothes. One shape, and
+        // the placket that used to run down from it is gone — it was a four-unit
+        // strip of the same colour drawing a line down the middle of a block
+        // that was already one colour.
+        <path
+          d={`M ${midX - 13} ${t.y - 5} L ${midX} ${t.y + 13} L ${midX + 13} ${t.y - 5} L ${midX + 6} ${t.y - 8} L ${midX} ${t.y + 2} L ${midX - 6} ${t.y - 8} Z`}
+          fill={colors.panel}
+        />
       ) : (
         // A hood collar: the cut that reads as a kid's clothes.
         <ellipse cx={midX} cy={t.y - 1} rx={t.w * 0.46} ry={10} fill={colors.panel} />
-      )}
-      <rect
-        x={midX - 16}
-        y={t.y + t.h * 0.52}
-        width={32}
-        height={17}
-        rx={8.5}
-        fill={colors.panel}
-        opacity={0.5}
-      />
-      {showsFiligree(detail) && (
-        <>
-          <path
-            d={`M ${midX - 7} ${t.y + 8} L ${midX - 8} ${t.y + 22}`}
-            stroke={colors.panel}
-            strokeWidth={3}
-            strokeLinecap="round"
-          />
-          <path
-            d={`M ${midX + 7} ${t.y + 8} L ${midX + 8} ${t.y + 20}`}
-            stroke={colors.panel}
-            strokeWidth={3}
-            strokeLinecap="round"
-          />
-        </>
       )}
     </g>
   );
@@ -359,13 +345,6 @@ function Hair({ rig, colors, form }: PartProps): ReactElement {
               'Z',
             ].join(' ')}
           />
-          <path
-            d={`M ${x - r * 0.46} ${y + r * 0.5} Q ${x} ${y + r * 0.78} ${x + r * 0.46} ${y + r * 0.5}`}
-            fill="none"
-            stroke={ELDER_HAIR_SHADE}
-            strokeWidth={r * 0.11}
-            strokeLinecap="round"
-          />
         </g>
       );
     case "kid-a":
@@ -381,7 +360,7 @@ function Hair({ rig, colors, form }: PartProps): ReactElement {
 }
 
 function Head(props: PartProps): ReactElement {
-  const { rig, colors, detail } = props;
+  const { rig, colors } = props;
   const { x, y, r } = rig.head;
   return (
     <g>
@@ -396,14 +375,6 @@ function Head(props: PartProps): ReactElement {
         fill={colors.bodyTop}
       />
       <Hair {...props} />
-      {showsFiligree(detail) && (
-        <g fill={colors.bodyBottom} opacity={0.5}>
-          <circle cx={x - r * 0.5} cy={y + r * 0.42} r={1.5} />
-          <circle cx={x - r * 0.32} cy={y + r * 0.55} r={1.3} />
-          <circle cx={x + r * 0.5} cy={y + r * 0.42} r={1.5} />
-          <circle cx={x + r * 0.32} cy={y + r * 0.55} r={1.3} />
-        </g>
-      )}
     </g>
   );
 }
@@ -470,10 +441,39 @@ export const KAVERI: ConceptDef = {
       pose: "idle",
       expression: "happy",
       prop: "briefcase",
-      outfit: { hat: "cap", face: "shades" },
+      // Same head as the voxel one: the crown is Reksi's landmark on the
+      // legacy site, and the two builds have to agree about it or they stop
+      // being one character in two bodies.
+      outfit: { hat: "crown", face: "shades" },
       garment: "purple",
       blurb:
-        "White hair, a full beard, shades he does not take off indoors, a purple cap and a briefcase — the legacy REKSI, rebuilt. He also turns up as a T-rex, which is the same character and the same title: the Princi-Pal is the principal gamer.",
+        "White hair, a full beard, shades he does not take off indoors, a small gold crown and a briefcase — the legacy REKSI, rebuilt. He also turns up as a T-rex, which is the same character and the same title: the Princi-Pal is the principal gamer, and he wears the crown in both bodies.",
+    },
+    {
+      // The same man in a onesie, and the only entry in this file whose point
+      // is a joke. It shares `elder-b` with the entry above deliberately: the
+      // two are the same person, so nothing about the build, the complexion or
+      // the beard may change between them — the hood and the tail are the
+      // whole difference, which is the claim the outfit system makes about
+      // itself.
+      name: "Reksi — the kigurumi",
+      job: "The same headmaster, in the costume — camps, parties, the silly half of the year",
+      variantId: "lilac",
+      form: "elder-b",
+      role: "none",
+      pose: "wave",
+      expression: "excited",
+      prop: "briefcase",
+      outfit: { hat: "rex-hood", face: "shades", back: "rex-tail" },
+      // Sky rather than the purple his jacket is. The jacket is painted from
+      // the *colourway's* accent slot — this species draws its own garment —
+      // so `garment` here only ever reaches worn items, and a purple hood over
+      // a purple jacket is one purple mass with a face in it. Sky is the
+      // nearest thing the twenty-four swatches have to the legacy T-rex's
+      // slate, which is the colour the costume is imitating.
+      garment: "sky",
+      blurb:
+        "Reksi in a dinosaur onesie: the hood with the scalloped crest and two blunt jaws either side of his face, the tail behind him, the shades and the briefcase still on. He is visibly the same elder underneath — same white beard, same build — which is the entire joke and also the test: if the costume erased him it would be a different character rather than a fancy-dress version of this one.",
     },
     {
       name: "Kanslisti",
@@ -512,10 +512,10 @@ export const KAVERI: ConceptDef = {
       pose: "idle",
       expression: "focused",
       prop: "blueprint",
-      outfit: { hat: "goggles", torso: "hoodie" },
+      outfit: { hat: "hardhat", torso: "hoodie" },
       garment: "amber",
       blurb:
-        "Goggles pushed up, an engineering-gold hoodie and a rolled drawing under his arm. The human read of the idea: the person who designed the thing you are standing in.",
+        "A hardhat, an engineering-gold hoodie and a rolled drawing under his arm. The human read of the idea: the person who designed the thing you are standing in.",
     },
   ],
 };

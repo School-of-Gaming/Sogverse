@@ -12,11 +12,18 @@
  * The four dials, block by block:
  *
  * 1. **Eye size and shape** — a white *square* and how big it is. Focused
- *    squashes it to a wide bar, exactly as the ellipse squeezes to a lens.
+ *    squashes it to a wide bar, which is this alphabet's spelling of the lid
+ *    the round face brings down for the same mood. A bar is axis-aligned and
+ *    has no point or taper anywhere on it, which is what the round face's
+ *    rule about never narrowing an eye into a lens is protecting; the bar was
+ *    checked against that rule on the raster and kept as it was.
  * 2. **Pupil position** — a smaller dark square inside it, clamped so it can
  *    never leave its own white. The clamp is new and is not a stylistic
  *    choice: a square pupil has corners, so the ellipse version's "the
- *    numbers happen to fit" is not good enough here.
+ *    numbers happen to fit" is not good enough here. This face takes no part
+ *    in the round face's resting sink — see the call site in `face.tsx` for
+ *    why a square pupil in a square white is not the doll eye that rule is
+ *    about.
  * 3. **Brow angle** — a brow cannot be a rotated line in this idiom, so the
  *    angle becomes a **stair**: three blocks at different heights, and which
  *    way they step is the slope. Arched up in the middle is delight, stepping

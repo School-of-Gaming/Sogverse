@@ -31,13 +31,34 @@
  * Whether that is enough to make it ownable is exactly the thing to look at on
  * the page. It is a small change on purpose: round two's judgement was that
  * Konsu is not where the effort should go.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** the two vent slats on the flank and the diagonal screen glint
+ * (both filigree, both absent below 96px — and the glint was a *reflection*,
+ * which is the same specular cue the face rules exist to keep off, sitting on
+ * the one surface that is entirely face). The two round face buttons on the
+ * belly went too, and so did the handle's grip line and its two bolt heads:
+ * a bolt is a rivet, a rivet is a seam, and at 40px all four were single dark
+ * pixels on a dark chassis.
+ *
+ * **Kept as identity, and the one judgement call here:** the d-pad, now one
+ * flat cross instead of two crossed bars. Strictly the 40px test kills it with
+ * everything else — nothing on this belly survives 40px, because at 40px a
+ * Konsu is a dark bot with a lit face and a handle, full stop. But the d-pad is
+ * the only shape on the character that says *console* rather than *robot*, and
+ * "reads as anyone's robot" is this concept's standing criticism; the two round
+ * buttons beside it were the redundant half of the same statement. So: one
+ * shape, one colour, no pair. Also kept — the marquee's four element pips,
+ * because four colours in a row is colour doing distinction, which is exactly
+ * what this pass is for, and they are the one piece of iconography here that a
+ * rival could not copy.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
-import { KONSU_VARIANTS, MASCOT_INK, YTY_ORDER, YTY_PIPS } from "../palette";
+import { KONSU_VARIANTS, YTY_ORDER, YTY_PIPS } from "../palette";
 
 /**
  * Which element a chassis belongs to. Arbitrary, and deliberately so — the
@@ -77,34 +98,31 @@ const RIG: Rig = {
   fusedHead: false,
 };
 
-function Body({ colors, variantId, detail }: PartProps): ReactElement {
+function Body({ colors, variantId }: PartProps): ReactElement {
   return (
     <g>
       <rect x={62} y={104} width={76} height={58} rx={20} fill={colors.bodyTop} />
       <rect x={62} y={132} width={76} height={30} rx={20} fill={colors.bodyBottom} opacity={0.7} />
       <rect x={72} y={114} width={56} height={38} rx={14} fill={colors.panel} />
-      <rect x={81} y={129} width={17} height={6} rx={3} fill={colors.accent} />
-      <rect x={86.5} y={123.5} width={6} height={17} rx={3} fill={colors.accent} />
-      <circle cx={114} cy={128} r={4.6} fill={colors.accent} />
-      <circle cx={123} cy={137} r={4.6} fill={colors.spark} />
+      {/* The d-pad, as one cross rather than as two bars laid over each other.
+          The only shape on this character that says console rather than robot,
+          which is why it is the one belly marking that survived the pass. */}
+      <path
+        d="M 84 123.5 L 90 123.5 L 90 129 L 95.5 129 L 95.5 135 L 90 135 L 90 140.5 L 84 140.5 L 84 135 L 78.5 135 L 78.5 129 L 84 129 Z"
+        fill={colors.accent}
+      />
       {/* The element pip: one diamond in one of the four lore colours. Which
           one is a property of the chassis, so a Konsu belongs to an element
           the way a gamer does. */}
       <path
-        d={`M 100 118 L 106 126 L 100 134 L 94 126 Z`}
+        d={`M 114 122 L 122 130 L 114 138 L 106 130 Z`}
         fill={YTY_PIPS[ELEMENT_FOR_VARIANT[variantId] ?? "glow"]}
       />
-      {showsFiligree(detail) && (
-        <>
-          <rect x={107} y={144} width={16} height={3} rx={1.5} fill={colors.spark} opacity={0.45} />
-          <rect x={107} y={149} width={11} height={3} rx={1.5} fill={colors.spark} opacity={0.3} />
-        </>
-      )}
     </g>
   );
 }
 
-function Head({ colors, detail }: PartProps): ReactElement {
+function Head({ colors }: PartProps): ReactElement {
   return (
     <g>
       <rect x={49} y={54} width={11} height={24} rx={5.5} fill={colors.limb} />
@@ -125,13 +143,6 @@ function Head({ colors, detail }: PartProps): ReactElement {
         />
       ))}
       <rect x={65} y={47} width={70} height={47} rx={16} fill={colors.panel} />
-      {showsFiligree(detail) && (
-        <path
-          d="M 72 90 L 90 49 L 100 49 L 82 90 Z"
-          fill={colors.sclera}
-          opacity={0.08}
-        />
-      )}
     </g>
   );
 }
@@ -151,14 +162,6 @@ function Crown({ colors }: PartProps): ReactElement {
         strokeWidth={8}
         strokeLinecap="round"
       />
-      <path
-        d="M 84 17 L 116 17"
-        stroke={colors.accent}
-        strokeWidth={3.4}
-        strokeLinecap="round"
-      />
-      <circle cx={74} cy={33} r={5} fill={colors.bodyBottom} stroke={MASCOT_INK.line} strokeWidth={1.6} />
-      <circle cx={126} cy={33} r={5} fill={colors.bodyBottom} stroke={MASCOT_INK.line} strokeWidth={1.6} />
     </g>
   );
 }

@@ -67,12 +67,31 @@
  * thing that makes that drawing recognisable. The hippo's yellow-green eyes
  * did not: the grammar's eye is a white shape and a dark pupil and nothing
  * else, and an iris is the third shape it does not get.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** every nostril and every belly stripe. The T-rex's and the elk's
+ * nostril pips, the hippo's skewed pair on the snout's top face, and the three
+ * hairlines ruled across the belly were all behind `showsFiligree` and so were
+ * never in the 40px picture — and on a species whose entire grammar is *large
+ * blocks*, a six-by-ten-unit pip is the one mark on the character that is not
+ * a block. The hippo's nostrils cost the most to give up, because they were
+ * the only place the 2.5D read carried information; the snout is the hippo, and
+ * the snout is unchanged.
+ *
+ * **Kept as identity:** the three faces of every cube — that is not shading,
+ * it is the whole style, and it is three flat colour blocks per block rather
+ * than a gradient on one. The cream belly (one flat block, and what stops a
+ * cube torso reading as a cardboard box). And the coloured band on every head:
+ * the T-rex's red patch, the hippo's wide low bar, the elk's narrow one. That
+ * band is the strongest 40px landmark any of these builds has — at 28px the
+ * T-rex is simply *the one with the red mouth* — which is colour doing
+ * identity, exactly as the ruling asks.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, FormDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
 import { PALIKKA_VARIANTS, shadeHex, tintHex } from "../palette";
 import type { Rig } from "../rig";
 
@@ -161,8 +180,8 @@ const BASE: Rig = {
   hipSpread: 18,
   footY: 178,
   footStyle: "block",
-  shoulderL: { x: 74, y: 116 },
-  shoulderR: { x: 126, y: 116 },
+  shoulderL: { x: 80, y: 116 },
+  shoulderR: { x: 120, y: 116 },
   head: { x: 100, y: 52, r: 40 },
   eyeDx: 21,
   eyeY: 40,
@@ -180,7 +199,22 @@ const BASE: Rig = {
   // within six units of each other and the whole character came out as one
   // unbroken column with eyes near the top — a head only reads as a head when
   // something below it is visibly smaller.
-  torso: { x: 72, y: 100, w: 56, h: 50 },
+  //
+  // **Narrowed again (2026-08-24), and this is the change that fixes the
+  // T-rex at avatar size.** At 56 the torso was seventy per cent of the head's
+  // eighty, which is a ratio a bear also has: the 40px raster showed the build
+  // reading as a blocky green animal identified entirely by the red bar on its
+  // face, and the frost-coloured member of the same build — whose band is pale
+  // rather than red — did not read as the same species at all. Colour was
+  // carrying identity, which the ruling says it should, but it was carrying
+  // *species* identity, which it cannot: two Palikka T-rexes have to be the
+  // same animal in two colours. At 44 the head is nearly twice the torso, and
+  // an oversized head on a small body is the one thing everybody names about a
+  // T-rex before they name anything else. Only this build reads `BASE.torso`
+  // — the hippo and the elk declare their own — so the change is the T-rex's
+  // alone. The shoulders came in with it, or the arms would have hung off
+  // nothing.
+  torso: { x: 78, y: 100, w: 44, h: 50 },
   fusedHead: false,
 };
 
@@ -224,11 +258,10 @@ function rigFor(form: string): Rig {
 }
 
 /** The torso, plus whatever this build carries behind it. */
-function Body({ colors, form, detail }: PartProps): ReactElement {
+function Body({ colors, form }: PartProps): ReactElement {
   const skin: Facets = { front: colors.bodyTop, top: colors.spark, side: colors.bodyBottom };
   const inset = facets(colors.panel);
   const box = rigFor(form).torso;
-  const filigree = showsFiligree(detail);
   return (
     <g>
       {/* The tail, first, so the body sits in front of where it joins. Two
@@ -257,29 +290,15 @@ function Body({ colors, form, detail }: PartProps): ReactElement {
         height={box.h * 0.68}
         fill={inset.front}
       />
-      {filigree && (
-        <g fill={inset.side} opacity={0.55}>
-          {[0, 1, 2].map((i) => (
-            <rect
-              key={i}
-              x={box.x + box.w * 0.25}
-              y={box.y + box.h * 0.32 + 9 + i * 9}
-              width={box.w * 0.5}
-              height={1.6}
-            />
-          ))}
-        </g>
-      )}
     </g>
   );
 }
 
 /** The head, which is the only part that knows which animal this is. */
-function Head({ colors, form, detail }: PartProps): ReactElement {
+function Head({ colors, form }: PartProps): ReactElement {
   const skin: Facets = { front: colors.bodyTop, top: colors.spark, side: colors.bodyBottom };
   const inset = facets(colors.panel);
   const band = facets(colors.accent);
-  const filigree = showsFiligree(detail);
 
   if (form === "hippo") {
     return (
@@ -297,16 +316,6 @@ function Head({ colors, form, detail }: PartProps): ReactElement {
             head and it read as a blocky bear; nothing else about the drawing
             had to change to fix that. */}
         <Cube x={46} y={68} w={108} h={44} d={10} f={inset} />
-        {/* Nostrils on the snout's *top* face, drawn skewed to sit in it. This
-            is the one place the 2.5D read carries information rather than
-            depth: a hippo's nostrils are on top of its muzzle, and a viewer
-            reads a pip on a top face as sitting on a horizontal surface. */}
-        {filigree && (
-          <g fill={shadeHex(colors.panel, 0.45)}>
-            <path d="M 76 67 L 82 61 L 96 61 L 90 67 Z" />
-            <path d="M 110 67 L 116 61 L 130 61 L 124 67 Z" />
-          </g>
-        )}
         {/* The mouth: one wide flat bar low on the slab, running its full
             width, with the glyph riding inside it. Same trick as the T-rex's
             red patch — at 28 pixels the bar is what survives, and a wide bar
@@ -335,12 +344,6 @@ function Head({ colors, form, detail }: PartProps): ReactElement {
         <Cube x={122} y={52} w={16} h={10} d={4} f={skin} />
         <Cube x={78} y={34} w={44} h={46} d={7} f={skin} />
         <Cube x={82} y={70} w={36} h={36} d={5} f={inset} />
-        {filigree && (
-          <g fill={inset.side}>
-            <rect x={88} y={75} width={9} height={6} />
-            <rect x={103} y={75} width={9} height={6} />
-          </g>
-        )}
         <rect x={82} y={99} width={36} height={7} fill={band.front} />
       </g>
     );
@@ -351,22 +354,18 @@ function Head({ colors, form, detail }: PartProps): ReactElement {
       <Cube x={60} y={18} w={80} h={58} d={10} f={skin} />
       {/* The snout, pushed forward and hung below the head. Its own top face
           cutting across the head's front is what makes it a snout rather than
-          a patch — and the nostrils go on that top face's near edge, which is
-          the one place on this character where the 2.5D read is doing work
-          rather than decoration. */}
+          a patch. */}
       <Cube x={70} y={54} w={60} h={48} d={9} f={skin} />
-      {filigree && (
-        <g fill={colors.bodyBottom}>
-          <rect x={84} y={58} width={10} height={6} />
-          <rect x={106} y={58} width={10} height={6} />
-        </g>
-      )}
-      {/* The legacy file's red block, inset from the snout's own edges so it
-          reads as a patch on the animal rather than as a band around it, with
-          the glyph mouth landing inside it. At small sizes this is the single
-          strongest landmark the build has: at 28 pixels it is the one with the
-          red mouth. */}
-      <rect x={78} y={66} width={44} height={22} fill={band.front} />
+      {/* The legacy file's red block. Kyle's ruling (2026-08-24) is that it is
+          *not* a defining feature of the character, and at 44 units it was
+          being treated as one — nearly three quarters of the snout's width,
+          and the only thing the 40px raster had to say about this build. So it
+          is cut to 34 by 18, which is the widest mouth glyph the voxel face
+          draws (Excited, at icon spacing, runs x 86.7 to 113.3) plus a couple
+          of units of margin. It is a mouth with a colour behind it now rather
+          than a band across the face, and what identifies the animal is the
+          head-to-body ratio the torso above sets. */}
+      <rect x={83} y={66} width={34} height={18} fill={band.front} />
     </g>
   );
 }
@@ -402,10 +401,13 @@ export const PALIKKA: ConceptDef = {
       role: "none",
       pose: "wave",
       expression: "happy",
-      outfit: { hat: "swept-cap", face: "shades" },
+      // The crown, not a cap: the legacy sog.gg site draws Reksi as a T-rex in
+      // a small gold crown and nothing else on his head, and it is what tells
+      // you which dinosaur you are looking at before you have read a word.
+      outfit: { hat: "crown", face: "shades" },
       garment: "purple",
       blurb:
-        "The one character in this folder who is a person. `treksi.png` is the T-rex and `REKSI.png` is the same man with white hair and a briefcase, and the shades and the cap are his in both. He is the first thing a family should meet, which is why he waves.",
+        "The one character in this folder who is a person. `treksi.png` is the T-rex and `REKSI.png` is the same man with white hair and a briefcase; the shades are his in both, and the crown is the one the old site drew on him. He is the first thing a family should meet, which is why he waves.",
     },
     {
       name: "Hipponen",
@@ -431,6 +433,30 @@ export const PALIKKA: ConceptDef = {
       garment: "green",
       blurb:
         "The build the legacy set never had, added to prove the species is a family rather than two ports. Antlers give the tallest, most nameable silhouette in the concept and survive being shrunk further than any face on it.",
+    },
+    {
+      name: "Chief Engineer Kyle",
+      job: "CTO — the engine room; scientist, builder, architect, engineer",
+      // The moss lime rather than either sampled legacy colourway. Reksi owns
+      // the olive and Hipponen owns the purple, and this is the third hippo-
+      // shaped thing in a set of four — colour is the only thing allowed to
+      // tell two members of one species apart, so it has to do the whole job
+      // here.
+      variantId: "sammal",
+      form: "hippo",
+      role: "none",
+      pose: "idle",
+      expression: "focused",
+      prop: "wrench",
+      // The build with the flattest skull in the species, which is the reason
+      // this candidate exists: a hardhat is a dome sitting on a head, and a
+      // head made of one slab is the only place in the set where the two
+      // shapes are honestly the same object rather than a round thing balanced
+      // on a square one.
+      outfit: { hat: "hardhat", torso: "tool-belt" },
+      garment: "amber",
+      blurb:
+        "The blocky builder. A species made of building blocks is already a construction site, so the engineer is the one member who needs no explaining at all — hardhat, belt, spanner, and a body that looks like it came out of the same box as the thing he is fixing. The widest, heaviest build in the concept, on the one colourway nobody else here has.",
     },
     {
       name: "Kulma",

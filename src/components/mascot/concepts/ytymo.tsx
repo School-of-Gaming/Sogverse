@@ -26,13 +26,29 @@
  * something in motion. That is the whole difference between a droplet and a
  * spark, and it is why the change is one of silhouette rather than of colour
  * or costume.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** the soft sheen up the body's left flank — a tilted paper ellipse
+ * at eighteen per cent, which is a *material* cue (this thing is glossy) rather
+ * than a shape, and the same category of mistake the face rules threw an eye
+ * highlight out for. The four loose motes went with it: they were four dots in
+ * the empty corners of the canvas, decorating the frame rather than the
+ * character. And the small smile stroke inside the Wit sign, which was a second
+ * face on a drawing that already has one.
+ *
+ * **Kept as identity:** the notched top and its two licks (the silhouette, and
+ * the entire reason this stopped being an egg), the underside plane and the
+ * belly ellipse — flat colour blocks that give a single closed path a top and a
+ * bottom — and the element sign overhead, which is what says *which* Ytymo this
+ * is. Colour and sign carry the four of them apart; nothing on the body was
+ * doing that job.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
-import { MASCOT_INK, YTYMO_VARIANTS } from "../palette";
+import { YTYMO_VARIANTS } from "../palette";
 import type { Rig } from "../rig";
 
 const RIG: Rig = {
@@ -73,7 +89,7 @@ const RIG: Rig = {
 const SPARK =
   "M 100 80 C 96 62 84 48 66 40 C 52 34 43 46 45 63 C 47 78 48 92 46 106 C 42 140 66 168 100 168 C 134 168 158 140 154 106 C 152 92 153 78 155 63 C 157 46 148 34 134 40 C 116 48 104 62 100 80 Z";
 
-function Body({ colors, detail }: PartProps): ReactElement {
+function Body({ colors }: PartProps): ReactElement {
   return (
     <g>
       <path d={SPARK} fill={colors.bodyTop} />
@@ -84,17 +100,6 @@ function Body({ colors, detail }: PartProps): ReactElement {
         opacity={0.6}
       />
       <ellipse cx={100} cy={144} rx={29} ry={15} fill={colors.panel} opacity={0.5} />
-      {showsFiligree(detail) && (
-        <ellipse
-          cx={70}
-          cy={86}
-          rx={10}
-          ry={17}
-          fill={MASCOT_INK.paper}
-          opacity={0.2}
-          transform="rotate(-20 70 86)"
-        />
-      )}
     </g>
   );
 }
@@ -105,11 +110,11 @@ function Head(): ReactElement {
 }
 
 /**
- * The element sign, floating overhead, plus a few loose motes. Four glyphs,
- * each a handful of anchors — the point is that they are readable at a glance
- * and editable in a text editor, not that they are the lucide icons redrawn.
+ * The element sign, floating overhead. Four glyphs, each a handful of anchors
+ * — the point is that they are readable at a glance and editable in a text
+ * editor, not that they are the lucide icons redrawn.
  */
-function Crown({ colors, variantId, floatClass, detail }: PartProps): ReactElement {
+function Crown({ colors, variantId, floatClass }: PartProps): ReactElement {
   const outline = { stroke: colors.spark, strokeWidth: 2.6, strokeLinejoin: "round" as const };
   let glyph: ReactElement;
   switch (variantId) {
@@ -145,13 +150,6 @@ function Crown({ colors, variantId, floatClass, detail }: PartProps): ReactEleme
           <circle cx={93} cy={16} r={8.5} fill={colors.accent} {...outline} />
           <circle cx={107} cy={16} r={8.5} fill={colors.accent} {...outline} />
           <circle cx={100} cy={26} r={7.5} fill={colors.accent} {...outline} />
-          <path
-            d="M 94 14 q 6 4 12 0"
-            fill="none"
-            stroke={colors.spark}
-            strokeWidth={2.2}
-            strokeLinecap="round"
-          />
         </g>
       );
       break;
@@ -169,14 +167,6 @@ function Crown({ colors, variantId, floatClass, detail }: PartProps): ReactEleme
       {/* The notch is at the centre of the top line, so the sign has the whole
           middle of the canvas to itself and needs no clearance. */}
       <g className={floatClass}>{glyph}</g>
-      {showsFiligree(detail) && (
-        <g fill={colors.accent} opacity={0.75}>
-          <circle cx={166} cy={78} r={3.6} />
-          <circle cx={34} cy={72} r={2.6} />
-          <circle cx={160} cy={148} r={3} />
-          <circle cx={38} cy={142} r={2.2} />
-        </g>
-      )}
     </g>
   );
 }

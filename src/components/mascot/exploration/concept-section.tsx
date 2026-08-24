@@ -41,7 +41,11 @@ export function ConceptSection({ conceptId }: { conceptId: ConceptId }): ReactEl
   const def = getConcept(conceptId);
   const primary = def.variants[0];
   return (
-    <Card id={def.id} className="scroll-mt-24 overflow-hidden border-0">
+    // No `id` here. The page wraps each deep dive in `#deep-<conceptId>`, and
+    // a bare `#<conceptId>` on this card would collide with the section ids
+    // the main flow already uses for the same species — two elements with one
+    // id, and a shared link landing on whichever comes first.
+    <Card className="scroll-mt-24 overflow-hidden border-0">
       <CardContent className="space-y-10 p-6">
         {/* --- identity ------------------------------------------------- */}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">

@@ -52,13 +52,59 @@
  * survives every outfit, cannot be taken off in a customiser, and repaints
  * with the colourway rather than with the garment slots. The dividing line is
  * whether the character would still be that animal without it.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * Sixteen forms is sixteen chances to add one more mark, and the file had
+ * taken most of them. What came off, and why each one failed the 40px test:
+ *
+ * **Removed everywhere:** the soft body sheen (a pale ellipse on the shoulder —
+ * a gloss cue, on fifteen forms at once), the muzzle philtrum, and the whiskers.
+ * The whiskers are the one removal that touches an earlier explicit permission
+ * — the MoodyRat brief allowed "whiskers-as-two-lines … they are geometry, not
+ * realism" — and the later simplicity ruling is what moves them: they are four
+ * hairline strokes at fifty-five per cent behind `showsFiligree`, so they exist
+ * only above 96px and are absent from the test picture entirely. The rat still
+ * has the ears, the pointed muzzle and the curling tail, which is what the same
+ * brief said was doing the identifying.
+ *
+ * **Removed per form:** the seal's belly speckles and the owl's and great tit's
+ * chest arcs (texture on a chest); the owl's brow feather ticks; the raccoon's
+ * and the leopard's dashed tail bands (a dash pattern is a texture, and at 40px
+ * both tails were a dotted line rather than a ringed one — each is now one flat
+ * colour, which is what the ruling asks for when a removed detail was doing a
+ * job); the leopard's rosettes on the head and the giraffe's two cheek patches
+ * (four and two rings of two-and-a-half-unit stroke, sub-pixel at 40px, on
+ * animals whose ears and neck already name them); the unicorn's two horn bands
+ * and its nostril pips; the fox's tail highlight; and the outline stroke around
+ * the bug's four wings.
+ *
+ * **Tested and kept, because removing them broke the read:** the owl's disc
+ * rims. They are the file's loudest "surely that is decoration" and they are
+ * not — a rimless owl is two pale circles on a round head, which is what the
+ * pre-disc version was and it read as a *cat*. The single dipped disc with a
+ * hard edge is the landmark. Also kept: the leopard's *body* rosettes and the
+ * giraffe's *body* and *neck* patches, which were already gated one level
+ * looser than filigree for exactly this reason and are still visible at 40px;
+ * the great tit's black stripe and cap; the raccoon's mask; the fox's and
+ * lynx's cheek ruffs (they are in the silhouette); the monster's lumpy edge;
+ * the ear inner shapes, which are one flat block per ear and are half of what
+ * separates a bear's discs from a rat's saucers at portrait size; and every
+ * muzzle and its nose, which is the family's shared colour block and the thing
+ * a mouth glyph is drawn under.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, FormDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
-import { markingHex, MASCOT_INK, OTSO_CAST_VARIANTS, OTSO_VARIANTS } from "../palette";
+import {
+  markingHex,
+  MASCOT_INK,
+  OTSO_CAST_VARIANTS,
+  OTSO_CUTE_VARIANTS,
+  OTSO_VARIANTS,
+  REKSI_VARIANTS,
+} from "../palette";
 import type { Rig } from "../rig";
 
 export const OTSO_FORMS: readonly FormDef[] = [
@@ -72,7 +118,7 @@ export const OTSO_FORMS: readonly FormDef[] = [
   {
     id: "raccoon",
     label: "Pesukarhu — raccoon",
-    note: "The bandit mask and a ringed tail. R Osmo, honestly translated.",
+    note: "The bandit mask, a ruff and a fat curl of tail. R Osmo, honestly translated.",
   },
   {
     id: "giraffe",
@@ -87,7 +133,7 @@ export const OTSO_FORMS: readonly FormDef[] = [
   {
     id: "leopard",
     label: "Leopardi — leopard",
-    note: "Rosettes and a long curled tail — what the lynx's stub cannot do.",
+    note: "Body rosettes and a long curled tail — what the lynx's stub cannot do.",
   },
   {
     id: "bug",
@@ -114,13 +160,43 @@ export const OTSO_FORMS: readonly FormDef[] = [
     label: "Majava — beaver",
     note: "The paddle tail does all of it, because the incisors are not allowed.",
   },
+  {
+    id: "gull",
+    label: "Lokki — gull",
+    note: "A grey mantle over a pale body and a long gold bill. Wants the frost coat.",
+  },
+  {
+    id: "rex",
+    label: "Reksi — T-rex",
+    note: "A head half the length of the animal, a square jaw, a scalloped back and no ears.",
+  },
+  {
+    id: "penguin",
+    label: "Pingviini — penguin",
+    note: "A dark hood over a pale face and belly, flipper arms and a small triangular beak.",
+  },
+  {
+    id: "otter",
+    label: "Saukko — otter",
+    note: "A sleek head, tiny ears, a broad pale muzzle and a thick tail curling forward.",
+  },
+  {
+    id: "hedgehog",
+    label: "Siili — hedgehog",
+    note: "One scalloped mantle behind a pale face. The only form whose back is the landmark.",
+  },
 ];
 
 /**
  * The family's coats: the original three, then the seven mixed for the second
  * cohort. Order matters — `honey` stays first, so it stays the default.
  */
-const OTSO_ALL_VARIANTS = [...OTSO_VARIANTS, ...OTSO_CAST_VARIANTS];
+const OTSO_ALL_VARIANTS = [
+  ...OTSO_VARIANTS,
+  ...OTSO_CAST_VARIANTS,
+  ...REKSI_VARIANTS,
+  ...OTSO_CUTE_VARIANTS,
+];
 
 const BASE: Rig = {
   shadow: { cx: 100, cy: 186, rx: 42, ry: 7 },
@@ -266,6 +342,20 @@ function rigFor(form: string): Rig {
         crown: { x: 100, y: 42 },
         crownW: 46,
       };
+    // The tit's skull, with a slightly smaller eye: a gull's is small and hard
+    // where a songbird's is not, and it is the only proportion separating the
+    // two heads once the cap and the mantle are off.
+    case "gull":
+      return {
+        ...BASE,
+        head: { x: 100, y: 72, r: 34 },
+        eyeDx: 13,
+        eyeY: 66,
+        eyeR: 6.5,
+        mouthY: 92,
+        crown: { x: 100, y: 42 },
+        crownW: 46,
+      };
     case "rat":
       return {
         ...BASE,
@@ -279,6 +369,117 @@ function rigFor(form: string): Rig {
       };
     case "beaver":
       return { ...BASE, crown: { x: 100, y: 44 }, crownW: 56, mouthY: 90 };
+    // A round skull, two units bigger than the songbirds' and set at the
+    // family's own height: the reference's head is 418 units of face across
+    // 310 of height, so the one proportion to respect is that this bird's head
+    // is *wide* rather than tall, and the pale face block is where that gets
+    // said. The eyes stay the family's size — a penguin's are small and dark
+    // on a big pale face, and shrinking them here loses the only feature the
+    // face block has in it.
+    case "penguin":
+      return {
+        ...BASE,
+        head: { x: 100, y: 70, r: 36 },
+        eyeDx: 14,
+        eyeY: 64,
+        eyeR: 7.5,
+        mouthY: 92,
+        crown: { x: 100, y: 38 },
+        crownW: 50,
+      };
+    // Sleeker than the beaver it has to be told apart from: the same head
+    // radius, drawn wider than tall, with the ears small and *high* where the
+    // beaver's are small and low. The tail does the rest.
+    case "otter":
+      return {
+        ...BASE,
+        head: { x: 100, y: 72, r: 34 },
+        eyeDx: 14,
+        eyeY: 66,
+        eyeR: 7,
+        mouthY: 94,
+        crown: { x: 100, y: 42 },
+        crownW: 48,
+      };
+    /**
+     * The small face inside a big mantle.
+     *
+     * `head.r` is 30 — the smallest in the family after the giraffe's — and
+     * that is the whole build: the mantle is drawn at 108 units across, so a
+     * head any bigger fills its own hood and the scallops stop showing above
+     * it. It buys the same thing the giraffe's small head bought, for the same
+     * reason: the avatar window is 3.6 head-radii wide, so a small head is a
+     * tight crop, and at 40px the bust is the mantle's arc with a face under
+     * it rather than a face with two bumps beside it.
+     *
+     * `crown` sits at 52 — level with the top of the skull rather than with
+     * the top of the mantle — so a hat lands *on the head*, in front of the
+     * spines, which is where a hedgehog would have to put one.
+     */
+    case "hedgehog":
+      return {
+        ...BASE,
+        head: { x: 100, y: 78, r: 30 },
+        eyeDx: 12,
+        eyeY: 74,
+        eyeR: 7,
+        mouthY: 104,
+        crown: { x: 100, y: 52 },
+        crownW: 44,
+      };
+    /**
+     * The one build in the family whose *proportion* is the animal.
+     *
+     * Everything else here is told apart above the neck. A T-rex is told apart
+     * by the ratio: the head is 90 units across where the bear's is 80, and the
+     * torso is 52 across where the bear's is 72, so the head goes from being
+     * one and a bit times the body's width to nearly twice it. That is the
+     * single measurement anyone would name from the legacy drawings, and it is
+     * the one that survives to 28px — where the head is most of the picture and
+     * the body is a stalk under it.
+     *
+     * The head is drawn as an ellipse at 0.86 of its radius in y, so `head.r`
+     * being 45 puts the skull's top at y=25 and the crown line 15 units under
+     * it, which is the same clearance the bear's has. The jaw hangs four units
+     * below the skull, which is what a beard then hangs off.
+     *
+     * The arms are the honest part. `armLen` only decides where the elbow goes
+     * — the hand lands wherever the pose table put it — so a genuinely
+     * comic tiny arm is not available without a per-species pose table, which
+     * is the thing this directory exists to avoid. What is available is
+     * everything else about them: sockets pulled in to the narrow torso, a
+     * thinner limb, a smaller hand, and a negative `reach` that tucks a
+     * hanging hand back towards the body instead of pushing it out. The result
+     * is a short thin forelimb rather than a two-fingered stub, and that is
+     * the trade this build makes.
+     */
+    case "rex":
+      return {
+        ...BASE,
+        // `head.r` is the *crop* radius rather than half the skull — the
+        // avatar window is 3.6 of it across and square, and this is the one
+        // build in the family whose head is much wider than it is tall. Left
+        // at half the drawn width the bust came out as a full-body shot with
+        // the tail in it; 36 puts the skull across about seventy per cent of
+        // the portrait, which is where every other form in the family sits.
+        // The drawing multiplies it back up.
+        head: { x: 100, y: 64, r: 36 },
+        eyeDx: 22,
+        eyeY: 48,
+        eyeR: 8.5,
+        mouthY: 99,
+        crown: { x: 100, y: 34 },
+        crownW: 66,
+        shoulderL: { x: 81, y: 120 },
+        shoulderR: { x: 119, y: 120 },
+        hip: { x: 100, y: 154 },
+        hipSpread: 15,
+        armLen: 24,
+        limbW: 10.5,
+        handR: 7,
+        reach: -2,
+        shadow: { cx: 100, cy: 186, rx: 34, ry: 6 },
+      };
     case "bear":
     default:
       return BASE;
@@ -317,6 +518,67 @@ const LEOPARD_BODY_ROSETTES: readonly (readonly [number, number, number])[] = [
   [110, 148, 4],
 ];
 
+/**
+ * The T-rex's back, as five discs on the tail's upper edge — biggest at the
+ * shoulder, smallest at the tip. Drawn behind everything, so each one is a
+ * scallop rather than a circle.
+ */
+const REX_RIDGE: readonly (readonly [number, number, number])[] = [
+  [120, 116, 11],
+  [141, 111, 9.5],
+  [159, 109, 8],
+  [175, 109, 6.5],
+  [188, 113, 5],
+];
+
+/**
+ * The hedgehog's mantle: one scalloped arch, drawn as a contour rather than as
+ * a field of spikes.
+ *
+ * The arch is the upper half of an ellipse at `cx 100, cy 142, rx 54, ry 104`
+ * — 108 units across against the family's 72-unit torso, so eighteen units of
+ * it stand clear on each side, and its crown at y = 38 is ten above the top of
+ * the skull. Nine bumps, each a quadratic whose control point sits a third of
+ * the way along rather than halfway, so the crest leans back the way a
+ * hedgehog's spines do; that asymmetry is what keeps the outline off a cloud.
+ *
+ * **Why a contour and not spikes, and why nine.** Individual spikes are
+ * texture: they die at 40px and they break the simplicity rule twice over. A
+ * wobble in the *outline* is silhouette, so it survives every size — which is
+ * also the conclusion the forest hedgehog in the pen-line species reached
+ * independently, from the same brief.
+ *
+ * Nine bumps at seven units of crest is also the whole disambiguation from the
+ * monster, the family's other lumpy form. That one is a ring of *fifteen*
+ * seven-unit lobes all the way around a floating body, with antennae; this is
+ * an arch of nine fourteen-unit scallops standing on the ground with a pale
+ * face under it. Rasterised side by side at 40px, halving the lobe count and
+ * doubling its size is what separates them.
+ */
+function scallopedArch(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  bumps: number,
+  crest: number,
+): string {
+  const at = (a: number, orx: number, ory: number): string =>
+    `${Math.round((cx + orx * Math.cos(a)) * 100) / 100} ${Math.round((cy - ory * Math.sin(a)) * 100) / 100}`;
+  const step = -Math.PI / bumps;
+  const parts = [`M ${at(Math.PI, rx, ry)}`];
+  for (let i = 0; i < bumps; i += 1) {
+    const a0 = Math.PI + step * i;
+    parts.push(`Q ${at(a0 + step * 0.32, rx + crest, ry + crest)} ${at(a0 + step, rx, ry)}`);
+  }
+  // A shallow curve back along the bottom rather than a straight cut: the
+  // whole lower edge sits behind the torso, and a hard horizontal line there
+  // showed at the two corners where the mantle is wider than the body.
+  return `${parts.join(" ")} L 154 148 Q 100 154 46 148 Z`;
+}
+
+const SIILI_MANTLE = scallopedArch(100, 142, 54, 104, 10, 10);
+
 /** A ring of discs around an ellipse — a lumpy edge, drawn rather than shaded. */
 function Fuzz({
   cx,
@@ -352,46 +614,25 @@ function Fuzz({
   );
 }
 
-/** The raccoon's tail, as one path drawn twice — the second copy is the rings. */
+/**
+ * The raccoon's tail. One stroke in one flat colour — it used to be the same
+ * path drawn twice, the second copy dashed to band it, and a dash pattern is a
+ * texture: at 40px it read as a dotted line rather than as a ringed tail. The
+ * mask carries this animal, and the tail is a shape behind it.
+ */
 const RACCOON_TAIL = "M 133 146 C 155 152 173 141 170 121";
 
-/** Whiskers: two lines a side, which are geometry rather than a texture. */
-function Whiskers({
-  x,
-  y,
-  spread,
-  reach,
-}: {
-  x: number;
-  y: number;
-  spread: number;
-  reach: number;
-}): ReactElement {
-  return (
-    <g stroke={MASCOT_INK.line} strokeWidth={1.4} strokeLinecap="round" opacity={0.55} fill="none">
-      <path d={`M ${x - spread} ${y - 2} l ${-reach} -4`} />
-      <path d={`M ${x - spread} ${y + 2} l ${-reach} 4`} />
-      <path d={`M ${x + spread} ${y - 2} l ${reach} -4`} />
-      <path d={`M ${x + spread} ${y + 2} l ${reach} 4`} />
-    </g>
-  );
-}
-
 /** The tail — and, for the ones that have them, the wings. Drawn behind the body. */
-function Tail({ colors, form, detail }: PartProps): ReactElement | null {
+function Tail({ colors, form }: PartProps): ReactElement | null {
   switch (form) {
     case "fox":
+      // One shape. The white tail tip was a second block on a shape three units
+      // wide at 40px, where it read as the tail having a frayed end.
       return (
-        <g>
-          <path
-            d="M 136 146 C 158 146 172 128 168 108 C 166 96 154 94 150 106 C 146 118 142 132 132 138 Z"
-            fill={colors.bodyBottom}
-          />
-          <path
-            d="M 168 108 C 166 96 154 94 150 106 C 154 104 162 104 166 114 Z"
-            fill={colors.panel}
-          />
-        </g>
+        <path
+          d="M 136 146 C 158 146 172 128 168 108 C 166 96 154 94 150 106 C 146 118 142 132 132 138 Z"
+          fill={colors.bodyBottom}
+        />
       );
     case "hare":
       return <circle cx={140} cy={150} r={11} fill={colors.panel} />;
@@ -414,44 +655,66 @@ function Tail({ colors, form, detail }: PartProps): ReactElement | null {
       );
     case "owl":
     case "tit":
+    case "gull":
       return (
         <>
           <path d="M 70 118 C 58 130 60 150 72 158 C 76 146 76 130 74 118 Z" fill={colors.bodyBottom} />
           <path d="M 130 118 C 142 130 140 150 128 158 C 124 146 124 130 126 118 Z" fill={colors.bodyBottom} />
         </>
       );
-    case "raccoon":
-      // Two strokes on one path: the pale tail, then the same curve dashed in
-      // the dark marking colour. A ringed tail drawn as a dash pattern always
-      // lands its bands square across the tail, which hand-placed ticks on a
-      // curve never quite do.
+    case "penguin":
+      // The other birds' wing wedges, moved out and lengthened. Drawn at the
+      // songbirds' 70/130 they sat almost entirely behind a torso 72 units
+      // across and six units of each showed; the reference's flippers reach
+      // the full width of the drawing — black from x = 0 to x = 887 on an
+      // 888-wide file, against 676 of sweater — so they are the widest thing
+      // on the animal and have to stand clear of it. Painted from the same
+      // slot as the hood, because a penguin's wings are the same block of
+      // colour as its back.
       return (
-        <g fill="none" strokeLinecap="round">
-          <path d={RACCOON_TAIL} stroke={colors.panel} strokeWidth={17} />
-          <path
-            d={RACCOON_TAIL}
-            stroke={markingHex(colors)}
-            strokeWidth={17}
-            strokeDasharray="8 9"
-            strokeDashoffset={-5}
-          />
-        </g>
+        <>
+          <path d="M 74 112 C 52 122 48 148 62 164 C 70 150 76 130 78 114 Z" fill={colors.bodyBottom} />
+          <path d="M 126 112 C 148 122 152 148 138 164 C 130 150 124 130 122 114 Z" fill={colors.bodyBottom} />
+        </>
+      );
+    case "otter":
+      // Round in section and tapering, curling forward past the near foot —
+      // the one thing that keeps this animal off the beaver's paddle, which is
+      // flat, tilted and held clear of the legs. Drawn in `Tail`, so it sits
+      // *in front of* the legs and behind the body: the crossing is what makes
+      // it read as coming round the front rather than lying beside them.
+      return (
+        <path
+          d="M 124 138 C 158 140 180 158 174 174 C 168 188 138 192 104 184 C 130 182 150 176 150 167 C 149 156 138 148 120 148 Z"
+          fill={colors.bodyBottom}
+        />
+      );
+    case "hedgehog":
+      // No tail. A hedgehog has one and nobody has ever seen it, and the
+      // family's default stub would put a bear's bobble on the one form whose
+      // whole back is already spoken for.
+      return null;
+    case "raccoon":
+      return (
+        <path
+          d={RACCOON_TAIL}
+          fill="none"
+          strokeLinecap="round"
+          stroke={colors.panel}
+          strokeWidth={17}
+        />
       );
     case "leopard":
+      // The long curled tail, one flat colour. The bands came off for the same
+      // reason the raccoon's did; the spots on the body are what say leopard.
       return (
-        <g fill="none" strokeLinecap="round">
-          <path
-            d="M 133 148 C 160 152 178 137 173 117 C 170 105 158 104 158 115"
-            stroke={colors.bodyTop}
-            strokeWidth={11}
-          />
-          <path
-            d="M 152 149 C 168 146 176 134 174 121"
-            stroke={markingHex(colors)}
-            strokeWidth={11}
-            strokeDasharray="3 10"
-          />
-        </g>
+        <path
+          d="M 133 148 C 160 152 178 137 173 117 C 170 105 158 104 158 115"
+          fill="none"
+          strokeLinecap="round"
+          stroke={colors.bodyTop}
+          strokeWidth={11}
+        />
       );
     case "giraffe":
       return (
@@ -487,27 +750,33 @@ function Tail({ colors, form, detail }: PartProps): ReactElement | null {
       // The whole animal, structurally. Two front teeth are the cue everyone
       // reaches for and they are teeth, so the paddle has to carry it alone —
       // which means it has to be big enough to read in the silhouette.
+      // One big oval on the slant, and nothing ruled across it. The three
+      // scutes were two-unit strokes — under half a pixel at 40px — so the
+      // paddle was already a bare oval in the picture the test looks at, and
+      // the oval, big and tilted and clear of the body, is the beaver.
       return (
-        <g transform="rotate(-16 152 158)">
-          <ellipse cx={152} cy={158} rx={34} ry={16} fill={colors.bodyBottom} />
-          {/* The scutes are gated one level looser than filigree, for the same
-              reason the giraffe's patches are: without them the paddle is an
-              oval, and the oval is the entire beaver. */}
-          {detail !== "icon" && (
-            <g fill="none" stroke={colors.panel} strokeWidth={2} strokeLinecap="round">
-              <path d="M 138 148 L 138 168" />
-              <path d="M 152 145 L 152 171" />
-              <path d="M 166 148 L 166 168" />
-            </g>
-          )}
-        </g>
+        <ellipse
+          cx={152}
+          cy={158}
+          rx={34}
+          ry={16}
+          fill={colors.bodyBottom}
+          transform="rotate(-16 152 158)"
+        />
       );
     case "bug":
       // Four flat wings, not four translucent ones. A see-through wing is a
-      // material cue, which is the same family of thing as an eye highlight,
-      // so they are opaque shapes with an outline instead.
+      // material cue, in the same family as an eye highlight.
+      //
+      // They used to be pale panel shapes with an outline stroke to separate
+      // them, and the simplicity pass took the outline off — which merged all
+      // four into one cream mass with the belly, and *four* is what the wings
+      // are for. So the fix is the one the ruling names: colour, not line. The
+      // accent is a different flat colour from anything else on this animal,
+      // it already paints the antenna tips and the monster's wings, and the
+      // count survives to 40px now in a way it did not with a 1.8-unit stroke.
       return (
-        <g fill={colors.panel} stroke={colors.spark} strokeWidth={1.8}>
+        <g fill={colors.accent}>
           <ellipse cx={66} cy={100} rx={27} ry={12} transform="rotate(-36 66 100)" />
           <ellipse cx={134} cy={100} rx={27} ry={12} transform="rotate(36 134 100)" />
           <ellipse cx={70} cy={117} rx={21} ry={9} transform="rotate(-14 70 117)" />
@@ -519,6 +788,34 @@ function Tail({ colors, form, detail }: PartProps): ReactElement | null {
         <g fill={colors.accent}>
           <path d="M 76 112 C 58 102 50 118 61 130 C 68 137 78 132 79 122 Z" />
           <path d="M 124 112 C 142 102 150 118 139 130 C 132 137 122 132 121 122 Z" />
+        </g>
+      );
+    case "rex":
+      // A thick base tapering to a point, and the scalloped back.
+      //
+      // The scallops are five discs laid along the tail's upper edge and drawn
+      // *first*, so the tail and then the body cover their lower halves and
+      // what is left showing is a row of soft bumps breaking the outline. That
+      // is the same trick the monster's fuzz uses and it is the reason this is
+      // a ridge rather than a stripe: at 40px a mark painted on the body has
+      // gone and a bump that changes the silhouette has not.
+      //
+      // Soft bumps, not spikes. The legacy sog.gg drawing has three hard pale
+      // spines and they are the one part of it that reads as a monster rather
+      // than as a mascot; rounding them keeps the count, the position and the
+      // break in the outline, and drops the only aggressive line on the
+      // animal.
+      return (
+        <g>
+          <g fill={colors.bodyBottom}>
+            {REX_RIDGE.map(([cx, cy, r]) => (
+              <circle key={cx} cx={cx} cy={cy} r={r} />
+            ))}
+          </g>
+          <path
+            d="M 106 122 C 140 116 176 112 194 120 C 178 130 150 150 108 162 Z"
+            fill={colors.bodyTop}
+          />
         </g>
       );
     case "moose":
@@ -534,6 +831,15 @@ function Body(props: PartProps): ReactElement {
   return (
     <g>
       <Tail {...props} />
+      {form === "hedgehog" && (
+        // The mantle, behind everything: the body and then the head are drawn
+        // over it, so what shows is the arch above the skull and the two
+        // shoulders of spines beside the torso. It is drawn here rather than in
+        // `Head` because it belongs to the animal's back and must not swing
+        // when the idle animation tilts the head — a hedgehog's spines stay
+        // where they are and the face turns inside them.
+        <path d={SIILI_MANTLE} fill={colors.bodyBottom} />
+      )}
       {form === "monster" ? (
         // The legacy character's fur is drawn as hundreds of hairs, which is a
         // texture and does not survive being a symbol. A lumpy *outline* is
@@ -543,6 +849,12 @@ function Body(props: PartProps): ReactElement {
           <Fuzz cx={100} cy={132} rx={36} ry={30} r={7} lobes={16} fill={colors.bodyTop} />
           <ellipse cx={100} cy={132} rx={36} ry={30} fill={colors.bodyTop} />
         </>
+      ) : form === "rex" ? (
+        // Tall and narrow where every other form is wide and round. Fifty-two
+        // units across against the family's seventy-two, which is what makes
+        // the head read as oversized without the head having to grow further —
+        // and it is what a T-rex standing on two legs actually is.
+        <ellipse cx={100} cy={138} rx={26} ry={30} fill={colors.bodyTop} />
       ) : (
         <ellipse cx={100} cy={132} rx={36} ry={30} fill={colors.bodyTop} />
       )}
@@ -563,7 +875,35 @@ function Body(props: PartProps): ReactElement {
           )}
         </>
       )}
-      {form !== "monster" && <ellipse cx={100} cy={139} rx={25} ry={21} fill={colors.panel} />}
+      {form === "gull" && (
+        // The mantle: the grey saddle over the shoulders that every gull has
+        // and no other bird in this family does. One flat block laid on the
+        // body ellipse and under the belly panel — it is the whole difference
+        // between this form and a generic pale bird, and it is the only mark
+        // the form adds. Dark wingtips were drawn beside it and cut: a third
+        // colour, three units wide, gone by 64px.
+        <path
+          d="M 100 102 C 122 102 136 116 136 132 C 136 124 120 118 100 118 C 80 118 64 124 64 132 C 64 116 78 102 100 102 Z"
+          fill={colors.bodyBottom}
+        />
+      )}
+      {form === "rex" ? (
+        // The pale front, fitted to the narrower torso. The legacy voxel
+        // `treksi.png` draws a cream belly panel and the sog.gg drawing draws a
+        // pale chest, so both sources agree about this one even though they
+        // agree about very little else.
+        <ellipse cx={100} cy={145} rx={17} ry={21} fill={colors.panel} />
+      ) : form === "penguin" ? (
+        // Taller and narrower than the family's belly, and reaching up behind
+        // the head: the landmark is that the pale runs from the face to the
+        // feet in ONE block with the dark hood coming down over the shoulders
+        // on either side of it. A belly that started at the family's y = 118
+        // left a dark band across the throat and cut the block in two, which
+        // at 40px is a dark bird with a pale spot rather than a penguin.
+        <ellipse cx={100} cy={136} rx={26} ry={34} fill={colors.panel} />
+      ) : (
+        form !== "monster" && <ellipse cx={100} cy={139} rx={25} ry={21} fill={colors.panel} />
+      )}
       {form === "giraffe" && marked && (
         <g fill={colors.bodyBottom}>
           {GIRAFFE_BODY_PATCHES.map(([cx, cy, r]) => (
@@ -582,27 +922,16 @@ function Body(props: PartProps): ReactElement {
         // The black stripe down a great tit's yellow front. One flat shape.
         <path d="M 100 110 L 105 110 L 103 158 L 97 158 L 95 110 Z" fill={markingHex(colors)} />
       )}
-      {form === "seal" && showsFiligree(detail) && (
-        <g fill="none" stroke={colors.bodyBottom} strokeWidth={2} opacity={0.55}>
-          <ellipse cx={80} cy={124} rx={6} ry={4.5} />
-          <ellipse cx={120} cy={122} rx={5} ry={4} />
-          <ellipse cx={104} cy={112} rx={5.5} ry={4} />
-        </g>
-      )}
-      {(form === "owl" || form === "tit") && showsFiligree(detail) && (
-        <g fill="none" stroke={colors.bodyBottom} strokeWidth={2} strokeLinecap="round" opacity={0.4}>
-          <path d="M 90 128 q 10 7 20 0" />
-          <path d="M 86 140 q 14 8 28 0" />
-        </g>
-      )}
-      {showsFiligree(detail) && form !== "seal" && form !== "monster" && (
-        <ellipse cx={82} cy={116} rx={9} ry={6} fill={MASCOT_INK.paper} opacity={0.18} />
-      )}
     </g>
   );
 }
 
-/** A muzzle: the pale patch, the nose, and the crease under it. */
+/**
+ * A muzzle: two flat colour blocks and nothing else — the pale patch, and the
+ * nose sitting high on it. The philtrum came off in the simplicity pass; it was
+ * a two-unit stroke drawing the line between the nose and the mouth glyph,
+ * which is a gap the two shapes already describe by being apart.
+ */
 function Muzzle({
   x,
   y,
@@ -610,7 +939,6 @@ function Muzzle({
   ry,
   noseRx,
   colors,
-  detail,
 }: {
   x: number;
   y: number;
@@ -618,31 +946,18 @@ function Muzzle({
   ry: number;
   noseRx: number;
   colors: { panel: string };
-  detail: PartProps["detail"];
 }): ReactElement {
   return (
     <g>
       <ellipse cx={x} cy={y} rx={rx} ry={ry} fill={colors.panel} />
       <ellipse cx={x} cy={y - ry * 0.55} rx={noseRx} ry={noseRx * 0.72} fill={MASCOT_INK.line} />
-      {/* The philtrum, and nothing else. A glint on the nose is the same
-          specular cue the face rules threw out — the fact that it was on a
-          muzzle rather than on an eye did not make it a different mistake. */}
-      {showsFiligree(detail) && (
-        <path
-          d={`M ${x} ${y - ry * 0.2} L ${x} ${y + ry * 0.15}`}
-          stroke={MASCOT_INK.line}
-          strokeWidth={2}
-          strokeLinecap="round"
-        />
-      )}
     </g>
   );
 }
 
 function Head(props: PartProps): ReactElement {
-  const { rig, colors, form, detail } = props;
+  const { rig, colors, form } = props;
   const { x, y, r } = rig.head;
-  const marked = detail !== "icon";
   switch (form) {
     case "fox":
       return (
@@ -654,7 +969,7 @@ function Head(props: PartProps): ReactElement {
           <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
           <path d={`M ${x - r} ${y + 2} q 10 20 26 22 q -20 8 -30 -6 Z`} fill={colors.panel} opacity={0.8} />
           <path d={`M ${x + r} ${y + 2} q -10 20 -26 22 q 20 8 30 -6 Z`} fill={colors.panel} opacity={0.8} />
-          <Muzzle x={x} y={y + 20} rx={17} ry={13} noseRx={6.5} colors={colors} detail={detail} />
+          <Muzzle x={x} y={y + 20} rx={17} ry={13} noseRx={6.5} colors={colors} />
         </g>
       );
     case "lynx":
@@ -677,7 +992,7 @@ function Head(props: PartProps): ReactElement {
           <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
           <path d={`M ${x - r - 4} ${y + 8} q 14 22 30 20 q -22 12 -34 -4 Z`} fill={colors.panel} opacity={0.75} />
           <path d={`M ${x + r + 4} ${y + 8} q -14 22 -30 20 q 22 12 34 -4 Z`} fill={colors.panel} opacity={0.75} />
-          <Muzzle x={x} y={y + 19} rx={16} ry={11} noseRx={6} colors={colors} detail={detail} />
+          <Muzzle x={x} y={y + 19} rx={16} ry={11} noseRx={6} colors={colors} />
         </g>
       );
     case "moose":
@@ -704,7 +1019,7 @@ function Head(props: PartProps): ReactElement {
           <ellipse cx={x - 38} cy={y - 14} rx={12} ry={7} fill={colors.bodyBottom} transform={`rotate(-20 ${x - 38} ${y - 14})`} />
           <ellipse cx={x + 38} cy={y - 14} rx={12} ry={7} fill={colors.bodyBottom} transform={`rotate(20 ${x + 38} ${y - 14})`} />
           <ellipse cx={x} cy={y - 2} rx={r * 0.82} ry={r * 0.86} fill={colors.bodyTop} />
-          <Muzzle x={x} y={y + 26} rx={20} ry={16} noseRx={8} colors={colors} detail={detail} />
+          <Muzzle x={x} y={y + 26} rx={20} ry={16} noseRx={8} colors={colors} />
         </g>
       );
     case "owl":
@@ -744,12 +1059,6 @@ function Head(props: PartProps): ReactElement {
             d={`M ${x} ${y + 17} C ${x - 7} ${y + 11} ${x - 8} ${y + 2} ${x - 7} ${y - 3} L ${x + 7} ${y - 3} C ${x + 8} ${y + 2} ${x + 7} ${y + 11} ${x} ${y + 17} Z`}
             fill={colors.bodyBottom}
           />
-          {showsFiligree(detail) && (
-            <g fill="none" stroke={colors.bodyBottom} strokeWidth={1.6} opacity={0.5}>
-              <path d={`M ${x - 34} ${y - 22} q 10 -8 18 -4`} />
-              <path d={`M ${x + 34} ${y - 22} q -10 -8 -18 -4`} />
-            </g>
-          )}
         </g>
       );
     case "hare":
@@ -764,15 +1073,14 @@ function Head(props: PartProps): ReactElement {
               were also teeth sitting on top of the mouth glyph, which is the
               exact detail cue the face rules exist to keep off. The ears do
               the identifying anyway. */}
-          <Muzzle x={x} y={y + 17} rx={14} ry={10} noseRx={5} colors={colors} detail={detail} />
+          <Muzzle x={x} y={y + 17} rx={14} ry={10} noseRx={5} colors={colors} />
         </g>
       );
     case "seal":
       return (
         <g>
           <ellipse cx={x} cy={y} rx={r * 1.02} ry={r * 0.94} fill={colors.bodyTop} />
-          <Muzzle x={x} y={y + 20} rx={18} ry={12} noseRx={6.5} colors={colors} detail={detail} />
-          {showsFiligree(detail) && <Whiskers x={x} y={y + 22} spread={16} reach={14} />}
+          <Muzzle x={x} y={y + 20} rx={18} ry={12} noseRx={6.5} colors={colors} />
         </g>
       );
     case "raccoon":
@@ -797,8 +1105,7 @@ function Head(props: PartProps): ReactElement {
             d={`M ${x - 34} ${y - 10} C ${x - 34} ${y - 22} ${x - 16} ${y - 22} ${x - 8} ${y - 15} C ${x - 4} ${y - 12} ${x + 4} ${y - 12} ${x + 8} ${y - 15} C ${x + 16} ${y - 22} ${x + 34} ${y - 22} ${x + 34} ${y - 10} C ${x + 34} ${y + 5} ${x + 18} ${y + 11} ${x + 8} ${y + 4} C ${x + 4} ${y + 1} ${x - 4} ${y + 1} ${x - 8} ${y + 4} C ${x - 18} ${y + 11} ${x - 34} ${y + 5} ${x - 34} ${y - 10} Z`}
             fill={markingHex(colors)}
           />
-          <Muzzle x={x} y={y + 19} rx={16} ry={12} noseRx={6} colors={colors} detail={detail} />
-          {showsFiligree(detail) && <Whiskers x={x} y={y + 21} spread={15} reach={15} />}
+          <Muzzle x={x} y={y + 19} rx={16} ry={12} noseRx={6} colors={colors} />
         </g>
       );
     case "leopard":
@@ -812,16 +1119,11 @@ function Head(props: PartProps): ReactElement {
           <path d={`M ${x - 28} ${y - 24} C ${x - 29} ${y - 34} ${x - 26} ${y - 37} ${x - 21} ${y - 33} Z`} fill={colors.panel} />
           <path d={`M ${x + 28} ${y - 24} C ${x + 29} ${y - 34} ${x + 26} ${y - 37} ${x + 21} ${y - 33} Z`} fill={colors.panel} />
           <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
-          {marked && (
-            <g fill="none" stroke={markingHex(colors)} strokeWidth={2.6}>
-              <circle cx={x - 28} cy={y - 2} r={4.5} />
-              <circle cx={x + 28} cy={y - 2} r={4.5} />
-              <circle cx={x - 15} cy={y - 22} r={4} />
-              <circle cx={x + 15} cy={y - 22} r={4} />
-            </g>
-          )}
-          <Muzzle x={x} y={y + 18} rx={14} ry={10} noseRx={5.4} colors={colors} detail={detail} />
-          {showsFiligree(detail) && <Whiskers x={x} y={y + 20} spread={15} reach={15} />}
+          {/* The rosettes stay on the body and come off the face. Four rings of
+              two-and-a-half-unit stroke around a muzzle are half a pixel each at
+              40px, and what they were competing with there is the ear shape —
+              which is the thing that separates this cat from the lynx. */}
+          <Muzzle x={x} y={y + 18} rx={14} ry={10} noseRx={5.4} colors={colors} />
         </g>
       );
     case "giraffe":
@@ -853,13 +1155,10 @@ function Head(props: PartProps): ReactElement {
             transform={`rotate(24 ${x + 25} ${y - 12})`}
           />
           <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
-          {marked && (
-            <g fill={colors.bodyBottom}>
-              <circle cx={x - 15} cy={y - 11} r={3.6} />
-              <circle cx={x + 16} cy={y - 8} r={3.2} />
-            </g>
-          )}
-          <Muzzle x={x} y={y + 16} rx={13} ry={12} noseRx={4.6} colors={colors} detail={detail} />
+          {/* No patches on the face. The head here is 23 units of radius and the
+              cheek pair was two three-unit dots on it; the patches that do the
+              identifying are on the neck and the body, where they are big. */}
+          <Muzzle x={x} y={y + 16} rx={13} ry={12} noseRx={4.6} colors={colors} />
         </g>
       );
     case "unicorn":
@@ -893,31 +1192,19 @@ function Head(props: PartProps): ReactElement {
             fill={colors.bodyBottom}
           />
           {/* The horn last, so it stands out of the mane rather than under it.
-              A tapered triangle with two bands: a drawn spiral turns to mush
-              below about 60px, two bands survive to the avatar crop. */}
+              One tapered triangle in the accent colour: the two spiral bands
+              that used to cross it were three-unit strokes on a nine-unit
+              shape, and the horn's *outline* is what anyone names it by. A
+              spiral would have turned to mush below 60px; the bands did too. */}
           <path d={`M ${x} ${y - 66} L ${x - 9} ${y - 28} L ${x + 9} ${y - 28} Z`} fill={colors.accent} />
-          <path
-            d={`M ${x - 6} ${y - 45} L ${x + 6} ${y - 45}`}
-            stroke={colors.spark}
-            strokeWidth={3.2}
-            strokeLinecap="round"
-          />
-          <path
-            d={`M ${x - 3.6} ${y - 56} L ${x + 3.6} ${y - 56}`}
-            stroke={colors.spark}
-            strokeWidth={2.8}
-            strokeLinecap="round"
-          />
           {/* A muzzle that carries on below the skull, which is the other half
-              of turning a round head into a horse's. Two small nostrils rather
-              than the family's single nose blob — a horse has them set apart,
-              and they are still flat shapes with no interior. */}
+              of turning a round head into a horse's. No nostril pips: two
+              three-unit ellipses on it were the smallest marks on the animal
+              and the first to vanish. The long pale block *is* the horse. */}
           <path
             d={`M ${x - 17} ${y + 4} C ${x - 17} ${y + 26} ${x - 11} ${y + 36} ${x} ${y + 36} C ${x + 11} ${y + 36} ${x + 17} ${y + 26} ${x + 17} ${y + 4} Z`}
             fill={colors.panel}
           />
-          <ellipse cx={x - 6} cy={y + 19} rx={3.4} ry={2.6} fill={MASCOT_INK.line} />
-          <ellipse cx={x + 6} cy={y + 19} rx={3.4} ry={2.6} fill={MASCOT_INK.line} />
         </g>
       );
     case "bug":
@@ -987,7 +1274,6 @@ function Head(props: PartProps): ReactElement {
             fill={colors.panel}
           />
           <ellipse cx={x} cy={y + 11} rx={5.4} ry={4.2} fill={MASCOT_INK.line} />
-          {showsFiligree(detail) && <Whiskers x={x} y={y + 14} spread={13} reach={18} />}
         </g>
       );
     case "beaver":
@@ -1005,7 +1291,127 @@ function Head(props: PartProps): ReactElement {
           <ellipse cx={x} cy={y} rx={r * 1.06} ry={r * 0.9} fill={colors.bodyTop} />
           {/* Broad, flat and low, and no incisors: two front teeth are the
               beaver cue everybody reaches for and teeth are not drawn here. */}
-          <Muzzle x={x} y={y + 20} rx={27} ry={12} noseRx={7} colors={colors} detail={detail} />
+          <Muzzle x={x} y={y + 20} rx={27} ry={12} noseRx={7} colors={colors} />
+        </g>
+      );
+    case "gull":
+      return (
+        <g>
+          <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
+          {/* The bill, in the coat's accent rather than in ink. Drawn dark
+              like the great tit's it merges with the mouth glyph eighteen
+              units below it and the pair reads as one open beak; in the
+              accent the two stay separate shapes. Twenty-two units long —
+              sixteen is a finch, twenty-eight is a duck. */}
+          <path
+            d={`M ${x - 6.5} ${y - 2} L ${x + 6.5} ${y - 2} L ${x + 4} ${y + 18} C ${x + 3} ${y + 22} ${x - 3} ${y + 22} ${x - 4} ${y + 18} Z`}
+            fill={colors.accent}
+          />
+        </g>
+      );
+    case "rex":
+      return (
+        <g>
+          {/* Wider than it is tall, and with nothing on top of it. Every other
+              form in the family is identified by what is above the ears; this
+              one is identified by having neither. */}
+          <rect
+            x={x - r * 1.28}
+            y={y - r * 0.87}
+            width={r * 2.56}
+            height={r * 1.74}
+            rx={r * 0.59}
+            fill={colors.bodyTop}
+          />
+          {/* THE JAW. The family's only muzzle with corners on it, and the
+              only one that hangs below the skull — sixty-two units across a
+              ninety-unit head, against the bear's forty-four across eighty.
+              Both halves of that matter: a broad muzzle on a round head is a
+              bear, and a broad *square* one that overshoots the chin is a
+              lizard. Drawn in `panel` like every other muzzle here, so the
+              coat's own pale underside paints it and no colourway has to know
+              this form exists.
+
+              The red mouth patch the legacy voxel file has is deliberately not
+              here. Kyle's ruling is that it is not a defining feature of the
+              character, and the geometry above is what is. */}
+          <rect x={x - 30} y={y + 16} width={60} height={30} rx={10} fill={colors.panel} />
+          <ellipse cx={x} cy={y + 23} rx={7.5} ry={5.4} fill={MASCOT_INK.line} />
+        </g>
+      );
+    /**
+     * Two colour blocks and one small triangle.
+     *
+     * Measured off `scratchpad/polonski-zoom.png` (888 × 700, trimmed) at
+     * working size, which is what settled every number here:
+     *
+     * - the yellow face is **418 px across** at its widest against **500 px**
+     *   of black at the same row — so the pale block is about 84 per cent of
+     *   the head's width and the hood is a rim of roughly eight per cent a
+     *   side. Here that is a 56-unit face inside a 72-unit head.
+     * - the face is **310 px tall against 418 wide** — wider than it is tall,
+     *   and it reaches the chin. Nothing about the reference is a disc with a
+     *   rim; that is the owl two cases up, and keeping the two apart is the
+     *   reason the pale here is tangent to the bottom of the skull rather than
+     *   floating inside it.
+     * - the beak is a **33 × 29 px** triangle — eight per cent of the face's
+     *   width, magenta, apex down, sitting 35 per cent of the way down the
+     *   head. Drawn at eight per cent it would be five units wide and gone by
+     *   64px, so it is drawn at twelve: still the smallest mark on the animal,
+     *   still clearly a triangle at 40.
+     *
+     * What is in the reference and deliberately not here: the scribbled hatch
+     * the plumage is drawn with (a texture — it becomes one flat block), and
+     * the two magenta cheek ovals (blush, which the face grammar bans
+     * outright).
+     */
+    case "penguin":
+      return (
+        <g>
+          <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
+          <ellipse cx={x} cy={y + 7} rx={27} ry={29} fill={colors.panel} />
+          <path d={`M ${x} ${y + 16} L ${x - 6} ${y + 4} L ${x + 6} ${y + 4} Z`} fill={colors.accent} />
+        </g>
+      );
+    case "otter":
+      return (
+        <g>
+          {/* Ears you could miss, set high and close, and with no pale inner
+              disc. An otter's are barely more than a dark fold; drawn at the
+              bear's size and spacing this form was a bear, and it was the pale
+              inner — the thing that makes a bear's ear a bear's ear — that was
+              doing most of that. Two flat nubs in the coat's own darker tone
+              cost nothing at 40px, where the tail is carrying the animal
+              anyway. */}
+          <circle cx={x - 26} cy={y - 26} r={7} fill={colors.bodyBottom} />
+          <circle cx={x + 26} cy={y - 26} r={7} fill={colors.bodyBottom} />
+          {/* Wider than tall and only slightly — a swimmer's head is a
+              streamlined block, and the beaver's flatter 1.06 × 0.9 is next
+              door, so the difference this shape can carry is small. The tail
+              is what is actually doing the work. */}
+          <ellipse cx={x} cy={y} rx={r * 1.03} ry={r * 0.95} fill={colors.bodyTop} />
+          {/* Broad, and the widest muzzle here after the beaver's: an otter's
+              face is mostly cheek. Low enough that the pale block touches the
+              chin, which is the half of it a bust crop keeps. */}
+          <Muzzle x={x} y={y + 20} rx={24} ry={12} noseRx={6.5} colors={colors} />
+        </g>
+      );
+    case "hedgehog":
+      return (
+        <g>
+          {/* The face is one pale block and nothing else — no ears (a
+              hedgehog's are inside the mantle), no markings, no second tone.
+              Everything this form has to say is said by the shape behind it,
+              which is exactly the trade the simplicity ruling asks for. */}
+          <circle cx={x} cy={y} r={r} fill={colors.panel} />
+          {/* The nose, and nothing under it. A pointed snout was drawn here
+              and cut: below the chin it lands on the body's own mid tone,
+              which is four steps from the pale it is drawn in and eight from
+              the mantle, so it read as a smudge at 240px and as nothing at 40
+              — and any longer it reaches the belly panel and is pale on pale.
+              The 40px raster with and without is identical, which is the test,
+              so it stays off and the mantle keeps the whole job. */}
+          <ellipse cx={x} cy={y + 16} rx={5.6} ry={4.4} fill={MASCOT_INK.line} />
         </g>
       );
     case "bear":
@@ -1017,7 +1423,7 @@ function Head(props: PartProps): ReactElement {
           <circle cx={x - 28} cy={y - 27} r={7.5} fill={colors.panel} />
           <circle cx={x + 28} cy={y - 27} r={7.5} fill={colors.panel} />
           <circle cx={x} cy={y} r={r} fill={colors.bodyTop} />
-          <Muzzle x={x} y={y + 20} rx={22} ry={15} noseRx={7.5} colors={colors} detail={detail} />
+          <Muzzle x={x} y={y + 20} rx={22} ry={15} noseRx={7.5} colors={colors} />
         </g>
       );
   }
@@ -1026,7 +1432,7 @@ function Head(props: PartProps): ReactElement {
 export const OTSO: ConceptDef = {
   id: "otso",
   species: "Otso",
-  kind: "Animal family — one rig, sixteen species",
+  kind: "Animal family — one rig, twenty species",
   origin: "fresh",
   pitch:
     "The warmest concept here, and the only one a seven-year-old will hug. Otso is the old Finnish word for bear, the one you used instead of the bear's real name. Round two answered the obvious objection — that a bear on its own says nothing about gaming and every Nordic children's brand already has one — by making the bear a *member* rather than the whole idea. Sixteen animals share one body plan, so a fox can be the fast one, an owl can be the gedu, a hare can be the beginner, a rat can tend the stories, and none of it costs a second pose sheet. Finnish nature is where it started and is still most of the list; the rest are here because a global company that loves animals does not check their passports.",
@@ -1054,6 +1460,27 @@ export const OTSO: ConceptDef = {
       pose: "wave",
       expression: "happy",
       blurb: "The species and the flagship share a name, the way a mascot usually does. Honey coat, no costume, always waving.",
+    },
+    {
+      name: "Reksi — the Princi-Pal",
+      job: "Principal gamer — the headmaster's voice: welcomes, announcements, the occasional dad joke",
+      variantId: "reksi",
+      form: "rex",
+      role: "none",
+      pose: "idle",
+      expression: "happy",
+      prop: "briefcase",
+      // The crown is disputed and is carried here as a candidate rather than
+      // as identity: it appears in exactly one asset anywhere (the sog.gg
+      // about-us drawing) and Kyle does not recognise it as part of the
+      // character. The marks he does name are the white beard, the shades, the
+      // purple and the briefcase, and all four are on this entry — the beard
+      // and the shades are one wearable because the rig has two head slots and
+      // he wants three things on his head.
+      outfit: { hat: "crown", face: "beard-shades" },
+      garment: "purple",
+      blurb:
+        "The same man as the voxel Reksi and the human one, in the body the legacy sog.gg site actually draws him in: an oversized head on a narrow standing body, a square jaw, a scalloped back and no ears. Grey-blue mixed off the sampled coat, white beard, shades indoors, briefcase in hand. The arms are short and thin rather than comically tiny — the pose table puts hands at absolute coordinates, so that joke costs a pose sheet of its own.",
     },
     {
       name: "MoodyRat",
@@ -1089,13 +1516,15 @@ export const OTSO: ConceptDef = {
       pose: "idle",
       expression: "focused",
       prop: "wrench",
-      // The goggles and the belt-and-braces gold both come off the `amber`
-      // swatch rather than off this coat, whose garment slot is teal: the
-      // goggle frames are painted from `clothing`, and teal frames around
-      // cyan glass are one colour pretending to be two.
-      outfit: { hat: "goggles", scene: "engine-room" },
+      // The hardhat comes off the `amber` swatch rather than off this coat,
+      // whose garment slot is teal: the shell is painted from `clothing`, and
+      // a teal hat on a teal-trimmed brown beaver is one colour pretending to
+      // be two. Gold is also what a hardhat is, everywhere, which is a rarer
+      // thing than it sounds — most of this registry's items have no real
+      // colour of their own.
+      outfit: { hat: "hardhat", scene: "engine-room" },
       garment: "amber",
-      blurb: "The animal that builds things, dams the river and keeps the water where it should be, which is close enough to a job description. Goggles pushed up, a spanner in hand and the reactor column behind him. No Star Trek anywhere on him: the gold is engineering gold, the column is a column, and the title is his own handle. The paddle tail is what keeps him from being a brown bear.",
+      blurb: "The animal that builds things, dams the river and keeps the water where it should be, which is close enough to a job description. A hardhat on, a spanner in hand and the reactor column behind him. No Star Trek anywhere on him: the gold is engineering gold, the column is a column, and the title is his own handle. The paddle tail is what keeps him from being a brown bear.",
     },
     {
       name: "Repo",
@@ -1127,6 +1556,69 @@ export const OTSO: ConceptDef = {
       pose: "reading",
       expression: "thinking",
       blurb: "The owl was always going to be the professor. Nobody has ever resisted this joke and we are not starting now.",
+    },
+    {
+      name: "Lokki",
+      job: "The archipelago guide — coastal camps and the summer clubs",
+      variantId: "frost",
+      form: "gull",
+      role: "none",
+      pose: "hold-up",
+      expression: "happy",
+      prop: "spyglass",
+      outfit: { hat: "captain-cap", scene: "lighthouse" },
+      garment: "sky",
+      blurb: "The one member of the family who was already at the coast when the rest of the fleet arrived. Grey mantle, gold bill, a glass to her eye and a completely unearned air of authority. She will take your ice cream.",
+    },
+    {
+      name: "Polonski",
+      job: "The desk — sign-ups, consent forms, and the letters that have to be got right",
+      variantId: "pingviini",
+      form: "penguin",
+      role: "none",
+      pose: "idle",
+      expression: "happy",
+      prop: "clipboard",
+      // The two things the legacy drawing is wearing, and nothing else. The
+      // orange glasses become the wardrobe's own `specs` — the frame colour is
+      // the accessory's, not his — and the green sweater is the `tee` in the
+      // `green` swatch, which is what the legacy strip already dressed his
+      // counterpart in before the species under it changed.
+      outfit: { face: "specs", torso: "tee" },
+      garment: "green",
+      blurb:
+        "The legacy cast's round yellow bird, under the ruling that settles what he actually is. Black back and flipper-arms, a yellow face and belly, a small pink beak and pink feet: a penguin, and never the great tit he was first rebuilt as. He keeps the sweater and the glasses he was drawn in, and he has quietly taken over everything at School of Gaming that has to be in writing.",
+    },
+    {
+      name: "Loiske",
+      job: "The icebreaker — first sessions, warm-ups, and the buddy nobody drifts away from",
+      variantId: "saukko",
+      form: "otter",
+      role: "none",
+      pose: "wave",
+      expression: "excited",
+      outfit: { torso: "life-vest" },
+      garment: "cyan",
+      blurb:
+        "\"Loiske\" is the sound of something happy landing in water. Otters sleep holding each other's paws so the current cannot separate them, which is the best description of a buddy system anyone has managed, and it is her entire job: she takes the new one round, learns their name out loud, and does not let go of them in the first five minutes.",
+    },
+    {
+      name: "Piikki",
+      job: "The house rules — the be-kind pages, reporting a problem, and the word after a bad match",
+      variantId: "siili",
+      form: "hedgehog",
+      role: "none",
+      pose: "idle",
+      expression: "happy",
+      // The lanyard rather than a garment: it is the one wearable in the
+      // registry that says "ask this one" without covering anything. A scarf
+      // was tried first and sits across the mouth glyph on this build — the
+      // head is small and the collar line is high — and a tee puts a second
+      // green shirt next to Polonski's.
+      outfit: { torso: "lanyard" },
+      garment: "emerald",
+      blurb:
+        "\"Piikki\" is a spine, and he is the softest character in the fleet. A hedgehog's whole defence is to stop, curl up and wait for it to pass, which happens to be the advice as well: do not answer it, tell somebody. Prickly seen from outside, pale and unbothered underneath, and never the one who started it.",
     },
   ],
 };

@@ -135,4 +135,39 @@ export const OUTFIT_PRESETS: readonly OutfitPreset[] = [
     outfit: { hat: "party-hat", torso: "hoodie", back: "backpack" },
     paletteId: "brand",
   },
+  /**
+   * The archipelago look. Two garments and nothing else, on purpose: the boat
+   * and the lighthouse are scenes rather than clothes, so a preset that put
+   * one of them on would decide where the character is standing as well as
+   * what it is wearing, and no other preset here does that.
+   */
+  {
+    id: "saaristo",
+    label: "Saaristo",
+    outfit: { hat: "captain-cap", torso: "sailor-shirt" },
+    paletteId: "summer",
+  },
+  /**
+   * The space look, which is one item: a helmet.
+   *
+   * It is a *preset* rather than a seasonal look, and the distinction is the
+   * point. Everything in the seasons module has to name a Finnish season and
+   * joins the date-driven `auto` path, and there is no week of the year that
+   * is space — so putting it there would mean inventing a calendar answer for
+   * a question the calendar does not ask. This strip is where a look that is
+   * simply *available* belongs, next to Party.
+   *
+   * One item and no repaint, on the same reasoning the archipelago preset
+   * gives: the landing pad is a scene, so a preset that included it would be
+   * deciding where the character is standing rather than what it has on. The
+   * palette stays native because the dome takes its ring from the character's
+   * own garment accent, and a look that recoloured that would make every
+   * species' helmet the same colour.
+   */
+  {
+    id: "space",
+    label: "Space",
+    outfit: { hat: "space-helmet" },
+    paletteId: "native",
+  },
 ];

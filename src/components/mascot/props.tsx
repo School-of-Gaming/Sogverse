@@ -15,6 +15,7 @@
 import type { ReactElement } from "react";
 
 import {
+  brandRadius,
   MASCOT_INK,
   MASCOT_SCENERY,
   shadeHex,
@@ -37,12 +38,15 @@ function Sign({ at, colors }: PropProps): ReactElement {
   return (
     <g>
       <rect x={at.x - 3} y={at.y - 18} width={6} height={22} rx={3} fill={MASCOT_INK.lineSoft} />
+      {/* The brand's own corner rounding: a board a character holds up is a
+          plate with School of Gaming's name on it, and the wordmark says what
+          radius one of those takes. See `BRAND_RADIUS`. */}
       <rect
         x={at.x - 48}
         y={at.y - 62}
         width={74}
         height={46}
-        rx={9}
+        rx={brandRadius(74, 46)}
         fill={MASCOT_INK.paper}
         {...OUTLINE}
       />
@@ -725,6 +729,325 @@ function Scanner({ at, colors }: PropProps): ReactElement {
   );
 }
 
+/**
+ * A storm lantern, hung from the hand rather than held out in front of it.
+ *
+ * Every other prop in this file is a *device* — a thing with buttons, moulded
+ * out of the shared dark plastic. This one is the opposite and is here for the
+ * nocturnal species: the only light source in the library, and the only object
+ * that draws with the character's accent at full strength. It is deliberately
+ * five flat shapes and no texture, because it turns up in scenes that are
+ * themselves flat silhouettes and a rendered brass lantern in front of a
+ * cut-paper spruce would be the only real object on the page.
+ *
+ * It hangs *below* the anchor for the same reason a bag would: a lantern held
+ * at eye level is a torch, and the whole point of one is the pool of light it
+ * makes at knee height.
+ */
+function Lantern({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  return (
+    <g>
+      <path
+        d={`M ${x - 7} ${y - 2} Q ${x} ${y - 17} ${x + 7} ${y - 2}`}
+        fill="none"
+        stroke={MASCOT_INK.lineSoft}
+        strokeWidth={2.2}
+        strokeLinecap="round"
+      />
+      <rect x={x - 9} y={y - 4} width={18} height={6} rx={2} fill={MASCOT_INK.lineSoft} />
+      <path
+        d={`M ${x - 7} ${y + 2} L ${x + 7} ${y + 2} L ${x + 9} ${y + 20} L ${x - 9} ${y + 20} Z`}
+        fill={MASCOT_INK.paper}
+        opacity={0.9}
+        {...OUTLINE}
+      />
+      <ellipse cx={x} cy={y + 12} rx={4} ry={6} fill={colors.accent} />
+      <rect x={x - 10} y={y + 19} width={20} height={5} rx={2} fill={MASCOT_INK.lineSoft} />
+    </g>
+  );
+}
+
+/**
+ * A kantele - five strings on a flat box, and the one prop here that is
+ * Finnish rather than generic.
+ *
+ * It is drawn as the instrument's own outline and nothing else: a trapezoid
+ * (wide at the tuning end, tapering towards the point the strings gather at),
+ * a soundhole, and five strings. Five is the count the oldest ones have, and
+ * it is also the most that survive as separate lines at this size - a
+ * thirty-string concert kantele would be a hatched rectangle.
+ *
+ * The box is scenery wood rather than the character's colourway, for the same
+ * reason a controller is moulded out of the device neutrals: an instrument
+ * tinted to match whoever is holding it stops being an object in the world.
+ */
+function Kantele({ at }: { at: Point }): ReactElement {
+  const { x, y } = at;
+  return (
+    <g>
+      <path
+        d={`M ${x - 26} ${y - 9} L ${x + 22} ${y - 1} L ${x + 22} ${y + 11} L ${x - 26} ${y + 11} Z`}
+        fill={tintHex(MASCOT_SCENERY.wood, 0.34)}
+        {...OUTLINE}
+      />
+      <path
+        d={`M ${x - 26} ${y + 11} L ${x + 22} ${y + 11} L ${x + 22} ${y + 15} L ${x - 26} ${y + 15} Z`}
+        fill={MASCOT_SCENERY.woodDark}
+      />
+      <circle cx={x - 4} cy={y + 4} r={3.4} fill={MASCOT_SCENERY.woodDark} />
+      {/* Dark strings on a pale top rather than the other way round. The first
+          version was scenery wood with paper strings, and against an amber
+          villager the whole instrument disappeared into the garment. */}
+      <g stroke={MASCOT_SCENERY.woodLine} strokeWidth={1.2} opacity={0.75} strokeLinecap="round">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <path key={i} d={`M ${x - 23} ${y - 6 + i * 3.4} L ${x + 19} ${y + 1 + i * 1.7}`} />
+        ))}
+      </g>
+      {/* The tuning pins, as three dots on the wide end. */}
+      <g fill={MASCOT_SCENERY.woodLine}>
+        <circle cx={x - 23.5} cy={y - 4} r={1.3} />
+        <circle cx={x - 23.5} cy={y + 2} r={1.3} />
+        <circle cx={x - 23.5} cy={y + 8} r={1.3} />
+      </g>
+    </g>
+  );
+}
+
+/**
+ * The mark's chevron, on a plate, held out as a pointer.
+ *
+ * The one prop in this library that is a piece of brand rather than a piece of
+ * furniture. `N8-gem-chevron.svg` is a rounded amber hexagon with a near-black
+ * chevron cut into it, and the chevron on its own is the part that means
+ * *this way* — so it comes off the gem, onto a plate with the wordmark's own
+ * corner rounding, and into a hand. A mascot beside a call to action can then
+ * point at it with the company's own arrow instead of with a generic one.
+ *
+ * The proportions are the favicon's, scaled: the source chevron is 28 across
+ * and 44 down with a 15-unit stroke, which is 0.43 of what is drawn here, and
+ * the round cap and join are the source's too. Amber comes from the swatch
+ * table rather than from the character's colourway on purpose — a chevron
+ * dyed to match whoever is holding it is not the brand's chevron any more.
+ */
+function Chevron({ at }: PropProps): ReactElement {
+  const { x, y } = at;
+  const w = 40;
+  const h = 44;
+  return (
+    <g>
+      {/* The outline is not decoration: the character most likely to be holding
+          this is the amber one, and an amber plate on an amber body has no
+          edge. Every other plate in this library carries the same line for the
+          same reason. */}
+      <rect
+        x={x - w / 2}
+        y={y - h / 2}
+        width={w}
+        height={h}
+        rx={brandRadius(w, h)}
+        fill={swatchHex("amber")}
+        {...OUTLINE}
+      />
+      <path
+        d={`M ${x - 6} ${y - 11} L ${x + 8} ${y} L ${x - 6} ${y + 11}`}
+        fill="none"
+        stroke={MASCOT_INK.line}
+        strokeWidth={7.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
+  );
+}
+
+/**
+ * A berry picker's basket — two flat tones and three berries over the rim.
+ *
+ * There is no weave on it. A basket is the one object in this library whose
+ * real-world texture is its whole appearance, which makes it the sharpest test
+ * of the simplicity ruling in the prop table: cross-hatching a twelve-unit
+ * trapezoid produces a grey smudge at 40px and a busy one at 200, and the
+ * shape — wide mouth, tapered base, one arched handle — already says basket on
+ * its own. So it is a wood block, a darker rim, and the handle as a stroke.
+ *
+ * The berries take the character's own `bodyTop`, which is a joke that pays
+ * for itself on the species this was drawn for: a Marja carrying one is a berry
+ * carrying a basket of its own kind.
+ */
+function Basket({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  return (
+    <g>
+      <path
+        d={`M ${x - 13} ${y - 3} Q ${x} ${y - 26} ${x + 13} ${y - 3}`}
+        fill="none"
+        stroke={MASCOT_SCENERY.woodDark}
+        strokeWidth={3.2}
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${x - 19} ${y - 2} L ${x + 19} ${y - 2} L ${x + 14} ${y + 21} L ${x - 14} ${y + 21} Z`}
+        fill={MASCOT_SCENERY.wood}
+        {...OUTLINE}
+      />
+      <g fill={colors.bodyTop}>
+        <circle cx={x - 8} cy={y - 6} r={5.5} />
+        <circle cx={x + 1} cy={y - 8} r={5.5} />
+        <circle cx={x + 9} cy={y - 5} r={5.5} />
+      </g>
+      <rect x={x - 21} y={y - 4} width={42} height={7} rx={3} fill={MASCOT_SCENERY.woodDark} />
+    </g>
+  );
+}
+
+/**
+ * The archipelago kit: an oar, a spyglass and a rod.
+ *
+ * All three are long objects held at the side grip, which puts the anchor at
+ * about y=148 with only fifty units of canvas below it. So none of them can
+ * hang down the way a real one would; each leans its length *upward and
+ * outboard*, away from the body's centre line, which is also the only strip of
+ * canvas no species' silhouette reaches into.
+ */
+
+/**
+ * A shouldered oar — blade up and outboard, loom down past the hip.
+ *
+ * The blade started at the bottom, where an oar's blade belongs, and the first
+ * raster settled it: the side grip is at y=148 and the boat's near hull covers
+ * everything below y=166, so the blade was either hidden by the hull or off
+ * the canvas, and what was left read as a wooden spoon. Carried blade-up over
+ * the shoulder it is unmistakable at 200px, it clears every head in the set
+ * (the tip lands around x=166, and the widest head here stops at 140), and it
+ * is what somebody walking down to the water actually does with an oar.
+ *
+ * The loom is scenery wood and the blade is the character's garment colour —
+ * boat gear in this country is painted, and the blade is the only part of the
+ * object with room to carry a colour.
+ */
+function Oar({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  return (
+    <g transform={`rotate(24 ${x} ${y})`}>
+      <rect x={x - 4.5} y={y - 48} width={9} height={84} rx={4.5} fill={MASCOT_SCENERY.wood} />
+      <rect x={x - 6} y={y + 28} width={12} height={9} rx={4} fill={MASCOT_SCENERY.woodDark} />
+      <path
+        d={`M ${x - 4} ${y - 44} C ${x - 13} ${y - 52} ${x - 12} ${y - 68} ${x} ${y - 78} C ${x + 12} ${y - 68} ${x + 13} ${y - 52} ${x + 4} ${y - 44} Z`}
+        fill={colors.clothing}
+      />
+    </g>
+  );
+}
+
+/**
+ * A spyglass: three tubes, two rings and a lens.
+ *
+ * Drawn as a stepped cone rather than as one tube, because a plain cylinder at
+ * this size is a pencil. The steps are what say "this pulls out", and two of
+ * them is the fewest that reads as a telescope.
+ *
+ * Leather and brass rather than the device neutrals every other instrument
+ * here is moulded from. Those are near-black by design, and the first raster
+ * of one against `#121212` was a dark cylinder with a pale dot on the end; a
+ * spyglass is an *old* object and the warm browns are both the honest material
+ * and the only ones that read on this ground. The two rings still take the
+ * character's accent, which is the split the controller already makes.
+ */
+function Spyglass({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  return (
+    <g transform={`rotate(-26 ${x} ${y})`}>
+      <rect x={x - 38} y={y - 3.5} width={26} height={7} rx={2} fill={MASCOT_SCENERY.leatherDark} />
+      <rect x={x - 14} y={y - 6.5} width={26} height={13} rx={2.5} fill={MASCOT_SCENERY.leather} />
+      <rect x={x + 10} y={y - 10.5} width={28} height={21} rx={3} fill={MASCOT_SCENERY.leatherDark} />
+      <rect x={x - 15} y={y - 7} width={5} height={14} rx={2} fill={colors.accent} />
+      <rect x={x + 9} y={y - 11} width={5} height={22} rx={2} fill={colors.accent} />
+      <ellipse cx={x + 36} cy={y} rx={3} ry={9.5} fill={MASCOT_INK.paper} opacity={0.9} />
+    </g>
+  );
+}
+
+/**
+ * A rod, a line and a bobber.
+ *
+ * The line is drawn *outside* the rod's rotation group on purpose: a line
+ * hangs straight down whatever angle the rod is held at, and rotating it with
+ * the rod is the fastest way to make a fishing scene look like it is happening
+ * on a hillside.
+ *
+ * The bobber is the part that has to survive being small — the line is under
+ * two units wide and stops existing below `full` — so it is a two-colour ball
+ * rather than a shape, and it is the reason the prop is nameable at 200px at
+ * all.
+ */
+const ROD_TIP = { dx: 43.1, dy: -29.1 };
+
+function FishingRod({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  const tipX = x + ROD_TIP.dx;
+  const tipY = y + ROD_TIP.dy;
+  const floatY = y + 20;
+  return (
+    <g>
+      <g transform={`rotate(-34 ${x} ${y})`}>
+        <path
+          d={`M ${x - 22} ${y - 4.5} L ${x + 52} ${y - 1} L ${x + 52} ${y + 1} L ${x - 22} ${y + 4.5} Z`}
+          fill={MASCOT_SCENERY.wood}
+        />
+        <rect x={x - 26} y={y - 5.5} width={18} height={11} rx={5} fill={colors.clothing} />
+        <circle cx={x - 3} cy={y + 8} r={5.5} fill={MASCOT_INK.device} />
+      </g>
+      <path
+        d={`M ${tipX} ${tipY} L ${tipX} ${floatY - 5}`}
+        stroke={MASCOT_INK.paper}
+        strokeWidth={2}
+        opacity={0.75}
+        fill="none"
+      />
+      <path
+        d={`M ${tipX - 5} ${floatY} A 5 5 0 0 1 ${tipX + 5} ${floatY} Z`}
+        fill={colors.clothing}
+      />
+      <path
+        d={`M ${tipX - 5} ${floatY} A 5 5 0 0 0 ${tipX + 5} ${floatY} Z`}
+        fill={MASCOT_INK.paper}
+      />
+    </g>
+  );
+}
+
+/**
+ * An arcade stick — a weighted base, a shaft and a ball on top.
+ *
+ * The library already has a `controller`, and this is not a second one: a pad
+ * is a thing a person holds in two hands in front of them, and a stick is a
+ * thing that *sits on a surface* and gets gripped. That difference is why it
+ * earns a place — the alien crew fly a saucer by stick, and a crew member
+ * playing a game on the same stick is the joke the species is built around.
+ *
+ * The base and the shaft are the shared device neutrals rather than the
+ * character's own colours, which is the standing rule for anything moulded:
+ * a controller tinted to match a teal alien is a teal controller on a teal
+ * body. Only the ball and the two buttons take the colourway, and the ball
+ * takes `clothing` rather than the `accent` every other loud thing here uses —
+ * because the species this was drawn for already spends `accent` on the ball
+ * on its own antenna, and a picture with two pale balls in it is one where
+ * neither of them means anything.
+ */
+function Joystick({ at, colors }: PropProps): ReactElement {
+  const { x, y } = at;
+  return (
+    <g>
+      <rect x={x - 22} y={y + 2} width={44} height={14} rx={5} fill={MASCOT_INK.device} {...OUTLINE} />
+      <rect x={x - 3.4} y={y - 14} width={6.8} height={18} rx={3.4} fill={MASCOT_INK.deviceLight} />
+      <circle cx={x} cy={y - 15} r={9} fill={colors.clothing} {...OUTLINE} />
+      <circle cx={x + 11} cy={y + 7} r={3.4} fill={colors.accent} />
+      <circle cx={x + 11} cy={y + 13} r={3.4} fill={colors.spark} />
+    </g>
+  );
+}
+
 export function HeldProp({
   prop,
   at,
@@ -773,5 +1096,21 @@ export function HeldProp({
       return <Beaker at={at} colors={colors} />;
     case "scanner":
       return <Scanner at={at} colors={colors} />;
+    case "lantern":
+      return <Lantern at={at} colors={colors} />;
+    case "kantele":
+      return <Kantele at={at} />;
+    case "chevron":
+      return <Chevron at={at} colors={colors} />;
+    case "oar":
+      return <Oar at={at} colors={colors} />;
+    case "spyglass":
+      return <Spyglass at={at} colors={colors} />;
+    case "fishing-rod":
+      return <FishingRod at={at} colors={colors} />;
+    case "basket":
+      return <Basket at={at} colors={colors} />;
+    case "joystick":
+      return <Joystick at={at} colors={colors} />;
   }
 }

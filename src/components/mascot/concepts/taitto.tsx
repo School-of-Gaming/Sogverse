@@ -16,12 +16,27 @@
  * it "leans a tad too hard on geometry". Rather than soften this one and lose
  * what made it sharp, three branches sit beside it — Kaari, Kide and Nappi —
  * each conceding curvature somewhere different. This file is the control.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** the crease strokes across the chest, the hips and the brow, and
+ * the second facet on the floating shard. All four were hairline strokes or
+ * slivers behind `showsFiligree`, which is off below 96px, so none of them is
+ * in the 40px picture at all — by the mechanical test they were embellishment
+ * before anyone argued about them.
+ *
+ * **Kept as identity:** every *plane*. A Taitto is planes, and a plane is a
+ * flat colour block, not a detail — the hexagon's lit top and shaded right
+ * face, the torso's shaded half and the chest diamond are what make the shape
+ * read as folded rather than as a flat hexagon, and they are the only things
+ * still saying so at 40px. The crease strokes were drawing the *edges between*
+ * those blocks a second time, which is the definition of a detail here: the
+ * colour change already is the fold.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
 import { TAITTO_VARIANTS } from "../palette";
 import type { Rig } from "../rig";
 
@@ -52,49 +67,22 @@ const RIG: Rig = {
   fusedHead: false,
 };
 
-function Body({ colors, detail }: PartProps): ReactElement {
+function Body({ colors }: PartProps): ReactElement {
   return (
     <g>
       <path d="M 100 98 L 132 114 L 126 154 L 100 164 L 74 154 L 68 114 Z" fill={colors.bodyTop} />
       <path d="M 100 98 L 132 114 L 126 154 L 100 164 Z" fill={colors.bodyBottom} />
       <path d="M 100 118 L 111 130 L 100 142 L 89 130 Z" fill={colors.panel} />
-      {showsFiligree(detail) && (
-        <>
-          <path
-            d="M 68 114 L 100 126 L 132 114"
-            fill="none"
-            stroke={colors.spark}
-            strokeWidth={1.8}
-            opacity={0.7}
-          />
-          <path
-            d="M 74 154 L 100 146 L 126 154"
-            fill="none"
-            stroke={colors.spark}
-            strokeWidth={1.8}
-            opacity={0.5}
-          />
-        </>
-      )}
     </g>
   );
 }
 
-function Head({ colors, detail }: PartProps): ReactElement {
+function Head({ colors }: PartProps): ReactElement {
   return (
     <g>
       <path d="M 100 30 L 131 47 L 131 79 L 100 96 L 69 79 L 69 47 Z" fill={colors.bodyTop} />
       <path d="M 100 30 L 131 47 L 100 64 L 69 47 Z" fill={colors.spark} opacity={0.3} />
       <path d="M 131 47 L 131 79 L 100 96 L 100 64 Z" fill={colors.bodyBottom} opacity={0.5} />
-      {showsFiligree(detail) && (
-        <path
-          d="M 69 47 L 100 64 L 131 47"
-          fill="none"
-          stroke={colors.limb}
-          strokeWidth={1.6}
-          opacity={0.55}
-        />
-      )}
     </g>
   );
 }
@@ -103,7 +91,6 @@ function Crown({ colors, floatClass }: PartProps): ReactElement {
   return (
     <g className={floatClass} style={{ transformBox: "view-box", transformOrigin: "100px 30px" }}>
       <path d="M 100 30 L 86 8 L 116 16 Z" fill={colors.limb} />
-      <path d="M 100 30 L 116 16 L 108 26 Z" fill={colors.panel} opacity={0.7} />
     </g>
   );
 }

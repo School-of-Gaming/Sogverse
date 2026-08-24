@@ -8,15 +8,33 @@
  * no material cues anywhere on an eye or a mouth. An expression is not a
  * drawing; it is four dials set to different values:
  *
- * 1. **Eye size and shape** — how big the white ellipse is, or whether it has
- *    stopped being an ellipse at all (a shut eye is an arc).
- * 2. **Pupil position** — centred, or off to one side.
+ * 1. **Eye size and shape** — how big the white ellipse is, how far a lid has
+ *    come down over it, or whether it has stopped being an ellipse at all (a
+ *    shut eye is an arc).
+ * 2. **Pupil position** — where it sits inside its own white.
  * 3. **Brow angle and presence** — one short line whose slope does the work,
  *    drawn only when the mood needs it.
  * 4. **Mouth shape** — a small curve, or a small solid glyph with no interior.
  *
  * The same four dials produce all six moods, which is what makes them read as
  * one character changing its mind rather than as six separate drawings.
+ *
+ * ## Two rules the dials are not free to break
+ *
+ * **A resting pupil is never dead centre on a face that has two of them.** A
+ * pair of perfectly concentric white-and-black discs, symmetric about the
+ * face's own axis, is a doll's fixed glass eye and it is quietly unsettling —
+ * which is why Thinking, whose eye is the identical shape with the pupil moved,
+ * never was. So `forward` gaze means "the calm resting look", not "geometrically
+ * centred": on a paired face the resting pupil sinks slightly, opening a
+ * crescent of white above it while still pointing at the viewer. One eye is a
+ * feature rather than a stare and keeps its centred pupil. See `RESTING_SINK`.
+ *
+ * **Focused narrows an eye with a lowered lid, never with a lens.** A pointed,
+ * slanted or tapered almond is a racial caricature whatever it was drawn to
+ * mean, so no mode here pinches an eye's ends: the white keeps its own round
+ * shape and a straight chord takes the top off it (`cutDisc`), with the pupil
+ * tucked under the cut. See `FOCUSED_CUT`.
  *
  * ## What was wrong before, twice
  *
@@ -43,6 +61,11 @@
  * cue is gone from every expression: no highlights, no sparkles, no blush, no
  * teeth, no tongue, no lip or lid lines, no shading. Where a mood used to be
  * expressed by adding detail it is now expressed by moving a dial.
+ *
+ * Two things round three still had wrong were fixed after Kyle looked at the
+ * finished set: Happy and Excited stared dead ahead, and Focused was drawn as
+ * a pointed lens. Both are the rules above, and both changed the paired faces
+ * only — the cyclops face was right already and is byte-for-byte unchanged.
  *
  * "Screen" mode is the second kind of head — a face that is a lit display
  * rather than a pair of eyes. It needs different primitives (a display draws
@@ -82,7 +105,7 @@ import type { ExpressionId, GazeId } from "./vocabulary";
  * property of the *head*, not a face design a caller picks, so it overrides
  * the comparison-strip `style` exactly as the screen face does.
  */
-export type FaceMode = "eyes" | "screen" | "cyclops" | "voxel";
+export type FaceMode = "eyes" | "screen" | "cyclops" | "voxel" | "lid";
 
 /**
  * Which face design.
@@ -160,31 +183,90 @@ function cyclopsCentre(rig: Rig): EyeCentre[] {
 }
 
 /**
- * Dial two, as a single vector: where the pupil sits relative to the middle
- * of its own white.
+ * A disc with its top cut off by a straight chord, as one path.
+ *
+ * `cut` is where the chord sits, in radii above the centre: 1 leaves the whole
+ * circle, 0 halves it, and a negative value cuts below the centre. Drawn as a
+ * true circular segment rather than as a rectangle of body colour laid over the
+ * white, because a shape that is *actually* that shape needs no second colour
+ * to be right and cannot come apart from the body it sits on.
+ *
+ * It is the one narrowed-eye primitive this file has. See `FOCUSED_CUT` for
+ * why nothing here is allowed to narrow an eye by pinching it into a lens.
+ */
+function cutDisc(x: number, y: number, r: number, cut: number): string {
+  const c = Math.min(0.999, cut);
+  const half = r * Math.sqrt(Math.max(0, 1 - c * c));
+  const chord = y - r * c;
+  // Sweep 0 takes the arc through the bottom of the circle; the large-arc flag
+  // is set whenever that bottom arc is more than a semicircle, which is
+  // whenever the chord sits above the centre.
+  return `M ${x - half} ${chord} A ${r} ${r} 0 ${c >= 0 ? 1 : 0} 0 ${x + half} ${chord} Z`;
+}
+
+/**
+ * **A resting pupil is never dead centre on a face that has two of them.**
+ *
+ * Kyle, on the round-three set: Happy and Excited "looking dead on has
+ * something of an unsettling look — just a bit creepy", while Thinking, whose
+ * eye is the *identical* shape and size but whose pupil is off-centre, does
+ * not, and neither does the one-eyed Silmu staring straight down the lens. The
+ * A/B/C/D sheets confirmed the diagnosis: what is unsettling is neither the
+ * shape nor the centring on its own but the **pair of perfectly concentric
+ * discs, symmetric about the face's own axis** — a doll's fixed glass eye, two
+ * identical bullseyes locked on the viewer. Break the concentricity and the
+ * same face is warm.
+ *
+ * There are two ways to break it and only one of them keeps the character
+ * looking at you. Sliding both pupils sideways (tested at 0.08 and 0.14) does
+ * kill the stare, but it also buys a glance off to one side — which is the
+ * gesture Thinking already owns, so Happy borrowing it makes the two moods
+ * argue. **Sinking both pupils slightly** leaves the eyes pointed at the viewer
+ * and merely opens a crescent of white above them, which is what a real relaxed
+ * eye does under its own lid. That is the pick, at **0.14 of the eye's own
+ * radius**: below about 0.10 the crescent is not there yet, and by 0.18 the
+ * pupil is crowding the bottom of the white and the mood tips into looking
+ * down. Only Happy and Excited take it — Thinking already has its own gesture,
+ * Laughing has no pupil, Surprised's tiny pupil dead in a wide white *is* the
+ * shock, and Focused is tucked under its own lid.
+ *
+ * `paired` is what keeps this off the one-eyed face. A cyclops was never creepy
+ * — one eye is a *feature*, not a stare, and there is no symmetry between two
+ * of them to break — so it keeps a geometrically centred resting pupil, and the
+ * sink is asked for by the modes that draw two eyes rather than applied here to
+ * everything.
+ *
+ * ## Precedence
  *
  * **Gaze and expression both want this dial, so the precedence is written
  * down here rather than guessed at each call site: an explicit gaze wins.**
- * `forward` is the default and means "whatever the mood already decided",
- * which is how Thinking keeps the one gesture that makes it Thinking — the
- * pupil up and away. Any other gaze *replaces* that offset rather than adding
- * to it, because adding them is how a Thinking mascot asked to look right
- * ends up with its pupil outside its own eye. One dial, one value, the
- * caller who asked for something specific wins.
+ * `forward` is the default and means "the calm resting look" — whatever the
+ * mood already decided, plus the resting sink where the mood decided nothing.
+ * It is no longer a synonym for "geometrically centred". Any other gaze
+ * *replaces* that offset rather than adding to it, because adding them is how a
+ * Thinking mascot asked to look right ends up with its pupil outside its own
+ * eye. One dial, one value, the caller who asked for something specific wins.
  *
  * The amounts are fractions of the eye radius, chosen so the pupil stays
  * inside the white for every expression that has one: the widest pupil is
  * Excited's at 0.7r inside a 1.22r white, leaving 0.52r of slack against the
- * 0.4r spent here. Focused is the exception — its white is squeezed into a
- * lens with very little vertical room — so it looks up and down half as far.
+ * 0.4r spent here. Focused is the exception — its white is a disc cut down by a
+ * lid, with much less vertical room — so it looks up and down half as far.
  */
+const RESTING_SINK = 0.14;
+
+/** The moods whose resting pupil is otherwise dead centre. See `RESTING_SINK`. */
+const RESTS_LOW: ReadonlySet<ExpressionId> = new Set<ExpressionId>(["happy", "excited"]);
+
 function pupilOffset(
   expression: ExpressionId,
   gaze: GazeId,
   r: number,
+  paired = false,
 ): { dx: number; dy: number } {
   if (gaze === "forward") {
-    return expression === "thinking" ? { dx: r * 0.34, dy: -r * 0.32 } : { dx: 0, dy: 0 };
+    if (expression === "thinking") return { dx: r * 0.34, dy: -r * 0.32 };
+    return { dx: 0, dy: paired && RESTS_LOW.has(expression) ? r * RESTING_SINK : 0 };
   }
   const across = r * 0.4;
   const down = r * (expression === "focused" ? 0.17 : 0.34);
@@ -201,6 +283,33 @@ function pupilOffset(
 }
 
 /**
+ * **Focused narrows an eye with a lowered lid, never with a lens.**
+ *
+ * Round three drew Focused as an almond: the white pinched to a pointed
+ * horizontal lens, sharp at both corners. Kyle: "the squinting eyes for the
+ * focused face can also read as a rude stereotype for Asian eyes — let's make
+ * sure we get this right and not offend on accident." He is right, and the
+ * fix is not a smaller almond: a pointed, slanted or tapered eye is exactly
+ * the caricature, so **no mode in this module narrows an eye by pinching its
+ * ends**. The construction that replaces it is the one the cyclops face was
+ * already using for the same mood — the eye's own round white, cut flat by a
+ * straight chord from the top (`cutDisc`), with the pupil tucked under the cut.
+ * It is a lid coming down over a round eye, which is what concentrating
+ * actually looks like, and it has no point anywhere on it.
+ *
+ * The two numbers are where "concentrating" beat "sleepy" on the raster
+ * ladder at 200 / 64 / 40. `FOCUSED_CUT` is the chord's height in radii above
+ * the centre: at 0.5 the eye is barely narrowed and the mood does not land, at
+ * 0 the eye is a half-disc and reads as nodding off, and 0.22 takes just under
+ * two fifths of the white's height off the top — narrowed, unmistakably awake.
+ * `FOCUSED_SINK` then drops the pupil far enough to sit *under* the lid rather
+ * than be sawn in half by it. The brow (which this mode draws and the lid mode
+ * does not) carries the rest of the intent.
+ */
+const FOCUSED_CUT = 0.22;
+const FOCUSED_SINK = 0.24;
+
+/**
  * Dials one and two: the white ellipse, and where the pupil sits in it.
  *
  * Every case here is two flat shapes and nothing else. If a future expression
@@ -208,7 +317,7 @@ function pupilOffset(
  * different ellipse — not a third shape.
  */
 function SymbolEyes({ centres, colors, expression, gaze, r, ink }: EyeProps): ReactElement {
-  const off = pupilOffset(expression, gaze, r);
+  const off = pupilOffset(expression, gaze, r, true);
   return (
     <>
       {centres.map(({ x, y, side }) => {
@@ -266,15 +375,19 @@ function SymbolEyes({ centres, colors, expression, gaze, r, ink }: EyeProps): Re
                 <circle cx={px} cy={py} r={r * 0.4} fill={colors.pupil} />
               </g>
             );
-          // Narrowed: the ellipse squeezed into a lens. Still two shapes.
+          // Narrowed by a lowered lid: the same round white, cut flat across
+          // the top, with the pupil tucked under the cut. Still two shapes,
+          // and still one dial — see `FOCUSED_CUT`.
           case "focused":
             return (
               <g key={side}>
-                <path
-                  d={`M ${x - r} ${y + r * 0.05} Q ${x} ${y - r * 1.05} ${x + r} ${y + r * 0.05} Q ${x} ${y + r * 0.62} ${x - r} ${y + r * 0.05} Z`}
-                  fill={colors.sclera}
+                <path d={cutDisc(x, y, r, FOCUSED_CUT)} fill={colors.sclera} />
+                <circle
+                  cx={px}
+                  cy={py + r * FOCUSED_SINK}
+                  r={r * 0.5}
+                  fill={colors.pupil}
                 />
-                <circle cx={px} cy={py - r * 0.05} r={r * 0.46} fill={colors.pupil} />
               </g>
             );
         }
@@ -482,25 +595,6 @@ function Brows({
  */
 
 /**
- * A disc with its top cut off by a straight chord, as one path.
- *
- * `cut` is where the chord sits, in radii above the centre: 1 leaves the whole
- * circle, 0 halves it, and a negative value cuts below the centre. Drawn as a
- * true circular segment rather than as a rectangle of body colour laid over the
- * white, because a shape that is *actually* that shape needs no second colour
- * to be right and cannot come apart from the body it sits on.
- */
-function cutDisc(x: number, y: number, r: number, cut: number): string {
-  const c = Math.min(0.999, cut);
-  const half = r * Math.sqrt(Math.max(0, 1 - c * c));
-  const chord = y - r * c;
-  // Sweep 0 takes the arc through the bottom of the circle; the large-arc flag
-  // is set whenever that bottom arc is more than a semicircle, which is
-  // whenever the chord sits above the centre.
-  return `M ${x - half} ${chord} A ${r} ${r} 0 ${c >= 0 ? 1 : 0} 0 ${x + half} ${chord} Z`;
-}
-
-/**
  * One eye per mood: how big the white is, where its chord falls and how far the
  * chord is tilted, and how much of the white the pupil takes.
  *
@@ -533,6 +627,53 @@ const CYCLOPS_EYES: Record<
   // Shut, and therefore a stroke rather than a shape, as in the paired face.
   laughing: { white: 1, cut: 1, tilt: 0, pupil: 0 },
 };
+
+/**
+ * The lid eye: a two-eye face whose whites are cut flat across the top, the
+ * way a resting lid sits on an eye. It is the eye of the Huhtala lineage the
+ * Porukka concept is built on — the cut is what makes the face calm — and it
+ * uses the same four dials as every other mode: the white's size, the cut's
+ * height, the pupil's size and its sink under the lid. The cut is a circular
+ * segment (`cutDisc`), never a drawn lid line. Laughing falls through to the
+ * symbol face's shut arcs, which are already the right glyph.
+ *
+ * `sink` is the *extra* drop a mood wants on top of the shared resting sink
+ * (`RESTING_SINK`), which this mode asks for like every other paired face. Two
+ * moods used to hold their own small tuck here and no longer need one: Happy
+ * and Excited get theirs from the shared rule, so their entry is zero and the
+ * two faces cannot drift apart.
+ */
+const LID_EYES: Record<ExpressionId, { white: number; cut: number; pupil: number; sink: number }> = {
+  happy: { white: 1.15, cut: 0.45, pupil: 0.5, sink: 0 },
+  excited: { white: 1.3, cut: 0.75, pupil: 0.52, sink: 0 },
+  surprised: { white: 1.3, cut: 0.95, pupil: 0.36, sink: 0 },
+  thinking: { white: 1.15, cut: 0.35, pupil: 0.5, sink: 0.12 },
+  focused: { white: 1.15, cut: 0.05, pupil: 0.5, sink: 0.16 },
+  laughing: { white: 1.15, cut: 1, pupil: 0, sink: 0 },
+};
+
+function LidEyes(props: EyeProps): ReactElement {
+  const { centres, colors, expression, gaze, r } = props;
+  if (expression === "laughing") return <SymbolEyes {...props} />;
+  const spec = LID_EYES[expression];
+  const rw = r * spec.white;
+  const off = pupilOffset(expression, gaze, rw, true);
+  return (
+    <>
+      {centres.map(({ x, y, side }) => (
+        <g key={side}>
+          <path d={cutDisc(x, y, rw, spec.cut)} fill={colors.sclera} />
+          <circle
+            cx={x + off.dx}
+            cy={y + off.dy + rw * spec.sink}
+            r={rw * spec.pupil}
+            fill={colors.pupil}
+          />
+        </g>
+      ))}
+    </>
+  );
+}
 
 function CyclopsEye({ centres, colors, expression, gaze, r, ink }: EyeProps): ReactElement {
   const { x, y } = centres[0];
@@ -697,8 +838,18 @@ export function Face({
   let eyes: ReactElement;
   if (mode === "screen") eyes = <ScreenEyes {...eyeProps} />;
   else if (mode === "voxel")
-    eyes = <VoxelEyes {...eyeProps} pupil={pupilOffset(expression, gaze, r)} />;
+    eyes = (
+      // No resting sink here, deliberately. The doll-eye the sink exists to
+      // break is a *round* pupil concentric in a *round* white — a drawn
+      // eyeball — and a dark square inside a white square does not read as one;
+      // it reads as a lit pixel, which is what this alphabet wants. Sunk, the
+      // white band above the pupil and the sliver below stop matching and the
+      // block looks misaligned rather than relaxed. Rasterised both ways before
+      // deciding.
+      <VoxelEyes {...eyeProps} pupil={pupilOffset(expression, gaze, r)} />
+    );
   else if (mode === "cyclops") eyes = <CyclopsEye {...eyeProps} />;
+  else if (mode === "lid") eyes = <LidEyes {...eyeProps} />;
   else if (style === "legacy") eyes = <LegacyEyeballs {...eyeProps} />;
   else if (style === "warm") eyes = <WarmEyes {...eyeProps} />;
   else eyes = <SymbolEyes {...eyeProps} />;
@@ -772,6 +923,7 @@ export function Face({
           What it used to say is said by the cut across the white instead. */}
       {mode !== "screen" &&
         mode !== "cyclops" &&
+        mode !== "lid" &&
         detail !== "icon" &&
         (mode === "voxel" ? (
           <VoxelBrows centres={centres} expression={expression} r={r} ink={ink} />

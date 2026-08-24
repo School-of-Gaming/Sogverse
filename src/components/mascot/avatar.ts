@@ -81,6 +81,121 @@ export const AVATAR_FIGURES: readonly AvatarFigure[] = [
   { concept: "palikka", form: "trex", label: "Palikka — T-rex" },
   { concept: "palikka", form: "hippo", label: "Palikka — virtahepo" },
   { concept: "palikka", form: "hirvi", label: "Palikka — hirvi" },
+  // Appended, never inserted — see the note at the top of the file. The
+  // flat-yellow people are the best humanoid bust in the set: a bust crop of
+  // a Porukka is a wide plain head, two wide-set eyes and one flat block of
+  // hair, with nothing hairline on it to turn to mush at 28 pixels.
+  { concept: "porukka", form: "kid-a", label: "Porukka — kid, mop" },
+  { concept: "porukka", form: "kid-b", label: "Porukka — kid, crop" },
+  { concept: "porukka", form: "teen-a", label: "Porukka — teen, long" },
+  { concept: "porukka", form: "teen-b", label: "Porukka — teen, knot" },
+  { concept: "porukka", form: "adult-a", label: "Porukka — adult, bob" },
+  { concept: "porukka", form: "adult-b", label: "Porukka — adult, crop" },
+  { concept: "porukka", form: "elder-a", label: "Porukka — elder, set" },
+  { concept: "porukka", form: "elder-b", label: "Porukka — elder, beard" },
+  // Appended, never inserted. The inked people are the best portrait in the
+  // set for the reason the idiom exists: a bust crop is *all interior line* —
+  // hair against a face, a collar against a neck, a frame against an eye — and
+  // interior line is the one thing that reads at every size on this ground.
+  // Rasterised at 28 pixels all four builds and all five colourways are still
+  // nameable apart.
+  { concept: "stadi", form: "kid", label: "Stadi — kid, mop" },
+  { concept: "stadi", form: "teen", label: "Stadi — teen, long" },
+  { concept: "stadi", form: "adult", label: "Stadi — adult, swept" },
+  { concept: "stadi", form: "elder", label: "Stadi — elder, white" },
+  // Appended, never inserted. The gem is in the list for the opposite reason
+  // to everything above it: its bust crop is not a good portrait of a person,
+  // it is the company's own mark with a face in it, and at 28 pixels that is
+  // the most recognisable tile in the set — one flat colour in a shape the
+  // viewer has already seen in their browser tab.
+  { concept: "jalo", label: "Jalo" },
+  // Appended, never inserted. The forest folk portrait on their silhouettes
+  // alone: at 28 pixels the pen line is a third of a pixel and has stopped
+  // existing, so what is left is the wash shape and the two pupils — which is
+  // enough, because the six forms were designed as silhouettes first. The
+  // hedgehog's bust needed the widest crop in the set (its `head.r` frames the
+  // whole mound rather than its face) or it came out as a plain rectangle.
+  { concept: "metsa", form: "siili", label: "Metsä — siili" },
+  { concept: "metsa", form: "hiiri", label: "Metsä — hiiri" },
+  { concept: "metsa", form: "pollo", label: "Metsä — pöllö" },
+  { concept: "metsa", form: "haltija", label: "Metsä — haltija" },
+  { concept: "metsa", form: "tonttu", label: "Metsä — tonttu" },
+  { concept: "metsa", form: "kettu", label: "Metsä — kettu" },
+  // Appended, never inserted. The villagers portrait better than their
+  // proportion suggests they should: a four-heads-tall figure has a small
+  // head, but the bust window is 3.6 head-radii wide, so a small head means a
+  // *tight* window and the face fills it. Rasterised at 64, 40 and 28 all six
+  // are still nameable apart, and what does it is the ear line — folded
+  // flaps, sharp triangles, forward triangles, sideways ellipses under horns, a
+  // comb, and two circles wider than the skull — plus the coat colour under it.
+  { concept: "kyla", form: "dog", label: "Kylä — koira" },
+  { concept: "kyla", form: "cat", label: "Kylä — kissa" },
+  { concept: "kyla", form: "pig", label: "Kylä — possu" },
+  { concept: "kyla", form: "goat", label: "Kylä — vuohi" },
+  { concept: "kyla", form: "rooster", label: "Kylä — kukko" },
+  { concept: "kyla", form: "mouse", label: "Kylä — hiiri" },
+  // Appended, never inserted. The dragons portrait on two marks a bust crop
+  // cannot lose: the horn pair breaking the top of the frame, and the muzzle
+  // breaking the bottom of the skull. Both are silhouette rather than
+  // colour, so all three ages survive 28 pixels; what does *not* survive is
+  // telling the grown one from the elder, whose difference is a pale beard
+  // frill that is sub-pixel there. They are all three in the list anyway —
+  // an avatar has to be recognisable, not classifiable.
+  { concept: "lohi", form: "kid", label: "Lohi — poikanen" },
+  { concept: "lohi", form: "grown", label: "Lohi — aikuinen" },
+  { concept: "lohi", form: "old", label: "Lohi — vanhus" },
+  // Appended, never inserted. Fruit and fungus are the best 28-pixel portraits
+  // in the set after the bean, for the same reason it is: a bust crop of a
+  // fused body is nearly all body, so what fills the tile is one saturated
+  // block of colour in a shape. Rasterised at 28 all nine are nameable apart —
+  // the star on the bilberry, the lobes on the cloudberry, the crown on the
+  // strawberry, and three cap silhouettes over one cream stem.
+  //
+  // The generator pairs a form with any of that species' colourways, which
+  // here means it will occasionally draw a red bilberry or a brown chanterelle.
+  // That is deliberate rather than a defect: an avatar is somebody's face, not
+  // a botany plate, and the odd wrong-coloured berry is exactly the kind of
+  // variety this list exists to produce.
+  { concept: "marja", form: "mustikka", label: "Marja — mustikka" },
+  { concept: "marja", form: "puolukka", label: "Marja — puolukka" },
+  { concept: "marja", form: "lakka", label: "Marja — lakka" },
+  { concept: "marja", form: "mansikka", label: "Marja — mansikka" },
+  { concept: "sieni", form: "kantarelli", label: "Sieni — kantarelli" },
+  { concept: "sieni", form: "tatti", label: "Sieni — tatti" },
+  { concept: "sieni", form: "karpassieni", label: "Sieni — kärpässieni" },
+  // Appended, never inserted. The crew portraits on three marks and only
+  // three: the cranium's outline, two whites set wide and low inside it, and
+  // one pale ball off the top-right corner. Rasterised at 64 / 40 / 28 all six
+  // skins are nameable apart and the antenna survives every one of them,
+  // because it is the only thing in the tile that breaks the head's own edge.
+  //
+  // The three builds are in the list knowing that at 28 pixels they are one
+  // silhouette — proportion is exactly the axis a portrait crop throws away.
+  // They separate from about 40 up (the engineer's brow is a third wider than
+  // the navigator's), and the species was always going to be told apart by
+  // colour rather than by build, which is what the ruling asks of it.
+  { concept: "galaksi", form: "pilot", label: "Galaksi — luotsi" },
+  { concept: "galaksi", form: "navigator", label: "Galaksi — suunnistaja" },
+  { concept: "galaksi", form: "engineer", label: "Galaksi — insinööri" },
+  // Appended, never inserted. The three cute animals are the first forms of
+  // the animal family to be added here since the original seven, and they earn
+  // it on the same axis the villagers did — one landmark each that a bust crop
+  // cannot lose. The penguin's hood-over-face split is the strongest portrait
+  // in the whole family: two blocks, a hard edge between them and a pink beak
+  // on the join, all of it above the collar. The hedgehog's scalloped arch
+  // frames the face the way the mound frames the forest hedgehog's, and its
+  // small `head.r` makes the bust window tight enough to hold the arch. The
+  // otter is the one that needed checking, because it portraits three inches
+  // from the beaver: rasterised at 64 / 40 / 28 beside it they stay apart on
+  // the ear line and the coat — two dark nubs high on a round skull against
+  // two pale-lined nubs low on a wide one, in a mahogany against a timber —
+  // and what actually separates them at full length, the tail, is out of frame
+  // in a bust. It is in the list because an avatar has to be recognisable
+  // rather than classifiable, and "the dark brown one with the little ears" is
+  // a thing a person can say.
+  { concept: "otso", form: "penguin", label: "Pingviini" },
+  { concept: "otso", form: "otter", label: "Saukko" },
+  { concept: "otso", form: "hedgehog", label: "Siili" },
 ];
 
 /**
@@ -159,7 +274,21 @@ export type MascotAvatar = {
  */
 export const AVATAR_VARIANTS: Record<string, readonly string[]> = {
   kaveri: ["lilac", "teal", "coral"],
-  otso: ["honey", "frost", "berry"],
+  // Appended, never inserted: the three coats the cute-animal round brought
+  // with it. They have to be here or the forms above cannot be drawn in the
+  // colours that identify them — a penguin's landmark is a *dark* hood over a
+  // *pale* face, and honey, frost and berry are each two pale tones with
+  // nothing to separate them.
+  //
+  // The generator picks form and colourway independently, so it will also
+  // paint a honey penguin and a slate bear. That is the same trade the berries
+  // and the mushrooms already take, and the same answer: an avatar is somebody's
+  // face rather than a field guide. It is worth naming that it costs more here
+  // — a wrong-coloured bilberry is still obviously a bilberry, and a penguin
+  // without its two blocks is just a bird with a pale face — and that the fix,
+  // if it is ever wanted, is a per-figure colourway list rather than a
+  // per-concept one.
+  otso: ["honey", "frost", "berry", "pingviini", "saukko", "siili"],
   taitto: ["prism", "aurora", "ember"],
   kaari: ["prism", "aurora", "ember"],
   kide: ["prism", "aurora", "ember"],
@@ -171,6 +300,21 @@ export const AVATAR_VARIANTS: Record<string, readonly string[]> = {
   // `MASCOT_SWATCHES` — where `AVATAR_CLOTHING` already put it.
   silmu: ["musta", ...MASCOT_SWATCHES.map((s) => s.id)],
   palikka: ["oliivi", "violetti", "ruska", "sammal", "routa"],
+  porukka: ["noki", "ruis", "kupari", "usva", "puola"],
+  stadi: ["taivas", "tiili", "okra", "paperi", "ratikka"],
+  // The gem is painted from the same shared swatch table the bean is, ahead
+  // of it the two brand pairs — so its list is derived the same way, and the
+  // append-only rule that governs it is `MASCOT_SWATCHES`'s.
+  jalo: ["jalo", "secondary", ...MASCOT_SWATCHES.map((s) => s.id)],
+  // The wash colourways only. `hamara` — the inverted register, a pale nib on
+  // a body barely above the page — is deliberately absent: it is the one
+  // colourway in this species that has no silhouette, and an avatar is nothing
+  // but silhouette.
+  metsa: ["kuu", "sammal", "puolukka", "usva", "tuohi", "havu"],
+  lohi: ["lohi", "koski", "virta", "nuotio", "kaisla"],
+  marja: ["mustikka", "puolukka", "lakka", "mansikka", "vadelma"],
+  sieni: ["kantarelli", "vahvero", "tatti", "karpassieni"],
+  galaksi: ["revontuli", "komeetta", "tahtisumu", "plasma", "kiertorata", "syvyys"],
 };
 
 /**

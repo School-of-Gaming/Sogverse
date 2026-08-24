@@ -3,7 +3,10 @@
 
 import { useState, type ReactElement, type ReactNode } from "react";
 
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+
+import type { ConceptId } from "../concept";
 
 export type Choice<T extends string> = { id: T; label: string };
 
@@ -90,23 +93,29 @@ export function Rubric({ title, note }: { title: string; note?: string }): React
 }
 
 /**
- * A section that does not render its contents until it is opened.
+ * A section that does not render its contents until it is opened, and whose
+ * starting state is the caller's decision.
  *
- * Not a styling choice: the deep dives below hold forty-odd mascots each, and
- * eight of them open at once is a page nobody scrolls to the bottom of. The
- * children sit behind a conditional rather than behind `hidden`, so a closed
- * section costs one button and nothing else.
+ * The children sit behind a conditional rather than behind `hidden`, so a
+ * closed section costs one button and nothing else — which is why this exists
+ * at all. Whether that saving is worth taking is a different question from
+ * whether the control works, and it is not this component's to answer:
+ * Kyle's ruling on the deep dives is that a collapsed section is a section
+ * the reader skips and never learns was there, so they open expanded and the
+ * page is long. Anything genuinely secondary passes nothing and starts shut.
  */
 export function Collapsible({
   title,
   subtitle,
+  defaultOpen = false,
   children,
 }: {
   title: string;
   subtitle?: string;
+  defaultOpen?: boolean;
   children: ReactNode;
 }): ReactElement {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="rounded-xl border border-border bg-card">
       <button
@@ -124,5 +133,48 @@ export function Collapsible({
       </button>
       {open && <div className="border-t border-border">{children}</div>}
     </div>
+  );
+}
+
+/**
+ * The species a study offers when it needs one picked.
+ *
+ * Deliberately the round-one and round-two base models rather than every
+ * concept in the registry: a study that exists to compare two *renderings* —
+ * a face grammar, an arm, a season — is asking one question of a stable set,
+ * and growing that set with every new species turns a comparison into a
+ * catalogue. The newer species each have a section of their own instead.
+ */
+export const STUDY_SPECIES: Choice<ConceptId>[] = [
+  { id: "kaveri", label: "Kaveri" },
+  { id: "otso", label: "Otso" },
+  { id: "taitto", label: "Taitto" },
+  { id: "kaari", label: "Kaari" },
+  { id: "kide", label: "Kide" },
+  { id: "nappi", label: "Nappi" },
+  { id: "ytymo", label: "Ytymo" },
+  { id: "konsu", label: "Konsu" },
+];
+
+/** The card one study renders into: a heading, its lede, and the pictures. */
+export function Panel({
+  title,
+  lede,
+  children,
+}: {
+  title: string;
+  lede: string;
+  children: ReactElement | ReactElement[];
+}): ReactElement {
+  return (
+    <Card>
+      <CardContent className="space-y-5 p-6">
+        <div>
+          <h3 className="text-2xl font-bold tracking-tight text-foreground">{title}</h3>
+          <p className="mt-1 max-w-4xl text-sm leading-relaxed text-muted-foreground">{lede}</p>
+        </div>
+        {children}
+      </CardContent>
+    </Card>
   );
 }

@@ -34,14 +34,17 @@
  * its weight; it does not float. Both resting loops are anchored at the
  * species' ground line and use only transforms that cannot move a sole, so the
  * figure grows and leans out of its own feet. The exceptions are declared
- * rather than accidental: a pose whose subject is leaving the ground
- * (`walking`, `jumping`) moves the feet because the action does, and a species
- * whose rig says `hovers` floats because it flies.
+ * rather than accidental: a species whose rig says `hovers` floats because it
+ * flies, and `jumping` translates because a jump is an arc — and even there
+ * the frames that touch down put the soles exactly on the line. `walking` does
+ * move its feet, but one at a time: the gait lifts the trailing leg while the
+ * stance leg stays planted, so the figure is never off the ground as a whole.
  *
  * **Motion is on by default and belongs to the pose.** Round one shared one
  * near-invisible idle loop across every pose, which read as a glitch rather
- * than as a decision. Now walking walks, a jump has anticipation and a
- * landing, thumbs tap on a controller and fingers move on a keyboard — and
+ * than as a decision. Now a walk strolls towards you, a jumppa hop crouches,
+ * pops and lands, thumbs tap on a controller, fingers move on a keyboard, and
+ * a character at rest breathes in phrases with a real pause between them — and
  * `animated={false}` still gives the identical still image, standing on the
  * pose's own key frame, which is what an email and a rasteriser will see.
  */
@@ -261,6 +264,7 @@ export function Mascot({
     colors: palette,
     variantId: chosen.id,
     form: activeForm,
+    expression,
     detail: level,
     floatClass: cls.float ?? "",
   };

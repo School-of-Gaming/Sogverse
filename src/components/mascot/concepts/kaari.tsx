@@ -8,21 +8,35 @@
  * like a crease. Those are the two places a body reads as *alive* rather than
  * as constructed, so they are where a curve buys the most.
  *
- * **What it keeps:** the body is still facets. The chevron torso, the fold
- * lines catching a different light on each plane, and the shard floating over
- * the head all survive — so the silhouette from the shoulders down is still
- * unmistakably the same species, and it still reads as *made* rather than
- * drawn.
+ * **What it keeps:** the body is still facets. The chevron torso, its two
+ * planes in two flat colours, and the shard floating over the head all survive
+ * — so the silhouette from the shoulders down is still unmistakably the same
+ * species, and it still reads as *made* rather than drawn.
  *
  * The bet is that the warmth of a mascot lives above the neck and in how it
  * moves, and that everything below can stay as graphic as you like. If Kaari
  * reads as cuddly and Taitto reads as cold, the bet paid.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** the chest crease stroke, the shard's second facet, and — the
+ * only removal here that is not filigree — *both shading shapes on the head*.
+ * The crescent and the lower-right quarter were the parent's fold planes
+ * carried onto a shape that has no folds: a sphere's light and shade, which is
+ * a material cue rather than a colour block, and the one thing on this branch
+ * that could not be described as a plane. A circle is either lit or it is not,
+ * and at 40px it was a smudge of a slightly different purple either way.
+ *
+ * **Kept as identity:** this concept's own `landmark` says it in six words —
+ * *a plain circle head over a chevron body*, and the join between them is the
+ * recognisable thing. So the body's planes stay (they are flat colour blocks,
+ * and they are the half of the join that is still a Taitto) and the head is
+ * now genuinely plain, which is what it always claimed to be.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
 import { TAITTO_VARIANTS } from "../palette";
 import type { Rig } from "../rig";
 
@@ -68,54 +82,23 @@ const PLANES = {
   torsoShade: "M 100 100 L 130 116 L 124 150 L 100 160 Z",
   chest: "M 100 120 L 110 131 L 100 142 L 90 131 Z",
   shard: "M 100 30 L 87 9 L 115 17 Z",
-  shardShade: "M 100 30 L 115 17 L 108 26 Z",
 } as const;
 
-function Body({ colors, detail }: PartProps): ReactElement {
+function Body({ colors }: PartProps): ReactElement {
   return (
     <g>
       <Facet d={PLANES.torso} fill={colors.bodyTop} round={9} />
       <Facet d={PLANES.torsoShade} fill={colors.bodyBottom} round={8} />
       <Facet d={PLANES.chest} fill={colors.panel} round={6} />
-      {showsFiligree(detail) && (
-        <path
-          d="M 71 117 L 100 128 L 129 117"
-          fill="none"
-          stroke={colors.spark}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          opacity={0.7}
-        />
-      )}
     </g>
   );
 }
 
-function Head({ colors, detail }: PartProps): ReactElement {
+/** One flat circle. There is no fold on a sphere, so there is no shading on one. */
+function Head({ colors }: PartProps): ReactElement {
   return (
     <g>
       <circle cx={100} cy={60} r={30} fill={colors.bodyTop} />
-      {/* One fold survives on the head: a soft crescent where the plane turns. */}
-      <path
-        d="M 70 60 A 30 30 0 0 1 130 60 A 40 40 0 0 0 70 60 Z"
-        fill={colors.spark}
-        opacity={0.28}
-      />
-      <path
-        d="M 130 60 A 30 30 0 0 1 100 90 L 100 60 Z"
-        fill={colors.bodyBottom}
-        opacity={0.35}
-      />
-      {showsFiligree(detail) && (
-        <path
-          d="M 72 52 Q 100 68 128 52"
-          fill="none"
-          stroke={colors.limb}
-          strokeWidth={1.6}
-          strokeLinecap="round"
-          opacity={0.5}
-        />
-      )}
     </g>
   );
 }
@@ -124,7 +107,6 @@ function Crown({ colors, floatClass }: PartProps): ReactElement {
   return (
     <g className={floatClass} style={{ transformBox: "view-box", transformOrigin: "100px 30px" }}>
       <Facet d={PLANES.shard} fill={colors.limb} round={4} />
-      <Facet d={PLANES.shardShade} fill={colors.panel} round={3} />
     </g>
   );
 }

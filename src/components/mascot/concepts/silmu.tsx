@@ -95,6 +95,24 @@
  * - **The face's drawn parts take whichever ink the body can carry.** A yellow
  *   or lime bean wants the shared near-black line; an indigo or violet one is
  *   dark enough that the line sinks into it and wants paper instead.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed: nothing.** This concept was drawn to the rule before the rule was
+ * written down, which is most of what it proved. There are exactly three marks
+ * on the body — the bean, the underside plane and, on a body too dark to have
+ * an edge against the page, a contour — and the file already says in prose why
+ * there is no sheen on it and never will be.
+ *
+ * **Kept as identity:** the bean (it *is* the species: two flat runs, no
+ * corners, widest below the eye), the underside plane (a flat colour block
+ * giving one closed shape a top and a bottom, which is the sanctioned way to
+ * do that job), and the `musta` contour — which is the one thing here that
+ * looks like decoration and is not. Removing it does not soften the 40px read,
+ * it deletes it: the faithful body is `#141414` on a `#121212` page, so with no
+ * edge the silhouette that the whole design consists of stops existing. It is
+ * drawn on the four per cent of colourways dark enough to need it and on no
+ * others, which is what makes it a legibility fix rather than a style.
  */
 
 import type { ReactElement } from "react";
@@ -455,10 +473,10 @@ export const SILMU: ConceptDef = {
       pose: "idle",
       expression: "focused",
       prop: "wrench",
-      outfit: { hat: "goggles", torso: "tool-belt" },
+      outfit: { hat: "hardhat", torso: "tool-belt" },
       garment: "amber",
       blurb:
-        "Goggles pushed up on the forehead, a tool belt round the middle and a spanner in hand, all in engineering gold on the original black body. He is also the fleet's answer to whether this species can wear a thing that is not a hat: a belt is a band rather than a sleeve, so it fits a body with no shoulders.",
+        "A hardhat, a tool belt round the middle and a spanner in hand, all in engineering gold on the original black body. He is the one candidate who *cannot* wear the goggles this idea started with — two lenses over one eye is the trademarked look the rename exists to escape — and the hat turns out to be the better answer anyway. He is also the fleet's answer to whether this species can wear a thing that is not a hat: a belt is a band rather than a sleeve, so it fits a body with no shoulders.",
     },
   ],
 };

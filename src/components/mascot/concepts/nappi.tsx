@@ -18,12 +18,24 @@
  * The practical bonus is that a two-heads-tall character is by far the best of
  * the four at small sizes — the head is most of the drawing, so the avatar
  * crop and the full body converge.
+ *
+ * ## The simplicity pass (2026-08-23)
+ *
+ * **Removed:** the two crease strokes (chest and brow) and the shard's second
+ * facet. Filigree, so absent below 96px and absent from the 40px test picture
+ * by construction — and on the one concept in the set that is *designed* to be
+ * looked at small, a stroke that only exists above 96px was decoration on the
+ * size nobody uses this species at.
+ *
+ * **Kept as identity:** every plane. The wide hexagon's lit top face and its
+ * shaded right face are what stop a Nappi head from being a flat six-sided
+ * blob, and they are still legible at 40px because they are colour rather than
+ * line — which is the whole argument for keeping planes and dropping creases.
  */
 
 import type { ReactElement } from "react";
 
 import type { ConceptDef, PartProps } from "../concept";
-import { showsFiligree } from "../detail";
 import { TAITTO_VARIANTS } from "../palette";
 import type { Rig } from "../rig";
 
@@ -52,26 +64,17 @@ const RIG: Rig = {
   fusedHead: false,
 };
 
-function Body({ colors, detail }: PartProps): ReactElement {
+function Body({ colors }: PartProps): ReactElement {
   return (
     <g>
       <path d="M 100 128 L 122 137 L 119 162 L 100 169 L 81 162 L 78 137 Z" fill={colors.bodyTop} />
       <path d="M 100 128 L 122 137 L 119 162 L 100 169 Z" fill={colors.bodyBottom} />
       <path d="M 100 140 L 107 147 L 100 155 L 93 147 Z" fill={colors.panel} />
-      {showsFiligree(detail) && (
-        <path
-          d="M 79 138 L 100 146 L 121 138"
-          fill="none"
-          stroke={colors.spark}
-          strokeWidth={1.6}
-          opacity={0.6}
-        />
-      )}
     </g>
   );
 }
 
-function Head({ colors, detail }: PartProps): ReactElement {
+function Head({ colors }: PartProps): ReactElement {
   return (
     <g>
       {/* A wide, squat hexagon — the same six sides as a Taitto, turned so the
@@ -79,15 +82,6 @@ function Head({ colors, detail }: PartProps): ReactElement {
       <path d="M 100 22 L 148 48 L 148 96 L 100 122 L 52 96 L 52 48 Z" fill={colors.bodyTop} />
       <path d="M 100 22 L 148 48 L 100 74 L 52 48 Z" fill={colors.spark} opacity={0.28} />
       <path d="M 148 48 L 148 96 L 100 122 L 100 74 Z" fill={colors.bodyBottom} opacity={0.42} />
-      {showsFiligree(detail) && (
-        <path
-          d="M 52 48 L 100 74 L 148 48"
-          fill="none"
-          stroke={colors.limb}
-          strokeWidth={1.6}
-          opacity={0.5}
-        />
-      )}
     </g>
   );
 }
@@ -96,7 +90,6 @@ function Crown({ colors, floatClass }: PartProps): ReactElement {
   return (
     <g className={floatClass} style={{ transformBox: "view-box", transformOrigin: "100px 22px" }}>
       <path d="M 100 22 L 86 2 L 114 8 Z" fill={colors.limb} />
-      <path d="M 100 22 L 114 8 L 107 18 Z" fill={colors.panel} opacity={0.75} />
     </g>
   );
 }

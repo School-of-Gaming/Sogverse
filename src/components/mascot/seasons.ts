@@ -49,7 +49,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 
 import type { Outfit } from "./outfit";
-import type { ColorOverride } from "./palette";
+import { swatchHex, tintHex, type ColorOverride } from "./palette";
 
 /** The product's home calendar. Every seasonal decision is made against it. */
 export const MASCOT_TIMEZONE = "Europe/Helsinki";
@@ -61,6 +61,8 @@ export const HOLIDAYS = [
   "paasiainen",
   "vappu",
   "juhannus",
+  "saaristo",
+  "avaruusviikko",
   "halloween",
   "itsenaisyyspaiva",
   "joulu",
@@ -142,6 +144,45 @@ export const HOLIDAY_LOOKS: Record<HolidayId, MascotLook> = {
     holiday: "juhannus",
     outfit: { hat: "flower-crown", torso: "tee", extra: "bonfire" },
     colors: { clothing: "#3FA34D", clothingAccent: "#FFE9A3" },
+  },
+  /**
+   * Saaristo — the whole of July.
+   *
+   * The odd one in this table, and worth defending. Every other entry here is
+   * a day or a weekend; this is thirty-one of them, and it is filed as a
+   * holiday rather than as a season because that is what July is in this
+   * country. The statutory summer leave is taken in it, the clubs stop, the
+   * cities empty and the coast fills up — *heinäkuu* is the month a Finn is
+   * away, and the archipelago is where they went. A generic `kesä` look on the
+   * one month nobody is at their desk is the wrong picture of the year.
+   *
+   * Mechanically it is also the cheapest place to put it: `holidayForDate`
+   * already overrides the season, so a whole-month entry needs one line and
+   * inherits the Helsinki-calendar handling every other look gets.
+   */
+  saaristo: {
+    id: "saaristo",
+    label: "Saaristo",
+    note: "July, the whole month. Captain's cap and Breton stripes, out on the water.",
+    season: "kesa",
+    holiday: "saaristo",
+    outfit: { hat: "captain-cap", torso: "sailor-shirt" },
+    colors: { clothing: swatchHex("sky"), clothingAccent: tintHex(swatchHex("sky"), 0.9) },
+  },
+  /**
+   * World Space Week, 4-10 October - an international celebration of science
+   * and technology observed in over 95 nations, and the week School of Gaming
+   * Galactic Oy was never going to sit out. Kyle's correction to "no week of
+   * the year is space": there is exactly one, and this is it.
+   */
+  avaruusviikko: {
+    id: "avaruusviikko",
+    label: "Avaruusviikko",
+    note: "4-10 Oct, World Space Week. Helmets on - the galactic in the company name.",
+    season: "syksy",
+    holiday: "avaruusviikko",
+    outfit: { hat: "space-helmet", torso: "tee" },
+    colors: { clothing: swatchHex("indigo"), clothingAccent: tintHex(swatchHex("cyan"), 0.55) },
   },
   halloween: {
     id: "halloween",
@@ -241,6 +282,13 @@ export function holidayForDate(year: number, month: number, day: number): Holida
   if (month === 12 && day >= 20 && day <= 26) return "joulu";
   if ((month === 4 && day === 30) || (month === 5 && day === 1)) return "vappu";
   if (month === 10 && day >= 29) return "halloween";
+  // World Space Week is fixed by the UN as 4-10 October; no collision - the
+  // month's only other entry starts on the 29th.
+  if (month === 10 && day >= 4 && day <= 10) return "avaruusviikko";
+  // The whole of July. Placed among the fixed dates rather than after them
+  // because it cannot collide with any of them: juhannus is always in June,
+  // and Easter can reach 25 April but never July.
+  if (month === 7) return "saaristo";
 
   const today = Date.UTC(year, month - 1, day);
   const eve = juhannusEve(year);

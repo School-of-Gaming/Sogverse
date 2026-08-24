@@ -106,6 +106,40 @@ export function Limb({
 /** Where each sole lands, and where the knee goes if the pose dictates one. */
 type LegTarget = { foot: Point; knee?: Point };
 
+/**
+ * How far apart the hip sockets are — the two points the legs actually hang
+ * from, and the two the walk cycle rotates and scales about.
+ *
+ * Most bodies want the legs to splay a little between socket and sole, which
+ * is what the 0.55 does. A species whose limbs are declared `straight` is
+ * asking for the opposite: sockets directly above the soles, so a standing leg
+ * is a vertical column rather than a shallow V.
+ *
+ * It is a function rather than a line inside `Legs` because the moving stances
+ * need it too: a walk puts each foot under its own socket, and that cannot be
+ * written without knowing where the socket is.
+ */
+function socketSpread(rig: Rig): number {
+  return rig.limbStyle === "straight" ? rig.hipSpread : rig.hipSpread * 0.55;
+}
+
+/**
+ * How far outboard a bent knee sits from the socket-to-sole line, per limb
+ * style.
+ *
+ * Zero for `straight`, and the zero is the point: the legacy mascot's legs are
+ * constant-width vertical columns with no bend anywhere, so a knee on that
+ * species has to be exactly on the line, leaving the two segments collinear
+ * and the limb indistinguishable from the single wedge it draws everywhere
+ * else. Every other style gets a shallow outward bow, which is what makes a
+ * foreshortened leg read as *bent* rather than merely short: the bow keeps its
+ * width while the vertical scale takes the length away, so the same geometry
+ * looks straighter at full extension and more folded at the top of the lift.
+ */
+function kneeBow(rig: Rig, amount: number): number {
+  return rig.limbStyle === "straight" ? 0 : amount;
+}
+
 function footTargets(rig: Rig, legs: LegStyle): [LegTarget, LegTarget] {
   const { hip, hipSpread, footY } = rig;
   switch (legs) {
@@ -119,16 +153,35 @@ function footTargets(rig: Rig, legs: LegStyle): [LegTarget, LegTarget] {
         { foot: { x: hip.x - hipSpread - 11, y: footY } },
         { foot: { x: hip.x + hipSpread + 11, y: footY } },
       ];
-    case "stride":
+    case "stride": {
+      // A front-on walk: both soles on the ground line, each directly under
+      // its own socket, knees bowed a little outward. Nothing here says which
+      // leg is stepping — that is the animation's job, and doing it as a
+      // vertical foreshortening about the socket is what keeps the feet from
+      // scissoring sideways, because a y-scale cannot change an x.
+      const spread = socketSpread(rig);
+      const bow = kneeBow(rig, 3.2);
+      const kneeY = hip.y + (footY - hip.y) * 0.54;
       return [
-        { foot: { x: hip.x - hipSpread - 15, y: footY } },
-        { foot: { x: hip.x + hipSpread + 13, y: footY - 5 } },
+        { knee: { x: hip.x - spread - bow, y: kneeY }, foot: { x: hip.x - spread, y: footY } },
+        { knee: { x: hip.x + spread + bow, y: kneeY }, foot: { x: hip.x + spread, y: footY } },
       ];
-    case "jump":
+    }
+    case "jump": {
+      // Feet under the hips and on the ground line, knees bowed a little wider
+      // than the walk's. Round two kicked them twenty units out and twenty up —
+      // a star jump, which is a shape rather than a jump, and which no shared
+      // keyframe could bring back down to the ground line for the takeoff and
+      // landing frames. Drawn standing, it lands exactly, and the tuck is the
+      // animation's job; see the `jump` member of `LegStyle`.
+      const spread = socketSpread(rig);
+      const bow = kneeBow(rig, 5);
+      const kneeY = hip.y + (footY - hip.y) * 0.5;
       return [
-        { foot: { x: hip.x - hipSpread - 20, y: footY - 20 } },
-        { foot: { x: hip.x + hipSpread + 20, y: footY - 20 } },
+        { knee: { x: hip.x - spread - bow, y: kneeY }, foot: { x: hip.x - spread, y: footY } },
+        { knee: { x: hip.x + spread + bow, y: kneeY }, foot: { x: hip.x + spread, y: footY } },
       ];
+    }
     case "sit":
       // Thighs forward and level, shins straight down: the shape a chair makes
       // of a leg. The knee is given rather than solved because IK would pick
@@ -256,12 +309,7 @@ export function Legs({
   classR?: string;
 }): ReactElement {
   const targets = footTargets(rig, legs);
-  // Most bodies want the legs to splay a little between hip and sole, which is
-  // what the 0.55 does. A species whose limbs are declared `straight` is asking
-  // for the opposite: sockets directly above the soles, so a standing leg is a
-  // vertical column rather than a shallow V. Nothing else uses `straight`, so
-  // every other species keeps the splay it had.
-  const spread = rig.limbStyle === "straight" ? rig.hipSpread : rig.hipSpread * 0.55;
+  const spread = socketSpread(rig);
   const sockets: [Point, Point] = [
     { x: rig.hip.x - spread, y: rig.hip.y },
     { x: rig.hip.x + spread, y: rig.hip.y },
