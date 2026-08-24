@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
-    "shortDescription": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir",
     "pages": {
       "signIn": "Connexion",
       "createAccount": "Créer un compte",
@@ -32,7 +31,6 @@
       "terms": "Conditions générales",
       "antiBullying": "Lutte contre le harcèlement et discipline",
       "attributions": "Crédits et licences",
-      "roblox": "Programme de création de jeux Roblox",
       "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
       "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
       "robloxTerms": "Conditions générales du Programme Roblox"

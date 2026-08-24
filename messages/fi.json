@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattitaitoisten pelikasvattajien johdolla.",
-    "shortDescription": "School of Gaming – Kun ruutuajasta tulee laatuaikaa",
     "pages": {
       "signIn": "Kirjaudu sisään",
       "createAccount": "Luo tili",
@@ -32,7 +31,6 @@
       "terms": "Käyttöehdot",
       "antiBullying": "Kiusaamisen ehkäisy ja kurinpito",
       "attributions": "Lähteet ja lisenssit",
-      "roblox": "Roblox-pelisuunnitteluohjelma",
       "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste",
       "robloxSafeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
       "robloxTerms": "Roblox-ohjelman käyttöehdot"

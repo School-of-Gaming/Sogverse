@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "nuqDaq Qapla’ ’oH? Minecraft ghom’a’Daq. Gedu’pu’ Dun chaH — toy’wI’pu’ tIqhommoH, jIH mevbe’.",
-    "shortDescription": "noH Quj yejHaD – DaH yIQam, batlh yIghoS",
     "pages": {
       "signIn": "yI’el",
       "createAccount": "Account yIchenmoH",
@@ -27,8 +26,7 @@
       "unlockPin": "PIN yIghItlh",
       "resetPin": "PIN yIchu’qa’",
       "verifyEmail": "QIn Daq yIngu’",
-      "changePin": "PIN yIchoH",
-      "roblox": "Roblox qetlh chenmoHmeH ghojmoH"
+      "changePin": "PIN yIchoH"
     }
   },
   "notFound": {
