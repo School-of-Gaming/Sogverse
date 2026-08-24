@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Settings } from "lucide-react";
-import sogLogoFull from "@/assets/brand/sog-logo-full.svg";
 import sogLogoSimple from "@/assets/brand/sog-logo-simple.svg";
+import { SogWordmark } from "@/components/brand/sog-wordmark";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { UnknownAvatar } from "@/components/ui/unknown-avatar";
@@ -34,7 +34,7 @@ const DASHBOARD_PREFIXES = ["/admin", "/parent", "/gamer", "/gedu"];
 // logo.
 const SELECTOR_ROLES = new Set<UserRole>(["customer", "gamer"]);
 
-/** The mark's true viewBox, handed to `next/image` so it reserves the right box. */
+/** The badge's true viewBox, handed to `next/image` so it reserves the right box. */
 const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
 
 /**
@@ -47,109 +47,8 @@ const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
 const NAV_LINK_CLASS =
   "inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium transition-colors hover:text-primary";
 
-// TEMP: header-nav exploration — strip before merge.
-// Where a labelled "My SOG" item sits, and what it looks like. `"none"` is what
-// ships today; the rest exist so the /preview/header-nav scene can put them side
-// by side before one is picked and wired for real.
-export type HeaderNavOption =
-  | "none"
-  | "trailing-pill"
-  | "leading-link"
-  | "cluster-pill";
-
-// TEMP: header-nav exploration — strip before merge.
-// The classes each option gives the My SOG item, split so the active state can
-// be applied on top of the resting one.
-const MY_SOG_CLASS: Record<
-  Exclude<HeaderNavOption, "none">,
-  { base: string; idle: string; active: string }
-> = {
-  // A. The last nav item, as a filled primary pill — the highest-contrast thing
-  // on the strip, reading as "the button" rather than as a third word.
-  // Already primary, so it cannot say "here" the way the text links do; an
-  // inset hairline is the nearest equivalent that does not invert the fill.
-  "trailing-pill": {
-    base: "ml-1 inline-flex min-h-11 items-center rounded-full bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90",
-    idle: "",
-    active: "ring-1 ring-inset ring-primary-foreground/40",
-  },
-  // B. The first nav item, styled exactly like Shop and Help — nearest the
-  // logo, where the eye starts, and saying "here" with the same muted → primary
-  // shift its siblings use.
-  "leading-link": {
-    base: NAV_LINK_CLASS,
-    idle: "text-muted-foreground",
-    active: "text-primary",
-  },
-  // C. A quiet pill in the right cluster, beside the cog and the avatar —
-  // "your stuff" grouped with "you". Outlined rather than filled so it does not
-  // fight A's read, and it keeps the nav's muted → primary active shift.
-  "cluster-pill": {
-    base: "inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-sm font-medium ring-1 transition-colors",
-    idle: "bg-muted/50 text-muted-foreground ring-border hover:text-primary",
-    active: "bg-primary/15 text-primary ring-primary/40",
-  },
-};
-
-// TEMP: header-nav exploration — strip before merge.
-// How the brand is drawn from `sm` up.
-//   - "full-mark"      — what ships: the badge with its own "SCHOOL OF GAMING"
-//                        line set as artwork, at 44px inside the 64px strip.
-//   - "mark-plus-text" — the icon-plus-wordmark candidate: the simple badge,
-//                        with the name beside it as real HTML text that stays
-//                        crisp at any size.
-//   - "tall-full-mark" — the same full mark, grown to 80px. Only legible inside
-//                        a taller strip, which the scene supplies by overriding
-//                        `--header-height` on the row: everything that lines up
-//                        with the header reads that variable, so the strip, the
-//                        nav's vertical centring and the row's own box all
-//                        follow with no other change.
-export type HeaderBrandRender =
-  | "full-mark"
-  | "mark-plus-text"
-  | "tall-full-mark";
-
-// TEMP: header-nav exploration — strip before merge.
-// Fixture overrides the /preview/header-nav scene passes in. The live app never
-// passes this, so the header behaves exactly as it did before.
-export interface HeaderPreviewOverrides {
-  /** Stands in for `usePathname()`, so a scene can put the header on any page. */
-  pathname: string;
-  /** Which arrangement of the labelled "My SOG" item to render. */
-  navOption: HeaderNavOption;
-  /**
-   * How the brand reads at `sm` and up: the full mark (what ships), or the
-   * simple mark with "School of Gaming" set beside it as real text. Below `sm`
-   * both render the simple mark alone, so this changes nothing on a phone.
-   */
-  brandRender?: HeaderBrandRender;
-  /**
-   * Force the sub-`sm` layout regardless of the real viewport.
-   *
-   * Tailwind's `sm:` is a *viewport* media query, so a 320px-wide box on a
-   * desktop screen still renders the wide forms — the full mark, the locale
-   * code beside the flag, the roomier gaps — and a phone frame built that way
-   * would be a picture of a layout no phone ever shows. This makes the narrow
-   * branch explicit so the frame is the real thing.
-   */
-  viewport?: "narrow";
-}
-
-export function Header({
-  preview,
-}: {
-  preview?: HeaderPreviewOverrides;
-} = {}) {
-  const livePathname = usePathname();
-  // TEMP: header-nav exploration — strip before merge (keep `usePathname()`).
-  const pathname = preview?.pathname ?? livePathname;
-  // TEMP: header-nav exploration — strip before merge (both lines). `sm()` drops
-  // the `sm:` half of a responsive pair when a scene has asked for the narrow
-  // layout, so the mobile branch is stated once rather than duplicated.
-  const narrow = preview?.viewport === "narrow";
-  const sm = (classes: string) => (narrow ? undefined : classes);
-  // TEMP: header-nav exploration — strip before merge.
-  const brandRender = preview?.brandRender ?? "full-mark";
+export function Header() {
+  const pathname = usePathname();
   const { user, profile, isLoading } = useAuth();
   const t = useTranslations("header");
   const c = useTranslations("common");
@@ -214,32 +113,6 @@ export function Header({
       : c("dashboard")
     : c("signIn");
 
-  // TEMP: header-nav exploration — strip before merge (down to `avatarContent`).
-  // The labelled way to My SOG, in whichever arrangement the scene asked for.
-  // It exists only under a preview override — the live header is untouched until
-  // an option is picked and wired for real (which is also when this item earns a
-  // `dashboard_nav` method of its own, and when the admin's label — "Dashboard",
-  // never "My SOG" — stops being a branch nothing exercises).
-  const navOption = preview?.navOption ?? "none";
-  const isOnDashboardTarget =
-    dashboardPath !== null &&
-    (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/"));
-  const mySogItem =
-    navOption === "none" || !user || !dashboardPath ? null : (
-      <Link
-        href={dashboardPath}
-        className={cn(
-          MY_SOG_CLASS[navOption].base,
-          isOnDashboardTarget
-            ? MY_SOG_CLASS[navOption].active
-            : MY_SOG_CLASS[navOption].idle,
-        )}
-        aria-current={isOnDashboardTarget ? "page" : undefined}
-      >
-        {profile?.role === "admin" ? c("dashboard") : d("pageTitle")}
-      </Link>
-    );
-
   const avatarContent = isLoading ? (
     <UnknownAvatar faded />
   ) : user ? (
@@ -259,90 +132,80 @@ export function Header({
     </Avatar>
   );
 
+  /**
+   * What is set beside the badge from `sm` up — and it is a different thing
+   * depending on who is looking, because the logo already links to two
+   * different places:
+   *
+   *   - **Signed out** it goes home, and the word beside it is the brand, set
+   *     in the mark's own letterforms (`SogWordmark`). The full mark's version
+   *     of that line renders around 6px tall at any height a 64px strip allows,
+   *     so it left the header; this is the same artwork at a legible size.
+   *   - **Signed in** it goes to the role's dashboard, and the word beside it
+   *     names that destination — "My SOG", or "Dashboard" for the admin, whose
+   *     panel is genuinely an admin panel. It takes the nav links' own
+   *     highlight, so the header says "you are here" in the one slot that is on
+   *     every page.
+   *
+   * They are alternatives that never coexist, so nothing here reserves a hole
+   * for the other one — and the two are very different widths, the wordmark
+   * being more than twice the width of "My SOG". Which is why this keys on
+   * `logoHref` rather than on `isLoading`: the loading window is exactly the
+   * case where the server saw no session, so the signed-out wordmark is both
+   * what the server renders and what the browser keeps. Holding the slot empty
+   * until auth settled would pop a 123px word into every signed-out visitor's
+   * header one frame after hydration, on every page. The layout below is
+   * arranged so that even the rare late swap — a session the server missed —
+   * moves nothing else on the strip.
+   *
+   * Below `sm` the badge stands alone in every state, so a phone sees no change
+   * at all whatever auth does.
+   */
+  const brandText = logoHref === ROUTES.home ? (
+    <SogWordmark height={15} className="hidden text-foreground sm:block" />
+  ) : (
+    <span
+      className={cn(
+        "hidden whitespace-nowrap text-base font-semibold transition-colors sm:inline",
+        isOnLogoTarget
+          ? "text-primary"
+          : "text-muted-foreground group-hover:text-primary",
+      )}
+    >
+      {profile?.role === "admin" ? c("dashboard") : d("pageTitle")}
+    </span>
+  );
+
   // Logo content is shared between the loading (non-clickable span) and
   // resolved (Link) branches — same className on the wrapper, identical inner
   // markup, so no layout shift when one swaps for the other.
-  const logoClassName = "flex shrink-0 items-center";
+  const logoClassName = "group flex shrink-0 items-center";
   const logoBody = (
-    // The mark carries the brand name as artwork, so nothing is set beside it —
-    // "Sogverse" is deliberately not in the header. Two files rather than one
-    // responsive SVG: below `sm` the phone has no room for the "SCHOOL OF
-    // GAMING" line under the letters, and the simple mark is the same badge
-    // with that line dropped, so the badge doesn't change size at the
-    // breakpoint. Both carry the true viewBox as width/height, which is what
-    // lets `w-auto` reserve the right box before the file lands.
+    // The badge is the one constant: same file, same size in every state, so it
+    // never moves or resizes. It carries the brand name as its `alt` — the
+    // constant rather than a message key, since this is a name and a locale
+    // translates the copy around a name rather than the name itself. The true
+    // viewBox goes in as width/height, which is what lets `w-auto` reserve the
+    // right box before the file lands.
     //
-    // The alt is the brand constant, not a message key: this is a name, and a
-    // locale translates the copy around a name rather than the name itself.
-    // Only one of the two is ever displayed, so assistive tech reads it once.
-    //
-    // `gap-2` costs nothing in the shipped arrangement: a `display: none` flex
-    // item creates no gap, and exactly one of these is ever visible there.
+    // `gap-2` costs nothing when nothing is set beside it: a `display: none`
+    // (or absent) flex item creates no gap.
     <span className="flex items-center gap-2">
       <Image
         src={sogLogoSimple}
         alt={SENDER_NAME}
         width={LOGO_INTRINSIC.width}
         height={LOGO_INTRINSIC.height}
-        // TEMP: header-nav exploration — the wrapper goes with it, leaving
-        // `className="h-9 w-auto sm:hidden"`. In the mark-plus-text brand the
-        // simple mark is what desktop shows too, grown to the full mark's 44px
-        // so the badge is the same size either way.
-        className={cn(
-          "h-9 w-auto",
-          brandRender === "mark-plus-text" ? sm("sm:h-11") : sm("sm:hidden"),
-        )}
+        className="h-9 w-auto sm:h-11"
         unoptimized
       />
-      {brandRender !== "mark-plus-text" ? (
-        <Image
-          src={sogLogoFull}
-          alt={SENDER_NAME}
-          width={LOGO_INTRINSIC.width}
-          height={LOGO_INTRINSIC.height}
-          // TEMP: header-nav exploration — the height branch and the `sm()`
-          // wrapper go with it; back to
-          // `className="hidden h-11 w-auto sm:block"`. 80px is where the mark's
-          // own "SCHOOL OF GAMING" line reaches ~10px and becomes readable —
-          // 13% of the badge's height, so 44px puts it at ~6px.
-          className={cn(
-            "hidden w-auto",
-            brandRender === "tall-full-mark" ? "h-20" : "h-11",
-            sm("sm:block"),
-          )}
-          unoptimized
-        />
-      ) : (
-        // TEMP: header-nav exploration — strip before merge (this whole
-        // branch). The full mark sets "SCHOOL OF GAMING" at about 13% of the
-        // badge's height, so at the 44px a 64px strip allows it renders around
-        // 6px — unreadable, and no height that fits the header fixes it. Set as
-        // real text it is crisp at any size. `aria-hidden` because the mark
-        // beside it already carries the same name as its alt, and a screen
-        // reader announcing the brand twice inside one link is noise.
-        <span
-          aria-hidden
-          className={cn(
-            "hidden whitespace-nowrap text-base font-semibold text-foreground",
-            sm("sm:inline"),
-          )}
-        >
-          {SENDER_NAME}
-        </span>
-      )}
+      {brandText}
     </span>
   );
 
   return (
     <SiteHeaderShell>
-      <nav
-        // TEMP: header-nav exploration — the `sm()` wrapper goes with it, back
-        // to a plain `className="… gap-2 px-3 sm:gap-3 sm:px-4"`.
-        className={cn(
-          "container mx-auto flex h-full items-center justify-between gap-2 px-3",
-          sm("sm:gap-3 sm:px-4"),
-        )}
-      >
+      <nav className="container mx-auto flex h-full items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
         {isLoading ? (
           // Auth-loading window: hold the logo as inert text so a hurried
           // click can't fire while logoHref hasn't been resolved yet (it
@@ -372,87 +235,83 @@ export function Header({
         )}
 
         {/*
-          Every link carries its own 44px-tall, `px-2` touch target, and the
-          group's `-mx-2` hands that outer padding straight back to the flex
-          gaps on either side. So the words sit exactly where they sat: on a
-          desktop the group's box is the same width it was (`sm:gap-2` + 8px of
-          padding per side is the old `sm:gap-6`), and on a phone only the space
-          *between* Shop and Help grows, from 8px to 16px, which is the crowding
-          this fixes. The reclaimed 8px means the first link's target abuts the
-          logo's rather than overlapping it — a near-miss on the mark lands on
-          Shop instead of on nothing, which is the honest trade for the padding.
-        */}
-        <div
-          // TEMP: header-nav exploration — the `sm()` wrapper goes with it,
-          // back to `className="-mx-2 flex items-center sm:gap-2"`.
-          className={cn("-mx-2 flex items-center", sm("sm:gap-2"))}
-        >
-          {navOption === "leading-link" && mySogItem}
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  NAV_LINK_CLASS,
-                  isActive ? "text-primary" : "text-muted-foreground",
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-          {navOption === "trailing-pill" && mySogItem}
-        </div>
+          Two groups, not three: the logo, then everything else as one
+          right-aligned block. The logo slot is the only part of the strip whose
+          width depends on auth — the wordmark it sets when signed out is more
+          than twice as wide as the "My SOG" it sets when signed in — and auth
+          resolves on the data's own schedule, not on anything the reader did.
+          With the nav centred between three `justify-between` groups it would
+          have slid sideways as that resolved; anchored to the right edge, the
+          links and the account cluster cannot move at all.
 
-        <div
-          // TEMP: header-nav exploration — the `sm()` wrapper goes with it,
-          // back to `className="flex shrink-0 items-center gap-2 sm:gap-3"`.
-          className={cn("flex shrink-0 items-center gap-2", sm("sm:gap-3"))}
-        >
-          {navOption === "cluster-pill" && mySogItem}
-          {user && (
-            <Link
-              href={ROUTES.settings}
-              aria-label={c("settings")}
-              aria-current={isOnSettings ? "page" : undefined}
-              className={cn(
-                "rounded-md p-1 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring",
-                isOnSettings ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <Settings className="h-5 w-5" />
-            </Link>
-          )}
-          {/* TEMP: header-nav exploration — the prop goes with it, back to a
-              bare `<LocalePicker />`. */}
-          <LocalePicker narrow={narrow} />
-          {avatarHref ? (
-            <Link
-              href={avatarHref}
-              aria-label={avatarLabel}
-              aria-current={isOnAvatarTarget ? "page" : undefined}
-              className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-              onClick={() => {
-                // Only the gedu avatar links straight to the dashboard;
-                // parents'/gamers' avatar opens the family selector, where the
-                // self-tile click is tracked instead.
-                if (profile?.role === "gedu") {
-                  trackDashboardNav({
-                    role: "gedu",
-                    method: "avatar",
-                    from: pathname,
-                  });
-                }
-              }}
-            >
-              {avatarFrame}
-            </Link>
-          ) : (
-            <span className="rounded-md">{avatarFrame}</span>
-          )}
+          Every link carries its own 44px-tall, `px-2` touch target. The group's
+          `-ml-2` hands that outer padding back to the space on the logo's side,
+          which is what keeps the strip's total width exactly what it was before
+          the regrouping — the 360px floor has no room to spare in French. The
+          padding on the *right* is deliberately kept: it separates the last
+          link from the cog by the gap plus 8px, so the nav words and the
+          account chrome don't read as one run.
+        */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="-ml-2 flex items-center sm:gap-2">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    NAV_LINK_CLASS,
+                    isActive ? "text-primary" : "text-muted-foreground",
+                  )}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            {user && (
+              <Link
+                href={ROUTES.settings}
+                aria-label={c("settings")}
+                aria-current={isOnSettings ? "page" : undefined}
+                className={cn(
+                  "rounded-md p-1 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring",
+                  isOnSettings ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+            )}
+            <LocalePicker />
+            {avatarHref ? (
+              <Link
+                href={avatarHref}
+                aria-label={avatarLabel}
+                aria-current={isOnAvatarTarget ? "page" : undefined}
+                className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                onClick={() => {
+                  // Only the gedu avatar links straight to the dashboard;
+                  // parents'/gamers' avatar opens the family selector, where the
+                  // self-tile click is tracked instead.
+                  if (profile?.role === "gedu") {
+                    trackDashboardNav({
+                      role: "gedu",
+                      method: "avatar",
+                      from: pathname,
+                    });
+                  }
+                }}
+              >
+                {avatarFrame}
+              </Link>
+            ) : (
+              <span className="rounded-md">{avatarFrame}</span>
+            )}
+          </div>
         </div>
       </nav>
     </SiteHeaderShell>

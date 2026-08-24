@@ -66,6 +66,8 @@
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
+    "goToMySog": "Gå till Min SOG",
+    "goToDashboard": "Gå till översikten",
     "viewDetails": "Visa detaljer",
     "learnMore": "Läs mer",
     "exploreClubs": "Utforska klubbar",
@@ -1416,6 +1418,11 @@
       "heading": "Behöver du hjälp?",
       "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur School of Gaming fungerar.",
       "emailLabel": "Mejla oss på"
+    },
+    "about": {
+      "heading": "Vilka är School of Gaming?",
+      "body": "Lär känna människorna bakom klubbarna, läs vad vi tror om spel och lärande, och se hur en träff faktiskt går till.",
+      "linkLabel": "Läs mer om oss"
     },
     "faq": {
       "heading": "Vanliga frågor",

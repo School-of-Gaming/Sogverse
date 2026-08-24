@@ -20,9 +20,6 @@ import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
-// TEMP: header-nav exploration — strip before merge (both imports).
-import { HeaderNavScene } from "./scenes/header-nav-scene";
-import { isHeaderNavScenario } from "./scenes/header-nav-scenarios";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
@@ -106,11 +103,6 @@ const SCENE_RENDERERS: Record<
   "gamer-club": (scenario) => {
     if (!isFamilyProductScenario(scenario)) notFound();
     return <FamilyProductPageScene audience="gamer" scenario={scenario} />;
-  },
-  // TEMP: header-nav exploration — strip before merge (this whole entry).
-  "header-nav": (scenario) => {
-    if (!isHeaderNavScenario(scenario)) notFound();
-    return <HeaderNavScene scenario={scenario} />;
   },
   "admin-dashboard": (scenario) => {
     if (!isAdminDashboardScenario(scenario)) notFound();

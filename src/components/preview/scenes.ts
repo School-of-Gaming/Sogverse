@@ -302,34 +302,6 @@ export const PREVIEW_SCENES = [
       { slug: "active-club", label: "Club — remote, session in progress" },
     ],
   },
-  // TEMP: header-nav exploration — strip before merge (this whole entry).
-  {
-    surface: "header-nav",
-    title: "Header nav — the labelled way to My SOG",
-    description:
-      "Three arrangements of a worded My SOG item against today's header, crossed with three ways of drawing the brand, over five locales and four widths. Temporary — this scene goes when an arrangement is picked and wired for real.",
-    chrome: "public",
-    scenarios: [
-      {
-        slug: "full-width",
-        label: "Desktop — every option, every brand",
-        description:
-          "Where the design is judged: the arrangements and the three brand treatments at your own width, signed in and out.",
-      },
-      {
-        slug: "phone-widths",
-        label: "360 and 390 px, every locale",
-        description:
-          "Where the fit is judged: whether five locales' words survive a phone, clipped exactly as a phone clips them.",
-      },
-      {
-        slug: "sm-breakpoint",
-        label: "640 and 768 px — the tight desktop band",
-        description:
-          "Where the brand's cost is judged: the desktop layout at the narrowest width it is asked to hold, in the widest locale.",
-      },
-    ],
-  },
   {
     surface: "admin-dashboard",
     title: "Admin dashboard (draft redesign)",

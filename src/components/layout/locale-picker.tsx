@@ -58,18 +58,7 @@ function FlagComponent({
   return Flag ? <Flag title={nativeLabel} /> : null;
 }
 
-export function LocalePicker({
-  className,
-  // TEMP: header-nav exploration — strip before merge (this prop and its two
-  // uses below). Tailwind's `sm:` is a viewport media query, so a phone-width
-  // frame rendered on a desktop screen would keep the locale code beside the
-  // flag and be 22px wider than any phone ever shows. The preview scene forces
-  // the narrow branch so its measurements are the real ones.
-  narrow = false,
-}: {
-  className?: string;
-  narrow?: boolean;
-}) {
+export function LocalePicker({ className }: { className?: string }) {
   const { locale, setLocale } = useLocaleControl();
   const c = useTranslations('common');
   const [open, setOpen] = useState(false);
@@ -89,9 +78,7 @@ export function LocalePicker({
         <span className="h-4 w-6 [&>svg]:h-full">
           <FlagComponent country={config.country} nativeLabel={config.nativeLabel} />
         </span>
-        <span className={cn(narrow ? "hidden" : "hidden sm:inline")}>
-          {locale.toUpperCase()}
-        </span>
+        <span className="hidden sm:inline">{locale.toUpperCase()}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </button>
       {open && (
