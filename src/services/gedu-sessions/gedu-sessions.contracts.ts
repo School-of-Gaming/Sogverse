@@ -39,7 +39,16 @@ const productTranslationSummary = z.object({
   description: z.string(),
 });
 
-const scheduleSlotSummary = z.object({
+/**
+ * One recurring slot in the product's schedule, as both session-feed reads emit
+ * it and as the client's calendar walk consumes it.
+ *
+ * Exported because the admin product read (00200) returns the same three fields
+ * for the same reason — its feed is built by the same merge, over the same
+ * shape. One schema rather than two so a change to what a slot carries cannot
+ * land on one surface and not the other.
+ */
+export const scheduleSlotSummary = z.object({
   weekday: z.number(),
   start_time: z.string(),
   duration_minutes: z.number(),

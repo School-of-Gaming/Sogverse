@@ -262,6 +262,7 @@
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
+        "online": "På distans",
         "unlisted": "olistad",
         "untitled": "(utan titel)",
         "missingGeduFee": "Gedu-arvode saknas",
@@ -298,6 +299,7 @@
           "external_contract": "Externt avtal (kommun)"
         },
         "fields": {
+          "publicUrl": "Publik länk",
           "topic": "Ämne",
           "materialUrl": "Lektionsmaterial",
           "startDate": "Startdatum",
@@ -316,7 +318,9 @@
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
           "visibility": "Synlighet"
-        }
+        },
+        "copyLink": "Kopiera den publika länken",
+        "copied": "Kopierad"
       },
       "editPage": {
         "back": "Tillbaka till produkten",
@@ -423,20 +427,7 @@
       "locationPicker": {
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",
-        "edit": "Redigera",
         "noVenueHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
-        "memberNotesLabel": "Medlemssynliga anteckningar",
-        "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
-        "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
-        "memberNotesHint": "Visas för föräldrar och spelare på produktsidan.",
-        "staffNotesLabel": "Personalanteckningar (endast admin + Gedu)",
-        "staffNotesFieldLabel": "Endast personal",
-        "staffNotesPlaceholder": "Portkoder, baksidesinformation, rumsnycklar, vem man frågar i receptionen.",
-        "staffNotesHint": "Visas aldrig för föräldrar eller spelare.",
-        "addressLabel": "Adress",
-        "addressPlaceholder": "Gata, postnummer, ort",
-        "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
-        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
         "chooseMunicipality": "Välj en kommun",
         "municipalityPickerTitle": "Välj en kommun",
         "chooseVenue": "Välj en lokal",
@@ -662,9 +653,11 @@
         "searchGedu": "Sök Geduer…",
         "searchMunicipality": "Sök kommuner…",
         "noResults": "Inga träffar.",
+        "search": "Sök produkter på namn",
+        "searchPlaceholder": "Sök på namn…",
         "showing": "Visar {count} av {total}",
-        "clear": "Rensa filter",
-        "noMatches": "Inga {plural} matchar de valda filtren."
+        "clear": "Rensa",
+        "noMatches": "Inga {plural} matchar sökningen och de valda filtren."
       },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",
@@ -789,6 +782,19 @@
           "standard": "Klubbar och avgiftsbelagda evenemang säljs med Finlands allmänna momssats. Satsen följer av produkttypen och kan inte ändras här."
         },
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
+      },
+      "sessions": {
+        "title": "Tillfällen",
+        "groupSelectorAria": "Välj en grupp",
+        "untitledGroup": "Namnlös grupp",
+        "noGroups": "Den här produkten har inga grupper än, så ingenting är dokumenterat.",
+        "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
+        "loading": "Laddar dokumentationen av produktens tillfällen.",
+        "addressLabel": "Platsens adress",
+        "addressPlaceholder": "Gata, postnummer, stad",
+        "addAddress": "Lägg till adress",
+        "editAddress": "Redigera adress",
+        "addressSaveFailed": "Adressen sparades inte. Försök igen."
       }
     },
     "users": {
@@ -1305,9 +1311,9 @@
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
       "unmarkedLabel": "Inte markerad",
-      "staffNoteLabel": "Endast Gedus",
+      "staffNoteLabel": "Gedus och administratörer",
       "familyNoteLabel": "Familjer ser det här",
-      "staffNoteTitle": "Anteckning om tillfället – endast Gedus",
+      "staffNoteTitle": "Anteckning om tillfället – Gedus och administratörer",
       "staffNoteHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffNotePlaceholder": "Allt en annan Gedu bör veta – och allt du behöver få nedskrivet privat: en incident, mobbning eller oro för en spelare.",
       "attendanceLegend": "Närvaro",

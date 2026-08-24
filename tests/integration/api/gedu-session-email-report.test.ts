@@ -344,6 +344,27 @@ function mockGedu(overrides?: Record<string, unknown>) {
   });
 }
 
+/**
+ * The same send, made by an admin from the product page (00200).
+ *
+ * Deliberately given an address that is ALSO in the admin list, because that is
+ * the real shape: every admin is in the CC, so the sender is in it too unless
+ * something takes them out.
+ */
+function mockAdmin() {
+  mockRequireRole.mockResolvedValue({
+    user: { id: "admin-1" },
+    profile: {
+      id: "admin-1",
+      role: "admin",
+      first_name: "Sylvia",
+      email: "admin1@test.local",
+      locale: "en",
+    },
+    supabase: { rpc: mockRpc },
+  });
+}
+
 function mockRefused() {
   mockRequireRole.mockResolvedValue(
     NextResponse.json({ error: "Forbidden" }, { status: 403 }),
@@ -410,11 +431,15 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
-  it("gates on a certified educator", async () => {
+  it("gates on a certified educator, or an admin", async () => {
     await POST(createRequest());
 
+    // Both roles reach the claim, which is the real authorization: it passes an
+    // admin by role and a gedu only on the group they teach. The certification
+    // test is applied by the gate to `gedu` callers alone, so naming admin here
+    // widens who may press the button without relaxing anything for educators.
     expect(mockRequireRole).toHaveBeenCalledWith(
-      ["gedu"],
+      ["gedu", "admin"],
       expect.objectContaining({ requireCertifiedGedu: true }),
     );
   });
@@ -717,6 +742,67 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // The group's name stands in the child's slot, so the copy reads as a record
     // of what the group was sent rather than as one child's mail.
     expect(copy.htmlContent).toContain("Kettukallio");
+  });
+
+  // -- The staff copy when an ADMIN pressed the button (00200) --
+  //
+  // Three things follow the sender rather than the role, and each of them is
+  // wrong in a way somebody would notice if it were left as the gedu case.
+
+  it("does not put an admin sender in their own CC", async () => {
+    mockAdmin();
+
+    await POST(createRequest());
+
+    const copies = staffCopies();
+    expect(copies).toHaveLength(1);
+    expect(copies[0].toEmail).toBe("admin1@test.local");
+    // The To address is dropped from the CC, or Brevo delivers the same copy
+    // twice to the person who sent it. Every OTHER admin still gets it.
+    expect(copies[0].cc).toEqual(["admin2@test.local"]);
+  });
+
+  it("links an admin's staff copy to the admin product page, not the gedu workspace", async () => {
+    mockAdmin();
+
+    await POST(createRequest());
+
+    // `/gedu/...` is role-gated to educators, so mailing an admin that URL is
+    // mailing them a link the proxy bounces.
+    const copy = staffCopies()[0];
+    expect(copy.htmlContent).toContain(
+      `${ORIGIN}/admin/consumer-clubs/${PRODUCT_ID}`,
+    );
+    expect(copy.htmlContent).not.toContain(`${ORIGIN}/gedu/clubs/`);
+  });
+
+  it("signs an admin's family mails with the admin's own name", async () => {
+    mockAdmin();
+
+    await POST(createRequest());
+
+    // The mail says who it is from. An admin sending on a gedu's behalf is
+    // still the person who sent it, and naming the educator instead would be a
+    // claim about a person rather than a cosmetic slip.
+    expect(familyMails()[0].htmlContent).toContain("Sylvia");
+    expect(familyMails()[0].htmlContent).not.toContain("Marianne");
+  });
+
+  it("mails the families exactly what a gedu's send would", async () => {
+    mockAdmin();
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    // The families are not told, and must not be told, that this went out from
+    // the admin panel: it is their group's report either way.
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ sent: 3, failed: 0, skipped: 0 });
+    expect(familyMails().map((mail) => mail.toEmail).sort()).toEqual([
+      "aino-parent@test.local",
+      "sylvie@test.local",
+      "vaino-parent@test.local",
+    ]);
   });
 
   it("answers 200 when only the staff copy throws", async () => {

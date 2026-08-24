@@ -262,6 +262,7 @@
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
+        "online": "Etänä",
         "unlisted": "ei listattu",
         "untitled": "(nimetön)",
         "missingGeduFee": "Gedun palkkio puuttuu",
@@ -298,6 +299,7 @@
           "external_contract": "Ulkoinen sopimus (kunta)"
         },
         "fields": {
+          "publicUrl": "Julkinen linkki",
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
           "startDate": "Alkamispäivä",
@@ -316,7 +318,9 @@
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
           "visibility": "Näkyvyys"
-        }
+        },
+        "copyLink": "Kopioi julkinen linkki",
+        "copied": "Kopioitu"
       },
       "editPage": {
         "back": "Takaisin tuotteeseen",
@@ -423,20 +427,7 @@
       "locationPicker": {
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",
-        "edit": "Muokkaa",
         "noVenueHint": "Ei fyysistä toimipaikkaa. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
-        "memberNotesLabel": "Jäsenille näkyvät tiedot",
-        "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
-        "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
-        "memberNotesHint": "Näkyvät vanhemmille ja pelaajille tuotesivulla.",
-        "staffNotesLabel": "Henkilökunnan tiedot (vain ylläpitäjä + Gedu)",
-        "staffNotesFieldLabel": "Vain henkilökunnalle",
-        "staffNotesPlaceholder": "Porttikoodit, takaoven yksityiskohdat, huoneavaimet, keneltä kysyä neuvontatiskillä.",
-        "staffNotesHint": "Ei koskaan näytetä vanhemmille tai pelaajille.",
-        "addressLabel": "Osoite",
-        "addressPlaceholder": "Katu, postinumero, kaupunki",
-        "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
-        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle.",
         "chooseMunicipality": "Valitse kunta",
         "municipalityPickerTitle": "Valitse kunta",
         "chooseVenue": "Valitse toimipiste",
@@ -662,9 +653,11 @@
         "searchGedu": "Hae Geduja…",
         "searchMunicipality": "Hae kuntia…",
         "noResults": "Ei osumia.",
+        "search": "Hae tuotteita nimellä",
+        "searchPlaceholder": "Hae nimellä…",
         "showing": "Näytetään {count} / {total}",
-        "clear": "Tyhjennä suodattimet",
-        "noMatches": "{plural} eivät vastaa valittuja suodattimia."
+        "clear": "Tyhjennä",
+        "noMatches": "{plural} eivät vastaa hakua ja valittuja suodattimia."
       },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
@@ -789,6 +782,19 @@
           "standard": "Kerhot ja maksulliset tapahtumat myydään Suomen yleisellä verokannalla. Kanta määräytyy tuotetyypin mukaan, eikä sitä voi muuttaa täällä."
         },
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
+      },
+      "sessions": {
+        "title": "Kerrat",
+        "groupSelectorAria": "Valitse ryhmä",
+        "untitledGroup": "Nimetön ryhmä",
+        "noGroups": "Tällä tuotteella ei ole vielä ryhmiä, joten mitään ei ole kirjattu.",
+        "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+        "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
+        "addressLabel": "Toimipaikan osoite",
+        "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
+        "addAddress": "Lisää osoite",
+        "editAddress": "Muokkaa osoitetta",
+        "addressSaveFailed": "Osoitteen tallennus epäonnistui. Yritä uudelleen."
       }
     },
     "users": {
@@ -1305,9 +1311,9 @@
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
       "unmarkedLabel": "Ei merkintää",
-      "staffNoteLabel": "Vain Geduille",
+      "staffNoteLabel": "Gedut ja ylläpitäjät",
       "familyNoteLabel": "Perheet näkevät tämän",
-      "staffNoteTitle": "Muistiinpano kerrasta – vain Geduille",
+      "staffNoteTitle": "Muistiinpano kerrasta – Gedut ja ylläpitäjät",
       "staffNoteHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
       "staffNotePlaceholder": "Mitä toisen Gedun on hyvä tietää – ja mitä sinun on tarpeen kirjata luottamuksellisesti: välikohtaus, kiusaaminen tai huoli pelaajasta.",
       "attendanceLegend": "Läsnäolo",

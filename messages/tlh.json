@@ -310,6 +310,7 @@
         "empty": "{plural} pagh. {label} chu’ yIchu’.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
+        "online": "HeHDaq",
         "unlisted": "tetlhDaq pagh",
         "untitled": "(pong pagh)",
         "missingGeduFee": "Gedu Huch Hutlh",
@@ -346,6 +347,7 @@
           "external_contract": "DIvI’ qaSpu’qa’ (veng)"
         },
         "fields": {
+          "publicUrl": "Hoch He",
           "topic": "Doch",
           "materialUrl": "ghojmoHmeH De’",
           "startDate": "tagh jaj",
@@ -364,7 +366,9 @@
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
           "visibility": "leghlu"
-        }
+        },
+        "copyLink": "Hoch He yIghItlhqa'",
+        "copied": "ghItlhqa'lu'ta'"
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
@@ -471,20 +475,7 @@
       "locationPicker": {
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
         "change": "choH",
-        "edit": "choH",
         "noVenueHint": "Daq pagh. veng vavmey neH luleghlu’.",
-        "memberNotesLabel": "ghom De’ (vavmey je ghItlh)",
-        "memberNotesFieldLabel": "vavmey je ghItlh De’",
-        "memberNotesPlaceholder": "Daq mIw, mIv pa’, baH — vavmey poQ.",
-        "memberNotesHint": "tuq ’ej ghom lu’leghlu’.",
-        "staffNotesLabel": "Qu’ De’ (ra’wI’ je Gedu neH)",
-        "staffNotesFieldLabel": "Qu’ neH",
-        "staffNotesPlaceholder": "lojmIt nguq, lojmIt rIm, pa’ nguq, ’Iv tlhob.",
-        "staffNotesHint": "vavmey ’ej ghom luleghbe’.",
-        "addressLabel": "Daq mIw",
-        "addressPlaceholder": "He, postnumber, veng",
-        "noMemberNotes": "ghom De’ pagh.",
-        "noStaffNotes": "Qu’ De’ pagh.",
         "chooseMunicipality": "veng yIwIv",
         "municipalityPickerTitle": "veng yIwIv",
         "chooseVenue": "Daq yIwIv",
@@ -710,9 +701,11 @@
         "searchGedu": "Gedu yISam…",
         "searchMunicipality": "veng yISam…",
         "noResults": "pagh SammoHlu’.",
+        "search": "pong lo'taHvIS ngoQ nej",
+        "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
-        "clear": "wIvmey yIteq",
-        "noMatches": "wIvpu’bogh DaqmeyvaD pagh {plural} tu’lu’."
+        "clear": "yIteq",
+        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!"
       },
       "geduPicker": {
         "searchPlaceholder": "pong, qoj ’ehmaH yInej…",
@@ -837,6 +830,19 @@
           "standard": "ghomHom Qu’mey je Huch nob motlh lo’. Segh ngu’ nob, vaj naDev choHlaH pagh."
         },
         "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
+      },
+      "sessions": {
+        "title": "may’mey",
+        "groupSelectorAria": "ghom’a’ yIwIv",
+        "untitledGroup": "ghom’a’ pong Hutlh",
+        "noGroups": "ngIq vamvaD ghommey tu’lu’be’, vaj qonta’ghach tu’lu’be’.",
+        "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
+        "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
+        "addressLabel": "Daq ngu’wI’",
+        "addressPlaceholder": "He, mI’, veng",
+        "addAddress": "Daq ngu’wI’ yIchel",
+        "editAddress": "Daq ngu’wI’ yIchoH",
+        "addressSaveFailed": "Daq ngu’wI’ pollu’be’. yIboq."
       }
     },
     "users": {
@@ -1349,9 +1355,9 @@
       "presentLabel": "pawpu’",
       "absentLabel": "pawbe’",
       "unmarkedLabel": "ngu’lu’be’",
-      "staffNoteLabel": "Gedupu’ neH",
+      "staffNoteLabel": "Gedupu’ che’wI’pu’ je",
       "familyNoteLabel": "qorDu’pu’ lulaD",
-      "staffNoteTitle": "may’ qonta’ — Gedupu’ neH",
+      "staffNoteTitle": "may’ qonta’ — Gedupu’ che’wI’pu’ je",
       "staffNoteHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffNotePlaceholder": "latlh Gedu Sovnis Hoch — ’ej pegh qonnIS Hoch: wanI’ qab, joy’taHghach, QujwI’ Daqelbogh je.",
       "attendanceLegend": "pawwI’pu’",

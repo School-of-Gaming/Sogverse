@@ -48,6 +48,14 @@ interface SessionFacts {
   endsAt: string;
   reportMarkdown: string;
   groupName: string;
+  /**
+   * Whoever pressed the button, by first name — the gedu who taught the
+   * session, or the admin who sent on their behalf. It is the *sender*, not the
+   * report's author: the mail says "here is the report from X", and a wrong
+   * name there is a claim about a person rather than a cosmetic slip. Since the
+   * claim RPC admits both roles, this is now honestly whichever of them made
+   * the send.
+   */
   geduName: string;
   productId: string;
   productType: ProductType;
@@ -142,15 +150,25 @@ function failureName(reason: unknown): string {
  * The gedu presses **Send to parents** on a past session's card, and this route
  * mails that session's report to every family in the group — one mail per active
  * participation, each in its reader's locale, each linking that child's own page
- * in My SOG — and then one copy to the gedu with every admin in CC.
+ * in My SOG — and then one copy to the sender with every admin in CC.
+ *
+ * **An admin may press it too** (00200). The same panel now sits on the admin
+ * product page, over the same feed component and the same claim, so the route
+ * admits both roles. Nothing about the family mail changes: an admin sending is
+ * an admin sending *this group's* report, and the families receive exactly what
+ * they would have. Three things follow the sender rather than the role, and are
+ * handled below: the name the mail is signed with, the staff copy's address
+ * list (an admin is already in the CC, so they are not also the To), and the
+ * link at the foot of the staff copy, which points at whichever surface the
+ * sender can actually open.
  *
  * **The claim is the authorization.** The first thing that happens is a write:
  * `claim_group_session_report_email`, on the USER-bound client, stamps
- * `report_emailed_at` — and it does so only for the gedu assigned to the group,
- * only when a report is actually written, and only when nobody has sent it yet.
- * Succeeding proves the caller may do this, which is what lets the recipient
- * resolution below run on the admin client without a second gate; and because
- * the claim is one guarded UPDATE, two tabs cannot both send.
+ * `report_emailed_at` — and it does so only for an admin or the gedu assigned
+ * to the group, only when a report is actually written, and only when nobody
+ * has sent it yet. Succeeding proves the caller may do this, which is what lets
+ * the recipient resolution below run on the admin client without a second gate;
+ * and because the claim is one guarded UPDATE, two tabs cannot both send.
  *
  * **The claim is committed before anything is sent, so every way out of the
  * window between them hands it back.** A group that will not read, an admin
@@ -168,16 +186,20 @@ function failureName(reason: unknown): string {
  * mails, which swallow their failures by rule. The staff copy is the one part
  * here that still swallows: it is the record, not the outcome.
  *
- * **The gedu is never told who was mailed.** The addresses and locales the admin
- * client reads (a child's linked parent, every admin) sit outside the caller's
- * own view; nothing read here is echoed back, only counted.
+ * **The sender is never told who was mailed.** The addresses and locales the
+ * admin client reads (a child's linked parent, every admin) sit outside a
+ * gedu's own view; nothing read here is echoed back, only counted. An admin
+ * could read all of it elsewhere, which is not a reason to start returning it
+ * from a route whose answer is a tally.
  */
 export const POST = defineRoute({
   posture: "role-gated",
-  roles: ["gedu"],
+  roles: ["gedu", "admin"],
   // Mailing every family in a group is a trust boundary. Group assignment
   // already implies an admin certified the educator, so this declares the
-  // posture rather than narrowing who gets through.
+  // posture rather than narrowing who gets through. The gate applies the
+  // certification test only to a caller whose role is `gedu`, so adding admin
+  // above widens the roles without weakening anything for educators.
   requireCertifiedGedu: true,
   body: emailSessionReportBody,
   response: emailSessionReportResponse,
@@ -402,9 +424,28 @@ export const POST = defineRoute({
       try {
         await sendStaffCopy({
           facts,
-          geduEmail: profile.email,
-          geduLocale: resolveLocale(profile.locale),
-          adminEmails: admins.map((admin) => admin.email),
+          senderEmail: profile.email,
+          senderLocale: resolveLocale(profile.locale),
+          // The sender's own address is dropped from the CC. It matters only
+          // when the sender IS an admin, where To and CC would otherwise name
+          // the same mailbox and Brevo would deliver the copy twice. Compared
+          // case-insensitively because an address is not case-sensitive in
+          // practice and a stored capital would defeat the whole check.
+          adminEmails: admins
+            .map((admin) => admin.email)
+            .filter(
+              (email) =>
+                email.toLowerCase() !== profile.email.toLowerCase(),
+            ),
+          // The staff copy's link goes wherever the SENDER can actually open
+          // this session. A gedu's workspace is role-gated to gedus, so mailing
+          // an admin that URL would hand them a link the proxy bounces; the
+          // admin product page is the same session record read by the surface
+          // they pressed the button on.
+          workspacePath:
+            profile.role === "admin"
+              ? ROUTES.admin.product(facts.productType, facts.productId)
+              : ROUTES.gedu.assignedProduct(facts.productType, facts.productId),
         });
       } catch (error) {
         console.error(
@@ -501,50 +542,56 @@ async function sendFamilyMail(
 /**
  * The same template once more, for the people who sent it. The group's name
  * takes the child's slot in the intro ("here's Marianne's report from
- * Kettukallio"), and the link is the gedu workspace's page for the PRODUCT — the
- * gedu routes are keyed by product, and the page resolves the gedu's own group.
+ * Kettukallio"), and the link is whichever product surface the sender can open
+ * — the gedu workspace for an educator (keyed by product; the page resolves
+ * their own group), the admin product page for an admin. The caller decides
+ * that, because the caller is what knows who sent it.
  */
 async function sendStaffCopy({
   facts,
-  geduEmail,
-  geduLocale,
+  senderEmail,
+  senderLocale,
   adminEmails,
+  workspacePath,
 }: {
   facts: SessionFacts;
-  geduEmail: string;
-  geduLocale: SupportedLocale;
+  senderEmail: string;
+  senderLocale: SupportedLocale;
+  /** Every admin except the sender — see the call site for why. */
   adminEmails: string[];
+  /** Path (not URL) to the sender's own view of this product. */
+  workspacePath: string;
 }): Promise<void> {
-  const t = await getEmailTranslator(geduLocale);
+  const t = await getEmailTranslator(senderLocale);
   const productName =
-    resolveTranslation(facts.productTranslations, geduLocale)?.name ?? "";
+    resolveTranslation(facts.productTranslations, senderLocale)?.name ?? "";
 
   const params = {
     gamerName: facts.groupName,
     geduName: facts.geduName,
     productName,
     groupName: facts.groupName,
-    sessionDate: formatDate(facts.startsAt, geduLocale, {
+    sessionDate: formatDate(facts.startsAt, senderLocale, {
       dateStyle: "full",
       timeZone: facts.productTimezone,
     }),
     sessionTime: formatTimeRange(
       facts.startsAt,
       facts.endsAt,
-      geduLocale,
+      senderLocale,
       facts.productTimezone,
     ),
     reportMarkdown: facts.reportMarkdown,
-    productUrl: `${facts.origin}${ROUTES.gedu.assignedProduct(facts.productType, facts.productId)}`,
+    productUrl: `${facts.origin}${workspacePath}`,
   };
 
   await sendTransactionalEmail({
     fromEmail: SENDER_EMAIL,
     fromName: SENDER_NAME,
-    toEmail: geduEmail,
+    toEmail: senderEmail,
     cc: adminEmails,
     subject: sessionReportSubject(t, params),
-    htmlContent: buildSessionReportEmail(t, geduLocale, params),
+    htmlContent: buildSessionReportEmail(t, senderLocale, params),
     // Product mail, so the support inbox as everywhere else — an admin reading
     // the copy who hits reply is asking us something, not writing to the gedu.
     replyToEmail: SUPPORT_EMAIL,

@@ -262,6 +262,7 @@
         "empty": "No {plural} yet. Click New {label} to create one.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
+        "online": "Online",
         "unlisted": "unlisted",
         "untitled": "(untitled)",
         "missingGeduFee": "Gedu fee missing",
@@ -298,6 +299,7 @@
           "external_contract": "External contract (municipality)"
         },
         "fields": {
+          "publicUrl": "Public link",
           "topic": "Topic",
           "materialUrl": "Lesson material",
           "startDate": "Start date",
@@ -316,7 +318,9 @@
           "tag": "Designed for",
           "regionLock": "Region lock",
           "visibility": "Visibility"
-        }
+        },
+        "copyLink": "Copy public link",
+        "copied": "Copied"
       },
       "editPage": {
         "back": "Back to product",
@@ -423,20 +427,7 @@
       "locationPicker": {
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",
-        "edit": "Edit",
         "noVenueHint": "No physical venue. Parents in this municipality will see the club when they browse.",
-        "memberNotesLabel": "Member-visible notes",
-        "memberNotesFieldLabel": "Notes shown to parents and gamers",
-        "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
-        "memberNotesHint": "Shown to parents and gamers on the product detail page.",
-        "staffNotesLabel": "Staff notes (admin + Gedu only)",
-        "staffNotesFieldLabel": "Staff-only notes",
-        "staffNotesPlaceholder": "Gate codes, back-entrance details, room keys, who to ask at the front desk.",
-        "staffNotesHint": "Never shown to parents or gamers.",
-        "addressLabel": "Address",
-        "addressPlaceholder": "Street, postal code, city",
-        "noMemberNotes": "No member-visible notes for this site.",
-        "noStaffNotes": "No staff notes for this site.",
         "chooseMunicipality": "Choose a municipality",
         "municipalityPickerTitle": "Choose a municipality",
         "chooseVenue": "Choose a venue",
@@ -662,9 +653,11 @@
         "searchGedu": "Search Gedus…",
         "searchMunicipality": "Search municipalities…",
         "noResults": "No matches.",
+        "search": "Search products by name",
+        "searchPlaceholder": "Search by name…",
         "showing": "Showing {count} of {total}",
-        "clear": "Clear filters",
-        "noMatches": "No {plural} match the selected filters."
+        "clear": "Clear",
+        "noMatches": "No {plural} match the current search and filters."
       },
       "geduPicker": {
         "searchPlaceholder": "Search name or email…",
@@ -789,6 +782,19 @@
           "standard": "Clubs and paid events are sold at Finland’s standard rate. The rate follows from the product type and can’t be changed here."
         },
         "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
+      },
+      "sessions": {
+        "title": "Sessions",
+        "groupSelectorAria": "Choose a group",
+        "untitledGroup": "Untitled group",
+        "noGroups": "This product has no groups yet, so there is nothing recorded against it.",
+        "loadFailed": "The session record could not be loaded. Reload the page to try again.",
+        "loading": "Loading this product's session record.",
+        "addressLabel": "Venue address",
+        "addressPlaceholder": "Street, postal code, city",
+        "addAddress": "Add address",
+        "editAddress": "Edit address",
+        "addressSaveFailed": "The address didn’t save. Try again."
       }
     },
     "users": {
@@ -1305,9 +1311,9 @@
       "presentLabel": "Present",
       "absentLabel": "Absent",
       "unmarkedLabel": "Not marked",
-      "staffNoteLabel": "Gedus only",
+      "staffNoteLabel": "Gedus and admins",
       "familyNoteLabel": "Families see this",
-      "staffNoteTitle": "Session note — Gedus only",
+      "staffNoteTitle": "Session note — Gedus and admins",
       "staffNoteHint": "Only Gedus and admins can see this. Families never do.",
       "staffNotePlaceholder": "Anything another Gedu should know — and anything you need on record privately: an incident, bullying, a worry about a gamer.",
       "attendanceLegend": "Attendance",

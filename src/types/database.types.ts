@@ -1861,6 +1861,10 @@ export type Database = {
       }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       get_admin_dashboard: { Args: never; Returns: Json }
+      get_admin_product_sessions: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json

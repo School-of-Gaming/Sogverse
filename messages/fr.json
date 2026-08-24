@@ -262,6 +262,7 @@
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
+        "online": "En ligne",
         "unlisted": "hors catalogue",
         "untitled": "(sans titre)",
         "missingGeduFee": "Rémunération Gedu manquante",
@@ -298,6 +299,7 @@
           "external_contract": "Contrat externe (commune)"
         },
         "fields": {
+          "publicUrl": "Lien public",
           "topic": "Thème",
           "materialUrl": "Matériel pédagogique",
           "startDate": "Date de début",
@@ -316,7 +318,9 @@
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
           "visibility": "Visibilité"
-        }
+        },
+        "copyLink": "Copier le lien public",
+        "copied": "Copié"
       },
       "editPage": {
         "back": "Retour au produit",
@@ -423,20 +427,7 @@
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
-        "edit": "Modifier",
         "noVenueHint": "Aucun lieu physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
-        "memberNotesLabel": "Notes visibles par les membres",
-        "memberNotesFieldLabel": "Notes affichées aux parents et aux joueurs",
-        "memberNotesPlaceholder": "Détails d’adresse, stationnement, accessibilité — tout ce que les parents doivent savoir.",
-        "memberNotesHint": "Affichées aux parents et aux joueurs sur la page de détail du produit.",
-        "staffNotesLabel": "Notes internes (admin et Gedu uniquement)",
-        "staffNotesFieldLabel": "Notes réservées à l’équipe",
-        "staffNotesPlaceholder": "Codes de portail, entrée de service, clés des salles, à qui s’adresser à l’accueil.",
-        "staffNotesHint": "Jamais affichées aux parents ni aux joueurs.",
-        "addressLabel": "Adresse",
-        "addressPlaceholder": "Rue, code postal, ville",
-        "noMemberNotes": "Aucune note visible par les membres pour ce site.",
-        "noStaffNotes": "Aucune note interne pour ce site.",
         "chooseMunicipality": "Choisir une commune",
         "municipalityPickerTitle": "Choisir une commune",
         "chooseVenue": "Choisir un site",
@@ -662,9 +653,11 @@
         "searchGedu": "Rechercher des Gedus…",
         "searchMunicipality": "Rechercher des communes…",
         "noResults": "Aucun résultat.",
+        "search": "Rechercher un produit par son nom",
+        "searchPlaceholder": "Rechercher par nom…",
         "showing": "Affichage de {count} sur {total}",
-        "clear": "Effacer les filtres",
-        "noMatches": "Pas de {plural} correspondant aux filtres sélectionnés."
+        "clear": "Effacer",
+        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés."
       },
       "geduPicker": {
         "searchPlaceholder": "Rechercher un nom ou un e-mail…",
@@ -789,6 +782,19 @@
           "standard": "Les clubs et les événements payants sont vendus au taux normal finlandais. Le taux découle du type de produit et ne se modifie pas ici."
         },
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
+      },
+      "sessions": {
+        "title": "Séances",
+        "groupSelectorAria": "Choisir un groupe",
+        "untitledGroup": "Groupe sans titre",
+        "noGroups": "Ce produit n’a pas encore de groupe, il n’y a donc rien d’enregistré.",
+        "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
+        "loading": "Chargement du suivi des séances de ce produit.",
+        "addressLabel": "Adresse du lieu",
+        "addressPlaceholder": "Rue, code postal, ville",
+        "addAddress": "Ajouter une adresse",
+        "editAddress": "Modifier l’adresse",
+        "addressSaveFailed": "L’adresse n’a pas été enregistrée. Réessayez."
       }
     },
     "users": {
@@ -1305,9 +1311,9 @@
       "presentLabel": "Présent",
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",
-      "staffNoteLabel": "Gedus uniquement",
+      "staffNoteLabel": "Gedus et admins",
       "familyNoteLabel": "Visible par les familles",
-      "staffNoteTitle": "Note de séance — Gedus uniquement",
+      "staffNoteTitle": "Note de séance — Gedus et admins",
       "staffNoteHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffNotePlaceholder": "Tout ce qu’un autre Gedu devrait savoir — et tout ce que vous devez consigner en privé : un incident, du harcèlement, une inquiétude au sujet d’un gamer.",
       "attendanceLegend": "Présences",
