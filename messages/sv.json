@@ -956,7 +956,7 @@
       "successDescription": "Ditt lösenord har uppdaterats."
     },
     "registerGedu": {
-      "title": "Skapa ditt Sogverse-spelfostrarkonto",
+      "title": "Skapa ditt spelfostrarkonto hos School of Gaming",
       "certificationAlertTitle": "Ditt konto måste certifieras",
       "certificationAlertDescription": "Du kan logga in direkt, men en administratör måste certifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du arbeta?",
@@ -1414,10 +1414,10 @@
   },
   "help": {
     "title": "Hjälp",
-    "intro": "Svar på vanliga frågor om Sogverse.",
+    "intro": "Svar på vanliga frågor om School of Gaming.",
     "contact": {
       "heading": "Behöver du hjälp?",
-      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur Sogverse fungerar.",
+      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur School of Gaming fungerar.",
       "emailLabel": "Mejla oss på"
     },
     "faq": {
@@ -2202,7 +2202,7 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Alla rättigheter förbehållna.",
+    "footer": "© {year} School of Gaming. Alla rättigheter förbehållna.",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",

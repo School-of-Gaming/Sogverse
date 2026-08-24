@@ -25,9 +25,12 @@ const HERO_GRADIENT = `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.b
  *   because Gmail Android dark mode shifts the "color" property but preserves gradients.
  */
 export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions): string {
+  // The copyright line names the company that holds the copyright, so it is the
+  // brand alone \u2014 same string the site footer renders, and `SENDER_NAME` rather
+  // than a typed literal, because no name in this directory's markup is typed.
   const footerText = t
     ? t("footer", { year: String(new Date().getFullYear()) })
-    : `\u00a9 ${new Date().getFullYear()} Sogverse. All rights reserved.`;
+    : `\u00a9 ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.`;
   return `<!DOCTYPE html>
 <html lang="${locale}">
 <head>

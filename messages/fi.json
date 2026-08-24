@@ -956,7 +956,7 @@
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
     "registerGedu": {
-      "title": "Luo Sogverse-pelikasvattajatilisi",
+      "title": "Luo School of Gaming -pelikasvattajatilisi",
       "certificationAlertTitle": "Tilisi on hyväksyttävä",
       "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
@@ -1414,10 +1414,10 @@
   },
   "help": {
     "title": "Apu",
-    "intro": "Vastauksia yleisimpiin Sogversea koskeviin kysymyksiin.",
+    "intro": "Vastauksia yleisimpiin School of Gamingia koskeviin kysymyksiin.",
     "contact": {
       "heading": "Tarvitsetko apua?",
-      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin Sogversen toimintaan liittyvissä kysymyksissä.",
+      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin School of Gamingin toimintaan liittyvissä kysymyksissä.",
       "emailLabel": "Sähköpostimme"
     },
     "faq": {
@@ -2202,7 +2202,7 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Kaikki oikeudet pidätetään.",
+    "footer": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",

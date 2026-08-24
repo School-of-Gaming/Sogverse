@@ -956,7 +956,7 @@
       "successDescription": "Your password has been successfully updated."
     },
     "registerGedu": {
-      "title": "Create your Sogverse Gedu account",
+      "title": "Create your School of Gaming Gedu account",
       "certificationAlertTitle": "Your account needs to be certified",
       "certificationAlertDescription": "You can sign in right away, but an admin needs to certify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you work?",
@@ -1414,10 +1414,10 @@
   },
   "help": {
     "title": "Help",
-    "intro": "Answers to common questions about Sogverse.",
+    "intro": "Answers to common questions about School of Gaming.",
     "contact": {
       "heading": "Need a hand?",
-      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how Sogverse works.",
+      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how School of Gaming works.",
       "emailLabel": "Email us at"
     },
     "faq": {
@@ -2834,7 +2834,7 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. All rights reserved.",
+    "footer": "© {year} School of Gaming. All rights reserved.",
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",

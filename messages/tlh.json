@@ -1004,7 +1004,7 @@
       "successDescription": "mu’mey chu’moHlu’. Qapla’!"
     },
     "registerGedu": {
-      "title": "Sogverse Gedu account yIchenmoH",
+      "title": "noH Quj yejHaD Gedu account yIchenmoH",
       "certificationAlertTitle": "patlh DaghajnIS",
       "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
@@ -1458,10 +1458,10 @@
   },
   "help": {
     "title": "boQ",
-    "intro": "Sogverse SeghHommey jatlhlu’.",
+    "intro": "noH Quj yejHaD SeghHommey jatlhlu’.",
     "contact": {
       "heading": "boQ DaneH’a’?",
-      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej Sogverse mIw qaSchugh, maHvaD bIjatlh.",
+      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej noH Quj yejHaD mIw qaSchugh, maHvaD bIjatlh.",
       "emailLabel": "naDev SeH wIje’"
     },
     "faq": {
@@ -2246,7 +2246,7 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Hoch batlh.",
+    "footer": "© {year} noH Quj yejHaD. Hoch batlh.",
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
     "roleGamer": "toy’wI’",
