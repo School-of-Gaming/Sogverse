@@ -318,7 +318,7 @@ export const PREVIEW_SCENES = [
       },
       {
         slug: "phone-widths",
-        label: "320 and 390 px, every locale",
+        label: "360 and 390 px, every locale",
         description:
           "Where the fit is judged: whether five locales' words survive a phone, clipped exactly as a phone clips them.",
       },

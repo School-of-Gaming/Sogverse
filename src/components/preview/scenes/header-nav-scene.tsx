@@ -35,12 +35,14 @@ import type { HeaderNavScenario } from "./header-nav-scenarios";
  * findable as the thing it replaces, and it has to fit on a phone.
  *
  * Fitting is the whole difficulty, and it is why this scene exists rather than a
- * paragraph of arithmetic. At 320px the strip has 296px inside its gutter, and
- * the mark (66px) plus the cog/locale/avatar cluster (134px) take 200 of them
- * before a single word is set. What is left has to carry Shop, Help *and* the
- * new item, in five locales whose words are not the same length — French sets
- * "Boutique" where English sets "Shop". So each option is rendered at 320 and
- * 390px in every locale, with today's header beside it as the control.
+ * paragraph of arithmetic. At the 360px design floor the strip has 336px inside
+ * its gutter, and the mark (66px) plus the cog/locale/avatar cluster (134px)
+ * take 200 of them before a single word is set. What is left has to carry Shop,
+ * Help *and* the new item, in five locales whose words are not the same length —
+ * French sets "Boutique" where English sets "Shop". So each option is rendered
+ * at 360 and 390px in every locale, with today's header beside it as the
+ * control. (360 is the floor per the root CLAUDE.md rule: the Android baseline
+ * width; 320px hardware is written off and only has to degrade gracefully.)
  *
  * A second, independent question rides along: **how the brand is drawn**. The
  * full mark sets "SCHOOL OF GAMING" at about 13% of the badge's height, so at
@@ -57,7 +59,7 @@ import type { HeaderNavScenario } from "./header-nav-scenarios";
  * - **full-width** is where the *design* is judged — each arrangement at real
  *   desktop width, in all three brand treatments, and signed out underneath,
  *   which is how you check that nothing else moves when the item is absent.
- * - **phone-widths** is where the *phone fit* is judged — 320 and 390px in every
+ * - **phone-widths** is where the *phone fit* is judged — 360 and 390px in every
  *   locale, clipped at the frame edge exactly as a phone clips it. The brand
  *   dimension is absent there on purpose: below `sm` all three treatments render
  *   the simple mark alone in a 64px strip, so there is nothing to compare.
@@ -117,7 +119,7 @@ const OPTIONS: readonly {
   {
     option: "none",
     title: "Control — today",
-    note: "The header as it ships: the mark is the only way to My SOG. Here as the control, so the cost of every option below is visible rather than asserted — and because it is already over its 320px budget in three locales.",
+    note: "The header as it ships: the mark is the only way to My SOG. Here as the control, so the cost of every option below is visible rather than asserted. At the 360px floor it fits in all five locales with about 20px of French spare; only written-off 320px hardware ever saw it overflow.",
   },
   {
     option: "trailing-pill",
@@ -171,8 +173,8 @@ const BRANDS: readonly {
   },
 ];
 
-/** The two phone widths worth arguing about: the small floor, and the common one. */
-const PHONE_WIDTHS = [320, 390] as const;
+/** The two phone widths worth arguing about: the design floor, and the common one. */
+const PHONE_WIDTHS = [360, 390] as const;
 type PhoneWidth = (typeof PHONE_WIDTHS)[number];
 
 /** The band where the desktop layout has just switched on and has least room. */
@@ -184,7 +186,7 @@ type SmWidth = (typeof SM_WIDTHS)[number];
  * the sm band. Literal class strings so Tailwind's scanner can see them.
  */
 const PHONE_GRID: Record<PhoneWidth, string> = {
-  320: "grid-cols-[repeat(4,320px)]",
+  360: "grid-cols-[repeat(4,360px)]",
   390: "grid-cols-[repeat(4,390px)]",
 };
 
@@ -194,7 +196,7 @@ const SM_GRID: Record<SmWidth, string> = {
 };
 
 const PHONE_NOTE: Record<PhoneWidth, string> = {
-  320: "The small-phone floor — an iPhone SE, and the narrowest viewport worth supporting.",
+  360: "The design floor — the Android baseline width that nearly every Samsung family phone reports. Anything narrower is a written-off 2013-era iPhone or an accessibility display-zoom, which must degrade gracefully but is not designed for.",
   390: "An iPhone 14/15, and roughly the middle of the modern Android range.",
 };
 
@@ -352,7 +354,7 @@ function FullWidthScenario() {
         </p>
         <p className="max-w-prose text-sm text-muted-foreground">
           Whether any of it fits on a phone is a different question with its own
-          page (<strong>320 and 390 px, every locale</strong>), and so is what the
+          page (<strong>360 and 390 px, every locale</strong>), and so is what the
           wordmark costs where the desktop layout is tightest (
           <strong>640 and 768 px</strong>).
         </p>
