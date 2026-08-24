@@ -62,6 +62,7 @@ import { SimplicityAudit } from "@/components/mascot/exploration/simplicity";
 import { StadiFamily } from "@/components/mascot/exploration/stadi-family";
 import { SurfaceIdeas } from "@/components/mascot/exploration/surfaces";
 import { ChiefEngineerIdeas, GardenerSpotlight } from "@/components/mascot/exploration/team";
+import { ViewportSection } from "@/components/mascot/exploration/viewport-section";
 import { WalkInSpike } from "@/components/mascot/exploration/walk-in";
 
 export const metadata: Metadata = {
@@ -134,6 +135,37 @@ function RuledOut({
  * one list, so a section added below without an entry here is a section
  * nobody finds.
  */
+/**
+ * Placeholder heights (px) for skipped sections — what `contain-intrinsic-size`
+ * reserves while `content-visibility: auto` skips a section's layout and
+ * paint. Estimated from the served page at the default desktop width and
+ * written down rather than measured at runtime (the repo's layout rule). The
+ * accepted tolerance is a few hundred pixels per section: the correction
+ * happens off-screen as a section realises, and on a page this tall it is
+ * under half a percent of scroll travel.
+ */
+const SECTION_HEIGHTS: Record<string, number> = {
+  faces: 1400,
+  people: 3200,
+  legacy: 2600,
+  silmu: 2200,
+  jalo: 1800,
+  animals: 3800,
+  "more-species": 2600,
+  palikka: 1400,
+  team: 2600,
+  simplicity: 3200,
+  surfaces: 2200,
+  motion: 1200,
+  spikes: 1800,
+  dressing: 2400,
+  avatars: 2200,
+  playground: 1400,
+  earlier: 300,
+};
+/** One expanded deep dive is roughly this tall. */
+const DEEP_DIVE_HEIGHT = 4200;
+
 const JUMPS: readonly { id: string; label: string }[] = [
   { id: "faces", label: "The face" },
   { id: "people", label: "The people" },
@@ -161,6 +193,11 @@ const JUMPS: readonly { id: string; label: string }[] = [
 export default function MascotExplorationPage() {
   return (
     <div className="mx-auto max-w-[100rem] px-4 py-10 sm:px-6 lg:px-8">
+      {/* Sections more than a viewport away stop ticking their animations —
+          content-visibility skips their paint, but an unpainted CSS animation
+          still burns style recalculation, and this page carries thousands of
+          keyframe channels. Literal class name on purpose (Tailwind scans). */}
+      <style>{".mascot-offstage * { animation-play-state: paused !important; }"}</style>
       <header className="mb-10 space-y-4">
         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
           A mascot fleet for School of Gaming
@@ -208,7 +245,7 @@ export default function MascotExplorationPage() {
       </header>
 
       <div className="space-y-14">
-        <section id="faces" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="faces" estimatedHeight={SECTION_HEIGHTS["faces"]}>
           <SectionHeader title="The face">
             Everything else on this page inherits this. Two rounds of faces were called creepy
             and soulless, and the fix was not to draw them better — it was to stop drawing a face
@@ -218,9 +255,9 @@ export default function MascotExplorationPage() {
             meet, at every mood?
           </SectionHeader>
           <FaceStudy />
-        </section>
+        </ViewportSection>
 
-        <section id="people" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="people" estimatedHeight={SECTION_HEIGHTS["people"]}>
           <SectionHeader title="The people">
             <strong className="text-foreground">This is the decision that matters most.</strong>{" "}
             The person-shaped hole is the reason this project exists, and an animal in a scarf
@@ -243,13 +280,13 @@ export default function MascotExplorationPage() {
           <div id="stadi" className="scroll-mt-24">
             <StadiFamily />
           </div>
-        </section>
+        </ViewportSection>
 
-        <section id="legacy" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="legacy" estimatedHeight={SECTION_HEIGHTS["legacy"]}>
           <LegacyOverview />
-        </section>
+        </ViewportSection>
 
-        <section id="silmu" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="silmu" estimatedHeight={SECTION_HEIGHTS["silmu"]}>
           <SectionHeader title="Silmu — the mascot we already had">
             The old one-eyed blob, rebuilt into the same system as everything else and renamed,
             because &ldquo;Minion&rdquo; belongs to Universal. Its identity used to be a hat,
@@ -265,9 +302,9 @@ export default function MascotExplorationPage() {
           <div id="legacy-minion" className="scroll-mt-24">
             <LegacyMinionStrip />
           </div>
-        </section>
+        </ViewportSection>
 
-        <section id="jalo" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="jalo" estimatedHeight={SECTION_HEIGHTS["jalo"]}>
           <SectionHeader title="Jalo — the mark that grew feet">
             The other way to answer the same question Silmu answers: instead of a character that
             becomes the brand, the brand mark itself gets a face and two legs. The favicon path
@@ -276,9 +313,9 @@ export default function MascotExplorationPage() {
             stops having characters and starts having a mascot of itself?
           </SectionHeader>
           <JaloStudy />
-        </section>
+        </ViewportSection>
 
-        <section id="animals" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="animals" estimatedHeight={SECTION_HEIGHTS["animals"]}>
           <SectionHeader title="The animals">
             One rig, a head and a tail per species, so a twentieth animal costs about thirty
             lines. This is the cast with the emotional range the humanoids do not have, and it is
@@ -299,9 +336,9 @@ export default function MascotExplorationPage() {
           <div id="metsa" className="scroll-mt-24">
             <MetsaForest />
           </div>
-        </section>
+        </ViewportSection>
 
-        <section id="more-species" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="more-species" estimatedHeight={SECTION_HEIGHTS["more-species"]}>
           <SectionHeader title="More of the cast">
             Three sets that are neither people nor animals, each built to test something the
             other sections cannot. The berries and mushrooms ask whether colour alone can tell
@@ -320,9 +357,9 @@ export default function MascotExplorationPage() {
           <div id="galaksi" className="scroll-mt-24">
             <GalaksiCrew />
           </div>
-        </section>
+        </ViewportSection>
 
-        <section id="palikka" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="palikka" estimatedHeight={SECTION_HEIGHTS["palikka"]}>
           <SectionHeader title="Palikka — the voxel line">
             Two of the thirty-four legacy files are blocky animals, and the first pass refused
             them for looking like Minecraft. That refusal was overturned: the rule forbids
@@ -333,9 +370,9 @@ export default function MascotExplorationPage() {
             partner?
           </SectionHeader>
           <PalikkaLine />
-        </section>
+        </ViewportSection>
 
-        <section id="team" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="team" estimatedHeight={SECTION_HEIGHTS["team"]}>
           <SectionHeader title="The team">
             Three characters that stand for real people here rather than for a user role: the
             Gardener who tends the stories, Reksi the Princi-Pal in both of the bodies the legacy
@@ -350,17 +387,17 @@ export default function MascotExplorationPage() {
           <div id="engineer" className="scroll-mt-24">
             <ChiefEngineerIdeas />
           </div>
-        </section>
+        </ViewportSection>
 
-        <section id="simplicity" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="simplicity" estimatedHeight={SECTION_HEIGHTS["simplicity"]}>
           <SimplicityAudit />
-        </section>
+        </ViewportSection>
 
-        <section id="surfaces" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="surfaces" estimatedHeight={SECTION_HEIGHTS["surfaces"]}>
           <SurfaceIdeas />
-        </section>
+        </ViewportSection>
 
-        <section id="motion" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="motion" estimatedHeight={SECTION_HEIGHTS["motion"]}>
           <SectionHeader title="Motion">
             Every pose owns a real animation rather than a shared wobble — walking walks, jumping
             jumps, typing types — and the standing one is the one to watch: it breathes, blinks
@@ -369,9 +406,9 @@ export default function MascotExplorationPage() {
             standing in it. The question: does the idle look alive, or does it look busy?
           </SectionHeader>
           <MotionRow />
-        </section>
+        </ViewportSection>
 
-        <section id="spikes" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="spikes" estimatedHeight={SECTION_HEIGHTS["spikes"]}>
           <SectionHeader title="Spikes — deliberate one-file experiments">
             Two questions that could not be answered by arguing, each answered by building the
             thing once in a single throwaway file that nothing else imports. They get promoted
@@ -395,9 +432,9 @@ export default function MascotExplorationPage() {
             </p>
             <BackViewSpike />
           </div>
-        </section>
+        </ViewportSection>
 
-        <section id="dressing" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="dressing" estimatedHeight={SECTION_HEIGHTS["dressing"]}>
           <SectionHeader title="Dressing up">
             Clothes, furniture, weather and places, none of which belong to any one species. A
             season is a set of accessories resolved from today&rsquo;s date in Helsinki, a desk
@@ -417,9 +454,9 @@ export default function MascotExplorationPage() {
           <div id="saaristo" className="scroll-mt-24">
             <SaaristoPack />
           </div>
-        </section>
+        </ViewportSection>
 
-        <section id="avatars" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="avatars" estimatedHeight={SECTION_HEIGHTS["avatars"]}>
           <SectionHeader title="Avatars">
             A side track on the same machinery, and the most likely first place any of this ships.
             Today every user gets an identicon — a pixel grid seeded from their id — and the
@@ -428,16 +465,16 @@ export default function MascotExplorationPage() {
             pixels, can you find the same person twice?
           </SectionHeader>
           <AvatarStudy />
-        </section>
+        </ViewportSection>
 
-        <section id="playground" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="playground" estimatedHeight={SECTION_HEIGHTS["playground"]}>
           <SectionHeader title="Playground">
             Every control on the component, live, on a fixed stage so nothing on the page moves
             as you flip through them. This is the place to try the combination you have in mind
             rather than the ones we chose to show you.
           </SectionHeader>
           <Playground />
-        </section>
+        </ViewportSection>
 
         <section id="notes" className="scroll-mt-24 space-y-4">
           <SectionHeader title="Notes on how this is built">
@@ -733,7 +770,7 @@ export default function MascotExplorationPage() {
           </Card>
         </section>
 
-        <section id="earlier" className="scroll-mt-24 space-y-4">
+        <ViewportSection id="earlier" estimatedHeight={SECTION_HEIGHTS["earlier"]}>
           <SectionHeader title="Earlier rounds">
             Two studies that were the argument once and are not any more. The arm rebuild is
             settled — a limb is two tapered segments and a derived joint, and every character on
@@ -765,7 +802,7 @@ export default function MascotExplorationPage() {
               </div>
             </Collapsible>
           </div>
-        </section>
+        </ViewportSection>
 
         <section id="deep" className="scroll-mt-24 space-y-3">
           <SectionHeader title="Deep dive, one concept at a time">
@@ -795,11 +832,16 @@ export default function MascotExplorationPage() {
             </CardContent>
           </Card>
           {CONCEPTS.map((def) => (
-            <div key={def.id} id={`deep-${def.id}`} className="scroll-mt-24">
+            <ViewportSection
+              key={def.id}
+              id={`deep-${def.id}`}
+              estimatedHeight={DEEP_DIVE_HEIGHT}
+              className="scroll-mt-24"
+            >
               <Collapsible title={def.species} subtitle={def.kind} defaultOpen>
                 <ConceptSection conceptId={def.id} />
               </Collapsible>
-            </div>
+            </ViewportSection>
           ))}
         </section>
       </div>

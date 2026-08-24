@@ -122,7 +122,14 @@ second.
   hedge. Every pose owns a real animation (walking walks, jumping jumps, typing types).
   The same SVG must render exactly as a static image when the stylesheet is stripped
   (emails, marketing images). **Do not pre-optimise**: the exploration page animates
-  everything at once on purpose because that is the better demo.
+  everything at once on purpose because that is the better demo. **Amended
+  2026-08-24, at nineteen expanded species:** "everything at once" survives as
+  "everything the reader can see" — off-screen sections skip layout and paint
+  (content-visibility with written-down placeholder heights) and pause their
+  animations beyond one viewport of slack, and renders under 64px are static by
+  default (a breath there is sub-pixel). Measured on the served page: 6,213
+  running animations at 6 fps before, 881 at 61 fps after, with every anchor
+  still landing. On-screen behaviour is unchanged.
 - **Four Finnish seasons + holidays, automatic.** Looks for talvi / kevät / kesä /
   syksy and a small holiday set, resolved in Europe/Helsinki from a pure
   date-to-look helper, with an "auto" path so a product surface just dresses for

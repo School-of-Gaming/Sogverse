@@ -125,6 +125,13 @@ export type MascotProps = {
   /**
    * Idle and pose motion. Off gives the exact same picture, standing still on
    * the pose's own key frame.
+   *
+   * The default is size-aware: below 64 rendered pixels a breath, a blink or a
+   * weight shift is under a pixel of travel, so the animation is invisible
+   * while its style recalculation still costs — and a page of small renders
+   * (a bust ladder, a 25-variant grid) multiplies that cost by hundreds. The
+   * avatar view was already always static for the same reason; this extends
+   * the rule to every small render unless a caller explicitly asks otherwise.
    */
   animated?: boolean;
   /**
@@ -190,7 +197,7 @@ export function Mascot({
   size = 160,
   detail,
   crop = "full",
-  animated = true,
+  animated = size >= 64,
   look,
   now,
   faceStyle = "symbol",
