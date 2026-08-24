@@ -20,6 +20,11 @@ import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
+// TEMP: logo-glow exploration — strip before merge.
+import {
+  LogoGlowScene,
+  isLogoGlowScenario,
+} from "./scenes/logo-glow-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
@@ -103,6 +108,11 @@ const SCENE_RENDERERS: Record<
   "gamer-club": (scenario) => {
     if (!isFamilyProductScenario(scenario)) notFound();
     return <FamilyProductPageScene audience="gamer" scenario={scenario} />;
+  },
+  // TEMP: logo-glow exploration — strip before merge (this whole entry).
+  "logo-glow": (scenario) => {
+    if (!isLogoGlowScenario(scenario)) notFound();
+    return <LogoGlowScene scenario={scenario} />;
   },
   "admin-dashboard": (scenario) => {
     if (!isAdminDashboardScenario(scenario)) notFound();

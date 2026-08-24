@@ -33,7 +33,14 @@ interface AuthContextType {
   unfreezeAuthState: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// TEMP: logo-glow exploration — strip before merge (back to a module-private
+// `const AuthContext = ...`). Exported so an admin-only preview scene can wrap
+// the real Header in a fixture auth value and render it as a signed-out visitor
+// or as a parent, neither of whom the admin viewing the scene actually is.
+// Nothing in the app should consume this directly — use `useAuth()`.
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
 
 interface AuthProviderProps {
   children: ReactNode;

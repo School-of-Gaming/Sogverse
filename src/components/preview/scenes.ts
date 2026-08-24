@@ -302,6 +302,27 @@ export const PREVIEW_SCENES = [
       { slug: "active-club", label: "Club — remote, session in progress" },
     ],
   },
+  // TEMP: logo-glow exploration — strip before merge (this whole entry).
+  {
+    surface: "logo-glow",
+    title: "Header logo — “you are here” treatments",
+    description:
+      "One real header per candidate treatment for the logo's on-its-own-target state, stacked at full width: nothing, two glows, a radial backdrop, and two non-glow rhymes of the nav's active state. Temporary — this scene goes when the treatment is picked.",
+    chrome: "public",
+    scenarios: [
+      {
+        slug: "signed-out",
+        label: "Signed-out visitor, home page",
+        description: "The bare strip, where the mark has the left end to itself.",
+      },
+      {
+        slug: "parent",
+        label: "Signed-in parent, My SOG",
+        description:
+          "The busier strip, with a cog and an identicon competing for the same eye.",
+      },
+    ],
+  },
   {
     surface: "admin-dashboard",
     title: "Admin dashboard (draft redesign)",
