@@ -875,12 +875,6 @@
       "joined": "muv",
       "unknown": "Sovbe’lu’",
       "referralCode": "ghum ngoq",
-      "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
-      "gender": {
-        "boy": "loDHom",
-        "girl": "be’Hom",
-        "non_binary": "ghob ghajbe’"
-      },
       "linkedGamers": "toy’wI’pu’ jonlu’",
       "linkedParents": "vav/SoSmey jonlu’",
       "unnamedGamer": "pong Hutlh toy’wI’",
@@ -891,6 +885,21 @@
       "unassignedGroup": "ghom Sambe’",
       "needsGroup": "ghom poQlu’",
       "untitledProduct": "Doch pong Hutlh",
+      "gamerDetails": {
+        "title": "QujwI’ De’",
+        "edit": "De’ yIchoH!",
+        "birthMonthLabel": "qoSlIj jar",
+        "birthYearLabel": "qoSlIj DIS",
+        "genderLabel": "ghob",
+        "genderUnset": "Sovbe’lu’",
+        "saveError": "De’ polta’be’. yInIDqa’!",
+        "gender": {
+          "boy": "loDHom",
+          "girl": "be’Hom",
+          "non_binary": "ghob ghajbe’"
+        },
+        "ageYears": "{age, plural, one {# DIS} other {# DIS}}"
+      },
       "gameAccounts": {
         "title": "QujmeH tetlh",
         "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."

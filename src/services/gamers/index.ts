@@ -1,4 +1,8 @@
-export { GamerService, type GamerUpdate } from "./gamers.service";
+export {
+  GamerService,
+  type GamerProfileEdit,
+  type GamerUpdate,
+} from "./gamers.service";
 export {
   gamerKeys,
   useMyGamers,
@@ -7,5 +11,6 @@ export {
   useLinkedParents,
   useCreateGamer,
   useUpdateGamer,
+  useUpdateGamerProfile,
   useGamerProfile,
 } from "./gamers.queries";

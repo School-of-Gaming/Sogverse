@@ -827,12 +827,6 @@
       "joined": "Joined",
       "unknown": "Unknown",
       "referralCode": "Referral code",
-      "ageYears": "{age, plural, one {# year old} other {# years old}}",
-      "gender": {
-        "boy": "Boy",
-        "girl": "Girl",
-        "non_binary": "Non-binary"
-      },
       "linkedGamers": "Linked Gamers",
       "linkedParents": "Linked Parents",
       "unnamedGamer": "Unnamed Gamer",
@@ -843,6 +837,21 @@
       "unassignedGroup": "No group assigned",
       "needsGroup": "Needs group assignment",
       "untitledProduct": "Untitled product",
+      "gamerDetails": {
+        "title": "Personal details",
+        "edit": "Edit personal details",
+        "birthMonthLabel": "Birth month",
+        "birthYearLabel": "Birth year",
+        "genderLabel": "Gender",
+        "genderUnset": "Not specified",
+        "saveError": "Couldn’t save these details. Please try again.",
+        "gender": {
+          "boy": "Boy",
+          "girl": "Girl",
+          "non_binary": "Non-binary"
+        },
+        "ageYears": "{age, plural, one {# year old} other {# years old}}"
+      },
       "gameAccounts": {
         "title": "Game accounts",
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."

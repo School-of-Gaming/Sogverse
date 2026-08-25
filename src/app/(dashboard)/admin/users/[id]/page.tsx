@@ -13,7 +13,8 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
-import { cn, computeAge, formatDate } from "@/lib/utils";
+import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
+import { cn, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
@@ -267,23 +268,22 @@ export default async function AdminUserDetailPage({
                 )}
               </div>
             )}
+            {/* Age and gender, with a pencil that opens their editor. The line
+                itself is a client island seeded with the row this page already
+                read, so it paints complete and restates itself after a save
+                without a reload. Absent only when that read failed, which is
+                what the read-only line before it did with a missing row. */}
             {isGamer && gamerProfile && (
-              <p className="text-sm text-muted-foreground">
-                <span>{t('ageYears', { age: computeAge(gamerProfile.date_of_birth, timeZone) })}</span>
-                {gamerProfile.gender && (
-                  <>
-                    {/* eslint-disable-next-line i18next/no-literal-string -- visual separator between two i18n strings, not user-facing copy */}
-                    <span aria-hidden="true"> · </span>
-                    <span>{t(`gender.${gamerProfile.gender}`)}</span>
-                  </>
-                )}
-              </p>
+              <GamerPersonalDetails gamerId={userId} initialProfile={gamerProfile} />
             )}
             {/* The Minecraft row used to sit here, read-only. It moved into the
                 editable Game accounts card below: an admin who can change these
                 needs one place that shows both platforms and holds the outcome
                 of a save, and a summary line that could go stale the moment the
-                card underneath it was used is the wrong second home. */}
+                card underneath it was used is the wrong second home. The line
+                above kept its place for the opposite reason — its editor is a
+                dialog over the same values, so there is no second home to
+                disagree with. */}
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGE_STYLES[profile.role]}>
                 {c(ROLE_LABEL_KEYS[profile.role])}

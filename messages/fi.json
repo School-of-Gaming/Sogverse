@@ -827,12 +827,6 @@
       "joined": "Liittynyt",
       "unknown": "Tuntematon",
       "referralCode": "Viittauskoodi",
-      "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
-      "gender": {
-        "boy": "Poika",
-        "girl": "Tyttö",
-        "non_binary": "Muunsukupuolinen"
-      },
       "linkedGamers": "Liitetyt pelaajat",
       "linkedParents": "Liitetyt vanhemmat",
       "unnamedGamer": "Nimetön pelaaja",
@@ -843,6 +837,21 @@
       "unassignedGroup": "Ei ryhmää määritetty",
       "needsGroup": "Tarvitsee ryhmän",
       "untitledProduct": "Nimetön tuote",
+      "gamerDetails": {
+        "title": "Henkilötiedot",
+        "edit": "Muokkaa henkilötietoja",
+        "birthMonthLabel": "Syntymäkuukausi",
+        "birthYearLabel": "Syntymävuosi",
+        "genderLabel": "Sukupuoli",
+        "genderUnset": "Ei määritelty",
+        "saveError": "Tietojen tallentaminen epäonnistui. Yritä uudelleen.",
+        "gender": {
+          "boy": "Poika",
+          "girl": "Tyttö",
+          "non_binary": "Muunsukupuolinen"
+        },
+        "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}"
+      },
       "gameAccounts": {
         "title": "Pelitilit",
         "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
