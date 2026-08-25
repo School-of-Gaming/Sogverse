@@ -1493,8 +1493,8 @@
     "hasNote": "Gedupu’vaD qonta’ tu’lu’",
     "openNote": "{name} qonta’ — Gedupu’vaD",
     "noteTitle": "{name} qonta’",
-    "notePrivacy": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq ratlh qonta’.",
-    "notePlaceholder": "ghomvamDaq {name} Sovnis latlh Gedu — nuq?",
+    "notePrivacy": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq reH ratlh qonta’.",
+    "notePlaceholder": "ghomvamDaq {name} qonta’.",
     "noteLastEdited": "Qav choHwI’: {name}"
   },
   "richText": {

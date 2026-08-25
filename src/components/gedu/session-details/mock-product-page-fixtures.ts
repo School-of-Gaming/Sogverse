@@ -734,16 +734,20 @@ const ROSTER_SCENARIO_SPECS: readonly EntrySpec[] = [
 ];
 
 /**
- * The club's staff-only roster overlay: three newcomers and two notes.
+ * The club's staff-only roster overlay: four newcomers and two notes.
  *
- * **Three newcomers, at three points in the fade, and that is the whole reason
- * there are three.** The badge does not switch off on a cliff — it thins out
- * across the member's first month — so a single newcomer proves only that the
- * badge renders. Emil joined two days ago and is at full strength, Siiri
- * eleven days ago sits about the middle, and Hilda at twenty-four is nearly
- * spent and about to disappear. Stacked in one rail they can be compared
- * against each other in a glance, which is the only way to tell whether the
- * faintest one is still legible against a card.
+ * **Four newcomers, evenly spread across the window — one per pip of the
+ * badge's meter.** The badge drains a four-pip block across a member's first
+ * month, so four members spread across the window show every state it has at
+ * once. Emil at one day is the full block, Siiri at ten and Marja at nineteen
+ * are the middle readings, and Hilda at twenty-eight is the last one before the
+ * badge stops altogether. Stacked in one rail they can be read against each
+ * other in a glance.
+ *
+ * **Marja is deliberately one of them.** She is the parent holding a seat of
+ * her own, and an adult is as new to a group as a child is — so the badge has
+ * to sit beside the Parent badge on the same wrapping line without either
+ * displacing the other.
  *
  * **Two notes, and one of them is on a newcomer on purpose.** A note dot on the
  * avatar and a badge beside the name are two marks on one row, and the question
@@ -767,9 +771,10 @@ function clubMemberFlair(now: Date): MemberFlairFixture {
 
   return {
     newcomers: {
-      [SESSION_FEED_GAMER_IDS.emil]: daysAgo(2),
-      [SESSION_FEED_GAMER_IDS.siiri]: daysAgo(11),
-      [SESSION_FEED_GAMER_IDS.hilda]: daysAgo(24),
+      [SESSION_FEED_GAMER_IDS.emil]: daysAgo(1),
+      [SESSION_FEED_GAMER_IDS.siiri]: daysAgo(10),
+      [SESSION_FEED_ADULT_ID]: daysAgo(19),
+      [SESSION_FEED_GAMER_IDS.hilda]: daysAgo(28),
     },
     notes: {
       [SESSION_FEED_GAMER_IDS.siiri]:

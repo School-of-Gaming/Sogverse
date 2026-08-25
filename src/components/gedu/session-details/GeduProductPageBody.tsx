@@ -394,7 +394,9 @@ export function GeduProductPageBody({
                   the message files. */}
               <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
                 <Users className="h-4 w-4" aria-hidden />
-                {t("participantCount", { count: assignedGroup.participant_count })}
+                {t("participantCount", {
+                  count: assignedGroup.participant_count,
+                })}
               </span>
             </p>
           )}
@@ -838,8 +840,9 @@ function GroupRailCard({
                   (memberFlair?.notes[member.participant_id] ?? "").length > 0
                 }
                 // Handed to every row, not only the ones already written
-                // about: an empty note is what the add flow opens, and most of
-                // the roster is that case.
+                // about: an empty note is what the add flow opens, most of the
+                // roster is that case, and a marker that appeared only on rows
+                // that already had one would leave no way to write the first.
                 onOpenNote={
                   memberFlair === undefined
                     ? undefined
@@ -863,7 +866,9 @@ function GroupRailCard({
           name={noteMember?.first_name ?? ""}
           note={noteFor === null ? "" : (memberFlair.notes[noteFor] ?? "")}
           lastEditedBy={
-            noteFor === null ? null : (memberFlair.noteEditors?.[noteFor] ?? null)
+            noteFor === null
+              ? null
+              : (memberFlair.noteEditors?.[noteFor] ?? null)
           }
           onSave={async (text) => {
             if (noteFor === null) return;

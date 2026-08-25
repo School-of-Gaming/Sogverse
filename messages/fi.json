@@ -1449,8 +1449,8 @@
     "hasNote": "Hänestä on muistiinpano Geduille",
     "openNote": "Muistiinpano Geduille pelaajasta {name}",
     "noteTitle": "Muistiinpano pelaajasta {name}",
-    "notePrivacy": "Vain Gedut ja ylläpitäjät näkevät tämän muistiinpanon. Se pysyy tässä ryhmässä.",
-    "notePlaceholder": "Mitä seuraavan Gedun on hyvä tietää pelaajasta {name} tässä ryhmässä?",
+    "notePrivacy": "Vain Gedut ja ylläpitäjät näkevät tämän muistiinpanon. Se pysyy tässä ryhmässä kerrasta toiseen.",
+    "notePlaceholder": "Muistiinpanoja pelaajasta {name} tässä ryhmässä.",
     "noteLastEdited": "Viimeksi muokannut {name}"
   },
   "richText": {

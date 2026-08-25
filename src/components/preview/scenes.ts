@@ -277,6 +277,27 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "voice-room",
+    title: "Voice room",
+    description:
+      "The scheduled group room over a fixture context — zone cards, control dock, chat and the participant rail. The rail is where the staff flair is judged; the family scenario is the check that none of it is there.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "gedu",
+        label: "Gedu — mid-session",
+        description:
+          "The staff view: newcomer badges across the window and two notes, on the real rail.",
+      },
+      {
+        slug: "gamer",
+        label: "Gamer — the same room",
+        description:
+          "The same room with no staff overlay at all, which is what a child's client can build.",
+      },
+    ],
+  },
+  {
     surface: "parent-club",
     title: "Family product page — parent",
     description:

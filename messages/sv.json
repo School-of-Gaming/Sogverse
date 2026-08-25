@@ -1449,8 +1449,8 @@
     "hasNote": "Har en Gedu-anteckning",
     "openNote": "Gedu-anteckning om {name}",
     "noteTitle": "Anteckning om {name}",
-    "notePrivacy": "Bara Gedus och administratörer ser den här anteckningen. Den stannar i den här gruppen.",
-    "notePlaceholder": "Vad behöver nästa Gedu veta om {name} i den här gruppen?",
+    "notePrivacy": "Bara Gedus och administratörer ser den här anteckningen. Den stannar i den här gruppen, från gång till gång.",
+    "notePlaceholder": "Anteckningar om {name} i den här gruppen.",
     "noteLastEdited": "Senast redigerad av {name}"
   },
   "richText": {

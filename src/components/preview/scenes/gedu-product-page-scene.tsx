@@ -36,11 +36,11 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * two most important things to feel here. Nothing persists past a reload.
  *
  * **The roster's staff flair is live too, on the club scenario that carries
- * it.** Any face opens that member's Gedu note — most of them empty, which is
- * the add flow — and saving one lands the dot on the avatar, while saving an
- * empty one takes it away again. The newcomer badges beside three of the names
- * are read-only: they fade off the scene's frozen clock, which is what lets the
- * three ages be compared against each other in one screenshot.
+ * it.** The note button at the end of every row opens that member's Gedu note —
+ * most of them empty, which is the add flow — and saving one lights the button,
+ * while saving an empty one puts it out again. The newcomer badges are
+ * read-only: their meters drain against the scene's frozen clock, which is what
+ * lets four ages spread across the window be compared in one screenshot.
  *
  * **Emailing a report to the families is live too, and reaches nobody.** One
  * press walks the button through all three of its states — send, sending, sent

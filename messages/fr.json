@@ -1449,8 +1449,8 @@
     "hasNote": "Fait l’objet d’une note pour les Gedus",
     "openNote": "Note pour les Gedus au sujet de {name}",
     "noteTitle": "Note au sujet de {name}",
-    "notePrivacy": "Cette note est visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe.",
-    "notePlaceholder": "Que doit savoir le prochain Gedu au sujet de {name} dans ce groupe ?",
+    "notePrivacy": "Cette note est visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
+    "notePlaceholder": "Notes au sujet de {name} dans ce groupe.",
     "noteLastEdited": "Dernière modification par {name}"
   },
   "richText": {

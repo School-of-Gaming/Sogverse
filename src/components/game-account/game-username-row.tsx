@@ -143,6 +143,27 @@ interface GameUsernameRowProps {
    * A caller passing `avatarUrl` must pass the render matching this.
    */
   figure?: GameFigure;
+  /**
+   * Whether to hold the trailing status square open when there is nothing to
+   * draw in it.
+   *
+   * `"reserved"` (the default) keeps the fixed square on every row, which is
+   * what an **editable** surface needs: a check is one round trip away, and the
+   * spinner and then the tick land in a slot that was already there, so nothing
+   * to the right of it moves. That is the geometry rule this row is built
+   * around, and it is not negotiable where a lookup can actually run.
+   *
+   * `"collapsed"` drops the square on the rows that would draw nothing in it.
+   * It is for a surface where the account is **read-only and static** — a voice
+   * room reads the identity off the Daily token, and it cannot change while the
+   * room is open — so the square is being held for something that can never
+   * arrive. An empty box between the username and whatever follows it reads as
+   * a rendering fault, and the root layout rule is explicit that reserving
+   * space for what can never coexist is its own defect. A verified row still
+   * draws its tick; the two rows simply end at different widths, which is a
+   * true statement about two different accounts.
+   */
+  statusSlot?: "reserved" | "collapsed";
   className?: string;
 }
 
@@ -165,6 +186,11 @@ interface GameUsernameRowProps {
  * the status is a fixed square, and the username is the only thing between them
  * that flexes; every one of the four states renders at exactly the same size.
  *
+ * **The one exception is a surface where no check can ever run** — see
+ * `statusSlot`. There the square is holding space for something that cannot
+ * arrive, and an empty box between the name and whatever follows it is a defect
+ * of its own rather than stability.
+ *
  * **One height, and there is no other.** No size variant, on either platform, in
  * any state. Only the box's *width* is the platform's to set, and only because
  * the render's proportion is: 1:2 for a Minecraft body, 1:1 for a Roblox bust.
@@ -180,6 +206,7 @@ export function GameUsernameRow({
   status,
   avatarUrl,
   figure = "full",
+  statusSlot = "reserved",
   className,
 }: GameUsernameRowProps) {
   const t = useTranslations("gameAccount");
@@ -226,22 +253,30 @@ export function GameUsernameRow({
       </span>
 
       {/* The fixed slot. It occupies its square in every state, including the
-          one that draws nothing, so a check landing cannot move the row.
+          one that draws nothing, so a check landing cannot move the row —
+          unless the caller has said no check can land here, in which case the
+          empty square is dead space and goes.
 
           `unverified` deliberately draws nothing here. It takes the house
           treatment for a saved-but-unconfirmed game account — amber, with the
           tick simply absent rather than a glyph of its own. The missing tick
           beside a name that carries one elsewhere is the signal; a second glyph
           would read as its own kind of failure. */}
-      <span
-        aria-hidden
-        className="flex h-4 w-4 shrink-0 items-center justify-center"
-      >
-        {resolved === "checking" && (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-        )}
-        {resolved === "verified" && <Check className="h-3.5 w-3.5 text-success" />}
-      </span>
+      {(statusSlot === "reserved" ||
+        resolved === "checking" ||
+        resolved === "verified") && (
+        <span
+          aria-hidden
+          className="flex h-4 w-4 shrink-0 items-center justify-center"
+        >
+          {resolved === "checking" && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          )}
+          {resolved === "verified" && (
+            <Check className="h-3.5 w-3.5 text-success" />
+          )}
+        </span>
+      )}
 
       {/* The state travels to assistive tech as words, once, rather than being
           re-read as part of the row every time the icon changes. Empty until

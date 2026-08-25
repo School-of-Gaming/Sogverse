@@ -18,19 +18,12 @@ import {
   AlertTriangle,
   Info,
   Eye,
-  NotebookPen,
-  StickyNote,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,15 +44,14 @@ import {
   PersonChipList,
   type PersonChipListPerson,
 } from "@/components/ui/person-chip";
-import {
-  NewcomerBadge,
-  GamerNoteDot,
-  GamerNoteDialog,
-} from "@/components/member-flair";
+import { GamerNoteDialog, NewcomerBadge } from "@/components/member-flair";
 import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
 import type { MinecraftPasswordResetResult } from "@/services/minecraft-education/minecraft-education.contracts";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
-import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
+import {
+  ParticipantRow,
+  type ParticipantRowData,
+} from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
@@ -182,7 +174,10 @@ function AnchorHeading({
 }) {
   const Tag = as;
   return (
-    <Tag id={id} className={`group scroll-mt-[calc(var(--header-height)+1rem)] ${className}`}>
+    <Tag
+      id={id}
+      className={`group scroll-mt-[calc(var(--header-height)+1rem)] ${className}`}
+    >
       <a
         href={`#${id}`}
         className="inline-flex items-center gap-2 hover:underline"
@@ -242,13 +237,7 @@ function SubSection({
   );
 }
 
-function Swatch({
-  label,
-  className,
-}: {
-  label: string;
-  className: string;
-}) {
+function Swatch({ label, className }: { label: string; className: string }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className={`h-12 w-12 rounded-lg border ${className}`} />
@@ -454,7 +443,11 @@ function SwitchProfileDialogDemo() {
       <SwitchProfileDialog
         open={open}
         onOpenChange={setOpen}
-        target={{ id: "7d0cf9eb-2567-4ec8-a883-2e67b9138a98", role: "gamer", first_name: "Aino" }}
+        target={{
+          id: "7d0cf9eb-2567-4ec8-a883-2e67b9138a98",
+          role: "gamer",
+          first_name: "Aino",
+        }}
         redirectUrl="#"
         title="Switch to Aino's profile to join Minecraft Club?"
         oneWayWarning="You'll be signed out of your parent account."
@@ -464,7 +457,9 @@ function SwitchProfileDialogDemo() {
 }
 
 function DialogDemo() {
-  const [openDialog, setOpenDialog] = useState<"confirm" | "destructive" | "info" | null>(null);
+  const [openDialog, setOpenDialog] = useState<
+    "confirm" | "destructive" | "info" | null
+  >(null);
 
   return (
     <Section title="Dialog">
@@ -472,7 +467,10 @@ function DialogDemo() {
         <Button variant="outline" onClick={() => setOpenDialog("confirm")}>
           Confirmation Dialog
         </Button>
-        <Button variant="destructive" onClick={() => setOpenDialog("destructive")}>
+        <Button
+          variant="destructive"
+          onClick={() => setOpenDialog("destructive")}
+        >
           Destructive Dialog
         </Button>
         <Button variant="secondary" onClick={() => setOpenDialog("info")}>
@@ -480,22 +478,31 @@ function DialogDemo() {
         </Button>
       </div>
 
-      <Dialog open={openDialog === "confirm"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+      <Dialog
+        open={openDialog === "confirm"}
+        onOpenChange={(open) => !open && setOpenDialog(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Hide Product</DialogTitle>
             <DialogDescription>
-              Are you sure you want to hide &ldquo;Sogverse Pro&rdquo;? It will no longer be visible to parents.
+              Are you sure you want to hide &ldquo;Sogverse Pro&rdquo;? It will
+              no longer be visible to parents.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDialog(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpenDialog(null)}>
+              Cancel
+            </Button>
             <Button onClick={() => setOpenDialog(null)}>Hide</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openDialog === "destructive"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+      <Dialog
+        open={openDialog === "destructive"}
+        onOpenChange={(open) => !open && setOpenDialog(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -503,22 +510,31 @@ function DialogDemo() {
               Delete Product
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;Starter Pack&rdquo;? This action cannot be undone.
+              Are you sure you want to delete &ldquo;Starter Pack&rdquo;? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDialog(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => setOpenDialog(null)}>Delete</Button>
+            <Button variant="outline" onClick={() => setOpenDialog(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => setOpenDialog(null)}>
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openDialog === "info"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+      <Dialog
+        open={openDialog === "info"}
+        onOpenChange={(open) => !open && setOpenDialog(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>About Dialogs</DialogTitle>
             <DialogDescription>
-              Dialogs use a portal to render above all content with a backdrop overlay. They dismiss on Escape key or clicking the backdrop.
+              Dialogs use a portal to render above all content with a backdrop
+              overlay. They dismiss on Escape key or clicking the backdrop.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -723,7 +739,10 @@ function VoiceZonesDemo() {
   const zones = composeZones(customZones, "demo");
 
   const member = (
-    over: Pick<VoiceParticipant, "sessionId" | "userId" | "userName" | "zoneId"> &
+    over: Pick<
+      VoiceParticipant,
+      "sessionId" | "userId" | "userName" | "zoneId"
+    > &
       Partial<VoiceParticipant>,
   ): VoiceParticipant => ({
     role: "gamer",
@@ -740,44 +759,210 @@ function VoiceZonesDemo() {
   // Real random UUIDs: the identicon hashes the id, so placeholder ids like
   // "u1" render degenerate avatars that don't represent the real UI.
   const participants: VoiceParticipant[] = [
-    member({ sessionId: "s1", userId: "1fc70377-0a73-4c36-b6c3-5cad0643748c", userName: "You", zoneId: "lobby", isLocal: true, role: "admin", isOwner: true }),
-    member({ sessionId: "s2", userId: "fea034bc-7e25-4b75-976a-0e567b993279", userName: "Aino", zoneId: "lobby" }),
-    member({ sessionId: "s3", userId: "6ee45509-c687-4d8b-88a8-e933929555e8", userName: "Eero", zoneId: "yty-glow", isSpeaking: true }),
-    member({ sessionId: "s4", userId: "82d61f2c-636f-4cfb-bcd3-9f35b366229e", userName: "Liisa", zoneId: "demo-strategy" }),
+    member({
+      sessionId: "s1",
+      userId: "1fc70377-0a73-4c36-b6c3-5cad0643748c",
+      userName: "You",
+      zoneId: "lobby",
+      isLocal: true,
+      role: "admin",
+      isOwner: true,
+    }),
+    member({
+      sessionId: "s2",
+      userId: "fea034bc-7e25-4b75-976a-0e567b993279",
+      userName: "Aino",
+      zoneId: "lobby",
+    }),
+    member({
+      sessionId: "s3",
+      userId: "6ee45509-c687-4d8b-88a8-e933929555e8",
+      userName: "Eero",
+      zoneId: "yty-glow",
+      isSpeaking: true,
+    }),
+    member({
+      sessionId: "s4",
+      userId: "82d61f2c-636f-4cfb-bcd3-9f35b366229e",
+      userName: "Liisa",
+      zoneId: "demo-strategy",
+    }),
     // A very crowded zone (25) so the horizontal scroll, chevron scroll buttons,
     // and edge fade are all exercised. Mixed English/Finnish names, with a few
     // long ones (Maximilian, Aleksanteri, …) to show label truncation.
     // Six muted members in Valor so the mic-off badge is visible in the demo.
-    member({ sessionId: "s5", userId: "6421f24d-01b3-47eb-a229-38b29c438715", userName: "Aino", zoneId: "yty-valor", audioOn: false }),
-    member({ sessionId: "s6", userId: "c4d53024-4d40-4c2a-9bad-44909fdc333b", userName: "Oliver", zoneId: "yty-valor", audioOn: false }),
-    member({ sessionId: "s7", userId: "a1df031a-f181-49f3-a964-4039d8546ee4", userName: "Väinö", zoneId: "yty-valor", isSpeaking: true }),
-    member({ sessionId: "s8", userId: "9c6f8a84-daa0-424f-a0a8-dd1af4fc3fbd", userName: "Charlotte", zoneId: "yty-valor", audioOn: false }),
-    member({ sessionId: "s9", userId: "10b01f6c-e047-4d61-b5f0-bb80f4ec4a55", userName: "Onni", zoneId: "yty-valor", audioOn: false }),
-    member({ sessionId: "s10", userId: "1620ec58-cc23-4a3f-b3ea-3880b12d19bf", userName: "James", zoneId: "yty-valor", audioOn: false }),
-    member({ sessionId: "s11", userId: "b4af1059-f201-4718-8a1b-fa81e51c48d6", userName: "Helmi", zoneId: "yty-valor", audioOn: false }),
-    member({ sessionId: "s12", userId: "c7d3368f-75bd-4841-bb1f-0ccd7b01d365", userName: "Maximilian", zoneId: "yty-valor" }),
-    member({ sessionId: "s13", userId: "85b79539-938a-4787-96b6-40d85b53c923", userName: "Veera", zoneId: "yty-valor" }),
-    member({ sessionId: "s14", userId: "3f323fe9-a59f-4444-8a2b-77a6ec310153", userName: "Benjamin", zoneId: "yty-valor" }),
-    member({ sessionId: "s15", userId: "a75793f5-b793-44f0-a85e-3f91d19523c3", userName: "Aarni", zoneId: "yty-valor" }),
-    member({ sessionId: "s16", userId: "1941c285-0589-4d4d-b23d-a7b1b9aa01f0", userName: "Sophia", zoneId: "yty-valor" }),
-    member({ sessionId: "s17", userId: "dc3a240c-0397-4300-bbbe-23c56f0287b3", userName: "Niilo", zoneId: "yty-valor" }),
-    member({ sessionId: "s18", userId: "147929ab-93ab-4a24-9d31-8786e14fe771", userName: "Alexandra", zoneId: "yty-valor" }),
-    member({ sessionId: "s19", userId: "2fbddcc4-f8e0-4bf9-b59c-9ac975e54086", userName: "Iiro", zoneId: "yty-valor" }),
-    member({ sessionId: "s20", userId: "3ee04404-1425-4af8-a027-9cfa925f6273", userName: "William", zoneId: "yty-valor" }),
-    member({ sessionId: "s21", userId: "859834f2-89b4-4902-8ae9-ae3d3dbfd3e0", userName: "Eveliina", zoneId: "yty-valor" }),
-    member({ sessionId: "s22", userId: "b039e677-6e77-4cf3-af9d-bd5e5c2fabbc", userName: "Liam", zoneId: "yty-valor" }),
-    member({ sessionId: "s23", userId: "bc17a11c-48f3-46c7-90dd-f1d01da20456", userName: "Aleksanteri", zoneId: "yty-valor" }),
-    member({ sessionId: "s24", userId: "bc5b1c08-6b0d-4265-af42-cf42e12d98da", userName: "Isabella", zoneId: "yty-valor" }),
-    member({ sessionId: "s25", userId: "2330764b-f7e5-483a-875d-691532be11e5", userName: "Pinja", zoneId: "yty-valor" }),
-    member({ sessionId: "s26", userId: "156922f3-8a32-48d6-b7ea-7c8de8b07440", userName: "Matias", zoneId: "yty-valor" }),
-    member({ sessionId: "s27", userId: "a094598f-8ab8-4787-83ff-849e0653a58a", userName: "Tuuli", zoneId: "yty-valor" }),
-    member({ sessionId: "s28", userId: "720504a5-4d6f-496b-b2a1-038fc5c6bc45", userName: "Kaarina", zoneId: "yty-valor" }),
-    member({ sessionId: "s29", userId: "35d24824-26c7-417b-9b6b-32798e1bfe57", userName: "Theodore", zoneId: "yty-valor" }),
+    member({
+      sessionId: "s5",
+      userId: "6421f24d-01b3-47eb-a229-38b29c438715",
+      userName: "Aino",
+      zoneId: "yty-valor",
+      audioOn: false,
+    }),
+    member({
+      sessionId: "s6",
+      userId: "c4d53024-4d40-4c2a-9bad-44909fdc333b",
+      userName: "Oliver",
+      zoneId: "yty-valor",
+      audioOn: false,
+    }),
+    member({
+      sessionId: "s7",
+      userId: "a1df031a-f181-49f3-a964-4039d8546ee4",
+      userName: "Väinö",
+      zoneId: "yty-valor",
+      isSpeaking: true,
+    }),
+    member({
+      sessionId: "s8",
+      userId: "9c6f8a84-daa0-424f-a0a8-dd1af4fc3fbd",
+      userName: "Charlotte",
+      zoneId: "yty-valor",
+      audioOn: false,
+    }),
+    member({
+      sessionId: "s9",
+      userId: "10b01f6c-e047-4d61-b5f0-bb80f4ec4a55",
+      userName: "Onni",
+      zoneId: "yty-valor",
+      audioOn: false,
+    }),
+    member({
+      sessionId: "s10",
+      userId: "1620ec58-cc23-4a3f-b3ea-3880b12d19bf",
+      userName: "James",
+      zoneId: "yty-valor",
+      audioOn: false,
+    }),
+    member({
+      sessionId: "s11",
+      userId: "b4af1059-f201-4718-8a1b-fa81e51c48d6",
+      userName: "Helmi",
+      zoneId: "yty-valor",
+      audioOn: false,
+    }),
+    member({
+      sessionId: "s12",
+      userId: "c7d3368f-75bd-4841-bb1f-0ccd7b01d365",
+      userName: "Maximilian",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s13",
+      userId: "85b79539-938a-4787-96b6-40d85b53c923",
+      userName: "Veera",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s14",
+      userId: "3f323fe9-a59f-4444-8a2b-77a6ec310153",
+      userName: "Benjamin",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s15",
+      userId: "a75793f5-b793-44f0-a85e-3f91d19523c3",
+      userName: "Aarni",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s16",
+      userId: "1941c285-0589-4d4d-b23d-a7b1b9aa01f0",
+      userName: "Sophia",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s17",
+      userId: "dc3a240c-0397-4300-bbbe-23c56f0287b3",
+      userName: "Niilo",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s18",
+      userId: "147929ab-93ab-4a24-9d31-8786e14fe771",
+      userName: "Alexandra",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s19",
+      userId: "2fbddcc4-f8e0-4bf9-b59c-9ac975e54086",
+      userName: "Iiro",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s20",
+      userId: "3ee04404-1425-4af8-a027-9cfa925f6273",
+      userName: "William",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s21",
+      userId: "859834f2-89b4-4902-8ae9-ae3d3dbfd3e0",
+      userName: "Eveliina",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s22",
+      userId: "b039e677-6e77-4cf3-af9d-bd5e5c2fabbc",
+      userName: "Liam",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s23",
+      userId: "bc17a11c-48f3-46c7-90dd-f1d01da20456",
+      userName: "Aleksanteri",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s24",
+      userId: "bc5b1c08-6b0d-4265-af42-cf42e12d98da",
+      userName: "Isabella",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s25",
+      userId: "2330764b-f7e5-483a-875d-691532be11e5",
+      userName: "Pinja",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s26",
+      userId: "156922f3-8a32-48d6-b7ea-7c8de8b07440",
+      userName: "Matias",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s27",
+      userId: "a094598f-8ab8-4787-83ff-849e0653a58a",
+      userName: "Tuuli",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s28",
+      userId: "720504a5-4d6f-496b-b2a1-038fc5c6bc45",
+      userName: "Kaarina",
+      zoneId: "yty-valor",
+    }),
+    member({
+      sessionId: "s29",
+      userId: "35d24824-26c7-417b-9b6b-32798e1bfe57",
+      userName: "Theodore",
+      zoneId: "yty-valor",
+    }),
     // Two confined to the private zone. In the real app their media is
     // SFU-blocked for outsiders (canReceive) — here they're just members of the
     // locked zone, rendered blurred behind the PrivacyScreen for an outsider.
-    member({ sessionId: "s30", userId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610", userName: "Onni", zoneId: "demo-quiet" }),
-    member({ sessionId: "s31", userId: "86592793-36ad-4247-a942-f2386cd27b43", userName: "Venla", zoneId: "demo-quiet" }),
+    member({
+      sessionId: "s30",
+      userId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610",
+      userName: "Onni",
+      zoneId: "demo-quiet",
+    }),
+    member({
+      sessionId: "s31",
+      userId: "86592793-36ad-4247-a942-f2386cd27b43",
+      userName: "Venla",
+      zoneId: "demo-quiet",
+    }),
   ];
 
   const participantsByZone = new Map<string, VoiceParticipant[]>();
@@ -857,52 +1042,23 @@ function daysAgoIso(now: Date, days: number): string {
 
 /** Oliver — the fixture whose mic + camera arrive locked. */
 const PARTICIPANT_OLIVER_ID = "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47";
-/** Aino — the fixture carrying both a fresh join stamp and a Gedu note. */
-const PARTICIPANT_AINO_ID = "1a54d62e-828f-4a42-89f1-cc36185351b0";
-
-/**
- * The staff-only overlay for the participant list, keyed by userId and kept
- * *out* of `DEMO_PARTICIPANTS` on purpose — the fixture array is the shape a
- * Daily token produces, and none of this rides that token (see the note-props
- * comment on ParticipantRow). Holding it in a separate map beside the array is
- * the same separation the props enforce, so the demo can't accidentally model
- * a leak the real room does not have.
- *
- * Two rows carry a join stamp so the fade has something to compare against in
- * place: Aino at three days is the bright end and also the one with a note,
- * Oliver at twenty-two is nearly faded out and has none.
- */
-const PARTICIPANT_NEWCOMER_DAYS: Record<string, number | undefined> = {
-  [PARTICIPANT_AINO_ID]: 3,
-  [PARTICIPANT_OLIVER_ID]: 22,
-};
-
 /**
  * The voice room sidebar's list: avatar, name, moderator controls (for
  * non-owner remote participants) and status indicators. The lock buttons are
  * live and toggle between the ghost and destructive button variants.
  *
- * The rows are rendered as a **Gedu** sees them, so they also carry the staff
- * overlay: the newcomer badge beside the name and the note dot on the avatar.
- * Every row passes `onOpenNote`, which is what makes each avatar a control —
- * open one and the dialog edits this demo's local note map, so saving and
- * clearing are both live here.
+ * **The staff flair a Gedu sees on these rows is not here**, and that is the
+ * one-home rule doing its job: a newcomer badge and a note marker are read off
+ * a rail of rows, at the rail's width, beside the zone cards — so the Voice
+ * room preview scene is where they are judged, and a second copy of them on a
+ * card would be the copy that goes stale.
  */
 function ParticipantCardDemo() {
-  const [locks, setLocks] = useState<Record<string, { audio: boolean; video: boolean }>>({
+  const [locks, setLocks] = useState<
+    Record<string, { audio: boolean; video: boolean }>
+  >({
     [PARTICIPANT_OLIVER_ID]: { audio: true, video: false },
   });
-
-  // One clock for the whole demo, frozen at mount: every badge in the list
-  // measures its fade against the same instant, exactly as a real surface hands
-  // its rows one request-stable "now".
-  const [now] = useState(() => new Date());
-  const [notes, setNotes] = useState<Record<string, string>>({
-    [PARTICIPANT_AINO_ID]: "Very keen, first weeks — check she gets a turn.",
-  });
-  const [noteTarget, setNoteTarget] = useState<{ id: string; name: string } | null>(
-    null,
-  );
 
   // Refs for simulated speaking glow — one per participant, and the count is
   // load-bearing: hooks can't loop, so a fixture row without its ref + glow
@@ -933,7 +1089,6 @@ function ParticipantCardDemo() {
       <CardContent className="space-y-2">
         {DEMO_PARTICIPANTS.map((p, i) => {
           const lockState = locks[p.userId] ?? { audio: false, video: false };
-          const newcomerDays = PARTICIPANT_NEWCOMER_DAYS[p.userId];
           return (
             <ParticipantRow
               key={p.userId}
@@ -941,12 +1096,6 @@ function ParticipantCardDemo() {
               lockState={lockState}
               isModView
               avatarRef={avatarRefs[i]}
-              newcomerJoinedAt={
-                newcomerDays === undefined ? null : daysAgoIso(now, newcomerDays)
-              }
-              flairNow={now}
-              hasNote={(notes[p.userId] ?? "") !== ""}
-              onOpenNote={() => setNoteTarget({ id: p.userId, name: p.userName })}
               onLock={(track, locked) =>
                 setLocks((prev) => ({
                   ...prev,
@@ -957,286 +1106,83 @@ function ParticipantCardDemo() {
           );
         })}
       </CardContent>
-
-      {/* Mounted only while a row is open, so the dialog seeds its draft from
-          whichever member was clicked and the target can be a plain non-null
-          value rather than something every handler has to re-narrow. */}
-      {noteTarget !== null && (
-        <GamerNoteDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) setNoteTarget(null);
-          }}
-          name={noteTarget.name}
-          note={notes[noteTarget.id] ?? ""}
-          lastEditedBy="Emma"
-          onSave={(text) =>
-            setNotes((prev) => ({ ...prev, [noteTarget.id]: text }))
-          }
-        />
-      )}
     </Card>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Member flair — newcomer badge & Gedu notes                          */
+/*  Member flair — newcomer badge & the Gedu note                       */
 /* ------------------------------------------------------------------ */
 
-interface MemberFlairPerson {
-  id: string;
-  name: string;
-  /** Days since they joined the group, or `null` for a settled member. */
-  newcomerDays: number | null;
-}
-
 /**
- * The roster the three note-indicator options are each drawn with — the *same*
- * three people three times, because an option is only comparable against the
- * others when the rows underneath it are identical.
+ * The newcomer badge across its whole window, in one line.
  *
- * Real generated UUIDs, hardcoded: the avatar is an identicon hashed out of the
- * id's hex bytes, so a readable stand-in like "flair-elias" does not render a
- * different face, it renders a collapsed one — which would make every option
- * here a false picture of the thing being judged.
+ * It earns a section because both surfaces that draw it — the gedu roster and
+ * the voice room rail — show a member at one age, so no page can show the
+ * series. Four stops, one per pip, is the series: the block drains a pip every
+ * seven and a half days and the badge stops rendering altogether at thirty, so
+ * these four are every state a Gedu will ever meet.
  */
-const MEMBER_FLAIR_PEOPLE: readonly MemberFlairPerson[] = [
-  { id: "1c0d7b09-cc5b-497c-bbed-dbc47b221990", name: "Elias", newcomerDays: null },
-  { id: "d4e6a21a-66e5-4f0a-8e0e-b25671ef741b", name: "Venla", newcomerDays: 4 },
-  { id: "36aff362-25a5-45da-8710-4b532296c398", name: "Matias", newcomerDays: null },
-];
-
-/**
- * The starting notes. Elias has one and no badge, Venla has both, Matias has
- * neither — the three combinations a real roster mixes, so each option is read
- * against a note-bearing row, a note-and-badge row and a plain one at once.
- * Elias's runs long on purpose: option C's whole claim is that a note is
- * readable without a click, and a note that fits is not a test of it.
- */
-const MEMBER_FLAIR_INITIAL_NOTES: Record<string, string> = {
-  "1c0d7b09-cc5b-497c-bbed-dbc47b221990":
-    "Sat out most of last session and asked to change teams — pair him with Venla and check in before the build starts.",
-  "d4e6a21a-66e5-4f0a-8e0e-b25671ef741b":
-    "Second session. Knows the mod inside out, does not know anyone here yet.",
-};
-
-/** The day stops the fade is sampled at, inside the 30-day window. */
-const NEWCOMER_FADE_STOPS = [0, 7, 14, 21, 28];
-
-/**
- * The two staff-only marks, side by side: the fading newcomer badge and the
- * three candidate ways of saying "there is a note about this person".
- *
- * All of it is one section on purpose. The fade is a series — a single badge
- * tells you nothing, five at spaced ages tell you the whole curve — and the
- * three note options are a decision to be made by looking at them together,
- * with one shared note map behind them, so editing a note in one option shows
- * up in the other two immediately.
- */
-function MemberFlairDemo() {
-  const t = useTranslations("memberFlair");
-
-  // One frozen clock for every badge in the section, so the fade series is a
-  // series and not five independent readings of `Date.now()`.
+function NewcomerBadgeDemo() {
   const [now] = useState(() => new Date());
-  const [notes, setNotes] = useState<Record<string, string>>(
-    MEMBER_FLAIR_INITIAL_NOTES,
-  );
-  const [noteTarget, setNoteTarget] = useState<MemberFlairPerson | null>(null);
-
-  const noteOf = (person: MemberFlairPerson) => notes[person.id] ?? "";
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          The fade, sampled across the window
-        </p>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          {NEWCOMER_FADE_STOPS.map((days) => (
-            <div key={days} className="flex items-center gap-2">
-              <NewcomerBadge joinedAt={daysAgoIso(now, days)} now={now} />
-              <span className="text-xs text-muted-foreground">Day {days}</span>
-            </div>
-          ))}
-        </div>
-        <p className="max-w-prose text-sm text-muted-foreground">
-          Opacity runs 1.0 on join day down to 0.3 at the end of the window, and
-          at day 30 the badge stops rendering altogether — there is no faint
-          permanent residue. The tooltip carries the exact age.
-        </p>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        {NEWCOMER_BADGE_STOPS.map((days) => (
+          <div key={days} className="flex items-center gap-2">
+            <NewcomerBadge joinedAt={daysAgoIso(now, days)} now={now} />
+            <span className="text-xs text-muted-foreground">Day {days}</span>
+          </div>
+        ))}
       </div>
-
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          Three ways to mark a note — same three people in each
-        </p>
-        <div className="grid gap-6 md:grid-cols-3">
-          <FlairOption
-            title="Option A — Avatar dot"
-            tradeoff="Visible wherever the avatar already is, and the smallest footprint: no row width spent and no extra line. This is the one wired into the real participant rows."
-          >
-            {MEMBER_FLAIR_PEOPLE.map((person) => (
-              <FlairRow key={person.id} person={person} now={now}>
-                <button
-                  type="button"
-                  onClick={() => setNoteTarget(person)}
-                  aria-label={t("openNote", { name: person.name })}
-                  className="relative block shrink-0 rounded-full transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  <Avatar className="h-8 w-8">
-                    <Identicon id={person.id} size={32} />
-                  </Avatar>
-                  {noteOf(person) !== "" && <GamerNoteDot />}
-                </button>
-              </FlairRow>
-            ))}
-          </FlairOption>
-
-          <FlairOption
-            title="Option B — Trailing icon"
-            tradeoff="A constant affordance, so a note can be started on anyone — but the weakest signal: the eye is on the faces, and a dimmed icon at the row's end is what it skips."
-          >
-            {MEMBER_FLAIR_PEOPLE.map((person) => (
-              <FlairRow
-                key={person.id}
-                person={person}
-                now={now}
-                trailing={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
-                    onClick={() => setNoteTarget(person)}
-                    aria-label={t("openNote", { name: person.name })}
-                    title={t("openNote", { name: person.name })}
-                  >
-                    <NotebookPen
-                      className={cn(
-                        "h-4 w-4",
-                        noteOf(person) !== ""
-                          ? "text-info"
-                          : "text-muted-foreground opacity-50",
-                      )}
-                    />
-                  </Button>
-                }
-              >
-                <Avatar className="h-8 w-8 shrink-0">
-                  <Identicon id={person.id} size={32} />
-                </Avatar>
-              </FlairRow>
-            ))}
-          </FlairOption>
-
-          <FlairOption
-            title="Option C — Inline preview"
-            tradeoff="The note is readable without a click, which is the point — at the cost of the tallest rows, an uneven list, and no way in at all on a member who has no note yet."
-          >
-            {MEMBER_FLAIR_PEOPLE.map((person) => (
-              <div
-                key={person.id}
-                className="rounded-lg border bg-card p-2 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <Identicon id={person.id} size={32} />
-                  </Avatar>
-                  <FlairName person={person} now={now} />
-                </div>
-                {noteOf(person) !== "" && (
-                  <button
-                    type="button"
-                    onClick={() => setNoteTarget(person)}
-                    aria-label={t("openNote", { name: person.name })}
-                    className="mt-1.5 flex w-full items-center gap-1.5 rounded pl-11 text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <StickyNote
-                      className="h-3 w-3 shrink-0 text-muted-foreground"
-                      aria-hidden
-                    />
-                    <span className="min-w-0 truncate text-xs text-muted-foreground">
-                      {noteOf(person)}
-                    </span>
-                  </button>
-                )}
-              </div>
-            ))}
-          </FlairOption>
-        </div>
-      </div>
-
-      {noteTarget !== null && (
-        <GamerNoteDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) setNoteTarget(null);
-          }}
-          name={noteTarget.name}
-          note={noteOf(noteTarget)}
-          lastEditedBy="Emma"
-          onSave={(text) =>
-            setNotes((prev) => ({ ...prev, [noteTarget.id]: text }))
-          }
-        />
-      )}
+      <p className="max-w-prose text-sm text-muted-foreground">
+        The pips drain bottom-right first, so the block changes shape rather
+        than just dimming — a badge is readable on its own row, without another
+        one beside it to compare against. At day 30 it stops rendering
+        altogether; there is no faint permanent residue. The tooltip carries the
+        exact age.
+      </p>
     </div>
   );
 }
 
-/** One candidate treatment: its rows, under a label, over its trade-off. */
-function FlairOption({
-  title,
-  tradeoff,
-  children,
-}: {
-  title: string;
-  tradeoff: string;
-  children: React.ReactNode;
-}) {
+/** One day inside each pip of the window, so all four states show at once. */
+const NEWCOMER_BADGE_STOPS = [0, 8, 16, 24];
+
+/**
+ * The note editor itself — an overlay, so the style guide is its home: it opens
+ * above whatever summoned it and the page behind it contributes nothing to how
+ * it reads.
+ *
+ * Live against local state, including the one behaviour worth checking here:
+ * saving an empty note is a real action that retires the note rather than a
+ * no-op.
+ */
+function GamerNoteDialogDemo() {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState(
+    "Quiet in big groups — pair her rather than letting her pick a partner. Has warmed up a lot since autumn.",
+  );
+
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">{title}</p>
-      <div className="space-y-2">{children}</div>
-      <p className="text-xs text-muted-foreground">{tradeoff}</p>
-    </div>
-  );
-}
-
-/**
- * A roster row stripped to what these options are being judged on: whatever the
- * option puts at the row's start (a plain avatar, or a clickable one), then the
- * name and its badge. Option C composes its own, because its note preview is a
- * second line rather than something in this one.
- */
-function FlairRow({
-  person,
-  now,
-  children,
-  trailing,
-}: {
-  person: MemberFlairPerson;
-  now: Date;
-  children: React.ReactNode;
-  /** Whatever the option puts at the row's far end, past the name. */
-  trailing?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg border bg-card p-2 transition-colors">
-      {children}
-      <FlairName person={person} now={now} />
-      {trailing}
-    </div>
-  );
-}
-
-function FlairName({ person, now }: { person: MemberFlairPerson; now: Date }) {
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-2">
-      <span className="truncate text-sm font-medium">{person.name}</span>
-      {person.newcomerDays !== null && (
-        <NewcomerBadge joinedAt={daysAgoIso(now, person.newcomerDays)} now={now} />
-      )}
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        Open the note about Siiri
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        {note === ""
+          ? "No note — the dialog opens on the add flow."
+          : "Has a note."}
+      </p>
+      <GamerNoteDialog
+        open={open}
+        onOpenChange={setOpen}
+        name="Siiri"
+        note={note}
+        lastEditedBy="Sanna"
+        onSave={setNote}
+      />
     </div>
   );
 }
@@ -1485,7 +1431,9 @@ function EnrollmentCardDemo() {
             </p>
           </div>
           <div className="space-y-2">
-            <DemoCaption>self &mdash; a parent about their own seat</DemoCaption>
+            <DemoCaption>
+              self &mdash; a parent about their own seat
+            </DemoCaption>
             <p className="text-sm text-muted-foreground">
               A for-parents product puts the reader in the seat, so the two
               footers move into the second person again &mdash; and the leave
@@ -1916,7 +1864,10 @@ function ProductTypePaletteDemo() {
               Open issue
             </span>
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
+              <Check
+                className="h-3.5 w-3.5 shrink-0 text-success"
+                aria-hidden
+              />
               All clear
             </span>
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -1979,9 +1930,7 @@ export default function AdminUIComponentsPage() {
             <span className="text-sm font-medium text-destructive">
               Destructive
             </span>
-            <span className="text-sm font-medium text-success">
-              Success
-            </span>
+            <span className="text-sm font-medium text-success">Success</span>
             <span className="text-sm font-medium text-info">Info</span>
             <span className="text-sm font-medium text-warning">Warning</span>
           </div>
@@ -2068,7 +2017,6 @@ export default function AdminUIComponentsPage() {
             </Badge>
           ))}
         </div>
-
       </Section>
 
       <Section title="Input & Label">
@@ -2102,17 +2050,30 @@ export default function AdminUIComponentsPage() {
             onSubmit={(e) => e.preventDefault()}
           >
             <Field label="First name" htmlFor="demo-field-required">
-              <Input id="demo-field-required" placeholder="e.g. Jane" autoComplete="off" />
+              <Input
+                id="demo-field-required"
+                placeholder="e.g. Jane"
+                autoComplete="off"
+              />
             </Field>
             <Field label="Phone number" htmlFor="demo-field-optional" optional>
-              <Input id="demo-field-optional" type="tel" placeholder="+358 …" autoComplete="off" />
+              <Input
+                id="demo-field-optional"
+                type="tel"
+                placeholder="+358 …"
+                autoComplete="off"
+              />
             </Field>
             <Field
               label="Password"
               htmlFor="demo-field-hint"
               hint="Must be at least 8 characters."
             >
-              <Input id="demo-field-hint" type="password" autoComplete="new-password" />
+              <Input
+                id="demo-field-hint"
+                type="password"
+                autoComplete="new-password"
+              />
             </Field>
             {/*
               The icon variant, for a label that has become a title — one
@@ -2127,7 +2088,11 @@ export default function AdminUIComponentsPage() {
               icon={Eye}
               hint="Everyone enrolled here can read this."
             >
-              <Input id="demo-field-icon" placeholder="Say hello…" autoComplete="off" />
+              <Input
+                id="demo-field-icon"
+                placeholder="Say hello…"
+                autoComplete="off"
+              />
             </Field>
           </form>
         </SubSection>
@@ -2145,7 +2110,11 @@ export default function AdminUIComponentsPage() {
           */}
           <div className="grid gap-6 md:grid-cols-2 max-w-2xl">
             <Field label="Short description" htmlFor="demo-textarea">
-              <Textarea id="demo-textarea" rows={3} placeholder="A sentence or two…" />
+              <Textarea
+                id="demo-textarea"
+                rows={3}
+                placeholder="A sentence or two…"
+              />
             </Field>
             <Field
               label="Message"
@@ -2257,11 +2226,25 @@ export default function AdminUIComponentsPage() {
         <p className="max-w-prose text-sm text-muted-foreground">
           Staff-only marks a Gedu reads off a roster before they read a name.
           Neither ever reaches a family surface: the data behind them comes from
-          staff-scoped reads, so a parent&rsquo;s page has nothing to pass. The
-          note dialog below is live against this page&rsquo;s local state —
-          saving an empty note clears it.
+          staff-scoped reads, so a parent&rsquo;s page has nothing to pass.
         </p>
-        <MemberFlairDemo />
+        <p className="max-w-prose text-sm text-muted-foreground">
+          The glyph and the note marker are both picked here — three options can
+          only be judged side by side, and one page can only ever draw one of
+          them. How the badge thins out across a member&rsquo;s first month
+          cannot be shown this way at all: it is a whole roster read as a
+          series, so it lives in the{" "}
+          <span className="font-medium text-foreground">Gedu product page</span>{" "}
+          and <span className="font-medium text-foreground">Voice room</span>{" "}
+          preview scenes, which also carry a switcher for everything on this
+          page.
+        </p>
+        <SubSection title="The newcomer badge">
+          <NewcomerBadgeDemo />
+        </SubSection>
+        <SubSection title="The note editor">
+          <GamerNoteDialogDemo />
+        </SubSection>
       </Section>
 
       <Section title="Alert">
@@ -2279,9 +2262,7 @@ export default function AdminUIComponentsPage() {
             <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Success</AlertTitle>
-              <AlertDescription>
-                Profile updated successfully!
-              </AlertDescription>
+              <AlertDescription>Profile updated successfully!</AlertDescription>
             </div>
           </Alert>
           <Alert variant="destructive">
@@ -2321,7 +2302,9 @@ export default function AdminUIComponentsPage() {
           </Alert>
           <Alert variant="destructive">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <AlertDescription>Something went wrong. Please try again.</AlertDescription>
+            <AlertDescription>
+              Something went wrong. Please try again.
+            </AlertDescription>
           </Alert>
 
           <Alert variant="success" align="center">
@@ -2330,11 +2313,15 @@ export default function AdminUIComponentsPage() {
           </Alert>
           <Alert variant="warning" align="center">
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            <AlertDescription>Purchase canceled. No charges were made.</AlertDescription>
+            <AlertDescription>
+              Purchase canceled. No charges were made.
+            </AlertDescription>
           </Alert>
           <Alert variant="destructive" align="center">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            <AlertDescription>Something went wrong starting checkout. Please try again.</AlertDescription>
+            <AlertDescription>
+              Something went wrong starting checkout. Please try again.
+            </AlertDescription>
           </Alert>
         </div>
       </Section>
@@ -2390,10 +2377,10 @@ export default function AdminUIComponentsPage() {
                 Two things a caller can do are deliberately <em>not</em> visible
                 here, because they belong to the data container rather than to
                 this panel: opening the breadcrumb already inside a country, and
-                restricting every row offered to one country. What the panel does
-                say about them is the bound-country panel beside it. This one is
-                handed no search rows at all, which is why typing into it finds
-                nothing and why the search branch has a panel of its own.
+                restricting every row offered to one country. What the panel
+                does say about them is the bound-country panel beside it. This
+                one is handed no search rows at all, which is why typing into it
+                finds nothing and why the search branch has a panel of its own.
               </p>
               <LocationPickerDemo />
             </div>
@@ -2464,22 +2451,57 @@ export default function AdminUIComponentsPage() {
             people one face and make the row look like a rendering bug. */}
         <div className="space-y-4">
           <UserRow
-            user={{ id: "1336ddd9-c36d-4a16-b5a9-e2a0cc867868", first_name: "Jane", last_name: "Doe", email: "jane@example.com", email_verified_at: "2026-03-04T09:12:00.000Z", role: "customer" }}
+            user={{
+              id: "1336ddd9-c36d-4a16-b5a9-e2a0cc867868",
+              first_name: "Jane",
+              last_name: "Doe",
+              email: "jane@example.com",
+              email_verified_at: "2026-03-04T09:12:00.000Z",
+              role: "customer",
+            }}
             linkedGamers={[
-              { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
-              { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", last_name: "Doe", email: null, email_verified_at: null, role: "gamer" },
+              {
+                id: "8e86d931-500c-49ed-889d-c2cd10879a28",
+                first_name: "Venla",
+                last_name: "Doe",
+                email: null,
+                email_verified_at: null,
+                role: "gamer",
+              },
+              {
+                id: "5aec0f5a-5398-46d7-a150-3554cf701beb",
+                first_name: "Lucas",
+                last_name: "Doe",
+                email: null,
+                email_verified_at: null,
+                role: "gamer",
+              },
             ]}
           />
           {/* A certified gedu whose address is confirmed too — the row that
               carries both marks, and the reason their order is fixed. */}
           <UserRow
-            user={{ id: "f4c215ef-174c-4ed3-9a25-26d2ba765b6d", first_name: "Sam", last_name: "Smith", email: "sam@example.com", email_verified_at: "2026-02-19T17:40:00.000Z", role: "gedu" }}
+            user={{
+              id: "f4c215ef-174c-4ed3-9a25-26d2ba765b6d",
+              first_name: "Sam",
+              last_name: "Smith",
+              email: "sam@example.com",
+              email_verified_at: "2026-02-19T17:40:00.000Z",
+              role: "gedu",
+            }}
             certified
           />
           {/* The same row with a known "no": an educator waiting on an admin,
               shield withheld. */}
           <UserRow
-            user={{ id: "2ddca203-1c71-4144-93c1-f79c25b93407", first_name: "Riikka", last_name: "Laine", email: "riikka@example.com", email_verified_at: "2026-05-02T08:05:00.000Z", role: "gedu" }}
+            user={{
+              id: "2ddca203-1c71-4144-93c1-f79c25b93407",
+              first_name: "Riikka",
+              last_name: "Laine",
+              email: "riikka@example.com",
+              email_verified_at: "2026-05-02T08:05:00.000Z",
+              role: "gedu",
+            }}
             certified={false}
           />
           {/* And the third state: the certification read failed, so nobody's
@@ -2487,21 +2509,35 @@ export default function AdminUIComponentsPage() {
               like the "yes" — a mark is a claim, and there is nobody here to
               make it. */}
           <UserRow
-            user={{ id: "006da659-e900-4d7a-b5ae-112ff93b28a9", first_name: "Petri", last_name: "Koskinen", email: "petri@example.com", email_verified_at: null, role: "gedu" }}
+            user={{
+              id: "006da659-e900-4d7a-b5ae-112ff93b28a9",
+              first_name: "Petri",
+              last_name: "Koskinen",
+              email: "petri@example.com",
+              email_verified_at: null,
+              role: "gedu",
+            }}
             certified={null}
           />
           {/* A parent who has never confirmed their address: no mark at all,
               which is the ordinary state of a new account. */}
           <UserRow
-            user={{ id: "6a909d0b-f865-4b31-846e-f39052953107", first_name: "Otto", last_name: "Nieminen", email: "otto@example.com", email_verified_at: null, role: "customer" }}
+            user={{
+              id: "6a909d0b-f865-4b31-846e-f39052953107",
+              first_name: "Otto",
+              last_name: "Nieminen",
+              email: "otto@example.com",
+              email_verified_at: null,
+              role: "customer",
+            }}
           />
         </div>
       </Section>
 
       <Section title="Seat Availability Bar">
         <p className="text-sm text-muted-foreground -mt-2">
-          The bar tracks seats <em>remaining</em> — an empty club starts full and
-          drains as it fills — so it reads as &ldquo;room left,&rdquo; not
+          The bar tracks seats <em>remaining</em> — an empty club starts full
+          and drains as it fills — so it reads as &ldquo;room left,&rdquo; not
           &ldquo;how full.&rdquo; At zero there&rsquo;s no fill to color, so the
           full state is carried by text/badge, where the waiting list is
           surfaced.
@@ -2532,13 +2568,12 @@ export default function AdminUIComponentsPage() {
         </p>
         <p className="text-sm text-muted-foreground">
           <strong>No card carries seat information</strong> except the
-          municipality seat-fill bar, which is the deliberate exception
-          (schools are the known-scarce case) and reads counts that are not
-          live. The free club and the full-with-waitlist club both look like
-          ordinary open cards, and the full-no-waitlist camp is inert &mdash;
-          whether the card opens is the only difference a parent can see before
-          clicking, and fullness is stated properly on the detail page behind
-          it.
+          municipality seat-fill bar, which is the deliberate exception (schools
+          are the known-scarce case) and reads counts that are not live. The
+          free club and the full-with-waitlist club both look like ordinary open
+          cards, and the full-no-waitlist camp is inert &mdash; whether the card
+          opens is the only difference a parent can see before clicking, and
+          fullness is stated properly on the detail page behind it.
         </p>
         <ProductsDemo />
       </Section>
@@ -2548,8 +2583,9 @@ export default function AdminUIComponentsPage() {
           The dialog the product form&rsquo;s picture card opens. Pictures are{" "}
           <strong>shared</strong>: one entry can be on many products, so
           clicking a tile only fills the reference column &mdash; a separate
-          button commits the pick &mdash; and the column carries the entry&rsquo;s
-          name, everything it reaches, and the two verbs that reach all of them.
+          button commits the pick &mdash; and the column carries the
+          entry&rsquo;s name, everything it reaches, and the two verbs that
+          reach all of them.
         </p>
         <p className="text-sm text-muted-foreground">
           The badge under each tile sits in a <strong>reserved slot</strong>, so
@@ -2562,8 +2598,8 @@ export default function AdminUIComponentsPage() {
 
       <Section title="Family — Enrollment Card">
         <p className="text-sm text-muted-foreground -mt-2">
-          One card per <em>enrollment</em> &mdash; a family&rsquo;s participation
-          in one product.
+          One card per <em>enrollment</em> &mdash; a family&rsquo;s
+          participation in one product.
         </p>
         <p className="text-sm text-muted-foreground">
           <strong>Two states have nothing behind them</strong> &mdash; a queue
@@ -2576,10 +2612,10 @@ export default function AdminUIComponentsPage() {
 
       <Section title="Rich text editor — authoring and what it stores">
         <p className="text-sm text-muted-foreground -mt-2">
-          The shared authoring control for anywhere a person writes prose the app
-          stores. It round-trips <strong>markdown</strong> behind a small fixed
-          toolbar, so a writer never has to know what <code>##</code> does. The
-          value below the editor is exactly what gets persisted.
+          The shared authoring control for anywhere a person writes prose the
+          app stores. It round-trips <strong>markdown</strong> behind a small
+          fixed toolbar, so a writer never has to know what <code>##</code>{" "}
+          does. The value below the editor is exactly what gets persisted.
         </p>
         <p className="text-sm text-muted-foreground">
           The toolbar produces a deliberately narrow subset: headings,
@@ -2622,7 +2658,6 @@ export default function AdminUIComponentsPage() {
         </p>
         <MinecraftPasswordResetDemo />
       </Section>
-
     </div>
   );
 }
@@ -2733,7 +2768,10 @@ const LEVELS: Record<string, LocationSummary[]> = {
   fr: [HDF, OCC],
   "32": [NORD, fixtureRow("62", "Pas-de-Calais", "district")],
   "76": [GARD, fixtureRow("34", "Hérault", "district")],
-  "59": [fixtureRow("59350", "Lille", "municipality"), fixtureRow("59512", "Roubaix", "municipality")],
+  "59": [
+    fixtureRow("59350", "Lille", "municipality"),
+    fixtureRow("59512", "Roubaix", "municipality"),
+  ],
   "62": [fixtureRow("62041", "Arras", "municipality")],
   "30": [fixtureRow("30189", "Nîmes", "municipality")],
   "34": [fixtureRow("34032", "Béziers", "municipality")],
@@ -2751,8 +2789,14 @@ const NIMES = fixtureRow("30189", "Nîmes", "municipality");
  */
 const HITS: LocationPick[] = [
   { location: NIMES, ancestors: [GARD, OCC, FR] },
-  { location: fixtureRow("34032", "Béziers", "municipality"), ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR] },
-  { location: fixtureRow("s-30189-1", "Gymnase municipal de Nîmes", "site"), ancestors: [NIMES, GARD, OCC, FR] },
+  {
+    location: fixtureRow("34032", "Béziers", "municipality"),
+    ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR],
+  },
+  {
+    location: fixtureRow("s-30189-1", "Gymnase municipal de Nîmes", "site"),
+    ancestors: [NIMES, GARD, OCC, FR],
+  },
 ];
 
 /**
@@ -2763,7 +2807,10 @@ function useFixtureBrowse(initialPath: LocationChainSummary[] = []) {
   const [path, setPath] = useState<LocationChainSummary[]>(initialPath);
   const parentId = path.at(-1)?.id ?? "root";
   const ancestors = [...path].reverse();
-  const rows = (LEVELS[parentId] ?? []).map((location) => ({ location, ancestors }));
+  const rows = (LEVELS[parentId] ?? []).map((location) => ({
+    location,
+    ancestors,
+  }));
 
   return {
     path,
@@ -2773,7 +2820,8 @@ function useFixtureBrowse(initialPath: LocationChainSummary[] = []) {
     // the fixture only browses — while being wrong in the app.
     onDrill: (pick: LocationPick) =>
       setPath([...[...pick.ancestors].reverse(), pick.location]),
-    onOpenDepth: (depth: number) => setPath((current) => current.slice(0, depth)),
+    onOpenDepth: (depth: number) =>
+      setPath((current) => current.slice(0, depth)),
     browse: { rows, total: rows.length, hasMore: false, loading: false },
   };
 }
@@ -2795,7 +2843,11 @@ function LocationPickerDemo() {
           flow would now list the venues already in it, with that row as the
           parent of any new one.
         </p>
-        <Button type="button" variant="outline" onClick={() => setConfirmed(null)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setConfirmed(null)}
+        >
           Pick another
         </Button>
       </div>
@@ -2866,9 +2918,9 @@ function LocationCoverageDemo() {
         />
       </div>
       <p className="text-xs text-muted-foreground">
-        Ticked: {ticked.size === 0 ? "(none)" : [...ticked].join(", ")}{" "}
-        &mdash; &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app
-        it closes the dialog and the caller&rsquo;s save commits the ticks.
+        Ticked: {ticked.size === 0 ? "(none)" : [...ticked].join(", ")} &mdash;
+        &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app it
+        closes the dialog and the caller&rsquo;s save commits the ticks.
       </p>
     </div>
   );
@@ -3139,14 +3191,19 @@ function GameDemoHeader({ label }: { label?: string }) {
     <>
       <div>{label ? <DemoCaption>{label}</DemoCaption> : null}</div>
       {DEMO_PLATFORMS.map((platform) => (
-        <DemoCaption key={platform}>{GAME_PLATFORMS[platform].name}</DemoCaption>
+        <DemoCaption key={platform}>
+          {GAME_PLATFORMS[platform].name}
+        </DemoCaption>
       ))}
     </>
   );
 }
 
 /** One person's accounts, as a surface would hold them. */
-type DemoAccount = { username: string | null; externalId: string | number | null };
+type DemoAccount = {
+  username: string | null;
+  externalId: string | number | null;
+};
 
 const EMPTY_ACCOUNTS: Readonly<Record<GamePlatform, DemoAccount>> = {
   minecraft: { username: null, externalId: null },
@@ -3424,11 +3481,7 @@ const EDITABLE_SEED: readonly {
 function GameEditableRowDemo() {
   const [rows, setRows] = useState(EDITABLE_SEED);
 
-  const commit = (
-    key: string,
-    platform: GamePlatform,
-    account: DemoAccount,
-  ) =>
+  const commit = (key: string, platform: GamePlatform, account: DemoAccount) =>
     setRows((prev) =>
       prev.map((row) =>
         row.key === key
@@ -3501,13 +3554,14 @@ function GameAccountDemo() {
             belongs to the surface, not to the component; a roster wants
             none. */}
         <p className="text-sm text-muted-foreground">
-          One component, one prop apart. A register form has nothing to view yet,
-          so those rows open straight into edit mode with the input where the
-          name will be; a roster leaves it closed and opens on a click. Either
-          way, committing <em>is</em> the verification &mdash; press Enter or the
-          tick and watch the status square: the name appears immediately, the
-          spinner sits in the square the tick will land in, and a failed lookup
-          leaves the name saved as unverified with the reason underneath.
+          One component, one prop apart. A register form has nothing to view
+          yet, so those rows open straight into edit mode with the input where
+          the name will be; a roster leaves it closed and opens on a click.
+          Either way, committing <em>is</em> the verification &mdash; press
+          Enter or the tick and watch the status square: the name appears
+          immediately, the spinner sits in the square the tick will land in, and
+          a failed lookup leaves the name saved as unverified with the reason
+          underneath.
         </p>
         <GameFirstCaptureDemo />
         <GameEditableRowDemo />
@@ -3527,12 +3581,12 @@ function GameAccountDemo() {
           button, because fixtures are all it has.
         </p>
         <p className="text-sm text-muted-foreground">
-          <code>figure=&quot;head&quot;</code> is the same row at 32px instead of
-          60px, for a dense list where the whole character crowds out what the
-          list is about. The two platforms are <em>identical</em> at that size,
-          because a Minecraft face render and a Roblox headshot are both square,
-          so the 1:2-vs-1:1 divergence that makes the full figure&rsquo;s box
-          differ simply does not exist.
+          <code>figure=&quot;head&quot;</code> is the same row at 32px instead
+          of 60px, for a dense list where the whole character crowds out what
+          the list is about. The two platforms are <em>identical</em> at that
+          size, because a Minecraft face render and a Roblox headshot are both
+          square, so the 1:2-vs-1:1 divergence that makes the full
+          figure&rsquo;s box differ simply does not exist.
         </p>
         <GameViewOnlyDemo />
       </SubSection>
@@ -3803,5 +3857,3 @@ function ParticipantChipRow() {
     </div>
   );
 }
-
-
