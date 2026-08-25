@@ -316,8 +316,12 @@ fact read out of the current schema.
 19. **No hardcoded colors or raw Tailwind color classes** — semantic tokens only. There is
     exactly one theme and it is dark; never write a light-mode fallback or a `dark:`
     variant.
-20. **A migration and the code that depends on it never ship in one release** — see
-    Staging below.
+20. **A migration and the code that depends on it ship in one release.** The release
+    pipeline holds the Vercel production promotion until the CI migrations job has
+    deployed, so the schema always lands first; the minute-or-less of new-schema-under-
+    old-app that remains is harmless here because every change is additive and the old
+    contracts strip unknown JSON fields. Staging is reserved for high-risk areas
+    (payments), which this is not — see `docs/plans/CLAUDE.md`, "Landing in stages".
 
 ---
 
@@ -859,36 +863,22 @@ the build fails.
 
 ## Staging
 
-**Two stages, and the constraint that forces the split is the CI migrations job / Vercel
-promotion race: a schema change the app depends on must be released before the code that
-depends on it.**
-
-**Stage 1 — the schema, alone.**
-The migration, the regenerated `database.types.ts`, the new and widened `*.contracts.ts`
-schemas, the `src/types/index.ts` field additions, and every db test above. Contracts and
-interfaces go early because the db tests parse real RPC output *through* them — that is
-what makes the migration assertable in CI — and because they are inert with no consumer.
-Nothing in this stage renders anything. Merge to `dev` with the usual `--no-ff` merge and
-release it on its own.
-
-Record the landed commit hashes in this file under Steps when it lands — the final stage's
-reviewer is handed them as part of one change under review.
-
-**Stage 2 — services and UI.**
-`src/services/member-flair/`, the three surfaces' wiring, the locale strings, the unit
-tests, the scene promotion. Merges and releases like any other work.
-
-**No stage is ever "merge to `dev` but do not release."** There is no operator step here —
-no backfill, no data pass — so nothing has to run between the two.
+**One release.** The pipeline holds the Vercel production promotion until the CI
+migrations job has deployed, so within the release the schema lands before the code that
+reads it. The minute-or-less of new schema under the still-old app that remains is
+harmless here: every change is additive — a nullable column, a new table, new RPCs, and
+widened JSON output the old app's contracts strip — so the old app never notices. This is
+not a high-risk surface (no money, no auth), so the staging exception in
+`docs/plans/CLAUDE.md` does not apply, and there is no operator step. One branch, one
+merge, one release.
 
 ---
 
 ## Steps
 
-Ordered by the migration-before-types-before-code constraint. Each is independently
-verifiable.
-
-**Stage 1**
+Ordered by the migration-before-types-before-code constraint — the order governs the
+*work*, not the release: everything below lands in one merge and one release. Each step is
+independently verifiable.
 
 1. Branch off the **latest `dev`** (`feat/member-flair` or similar). `main` trails `dev` by
    hundreds of commits and is the wrong base, including when tooling offers it as the
@@ -909,25 +899,23 @@ verifiable.
 7. Write `tests/db/member-flair.test.ts`; extend the three reader tests; add both RPCs to
    the authorization spine.
 8. Lint, type-check, unit suite. Push and let CI run the db suite — it cannot be run
-   locally.
-9. Merge to `dev` (`--no-ff`, subject `Merge the member flair schema into dev`) and release
-   via `/pr-dev-to-main`. Record the commit hashes here.
-
-**Stage 2**
-
-10. `src/services/member-flair/` — service, keys, queries, barrel.
-11. `showsNewcomerBadge` in `src/components/member-flair/newcomer.ts`, exported from its
+   locally. The migration is on the deployed database from step 3 onward, which the old
+   deployed app tolerates (everything is additive), so the branch can sit here as long as
+   the work below takes.
+9. `src/services/member-flair/` — service, keys, queries, barrel.
+10. `showsNewcomerBadge` in `src/components/member-flair/newcomer.ts`, exported from its
     barrel; extend the existing unit test.
-12. Promote the gedu product page: live shell passes real roster fields into the same props
+11. Promote the gedu product page: live shell passes real roster fields into the same props
     the scene feeds.
-13. Promote the voice room: `ParticipantList` fetches the overlay and merges by `userId`;
+12. Promote the voice room: `ParticipantList` fetches the overlay and merges by `userId`;
     rows render flair; the dialog saves through the mutation.
-14. Promote the admin groups panel chip.
-15. Locale strings for anything the chosen indicator needs, in all five files.
-16. Unit tests for the wiring.
-17. **Take the note-indicator question to the owner** with the scenes open. Ship the choice.
-18. Lint, type-check, `npm run test`. Merge to `dev`, release.
-19. **Delete this file**, and propose the follow-ups below to the owner by headline — only
+13. Promote the admin groups panel chip.
+14. Locale strings for anything the chosen indicator needs, in all five files.
+15. Unit tests for the wiring.
+16. **Take the note-indicator question to the owner** with the scenes open. Ship the choice.
+17. Lint, type-check, `npm run test`. Merge to `dev` (`--no-ff`, subject `Merge the member
+    flair into dev`) and release via `/pr-dev-to-main`.
+18. **Delete this file**, and propose the follow-ups below to the owner by headline — only
     the ones they name go into `TODO.md`.
 
 ---
@@ -964,7 +952,7 @@ verifiable.
 
 ## Review
 
-A migration, three surfaces and a release-ordering question — so: **one challenge, then one
+A migration and three surfaces — so: **one challenge, then one
 cold-read**, one round each, both to fresh agents with no conversation context, both on the
 strong-but-cheaper tier rather than the driver's. Challenge first (is this only what v1
 needs?), then the cold-read (can this be built from the document alone?). Do not loop.
@@ -984,6 +972,3 @@ needs?), then the cold-read (can this be built from the document alone?). Do not
   signal, and entirely separable from the badge.
 - **Membership history** (one row per group-membership episode), which would make "when did
   they join, and what before that" answerable and would supersede the single stamp.
-- **Notes on camps and events.** The table already supports it and the RPCs do not gate on
-  product type; only the surfaces would need to offer the affordance. Left out because no
-  camp or event surface was named in the requirement.
