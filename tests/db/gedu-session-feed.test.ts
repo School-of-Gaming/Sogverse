@@ -36,13 +36,16 @@ import {
  *
  *   1. **Role** — a gedu passes, and since 00200 so does an ADMIN on the five
  *      session writers, which the admin product page now drives from the same
- *      components. The two READS stay gedu-only: they answer "my workspace",
- *      and an admin asks a different question through a product-keyed RPC of
- *      their own (admin-product-sessions.test.ts). The game-username writers
- *      stay gedu-only too — nothing admin-facing calls them. Everybody else is
- *      refused on the first statement, as before.
- *   2. **Assignment (the actor)** — a gedu may only touch groups they teach.
- *      This is the half, and the only half, an admin is exempt from.
+ *      components. Since 00204 an admin passes `get_gedu_group_feed` too: the
+ *      product page's per-group GROUP DETAILS page renders this workspace's
+ *      page body unchanged, so it is fed the same document rather than an
+ *      admin-shaped copy that would drift from it field by field. The other
+ *      READ stays gedu-only — `get_my_gedu_assignment_summaries` answers "what
+ *      do *I* owe", which is a question an admin cannot coherently ask. The
+ *      game-username writers stay gedu-only too: nothing admin-facing calls
+ *      them. Everybody else is refused on the first statement, as before.
+ *   2. **Assignment (the actor)** — a gedu may only touch, or read, groups they
+ *      teach. This is the half, and the only half, an admin is exempt from.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
  *      edit a game username of, children actually in that group. Both platforms
  *      are covered: `set_group_member_minecraft` and, since 00195, its Roblox
@@ -239,8 +242,14 @@ describe("gedu session feed", () => {
   // -------------------------------------------------------------------------
 
   describe("role gate", () => {
-    it("refuses every non-gedu role on the feed read", async () => {
-      for (const client of [adminAuth, customerAuth, gamerAuth]) {
+    it("refuses a customer and a gamer on the feed read", async () => {
+      // Admin is deliberately absent from this loop since 00204 — the admin
+      // group details page reads this exact document, and the positive case is
+      // pinned in the get_gedu_group_feed block below. What stays refused is
+      // what matters: this document carries the gedu-only material link, the
+      // group's staff note, the site's staff note and every member's staff
+      // note, none of which may reach a family.
+      for (const client of [customerAuth, gamerAuth]) {
         const { error } = await client.rpc("get_gedu_group_feed", {
           p_group_id: GROUP_MINE,
         });
@@ -848,6 +857,69 @@ describe("gedu session feed", () => {
       // Written but not yet sent, which is the state the card offers the
       // button in.
       expect(session?.report_emailed_at).toBeNull();
+    });
+
+    it("hands an admin the identical document the assigned gedu reads", async () => {
+      // 00204. The admin product page's per-group GROUP DETAILS page renders
+      // the gedu workspace's page body unchanged, so the two surfaces stay one
+      // surface only while they are fed one document. Equality is therefore the
+      // assertion, not "an admin gets something back": a document that merely
+      // parses would let the two drift a field at a time, and the drift would
+      // read downstream as a panel populated on one page and empty on the other
+      // rather than as an error.
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "# Yesterday\n\nWe rebuilt the east tower.",
+        p_gedu_note: "The projector cable is still loose.",
+      });
+      await geduAuth.rpc("record_attendance", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.GAMER,
+        p_status: "present",
+      });
+
+      const asGedu = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const asAdmin = await adminAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(asAdmin.error).toBeNull();
+
+      // Parsed through the same contract as every other read here, so a shape
+      // the admin path somehow served differently fails as a parse error rather
+      // than as a mismatch nobody can read.
+      const adminFeed = geduGroupFeed.parse(asAdmin.data);
+      expect(adminFeed).toEqual(geduGroupFeed.parse(asGedu.data));
+
+      // Named rather than left to the deep equality: these are the four
+      // staff-only fields the refusal above exists to protect, and an equality
+      // that passed because both sides were empty would prove nothing.
+      expect(adminFeed.group.gedu_note).toContain("projector");
+      expect(adminFeed.roster).toHaveLength(1);
+      expect(adminFeed.roster[0].group_joined_at).not.toBeNull();
+      expect(
+        adminFeed.sessions.find((s) => s.session_date === YESTERDAY)?.report,
+      ).toContain("east tower");
+    });
+
+    it("hands an admin a group no gedu here teaches", async () => {
+      // The assignment half of the gate, which an admin is exempt from and the
+      // block above pins the gedu being refused by. GROUP_OTHER has a real
+      // roster and no assignment at all, so this is the read the admin page
+      // actually makes: any group of any product, whoever teaches it.
+      const { data, error } = await adminAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_OTHER,
+      });
+      expect(error).toBeNull();
+
+      const feed = geduGroupFeed.parse(data);
+      expect(feed.group.id).toBe(GROUP_OTHER);
+      expect(feed.product.id).toBe(PRODUCT_OTHER);
+      expect(feed.roster).toHaveLength(1);
+      expect(feed.roster[0].participant_id).toBe(TEST_IDS.GAMER_2);
     });
 
     it("carries the send marker once the report has been emailed", async () => {
