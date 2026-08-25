@@ -249,7 +249,11 @@ Order matters — several of these steps block the next one if skipped.
 1. **Confirm clean:** `npm run lint`, `npm run type-check`, and the full
    `npm run test` all pass — plus `npm run check-translations` if the branch
    touched `messages/` — and everything is committed. Phase 2's per-file test
-   runs were for iteration; landing gets the whole suite.
+   runs were for iteration; landing gets the whole suite. A run is current
+   as long as HEAD hasn't moved: when the full gates already passed on the
+   exact commit being merged, say so and skip the re-run — the gate exists
+   to catch changes, not to ritualise. Any commit since, however small,
+   voids it.
 
 2. **Stop the dev server first, if Phase 3 started one — by port, with a tree
    kill. Every time; this is the procedure, not a recovery.** On Windows,
