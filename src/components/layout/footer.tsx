@@ -44,21 +44,39 @@ export function Footer() {
           >
             {t('contact.email', { email: SUPPORT_EMAIL })}
           </a>
+          {/* No prefetch on this row. These four sit on every page, so the
+              default viewport prefetch fires them on roughly every visit —
+              63k requests in August against 46 actual visits.
+
+              Turning it off costs nothing, because the prefetch was never
+              buying a faster click. The app has no `loading.tsx` anywhere and
+              no PPR, and on that shape Next's tree walk short-circuits a
+              prefetch to "send only the router state" — no segment data, no
+              head, nothing the click can render from. The navigation pays a
+              full round trip either way; the request was pure cost.
+
+              This is site-wide, not a property of these four links. The row
+              is turned off here because it is the clearest case: nobody reads
+              the licence page, and it was costing more requests than almost
+              any other route on the site. */}
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link
               href={ROUTES.privacy}
+              prefetch={false}
               className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               {t('privacy')}
             </Link>
             <Link
               href={ROUTES.termsAndConditions}
+              prefetch={false}
               className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               {t('terms')}
             </Link>
             <Link
               href={ROUTES.antiBullying}
+              prefetch={false}
               className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               {t('antiBullying')}
@@ -70,6 +88,7 @@ export function Footer() {
                 what each licence actually requires. */}
             <Link
               href={ROUTES.attributions}
+              prefetch={false}
               className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               {t('attributions')}
