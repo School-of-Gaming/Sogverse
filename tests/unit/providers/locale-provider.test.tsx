@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, waitFor } from "@testing-library/react";
 import { LocaleProvider, useLocaleControl } from "@/providers/locale-provider";
 import type { Profile } from "@/types";
-import type { SupportedLocale } from "@/lib/constants/locales";
-import type { DetectedLocale } from "@/lib/analytics";
+import type {
+  SupportedLocale,
+  DetectedLocale,
+} from "@/lib/constants/locales";
 import { createMockProfile } from "../../mocks/supabase";
 
 // Shared mock state for useAuth — updated per test via mockAuth.*
@@ -236,6 +238,10 @@ describe("LocaleProvider", () => {
       from: "en",
       to: "fi",
     });
+    // One row per change. `toHaveBeenCalledWith` alone is blind to a second,
+    // identical call — precisely the failure that would silently double the
+    // headline number these events exist to produce.
+    expect(mockTrack).toHaveBeenCalledTimes(1);
   });
 
   it("does not report a change when the picked locale is already showing", () => {
@@ -267,17 +273,23 @@ describe("LocaleProvider", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response(null));
 
-    const setLocale = renderWithControl("en");
+    // Restored in a `finally`: neither vitest.config.mts nor tests/setup.ts
+    // sets `restoreMocks`, so an assertion throwing above would leak the spy
+    // into every test after it and bury the real failure.
+    try {
+      const setLocale = renderWithControl("en");
 
-    act(() => setLocale("fr"));
+      act(() => setLocale("fr"));
 
-    expect(mockTrack).toHaveBeenCalledWith("locale_change", {
-      detected: "en",
-      from: "sv",
-      to: "fr",
-    });
-
-    fetchMock.mockRestore();
+      expect(mockTrack).toHaveBeenCalledWith("locale_change", {
+        detected: "en",
+        from: "sv",
+        to: "fr",
+      });
+      expect(mockTrack).toHaveBeenCalledTimes(1);
+    } finally {
+      fetchMock.mockRestore();
+    }
   });
 
   it('reports detected as "none" when the browser asked for nothing we ship', () => {
@@ -293,5 +305,6 @@ describe("LocaleProvider", () => {
       from: "en",
       to: "fr",
     });
+    expect(mockTrack).toHaveBeenCalledTimes(1);
   });
 });

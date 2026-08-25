@@ -28,13 +28,11 @@ import {
   isSupportedLocale,
   DEFAULT_LOCALE,
   type SupportedLocale,
+  type DetectedLocale,
 } from "@/lib/constants/locales";
 
 import { getCookie, setCookie } from "@/lib/cookies";
-import {
-  trackLocaleChange,
-  type DetectedLocale,
-} from "@/lib/analytics";
+import { trackLocaleChange } from "@/lib/analytics";
 
 const COOKIE_NAME = "locale";
 

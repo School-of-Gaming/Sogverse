@@ -6,8 +6,7 @@ import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { REFERRAL_CODE_HEADER } from "@/lib/referral";
-import { BRAND_LOCKUP, matchLocaleFromHeader } from "@/lib/constants";
-import type { DetectedLocale } from "@/lib/analytics";
+import { BRAND_LOCKUP, toDetectedLocale } from "@/lib/constants";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -99,11 +98,12 @@ export default async function RootLayout({
   // those carry the answer the user has already given us, and this is the
   // question. Analytics compares the two (see `trackLocaleChange`), so folding
   // them together here would delete the only signal we're after — which is also
-  // why this uses `matchLocaleFromHeader` and not `detectLocaleFromHeader`: no
-  // match has to stay distinguishable from a match on English, so it becomes
-  // `"none"` here rather than collapsing into the default locale.
-  const detectedLocale: DetectedLocale =
-    matchLocaleFromHeader(requestHeaders.get("accept-language")) ?? "none";
+  // why this uses `toDetectedLocale` and not `detectLocaleFromHeader`: no match
+  // has to stay distinguishable from a match on English, so it becomes `"none"`
+  // here rather than collapsing into the default locale.
+  const detectedLocale = toDetectedLocale(
+    requestHeaders.get("accept-language"),
+  );
   // Strip server-only namespaces (email, metadata) from the client bundle.
   // Server components access full messages via getTranslations() directly.
   const { email: _email, metadata: _metadata, ...clientMessages } =

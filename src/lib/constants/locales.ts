@@ -222,6 +222,34 @@ export function detectLocaleFromHeader(
   return matchLocaleFromHeader(header) ?? DEFAULT_LOCALE;
 }
 
+/**
+ * What a request's `Accept-Language` header negotiated to — a supported locale,
+ * or `"none"` when the browser asked only for languages we don't ship (or sent
+ * no header at all).
+ *
+ * `"none"` is a distinct value on purpose. The render path folds every no-match
+ * case into `DEFAULT_LOCALE`, but for measurement that conflation is fatal: a
+ * German-only visitor switching to French would otherwise read as "overrode a
+ * correct English guess", when the finding is really "we don't ship their
+ * language". One is a detection bug, the other is a roadmap item.
+ *
+ * Lives here rather than beside the analytics events that carry it: it is a
+ * fact about locale detection, and the server components that read it must not
+ * be one deleted `type` keyword away from pulling the client analytics module
+ * into their bundle.
+ */
+export type DetectedLocale = SupportedLocale | "none";
+
+/**
+ * The `DetectedLocale` for a request carrying this `Accept-Language` header —
+ * `matchLocaleFromHeader` with the no-match case named. The `"none"` sentinel
+ * is declared directly above, so the coercion into it belongs here too rather
+ * than being spelled out at each call site.
+ */
+export function toDetectedLocale(header: string | null): DetectedLocale {
+  return matchLocaleFromHeader(header) ?? "none";
+}
+
 export function isSupportedLocale(value: unknown): value is SupportedLocale {
   return (
     typeof value === "string" &&

@@ -9,8 +9,10 @@ import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
 import { ReferralProvider } from "./referral-provider";
 import type { AuthenticatedUser, Profile } from "@/types";
-import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
-import type { DetectedLocale } from "@/lib/analytics";
+import {
+  DEFAULT_TIMEZONE,
+  type DetectedLocale,
+} from "@/lib/constants/locales";
 
 interface ProvidersProps {
   children: ReactNode;
