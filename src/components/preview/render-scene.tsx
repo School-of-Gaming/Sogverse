@@ -4,7 +4,7 @@ import { isFamilyProductScenario } from "@/components/family/product-page/mock-f
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
 import { isGeduContractScenario } from "@/components/gedu/contract/mock-contract-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
-import { isGeduProductScenario } from "@/components/gedu/session-details/mock-product-page-fixtures";
+import { isGroupWorkspaceScenario } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
 import { isVoiceRoomScenario } from "@/components/voice/mock-room-fixtures";
 import {
@@ -97,7 +97,7 @@ const SCENE_RENDERERS: Record<
     return <GeduContractScene scenario={scenario} />;
   },
   "gedu-product": (scenario) => {
-    if (!isGeduProductScenario(scenario)) notFound();
+    if (!isGroupWorkspaceScenario(scenario)) notFound();
     return <GeduProductPageScene scenario={scenario} />;
   },
   "voice-room": (scenario) => {

@@ -13,12 +13,12 @@ import {
   type SessionFeedEntry,
   type SessionReportSendResult,
 } from "@/components/gedu/session-feed";
-import { GeduProductPageBody } from "@/components/gedu/session-details/GeduProductPageBody";
-import type { GroupNotesDraft } from "@/components/gedu/session-details/GroupNotesPanel";
+import { GroupWorkspace } from "@/components/group-workspace/GroupWorkspace";
+import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import {
-  buildGeduProductPageFixture,
-  type GeduProductScenario,
-} from "@/components/gedu/session-details/mock-product-page-fixtures";
+  buildGroupWorkspaceFixture,
+  type GroupWorkspaceScenario,
+} from "@/components/group-workspace/mock-workspace-fixtures";
 import { useNow } from "@/providers";
 import type { GeduAssignedProductRosterEntry } from "@/types";
 
@@ -74,7 +74,7 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
 export function GeduProductPageScene({
   scenario,
 }: {
-  scenario: GeduProductScenario;
+  scenario: GroupWorkspaceScenario;
 }) {
   const liveNow = useNow();
   /**
@@ -89,7 +89,7 @@ export function GeduProductPageScene({
    * whichever state was on screen at mount is the state under review.
    */
   const [now] = useState(liveNow);
-  const [fixture] = useState(() => buildGeduProductPageFixture(now, scenario));
+  const [fixture] = useState(() => buildGroupWorkspaceFixture(now, scenario));
   const [data, setData] = useState(fixture.data);
   const [entries, setEntries] = useState<SessionFeedEntry[]>(fixture.entries);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -385,7 +385,7 @@ export function GeduProductPageScene({
   };
 
   return (
-    <GeduProductPageBody
+    <GroupWorkspace
       data={data}
       entries={entries}
       // The same frozen instant the fixture's sessions were laid out around.

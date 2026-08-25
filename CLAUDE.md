@@ -286,6 +286,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Product image catalogue | `src/services/product-images/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
+| Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |

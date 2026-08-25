@@ -7,12 +7,12 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import {
-  GeduProductPageBody,
+  GroupWorkspace,
   type RosterMemberFlair,
-} from "@/components/gedu/session-details/GeduProductPageBody";
-import type { GroupNotesDraft } from "@/components/gedu/session-details/GroupNotesPanel";
-import { createSessionEntrySaves } from "@/components/gedu/session-details/session-entry-saves";
-import type { SiteNotesDraft } from "@/components/gedu/session-details/SiteNotesPanel";
+} from "@/components/group-workspace/GroupWorkspace";
+import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
+import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
+import type { SiteNotesDraft } from "@/components/group-workspace/SiteNotesPanel";
 import type { SessionFeedGamer } from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
@@ -55,11 +55,11 @@ interface AdminGroupDetailsPageProps {
  * One group of one product, as an **admin** sees it — which is to say exactly
  * as the gedu teaching it sees it.
  *
- * **One body, two shells.** The page under the chrome is
- * `GeduProductPageBody`, the same component `/gedu/clubs|camps|events/[id]`
- * renders: the same masthead, the same standing notes, the same reference rail
- * with its roster, its newcomer badges and its note buttons, and the same
- * session timeline with its registers and its Send. Nothing here is an
+ * **One body, two shells.** The page under the chrome is `GroupWorkspace`, the
+ * same component `/gedu/clubs|camps|events/[id]` renders: the same masthead,
+ * the same standing notes, the same reference rail with its roster, its
+ * newcomer badges and its note buttons, and the same session timeline with its
+ * registers and its Send. Nothing here is an
  * admin-styled copy of any of it. The admin's view of a group used to be a
  * re-composition at the foot of the product page — a group selector in front of
  * a subset of the same components — and it was a second arrangement of the same
@@ -597,7 +597,7 @@ function Workspace({
   };
 
   return (
-    <GeduProductPageBody
+    <GroupWorkspace
       data={data}
       entries={entries}
       // The frame above already carries this page's back link, held in place

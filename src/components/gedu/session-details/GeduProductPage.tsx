@@ -26,15 +26,15 @@ import {
   useUpdateGroupMemberRoblox,
 } from "@/services/roblox";
 import type { GeduAssignedProduct } from "@/types";
-import { SessionDetailsBackLink } from "./BackLink";
+import { SessionDetailsBackLink } from "@/components/group-workspace/BackLink";
 import {
-  GeduProductPageBody,
+  GroupWorkspace,
   type RosterMemberFlair,
-} from "./GeduProductPageBody";
+} from "@/components/group-workspace/GroupWorkspace";
+import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
+import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
+import type { SiteNotesDraft } from "@/components/group-workspace/SiteNotesPanel";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
-import type { GroupNotesDraft } from "./GroupNotesPanel";
-import { createSessionEntrySaves } from "./session-entry-saves";
-import type { SiteNotesDraft } from "./SiteNotesPanel";
 
 /**
  * The data shell behind `/gedu/clubs|camps|events/[id]` — the gedu's group
@@ -464,7 +464,7 @@ function Workspace({
   };
 
   return (
-    <GeduProductPageBody
+    <GroupWorkspace
       data={data}
       entries={entries}
       // The very instant `entries` were built from — frozen while an editor is

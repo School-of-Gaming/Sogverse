@@ -7,9 +7,9 @@ import {
 import { countEntriesNeedingAttention } from "@/components/gedu/session-feed";
 import { SESSION_FEED_TIMEZONE } from "@/components/gedu/session-feed/mock-fixtures";
 import {
-  buildGeduProductPageFixture,
-  type GeduProductScenario,
-} from "@/components/gedu/session-details/mock-product-page-fixtures";
+  buildGroupWorkspaceFixture,
+  type GroupWorkspaceScenario,
+} from "@/components/group-workspace/mock-workspace-fixtures";
 import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSectionView";
 import {
   formatProductSchedule,
@@ -129,7 +129,7 @@ const EVENT_SITE_NAME = "Kaapelitehdas, Helsinki";
  * their badges to zero rather than inventing a third and fourth fixture feed
  * nobody would ever read.
  */
-const SCENE_BY_PRODUCT: Record<string, GeduProductScenario> = {
+const SCENE_BY_PRODUCT: Record<string, GroupWorkspaceScenario> = {
   [MINECRAFT_PRODUCT_ID]: "club",
   [CAMP_PRODUCT_ID]: "camp",
 };
@@ -465,7 +465,7 @@ function sceneBackedFacts(now: Date): {
   const attention: Record<string, number> = {};
   const siteNames: Record<string, string | null> = {};
   for (const [productId, scenario] of Object.entries(SCENE_BY_PRODUCT)) {
-    const { entries, feedRoster, site } = buildGeduProductPageFixture(
+    const { entries, feedRoster, site } = buildGroupWorkspaceFixture(
       now,
       scenario,
     );

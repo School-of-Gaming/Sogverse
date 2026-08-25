@@ -40,11 +40,18 @@ import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
 
 /**
- * The gedu's product page: the assigned group's *workspace*, with the session
- * feed as its spine. It is the body of `/gedu/clubs|camps|events/[id]`, and the
- * same body a full-page preview scene renders over fixtures. It deliberately
- * takes everything as props — no query, no clock of its own beyond the shared
- * providers — which is what lets one body serve both shells.
+ * One group of one product, as the people running it work it: the group's
+ * *workspace*, with the session feed as its spine. It is the body of the gedu's
+ * `/gedu/clubs|camps|events/[id]`, the body of the admin's group details page,
+ * and the same body a full-page preview scene renders over fixtures. It
+ * deliberately takes everything as props — no query, no clock of its own beyond
+ * the shared providers — which is what lets one body serve every shell.
+ *
+ * **The design below is written from the gedu's side**, because a gedu is who
+ * this page is *for*. The admin surface exists to show an admin exactly what the
+ * gedu teaching the group sees, so every rule here holds there unchanged — an
+ * admin-shaped variation of any of it would be the drift the shared body exists
+ * to prevent.
  *
  * The shape, and why:
  *
@@ -166,7 +173,7 @@ export interface ProductSite {
   staffNote: string | null;
 }
 
-interface GeduProductPageBodyProps {
+interface GroupWorkspaceProps {
   data: GeduAssignedProduct;
   /**
    * Newest first: the future sessions inside the horizon (furthest away first,
@@ -193,8 +200,9 @@ interface GeduProductPageBodyProps {
   sourceTimeZone: string;
   /**
    * Staff-only lesson/material URL, or `null` when unset. **Never render this on
-   * a surface a parent or gamer can reach** — this page is gedu-only, which is
-   * the only reason no visibility check happens here.
+   * a surface a parent or gamer can reach** — this workspace is staff-only
+   * (gedu and admin), which is the only reason no visibility check happens
+   * here.
    */
   materialUrl: string | null;
   /** The group's standing public note, independent of any session. */
@@ -315,7 +323,7 @@ interface GeduProductPageBodyProps {
   workspaceHref?: string;
 }
 
-export function GeduProductPageBody({
+export function GroupWorkspace({
   data,
   entries,
   feedNow,
@@ -342,7 +350,7 @@ export function GeduProductPageBody({
   memberFlair,
   backLink,
   workspaceHref: workspaceHrefProp,
-}: GeduProductPageBodyProps) {
+}: GroupWorkspaceProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
   const locale = useLocale();
@@ -389,7 +397,7 @@ export function GeduProductPageBody({
     ROUTES.gedu.assignedProduct(data.product.product_type, data.product.id);
 
   return (
-    // Wide, because this is a gedu surface and gedus are at a desk. The reading
+    // Wide, because this is a staff surface and staff are at a desk. The reading
     // column inside is still capped; the extra width buys the reference rail.
     //
     // No horizontal padding of its own: the dashboard layout this body renders

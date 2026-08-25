@@ -22,7 +22,7 @@ import type {
 } from "@/types";
 
 /**
- * Fixtures for the gedu product-page preview scenes — the product shell, the
+ * Fixtures for the group workspace's preview scenes — the product shell, the
  * groups, the group-level notes, and the session feed that is the page's spine,
  * all computed from a `now` the caller supplies. No absolute dates: whenever the
  * scene is opened it shows a plausible term around today.
@@ -62,17 +62,17 @@ import type {
  * group) because the only question they are open to answer is what the rail's
  * roster looks like.
  */
-export const GEDU_PRODUCT_SCENARIOS = [
+export const GROUP_WORKSPACE_SCENARIOS = [
   "club",
   "camp",
   "roblox",
   "no-platform",
 ] as const;
 
-export type GeduProductScenario = (typeof GEDU_PRODUCT_SCENARIOS)[number];
+export type GroupWorkspaceScenario = (typeof GROUP_WORKSPACE_SCENARIOS)[number];
 
-export function isGeduProductScenario(s: string): s is GeduProductScenario {
-  return (GEDU_PRODUCT_SCENARIOS as readonly string[]).includes(s);
+export function isGroupWorkspaceScenario(s: string): s is GroupWorkspaceScenario {
+  return (GROUP_WORKSPACE_SCENARIOS as readonly string[]).includes(s);
 }
 
 /** The persistent, non-session notes attached to the group itself. */
@@ -110,7 +110,7 @@ export interface MemberFlairFixture {
   noteEditors: Record<string, string>;
 }
 
-export interface GeduProductPageFixture {
+export interface GroupWorkspaceFixture {
   data: GeduAssignedProduct;
   entries: SessionFeedEntry[];
   /** The attendance roster, keyed to the same ids as the group roster. */
@@ -841,7 +841,7 @@ function campMemberFlair(): MemberFlairFixture {
 
 /* ------------------------------------------------------------------ */
 
-const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
+const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink.** A remote weekly club a year and a bit into its run,
    * carrying every state the feed can be in at once: sessions finished on both
@@ -1096,10 +1096,10 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   },
 };
 
-export function buildGeduProductPageFixture(
+export function buildGroupWorkspaceFixture(
   now: Date,
-  scenario: GeduProductScenario,
-): GeduProductPageFixture {
+  scenario: GroupWorkspaceScenario,
+): GroupWorkspaceFixture {
   const config = SCENARIOS[scenario];
 
   const feed = buildSessionFeedFixture(now, {

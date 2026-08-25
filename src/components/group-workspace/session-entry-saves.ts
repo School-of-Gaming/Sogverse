@@ -21,7 +21,7 @@ import {
  * that mounts the gedu session feed.
  *
  * Two shells hand these entries to a feed: the gedu's own group workspace, and
- * the admin product page that composes the same components. They bind different
+ * the admin group details page that renders the same body. They bind different
  * mutation hooks — one keyed by group and invalidating the gedu feed, one keyed
  * by product and invalidating the product document — but what happens *between*
  * a draft and those mutations is not a per-surface decision. It is the rules
