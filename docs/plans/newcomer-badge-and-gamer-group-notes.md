@@ -1226,6 +1226,24 @@ independently verifiable.
 
 ---
 
+## Deviations during implementation
+
+- **The admin sessions panel does not read `get_product_groups_with_details` today** — it
+  reads its own `get_admin_product_sessions`, whose roster is deliberately thin
+  (`participant_id`, `first_name`). The members card therefore reads the groups snapshot
+  through the same query hook (and query key) the groups panel higher on the page already
+  uses — a cache hit, not a second round trip — rather than widening the admin-sessions
+  contract with fields the register does not need. The snapshot read is folded into the
+  panel's pending gate so the card is present-or-absent from first paint.
+- **The admin snapshot's participation shape carries no `parent_email`**, so the shared
+  roster row on the admin members card renders a child row without a contact line (an
+  adult still shows their own address). The mapper passes `parent_email: null` and says so.
+- **The migration is numbered `00203`**, not the plan's provisional `00202` —
+  `00202_a_contract_version_carries_its_language.sql` landed on `dev` between authoring
+  and implementation, exactly the contention constraint 3 anticipated.
+
+---
+
 ## Acceptance criteria
 
 - A participation gaining a group is stamped; a move between groups of one product

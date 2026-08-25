@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import type { SessionFeedGamer } from "@/components/gedu/session-feed";
+import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { useNow } from "@/providers";
@@ -18,6 +19,7 @@ import {
   useSetSiteNotes,
   type GeduGroupFeed,
 } from "@/services/gedu-sessions";
+import { useSetGamerGroupNote } from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
 import {
   useRobloxRenders,
@@ -25,7 +27,10 @@ import {
 } from "@/services/roblox";
 import type { GeduAssignedProduct } from "@/types";
 import { SessionDetailsBackLink } from "./BackLink";
-import { GeduProductPageBody } from "./GeduProductPageBody";
+import {
+  GeduProductPageBody,
+  type RosterMemberFlair,
+} from "./GeduProductPageBody";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
 import type { GroupNotesDraft } from "./GroupNotesPanel";
 import { createSessionEntrySaves } from "./session-entry-saves";
@@ -53,6 +58,12 @@ import type { SiteNotesDraft } from "./SiteNotesPanel";
  * read.** They are the same children, but only one of the two is invalidated
  * when a gedu fixes a game username, and a roster that does not refresh after
  * its own edit is worse than a slightly indirect one.
+ *
+ * **The staff flair rides that same copy and costs no third read.** Newcomer
+ * stamps and Gedu notes are fields on the feed's roster rows, so this page never
+ * asks `get_group_staff_overlay` — that RPC exists for the voice room, which
+ * owns no roster document at all. What the shell does instead is fold those
+ * fields into the one flair object the body takes, against the page's own clock.
  *
  * **Both reads are usually already answered before this renders.** The route's
  * server half runs the same pair and hydrates them into the cache, so a direct
@@ -168,6 +179,10 @@ function Workspace({
   // returns. The dispatch happens inside the save handler instead.
   const updateMinecraft = useUpdateGroupMemberMinecraft(groupId);
   const updateRoblox = useUpdateGroupMemberRoblox(groupId);
+  // The one write behind the roster's staff flair. It invalidates all four
+  // documents that carry the same note — this page's feed among them — so the
+  // rail relights its own button without anything here refetching by hand.
+  const setGamerNote = useSetGamerGroupNote(groupId);
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -285,6 +300,65 @@ function Workspace({
     }),
     [product, feed.roster],
   );
+
+  /**
+   * The roster's staff-only overlay, built from **the same roster copy the rail
+   * renders** — the feed's, not the assignment document's.
+   *
+   * That is the whole reason both readers carry the three flair fields: the
+   * shell throws the assignment document's roster away above, so a page built
+   * from that copy would show no badge and no note with nothing failing.
+   *
+   * **Absence is how "none" is spelled.** A NULL from the RPC is left out of the
+   * map rather than written in as a null, because every consumer downstream —
+   * the row's `hasNote`, the dialog's seed, the badge's own window check — reads
+   * a missing key as the answer rather than as a gap.
+   *
+   * The clubs-only gate lives here and nowhere below: on a camp or an event the
+   * newcomers map is handed over **empty**, while the notes go through
+   * untouched. A note is just as useful on a camp; only the badge is gated.
+   *
+   * The clock is the page's own — frozen with the feed while a session editor is
+   * open — so a newcomer meter answers off the same instant as everything
+   * around it rather than inventing one.
+   */
+  const drawsNewcomerBadge = showsNewcomerBadge(product.product.product_type);
+  const flairMaps = useMemo(() => {
+    const newcomers: Record<string, string> = {};
+    const notes: Record<string, string> = {};
+    const noteEditors: Record<string, string> = {};
+
+    for (const member of feed.roster) {
+      if (drawsNewcomerBadge && member.group_joined_at !== null) {
+        newcomers[member.participant_id] = member.group_joined_at;
+      }
+      if (member.note !== null) {
+        notes[member.participant_id] = member.note;
+      }
+      if (member.note_updated_by_first_name !== null) {
+        noteEditors[member.participant_id] = member.note_updated_by_first_name;
+      }
+    }
+
+    return { newcomers, notes, noteEditors };
+  }, [feed.roster, drawsNewcomerBadge]);
+
+  /**
+   * The flair the body takes, with the write attached.
+   *
+   * **The mutation's promise goes straight through.** The dialog holds its own
+   * `committing` flag, awaits this and closes only once it lands, so nothing
+   * here derives a disabled state from `isPending` — that flag flips false a
+   * beat before the dialog closes, which is exactly the frame the button must
+   * not re-enable in.
+   */
+  const memberFlair: RosterMemberFlair = {
+    now,
+    ...flairMaps,
+    onSaveNote: async (participantId, text) => {
+      await setGamerNote.mutateAsync({ participantId, note: text });
+    },
+  };
 
   /**
    * Save and Send for one session card — the diff, the write ordering and the
@@ -425,6 +499,7 @@ function Workspace({
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
+      memberFlair={memberFlair}
     />
   );
 }

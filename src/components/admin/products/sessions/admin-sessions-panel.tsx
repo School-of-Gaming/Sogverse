@@ -25,6 +25,9 @@ import {
   type AdminProductSessions,
   type AdminSessionGroup,
 } from "@/services/admin-sessions";
+import { useProductGroups } from "@/services/groups";
+import type { ProductGroupsSnapshot } from "@/types";
+import { GroupMembersCard } from "./group-members-card";
 import { SiteAddressField } from "./site-address-field";
 
 /**
@@ -59,6 +62,12 @@ import { SiteAddressField } from "./site-address-field";
  * meant a card appearing between two settled ones when this read landed, pushing
  * the groups panel down the page under whoever was reading it.
  *
+ * **The group members card sits between the notes and the feed**, and it is the
+ * admin's home for a per-member Gedu note. The panel is already group-scoped and
+ * a note is keyed to `(group, member)`, so the scope the note needs is the scope
+ * the selector already establishes — see the card's own note for why it is not
+ * on the groups panel and not attached to the register.
+ *
  * **Last on the page, deliberately.** This read is a term of sessions for every
  * group at once — the slow category — so the panel paints a structured skeleton
  * the moment it mounts. Putting it under everything else means the skeleton
@@ -71,6 +80,19 @@ export function AdminProductSessionsPanel({
 }) {
   const t = useTranslations("admin.products.sessions");
   const { data, isPending, isError } = useAdminProductSessions(productId);
+  /**
+   * The group members card's source — the same admin snapshot the groups panel
+   * higher up this page already reads, under the same query key, so this is a
+   * cache hit rather than a second round trip.
+   *
+   * **Folded into the pending gate below rather than rendered when it lands.**
+   * The card sits above the session feed, and a card arriving late would push
+   * the whole term of sessions down the page under whoever is reading it. This
+   * read is the fast one of the pair; waiting for it costs nothing and makes the
+   * body land whole. A failed one leaves `data` undefined, which the panel shows
+   * as no card at all — settled before first paint either way.
+   */
+  const groups = useProductGroups(productId);
 
   return (
     <section className="space-y-4">
@@ -78,7 +100,7 @@ export function AdminProductSessionsPanel({
           its final position — nothing below it survives the load. */}
       <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
 
-      {isPending ? (
+      {isPending || groups.isPending ? (
         <SessionsSkeleton />
       ) : isError ? (
         <Card>
@@ -97,7 +119,11 @@ export function AdminProductSessionsPanel({
           </CardContent>
         </Card>
       ) : (
-        <LoadedSessions productId={productId} data={data} />
+        <LoadedSessions
+          productId={productId}
+          data={data}
+          groupsSnapshot={groups.data}
+        />
       )}
     </section>
   );
@@ -115,10 +141,19 @@ export function AdminProductSessionsPanel({
 function LoadedSessions({
   productId,
   data,
+  groupsSnapshot,
 }: {
   productId: string;
   /** Guaranteed by the shell to carry at least one group. */
   data: AdminProductSessions;
+  /**
+   * The admin groups snapshot, which is what carries each member's note — the
+   * session document's own roster is deliberately just an id and a first name,
+   * enough to key an attendance mark by. `undefined` only when that read failed,
+   * and the shell has already settled it, so the members card is present or
+   * absent from the first paint rather than appearing partway through.
+   */
+  groupsSnapshot: ProductGroupsSnapshot | undefined;
 }) {
   const liveNow = useNow();
 
@@ -173,6 +208,20 @@ function LoadedSessions({
       }),
     [selected, data.product, now],
   );
+
+  /**
+   * The selected group's seats as the groups snapshot describes them — the copy
+   * that carries each member's note. `null` where that read failed, which is the
+   * one case the members card is absent.
+   *
+   * Matched by group id rather than by position: the two documents are ordered
+   * by the same key today, and a card handed another group's roster because one
+   * of them was sorted differently tomorrow is exactly the kind of silent wrong
+   * answer an index lookup produces.
+   */
+  const selectedGroupMembers =
+    groupsSnapshot?.groups.find((group) => group.id === groupId)
+      ?.participations ?? null;
 
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
@@ -315,6 +364,17 @@ function LoadedSessions({
         </CardContent>
       </Card>
 
+      {/* The group's members, with the note button on every row. Keyed by group
+          for the same reason the notes panel above is: the card owns which
+          member's note is open, and a switch must not carry that across. */}
+      {selectedGroupMembers !== null && (
+        <GroupMembersCard
+          key={selected.id}
+          groupId={selected.id}
+          members={selectedGroupMembers}
+        />
+      )}
+
       <SessionFeed
         // Keyed by group so switching rebuilds the feed's own scroll and reveal
         // state rather than carrying one group's revealed history into another's.
@@ -409,6 +469,8 @@ function SessionsSkeleton() {
       <div className="space-y-4" aria-hidden>
         <div className="h-10 w-56 animate-pulse rounded-full bg-muted" />
         <div className="h-40 animate-pulse rounded-lg border border-input bg-muted" />
+        {/* The members card, between the notes and the feed. */}
+        <div className="h-32 animate-pulse rounded-lg border border-input bg-muted" />
         <div className="space-y-3">
           {[0, 1, 2, 3].map((row) => (
             <div

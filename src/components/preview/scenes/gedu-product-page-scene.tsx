@@ -35,12 +35,17 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * turning into a finished one, and a part-marked one staying flagged, are the
  * two most important things to feel here. Nothing persists past a reload.
  *
- * **The roster's staff flair is live too, on the club scenario that carries
- * it.** The note button at the end of every row opens that member's Gedu note —
- * most of them empty, which is the add flow — and saving one lights the button,
- * while saving an empty one puts it out again. The newcomer badges are
- * read-only: their meters drain against the scene's frozen clock, which is what
- * lets four ages spread across the window be compared in one screenshot.
+ * **The roster's staff flair is live too, on the two scenarios that carry it.**
+ * The note button at the end of every row opens that member's Gedu note — most
+ * of them empty, which is the add flow — and saving one lights the button, while
+ * saving an empty one puts it out again. The newcomer badges are read-only:
+ * their meters drain against the scene's frozen clock, which is what lets four
+ * ages spread across the window be compared in one screenshot.
+ *
+ * **The camp is where the two marks come apart**, and that is the whole reason it
+ * carries flair at all: notes on its rows and no badge on any of them, which is
+ * the clubs-only badge rule beside a note that has no such gate — and the exact
+ * shape the live shell hands a non-club product.
  *
  * **Emailing a report to the families is live too, and reaches nobody.** One
  * press walks the button through all three of its states — send, sending, sent
@@ -96,8 +101,9 @@ export function GeduProductPageScene({
     Record<string, GameAccountStatus>
   >({});
   /**
-   * The Gedu notes, live against local state — the club scenario seeds two and
-   * every other scenario seeds none, because only the club carries flair at all.
+   * The Gedu notes, live against local state — the club and the camp seed two
+   * each and the identity scenarios seed none, because those two are the only
+   * ones carrying flair at all.
    *
    * Held as a record keyed by participant id, exactly as the live read will hand
    * it over: the roster rows only need "does this person have one", and the
@@ -402,7 +408,7 @@ export function GeduProductPageScene({
       onSendReport={handleSendReport}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
-      // Only where the scenario has flair at all — the club. Passed whole at
+      // Only where the scenario has flair at all — the club and the camp. Passed whole at
       // mount, badges and note buttons included, so nothing arrives on a row after the
       // roster has painted; the live page hands it over in the same staff-scoped
       // read as the roster itself, so it behaves the same way there.
