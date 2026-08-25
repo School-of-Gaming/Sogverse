@@ -209,6 +209,36 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "gedu-session-feed.test.ts.",
   },
 
+  // --- the member flair ----------------------------------------------------
+  //
+  // The two staff-only marks a gedu meets before a session starts (00203): the
+  // newcomer badge's join stamp and the per-(group, member) note. Both admit an
+  // ADMIN beside any gedu assigned to ANY group of the group's product, with
+  // full read/write parity between the two — a substitute standing in for
+  // another group is exactly the person who needs the note. So the negative
+  // half of the matrix is the interesting one here: a customer and a gamer are
+  // refused on the first statement, which is what makes the flair gated by data
+  // access rather than by a viewer prop a refactor could drop.
+  get_group_staff_overlay: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "a NULL group is a group no gedu teaches, so the ownership half of the " +
+      "gate refuses one with a second 42501. An admin passes that half and gets " +
+      "a null-shaped document back rather than a refusal, so the annotation is " +
+      "carried for the gedu alone — it is per function, not per role. Positive " +
+      "path, for both roles: member-flair.test.ts.",
+  },
+  set_gamer_group_note: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments, for BOTH permitted roles — no " +
+      "gedu teaches the product of a NULL group, and no NULL participant sits " +
+      "in a NULL group, which is the target check an admin is deliberately " +
+      "still bound by. That target check is also what stands in for a " +
+      "write-IDOR loop entry, the notes table carrying no write grant for any " +
+      "client role. Positive path, for both roles: member-flair.test.ts.",
+  },
+
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product is SECURITY INVOKER, so
   // its guard runs as the caller (see migration 00120; update_product was

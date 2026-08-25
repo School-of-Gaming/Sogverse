@@ -963,6 +963,49 @@ describe("gedu session feed", () => {
         .eq("product_id", PRODUCT_MINE);
     });
 
+    it("carries the staff-only flair on the roster, with a note and without one", async () => {
+      // 00203's three fields, parsed through the same contract as everything
+      // else here — a widened schema with no covering db test is exactly the
+      // gap the contracts convention exists to close.
+      //
+      // One member, read twice, rather than two members: GROUP_MINE's roster is
+      // one child by construction, and GAMER_2's ABSENCE from it is the target-
+      // authorization case several blocks above depend on. So the "without"
+      // half is this read, and the "with" half is the same seat after a write.
+      const before = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const unmarked = geduGroupFeed.parse(before.data).roster[0];
+      // Stamped by the trigger when the seat was inserted into a group, and it
+      // answers a different question from signed_up_at beside it: when this seat
+      // entered THIS GROUP, as against when it was taken on the product.
+      expect(unmarked.group_joined_at).not.toBeNull();
+      expect(unmarked.note).toBeNull();
+      expect(unmarked.note_updated_by_first_name).toBeNull();
+
+      const write = await geduAuth.rpc("set_gamer_group_note", {
+        p_group_id: GROUP_MINE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_note: "Works best with a job to be in charge of.",
+      });
+      expect(write.error).toBeNull();
+
+      const after = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const marked = geduGroupFeed.parse(after.data).roster[0];
+      expect(marked.note).toBe("Works best with a job to be in charge of.");
+      expect(marked.note_updated_by_first_name).toBeTruthy();
+      expect(marked.group_joined_at).toBe(unmarked.group_joined_at);
+
+      // Clear it again, so nothing downstream reads a roster this seeded.
+      await geduAuth.rpc("set_gamer_group_note", {
+        p_group_id: GROUP_MINE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_note: "",
+      });
+    });
+
     it("reports a null material link when the product has no staff row", async () => {
       // The row is sparse — most products have none — and its absence must read
       // as "no lesson material" rather than breaking the LEFT JOIN's product.
