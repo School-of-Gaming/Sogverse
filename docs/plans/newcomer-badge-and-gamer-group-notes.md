@@ -4,8 +4,15 @@ Two staff-only marks that tell a Gedu what they need to know about a member befo
 session starts: a **newcomer badge** that drains a pip meter across a member's first month in a group,
 and a **per-(group, member) plain-text note** any Gedu on the product can read and write.
 
-Both are visible to **Gedus and admins only**, on three surfaces: the gedu product details
-page roster, the voice room participant list, and the admin product details groups panel.
+Both are visible to **Gedus and admins only**. The badge is drawn on two surfaces — the gedu
+product details page roster and the voice room participant list — and the note on three: those
+two, plus a group members card in the **admin sessions panel** at the foot of the admin product
+details page.
+
+The **newcomer badge is not drawn on any admin surface**, and the admin product details
+*groups* panel carries neither mark. A participant chip there is a drag handle on a board for
+moving people between groups: how new a member is has no bearing on that, and a note is a
+control, which is the one thing that cannot live inside a drag handle.
 
 ---
 
@@ -143,9 +150,8 @@ code helper; and the overlay RPC carries the group's `product_type` so the voice
 call that helper.**
 
 The recommendation in the brief was "the RPCs emit the timestamp; the surfaces, which all
-know `product_type`, render the badge only for club products". Two of the three surfaces do
-know it — the gedu page has `data.product.product_type`, the admin panel is inside a
-product details page. **The voice room does not.** `/voice/group/[id]` is passed only a
+know `product_type`, render the badge only for club products". One of the two badge surfaces
+does know it — the gedu page has `data.product.product_type`. **The voice room does not.** `/voice/group/[id]` is passed only a
 group id and a back link; `VoiceRoomContext` carries `groupId` and `isModerator` and
 nothing about the product; the token route knows the product type but deliberately puts
 nothing staff-shaped on the token. So the premise fails for exactly the surface that most
@@ -173,9 +179,9 @@ useful on a camp too, and nobody asked for one.
 
 **Decided: a new service directory, owning only the two genuinely new RPCs.**
 
-The three surfaces are owned by three different services — `assignments` (the gedu product
-page's `get_gedu_assigned_product`), `gedu-sessions` (the group feed), `groups` (the admin
-snapshot) — plus `voice`, which owns none of them. Putting the overlay read and the note
+The roster documents these marks ride are owned by three different services — `assignments`
+(the gedu product page's `get_gedu_assigned_product`), `gedu-sessions` (the group feed),
+`groups` (the admin snapshot) — plus `voice`, which owns none of them. Putting the overlay read and the note
 write into any one of those forces the other three to import a service named for somebody
 else's surface: a voice component importing `GeduSessionsService` is precisely the coupling
 `src/components/member-flair/index.ts` already argues against, one layer up.
@@ -200,10 +206,13 @@ posture registry is untouched**.
 ### The table needs no write-IDOR case, and here is what replaces it
 
 The write-IDOR loop in `tests/db/write-idor.test.ts` is closed over "every table
-`authenticated` may UPDATE or DELETE". `gamer_group_notes` grants `authenticated` **SELECT
-and nothing else** (writes go through the RPC, which bypasses RLS), so the loop's
-completeness check will neither demand nor accept an entry for it — adding one would fail
-the equality assertion.
+`authenticated` may UPDATE or DELETE". `gamer_group_notes` grants `authenticated`
+**nothing at all** — every read and write goes through an RPC, which bypasses RLS — so the
+loop's completeness check will neither demand nor accept an entry for it, and adding one
+would fail the equality assertion. The same holds for the grant allowlist in
+`tests/db/access-control.test.ts`, which is likewise a *write*-grant allowlist: a table
+with no client grants needs no entry, and the RLS sweep in that file picks the new table up
+on its own.
 
 The write-IDOR *requirement* is still met, one layer up: the write RPC authorizes **actor
 and target** (staff reach over the product, **and** the participant actually sits in that
@@ -251,6 +260,34 @@ header so the next reader does not go looking for the missing loop entry.
   it would leave the same three facts arriving in two differently-shaped documents depending
   on the surface. Build what is written. If the case still looks compelling with the code in
   front of you, it is a question for the owner, not a decision to take mid-build.
+- **A client-facing SELECT on `gamer_group_notes` — in either of the two shapes that would
+  have made it work.** The table was going to grant `authenticated` SELECT behind two
+  policies, one for admins and one calling `gedu_teaches_group_product(group_id)`. That
+  cannot coexist with keeping the predicate private: **an RLS policy predicate is evaluated
+  as the querying role**, so a function a policy names must be EXECUTE-able by that role,
+  and `SECURITY DEFINER` does not help — it decides whose privileges apply inside the body,
+  not who may call it. Two ways out were available and neither was taken.
+  - *Grant `gedu_teaches_group_product` to `authenticated`.* It would work, and it would
+    turn an internal predicate into an exposed function: an authorization-spine entry, a
+    classification as role-gated or self-scoping, and a standing invitation to call it from
+    anywhere. All of that to serve a query nobody makes.
+  - *Inline the `EXISTS` into both policies* and keep the function private. Also works, and
+    duplicates the predicate in two more places — three spellings of "does this Gedu teach
+    this group's product" that have to stay identical through every later edit.
+
+  Neither is needed once nothing reads the table directly: every read already goes through
+  `get_group_staff_overlay` or rides a roster document, and both are `SECURITY DEFINER` and
+  bypass RLS. So the grant and both policies are dropped, RLS stays on with no policy at
+  all, and the predicate stays private like its stated precedent.
+
+  **Worth naming the failure this avoids, because it was well camouflaged.** Shipping the
+  grant *without* granting the function would have failed **closed** — `permission denied
+  for function gedu_teaches_group_product` on every gedu read through the Data API, so no
+  data would have leaked and the feature would simply have been broken —
+  and it would have passed everything guarding the migration: the end-state assertion block
+  asserts the function is *not* granted to `authenticated`, which the broken shape satisfies
+  exactly, and the db tests exercise the RPCs, which bypass RLS and never evaluate a policy.
+  A green CI on a contradiction is the reason this is written down rather than merely fixed.
 - **Reusing `is_voice_group_moderator` as the new RPCs' second gate.** It computes exactly
   the predicate we want (admin, or a Gedu assigned to any group of the product) but its
   name would make a note read look like a voice concern, and it is referenced by voice RLS
@@ -417,12 +454,25 @@ ALTER TABLE public.gamer_group_notes ENABLE ROW LEVEL SECURITY;
   by the FK.
 - `updated_by` is `ON DELETE SET NULL` — a departed Gedu's account must not delete the note
   they wrote. The read then shows the note with no editor line.
-- Two SELECT policies and **no write policy**, because there is no write grant for one to
-  authorize: admins (`(SELECT public.is_admin())`) and Gedus on the product
-  (`(SELECT public.gedu_teaches_group_product(group_id))`). Wrap each predicate in
-  `(SELECT …)` so it is an InitPlan evaluated once per statement, matching `00201`.
-- Grants: `GRANT SELECT ON TABLE public.gamer_group_notes TO authenticated;` and
-  `GRANT ALL … TO service_role;`. Nothing for `anon`.
+- **RLS on, and no policy at all** — not a read policy, not a write policy. Every read and
+  every write of this table goes through the two `SECURITY DEFINER` RPCs, which bypass RLS
+  entirely, so a policy would authorize a query nothing makes. With RLS enabled and no
+  policy the table is deny-all to anyone who reaches it over the Data API, which is the
+  strongest posture available and the one that matches how the table is actually used.
+- Grants: `GRANT ALL ON TABLE public.gamer_group_notes TO service_role;` and **nothing for
+  `authenticated`**, nothing for `anon`. No client role holds a grant on this table.
+- **This is what keeps `gedu_teaches_group_product` private, and the two facts are one
+  decision.** An RLS policy predicate is evaluated as the *querying* role, so a function
+  named in a policy must be EXECUTE-able by that role — `SECURITY DEFINER` governs whose
+  privileges apply *inside* the body, never who may call it. A `SELECT` policy on this
+  table calling that predicate would therefore have forced a `GRANT EXECUTE … TO
+  authenticated`, which makes it an exposed function needing an authorization-spine entry,
+  and would have contradicted the migration's own end-state assertion that it is not
+  granted. Dropping the client read drops all of that. The schema already draws this line
+  both ways and both were checked: `is_voice_group_moderator` is granted to `authenticated`
+  precisely because the `voice_zones` / `voice_private_zone_occupants` policies name it,
+  and `gedu_teaches_group` is granted only to `service_role` and appears in no policy at
+  all.
 - The `updated_at` touch: reuse `public.update_updated_at_column()` via a trigger, as
   `participations` does, rather than setting it by hand in the RPC.
 
@@ -444,8 +494,10 @@ $$;
 ```
 
 Internal, **not granted to `authenticated`** — exactly like `gedu_teaches_group`, whose
-comment says so. It is called from inside the two `SECURITY DEFINER` RPCs and from the
-table's RLS policies. Its comment should state the relationship to `gedu_teaches_group`
+comment says so, and which the schema grants to `service_role` alone. It is called from
+inside the two `SECURITY DEFINER` RPCs and **from nowhere else** — in particular from no RLS
+policy, which is the whole reason it can stay private (see the notes table above). Its
+comment should state the relationship to `gedu_teaches_group`
 (same question, product-wide instead of group-wide) and to `is_voice_group_moderator` (the
 admin-folded voice variant of the same predicate, deliberately left alone because voice RLS
 policies reference it).
@@ -611,12 +663,14 @@ A `DO $assert$` at the foot, in `00201`'s style. At minimum:
 - the column exists, is `timestamptz`, and is nullable;
 - the trigger exists on `participations`, is `BEFORE INSERT OR UPDATE`, and names
   `group_id` in its column list;
-- `gamer_group_notes` has RLS enabled, exactly the expected grants for `authenticated`
-  (SELECT only — assert the *absence* of INSERT/UPDATE/DELETE explicitly, since that
-  absence is what keeps the table off the write-IDOR loop), and its length CHECK;
+- `gamer_group_notes` has RLS enabled, **holds no grant of any kind for `authenticated` or
+  `anon`** (assert the absence explicitly — it is the whole access story for this table, and
+  the absence of a write grant is what keeps it off the write-IDOR loop), has **no policies
+  at all**, and carries its length CHECK;
 - both new RPCs have `assert_role` as their first statement (grep `prosrc`, as `00201`
   does), are executable by `authenticated`, and are **not** executable by `anon`;
-- `gedu_teaches_group_product` is **not** executable by `authenticated`;
+- `gedu_teaches_group_product` is **not** executable by `authenticated` — an assertion that
+  is now simply true, rather than one the table's own policies would have falsified;
 - the three recreated readers still contain their own guard (`assert_role('gedu')` /
   `assert_admin()`) and now contain `group_joined_at` — a lost guard or a lost section in a
   retyped body reads as an empty panel rather than an error, which is why the assertions
@@ -690,13 +744,24 @@ Regenerated, never hand-edited. It will gain `participations.group_joined_at`, t
 - `member-flair.queries.ts` — `useGroupStaffOverlay(groupId, enabled)` and
   `useSetGamerGroupNote(...)`. **The read is category 2** in the loading taxonomy: a small,
   indexed, bounded read of one group's members. So it renders **nothing** while in flight,
-  inside a container already at its final size — no skeleton, no spinner, no delay. The
-  flair simply appears when it lands, which is the same "nothing outlives this change"
-  case the layout rule permits.
+  inside a container already at its final size — no skeleton, no spinner, no delay.
+
+  **This is settled, and it is settled by the row rather than by the query.** The row *does*
+  outlive the overlay landing, so "nothing outlives this change" is not the exemption here;
+  what makes the arrival free is that the row is **additive by construction** — the newcomer
+  badge is last on the identity line and the note button is the left edge of a right-packed
+  trailing group, so both grow into the row's slack and nothing already painted moves. See
+  "Where the marks sit on a row". Two other answers were considered and neither is needed:
+  **resolving the overlay before the room's first paint** (which would hold the whole room
+  behind a staff-only read, and give a family's room nothing to wait for), and **reserving
+  space for the flair** (a hole on every row without a note or a badge — which is most of
+  them — to prevent a shift on the few, exactly the cost the root layout rule warns about).
+  So the acceptance criterion demanding no layout shift and this "render nothing while in
+  flight" choice are the *same* decision seen from two ends, not two answers to one question.
 - `index.ts` — the barrel.
 
-**Invalidation on a successful note save** (`onSuccess`), every one of them needed because
-four different documents can be showing the same note:
+**Invalidation on a successful note save** (`onSuccess`), because four different documents
+carry the same note:
 
 ```
 memberFlairKeys.overlay(groupId)   // the voice room
@@ -704,6 +769,11 @@ geduSessionKeys.feed(groupId)      // the gedu group feed roster
 assignmentKeys.all                 // the gedu product page document
 groupsKeys.all                     // the admin groups snapshot
 ```
+
+The first three are what the two live surfaces read. `groupsKeys.all` is there because the
+admin snapshot *carries* the note whether or not anything draws it yet, and a document
+holding a stale note is a document holding a wrong one; it is also one cheap staff-only
+read.
 
 The last two are invalidated at the top of their hierarchies rather than by id: the
 mutation does not always know the product id, each is one cheap single-document read, and
@@ -784,12 +854,30 @@ property of the derived value, and the shell derives the set from the document's
 
 ### Where the marks sit on a row
 
-**Order: the name, then the person's own detail, then the newcomer badge, then the Parent
-badge.** The middle slot is whatever that surface uses to say who this is — the child's age
-and gender on the gedu roster, their game username in the voice room — and it is empty on an
-adult's row, since a parent has neither. So the badge lands after the detail on a child's row
-and directly after the name on an adult's, and always before the Parent badge. One rule, both
-surfaces. The note button is at the far end of the row on both, past the status icons.
+**Order: the name, then the person's own detail, then the Parent badge, and the newcomer
+badge last.** The middle slot is whatever that surface uses to say who this is — the child's
+age and gender on the gedu roster, their game username in the voice room — and an adult has
+neither, which is what the Parent badge stands in for. The two are mutually exclusive by
+role, so a row carries one of them, and the newcomer badge follows whichever it was.
+
+**Last is not a tidiness preference; it is the layout rule.** The newcomer badge is the only
+item on that line that can arrive after the row has painted — in the voice room it comes with
+the staff overlay, a round trip behind the Daily token that drew everything else. A mark
+landing at the end of the run is absorbed by the line's slack; the same mark one position
+earlier shoves an already-painted Parent badge sideways on data's own schedule, which the
+root layout rule forbids outright. The gedu roster orders the two the same way even though
+its flair arrives in the same payload as the roster, so there is **one order across both
+surfaces** and neither has to remember which of them had the timing problem. Do not "tidy"
+the badge forward.
+
+**The note button's position follows from the same fact, and differs by surface because the
+rows differ.** On the gedu roster it is the last child of the row, past the identity column
+entirely. In the voice room it is the **left edge of the trailing control group** — the note
+button, the mic/camera icons and the moderator menu are one group carrying the row's
+`ml-auto`, so the group is right-packed and a button appearing later grows it leftward into
+slack while the icons and the menu hold their positions to the pixel. It sat *between* the
+icons and the menu once, and there every overlay landing pushed the icons left by its own
+width.
 
 **The voice room's row wraps below `sm`, and the identity is what moves.** At the 360px
 floor the row has 294px of content width; the avatar, the status pair, the note button, the
@@ -881,13 +969,42 @@ state. Swap the fixture for the query and the shape is done.
   mutation the gedu page uses.
 - **Nothing about this rides the Daily token.** Do not add a slot to `user_name`.
 
-### Admin product details groups panel (`src/components/admin/products/groups/`)
+### Admin product details — the groups panel draws neither mark
 
-`ParticipantChip` gains the badge and the indicator from the widened
-`GroupParticipationDetail`. The panel knows the product type from the page around it, so
-`showsNewcomerBadge` is a direct call. The unassigned and waitlist cards render the same
-chip and will receive NULLs, which draws nothing — that is the correct outcome, and it is
-why the three arms keep one shape.
+**Nothing on `src/components/admin/products/groups/` changes.** A participant chip there is a
+drag handle on a board whose whole purpose is moving people between groups, so `ParticipantChip`
+is untouched: the newcomer badge has no bearing on a move, and the note is a *control*, which is
+the one kind of thing that cannot sit inside a drag handle without competing with the gesture
+the board exists for. `showsNewcomerBadge` is never called on this surface.
+
+### Admin product details — the note lives in the sessions panel
+
+The admin's home for a member note is a **group members card in the sessions panel** at the
+foot of the admin product details page — the panel whose own subject is what happened on this
+product, group by group: the group's standing notes, the venue's notes, and the session record.
+
+Three things make it the right home rather than a place the note was fitted into:
+
+- **It is already group-scoped.** The panel carries a group selector, and a note is keyed to
+  `(group, member)`. The scope the note needs is the scope the panel already has, so nothing
+  has to be threaded in to establish which group a note belongs to.
+- **It already reuses the gedu presentation rather than forking it** — the standing-notes and
+  site-notes panels on it are the gedu components, imported. A members card renders the same
+  roster row the gedu page renders, which already takes the note props and already draws the
+  button. There is no new component and no new interaction to design.
+- **It sits beside the group's own notes, which is what it is.** A note about a person in a
+  group belongs next to the notes about the group.
+
+**The card sits beside the standing notes, not attached to the register.** The register is
+per *session* and the note is per *(group, member)*; hanging a note off an attendance row
+would quietly assert that a note is about the session it was written during, which is the
+opposite of what it is for — the note is the thing that survives from one session to the next.
+
+**The card draws the note button and no badge**, per the rule above. Rows are read-only
+otherwise: this is not a second place to correct a game username.
+
+`get_product_groups_with_details` carries the three fields (see the migration) — which is
+also what keeps its three participation arms one shape — and the card is what renders them.
 
 ### Preview scenes
 
@@ -908,7 +1025,16 @@ hands a non-club product, and the only way a scene can show the two gates coming
 
 **None are needed.** The `memberFlair` namespace already carries everything both marks use,
 in all five locales: `newcomer`, `newcomerTooltip`, `openNote`, `noteTitle`, `notePrivacy`,
-`notePlaceholder` and `noteLastEdited`. Two candidates were considered alongside the
+`notePlaceholder` and `noteLastEdited`.
+
+**One of them has already been retuned for width, and the reason is the 360px row.** The
+French `newcomer` read "Arrivée récente" and left the name beside it an ellipsis on a 360px
+participant row; it is **"Nouveau"** now, and `newcomerTooltip` follows it. French is
+routinely the widest of our locales, which is what the root CLAUDE.md rule means by judging
+a tight layout in the widest one — so a future edit to this label is a width decision, not
+just a wording one.
+
+Two candidates were considered alongside the
 indicator choice and the choice retired both:
 
 - an **"add a note" label** for rows with nothing written yet. The note button is present on
@@ -1006,8 +1132,8 @@ needs **no** entry — it is not granted to `authenticated`, and the completenes
 say so if that is ever wrong.
 
 **`tests/db/access-control.test.ts`** — the new table is swept automatically for RLS. Run
-it and confirm the write-IDOR completeness check still balances (it should: no write grant,
-no entry).
+it and confirm the grant allowlist and the write-IDOR completeness check both still balance
+(they should: the table holds no client grant at all, so it needs no entry in either).
 
 ### Unit (`tests/unit/`)
 
@@ -1086,7 +1212,11 @@ independently verifiable.
     the context value, wraps the room in the flair provider and mounts the dialog — the
     preview scene's shape, with a query where its fixture is. Rows merge by `userId` and
     render flair; the dialog saves through the mutation.
-13. Promote the admin groups panel chip.
+13. **Add the group members card to the admin sessions panel.** Beside the standing notes,
+    inside the selected group's scope: the shared roster row per member, fed from
+    `get_product_groups_with_details`, with the note button live against the same write RPC
+    and the same invalidations the other two surfaces use. No newcomer badge, and no game
+    username editor. `src/components/admin/products/groups/` is untouched by this plan.
 14. Unit tests for the wiring. **No locale work**: the namespace is complete, and the key
     the losing indicator needed is already gone from all five files.
 15. Lint, type-check, `npm run test`. Merge to `dev` (`--no-ff`, subject `Merge the member
@@ -1103,9 +1233,14 @@ independently verifiable.
   write to `participations` touches it.
 - Every pre-existing participation row has `group_joined_at IS NULL` after the migration,
   and nothing badges on launch day.
-- A Gedu and an admin see the newcomer badge on club products on all three surfaces, its pip
-  meter draining across the 30-day window and the badge gone after it; neither sees it on a
-  camp or an event.
+- A Gedu and an admin see the newcomer badge on club products on **both** badge surfaces —
+  the gedu product details roster and the voice room participant list — its pip meter
+  draining across the 30-day window and the badge gone after it; neither sees it on a camp
+  or an event, and neither sees it on any admin surface.
+- An admin can read and write a member's note from the group members card in the admin
+  sessions panel, and an edit made there shows up on the gedu page and in the voice room —
+  and the reverse — because all three go through one write RPC and one set of invalidations.
+  The admin groups panel is unchanged and draws neither mark.
 - A parent, a gamer, and an unauthenticated caller can reach neither the badge data nor a
   note: the overlay RPC refuses them `42501`, and the roster RPCs are already staff-only.
 - No staff-only value appears anywhere in a Daily token, `user_name`, or any other channel
@@ -1117,10 +1252,12 @@ independently verifiable.
 - Saving an empty note deletes the row; the indicator disappears on every surface without a
   reload, through query invalidation.
 - Writing a note about somebody who does not sit in the group is refused.
-- Editing a note in the voice room updates the gedu page and the admin panel, and the
-  reverse.
-- No layout shift when the overlay lands in the voice room; no button re-enables between a
-  save click and the dialog closing.
+- Editing a note in the voice room updates the gedu page, and the reverse.
+- No layout shift when the overlay lands in the voice room — and it holds by construction,
+  not by timing: the newcomer badge is the last item on the identity line, and the note
+  button is the left edge of the right-packed trailing group, so both grow into the row's
+  slack and nothing already painted moves. Reordering either reintroduces the shift.
+- No button re-enables between a save click and the dialog closing.
 - `npm run lint`, `npm run type-check`, `npm run test` clean; CI's db suite green,
   including the spine's completeness checks and the write-IDOR loop's equality assertion.
 - No new API route, and the route posture registry is untouched.
@@ -1129,7 +1266,7 @@ independently verifiable.
 
 ## Review
 
-A migration and three surfaces — so: **one challenge, then one
+A migration and two surfaces — so: **one challenge, then one
 cold-read**, one round each, both to fresh agents with no conversation context, both on the
 strong-but-cheaper tier rather than the driver's. Challenge first (is this only what v1
 needs?), then the cold-read (can this be built from the document alone?). Do not loop.

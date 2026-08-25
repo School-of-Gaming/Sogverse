@@ -203,13 +203,23 @@ export function ParticipantRow({
         />
       )}
 
-      {/* Newcomer badge, then the Parent badge — two direct children sharing one
-          `order`, so they sit adjacent at every width without a wrapper. On a
-          wide row that puts the badge directly after the game account; on a
-          phone, directly after the name. The identity slot and the Parent badge
-          are mutually exclusive by role and the newcomer badge is orthogonal to
-          both, so an adult's row can carry it too — a room does not gain a
-          wider slot when a newcomer joins it.
+      {/* The Parent badge, then the newcomer badge — in that order, and the
+          order is what makes the row safe rather than merely tidy.
+
+          The Parent badge is painted from the Daily token the instant the room
+          is; the newcomer badge arrives with the staff overlay a round trip
+          later. **Anything that lands late has to land at the end of the run**,
+          where its arrival is absorbed by the row's slack instead of displacing
+          something already on screen — the same reason the note button sits at
+          the left edge of the right-packed trailing group below. Put the
+          newcomer badge ahead of the Parent badge and the overlay shoves an
+          adult's role badge sideways every time it resolves.
+
+          Both are `shrink-0`, so the name goes on surrendering width to
+          truncation first and a room does not gain a wider slot when a newcomer
+          joins it. The identity slot and the Parent badge are mutually
+          exclusive by role and the newcomer badge is orthogonal to both, so an
+          adult's row can carry it too.
 
           **No wrapping div, deliberately.** A group would have to decide
           whether it renders at all, and the only honest answer depends on
@@ -218,13 +228,6 @@ export function ParticipantRow({
           renders `null` is simply not a flex item and costs nothing; a group
           would have cost a gap on either side of itself for a stamp that had
           quietly expired. */}
-      {newcomerJoinedAt != null && flairNow !== undefined && (
-        <NewcomerBadge
-          joinedAt={newcomerJoinedAt}
-          now={flairNow}
-          className="order-3 sm:order-4"
-        />
-      )}
       {p.role === "customer" && (
         /* The same badge and word the roster row and admin chips draw for a
            customer, read off the shared role constants. Rendered inside a
@@ -239,63 +242,87 @@ export function ParticipantRow({
           {c(ROLE_LABEL_KEYS.customer)}
         </Badge>
       )}
-
-      {onOpenNote && (
-        <GamerNoteButton
-          name={p.userName}
-          hasNote={hasNote === true}
-          onOpen={onOpenNote}
-          className="order-5 sm:order-6"
+      {newcomerJoinedAt != null && flairNow !== undefined && (
+        <NewcomerBadge
+          joinedAt={newcomerJoinedAt}
+          now={flairNow}
+          className="order-3 sm:order-4"
         />
       )}
 
-      {/* Status indicators — always show both icons for stable layout. This is
-          also where the row's slack is parked (`ml-auto`), which is what keeps
-          the status pair, the note button and the menu pinned to the right edge
-          on every row whatever the name, the badges or the identity did with
-          the space before them. */}
-      <div className="order-4 ml-auto flex shrink-0 items-center gap-1.5 sm:order-5">
-        <div className="relative">
-          {p.videoOn ? (
-            <Video className="h-3.5 w-3.5 text-muted-foreground" />
-          ) : (
-            <VideoOff
-              className={cn(
-                "h-3.5 w-3.5",
-                lockState.video ? "text-destructive" : "text-muted-foreground",
-              )}
-            />
-          )}
-          {lockState.video && (
-            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-          )}
+      {/* The row's trailing controls, as **one right-packed group**, and both
+          halves of that are load-bearing.
+
+          *Right-packed*, because the group carries the row's slack (`ml-auto`)
+          and is the last thing on the line: its right edge is the row's right
+          edge, and its contents pack leftward from there. So a control that
+          appears later — the note button, which arrives with the staff overlay
+          a round trip after the room paints — grows the group leftward into
+          slack rather than displacing what is already on screen. The icons and
+          the menu keep their positions to the pixel.
+
+          *One group*, because that only holds while the note button sits to the
+          **left** of the icons. Between them (where it first sat) it pushed the
+          mic and camera left by its own width on every row, every time the
+          overlay landed — an already-painted element moving on data's own
+          schedule, which is exactly what the layout rule forbids. Keeping the
+          three in one always-present group is also what lets the slack live in
+          one fixed place: parking it on a conditional control would mean the
+          row had no sink at all on the rows that lack it. */}
+      <div className="order-4 ml-auto flex shrink-0 items-center gap-2 sm:order-5">
+        {onOpenNote && (
+          <GamerNoteButton
+            name={p.userName}
+            hasNote={hasNote === true}
+            onOpen={onOpenNote}
+          />
+        )}
+
+        {/* Status indicators — always show both icons for stable layout. */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="relative">
+            {p.videoOn ? (
+              <Video className="h-3.5 w-3.5 text-muted-foreground" />
+            ) : (
+              <VideoOff
+                className={cn(
+                  "h-3.5 w-3.5",
+                  lockState.video
+                    ? "text-destructive"
+                    : "text-muted-foreground",
+                )}
+              />
+            )}
+            {lockState.video && (
+              <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
+            )}
+          </div>
+          <div className="relative">
+            {p.audioOn ? (
+              <Mic className="h-3.5 w-3.5 text-success" />
+            ) : (
+              <MicOff className="h-3.5 w-3.5 text-destructive" />
+            )}
+            {lockState.audio && (
+              <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
+            )}
+          </div>
         </div>
-        <div className="relative">
-          {p.audioOn ? (
-            <Mic className="h-3.5 w-3.5 text-success" />
-          ) : (
-            <MicOff className="h-3.5 w-3.5 text-destructive" />
-          )}
-          {lockState.audio && (
-            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-          )}
-        </div>
+
+        {/* All moderator actions collapse into one overflow menu — a single icon
+            at the row's end, so the row layout is identical for every
+            participant and nothing spills into the name on mobile. */}
+        {showModMenu && (
+          <ParticipantModMenu
+            name={p.userName}
+            audioOn={p.audioOn}
+            videoOn={p.videoOn}
+            lockState={lockState}
+            onMute={onMute}
+            onLock={onLock}
+          />
+        )}
       </div>
-
-      {/* All moderator actions collapse into one overflow menu — a single icon at
-          the row's end, so the row layout is identical for every participant and
-          nothing spills into the name on mobile. */}
-      {showModMenu && (
-        <ParticipantModMenu
-          className="order-6 sm:order-7"
-          name={p.userName}
-          audioOn={p.audioOn}
-          videoOn={p.videoOn}
-          lockState={lockState}
-          onMute={onMute}
-          onLock={onLock}
-        />
-      )}
     </div>
   );
 }

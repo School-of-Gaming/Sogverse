@@ -232,23 +232,29 @@ export function ParticipantRosterRow({
               p early and React fails hydration on the mismatch. */}
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-medium leading-tight">
             <span className="truncate">{participant.first_name}</span>
-            {/* Order on this line: the name, then whatever this person's own
-                detail is, then the newcomer badge, then the Parent badge. The
-                middle slot is the child's age and gender or — on an adult row —
-                nothing, since a parent has no such detail; the badge therefore
-                lands after the detail on a child's row and directly after the
-                name on an adult's, which is the same rule the voice room's row
-                follows with the game username in that middle slot. An adult can
-                be new to a group like anyone else, so this is not a child-only
-                mark. All four queue in one wrapping line and never displace one
+            {/* Order on this line: the name, then this person's own detail,
+                then their role badge, and the newcomer badge last. The middle
+                slot is the child's age and gender or — on an adult row — the
+                Parent badge, since a parent has no such detail; the voice room
+                follows the same rule with the game username in that slot. An
+                adult can be new to a group like anyone else, so this is not a
+                child-only mark.
+
+                **The newcomer badge goes last because it is the one thing here
+                that can arrive late.** On this page it does not — the flair
+                comes in the same payload as the roster — but the rule is shared
+                with the voice room, where the overlay lands a round trip after
+                the row paints, and a mark that appears at the end of the run is
+                absorbed by the line's slack instead of shoving a role badge
+                sideways. One order, both surfaces, and no surface has to
+                remember why.
+
+                All four queue in one wrapping line and never displace one
                 another. */}
             {!isAdult && detail && (
               <span className="text-[11px] font-normal text-muted-foreground">
                 {detail}
               </span>
-            )}
-            {flairNow !== undefined && (
-              <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
             )}
             {isAdult && (
               /* The same badge and the same word the admin surfaces use for a
@@ -263,6 +269,9 @@ export function ParticipantRosterRow({
               >
                 {c(ROLE_LABEL_KEYS.customer)}
               </Badge>
+            )}
+            {flairNow !== undefined && (
+              <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
             )}
           </div>
           {!isAdult && platform !== null && (
