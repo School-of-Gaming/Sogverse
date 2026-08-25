@@ -10,25 +10,26 @@ import { useUpdateSiteNotes } from "@/services/products";
 /**
  * The one affordance on this page that writes the venue's street address.
  *
- * **It is separate from the site-notes panel above it because the two fields
- * have different owners, and that split is the point.** The two site *notes*
- * are written by whoever runs the building's sessions — an admin or an assigned
- * gedu — through an RPC that deliberately takes no address at all. The address
- * is family-facing venue detail belonging to the location record, an admin's
- * alone, and it travels on the admin route instead. One control per owner is
- * what stops a note save carrying a stale address back with it, which is the
- * bug the RPC dropped its address parameter to kill.
+ * **It is a control of its own inside the site-notes section because the two
+ * fields have different owners, and that split is the point.** The two site
+ * *notes* are written by whoever runs the building's sessions — an admin or an
+ * assigned gedu — through an RPC that deliberately takes no address at all. The
+ * address is family-facing venue detail belonging to the location record, an
+ * admin's alone, and it travels on the admin route instead. One control per
+ * owner is what stops a note save carrying a stale address back with it, which
+ * is the bug the RPC dropped its address parameter to kill.
  *
  * **It sends the address and nothing else**, and the route leaves an absent
  * field alone rather than writing it null — so this cannot blank a note
- * somebody wrote a moment ago in the panel directly above.
+ * somebody wrote a moment ago in the panel around it.
  *
  * **It renders no address of its own.** The shared notes panel already shows
  * it, read-only, exactly as a gedu sees it; a second copy here would be the
  * same fact in two places, free to disagree for a frame after a save. So this
- * is a control and an editor, nothing more — and it lives on the admin surface
- * rather than inside the shared panel, because a panel that grew an edit button
- * for some viewers would mean two different things depending on who opened it.
+ * is a control and an editor, nothing more — and it reaches the panel through
+ * that panel's `addressEditor` slot rather than living inside it, because a
+ * panel that grew an edit button for some viewers would mean two different
+ * things depending on who opened it.
  */
 export function SiteAddressField({
   locationId,
@@ -72,7 +73,7 @@ export function SiteAddressField({
       setEditing(false);
     } catch {
       // The thrown message is English server text written for a log, exactly
-      // as the notes panel beside this one treats its own refusals: one
+      // as the notes panel around this one treats its own refusals: one
       // translated line, and the draft left where it is for the retry.
       setError(t("addressSaveFailed"));
     } finally {

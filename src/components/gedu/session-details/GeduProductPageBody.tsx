@@ -221,6 +221,18 @@ interface GeduProductPageBodyProps {
   onSiteNotesEditingChange: (editing: boolean) => void;
   /** Persist the venue's shared notes. Awaited by the panel. */
   onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
+  /**
+   * A control that writes the venue's **address**, for a shell whose viewer owns
+   * that field. Omitted — which is what the gedu shell does, and what a scene
+   * does — the site section is exactly what it has always been.
+   *
+   * It is the same "one optional capability, or none of it" shape
+   * `memberFlair` below uses: either the caller can offer this and passes a
+   * control, or it cannot and passes nothing. The body only decides *where* it
+   * goes; every string, every mutation and every failure line inside it belong
+   * to whoever built it.
+   */
+  siteAddressEditor?: ReactNode;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -302,6 +314,7 @@ export function GeduProductPageBody({
   siteNotesEditing,
   onSiteNotesEditingChange,
   onSaveSiteNotes,
+  siteAddressEditor,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
@@ -481,6 +494,7 @@ export function GeduProductPageBody({
                       editing={siteNotesEditing}
                       onEditingChange={onSiteNotesEditingChange}
                       onSave={onSaveSiteNotes}
+                      addressEditor={siteAddressEditor}
                     />
                   </div>
                 )}

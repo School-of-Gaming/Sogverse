@@ -1241,6 +1241,20 @@ independently verifiable.
 - **The migration is numbered `00203`**, not the plan's provisional `00202` —
   `00202_a_contract_version_carries_its_language.sql` landed on `dev` between authoring
   and implementation, exactly the contention constraint 3 anticipated.
+- **Owner redesign (2026-08-25): the admin sessions panel is gone, and with it the plan's
+  whole "group members card" shape.** Building the card made the underlying problem
+  visible: the admin product page defines the product at product level, while the sessions
+  panel re-composed the gedu *group* workspace at its foot — a second composition of the
+  same surface, growing with every group-level feature. The owner's ruling: each group on
+  the admin product page links to a per-group **admin group details page** that renders the
+  same page body the gedu sees — identical layout, badge and note included, comfortable
+  density. One body, two shells; migration `00204` widens `get_gedu_group_feed` to
+  gedu-or-admin so the admin shell reads the *same document through the same contract*,
+  which also makes admin and gedu surfaces invalidate each other's reads for free. The
+  plan's sections placing the note in a members card inside the sessions panel, and the
+  "no badge on any admin surface" rule, are superseded by this — the badge appears
+  wherever the shared body renders, which now includes the admin's view of a group. The
+  groups drag board still carries neither mark.
 
 ---
 
