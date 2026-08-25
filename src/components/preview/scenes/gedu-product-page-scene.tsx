@@ -35,6 +35,13 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * turning into a finished one, and a part-marked one staying flagged, are the
  * two most important things to feel here. Nothing persists past a reload.
  *
+ * **The roster's staff flair is live too, on the club scenario that carries
+ * it.** The note button at the end of every row opens that member's Gedu note —
+ * most of them empty, which is the add flow — and saving one lights the button,
+ * while saving an empty one puts it out again. The newcomer badges are
+ * read-only: their meters drain against the scene's frozen clock, which is what
+ * lets four ages spread across the window be compared in one screenshot.
+ *
  * **Emailing a report to the families is live too, and reaches nobody.** One
  * press walks the button through all three of its states — send, sending, sent
  * — because what the click runs is a delayed local stamp on the entry rather
@@ -88,6 +95,20 @@ export function GeduProductPageScene({
   const [gameStatuses, setGameStatuses] = useState<
     Record<string, GameAccountStatus>
   >({});
+  /**
+   * The Gedu notes, live against local state — the club scenario seeds two and
+   * every other scenario seeds none, because only the club carries flair at all.
+   *
+   * Held as a record keyed by participant id, exactly as the live read will hand
+   * it over: the roster rows only need "does this person have one", and the
+   * dialog looks the text up when it opens.
+   */
+  const [gamerNotes, setGamerNotes] = useState<Record<string, string>>(
+    () => fixture.memberFlair?.notes ?? {},
+  );
+  const [noteEditors, setNoteEditors] = useState<Record<string, string>>(
+    () => fixture.memberFlair?.noteEditors ?? {},
+  );
 
   /**
    * Which identity this scenario's roster shows, read off the fixture's own
@@ -335,6 +356,28 @@ export function GeduProductPageScene({
     pendingTimers.current.add(timer);
   };
 
+  /**
+   * A Gedu writing, rewriting or retiring a note about one member.
+   *
+   * The text arrives trimmed, and an empty one is a real action rather than a
+   * no-op: it **deletes** the key, which is what puts the row back to an unlit note button and
+   * is how a Gedu drops guidance that no longer applies. The editor stamp moves
+   * with it — this scene's viewer is Sanna, so a note she rewrites now says so,
+   * and a cleared note takes its attribution with it rather than leaving a name
+   * attached to nothing.
+   *
+   * Like every write in this scene bar the send, it resolves immediately: the
+   * dialog's disabled-until-saved frame is the live page's to show.
+   */
+  const handleSaveNote = (participantId: string, text: string) => {
+    setGamerNotes(({ [participantId]: _cleared, ...rest }) =>
+      text.length > 0 ? { ...rest, [participantId]: text } : rest,
+    );
+    setNoteEditors(({ [participantId]: _dropped, ...rest }) =>
+      text.length > 0 ? { ...rest, [participantId]: SCENE_VIEWER } : rest,
+    );
+  };
+
   return (
     <GeduProductPageBody
       data={data}
@@ -359,6 +402,23 @@ export function GeduProductPageScene({
       onSendReport={handleSendReport}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
+      // Only where the scenario has flair at all — the club. Passed whole at
+      // mount, badges and note buttons included, so nothing arrives on a row after the
+      // roster has painted; the live page hands it over in the same staff-scoped
+      // read as the roster itself, so it behaves the same way there.
+      memberFlair={
+        fixture.memberFlair === null
+          ? undefined
+          : {
+              // The scene's one frozen instant, so the newcomer meter is measured
+              // against the same clock the sessions were laid out around.
+              now,
+              newcomers: fixture.memberFlair.newcomers,
+              notes: gamerNotes,
+              noteEditors,
+              onSaveNote: handleSaveNote,
+            }
+      }
       // Deliberately not passed. A Roblox render can only be resolved by
       // account id through our own route, and a scene must not reach a
       // third-party host on load — so every figure here is the drawn stand-in,
@@ -367,6 +427,14 @@ export function GeduProductPageScene({
     />
   );
 }
+
+/**
+ * Who is looking at this page. The rail names Sanna and Petra as the group's
+ * gedus and Sanna writes most of the fixture's sessions up, so she is the one
+ * whose name a note rewritten here should carry — a scene that stamped a third
+ * name would be showing a colleague nobody on this product is.
+ */
+const SCENE_VIEWER = "Sanna";
 
 /**
  * Roughly what a Mojang lookup costs over a home connection. Long enough that

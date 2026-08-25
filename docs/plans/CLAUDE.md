@@ -88,12 +88,24 @@ or the deletion of data. Everything else is theirs.
 
 ## Landing in stages
 
-**The default is one branch, one merge, one review, one release.** A plan splits its work
-into stages that land on `dev` separately only when a constraint forces it, and the plan
-names that constraint. The one that recurs here: the CI migrations job and the Vercel
-promotion race, so a migration and the code that depends on it are never in one release —
-a schema change the app needs goes first, alone. Two things follow, and both are rules
-because each was nearly got wrong the first time:
+**The default is one branch, one merge, one review, one release — migrations included.**
+The release pipeline holds the Vercel production promotion until the CI migrations job has
+deployed successfully, so within a single release the schema always lands before the code
+that depends on it. What remains is a brief window — a minute or less — where the new
+schema is live under the still-old app. That window is accepted, not solved: releases are
+timed at low traffic, and holding finished code back for a second release costs more in
+rot than the window costs in risk. What the window does ask of a migration is that the
+*old* app survives it — the additive shapes (new columns, new tables, new RPCs, widened
+JSON the old contracts strip) do so for free; a migration the live app would actually
+break under (a drop, a rename, a tightened constraint the old writes violate) needs its
+own compatibility step regardless of staging.
+
+A plan splits its work into stages that land on `dev` separately only when a constraint
+forces it, and the plan names that constraint. The one that qualifies: a **high-risk or
+high-visibility area** — payments is the standing example — where even a minute of
+schema/app skew under live traffic is not acceptable; there the schema goes first, alone,
+and the code follows in its own release. Two things follow whenever a stage does land
+early, and both are rules because each was nearly got wrong the first time:
 
 - **Only what the constraint forces goes early; everything else stays on the feature
   branch.** Releasing a stage releases all of `dev` — `/pr-dev-to-main` ships the branch

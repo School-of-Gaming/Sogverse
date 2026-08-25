@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { MaterialLink } from "@/components/ui/material-link";
 import { PersonChipList } from "@/components/ui/person-chip";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import { GamerNoteDialog } from "@/components/member-flair";
 import {
   SessionFeed,
   type SessionEntryDraft,
@@ -120,6 +121,41 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  * Both notes are **site-scoped**: they are shared by every product running
  * there, which is why the panel that renders them says so by name.
  */
+/**
+ * The staff-only overlay on the group's roster: who is new to the group, who
+ * has a Gedu note, and how a note is written back.
+ *
+ * **One object rather than five props, because it is one decision.** Either the
+ * caller made a staff-scoped read of this group's membership and can answer all
+ * of it, or it did not and answers none of it — there is no surface holding
+ * newcomer stamps but no notes. Omitting it is the resting state, and a page
+ * that omits it renders exactly the roster it rendered before flair existed.
+ *
+ * Every record is keyed by `participant_id`, and **absence is the common case**:
+ * most members are neither new nor written about, so a missing key is the answer
+ * rather than a gap.
+ */
+export interface RosterMemberFlair {
+  /**
+   * The instant the newcomer badge's meter is measured against. The caller's, so the
+   * badge answers off the same clock as everything else on the page — a scene's
+   * frozen instant, a live page's request-stable now.
+   */
+  now: Date;
+  /** ISO join stamps. A member past the window keeps their key and simply stops rendering a badge. */
+  newcomers: Readonly<Record<string, string>>;
+  /** Note text. A member with no note has no key; `""` and absent mean the same thing. */
+  notes: Readonly<Record<string, string>>;
+  /** Who last wrote each note, where that is known. Read only for members who have one. */
+  noteEditors?: Readonly<Record<string, string>>;
+  /**
+   * Persist one member's note. **Awaited by the dialog**, which holds its Save
+   * disabled until the write lands and closes only then; the trimmed text
+   * arrives here, and an empty string means "clear it".
+   */
+  onSaveNote: (participantId: string, text: string) => void | Promise<void>;
+}
+
 export interface ProductSite {
   name: string;
   /** Street address, family-facing. `null` when the venue record has none. */
@@ -239,6 +275,15 @@ interface GeduProductPageBodyProps {
    * verified name and needs nothing handed in.
    */
   robloxAvatarUrls?: RobloxRenderMap;
+  /**
+   * The roster's staff-only overlay — newcomer stamps, note markers, and the
+   * note write-back. Omitted, the rail's roster is untouched.
+   *
+   * It travels with the roster rather than after it: both records are handed in
+   * whole at first paint, so a badge or a lit note button never lands on a row the reader is
+   * already looking at.
+   */
+  memberFlair?: RosterMemberFlair;
 }
 
 export function GeduProductPageBody({
@@ -264,6 +309,7 @@ export function GeduProductPageBody({
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
+  memberFlair,
 }: GeduProductPageBodyProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
@@ -348,7 +394,9 @@ export function GeduProductPageBody({
                   the message files. */}
               <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
                 <Users className="h-4 w-4" aria-hidden />
-                {t("participantCount", { count: assignedGroup.participant_count })}
+                {t("participantCount", {
+                  count: assignedGroup.participant_count,
+                })}
               </span>
             </p>
           )}
@@ -388,6 +436,7 @@ export function GeduProductPageBody({
               onSaveGameUsername={onSaveGameUsername}
               gameStatuses={gameStatuses}
               robloxAvatarUrls={robloxAvatarUrls}
+              memberFlair={memberFlair}
             />
           )}
 
@@ -677,6 +726,12 @@ function rosterAvatarUrl(
  * which is the price of having the Join within reach, and it is paid in the
  * right order: the Join and the copy-all row sit above the roster inside this
  * card, so the two urgent things are still the first two things.
+ *
+ * **It owns the one note dialog.** The button lives on a row, but the dialog does
+ * not: eight rows holding eight dialogs would be eight parsers and eight drafts
+ * for a surface that can only ever have one open. The card holds *which* member
+ * is open instead, and the dialog reads that member's note out of the record it
+ * was handed.
  */
 function GroupRailCard({
   group,
@@ -689,6 +744,7 @@ function GroupRailCard({
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
+  memberFlair,
 }: {
   group: GeduAssignedProductGroup;
   isRemote: boolean;
@@ -705,6 +761,8 @@ function GroupRailCard({
   ) => void | Promise<void>;
   gameStatuses?: Readonly<Record<string, GameAccountStatus>>;
   robloxAvatarUrls?: RobloxRenderMap;
+  /** The roster's staff-only overlay, or `undefined` where there is none. */
+  memberFlair?: RosterMemberFlair;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -713,6 +771,15 @@ function GroupRailCard({
     () => deduplicateEmails(roster.map(rosterContactEmail)),
     [roster],
   );
+  /**
+   * Whose note is open — an id, not the note itself, so the dialog always shows
+   * what the record currently holds rather than a copy taken when it opened.
+   */
+  const [noteFor, setNoteFor] = useState<string | null>(null);
+  const noteMember =
+    noteFor === null
+      ? null
+      : (roster.find((member) => member.participant_id === noteFor) ?? null);
 
   return (
     <RailCard
@@ -767,11 +834,48 @@ function GroupRailCard({
                   member.roblox_user_id,
                   robloxAvatarUrls,
                 )}
+                newcomerJoinedAt={memberFlair?.newcomers[member.participant_id]}
+                flairNow={memberFlair?.now}
+                hasNote={
+                  (memberFlair?.notes[member.participant_id] ?? "").length > 0
+                }
+                // Handed to every row, not only the ones already written
+                // about: an empty note is what the add flow opens, most of the
+                // roster is that case, and a marker that appeared only on rows
+                // that already had one would leave no way to write the first.
+                onOpenNote={
+                  memberFlair === undefined
+                    ? undefined
+                    : () => setNoteFor(member.participant_id)
+                }
               />
             ))}
           </ul>
         )}
       </div>
+
+      {/* One dialog for the whole roster. It stays mounted with the member it
+          was opened for until the close lands, so nothing in it changes under
+          the reader on the way out. */}
+      {memberFlair !== undefined && (
+        <GamerNoteDialog
+          open={noteFor !== null}
+          onOpenChange={(open) => {
+            if (!open) setNoteFor(null);
+          }}
+          name={noteMember?.first_name ?? ""}
+          note={noteFor === null ? "" : (memberFlair.notes[noteFor] ?? "")}
+          lastEditedBy={
+            noteFor === null
+              ? null
+              : (memberFlair.noteEditors?.[noteFor] ?? null)
+          }
+          onSave={async (text) => {
+            if (noteFor === null) return;
+            await memberFlair.onSaveNote(noteFor, text);
+          }}
+        />
+      )}
     </RailCard>
   );
 }

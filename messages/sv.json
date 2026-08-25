@@ -1443,6 +1443,15 @@
     "materialAction": "Undervisningsmaterial",
     "materialStaffOnly": "Endast Gedus — familjerna ser aldrig den här länken"
   },
+  "memberFlair": {
+    "newcomer": "Ny",
+    "newcomerTooltip": "Ny i den här gruppen — gick med {days, plural, =0 {i dag} one {för # dag sedan} other {för # dagar sedan}}",
+    "openNote": "Gedu-anteckning om {name}",
+    "noteTitle": "Anteckning om {name}",
+    "notePrivacy": "Bara Gedus och administratörer ser den här anteckningen. Den stannar i den här gruppen, från gång till gång.",
+    "notePlaceholder": "Anteckningar om {name} i den här gruppen.",
+    "noteLastEdited": "Senast redigerad av {name}"
+  },
   "richText": {
     "bold": "Fet stil",
     "italic": "Kursiv stil",

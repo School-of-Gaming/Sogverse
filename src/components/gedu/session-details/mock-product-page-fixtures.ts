@@ -96,6 +96,20 @@ export interface SiteFixture {
   staffNote: string | null;
 }
 
+/**
+ * The roster's staff-only overlay: who is new to the group, who has been written
+ * about, and by whom. Every record is keyed by participant id, and absence is
+ * the ordinary answer — most of a roster is neither.
+ */
+export interface MemberFlairFixture {
+  /** ISO join stamps, one per member still inside the newcomer window. */
+  newcomers: Record<string, string>;
+  /** Note text, one per member a Gedu has written about. */
+  notes: Record<string, string>;
+  /** Who last wrote each note, keyed the same way as `notes`. */
+  noteEditors: Record<string, string>;
+}
+
 export interface GeduProductPageFixture {
   data: GeduAssignedProduct;
   entries: SessionFeedEntry[];
@@ -118,6 +132,18 @@ export interface GeduProductPageFixture {
    * row. Must never be rendered to a parent or gamer.
    */
   materialUrl: string | null;
+  /**
+   * The roster's newcomer stamps and Gedu notes, or `null` where the scenario
+   * has none — which is every scenario but the club.
+   *
+   * **The camp's `null` is the clubs-only rule made visible**, not an omission:
+   * a newcomer badge answers "how long has this child been coming", and a
+   * question about a week-long camp everybody started on the same Monday has no
+   * useful answer. The two roster scenarios beside it are `null` for the other
+   * reason — each exists to show one thing about the identity cell, and a badge
+   * or a note button on those rows would only be something else to look at.
+   */
+  memberFlair: MemberFlairFixture | null;
 }
 
 /** Gedu ids. Real UUIDs because each one renders as an identicon chip. */
@@ -166,6 +192,13 @@ interface ScenarioConfig {
   materialUrl: string | null;
   groupName: string;
   groupNotes: GroupNotesFixture;
+  /**
+   * Builds the roster's staff-only overlay from the scene's `now`, or `null`
+   * where the scenario shows none. Only the club does: a newcomer badge is a
+   * clubs-only mark by product decision, and the three scenarios beside it each
+   * exist to show one other thing.
+   */
+  memberFlair: ((now: Date) => MemberFlairFixture) | null;
   /**
    * The other groups running on the same product — the reference rail's
    * peer-cover rows. Both scenarios carry some: the rail's empty state is one
@@ -700,6 +733,62 @@ const ROSTER_SCENARIO_SPECS: readonly EntrySpec[] = [
   },
 ];
 
+/**
+ * The club's staff-only roster overlay: four newcomers and two notes.
+ *
+ * **Four newcomers, evenly spread across the window — one per pip of the
+ * badge's meter.** The badge drains a four-pip block across a member's first
+ * month, so four members spread across the window show every state it has at
+ * once. Emil at one day is the full block, Siiri at ten and Marja at nineteen
+ * are the middle readings, and Hilda at twenty-eight is the last one before the
+ * badge stops altogether. Stacked in one rail they can be read against each
+ * other in a glance.
+ *
+ * **Marja is deliberately one of them.** She is the parent holding a seat of
+ * her own, and an adult is as new to a group as a child is — so the badge has
+ * to sit beside the Parent badge on the same wrapping line without either
+ * displacing the other.
+ *
+ * **Two notes, and one of them is on a newcomer on purpose.** A lit note button
+ * at the end of a row and a badge beside the name are two marks on one row, and
+ * the question a reviewer actually has is whether that row still reads as one
+ * person rather than as a decorated one — which cannot be answered from two
+ * rows each wearing one mark. Siiri carries both. Emil's note is the second, so a note is also
+ * seen on a row that has nothing else on it.
+ *
+ * The two notes are the ones a Gedu really writes: how to pair somebody, and
+ * where a new arrival came from and what they already know. Both are staff
+ * register, never a parent's — the note is private to Gedus and admins, and a
+ * fixture written as if a family might read it would quietly teach the wrong
+ * voice. Mock data, so untranslated English like every other fixture here.
+ *
+ * Stamps are a duration back from `now` — arithmetic between instants, which is
+ * exactly what the badge measures, so no calendar stepping is involved.
+ */
+function clubMemberFlair(now: Date): MemberFlairFixture {
+  const daysAgo = (days: number) =>
+    new Date(now.getTime() - days * 86_400_000).toISOString();
+
+  return {
+    newcomers: {
+      [SESSION_FEED_GAMER_IDS.emil]: daysAgo(1),
+      [SESSION_FEED_GAMER_IDS.siiri]: daysAgo(10),
+      [SESSION_FEED_ADULT_ID]: daysAgo(19),
+      [SESSION_FEED_GAMER_IDS.hilda]: daysAgo(28),
+    },
+    notes: {
+      [SESSION_FEED_GAMER_IDS.siiri]:
+        "Quiet in big groups — pair her rather than letting her pick a partner. Has warmed up a lot since autumn.",
+      [SESSION_FEED_GAMER_IDS.emil]:
+        "Joined from the Monday B waitlist. Knows redstone already — needs stretching, not settling in.",
+    },
+    noteEditors: {
+      [SESSION_FEED_GAMER_IDS.siiri]: "Sanna",
+      [SESSION_FEED_GAMER_IDS.emil]: "Petra",
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ */
 
 const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
@@ -740,6 +829,9 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       staffNote:
         "Two siblings in this group (Aino and Väinö) — same parent email, so one message reaches both. Siiri needs pairing rather than free choice of partner. Room laptops 3 and 5 have flaky audio. Everything before last autumn predates write-ups, so the oldest entries are blank by design, not by neglect.",
     },
+    // A club is the one product long-lived enough for "new to this group" to
+    // mean anything, so it is the only scenario carrying the flair.
+    memberFlair: clubMemberFlair,
     peers: [
       { id: "mock-group-b", name: "Monday B", participantCount: 7, gedus: [PETRA] },
       {
@@ -837,6 +929,10 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       staffNote:
         "Venue laptops are slow to load Studio — start them ten minutes early. Lunch is 12:30, there is a proper break at 15:00, and the room has to be clear by 18:00.",
     },
+    // No flair, and the absence is the clubs-only rule made visible: everyone
+    // on a camp started on the same Monday, so "new to this group" is a
+    // question with no useful answer here.
+    memberFlair: null,
     peers: [
       {
         id: "mock-group-blue",
@@ -891,6 +987,9 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       staffNote:
         "Studio is slow to open on the older laptops — worth starting it before the group arrives. Siiri needs pairing rather than free choice of partner.",
     },
+    // Kept bare: the only question this scenario is open to answer is what a
+    // Roblox identity cell looks like.
+    memberFlair: null,
     peers: [
       {
         id: "mock-group-thursday-b",
@@ -933,6 +1032,9 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       staffNote:
         "No game account on this product, so nothing to check against a server. Two of the group are well ahead and want harder problems.",
     },
+    // Kept bare for the same reason as the Roblox scenario: the subject here is
+    // the short row, and a mark on it would be a second thing to look at.
+    memberFlair: null,
     peers: [
       {
         id: "mock-group-tuesday-b",
@@ -1017,6 +1119,7 @@ export function buildGeduProductPageFixture(
     groupNotes: config.groupNotes,
     site: config.site,
     materialUrl: config.materialUrl,
+    memberFlair: config.memberFlair === null ? null : config.memberFlair(now),
   };
 }
 

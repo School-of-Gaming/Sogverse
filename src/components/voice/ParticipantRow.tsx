@@ -1,7 +1,15 @@
 "use client";
 
 import { type Ref, type ReactNode, useEffect, useRef, useState } from "react";
-import { Mic, MicOff, Video, VideoOff, Lock, LockOpen, MoreVertical } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  Lock,
+  LockOpen,
+  MoreVertical,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -12,6 +20,7 @@ import {
   type GameAccountExternalId,
   type GamePlatform,
 } from "@/components/game-account";
+import { GamerNoteButton, NewcomerBadge } from "@/components/member-flair";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
@@ -54,6 +63,47 @@ export interface ParticipantRowProps {
   avatarRef?: Ref<HTMLDivElement>;
   onMute?: (track: "audio" | "video") => void;
   onLock?: (track: "audio" | "video", locked: boolean) => void;
+
+  /* ---- Staff-only overlay ------------------------------------------------
+     The member flair below is *not* participant identity, which is why it sits
+     here rather than in ParticipantRowData: everything in that shape arrives
+     over the Daily token's `user_name`, which Daily broadcasts to every peer in
+     the room — children included. These facts are the opposite kind of thing.
+     A group join stamp and the existence of a private Gedu note are staff
+     working memory, and they reach the client through a staff-scoped fetch a
+     family's client never makes and RLS would refuse it anyway.
+
+     **So they must never ride the token.** Putting a join date or a note flag
+     into `user_name` would hand both to every gamer in the call, permanently,
+     for the life of the token — a leak no client-side gate could take back.
+     Keeping them as separate props on the *props* (a viewer-dependent overlay,
+     resolved by whoever renders the list) rather than on the participant makes
+     that boundary structural: a row assembled from a token simply has nothing
+     to pass, and the flair renders as absence.
+
+     Absence is the resting state throughout — every one of these is optional,
+     and with `onOpenNote` omitted the row renders exactly as it did before the
+     overlay existed. */
+
+  /**
+   * The member's `group_joined_at`, for the fading newcomer badge. `null` (or
+   * omitted) draws nothing, as does a stamp past the newcomer window.
+   */
+  newcomerJoinedAt?: string | null;
+  /**
+   * The clock the badge's fade is measured against — the caller's, so a room
+   * full of rows agrees with the page around it instead of each row reading its
+   * own `new Date()`. Only consulted when `newcomerJoinedAt` is set.
+   */
+  flairNow?: Date;
+  /** Whether a Gedu note exists for this member in this group. */
+  hasNote?: boolean;
+  /**
+   * Opens the note dialog. Its presence is what puts the note button at the end
+   * of the row: a viewer with no note access passes nothing and the row has no
+   * trailing control for a screen reader to announce.
+   */
+  onOpenNote?: () => void;
 }
 
 export function ParticipantRow({
@@ -63,6 +113,10 @@ export function ParticipantRow({
   avatarRef,
   onMute,
   onLock,
+  newcomerJoinedAt,
+  flairNow,
+  hasNote,
+  onOpenNote,
 }: ParticipantRowProps) {
   const c = useTranslations("common");
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
@@ -78,101 +132,197 @@ export function ParticipantRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-lg border p-2 transition-colors",
+        // One wrapping line, not a row of nested columns. Everything on the row
+        // is a direct child so that `order` can put the game identity in two
+        // different places at two widths (see the identity slot below), which
+        // no amount of nesting can do.
+        "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border p-2 transition-colors sm:gap-x-3",
         p.isLocal && "bg-accent/50",
       )}
     >
-      {/* Avatar */}
-      <div ref={avatarRef} className="shrink-0 rounded-md">
+      {/* Avatar — the ref div is the element the speaking glow writes box-shadow
+          and border-color onto every animation frame, so nothing may wrap it:
+          wrapping would move the glow off the face. */}
+      <div ref={avatarRef} className="order-1 shrink-0 rounded-md">
         <Avatar className="h-8 w-8">
           <Identicon id={p.userId} size={32} />
         </Avatar>
       </div>
 
-      {/* Name + identity — takes all the flexible width; the name truncates
-          while the identity slot keeps its fixed geometry. The moderation
-          controls no longer sit here, so there's nothing to crowd the username
-          on a narrow screen. The identity slot follows the adult-variant
-          grammar the rosters established: a child-shaped fact for children
-          (the game account), the Parent badge for a parent on their own seat —
-          the same slot answers "who is this" either way. */}
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="truncate text-sm font-medium">
-          {p.userName}
-        </span>
-        {gamePlatform && (
-          <GameUsernameRow
-            platform={gamePlatform}
-            username={p.gameUsername ?? null}
-            externalId={p.gameExternalId ?? null}
-            avatarUrl={p.gameAvatarUrl}
-            // The compact figure. A participant list is dense by nature and the
-            // full body made every row half again as tall while outweighing the
-            // identicon beside it — the face carries the same identity at the
-            // identicon's own size. It is also square on both platforms, so the
-            // slot's geometry does not move when the room's platform changes.
-            figure="head"
-            className="w-40 shrink-0"
-          />
-        )}
-        {p.role === "customer" && (
-          /* The same badge and word the roster row and admin chips draw for a
-             customer, read off the shared role constants. Rendered inside a
-             flex div — a Badge is a div, and this exact badge inside a <p>
-             was a hydration failure once already. */
-          <Badge
-            className={cn(
-              ROLE_BADGE_STYLES.customer,
-              "shrink-0 px-1.5 py-0 text-[10px] font-normal",
-            )}
-          >
-            {c(ROLE_LABEL_KEYS.customer)}
-          </Badge>
-        )}
-      </div>
+      {/* The name — the one thing on this row allowed to truncate, and the
+          *only* one: everything beside it is `shrink-0`, so a long name gives
+          way rather than abbreviating a game account or clipping a badge.
 
-      {/* Status indicators — always show both icons for stable layout */}
-      <div className="flex shrink-0 items-center gap-1.5">
-        <div className="relative">
-          {p.videoOn ? (
-            <Video className="h-3.5 w-3.5 text-muted-foreground" />
-          ) : (
-            <VideoOff
-              className={cn(
-                "h-3.5 w-3.5",
-                lockState.video ? "text-destructive" : "text-muted-foreground",
-              )}
-            />
-          )}
-          {lockState.video && (
-            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-          )}
-        </div>
-        <div className="relative">
-          {p.audioOn ? (
-            <Mic className="h-3.5 w-3.5 text-success" />
-          ) : (
-            <MicOff className="h-3.5 w-3.5 text-destructive" />
-          )}
-          {lockState.audio && (
-            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-          )}
-        </div>
-      </div>
+          **`flex-1` paired with `max-w-fit` is what makes that true in a
+          wrapping row, and neither half works alone.** A wrapping flex
+          container decides its line breaks from each item's *hypothetical*
+          size — before any shrinking — and `truncate` sets `white-space:
+          nowrap`, so a plain truncating name contributes its full text width to
+          that decision and pushes the trailing controls onto a second line
+          instead of giving way. `flex-1` sets the basis to zero, so the name
+          contributes nothing to line-breaking and absorbs slack afterwards;
+          `max-w-fit` then caps that growth at the name's own width, so it never
+          takes more room than it needs and the identity still sits directly
+          against it rather than being flung to the far edge of a wide row. */}
+      <span className="order-2 min-w-0 max-w-fit flex-1 truncate text-sm font-medium">
+        {p.userName}
+      </span>
 
-      {/* All moderator actions collapse into one overflow menu — a single icon at
-          the row's end, so the row layout is identical for every participant and
-          nothing spills into the name on mobile. */}
-      {showModMenu && (
-        <ParticipantModMenu
-          name={p.userName}
-          audioOn={p.audioOn}
-          videoOn={p.videoOn}
-          lockState={lockState}
-          onMute={onMute}
-          onLock={onLock}
+      {/* The game identity — **the one item that moves between breakpoints.**
+          From `sm` up it sits directly after the name, sized to its own
+          content; below `sm` it takes a line of its own under everything else,
+          indented past the avatar.
+
+          Two rules force that. A game account is never abbreviated, so this
+          slot is `shrink-0` and has no fixed width — a fixed 160px column both
+          clipped the long names and left a dead gap after the short ones. And
+          the newcomer badge belongs beside the *name* on a phone, not adrift on
+          a line of its own, which rules out simply stacking the row into two
+          halves. A single wrapping line with `order` gives both: on a phone the
+          full-width identity is the last item and wraps below, while the name
+          and its badges stay together on the first line. The 360px arithmetic
+          this answers is in ./CLAUDE.md. */}
+      {gamePlatform && (
+        <GameUsernameRow
+          platform={gamePlatform}
+          username={p.gameUsername ?? null}
+          externalId={p.gameExternalId ?? null}
+          avatarUrl={p.gameAvatarUrl}
+          // The compact figure. A participant list is dense by nature and the
+          // full body made every row half again as tall while outweighing the
+          // identicon beside it — the face carries the same identity at the
+          // identicon's own size. It is also square on both platforms, so the
+          // slot's geometry does not move when the room's platform changes.
+          figure="head"
+          // Nothing on this row is ever checked — the identity arrives on the
+          // Daily token and cannot change while the room is open — so the
+          // trailing status square would be an empty box held open between the
+          // username and the newcomer badge for a spinner that can never run.
+          statusSlot="collapsed"
+          className="order-7 w-full shrink-0 pl-11 sm:order-3 sm:w-auto sm:pl-0"
         />
       )}
+
+      {/* The Parent badge, then the newcomer badge — in that order, and the
+          order is what makes the row safe rather than merely tidy.
+
+          The Parent badge is painted from the Daily token the instant the room
+          is; the newcomer badge arrives with the staff overlay a round trip
+          later. **Anything that lands late has to land at the end of the run**,
+          where its arrival is absorbed by the row's slack instead of displacing
+          something already on screen — the same reason the note button sits at
+          the left edge of the right-packed trailing group below. Put the
+          newcomer badge ahead of the Parent badge and the overlay shoves an
+          adult's role badge sideways every time it resolves.
+
+          Both are `shrink-0`, so the name goes on surrendering width to
+          truncation first and a room does not gain a wider slot when a newcomer
+          joins it. The identity slot and the Parent badge are mutually
+          exclusive by role and the newcomer badge is orthogonal to both, so an
+          adult's row can carry it too.
+
+          **No wrapping div, deliberately.** A group would have to decide
+          whether it renders at all, and the only honest answer depends on
+          whether the badge is inside its 30-day window — which is the badge's
+          own arithmetic, not this row's. Left as direct children, a badge that
+          renders `null` is simply not a flex item and costs nothing; a group
+          would have cost a gap on either side of itself for a stamp that had
+          quietly expired. */}
+      {p.role === "customer" && (
+        /* The same badge and word the roster row and admin chips draw for a
+           customer, read off the shared role constants. Rendered inside a
+           flex div — a Badge is a div, and this exact badge inside a <p>
+           was a hydration failure once already. */
+        <Badge
+          className={cn(
+            ROLE_BADGE_STYLES.customer,
+            "order-3 shrink-0 px-1.5 py-0 text-[10px] font-normal sm:order-4",
+          )}
+        >
+          {c(ROLE_LABEL_KEYS.customer)}
+        </Badge>
+      )}
+      {newcomerJoinedAt != null && flairNow !== undefined && (
+        <NewcomerBadge
+          joinedAt={newcomerJoinedAt}
+          now={flairNow}
+          className="order-3 sm:order-4"
+        />
+      )}
+
+      {/* The row's trailing controls, as **one right-packed group**, and both
+          halves of that are load-bearing.
+
+          *Right-packed*, because the group carries the row's slack (`ml-auto`)
+          and is the last thing on the line: its right edge is the row's right
+          edge, and its contents pack leftward from there. So a control that
+          appears later — the note button, which arrives with the staff overlay
+          a round trip after the room paints — grows the group leftward into
+          slack rather than displacing what is already on screen. The icons and
+          the menu keep their positions to the pixel.
+
+          *One group*, because that only holds while the note button sits to the
+          **left** of the icons. Between them (where it first sat) it pushed the
+          mic and camera left by its own width on every row, every time the
+          overlay landed — an already-painted element moving on data's own
+          schedule, which is exactly what the layout rule forbids. Keeping the
+          three in one always-present group is also what lets the slack live in
+          one fixed place: parking it on a conditional control would mean the
+          row had no sink at all on the rows that lack it. */}
+      <div className="order-4 ml-auto flex shrink-0 items-center gap-2 sm:order-5">
+        {onOpenNote && (
+          <GamerNoteButton
+            name={p.userName}
+            hasNote={hasNote === true}
+            onOpen={onOpenNote}
+          />
+        )}
+
+        {/* Status indicators — always show both icons for stable layout. */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="relative">
+            {p.videoOn ? (
+              <Video className="h-3.5 w-3.5 text-muted-foreground" />
+            ) : (
+              <VideoOff
+                className={cn(
+                  "h-3.5 w-3.5",
+                  lockState.video
+                    ? "text-destructive"
+                    : "text-muted-foreground",
+                )}
+              />
+            )}
+            {lockState.video && (
+              <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
+            )}
+          </div>
+          <div className="relative">
+            {p.audioOn ? (
+              <Mic className="h-3.5 w-3.5 text-success" />
+            ) : (
+              <MicOff className="h-3.5 w-3.5 text-destructive" />
+            )}
+            {lockState.audio && (
+              <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
+            )}
+          </div>
+        </div>
+
+        {/* All moderator actions collapse into one overflow menu — a single icon
+            at the row's end, so the row layout is identical for every
+            participant and nothing spills into the name on mobile. */}
+        {showModMenu && (
+          <ParticipantModMenu
+            name={p.userName}
+            audioOn={p.audioOn}
+            videoOn={p.videoOn}
+            lockState={lockState}
+            onMute={onMute}
+            onLock={onLock}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -185,6 +335,7 @@ export function ParticipantRow({
  * click-outside / Escape to close.
  */
 function ParticipantModMenu({
+  className,
   name,
   audioOn,
   videoOn,
@@ -192,6 +343,8 @@ function ParticipantModMenu({
   onMute,
   onLock,
 }: {
+  /** Where the menu sits in the row's wrapping order. */
+  className?: string;
   name: string;
   audioOn: boolean;
   videoOn: boolean;
@@ -206,7 +359,11 @@ function ParticipantModMenu({
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: MouseEvent) => {
-      if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) {
+      if (
+        ref.current &&
+        e.target instanceof Node &&
+        !ref.current.contains(e.target)
+      ) {
         setOpen(false);
       }
     };
@@ -227,7 +384,7 @@ function ParticipantModMenu({
   };
 
   return (
-    <div ref={ref} className="relative shrink-0">
+    <div ref={ref} className={cn("relative shrink-0", className)}>
       <Button
         variant="ghost"
         size="icon"
@@ -262,13 +419,27 @@ function ParticipantModMenu({
           />
           <div className="my-1 h-px bg-border" />
           <MenuItem
-            icon={lockState.audio ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-            label={lockState.audio ? t("unlockMicrophone") : t("lockMicrophone")}
+            icon={
+              lockState.audio ? (
+                <LockOpen className="h-4 w-4" />
+              ) : (
+                <Lock className="h-4 w-4" />
+              )
+            }
+            label={
+              lockState.audio ? t("unlockMicrophone") : t("lockMicrophone")
+            }
             active={lockState.audio}
             onClick={() => run(() => onLock?.("audio", !lockState.audio))}
           />
           <MenuItem
-            icon={lockState.video ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            icon={
+              lockState.video ? (
+                <LockOpen className="h-4 w-4" />
+              ) : (
+                <Lock className="h-4 w-4" />
+              )
+            }
             label={lockState.video ? t("unlockCamera") : t("lockCamera")}
             active={lockState.video}
             onClick={() => run(() => onLock?.("video", !lockState.video))}

@@ -105,6 +105,8 @@ else — the add-gamer dialog, whose job is a name and a birthday — leaves the
 closed, because two open text inputs among four fields read as two more things
 being demanded rather than two things on offer. The pencil is the invitation.
 
+**Rule: the status square is reserved wherever a check can run, and collapsed wherever one cannot.** On an editable surface the square is held open in every state so the spinner and then the tick land in a slot that already exists — that is the geometry rule the row is built around, and a roster of eight must not twitch mid-session. But a surface that only *reads* an account — a voice room, whose identity arrives on the Daily token and cannot change while the room is open — is holding that square for something that can never arrive, and an empty box between the username and whatever follows it reads as a rendering fault. Such a caller passes `statusSlot="collapsed"` and the square is drawn only when it has a tick or a spinner in it. A verified row and an unverified one then end at different widths, which is a true statement about two different accounts rather than a layout that moved.
+
 **Rule: committing is verifying.** There is no Verify control, because a second
 control asking "is that real?" is the question the commit already asks. Enter or
 the tick closes the editor, the typed name appears immediately, and the lookup
