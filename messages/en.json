@@ -1443,6 +1443,16 @@
     "materialAction": "Teaching materials",
     "materialStaffOnly": "Gedu only — families never see this link"
   },
+  "memberFlair": {
+    "newcomer": "New",
+    "newcomerTooltip": "New to this group — joined {days, plural, =0 {today} one {# day ago} other {# days ago}}",
+    "hasNote": "Has a Gedu note",
+    "openNote": "Gedu note about {name}",
+    "noteTitle": "Note about {name}",
+    "notePrivacy": "Only Gedus and admins can see this note. It stays with this group.",
+    "notePlaceholder": "What should the next Gedu know about {name} in this group?",
+    "noteLastEdited": "Last edited by {name}"
+  },
   "richText": {
     "bold": "Bold",
     "italic": "Italic",

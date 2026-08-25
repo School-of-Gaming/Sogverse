@@ -1487,6 +1487,16 @@
     "materialAction": "ghojmeH De’",
     "materialStaffOnly": "Gedupu’ neH — ngaqvam luleghbe’ not qorDu’"
   },
+  "memberFlair": {
+    "newcomer": "SuvwI’ chu’",
+    "newcomerTooltip": "ghomvamDaq SuvwI’ chu’ — {days, plural, =0 {DaHjaj muvpu’} one {# jaj ret muvpu’} other {# jaj ret muvpu’}}",
+    "hasNote": "Gedupu’vaD qonta’ tu’lu’",
+    "openNote": "{name} qonta’ — Gedupu’vaD",
+    "noteTitle": "{name} qonta’",
+    "notePrivacy": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq ratlh qonta’.",
+    "notePlaceholder": "ghomvamDaq {name} Sovnis latlh Gedu — nuq?",
+    "noteLastEdited": "Qav choHwI’: {name}"
+  },
   "richText": {
     "bold": "ngutlh tIn",
     "italic": "ngutlh Sur",

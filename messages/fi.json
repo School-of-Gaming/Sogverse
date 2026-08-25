@@ -1443,6 +1443,16 @@
     "materialAction": "Opetusmateriaalit",
     "materialStaffOnly": "Vain Geduille — perheet eivät näe tätä linkkiä"
   },
+  "memberFlair": {
+    "newcomer": "Uusi",
+    "newcomerTooltip": "Uusi tässä ryhmässä — liittyi {days, plural, =0 {tänään} one {# päivä sitten} other {# päivää sitten}}",
+    "hasNote": "Hänestä on muistiinpano Geduille",
+    "openNote": "Muistiinpano Geduille pelaajasta {name}",
+    "noteTitle": "Muistiinpano pelaajasta {name}",
+    "notePrivacy": "Vain Gedut ja ylläpitäjät näkevät tämän muistiinpanon. Se pysyy tässä ryhmässä.",
+    "notePlaceholder": "Mitä seuraavan Gedun on hyvä tietää pelaajasta {name} tässä ryhmässä?",
+    "noteLastEdited": "Viimeksi muokannut {name}"
+  },
   "richText": {
     "bold": "Lihavointi",
     "italic": "Kursivointi",
