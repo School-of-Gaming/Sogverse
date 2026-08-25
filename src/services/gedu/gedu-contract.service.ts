@@ -24,7 +24,11 @@ export class GeduContractService {
    *
    * The caller decides what "current" means and compares against it. This method
    * deliberately does not, because the current version is a property of the
-   * document the app ships, not of the row set.
+   * document the app ships, not of the row set. A stored version carries the
+   * language of the text that was signed (`<base>/<language>`), and the callers
+   * that ask about standing compare the base — the languages of one version are
+   * one agreement — while the ones that display a signature show the whole
+   * string.
    */
   async getAcceptances(geduId: string): Promise<GeduContractAcceptance[]> {
     const { data, error } = await this.supabase
@@ -46,6 +50,12 @@ export class GeduContractService {
    * first acceptance's timestamp and writes nothing — which is what lets a
    * double-submit, a retry or a stale tab be harmless rather than a second
    * signature.
+   *
+   * The version is the full encoded string — `<base>/<language>`, naming which
+   * of the version's equally binding texts was actually on screen — and this
+   * method only forwards it: the whitelist the RPC checks against holds exactly
+   * those strings, so a caller that assembled one any other way is caught there
+   * rather than here.
    *
    * Throws when the version is one the platform does not know about. That is the
    * shape of a client left running across a release that published a new

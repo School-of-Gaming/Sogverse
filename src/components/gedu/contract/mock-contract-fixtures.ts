@@ -1,5 +1,10 @@
 import type { GeduContractAcceptance } from "@/types";
-import { GEDU_CONTRACT_CURRENT_VERSION } from "./documents";
+import {
+  geduContractStoredVersion,
+  GEDU_CONTRACT_CURRENT_VERSION,
+  GEDU_CONTRACT_FALLBACK_LANGUAGE,
+  getGeduContractDocument,
+} from "./documents";
 
 /**
  * Fixtures for the contract page's preview scene.
@@ -40,6 +45,23 @@ const FIXTURE_SIGNER_NAME = "Aino Virtanen";
 const SIGNED_DAYS_AGO = 12;
 
 /**
+ * The version string on the fixture row, in the encoded `<base>/<language>`
+ * shape a real acceptance stores — derived from a real document rather than
+ * spelled out, so the fixture cannot drift into a string the whitelist would
+ * refuse. The Finnish text is the one the fixture educator signed; the scene
+ * shows it verbatim, and it is deliberately not the language the scene renders
+ * the document in, so the record card is seen saying which of the two texts was
+ * read rather than merely echoing the page.
+ */
+const FIXTURE_SIGNED_DOCUMENT = getGeduContractDocument(
+  GEDU_CONTRACT_CURRENT_VERSION,
+  GEDU_CONTRACT_FALLBACK_LANGUAGE,
+);
+const FIXTURE_SIGNED_VERSION = FIXTURE_SIGNED_DOCUMENT
+  ? geduContractStoredVersion(FIXTURE_SIGNED_DOCUMENT)
+  : `${GEDU_CONTRACT_CURRENT_VERSION}/${GEDU_CONTRACT_FALLBACK_LANGUAGE}`;
+
+/**
  * The page's state for one scenario, relative to the caller's `now`.
  *
  * The acceptance moment is derived rather than hardcoded, for the reason every
@@ -58,7 +80,7 @@ export function buildGeduContractFixture(
     signerName: FIXTURE_SIGNER_NAME,
     acceptance: {
       gedu_id: FIXTURE_GEDU_ID,
-      contract_version: GEDU_CONTRACT_CURRENT_VERSION,
+      contract_version: FIXTURE_SIGNED_VERSION,
       accepted_at: new Date(
         now.getTime() - SIGNED_DAYS_AGO * 24 * 60 * 60 * 1000,
       ).toISOString(),
