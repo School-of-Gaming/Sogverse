@@ -218,8 +218,8 @@ export function GroupColumn({
                     <Link
                       href={groupHref(group.id)}
                       className={cn(
-                        buttonVariants({ variant: "ghost", size: "sm" }),
-                        "h-7 shrink-0 gap-1 px-2 text-xs text-muted-foreground",
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        "h-7 shrink-0 gap-1 px-2 text-xs",
                       )}
                     >
                       {/* Named for what is behind it, not "View details": with
