@@ -215,33 +215,42 @@ describe("SessionFeed — the frozen clock survives the provider's tick", () => 
  */
 describe("SessionFeedItem — the live card shows its register", () => {
   /*
-   * Queried by ROLE, not by text. The record editor is mounted-but-collapsed
-   * behind every card (that is how it animates open), and it renders the same
-   * "n of m marked" wording in its own legend — so a bare text query matches the
-   * shut editor and proves nothing about the card. Only the card's summary is a
-   * disclosure *button*, which makes the role the thing that distinguishes them.
+   * Queried by ROLE AND NAME, not by text. The record editor is
+   * mounted-but-collapsed behind every card (that is how it animates open),
+   * and its legend renders the visible word "Attendance" — so a bare text
+   * query matches the shut editor and proves nothing about the card. The
+   * card's chips are the one *list* carrying that accessible name. (They used
+   * to sit behind an "n of m marked" disclosure button; the owner removed the
+   * summary line and the collapse, so the chips render directly.)
    */
-  it("renders the attendance line on a live session that has marks", () => {
+  it("renders the attendance chips on a live session that has marks", () => {
     const { getByRole } = renderFeed({
       entries: [liveEntry({ [GAMERS[0].id]: "present" })],
       feedNow: MID_SESSION,
     });
 
-    // "1 of 3 marked" — the same summary a past entry shows, on the card the
-    // gedu is looking at for the whole session.
-    getByRole("button", { name: "1 of 3 marked" });
+    // The same chip list a past entry shows, on the card the gedu is looking
+    // at for the whole session — with the marked child in it.
+    const chips = getByRole("list", {
+      name: messages.gedu.sessionFeed.attendanceLegend,
+    });
+    within(chips).getByText(GAMERS[0].firstName);
   });
 
-  it("renders no attendance line on a live session nobody has marked yet", () => {
+  it("renders no attendance chips on a live session nobody has marked yet", () => {
     const { queryByRole } = renderFeed({
       entries: [liveEntry()],
       feedNow: MID_SESSION,
     });
 
-    // Gated on having marks, not on being live: a card that grew "0 of 3
-    // marked" the instant the session opened would be scolding a gedu for a
-    // register they have not had a chance to touch.
-    expect(queryByRole("button", { name: "0 of 3 marked" })).toBeNull();
+    // Gated on having marks, not on being live: a chip row that appeared the
+    // instant the session opened would be scolding a gedu for a register they
+    // have not had a chance to touch.
+    expect(
+      queryByRole("list", {
+        name: messages.gedu.sessionFeed.attendanceLegend,
+      }),
+    ).toBeNull();
   });
 
   it("renders no attendance line on a session that has not started", () => {
@@ -261,7 +270,11 @@ describe("SessionFeedItem — the live card shows its register", () => {
       feedNow: MID_SESSION,
     });
 
-    expect(queryByRole("button", { name: "0 of 3 marked" })).toBeNull();
+    expect(
+      queryByRole("list", {
+        name: messages.gedu.sessionFeed.attendanceLegend,
+      }),
+    ).toBeNull();
     // It is a plain upcoming session, and says so.
     getByText(messages.gedu.sessionFeed.noNotesYet);
   });

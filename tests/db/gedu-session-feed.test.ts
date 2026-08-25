@@ -947,6 +947,17 @@ describe("gedu session feed", () => {
         p_report: "# Yesterday\n\nWe rebuilt the east tower.",
         p_gedu_note: "The projector cable is still loose.",
       });
+      // The STANDING note is its own field and its own RPC — written here, in
+      // this test's own body, because the named assertions below check it and
+      // an earlier test's value must not be what makes them pass. (The first
+      // CI run of this test asserted the standing note while having written
+      // only the session note above — a different field — and failed on
+      // whatever the file had left in it.)
+      await geduAuth.rpc("set_group_notes", {
+        p_group_id: GROUP_MINE,
+        p_public_note: "Bring water bottles.",
+        p_gedu_note: "The hall projector lives in the blue cabinet.",
+      });
       await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
