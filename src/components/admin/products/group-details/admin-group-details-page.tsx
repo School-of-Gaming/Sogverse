@@ -99,6 +99,10 @@ export function AdminGroupDetailsPage({
   const s = useTranslations("admin.products.sessions");
   const config = PRODUCT_TYPE_CONFIG[productType];
   const backHref = `/admin/${config.routeSlug}/${productId}`;
+  // This page's own route — where leaving a voice room joined from here lands,
+  // instead of the body's gedu-workspace default (which the proxy would bounce
+  // an admin off, via /gedu, onto /admin and away from this group).
+  const selfHref = `${backHref}/groups/${groupId}`;
 
   const product = useProductAdmin(productId);
   const sessions = useAdminProductSessions(productId);
@@ -160,6 +164,7 @@ export function AdminGroupDetailsPage({
         group={group}
         feed={feed.data}
         snapshot={groups.data}
+        selfHref={selfHref}
       />
     </PageFrame>
   );
@@ -267,12 +272,15 @@ function Workspace({
   group,
   feed,
   snapshot,
+  selfHref,
 }: {
   product: ProductAdminDetailRow;
   sessions: AdminProductSessions;
   /** This page's group, already found in the record above by the shell. */
   group: AdminSessionGroup;
   feed: GeduGroupFeed;
+  /** This page's own route — handed to the body as the voice rooms' way back. */
+  selfHref: string;
   /**
    * The admin groups snapshot, and the only source on this page for who teaches
    * each group. `undefined` when that read failed, which renders every group's
@@ -592,6 +600,12 @@ function Workspace({
     <GeduProductPageBody
       data={data}
       entries={entries}
+      // The frame above already carries this page's back link, held in place
+      // across the skeleton and the loaded state — a second one inside the
+      // body would double it, and the body's own default points at /gedu.
+      backLink={null}
+      // Leaving a voice room joined from this page lands back on this page.
+      workspaceHref={selfHref}
       // The very instant `entries` were built from — frozen while an editor is
       // open. Anything fresher would step around the freeze and reclassify a
       // card under somebody typing into it.

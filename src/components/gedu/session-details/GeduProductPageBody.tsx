@@ -296,6 +296,23 @@ interface GeduProductPageBodyProps {
    * already looking at.
    */
   memberFlair?: RosterMemberFlair;
+  /**
+   * The link out of this workspace, rendered at the top of the page. Omitted,
+   * the body renders the gedu's own back link ("Back to My SOG"); `null` renders
+   * none at all — the admin shell passes `null` because its frame already
+   * carries a back link that has to hold its position across the skeleton and
+   * the loaded state, and a second one inside the body would double it. The way
+   * out of a workspace belongs to whoever brought you in.
+   */
+  backLink?: ReactNode;
+  /**
+   * The route THIS workspace lives at — where leaving a voice room joined from
+   * here lands. Omitted, it is the gedu route for this product, which is right
+   * for the gedu shell and wrong for any other: an admin leaving a room would
+   * be bounced through /gedu to /admin instead of back to the group they were
+   * looking at. Same ownership rule as {@link backLink}.
+   */
+  workspaceHref?: string;
 }
 
 export function GeduProductPageBody({
@@ -323,6 +340,8 @@ export function GeduProductPageBody({
   gameStatuses,
   robloxAvatarUrls,
   memberFlair,
+  backLink,
+  workspaceHref: workspaceHrefProp,
 }: GeduProductPageBodyProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
@@ -365,10 +384,9 @@ export function GeduProductPageBody({
    * is the point of covering somebody's room for ten minutes rather than
    * inheriting their page.
    */
-  const workspaceHref = ROUTES.gedu.assignedProduct(
-    data.product.product_type,
-    data.product.id,
-  );
+  const workspaceHref =
+    workspaceHrefProp ??
+    ROUTES.gedu.assignedProduct(data.product.product_type, data.product.id);
 
   return (
     // Wide, because this is a gedu surface and gedus are at a desk. The reading
@@ -379,7 +397,9 @@ export function GeduProductPageBody({
     // here double-pads the phone (where the two gutters are most of the screen)
     // while doing nothing at all on the desktop this page is designed for.
     <div className="mx-auto max-w-7xl py-6 sm:py-10">
-      <SessionDetailsBackLink />
+      {/* `undefined` means "the gedu default", `null` means "the shell already
+          has one" — so this is an explicit check, not `??`. */}
+      {backLink === undefined ? <SessionDetailsBackLink /> : backLink}
 
       {/* The masthead is a two-column row on desktop: identity on the left,
           the one outward action on the right. A family-facing link out to a
