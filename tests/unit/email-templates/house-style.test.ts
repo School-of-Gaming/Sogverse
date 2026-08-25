@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
-import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
 /**
@@ -33,9 +33,13 @@ import { RADIUS } from "@/lib/constants/radius";
 
 /** Every colour a mail is allowed to emit. */
 const PALETTE = new Set(
-  [...Object.values(BRAND), ...Object.values(DARK_THEME), ...Object.values(GRADIENT)].map((hex) =>
-    hex.toLowerCase(),
-  ),
+  [
+    ...Object.values(BRAND),
+    ...Object.values(DARK_THEME),
+    ...Object.values(GRADIENT),
+    ...Object.values(STATUS),
+    ...Object.values(STATUS_TINT),
+  ].map((hex) => hex.toLowerCase()),
 );
 
 const RADII = new Set(Object.values(RADIUS));

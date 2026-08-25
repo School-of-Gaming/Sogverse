@@ -1,12 +1,13 @@
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
 
 /**
- * Content blocks the link-carrying templates share: buttons, bulleted steps and
- * inline links. `utils.ts` holds the pieces every template uses (escaping, a
- * paragraph, a styled name); these are the ones that only appear in a mail that
- * asks the reader to go somewhere.
+ * The composed blocks a template reaches for rather than builds. `utils.ts`
+ * holds the pieces every template uses (escaping, a paragraph, a styled name);
+ * these are the larger shapes: the buttons and links a mail that sends the
+ * reader somewhere needs, and the callout panel a mail that has something to say
+ * about *itself* opens with.
  *
  * **Every `href` here is embedded unescaped, by design** — the same exception
  * the password-reset builder documents. Callers pass app-generated URLs
@@ -246,4 +247,62 @@ export function bulletList(items: string[]): string {
 /** A bold lead-in above a list — a section label, not a second heading. */
 export function sectionLabel(text: string): string {
   return `<p style="margin:0 0 8px;color:${DARK_THEME.foreground};font-size:14px;font-weight:bold;line-height:1.6;">${text}</p>`;
+}
+
+interface CalloutPanelOptions {
+  /** Already-translated. The panel sets it small, bold and uppercase. */
+  label: string;
+  /** Already-translated (and already-escaped) paragraphs, in reading order. */
+  paragraphs: string[];
+}
+
+/**
+ * A panel above the mail's own opening, for something the reader has to be told
+ * about the mail rather than in it — today, the session report's staff copy
+ * saying that it *is* a copy and that each family's mail was its own.
+ *
+ * **It is the app's `Alert`, in its `info` variant, in an inbox.** A mail
+ * inherits rather than being styled, so the shape comes from the component the
+ * app already uses for exactly this: `rounded-lg`, a full 1px border in the info
+ * colour at half alpha, a wash of the same colour at a tenth. Email cannot rely
+ * on alpha, so both arrive here as flat values composited over the message panel
+ * (`STATUS_TINT`, in `colors.ts`, with the derivation beside them). The earlier
+ * version of this panel was a 3px brand-orange rule down one edge, which is a
+ * treatment that exists nowhere in the app and read as a warning besides — the
+ * brand primary is the colour that means *ours*, not *careful*.
+ *
+ * **The border is decorative and is allowed to be quiet.** At 2.18:1 against the
+ * card it would not carry a control boundary on its own, and it is not asked to:
+ * everything the panel means is in its label and its sentences, and the wash is
+ * what separates it from the body below. That is the app's own balance for this
+ * component, not a concession made for mail.
+ *
+ * **The text on it is the body's colour, and that is a contrast fact.** The
+ * app's `Alert` colours its title with the accent, and the mail cannot: the info
+ * blue on this wash is 4.46:1, just under AA, and a label this size gets no
+ * large-text exemption. So the label and the paragraphs are `foreground`
+ * (13.24:1) — checked before fidelity, as this directory's rule says, and pinned
+ * in `palette-contrast.test.ts` both ways round.
+ *
+ * The paragraphs carry equal weight rather than the second being muted: in a
+ * callout the later sentence is usually the one that answers the actual worry,
+ * and greying it would quiet exactly the line the panel exists to say.
+ */
+export function calloutPanel({ label, paragraphs }: CalloutPanelOptions): string {
+  const last = paragraphs.length - 1;
+  const body = paragraphs
+    .map(
+      (text, i) =>
+        `<p style="margin:${i === last ? "0" : "0 0 8px"};${BODY_TEXT_STYLE}">${text}</p>`,
+    )
+    .join("");
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      <tr>
+        <td style="${pinnedFill(STATUS_TINT.infoSurface)}border:1px solid ${STATUS_TINT.infoBorder};border-radius:${RADIUS.lg};padding:16px;">
+          <p style="margin:0 0 8px;color:${DARK_THEME.foreground};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
+          ${body}
+        </td>
+      </tr>
+    </table>`;
 }

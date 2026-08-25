@@ -41,6 +41,35 @@ export const DARK_THEME = {
   mutedFg: "#a6a6a6",    // --muted-foreground: 0 0% 65%
 } as const;
 
+/**
+ * The status fills mirrored from globals.css, and the foreground each carries.
+ *
+ * Only `info` is here, because only `info` has been needed. Mirroring a colour
+ * no mail uses would put an unmeasured value in the palette and read as an
+ * invitation to reach for it; add `destructive`/`success`/`warning` when a mail
+ * actually needs one, and measure it in the same change.
+ *
+ * The foreground is named beside the fill because a fill and its foreground are
+ * one decision — but this particular pair is **not a legible one at body size**:
+ * white on this blue is 3.48:1, under the 4.5:1 floor. So `info` never becomes a
+ * fill under a label here. It is used the way the app's `Alert` uses it, through
+ * the composited tints below, and `palette-contrast.test.ts` pins the white
+ * pairing as rejected so that stays measured rather than remembered.
+ */
+export const STATUS = {
+  info: "#308CE8",           // --info: 210 80% 55%
+  infoForeground: "#ffffff", // --info-foreground: 0 0% 100%
+} as const;
+
+// The app's `Alert` in its `info` variant, pre-composited for email the same way
+// the hero gradient above is: a client cannot be relied on for alpha, so the
+// component's `border-info/50` and `bg-info/10` are flattened against the ground
+// they actually sit on — the message panel (DARK_THEME.card), not the shell's
+// darker background behind it. Composite over the wrong ground and the tint is a
+// visible rectangle rather than a wash.
+// info(50%) over #1a1a1a = #255381, info(10%) over #1a1a1a = #1C252F
+export const STATUS_TINT = { infoBorder: "#255381", infoSurface: "#1C252F" } as const;
+
 // A footer grey of #555555 used to live here. It mirrored no token in
 // globals.css — the only value in this module that did not — and it was 2.51:1
 // on the background, below AA and below AA-large, which is worse than the purple

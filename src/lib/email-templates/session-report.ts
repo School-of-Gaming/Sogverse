@@ -1,16 +1,8 @@
 import { wrapInLayout } from "./layout";
-import {
-  BODY_TEXT_STYLE,
-  escapeHtml,
-  paragraph,
-  pinnedFill,
-  styledName,
-  styledProductName,
-} from "./utils";
-import { ctaButton } from "./blocks";
+import { escapeHtml, paragraph, styledName, styledProductName } from "./utils";
+import { calloutPanel, ctaButton } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
-import { RADIUS } from "@/lib/constants/radius";
+import { DARK_THEME } from "@/lib/constants/colors";
 import type { EmailTranslator } from "./translator";
 
 /**
@@ -140,31 +132,19 @@ export function buildSessionReportEmail(
  * colleagues — before they have read a word, and an explanation further down is
  * an explanation arriving after the alarm.
  *
- * **Prominent within the rules, which means everything but coloured text.** The
- * brand orange is a 3px left rule and nothing else: an email's brand colour is
- * for the header and button fills, and purple-as-body-text is the mistake this
- * directory measured at 2.7:1 and pulled out. What separates the banner from
- * the report below it is therefore the ground colour under it (the shell's
- * background, one step darker than the card, declared twice so Gmail's dark
- * theme leaves it alone), that rule, and an uppercase label line. Both text
- * colours on it — the label's and the body's — are pairs
- * `palette-contrast.test.ts` already pins as legible on the ground.
- *
- * The two paragraphs carry the body's own weight rather than one of them being
- * muted: the privacy sentence is the half that answers the actual worry, and
- * greying it would quiet exactly the line the banner exists to say.
+ * **It is `calloutPanel`, not markup of its own** — the app's `Alert` in its
+ * `info` variant, reaching an inbox: a washed info surface inside a full info
+ * border, with an uppercase label and the body's own text colour. Everything
+ * about how it looks lives in the helper, so the one thing this file decides is
+ * which three strings go in it. It was a brand-orange rule down one edge for a
+ * while, which is a treatment the app has nowhere and which read as a warning —
+ * this is a copy of a report, not an alarm.
  */
 function staffCopyBanner(t: EmailTranslator): string {
-  return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
-      <tr>
-        <td style="${pinnedFill(DARK_THEME.bg)}border-left:3px solid ${BRAND.primary};border-radius:${RADIUS.lg};padding:16px;">
-          <p style="margin:0 0 8px;color:${DARK_THEME.foreground};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${t("sessionReport.staffCopyLabel")}</p>
-          <p style="margin:0 0 8px;${BODY_TEXT_STYLE}">${t("sessionReport.staffCopyBody")}</p>
-          <p style="margin:0;${BODY_TEXT_STYLE}">${t("sessionReport.staffCopyPrivacy")}</p>
-        </td>
-      </tr>
-    </table>`;
+  return calloutPanel({
+    label: t("sessionReport.staffCopyLabel"),
+    paragraphs: [t("sessionReport.staffCopyBody"), t("sessionReport.staffCopyPrivacy")],
+  });
 }
 
 /**

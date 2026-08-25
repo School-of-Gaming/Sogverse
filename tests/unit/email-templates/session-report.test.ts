@@ -4,7 +4,7 @@ import {
   sessionReportSubject,
 } from "@/lib/email-templates/session-report";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS_TINT } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
 
@@ -162,23 +162,32 @@ describe("the staff copy's banner", () => {
   });
 
   /**
-   * Prominent within the house rules: the brand colour is a rule down the left
-   * edge, never the text. Brand-coloured body copy is the mistake this
-   * directory measured at 2.7:1 and removed.
+   * The banner is the app's `Alert` in its `info` variant, not a treatment of
+   * its own: a washed info surface inside a full info border. It carried a 3px
+   * brand-orange rule down one edge before that, which is a shape the app has
+   * nowhere and which read as a warning — so the brand colours are asserted
+   * *absent* here, not merely relocated.
    */
-  it("takes its prominence from a brand rule and a fill, not from coloured text", () => {
+  it("takes its prominence from the info border and wash, not from coloured text", () => {
     const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
     // The banner's own cell, from its opening tag to its close, so nothing the
     // shell around it emits can satisfy or break these.
     const start = html.lastIndexOf("<td ", html.indexOf(LABEL));
     const banner = html.slice(start, html.indexOf("</td>", start));
 
-    expect(banner).toContain(`border-left:3px solid ${BRAND.primary}`);
-    // Declared twice, so Gmail's dark theme leaves the fill alone.
+    // The Alert's full 1px border, in the info colour flattened out of alpha.
+    expect(banner).toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    expect(banner).not.toContain("border-left:");
+    // The wash, declared twice so Gmail's dark theme leaves the fill alone.
     expect(banner).toContain(
-      `background-color:${DARK_THEME.bg};background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg})`,
+      `background-color:${STATUS_TINT.infoSurface};background-image:linear-gradient(${STATUS_TINT.infoSurface},${STATUS_TINT.infoSurface})`,
     );
-    // Every colour the banner's own text carries is the body's.
+    // No brand colour anywhere in it: the accent moved, it did not move over.
+    expect(banner).not.toContain(BRAND.primary);
+    expect(banner).not.toContain(BRAND.secondary);
+    // Every colour the banner's own text carries is the body's — the app's
+    // Alert tints its title with the accent, and at this size that pairing is
+    // below AA (`palette-contrast.test.ts` pins it as rejected).
     for (const color of banner.matchAll(/<p style="[^"]*color:(#[0-9a-fA-F]{6})/g)) {
       expect(color[1]).toBe(DARK_THEME.foreground);
     }
