@@ -8,6 +8,10 @@ import {
 } from "@/services/gedu";
 import type { GeduContractAcceptance } from "@/types";
 import type { GeduContractDocument } from "./contract-document";
+import {
+  findGeduContractAcceptance,
+  geduContractStoredVersion,
+} from "./documents";
 import { GeduContractPageBody } from "./gedu-contract-page-body";
 
 /**
@@ -25,6 +29,12 @@ import { GeduContractPageBody } from "./gedu-contract-page-body";
  * signed an earlier version has a row, and it stays — it is the record of what
  * they agreed to then — but it does not answer for terms published since, so
  * this looks for the version the app is showing and nothing else.
+ *
+ * **"The version on screen" is a base version, not a stored one.** A stored
+ * version names a language as well, and the languages of one version are the
+ * same agreement: somebody who signed the Finnish text and then switched the app
+ * to English is already signed, and must not be asked again for a text they have
+ * agreed to in the only other words it exists in.
  */
 export function GeduContractPage({
   geduId,
@@ -55,9 +65,7 @@ export function GeduContractPage({
   const acceptance =
     acceptances === undefined
       ? undefined
-      : (acceptances.find(
-          (row) => row.contract_version === contract.version,
-        ) ?? null);
+      : findGeduContractAcceptance(acceptances, contract.version);
 
   const signerName = [profile?.first_name, profile?.last_name]
     .filter(Boolean)
@@ -77,12 +85,13 @@ export function GeduContractPage({
   const handleAccept = () => {
     setCommitting(true);
     setAcceptFailed(false);
-    // The version on screen, not a constant read from somewhere else: what is
-    // being accepted is the document this page just rendered. The route only
-    // ever hands over the current one, so the two agree — and if they ever
-    // stopped agreeing, signing the text the reader actually read is the
-    // answer that stays defensible.
-    acceptContract.mutate(contract.version, {
+    // The document on screen, encoded, not a constant read from somewhere else:
+    // what is being accepted is the text this page just rendered, in the
+    // language it rendered it in. The route only ever hands over the current
+    // version, so base and language both agree with what is in force — and if
+    // they ever stopped agreeing, recording the text the reader actually read is
+    // the answer that stays defensible.
+    acceptContract.mutate(geduContractStoredVersion(contract), {
       onError: () => {
         setAcceptFailed(true);
         setCommitting(false);

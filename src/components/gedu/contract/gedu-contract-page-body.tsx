@@ -41,10 +41,12 @@ export function GeduContractPageBody({
 }: {
   contract: GeduContractDocument;
   /**
-   * This gedu's acceptance of the version on screen: the row when they have
-   * signed it, `null` when they have not, and `undefined` while the answer is
-   * still in flight — which happens only when the server prefetch failed, since
-   * the ordinary visit paints with the answer already in hand.
+   * This gedu's acceptance of the version on screen — of either of its equally
+   * binding languages, which is why the host matches on the base version: the
+   * row when they have signed it, `null` when they have not, and `undefined`
+   * while the answer is still in flight — which happens only when the server
+   * prefetch failed, since the ordinary visit paints with the answer already in
+   * hand.
    */
   acceptance: GeduContractAcceptance | null | undefined;
   /** The signer's name, as the signature line will draw it. */
@@ -128,7 +130,10 @@ export function GeduContractPageBody({
               </p>
               {/* The version and the moment in one string, because which of
                   the two comes first and what separates them is a sentence a
-                  translator has to be able to write. */}
+                  translator has to be able to write. The version is the stored
+                  one, verbatim — `2026-2027/fi` says which of the two equally
+                  binding texts was signed, and trimming it back to the base
+                  would delete half of what the record is for. */}
               <p className="text-sm text-muted-foreground">
                 {t("acceptedMeta", {
                   version: acceptance.contract_version,

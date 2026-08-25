@@ -10,10 +10,17 @@
  * exactly the constructs this document uses and nothing more; a construct the
  * next version needs is added here, in the same change that adds it to the text.
  *
- * The binding text is Finnish and renders verbatim in every locale — it is a
- * contract, not UI copy, so it never goes through `messages/`. A translated
- * sibling of the same version can be added later as another entry in the
- * document registry (see `documents/index.ts`); it is never machine-translated.
+ * A version of the contract exists in one or more languages, and the languages
+ * of one version are **equally binding** — one agreement published twice, not a
+ * source text and a courtesy translation. Whichever text a gedu read is the text
+ * they signed, so the language is part of the record; the registry
+ * (`documents/index.ts`) holds every transcribed pair and encodes the language
+ * into the version string that acceptance stores.
+ *
+ * A document renders verbatim whatever the reader's locale — it is a contract,
+ * not UI copy, so it never goes through `messages/`. Which of the transcribed
+ * texts is shown follows the locale; the text itself is never translated on the
+ * way to the screen, and never machine-translated on the way into the repo.
  */
 
 /**
@@ -62,14 +69,20 @@ export type GeduContractBlock =
   | { kind: "separator" };
 
 /**
- * Languages a version of the contract can exist in. Only `fi` exists today and
- * it is the binding one; an `en` sibling would be a human translation of the
- * same version, published alongside it rather than replacing it.
+ * Languages a version of the contract can exist in. Both texts of a version are
+ * the agreement rather than one being the agreement and the other a rendering of
+ * it, so neither is subordinate here — what differs between them is only which
+ * one a version is guaranteed to have (see the fallback language in
+ * `documents/index.ts`), and each is written by a lawyer, never translated.
  */
 export type GeduContractLanguage = "fi" | "en";
 
 export interface GeduContractDocument {
-  /** The version these terms are, e.g. `"2026-2027"`. Stored on acceptance. */
+  /**
+   * The **base** version these terms are, e.g. `"2026-2027"` — the label with
+   * no language on it. What an acceptance stores is `<base>/<language>`; see
+   * `geduContractStoredVersion` in `documents/`.
+   */
   version: string;
   language: GeduContractLanguage;
   /** The document's own title, rendered as the h1. */

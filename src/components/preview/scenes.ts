@@ -228,7 +228,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-contract",
     title: "Gedu contract",
     description:
-      "The page a Game Educator reads and signs their contract on: the Finnish terms verbatim, with the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
+      "The page a Game Educator reads and signs their contract on: the terms verbatim in your own locale's language, with the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
     chrome: "dashboard",
     scenarios: [
       {

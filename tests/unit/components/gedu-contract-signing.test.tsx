@@ -3,7 +3,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { GeduContractPageBody } from "@/components/gedu/contract/gedu-contract-page-body";
-import { getGeduContractDocument, GEDU_CONTRACT_CURRENT_VERSION } from "@/components/gedu/contract/documents";
+import {
+  geduContractStoredVersion,
+  getGeduContractDocument,
+  GEDU_CONTRACT_CURRENT_VERSION,
+} from "@/components/gedu/contract/documents";
 import type { GeduContractDocument } from "@/components/gedu/contract/contract-document";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";
@@ -36,7 +40,9 @@ const contract: GeduContractDocument = maybeContract;
 
 const ACCEPTANCE: GeduContractAcceptance = {
   gedu_id: "b3e2f1d0-0000-4000-8000-000000000001",
-  contract_version: GEDU_CONTRACT_CURRENT_VERSION,
+  // The encoded string a real acceptance stores — base and language — because
+  // the record card renders it verbatim.
+  contract_version: geduContractStoredVersion(contract),
   accepted_at: "2026-08-24T12:00:05+00:00",
   signed_name: "Aino Virtanen",
 };

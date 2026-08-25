@@ -10,13 +10,19 @@ import {
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * `accept_gedu_contract` and the two tables behind it (migration 00201).
+ * `accept_gedu_contract` and the two tables behind it (migrations 00201, 00202).
  *
  * The feature's whole claim is that an acceptance row is an *audit record*: the
  * version accepted, a moment nobody but the server chose, and the signer's name
  * as it stood at that moment. Everything here tests one of those three, plus the
  * two properties that make the record trustworthy — that the row cannot be
  * written any other way, and that it cannot be read by someone it is not about.
+ *
+ * **A version string carries the language of the text it names** — `<base>/<language>`
+ * since 00202 — because the contract exists in two equally binding translations
+ * and which one a gedu read is part of what they signed. So the version accepted
+ * is the whole encoded string, while "is this gedu current" is a question about
+ * the BASE alone. Both halves are exercised below.
  *
  * **The role matrix is deliberately absent.** The authorization spine already
  * signs in as every role that is not a gedu and requires 42501 from this RPC's
@@ -31,12 +37,13 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  */
 
 /**
- * A version string that cannot be a real contract version: the whitelist holds
- * document labels, and no document is labelled with a leading sentinel word.
- * Guessing an "obviously unused" plausible label is exactly the mistake CI's
- * combined migration+seed database punishes.
+ * A version string that cannot be a real contract version: it is shaped like one
+ * (`<base>/<language>`) so nothing rejects it for its form, but no document is
+ * labelled with a leading sentinel word. Guessing an "obviously unused"
+ * plausible label is exactly the mistake CI's combined migration+seed database
+ * punishes.
  */
-const UNKNOWN_VERSION = "not-a-version-0000-0000";
+const UNKNOWN_VERSION = "not-a-version-0000-0000/fi";
 
 describe("gedu contract acceptance", () => {
   let admin: SupabaseClient<Database>;
@@ -46,7 +53,11 @@ describe("gedu contract acceptance", () => {
   /** The gedu's raw access token, for the one call the generated types forbid. */
   let geduToken: string;
 
-  /** The current contract version, as the database defines it. */
+  /** The base of the current contract version, as the database defines it. */
+  let currentBase: string;
+  /** Every encoded version sharing that base — one per language, in the RPC's order. */
+  let currentVersions: string[];
+  /** The one the tests below sign first; `currentVersions[1]` is the other text. */
   let currentVersion: string;
   /** `Test Gedu` — read rather than assumed, because it is the snapshot's source. */
   let expectedSignedName: string;
@@ -89,14 +100,21 @@ describe("gedu contract acceptance", () => {
       .delete()
       .eq("gedu_id", TEST_IDS.GEDU);
 
-    const version = await admin
+    // Read in the same order the dashboard's own pick uses. The languages of
+    // one version share a created_at deliberately, so `version DESC` is what
+    // makes "the first one" mean the same thing here as it does there — and the
+    // base, which is what "current" actually means, is the same either way.
+    const versions = await admin
       .from("gedu_contract_versions")
       .select("version")
       .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    expect(version.error).toBeNull();
-    currentVersion = version.data!.version;
+      .order("version", { ascending: false });
+    expect(versions.error).toBeNull();
+    currentBase = versions.data![0].version.split("/")[0];
+    currentVersions = versions
+      .data!.filter((v) => v.version.split("/")[0] === currentBase)
+      .map((v) => v.version);
+    currentVersion = currentVersions[0];
 
     const profile = await admin
       .from("profiles")
@@ -119,7 +137,46 @@ describe("gedu contract acceptance", () => {
     it("holds the version the platform ships", () => {
       // Not an assertion about which label it is — that changes by migration —
       // but that the derivation the dashboard's queue depends on has an answer.
+      expect(currentBase).toBeTruthy();
       expect(currentVersion).toBeTruthy();
+    });
+
+    it("names a language in every version it holds", async () => {
+      // The format is the whole of what 00202 added, and it is what lets an
+      // acceptance row say which of two equally binding texts was signed. A row
+      // with no suffix would be a document nobody can identify.
+      const { data, error } = await admin
+        .from("gedu_contract_versions")
+        .select("version");
+      expect(error).toBeNull();
+      for (const row of data!) {
+        const [base, language, ...rest] = row.version.split("/");
+        expect(base).toBeTruthy();
+        expect(language).toBeTruthy();
+        expect(rest).toEqual([]);
+      }
+    });
+
+    it("publishes the current version in more than one language", () => {
+      // The two texts are the same agreement, and everything below about
+      // signing "the other language" is vacuous against a version with one.
+      expect(currentVersions.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("gives the texts of one version a single moment", async () => {
+      // `created_at` is the ordering key that picks what is current. Letting the
+      // two texts drift apart would make it pick a LANGUAGE, which is not a
+      // thing anything is asking about.
+      const { data, error } = await admin
+        .from("gedu_contract_versions")
+        .select("version, created_at");
+      expect(error).toBeNull();
+      const moments = new Set(
+        data!
+          .filter((v) => v.version.split("/")[0] === currentBase)
+          .map((v) => v.created_at),
+      );
+      expect(moments.size).toBe(1);
     });
 
     it("is readable by a signed-in gedu", async () => {
@@ -273,6 +330,39 @@ describe("gedu contract acceptance", () => {
 
       const rows = await acceptanceRows();
       expect(rows).toHaveLength(1);
+    });
+  });
+
+  /**
+   * Last, because it is the one case that leaves the gedu holding two rows —
+   * every count above is written against the single acceptance that precedes it.
+   */
+  describe("both languages of one version", () => {
+    it("takes the other text as a second signature on the same agreement", async () => {
+      const otherVersion = currentVersions[1];
+      expect(otherVersion).not.toBe(currentVersion);
+      expect(otherVersion.split("/")[0]).toBe(currentBase);
+
+      const { data, error } = await gedu.rpc("accept_gedu_contract", {
+        p_version: otherVersion,
+      });
+      expect(error).toBeNull();
+      expect(data).toBeTruthy();
+      // Not the idempotent path: the encoded version is different, so this is a
+      // signature the platform has not seen rather than a repeat of one it has.
+      expect(data).not.toBe(firstAcceptedAt);
+
+      const rows = await acceptanceRows();
+      expect(rows).toHaveLength(2);
+      expect(rows.map((r) => r.contract_version).sort()).toEqual(
+        [...currentVersions].sort(),
+      );
+
+      // And the first signature is untouched. Signing the second text is a
+      // second fact about one agreement, not a correction of the first — the
+      // moment this gedu agreed to these terms has not moved.
+      const first = rows.find((r) => r.contract_version === currentVersion);
+      expect(first?.accepted_at).toBe(firstAcceptedAt);
     });
   });
 });
