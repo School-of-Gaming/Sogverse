@@ -802,6 +802,7 @@
       "sessions": {
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
+        "railGroupHeading": "Grupp",
         "addressLabel": "Platsens adress",
         "addressPlaceholder": "Gata, postnummer, stad",
         "addAddress": "Lägg till adress",
@@ -1319,7 +1320,6 @@
       "noRecordLabel": "Ingen anteckning",
       "emptyFeed": "Den här gruppen har inga tillfällen än.",
       "noNotesYet": "Inga anteckningar för det här tillfället än.",
-      "attendanceSummary": "{present} av {total} närvarande",
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
       "unmarkedLabel": "Inte markerad",

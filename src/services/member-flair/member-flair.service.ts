@@ -104,7 +104,7 @@ export class MemberFlairService {
    * server-side, so a caller may hand over whatever is in the box.
    *
    * **A refusal is mapped here, once, for all three surfaces.** The gedu page,
-   * the voice room and the admin sessions panel all hand the rejection straight
+   * the voice room and the admin group details page all hand the rejection straight
    * to the same dialog, so this is the single point where a raw SQL message is
    * stopped from reaching a reader — see {@link UnexplainedNoteWriteError}.
    */

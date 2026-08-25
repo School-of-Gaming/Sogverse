@@ -321,6 +321,17 @@ interface GroupWorkspaceProps {
    * looking at. Same ownership rule as {@link backLink}.
    */
   workspaceHref?: string;
+  /**
+   * What the rail's first card is called. Omitted, it is the gedu's "My Group",
+   * which is the possessive that makes the pair with "Other groups" read as one
+   * distinction — and which is a claim only the gedu teaching the group can
+   * make. An admin holds no group, so their shell passes the category word
+   * instead; the card carries the group's own *name* either way, so what this
+   * chooses is only how the heading relates the card to its reader. Same
+   * ownership rule as {@link backLink}: a string that is about who brought you
+   * here belongs to whoever did.
+   */
+  groupHeading?: string;
 }
 
 export function GroupWorkspace({
@@ -350,6 +361,7 @@ export function GroupWorkspace({
   memberFlair,
   backLink,
   workspaceHref: workspaceHrefProp,
+  groupHeading,
 }: GroupWorkspaceProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
@@ -468,6 +480,7 @@ export function GroupWorkspace({
           {assignedGroup && (
             <GroupRailCard
               group={assignedGroup}
+              heading={groupHeading}
               isRemote={data.product.is_remote}
               voiceIsOpen={voiceState.voiceIsOpen}
               opensDate={voiceState.opensDate}
@@ -741,12 +754,13 @@ function rosterAvatarUrl(
  * This group: its own room's Join, the gedus teaching it, then every child with
  * their parent's email and the copy-all helper.
  *
- * **It is titled "My Group", and it carries its size top-right.** "Group" was
- * ambiguous on a page whose other rail card is called "Other groups" — the
- * possessive is what makes the pair read as one distinction rather than as two
- * unrelated headings. The count sits in the same corner every peer row puts its
- * own, so "mine has eight, that one has six" is one horizontal glance rather
- * than a hunt.
+ * **It is titled "My Group" by default, and it carries its size top-right.**
+ * "Group" was ambiguous on a page whose other rail card is called "Other
+ * groups" — the possessive is what makes the pair read as one distinction
+ * rather than as two unrelated headings. That possessive is the gedu's, though,
+ * so a shell whose reader owns no group hands in its own heading instead. The
+ * count sits in the same corner every peer row puts its own, so "mine has
+ * eight, that one has six" is one horizontal glance rather than a hunt.
  *
  * **The Join lives here, at the top of the card, and nowhere else on the page.**
  * A voice room belongs to a group, and this card is the group — so the button
@@ -777,6 +791,7 @@ function rosterAvatarUrl(
  */
 function GroupRailCard({
   group,
+  heading,
   isRemote,
   voiceIsOpen,
   opensDate,
@@ -789,6 +804,8 @@ function GroupRailCard({
   memberFlair,
 }: {
   group: GeduAssignedProductGroup;
+  /** The card's heading, or `undefined` for the gedu's "My Group". */
+  heading?: string;
   isRemote: boolean;
   voiceIsOpen: boolean;
   opensDate: string;
@@ -825,7 +842,7 @@ function GroupRailCard({
 
   return (
     <RailCard
-      title={t("railGroupHeading")}
+      title={heading ?? t("railGroupHeading")}
       trailing={<ParticipantCount count={group.participant_count} />}
     >
       {isRemote && (

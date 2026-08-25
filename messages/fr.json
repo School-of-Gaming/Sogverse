@@ -802,6 +802,7 @@
       "sessions": {
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
+        "railGroupHeading": "Groupe",
         "addressLabel": "Adresse du lieu",
         "addressPlaceholder": "Rue, code postal, ville",
         "addAddress": "Ajouter une adresse",
@@ -1319,7 +1320,6 @@
       "noRecordLabel": "Aucun compte rendu",
       "emptyFeed": "Ce groupe n’a pas encore de séances.",
       "noNotesYet": "Aucune note pour cette séance pour l’instant.",
-      "attendanceSummary": "{present} présents sur {total}",
       "presentLabel": "Présent",
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",

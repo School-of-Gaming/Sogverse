@@ -10,6 +10,8 @@ import {
   GroupWorkspace,
   type RosterMemberFlair,
 } from "@/components/group-workspace/GroupWorkspace";
+import { deriveRosterFlairMaps } from "@/components/group-workspace/derive-roster-flair";
+import { createGameUsernameSave } from "@/components/group-workspace/game-username-save";
 import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
 import type { SiteNotesDraft } from "@/components/group-workspace/SiteNotesPanel";
@@ -289,6 +291,7 @@ function Workspace({
    */
   snapshot: ProductGroupsSnapshot | undefined;
 }) {
+  const s = useTranslations("admin.products.sessions");
   const liveNow = useNow();
   const groupId = group.id;
   const productId = product.id;
@@ -330,14 +333,12 @@ function Workspace({
   // a branch, and the one that is never fired costs nothing but the object it
   // returns.
   //
-  // **These two are the one control on this page an admin cannot actually
-  // use.** Both writes go through a route posted as `roles: "gedu"`, so an
-  // admin's save is refused before it reaches the RPC and the row shows its
-  // "didn't save" line. The editor is still rendered, because it is the roster
-  // row's own affordance and the alternative — handing the body no platform —
-  // would take the game identity off every row and make this page show *less*
-  // than the gedu's. Widening the route is an auth change and belongs to
-  // whoever owns those routes.
+  // **Both of these work for an admin.** The routes and the RPCs behind them are
+  // gedu-or-admin since 00205 — an admin already held exactly this edit on the
+  // admin users page, on any user and with no group involved at all, so the
+  // narrower posture here was the odd one out rather than a boundary. What did
+  // not move is the target-role check: a game account belongs to a child, so a
+  // row keyed to an adult seat is refused for gedu and admin alike.
   const updateMinecraft = useUpdateGroupMemberMinecraft(groupId);
   const updateRoblox = useUpdateGroupMemberRoblox(groupId);
   // The one write behind the roster's staff flair. It invalidates the feed —
@@ -452,35 +453,18 @@ function Workspace({
    * The roster's staff-only overlay, built from **the same roster copy the rail
    * renders** — the feed's.
    *
-   * **Absence is how "none" is spelled.** A NULL from the RPC is left out of the
-   * map rather than written in as a null, because every consumer downstream —
-   * the row's `hasNote`, the dialog's seed, the badge's own window check — reads
-   * a missing key as the answer rather than as a gap.
-   *
-   * The clubs-only gate lives here and nowhere below: on a camp or an event the
-   * newcomers map is handed over **empty**, while the notes go through
-   * untouched. A note is just as useful on a camp; only the badge is gated.
+   * **The turn is the gedu shell's**, imported rather than reproduced: the
+   * clubs-only gate and the absence-is-none convention are rules about the
+   * document, not about who is reading it, and a second copy of them is a second
+   * place for a badge to appear on a camp. What this shell owns is only the
+   * gate's input — the product type it reads it from, which is the admin row's
+   * here and the assignment document's there.
    */
   const drawsNewcomerBadge = showsNewcomerBadge(product.product_type);
-  const flairMaps = useMemo(() => {
-    const newcomers: Record<string, string> = {};
-    const notes: Record<string, string> = {};
-    const noteEditors: Record<string, string> = {};
-
-    for (const member of feed.roster) {
-      if (drawsNewcomerBadge && member.group_joined_at !== null) {
-        newcomers[member.participant_id] = member.group_joined_at;
-      }
-      if (member.note !== null) {
-        notes[member.participant_id] = member.note;
-      }
-      if (member.note_updated_by_first_name !== null) {
-        noteEditors[member.participant_id] = member.note_updated_by_first_name;
-      }
-    }
-
-    return { newcomers, notes, noteEditors };
-  }, [feed.roster, drawsNewcomerBadge]);
+  const flairMaps = useMemo(
+    () => deriveRosterFlairMaps(feed.roster, drawsNewcomerBadge),
+    [feed.roster, drawsNewcomerBadge],
+  );
 
   /**
    * The flair the body takes, with the write attached.
@@ -553,48 +537,17 @@ function Workspace({
 
   /**
    * An admin correcting a child's game username, with the platform's real round
-   * trip behind it — the gedu shell's handler, unchanged, so a save that finds
-   * an account lands **verified** and one the platform does not know lands
-   * `unverified` with the name still saved.
+   * trip behind it — **the same implementation the gedu workspace runs**,
+   * imported rather than reproduced, so a save that finds an account lands
+   * **verified** and one the platform does not know lands `unverified` with the
+   * name still saved.
    */
-  const handleSaveGameUsername = async (gamerId: string, username: string) => {
-    if (platform === null) return;
-    const trimmed = username.trim();
-    const value = trimmed.length === 0 ? null : trimmed;
-
-    /** The write for this product's platform, answering with the stored key. */
-    const save = async (): Promise<string | number | null> =>
-      platform === "minecraft"
-        ? (
-            await updateMinecraft.mutateAsync({
-              gamerId,
-              minecraftUsername: value,
-            })
-          ).minecraft_uuid
-        : (
-            await updateRoblox.mutateAsync({ gamerId, robloxUsername: value })
-          ).roblox_user_id;
-
-    if (value === null) {
-      await save();
-      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
-      return;
-    }
-
-    setGameStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
-    try {
-      const externalId = await save();
-      setGameStatuses((prev) => ({
-        ...prev,
-        [gamerId]: externalId === null ? "unverified" : "verified",
-      }));
-    } catch (error) {
-      // A refused write says nothing about the name, so the row goes back to
-      // whatever its account says rather than claiming a failed check.
-      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
-      throw error;
-    }
-  };
+  const handleSaveGameUsername = createGameUsernameSave({
+    platform,
+    updateMinecraft,
+    updateRoblox,
+    setGameStatuses,
+  });
 
   return (
     <GroupWorkspace
@@ -606,6 +559,11 @@ function Workspace({
       backLink={null}
       // Leaving a voice room joined from this page lands back on this page.
       workspaceHref={selfHref}
+      // The body's default heading is "My Group", which is a claim only the
+      // gedu teaching it can make — an admin holds no group here. The card
+      // already carries the group's own name, so the heading is just the
+      // category word.
+      groupHeading={s("railGroupHeading")}
       // The very instant `entries` were built from — frozen while an editor is
       // open. Anything fresher would step around the freeze and reclassify a
       // card under somebody typing into it.

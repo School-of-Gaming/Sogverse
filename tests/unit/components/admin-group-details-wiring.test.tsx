@@ -414,6 +414,15 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     expect(isLit(noteButton("Emil"))).toBe(false);
   });
 
+  it("heads the roster rail with the category word, not the gedu's possessive", () => {
+    renderPage("consumer_club");
+
+    // The body's default is "My Group", which is a claim only the gedu teaching
+    // it can make. The card carries the group's own name either way.
+    expect(screen.getByRole("heading", { name: "Group" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "My Group" })).toBeNull();
+  });
+
   it("badges the members inside the newcomer window, and nobody else", () => {
     renderPage("consumer_club");
 

@@ -128,10 +128,14 @@ export const groupParticipationDetail = z.object({
    * spelled the same on all three readers.
    *
    * The groups panel draws **neither** mark: a participant chip there is a drag
-   * handle, a badge has no bearing on a move, and a note is a control. The
-   * note is rendered by the group members card in the sessions panel on the same
-   * page; `group_joined_at` rides here for shape parity rather than for a badge,
-   * since the newcomer badge is drawn on no admin surface.
+   * handle, a badge has no bearing on a move, and a note is a control. So all
+   * three fields ride here for **shape parity across the three roster readers**
+   * rather than for anything this document's own reader renders — today no admin
+   * surface draws them from THIS document at all: the group details page shows
+   * both marks and reads them off the group *feed*, which is the copy a note
+   * write invalidates. That is a known and accepted state, not an oversight: the
+   * parity is the decision, and one shared expression is what keeps the three
+   * arms one shape.
    */
   group_joined_at: z.string().nullable(),
   note: z.string().nullable(),

@@ -15,7 +15,7 @@ import {
  * member out of a group while a Gedu has a stale roster open, and the Gedu's
  * next save meets the RPC's target check. Postgres answers `42501` with the
  * message `Forbidden` — English, untranslated, written for a log — and all
- * three surfaces (the gedu page, the voice room, the admin sessions panel) hand
+ * three surfaces (the gedu page, the voice room, the admin group details page) hand
  * the rejection to the same dialog, which prints an `Error`'s own message.
  *
  * So the mapping lives here, at the one point all three inherit: a known raw-SQL

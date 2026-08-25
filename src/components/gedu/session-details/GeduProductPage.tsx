@@ -27,6 +27,8 @@ import {
 } from "@/services/roblox";
 import type { GeduAssignedProduct } from "@/types";
 import { SessionDetailsBackLink } from "@/components/group-workspace/BackLink";
+import { deriveRosterFlairMaps } from "@/components/group-workspace/derive-roster-flair";
+import { createGameUsernameSave } from "@/components/group-workspace/game-username-save";
 import {
   GroupWorkspace,
   type RosterMemberFlair,
@@ -314,34 +316,21 @@ function Workspace({
    * the row's `hasNote`, the dialog's seed, the badge's own window check — reads
    * a missing key as the answer rather than as a gap.
    *
-   * The clubs-only gate lives here and nowhere below: on a camp or an event the
-   * newcomers map is handed over **empty**, while the notes go through
-   * untouched. A note is just as useful on a camp; only the badge is gated.
+   * The turn itself — the clubs-only gate, and absence being how "none" is
+   * spelled — is next door rather than here, because the admin group details
+   * page folds the same document into the same overlay and must produce the same
+   * maps. What this shell owns is only the gate's *input*: the product type it
+   * reads it from.
    *
    * The clock is the page's own — frozen with the feed while a session editor is
    * open — so a newcomer meter answers off the same instant as everything
    * around it rather than inventing one.
    */
   const drawsNewcomerBadge = showsNewcomerBadge(product.product.product_type);
-  const flairMaps = useMemo(() => {
-    const newcomers: Record<string, string> = {};
-    const notes: Record<string, string> = {};
-    const noteEditors: Record<string, string> = {};
-
-    for (const member of feed.roster) {
-      if (drawsNewcomerBadge && member.group_joined_at !== null) {
-        newcomers[member.participant_id] = member.group_joined_at;
-      }
-      if (member.note !== null) {
-        notes[member.participant_id] = member.note;
-      }
-      if (member.note_updated_by_first_name !== null) {
-        noteEditors[member.participant_id] = member.note_updated_by_first_name;
-      }
-    }
-
-    return { newcomers, notes, noteEditors };
-  }, [feed.roster, drawsNewcomerBadge]);
+  const flairMaps = useMemo(
+    () => deriveRosterFlairMaps(feed.roster, drawsNewcomerBadge),
+    [feed.roster, drawsNewcomerBadge],
+  );
 
   /**
    * The flair the body takes, with the write attached.
@@ -408,60 +397,18 @@ function Workspace({
    * A gedu correcting a child's game username, with the platform's real round
    * trip behind it.
    *
-   * The route resolves the name server-side and stores the account key beside
-   * it, so a save that finds an account lands **verified** — the status here is
-   * read off what came back rather than guessed at, and a name the platform does
-   * not know lands `unverified` with the name still saved. A clear needs no
-   * lookup and no status at all.
-   *
-   * **The platform decides which write happens, and it is the product's rather
-   * than the row's**: one roster shows one identity, so there is no per-child
-   * question to ask here. A product whose topic names no platform renders no
-   * editor at all, so this cannot be reached with a null one — and it returns
-   * quietly rather than throwing if it somehow is, because a roster row is not
-   * the place to surface a programming error.
+   * **The same implementation the admin group details page runs**, imported
+   * rather than reproduced: the platform dispatch and the
+   * checking/verified/unverified machine are rules about the write, not about
+   * who is making it. What this shell hands over is which platform, which
+   * mutations, and where the statuses live.
    */
-  const handleSaveGameUsername = async (gamerId: string, username: string) => {
-    if (platform === null) return;
-    const trimmed = username.trim();
-    const value = trimmed.length === 0 ? null : trimmed;
-
-    /** The write for this product's platform, answering with the stored key. */
-    const save = async (): Promise<string | number | null> =>
-      platform === "minecraft"
-        ? (
-            await updateMinecraft.mutateAsync({
-              gamerId,
-              minecraftUsername: value,
-            })
-          ).minecraft_uuid
-        : (
-            await updateRoblox.mutateAsync({ gamerId, robloxUsername: value })
-          ).roblox_user_id;
-
-    if (value === null) {
-      await save();
-      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
-      return;
-    }
-
-    setGameStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
-    try {
-      // Presence of the key is the whole of "verified" — nothing reads its
-      // value, which is how a dashed Mojang UUID and a Roblox integer share one
-      // branch without being pretended to be the same value space.
-      const externalId = await save();
-      setGameStatuses((prev) => ({
-        ...prev,
-        [gamerId]: externalId === null ? "unverified" : "verified",
-      }));
-    } catch (error) {
-      // A refused write says nothing about the name, so the row goes back to
-      // whatever its account says rather than claiming a failed check.
-      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
-      throw error;
-    }
-  };
+  const handleSaveGameUsername = createGameUsernameSave({
+    platform,
+    updateMinecraft,
+    updateRoblox,
+    setGameStatuses,
+  });
 
   return (
     <GroupWorkspace

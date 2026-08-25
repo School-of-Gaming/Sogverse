@@ -19,8 +19,10 @@ shells differ in which documents they read (an assignment plus a group feed on t
 side; an admin session record plus the same group feed on the admin side), which
 mutations they bind, and what their chrome is. Where a shell genuinely needs the body to
 differ, the difference enters as a prop with a documented default rather than as a branch
-on who is looking — the back link and the voice rooms' way back are the two that exist,
-and both default to the gedu answer because that shell is the one with no other.
+on who is looking — the back link, the voice rooms' way back and the roster rail's heading
+are the three that exist, and every one of them defaults to the gedu answer because that
+shell is the one with no other. All three are the same kind of thing: a statement about
+who brought you here, which is exactly what a shared body cannot know.
 
 **Rule: nothing in here is named for a role.** The directory is the shared half, so a
 `Gedu*` or `Admin*` name in it is a claim the code does not make. Role-specific shells
@@ -50,6 +52,13 @@ ban, and the ESLint config says so.
   copy and a different owner (the group; the venue).
 - **`session-entry-saves.ts`** — what a session editor's Save and Send *do* between the
   draft and the writes, taking the mutations as arguments so both shells run one copy.
+- **`game-username-save.ts`** — the same split for the roster's username editor: the
+  platform dispatch and the checking/verified/unverified machine, taking both platforms'
+  mutations and the shell's status setter as arguments.
+- **`derive-roster-flair.ts`** — the group feed's roster rows turned into the three sparse
+  maps the flair prop carries. Holds the clubs-only badge gate and the absence-is-none
+  convention, both of which fail silently, and neither of which needs a React tree to
+  test.
 - **`types.ts` / `roster-helpers.tsx`** — the roster row alias and the two questions every
   roster consumer has to answer identically (which address, which game account).
 - **`BackLink.tsx`** — the workspace's default back link, which is the gedu shell's.

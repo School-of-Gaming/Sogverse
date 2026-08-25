@@ -850,6 +850,7 @@
       "sessions": {
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
+        "railGroupHeading": "ghom",
         "addressLabel": "Daq ngu’wI’",
         "addressPlaceholder": "He, mI’, veng",
         "addAddress": "Daq ngu’wI’ yIchel",
@@ -1363,7 +1364,6 @@
       "noRecordLabel": "qonta’ tu’lu’be’",
       "emptyFeed": "ghom’a’vam may’mey tu’lu’be’.",
       "noNotesYet": "may’vamvaD qonta’ tu’lu’be’ DaH.",
-      "attendanceSummary": "{present}/{total} pawpu’",
       "presentLabel": "pawpu’",
       "absentLabel": "pawbe’",
       "unmarkedLabel": "ngu’lu’be’",

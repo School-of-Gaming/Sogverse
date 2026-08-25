@@ -802,6 +802,7 @@
       "sessions": {
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
+        "railGroupHeading": "Ryhmä",
         "addressLabel": "Toimipaikan osoite",
         "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
         "addAddress": "Lisää osoite",
@@ -1319,7 +1320,6 @@
       "noRecordLabel": "Ei kirjausta",
       "emptyFeed": "Tällä ryhmällä ei ole vielä kertoja.",
       "noNotesYet": "Tälle kerralle ei ole vielä muistiinpanoja.",
-      "attendanceSummary": "{present}/{total} paikalla",
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
       "unmarkedLabel": "Ei merkintää",

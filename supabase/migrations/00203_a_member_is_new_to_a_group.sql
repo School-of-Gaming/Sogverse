@@ -969,9 +969,11 @@ GRANT EXECUTE ON FUNCTION public.get_gedu_group_feed(uuid) TO service_role;
 -- the participation and the (group, member) pair, not about the person — and
 -- they are then spelled the same on all three readers.
 --
--- This is also the admin's route to a member note: the sessions panel's group
--- members card renders it. The newcomer badge is drawn on NO admin surface, so
--- group_joined_at rides here for shape parity rather than for a badge.
+-- All three fields ride here for that shape parity rather than for a reader of
+-- THIS document: no admin surface draws them from it today. The admin group
+-- details page renders both marks and reads them off get_gedu_group_feed, which
+-- is the copy a note write invalidates. Known and accepted — the parity is the
+-- decision.
 
 CREATE OR REPLACE FUNCTION public.get_product_groups_with_details(p_product_id uuid) RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -1053,8 +1055,8 @@ BEGIN
                      'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
                      -- The staff-only flair (00203), identical in all three
                      -- arms. The groups PANEL draws neither mark — a chip there
-                     -- is a drag handle — but the sessions panel's members card
-                     -- renders the note from this same document.
+                     -- is a drag handle — so these ride for shape parity across
+                     -- the three roster readers, not for a reader of this one.
                      'group_joined_at',                p.group_joined_at,
                      'note',                           gn.note,
                      'note_updated_by_first_name',     ned.first_name
@@ -1237,7 +1239,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. Since 00203 all three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark; the note is rendered by the group members card in the sessions panel on the same page.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. Since 00203 all three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document today — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one.';
 
 REVOKE EXECUTE ON FUNCTION public.get_product_groups_with_details(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_product_groups_with_details(uuid) TO authenticated;

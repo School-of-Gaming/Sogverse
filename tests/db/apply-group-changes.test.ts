@@ -693,8 +693,10 @@ describe("get_product_groups_with_details", () => {
   });
 
   it("carries the staff-only flair identically on the grouped and group-less arms", async () => {
-    // 00203's three fields, on the reader the admin sessions panel's group
-    // members card renders them from. The two arms are the point: one shared
+    // 00203's three fields, on the groups-snapshot reader. No admin surface
+    // draws them from this document today — the admin group details page reads
+    // both marks off the group feed — so what is asserted here is the shape
+    // parity itself. The two arms are the point: one shared
     // LEFT JOIN feeds all three participation arms, so a seat in a group can
     // carry a note and a seat in none comes back null throughout — which is the
     // truth, and is what keeps the three shapes one shape.
