@@ -799,10 +799,6 @@
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
       },
       "sessions": {
-        "title": "Kerrat",
-        "groupSelectorAria": "Valitse ryhmä",
-        "untitledGroup": "Nimetön ryhmä",
-        "noGroups": "Tällä tuotteella ei ole vielä ryhmiä, joten mitään ei ole kirjattu.",
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
         "addressLabel": "Toimipaikan osoite",

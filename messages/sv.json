@@ -799,10 +799,6 @@
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
       },
       "sessions": {
-        "title": "Tillfällen",
-        "groupSelectorAria": "Välj en grupp",
-        "untitledGroup": "Namnlös grupp",
-        "noGroups": "Den här produkten har inga grupper än, så ingenting är dokumenterat.",
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
         "addressLabel": "Platsens adress",

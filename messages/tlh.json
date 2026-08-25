@@ -847,10 +847,6 @@
         "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
       },
       "sessions": {
-        "title": "may’mey",
-        "groupSelectorAria": "ghom’a’ yIwIv",
-        "untitledGroup": "ghom’a’ pong Hutlh",
-        "noGroups": "ngIq vamvaD ghommey tu’lu’be’, vaj qonta’ghach tu’lu’be’.",
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
         "addressLabel": "Daq ngu’wI’",

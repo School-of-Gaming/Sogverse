@@ -799,10 +799,6 @@
         "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
       },
       "sessions": {
-        "title": "Sessions",
-        "groupSelectorAria": "Choose a group",
-        "untitledGroup": "Untitled group",
-        "noGroups": "This product has no groups yet, so there is nothing recorded against it.",
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
         "addressLabel": "Venue address",
