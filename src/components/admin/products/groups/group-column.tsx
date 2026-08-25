@@ -219,7 +219,10 @@ export function GroupColumn({
                       href={groupHref(group.id)}
                       className={cn(
                         buttonVariants({ variant: "outline", size: "sm" }),
-                        "h-7 shrink-0 gap-1 px-2 text-xs",
+                        // h-8 rather than sm's h-9: level with the name's line
+                        // box beside it, without out-sizing the h-7 pencil in
+                        // between.
+                        "h-8 shrink-0 gap-1 px-2.5",
                       )}
                     >
                       {/* Named for what is behind it, not "View details": with
