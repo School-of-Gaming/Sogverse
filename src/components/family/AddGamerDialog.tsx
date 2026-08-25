@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import type { CreateGamerInput } from "@/types";
 import {
   assembleGamerDateOfBirth,
+  gamerBirthMonthOptions,
   gamerBirthYearOptions,
 } from "@/lib/gamer-birth";
 
@@ -212,13 +213,10 @@ export function AddGamerFormCard({
 
   const years = useMemo(() => gamerBirthYearOptions(), []);
 
-  const months = useMemo(() => {
-    const fmt = new Intl.DateTimeFormat(locale, { month: "long" });
-    return Array.from({ length: 12 }, (_, i) => ({
-      value: i + 1,
-      label: fmt.format(new Date(2000, i, 1)),
-    }));
-  }, [locale]);
+  // Unclamped: the year select here offers only the rolling enrollment band,
+  // whose youngest year is six back, so no month it can be paired with is in
+  // the future.
+  const months = useMemo(() => gamerBirthMonthOptions(locale), [locale]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

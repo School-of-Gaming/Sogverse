@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   assembleGamerDateOfBirth,
+  gamerBirthMonthOptions,
   gamerBirthYearOptions,
   gamerBirthYearOptionsIncluding,
   splitGamerDateOfBirth,
@@ -64,6 +65,75 @@ describe("gamerBirthYearOptionsIncluding", () => {
 
   it("carries a year younger than the window at the head", () => {
     expect(gamerBirthYearOptionsIncluding(2025, today)[0]).toBe(2025);
+  });
+});
+
+describe("gamerBirthMonthOptions", () => {
+  const values = (locale: string, clamp?: Parameters<typeof gamerBirthMonthOptions>[1]) =>
+    gamerBirthMonthOptions(locale, clamp).map((m) => m.value);
+
+  it("offers all twelve months, labelled in the locale, when unclamped", () => {
+    const months = gamerBirthMonthOptions("en-US");
+    expect(months).toHaveLength(12);
+    expect(months[0]).toEqual({ value: 1, label: "January" });
+    expect(months[11]).toEqual({ value: 12, label: "December" });
+  });
+
+  it("labels the months in the caller's own locale", () => {
+    expect(gamerBirthMonthOptions("fi")[0].label).toBe("tammikuu");
+  });
+
+  it("offers all twelve when the selected year is in the past", () => {
+    expect(
+      values("en-US", { selectedYear: 2017, currentYear: 2026, currentMonth: 8 }),
+    ).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  });
+
+  it("stops at the current month when the selected year is the current year", () => {
+    expect(
+      values("en-US", { selectedYear: 2026, currentYear: 2026, currentMonth: 8 }),
+    ).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
+  it("offers only January in the current year's first month", () => {
+    expect(
+      values("en-US", { selectedYear: 2026, currentYear: 2026, currentMonth: 1 }),
+    ).toEqual([1]);
+  });
+
+  it("carries a stored month the clamp would otherwise remove", () => {
+    expect(
+      values("en-US", {
+        selectedYear: 2026,
+        currentYear: 2026,
+        currentMonth: 8,
+        stored: { year: 2026, month: 11 },
+      }),
+    ).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 11]);
+  });
+
+  it("does not duplicate a stored month the clamp already keeps", () => {
+    expect(
+      values("en-US", {
+        selectedYear: 2026,
+        currentYear: 2026,
+        currentMonth: 8,
+        stored: { year: 2026, month: 3 },
+      }),
+    ).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
+  it("does not carry the stored month into a different year's list", () => {
+    // The row holds November 2025; with 2026 selected, November is a future
+    // month of a year the row says nothing about.
+    expect(
+      values("en-US", {
+        selectedYear: 2026,
+        currentYear: 2026,
+        currentMonth: 8,
+        stored: { year: 2025, month: 11 },
+      }),
+    ).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 });
 

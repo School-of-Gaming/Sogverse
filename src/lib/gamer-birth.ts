@@ -55,6 +55,96 @@ export function gamerBirthYearOptionsIncluding(
   return [...years, year].sort((a, b) => b - a);
 }
 
+/** A stored birth date, split back into the two values a form edits. */
+export interface GamerBirthMonthYear {
+  year: number;
+  /** 1–12, matching the value `assembleGamerDateOfBirth` takes. */
+  month: number;
+}
+
+/** One entry of a birth-month select: the 1–12 value and its name in the locale. */
+export interface GamerBirthMonthOption {
+  value: number;
+  /** The locale's own month name, from `Intl` — never a translated string. */
+  label: string;
+}
+
+/**
+ * What a month select needs in order to know which of its months are still in
+ * the past: the year sitting beside it, and today in the *viewer's* zone.
+ *
+ * The two "current" fields are arguments rather than a `new Date()` inside,
+ * because "today" is a calendar date in somebody's IANA zone and this file has
+ * no way to know whose — the caller resolves it with `formatInTimeZone` and
+ * hands the digits over, which also leaves this helper pure and testable.
+ */
+export interface GamerBirthMonthClamp {
+  /** The year currently chosen in the year select beside this one. */
+  selectedYear: number;
+  /** Today's year in the viewer's zone. */
+  currentYear: number;
+  /** Today's month in the viewer's zone, 1–12. */
+  currentMonth: number;
+  /**
+   * The month+year the row already holds, when editing one. Its own month is
+   * never clamped away — see below.
+   */
+  stored?: GamerBirthMonthYear;
+}
+
+/**
+ * The months a birth-month select offers, labelled in the caller's locale.
+ *
+ * **Why a clamp at all.** `date_of_birth` carries a `<= CURRENT_DATE` CHECK, and
+ * the year select can legitimately offer the current year (never from the
+ * rolling enrollment band — `MIN_ENROLLMENT_AGE` puts its youngest year six back
+ * — but `gamerBirthYearOptionsIncluding` carries a stored one). With the current
+ * year chosen, every month after this one assembles a future date that the
+ * database rejects, and all the admin gets back is the generic save error. So
+ * when the selected year *is* the current year, only months up to this one are
+ * offered and the invalid choice cannot be made.
+ *
+ * **The stored month is never clamped away.** Same principle as
+ * `gamerBirthYearOptionsIncluding`: a select whose value matches no option
+ * renders as though nothing were chosen and saves as something else the moment
+ * anything beside it is touched. If a row somehow holds a future month in the
+ * current year, its own month stays selectable — carried the way that function
+ * carries a year, one value, not the whole span up to it.
+ *
+ * Called with no clamp (the parent's Add Gamer form, which offers no year the
+ * clamp could bite on) it is the plain twelve.
+ */
+export function gamerBirthMonthOptions(
+  locale: string,
+  clamp?: GamerBirthMonthClamp,
+): GamerBirthMonthOption[] {
+  const fmt = new Intl.DateTimeFormat(locale, { month: "long" });
+  return selectableBirthMonths(clamp).map((month) => ({
+    value: month,
+    // The year and day are arbitrary — only the month name is read out.
+    label: fmt.format(new Date(2000, month - 1, 1)),
+  }));
+}
+
+/** The 1–12 values `gamerBirthMonthOptions` labels, ascending. */
+function selectableBirthMonths(clamp?: GamerBirthMonthClamp): number[] {
+  const all = Array.from({ length: 12 }, (_, i) => i + 1);
+  if (!clamp || clamp.selectedYear !== clamp.currentYear) return all;
+
+  const months = all.filter((month) => month <= clamp.currentMonth);
+  const { stored } = clamp;
+  if (
+    stored &&
+    stored.year === clamp.selectedYear &&
+    stored.month > clamp.currentMonth
+  ) {
+    // Appended, which keeps the list ascending: it is past every month the
+    // filter above kept.
+    months.push(stored.month);
+  }
+  return months;
+}
+
 /**
  * Composes the gamer's date_of_birth from a separate month + year selection.
  * The DB stores a full DATE; we anchor to the first of the selected month since
@@ -62,13 +152,6 @@ export function gamerBirthYearOptionsIncluding(
  */
 export function assembleGamerDateOfBirth(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}-01`;
-}
-
-/** A stored birth date, split back into the two values a form edits. */
-export interface GamerBirthMonthYear {
-  year: number;
-  /** 1–12, matching the value `assembleGamerDateOfBirth` takes. */
-  month: number;
 }
 
 /**

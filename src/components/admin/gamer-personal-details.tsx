@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type RefObject } from "react";
+import { formatInTimeZone } from "date-fns-tz";
 import { Loader2, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useTimezone } from "@/providers";
 import { useGamerProfile, useUpdateGamerProfile } from "@/services/gamers";
 import {
   assembleGamerDateOfBirth,
+  gamerBirthMonthOptions,
   gamerBirthYearOptionsIncluding,
   splitGamerDateOfBirth,
 } from "@/lib/gamer-birth";
@@ -73,6 +75,21 @@ export function GamerPersonalDetails({
   const profile = data ?? initialProfile;
 
   const [editing, setEditing] = useState(false);
+  // The form below owns the save, but the dialog's dismissal lives up here — so
+  // the in-flight flag is a ref the form sets synchronously beside its own
+  // `committing` state, rather than state lifted out of the form and threaded
+  // back down. A ref is also what this reader needs: `onOpenChange` fires from
+  // an Escape keypress or a backdrop click, outside React's render, and must
+  // read the value as it is at that instant.
+  const busyRef = useRef(false);
+
+  // Every close the form itself asks for — a save that landed, or Cancel —
+  // comes through here, which is also where the flag is put back so the next
+  // opening starts dismissible.
+  function close() {
+    busyRef.current = false;
+    setEditing(false);
+  }
 
   return (
     <>
@@ -89,9 +106,11 @@ export function GamerPersonalDetails({
             </>
           )}
         </p>
-        {/* At the end of the run, so the gender half appearing or disappearing
-            after a save grows the text leftward of it rather than pushing the
-            control the admin is aiming at. */}
+        {/* The row is left-packed, so a save that adds or clears the gender half
+            does move this pencil. That is the permitted kind of shift: it is the
+            direct result of the admin confirming the dialog they opened from
+            here, not something arriving on data's own schedule. Nothing moves
+            while they are merely reading the line. */}
         <button
           type="button"
           onClick={() => setEditing(true)}
@@ -105,11 +124,23 @@ export function GamerPersonalDetails({
       {/* `Dialog` renders nothing while closed, so the form below only mounts
           when it opens — which is what seeds its three controls from the row as
           it stands right now, every time, with no effect syncing them. */}
-      <Dialog open={editing} onOpenChange={setEditing}>
+      <Dialog
+        open={editing}
+        // A save in flight owns the dialog until it resolves. Escape and a
+        // backdrop click arrive here as `false` and would otherwise unmount the
+        // form mid-write — with Cancel disabled, that is the one dismissal left
+        // open, and it would leave a failure with nowhere to be reported and an
+        // admin believing the correction landed.
+        onOpenChange={(open) => {
+          if (!open && busyRef.current) return;
+          setEditing(open);
+        }}
+      >
         <GamerPersonalDetailsForm
           gamerId={gamerId}
           profile={profile}
-          onClose={() => setEditing(false)}
+          busyRef={busyRef}
+          onClose={close}
         />
       </Dialog>
     </>
@@ -128,15 +159,19 @@ export function GamerPersonalDetails({
 function GamerPersonalDetailsForm({
   gamerId,
   profile,
+  busyRef,
   onClose,
 }: {
   gamerId: string;
   profile: GamerProfile;
+  /** Set true for as long as a save is in flight; see the parent. */
+  busyRef: RefObject<boolean>;
   onClose: () => void;
 }) {
   const t = useTranslations("admin.users.gamerDetails");
   const c = useTranslations("common");
   const locale = useLocale();
+  const timeZone = useTimezone();
   const updateProfile = useUpdateGamerProfile();
 
   /**
@@ -144,7 +179,10 @@ function GamerPersonalDetailsForm({
    * date has no instant to convert, and `new Date("2017-01-01")` read back
    * through the runtime's zone lands in December for any viewer west of UTC.
    */
-  const stored = splitGamerDateOfBirth(profile.date_of_birth);
+  const stored = useMemo(
+    () => splitGamerDateOfBirth(profile.date_of_birth),
+    [profile.date_of_birth],
+  );
 
   // Seeded once, because this component exists only while the dialog is open:
   // reopening it mounts a fresh form over whatever the row now holds.
@@ -160,14 +198,37 @@ function GamerPersonalDetailsForm({
   const [committing, setCommitting] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const months = useMemo(() => {
-    // Never a translated string: the locale's own month names, from Intl.
-    const fmt = new Intl.DateTimeFormat(locale, { month: "long" });
-    return Array.from({ length: 12 }, (_, i) => ({
-      value: i + 1,
-      label: fmt.format(new Date(2000, i, 1)),
-    }));
-  }, [locale]);
+  // Today as the *viewer* reads it, which is the calendar the CHECK behind this
+  // write is compared against from their side. The dialog is short-lived and
+  // mounts only on the admin's click, so reading the clock here is a client-only
+  // render with nothing to disagree with — the same shape `computeAge` uses for
+  // the line this form edits.
+  const today = useMemo(() => {
+    const [todayYear, todayMonth] = formatInTimeZone(
+      new Date(),
+      timeZone,
+      "yyyy-MM",
+    )
+      .split("-")
+      .map(Number);
+    return { year: todayYear, month: todayMonth };
+  }, [timeZone]);
+
+  // Clamped against the year beside it: with the current year selected, a month
+  // after this one would assemble a future date the `date_of_birth <=
+  // CURRENT_DATE` CHECK rejects, and the admin would get only the generic save
+  // error back. Recomputed as the year changes, which is what the `year` dep is
+  // for — the list is a function of both selects, not of the locale alone.
+  const months = useMemo(
+    () =>
+      gamerBirthMonthOptions(locale, {
+        selectedYear: Number(year),
+        currentYear: today.year,
+        currentMonth: today.month,
+        stored,
+      }),
+    [locale, year, today, stored],
+  );
 
   // The enrollment band, plus whatever year is actually stored — see
   // `gamerBirthYearOptionsIncluding`. A stored year the rolling window no longer
@@ -183,6 +244,9 @@ function GamerPersonalDetailsForm({
     if (committing) return;
     setFailed(false);
     setCommitting(true);
+    // Beside the state, not after it: the parent reads this from an Escape or a
+    // backdrop click that can arrive before React has rendered anything.
+    busyRef.current = true;
     void updateProfile
       .mutateAsync({
         gamerId,
@@ -200,6 +264,7 @@ function GamerPersonalDetailsForm({
       .catch(() => {
         setFailed(true);
         setCommitting(false);
+        busyRef.current = false;
       });
   }
 
@@ -273,7 +338,10 @@ function GamerPersonalDetailsForm({
               push the very selects the admin just used. It only ever appears
               after they pressed Save and it did not take. */}
           {failed && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+            >
               {t("saveError")}
             </div>
           )}

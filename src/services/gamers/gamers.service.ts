@@ -111,7 +111,9 @@ export class GamerService {
    * the table, so the caller's own session is the authorization — and adding a
    * route would only put our own re-check of `is_admin()` in front of the
    * database's. The `date_of_birth <= CURRENT_DATE` CHECK still stands behind
-   * it, so a future date fails loudly at the schema rather than storing.
+   * it: the editor's month select is clamped against the year beside it, so the
+   * UI cannot compose a future date in the first place, and the CHECK is there
+   * to fail loudly rather than store one if anything else ever tries.
    *
    * The updated row is returned (rather than the caller re-reading it) so the
    * mutation can seed the profile cache with it: the card that saves is showing
