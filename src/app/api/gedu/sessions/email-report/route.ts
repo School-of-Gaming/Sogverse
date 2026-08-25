@@ -421,6 +421,10 @@ export const POST = defineRoute({
       // and the admins can see reports reaching families, at a seventh of the
       // inbox noise a BCC on every send would cost. Its failure is logged and
       // changes nothing — the families are the outcome, this is the record.
+      //
+      // The copy names itself as one, in a banner above the report: staff read
+      // their own To and CC as evidence that a family mail exposed the address
+      // list, and nothing but the mail saying otherwise reaches them in time.
       try {
         await sendStaffCopy({
           facts,
@@ -546,6 +550,14 @@ async function sendFamilyMail(
  * — the gedu workspace for an educator (keyed by product; the page resolves
  * their own group), the admin product page for an admin. The caller decides
  * that, because the caller is what knows who sent it.
+ *
+ * **It asks for the staff variant, and that is the one thing about this mail a
+ * reader has to be told.** Its To and CC are full of colleagues, and staff kept
+ * reading that as a family mail that had leaked the whole address list — so the
+ * variant opens with a banner saying this is the copy, and that each family's
+ * mail was its own. The flag is set here rather than inferred in the builder
+ * because this function is the only place that knows the mail is going to
+ * staff; every other render of this template is a family's.
  */
 async function sendStaffCopy({
   facts,
@@ -583,6 +595,7 @@ async function sendStaffCopy({
     ),
     reportMarkdown: facts.reportMarkdown,
     productUrl: `${facts.origin}${workspacePath}`,
+    staffCopy: true,
   };
 
   await sendTransactionalEmail({

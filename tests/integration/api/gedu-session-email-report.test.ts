@@ -744,6 +744,28 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(copy.htmlContent).toContain("Kettukallio");
   });
 
+  /**
+   * The copy names itself as one, and the family mails do not.
+   *
+   * This is the route's half of the variant — the builder can render the banner
+   * and still never be asked to. What it prevents is the confusion the banner
+   * was written for (staff reading their own To and CC as a leaked family mail)
+   * and the far worse inverse: a parent told their report is a copy of what
+   * went to the other families.
+   */
+  it("opens the staff copy with the banner and leaves it off every family mail", async () => {
+    await POST(createRequest());
+
+    const copy = staffCopies()[0];
+    expect(copy.htmlContent).toContain("Staff copy");
+    expect(copy.htmlContent).toContain("Every family received their own separate email");
+
+    for (const mail of familyMails()) {
+      expect(mail.htmlContent).not.toContain("Staff copy");
+      expect(mail.htmlContent).not.toContain("Every family received their own separate email");
+    }
+  });
+
   // -- The staff copy when an ADMIN pressed the button (00200) --
   //
   // Three things follow the sender rather than the role, and each of them is

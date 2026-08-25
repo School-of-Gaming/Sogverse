@@ -183,8 +183,9 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
 }
 
 /**
- * The session-report form picks one of the bundled sample reports, a zone to
- * stand in for the parent's, and may paste a markdown body over the sample.
+ * The session-report form picks which of the send's two mails to render, one of
+ * the bundled sample reports, a zone to stand in for the parent's, and may
+ * paste a markdown body over the sample.
  * Testing plumbing, not the live send: `POST /api/gedu/sessions/email-report`
  * reads a real session row and formats in the product's zone, so here the
  * fixture stands in for that row and the select stands in for that zone. The instants are formatted for the
@@ -211,8 +212,19 @@ const VIEWER_TIMEZONE_OPTIONS = [
   { label: "America/New_York", value: "America/New_York" },
 ];
 
+/**
+ * Which of the two mails one send produces. The live route sends both — a
+ * family's, and one copy to the sender with the admins in CC — and they differ
+ * only in the banner the copy opens with, so the difference is invisible unless
+ * the testing UI can ask for either.
+ */
+const SESSION_REPORT_COPY_OPTIONS = [
+  { label: "The family mail (what a parent receives)", value: "family" },
+  { label: "The staff copy (sender, admins in CC)", value: "staff" },
+];
+
 function resolveSessionReport(
-  { sample: sampleId, viewerTimezone, reportMarkdown, ...rest }: SessionReportParams,
+  { sample: sampleId, viewerTimezone, reportMarkdown, copy, ...rest }: SessionReportParams,
   locale: string,
 ): SessionReportEmailOptions {
   const sample =
@@ -220,6 +232,7 @@ function resolveSessionReport(
     SESSION_REPORT_SAMPLES[0];
   return {
     ...rest,
+    staffCopy: copy === "staff",
     sessionDate: formatDate(sample.startsAt, locale, {
       timeZone: viewerTimezone,
       dateStyle: "full",
@@ -298,6 +311,13 @@ const sessionReportParamsSchema = z.object({
   /** Empty means "use the sample's own markdown". */
   reportMarkdown: z.string(),
   productUrl: z.string().url(),
+  /**
+   * Required rather than defaulted: a schema whose parsed output differs from
+   * its input no longer satisfies the registry's `ZodType<P>`, and the testing
+   * form posts an untouched select's first option anyway, so nothing that
+   * reaches this schema through the UI can omit it.
+   */
+  copy: z.enum(["family", "staff"]),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -422,6 +442,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "geduName", label: "Gedu Name", placeholder: "Marianne" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft: Cozy Adventures" },
       { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
+      { key: "copy", label: "Which copy", type: "select", options: SESSION_REPORT_COPY_OPTIONS },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
       { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {

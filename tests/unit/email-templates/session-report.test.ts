@@ -4,7 +4,7 @@ import {
   sessionReportSubject,
 } from "@/lib/email-templates/session-report";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { BRAND } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
 
@@ -104,6 +104,82 @@ describe("buildSessionReportEmail", () => {
     const body = html.slice(from, to);
     expect(body).not.toContain(BRAND.primary);
     expect(body).not.toContain(BRAND.secondary);
+  });
+});
+
+/**
+ * The staff copy is the same mail with one thing added, and both halves of that
+ * matter: the banner has to be there when the copy is asked for, and it has to
+ * be absent from every family mail — a parent reading "this is a copy that went
+ * to the group's families" would be worse than the confusion the banner exists
+ * to end.
+ */
+describe("the staff copy's banner", () => {
+  const LABEL = "Staff copy";
+  const IS_A_COPY = "This is a copy of the session report that went to the group";
+  const PRIVACY = "Every family received their own separate email";
+
+  it("opens the staff copy by saying what it is and what the families got", () => {
+    const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
+
+    expect(html).toContain(LABEL);
+    expect(html).toContain(IS_A_COPY);
+    expect(html).toContain(PRIVACY);
+  });
+
+  it("says all of it above the intro, where the reader's alarm already is", () => {
+    const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
+
+    // The gedu's name is in the intro sentence and nowhere else in the mail.
+    const intro = html.indexOf("Marianne");
+    expect(intro).toBeGreaterThan(0);
+    expect(html.indexOf(LABEL)).toBeLessThan(intro);
+    expect(html.indexOf(PRIVACY)).toBeLessThan(intro);
+  });
+
+  it("is absent from the mail a family receives", () => {
+    for (const html of [
+      buildSessionReportEmail(t, "en", base),
+      buildSessionReportEmail(t, "en", { ...base, staffCopy: false }),
+    ]) {
+      expect(html).not.toContain(LABEL);
+      expect(html).not.toContain(IS_A_COPY);
+      expect(html).not.toContain(PRIVACY);
+    }
+  });
+
+  /**
+   * The variant adds a block and changes nothing else, so the mail three
+   * quarters of the recipients read has to come out exactly as it did before
+   * the flag existed — not merely equivalent.
+   */
+  it("leaves the family mail byte-for-byte what it was", () => {
+    expect(buildSessionReportEmail(t, "en", { ...base, staffCopy: false })).toBe(
+      buildSessionReportEmail(t, "en", base),
+    );
+  });
+
+  /**
+   * Prominent within the house rules: the brand colour is a rule down the left
+   * edge, never the text. Brand-coloured body copy is the mistake this
+   * directory measured at 2.7:1 and removed.
+   */
+  it("takes its prominence from a brand rule and a fill, not from coloured text", () => {
+    const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
+    // The banner's own cell, from its opening tag to its close, so nothing the
+    // shell around it emits can satisfy or break these.
+    const start = html.lastIndexOf("<td ", html.indexOf(LABEL));
+    const banner = html.slice(start, html.indexOf("</td>", start));
+
+    expect(banner).toContain(`border-left:3px solid ${BRAND.primary}`);
+    // Declared twice, so Gmail's dark theme leaves the fill alone.
+    expect(banner).toContain(
+      `background-color:${DARK_THEME.bg};background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg})`,
+    );
+    // Every colour the banner's own text carries is the body's.
+    for (const color of banner.matchAll(/<p style="[^"]*color:(#[0-9a-fA-F]{6})/g)) {
+      expect(color[1]).toBe(DARK_THEME.foreground);
+    }
   });
 });
 

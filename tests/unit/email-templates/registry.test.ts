@@ -178,6 +178,7 @@ describe("templateRegistry sessionReport", () => {
     geduName: "Marianne",
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
+    copy: "family",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -246,6 +247,23 @@ describe("templateRegistry sessionReport", () => {
     expect(subject).toContain("Thursday, August 20, 2026");
   });
 
+  /**
+   * The select is the whole reason the variant is testable from the admin tool:
+   * a banner nobody can send themselves is a banner nobody can check. The
+   * default option is the family mail, which is what an untouched form posts.
+   */
+  it("renders the staff copy's banner only when the form asks for it", () => {
+    const family = templateRegistry.sessionReport.render(params, t, "en");
+    const staff = templateRegistry.sessionReport.render({ ...params, copy: "staff" }, t, "en");
+
+    expect(staff.html).toContain("Staff copy");
+    expect(staff.html).toContain("Every family received their own separate email");
+    expect(family.html).not.toContain("Staff copy");
+    // The subject is the family mail's, deliberately: the copy is the same mail
+    // and finds itself in an inbox by the same line.
+    expect(staff.subject).toBe(family.subject);
+  });
+
   it("rejects a sample id it does not know", () => {
     expect(() =>
       templateRegistry.sessionReport.render({ ...params, sample: "1999-01-01" }, t, "en"),
@@ -309,6 +327,7 @@ describe("every template renders in every locale", () => {
       geduName: "Marianne",
       productName: "Minecraft: Cozy Adventures",
       groupName: "Usvalaakso: Kettukallio",
+      copy: "family",
       sample: "en",
       viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",

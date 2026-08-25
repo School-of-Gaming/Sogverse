@@ -2391,7 +2391,10 @@
       "dateLabel": "Datum",
       "timeLabel": "Tid",
       "productButton": "Öppna i Min SOG",
-      "closing": "Den här rapporten, de tidigare och de kommande passen finns alla på sidan för {productName} i Min SOG."
+      "closing": "Den här rapporten, de tidigare och de kommande passen finns alla på sidan för {productName} i Min SOG.",
+      "staffCopyLabel": "Kopia till personalen",
+      "staffCopyBody": "Det här är en kopia av rapporten som skickades till gruppens familjer. Du får den som avsändare eller som administratör, inte som förälder.",
+      "staffCopyPrivacy": "Varje familj fick ett eget separat mejl, adresserat enbart till dem. Personaladresserna i den här kopians Till- och Kopia-fält finns bara på den här kopian: ingen förälder ser dem, och ingen familj ser en annan familj."
     }
   },
   "legal": {
