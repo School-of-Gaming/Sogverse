@@ -256,9 +256,9 @@ describe("templateRegistry sessionReport", () => {
     const family = templateRegistry.sessionReport.render(params, t, "en");
     const staff = templateRegistry.sessionReport.render({ ...params, copy: "staff" }, t, "en");
 
-    expect(staff.html).toContain("Staff copy");
+    expect(staff.html).toContain("Gedu and Admin copy");
     expect(staff.html).toContain("Every family received their own separate email");
-    expect(family.html).not.toContain("Staff copy");
+    expect(family.html).not.toContain("Gedu and Admin copy");
     // The subject is the family mail's, deliberately: the copy is the same mail
     // and finds itself in an inbox by the same line.
     expect(staff.subject).toBe(family.subject);

@@ -769,7 +769,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(copy.htmlContent).toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
     // The English copy's words still earn their place — this sender reads in
     // `en`, and the marker cannot tell a banner from an empty one.
-    expect(copy.htmlContent).toContain("Staff copy");
+    expect(copy.htmlContent).toContain("Gedu and Admin copy");
     expect(copy.htmlContent).toContain("Every family received their own separate email");
 
     for (const mail of familyMails()) {

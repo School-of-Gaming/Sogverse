@@ -115,7 +115,7 @@ describe("buildSessionReportEmail", () => {
  * to end.
  */
 describe("the staff copy's banner", () => {
-  const LABEL = "Staff copy";
+  const LABEL = "Gedu and Admin copy";
   const IS_A_COPY = "This is a copy of the session report that went to the group";
   const PRIVACY = "Every family received their own separate email";
 

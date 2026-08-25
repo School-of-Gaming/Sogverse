@@ -2392,9 +2392,9 @@
       "timeLabel": "Heure",
       "productButton": "Ouvrir dans Mon SOG",
       "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG.",
-      "staffCopyLabel": "Copie pour l’équipe",
+      "staffCopyLabel": "Copie pour les Gedus et les admins",
       "staffCopyBody": "Ceci est une copie du compte rendu envoyé aux familles du groupe. Vous la recevez en tant qu’expéditeur ou en tant qu’administrateur, et non en tant que parent.",
-      "staffCopyPrivacy": "Chaque famille a reçu son propre e-mail, adressé à elle seule. Les adresses de l’équipe qui figurent dans les champs À et Cc de cette copie n’apparaissent que sur cette copie : aucun parent ne les voit, et aucune famille n’en voit une autre."
+      "staffCopyPrivacy": "Chaque famille a reçu son propre e-mail, adressé à elle seule. Les adresses des Gedus et des admins qui figurent dans les champs À et Cc de cette copie n’apparaissent que sur cette copie : aucun parent ne les voit, et aucune famille n’en voit une autre."
     }
   },
   "legal": {

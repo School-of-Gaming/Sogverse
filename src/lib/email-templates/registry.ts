@@ -231,7 +231,7 @@ const SESSION_REPORT_COPIES = ["family", "staff"] as const;
 
 const SESSION_REPORT_COPY_LABELS: Record<(typeof SESSION_REPORT_COPIES)[number], string> = {
   family: "The family mail (what a parent receives)",
-  staff: "The staff copy (sender, admins in CC)",
+  staff: "The Gedu and Admin copy (sender, admins in CC)",
 };
 
 const SESSION_REPORT_COPY_OPTIONS = SESSION_REPORT_COPIES.map((value) => ({
