@@ -455,7 +455,7 @@ $$;
 -- Name: FUNCTION accept_gedu_contract(p_version text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.accept_gedu_contract(p_version text) IS 'Record that the CALLER accepted one version of the gedu contract, and return the acceptance timestamp. Gedu-only, guard-first on assert_role. There is no target parameter: the row is keyed to auth.uid(), so a caller cannot accept on anyone else''s behalf, and accepted_at and signed_name are both stamped server-side — the name as a snapshot taken from profiles at this moment, because a profile name is editable and the legal record must not drift. p_version is checked against gedu_contract_versions and refused with foreign_key_violation if unknown. Idempotent: accepting the same version twice returns the first acceptance''s stamp and writes nothing, including when the duplicate arrives concurrently. Accepting gates nothing — admin certification remains the only blocking lever over an educator.';
+COMMENT ON FUNCTION public.accept_gedu_contract(p_version text) IS 'Record that the CALLER accepted one version of the gedu contract, and return the acceptance timestamp. Gedu-only, guard-first on assert_role. There is no target parameter: the row is keyed to auth.uid(), so a caller cannot accept on anyone else''s behalf, and accepted_at and signed_name are both stamped server-side — the name as a snapshot taken from profiles at this moment, because a profile name is editable and the legal record must not drift. p_version is the full encoded version string — <base>/<language>, e.g. 2026-2027/fi — naming which of the equally binding texts was read, and it is checked against gedu_contract_versions and refused with foreign_key_violation if unknown. Idempotent per encoded version: accepting the same string twice returns the first acceptance''s stamp and writes nothing, including when the duplicate arrives concurrently. Signing the other language of the same version writes a second row, which is a second signature on one agreement and not a re-acceptance. Accepting gates nothing — admin certification remains the only blocking lever over an educator.';
 
 
 --
@@ -1807,6 +1807,12 @@ BEGIN
   -- CURRENT contract version, or NULL. It informs the certification decision and
   -- does not gate it — an unsigned candidate is still certifiable, and the admin
   -- is the one who decides what to make of the gap.
+  --
+  -- Standing is judged on the BASE version (00202): a version string is
+  -- `<base>/<language>` and the languages of one version are the same agreement,
+  -- so signing either makes a candidate current. min() because a candidate may
+  -- hold both languages' rows — the first signature is the moment they agreed,
+  -- and a scalar subquery would error rather than answer.
   -- ---------------------------------------------------------------------------
   SELECT COALESCE(
            jsonb_agg(
@@ -1816,11 +1822,11 @@ BEGIN
                'last_name',  pr.last_name,
                'created_at', pr.created_at,
                'contract_accepted_at', (
-                 SELECT ca.accepted_at
+                 SELECT min(ca.accepted_at)
                    FROM public.gedu_contract_acceptances ca
                   WHERE ca.gedu_id = pr.id
-                    AND ca.contract_version = (
-                          SELECT v.version
+                    AND split_part(ca.contract_version, '/', 1) = (
+                          SELECT split_part(v.version, '/', 1)
                             FROM public.gedu_contract_versions v
                            ORDER BY v.created_at DESC, v.version DESC
                            LIMIT 1
@@ -2039,7 +2045,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the CURRENT gedu contract version, or NULL — which informs the certification decision without gating it. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
@@ -5657,7 +5663,7 @@ CREATE TABLE public.gedu_contract_acceptances (
 -- Name: TABLE gedu_contract_acceptances; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.gedu_contract_acceptances IS 'One row per (gedu, contract version) accepted: the whole of what the platform records about a gedu agreeing to the contract. The primary key is what makes acceptance idempotent — a gedu accepting the same version twice is the same fact, not a second one — and version-keyed, so a new version leaves the old row standing and re-prompts. Carries no write grant for any Data API role: every field a forger would want is stamped server-side by accept_gedu_contract, which is the only way in, the same arrangement gedu_profiles and set_gedu_certified have. Acceptance gates NOTHING — admin certification is the only blocking lever over an educator; this table informs that decision and does not pre-empt it.';
+COMMENT ON TABLE public.gedu_contract_acceptances IS 'One row per (gedu, contract version) accepted: the whole of what the platform records about a gedu agreeing to the contract. The primary key is what makes acceptance idempotent — a gedu accepting the same version twice is the same fact, not a second one — and version-keyed, so a new version leaves the old row standing and re-prompts. Because the version string carries its language, a gedu who signed both texts of one version holds two rows: two signatures on one agreement, not a contradiction, and either alone makes them current. Carries no write grant for any Data API role: every field a forger would want is stamped server-side by accept_gedu_contract, which is the only way in, the same arrangement gedu_profiles and set_gedu_certified have. Acceptance gates NOTHING — admin certification is the only blocking lever over an educator; this table informs that decision and does not pre-empt it.';
 
 
 --
@@ -5671,7 +5677,7 @@ COMMENT ON COLUMN public.gedu_contract_acceptances.gedu_id IS 'The educator who 
 -- Name: COLUMN gedu_contract_acceptances.contract_version; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.gedu_contract_acceptances.contract_version IS 'Which version was accepted, FK into the whitelist. Not free text: the version decides whether the gedu is re-prompted, so a value the platform does not know about would be unanswerable rather than merely wrong.';
+COMMENT ON COLUMN public.gedu_contract_acceptances.contract_version IS 'Which version was accepted, FK into the whitelist, stored and displayed as the full encoded <base>/<language> string — the language is half of what was signed and the record would be incomplete without it. Not free text: the version decides whether the gedu is re-prompted, so a value the platform does not know about would be unanswerable rather than merely wrong. Re-prompting compares the BASE, so a gedu who signed the Finnish text stands as current against the English one — both ARE the current version.';
 
 
 --
@@ -5703,21 +5709,21 @@ CREATE TABLE public.gedu_contract_versions (
 -- Name: TABLE gedu_contract_versions; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.gedu_contract_versions IS 'Every version of the gedu contract (Pelikasvattajan sopimusehdot) the platform knows about, one row each. Rows arrive by MIGRATION only — there is no write grant for any Data API role — because a version is a document that was drafted and published, not a value an app invents. The CURRENT version is the row with the greatest created_at, and that derivation is what makes acceptance version-keyed: a gedu whose accepted version is not the current one is re-prompted. Readable by every signed-in role, because a gedu needs to know what they are signing and an admin needs to know what "current" means.';
+COMMENT ON TABLE public.gedu_contract_versions IS 'Every version of the gedu contract (Pelikasvattajan sopimusehdot) the platform knows about, one row per version PER LANGUAGE — the languages of one version are the same agreement published twice and equally binding, so they share a base label and a created_at and differ only in the suffix. Rows arrive by MIGRATION only — there is no write grant for any Data API role — because a version is a document that was drafted and published, not a value an app invents. The CURRENT version is the BASE of the row with the greatest created_at, and that derivation is what makes acceptance version-keyed: a gedu whose accepted base is not the current one is re-prompted, and one who signed either language of the current version is not. Readable by every signed-in role, because a gedu needs to know what they are signing and an admin needs to know what "current" means.';
 
 
 --
 -- Name: COLUMN gedu_contract_versions.version; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.gedu_contract_versions.version IS 'The version label as the document itself carries it, e.g. 2026-2027. The primary key, and the value gedu_contract_acceptances stores.';
+COMMENT ON COLUMN public.gedu_contract_versions.version IS 'The version label, encoded as <base>/<language>: the label the document itself carries, a slash, and the code of the language that text is written in — e.g. 2026-2027/fi, 2026-2027/en. The primary key, and the value gedu_contract_acceptances stores verbatim, because which of the two equally binding texts a gedu read is part of what they signed. Anything asking whether a gedu is CURRENT compares the base alone (split_part(version, ''/'', 1)); anything displaying what they signed shows the whole string.';
 
 
 --
 -- Name: COLUMN gedu_contract_versions.created_at; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.gedu_contract_versions.created_at IS 'When this version was added to the platform. Ordering key and nothing else: the greatest created_at IS the current version, which is the one question anything asks of this table.';
+COMMENT ON COLUMN public.gedu_contract_versions.created_at IS 'When this version was added to the platform. Ordering key and nothing else: the greatest created_at names the current version, whose BASE is what "current" means. Every language of one version carries the same created_at, set from the moment that version was published rather than re-read per row — so the ordering picks a version and never a language, and a tie between the two texts is not a tie anything has to break.';
 
 
 --
