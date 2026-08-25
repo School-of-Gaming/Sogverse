@@ -23,9 +23,7 @@ export {
 export {
   referenceKeys,
   useHolidayCalendars,
-  useSiteDetails,
   useUpdateSiteNotes,
-  type SiteDetailsBundle,
   type HolidayCalendarWithDates,
   type UpdateSiteNotesInput,
 } from "./reference-data.queries";

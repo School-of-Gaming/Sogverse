@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "nuqDaq Qapla’ ’oH? Minecraft ghom’a’Daq. Gedu’pu’ Dun chaH — toy’wI’pu’ tIqhommoH, jIH mevbe’.",
-    "shortDescription": "noH Quj yejHaD – DaH yIQam, batlh yIghoS",
     "pages": {
       "signIn": "yI’el",
       "createAccount": "Account yIchenmoH",
@@ -28,7 +27,8 @@
       "resetPin": "PIN yIchu’qa’",
       "verifyEmail": "QIn Daq yIngu’",
       "changePin": "PIN yIchoH",
-      "roblox": "Roblox qetlh chenmoHmeH ghojmoH"
+      "roblox": "Roblox qetlh chenmoHmeH ghojmoH",
+      "geduContract": "Gedu quv chut"
     }
   },
   "notFound": {
@@ -61,6 +61,8 @@
     "signIn": "yI’el",
     "signOut": "yImej",
     "getStarted": "DaH yIqet",
+    "goToMySog": "jIH SOG yIghoS",
+    "goToDashboard": "QaD yIghoS",
     "viewDetails": "tIqel",
     "learnMore": "bIghojnIS",
     "exploreClubs": "ghom’a’mey tIghoS",
@@ -284,6 +286,20 @@
         "heading": "De’ Seghmey"
       }
     },
+    "geduContract": {
+      "heading": "Gedu quv chut",
+      "accepted": "chut qonlu’pu’",
+      "acceptedDetail": "mIw {version}, qonlu’pu’ {date}",
+      "notAccepted": "Gedu quv chut qonbe’taH",
+      "notCurrentVersion": "chut ratlhbogh ({version}) qonbe’taH",
+      "previousVersion": "wa’Hu’ mIw {version} qonpu’: {date}.",
+      "queueAccepted": "chut qonlu’pu’ {date}",
+      "queueNotAccepted": "chut qonlu’be’",
+      "confirmTitle": "chut qonbe’pu’ — patlh yInob ’e’ DaHech’a’?",
+      "confirmBody": "patlh nobmeH chut qonlu’pu’bogh poQlu’be’ — vaj patlh Danob laH.",
+      "confirmWarning": "chut ratlhbogh qonbe’taH Geduvam. patlh ghajDI’, chut HarchoHpa’ ghob je’lu’ net chaw’.",
+      "confirmAction": "patlh yInob ’e’ yIruch"
+    },
     "products": {
       "types": {
         "consumerClub": {
@@ -309,6 +325,7 @@
         "empty": "{plural} pagh. {label} chu’ yIchu’.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
+        "online": "HeHDaq",
         "unlisted": "tetlhDaq pagh",
         "untitled": "(pong pagh)",
         "missingGeduFee": "Gedu Huch Hutlh",
@@ -345,6 +362,7 @@
           "external_contract": "DIvI’ qaSpu’qa’ (veng)"
         },
         "fields": {
+          "publicUrl": "Hoch He",
           "topic": "Doch",
           "materialUrl": "ghojmoHmeH De’",
           "startDate": "tagh jaj",
@@ -363,7 +381,9 @@
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
           "visibility": "leghlu"
-        }
+        },
+        "copyLink": "Hoch He yIghItlhqa'",
+        "copied": "ghItlhqa'lu'ta'"
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
@@ -470,20 +490,7 @@
       "locationPicker": {
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
         "change": "choH",
-        "edit": "choH",
         "noVenueHint": "Daq pagh. veng vavmey neH luleghlu’.",
-        "memberNotesLabel": "ghom De’ (vavmey je ghItlh)",
-        "memberNotesFieldLabel": "vavmey je ghItlh De’",
-        "memberNotesPlaceholder": "Daq mIw, mIv pa’, baH — vavmey poQ.",
-        "memberNotesHint": "tuq ’ej ghom lu’leghlu’.",
-        "staffNotesLabel": "Qu’ De’ (ra’wI’ je Gedu neH)",
-        "staffNotesFieldLabel": "Qu’ neH",
-        "staffNotesPlaceholder": "lojmIt nguq, lojmIt rIm, pa’ nguq, ’Iv tlhob.",
-        "staffNotesHint": "vavmey ’ej ghom luleghbe’.",
-        "addressLabel": "Daq mIw",
-        "addressPlaceholder": "He, postnumber, veng",
-        "noMemberNotes": "ghom De’ pagh.",
-        "noStaffNotes": "Qu’ De’ pagh.",
         "chooseMunicipality": "veng yIwIv",
         "municipalityPickerTitle": "veng yIwIv",
         "chooseVenue": "Daq yIwIv",
@@ -709,9 +716,11 @@
         "searchGedu": "Gedu yISam…",
         "searchMunicipality": "veng yISam…",
         "noResults": "pagh SammoHlu’.",
+        "search": "pong lo'taHvIS ngoQ nej",
+        "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
-        "clear": "wIvmey yIteq",
-        "noMatches": "wIvpu’bogh DaqmeyvaD pagh {plural} tu’lu’."
+        "clear": "yIteq",
+        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!"
       },
       "geduPicker": {
         "searchPlaceholder": "pong, qoj ’ehmaH yInej…",
@@ -836,6 +845,19 @@
           "standard": "ghomHom Qu’mey je Huch nob motlh lo’. Segh ngu’ nob, vaj naDev choHlaH pagh."
         },
         "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
+      },
+      "sessions": {
+        "title": "may’mey",
+        "groupSelectorAria": "ghom’a’ yIwIv",
+        "untitledGroup": "ghom’a’ pong Hutlh",
+        "noGroups": "ngIq vamvaD ghommey tu’lu’be’, vaj qonta’ghach tu’lu’be’.",
+        "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
+        "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
+        "addressLabel": "Daq ngu’wI’",
+        "addressPlaceholder": "He, mI’, veng",
+        "addAddress": "Daq ngu’wI’ yIchel",
+        "editAddress": "Daq ngu’wI’ yIchoH",
+        "addressSaveFailed": "Daq ngu’wI’ pollu’be’. yIboq."
       }
     },
     "users": {
@@ -946,8 +968,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Sogverse bIghoS, SuvwI’!",
-      "description": "accountlIj yI’el",
+      "welcomeTitle": "noH Quj yejHaD bIghoS, SuvwI’!",
       "noAccountSignUp": "account DaHutlh’a’? <link>DachenmoH</link>",
       "signingIn": "bI’el...",
       "emailPlaceholder": "SoH@example.com",
@@ -1004,7 +1025,7 @@
       "successDescription": "mu’mey chu’moHlu’. Qapla’!"
     },
     "registerGedu": {
-      "title": "Sogverse Gedu account yIchenmoH",
+      "title": "noH Quj yejHaD Gedu account yIchenmoH",
       "certificationAlertTitle": "patlh DaghajnIS",
       "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
@@ -1349,9 +1370,9 @@
       "presentLabel": "pawpu’",
       "absentLabel": "pawbe’",
       "unmarkedLabel": "ngu’lu’be’",
-      "staffNoteLabel": "Gedupu’ neH",
+      "staffNoteLabel": "Gedupu’ che’wI’pu’ je",
       "familyNoteLabel": "qorDu’pu’ lulaD",
-      "staffNoteTitle": "may’ qonta’ — Gedupu’ neH",
+      "staffNoteTitle": "may’ qonta’ — Gedupu’ che’wI’pu’ je",
       "staffNoteHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffNotePlaceholder": "latlh Gedu Sovnis Hoch — ’ej pegh qonnIS Hoch: wanI’ qab, joy’taHghach, QujwI’ Daqelbogh je.",
       "attendanceLegend": "pawwI’pu’",
@@ -1404,6 +1425,41 @@
       "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS.",
       "saveFailed": "Daq qonta’ pollu’be’. yIboq."
+    },
+    "contract": {
+      "back": "jIH SOGDaq yIchegh",
+      "pageTitle": "Gedu quv chut",
+      "intro": "quv chutmey bIH. Suomi Hol chenmoHlu’ — chut Hol wa’ neH tu’lu’, ’ej pagh choHlu’. yIlaD!",
+      "acceptLead": "ponglIj DaqonDI’, chutmey DalaDpu’ ’ej DaHarpu’ ’e’ Daper. wa’ mIw, wa’ jaj, wa’ pong — latlh pagh vIqon.",
+      "acceptCta": "yIqon, jaj yIper, yIHar",
+      "acceptedTitle": "chutmey Daqonpu’ — batlh Duquv!",
+      "dialog": {
+        "title": "yIqon ’ej yIHar",
+        "description": "ponglIj yIqon, DaHjaj yIper, ghIq chut yIHar.",
+        "signatureLabel": "pong",
+        "signAction": "qonmeH yI’uy",
+        "dateLabel": "jaj",
+        "dateAction": "jaj permeH yI’uy",
+        "cancel": "yImev",
+        "confirm": "chut yIHar",
+        "error": "Qapbe’! rIvSo’lIj yIqel ’ej yInIDqa’."
+      },
+      "notice": {
+        "title": "Gedu quv chut DaHarbe’taH!",
+        "body": "chut DalaD ’ej DaHar ’e’ DapoQ — ra’wI’ ra’. cha’ tup neH ngeHlu’.",
+        "action": "chut yIlaD ’ej yIHar"
+      },
+      "settings": {
+        "title": "Gedu quv chut",
+        "description": "Gedu SoH; chutmeyvam bIvang.",
+        "acceptedTitle": "qonlu’pu’",
+        "acceptedDetail": "mIw {version}, qonlu’pu’ {date}",
+        "notAcceptedTitle": "wej qonlu’",
+        "notAcceptedBody": "chut ratlhbogh DaHarbe’taH. DalaD ’ej DaHar ’e’ DapoQ.",
+        "readAndAccept": "yIlaD ’ej yIHar",
+        "view": "chut yIlegh"
+      },
+      "acceptedMeta": "mIw {version}, qonlu’pu’ {date}"
     }
   },
   "productType": {
@@ -1458,11 +1514,16 @@
   },
   "help": {
     "title": "boQ",
-    "intro": "Sogverse SeghHommey jatlhlu’.",
+    "intro": "noH Quj yejHaD SeghHommey jatlhlu’.",
     "contact": {
       "heading": "boQ DaneH’a’?",
-      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej Sogverse mIw qaSchugh, maHvaD bIjatlh.",
+      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej noH Quj yejHaD mIw qaSchugh, maHvaD bIjatlh.",
       "emailLabel": "naDev SeH wIje’"
+    },
+    "about": {
+      "heading": "’Iv ghaH noH Quj yejHaD’e’?",
+      "body": "ghom’a’mey luchenmoHbogh nuvpu’ tISov. Quj ghojmoH je wIHarbogh yIlaD. ’ej chay’ qaS qep, yIleghqu’.",
+      "linkLabel": "maH yISov"
     },
     "faq": {
       "heading": "qaSchuq SeghHommey",
@@ -2246,23 +2307,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Hoch batlh.",
+    "footer": "© {year} noH Quj yejHaD. Hoch batlh.",
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
     "roleGamer": "toy’wI’",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Sogverse mu’mey yIchoH",
+      "subject": "noH Quj yejHaD mu’mey yIchoH",
       "heading": "mu’mey yIchoH",
-      "body": "Sogverse mu’mey chovmoH tlhob Suqlu’. mu’mey chu’ yIwIv.",
+      "body": "noH Quj yejHaD mu’mey chovmoH tlhob Suqlu’. mu’mey chu’ yIwIv.",
       "expiry": "ngeH wa’ rep Qav.",
       "ignore": "mu’mey chovmoH DatlhobHa’chugh, QIn yIleghQo’. mu’mey choHbe’lu’.",
       "button": "mu’mey yIchoH"
     },
     "pinReset": {
-      "subject": "Sogverse vavpu’ PIN yIchoH",
+      "subject": "noH Quj yejHaD vavpu’ PIN yIchoH",
       "heading": "vavpu’ PIN yIchoH",
-      "body": "Sogverse vavpu’ PIN chovmoH tlhob Suqlu’. PIN chu’ (loS mI’) yIwIv.",
+      "body": "noH Quj yejHaD vavpu’ PIN chovmoH tlhob Suqlu’. PIN chu’ (loS mI’) yIwIv.",
       "expiry": "ngeH cha’maH loS rep Qav.",
       "ignore": "PIN chovmoH DatlhobHa’chugh, QIn yIleghQo’. PIN choHbe’lu’.",
       "button": "PIN yIchoH"

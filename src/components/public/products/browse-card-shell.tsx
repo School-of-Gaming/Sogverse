@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { cn } from "@/lib/utils";
+import type { SpokenLanguageCode } from "@/types";
 import type { ProductPriceLine } from "./format-product-price";
 import type { ProductCardTag } from "./product-chips";
 import { useRegistrationCta, type RegistrationCta } from "./registration-cta";
@@ -75,11 +76,11 @@ export interface ProductBrowseCardViewProps {
    */
   locationLine: LocationLine;
   /**
-   * Spoken-language code (`fi` / `en` / `sv`) the product is delivered in.
-   * Rendered as flag + uppercase code so parents can see delivery language at
-   * a glance — same flag treatment as the locale picker in the site header.
+   * The `spoken_language` the product is delivered in. Rendered as flag +
+   * uppercase code so parents can see delivery language at a glance — same flag
+   * treatment as the locale picker in the site header.
    */
-  spokenLanguageCode: string;
+  spokenLanguageCode: SpokenLanguageCode;
   price: ProductPriceLine;
   /**
    * Municipality clubs are externally funded, so their footer shows a

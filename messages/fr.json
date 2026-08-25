@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
-    "shortDescription": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir",
     "pages": {
       "signIn": "Connexion",
       "createAccount": "Créer un compte",
@@ -35,7 +34,8 @@
       "roblox": "Programme de création de jeux Roblox",
       "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
       "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
-      "robloxTerms": "Conditions générales du Programme Roblox"
+      "robloxTerms": "Conditions générales du Programme Roblox",
+      "geduContract": "Contrat Gedu"
     }
   },
   "notFound": {
@@ -68,6 +68,8 @@
     "signIn": "Connexion",
     "signOut": "Déconnexion",
     "getStarted": "C’est parti !",
+    "goToMySog": "Accéder à Mon SOG",
+    "goToDashboard": "Accéder au tableau de bord",
     "viewDetails": "Voir les détails",
     "learnMore": "En savoir plus",
     "exploreClubs": "Découvrir les clubs",
@@ -236,6 +238,20 @@
         "heading": "Types de produit"
       }
     },
+    "geduContract": {
+      "heading": "Contrat Gedu",
+      "accepted": "Contrat accepté",
+      "acceptedDetail": "Version {version}, acceptée le {date}",
+      "notAccepted": "N’a pas accepté le contrat Gedu",
+      "notCurrentVersion": "N’a pas accepté le contrat en vigueur ({version})",
+      "previousVersion": "A accepté auparavant la version {version} le {date}.",
+      "queueAccepted": "Contrat accepté le {date}",
+      "queueNotAccepted": "Contrat non accepté",
+      "confirmTitle": "Certifier sans contrat accepté ?",
+      "confirmBody": "La certification n’exige pas de contrat accepté : vous pouvez donc le certifier quand même.",
+      "confirmWarning": "Ce Gedu n’a pas accepté le contrat en vigueur. Une fois certifié, il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
+      "confirmAction": "Certifier quand même"
+    },
     "products": {
       "types": {
         "consumerClub": {
@@ -261,6 +277,7 @@
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
+        "online": "En ligne",
         "unlisted": "hors catalogue",
         "untitled": "(sans titre)",
         "missingGeduFee": "Rémunération Gedu manquante",
@@ -297,6 +314,7 @@
           "external_contract": "Contrat externe (commune)"
         },
         "fields": {
+          "publicUrl": "Lien public",
           "topic": "Thème",
           "materialUrl": "Matériel pédagogique",
           "startDate": "Date de début",
@@ -315,7 +333,9 @@
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
           "visibility": "Visibilité"
-        }
+        },
+        "copyLink": "Copier le lien public",
+        "copied": "Copié"
       },
       "editPage": {
         "back": "Retour au produit",
@@ -422,20 +442,7 @@
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
-        "edit": "Modifier",
         "noVenueHint": "Aucun lieu physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
-        "memberNotesLabel": "Notes visibles par les membres",
-        "memberNotesFieldLabel": "Notes affichées aux parents et aux joueurs",
-        "memberNotesPlaceholder": "Détails d’adresse, stationnement, accessibilité — tout ce que les parents doivent savoir.",
-        "memberNotesHint": "Affichées aux parents et aux joueurs sur la page de détail du produit.",
-        "staffNotesLabel": "Notes internes (admin et Gedu uniquement)",
-        "staffNotesFieldLabel": "Notes réservées à l’équipe",
-        "staffNotesPlaceholder": "Codes de portail, entrée de service, clés des salles, à qui s’adresser à l’accueil.",
-        "staffNotesHint": "Jamais affichées aux parents ni aux joueurs.",
-        "addressLabel": "Adresse",
-        "addressPlaceholder": "Rue, code postal, ville",
-        "noMemberNotes": "Aucune note visible par les membres pour ce site.",
-        "noStaffNotes": "Aucune note interne pour ce site.",
         "chooseMunicipality": "Choisir une commune",
         "municipalityPickerTitle": "Choisir une commune",
         "chooseVenue": "Choisir un site",
@@ -661,9 +668,11 @@
         "searchGedu": "Rechercher des Gedus…",
         "searchMunicipality": "Rechercher des communes…",
         "noResults": "Aucun résultat.",
+        "search": "Rechercher un produit par son nom",
+        "searchPlaceholder": "Rechercher par nom…",
         "showing": "Affichage de {count} sur {total}",
-        "clear": "Effacer les filtres",
-        "noMatches": "Pas de {plural} correspondant aux filtres sélectionnés."
+        "clear": "Effacer",
+        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés."
       },
       "geduPicker": {
         "searchPlaceholder": "Rechercher un nom ou un e-mail…",
@@ -788,6 +797,19 @@
           "standard": "Les clubs et les événements payants sont vendus au taux normal finlandais. Le taux découle du type de produit et ne se modifie pas ici."
         },
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
+      },
+      "sessions": {
+        "title": "Séances",
+        "groupSelectorAria": "Choisir un groupe",
+        "untitledGroup": "Groupe sans titre",
+        "noGroups": "Ce produit n’a pas encore de groupe, il n’y a donc rien d’enregistré.",
+        "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
+        "loading": "Chargement du suivi des séances de ce produit.",
+        "addressLabel": "Adresse du lieu",
+        "addressPlaceholder": "Rue, code postal, ville",
+        "addAddress": "Ajouter une adresse",
+        "editAddress": "Modifier l’adresse",
+        "addressSaveFailed": "L’adresse n’a pas été enregistrée. Réessayez."
       }
     },
     "users": {
@@ -898,8 +920,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Bienvenue dans le Sogverse",
-      "description": "Connectez-vous à votre compte",
+      "welcomeTitle": "Bienvenue chez School of Gaming",
       "noAccountSignUp": "Vous n’avez pas de compte ? <link>Inscrivez-vous</link>",
       "signingIn": "Connexion...",
       "emailPlaceholder": "vous@exemple.com",
@@ -956,7 +977,7 @@
       "successDescription": "Votre mot de passe a bien été mis à jour."
     },
     "registerGedu": {
-      "title": "Créez votre compte Gedu Sogverse",
+      "title": "Créez votre compte Gedu chez School of Gaming",
       "certificationAlertTitle": "Votre compte doit être certifié",
       "certificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit certifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
@@ -1305,9 +1326,9 @@
       "presentLabel": "Présent",
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",
-      "staffNoteLabel": "Gedus uniquement",
+      "staffNoteLabel": "Gedus et admins",
       "familyNoteLabel": "Visible par les familles",
-      "staffNoteTitle": "Note de séance — Gedus uniquement",
+      "staffNoteTitle": "Note de séance — Gedus et admins",
       "staffNoteHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffNotePlaceholder": "Tout ce qu’un autre Gedu devrait savoir — et tout ce que vous devez consigner en privé : un incident, du harcèlement, une inquiétude au sujet d’un gamer.",
       "attendanceLegend": "Présences",
@@ -1360,6 +1381,41 @@
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
       "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
+    },
+    "contract": {
+      "back": "Retour à Mon SOG",
+      "pageTitle": "Votre contrat Gedu",
+      "intro": "Voici les conditions qui encadrent votre travail d’animation pour School of Gaming. Le contrat fait foi en finnois : il s’affiche donc tel quel, quelle que soit la langue dans laquelle vous lisez le reste de l’application.",
+      "acceptLead": "En signant ci-dessous, vous confirmez avoir lu ces conditions et les accepter telles quelles. Nous enregistrons la version acceptée, la date et le nom signé — rien d’autre.",
+      "acceptCta": "Signer, dater et accepter",
+      "acceptedTitle": "Vous avez accepté ces conditions",
+      "dialog": {
+        "title": "Signer et accepter",
+        "description": "Inscrivez votre nom et la date du jour sur les lignes ci-dessous, puis acceptez.",
+        "signatureLabel": "Signature",
+        "signAction": "Cliquez pour signer",
+        "dateLabel": "Date",
+        "dateAction": "Cliquez pour dater",
+        "cancel": "Annuler",
+        "confirm": "Accepter le contrat",
+        "error": "L’envoi a échoué. Vérifiez votre connexion et réessayez."
+      },
+      "notice": {
+        "title": "Vous n’avez pas accepté votre contrat Gedu",
+        "body": "Lire et accepter les conditions qui encadrent votre travail est obligatoire. Cela prend deux minutes.",
+        "action": "Lire et accepter le contrat"
+      },
+      "settings": {
+        "title": "Contrat Gedu",
+        "description": "Les conditions qui encadrent votre travail d’animation.",
+        "acceptedTitle": "Accepté",
+        "acceptedDetail": "version {version}, accepté le {date}",
+        "notAcceptedTitle": "Pas encore accepté",
+        "notAcceptedBody": "Vous n’avez pas accepté le contrat en vigueur. Le lire et l’accepter est obligatoire.",
+        "readAndAccept": "Lire et accepter",
+        "view": "Voir le contrat"
+      },
+      "acceptedMeta": "Version {version}, accepté le {date}"
     }
   },
   "productType": {
@@ -1414,11 +1470,16 @@
   },
   "help": {
     "title": "Aide",
-    "intro": "Réponses aux questions fréquentes sur Sogverse.",
+    "intro": "Réponses aux questions fréquentes sur School of Gaming.",
     "contact": {
       "heading": "Besoin d’un coup de main ?",
-      "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de Sogverse.",
+      "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de School of Gaming.",
       "emailLabel": "Écrivez-nous à"
+    },
+    "about": {
+      "heading": "Qui est School of Gaming ?",
+      "body": "Découvrez les personnes derrière les clubs, notre vision du jeu et de l’apprentissage, et le déroulement concret d’une session.",
+      "linkLabel": "En savoir plus sur nous"
     },
     "faq": {
       "heading": "Questions fréquentes",
@@ -2202,23 +2263,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Tous droits réservés.",
+    "footer": "© {year} School of Gaming. Tous droits réservés.",
     "roleAdmin": "Administrateur",
     "roleParent": "Parent",
     "roleGamer": "Joueur",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Réinitialisez votre mot de passe Sogverse",
+      "subject": "Réinitialisez le mot de passe de votre compte School of Gaming",
       "heading": "Réinitialisez votre mot de passe",
-      "body": "Nous avons reçu une demande de réinitialisation de votre mot de passe Sogverse. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
+      "body": "Nous avons reçu une demande de réinitialisation du mot de passe de votre compte School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
       "expiry": "Ce lien expirera dans 1 heure.",
       "ignore": "Si vous n’avez pas demandé de réinitialisation de mot de passe, vous pouvez ignorer cet e-mail sans crainte. Votre mot de passe ne sera pas modifié.",
       "button": "Réinitialiser le mot de passe"
     },
     "pinReset": {
-      "subject": "Réinitialisez votre code PIN parent Sogverse",
+      "subject": "Réinitialisez le code PIN de votre compte parent School of Gaming",
       "heading": "Réinitialisez votre code PIN parent",
-      "body": "Nous avons reçu une demande de réinitialisation du code PIN de votre compte parent Sogverse. Cliquez sur le bouton ci-dessous pour choisir un nouveau code PIN à 4 chiffres.",
+      "body": "Nous avons reçu une demande de réinitialisation du code PIN de votre compte parent School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau code PIN à 4 chiffres.",
       "expiry": "Ce lien expirera dans 24 heures.",
       "ignore": "Si vous n’avez pas demandé de réinitialisation du code PIN, vous pouvez ignorer cet e-mail sans crainte. Votre code PIN ne sera pas modifié.",
       "button": "Réinitialiser le code PIN"
@@ -2657,11 +2718,11 @@
   "roblox": {
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
-      "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en partenariat avec Roblox.",
+      "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
       "cta": "Inscrivez-vous"
     },
     "lockup": {
-      "heading": "Un partenariat entre",
+      "heading": "Une collaboration entre",
       "sogAlt": "School of Gaming",
       "lynxAlt": "Lynx Educate",
       "robloxAlt": "Roblox"

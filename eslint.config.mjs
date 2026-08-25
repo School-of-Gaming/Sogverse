@@ -131,6 +131,51 @@ const eslintConfig = defineConfig([
       }],
     },
   },
+  // The email house style, made mechanical at the point of typing. Colours and
+  // corners in a mail come from the modules that mirror globals.css — an email
+  // cannot use a Tailwind class, so a literal is the easy path and the whole
+  // reason the mail and the app drifted apart in the first place. Two radii and
+  // a footer grey diverged this way and nobody could see it, because a number
+  // typed into markup cannot disagree with anything.
+  //
+  // This catches the literal as it is written, with a pointer to the constant.
+  // It does not catch a template that bypasses the helpers entirely — those
+  // arrive through legitimate constants and are caught by the rendered-output
+  // sweep in tests/unit/email-templates/house-style.test.ts. The two are
+  // complementary, and neither replaces the other.
+  {
+    files: ["src/lib/email-templates/**/*.ts"],
+    rules: {
+      // String.raw, not a plain string: a selector is a JS string literal that
+      // esquery then parses, so `"\b"` reaches it as a backspace character and
+      // `"\s"` collapses to a bare `s`. Both spellings compile to a regex that
+      // is syntactically fine and matches nothing anyone would ever write, which
+      // is the worst failure mode available — the rule reports no errors and
+      // reads as a rule that is holding. It shipped that way once; a lint guard
+      // is only worth what a deliberately-bad line proves it catches.
+      "no-restricted-syntax": ["error",
+        {
+          // 3, 4, 6 or 8 hex digits, which is every shape a CSS colour comes in.
+          // The lookbehind is what keeps `&#8288;` — the word joiner that defuses
+          // a client's autolinker — from reading as a four-digit colour. Comments
+          // are not nodes, so the directory's explanatory hexes are untouched.
+          selector: String.raw`Literal[value=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
+          message:
+            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
+        },
+        {
+          selector: String.raw`TemplateElement[value.raw=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
+          message:
+            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
+        },
+        {
+          selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
+          message:
+            "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

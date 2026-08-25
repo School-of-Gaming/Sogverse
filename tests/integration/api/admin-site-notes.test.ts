@@ -153,6 +153,55 @@ describe("PATCH /api/admin/site-notes", () => {
     expect(mockUpsert).toHaveBeenCalledTimes(2);
   });
 
+  // -- Absent means "leave it alone", not "set it null" --
+  //
+  // The member row carries two fields with two different owners: the venue's
+  // address, which only an admin edits from the product page, and the
+  // family-facing note, which admins and gedus write through the site-notes
+  // RPC. Treating an omitted key as null made those two writers clobber each
+  // other, and forced a caller to echo back a cached copy of the field it was
+  // not editing — the exact stale-copy bug the RPC dropped its address
+  // parameter to kill.
+
+  it("leaves the address alone when only the note is sent", async () => {
+    mockAdmin();
+
+    await PATCH(
+      patchRequest({ location_id: LOCATION_ID, member: { notes: "Ring the bell" } }),
+    );
+
+    expect(mockUpsert).toHaveBeenCalledWith(
+      { location_id: LOCATION_ID, notes: "Ring the bell" },
+      { onConflict: "location_id" },
+    );
+  });
+
+  it("leaves the note alone when only the address is sent", async () => {
+    mockAdmin();
+
+    await PATCH(
+      patchRequest({ location_id: LOCATION_ID, member: { address: "Kaisaniemenkatu 1" } }),
+    );
+
+    expect(mockUpsert).toHaveBeenCalledWith(
+      { location_id: LOCATION_ID, address: "Kaisaniemenkatu 1" },
+      { onConflict: "location_id" },
+    );
+  });
+
+  it("writes nothing for a member object naming neither field", async () => {
+    // An UPDATE with an empty SET list is a syntax error, so the no-op has to
+    // be answered here rather than sent to Postgres to fail on.
+    mockAdmin();
+
+    const response = await PATCH(
+      patchRequest({ location_id: LOCATION_ID, member: {} }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockUpsert).not.toHaveBeenCalled();
+  });
+
   it("stores a blanked field as null rather than an empty string", async () => {
     mockAdmin();
 

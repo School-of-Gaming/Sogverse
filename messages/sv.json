@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "När skärmtid blir kvalitetstid – Minecraft-klubbar ledda av professionella spelfostrare.",
-    "shortDescription": "School of Gaming – När skärmtid blir kvalitetstid",
     "pages": {
       "signIn": "Logga in",
       "createAccount": "Skapa konto",
@@ -35,7 +34,8 @@
       "roblox": "Roblox-speldesignprogram",
       "robloxPrivacy": "Integritetspolicy för Roblox-programmet",
       "robloxSafeguarding": "Barnskyddspolicy för Roblox-programmet",
-      "robloxTerms": "Användarvillkor för Roblox-programmet"
+      "robloxTerms": "Användarvillkor för Roblox-programmet",
+      "geduContract": "Gedu-avtal"
     }
   },
   "notFound": {
@@ -68,6 +68,8 @@
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
+    "goToMySog": "Gå till Min SOG",
+    "goToDashboard": "Gå till översikten",
     "viewDetails": "Visa detaljer",
     "learnMore": "Läs mer",
     "exploreClubs": "Utforska klubbar",
@@ -236,6 +238,20 @@
         "heading": "Produkttyper"
       }
     },
+    "geduContract": {
+      "heading": "Gedu-avtal",
+      "accepted": "Avtalet godkänt",
+      "acceptedDetail": "Version {version}, godkänt {date}",
+      "notAccepted": "Har inte godkänt Gedu-avtalet",
+      "notCurrentVersion": "Har inte godkänt det gällande avtalet ({version})",
+      "previousVersion": "Godkände tidigare version {version} den {date}.",
+      "queueAccepted": "Avtalet godkänt {date}",
+      "queueNotAccepted": "Avtalet inte godkänt",
+      "confirmTitle": "Certifiera utan godkänt avtal?",
+      "confirmBody": "Certifieringen kräver inget godkänt avtal, så du kan certifiera hen ändå.",
+      "confirmWarning": "Den här Gedun har inte godkänt det gällande avtalet. Som certifierad kan hen tilldelas grupper innan hen har godkänt villkoren hen arbetar under.",
+      "confirmAction": "Certifiera ändå"
+    },
     "products": {
       "types": {
         "consumerClub": {
@@ -261,6 +277,7 @@
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
+        "online": "På distans",
         "unlisted": "olistad",
         "untitled": "(utan titel)",
         "missingGeduFee": "Gedu-arvode saknas",
@@ -297,6 +314,7 @@
           "external_contract": "Externt avtal (kommun)"
         },
         "fields": {
+          "publicUrl": "Publik länk",
           "topic": "Ämne",
           "materialUrl": "Lektionsmaterial",
           "startDate": "Startdatum",
@@ -315,7 +333,9 @@
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
           "visibility": "Synlighet"
-        }
+        },
+        "copyLink": "Kopiera den publika länken",
+        "copied": "Kopierad"
       },
       "editPage": {
         "back": "Tillbaka till produkten",
@@ -422,20 +442,7 @@
       "locationPicker": {
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",
-        "edit": "Redigera",
         "noVenueHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
-        "memberNotesLabel": "Medlemssynliga anteckningar",
-        "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
-        "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
-        "memberNotesHint": "Visas för föräldrar och spelare på produktsidan.",
-        "staffNotesLabel": "Personalanteckningar (endast admin + Gedu)",
-        "staffNotesFieldLabel": "Endast personal",
-        "staffNotesPlaceholder": "Portkoder, baksidesinformation, rumsnycklar, vem man frågar i receptionen.",
-        "staffNotesHint": "Visas aldrig för föräldrar eller spelare.",
-        "addressLabel": "Adress",
-        "addressPlaceholder": "Gata, postnummer, ort",
-        "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
-        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
         "chooseMunicipality": "Välj en kommun",
         "municipalityPickerTitle": "Välj en kommun",
         "chooseVenue": "Välj en lokal",
@@ -661,9 +668,11 @@
         "searchGedu": "Sök Geduer…",
         "searchMunicipality": "Sök kommuner…",
         "noResults": "Inga träffar.",
+        "search": "Sök produkter på namn",
+        "searchPlaceholder": "Sök på namn…",
         "showing": "Visar {count} av {total}",
-        "clear": "Rensa filter",
-        "noMatches": "Inga {plural} matchar de valda filtren."
+        "clear": "Rensa",
+        "noMatches": "Inga {plural} matchar sökningen och de valda filtren."
       },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",
@@ -788,6 +797,19 @@
           "standard": "Klubbar och avgiftsbelagda evenemang säljs med Finlands allmänna momssats. Satsen följer av produkttypen och kan inte ändras här."
         },
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
+      },
+      "sessions": {
+        "title": "Tillfällen",
+        "groupSelectorAria": "Välj en grupp",
+        "untitledGroup": "Namnlös grupp",
+        "noGroups": "Den här produkten har inga grupper än, så ingenting är dokumenterat.",
+        "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
+        "loading": "Laddar dokumentationen av produktens tillfällen.",
+        "addressLabel": "Platsens adress",
+        "addressPlaceholder": "Gata, postnummer, stad",
+        "addAddress": "Lägg till adress",
+        "editAddress": "Redigera adress",
+        "addressSaveFailed": "Adressen sparades inte. Försök igen."
       }
     },
     "users": {
@@ -898,8 +920,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Välkommen till Sogverse",
-      "description": "Logga in på ditt konto",
+      "welcomeTitle": "Välkommen till School of Gaming",
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
       "emailPlaceholder": "du@example.com",
@@ -956,7 +977,7 @@
       "successDescription": "Ditt lösenord har uppdaterats."
     },
     "registerGedu": {
-      "title": "Skapa ditt Sogverse-spelfostrarkonto",
+      "title": "Skapa ditt spelfostrarkonto hos School of Gaming",
       "certificationAlertTitle": "Ditt konto måste certifieras",
       "certificationAlertDescription": "Du kan logga in direkt, men en administratör måste certifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du arbeta?",
@@ -1305,9 +1326,9 @@
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
       "unmarkedLabel": "Inte markerad",
-      "staffNoteLabel": "Endast Gedus",
+      "staffNoteLabel": "Gedus och administratörer",
       "familyNoteLabel": "Familjer ser det här",
-      "staffNoteTitle": "Anteckning om tillfället – endast Gedus",
+      "staffNoteTitle": "Anteckning om tillfället – Gedus och administratörer",
       "staffNoteHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffNotePlaceholder": "Allt en annan Gedu bör veta – och allt du behöver få nedskrivet privat: en incident, mobbning eller oro för en spelare.",
       "attendanceLegend": "Närvaro",
@@ -1360,6 +1381,41 @@
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
       "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
+    },
+    "contract": {
+      "back": "Tillbaka till Min SOG",
+      "pageTitle": "Ditt Gedu-avtal",
+      "intro": "Det här är villkoren du arbetar under som spelfostrare för School of Gaming. Avtalet är bindande på finska, så det visas ordagrant oavsett vilket språk du läser resten av appen på.",
+      "acceptLead": "Genom att signera nedan bekräftar du att du har läst villkoren och godkänner dem som de står. Vi sparar vilken version du godkände, när du gjorde det och namnet du signerade med — inget annat.",
+      "acceptCta": "Signera, datera och godkänn",
+      "acceptedTitle": "Du har godkänt de här villkoren",
+      "dialog": {
+        "title": "Signera och godkänn",
+        "description": "Skriv ditt namn och dagens datum på raderna nedan och godkänn sedan.",
+        "signatureLabel": "Signatur",
+        "signAction": "Klicka för att signera",
+        "dateLabel": "Datum",
+        "dateAction": "Klicka för att datera",
+        "cancel": "Avbryt",
+        "confirm": "Godkänn avtalet",
+        "error": "Det gick inte igenom. Kontrollera din anslutning och försök igen."
+      },
+      "notice": {
+        "title": "Du har inte godkänt ditt Gedu-avtal",
+        "body": "Att läsa och godkänna villkoren du arbetar under är obligatoriskt. Det tar ett par minuter.",
+        "action": "Läs och godkänn avtalet"
+      },
+      "settings": {
+        "title": "Gedu-avtal",
+        "description": "Villkoren du arbetar under som spelfostrare.",
+        "acceptedTitle": "Godkänt",
+        "acceptedDetail": "version {version}, godkänt {date}",
+        "notAcceptedTitle": "Inte godkänt än",
+        "notAcceptedBody": "Du har inte godkänt det gällande avtalet. Att läsa och godkänna det är obligatoriskt.",
+        "readAndAccept": "Läs och godkänn",
+        "view": "Visa avtalet"
+      },
+      "acceptedMeta": "Version {version}, godkänt {date}"
     }
   },
   "productType": {
@@ -1414,11 +1470,16 @@
   },
   "help": {
     "title": "Hjälp",
-    "intro": "Svar på vanliga frågor om Sogverse.",
+    "intro": "Svar på vanliga frågor om School of Gaming.",
     "contact": {
       "heading": "Behöver du hjälp?",
-      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur Sogverse fungerar.",
+      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur School of Gaming fungerar.",
       "emailLabel": "Mejla oss på"
+    },
+    "about": {
+      "heading": "Vilka är School of Gaming?",
+      "body": "Lär känna människorna bakom klubbarna, läs vad vi tror om spel och lärande, och se hur en träff faktiskt går till.",
+      "linkLabel": "Läs mer om oss"
     },
     "faq": {
       "heading": "Vanliga frågor",
@@ -2202,23 +2263,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Alla rättigheter förbehållna.",
+    "footer": "© {year} School of Gaming. Alla rättigheter förbehållna.",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Återställ ditt Sogverse-lösenord",
+      "subject": "Återställ lösenordet till ditt School of Gaming-konto",
       "heading": "Återställ ditt lösenord",
-      "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
+      "body": "Vi har mottagit en begäran om att återställa lösenordet till ditt School of Gaming-konto. Klicka på knappen nedan för att välja ett nytt lösenord.",
       "expiry": "Denna länk upphör att gälla om 1 timme.",
       "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
       "button": "Återställ lösenord"
     },
     "pinReset": {
-      "subject": "Återställ PIN-koden för ditt Sogverse-föräldrakonto",
+      "subject": "Återställ PIN-koden för ditt föräldrakonto hos School of Gaming",
       "heading": "Återställ din PIN-kod",
-      "body": "Vi har mottagit en begäran om att återställa PIN-koden för ditt Sogverse-föräldrakonto. Klicka på knappen nedan för att välja en ny fyrsiffrig PIN-kod.",
+      "body": "Vi har mottagit en begäran om att återställa PIN-koden för ditt föräldrakonto hos School of Gaming. Klicka på knappen nedan för att välja en ny fyrsiffrig PIN-kod.",
       "expiry": "Denna länk upphör att gälla om 24 timmar.",
       "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
       "button": "Återställ PIN-kod"

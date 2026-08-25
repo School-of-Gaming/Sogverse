@@ -6,7 +6,7 @@ import {
   type FormState,
 } from "@/components/admin/products/product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
-import type { SpokenLanguage } from "@/types";
+import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
 
 /**
  * **The Audience section's two one-of-many controls, as a reader of the form
@@ -38,23 +38,6 @@ import type { SpokenLanguage } from "@/types";
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
   useLocale: () => "en",
-}));
-
-/**
- * The reference set the pill row renders from, injected rather than fetched.
- *
- * A shape-accurate slice of `spoken_languages`: the `name` column is the
- * table's single English label, which the display-name hook uses only as a
- * fallback, so these are the rows a real read would hand back.
- */
-const LANGUAGES: SpokenLanguage[] = [
-  { code: "fi", name: "Finnish" },
-  { code: "sv", name: "Swedish" },
-  { code: "en", name: "English" },
-];
-
-vi.mock("@/services/users", () => ({
-  useSpokenLanguages: () => ({ data: LANGUAGES }),
 }));
 
 /** A consumer club: the section's fullest form — `regionLockable` is true. */
@@ -158,7 +141,7 @@ describe("the spoken-language pills", () => {
   it("checks the stored language's own pill", () => {
     const { container } = renderSection({ spokenLanguageCode: "fi" });
     const pills = radios(container, "spokenLanguage");
-    expect(pills).toHaveLength(LANGUAGES.length);
+    expect(pills).toHaveLength(SPOKEN_LANGUAGES.length);
     const checked = checkedIn(container, "spokenLanguage");
     expect(cardOf(checked!).textContent).toContain("Finnish");
     expect(pills.filter((r) => r.checked)).toHaveLength(1);

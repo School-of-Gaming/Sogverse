@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { ParticipationCounts } from "@/services/participations";
-import type { ProductBrowseRow, SpokenLanguage } from "@/types";
+import type { ProductBrowseRow } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
 import { ProductBrowseCard } from "./product-browse-card";
@@ -68,11 +68,9 @@ interface ProductBrowseResultsProps {
    *  per-id map here so both browse hosts hand this component the raw query
    *  result, not a map. */
   counts: ParticipationCounts[];
-  /** Forwarded verbatim to `<ProductBrowseFilters>`. */
-  filters: {
-    initialSpokenLanguages: SpokenLanguage[];
-    showTypeFilter?: boolean;
-  };
+  /** Forwarded to `<ProductBrowseFilters>` — see the prop there for why the
+   *  municipality page turns the Type row off. */
+  showTypeFilter?: boolean;
   /** Whether the page's scope holds any products before *any* filtering —
    *  including the Type narrowing the shop applies while building `sections`.
    *  Distinguishes "nothing here yet" from "no matches": without it, selecting
@@ -91,7 +89,7 @@ interface ProductBrowseResultsProps {
 export function ProductBrowseResults({
   sections,
   counts,
-  filters,
+  showTypeFilter,
   scopeHasProducts,
   productHref,
   municipalityScoped,
@@ -158,7 +156,7 @@ export function ProductBrowseResults({
           explicit 16rem width plus `justify-self-end` keep the rail its own
           size and against the cards while its track grows past it. */}
       <div className="mb-3 lg:mb-0 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:w-64 lg:justify-self-end lg:self-start lg:overflow-y-auto">
-        <ProductBrowseFilters {...filters} />
+        <ProductBrowseFilters showTypeFilter={showTypeFilter} />
       </div>
 
       {visibleSections.length > 0 ? (

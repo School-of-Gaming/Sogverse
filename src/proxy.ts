@@ -68,8 +68,9 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // via the prefix match below.
 // ROUTES.schools is the public municipality-club discovery page; the prefix
 // match also covers the per-municipality pages (/schools/[slug]).
-// ROUTES.roblox is the partnership landing page — public so it can be shared
-// with partners, but kept out of robots.txt and the sitemap rather than gated.
+// ROUTES.roblox is the Roblox programme landing page — public so it can be
+// shared with Lynx and Roblox, but kept out of robots.txt and the sitemap
+// rather than gated.
 // ROUTES.verifyEmail is public rather than an AUTH_ROUTE: an auth route bounces
 // a signed-in visitor to their dashboard, and the person clicking a
 // verification link is very often already signed in — that bounce would eat the

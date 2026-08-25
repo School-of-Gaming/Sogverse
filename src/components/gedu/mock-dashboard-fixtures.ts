@@ -98,6 +98,8 @@ export interface GeduDashboardFixture {
   /** One roll-up card per assignment, soonest next session first. */
   assignments: GeduAssignmentCardData[];
   certified: boolean;
+  /** Whether the contract band is on the page. */
+  contractAccepted: boolean;
 }
 
 const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
@@ -408,6 +410,20 @@ export function buildGeduDashboardFixture(
       };
     }),
     certified: scenario !== "uncertified",
+    /**
+     * **The band is on two of the three, and off on `clubs-only`.**
+     *
+     * Signed and unsigned cannot share a render, so one scenario has to carry
+     * each — and the interesting one is the band sitting *above a full page*,
+     * where what is being judged is whether it reads as unmissable without
+     * burying the work under it. `default` therefore carries it, and
+     * `uncertified` does too, because a brand-new account has neither signed
+     * nor been certified and pairing them anywhere else would be inventing a
+     * gedu who exists only in a fixture. `clubs-only` is the signed page, which
+     * puts the no-band composition on the scenario whose own subject is the
+     * grid.
+     */
+    contractAccepted: scenario === "clubs-only",
   };
 }
 

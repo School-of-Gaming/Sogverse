@@ -1,4 +1,4 @@
-# Gedu profiles, self-registration & certification
+# Gedu profiles, self-registration, certification & the contract
 
 Game educators ("gedu") self-register like parents and are **certified by an admin**
 before they can be assigned to work. This directory owns the gedu extension table
@@ -93,6 +93,94 @@ open to an uncertified gedu.
 Certification state is read via `useGeduProfiles` / `useGeduCertificationMap`
 (lists/picker) and `useGeduProfile` (detail, seeded with a server fetch).
 `useSetGeduCertified` invalidates the whole `gedu-profiles` key on success.
+
+## The gedu contract
+
+A gedu is an independent contractor, and the terms they work under
+(*Pelikasvattajan sopimusehdot*) are read and accepted **on the platform**. What is
+stored is the whole of what a lawyer asked for and nothing else: which version was
+accepted, when, and who signed — the three facts that decide a dispute.
+
+**Rule: acceptance gates nothing.** Certification remains the platform's only
+blocking lever over an educator, and keeping it the only one is deliberate — two
+independent gates on the same person is how an account ends up in a state nobody
+can explain. An unsigned educator keeps every permission a signed one has, and is
+still certifiable. What acceptance buys is *visibility*: the admin certification
+queue reports each candidate's standing so the decision is better informed, not
+pre-empted. If a gate is ever wanted, it is a separate decision to make
+deliberately, not a consequence to discover.
+
+### Version-keyed, and what "current" means
+
+Acceptance is keyed to a **version**, not to a person. Versions live in a
+whitelist table that only migrations write to, each with the moment it was added,
+and **the current version is the row with the greatest added-at moment** — a
+derivation rather than a stored flag, so there is no second place that can
+disagree about which terms are in force. A gedu whose accepted version is not the
+current one is re-prompted, and the previous acceptance is left standing: it is
+the record of what they agreed to at the time, and a new version does not make it
+untrue.
+
+That derivation is also why "accepted an older version" and "never accepted
+anything" read identically in the admin queue. The question an admin is deciding
+against is standing under the terms in force *today*, and both answers to that
+are "not yet".
+
+The current version the *app* asks for is a constant in the contract document's
+own directory (`../../components/gedu/contract/`), because the version is a
+property of the document being shown. The service layer never picks one — it
+accepts whatever it is handed and lets the database refuse a version it does not
+know.
+
+### The write posture: one RPC, no table grant
+
+An acceptance row is an audit record, so **every field a forger would want is
+derived server-side**: the signer is the calling session's own user, the moment is
+the server's clock, and the name is read from the profile at that instant. The
+only caller-supplied value is the version, which is checked against the whitelist
+before anything is written. Neither table carries an insert, update or delete
+grant for any browser-reachable role — the same arrangement the certification RPC
+has one table over, and for the same reason.
+
+Two consequences worth stating plainly:
+
+- **The write is idempotent and the first signature is the one that stands.**
+  Accepting a version already accepted returns the original moment and writes
+  nothing, including when a duplicate arrives concurrently. A reload, a retry or a
+  double-submit is therefore harmless rather than a second signature, and no
+  reader ever sees a record silently re-stamped.
+- **The stored name is a snapshot, never a join.** A profile name is editable by
+  its owner, so resolving it at read time would answer "what is this person called
+  today" when the question is "who signed this". The snapshot is the identity half
+  of the legal record and must not drift.
+
+Reads need no wrapper: row-level security already says who may see an acceptance —
+an admin sees anyone's, a gedu sees their own — so a plain select is safe, and a
+gedu's acceptances are a bounded set (at most one row per version ever published)
+read by primary-key prefix, so it is a near-instant call that wants no loading
+affordance beyond a container already at its final size.
+
+### Cache keys
+
+Contract acceptance has a **query-key root of its own**, separate from the
+gedu-profiles root that certification uses. The two answer different questions
+about the same person and are written by different actors — certification is an
+admin's verdict on an educator, acceptance is the educator's own act — so sharing
+a root would make every certify refetch signatures and every signature refetch the
+certification list, invalidations describing a relationship the data does not have.
+
+The key factory lives outside the hooks file for the same reason the admin
+dashboard's and family feed's do: the hooks file is a client module, so a server
+component importing from it would get a client reference rather than the object,
+and a surface that hydrates this cache entry server-side has to name the very key
+the hook reads.
+
+**The admin dashboard's key is deliberately not invalidated by the acceptance
+mutation.** That entry only ever exists in an *admin's* browser — a gedu's session
+cannot call the dashboard read at all — so an invalidation from a gedu-side write
+would be provably dead. The admin's queue picks a new acceptance up on its own
+next read. This is the same line the dashboard key's own factory draws: admin
+writes invalidate it, writes from any other role reach it through their next read.
 
 ## Coverage field reuse
 

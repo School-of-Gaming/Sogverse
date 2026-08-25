@@ -100,6 +100,24 @@ export interface UncertifiedGedu {
    * card's, because that half is translated copy and this half is not.
    */
   registeredAgo: string;
+  /**
+   * When they accepted the contract version **in force today**, already
+   * formatted as a calendar date in the viewer's zone — or `null` when they
+   * have not.
+   *
+   * `null` deliberately covers two situations the queue does not tell apart:
+   * never signed anything, and signed a version that has since been superseded.
+   * The question an admin is deciding against is standing under the terms in
+   * force *today*, and both answers to that are "not yet"; the user's own admin
+   * page is where the older acceptance is shown, because that is where there is
+   * room to say what it was.
+   *
+   * Pre-formatted for the same reason `registeredAgo` is: it is an `Intl`
+   * product rather than translated copy, and formatting it beside the wait keeps
+   * both derivations at one call site rather than handing the queue a zone it
+   * would otherwise have no use for.
+   */
+  contractAcceptedOn: string | null;
 }
 
 /**

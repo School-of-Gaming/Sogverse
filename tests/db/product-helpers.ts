@@ -57,6 +57,16 @@ import { TEST_IDS } from "./constants";
  *                  633-636 for the product_images entries it links them to —
  *                  a different table, but kept in the one registry so nobody
  *                  has to hold two allocation schemes in their head)
+ *   640-645        admin-product-sessions.test.ts (an in-person product 640
+ *                  with two groups 641/642 — two, because the whole point of
+ *                  the product-keyed read is that it carries every group at
+ *                  once — plus a decoy product 643 with a group 644, which is
+ *                  what makes "only this product's groups came back" provable
+ *                  rather than merely true. 645 is a `locations` row rather
+ *                  than a product: its own venue, because `site_details` is
+ *                  keyed by location and shared across products, so writing
+ *                  notes on the seeded Test School would race the gedu feed's
+ *                  suite in a parallel worker)
  *   637            write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

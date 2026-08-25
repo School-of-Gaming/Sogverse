@@ -8,7 +8,6 @@ import {
   useLocationsByIds,
   type LocationWithChain,
 } from "@/services/locations";
-import { useSiteDetails } from "@/services/products";
 import {
   LocationPickerDialog,
   useBoundCountryName,
@@ -22,7 +21,6 @@ import {
 } from "@/lib/locations/stored-pick";
 import { MUNI_CLUB_COUNTRY_CODE } from "./product-type-config";
 import { VenuePickerDialog } from "./venue-picker-dialog";
-import { SiteNotesEditor } from "./site-notes-editor";
 
 type PickableMode = "site" | "municipality";
 
@@ -162,7 +160,7 @@ function SitePicker({
         dropping={dropping}
         row={row}
         emptyLabel={t("chooseVenue")}
-        withNotes
+        isVenue
         onOpen={() => setPicking(true)}
       />
 
@@ -203,7 +201,7 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
         dropping={dropping}
         row={row}
         emptyLabel={t("chooseMunicipality")}
-        withNotes={false}
+        isVenue={false}
         onOpen={() => setPicking(true)}
       />
 
@@ -288,8 +286,8 @@ interface ChosenPlaceProps {
   row: LocationWithChain | null | undefined;
   /** What the empty state's control says. */
   emptyLabel: string;
-  /** Whether a pick in this mode carries site notes. */
-  withNotes: boolean;
+  /** Whether a pick in this mode is a venue (rather than a municipality). */
+  isVenue: boolean;
   onOpen: () => void;
 }
 
@@ -309,7 +307,7 @@ function ChosenPlace({
   dropping,
   row,
   emptyLabel,
-  withNotes,
+  isVenue,
   onOpen,
 }: ChosenPlaceProps) {
   if (value === null || dropping) {
@@ -320,9 +318,8 @@ function ChosenPlace({
   }
   return (
     <SelectedLocationCard
-      locationId={value}
       location={row ?? undefined}
-      withNotes={withNotes}
+      isVenue={isVenue}
       onEdit={onOpen}
     />
   );
@@ -359,26 +356,24 @@ function ChoosePlaceButton({
 }
 
 interface SelectedLocationCardProps {
-  /** The stored id — known before the row behind it is. */
-  locationId: string;
   /**
    * The row and its chain, nearest first, or `undefined` while the keyed read
    * is still in flight. Both modes render this card before their row lands.
    */
   location: LocationWithChain | undefined;
   /**
-   * Whether this field's picks carry site notes. A property of the *mode*, not
-   * of the row, so it is known synchronously — which matters twice over:
-   * inferring it from a row that has not arrived would either fetch site
-   * details for a municipality or push the rest of the form down a frame later.
+   * Whether this field's picks are venues rather than municipalities. A
+   * property of the *mode*, not of the row, so it is known synchronously —
+   * inferring it from a row that has not arrived would push the rest of the
+   * form down a frame later.
    */
-  withNotes: boolean;
+  isVenue: boolean;
   onEdit: () => void;
 }
 
 /**
- * What a chosen place collapses to: its name, its path, an affordance to change
- * it, and — for a venue — the two tiers of site notes.
+ * What a chosen place collapses to: its name, its path, and an affordance to
+ * change it.
  *
  * The card is at its final size from the first frame and fills the text in, per
  * the loading rule: the read behind it is one row by primary key, so a skeleton
@@ -386,21 +381,24 @@ interface SelectedLocationCardProps {
  * immediately because it needs nothing from the read. Everything whose *height*
  * the read could otherwise change is either reserved (the name and path lines)
  * or does not depend on it at all (the municipality note, which is a fact about
- * the mode). The notes editors stacked under the card are a separate read with
- * a settle of their own, older than this control and untouched by it.
+ * the mode).
+ *
+ * **The venue's two site notes used to hang under it and no longer do.** They
+ * are not a property of this product — every product at that building reads and
+ * writes the same two paragraphs — and they saved out of band, so a form field
+ * that committed the moment you pressed its own little Save button sat inside a
+ * form nothing else committed until the bottom of the page. They live on the
+ * product's details page now, beside the group's standing notes, in the panel
+ * that reads the rest of the session record.
  */
 function SelectedLocationCard({
-  locationId,
   location,
-  withNotes,
+  isVenue,
   onEdit,
 }: SelectedLocationCardProps) {
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
 
-  // Only sites have site_details / site_staff_details rows, so a municipality
-  // pick skips the fetch outright.
-  const { data: details } = useSiteDetails(withNotes ? locationId : null);
   // Root first, so it reads "Uusimaa · Helsinki" the way a breadcrumb does.
   const chain = location ? withoutCountry(location.ancestors).reverse() : [];
 
@@ -423,7 +421,7 @@ function SelectedLocationCard({
                     <span className="font-medium">
                       {localizedLocationName(location, locale)}
                     </span>
-                    {!withNotes && (
+                    {!isVenue && (
                       <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                         {location.type}
                       </span>
@@ -442,7 +440,7 @@ function SelectedLocationCard({
                   above it, and interpolating it would make this paragraph's
                   height depend on a read — the one thing the card must not
                   allow, since it wraps and the form sits underneath. */}
-              {!withNotes && (
+              {!isVenue && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   {t("noVenueHint")}
                 </p>
@@ -461,42 +459,6 @@ function SelectedLocationCard({
           </Button>
         </div>
       </div>
-
-      {/*
-        The `key` is load-bearing and must not be "simplified" away.
-
-        A notes editor holds its open/closed state and its draft text in local
-        state, seeded once at mount. Since the picker became an overlay, this
-        card is no longer unmounted while a different venue is being chosen —
-        so without a key an editor left open across a venue change survives the
-        change with the *old* venue's draft in it, pointed at the *new*
-        `locationId`. Saving then writes one building's address and notes onto
-        another's, and `site_details` / `site_staff_details` are per-site rows
-        shared by every product at that site, so the damage is not confined to
-        the product being edited.
-
-        Keying on the id makes a venue change a remount, which is what drops
-        the stale draft. Anything else — resetting from props, an effect that
-        syncs the draft — reintroduces the same class of bug the first time
-        someone edits one of the two pieces of state and not the other.
-      */}
-      {withNotes && (
-        <>
-          <SiteNotesEditor
-            key={`member-${locationId}`}
-            locationId={locationId}
-            tier="member"
-            address={details?.member?.address ?? null}
-            notes={details?.member?.notes ?? null}
-          />
-          <SiteNotesEditor
-            key={`staff-${locationId}`}
-            locationId={locationId}
-            tier="staff"
-            notes={details?.staff?.notes ?? null}
-          />
-        </>
-      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
 import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
+import { isGeduContractScenario } from "@/components/gedu/contract/mock-contract-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
 import { isGeduProductScenario } from "@/components/gedu/session-details/mock-product-page-fixtures";
 import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
@@ -19,6 +20,7 @@ import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
+import { GeduContractScene } from "./scenes/gedu-contract-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
@@ -87,6 +89,10 @@ const SCENE_RENDERERS: Record<
   "gedu-dashboard": (scenario) => {
     if (!isGeduDashboardScenario(scenario)) notFound();
     return <GeduDashboardScene scenario={scenario} />;
+  },
+  "gedu-contract": (scenario) => {
+    if (!isGeduContractScenario(scenario)) notFound();
+    return <GeduContractScene scenario={scenario} />;
   },
   "gedu-product": (scenario) => {
     if (!isGeduProductScenario(scenario)) notFound();

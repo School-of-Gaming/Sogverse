@@ -50,6 +50,17 @@ export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"][
 export type GeduProfile = Database["public"]["Tables"]["gedu_profiles"]["Row"];
 export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["Update"];
 
+// gedu_contract_versions / gedu_contract_acceptances
+//
+// No Insert/Update aliases for either: neither table carries a write grant for
+// any Data API role. Versions arrive by migration, and an acceptance is written
+// only by the RPC that stamps it, so an Insert type here would name a statement
+// nothing in the app is allowed to make.
+export type GeduContractVersion =
+  Database["public"]["Tables"]["gedu_contract_versions"]["Row"];
+export type GeduContractAcceptance =
+  Database["public"]["Tables"]["gedu_contract_acceptances"]["Row"];
+
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];
@@ -72,11 +83,6 @@ export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissi
 // on the way past). No application surface reads them; the alias is here
 // because the DB test asserts against the row shape.
 export type VerificationEmailRequest = Database["public"]["Tables"]["verification_email_requests"]["Row"];
-
-// spoken_languages (reference table — the human languages a person speaks /
-// a club is delivered in). Distinct from `locale` (UI translation), which
-// has no DB table and is constrained by SUPPORTED_LOCALES in code.
-export type SpokenLanguage = Database["public"]["Tables"]["spoken_languages"]["Row"];
 
 // locations
 /**
@@ -141,6 +147,13 @@ export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 // the tag module under src/components/public/products/ re-exports it and owns the
 // label-key resolution.
 export type ProductTag = Database["public"]["Enums"]["product_tag"];
+// A human language a club is delivered in / a person speaks — the value in
+// `products.spoken_language_code` and each entry of `profiles.spoken_languages`.
+// Deliberately NOT the UI locale, which is which translation of the app someone
+// sees and is constrained by SUPPORTED_LOCALES in code; see the "Locale vs.
+// Spoken Language" rule in CLAUDE.md. The ordered value list and the string
+// guard live in src/lib/constants/spoken-languages.ts.
+export type SpokenLanguageCode = Database["public"]["Enums"]["spoken_language"];
 
 // products
 export type Product = Database["public"]["Tables"]["products"]["Row"];

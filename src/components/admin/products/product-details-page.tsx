@@ -5,11 +5,13 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Calendar,
+  Check,
   Clock,
   Coins,
   Copy,
   Globe2,
   Landmark,
+  Link2,
   MapPin,
   Pencil,
   Shapes,
@@ -18,12 +20,15 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SUPPORTED_CURRENCIES } from "@/lib/constants";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { ROUTES, SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { municipalityOf } from "@/lib/locations/embedded-chain";
+import { municipalitySlug } from "@/lib/locations/municipality-slug";
+import { cn, formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { productImageSrc } from "@/lib/images/product-image-url";
 import { productAudience } from "@/components/public/products/product-audience";
@@ -43,6 +48,8 @@ import {
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import { GroupsPanel } from "./groups/groups-panel";
+import { AdminProductSessionsPanel } from "./sessions/admin-sessions-panel";
+import { ProductStatusChip } from "./product-status-chip";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
 
@@ -50,17 +57,6 @@ interface ProductDetailsPageProps {
   productType: ProductType;
   productId: string;
 }
-
-// Keyed by the effective status, exhaustively: the compiler is what guarantees
-// every member has a chip style, so there is no fallback to reach for and no
-// way to add a status without being asked what colour it wears.
-const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
-  pending: "bg-primary/20 text-primary",
-  running: "bg-primary text-primary-foreground",
-  completed: "bg-muted text-muted-foreground",
-  cancelled: "bg-destructive/20 text-destructive",
-  expired: "bg-muted text-muted-foreground",
-};
 
 export function ProductDetailsPage({
   productType,
@@ -85,7 +81,7 @@ export function ProductDetailsPage({
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-reserve-scroll-gutter>
         <Link
           href={listHref}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -101,7 +97,7 @@ export function ProductDetailsPage({
 
   if (!product) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-reserve-scroll-gutter>
         <Link
           href={listHref}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -119,7 +115,7 @@ export function ProductDetailsPage({
   }
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
-  const status = effectiveStatus(product, new Date(), 0);
+  const status = effectiveStatus(product, now, 0);
   // Every group on the product shares one schedule, so resolve the voice
   // window once here and thread it into each group's Join button. `useNow`
   // ticks so the live/locked flip happens without a reload. A room only
@@ -132,7 +128,7 @@ export function ProductDetailsPage({
   const topicName = topicLabel(product.topic);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-reserve-scroll-gutter>
       <Link
         href={listHref}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -147,7 +143,6 @@ export function ProductDetailsPage({
         title={tr?.name ?? t("list.untitled")}
         description={tr?.short_description ?? null}
         statusKey={status}
-        statusLabel={t(`status.${status}`)}
         isVisible={product.is_visible}
         listedLabel={t("detailsPage.listed")}
         unlistedLabel={t("detailsPage.unlisted")}
@@ -184,6 +179,12 @@ export function ProductDetailsPage({
         opensDate={voice.opensDate}
         opensTime={voice.opensTime}
       />
+
+      {/* Last on the page, and the only section here fed by a slow read. Its
+          skeleton gives way to a body of a different height, and putting it
+          under everything else is what makes that free: there is nothing below
+          it for the change to push around. */}
+      <AdminProductSessionsPanel productId={productId} />
     </div>
   );
 }
@@ -199,7 +200,6 @@ function HeaderCard({
   title,
   description,
   statusKey,
-  statusLabel,
   isVisible,
   listedLabel,
   unlistedLabel,
@@ -213,7 +213,6 @@ function HeaderCard({
   title: string;
   description: string | null;
   statusKey: EffectiveProductStatus;
-  statusLabel: string;
   isVisible: boolean;
   listedLabel: string;
   unlistedLabel: string;
@@ -248,11 +247,7 @@ function HeaderCard({
             </p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[statusKey]}`}
-            >
-              {statusLabel}
-            </span>
+            <ProductStatusChip status={statusKey} />
             <Badge variant={isVisible ? "default" : "secondary"}>
               {isVisible ? listedLabel : unlistedLabel}
             </Badge>
@@ -352,6 +347,11 @@ function OperationalFacts({
   // card instead, so the helper returns null for them.
   const termDates = formatClubTermDates(product, uiLocale);
 
+  // Where a family meets this product. `null` only for a municipality club with
+  // no location at all — there is no school page to point at, and a `/shop`
+  // link would name a listing that deliberately excludes the type.
+  const publicPath = publicProductPath(product);
+
   const seatsLine =
     product.seat_count !== null
       ? t("list.seats", { count: product.seat_count })
@@ -379,6 +379,19 @@ function OperationalFacts({
   return (
     <Card>
       <CardContent className="grid gap-x-6 gap-y-5 p-6 sm:grid-cols-2">
+        {/* First, and across the width: it is the one fact on this card an
+            admin comes here to take away rather than to check, and a product id
+            in a URL needs the room. */}
+        {publicPath && (
+          <Fact
+            icon={Link2}
+            label={t("detailsPage.fields.publicUrl")}
+            className="sm:col-span-2"
+          >
+            <PublicProductLink path={publicPath} />
+          </Fact>
+        )}
+
         {termDates && (
           <Fact icon={Calendar} label={t("detailsPage.fields.termDates")}>
             {termDates}
@@ -484,14 +497,17 @@ function OperationalFacts({
 function Fact({
   icon: Icon,
   label,
+  className,
   children,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
+  /** Grid placement for a fact that wants more than its one cell. */
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex gap-3">
+    <div className={cn("flex gap-3", className)}>
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -500,5 +516,89 @@ function Fact({
         <div className="mt-0.5 text-sm">{children}</div>
       </div>
     </div>
+  );
+}
+
+/**
+ * The path a family meets this product at.
+ *
+ * Every type but one is sold from the storefront's single `/shop/[id]` route. A
+ * municipality club is not in the shop at all: it is listed on its town's own
+ * `/schools/<slug>` page, and its link has to carry that slug. The slug is
+ * derived from the municipality's **canonical** name rather than the admin's
+ * locale rendering of it, because this URL is written down and sent to somebody
+ * else — a link should not depend on which language the person who copied it had
+ * their panel in. Both spellings resolve to the same town when the page reads
+ * them back, so the canonical one is simply the stable choice.
+ *
+ * `null` when a municipality club carries no location: there is no school page
+ * for it, and the `/shop` path would name a listing that excludes the type.
+ * Nothing today can save such a club — the DB CHECK demands the location — so
+ * this is the cheap branch against a state that would otherwise render a link
+ * to nowhere.
+ */
+function publicProductPath(product: ProductAdminDetailRow): string | null {
+  if (product.product_type !== "municipality_club") {
+    return ROUTES.shopProduct(product.id);
+  }
+  const municipality = municipalityOf(product.locations);
+  if (municipality === null) return null;
+  return ROUTES.schoolMunicipalityProduct(
+    municipalitySlug(municipality.name),
+    product.id,
+  );
+}
+
+/**
+ * The product's public URL in full, and a button that puts it on the clipboard.
+ *
+ * Shown rather than hidden behind a bare "Copy link" button because the two
+ * things an admin does with this are paste it and *check* it — a municipality
+ * club's path carries a town slug, and getting that wrong is a link that 404s
+ * for a whole town.
+ *
+ * The origin comes from `window.location`: the admin is reading the page on the
+ * very deployment the link belongs to, so what they copy is what they can open
+ * in the next tab. Reading it during render needs no mount effect — this card
+ * paints only after the admin product query resolves, which cannot happen
+ * server-side because nothing prefetches it — and no mount effect means no
+ * post-paint swap from a bare path to an absolute URL under the reader's eyes.
+ */
+function PublicProductLink({ path }: { path: string }) {
+  const t = useTranslations("admin.products");
+  const { copied, copy } = useCopyToClipboard();
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const url = `${origin}${path}`;
+  const copyLabel = copied ? t("detailsPage.copied") : t("detailsPage.copyLink");
+
+  return (
+    <span className="flex items-start gap-2">
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="min-w-0 break-all text-primary underline-offset-2 hover:underline"
+      >
+        {url}
+      </a>
+      {/* The confirmation is an icon swap inside a fixed-size button, so it
+          lands in exactly the footprint the copy icon had: nothing on the card
+          moves, and the URL beside it does not reflow. */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={cn("h-6 w-6 shrink-0", copied && "text-success")}
+        onClick={() => void copy(url)}
+        aria-label={copyLabel}
+        title={copyLabel}
+      >
+        {copied ? (
+          <Check aria-hidden className="h-3.5 w-3.5" />
+        ) : (
+          <Copy aria-hidden className="h-3.5 w-3.5" />
+        )}
+      </Button>
+    </span>
   );
 }

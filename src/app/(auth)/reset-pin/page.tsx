@@ -5,7 +5,7 @@ import { resolvePinResetToken } from "@/lib/pin-session-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("resetPin"), description: "Set a new parent PIN for your Sogverse account" };
+  return { title: t("resetPin"), description: "Set a new parent PIN for your School of Gaming account" };
 }
 
 /**

@@ -1,13 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { X } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { FilterCombobox } from "@/components/ui/filter-combobox";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { useSpokenLanguages, useUsersByRole } from "@/services/users";
+import { useUsersByRole } from "@/services/users";
 import {
   municipalityOf,
   type EmbeddedLocationNode,
@@ -16,7 +14,17 @@ import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatWeekday } from "@/components/public/products/format-product-schedule";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { ProductRows } from "./product-rows";
+import {
+  matchesProductSearch,
+  normalizeProductSearch,
+} from "./product-name-search";
+import { ProductListResults } from "./product-list-results";
+import {
+  optionInRange,
+  PRODUCT_LIST_PARAMS,
+  useUrlParamState,
+} from "./product-list-url-state";
+import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
@@ -24,21 +32,28 @@ import type { ProductType } from "@/types";
 interface ClubProductFiltersProps {
   productType: ProductType;
   products: ProductWithDetails[];
+  /** The page's search box, ANDed with the filters below. */
+  search: string;
+  /** Clearing here clears the search too — one button empties the whole bar. */
+  onClearSearch: () => void;
 }
 
 // The filtered club list. Owns the day / educator / language / municipality
 // filters and the reference-data hooks they need; only mounts for the two club
-// types (camps/events render <ProductRows> directly), so the extra reference
-// queries never fire on the other admin product pages.
+// types (camps and events narrow by the page's search box alone), so the extra
+// reference queries never fire on the other admin product pages.
 //
 // All filters are single-select; no selection means "all", and active filters
-// AND together — a row must satisfy every one. Filtering is client-side over
-// the already loaded list; the day/educator/language/municipality data all ride
-// on the list query (educator via `gedu_group_assignments`, municipality via
-// the embedded location and its parent).
+// AND together — a row must satisfy every one, the page's search included.
+// Filtering is client-side over the already loaded list; the
+// day/educator/language/municipality data all ride on the list query (educator
+// via `gedu_group_assignments`, municipality via the embedded location and its
+// parent).
 export function ClubProductFilters({
   productType,
   products,
+  search,
+  onClearSearch,
 }: ClubProductFiltersProps) {
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
@@ -48,18 +63,24 @@ export function ClubProductFilters({
   const isConsumer = productType === "consumer_club";
   const isMunicipality = productType === "municipality_club";
 
-  const [day, setDay] = useState<string | null>(null);
-  const [geduId, setGeduId] = useState<string | null>(null);
-  const [language, setLanguage] = useState<string | null>(null);
-  const [municipalityId, setMunicipalityId] = useState<string | null>(null);
+  // Each selection lives in the query string, so an admin who narrows the list,
+  // opens a club and presses Back finds the bar exactly as they left it. The
+  // raw values are clamped against the options below before anything reads
+  // them — a stale bookmark can name an educator who has since left.
+  const [dayParam, setDay] = useUrlParamState(PRODUCT_LIST_PARAMS.day);
+  const [geduParam, setGeduId] = useUrlParamState(PRODUCT_LIST_PARAMS.gedu);
+  const [languageParam, setLanguage] = useUrlParamState(
+    PRODUCT_LIST_PARAMS.language,
+  );
+  const [municipalityParam, setMunicipalityId] = useUrlParamState(
+    PRODUCT_LIST_PARAMS.municipality,
+  );
 
-  // Both reference queries fire for both club types even though each page only
-  // reads one: consumer clubs ignore nothing here, municipality clubs ignore
-  // `spokenLanguages`. Left unconditional on purpose — the queries are cheap
-  // and cached, and gating them would mean splitting the municipality-only work
-  // into a child component that only mounts for `isMunicipality`.
+  // Fires for both club types even though only the municipality page reads it.
+  // Left unconditional on purpose — the query is cheap and cached, and gating
+  // it would mean splitting the municipality-only work into a child component
+  // that only mounts for `isMunicipality`.
   const { data: gedus } = useUsersByRole("gedu");
-  const { data: spokenLanguages } = useSpokenLanguages();
 
   const languageName = useLanguageNames();
 
@@ -108,26 +129,21 @@ export function ClubProductFilters({
 
   const languageOptions = useMemo(() => {
     if (!isConsumer) return [];
-    const present = new Set<string>();
-    for (const p of products)
-      if (p.spoken_language_code) present.add(p.spoken_language_code);
-    // Order by the canonical spoken-language reference order (same as the
-    // spoken-language checkboxes), not alphabetically — language lists have a
-    // conventional ordering. Any present code missing from the reference list
-    // is appended defensively.
-    const ordered = (spokenLanguages ?? [])
-      .map((l) => l.code)
-      .filter((code) => present.has(code));
-    for (const code of present) if (!ordered.includes(code)) ordered.push(code);
-    return ordered.map((code) => {
-      const name = languageName(code, code.toUpperCase());
+    const present = new Set(products.map((p) => p.spoken_language_code));
+    // Ordered by the enum's own declaration order — the same sequence every
+    // other language control renders — rather than alphabetically by a name
+    // that changes with the viewer's locale. Only languages some club is
+    // actually delivered in are offered: a filter chip matching nothing is a
+    // control that can only empty the table.
+    return SPOKEN_LANGUAGES.filter((code) => present.has(code)).map((code) => {
+      const name = languageName(code);
       return {
         value: code,
         label: name,
         adornment: <LanguageFlag code={code} showCode={false} title={name} />,
       };
     });
-  }, [products, spokenLanguages, languageName, isConsumer]);
+  }, [products, languageName, isConsumer]);
 
   const municipalityOptions = useMemo(() => {
     if (!isMunicipality) return [];
@@ -141,9 +157,19 @@ export function ClubProductFilters({
       .sort((a, b) => a.label.localeCompare(b.label, uiLocale));
   }, [muniByProduct, isMunicipality, uiLocale]);
 
+  // The stored params, each narrowed to something the control can actually
+  // offer — a value naming a gedu who has left or a municipality whose last
+  // club was retired reads as "all" rather than as a filter matching nothing.
+  const day = optionInRange(dayOptions, dayParam);
+  const geduId = optionInRange(geduOptions, geduParam);
+  const language = optionInRange(languageOptions, languageParam);
+  const municipalityId = optionInRange(municipalityOptions, municipalityParam);
+
   const filtered = useMemo(() => {
     const dayNum = day === null ? null : Number(day);
+    const needle = normalizeProductSearch(search);
     return products.filter((p) => {
+      if (!matchesProductSearch(p, needle)) return false;
       if (dayNum !== null && !p.schedule_slots.some((s) => s.weekday === dayNum))
         return false;
       if (
@@ -160,6 +186,7 @@ export function ClubProductFilters({
     });
   }, [
     products,
+    search,
     day,
     geduId,
     language,
@@ -170,6 +197,7 @@ export function ClubProductFilters({
   ]);
 
   const anyActive =
+    normalizeProductSearch(search) !== "" ||
     day !== null ||
     geduId !== null ||
     (isConsumer && language !== null) ||
@@ -180,10 +208,13 @@ export function ClubProductFilters({
     setGeduId(null);
     setLanguage(null);
     setMunicipalityId(null);
+    onClearSearch();
   }
 
   return (
-    <div className="space-y-4">
+    // A fragment: the page's own `space-y-4` spaces the search box, this grid,
+    // the count line and the rows as one rhythm across all four product types.
+    <>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <FilterDropdown
           label={t("filters.day")}
@@ -221,37 +252,14 @@ export function ClubProductFilters({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span>
-          {t("filters.showing", {
-            count: filtered.length,
-            total: products.length,
-          })}
-        </span>
-        {/* No vertical padding: with py-1 the button is taller than the bare
-            text, so toggling it in/out grows the row and shifts the cards below.
-            Its height now matches the showing-count span's line-height. */}
-        {anyActive && (
-          <button
-            type="button"
-            onClick={clear}
-            className="inline-flex items-center gap-1 rounded-md px-2 transition-colors hover:text-foreground"
-          >
-            <X className="h-3 w-3" />
-            {t("filters.clear")}
-          </button>
-        )}
-      </div>
-
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            {t("filters.noMatches", { plural })}
-          </CardContent>
-        </Card>
-      ) : (
-        <ProductRows products={filtered} productType={productType} />
-      )}
-    </div>
+      <ProductListResults
+        products={filtered}
+        total={products.length}
+        productType={productType}
+        plural={plural}
+        narrowed={anyActive}
+        onClear={clear}
+      />
+    </>
   );
 }

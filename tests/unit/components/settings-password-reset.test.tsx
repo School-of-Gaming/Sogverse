@@ -47,7 +47,6 @@ vi.mock("@/providers", () => ({
 vi.mock("@/services/users", () => ({
   useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
   useSendVerificationEmail: () => ({ mutate: vi.fn() }),
-  useSpokenLanguages: () => ({ data: [] }),
 }));
 vi.mock("@/services/locations", () => ({
   useLocationsByIds: () => ({ data: undefined }),
@@ -69,6 +68,9 @@ vi.mock("@/components/game-account", () => ({
 vi.mock("@/components/gedu/gedu-coverage-editor", () => ({
   GeduCoverageEditor: () => <div data-testid="gedu-coverage-editor" />,
 }));
+vi.mock("@/components/gedu/contract/gedu-contract-settings-card", () => ({
+  GeduContractSettingsCard: () => <div data-testid="gedu-contract-card" />,
+}));
 vi.mock("@/components/locations/home-location-field", () => ({
   HomeLocationField: () => <div data-testid="home-location-field" />,
 }));
@@ -82,7 +84,7 @@ const SENDING = messages.common.sending;
 function renderSettings() {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <SettingsSectionContent initialSpokenLanguages={[]} />
+      <SettingsSectionContent />
     </NextIntlClientProvider>,
   );
 }

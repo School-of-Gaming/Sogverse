@@ -71,6 +71,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   create_product: { permittedRoles: ["admin"] },
   update_product: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
+  // The admin product page's whole session record (00200). Its second question
+  // is "does this product exist", which a NULL id answers with P0002 rather
+  // than a second 42501 — so unlike every gedu read below, the positive half of
+  // the matrix IS assertable here with no fixture.
+  get_admin_product_sessions: { permittedRoles: ["admin"] },
   // Takes no arguments at all, so the all-NULL convention hands it an empty
   // argument object and a permitted admin gets the whole document back — the
   // positive half of the matrix is assertable here without a fixture.
@@ -92,6 +97,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
+  // Accepting the gedu contract (00201). Role-gated rather than self-scoping
+  // despite naming no subject: its first statement is the gedu role guard, which
+  // is what check 1 reads, and the two classifications are exclusive. The
+  // scoping property is still real and is enforced elsewhere — the row is keyed
+  // to auth.uid() inside the body, and there is no argument that could aim it.
+  // The positive half of the matrix IS assertable with no fixture: a gedu passes
+  // the guard and is then refused by the version whitelist (a NULL version
+  // matches nothing), which is 23503 rather than 42501.
+  accept_gedu_contract: { permittedRoles: ["gedu"] },
   get_gedu_assigned_product: {
     permittedRoles: ["gedu"],
     permittedAlsoForbiddenOnNullArgs:
@@ -120,41 +134,62 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
   // than a refusal.
   get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
+  // Since 00200 the four writers below — and the site-notes writer further
+  // down — admit an ADMIN beside the assigned gedu. The guard itself is one
+  // call that asserts whichever of the two roles the caller holds, so the
+  // negative half of the matrix is unchanged: a customer and a gamer are still
+  // refused on the first statement. What an admin skips is only the SECOND
+  // question each of these asks — "and do you teach this group / run something
+  // at this building" — and nothing else about them.
   set_group_session_notes: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "the assignment half of the gate refuses a NULL group with a second " +
-      "42501. Positive path: gedu-session-feed.test.ts.",
+      "for a gedu, the assignment half of the gate refuses a NULL group with a " +
+      "second 42501; an admin passes that half and is then refused by the " +
+      "writable-date check with check_violation, which is not 42501 but is not " +
+      "assertable through this annotation either, since it is per function " +
+      "rather than per role. Positive paths: gedu-session-feed.test.ts for the " +
+      "gedu, admin-product-sessions.test.ts for the admin.",
   },
   record_attendance: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "refused twice over on NULL arguments — the caller teaches no NULL group, " +
-      "and no NULL child is on its roster. Positive path: " +
-      "gedu-session-feed.test.ts.",
+      "refused twice over on NULL arguments, for BOTH permitted roles — a gedu " +
+      "teaches no NULL group, and no NULL child is on any group's roster, which " +
+      "is the target check an admin is deliberately still bound by. Positive " +
+      "paths: gedu-session-feed.test.ts for the gedu, " +
+      "admin-product-sessions.test.ts for the admin.",
   },
   // The send's claim (00197). Same two-part gate as the notes writer above, and
   // the claim is the send's authorization in its own right: succeeding is what
   // lets the route go on to resolve parents' addresses with the service role.
   claim_group_session_report_email: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "the assignment half of the gate refuses a NULL group with a second " +
-      "42501, before the body ever looks for a session to claim. Positive " +
-      "path: gedu-session-feed.test.ts.",
+      "for a gedu, the assignment half of the gate refuses a NULL group with a " +
+      "second 42501 before the body ever looks for a session to claim; an admin " +
+      "passes that half and is refused by P0021, there being no session to send. " +
+      "Positive paths: gedu-session-feed.test.ts for the gedu, " +
+      "admin-product-sessions.test.ts for the admin.",
   },
   set_group_notes: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "the assignment half of the gate refuses a NULL group with a second " +
-      "42501. Positive path: gedu-session-feed.test.ts.",
+      "the assignment half of the gate refuses a gedu's NULL group with a " +
+      "second 42501. An admin passes it and updates zero rows, so the " +
+      "annotation is carried for the gedu alone — it is per function, not per " +
+      "role. Positive paths: gedu-session-feed.test.ts for the gedu, " +
+      "admin-product-sessions.test.ts for the admin.",
   },
   set_site_notes: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "the caller runs no product at a NULL location, so the site half of the " +
-      "gate refuses with a second 42501. Positive path: " +
-      "gedu-session-feed.test.ts.",
+      "a gedu runs no product at a NULL location, so the site half of the gate " +
+      "refuses them with a second 42501. An admin passes it and is refused by " +
+      "the NOT NULL primary key of site_details instead, which is a different " +
+      "error rather than a forbidden one. Positive paths: " +
+      "gedu-session-feed.test.ts for the gedu, admin-product-sessions.test.ts " +
+      "for the admin.",
   },
   set_group_member_minecraft: {
     permittedRoles: ["gedu"],

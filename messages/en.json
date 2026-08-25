@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Where screen time becomes quality time through Minecraft clubs led by professional Game Educators.",
-    "shortDescription": "School of Gaming – Where screen time becomes quality time",
     "pages": {
       "signIn": "Sign In",
       "createAccount": "Create Account",
@@ -35,7 +34,8 @@
       "roblox": "Roblox Game Design Programme",
       "robloxPrivacy": "Roblox Programme Privacy Policy",
       "robloxSafeguarding": "Roblox Programme Child Safeguarding Policy",
-      "robloxTerms": "Roblox Programme Terms & Conditions"
+      "robloxTerms": "Roblox Programme Terms & Conditions",
+      "geduContract": "Gedu contract"
     }
   },
   "notFound": {
@@ -68,6 +68,8 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",
+    "goToMySog": "Go to My SOG",
+    "goToDashboard": "Go to Dashboard",
     "viewDetails": "View Details",
     "learnMore": "Learn More",
     "exploreClubs": "Explore Clubs",
@@ -236,6 +238,20 @@
         "heading": "Product types"
       }
     },
+    "geduContract": {
+      "heading": "Gedu contract",
+      "accepted": "Contract accepted",
+      "acceptedDetail": "Version {version}, accepted on {date}",
+      "notAccepted": "Has not accepted the Gedu contract",
+      "notCurrentVersion": "Has not accepted the contract in force ({version})",
+      "previousVersion": "Previously accepted version {version} on {date}.",
+      "queueAccepted": "Contract accepted {date}",
+      "queueNotAccepted": "Contract not accepted",
+      "confirmTitle": "Certify without an accepted contract?",
+      "confirmBody": "Certification does not require an accepted contract, so you can certify them anyway.",
+      "confirmWarning": "This Gedu has not accepted the contract that is in force. Certified, they can be assigned to groups before they have agreed to the terms they work under.",
+      "confirmAction": "Certify anyway"
+    },
     "products": {
       "types": {
         "consumerClub": {
@@ -261,6 +277,7 @@
         "empty": "No {plural} yet. Click New {label} to create one.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
+        "online": "Online",
         "unlisted": "unlisted",
         "untitled": "(untitled)",
         "missingGeduFee": "Gedu fee missing",
@@ -297,6 +314,7 @@
           "external_contract": "External contract (municipality)"
         },
         "fields": {
+          "publicUrl": "Public link",
           "topic": "Topic",
           "materialUrl": "Lesson material",
           "startDate": "Start date",
@@ -315,7 +333,9 @@
           "tag": "Designed for",
           "regionLock": "Region lock",
           "visibility": "Visibility"
-        }
+        },
+        "copyLink": "Copy public link",
+        "copied": "Copied"
       },
       "editPage": {
         "back": "Back to product",
@@ -422,20 +442,7 @@
       "locationPicker": {
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",
-        "edit": "Edit",
         "noVenueHint": "No physical venue. Parents in this municipality will see the club when they browse.",
-        "memberNotesLabel": "Member-visible notes",
-        "memberNotesFieldLabel": "Notes shown to parents and gamers",
-        "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
-        "memberNotesHint": "Shown to parents and gamers on the product detail page.",
-        "staffNotesLabel": "Staff notes (admin + Gedu only)",
-        "staffNotesFieldLabel": "Staff-only notes",
-        "staffNotesPlaceholder": "Gate codes, back-entrance details, room keys, who to ask at the front desk.",
-        "staffNotesHint": "Never shown to parents or gamers.",
-        "addressLabel": "Address",
-        "addressPlaceholder": "Street, postal code, city",
-        "noMemberNotes": "No member-visible notes for this site.",
-        "noStaffNotes": "No staff notes for this site.",
         "chooseMunicipality": "Choose a municipality",
         "municipalityPickerTitle": "Choose a municipality",
         "chooseVenue": "Choose a venue",
@@ -661,9 +668,11 @@
         "searchGedu": "Search Gedus…",
         "searchMunicipality": "Search municipalities…",
         "noResults": "No matches.",
+        "search": "Search products by name",
+        "searchPlaceholder": "Search by name…",
         "showing": "Showing {count} of {total}",
-        "clear": "Clear filters",
-        "noMatches": "No {plural} match the selected filters."
+        "clear": "Clear",
+        "noMatches": "No {plural} match the current search and filters."
       },
       "geduPicker": {
         "searchPlaceholder": "Search name or email…",
@@ -788,6 +797,19 @@
           "standard": "Clubs and paid events are sold at Finland’s standard rate. The rate follows from the product type and can’t be changed here."
         },
         "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
+      },
+      "sessions": {
+        "title": "Sessions",
+        "groupSelectorAria": "Choose a group",
+        "untitledGroup": "Untitled group",
+        "noGroups": "This product has no groups yet, so there is nothing recorded against it.",
+        "loadFailed": "The session record could not be loaded. Reload the page to try again.",
+        "loading": "Loading this product's session record.",
+        "addressLabel": "Venue address",
+        "addressPlaceholder": "Street, postal code, city",
+        "addAddress": "Add address",
+        "editAddress": "Edit address",
+        "addressSaveFailed": "The address didn’t save. Try again."
       }
     },
     "users": {
@@ -898,8 +920,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Welcome to the Sogverse",
-      "description": "Sign in to your account",
+      "welcomeTitle": "Welcome to School of Gaming",
       "noAccountSignUp": "Don’t have an account? <link>Sign up</link>",
       "signingIn": "Signing in...",
       "emailPlaceholder": "you@example.com",
@@ -956,7 +977,7 @@
       "successDescription": "Your password has been successfully updated."
     },
     "registerGedu": {
-      "title": "Create your Sogverse Gedu account",
+      "title": "Create your School of Gaming Gedu account",
       "certificationAlertTitle": "Your account needs to be certified",
       "certificationAlertDescription": "You can sign in right away, but an admin needs to certify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you work?",
@@ -1305,9 +1326,9 @@
       "presentLabel": "Present",
       "absentLabel": "Absent",
       "unmarkedLabel": "Not marked",
-      "staffNoteLabel": "Gedus only",
+      "staffNoteLabel": "Gedus and admins",
       "familyNoteLabel": "Families see this",
-      "staffNoteTitle": "Session note — Gedus only",
+      "staffNoteTitle": "Session note — Gedus and admins",
       "staffNoteHint": "Only Gedus and admins can see this. Families never do.",
       "staffNotePlaceholder": "Anything another Gedu should know — and anything you need on record privately: an incident, bullying, a worry about a gamer.",
       "attendanceLegend": "Attendance",
@@ -1360,6 +1381,41 @@
       "staffHint": "Only Gedus and admins can see this. Families never do.",
       "staffPlaceholder": "Keys, kit, room quirks — what the next Gedu at this site needs to know.",
       "saveFailed": "These site notes didn’t save. Try again."
+    },
+    "contract": {
+      "back": "Back to My SOG",
+      "pageTitle": "Your Gedu contract",
+      "intro": "These are the terms you work under as a Game Educator for School of Gaming. The contract is binding in Finnish, so it is shown exactly as written whatever language you read the rest of the app in.",
+      "acceptLead": "By signing below you confirm that you have read these terms and accept them as they stand. We record which version you accepted, when, and the name you signed under — nothing else.",
+      "acceptCta": "Sign, date and accept",
+      "acceptedTitle": "You have accepted these terms",
+      "dialog": {
+        "title": "Sign and accept",
+        "description": "Put your name and today’s date on the lines below, then accept.",
+        "signatureLabel": "Signature",
+        "signAction": "Click to sign",
+        "dateLabel": "Date",
+        "dateAction": "Click to date",
+        "cancel": "Cancel",
+        "confirm": "Accept the contract",
+        "error": "That didn’t go through. Check your connection and try again."
+      },
+      "notice": {
+        "title": "You haven’t accepted your Gedu contract",
+        "body": "Reading and accepting the terms you work under is mandatory. It takes a couple of minutes.",
+        "action": "Read and accept the contract"
+      },
+      "settings": {
+        "title": "Gedu contract",
+        "description": "The terms you work under as a Game Educator.",
+        "acceptedTitle": "Accepted",
+        "acceptedDetail": "version {version}, accepted on {date}",
+        "notAcceptedTitle": "Not accepted yet",
+        "notAcceptedBody": "You haven’t accepted the contract that is in force. Reading and accepting it is mandatory.",
+        "readAndAccept": "Read and accept",
+        "view": "View the contract"
+      },
+      "acceptedMeta": "Version {version}, accepted on {date}"
     }
   },
   "productType": {
@@ -1414,11 +1470,16 @@
   },
   "help": {
     "title": "Help",
-    "intro": "Answers to common questions about Sogverse.",
+    "intro": "Answers to common questions about School of Gaming.",
     "contact": {
       "heading": "Need a hand?",
-      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how Sogverse works.",
+      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how School of Gaming works.",
       "emailLabel": "Email us at"
+    },
+    "about": {
+      "heading": "Who is School of Gaming?",
+      "body": "Meet the people behind the clubs, read what we believe about play and learning, and see how a session actually runs.",
+      "linkLabel": "Learn about us"
     },
     "faq": {
       "heading": "Frequently asked questions",
@@ -1778,11 +1839,11 @@
   "roblox": {
     "hero": {
       "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
-      "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in partnership with Roblox.",
+      "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
       "cta": "Register now"
     },
     "lockup": {
-      "heading": "A partnership between",
+      "heading": "A collaboration between",
       "sogAlt": "School of Gaming",
       "lynxAlt": "Lynx Educate",
       "robloxAlt": "Roblox"
@@ -2834,23 +2895,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. All rights reserved.",
+    "footer": "© {year} School of Gaming. All rights reserved.",
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Reset your Sogverse password",
+      "subject": "Reset your School of Gaming password",
       "heading": "Reset Your Password",
-      "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
+      "body": "We received a request to reset your School of Gaming password. Click the button below to choose a new password.",
       "expiry": "This link will expire in 1 hour.",
       "ignore": "If you didn’t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
     "pinReset": {
-      "subject": "Reset your Sogverse parent PIN",
+      "subject": "Reset your School of Gaming parent PIN",
       "heading": "Reset Your Parent PIN",
-      "body": "We received a request to reset the PIN for your Sogverse parent account. Click the button below to choose a new 4-digit PIN.",
+      "body": "We received a request to reset the PIN for your School of Gaming parent account. Click the button below to choose a new 4-digit PIN.",
       "expiry": "This link will expire in 24 hours.",
       "ignore": "If you didn’t request a PIN reset, you can safely ignore this email. Your PIN will not be changed.",
       "button": "Reset PIN"

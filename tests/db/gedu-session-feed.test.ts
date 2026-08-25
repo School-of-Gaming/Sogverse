@@ -34,10 +34,15 @@ import {
  * "who may write what" is actually settled. Three separate authorizations are
  * pinned, because they fail differently:
  *
- *   1. **Role** — only a gedu passes. Admin is refused too, matching every
- *      other gedu RPC on the surface; admin override is a service-role concern
- *      and has no UI.
+ *   1. **Role** — a gedu passes, and since 00200 so does an ADMIN on the five
+ *      session writers, which the admin product page now drives from the same
+ *      components. The two READS stay gedu-only: they answer "my workspace",
+ *      and an admin asks a different question through a product-keyed RPC of
+ *      their own (admin-product-sessions.test.ts). The game-username writers
+ *      stay gedu-only too — nothing admin-facing calls them. Everybody else is
+ *      refused on the first statement, as before.
  *   2. **Assignment (the actor)** — a gedu may only touch groups they teach.
+ *      This is the half, and the only half, an admin is exempt from.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
  *      edit a game username of, children actually in that group. Both platforms
  *      are covered: `set_group_member_minecraft` and, since 00195, its Roblox
@@ -252,8 +257,12 @@ describe("gedu session feed", () => {
       }
     });
 
-    it("refuses every non-gedu role on each write path", async () => {
-      for (const client of [adminAuth, customerAuth, gamerAuth]) {
+    it("refuses a customer and a gamer on every write path", async () => {
+      // Admin is deliberately absent from this loop since 00200 — the five
+      // session writers admit one, and the test below is where that is pinned.
+      // The two game-username writers still refuse an admin, and keep their own
+      // loop underneath for exactly that reason.
+      for (const client of [customerAuth, gamerAuth]) {
         const notes = await client.rpc("set_group_session_notes", {
           p_group_id: GROUP_MINE,
           p_session_date: YESTERDAY,
@@ -284,6 +293,20 @@ describe("gedu session feed", () => {
         });
         expect(siteNotes.error?.code).toBe("42501");
 
+        const claim = await client.rpc("claim_group_session_report_email", {
+          p_group_id: GROUP_MINE,
+          p_session_date: YESTERDAY,
+        });
+        expect(claim.error?.code).toBe("42501");
+      }
+    });
+
+    it("refuses every non-gedu role, admin included, on the game-username writers", async () => {
+      // These two never grew an admin path: nothing on an admin surface calls
+      // them, and a roster identity is corrected by the educator who found out
+      // it was wrong. Kept as its own loop so widening the session writers
+      // cannot quietly widen these by sharing a list.
+      for (const client of [adminAuth, customerAuth, gamerAuth]) {
         const minecraft = await client.rpc("set_group_member_minecraft", {
           p_participant_id: TEST_IDS.GAMER,
           p_minecraft_username: "Defaced",
@@ -296,12 +319,6 @@ describe("gedu session feed", () => {
           p_roblox_username: "Defaced",
         });
         expect(roblox.error?.code).toBe("42501");
-
-        const claim = await client.rpc("claim_group_session_report_email", {
-          p_group_id: GROUP_MINE,
-          p_session_date: YESTERDAY,
-        });
-        expect(claim.error?.code).toBe("42501");
       }
     });
   });

@@ -9,7 +9,7 @@ import {
   useParticipationCounts,
   type ParticipationCounts,
 } from "@/services/participations";
-import type { ProductBrowseRow, SpokenLanguage } from "@/types";
+import type { ProductBrowseRow } from "@/types";
 import { ProductBrowseResults } from "@/components/public/products/product-browse-results";
 
 // The per-municipality clubs page (`/schools/<slug>`). A shop browse page
@@ -44,7 +44,6 @@ interface MunicipalityClubsBrowseProps {
   initialProducts: ProductBrowseRow[];
   /** Seat counts for *this* municipality's clubs (server-prefetched). */
   initialCounts: ParticipationCounts[];
-  initialSpokenLanguages: SpokenLanguage[];
 }
 
 export function MunicipalityClubsBrowse({
@@ -53,7 +52,6 @@ export function MunicipalityClubsBrowse({
   municipalityName,
   initialProducts,
   initialCounts,
-  initialSpokenLanguages,
 }: MunicipalityClubsBrowseProps) {
   const t = useTranslations("schools.municipality");
 
@@ -94,10 +92,7 @@ export function MunicipalityClubsBrowse({
         <ProductBrowseResults
           sections={sections}
           counts={counts ?? []}
-          filters={{
-            initialSpokenLanguages,
-            showTypeFilter: false,
-          }}
+          showTypeFilter={false}
           productHref={(id) =>
             ROUTES.schoolMunicipalityProduct(municipalitySlug, id)
           }

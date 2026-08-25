@@ -11,9 +11,11 @@ import type { FamilyMember } from "@/services/family";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("selectProfile");
-  // `absolute` skips the root layout's "%s | Sogverse" template — the title
-  // already contains "Sogverse", and the templated version reads as a stutter.
-  return { title: { absolute: t("title") } };
+  // Plain, so it inherits the root layout's "%s | School of Gaming" template.
+  // It used to be `absolute`: the template said "%s | Sogverse", and a title
+  // that already contains "Sogverse" stuttered against it. The template leads
+  // with the brand now, so there is nothing left to skip.
+  return { title: t("title") };
 }
 
 /**

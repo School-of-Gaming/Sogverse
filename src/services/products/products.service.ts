@@ -5,6 +5,7 @@ import type {
   ProductTag,
   BillingMode,
   ProductStatus,
+  SpokenLanguageCode,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
 import type { SupportedCurrency } from "@/lib/constants/currency";
@@ -336,7 +337,7 @@ export type CreateProductInput = {
    * accepted — see the column comment in migration 00193.
    */
   region_lock_country: string | null;
-  spoken_language_code: string;
+  spoken_language_code: SpokenLanguageCode;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
    * column on `products`, which is anon-readable by column selection. The RPC
@@ -398,7 +399,7 @@ export type UpdateProductInput = {
    *  half too, and that is the load-bearing one: the RPC assigns every editable
    *  column, so an omitted code unlocks the product. */
   region_lock_country: string | null;
-  spoken_language_code: string;
+  spoken_language_code: SpokenLanguageCode;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
    * column on `products`, which is anon-readable by column selection. The RPC

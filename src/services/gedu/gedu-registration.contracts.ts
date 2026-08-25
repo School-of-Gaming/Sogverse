@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
@@ -9,9 +10,10 @@ import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
  *
  * Optional text fields are sent through as-is and the `register_gedu` RPC
  * NULLIFs them server-side; the form simply omits a field nobody filled in.
- * Language and location ids are validated for *shape* here — the DB (the
- * validate_profile_languages trigger and the locations FK) is the source of
- * truth for whether the values actually exist.
+ * Location ids are validated for *shape* here — the locations FK is the source
+ * of truth for whether a row exists. Spoken languages are different since
+ * 00199: the vocabulary is a Postgres enum, so this schema checks the values
+ * themselves against codegen and the RPC's argument type is that same enum.
  */
 export const registerGeduBody = z.object({
   email: z.string().email(),
@@ -27,7 +29,9 @@ export const registerGeduBody = z.object({
     .min(DISPLAY_NAME_MIN)
     .max(DISPLAY_NAME_MAX),
   phone: z.string().optional(),
-  spokenLanguages: z.array(z.string()).default([]),
+  spokenLanguages: z
+    .array(z.enum(Constants.public.Enums.spoken_language))
+    .default([]),
   locale: z.string().optional(),
   locationIds: z.array(z.string().uuid()).default([]),
   /**

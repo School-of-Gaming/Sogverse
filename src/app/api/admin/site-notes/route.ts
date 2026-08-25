@@ -11,6 +11,16 @@ import {
  * location_id. Either side is optional; sending only the half that's being
  * edited keeps the request shape obvious. RLS already restricts both writes
  * to admin, so no extra gating beyond the role posture is needed.
+ *
+ * **A field absent from the request is left alone — it is not written null.**
+ * The member row carries two independent things with two different owners: the
+ * venue's street address, which only an admin edits, and the family-facing site
+ * note, which the session-record panel writes through an RPC that admins and
+ * gedus share. Treating an omitted key as "set it to null" made those two
+ * writers clobber each other — an address save would blank a note somebody had
+ * just written, and the caller would have had to echo back a cached copy of the
+ * other field to avoid it, which is exactly the stale-copy bug the site-notes
+ * RPC dropped its address parameter to kill.
  */
 export const PATCH = defineRoute({
   posture: "role-gated",
@@ -28,18 +38,31 @@ export const PATCH = defineRoute({
     const locationId = body.location_id;
 
     if (body.member) {
-      const { error } = await supabase.from("site_details").upsert(
-        {
-          location_id: locationId,
-          address: body.member.address?.trim() || null,
-          notes: body.member.notes?.trim() || null,
-        },
-        { onConflict: "location_id" },
-      );
-      if (error) throw error;
+      // Only the keys the request actually carried. `upsert` builds its
+      // ON CONFLICT assignment list from the payload's own keys, so an omitted
+      // one is neither inserted nor updated — which is the whole of the
+      // leave-it-alone guarantee above.
+      const member: { location_id: string; address?: string | null; notes?: string | null } =
+        { location_id: locationId };
+      if (body.member.address !== undefined) {
+        member.address = body.member.address?.trim() || null;
+      }
+      if (body.member.notes !== undefined) {
+        member.notes = body.member.notes?.trim() || null;
+      }
+
+      // A `member` object naming neither field asks for nothing. Upserting the
+      // primary key alone is an UPDATE with an empty SET list, which Postgres
+      // refuses — so answer it as the no-op it is.
+      if (member.address !== undefined || member.notes !== undefined) {
+        const { error } = await supabase
+          .from("site_details")
+          .upsert(member, { onConflict: "location_id" });
+        if (error) throw error;
+      }
     }
 
-    if (body.staff) {
+    if (body.staff?.notes !== undefined) {
       const { error } = await supabase.from("site_staff_details").upsert(
         {
           location_id: locationId,

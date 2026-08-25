@@ -8,10 +8,6 @@
 
 - [ ] **We tell a parent their child's game account does not exist when we only mean we got no answer.** `lookupMinecraftUser` (`src/lib/mojang.ts`) and `lookupRobloxUser` (`src/lib/roblox.ts`) both collapse "the platform says no such account" and "the platform did not answer" into `null` — a connection failure, a 5xx and a rate-limit all take the same `.catch(() => null)` / `if (!res?.ok) return null` path as a genuine miss. Both verify routes then answer 404, and the row says "{platform} account not found. Check the username and try again." So during a Roblox rate-limit — per-IP across the whole serverless fleet, so not hypothetical — a parent is told something untrue about their child and invited to change a username that was correct. **This is a truthfulness bug, not a localization one**; it would still be wrong if every string were perfectly translated. **The conflation is deliberate and must be preserved for the write paths** — the comment at the Roblox lookup explains that letting the failure propagate would turn an outage into a 500 on every path that saves a username. Fortunately those two concerns separate cleanly: of the 9 routes calling these lookups, **7 only want the account id** (`?.uuid ?? null` / `?.userId ?? null`) and do not care why it is absent, so they need not change at all. Only the 2 verify routes need the distinction. Shape: add a result-returning variant beside each lookup that reports *why* it failed, keep the existing function as a thin wrapper over it so the 7 write paths are untouched, have the verify routes answer a distinct status for "no answer", and give the row a second message key (one new string × 5 locales). Roughly 50–70 lines across the two lib files, two routes, two services and the row.
 
-- [ ] **Convict the intermittent "content shifts down ~20-40px moments after load" bug, then remove the tripwire.** A dev-only diagnostic (`src/components/dev/layout-shift-tripwire.tsx`, mounted in the root layout) logs every browser-detected layout shift with attributed nodes and before/after rects (`[tripwire]` console lines; ring buffer on `window.__layoutShiftLog`), and separately logs any soft-nav landing with non-zero scrollY — the two suspect families from the 2026-08-04 investigation. Standing suspects, all live in prod code paths: (1) the spoken-languages filter row pops in (~38px) above the shop/schools product grids when an earlier page's failed server prefetch poisoned the shared query key — the row is rendered with no reserved box (`src/components/public/products/product-browse-filters.tsx`, unlike the Clear button right above it), and the global 60s `staleTime` defers the heal to a later mount/focus refetch, which is why reload-based repro can never show it; (2) Next.js soft navs preserve scroll offsets smaller than ~the header height (segment-visibility check), so pages land 20-40px high — the layout-shift API is blind to scroll, hence the landing channel. Related doc rot: ~10 comments claim seeded hooks "refetch on mount", which the global `staleTime` disables. When a sighting lands in the console, fix the named culprit, delete the tripwire, its layout.tsx mount, and this item.
-
-- [ ] **Decide the theme story — the "dark mode via next-themes" claim is false and the `.light` tokens are dead.** `next-themes` is not a dependency (zero hits in `package.json`/lock), nothing ever applies a `light` class, and `<html className="dark">` is hardcoded in `src/app/layout.tsx` — yet root `CLAUDE.md`'s Styling section says "Dark mode is default (class-based via next-themes)" and `globals.css` carries ~49 lines of `.light` tokens nothing can activate. Either light mode is planned (then wire a real theme switch and keep the tokens) or it isn't (then delete the token block). Correct the `CLAUDE.md` sentence as part of whichever pass — today it misleads every session that reads it.
-
 - [ ] **`DashboardSectionPill` hardcodes the header offset in three places, against the layout doc's own rule.** `sticky top-20` (`src/components/layout/dashboard-section-pill.tsx`), the `REFERENCE_OFFSET_PX = 144` scroll-spy constant, and every consuming section's `scroll-mt-32` all encode header-height-derived numbers as literals; the component's own comment admits the coupling ("keep these in sync"). The home pill and the product-detail sticky rail derive from `--header-height` correctly — converge this one on the same variable (`top-[var(--header-height)+...]`-style arbitrary values) so a header resize can't strand it.
 
 - [ ] **Re-decide the ~14 pre-existing loading skeletons against the loading rule.** The ~250ms reveal gate is gone (root CLAUDE.md now picks the affordance from what the call *is*, not from a timer), and `useRevealAfter` went with it. Roughly fourteen files still paint an instant solid-pulse placeholder over reads nobody has classified: auth pages, admin users/product pages, parent gamer page, ProfileTiles, groups panel, gamer picker. Each needs the same one question asked — cached, small-and-indexed, or genuinely slow — and most will end up rendering nothing in a correctly-sized box, as the locations picker now does. This is a judgement pass, not a mechanical one; do it with the queries open, not the components.
@@ -507,3 +503,50 @@ its leave affordance has a backend. One open question remains:
   notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
+
+## The filled button on Gmail iOS is unverified, and it is the one that matters
+
+Everything else about how our mail renders is now either machine-checked or has
+been looked at on a real client. This has been neither, and it is the highest-
+stakes surface we have: the filled brand button is what password reset and
+email verification ask the reader to press.
+
+The mechanism is known even though the outcome is not. The pin that keeps that
+label near-black is scoped to a selector that reaches Gmail's web and Android
+clients and **not** its iOS one, so on an iPhone the label falls back to its
+inline colour with nothing defending it. If that client flips label colours the
+way Android did — the original "sometimes white, sometimes black" fault — the
+arithmetic is unforgiving:
+
+| | contrast |
+|---|---|
+| `#121212` on brand orange, as authored | 9.58:1 |
+| `#ffffff` on brand orange, if flipped | **1.96:1** |
+
+At 1.96:1 the label is not hard to read, it is absent. **No label colour
+survives that flip** — the two candidates are 9.58 and 1.96, with nothing usable
+between them — so this cannot be designed around from here. It has to be seen
+first.
+
+- [ ] **Get one screenshot of the components reference from any iPhone.** Send
+  it from `/admin/testing` to anyone who has one. The controls at the top of that
+  mail are what make a single photo conclusive: if the filled button's label is
+  black, the exposure was theoretical and this item closes with a note saying so;
+  if it is white, we have a live fault on the two mails that recover an account.
+
+Worth being clear that this is **not a regression** — it predates the house-style
+work, which neither introduced nor fixed it, and it improved iOS in three other
+ways along the way (the footer's contrast, both panels' declared fills, and the
+addresses clients were linkifying). What changed is that the risk is now written
+down instead of unnoticed.
+
+A second, looser worry rides along: Gmail iOS is reported to full-invert email
+that is already dark. If our card inverts to light, brand orange sits at
+1.67–1.96:1 against it, which would take the header lockup with it. The selector
+fact and the contrast figures above are solid; that behaviour is reported rather
+than measured, and the same screenshot settles it.
+
+Apple Mail is expected to be fine and for a real reason rather than luck: the
+shell sets `color-scheme` and `supported-color-schemes`, which is exactly the
+mechanism Apple Mail honours to skip its own adjustment. Gmail ignores those
+tags, which is the whole story.

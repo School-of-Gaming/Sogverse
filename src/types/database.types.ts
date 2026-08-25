@@ -209,6 +209,57 @@ export type Database = {
           },
         ]
       }
+      gedu_contract_acceptances: {
+        Row: {
+          accepted_at: string
+          contract_version: string
+          gedu_id: string
+          signed_name: string
+        }
+        Insert: {
+          accepted_at?: string
+          contract_version: string
+          gedu_id: string
+          signed_name: string
+        }
+        Update: {
+          accepted_at?: string
+          contract_version?: string
+          gedu_id?: string
+          signed_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_contract_acceptances_contract_version_fkey"
+            columns: ["contract_version"]
+            isOneToOne: false
+            referencedRelation: "gedu_contract_versions"
+            referencedColumns: ["version"]
+          },
+          {
+            foreignKeyName: "gedu_contract_acceptances_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "gedu_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      gedu_contract_versions: {
+        Row: {
+          created_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       gedu_group_assignments: {
         Row: {
           created_at: string
@@ -1057,7 +1108,7 @@ export type Database = {
           registration_opens_at: string
           seat_count: number | null
           signup_threshold: number | null
-          spoken_language_code: string
+          spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           start_date: string | null
           status: Database["public"]["Enums"]["product_status"]
           tag: Database["public"]["Enums"]["product_tag"] | null
@@ -1089,7 +1140,7 @@ export type Database = {
           registration_opens_at: string
           seat_count?: number | null
           signup_threshold?: number | null
-          spoken_language_code: string
+          spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           tag?: Database["public"]["Enums"]["product_tag"] | null
@@ -1121,7 +1172,7 @@ export type Database = {
           registration_opens_at?: string
           seat_count?: number | null
           signup_threshold?: number | null
-          spoken_language_code?: string
+          spoken_language_code?: Database["public"]["Enums"]["spoken_language"]
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           tag?: Database["public"]["Enums"]["product_tag"] | null
@@ -1159,13 +1210,6 @@ export type Database = {
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "products_spoken_language_code_fkey"
-            columns: ["spoken_language_code"]
-            isOneToOne: false
-            referencedRelation: "spoken_languages"
-            referencedColumns: ["code"]
-          },
         ]
       }
       profiles: {
@@ -1182,7 +1226,7 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
-          spoken_languages: string[]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
         }
         Insert: {
@@ -1198,7 +1242,7 @@ export type Database = {
           phone?: string | null
           referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          spoken_languages?: string[]
+          spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
         }
         Update: {
@@ -1214,7 +1258,7 @@ export type Database = {
           phone?: string | null
           referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          spoken_languages?: string[]
+          spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
         }
         Relationships: [
@@ -1421,21 +1465,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      spoken_languages: {
-        Row: {
-          code: string
-          name: string
-        }
-        Insert: {
-          code: string
-          name: string
-        }
-        Update: {
-          code?: string
-          name?: string
-        }
-        Relationships: []
       }
       verification_email_requests: {
         Row: {
@@ -1686,7 +1715,9 @@ export type Database = {
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           search_blob: string | null
-          spoken_languages: string[] | null
+          spoken_languages:
+            | Database["public"]["Enums"]["spoken_language"][]
+            | null
           updated_at: string | null
         }
         Relationships: [
@@ -1759,6 +1790,7 @@ export type Database = {
           view_name: string
         }[]
       }
+      accept_gedu_contract: { Args: { p_version: string }; Returns: string }
       admin_enroll_participant: {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
@@ -1852,7 +1884,7 @@ export type Database = {
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
-          p_spoken_language_code: string
+          p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_status?: Database["public"]["Enums"]["product_status"]
           p_tag?: Database["public"]["Enums"]["product_tag"]
@@ -1881,6 +1913,10 @@ export type Database = {
       }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       get_admin_dashboard: { Args: never; Returns: Json }
+      get_admin_product_sessions: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json
@@ -1921,7 +1957,7 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
-          spoken_languages: string[]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
         }[]
         SetofOptions: {
@@ -1950,7 +1986,7 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
-          spoken_languages: string[]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
         }[]
         SetofOptions: {
@@ -2068,7 +2104,7 @@ export type Database = {
           p_phone: string
           p_roblox_user_id: string
           p_roblox_username: string
-          p_spoken_languages: string[]
+          p_spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           p_user_id: string
         }
         Returns: undefined
@@ -2157,7 +2193,7 @@ export type Database = {
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
-          p_spoken_language_code: string
+          p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_tag?: Database["public"]["Enums"]["product_tag"]
           p_timezone: string
@@ -2201,6 +2237,7 @@ export type Database = {
         | "esports"
         | "game_studio"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
+      spoken_language: "fi" | "sv" | "en" | "fr"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -2363,6 +2400,7 @@ export const Constants = {
         "game_studio",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
+      spoken_language: ["fi", "sv", "en", "fr"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },

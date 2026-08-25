@@ -14,21 +14,18 @@ import { GameAccountCard } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
+import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import {
-  useUpdateProfile,
-  useSendVerificationEmail,
-  useSpokenLanguages,
-} from "@/services/users";
+import { useUpdateProfile, useSendVerificationEmail } from "@/services/users";
 import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
-import { isGamerProfile, type ProfileUpdate, type SpokenLanguage } from "@/types";
+import { isGamerProfile, type ProfileUpdate, type SpokenLanguageCode } from "@/types";
 
 /**
  * A keyed location read, as the picker's own value shape. The two are already
@@ -40,11 +37,7 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
   return { location: row, ancestors: row.ancestors };
 }
 
-export function SettingsSectionContent({
-  initialSpokenLanguages,
-}: {
-  initialSpokenLanguages: SpokenLanguage[];
-}) {
+export function SettingsSectionContent() {
   const t = useTranslations('settings');
   const c = useTranslations('common');
   const { user, profile, refreshProfile } = useAuth();
@@ -60,14 +53,13 @@ export function SettingsSectionContent({
   const updateMyMc = useUpdateMyMinecraft();
   const { data: robloxAccount } = useMyRobloxAccount();
   const updateMyRoblox = useUpdateMyRoblox();
-  const { data: availableLanguages } = useSpokenLanguages({
-    initialData: initialSpokenLanguages,
-  });
 
   const [firstName, setFirstName] = useState(profile?.first_name ?? "");
   const [lastName, setLastName] = useState(profile?.last_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ? `+${profile.phone}` : "");
-  const [spokenLanguages, setSpokenLanguages] = useState<string[]>(profile?.spoken_languages ?? []);
+  const [spokenLanguages, setSpokenLanguages] = useState<SpokenLanguageCode[]>(
+    profile?.spoken_languages ?? [],
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -353,7 +345,6 @@ export function SettingsSectionContent({
           </Field>
 
           <SpokenLanguageCheckboxes
-            spokenLanguages={availableLanguages ?? []}
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
           />
@@ -526,6 +517,15 @@ export function SettingsSectionContent({
           />
         </>
       )}
+
+      {/* Last on the page, and that is a layout decision rather than a ranking
+          one. This is the only card here whose body is decided by a read the
+          server did not seed, so it is the only one that can grow after the
+          first paint — and at the foot of the page there is nothing under it
+          to push down when it does. Anywhere higher it would have to hold a
+          slot open at the taller of its two states, leaving a visible hole in
+          the shorter one. */}
+      {isGedu && user && <GeduContractSettingsCard geduId={user.id} />}
     </div>
   );
 }

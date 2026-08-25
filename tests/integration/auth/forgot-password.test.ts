@@ -145,7 +145,7 @@ describe("POST /api/auth/forgot-password", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         toEmail: "user@example.com",
-        subject: "Reset your Sogverse password",
+        subject: "Reset your School of Gaming password",
         htmlContent: expect.stringContaining(
           "https://test.sogverse.local/reset-password?token_hash=hashed-abc-123&type=recovery",
         ),
@@ -190,7 +190,7 @@ describe("POST /api/auth/forgot-password", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: "Nollaa Sogverse-salasanasi",
+        subject: "Nollaa School of Gaming -salasanasi",
       })
     );
   });
@@ -204,7 +204,7 @@ describe("POST /api/auth/forgot-password", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: "Reset your Sogverse password",
+        subject: "Reset your School of Gaming password",
       })
     );
   });
@@ -219,7 +219,7 @@ describe("POST /api/auth/forgot-password", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: "Nollaa Sogverse-salasanasi",
+        subject: "Nollaa School of Gaming -salasanasi",
       })
     );
   });

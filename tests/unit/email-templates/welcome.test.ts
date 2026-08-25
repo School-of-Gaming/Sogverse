@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "@/lib/email-templates/welcome";
+import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 
 let t: EmailTranslator;
@@ -94,6 +95,63 @@ describe("buildWelcomeParentEmail", () => {
     expect(html.indexOf(SHOP_URL)).toBeLessThan(rightCell);
     expect(html.indexOf(DASHBOARD_URL)).toBeGreaterThan(rightCell);
     expect(html.indexOf(VERIFICATION_URL)).toBeGreaterThan(html.indexOf(DASHBOARD_URL));
+  });
+
+  /**
+   * The outlined buttons' labels carry no class, and that is the fix rather
+   * than an omission. They used to carry a `background-clip:text` pin, which is
+   * what broke them: the pin restates a text colour as a background colour, and
+   * a client's dark theme darkens light backgrounds — so protecting `#ededed`
+   * fed it to the one pass that exists to darken `#ededed`. Measured on Gmail
+   * Android against the shipping markup; a class reappearing here is that bug
+   * coming back.
+   */
+  it("leaves the outlined buttons' light labels unpinned", () => {
+    const html = buildWelcomeParentEmail(t, "en", params);
+    const outlinedAnchors = [...html.matchAll(/<td width="50%"[^>]*>\s*<a ([^>]*)>/g)].map(
+      (match) => match[1],
+    );
+    expect(outlinedAnchors).toHaveLength(2);
+    for (const attrs of outlinedAnchors) {
+      expect(attrs).toContain(`color:${DARK_THEME.foreground}`);
+      expect(attrs).not.toContain("class=");
+    }
+    expect(html).not.toContain("cta-on-card");
+  });
+
+  /**
+   * The dark label keeps its pin, and the asymmetry is the point: `#121212` is
+   * dark enough that a dark theme leaves it alone as a background, so the same
+   * mechanism that destroys the light label carries this one intact. It fixed a
+   * real fault — the label used to arrive white in one inbox and black in the
+   * next — so removing it would undo that.
+   */
+  it("keeps the pin on the filled button's dark label", () => {
+    const html = buildWelcomeParentEmail(t, "en", params);
+    expect(html).toContain('class="cta-on-brand"');
+    expect(html).toContain("u + .body .cta-on-brand");
+    expect(html).toContain(
+      `background-color:${BRAND.primary};background-image:linear-gradient(${BRAND.primary},${BRAND.primary})`,
+    );
+  });
+
+  /**
+   * Both surfaces still declare a fill twice. Unproven as a fix on its own, but
+   * it is half of the configuration that measured clean (the check's V2), so it
+   * stays until something measures it away.
+   */
+  it("declares every button fill as a colour and a flat gradient", () => {
+    const html = buildWelcomeParentEmail(t, "en", params);
+    const outlined = [...html.matchAll(/<td width="50%"[^>]*style="([^"]*)"/g)].map(
+      (match) => match[1],
+    );
+    expect(outlined).toHaveLength(2);
+    for (const style of outlined) {
+      expect(style).toContain(`background-color:${DARK_THEME.card}`);
+      expect(style).toContain(
+        `background-image:linear-gradient(${DARK_THEME.card},${DARK_THEME.card})`,
+      );
+    }
   });
 
   /**

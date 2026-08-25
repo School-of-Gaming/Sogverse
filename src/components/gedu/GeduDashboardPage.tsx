@@ -58,6 +58,7 @@ export function GeduDashboardPage({
   initialRows,
   initialSummaries,
   certified,
+  contractAccepted,
 }: {
   initialRows: MyAssignedProductSessionRow[];
   /**
@@ -68,6 +69,13 @@ export function GeduDashboardPage({
    */
   initialSummaries: GeduAssignmentSummary[] | null;
   certified: boolean;
+  /**
+   * Has this gedu accepted the contract version in force? Resolved by the
+   * route, not read here, so the notice band is decided before the first paint
+   * — it sits above every section, and one that landed later would push the
+   * whole page down under the reader.
+   */
+  contractAccepted: boolean;
 }) {
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
@@ -86,12 +94,14 @@ export function GeduDashboardPage({
     [rows, summaries, locale, timeZone, now],
   );
 
-  if (assignments === null) return <GeduDashboardSkeleton />;
+  if (assignments === null)
+    return <GeduDashboardSkeleton contractAccepted={contractAccepted} />;
 
   return (
     <GeduDashboardPageBody
       assignments={assignments}
       certified={certified}
+      contractAccepted={contractAccepted}
       toolsCard={<MinecraftPasswordResetCard />}
       instantRoomCard={<CreateInstantRoomCard />}
     />

@@ -70,6 +70,14 @@ supabase/.temp/
 # migration nobody can order.
 supabase/reconciliations/
 
+# Working artifacts of the observation scripts (scripts/watch-registration.mjs,
+# supabase-compute-metrics.mjs, speed-insights.mjs). These are measurements of a
+# moment — one JSONL row per poll of a live event — so they are worth keeping on
+# disk and reading back later, but they are data rather than source: they never
+# affect a build, they would collide between machines, and a registration
+# opening writes thousands of rows nobody should review in a diff.
+scripts/output/
+
 # Logs
 logs
 *.log

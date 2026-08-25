@@ -1,7 +1,6 @@
 {
   "metadata": {
     "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattitaitoisten pelikasvattajien johdolla.",
-    "shortDescription": "School of Gaming – Kun ruutuajasta tulee laatuaikaa",
     "pages": {
       "signIn": "Kirjaudu sisään",
       "createAccount": "Luo tili",
@@ -35,7 +34,8 @@
       "roblox": "Roblox-pelisuunnitteluohjelma",
       "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste",
       "robloxSafeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
-      "robloxTerms": "Roblox-ohjelman käyttöehdot"
+      "robloxTerms": "Roblox-ohjelman käyttöehdot",
+      "geduContract": "Gedu-sopimus"
     }
   },
   "notFound": {
@@ -68,6 +68,8 @@
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
+    "goToMySog": "Avaa Oma SOG",
+    "goToDashboard": "Avaa hallintapaneeli",
     "viewDetails": "Näytä tiedot",
     "learnMore": "Lue lisää",
     "exploreClubs": "Tutustu kerhoihin",
@@ -236,6 +238,20 @@
         "heading": "Tuotetyypit"
       }
     },
+    "geduContract": {
+      "heading": "Gedu-sopimus",
+      "accepted": "Sopimus hyväksytty",
+      "acceptedDetail": "Versio {version}, hyväksytty {date}",
+      "notAccepted": "Ei ole hyväksynyt Gedu-sopimusta",
+      "notCurrentVersion": "Ei ole hyväksynyt voimassa olevaa sopimusta ({version})",
+      "previousVersion": "Hyväksynyt aiemmin version {version} {date}.",
+      "queueAccepted": "Sopimus hyväksytty {date}",
+      "queueNotAccepted": "Sopimusta ei ole hyväksytty",
+      "confirmTitle": "Hyväksytäänkö ilman hyväksyttyä sopimusta?",
+      "confirmBody": "Gedun hyväksyminen ei edellytä hyväksyttyä sopimusta, joten voit hyväksyä hänet silti.",
+      "confirmWarning": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
+      "confirmAction": "Hyväksy silti"
+    },
     "products": {
       "types": {
         "consumerClub": {
@@ -261,6 +277,7 @@
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
+        "online": "Etänä",
         "unlisted": "ei listattu",
         "untitled": "(nimetön)",
         "missingGeduFee": "Gedun palkkio puuttuu",
@@ -297,6 +314,7 @@
           "external_contract": "Ulkoinen sopimus (kunta)"
         },
         "fields": {
+          "publicUrl": "Julkinen linkki",
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
           "startDate": "Alkamispäivä",
@@ -315,7 +333,9 @@
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
           "visibility": "Näkyvyys"
-        }
+        },
+        "copyLink": "Kopioi julkinen linkki",
+        "copied": "Kopioitu"
       },
       "editPage": {
         "back": "Takaisin tuotteeseen",
@@ -422,20 +442,7 @@
       "locationPicker": {
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",
-        "edit": "Muokkaa",
         "noVenueHint": "Ei fyysistä toimipaikkaa. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
-        "memberNotesLabel": "Jäsenille näkyvät tiedot",
-        "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
-        "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
-        "memberNotesHint": "Näkyvät vanhemmille ja pelaajille tuotesivulla.",
-        "staffNotesLabel": "Henkilökunnan tiedot (vain ylläpitäjä + Gedu)",
-        "staffNotesFieldLabel": "Vain henkilökunnalle",
-        "staffNotesPlaceholder": "Porttikoodit, takaoven yksityiskohdat, huoneavaimet, keneltä kysyä neuvontatiskillä.",
-        "staffNotesHint": "Ei koskaan näytetä vanhemmille tai pelaajille.",
-        "addressLabel": "Osoite",
-        "addressPlaceholder": "Katu, postinumero, kaupunki",
-        "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
-        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle.",
         "chooseMunicipality": "Valitse kunta",
         "municipalityPickerTitle": "Valitse kunta",
         "chooseVenue": "Valitse toimipiste",
@@ -661,9 +668,11 @@
         "searchGedu": "Hae Geduja…",
         "searchMunicipality": "Hae kuntia…",
         "noResults": "Ei osumia.",
+        "search": "Hae tuotteita nimellä",
+        "searchPlaceholder": "Hae nimellä…",
         "showing": "Näytetään {count} / {total}",
-        "clear": "Tyhjennä suodattimet",
-        "noMatches": "{plural} eivät vastaa valittuja suodattimia."
+        "clear": "Tyhjennä",
+        "noMatches": "{plural} eivät vastaa hakua ja valittuja suodattimia."
       },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
@@ -788,6 +797,19 @@
           "standard": "Kerhot ja maksulliset tapahtumat myydään Suomen yleisellä verokannalla. Kanta määräytyy tuotetyypin mukaan, eikä sitä voi muuttaa täällä."
         },
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
+      },
+      "sessions": {
+        "title": "Kerrat",
+        "groupSelectorAria": "Valitse ryhmä",
+        "untitledGroup": "Nimetön ryhmä",
+        "noGroups": "Tällä tuotteella ei ole vielä ryhmiä, joten mitään ei ole kirjattu.",
+        "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+        "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
+        "addressLabel": "Toimipaikan osoite",
+        "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
+        "addAddress": "Lisää osoite",
+        "editAddress": "Muokkaa osoitetta",
+        "addressSaveFailed": "Osoitteen tallennus epäonnistui. Yritä uudelleen."
       }
     },
     "users": {
@@ -898,8 +920,7 @@
   },
   "auth": {
     "login": {
-      "welcomeTitle": "Tervetuloa Sogverseen",
-      "description": "Kirjaudu tilillesi",
+      "welcomeTitle": "Tervetuloa School of Gamingiin",
       "noAccountSignUp": "Eikö sinulla ole tiliä? <link>Rekisteröidy</link>",
       "signingIn": "Kirjaudutaan...",
       "emailPlaceholder": "sinä@example.com",
@@ -956,7 +977,7 @@
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
     "registerGedu": {
-      "title": "Luo Sogverse-pelikasvattajatilisi",
+      "title": "Luo School of Gaming -pelikasvattajatilisi",
       "certificationAlertTitle": "Tilisi on hyväksyttävä",
       "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
@@ -1305,9 +1326,9 @@
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
       "unmarkedLabel": "Ei merkintää",
-      "staffNoteLabel": "Vain Geduille",
+      "staffNoteLabel": "Gedut ja ylläpitäjät",
       "familyNoteLabel": "Perheet näkevät tämän",
-      "staffNoteTitle": "Muistiinpano kerrasta – vain Geduille",
+      "staffNoteTitle": "Muistiinpano kerrasta – Gedut ja ylläpitäjät",
       "staffNoteHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
       "staffNotePlaceholder": "Mitä toisen Gedun on hyvä tietää – ja mitä sinun on tarpeen kirjata luottamuksellisesti: välikohtaus, kiusaaminen tai huoli pelaajasta.",
       "attendanceLegend": "Läsnäolo",
@@ -1360,6 +1381,41 @@
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
       "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
       "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
+    },
+    "contract": {
+      "back": "Takaisin Omaan SOGiin",
+      "pageTitle": "Gedu-sopimuksesi",
+      "intro": "Nämä ovat ehdot, joiden mukaisesti työskentelet pelikasvattajana School of Gamingille. Sopimus on sitova suomeksi, joten se näytetään sellaisenaan riippumatta siitä, millä kielellä luet muuta sovellusta.",
+      "acceptLead": "Allekirjoittamalla vahvistat, että olet lukenut nämä ehdot ja hyväksyt ne sellaisinaan. Tallennamme vain sen, minkä version hyväksyit, milloin hyväksyit sen ja millä nimellä allekirjoitit.",
+      "acceptCta": "Allekirjoita, päivää ja hyväksy",
+      "acceptedTitle": "Olet hyväksynyt nämä ehdot",
+      "dialog": {
+        "title": "Allekirjoita ja hyväksy",
+        "description": "Lisää nimesi ja tämän päivän päivämäärä alla oleville riveille ja hyväksy sitten sopimus.",
+        "signatureLabel": "Allekirjoitus",
+        "signAction": "Allekirjoita napsauttamalla",
+        "dateLabel": "Päiväys",
+        "dateAction": "Päivää napsauttamalla",
+        "cancel": "Peruuta",
+        "confirm": "Hyväksy sopimus",
+        "error": "Hyväksyntä ei mennyt läpi. Tarkista yhteytesi ja yritä uudelleen."
+      },
+      "notice": {
+        "title": "Et ole vielä hyväksynyt Gedu-sopimustasi",
+        "body": "Työehtojesi lukeminen ja hyväksyminen on pakollista. Se vie pari minuuttia.",
+        "action": "Lue ja hyväksy sopimus"
+      },
+      "settings": {
+        "title": "Gedu-sopimus",
+        "description": "Ehdot, joiden mukaisesti työskentelet pelikasvattajana.",
+        "acceptedTitle": "Hyväksytty",
+        "acceptedDetail": "versio {version}, hyväksytty {date}",
+        "notAcceptedTitle": "Ei vielä hyväksytty",
+        "notAcceptedBody": "Et ole hyväksynyt voimassa olevaa sopimusta. Sen lukeminen ja hyväksyminen on pakollista.",
+        "readAndAccept": "Lue ja hyväksy",
+        "view": "Näytä sopimus"
+      },
+      "acceptedMeta": "Versio {version}, hyväksytty {date}"
     }
   },
   "productType": {
@@ -1414,11 +1470,16 @@
   },
   "help": {
     "title": "Apu",
-    "intro": "Vastauksia yleisimpiin Sogversea koskeviin kysymyksiin.",
+    "intro": "Vastauksia yleisimpiin School of Gamingia koskeviin kysymyksiin.",
     "contact": {
       "heading": "Tarvitsetko apua?",
-      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin Sogversen toimintaan liittyvissä kysymyksissä.",
+      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin School of Gamingin toimintaan liittyvissä kysymyksissä.",
       "emailLabel": "Sähköpostimme"
+    },
+    "about": {
+      "heading": "Mikä School of Gaming on?",
+      "body": "Tutustu kerhojen takana oleviin ihmisiin, lue ajatuksemme pelaamisesta ja oppimisesta sekä katso, miten tapaaminen käytännössä sujuu.",
+      "linkLabel": "Lue lisää meistä"
     },
     "faq": {
       "heading": "Usein kysytyt kysymykset",
@@ -2202,23 +2263,23 @@
     }
   },
   "email": {
-    "footer": "© {year} Sogverse. Kaikki oikeudet pidätetään.",
+    "footer": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
     "roleGedu": "Gedu",
     "passwordReset": {
-      "subject": "Nollaa Sogverse-salasanasi",
+      "subject": "Nollaa School of Gaming -salasanasi",
       "heading": "Nollaa salasanasi",
-      "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
+      "body": "Saimme pyynnön nollata School of Gaming -salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
       "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
       "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
       "button": "Nollaa salasana"
     },
     "pinReset": {
-      "subject": "Nollaa Sogverse-vanhempaintilin PIN-koodi",
+      "subject": "Nollaa School of Gaming -vanhempaintilin PIN-koodi",
       "heading": "Nollaa vanhempaintilin PIN-koodi",
-      "body": "Saimme pyynnön nollata Sogverse-vanhempaintilisi PIN-koodi. Napsauta alla olevaa painiketta valitaksesi uuden nelinumeroisen PIN-koodin.",
+      "body": "Saimme pyynnön nollata School of Gaming -vanhempaintilisi PIN-koodi. Napsauta alla olevaa painiketta valitaksesi uuden nelinumeroisen PIN-koodin.",
       "expiry": "Tämä linkki vanhenee 24 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
+import { GeduContractNotice } from "./gedu-contract-notice";
 import {
   GeduAssignmentsSectionView,
   type GeduAssignmentCardData,
@@ -54,11 +55,27 @@ import { UncertifiedToolsNotice } from "./uncertified-notice";
 export function GeduDashboardPageBody({
   assignments,
   certified,
+  contractAccepted,
   toolsCard,
   instantRoomCard,
 }: {
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
+  /**
+   * Has this gedu accepted the contract version in force? `false` puts the
+   * notice band above everything else on the page.
+   *
+   * **A prop rather than a query, because it has to be settled before the first
+   * paint.** The band sits at the top of the body, so one that arrived with a
+   * client read would push the entire dashboard down a frame after the reader
+   * started looking at it. The shell resolves it server-side and hands over the
+   * answer.
+   *
+   * It is deliberately *not* paired with `certified` into one "standing" flag:
+   * they are two independent facts written by two different actors, and
+   * acceptance gates nothing while certification gates the Tools section.
+   */
+  contractAccepted: boolean;
   /**
    * Has an admin certified this gedu? Gates the whole Tools section, because
    * every tool in it is a moderator power an unapproved account does not hold
@@ -126,6 +143,12 @@ export function GeduDashboardPageBody({
           this body is a client component. Page copy belongs in a page namespace
           regardless — `metadata` names documents, not headings. */}
       <h1 className="sr-only">{t("pageTitle")}</h1>
+
+      {/* Above the pill, and above everything a gedu came here to do. It is the
+          one errand on this page that is not optional, so it is the first thing
+          on it — and it is gone entirely once signed, leaving no hole where it
+          used to be. */}
+      {!contractAccepted && <GeduContractNotice />}
 
       {/* The pill names the page rather than any one section: with the heading
           set now varying per gedu, borrowing the first section's label would

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ProductBrowseRow, SpokenLanguage } from "@/types";
+import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { ProductBrowsePage } from "./product-browse-page";
 import { visibleCategories } from "./shop-categories";
@@ -24,13 +24,11 @@ import { useShopCategories } from "./use-shop-categories";
 interface ShopBrowseProps {
   initialProducts: ProductBrowseRow[];
   initialCounts: ParticipationCounts[];
-  initialSpokenLanguages: SpokenLanguage[];
 }
 
 export function ShopBrowse({
   initialProducts,
   initialCounts,
-  initialSpokenLanguages,
 }: ShopBrowseProps) {
   const { categories } = useShopCategories();
   return (
@@ -38,7 +36,6 @@ export function ShopBrowse({
       categories={visibleCategories(categories)}
       initialProducts={initialProducts}
       initialCounts={initialCounts}
-      initialSpokenLanguages={initialSpokenLanguages}
     />
   );
 }
