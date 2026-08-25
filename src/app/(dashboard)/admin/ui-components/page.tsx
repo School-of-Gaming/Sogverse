@@ -18,6 +18,8 @@ import {
   AlertTriangle,
   Info,
   Eye,
+  NotebookPen,
+  StickyNote,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -49,6 +51,11 @@ import {
   PersonChipList,
   type PersonChipListPerson,
 } from "@/components/ui/person-chip";
+import {
+  NewcomerBadge,
+  GamerNoteDot,
+  GamerNoteDialog,
+} from "@/components/member-flair";
 import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
 import type { MinecraftPasswordResetResult } from "@/services/minecraft-education/minecraft-education.contracts";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
@@ -836,15 +843,66 @@ function VoiceZonesDemo() {
   );
 }
 
+const DAY_MS = 86_400_000;
+
+/**
+ * A join stamp `days` before the demo clock. The flair fixtures are written in
+ * whole days ago rather than as literal timestamps, because a hardcoded ISO
+ * string ages: a badge pinned to a date in 2026 reads "28 days" this month and
+ * renders nothing the next, and the fade series would quietly go blank.
+ */
+function daysAgoIso(now: Date, days: number): string {
+  return new Date(now.getTime() - days * DAY_MS).toISOString();
+}
+
+/** Oliver — the fixture whose mic + camera arrive locked. */
+const PARTICIPANT_OLIVER_ID = "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47";
+/** Aino — the fixture carrying both a fresh join stamp and a Gedu note. */
+const PARTICIPANT_AINO_ID = "1a54d62e-828f-4a42-89f1-cc36185351b0";
+
+/**
+ * The staff-only overlay for the participant list, keyed by userId and kept
+ * *out* of `DEMO_PARTICIPANTS` on purpose — the fixture array is the shape a
+ * Daily token produces, and none of this rides that token (see the note-props
+ * comment on ParticipantRow). Holding it in a separate map beside the array is
+ * the same separation the props enforce, so the demo can't accidentally model
+ * a leak the real room does not have.
+ *
+ * Two rows carry a join stamp so the fade has something to compare against in
+ * place: Aino at three days is the bright end and also the one with a note,
+ * Oliver at twenty-two is nearly faded out and has none.
+ */
+const PARTICIPANT_NEWCOMER_DAYS: Record<string, number | undefined> = {
+  [PARTICIPANT_AINO_ID]: 3,
+  [PARTICIPANT_OLIVER_ID]: 22,
+};
+
 /**
  * The voice room sidebar's list: avatar, name, moderator controls (for
  * non-owner remote participants) and status indicators. The lock buttons are
  * live and toggle between the ghost and destructive button variants.
+ *
+ * The rows are rendered as a **Gedu** sees them, so they also carry the staff
+ * overlay: the newcomer badge beside the name and the note dot on the avatar.
+ * Every row passes `onOpenNote`, which is what makes each avatar a control —
+ * open one and the dialog edits this demo's local note map, so saving and
+ * clearing are both live here.
  */
 function ParticipantCardDemo() {
   const [locks, setLocks] = useState<Record<string, { audio: boolean; video: boolean }>>({
-    "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47": { audio: true, video: false },
+    [PARTICIPANT_OLIVER_ID]: { audio: true, video: false },
   });
+
+  // One clock for the whole demo, frozen at mount: every badge in the list
+  // measures its fade against the same instant, exactly as a real surface hands
+  // its rows one request-stable "now".
+  const [now] = useState(() => new Date());
+  const [notes, setNotes] = useState<Record<string, string>>({
+    [PARTICIPANT_AINO_ID]: "Very keen, first weeks — check she gets a turn.",
+  });
+  const [noteTarget, setNoteTarget] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   // Refs for simulated speaking glow — one per participant, and the count is
   // load-bearing: hooks can't loop, so a fixture row without its ref + glow
@@ -875,6 +933,7 @@ function ParticipantCardDemo() {
       <CardContent className="space-y-2">
         {DEMO_PARTICIPANTS.map((p, i) => {
           const lockState = locks[p.userId] ?? { audio: false, video: false };
+          const newcomerDays = PARTICIPANT_NEWCOMER_DAYS[p.userId];
           return (
             <ParticipantRow
               key={p.userId}
@@ -882,6 +941,12 @@ function ParticipantCardDemo() {
               lockState={lockState}
               isModView
               avatarRef={avatarRefs[i]}
+              newcomerJoinedAt={
+                newcomerDays === undefined ? null : daysAgoIso(now, newcomerDays)
+              }
+              flairNow={now}
+              hasNote={(notes[p.userId] ?? "") !== ""}
+              onOpenNote={() => setNoteTarget({ id: p.userId, name: p.userName })}
               onLock={(track, locked) =>
                 setLocks((prev) => ({
                   ...prev,
@@ -892,7 +957,287 @@ function ParticipantCardDemo() {
           );
         })}
       </CardContent>
+
+      {/* Mounted only while a row is open, so the dialog seeds its draft from
+          whichever member was clicked and the target can be a plain non-null
+          value rather than something every handler has to re-narrow. */}
+      {noteTarget !== null && (
+        <GamerNoteDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setNoteTarget(null);
+          }}
+          name={noteTarget.name}
+          note={notes[noteTarget.id] ?? ""}
+          lastEditedBy="Emma"
+          onSave={(text) =>
+            setNotes((prev) => ({ ...prev, [noteTarget.id]: text }))
+          }
+        />
+      )}
     </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Member flair — newcomer badge & Gedu notes                          */
+/* ------------------------------------------------------------------ */
+
+interface MemberFlairPerson {
+  id: string;
+  name: string;
+  /** Days since they joined the group, or `null` for a settled member. */
+  newcomerDays: number | null;
+}
+
+/**
+ * The roster the three note-indicator options are each drawn with — the *same*
+ * three people three times, because an option is only comparable against the
+ * others when the rows underneath it are identical.
+ *
+ * Real generated UUIDs, hardcoded: the avatar is an identicon hashed out of the
+ * id's hex bytes, so a readable stand-in like "flair-elias" does not render a
+ * different face, it renders a collapsed one — which would make every option
+ * here a false picture of the thing being judged.
+ */
+const MEMBER_FLAIR_PEOPLE: readonly MemberFlairPerson[] = [
+  { id: "1c0d7b09-cc5b-497c-bbed-dbc47b221990", name: "Elias", newcomerDays: null },
+  { id: "d4e6a21a-66e5-4f0a-8e0e-b25671ef741b", name: "Venla", newcomerDays: 4 },
+  { id: "36aff362-25a5-45da-8710-4b532296c398", name: "Matias", newcomerDays: null },
+];
+
+/**
+ * The starting notes. Elias has one and no badge, Venla has both, Matias has
+ * neither — the three combinations a real roster mixes, so each option is read
+ * against a note-bearing row, a note-and-badge row and a plain one at once.
+ * Elias's runs long on purpose: option C's whole claim is that a note is
+ * readable without a click, and a note that fits is not a test of it.
+ */
+const MEMBER_FLAIR_INITIAL_NOTES: Record<string, string> = {
+  "1c0d7b09-cc5b-497c-bbed-dbc47b221990":
+    "Sat out most of last session and asked to change teams — pair him with Venla and check in before the build starts.",
+  "d4e6a21a-66e5-4f0a-8e0e-b25671ef741b":
+    "Second session. Knows the mod inside out, does not know anyone here yet.",
+};
+
+/** The day stops the fade is sampled at, inside the 30-day window. */
+const NEWCOMER_FADE_STOPS = [0, 7, 14, 21, 28];
+
+/**
+ * The two staff-only marks, side by side: the fading newcomer badge and the
+ * three candidate ways of saying "there is a note about this person".
+ *
+ * All of it is one section on purpose. The fade is a series — a single badge
+ * tells you nothing, five at spaced ages tell you the whole curve — and the
+ * three note options are a decision to be made by looking at them together,
+ * with one shared note map behind them, so editing a note in one option shows
+ * up in the other two immediately.
+ */
+function MemberFlairDemo() {
+  const t = useTranslations("memberFlair");
+
+  // One frozen clock for every badge in the section, so the fade series is a
+  // series and not five independent readings of `Date.now()`.
+  const [now] = useState(() => new Date());
+  const [notes, setNotes] = useState<Record<string, string>>(
+    MEMBER_FLAIR_INITIAL_NOTES,
+  );
+  const [noteTarget, setNoteTarget] = useState<MemberFlairPerson | null>(null);
+
+  const noteOf = (person: MemberFlairPerson) => notes[person.id] ?? "";
+
+  return (
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          The fade, sampled across the window
+        </p>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          {NEWCOMER_FADE_STOPS.map((days) => (
+            <div key={days} className="flex items-center gap-2">
+              <NewcomerBadge joinedAt={daysAgoIso(now, days)} now={now} />
+              <span className="text-xs text-muted-foreground">Day {days}</span>
+            </div>
+          ))}
+        </div>
+        <p className="max-w-prose text-sm text-muted-foreground">
+          Opacity runs 1.0 on join day down to 0.3 at the end of the window, and
+          at day 30 the badge stops rendering altogether — there is no faint
+          permanent residue. The tooltip carries the exact age.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Three ways to mark a note — same three people in each
+        </p>
+        <div className="grid gap-6 md:grid-cols-3">
+          <FlairOption
+            title="Option A — Avatar dot"
+            tradeoff="Visible wherever the avatar already is, and the smallest footprint: no row width spent and no extra line. This is the one wired into the real participant rows."
+          >
+            {MEMBER_FLAIR_PEOPLE.map((person) => (
+              <FlairRow key={person.id} person={person} now={now}>
+                <button
+                  type="button"
+                  onClick={() => setNoteTarget(person)}
+                  aria-label={t("openNote", { name: person.name })}
+                  className="relative block shrink-0 rounded-full transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <Avatar className="h-8 w-8">
+                    <Identicon id={person.id} size={32} />
+                  </Avatar>
+                  {noteOf(person) !== "" && <GamerNoteDot />}
+                </button>
+              </FlairRow>
+            ))}
+          </FlairOption>
+
+          <FlairOption
+            title="Option B — Trailing icon"
+            tradeoff="A constant affordance, so a note can be started on anyone — but the weakest signal: the eye is on the faces, and a dimmed icon at the row's end is what it skips."
+          >
+            {MEMBER_FLAIR_PEOPLE.map((person) => (
+              <FlairRow
+                key={person.id}
+                person={person}
+                now={now}
+                trailing={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    onClick={() => setNoteTarget(person)}
+                    aria-label={t("openNote", { name: person.name })}
+                    title={t("openNote", { name: person.name })}
+                  >
+                    <NotebookPen
+                      className={cn(
+                        "h-4 w-4",
+                        noteOf(person) !== ""
+                          ? "text-info"
+                          : "text-muted-foreground opacity-50",
+                      )}
+                    />
+                  </Button>
+                }
+              >
+                <Avatar className="h-8 w-8 shrink-0">
+                  <Identicon id={person.id} size={32} />
+                </Avatar>
+              </FlairRow>
+            ))}
+          </FlairOption>
+
+          <FlairOption
+            title="Option C — Inline preview"
+            tradeoff="The note is readable without a click, which is the point — at the cost of the tallest rows, an uneven list, and no way in at all on a member who has no note yet."
+          >
+            {MEMBER_FLAIR_PEOPLE.map((person) => (
+              <div
+                key={person.id}
+                className="rounded-lg border bg-card p-2 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <Identicon id={person.id} size={32} />
+                  </Avatar>
+                  <FlairName person={person} now={now} />
+                </div>
+                {noteOf(person) !== "" && (
+                  <button
+                    type="button"
+                    onClick={() => setNoteTarget(person)}
+                    aria-label={t("openNote", { name: person.name })}
+                    className="mt-1.5 flex w-full items-center gap-1.5 rounded pl-11 text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <StickyNote
+                      className="h-3 w-3 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="min-w-0 truncate text-xs text-muted-foreground">
+                      {noteOf(person)}
+                    </span>
+                  </button>
+                )}
+              </div>
+            ))}
+          </FlairOption>
+        </div>
+      </div>
+
+      {noteTarget !== null && (
+        <GamerNoteDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setNoteTarget(null);
+          }}
+          name={noteTarget.name}
+          note={noteOf(noteTarget)}
+          lastEditedBy="Emma"
+          onSave={(text) =>
+            setNotes((prev) => ({ ...prev, [noteTarget.id]: text }))
+          }
+        />
+      )}
+    </div>
+  );
+}
+
+/** One candidate treatment: its rows, under a label, over its trade-off. */
+function FlairOption({
+  title,
+  tradeoff,
+  children,
+}: {
+  title: string;
+  tradeoff: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">{title}</p>
+      <div className="space-y-2">{children}</div>
+      <p className="text-xs text-muted-foreground">{tradeoff}</p>
+    </div>
+  );
+}
+
+/**
+ * A roster row stripped to what these options are being judged on: whatever the
+ * option puts at the row's start (a plain avatar, or a clickable one), then the
+ * name and its badge. Option C composes its own, because its note preview is a
+ * second line rather than something in this one.
+ */
+function FlairRow({
+  person,
+  now,
+  children,
+  trailing,
+}: {
+  person: MemberFlairPerson;
+  now: Date;
+  children: React.ReactNode;
+  /** Whatever the option puts at the row's far end, past the name. */
+  trailing?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-2 transition-colors">
+      {children}
+      <FlairName person={person} now={now} />
+      {trailing}
+    </div>
+  );
+}
+
+function FlairName({ person, now }: { person: MemberFlairPerson; now: Date }) {
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-2">
+      <span className="truncate text-sm font-medium">{person.name}</span>
+      {person.newcomerDays !== null && (
+        <NewcomerBadge joinedAt={daysAgoIso(now, person.newcomerDays)} now={now} />
+      )}
+    </div>
   );
 }
 
@@ -1906,6 +2251,17 @@ export default function AdminUIComponentsPage() {
             />
           </div>
         </div>
+      </Section>
+
+      <Section title="Member flair — newcomer badge & Gedu notes">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          Staff-only marks a Gedu reads off a roster before they read a name.
+          Neither ever reaches a family surface: the data behind them comes from
+          staff-scoped reads, so a parent&rsquo;s page has nothing to pass. The
+          note dialog below is live against this page&rsquo;s local state —
+          saving an empty note clears it.
+        </p>
+        <MemberFlairDemo />
       </Section>
 
       <Section title="Alert">

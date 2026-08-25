@@ -12,6 +12,7 @@ import {
   type GameAccountExternalId,
   type GamePlatform,
 } from "@/components/game-account";
+import { NewcomerBadge, GamerNoteDot } from "@/components/member-flair";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
@@ -54,6 +55,47 @@ export interface ParticipantRowProps {
   avatarRef?: Ref<HTMLDivElement>;
   onMute?: (track: "audio" | "video") => void;
   onLock?: (track: "audio" | "video", locked: boolean) => void;
+
+  /* ---- Staff-only overlay ------------------------------------------------
+     The member flair below is *not* participant identity, which is why it sits
+     here rather than in ParticipantRowData: everything in that shape arrives
+     over the Daily token's `user_name`, which Daily broadcasts to every peer in
+     the room — children included. These facts are the opposite kind of thing.
+     A group join stamp and the existence of a private Gedu note are staff
+     working memory, and they reach the client through a staff-scoped fetch a
+     family's client never makes and RLS would refuse it anyway.
+
+     **So they must never ride the token.** Putting a join date or a note flag
+     into `user_name` would hand both to every gamer in the call, permanently,
+     for the life of the token — a leak no client-side gate could take back.
+     Keeping them as separate props on the *props* (a viewer-dependent overlay,
+     resolved by whoever renders the list) rather than on the participant makes
+     that boundary structural: a row assembled from a token simply has nothing
+     to pass, and the flair renders as absence.
+
+     Absence is the resting state throughout — every one of these is optional,
+     and with `onOpenNote` omitted the row renders exactly as it did before the
+     overlay existed. */
+
+  /**
+   * The member's `group_joined_at`, for the fading newcomer badge. `null` (or
+   * omitted) draws nothing, as does a stamp past the newcomer window.
+   */
+  newcomerJoinedAt?: string | null;
+  /**
+   * The clock the badge's fade is measured against — the caller's, so a room
+   * full of rows agrees with the page around it instead of each row reading its
+   * own `new Date()`. Only consulted when `newcomerJoinedAt` is set.
+   */
+  flairNow?: Date;
+  /** Whether a Gedu note exists for this member in this group. */
+  hasNote?: boolean;
+  /**
+   * Opens the note dialog. Its presence is what makes the avatar a control at
+   * all: a viewer with no note access passes nothing and gets today's plain
+   * avatar, with no button semantics for a screen reader to announce.
+   */
+  onOpenNote?: () => void;
 }
 
 export function ParticipantRow({
@@ -63,8 +105,13 @@ export function ParticipantRow({
   avatarRef,
   onMute,
   onLock,
+  newcomerJoinedAt,
+  flairNow,
+  hasNote,
+  onOpenNote,
 }: ParticipantRowProps) {
   const c = useTranslations("common");
+  const f = useTranslations("memberFlair");
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
   // Show the game identity for gedu/gamer participants, but only when the token
   // actually carried a platform. An absent platform == no game context (an
@@ -82,11 +129,31 @@ export function ParticipantRow({
         p.isLocal && "bg-accent/50",
       )}
     >
-      {/* Avatar */}
+      {/* Avatar — the ref div stays the outermost element whatever the note
+          affordance does, because the speaking glow writes box-shadow and
+          border-color straight onto it every animation frame. Wrapping *it*
+          would move the glow off the face; the button goes inside, around the
+          Avatar, and carries the accessible name for the dot (which is
+          decorative). Same size and geometry either way, so a viewer with note
+          access and one without see rows of identical shape. */}
       <div ref={avatarRef} className="shrink-0 rounded-md">
-        <Avatar className="h-8 w-8">
-          <Identicon id={p.userId} size={32} />
-        </Avatar>
+        {onOpenNote ? (
+          <button
+            type="button"
+            onClick={onOpenNote}
+            aria-label={f("openNote", { name: p.userName })}
+            className="relative block rounded-full transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <Avatar className="h-8 w-8">
+              <Identicon id={p.userId} size={32} />
+            </Avatar>
+            {hasNote && <GamerNoteDot />}
+          </button>
+        ) : (
+          <Avatar className="h-8 w-8">
+            <Identicon id={p.userId} size={32} />
+          </Avatar>
+        )}
       </div>
 
       {/* Name + identity — takes all the flexible width; the name truncates
@@ -100,6 +167,16 @@ export function ParticipantRow({
         <span className="truncate text-sm font-medium">
           {p.userName}
         </span>
+        {/* Directly after the name, before the identity slot: the badge is a
+            fact about the person, and it is `shrink-0`, so the name goes on
+            surrendering width to truncation first — exactly as it already does
+            beside the identity slot and the Parent badge. Those two are
+            mutually exclusive by role and this one is orthogonal to both, so a
+            parent's row can carry it too; a room does not gain a wider slot
+            when a newcomer joins it. */}
+        {newcomerJoinedAt != null && flairNow !== undefined && (
+          <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
+        )}
         {gamePlatform && (
           <GameUsernameRow
             platform={gamePlatform}
