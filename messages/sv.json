@@ -839,7 +839,7 @@
       "untitledProduct": "Namnlös produkt",
       "gamerDetails": {
         "title": "Personuppgifter",
-        "description": "Korrigera gamerns födelsemånad och födelseår samt kön.",
+        "edit": "Redigera personuppgifter",
         "birthMonthLabel": "Födelsemånad",
         "birthYearLabel": "Födelseår",
         "genderLabel": "Kön",

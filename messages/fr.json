@@ -839,7 +839,7 @@
       "untitledProduct": "Produit sans titre",
       "gamerDetails": {
         "title": "Informations personnelles",
-        "description": "Corrigez le mois et l’année de naissance enregistrés pour ce joueur, ainsi que son genre.",
+        "edit": "Modifier les informations personnelles",
         "birthMonthLabel": "Mois de naissance",
         "birthYearLabel": "Année de naissance",
         "genderLabel": "Genre",

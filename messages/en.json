@@ -839,7 +839,7 @@
       "untitledProduct": "Untitled product",
       "gamerDetails": {
         "title": "Personal details",
-        "description": "Correct the birth month and year on file, and the gender recorded for this gamer.",
+        "edit": "Edit personal details",
         "birthMonthLabel": "Birth month",
         "birthYearLabel": "Birth year",
         "genderLabel": "Gender",

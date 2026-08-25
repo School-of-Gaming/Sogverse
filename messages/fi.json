@@ -839,7 +839,7 @@
       "untitledProduct": "Nimetön tuote",
       "gamerDetails": {
         "title": "Henkilötiedot",
-        "description": "Korjaa pelaajan syntymäkuukausi ja -vuosi sekä sukupuoli.",
+        "edit": "Muokkaa henkilötietoja",
         "birthMonthLabel": "Syntymäkuukausi",
         "birthYearLabel": "Syntymävuosi",
         "genderLabel": "Sukupuoli",
