@@ -369,7 +369,9 @@ function LoadedSessions({
           member's note is open, and a switch must not carry that across. */}
       {selectedGroupMembers !== null && (
         <GroupMembersCard
-          key={selected.id}
+          // Prefixed: SessionFeed below is keyed by the same group id, and two
+          // siblings must not share a key.
+          key={`members-${selected.id}`}
           groupId={selected.id}
           members={selectedGroupMembers}
         />
