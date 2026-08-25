@@ -7,6 +7,44 @@ import {
 } from "./member-flair.contracts";
 
 /**
+ * The SQLSTATEs a note write can come back with whose `message` is a raw
+ * database string, written for a log and never for a Gedu.
+ *
+ * `42501` is the RPC's own refusal and reads as the literal word `Forbidden`;
+ * `23514` is the length CHECK and reads as a constraint name. Both are real
+ * paths — an admin can move a member out of a group while a Gedu has a stale
+ * roster open, and the Gedu's next save is refused — and both would otherwise
+ * be printed, untranslated, into a dialog in a Finnish or French session.
+ */
+const OPAQUE_NOTE_WRITE_SQLSTATES = new Set(["42501", "23514"]);
+
+/**
+ * A write refusal the surface has nothing true to say about.
+ *
+ * It carries **no message on purpose**. The only alternatives were showing the
+ * database's own English words or inventing a locale string per SQLSTATE for a
+ * distinction a Gedu cannot act on differently — the roster moved under them,
+ * and reopening the page is the answer either way. So the failure arrives with
+ * nothing to print, and the dialog falls back to the localized copy it already
+ * has; an error that *does* carry a message still shows what it said, because
+ * the mapping is a named list rather than a blanket. The original rides on
+ * `cause`, so a console and any future logging keep the SQLSTATE.
+ *
+ * **This is deliberate rather than accidental, which is the point.** Without
+ * `.throwOnError()` the client hands back the parsed error *body* — a plain
+ * object that is not an `Error` instance, however `PostgrestError` types it —
+ * so today a raw SQL message happens to miss the dialog's `err.message` branch
+ * anyway. One `.throwOnError()`, or one library release that always constructs
+ * the class, and `Forbidden` would be on a Gedu's screen in a Finnish session.
+ */
+class UnexplainedNoteWriteError extends Error {
+  constructor(cause: unknown) {
+    super("", { cause });
+    this.name = "UnexplainedNoteWriteError";
+  }
+}
+
+/**
  * The two staff-only marks that are genuinely **new** — the group staff overlay
  * and the (group, member) note write.
  *
@@ -64,6 +102,11 @@ export class MemberFlairService {
    * note is how a gedu retires guidance that no longer applies, and the absence
    * of a row is what "no note" means on every surface. The trimming happens
    * server-side, so a caller may hand over whatever is in the box.
+   *
+   * **A refusal is mapped here, once, for all three surfaces.** The gedu page,
+   * the voice room and the admin sessions panel all hand the rejection straight
+   * to the same dialog, so this is the single point where a raw SQL message is
+   * stopped from reaching a reader — see {@link UnexplainedNoteWriteError}.
    */
   async setGamerGroupNote({
     groupId,
@@ -80,7 +123,12 @@ export class MemberFlairService {
       p_note: note,
     });
 
-    if (error) throw error;
+    if (error) {
+      if (OPAQUE_NOTE_WRITE_SQLSTATES.has(error.code)) {
+        throw new UnexplainedNoteWriteError(error);
+      }
+      throw error;
+    }
 
     return gamerGroupNoteResult.parse(data);
   }

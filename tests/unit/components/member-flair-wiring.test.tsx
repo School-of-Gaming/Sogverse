@@ -12,8 +12,16 @@ import messages from "@/../messages/en.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { GeduProductPage } from "@/components/gedu/session-details/GeduProductPage";
+// The real service, reached past the barrel this file mocks — the refusal test
+// below drives it over a fake transport so the error the dialog meets is the one
+// supabase-js actually builds.
+import { MemberFlairService } from "@/services/member-flair/member-flair.service";
 import type { GeduGroupFeed } from "@/services/gedu-sessions";
 import type { GeduAssignedProduct, ProductType } from "@/types";
+import {
+  createFetchStubbedClient,
+  postgrestJson,
+} from "../../mocks/postgrest-fetch";
 
 /**
  * ============================================================================
@@ -379,5 +387,43 @@ describe("gedu product page — writing a note", () => {
         screen.queryByRole("heading", { name: NOTE_DIALOG_TITLE }),
       ).toBeNull(),
     );
+  });
+
+  it("shows the localized line when the database refuses the write, never its own words", async () => {
+    // A real path, not a hypothetical: an admin moves a member out of the group
+    // while a Gedu has this roster open, and the next save meets the write
+    // RPC's target check. Postgres answers `42501` with the literal word
+    // `Forbidden`, which is English, untranslated, and written for a log.
+    //
+    // The whole chain runs here — the real service over a fake transport, the
+    // real dialog — because the mapping and the fallback live in two files and
+    // only their meeting point is the claim.
+    const fetchMock = vi.fn<typeof fetch>();
+    fetchMock.mockResolvedValue(
+      postgrestJson(
+        { message: "Forbidden", code: "42501", details: null, hint: null },
+        403,
+      ),
+    );
+    const service = new MemberFlairService(createFetchStubbedClient(fetchMock));
+    setNote.mockImplementation((vars: { participantId: string; note: string }) =>
+      service.setGamerGroupNote({ groupId: IDS.group, ...vars }),
+    );
+
+    renderPage("consumer_club");
+    fireEvent.click(noteButton("Siiri"));
+    fireEvent.click(noteDialog().getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(
+        noteDialog().getByText("An unexpected error occurred"),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByText("Forbidden")).toBeNull();
+    // The dialog stays open on a failure, with Save live again: the draft is
+    // still in the box and reopening the page is the fix.
+    expect(
+      noteDialog().getByRole("button", { name: "Save" }),
+    ).toHaveProperty("disabled", false);
   });
 });

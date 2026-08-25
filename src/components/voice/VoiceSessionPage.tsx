@@ -4,14 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
-import { GamerNoteDialog, showsNewcomerBadge } from "@/components/member-flair";
+import { GamerNoteDialog } from "@/components/member-flair";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
-import {
-  VoiceMemberFlairProvider,
-  type VoiceMemberFlair,
-} from "@/components/voice/VoiceMemberFlairProvider";
-import { useNow } from "@/providers";
+import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
+import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
 import {
   useGroupStaffOverlay,
   useSetGamerGroupNote,
@@ -85,57 +82,37 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
    * badge is last on the identity line, the note button is the left edge of the
    * right-packed trailing group), which is why nothing waits for it.
    */
-  const now = useNow();
   const { data: overlay } = useGroupStaffOverlay(groupId, isModerator);
   const setGamerNote = useSetGamerGroupNote(groupId);
 
   /**
-   * The document turned into the context value — and the two shapes are
-   * deliberately different, so this is where one becomes the other.
+   * One instant, taken at mount and never advanced — **the room deliberately
+   * does not tick**, which is why this is not the shared `useNow()`.
    *
-   * The RPC answers with a product type and one record per active member; the
-   * context wants one clock, the seat-holder set, and three sparse maps. **The
-   * seat-holder set is the document's own keys**: the RPC emits an entry for
-   * every active participation, note or no note, stamp or no stamp, so those
-   * keys already name exactly the people a note may be written about. A second
-   * ids array beside the map would be a second list of the same people to keep
-   * true.
-   *
-   * **The clubs-only gate is applied here and can live nowhere else** — the
-   * participant list and its rows know nothing about a product, which is the
-   * whole reason `product_type` travels on this document. On a camp or an event
-   * the newcomers map goes over empty; the notes are ungated and go over whole.
-   * A null product type (an unknown group answered to an admin) is "no badge"
-   * for the same reason.
+   * The only thing this clock feeds is the newcomer badge, and the badge answers
+   * in whole days. A 30-second tick would rebuild the flair object on every one
+   * (a fresh Set and three fresh maps), re-rendering the whole participant list
+   * on a page holding live media, a dnd-kit board and the speaking-glow
+   * analyser — all so a badge could cross a day boundary that a room living an
+   * hour or two will almost never reach, and that nobody is watching for when it
+   * does. Freezing it also keeps every row's badge agreeing with every other
+   * row's for the whole session.
    */
-  const flair = useMemo<VoiceMemberFlair | null>(() => {
-    if (overlay == null) return null;
+  const [now] = useState(() => new Date());
 
-    const drawsNewcomerBadge =
-      overlay.product_type !== null && showsNewcomerBadge(overlay.product_type);
-    const newcomers: Record<string, string> = {};
-    const notes: Record<string, string> = {};
-    const noteEditors: Record<string, string> = {};
+  const openNote = useCallback((userId: string, name: string) => {
+    setNoteTarget({ id: userId, name });
+  }, []);
 
-    for (const [userId, member] of Object.entries(overlay.members)) {
-      if (drawsNewcomerBadge && member.group_joined_at !== null) {
-        newcomers[userId] = member.group_joined_at;
-      }
-      if (member.note !== null) notes[userId] = member.note;
-      if (member.note_updated_by_first_name !== null) {
-        noteEditors[userId] = member.note_updated_by_first_name;
-      }
-    }
-
-    return {
-      now,
-      members: new Set(Object.keys(overlay.members)),
-      newcomers,
-      notes,
-      noteEditors,
-      onOpenNote: (userId, name) => setNoteTarget({ id: userId, name }),
-    };
-  }, [overlay, now]);
+  /**
+   * The document turned into the context value. The derivation is next door —
+   * the clubs-only gate, the seat-holder set and the absence convention are
+   * rules with their own unit tests, and none of them needs a React tree.
+   */
+  const flair = useMemo(
+    () => deriveVoiceMemberFlair(overlay, now, openNote),
+    [overlay, now, openNote],
+  );
 
   const handleLeave = useCallback(async () => {
     setLeaving(true);
