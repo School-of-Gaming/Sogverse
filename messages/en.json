@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Groups",
+        "attendanceAndReports": "Attendance & reports",
         "subtitle": "Drag each participant into the group they’ll play with. Add Gedus to lead each group.",
         "addGroup": "Add group",
         "loading": "Loading…",

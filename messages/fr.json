@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Groupes",
+        "attendanceAndReports": "Présences et comptes rendus",
         "subtitle": "Faites glisser chaque participant dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
         "addGroup": "Ajouter un groupe",
         "loading": "Chargement…",

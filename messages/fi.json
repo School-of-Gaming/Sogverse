@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Ryhmät",
+        "attendanceAndReports": "Läsnäolot ja koosteet",
         "subtitle": "Vedä jokainen osallistuja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
         "addGroup": "Lisää ryhmä",
         "loading": "Ladataan…",

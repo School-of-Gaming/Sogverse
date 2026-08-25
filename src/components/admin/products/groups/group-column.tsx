@@ -222,7 +222,12 @@ export function GroupColumn({
                         "h-7 shrink-0 gap-1 px-2 text-xs text-muted-foreground",
                       )}
                     >
-                      {c("viewDetails")}
+                      {/* Named for what is behind it, not "View details": with
+                          the sessions panel gone, this link is the only way
+                          from here to a group's attendance and session
+                          reports — the two things an admin comes looking for
+                          every month — and a generic label hides that. */}
+                      {t("attendanceAndReports")}
                       <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
                     </Link>
                   )}

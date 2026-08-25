@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Grupper",
+        "attendanceAndReports": "Närvaro och sammanfattningar",
         "subtitle": "Dra varje deltagare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
         "addGroup": "Lägg till grupp",
         "loading": "Laddar…",
