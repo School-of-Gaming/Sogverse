@@ -1,4 +1,7 @@
-import { SESSION_FEED_GAMER_IDS } from "@/components/gedu/session-feed/mock-fixtures";
+import {
+  SESSION_FEED_ADULT_ID,
+  SESSION_FEED_GAMER_IDS,
+} from "@/components/gedu/session-feed/mock-fixtures";
 import type { VoiceParticipant } from "./hooks/types";
 import type { VoiceZone } from "@/types";
 
@@ -23,8 +26,15 @@ export function isVoiceRoomScenario(value: string): value is VoiceRoomScenario {
 
 /** The Gedu whose view the staff scenario is. */
 export const VOICE_ROOM_GEDU_ID = "4a84d001-b789-41f5-ace3-cfcffa139869";
-/** Marja — the parent holding a seat of her own, as on the gedu roster. */
-const ADULT_ID = "0a1f4a4b-6f4c-4a6b-9a1f-8d3a5f2c7b10";
+/**
+ * Marja — the parent holding a seat of her own.
+ *
+ * Imported rather than restated, like the children's ids beside it: the
+ * identicon is hashed from the id, so a second literal for the same fixture
+ * person would give her a different face here than on the gedu roster, and this
+ * file's whole claim is that the two surfaces show the same crowd.
+ */
+const ADULT_ID = SESSION_FEED_ADULT_ID;
 
 const DAY_MS = 86_400_000;
 

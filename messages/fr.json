@@ -1446,7 +1446,6 @@
   "memberFlair": {
     "newcomer": "Arrivée récente",
     "newcomerTooltip": "Arrivée récente dans ce groupe — {days, plural, =0 {aujourd’hui} one {il y a # jour} other {il y a # jours}}",
-    "hasNote": "Fait l’objet d’une note pour les Gedus",
     "openNote": "Note pour les Gedus au sujet de {name}",
     "noteTitle": "Note au sujet de {name}",
     "notePrivacy": "Cette note est visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",

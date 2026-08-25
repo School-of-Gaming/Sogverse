@@ -67,8 +67,9 @@ export function NewcomerBadge({
  * **Laid out 2×2 rather than in a line.** A row of four pips is nearly as wide
  * as the word beside it, and on a 360px participant row that is width the name
  * needs; a square block is a quarter of that and reads as one object rather
- * than as four things to count. It also drains like a block — the last pip to
- * go is the bottom right — so the shape itself changes as the month passes,
+ * than as four things to count. It also drains like a block — the bottom right
+ * goes first and the top left is the last to survive — so the shape itself
+ * changes as the month passes,
  * which a line of dimming dots does not do nearly as visibly.
  *
  * The decorative half of the badge — the tooltip already carries the exact age,

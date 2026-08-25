@@ -1490,7 +1490,6 @@
   "memberFlair": {
     "newcomer": "SuvwI’ chu’",
     "newcomerTooltip": "ghomvamDaq SuvwI’ chu’ — {days, plural, =0 {DaHjaj muvpu’} one {# jaj ret muvpu’} other {# jaj ret muvpu’}}",
-    "hasNote": "Gedupu’vaD qonta’ tu’lu’",
     "openNote": "{name} qonta’ — Gedupu’vaD",
     "noteTitle": "{name} qonta’",
     "notePrivacy": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq reH ratlh qonta’.",

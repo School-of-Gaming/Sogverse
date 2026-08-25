@@ -82,18 +82,18 @@ interface ParticipantRosterRowProps {
    */
   newcomerJoinedAt?: string | null;
   /**
-   * The instant the newcomer fade is measured against — the caller's
+   * The instant the newcomer badge's meter is measured against — the caller's
    * request-stable clock, the same one everything else on the page answers off.
    */
   flairNow?: Date;
   /**
-   * Whether a Gedu has written a note about this person in this group. Drives
-   * the dot on the avatar and nothing else; the note's *text* never reaches this
-   * row, which only opens the dialog that holds it.
+   * Whether a Gedu has written a note about this person in this group. It only
+   * lights the note button at the end of the row; the note's *text* never
+   * reaches this row, which merely opens the dialog that holds it.
    *
    * Another staff-only overlay fact, arriving with the roster rather than after
-   * it — so the dot is painted in the first frame and never pops in over a face
-   * the reader is already looking at.
+   * it — so the button is painted in its final state in the first frame, rather
+   * than lighting up under a reader who is already looking at the row.
    */
   hasNote?: boolean;
   /**

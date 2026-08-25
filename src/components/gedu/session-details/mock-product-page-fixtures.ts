@@ -141,7 +141,7 @@ export interface GeduProductPageFixture {
    * question about a week-long camp everybody started on the same Monday has no
    * useful answer. The two roster scenarios beside it are `null` for the other
    * reason — each exists to show one thing about the identity cell, and a badge
-   * or a dot on those rows would only be something else to look at.
+   * or a note button on those rows would only be something else to look at.
    */
   memberFlair: MemberFlairFixture | null;
 }
@@ -749,11 +749,11 @@ const ROSTER_SCENARIO_SPECS: readonly EntrySpec[] = [
  * to sit beside the Parent badge on the same wrapping line without either
  * displacing the other.
  *
- * **Two notes, and one of them is on a newcomer on purpose.** A note dot on the
- * avatar and a badge beside the name are two marks on one row, and the question
- * a reviewer actually has is whether that row still reads as one person rather
- * than as a decorated one — which cannot be answered from two rows each wearing
- * one mark. Siiri carries both. Emil's note is the second, so a note is also
+ * **Two notes, and one of them is on a newcomer on purpose.** A lit note button
+ * at the end of a row and a badge beside the name are two marks on one row, and
+ * the question a reviewer actually has is whether that row still reads as one
+ * person rather than as a decorated one — which cannot be answered from two
+ * rows each wearing one mark. Siiri carries both. Emil's note is the second, so a note is also
  * seen on a row that has nothing else on it.
  *
  * The two notes are the ones a Gedu really writes: how to pair somebody, and

@@ -1034,7 +1034,7 @@ const DAY_MS = 86_400_000;
  * A join stamp `days` before the demo clock. The flair fixtures are written in
  * whole days ago rather than as literal timestamps, because a hardcoded ISO
  * string ages: a badge pinned to a date in 2026 reads "28 days" this month and
- * renders nothing the next, and the fade series would quietly go blank.
+ * renders nothing the next, and the badge series would quietly go blank.
  */
 function daysAgoIso(now: Date, days: number): string {
   return new Date(now.getTime() - days * DAY_MS).toISOString();

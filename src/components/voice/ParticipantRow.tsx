@@ -120,9 +120,6 @@ export function ParticipantRow({
 }: ParticipantRowProps) {
   const c = useTranslations("common");
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
-  // Narrowed into a boolean so the badge group can decide whether it renders at
-  // all — an empty group would still cost a gap on either side of itself.
-  const showNewcomerBadge = newcomerJoinedAt != null && flairNow !== undefined;
   // Show the game identity for gedu/gamer participants, but only when the token
   // actually carried a platform. An absent platform == no game context (an
   // instant room, or a product whose topic is about no single game account) →
@@ -139,7 +136,7 @@ export function ParticipantRow({
         // is a direct child so that `order` can put the game identity in two
         // different places at two widths (see the identity slot below), which
         // no amount of nesting can do.
-        "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border p-2 transition-colors",
+        "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border p-2 transition-colors sm:gap-x-3",
         p.isLocal && "bg-accent/50",
       )}
     >
@@ -152,13 +149,22 @@ export function ParticipantRow({
         </Avatar>
       </div>
 
-      {/* The name. It is the one thing on this row allowed to truncate, and it
-          is the *only* one: everything beside it is `shrink-0`, so a long name
-          gives way rather than abbreviating a game account or clipping a
-          badge. No `flex-1` — the slack belongs after the badges, so the
-          identity sits directly against the name instead of being flung to the
-          far edge of a wide row. */}
-      <span className="order-2 min-w-0 truncate text-sm font-medium">
+      {/* The name — the one thing on this row allowed to truncate, and the
+          *only* one: everything beside it is `shrink-0`, so a long name gives
+          way rather than abbreviating a game account or clipping a badge.
+
+          **`flex-1` paired with `max-w-fit` is what makes that true in a
+          wrapping row, and neither half works alone.** A wrapping flex
+          container decides its line breaks from each item's *hypothetical*
+          size — before any shrinking — and `truncate` sets `white-space:
+          nowrap`, so a plain truncating name contributes its full text width to
+          that decision and pushes the trailing controls onto a second line
+          instead of giving way. `flex-1` sets the basis to zero, so the name
+          contributes nothing to line-breaking and absorbs slack afterwards;
+          `max-w-fit` then caps that growth at the name's own width, so it never
+          takes more room than it needs and the identity still sits directly
+          against it rather than being flung to the far edge of a wide row. */}
+      <span className="order-2 min-w-0 max-w-fit flex-1 truncate text-sm font-medium">
         {p.userName}
       </span>
 
@@ -197,36 +203,41 @@ export function ParticipantRow({
         />
       )}
 
-      {/* Newcomer badge, then the Parent badge — adjacent at every width, so
-          they travel as one group. On a wide row that puts the badge directly
-          after the game account; on a phone, directly after the name. The
-          identity slot and the Parent badge are mutually exclusive by role and
-          the newcomer badge is orthogonal to both, so an adult's row can carry
-          it too — a room does not gain a wider slot when a newcomer joins it.
-          The group renders only when it holds something: an always-present
-          empty div would still take a gap on each side of itself, which is
-          precisely the dead space this row is meant to be rid of. The row's
-          slack is parked on the status cluster instead, for the same reason. */}
-      {(showNewcomerBadge || p.role === "customer") && (
-        <div className="order-3 flex shrink-0 items-center gap-2 sm:order-4">
-          {showNewcomerBadge && (
-            <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
+      {/* Newcomer badge, then the Parent badge — two direct children sharing one
+          `order`, so they sit adjacent at every width without a wrapper. On a
+          wide row that puts the badge directly after the game account; on a
+          phone, directly after the name. The identity slot and the Parent badge
+          are mutually exclusive by role and the newcomer badge is orthogonal to
+          both, so an adult's row can carry it too — a room does not gain a
+          wider slot when a newcomer joins it.
+
+          **No wrapping div, deliberately.** A group would have to decide
+          whether it renders at all, and the only honest answer depends on
+          whether the badge is inside its 30-day window — which is the badge's
+          own arithmetic, not this row's. Left as direct children, a badge that
+          renders `null` is simply not a flex item and costs nothing; a group
+          would have cost a gap on either side of itself for a stamp that had
+          quietly expired. */}
+      {newcomerJoinedAt != null && flairNow !== undefined && (
+        <NewcomerBadge
+          joinedAt={newcomerJoinedAt}
+          now={flairNow}
+          className="order-3 sm:order-4"
+        />
+      )}
+      {p.role === "customer" && (
+        /* The same badge and word the roster row and admin chips draw for a
+           customer, read off the shared role constants. Rendered inside a
+           flex div — a Badge is a div, and this exact badge inside a <p>
+           was a hydration failure once already. */
+        <Badge
+          className={cn(
+            ROLE_BADGE_STYLES.customer,
+            "order-3 shrink-0 px-1.5 py-0 text-[10px] font-normal sm:order-4",
           )}
-          {p.role === "customer" && (
-            /* The same badge and word the roster row and admin chips draw for a
-             customer, read off the shared role constants. Rendered inside a
-             flex div — a Badge is a div, and this exact badge inside a <p>
-             was a hydration failure once already. */
-            <Badge
-              className={cn(
-                ROLE_BADGE_STYLES.customer,
-                "shrink-0 px-1.5 py-0 text-[10px] font-normal",
-              )}
-            >
-              {c(ROLE_LABEL_KEYS.customer)}
-            </Badge>
-          )}
-        </div>
+        >
+          {c(ROLE_LABEL_KEYS.customer)}
+        </Badge>
       )}
 
       {onOpenNote && (

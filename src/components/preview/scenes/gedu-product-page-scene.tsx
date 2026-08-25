@@ -360,7 +360,7 @@ export function GeduProductPageScene({
    * A Gedu writing, rewriting or retiring a note about one member.
    *
    * The text arrives trimmed, and an empty one is a real action rather than a
-   * no-op: it **deletes** the key, which is what puts the row back to no dot and
+   * no-op: it **deletes** the key, which is what puts the row back to an unlit note button and
    * is how a Gedu drops guidance that no longer applies. The editor stamp moves
    * with it — this scene's viewer is Sanna, so a note she rewrites now says so,
    * and a cleared note takes its attribution with it rather than leaving a name
@@ -403,14 +403,14 @@ export function GeduProductPageScene({
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       // Only where the scenario has flair at all — the club. Passed whole at
-      // mount, badges and dots included, so nothing arrives on a row after the
+      // mount, badges and note buttons included, so nothing arrives on a row after the
       // roster has painted; the live page hands it over in the same staff-scoped
       // read as the roster itself, so it behaves the same way there.
       memberFlair={
         fixture.memberFlair === null
           ? undefined
           : {
-              // The scene's one frozen instant, so the newcomer fade is measured
+              // The scene's one frozen instant, so the newcomer meter is measured
               // against the same clock the sessions were laid out around.
               now,
               newcomers: fixture.memberFlair.newcomers,

@@ -137,7 +137,7 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  */
 export interface RosterMemberFlair {
   /**
-   * The instant the newcomer fade is measured against. The caller's, so the
+   * The instant the newcomer badge's meter is measured against. The caller's, so the
    * badge answers off the same clock as everything else on the page — a scene's
    * frozen instant, a live page's request-stable now.
    */
@@ -280,7 +280,7 @@ interface GeduProductPageBodyProps {
    * note write-back. Omitted, the rail's roster is untouched.
    *
    * It travels with the roster rather than after it: both records are handed in
-   * whole at first paint, so a badge or a dot never lands on a row the reader is
+   * whole at first paint, so a badge or a lit note button never lands on a row the reader is
    * already looking at.
    */
   memberFlair?: RosterMemberFlair;
@@ -727,7 +727,7 @@ function rosterAvatarUrl(
  * right order: the Join and the copy-all row sit above the roster inside this
  * card, so the two urgent things are still the first two things.
  *
- * **It owns the one note dialog.** The dot lives on a row, but the dialog does
+ * **It owns the one note dialog.** The button lives on a row, but the dialog does
  * not: eight rows holding eight dialogs would be eight parsers and eight drafts
  * for a surface that can only ever have one open. The card holds *which* member
  * is open instead, and the dialog reads that member's note out of the record it

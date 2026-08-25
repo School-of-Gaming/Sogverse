@@ -238,6 +238,19 @@ header so the next reader does not go looking for the missing loop entry.
 - **Markdown notes.** Turned down in the dialog's own header: a note is read in the box it
   was typed in, and offering headings would invite composing a document rather than
   jotting.
+- **Serving the gedu product page from the overlay RPC instead of widening the roster
+  documents.** Named here because an implementer *will* notice it partway through:
+  `get_group_staff_overlay` already answers exactly the record that page wants — join stamp,
+  note text, last editor's first name — keyed by participant id, for a group whose id the
+  page already holds. One extra query there would delete the roster-widening work on **two**
+  of the three readers, their contracts and their db coverage, leaving only the admin
+  per-product read genuinely needing the new fields (it spans every group of a product at
+  once, which a per-group overlay cannot answer). This was seen and is **not** taken. It is
+  a scope change the owner has not ruled on; it costs the gedu page a third round trip and
+  its own landing moment for data that rides free on a document the page already reads; and
+  it would leave the same three facts arriving in two differently-shaped documents depending
+  on the surface. Build what is written. If the case still looks compelling with the code in
+  front of you, it is a question for the owner, not a decision to take mid-build.
 - **Reusing `is_voice_group_moderator` as the new RPCs' second gate.** It computes exactly
   the predicate we want (admin, or a Gedu assigned to any group of the product) but its
   name would make a note read look like a voice concern, and it is referenced by voice RLS
@@ -302,9 +315,12 @@ fact read out of the current schema.
 14. **The voice room is passed a group id and nothing else.** `VoiceRoomContext` exposes
     `groupId: string | null` (null = instant room) and `isModerator: boolean`; there is no
     product type anywhere in it.
-15. **`ParticipantList` is where a room-wide lookup belongs**, not `ParticipantRow` — the
-    list already owns the batched Roblox render lookup for exactly this reason, and its
-    header explains why a hook per row is wrong.
+15. **A room-wide lookup is resolved once for the whole list, never per row** — the list
+    already owns the batched Roblox render lookup for exactly that reason, and its header
+    explains why a hook per row is wrong. **The staff overlay obeys the same rule from one
+    level further out**: every component in the room is a pure consumer of context, so the
+    list resolves the overlay through the flair context and the *page* that mounts the room
+    is what fetches it and fills that context in.
 16. **Mutations must invalidate related queries in `onSuccess`,** using the key hierarchy so
     a parent key cascades.
 17. **A button must not visually re-enable between the click and the action finishing** —
@@ -629,6 +645,13 @@ Regenerated, never hand-edited. It will gain `participations.group_joined_at`, t
   `note_updated_by_first_name: string | null`.
 - Re-export the new member-flair contract types from the new service, following the
   existing convention that consumers import their types from `@/types`.
+- **Only one of the three roster shapes is hand-written, and it is that one.**
+  `GeduAssignedProductRosterEntry` is a pinned interface living in this file, so it has to be
+  widened by hand in step with its zod schema. The gedu feed's roster entry and the admin
+  snapshot's participation detail are **derived** from their contracts and merely re-exported
+  from here, so widening those two schemas is the whole of the edit — there is no second
+  declaration to keep in sync, and writing one would manufacture exactly the drift the
+  derivation exists to prevent.
 
 ### Contracts
 
@@ -729,10 +752,16 @@ is the common action. An inline preview line answers "what does it say" without 
 the cost of a list whose rows are no longer the same height, and it has the same no-way-in
 gap. A constant icon has neither problem, and its lit/dimmed state carries the marker.
 
-**A consequence worth stating: the note's *text* never reaches a row.** The inline candidate
-was the only one that needed it, so the roster read and the voice room's staff overlay carry
-a flag per member and nothing more. The dialog is mounted by the page and seeds its draft
-from the overlay's note map.
+**A consequence worth stating: the note's *text* never reaches a *row*.** The inline
+candidate was the only one that needed it there, so a row is handed a boolean and nothing
+else — enough to light its button, nothing that could leak into a list.
+
+**The payload is not thinned to match.** Both the roster documents and the staff overlay
+carry the note's **text** and its last editor's first name, keyed by participant id, because
+the dialog is mounted once by the page rather than by each row and has to seed its draft
+from somewhere. Emitting a bare `has_note` boolean would leave the dialog with nothing to
+open onto and force a second read per member. The thinning happens one layer down, where the
+page derives each row's props from the map it holds.
 
 ### The voice room shows the note only on seat holders
 
@@ -740,11 +769,18 @@ from the overlay's note map.
 the session, anyone covering with them, and any admin who has dropped in. A note is keyed to
 `(group, participant)` and the write RPC refuses a target who does not currently sit in that
 group — so a note button on a Gedu's own row is an affordance whose save can only fail. The
-staff overlay the room fetches therefore carries **the group's seat-holder ids** beside its
-notes and join stamps, and the participant list renders the button only for those. Gating on
+participant list therefore renders the button only for the group's seat holders. Gating on
 the row's role instead would be wrong in a real case: a Gedu can hold a seat in another
 group, and the question is membership of *this* one. The gedu product page needs no such gate
 — its roster is seat holders by construction.
+
+**The seat-holder set needs nothing new on the overlay: it is the members map's own keys.**
+The RPC emits one entry per **active** participation of the group — note or no note, stamp
+or no stamp — so its keys already name exactly the people a note may be written about. Do
+not add an ids array beside the map; a second list of the same people is a second thing that
+has to stay true. (The room's flair context does carry a distinct member set, because *its*
+maps are sparse — only those with a note, only those inside the window — but that is a
+property of the derived value, and the shell derives the set from the document's keys.)
 
 ### Where the marks sit on a row
 
@@ -770,37 +806,79 @@ it rather than eyeballing it.
 
 ### Gedu product details page (`src/components/gedu/session-details/`)
 
-`ParticipantSessionRow` is an alias of `GeduAssignedProductRosterEntry`, so the three new
-fields arrive on the roster rows with no plumbing once the contract and the interface
-carry them. The row renders:
+**There is no plumbing to invent — it is built, and it is one prop.** The page body takes an
+optional `RosterMemberFlair` (exported from the same module) and derives every row's flair
+from it: the clock the badges measure against, `newcomers` (ISO join stamps by participant
+id), `notes` (note text by participant id), an optional editor map, and
+`onSaveNote(participantId, text)`. The body owns which member's note is open, mounts **one**
+`GamerNoteDialog` for the whole roster, and hands each row a join stamp, the clock, a
+`hasNote` boolean and an open callback — the note's text stops at the body. Rows do not read
+flair off the roster entry, and this phase must not make them start.
 
-- `NewcomerBadge` when `showsNewcomerBadge(product.product_type)` **and**
-  `newcomerPresence(entry.group_joined_at, now)` is non-null. The badge sits on the identity
-  line and must not move anything already painted — the field arrives in the same payload
-  as the name, so nothing shifts after paint, which is the same argument the adult-variant
-  row already makes.
-- the chosen note indicator when `entry.note` is non-null, and a click target that opens
-  `GamerNoteDialog` with `{ name, note, lastEditedBy: entry.note_updated_by_first_name,
-  onSave }`.
-- `onSave` calls `useSetGamerGroupNote`. The dialog already holds its own `committing`
-  flag and awaits the save, so pass the mutation's promise through and do not re-enable on
-  `isPending`.
+Every map is keyed by participant id and **absence is how "none" is spelled**, which is the
+one coercion this step has to get right: a NULL from the RPC is *left out* of the map, never
+written in as a null. The dialog's `note` is a `string` where `""` means "nothing written
+yet", its `lastEditedBy` is optional, and its `onSave` receives the trimmed draft and is
+awaited.
+
+So the work here is the data shell, not the row:
+
+- **The roster this page renders comes from the *feed* RPC, not from the assignment
+  document.** The shell reads both — the assignment RPC answers "which group here is mine
+  and who else teaches this product", the feed RPC answers everything about that one group —
+  and then substitutes the feed's roster, and its headcount, into the assignment document
+  before handing it down, because the feed is the copy a roster write invalidates. Widening
+  only `get_gedu_assigned_product` would therefore ship a page with **no flair and no
+  error**: the fields would be sitting on a roster the shell throws away. Both readers carry
+  them, which is what the parity rule in the migration already asks for — this is why it
+  matters here.
+- **Build the flair object in the shell, from the clock the feed was built against**, so the
+  badges answer off the page's own instant rather than inventing one and disagreeing with
+  everything around them.
+- **The clubs-only gate lives here, not in the row.** On a non-club product hand over an
+  **empty newcomers map** and leave the notes exactly as they are — a note is not gated by
+  product type.
+- **`onSaveNote` passes the mutation's promise straight through.** The dialog holds its own
+  `committing` flag, awaits the save and closes only once it lands, so the wiring must not
+  add a disabled state derived from `mutation.isPending`.
+
+**The row needs no clock call and no window check.** `NewcomerBadge` reads the day count
+itself and renders `null` past the window — and for a member with no stamp at all — so a
+caller simply renders the badge; the row's only condition is having a clock to hand it.
+Nothing in the row calls the arithmetic directly, and nothing should start to.
 
 ### Voice room (`src/components/voice/`)
 
-- **`ParticipantList` owns the fetch**, not `ParticipantRow` — the same argument the list's
-  header already makes about the batched Roblox lookup. Call
-  `useGroupStaffOverlay(groupId, { enabled: groupId !== null && isModerator })`, both read
-  from `useVoiceRoom()`. `groupId === null` is an instant room and has no group to ask
-  about; `isModerator` is the client's copy of the token's `is_owner` and is used **only to
-  avoid firing a request that would be refused** — the RPC's `42501` is the actual boundary.
+**The seam is the page that mounts the room, not the participant list.** Every component
+inside the room is a pure consumer of context now: the list reads the overlay through
+`useVoiceMemberFlair()` and hands each row its own answer, and it has no way to fetch one —
+so the fetch, the derivation and the note dialog all belong to the client page component
+behind `/voice/group/[id]`, the one that already owns the token, the join and the leave. It
+wraps the room in `VoiceMemberFlairProvider` and mounts the dialog beside it. **The
+voice-room preview scene is the exact model to copy**: it builds the same context value from
+fixtures, mounts the dialog outside the provider's subtree, and drives the note against local
+state. Swap the fixture for the query and the shape is done.
+
+- Call the overlay read with the group id and the moderator flag from `useVoiceRoom()`,
+  enabled only when there is a group to ask about (`groupId === null` is an instant room)
+  and the viewer is a moderator. That flag exists **only to avoid firing a request that
+  would be refused** — the RPC's `42501` is the actual boundary — and a viewer with no
+  overlay is handed `null`, which is the room exactly as it rendered before any of this
+  existed.
+- **The context value's shape is fixed, and it is not the RPC's.** The provider takes one
+  clock, a seat-holder set, a stamp map, a note map, an optional editor map and an open-note
+  callback; the RPC answers with a product type and one record per member. Turning one into
+  the other **is** this step; neither shape moves to meet the other, and nothing is added to
+  the context that the document does not already imply.
+- **The seat-holder set is the document's keys** — see the section above. No ids array.
 - Merge into each row by `userId`, which is `profiles.id` (the token sets `user_id` to it,
   which is what `canReceive.byUserId` already keys on).
-- Gate the badge on `showsNewcomerBadge(overlay.product_type)`.
-- The row's identity slot keeps its fixed geometry — the flair must not change a row's
-  height when the overlay lands. Give it a place that is already sized, exactly as the game
-  figure box is.
-- The note dialog opens from the row and saves through the same mutation.
+- **The clubs-only gate is applied where the context value is built, and can live nowhere
+  else**: the participant list and its rows know nothing about a product, which is why the
+  overlay carries `product_type` at all. On a non-club product hand over an **empty
+  newcomers map**. The notes are ungated and go over unchanged.
+- The dialog is the page's; the row's callback opens it, and it saves through the same
+  mutation the gedu page uses.
 - **Nothing about this rides the Daily token.** Do not add a slot to `user_name`.
 
 ### Admin product details groups panel (`src/components/admin/products/groups/`)
@@ -817,20 +895,37 @@ The gedu-product scene and any voice scene keep feeding the same props from fixt
 fixture id that feeds an identicon **must be a real generated UUID hardcoded as a literal**
 — a readable stand-in renders a degenerate avatar and makes the demo a false picture.
 
+**One fixture is narrower than the rule, and the rule wins.** The gedu product page's
+scenarios give flair to the **club** only; the camp scenario passes none at all, its comment
+reading the absence as the clubs-only *badge* rule made visible. But the two marks are gated
+differently — a note is not gated by product type — so as things stand no scene anywhere
+shows a note on a camp, and the fixture quietly implies a gate the product does not have.
+The plan is the authority: the live camp page carries notes. When the wiring lands, give the
+camp scenario notes with an empty newcomers map — which is precisely the shape the live shell
+hands a non-club product, and the only way a scene can show the two gates coming apart.
+
 ### Locale strings
 
-The `memberFlair` namespace is already being added in the parallel UI work
-(`newcomer`, `newcomerTooltip`, `hasNote`, `openNote`, `noteTitle`, `notePrivacy`,
-`notePlaceholder`, `noteLastEdited`). Additional strings this phase may need, all decided
-*with* the indicator choice:
+**None are needed.** The `memberFlair` namespace already carries everything both marks use,
+in all five locales: `newcomer`, `newcomerTooltip`, `openNote`, `noteTitle`, `notePrivacy`,
+`notePlaceholder` and `noteLastEdited`. Two candidates were considered alongside the
+indicator choice and the choice retired both:
 
-- an **empty-state affordance label** if the chosen indicator doubles as an "add a note"
-  control on members who have none (`memberFlair.addNote`);
-- a **save-failure line** if the surfaces want copy more specific than `common.unexpectedError`.
+- an **"add a note" label** for rows with nothing written yet. The note button is present on
+  every row and carries the *same* accessible name lit or dimmed, because opening an empty
+  note **is** the add flow — one label covers both states, and a second one would assert
+  they are two different actions.
+- a **save-failure line**. The dialog surfaces the thrown error's own message and falls back
+  to the shared `common.unexpectedError`, which is what every other write on these surfaces
+  does; a bespoke string would be one more thing to translate saying the same thing.
 
-Anything added goes into **all five** locale files (`en`, `fi`, `sv`, `fr`, `tlh`) in the
-same change, with no emoji — a glyph is a `lucide-react` icon rendered beside the
-translated text.
+There was a ninth key, `memberFlair.hasNote` — a screen-reader label belonging to the
+indicator that lost — and it has been **deleted from all five locale files on this branch**.
+Nothing can reach it, and the wiring must not bring it back.
+
+If a string does turn out to be needed after all, it goes into **all five** locale files
+(`en`, `fi`, `sv`, `fr`, `tlh`) in the same change, with no emoji — a glyph is a
+`lucide-react` icon rendered beside the translated text.
 
 ---
 
@@ -840,11 +935,24 @@ translated text.
 
 **New: `tests/db/member-flair.test.ts`.**
 
+**Reserve its fixture UUIDs first.** `tests/db/product-helpers.ts` carries an allocation
+registry in its header — every db test file owns a sub-range of the reserved id space, because
+CI runs each file in its own worker and two files sharing a product id race on the primary
+key. Pick a free sub-range, write it into that registry with a line saying what each id is
+for, and use it. Keeping the registry current is part of adding the file, not a tidy-up
+afterwards.
+
 *The trigger:*
 - inserting a participation with a `group_id` stamps `group_joined_at`;
 - inserting with `group_id NULL` leaves it NULL;
-- moving between two groups of the same product **re-stamps** (strictly greater than the
-  previous value);
+- moving between two groups of the same product **re-stamps** — strictly greater than the
+  previous value, and **that comparison only holds across transactions**. `now()` is the
+  *transaction* timestamp, so two moves inside one statement or one RPC call stamp
+  identically; what makes "strictly greater" true here is that the test's two moves are
+  separate round trips. Say so beside the assertion, so a reader who later meets a
+  same-transaction pair of moves reaches for a second round trip rather than "fixing" the
+  trigger to `clock_timestamp()` — which would buy nothing and break the column's parity
+  with `signed_up_at`;
 - moving to `group_id NULL` **clears** it;
 - deleting the group (the `ON DELETE SET NULL` cascade) clears it;
 - an UPDATE that does not touch `group_id` does **not** re-stamp;
@@ -862,7 +970,13 @@ translated text.
 
 *The note write:*
 - writes and reads back, with `note_updated_by_first_name` naming the writer;
-- a second Gedu on the product overwrites it and becomes the named editor;
+- a **second editor** on the product overwrites it and becomes the named one. This cannot
+  be written as "a second Gedu" out of the box: **the db seed carries exactly one gedu
+  account**. Two honest ways through, and the file header should say which was taken —
+  create a second gedu in the file's own setup (an admin-API user, promoted, torn down in
+  the same hook, which other db tests already do for their fixtures), or make the **admin**
+  the second editor, which costs nothing extra because the admin-parity case below already
+  needs an admin writing this note;
 - a trimmed-empty save **deletes** the row;
 - a note for a participant **not in that group** is refused `42501` (the target half —
   note in the file header that this is what stands in for a write-IDOR loop entry, since
@@ -897,7 +1011,9 @@ no entry).
 
 ### Unit (`tests/unit/`)
 
-- `member-flair-newcomer.test.ts` already covers `newcomerPresence`. Extend it with
+- `member-flair-newcomer.test.ts` already covers `newcomerDaysIn` — the clock's whole public
+  surface, which answers in whole days or `null` and is called by the badge, never by a row.
+  Extend it with
   `showsNewcomerBadge`: true for both club types, false for camp and event, exhaustive over
   the enum so a fifth product type fails the test rather than defaulting to "no badge".
 - A wiring test in the style of `groups-panel-wiring.test.tsx`: a roster row with a note
@@ -964,17 +1080,18 @@ independently verifiable.
 9. `src/services/member-flair/` — service, keys, queries, barrel.
 10. `showsNewcomerBadge` in `src/components/member-flair/newcomer.ts`, exported from its
     barrel; extend the existing unit test.
-11. Promote the gedu product page: live shell passes real roster fields into the same props
-    the scene feeds.
-12. Promote the voice room: `ParticipantList` fetches the overlay and merges by `userId`;
-    rows render flair; the dialog saves through the mutation.
+11. Promote the gedu product page: the live shell builds the flair object out of the
+    **feed's** roster and the page's clock, and hands it to the same prop the scene feeds.
+12. Promote the voice room: the page behind `/voice/group/[id]` fetches the overlay, derives
+    the context value, wraps the room in the flair provider and mounts the dialog — the
+    preview scene's shape, with a query where its fixture is. Rows merge by `userId` and
+    render flair; the dialog saves through the mutation.
 13. Promote the admin groups panel chip.
-14. Locale strings for anything the chosen indicator needs, in all five files.
-15. Unit tests for the wiring.
-16. **Take the note-indicator question to the owner** with the scenes open. Ship the choice.
-17. Lint, type-check, `npm run test`. Merge to `dev` (`--no-ff`, subject `Merge the member
+14. Unit tests for the wiring. **No locale work**: the namespace is complete, and the key
+    the losing indicator needed is already gone from all five files.
+15. Lint, type-check, `npm run test`. Merge to `dev` (`--no-ff`, subject `Merge the member
     flair into dev`) and release via `/pr-dev-to-main`.
-18. **Delete this file**, and propose the follow-ups below to the owner by headline — only
+16. **Delete this file**, and propose the follow-ups below to the owner by headline — only
     the ones they name go into `TODO.md`.
 
 ---
@@ -986,8 +1103,9 @@ independently verifiable.
   write to `participations` touches it.
 - Every pre-existing participation row has `group_joined_at IS NULL` after the migration,
   and nothing badges on launch day.
-- A Gedu and an admin see the newcomer badge on club products on all three surfaces, fading
-  across 30 days and gone after; neither sees it on a camp or an event.
+- A Gedu and an admin see the newcomer badge on club products on all three surfaces, its pip
+  meter draining across the 30-day window and the badge gone after it; neither sees it on a
+  camp or an event.
 - A parent, a gamer, and an unauthenticated caller can reach neither the badge data nor a
   note: the overlay RPC refuses them `42501`, and the roster RPCs are already staff-only.
 - No staff-only value appears anywhere in a Daily token, `user_name`, or any other channel
