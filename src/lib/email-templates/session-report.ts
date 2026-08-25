@@ -158,7 +158,7 @@ function staffCopyBanner(t: EmailTranslator): string {
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
       <tr>
-        <td style="${pinnedFill(DARK_THEME.bg)}border-left:3px solid ${BRAND.primary};border-radius:${RADIUS.md};padding:16px;">
+        <td style="${pinnedFill(DARK_THEME.bg)}border-left:3px solid ${BRAND.primary};border-radius:${RADIUS.lg};padding:16px;">
           <p style="margin:0 0 8px;color:${DARK_THEME.foreground};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${t("sessionReport.staffCopyLabel")}</p>
           <p style="margin:0 0 8px;${BODY_TEXT_STYLE}">${t("sessionReport.staffCopyBody")}</p>
           <p style="margin:0;${BODY_TEXT_STYLE}">${t("sessionReport.staffCopyPrivacy")}</p>

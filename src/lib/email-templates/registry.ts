@@ -215,13 +215,29 @@ const VIEWER_TIMEZONE_OPTIONS = [
 /**
  * Which of the two mails one send produces. The live route sends both — a
  * family's, and one copy to the sender with the admins in CC — and they differ
- * only in the banner the copy opens with, so the difference is invisible unless
- * the testing UI can ask for either.
+ * in three places, none of which is visible unless the testing UI can ask for
+ * the other mail: the copy opens with the staff banner, it carries the GROUP's
+ * name where a family's mail carries the child's (so the intro reads as a
+ * record of what the group was sent), and its button points at the sender's own
+ * workspace rather than at a family's enrollment page.
+ *
+ * The first two follow this select. The third stays the tester's to type: the
+ * `productUrl` field is a family-page link, and a workspace URL cannot be
+ * derived here — the live route picks between the gedu workspace and the admin
+ * product page from the sender's role, which this form has no notion of. Change
+ * it by hand when the link is what you are checking.
  */
-const SESSION_REPORT_COPY_OPTIONS = [
-  { label: "The family mail (what a parent receives)", value: "family" },
-  { label: "The staff copy (sender, admins in CC)", value: "staff" },
-];
+const SESSION_REPORT_COPIES = ["family", "staff"] as const;
+
+const SESSION_REPORT_COPY_LABELS: Record<(typeof SESSION_REPORT_COPIES)[number], string> = {
+  family: "The family mail (what a parent receives)",
+  staff: "The staff copy (sender, admins in CC)",
+};
+
+const SESSION_REPORT_COPY_OPTIONS = SESSION_REPORT_COPIES.map((value) => ({
+  label: SESSION_REPORT_COPY_LABELS[value],
+  value,
+}));
 
 function resolveSessionReport(
   { sample: sampleId, viewerTimezone, reportMarkdown, copy, ...rest }: SessionReportParams,
@@ -230,9 +246,13 @@ function resolveSessionReport(
   const sample =
     SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
     SESSION_REPORT_SAMPLES[0];
+  const staffCopy = copy === "staff";
   return {
     ...rest,
-    staffCopy: copy === "staff",
+    // The group's name in the child's slot, as the live send does it — the copy
+    // is a record of what the group was mailed, not one child's report.
+    gamerName: staffCopy ? rest.groupName : rest.gamerName,
+    staffCopy,
     sessionDate: formatDate(sample.startsAt, locale, {
       timeZone: viewerTimezone,
       dateStyle: "full",
@@ -317,7 +337,7 @@ const sessionReportParamsSchema = z.object({
    * form posts an untouched select's first option anyway, so nothing that
    * reaches this schema through the UI can omit it.
    */
-  copy: z.enum(["family", "staff"]),
+  copy: z.enum(SESSION_REPORT_COPIES),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;

@@ -149,11 +149,13 @@ describe("the staff copy's banner", () => {
   });
 
   /**
-   * The variant adds a block and changes nothing else, so the mail three
-   * quarters of the recipients read has to come out exactly as it did before
-   * the flag existed — not merely equivalent.
+   * The flag's default is the family mail: an absent `staffCopy` and an explicit
+   * `false` produce the identical document, byte for byte. That is what this
+   * pins — two renders of the current builder against each other, not this
+   * builder against the one that predated the flag, which no assertion here can
+   * reach.
    */
-  it("leaves the family mail byte-for-byte what it was", () => {
+  it("renders the same family mail whether the flag is absent or false", () => {
     expect(buildSessionReportEmail(t, "en", { ...base, staffCopy: false })).toBe(
       buildSessionReportEmail(t, "en", base),
     );

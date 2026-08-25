@@ -2394,7 +2394,7 @@
       "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}.",
       "staffCopyLabel": "Kopio henkilökunnalle",
       "staffCopyBody": "Tämä on kopio raportista, joka lähetettiin ryhmän perheille. Saat sen lähettäjänä tai ylläpitäjänä, et vanhempana.",
-      "staffCopyPrivacy": "Jokainen perhe sai oman erillisen viestinsä, joka oli osoitettu vain heille. Tämän kopion vastaanottaja- ja kopiokentissä näkyvät henkilökunnan osoitteet ovat vain tässä kopiossa: yksikään vanhempi ei näe niitä eikä muiden perheiden osoitteita."
+      "staffCopyPrivacy": "Jokainen perhe sai oman erillisen viestinsä, joka oli osoitettu vain sen omalle perheelle. Henkilökunnan osoitteet näkyvät vain tämän viestin vastaanottaja- ja kopiokentissä: yksikään vanhempi ei näe niitä eikä muiden perheiden osoitteita."
     }
   },
   "legal": {

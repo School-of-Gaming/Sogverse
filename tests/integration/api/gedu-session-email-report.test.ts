@@ -5,6 +5,7 @@ import {
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { BRAND } from "@/lib/constants/colors";
 
 /**
  * POST /api/gedu/sessions/email-report — the fan-out that mails a session
@@ -757,12 +758,20 @@ describe("POST /api/gedu/sessions/email-report", () => {
     await POST(createRequest());
 
     const copy = staffCopies()[0];
+    // The load-bearing check is the banner's own markup, not its words: these
+    // mails are rendered in each reader's locale, so an English string proves
+    // nothing about the Finnish parent's mail — it would be absent from that one
+    // whether the banner rendered or not. The 3px brand rule is the banner's
+    // alone in this template and is the same bytes in every locale. (The
+    // twice-declared `DARK_THEME.bg` fill is not: the shell emits it too.)
+    expect(copy.htmlContent).toContain(`border-left:3px solid ${BRAND.primary}`);
+    // The English copy's words still earn their place — this sender reads in
+    // `en`, and the marker cannot tell a banner from an empty one.
     expect(copy.htmlContent).toContain("Staff copy");
     expect(copy.htmlContent).toContain("Every family received their own separate email");
 
     for (const mail of familyMails()) {
-      expect(mail.htmlContent).not.toContain("Staff copy");
-      expect(mail.htmlContent).not.toContain("Every family received their own separate email");
+      expect(mail.htmlContent).not.toContain(`border-left:3px solid ${BRAND.primary}`);
     }
   });
 
