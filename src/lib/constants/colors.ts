@@ -52,9 +52,11 @@ export const DARK_THEME = {
  * The foreground is named beside the fill because a fill and its foreground are
  * one decision — but this particular pair is **not a legible one at body size**:
  * white on this blue is 3.48:1, under the 4.5:1 floor. So `info` never becomes a
- * fill under a label here. It is used the way the app's `Alert` uses it, through
- * the composited tints below, and `palette-contrast.test.ts` pins the white
- * pairing as rejected so that stays measured rather than remembered.
+ * fill under a label here — a ruling this comment carries, not a guard any sweep
+ * enforces: the palette check accepts the colour anywhere in a mail. It is used
+ * the way the app's `Alert` uses it, through the composited tints below, and
+ * `palette-contrast.test.ts` pins the white pairing as rejected so the
+ * measurement, at least, stays measured rather than remembered.
  */
 export const STATUS = {
   info: "#308CE8",           // --info: 210 80% 55%

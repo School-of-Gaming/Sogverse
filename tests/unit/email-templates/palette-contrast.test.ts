@@ -78,7 +78,16 @@ describe("every colour pair a mail may emit is legible", () => {
  * survives the reasoning.
  */
 describe("the pairs we rejected are still worth rejecting", () => {
-  const FORBIDDEN: { name: string; fg: string; bg: string; why: string }[] = [
+  // `atLeast` pins a pair whose *nearness* to the floor is load-bearing for the
+  // prose around it: the number lives where the build fails when it stops being
+  // true, instead of rotting in a comment.
+  const FORBIDDEN: {
+    name: string;
+    fg: string;
+    bg: string;
+    why: string;
+    atLeast?: number;
+  }[] = [
     {
       name: "brand purple as body text",
       fg: BRAND.secondary,
@@ -116,10 +125,18 @@ describe("the pairs we rejected are still worth rejecting", () => {
       // that: at 12px bold there is no large-text exemption to reach for, so the
       // label is `foreground` and the accent stays in the border and the wash.
       why: "the one thing the mail's callout does not inherit from the app's Alert",
+      atLeast: 4.4,
     },
   ];
 
-  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg }) => {
-    expect(contrast(fg, bg)).toBeLessThan(AA_BODY);
+  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg, atLeast }) => {
+    const ratio = contrast(fg, bg);
+    expect(ratio).toBeLessThan(AA_BODY);
+    if (atLeast !== undefined) {
+      expect(
+        ratio,
+        `the "hair under the floor" claim beside this pair assumes at least ${atLeast}:1`,
+      ).toBeGreaterThan(atLeast);
+    }
   });
 });

@@ -271,11 +271,12 @@ interface CalloutPanelOptions {
  * treatment that exists nowhere in the app and read as a warning besides — the
  * brand primary is the colour that means *ours*, not *careful*.
  *
- * **The border is decorative and is allowed to be quiet.** At 2.18:1 against the
- * card it would not carry a control boundary on its own, and it is not asked to:
- * everything the panel means is in its label and its sentences, and the wash is
- * what separates it from the body below. That is the app's own balance for this
- * component, not a concession made for mail.
+ * **The border is what draws the panel, and it is allowed to be quiet.** At
+ * 2.18:1 against the card it would not carry a control boundary on its own, and
+ * it is not asked to: everything the panel means is in its label and its
+ * sentences. The wash is a tint rather than a divider — 1.12:1 on the card —
+ * and that is the app's own balance for this component, not a concession made
+ * for mail.
  *
  * **The text on it is the body's colour, and that is a contrast fact.** The
  * app's `Alert` colours its title with the accent, and the mail cannot: the info
