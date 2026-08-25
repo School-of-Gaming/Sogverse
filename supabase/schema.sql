@@ -1742,6 +1742,34 @@ COMMENT ON FUNCTION public.gedu_teaches_group(p_group_id uuid) IS 'Internal pred
 
 
 --
+-- Name: gedu_teaches_group_product(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_teaches_group_product(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  -- One join, because gedu_group_assignments carries product_id alongside
+  -- group_id: "any group of this group's product" is a single-table EXISTS
+  -- rather than a walk back through products.
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.product_groups g
+      JOIN public.gedu_group_assignments a ON a.product_id = g.product_id
+     WHERE g.id = p_group_id
+       AND a.gedu_id = (SELECT auth.uid())
+  );
+$$;
+
+
+--
+-- Name: FUNCTION gedu_teaches_group_product(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_teaches_group_product(p_group_id uuid) IS 'Internal predicate: is the caller a gedu assigned to ANY group of this group''s product? The same question gedu_teaches_group asks, widened from one group to the whole product — which is the cross-group mobility the member-flair RPCs need, because a substitute standing in for another group is exactly the person who needs the note. Gedu-only and composed with is_admin() at each call site, the dominant pattern in this schema. NOT exposed to authenticated: it is called from inside SECURITY DEFINER RPCs and from nowhere else — in particular from no RLS policy, which is what lets it stay private, since a policy predicate is evaluated as the querying role and would have forced a grant. is_voice_group_moderator computes the same thing with is_admin() folded in; it is deliberately left alone rather than reused or renamed, because the voice_zones and voice_private_zone_occupants policies reference it and its name would make a note read look like a voice concern.';
+
+
+--
 -- Name: get_admin_dashboard(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2334,7 +2362,15 @@ BEGIN
                          'participant_email',
                            CASE WHEN part.participant_id = part.customer_id
                                  AND gmp.role = 'customer'
-                                THEN gmp.email END
+                                THEN gmp.email END,
+                         -- The staff-only flair (00203). Emitted for every
+                         -- roster row, note or no note, stamp or no stamp. The
+                         -- join stamp is a FACT and the clubs-only newcomer
+                         -- rule is a PRESENTATION rule applied client-side, so
+                         -- nothing here is nulled out by product type.
+                         'group_joined_at',            part.group_joined_at,
+                         'note',                       gn.note,
+                         'note_updated_by_first_name', ned.first_name
                        )
                        ORDER BY gmp.first_name
                      )
@@ -2343,6 +2379,12 @@ BEGIN
                 LEFT JOIN gamer_profiles gprof  ON gprof.user_id = part.participant_id
                 LEFT JOIN minecraft_accounts mca ON mca.user_id  = part.participant_id
                 LEFT JOIN roblox_accounts rba    ON rba.user_id   = part.participant_id
+                -- Keyed on exactly (group_id, participant_id), so this cannot
+                -- fan the row out; profiles.id behind it is a primary key.
+                LEFT JOIN public.gamer_group_notes gn
+                       ON gn.group_id       = part.group_id
+                      AND gn.participant_id = part.participant_id
+                LEFT JOIN public.profiles ned ON ned.id = gn.updated_by
                WHERE part.group_id = pg.id
                  AND part.status   = 'active'
             ), '[]'::jsonb)
@@ -2366,7 +2408,7 @@ $$;
 -- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) IS 'One round trip for a gedu opening a product they are assigned to: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id (00175) — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy. Since 00195 the shell carries the product''s topic (which decides whether a game identity is shown at all, and which one) and each roster entry carries roblox_username/roblox_user_id beside the Minecraft pair.';
+COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) IS 'One round trip for a gedu opening a product they are assigned to: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id (00175) — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy. Since 00195 the shell carries the product''s topic (which decides whether a game identity is shown at all, and which one) and each roster entry carries roblox_username/roblox_user_id beside the Minecraft pair. Since 00203 each roster entry also carries the staff-only flair — group_joined_at, note and note_updated_by_first_name — emitted unconditionally, because the join stamp is a fact and the clubs-only newcomer rule is applied by the client.';
 
 
 --
@@ -2385,13 +2427,24 @@ DECLARE
   v_roster     jsonb;
   v_sessions   jsonb;
 BEGIN
-  PERFORM public.assert_role('gedu');
+  -- Guard-first, in the shape set_group_notes established and the authorization
+  -- spine reads: the role half admits an admin or a gedu and refuses everyone
+  -- else on the first statement.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
-  -- v1 shows a gedu only their OWN group's feed. Peer-group feeds are not a
-  -- schema restriction — relaxing this to "any group on a product the caller is
-  -- assigned to" is a change to this predicate alone, and nothing downstream
-  -- assumes the caller teaches the group they are reading.
-  IF NOT public.gedu_teaches_group(p_group_id) THEN
+  -- The ownership half. An admin passes it outright — the admin group details
+  -- page renders this same document for any group of any product, which is what
+  -- makes it the same surface as the gedu workspace rather than a second one.
+  --
+  -- For a GEDU this is unchanged: v1 shows them only their OWN group's feed.
+  -- Peer-group feeds are not a schema restriction — relaxing this to "any group
+  -- on a product the caller is assigned to" is a change to this predicate alone,
+  -- and nothing downstream assumes the caller teaches the group they are
+  -- reading, which is exactly what the admin path above now relies on.
+  IF NOT public.is_admin()
+     AND NOT public.gedu_teaches_group(p_group_id) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
@@ -2472,6 +2525,11 @@ BEGIN
   -- have given one handle, both, or none. Which one a surface draws is decided
   -- by the product's topic, which this document does not carry — the page takes
   -- it from get_gedu_assigned_product.
+  --
+  -- `signed_up_at` and `group_joined_at` answer two different questions and
+  -- both travel (00203): the first is when this seat was taken on the PRODUCT,
+  -- the second when it entered THIS GROUP, and a member moved between two
+  -- groups of one product has a fresh second and an unchanged first.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
     INTO v_roster
     FROM (
@@ -2508,13 +2566,25 @@ BEGIN
         -- NULL here rather than leaking the synthetic handle.
         'participant_email',
           CASE WHEN part.participant_id = part.customer_id
-                AND gmp.role = 'customer' THEN gmp.email END
+                AND gmp.role = 'customer' THEN gmp.email END,
+        -- The staff-only flair (00203), in parity with
+        -- get_gedu_assigned_product's roster — the two shapes are kept
+        -- identical on purpose, and this is the copy the page renders.
+        'group_joined_at',            part.group_joined_at,
+        'note',                       gn.note,
+        'note_updated_by_first_name', ned.first_name
       ) AS entry
         FROM public.participations part
         JOIN public.profiles gmp                ON gmp.id        = part.participant_id
         LEFT JOIN public.gamer_profiles gprof   ON gprof.user_id = part.participant_id
         LEFT JOIN public.minecraft_accounts mca ON mca.user_id   = part.participant_id
         LEFT JOIN public.roblox_accounts rba    ON rba.user_id   = part.participant_id
+        -- Keyed on exactly (group_id, participant_id), so this cannot fan the
+        -- row out; profiles.id behind it is a primary key.
+        LEFT JOIN public.gamer_group_notes gn
+               ON gn.group_id       = part.group_id
+              AND gn.participant_id = part.participant_id
+        LEFT JOIN public.profiles ned           ON ned.id        = gn.updated_by
        WHERE part.group_id = p_group_id
          AND part.status   = 'active'::public.participation_status
     ) AS roster_rows;
@@ -2596,7 +2666,84 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Each session row carries report_emailed_at since 00197 — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere.';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Open since 00204 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s page body unchanged: one body fed by one document is what keeps the two surfaces one surface, where a second admin-shaped RPC would have started drifting field by field. An admin passes the ownership half outright; a gedu is still shown only their OWN group''s feed, and a customer or a gamer is still refused on the first statement, which is what keeps the material link and the three staff notes off every family surface. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Since 00203 each roster row also carries the staff-only flair — group_joined_at (when the seat entered THIS group, as against signed_up_at, which is when it was taken on the product), note and note_updated_by_first_name — in deliberate parity with get_gedu_assigned_product''s roster, which is the parity the page depends on because it renders this copy. Each session row carries report_emailed_at since 00197 — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere.';
+
+
+--
+-- Name: get_group_staff_overlay(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_group_staff_overlay(p_group_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_type public.product_type;
+  v_members      jsonb;
+BEGIN
+  -- Guard-first, in the shape set_group_notes established and the authorization
+  -- spine reads: the role half admits an admin or a gedu and refuses everyone
+  -- else on the first statement.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  -- The ownership half. An admin passes it outright; a gedu has to teach some
+  -- group of this group's product.
+  IF NOT public.is_admin()
+     AND NOT public.gedu_teaches_group_product(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- The product type travels because the voice room has NO other route to it:
+  -- /voice/group/[id] is passed a group id and a back link, VoiceRoomContext
+  -- carries groupId and isModerator, and the token deliberately puts nothing
+  -- staff-shaped on itself. The newcomer badge is a clubs-only PRESENTATION
+  -- rule and the join stamp is a FACT, so the fact is emitted unconditionally
+  -- and the client applies the rule — one shared helper instead of the same
+  -- decision baked into four RPCs.
+  SELECT p.product_type INTO v_product_type
+    FROM public.product_groups g
+    JOIN public.products p ON p.id = g.product_id
+   WHERE g.id = p_group_id;
+
+  -- One entry per ACTIVE participation of the group, note or no note, stamp or
+  -- no stamp — the same map shape get_gedu_group_feed already uses for
+  -- attendance. So the map's own keys name exactly the people a note may be
+  -- written about, which is the seat-holder set the room needs; a separate ids
+  -- array would be a second list of the same people to keep true. A participant
+  -- id absent from the map — a visiting admin, the gedu themselves, a stale
+  -- peer — simply gets no flair.
+  --
+  -- Neither join can fan a row out: gamer_group_notes is keyed on exactly
+  -- (group_id, participant_id) and profiles.id is a primary key.
+  SELECT COALESCE(jsonb_object_agg(part.participant_id, jsonb_build_object(
+           'group_joined_at',            part.group_joined_at,
+           'note',                       n.note,
+           'note_updated_by_first_name', ed.first_name
+         )), '{}'::jsonb)
+    INTO v_members
+    FROM public.participations part
+    LEFT JOIN public.gamer_group_notes n
+           ON n.group_id       = part.group_id
+          AND n.participant_id = part.participant_id
+    LEFT JOIN public.profiles ed ON ed.id = n.updated_by
+   WHERE part.group_id = p_group_id
+     AND part.status   = 'active'::public.participation_status;
+
+  RETURN jsonb_build_object(
+    'product_type', v_product_type,
+    'members',      v_members
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_group_staff_overlay(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_group_staff_overlay(p_group_id uuid) IS 'The staff-only marks for one group''s active roster, in one document: product_type, and a map keyed by participant id whose entries carry group_joined_at, note and note_updated_by_first_name. Open to an ADMIN or to any gedu assigned to any group of the group''s product, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. Built for the voice room, which has no other route to either mark: staff-only data must never ride the Daily token or user_name, because that channel is broadcast to every peer including children. A refused caller means the flair is gated by data access rather than by a viewer prop. product_type is on the document because the room knows only a group id, and the clubs-only newcomer rule is applied client-side from it. Every active member appears whether or not they have a note, so the map''s keys are the seat-holder set. An unknown group id returns a null-shaped document to an admin rather than raising.';
 
 
 --
@@ -3282,7 +3429,14 @@ BEGIN
                      'has_live_subscription',          (fs.id IS NOT NULL),
                      -- The promote dialog's condition (00167): money once
                      -- arrived for this seat.
-                     'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL)
+                     'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
+                     -- The staff-only flair (00203), identical in all three
+                     -- arms. The groups PANEL draws neither mark — a chip there
+                     -- is a drag handle — so these ride for shape parity across
+                     -- the three roster readers, not for a reader of this one.
+                     'group_joined_at',                p.group_joined_at,
+                     'note',                           gn.note,
+                     'note_updated_by_first_name',     ned.first_name
                    )
                    ORDER BY p.updated_at, p.id
                  )
@@ -3300,6 +3454,12 @@ BEGIN
             LEFT JOIN family_subscriptions fs
                    ON fs.participation_id = p.id
                   AND fs.status <> 'cancelled'
+            -- Keyed on exactly (group_id, participant_id), so this cannot fan
+            -- the row out; profiles.id behind it is a primary key.
+            LEFT JOIN public.gamer_group_notes gn
+                   ON gn.group_id       = p.group_id
+                  AND gn.participant_id = p.participant_id
+            LEFT JOIN public.profiles ned ON ned.id = gn.updated_by
             LEFT JOIN LATERAL (
               SELECT pp.first_name, pp.last_name
                 FROM parent_gamer pgm
@@ -3336,7 +3496,15 @@ BEGIN
              'status',                         p.status,
              'signed_up_at',                   p.signed_up_at,
              'has_live_subscription',          (fs.id IS NOT NULL),
-             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL)
+             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
+             -- Group-less by definition, so the join matches nothing and all
+             -- three come back NULL. That is the truth rather than a gap: a
+             -- seat in no group is new to nothing and has no note filed under
+             -- any group. Keeping the expression identical is what keeps this
+             -- arm the same shape as the other two.
+             'group_joined_at',                p.group_joined_at,
+             'note',                           gn.note,
+             'note_updated_by_first_name',     ned.first_name
            )
            ORDER BY p.updated_at, p.id
          ), '[]'::jsonb)
@@ -3349,6 +3517,10 @@ BEGIN
     LEFT JOIN family_subscriptions fs
            ON fs.participation_id = p.id
           AND fs.status <> 'cancelled'
+    LEFT JOIN public.gamer_group_notes gn
+           ON gn.group_id       = p.group_id
+          AND gn.participant_id = p.participant_id
+    LEFT JOIN public.profiles ned ON ned.id = gn.updated_by
     LEFT JOIN LATERAL (
       SELECT pp.first_name, pp.last_name
         FROM parent_gamer pgm
@@ -3399,7 +3571,15 @@ BEGIN
              'status',                         p.status,
              'signed_up_at',                   p.signed_up_at,
              'has_live_subscription',          (fs.id IS NOT NULL),
-             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL)
+             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
+             -- A waitlisted seat holds no group either, so these are NULL for
+             -- the same reason as the arm above. The note RPC does admit a
+             -- waitlisted TARGET — a note about somebody queueing for the group
+             -- is coherent — but such a row is reached through the group's own
+             -- roster, not through this arm.
+             'group_joined_at',                p.group_joined_at,
+             'note',                           gn.note,
+             'note_updated_by_first_name',     ned.first_name
            )
            ORDER BY p.waitlisted_at, p.id
          ), '[]'::jsonb)
@@ -3412,6 +3592,10 @@ BEGIN
     LEFT JOIN family_subscriptions fs
            ON fs.participation_id = p.id
           AND fs.status <> 'cancelled'
+    LEFT JOIN public.gamer_group_notes gn
+           ON gn.group_id       = p.group_id
+          AND gn.participant_id = p.participant_id
+    LEFT JOIN public.profiles ned ON ned.id = gn.updated_by
     LEFT JOIN LATERAL (
       SELECT pp.first_name, pp.last_name
         FROM parent_gamer pgm
@@ -3437,7 +3621,7 @@ $$;
 -- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. Since 00203 all three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document today — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one.';
 
 
 --
@@ -4601,6 +4785,105 @@ COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.locatio
 
 
 --
+-- Name: set_gamer_group_note(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_note text := NULLIF(btrim(COALESCE(p_note, '')), '');
+  v_row  public.gamer_group_notes;
+BEGIN
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  -- The ACTOR half: an admin, or a gedu who teaches this group's product. Read
+  -- and write parity between the two is deliberate — refusing a substitute
+  -- standing in for another group would make the feature useless in the one
+  -- situation it matters most.
+  IF NOT public.is_admin()
+     AND NOT public.gedu_teaches_group_product(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- The TARGET half: a note may only be written about somebody who sits in the
+  -- group it is filed under. Without this an authorized gedu could file a note
+  -- against any profile id on the platform. The table carries no write grant,
+  -- so it is correctly outside the write-IDOR loop's completeness check — these
+  -- two checks together are what stands in for an entry there, and the db tests
+  -- assert both halves negatively.
+  --
+  -- ANY status counts, not just active: a note about somebody on the group's
+  -- waitlist is a coherent thing to write, and narrowing it buys nothing. What
+  -- it does exclude is a member who has LEFT the group, which is why an
+  -- orphaned note cannot be edited back into life.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.participations part
+     WHERE part.group_id       = p_group_id
+       AND part.participant_id = p_participant_id
+  ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- A trimmed-empty save DELETES the row. Clearing a note is how a gedu retires
+  -- guidance that no longer applies, and the absence of a row is what "no note"
+  -- means on every surface — so the empty save has to produce that absence
+  -- rather than an empty string standing in for it. The returned document is
+  -- the null shape, so a caller merges the same keys either way.
+  IF v_note IS NULL THEN
+    DELETE FROM public.gamer_group_notes
+     WHERE group_id = p_group_id AND participant_id = p_participant_id;
+
+    RETURN jsonb_build_object(
+      'group_id',                   p_group_id,
+      'participant_id',             p_participant_id,
+      'note',                       NULL,
+      'note_updated_by_first_name', NULL,
+      'updated_at',                 NULL
+    );
+  END IF;
+
+  -- Upsert, last-write-wins, no history: only the last editor is stored.
+  -- updated_at is left to the touch trigger. Length is NOT checked here — the
+  -- CHECK refuses anything over 2000 with 23514, and since the dialog caps at
+  -- 2000 a longer write can only come from a non-UI caller, which deserves a
+  -- loud refusal rather than a silent truncation.
+  INSERT INTO public.gamer_group_notes AS n
+         (group_id, participant_id, note, updated_by)
+  VALUES (p_group_id, p_participant_id, v_note, (SELECT auth.uid()))
+  ON CONFLICT (group_id, participant_id) DO UPDATE
+     SET note       = EXCLUDED.note,
+         updated_by = EXCLUDED.updated_by
+  RETURNING * INTO v_row;
+
+  RETURN jsonb_build_object(
+    'group_id',       v_row.group_id,
+    'participant_id', v_row.participant_id,
+    'note',           v_row.note,
+    -- Resolved at read time on purpose, unlike the signed-name snapshot on a
+    -- contract acceptance: this line answers "who should I ask about this
+    -- note", so the name they go by today is the right answer. NULL when the
+    -- editor's account is gone (updated_by is ON DELETE SET NULL), and the
+    -- surface then shows the note with no editor line.
+    'note_updated_by_first_name',
+      (SELECT pr.first_name FROM public.profiles pr WHERE pr.id = v_row.updated_by),
+    'updated_at',     v_row.updated_at
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text) IS 'Write, replace or clear the staff note about one member of one group, and return the resulting document (group_id, participant_id, note, note_updated_by_first_name, updated_at). Open to an ADMIN or to any gedu assigned to any group of the group''s product, with full read/write parity between the two; guard-first on assert_role, then two further 42501s — the ACTOR half (staff reach over the product) and the TARGET half (the participant actually holds a participation in that group, at ANY status). The target half is what stands in for a write-IDOR loop entry, since the table carries no write grant for any client role. A trimmed-empty note DELETES the row and returns the null-shaped document, because absence of a row is what "no note" means everywhere else. Over-long notes are refused by the table''s CHECK (23514) rather than truncated. Last-write-wins, and only the last editor is stored — there is no history. A note does not follow a member moved to another group: it stays where it was written.';
+
+
+--
 -- Name: set_gedu_certified(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4645,12 +4928,21 @@ DECLARE
   v_username text;
   v_uuid     text;
 BEGIN
-  PERFORM public.assert_role('gedu');
+  -- Guard-first, in the shape the authorization spine reads: the role half
+  -- admits an admin or a gedu and refuses everyone else on the first statement.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
   -- Actor AND target: the participant must be actively participating in a group
   -- the caller is assigned to. A gedu may fix a username for the people they
   -- teach and for nobody else.
-  IF NOT EXISTS (
+  --
+  -- An admin passes this outright (00205). The admin group details page renders
+  -- the gedu workspace's roster body — this editor included — for any group of
+  -- any product, and an admin already holds the same edit on /admin/users/[id],
+  -- so the group question was never a statement about them.
+  IF NOT public.is_admin() AND NOT EXISTS (
     SELECT 1
       FROM public.participations part
       JOIN public.gedu_group_assignments ga ON ga.group_id = part.group_id
@@ -4665,7 +4957,8 @@ BEGIN
   -- seat carries no game account and the roster renders that slot empty by
   -- design, so a row keyed to a customer would be an orphan the admin twin
   -- already refuses to write. The scope check above does not care about the
-  -- target's role, so this stands on its own.
+  -- target's role, so this stands on its own — and it binds an admin too, being
+  -- about the integrity of the row rather than about who is looking.
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles pr
      WHERE pr.id = p_participant_id
@@ -4702,7 +4995,7 @@ $$;
 -- Name: FUNCTION set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design.';
+COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open since 00205 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the group question as a second 42501 — the same shape the session writers took in 00200 and the group feed in 00204. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s roster body unchanged, inline editor included; an admin already holds this exact edit on /admin/users/[id], so the widening aligns two surfaces on one action rather than granting a power. An admin passes the group half outright and is exempt from nothing else: the target must still be a gamer (23514), and a customer or a gamer is still refused on the first statement.';
 
 
 --
@@ -4717,12 +5010,17 @@ DECLARE
   v_username text;
   v_user_id  bigint;
 BEGIN
-  PERFORM public.assert_role('gedu');
+  -- Guard-first, in the shape the authorization spine reads: the role half
+  -- admits an admin or a gedu and refuses everyone else on the first statement.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
 
   -- Actor AND target: the participant must be actively participating in a group
   -- the caller is assigned to. A gedu may fix a username for the people they
-  -- teach and for nobody else.
-  IF NOT EXISTS (
+  -- teach and for nobody else. An admin passes it outright (00205) — see the
+  -- Minecraft twin above for why.
+  IF NOT public.is_admin() AND NOT EXISTS (
     SELECT 1
       FROM public.participations part
       JOIN public.gedu_group_assignments ga ON ga.group_id = part.group_id
@@ -4737,7 +5035,7 @@ BEGIN
   -- carries none and the roster renders that slot empty by design, so a row
   -- keyed to a customer would be an orphan the admin twin already refuses to
   -- write. The scope check above does not care about the target's role, so this
-  -- stands on its own.
+  -- stands on its own — and it binds an admin too.
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles pr
      WHERE pr.id = p_participant_id
@@ -4777,7 +5075,7 @@ $$;
 -- Name: FUNCTION set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) IS 'Set a group member''s Roblox username + resolved account id, scoped to participants actively enrolled in a group the calling gedu teaches. The Roblox twin of set_group_member_minecraft, and identical to it in every respect but the key''s type: Roblox''s id is an int64, so the account-id parameter is a DEFAULTed bigint rather than a text column carrying an '''' sentinel, and omitting it is how an unverified save is expressed. The Roblox lookup happens in the calling route (neither Roblox API is reachable from a browser), so an id arriving here was resolved server-side and its presence is the whole of "verified". Clearing the username clears the id with it. In practice the target is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design.';
+COMMENT ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) IS 'Set a group member''s Roblox username + resolved account id, scoped to participants actively enrolled in a group the calling gedu teaches. The Roblox twin of set_group_member_minecraft, and identical to it in every respect but the key''s type: Roblox''s id is an int64, so the account-id parameter is a DEFAULTed bigint rather than a text column carrying an '''' sentinel, and omitting it is how an unverified save is expressed. The Roblox lookup happens in the calling route (neither Roblox API is reachable from a browser), so an id arriving here was resolved server-side and its presence is the whole of "verified". Clearing the username clears the id with it. In practice the target is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open since 00205 to an ADMIN as well as to the assigned gedu, in the same change and the same shape as its Minecraft twin — the admin group details page renders one roster editor serving both platforms, so widening one alone would have shipped a control that works on a Minecraft group and refuses on a Roblox one. An admin passes the group half outright and is exempt from nothing else.';
 
 
 --
@@ -5025,6 +5323,48 @@ $$;
 --
 
 COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who teaches on an in-person product at that site (00200). Last-write-wins on the notes, across products.';
+
+
+--
+-- Name: stamp_participation_group_joined_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.stamp_participation_group_joined_at() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  -- No group, no join. The ON DELETE SET NULL cascade from product_groups lands
+  -- here too, which is the path no function would ever have covered: deleting a
+  -- group rewrites group_id on every member row with nothing in between. A
+  -- member with no group is not new to anything.
+  IF NEW.group_id IS NULL THEN
+    NEW.group_joined_at := NULL;
+
+  -- IS DISTINCT FROM rather than <>, so a NULL on either side counts as a
+  -- change: a seat moving from no group into one is exactly the case <> would
+  -- miss. An UPDATE that does not NAME group_id never fires this trigger at
+  -- all, so an unrelated write — a status change, the updated_at touch — cannot
+  -- re-stamp; an UPDATE that names it with the value it already held does fire,
+  -- and this comparison is what makes that a no-op.
+  ELSIF TG_OP = 'INSERT' OR NEW.group_id IS DISTINCT FROM OLD.group_id THEN
+    -- now(), not clock_timestamp(). This is a display timestamp with no
+    -- cross-row ordering semantics — the same case as signed_up_at beside it.
+    -- Two moves inside one transaction therefore stamp identically, which is
+    -- correct: they are one decision.
+    NEW.group_joined_at := now();
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION stamp_participation_group_joined_at(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.stamp_participation_group_joined_at() IS 'Trigger function: keep participations.group_joined_at in step with group_id. Sets it to now() when a seat enters a group or moves to a different one, clears it when the seat leaves a group (including via the ON DELETE SET NULL cascade from product_groups), and leaves it alone otherwise. The column has no other writer.';
 
 
 --
@@ -5635,6 +5975,49 @@ CREATE TABLE public.feedback_submissions (
 
 
 --
+-- Name: gamer_group_notes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gamer_group_notes (
+    group_id uuid NOT NULL,
+    participant_id uuid NOT NULL,
+    note text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by uuid,
+    CONSTRAINT chk_gamer_group_notes_length CHECK ((((char_length(note) >= 1) AND (char_length(note) <= 2000)) AND (btrim(note) <> ''::text)))
+);
+
+
+--
+-- Name: TABLE gamer_group_notes; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.gamer_group_notes IS 'One row per (group, member): what the staff running that group need to know about that person before the session starts. Plain text, not markdown — a note is read in the box it was typed in, and offering headings would invite composing a document rather than jotting. Strictly keyed to the group, so a note does NOT follow a member who is moved: it is about how THIS group is going, and half of them would be stale or actively misleading in the next one. A member who leaves the group leaves their row behind, unreachable from every surface (all of them render the group''s active roster) and refused by the write RPC''s target check — an ACCEPTED leftover, not an oversight, and deliberately not cleaned up. Deleting the GROUP does delete the note, by FK. No Data API role holds a grant on this table and RLS is on with no policy at all: every read rides a roster document or get_group_staff_overlay, every write goes through set_gamer_group_note, and all of those are SECURITY DEFINER. Absence of a row is what "no note" means everywhere. One further consequence of the retention, also reviewed and accepted: a member who leaves and later RETURNS to the group silently regains their old row, and every surface presents it as current — the note dialog names its writer but not its date. Dating the edit line is the known follow-up if months-old guidance resurfacing this way ever misleads in practice.';
+
+
+--
+-- Name: COLUMN gamer_group_notes.group_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_group_notes.group_id IS 'The group the note is filed under. ON DELETE CASCADE — a note belongs to the group, so deleting the group deletes it. This is the one orphan case that IS cleaned up, and the FK is what cleans it.';
+
+
+--
+-- Name: COLUMN gamer_group_notes.participant_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_group_notes.participant_id IS 'The person the note is about — whoever holds the seat, adult or child, the same subject participations.participant_id names. References profiles rather than participations so a seat rewritten in place does not take the note with it; membership is asserted by the write RPC''s target check instead.';
+
+
+--
+-- Name: COLUMN gamer_group_notes.updated_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_group_notes.updated_by IS 'Who last wrote it, surfaced to other staff as "Last edited by {first name}". ON DELETE SET NULL: a departed gedu''s account must not delete the note they wrote — the note stands and the read simply shows no editor line. There is no history here; only the last editor is stored.';
+
+
+--
 -- Name: gamer_profiles; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -5936,8 +6319,16 @@ CREATE TABLE public.participations (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     waitlisted_at timestamp with time zone,
     stripe_checkout_session_id text,
+    group_joined_at timestamp with time zone,
     CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
 );
+
+
+--
+-- Name: TABLE participations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.participations IS 'One row per seat on a product: who holds it, who pays for it, which group they sit in and what state the seat is in. Some of its columns are settled by triggers rather than by any caller, and are therefore invisible at the call site: updated_at is touched on every write, product_id is reconciled against the group''s product by trg_validate_participations_group, and group_joined_at is stamped by trg_participations_stamp_group_joined_at whenever group_id is set, changed or cleared — group_id has at least five writers, including the ON DELETE SET NULL cascade from product_groups, which is why the stamp lives in a trigger and not in an RPC. Do not set group_joined_at by hand.';
 
 
 --
@@ -5952,6 +6343,13 @@ COMMENT ON COLUMN public.participations.participant_id IS 'The profile occupying
 --
 
 COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Checkout Session that paid for this seat. NULL for no-charge seats (free, municipality, admin enrollment, waitlist) and for rows predating the create-on-confirmation flow.';
+
+
+--
+-- Name: COLUMN participations.group_joined_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.group_joined_at IS 'When this seat entered its CURRENT group. NULL when the seat holds no group, and NULL for every row that predates the column — there was deliberately no backfill, because a group move leaves no trace and signed_up_at is not a join date for anyone who has ever been moved. A move between two groups of one product RESETS it: the member is new to THAT group, which is the whole claim the newcomer badge makes. Stamped only by trg_participations_stamp_group_joined_at, which is the column''s only writer — no RPC and no policy-driven UPDATE sets it, because group_id has at least five writers (including the ON DELETE SET NULL cascade from product_groups) and a trigger is the only point that sees all of them. A consequence with no undo, accepted for v1: an accidental move on the admin drag board, corrected with a second move back, re-stamps both times — the member reads as new to a group they never really left, for the length of the badge window, and no UI clears the stamp. The mislabel is rare, bounded at 30 days, and its harm is a Gedu welcoming someone they already know; a per-member clear affordance is the known follow-up if it starts to matter.';
 
 
 --
@@ -6589,6 +6987,14 @@ ALTER TABLE ONLY public.family_subscriptions
 
 ALTER TABLE ONLY public.feedback_submissions
     ADD CONSTRAINT feedback_submissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: gamer_group_notes gamer_group_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_group_notes
+    ADD CONSTRAINT gamer_group_notes_pkey PRIMARY KEY (group_id, participant_id);
 
 
 --
@@ -7314,6 +7720,13 @@ CREATE TRIGGER family_subscriptions_updated_at BEFORE UPDATE ON public.family_su
 
 
 --
+-- Name: gamer_group_notes gamer_group_notes_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER gamer_group_notes_updated_at BEFORE UPDATE ON public.gamer_group_notes FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
 -- Name: group_sessions group_sessions_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -7437,6 +7850,13 @@ CREATE TRIGGER trg_participations_refresh_counts_ins AFTER INSERT ON public.part
 --
 
 CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
+
+
+--
+-- Name: participations trg_participations_stamp_group_joined_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_participations_stamp_group_joined_at BEFORE INSERT OR UPDATE OF group_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.stamp_participation_group_joined_at();
 
 
 --
@@ -7575,6 +7995,30 @@ ALTER TABLE ONLY public.family_subscriptions
 
 ALTER TABLE ONLY public.feedback_submissions
     ADD CONSTRAINT feedback_submissions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: gamer_group_notes gamer_group_notes_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_group_notes
+    ADD CONSTRAINT gamer_group_notes_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: gamer_group_notes gamer_group_notes_participant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_group_notes
+    ADD CONSTRAINT gamer_group_notes_participant_id_fkey FOREIGN KEY (participant_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: gamer_group_notes gamer_group_notes_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_group_notes
+    ADD CONSTRAINT gamer_group_notes_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
 
 --
@@ -8319,6 +8763,12 @@ ALTER TABLE public.family_subscriptions ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.feedback_submissions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: gamer_group_notes; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.gamer_group_notes ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: gamer_profiles; Type: ROW SECURITY; Schema: public; Owner: -
@@ -9077,6 +9527,14 @@ GRANT ALL ON FUNCTION public.gedu_teaches_group(p_group_id uuid) TO service_role
 
 
 --
+-- Name: FUNCTION gedu_teaches_group_product(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_teaches_group_product(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_teaches_group_product(p_group_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION get_admin_dashboard(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -9110,6 +9568,14 @@ GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO ser
 REVOKE ALL ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION get_group_staff_overlay(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_group_staff_overlay(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_group_staff_overlay(p_group_id uuid) TO authenticated;
 
 
 --
@@ -9470,6 +9936,14 @@ GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.locat
 
 
 --
+-- Name: FUNCTION set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text) TO authenticated;
+
+
+--
 -- Name: FUNCTION set_gedu_certified(p_gedu_id uuid, p_certified boolean); Type: ACL; Schema: public; Owner: -
 --
 
@@ -9544,6 +10018,13 @@ GRANT ALL ON FUNCTION public.set_pin_for_user(p_user_id uuid, p_pin text) TO ser
 REVOKE ALL ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) TO authenticated;
 GRANT ALL ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) TO service_role;
+
+
+--
+-- Name: FUNCTION stamp_participation_group_joined_at(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.stamp_participation_group_joined_at() FROM PUBLIC;
 
 
 --
@@ -9688,6 +10169,13 @@ GRANT SELECT ON TABLE public.family_subscriptions TO authenticated;
 GRANT SELECT ON TABLE public.feedback_submissions TO anon;
 GRANT ALL ON TABLE public.feedback_submissions TO service_role;
 GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
+
+
+--
+-- Name: TABLE gamer_group_notes; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.gamer_group_notes TO service_role;
 
 
 --
