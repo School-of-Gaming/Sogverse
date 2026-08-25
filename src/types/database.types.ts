@@ -176,6 +176,69 @@ export type Database = {
           },
         ]
       }
+      gamer_group_notes: {
+        Row: {
+          created_at: string
+          group_id: string
+          note: string
+          participant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          note: string
+          participant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          note?: string
+          participant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_group_notes_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_notes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_notes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_notes_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_notes_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gamer_profiles: {
         Row: {
           date_of_birth: string
@@ -669,6 +732,7 @@ export type Database = {
           created_at: string
           customer_id: string
           group_id: string | null
+          group_joined_at: string | null
           id: string
           participant_id: string
           product_id: string
@@ -682,6 +746,7 @@ export type Database = {
           created_at?: string
           customer_id: string
           group_id?: string | null
+          group_joined_at?: string | null
           id?: string
           participant_id: string
           product_id: string
@@ -695,6 +760,7 @@ export type Database = {
           created_at?: string
           customer_id?: string
           group_id?: string | null
+          group_joined_at?: string | null
           id?: string
           participant_id?: string
           product_id?: string
@@ -1912,6 +1978,10 @@ export type Database = {
         Returns: string
       }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
+      gedu_teaches_group_product: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
       get_admin_dashboard: { Args: never; Returns: Json }
       get_admin_product_sessions: {
         Args: { p_product_id: string }
@@ -1922,6 +1992,7 @@ export type Database = {
         Returns: Json
       }
       get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
+      get_group_staff_overlay: { Args: { p_group_id: string }; Returns: Json }
       get_my_assigned_products: {
         Args: never
         Returns: {
@@ -2117,6 +2188,10 @@ export type Database = {
           p_query: string
           p_types?: Database["public"]["Enums"]["location_type"][]
         }
+        Returns: Json
+      }
+      set_gamer_group_note: {
+        Args: { p_group_id: string; p_note: string; p_participant_id: string }
         Returns: Json
       }
       set_gedu_certified: {

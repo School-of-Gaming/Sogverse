@@ -14,4 +14,8 @@
 export { NewcomerBadge } from "./NewcomerBadge";
 export { GamerNoteButton } from "./GamerNoteButton";
 export { GamerNoteDialog, GAMER_NOTE_MAX_LENGTH } from "./GamerNoteDialog";
-export { newcomerDaysIn, NEWCOMER_WINDOW_DAYS } from "./newcomer";
+export {
+  newcomerDaysIn,
+  showsNewcomerBadge,
+  NEWCOMER_WINDOW_DAYS,
+} from "./newcomer";
