@@ -97,14 +97,18 @@ export function GeduCertificationCard({
    * `undefined` is "not answered yet", which with the server seed above only
    * arises when that fetch failed.
    *
-   * **Both are matched on the base version.** A stored version names the
+   * **`current` is matched on the base version.** A stored version names the
    * language of the text that was signed, and the two languages of one version
    * are the same agreement published twice — so either signature makes an
    * educator current, and an educator who signed both is current on the
    * *earliest* of them, the same row the dashboard queue's standing read
-   * reports. Below, every version that names a *signature* is rendered from the
-   * row verbatim, encoded language and all; the one that names the terms in
-   * force is the base alone, because that is what "in force" is a property of.
+   * reports. `previous` is deliberately matched on nothing: it is the newest
+   * signature of *any* version, and it may only be read where `current` is
+   * null — the "what they signed instead" line — because next to a current
+   * signature it could name the same agreement twice. Below, every version
+   * that names a *signature* is rendered from the row verbatim, encoded
+   * language and all; the one that names the terms in force is the base alone,
+   * because that is what "in force" is a property of.
    */
   const current =
     acceptances === undefined

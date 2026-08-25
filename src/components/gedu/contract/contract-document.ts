@@ -78,7 +78,11 @@ export type GeduContractBlock =
 export type GeduContractLanguage = "fi" | "en";
 
 export interface GeduContractDocument {
-  /** The version these terms are, e.g. `"2026-2027"`. Stored on acceptance. */
+  /**
+   * The **base** version these terms are, e.g. `"2026-2027"` — the label with
+   * no language on it. What an acceptance stores is `<base>/<language>`; see
+   * `geduContractStoredVersion` in `documents/`.
+   */
   version: string;
   language: GeduContractLanguage;
   /** The document's own title, rendered as the h1. */
