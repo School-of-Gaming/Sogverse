@@ -25,7 +25,7 @@ import type { CreateGamerInput } from "@/types";
 import {
   assembleGamerDateOfBirth,
   gamerBirthYearOptions,
-} from "./add-gamer-dialog-helpers";
+} from "@/lib/gamer-birth";
 
 type Gender = "boy" | "girl" | "non_binary";
 

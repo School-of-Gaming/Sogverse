@@ -13,7 +13,8 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
-import { cn, computeAge, formatDate } from "@/lib/utils";
+import { GamerPersonalDetailsCard } from "@/components/admin/gamer-personal-details-card";
+import { cn, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
@@ -267,23 +268,13 @@ export default async function AdminUserDetailPage({
                 )}
               </div>
             )}
-            {isGamer && gamerProfile && (
-              <p className="text-sm text-muted-foreground">
-                <span>{t('ageYears', { age: computeAge(gamerProfile.date_of_birth, timeZone) })}</span>
-                {gamerProfile.gender && (
-                  <>
-                    {/* eslint-disable-next-line i18next/no-literal-string -- visual separator between two i18n strings, not user-facing copy */}
-                    <span aria-hidden="true"> · </span>
-                    <span>{t(`gender.${gamerProfile.gender}`)}</span>
-                  </>
-                )}
-              </p>
-            )}
-            {/* The Minecraft row used to sit here, read-only. It moved into the
-                editable Game accounts card below: an admin who can change these
-                needs one place that shows both platforms and holds the outcome
-                of a save, and a summary line that could go stale the moment the
-                card underneath it was used is the wrong second home. */}
+            {/* The Minecraft row used to sit here, read-only, and so did the
+                gamer's age and gender. Both moved into editable cards below —
+                Game accounts, and Personal details — for the same reason: an
+                admin who can change these needs one place that shows them and
+                holds the outcome of a save, and a summary line that could go
+                stale the moment the card underneath it was used is the wrong
+                second home. */}
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGE_STYLES[profile.role]}>
                 {c(ROLE_LABEL_KEYS[profile.role])}
@@ -313,6 +304,15 @@ export default async function AdminUserDetailPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Birth month/year and gender, editable — directly under the summary,
+          because this is where the read-only line that used to state them sat.
+          Rendered from the row this page already read, so it paints complete.
+          Absent only when that read failed, which is the same thing the summary
+          line did with a missing row. */}
+      {isGamer && gamerProfile && (
+        <GamerPersonalDetailsCard gamerId={userId} initialProfile={gamerProfile} />
+      )}
 
       {/* Linked Accounts (customers → gamers, gamers → parents) */}
       {(isCustomer || isGamer) && (

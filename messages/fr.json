@@ -827,12 +827,6 @@
       "joined": "Inscrit le",
       "unknown": "Inconnu",
       "referralCode": "Code de provenance",
-      "ageYears": "{age, plural, one {# an} other {# ans}}",
-      "gender": {
-        "boy": "Garçon",
-        "girl": "Fille",
-        "non_binary": "Non binaire"
-      },
       "linkedGamers": "Joueurs associés",
       "linkedParents": "Parents associés",
       "unnamedGamer": "Joueur sans nom",
@@ -843,6 +837,21 @@
       "unassignedGroup": "Aucun groupe attribué",
       "needsGroup": "Doit être affecté à un groupe",
       "untitledProduct": "Produit sans titre",
+      "gamerDetails": {
+        "title": "Informations personnelles",
+        "description": "Corrigez le mois et l’année de naissance enregistrés pour ce joueur, ainsi que son genre.",
+        "birthMonthLabel": "Mois de naissance",
+        "birthYearLabel": "Année de naissance",
+        "genderLabel": "Genre",
+        "genderUnset": "Non précisé",
+        "saveError": "Impossible d’enregistrer ces informations. Veuillez réessayer.",
+        "gender": {
+          "boy": "Garçon",
+          "girl": "Fille",
+          "non_binary": "Non binaire"
+        },
+        "ageYears": "{age, plural, one {# an} other {# ans}}"
+      },
       "gameAccounts": {
         "title": "Comptes de jeu",
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."

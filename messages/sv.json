@@ -827,12 +827,6 @@
       "joined": "Gick med",
       "unknown": "Okänd",
       "referralCode": "Hänvisningskod",
-      "ageYears": "{age, plural, one {# år} other {# år}}",
-      "gender": {
-        "boy": "Pojke",
-        "girl": "Flicka",
-        "non_binary": "Icke-binär"
-      },
       "linkedGamers": "Kopplade spelare",
       "linkedParents": "Kopplade föräldrar",
       "unnamedGamer": "Namnlös spelare",
@@ -843,6 +837,21 @@
       "unassignedGroup": "Ingen grupp tilldelad",
       "needsGroup": "Behöver en grupp",
       "untitledProduct": "Namnlös produkt",
+      "gamerDetails": {
+        "title": "Personuppgifter",
+        "description": "Korrigera gamerns födelsemånad och födelseår samt kön.",
+        "birthMonthLabel": "Födelsemånad",
+        "birthYearLabel": "Födelseår",
+        "genderLabel": "Kön",
+        "genderUnset": "Ej angivet",
+        "saveError": "Det gick inte att spara uppgifterna. Försök igen.",
+        "gender": {
+          "boy": "Pojke",
+          "girl": "Flicka",
+          "non_binary": "Icke-binär"
+        },
+        "ageYears": "{age, plural, one {# år} other {# år}}"
+      },
       "gameAccounts": {
         "title": "Spelkonton",
         "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
