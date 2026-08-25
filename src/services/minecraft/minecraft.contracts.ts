@@ -49,11 +49,12 @@ export const updateMinecraftAccountBody = z.object({
 
 /**
  * Request body of PATCH /api/gedu/gamers/[gamerId]/minecraft — a gedu fixing
- * the username of a child in their own group.
+ * the username of a child in their own group, or (since 00205) an admin fixing
+ * it from the group details page, which renders that same roster editor.
  *
  * The same value schema as the self-serve route, because it is the same edit
  * made by someone else: the server resolves the name against Mojang and stores
- * the canonical spelling with the UUID, so a gedu's save lands *verified*
+ * the canonical spelling with the UUID, so a staff save lands *verified*
  * rather than pending. The gamer is named by the URL, not the body, so there is
  * nothing here to aim at another child.
  */

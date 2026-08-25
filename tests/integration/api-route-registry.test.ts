@@ -670,15 +670,26 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   // --- Educator surfaces ---------------------------------------------------
 
-  // The role gate only establishes that the caller is an educator. WHICH
-  // children they may edit is decided by the RPC underneath, which re-derives
-  // the caller from auth.uid() and refuses any gamer who is not actively
-  // participating in a group that caller is assigned to — so the gamer id in
-  // the path names a target and grants nothing.
+  // The role gate only establishes that the caller is staff. WHICH children
+  // they may edit is decided by the RPC underneath, which re-derives the caller
+  // from auth.uid() and refuses any gamer who is not actively participating in
+  // a group that caller is assigned to — so the gamer id in the path names a
+  // target and grants nothing.
+  //
+  // `admin` joined the roles in 00205, when the admin group details page began
+  // rendering the gedu workspace's roster body unchanged, inline username
+  // editor included: a surface that shows the control has to serve it. This
+  // aligns two surfaces rather than granting a power — an admin already holds
+  // this exact edit on /admin/users/[id], so nothing here is reachable to them
+  // that was not reachable before. The RPC is still the authorization: an admin
+  // passes its "and you teach this group" half by role, exactly as they do on
+  // the session writers widened in 00200, and every other refusal in the
+  // function — the target must be a gamer, a customer or a gamer is refused on
+  // the first statement — binds them identically.
   "src/app/api/gedu/gamers/[gamerId]/minecraft/route.ts": {
     handlers: {
       PATCH: {
-        posture: { kind: "role-gated", roles: ["gedu"] },
+        posture: { kind: "role-gated", roles: ["gedu", "admin"] },
         body: { kind: "json", schema: "updateGroupMemberMinecraftBody" },
         test: TESTS.geduGamerMinecraft,
       },
@@ -686,12 +697,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   // The Roblox twin of the route above, and the same reasoning applies verbatim:
-  // the role gate says "an educator", and `set_group_member_roblox` says which
-  // children that educator may touch, re-deriving them from auth.uid().
+  // the role gate says "an educator or an admin", and `set_group_member_roblox`
+  // says which children that caller may touch, re-deriving them from auth.uid()
+  // and letting an admin past the group half alone. Widened alongside its twin
+  // in 00205 — the editor the admin page renders is one component serving both
+  // platforms, so one of the two routes admitting an admin would have shipped a
+  // control that works on Minecraft groups and 403s on Roblox ones.
   "src/app/api/gedu/gamers/[gamerId]/roblox/route.ts": {
     handlers: {
       PATCH: {
-        posture: { kind: "role-gated", roles: ["gedu"] },
+        posture: { kind: "role-gated", roles: ["gedu", "admin"] },
         body: { kind: "json", schema: "updateGroupMemberRobloxBody" },
         test: TESTS.geduGamerRoblox,
       },

@@ -9,7 +9,8 @@ import {
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/minecraft — a gedu fixing the Minecraft
- * username of a child in a group they teach.
+ * username of a child in a group they teach, and an admin making the same fix
+ * from the admin group details page.
  *
  * It exists as a route rather than a bare RPC call for one reason: the Mojang
  * lookup has to happen on the server, exactly as it does for the self-serve
@@ -25,11 +26,24 @@ import {
  * group that caller is assigned to. The gamer id here names the target; it
  * grants nothing, and a gedu aiming it at somebody else's child gets a 403 from
  * the database rather than from a check this route could forget to write.
+ *
+ * **`admin` joined the roles in 00205**, because the admin group details page
+ * renders the gedu workspace's roster body unchanged — inline username editor
+ * included — and a surface that shows the control has to serve it. It grants an
+ * admin nothing they did not already hold: the same edit is theirs on
+ * /admin/users/[id], so this aligns two surfaces rather than widening a power.
+ * The RPC's guard was widened in the same shape every gedu-or-admin writer has
+ * taken since 00200: one `assert_role` naming whichever of the two roles the
+ * caller holds, then the "and you teach this group" question, which an admin
+ * passes by role. Nothing else about the function is relaxed for them — the
+ * target must still be a gamer, and a family is still refused on the first
+ * statement.
  */
 export const PATCH = defineRoute({
   posture: "role-gated",
-  roles: "gedu",
-  forbiddenMessage: "Only game educators can edit a group member's Minecraft username",
+  roles: ["gedu", "admin"],
+  forbiddenMessage:
+    "Only game educators and admins can edit a group member's Minecraft username",
   params: z.object({ gamerId: z.string().uuid() }),
   body: updateGroupMemberMinecraftBody,
   response: minecraftAccountWriteResult,

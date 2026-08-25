@@ -203,22 +203,36 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "gedu-session-feed.test.ts for the gedu, admin-product-sessions.test.ts " +
       "for the admin.",
   },
+  // The two game-username writers, widened to admins by 00205 — the last pair
+  // on this surface to be, and for the reason the rest were: the admin group
+  // details page renders the gedu workspace's roster body unchanged, and that
+  // roster carries an inline username editor. A surface that draws the control
+  // has to serve it. The widening grants an admin nothing new — the same edit is
+  // already theirs on /admin/users/[id], on any user and with no group involved
+  // — so what moved is which surface the action is reachable from, not who may
+  // take it.
   set_group_member_minecraft: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "no NULL child participates in a group the caller teaches, so the target " +
-      "half of the gate refuses with a second 42501. Positive path: " +
-      "gedu-session-feed.test.ts.",
+      "no NULL child participates in a group the caller teaches, so for a gedu " +
+      "the group half of the gate refuses with a second 42501. An admin passes " +
+      "that half and is refused by the target-role check instead — no NULL " +
+      "profile is a gamer — which is 23514 rather than a forbidden one, so the " +
+      "annotation is carried for the gedu alone; it is per function, not per " +
+      "role. Positive paths: gedu-session-feed.test.ts for both roles.",
   },
   // The Roblox twin (00195). Same guard, same scope check, same target role
   // check — and therefore the same reason its permitted half cannot be asserted
-  // on NULL arguments.
+  // on NULL arguments. Widened in the same change as its twin, deliberately:
+  // one roster editor serves both platforms, so widening one alone would ship a
+  // control that saves on a Minecraft group and refuses on a Roblox one.
   set_group_member_roblox: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "no NULL child participates in a group the caller teaches, so the target " +
-      "half of the gate refuses with a second 42501. Positive path: " +
-      "gedu-session-feed.test.ts.",
+      "no NULL child participates in a group the caller teaches, so for a gedu " +
+      "the group half of the gate refuses with a second 42501. An admin passes " +
+      "that half and is refused by the target-role check instead, which is " +
+      "23514. Positive paths: gedu-session-feed.test.ts for both roles.",
   },
 
   // --- the member flair ----------------------------------------------------

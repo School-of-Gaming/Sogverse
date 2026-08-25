@@ -41,9 +41,13 @@ import {
  *      page body unchanged, so it is fed the same document rather than an
  *      admin-shaped copy that would drift from it field by field. The other
  *      READ stays gedu-only — `get_my_gedu_assignment_summaries` answers "what
- *      do *I* owe", which is a question an admin cannot coherently ask. The
- *      game-username writers stay gedu-only too: nothing admin-facing calls
- *      them. Everybody else is refused on the first statement, as before.
+ *      do *I* owe", which is a question an admin cannot coherently ask. Since
+ *      00205 an admin passes the two GAME-USERNAME writers as well: the group
+ *      details page renders this workspace's roster body unchanged, inline
+ *      username editor included, and an admin already holds that same edit on
+ *      /admin/users/[id] — so serving it here aligns two surfaces rather than
+ *      granting a power. Everybody else is refused on the first statement, as
+ *      before.
  *   2. **Assignment (the actor)** — a gedu may only touch, or read, groups they
  *      teach. This is the half, and the only half, an admin is exempt from.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
@@ -310,12 +314,14 @@ describe("gedu session feed", () => {
       }
     });
 
-    it("refuses every non-gedu role, admin included, on the game-username writers", async () => {
-      // These two never grew an admin path: nothing on an admin surface calls
-      // them, and a roster identity is corrected by the educator who found out
-      // it was wrong. Kept as its own loop so widening the session writers
-      // cannot quietly widen these by sharing a list.
-      for (const client of [adminAuth, customerAuth, gamerAuth]) {
+    it("refuses a customer and a gamer on the game-username writers", async () => {
+      // The family half, and the half that has never moved. An admin was in
+      // this loop until 00205, when the group details page began rendering this
+      // workspace's roster body — editor included — and a control that is drawn
+      // has to be served; their positive path is in the target-authorization
+      // block below. Kept as its own loop all the same, so a future widening of
+      // the session writers cannot quietly widen these by sharing a list.
+      for (const client of [customerAuth, gamerAuth]) {
         const minecraft = await client.rpc("set_group_member_minecraft", {
           p_participant_id: TEST_IDS.GAMER,
           p_minecraft_username: "Defaced",
@@ -528,6 +534,74 @@ describe("gedu session feed", () => {
       // An account id with no name behind it is a verified link to nothing —
       // the id is discarded even though this call supplied one.
       expect(written.roblox_user_id).toBeNull();
+    });
+
+    /**
+     * **The admin half of the target check (00205).** The admin holds no
+     * assignment on any fixture product in this file, so a pass here is a pass
+     * by ROLE — which is the whole of what the widening granted. Both platforms
+     * are asserted, because one roster editor serves both and a widening that
+     * reached one alone would ship a control that saves on a Minecraft group
+     * and refuses on a Roblox one.
+     */
+    it("allows an admin the same edit on a group they teach nothing of", async () => {
+      const minecraft = await adminAuth.rpc("set_group_member_minecraft", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_minecraft_username: "AdminFixed",
+        p_minecraft_uuid: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      });
+      expect(minecraft.error).toBeNull();
+      expect(
+        groupMemberMinecraftResult.parse(minecraft.data).minecraft_username,
+      ).toBe("AdminFixed");
+
+      const roblox = await adminAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "AdminFixedRBX",
+        p_roblox_user_id: ROBLOX_USER_ID,
+      });
+      expect(roblox.error).toBeNull();
+      expect(groupMemberRobloxResult.parse(roblox.data).roblox_username).toBe(
+        "AdminFixedRBX",
+      );
+
+      // Put the seeded child back as this block found them. Both accounts are
+      // rows on a SHARED seed profile rather than on a fixture this file
+      // created, and every case above it leaves them cleared — so a case that
+      // walked away with a handle still on the row would be handing the next
+      // reader of that profile a value from a test they never ran.
+      await adminAuth.rpc("set_group_member_minecraft", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_minecraft_username: "",
+        p_minecraft_uuid: "",
+      });
+      await adminAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "",
+      });
+    });
+
+    /**
+     * **And the rule an admin is NOT exempt from.** A game account belongs to a
+     * child: an adult seat carries none and the roster renders that slot empty
+     * by design, so the target-role check (00177) is about the integrity of the
+     * row rather than about who is looking. It answers 23514 — a different
+     * error from the group half's 42501, which is what proves the admin got
+     * past the group half and was stopped by this one instead.
+     */
+    it("refuses an admin a game username on an adult seat", async () => {
+      const minecraft = await adminAuth.rpc("set_group_member_minecraft", {
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_minecraft_username: "GrownUp",
+        p_minecraft_uuid: "",
+      });
+      expect(minecraft.error?.code).toBe("23514");
+
+      const roblox = await adminAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_roblox_username: "GrownUp",
+      });
+      expect(roblox.error?.code).toBe("23514");
     });
   });
 

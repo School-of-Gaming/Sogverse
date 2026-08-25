@@ -1255,6 +1255,13 @@ independently verifiable.
   "no badge on any admin surface" rule, are superseded by this — the badge appears
   wherever the shared body renders, which now includes the admin's view of a group. The
   groups drag board still carries neither mark.
+- **Two rulings that followed from the redesign.** The shared body is renamed: what this
+  plan calls `GeduProductPageBody` is now `GroupWorkspace` in
+  `src/components/group-workspace/` (shells keep their role names). And the inline
+  game-username editor works for admins: migration `00205` widens the two
+  `set_group_member_*` RPCs (and their API routes) to gedu-or-admin — an admin already
+  holds the same edit on the admin users page, so this aligns two surfaces on one action
+  rather than granting a power. The target-must-be-a-gamer check stays for everyone.
 
 ---
 
