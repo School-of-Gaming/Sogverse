@@ -31,19 +31,37 @@ import {
 } from "@/lib/constants/locales";
 
 import { getCookie, setCookie } from "@/lib/cookies";
+import {
+  trackLocaleChange,
+  type DetectedLocale,
+} from "@/lib/analytics";
 
 const COOKIE_NAME = "locale";
 
 interface LocaleContextType {
   locale: SupportedLocale;
   setLocale: (locale: SupportedLocale) => void;
+  /**
+   * What the browser's Accept-Language negotiated to on this request, or
+   * `"none"` when it asked only for languages we don't ship. Exposed so the
+   * picker can report it alongside its own events; the client cannot derive it
+   * (navigator.language disagrees with the sent header on iOS Safari — see the
+   * seeding comment below), so it only ever arrives from the server.
+   */
+  detectedLocale: DetectedLocale;
 }
 
 const LocaleContext = createContext<LocaleContextType | undefined>(
   undefined,
 );
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
+export function LocaleProvider({
+  children,
+  detectedLocale,
+}: {
+  children: ReactNode;
+  detectedLocale: DetectedLocale;
+}) {
   const { profile, user, refreshProfile } = useAuth();
   const router = useRouter();
   // Seed from the server-resolved locale so SSR and the first client paint
@@ -89,6 +107,21 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback(
     (newLocale: SupportedLocale) => {
+      // `derivedLocale`, not the raw `locale` state: it's the locale actually
+      // on screen (a profile locale outranks local state), which is what the
+      // user was reading when they reached for the picker. Skipped entirely
+      // when it matches — the picker lets you click the entry that is already
+      // active, and a from === to row would be a no-op cluttering the matrix.
+      // Everything below still runs in that case: this change adds an event, it
+      // does not change what the picker does.
+      if (newLocale !== derivedLocale) {
+        trackLocaleChange({
+          detected: detectedLocale,
+          from: derivedLocale,
+          to: newLocale,
+        });
+      }
+
       setLocaleState(newLocale);
       setCookie(COOKIE_NAME, newLocale);
 
@@ -106,12 +139,12 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       // Trigger server re-render to load new locale's messages
       router.refresh();
     },
-    [user, refreshProfile, router],
+    [user, refreshProfile, router, derivedLocale, detectedLocale],
   );
 
   return (
     <LocaleContext.Provider
-      value={{ locale: derivedLocale, setLocale }}
+      value={{ locale: derivedLocale, setLocale, detectedLocale }}
     >
       {children}
     </LocaleContext.Provider>

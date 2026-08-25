@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   detectLocaleFromHeader,
+  matchLocaleFromHeader,
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
 } from "@/lib/constants/locales";
@@ -95,5 +96,49 @@ describe("detectLocaleFromHeader", () => {
     // asked for outranks a region variant we happen to have. (A global
     // exact-first pass would answer "fi" here and break the case above it.)
     expect(detectLocaleFromHeader("fr-CA,fi;q=0.9")).toBe("fr");
+  });
+});
+
+describe("matchLocaleFromHeader", () => {
+  // The reason this function exists: `detectLocaleFromHeader` answers "en" for
+  // three different situations — the browser asked for English, it asked for
+  // nothing at all, and it asked only for languages we don't ship. Rendering
+  // needs them folded together; measuring them must not, or a German-only
+  // visitor switching to French reads as overriding a correct English guess.
+  // These pin the paths where the two functions diverge.
+
+  it("returns null for a null header", () => {
+    expect(matchLocaleFromHeader(null)).toBeNull();
+  });
+
+  it("returns null for an empty header", () => {
+    expect(matchLocaleFromHeader("")).toBeNull();
+  });
+
+  it("returns null when nothing in the header is a locale we ship", () => {
+    expect(matchLocaleFromHeader("de-DE,de;q=0.9")).toBeNull();
+    expect(matchLocaleFromHeader("de-DE,pl;q=0.9,ja;q=0.8")).toBeNull();
+  });
+
+  it("distinguishes a real English request from no match at all", () => {
+    // Both of these render as English; only one of them is a browser that
+    // actually asked for it.
+    expect(matchLocaleFromHeader("en-GB,en;q=0.9")).toBe("en");
+    expect(matchLocaleFromHeader("de-DE,de;q=0.9")).toBeNull();
+  });
+
+  it("matches exactly as detectLocaleFromHeader does wherever there is a match", () => {
+    // The matching logic is shared, not duplicated — the cases above in the
+    // detect suite therefore cover this one too. Spot-checked here so a future
+    // reimplementation of either function has to keep them in step.
+    for (const header of [
+      "fi-FI,en;q=0.9",
+      "ja,zh;q=0.9,pl;q=0.8,sv;q=0.7",
+      "fi;q=0.8,sv;q=0.9",
+      "fr-CA,fi;q=0.9",
+      "FI-fi",
+    ]) {
+      expect(matchLocaleFromHeader(header)).toBe(detectLocaleFromHeader(header));
+    }
   });
 });

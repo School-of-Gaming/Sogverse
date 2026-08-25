@@ -6,7 +6,8 @@ import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { REFERRAL_CODE_HEADER } from "@/lib/referral";
-import { BRAND_LOCKUP } from "@/lib/constants";
+import { BRAND_LOCKUP, matchLocaleFromHeader } from "@/lib/constants";
+import type { DetectedLocale } from "@/lib/analytics";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -91,7 +92,18 @@ export default async function RootLayout({
   // gets prerendered. This `headers()` call is free: the layout is fully dynamic
   // already (it reads cookies and loads the user's profile) with no PPR or
   // component caching enabled, so it adds no cost and no Suspense requirement.
-  const initialReferralCode = (await headers()).get(REFERRAL_CODE_HEADER);
+  const requestHeaders = await headers();
+  const initialReferralCode = requestHeaders.get(REFERRAL_CODE_HEADER);
+  // What this browser *asked* for, read straight from Accept-Language and
+  // deliberately bypassing both the `locale` cookie and `profiles.locale` —
+  // those carry the answer the user has already given us, and this is the
+  // question. Analytics compares the two (see `trackLocaleChange`), so folding
+  // them together here would delete the only signal we're after — which is also
+  // why this uses `matchLocaleFromHeader` and not `detectLocaleFromHeader`: no
+  // match has to stay distinguishable from a match on English, so it becomes
+  // `"none"` here rather than collapsing into the default locale.
+  const detectedLocale: DetectedLocale =
+    matchLocaleFromHeader(requestHeaders.get("accept-language")) ?? "none";
   // Strip server-only namespaces (email, metadata) from the client bundle.
   // Server components access full messages via getTranslations() directly.
   const { email: _email, metadata: _metadata, ...clientMessages } =
@@ -109,6 +121,7 @@ export default async function RootLayout({
           initialTimezone={initialTimezone}
           initialNow={initialNow}
           initialReferralCode={initialReferralCode}
+          detectedLocale={detectedLocale}
           messages={clientMessages}
         >
           {/* Header rendering is owned by each route group's layout — that's

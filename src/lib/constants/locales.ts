@@ -147,7 +147,8 @@ export const DEFAULT_TIMEZONE = "Europe/Helsinki";
 
 /**
  * Walk an Accept-Language header in priority order and return the first
- * supported locale. Falls back to DEFAULT_LOCALE when no match is found.
+ * supported locale, or `null` when the header asked for nothing we ship (and
+ * when there is no header at all).
  *
  * Handles the full ranked header so users whose primary language is
  * unsupported but who list a supported language lower in the preference
@@ -163,11 +164,18 @@ export const DEFAULT_TIMEZONE = "Europe/Helsinki";
  * Quality order stays the outer loop: a caller's higher-ranked language beats a
  * lower-ranked exact tag, because "the language I actually want" outranks "the
  * region variant you happen to have".
+ *
+ * Most callers want `detectLocaleFromHeader` below, which folds the no-match
+ * case into `DEFAULT_LOCALE`. Reach for this one only when "we could not match
+ * this browser" has to stay distinguishable from "this browser asked for
+ * English" — measurement being the case in hand: a German-only visitor picking
+ * French is a missing-locale finding, not us guessing English wrongly, and the
+ * two are the same value once the fallback is applied.
  */
-export function detectLocaleFromHeader(
+export function matchLocaleFromHeader(
   header: string | null,
-): SupportedLocale {
-  if (!header) return DEFAULT_LOCALE;
+): SupportedLocale | null {
+  if (!header) return null;
 
   // Parse into { tag, q } entries sorted by descending quality
   const entries: { tag: string; q: number }[] = [];
@@ -198,7 +206,20 @@ export function detectLocaleFromHeader(
     if (isSupportedLocale(lang)) return lang;
   }
 
-  return DEFAULT_LOCALE;
+  return null;
+}
+
+/**
+ * The locale to *render* for a request carrying this Accept-Language header:
+ * the best supported match, or `DEFAULT_LOCALE` when there is none. Serving a
+ * page has to name some locale, so every no-match path — no header, an empty
+ * one, a browser asking only for languages we don't ship — resolves to English
+ * here.
+ */
+export function detectLocaleFromHeader(
+  header: string | null,
+): SupportedLocale {
+  return matchLocaleFromHeader(header) ?? DEFAULT_LOCALE;
 }
 
 export function isSupportedLocale(value: unknown): value is SupportedLocale {
