@@ -9,8 +9,9 @@ import {
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/roblox — a gedu fixing the Roblox username
- * of a child in a group they teach. The Minecraft route beside it is the same
- * edit on the other platform, and the two are deliberately the same shape.
+ * of a child in a group they teach, and an admin making the same fix from the
+ * admin group details page. The Minecraft route beside it is the same edit on
+ * the other platform, and the two are deliberately the same shape.
  *
  * It exists as a route rather than a bare RPC call because the lookup has to
  * happen on the server, and on this platform that is not a preference: both
@@ -38,11 +39,20 @@ import {
  * group that caller is assigned to. The gamer id here names the target; it
  * grants nothing, and a gedu aiming it at somebody else's child gets a 403 from
  * the database rather than from a check this route could forget to write.
+ *
+ * **`admin` joined the roles in 00205**, for the reason set out in full on the
+ * Minecraft route beside this one and applying here verbatim: the admin group
+ * details page renders the gedu workspace's roster body unchanged, editor
+ * included, and an admin already holds this exact edit on /admin/users/[id], so
+ * serving it here aligns two surfaces rather than granting a power. The RPC's
+ * guard was widened in the same shape, and an admin is exempt from the "and you
+ * teach this group" half alone.
  */
 export const PATCH = defineRoute({
   posture: "role-gated",
-  roles: "gedu",
-  forbiddenMessage: "Only game educators can edit a group member's Roblox username",
+  roles: ["gedu", "admin"],
+  forbiddenMessage:
+    "Only game educators and admins can edit a group member's Roblox username",
   params: z.object({ gamerId: z.string().uuid() }),
   body: updateGroupMemberRobloxBody,
   response: robloxAccountWriteResult,

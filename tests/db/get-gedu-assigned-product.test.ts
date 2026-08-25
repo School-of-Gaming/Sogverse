@@ -375,4 +375,70 @@ describe("get_gedu_assigned_product", () => {
         .eq("participant_id", TEST_IDS.GAMER);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // The staff-only flair (00203) — group_joined_at, note, note_updated_by_first
+  // _name. Widening a document's contract without running real output through it
+  // is exactly the gap the contracts convention exists to close, so these parse
+  // through `geduAssignedProduct` like everything above.
+  //
+  // "With a note" and "without one" are two reads of the same member rather than
+  // two members: this roster is one seat by construction — the sister group's
+  // roster is withheld, which is the privacy guarantee pinned further up — and
+  // adding a second seat here would move participant_count under the assertions
+  // that pin it.
+  // ---------------------------------------------------------------------------
+
+  describe("the staff-only flair", () => {
+    /** The one roster entry on the caller's own group. */
+    async function ownRosterEntry() {
+      const { data, error } = await geduAuth.rpc("get_gedu_assigned_product", {
+        p_product_id: PRODUCT_GEDU_ON,
+      });
+      expect(error).toBeNull();
+      const result = geduAssignedProduct.parse(data);
+      return result.groups.find((g) => g.id === myGroupId)?.roster?.[0];
+    }
+
+    it("carries the join stamp and no note before anything is written", async () => {
+      const entry = await ownRosterEntry();
+
+      // Stamped by the trigger when the seat was inserted into a group, and
+      // emitted unconditionally: the stamp is a FACT, and the clubs-only
+      // newcomer rule is a presentation rule the client applies.
+      expect(entry?.group_joined_at).not.toBeNull();
+      // Absence of a row is what "no note" means, on every surface.
+      expect(entry?.note).toBeNull();
+      expect(entry?.note_updated_by_first_name).toBeNull();
+    });
+
+    it("carries a note written through the RPC, naming its editor", async () => {
+      const { error } = await geduAuth.rpc("set_gamer_group_note", {
+        p_group_id: myGroupId,
+        p_participant_id: TEST_IDS.GAMER,
+        // Untrimmed: the write trims, and the stored value is what renders.
+        p_note: "  Bring the spare headset for this one.  ",
+      });
+      expect(error).toBeNull();
+
+      const entry = await ownRosterEntry();
+      expect(entry?.note).toBe("Bring the spare headset for this one.");
+      expect(entry?.note_updated_by_first_name).toBeTruthy();
+      expect(entry?.group_joined_at).not.toBeNull();
+    });
+
+    it("drops the note again on a trimmed-empty save, keeping the stamp", async () => {
+      await geduAuth.rpc("set_gamer_group_note", {
+        p_group_id: myGroupId,
+        p_participant_id: TEST_IDS.GAMER,
+        p_note: "   ",
+      });
+
+      const entry = await ownRosterEntry();
+      expect(entry?.note).toBeNull();
+      expect(entry?.note_updated_by_first_name).toBeNull();
+      // The clock is not the note's to clear — the two marks are independent.
+      expect(entry?.group_joined_at).not.toBeNull();
+    });
+  });
 });

@@ -114,6 +114,32 @@ export const groupParticipationDetail = z.object({
    * product.
    */
   has_payment_marker: z.boolean(),
+  /**
+   * The staff-only flair (00203), emitted identically in all three arms of the
+   * snapshot — grouped, unassigned and waitlist — from one shared LEFT JOIN.
+   * On the two group-less arms it comes back null throughout, which is the
+   * truth: a seat in no group is new to nothing and has no note filed under any
+   * group. Keeping one expression is what keeps the three shapes one shape, and
+   * this schema is where that shows up on the TypeScript side.
+   *
+   * The names are unprefixed, matching `status` / `signed_up_at` /
+   * `has_payment_marker` beside them: these are facts about the participation
+   * and the (group, member) pair rather than about the person — and they are
+   * spelled the same on all three readers.
+   *
+   * The groups panel draws **neither** mark: a participant chip there is a drag
+   * handle, a badge has no bearing on a move, and a note is a control. So all
+   * three fields ride here for **shape parity across the three roster readers**
+   * rather than for anything this document's own reader renders — today no admin
+   * surface draws them from THIS document at all: the group details page shows
+   * both marks and reads them off the group *feed*, which is the copy a note
+   * write invalidates. That is a known and accepted state, not an oversight: the
+   * parity is the decision, and one shared expression is what keeps the three
+   * arms one shape.
+   */
+  group_joined_at: z.string().nullable(),
+  note: z.string().nullable(),
+  note_updated_by_first_name: z.string().nullable(),
 });
 
 export const groupGeduDetail = z.object({

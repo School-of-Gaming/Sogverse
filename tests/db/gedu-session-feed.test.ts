@@ -36,13 +36,20 @@ import {
  *
  *   1. **Role** — a gedu passes, and since 00200 so does an ADMIN on the five
  *      session writers, which the admin product page now drives from the same
- *      components. The two READS stay gedu-only: they answer "my workspace",
- *      and an admin asks a different question through a product-keyed RPC of
- *      their own (admin-product-sessions.test.ts). The game-username writers
- *      stay gedu-only too — nothing admin-facing calls them. Everybody else is
- *      refused on the first statement, as before.
- *   2. **Assignment (the actor)** — a gedu may only touch groups they teach.
- *      This is the half, and the only half, an admin is exempt from.
+ *      components. Since 00204 an admin passes `get_gedu_group_feed` too: the
+ *      product page's per-group GROUP DETAILS page renders this workspace's
+ *      page body unchanged, so it is fed the same document rather than an
+ *      admin-shaped copy that would drift from it field by field. The other
+ *      READ stays gedu-only — `get_my_gedu_assignment_summaries` answers "what
+ *      do *I* owe", which is a question an admin cannot coherently ask. Since
+ *      00205 an admin passes the two GAME-USERNAME writers as well: the group
+ *      details page renders this workspace's roster body unchanged, inline
+ *      username editor included, and an admin already holds that same edit on
+ *      /admin/users/[id] — so serving it here aligns two surfaces rather than
+ *      granting a power. Everybody else is refused on the first statement, as
+ *      before.
+ *   2. **Assignment (the actor)** — a gedu may only touch, or read, groups they
+ *      teach. This is the half, and the only half, an admin is exempt from.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
  *      edit a game username of, children actually in that group. Both platforms
  *      are covered: `set_group_member_minecraft` and, since 00195, its Roblox
@@ -239,8 +246,14 @@ describe("gedu session feed", () => {
   // -------------------------------------------------------------------------
 
   describe("role gate", () => {
-    it("refuses every non-gedu role on the feed read", async () => {
-      for (const client of [adminAuth, customerAuth, gamerAuth]) {
+    it("refuses a customer and a gamer on the feed read", async () => {
+      // Admin is deliberately absent from this loop since 00204 — the admin
+      // group details page reads this exact document, and the positive case is
+      // pinned in the get_gedu_group_feed block below. What stays refused is
+      // what matters: this document carries the gedu-only material link, the
+      // group's staff note, the site's staff note and every member's staff
+      // note, none of which may reach a family.
+      for (const client of [customerAuth, gamerAuth]) {
         const { error } = await client.rpc("get_gedu_group_feed", {
           p_group_id: GROUP_MINE,
         });
@@ -301,12 +314,14 @@ describe("gedu session feed", () => {
       }
     });
 
-    it("refuses every non-gedu role, admin included, on the game-username writers", async () => {
-      // These two never grew an admin path: nothing on an admin surface calls
-      // them, and a roster identity is corrected by the educator who found out
-      // it was wrong. Kept as its own loop so widening the session writers
-      // cannot quietly widen these by sharing a list.
-      for (const client of [adminAuth, customerAuth, gamerAuth]) {
+    it("refuses a customer and a gamer on the game-username writers", async () => {
+      // The family half, and the half that has never moved. An admin was in
+      // this loop until 00205, when the group details page began rendering this
+      // workspace's roster body — editor included — and a control that is drawn
+      // has to be served; their positive path is in the target-authorization
+      // block below. Kept as its own loop all the same, so a future widening of
+      // the session writers cannot quietly widen these by sharing a list.
+      for (const client of [customerAuth, gamerAuth]) {
         const minecraft = await client.rpc("set_group_member_minecraft", {
           p_participant_id: TEST_IDS.GAMER,
           p_minecraft_username: "Defaced",
@@ -519,6 +534,74 @@ describe("gedu session feed", () => {
       // An account id with no name behind it is a verified link to nothing —
       // the id is discarded even though this call supplied one.
       expect(written.roblox_user_id).toBeNull();
+    });
+
+    /**
+     * **The admin half of the target check (00205).** The admin holds no
+     * assignment on any fixture product in this file, so a pass here is a pass
+     * by ROLE — which is the whole of what the widening granted. Both platforms
+     * are asserted, because one roster editor serves both and a widening that
+     * reached one alone would ship a control that saves on a Minecraft group
+     * and refuses on a Roblox one.
+     */
+    it("allows an admin the same edit on a group they teach nothing of", async () => {
+      const minecraft = await adminAuth.rpc("set_group_member_minecraft", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_minecraft_username: "AdminFixed",
+        p_minecraft_uuid: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      });
+      expect(minecraft.error).toBeNull();
+      expect(
+        groupMemberMinecraftResult.parse(minecraft.data).minecraft_username,
+      ).toBe("AdminFixed");
+
+      const roblox = await adminAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "AdminFixedRBX",
+        p_roblox_user_id: ROBLOX_USER_ID,
+      });
+      expect(roblox.error).toBeNull();
+      expect(groupMemberRobloxResult.parse(roblox.data).roblox_username).toBe(
+        "AdminFixedRBX",
+      );
+
+      // Put the seeded child back as this block found them. Both accounts are
+      // rows on a SHARED seed profile rather than on a fixture this file
+      // created, and every case above it leaves them cleared — so a case that
+      // walked away with a handle still on the row would be handing the next
+      // reader of that profile a value from a test they never ran.
+      await adminAuth.rpc("set_group_member_minecraft", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_minecraft_username: "",
+        p_minecraft_uuid: "",
+      });
+      await adminAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.GAMER,
+        p_roblox_username: "",
+      });
+    });
+
+    /**
+     * **And the rule an admin is NOT exempt from.** A game account belongs to a
+     * child: an adult seat carries none and the roster renders that slot empty
+     * by design, so the target-role check (00177) is about the integrity of the
+     * row rather than about who is looking. It answers 23514 — a different
+     * error from the group half's 42501, which is what proves the admin got
+     * past the group half and was stopped by this one instead.
+     */
+    it("refuses an admin a game username on an adult seat", async () => {
+      const minecraft = await adminAuth.rpc("set_group_member_minecraft", {
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_minecraft_username: "GrownUp",
+        p_minecraft_uuid: "",
+      });
+      expect(minecraft.error?.code).toBe("23514");
+
+      const roblox = await adminAuth.rpc("set_group_member_roblox", {
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_roblox_username: "GrownUp",
+      });
+      expect(roblox.error?.code).toBe("23514");
     });
   });
 
@@ -850,6 +933,80 @@ describe("gedu session feed", () => {
       expect(session?.report_emailed_at).toBeNull();
     });
 
+    it("hands an admin the identical document the assigned gedu reads", async () => {
+      // 00204. The admin product page's per-group GROUP DETAILS page renders
+      // the gedu workspace's page body unchanged, so the two surfaces stay one
+      // surface only while they are fed one document. Equality is therefore the
+      // assertion, not "an admin gets something back": a document that merely
+      // parses would let the two drift a field at a time, and the drift would
+      // read downstream as a panel populated on one page and empty on the other
+      // rather than as an error.
+      await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_report: "# Yesterday\n\nWe rebuilt the east tower.",
+        p_gedu_note: "The projector cable is still loose.",
+      });
+      // The STANDING note is its own field and its own RPC — written here, in
+      // this test's own body, because the named assertions below check it and
+      // an earlier test's value must not be what makes them pass. (The first
+      // CI run of this test asserted the standing note while having written
+      // only the session note above — a different field — and failed on
+      // whatever the file had left in it.)
+      await geduAuth.rpc("set_group_notes", {
+        p_group_id: GROUP_MINE,
+        p_public_note: "Bring water bottles.",
+        p_gedu_note: "The hall projector lives in the blue cabinet.",
+      });
+      await geduAuth.rpc("record_attendance", {
+        p_group_id: GROUP_MINE,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.GAMER,
+        p_status: "present",
+      });
+
+      const asGedu = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const asAdmin = await adminAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(asAdmin.error).toBeNull();
+
+      // Parsed through the same contract as every other read here, so a shape
+      // the admin path somehow served differently fails as a parse error rather
+      // than as a mismatch nobody can read.
+      const adminFeed = geduGroupFeed.parse(asAdmin.data);
+      expect(adminFeed).toEqual(geduGroupFeed.parse(asGedu.data));
+
+      // Named rather than left to the deep equality: these are the four
+      // staff-only fields the refusal above exists to protect, and an equality
+      // that passed because both sides were empty would prove nothing.
+      expect(adminFeed.group.gedu_note).toContain("projector");
+      expect(adminFeed.roster).toHaveLength(1);
+      expect(adminFeed.roster[0].group_joined_at).not.toBeNull();
+      expect(
+        adminFeed.sessions.find((s) => s.session_date === YESTERDAY)?.report,
+      ).toContain("east tower");
+    });
+
+    it("hands an admin a group no gedu here teaches", async () => {
+      // The assignment half of the gate, which an admin is exempt from and the
+      // block above pins the gedu being refused by. GROUP_OTHER has a real
+      // roster and no assignment at all, so this is the read the admin page
+      // actually makes: any group of any product, whoever teaches it.
+      const { data, error } = await adminAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_OTHER,
+      });
+      expect(error).toBeNull();
+
+      const feed = geduGroupFeed.parse(data);
+      expect(feed.group.id).toBe(GROUP_OTHER);
+      expect(feed.product.id).toBe(PRODUCT_OTHER);
+      expect(feed.roster).toHaveLength(1);
+      expect(feed.roster[0].participant_id).toBe(TEST_IDS.GAMER_2);
+    });
+
     it("carries the send marker once the report has been emailed", async () => {
       await geduAuth.rpc("set_group_session_notes", {
         p_group_id: GROUP_MINE,
@@ -961,6 +1118,49 @@ describe("gedu session feed", () => {
         .from("product_staff_details")
         .delete()
         .eq("product_id", PRODUCT_MINE);
+    });
+
+    it("carries the staff-only flair on the roster, with a note and without one", async () => {
+      // 00203's three fields, parsed through the same contract as everything
+      // else here — a widened schema with no covering db test is exactly the
+      // gap the contracts convention exists to close.
+      //
+      // One member, read twice, rather than two members: GROUP_MINE's roster is
+      // one child by construction, and GAMER_2's ABSENCE from it is the target-
+      // authorization case several blocks above depend on. So the "without"
+      // half is this read, and the "with" half is the same seat after a write.
+      const before = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const unmarked = geduGroupFeed.parse(before.data).roster[0];
+      // Stamped by the trigger when the seat was inserted into a group, and it
+      // answers a different question from signed_up_at beside it: when this seat
+      // entered THIS GROUP, as against when it was taken on the product.
+      expect(unmarked.group_joined_at).not.toBeNull();
+      expect(unmarked.note).toBeNull();
+      expect(unmarked.note_updated_by_first_name).toBeNull();
+
+      const write = await geduAuth.rpc("set_gamer_group_note", {
+        p_group_id: GROUP_MINE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_note: "Works best with a job to be in charge of.",
+      });
+      expect(write.error).toBeNull();
+
+      const after = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const marked = geduGroupFeed.parse(after.data).roster[0];
+      expect(marked.note).toBe("Works best with a job to be in charge of.");
+      expect(marked.note_updated_by_first_name).toBeTruthy();
+      expect(marked.group_joined_at).toBe(unmarked.group_joined_at);
+
+      // Clear it again, so nothing downstream reads a roster this seeded.
+      await geduAuth.rpc("set_gamer_group_note", {
+        p_group_id: GROUP_MINE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_note: "",
+      });
     });
 
     it("reports a null material link when the product has no staff row", async () => {

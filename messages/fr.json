@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Groupes",
+        "attendanceAndReports": "Présences et comptes rendus",
         "subtitle": "Faites glisser chaque participant dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
         "addGroup": "Ajouter un groupe",
         "loading": "Chargement…",
@@ -799,12 +800,9 @@
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
       },
       "sessions": {
-        "title": "Séances",
-        "groupSelectorAria": "Choisir un groupe",
-        "untitledGroup": "Groupe sans titre",
-        "noGroups": "Ce produit n’a pas encore de groupe, il n’y a donc rien d’enregistré.",
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
+        "railGroupHeading": "Groupe",
         "addressLabel": "Adresse du lieu",
         "addressPlaceholder": "Rue, code postal, ville",
         "addAddress": "Ajouter une adresse",
@@ -1331,7 +1329,6 @@
       "noRecordLabel": "Aucun compte rendu",
       "emptyFeed": "Ce groupe n’a pas encore de séances.",
       "noNotesYet": "Aucune note pour cette séance pour l’instant.",
-      "attendanceSummary": "{present} présents sur {total}",
       "presentLabel": "Présent",
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",

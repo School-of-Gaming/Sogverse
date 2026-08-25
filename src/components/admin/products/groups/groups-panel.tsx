@@ -20,6 +20,7 @@ import type { ProductAudience } from "@/components/public/products/product-audie
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
+import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
 import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
@@ -181,6 +182,11 @@ export function GroupsPanel({
       opensDate={opensDate}
       opensTime={opensTime}
       robloxRenders={robloxRenders}
+      // Built from the type's own route slug, exactly as this page's other
+      // admin links are: `/admin/<slug>/<product>/groups/<group>`.
+      groupHref={(id) =>
+        `/admin/${PRODUCT_TYPE_CONFIG[productType].routeSlug}/${productId}/groups/${id}`
+      }
       actions={actions}
       overlays={
         <>

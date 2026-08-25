@@ -40,11 +40,18 @@ import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
 
 /**
- * The gedu's product page: the assigned group's *workspace*, with the session
- * feed as its spine. It is the body of `/gedu/clubs|camps|events/[id]`, and the
- * same body a full-page preview scene renders over fixtures. It deliberately
- * takes everything as props — no query, no clock of its own beyond the shared
- * providers — which is what lets one body serve both shells.
+ * One group of one product, as the people running it work it: the group's
+ * *workspace*, with the session feed as its spine. It is the body of the gedu's
+ * `/gedu/clubs|camps|events/[id]`, the body of the admin's group details page,
+ * and the same body a full-page preview scene renders over fixtures. It
+ * deliberately takes everything as props — no query, no clock of its own beyond
+ * the shared providers — which is what lets one body serve every shell.
+ *
+ * **The design below is written from the gedu's side**, because a gedu is who
+ * this page is *for*. The admin surface exists to show an admin exactly what the
+ * gedu teaching the group sees, so every rule here holds there unchanged — an
+ * admin-shaped variation of any of it would be the drift the shared body exists
+ * to prevent.
  *
  * The shape, and why:
  *
@@ -166,7 +173,7 @@ export interface ProductSite {
   staffNote: string | null;
 }
 
-interface GeduProductPageBodyProps {
+interface GroupWorkspaceProps {
   data: GeduAssignedProduct;
   /**
    * Newest first: the future sessions inside the horizon (furthest away first,
@@ -193,8 +200,9 @@ interface GeduProductPageBodyProps {
   sourceTimeZone: string;
   /**
    * Staff-only lesson/material URL, or `null` when unset. **Never render this on
-   * a surface a parent or gamer can reach** — this page is gedu-only, which is
-   * the only reason no visibility check happens here.
+   * a surface a parent or gamer can reach** — this workspace is staff-only
+   * (gedu and admin), which is the only reason no visibility check happens
+   * here.
    */
   materialUrl: string | null;
   /** The group's standing public note, independent of any session. */
@@ -221,6 +229,18 @@ interface GeduProductPageBodyProps {
   onSiteNotesEditingChange: (editing: boolean) => void;
   /** Persist the venue's shared notes. Awaited by the panel. */
   onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
+  /**
+   * A control that writes the venue's **address**, for a shell whose viewer owns
+   * that field. Omitted — which is what the gedu shell does, and what a scene
+   * does — the site section is exactly what it has always been.
+   *
+   * It is the same "one optional capability, or none of it" shape
+   * `memberFlair` below uses: either the caller can offer this and passes a
+   * control, or it cannot and passes nothing. The body only decides *where* it
+   * goes; every string, every mutation and every failure line inside it belong
+   * to whoever built it.
+   */
+  siteAddressEditor?: ReactNode;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -284,9 +304,37 @@ interface GeduProductPageBodyProps {
    * already looking at.
    */
   memberFlair?: RosterMemberFlair;
+  /**
+   * The link out of this workspace, rendered at the top of the page. Omitted,
+   * the body renders the gedu's own back link ("Back to My SOG"); `null` renders
+   * none at all — the admin shell passes `null` because its frame already
+   * carries a back link that has to hold its position across the skeleton and
+   * the loaded state, and a second one inside the body would double it. The way
+   * out of a workspace belongs to whoever brought you in.
+   */
+  backLink?: ReactNode;
+  /**
+   * The route THIS workspace lives at — where leaving a voice room joined from
+   * here lands. Omitted, it is the gedu route for this product, which is right
+   * for the gedu shell and wrong for any other: an admin leaving a room would
+   * be bounced through /gedu to /admin instead of back to the group they were
+   * looking at. Same ownership rule as {@link backLink}.
+   */
+  workspaceHref?: string;
+  /**
+   * What the rail's first card is called. Omitted, it is the gedu's "My Group",
+   * which is the possessive that makes the pair with "Other groups" read as one
+   * distinction — and which is a claim only the gedu teaching the group can
+   * make. An admin holds no group, so their shell passes the category word
+   * instead; the card carries the group's own *name* either way, so what this
+   * chooses is only how the heading relates the card to its reader. Same
+   * ownership rule as {@link backLink}: a string that is about who brought you
+   * here belongs to whoever did.
+   */
+  groupHeading?: string;
 }
 
-export function GeduProductPageBody({
+export function GroupWorkspace({
   data,
   entries,
   feedNow,
@@ -302,6 +350,7 @@ export function GeduProductPageBody({
   siteNotesEditing,
   onSiteNotesEditingChange,
   onSaveSiteNotes,
+  siteAddressEditor,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
@@ -310,7 +359,10 @@ export function GeduProductPageBody({
   gameStatuses,
   robloxAvatarUrls,
   memberFlair,
-}: GeduProductPageBodyProps) {
+  backLink,
+  workspaceHref: workspaceHrefProp,
+  groupHeading,
+}: GroupWorkspaceProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
   const locale = useLocale();
@@ -352,13 +404,12 @@ export function GeduProductPageBody({
    * is the point of covering somebody's room for ten minutes rather than
    * inheriting their page.
    */
-  const workspaceHref = ROUTES.gedu.assignedProduct(
-    data.product.product_type,
-    data.product.id,
-  );
+  const workspaceHref =
+    workspaceHrefProp ??
+    ROUTES.gedu.assignedProduct(data.product.product_type, data.product.id);
 
   return (
-    // Wide, because this is a gedu surface and gedus are at a desk. The reading
+    // Wide, because this is a staff surface and staff are at a desk. The reading
     // column inside is still capped; the extra width buys the reference rail.
     //
     // No horizontal padding of its own: the dashboard layout this body renders
@@ -366,7 +417,9 @@ export function GeduProductPageBody({
     // here double-pads the phone (where the two gutters are most of the screen)
     // while doing nothing at all on the desktop this page is designed for.
     <div className="mx-auto max-w-7xl py-6 sm:py-10">
-      <SessionDetailsBackLink />
+      {/* `undefined` means "the gedu default", `null` means "the shell already
+          has one" — so this is an explicit check, not `??`. */}
+      {backLink === undefined ? <SessionDetailsBackLink /> : backLink}
 
       {/* The masthead is a two-column row on desktop: identity on the left,
           the one outward action on the right. A family-facing link out to a
@@ -427,6 +480,7 @@ export function GeduProductPageBody({
           {assignedGroup && (
             <GroupRailCard
               group={assignedGroup}
+              heading={groupHeading}
               isRemote={data.product.is_remote}
               voiceIsOpen={voiceState.voiceIsOpen}
               opensDate={voiceState.opensDate}
@@ -481,6 +535,7 @@ export function GeduProductPageBody({
                       editing={siteNotesEditing}
                       onEditingChange={onSiteNotesEditingChange}
                       onSave={onSaveSiteNotes}
+                      addressEditor={siteAddressEditor}
                     />
                   </div>
                 )}
@@ -699,12 +754,13 @@ function rosterAvatarUrl(
  * This group: its own room's Join, the gedus teaching it, then every child with
  * their parent's email and the copy-all helper.
  *
- * **It is titled "My Group", and it carries its size top-right.** "Group" was
- * ambiguous on a page whose other rail card is called "Other groups" — the
- * possessive is what makes the pair read as one distinction rather than as two
- * unrelated headings. The count sits in the same corner every peer row puts its
- * own, so "mine has eight, that one has six" is one horizontal glance rather
- * than a hunt.
+ * **It is titled "My Group" by default, and it carries its size top-right.**
+ * "Group" was ambiguous on a page whose other rail card is called "Other
+ * groups" — the possessive is what makes the pair read as one distinction
+ * rather than as two unrelated headings. That possessive is the gedu's, though,
+ * so a shell whose reader owns no group hands in its own heading instead. The
+ * count sits in the same corner every peer row puts its own, so "mine has
+ * eight, that one has six" is one horizontal glance rather than a hunt.
  *
  * **The Join lives here, at the top of the card, and nowhere else on the page.**
  * A voice room belongs to a group, and this card is the group — so the button
@@ -735,6 +791,7 @@ function rosterAvatarUrl(
  */
 function GroupRailCard({
   group,
+  heading,
   isRemote,
   voiceIsOpen,
   opensDate,
@@ -747,6 +804,8 @@ function GroupRailCard({
   memberFlair,
 }: {
   group: GeduAssignedProductGroup;
+  /** The card's heading, or `undefined` for the gedu's "My Group". */
+  heading?: string;
   isRemote: boolean;
   voiceIsOpen: boolean;
   opensDate: string;
@@ -783,7 +842,7 @@ function GroupRailCard({
 
   return (
     <RailCard
-      title={t("railGroupHeading")}
+      title={heading ?? t("railGroupHeading")}
       trailing={<ParticipantCount count={group.participant_count} />}
     >
       {isRemote && (

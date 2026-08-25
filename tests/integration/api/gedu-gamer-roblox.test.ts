@@ -6,8 +6,9 @@ import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/roblox — a gedu fixing a group member's
- * Roblox username. The Minecraft twin beside this file is the same edit on the
- * other platform, and the two suites are deliberately the same shape.
+ * Roblox username, and since 00205 an admin making the same fix from the admin
+ * group details page. The Minecraft twin beside this file is the same edit on
+ * the other platform, and the two suites are deliberately the same shape.
  *
  * What this file is responsible for is the *route*: the role gate, the shape of
  * the path parameter, the Roblox round trip, and what reaches the RPC. It is
@@ -69,6 +70,15 @@ function mockAuthenticatedGedu() {
   });
 }
 
+/** The same edit, made by an admin from the group details page (00205). */
+function mockAuthenticatedAdmin() {
+  mockRequireRole.mockResolvedValue({
+    user: { id: "admin-1" },
+    profile: { role: "admin" },
+    supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
+  });
+}
+
 function mockRpcSuccess(username: string | null, userId: number | null) {
   mockRpc.mockResolvedValue({
     data: {
@@ -98,7 +108,10 @@ describe("PATCH /api/gedu/gamers/[gamerId]/roblox", () => {
     expect(response.status).toBe(401);
   });
 
-  it("gates on the gedu role", async () => {
+  // A customer and a gamer are still refused, and the gate is what refuses
+  // them: naming `admin` beside `gedu` widens who may press save on the roster
+  // and takes nothing away from the family half of the platform.
+  it("gates on the gedu or admin role", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     );
@@ -109,7 +122,47 @@ describe("PATCH /api/gedu/gamers/[gamerId]/roblox", () => {
     );
 
     expect(response.status).toBe(403);
-    expect(mockRequireRole).toHaveBeenCalledWith("gedu", expect.any(Object));
+    expect(mockRequireRole).toHaveBeenCalledWith(
+      ["gedu", "admin"],
+      expect.any(Object),
+    );
+    // A refused caller must not reach the write, nor spend a Roblox request
+    // against the 60-per-minute-per-IP budget the whole fleet shares.
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockLookupRobloxUser).not.toHaveBeenCalled();
+  });
+
+  /**
+   * **An admin's save reaches the RPC, and reaches it as the same call.** The
+   * admin group details page renders the gedu workspace's roster body
+   * unchanged, so what an admin presses is the gedu's editor — the assertion
+   * worth making is therefore not merely that the gate lets them past but that
+   * nothing downstream forks on who they are. Which child an admin may edit is
+   * still the RPC's answer, proved against a real database rather than here.
+   */
+  it("lets an admin make the same edit, sending the same call", async () => {
+    mockAuthenticatedAdmin();
+    mockLookupRobloxUser.mockResolvedValue({
+      username: "Builderman",
+      userId: ROBLOX_USER_ID,
+      displayName: "builderman",
+    });
+    mockRpcSuccess("builderman", ROBLOX_USER_ID);
+
+    const response = await PATCH(
+      createRequest({ robloxUsername: "builderman" }),
+      routeContext(),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith("set_group_member_roblox", {
+      p_participant_id: GAMER_ID,
+      p_roblox_username: "builderman",
+      p_roblox_user_id: ROBLOX_USER_ID,
+    });
+    expect(data.roblox_username).toBe("builderman");
+    expect(data.roblox_user_id).toBe(ROBLOX_USER_ID);
   });
 
   /**

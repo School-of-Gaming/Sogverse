@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Ryhmät",
+        "attendanceAndReports": "Läsnäolot ja koosteet",
         "subtitle": "Vedä jokainen osallistuja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
         "addGroup": "Lisää ryhmä",
         "loading": "Ladataan…",
@@ -799,12 +800,9 @@
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
       },
       "sessions": {
-        "title": "Kerrat",
-        "groupSelectorAria": "Valitse ryhmä",
-        "untitledGroup": "Nimetön ryhmä",
-        "noGroups": "Tällä tuotteella ei ole vielä ryhmiä, joten mitään ei ole kirjattu.",
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
+        "railGroupHeading": "Ryhmä",
         "addressLabel": "Toimipaikan osoite",
         "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
         "addAddress": "Lisää osoite",
@@ -1331,7 +1329,6 @@
       "noRecordLabel": "Ei kirjausta",
       "emptyFeed": "Tällä ryhmällä ei ole vielä kertoja.",
       "noNotesYet": "Tälle kerralle ei ole vielä muistiinpanoja.",
-      "attendanceSummary": "{present}/{total} paikalla",
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
       "unmarkedLabel": "Ei merkintää",

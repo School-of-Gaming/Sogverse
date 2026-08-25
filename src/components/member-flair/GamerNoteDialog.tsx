@@ -95,7 +95,14 @@ export function GamerNoteDialog({
       // frame in which the button could re-enable under the cursor.
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : c("unexpectedError"));
+      // A message is shown only when there is one to show. The note write maps
+      // a database refusal — a `42501` reading `Forbidden`, a CHECK violation
+      // reading a constraint name — to an error carrying no message at all,
+      // precisely so this falls back to the localized copy; a failure that does
+      // have something to say still says it. Which failures those are is the
+      // service's call, once, for all three surfaces that mount this dialog.
+      const message = err instanceof Error ? err.message : "";
+      setError(message.length > 0 ? message : c("unexpectedError"));
       setCommitting(false);
     }
   };

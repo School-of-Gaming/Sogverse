@@ -692,6 +692,75 @@ describe("get_product_groups_with_details", () => {
       .eq("product_id", PRODUCT_DETAILS);
   });
 
+  it("carries the staff-only flair identically on the grouped and group-less arms", async () => {
+    // 00203's three fields, on the groups-snapshot reader. No admin surface
+    // draws them from this document today — the admin group details page reads
+    // both marks off the group feed — so what is asserted here is the shape
+    // parity itself. The two arms are the point: one shared
+    // LEFT JOIN feeds all three participation arms, so a seat in a group can
+    // carry a note and a seat in none comes back null throughout — which is the
+    // truth, and is what keeps the three shapes one shape.
+    const setup = await adminAuth.rpc("apply_group_changes", {
+      p_product_id: PRODUCT_DETAILS,
+      p_added_groups: [{ tempId: "tF", name: "Flair", geduIds: [] }],
+    });
+    const groupF = getStringRecord(setup.data, "tempMap").tF;
+
+    await admin.from("participations").insert([
+      {
+        product_id: PRODUCT_DETAILS,
+        participant_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+        group_id: groupF,
+      },
+      {
+        product_id: PRODUCT_DETAILS,
+        participant_id: TEST_IDS.GAMER_2,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+        group_id: null,
+      },
+    ]);
+
+    // Written through the real RPC, by an admin — who has full read/write
+    // parity with the gedus on the product.
+    const write = await adminAuth.rpc("set_gamer_group_note", {
+      p_group_id: groupF,
+      p_participant_id: TEST_IDS.GAMER,
+      p_note: "Sits with the quieter table.",
+    });
+    expect(write.error).toBeNull();
+
+    const { data } = await adminAuth.rpc("get_product_groups_with_details", {
+      p_product_id: PRODUCT_DETAILS,
+    });
+    const result = productGroupsSnapshot.parse(data);
+
+    const noted = result.groups
+      .find((g) => g.id === groupF)
+      ?.participations.find((p) => p.participant_id === TEST_IDS.GAMER);
+    expect(noted?.note).toBe("Sits with the quieter table.");
+    expect(noted?.note_updated_by_first_name).toBeTruthy();
+    // Stamped by the trigger on insert, since this seat was created in a group.
+    // It rides here for shape parity rather than for a badge — the newcomer
+    // badge is drawn on no admin surface.
+    expect(noted?.group_joined_at).not.toBeNull();
+
+    const unassigned = result.unassigned.find(
+      (p) => p.participant_id === TEST_IDS.GAMER_2,
+    );
+    expect(unassigned?.note).toBeNull();
+    expect(unassigned?.note_updated_by_first_name).toBeNull();
+    expect(unassigned?.group_joined_at).toBeNull();
+
+    // Cleanup. The note row goes with the group, which goes with the product.
+    await admin
+      .from("participations")
+      .delete()
+      .eq("product_id", PRODUCT_DETAILS);
+  });
+
   it("returns Forbidden when called by a non-admin", async () => {
     const customerAuth = await createAuthenticatedClient(
       TEST_CREDENTIALS.CUSTOMER.email,

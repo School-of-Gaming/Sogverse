@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Grupper",
+        "attendanceAndReports": "Närvaro och sammanfattningar",
         "subtitle": "Dra varje deltagare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
         "addGroup": "Lägg till grupp",
         "loading": "Laddar…",
@@ -799,12 +800,9 @@
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
       },
       "sessions": {
-        "title": "Tillfällen",
-        "groupSelectorAria": "Välj en grupp",
-        "untitledGroup": "Namnlös grupp",
-        "noGroups": "Den här produkten har inga grupper än, så ingenting är dokumenterat.",
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
+        "railGroupHeading": "Grupp",
         "addressLabel": "Platsens adress",
         "addressPlaceholder": "Gata, postnummer, stad",
         "addAddress": "Lägg till adress",
@@ -1331,7 +1329,6 @@
       "noRecordLabel": "Ingen anteckning",
       "emptyFeed": "Den här gruppen har inga tillfällen än.",
       "noNotesYet": "Inga anteckningar för det här tillfället än.",
-      "attendanceSummary": "{present} av {total} närvarande",
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
       "unmarkedLabel": "Inte markerad",

@@ -75,4 +75,3 @@ export const adminProductSessions = z.object({
 
 export type AdminProductSessions = z.infer<typeof adminProductSessions>;
 export type AdminSessionGroup = z.infer<typeof adminSessionGroup>;
-export type AdminSessionRosterEntry = z.infer<typeof adminSessionRosterEntry>;

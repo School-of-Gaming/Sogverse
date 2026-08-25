@@ -1,11 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useDroppable } from "@dnd-kit/core";
-import { Check, Pencil, Trash2, UserPlus, Users, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  Check,
+  Pencil,
+  Trash2,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -38,6 +47,16 @@ interface GroupColumnProps {
   opensDate: string;
   /** Pre-formatted "next open" time label for the locked Join button. */
   opensTime: string;
+  /**
+   * Where this group's own page lives, or `undefined` on a surface that has no
+   * such page to point at (a fixture-fed one, say).
+   *
+   * It is a **function of the id rather than a ready href** because the column
+   * is rendered for a not-yet-persisted card too, whose id names no page — the
+   * caller answers "what is the URL for a group" once, and this component
+   * decides when there is a real group to ask about.
+   */
+  groupHref?: (groupId: string) => string;
   onRename: (groupId: string, name: string) => void;
   onDelete: (groupId: string) => void;
   onAddGedu: (groupId: string) => void;
@@ -53,6 +72,7 @@ export function GroupColumn({
   voiceIsOpen,
   opensDate,
   opensTime,
+  groupHref,
   onRename,
   onDelete,
   onAddGedu,
@@ -167,7 +187,7 @@ export function GroupColumn({
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <span className="font-medium">{group.name}</span>
                   <Button
                     type="button"
@@ -180,6 +200,40 @@ export function GroupColumn({
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
+                  {/* The way in to this group's own page — its notes, its
+                      roster and its whole session record, rendered as the gedu
+                      teaching it sees them.
+
+                      **In the header, beside the name, and nowhere near a
+                      chip.** A chip on this board is a drag handle whose entire
+                      purpose is moving somebody between groups; a link inside
+                      one would compete with that gesture for the same pointer
+                      press. The header is the part of the card that is about
+                      the *group* rather than about its people.
+
+                      Absent on a card whose create has not landed (its id names
+                      no page yet) and on one being deleted (that page is about
+                      to stop existing). */}
+                  {groupHref !== undefined && !isTemp && !isDeleting && (
+                    <Link
+                      href={groupHref(group.id)}
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        // h-8 rather than sm's h-9: level with the name's line
+                        // box beside it, without out-sizing the h-7 pencil in
+                        // between.
+                        "h-8 shrink-0 gap-1 px-2.5",
+                      )}
+                    >
+                      {/* Named for what is behind it, not "View details": with
+                          the sessions panel gone, this link is the only way
+                          from here to a group's attendance and session
+                          reports — the two things an admin comes looking for
+                          every month — and a generic label hides that. */}
+                      {t("attendanceAndReports")}
+                      <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
