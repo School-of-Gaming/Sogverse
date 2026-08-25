@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
+import { GamerNoteDot, NewcomerBadge } from "@/components/member-flair";
 import {
   gameFigureHeight,
   GAME_PLATFORMS,
@@ -67,6 +68,44 @@ interface ParticipantRosterRowProps {
     participantId: string,
     username: string,
   ) => void | Promise<void>;
+  /**
+   * When this person joined the group the roster belongs to, as an ISO stamp —
+   * the newcomer badge's clock.
+   *
+   * **A staff-only overlay fact**, and the gate is the data rather than a viewer
+   * prop: the stamp comes off a staff-scoped read, so a surface a family sees
+   * has nothing to pass and the badge cannot appear there. Omitted (or `null`)
+   * the row renders exactly what it rendered before the badge existed.
+   *
+   * Paired with {@link flairNow} — a badge without a clock would have to invent
+   * one, and a clock it invented would disagree with the page around it.
+   */
+  newcomerJoinedAt?: string | null;
+  /**
+   * The instant the newcomer fade is measured against — the caller's
+   * request-stable clock, the same one everything else on the page answers off.
+   */
+  flairNow?: Date;
+  /**
+   * Whether a Gedu has written a note about this person in this group. Drives
+   * the dot on the avatar and nothing else; the note's *text* never reaches this
+   * row, which only opens the dialog that holds it.
+   *
+   * Another staff-only overlay fact, arriving with the roster rather than after
+   * it — so the dot is painted in the first frame and never pops in over a face
+   * the reader is already looking at.
+   */
+  hasNote?: boolean;
+  /**
+   * Open this person's Gedu note. **Its presence is what turns the avatar into a
+   * control**, so a surface that does not pass it renders the plain avatar it
+   * always did.
+   *
+   * Every row gets it where notes are available, including the majority with
+   * nothing written yet: opening an empty note *is* the add flow, and gating the
+   * affordance on {@link hasNote} would leave no way to write the first one.
+   */
+  onOpenNote?: () => void;
   /**
    * Where the platform's check for this child's name has got to, when one is in
    * flight or has just landed. Omitted, the row derives its own resting state
@@ -141,6 +180,12 @@ interface ParticipantRosterRowProps {
  * The one thing that does add height is the line saying a save was refused, and
  * that is a direct answer to the button the gedu just pressed rather than
  * something arriving on the data's own schedule.
+ *
+ * **Staff flair is optional and additive.** A newcomer badge beside the name and
+ * a note dot on the avatar are facts only a staff-scoped read supplies, so a
+ * caller that has none passes none and this row is byte-for-byte the row it was
+ * before either existed. Both arrive in the same payload as the roster, so
+ * neither lands on a face or a name that is already on screen.
  */
 export function ParticipantRosterRow({
   participant,
@@ -148,9 +193,14 @@ export function ParticipantRosterRow({
   onSaveGameUsername,
   gameStatus,
   avatarUrl,
+  newcomerJoinedAt,
+  flairNow,
+  hasNote,
+  onOpenNote,
 }: ParticipantRosterRowProps) {
   const t = useTranslations("gedu.sessionDetails");
   const c = useTranslations("common");
+  const t2 = useTranslations("memberFlair");
   const timeZone = useTimezone();
 
   // The one bit that decides the variant. The RPC emits `participant_email`
@@ -171,18 +221,42 @@ export function ParticipantRosterRow({
   }
   const detail = detailParts.join(" · ");
 
+  const avatar = <Identicon id={participant.participant_id} size={32} />;
+
   return (
     <li className="space-y-1.5 rounded-md border border-border bg-card p-2.5">
       <div className="flex min-w-0 items-start gap-2.5">
-        <Avatar className="h-8 w-8 shrink-0">
-          <Identicon id={participant.participant_id} size={32} />
-        </Avatar>
+        {onOpenNote === undefined ? (
+          <Avatar className="h-8 w-8 shrink-0">{avatar}</Avatar>
+        ) : (
+          /* The face is the control, because the dot that marks a note sits on
+             it — a separate button elsewhere in the row would put the mark and
+             the way to reach it in two places. `relative` and unclipped so the
+             dot can straddle the corner; the Avatar keeps its own
+             `overflow-hidden`, which is why the dot hangs outside it. */
+          <button
+            type="button"
+            onClick={onOpenNote}
+            aria-label={t2("openNote", { name: participant.first_name })}
+            className="relative shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Avatar className="h-8 w-8">{avatar}</Avatar>
+            {hasNote && <GamerNoteDot />}
+          </button>
+        )}
         <div className="min-w-0 flex-1 space-y-1">
           {/* A div, not a p: the adult variant's Badge renders a div, and a
               block element inside a p is invalid HTML — the browser closes the
               p early and React fails hydration on the mismatch. */}
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-medium leading-tight">
             <span className="truncate">{participant.first_name}</span>
+            {/* Straight after the name, ahead of the age/gender detail and of
+                the adult row's Parent badge — the two never displace each
+                other, they queue in the same wrapping line. An adult can be new
+                to a group too, so this is not a child-only mark. */}
+            {flairNow !== undefined && (
+              <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
+            )}
             {isAdult ? (
               /* The same badge and the same word the admin surfaces use for a
                  customer profile, read off the shared role constants rather
