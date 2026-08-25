@@ -3023,7 +3023,10 @@
       "dateLabel": "Date",
       "timeLabel": "Time",
       "productButton": "View in My SOG",
-      "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG."
+      "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG.",
+      "staffCopyLabel": "Gedu and Admin copy",
+      "staffCopyBody": "This is a copy of the session report that went to the group’s families. You are reading it as the person who sent it, or as an admin, not as a parent.",
+      "staffCopyPrivacy": "Every family received their own separate email, addressed to them alone. The Gedu and admin addresses in this copy’s To and Cc lines appear on this copy only: no parent sees them, and no family sees another family."
     }
   },
   "legal": {

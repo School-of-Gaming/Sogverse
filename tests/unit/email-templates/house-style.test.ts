@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
-import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
 /**
@@ -33,9 +33,13 @@ import { RADIUS } from "@/lib/constants/radius";
 
 /** Every colour a mail is allowed to emit. */
 const PALETTE = new Set(
-  [...Object.values(BRAND), ...Object.values(DARK_THEME), ...Object.values(GRADIENT)].map((hex) =>
-    hex.toLowerCase(),
-  ),
+  [
+    ...Object.values(BRAND),
+    ...Object.values(DARK_THEME),
+    ...Object.values(GRADIENT),
+    ...Object.values(STATUS),
+    ...Object.values(STATUS_TINT),
+  ].map((hex) => hex.toLowerCase()),
 );
 
 const RADII = new Set(Object.values(RADIUS));
@@ -92,6 +96,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     geduName: "Marianne",
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
+    copy: "family",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -119,8 +124,19 @@ afterAll(() => {
   vi.unstubAllEnvs();
 });
 
-function fromRegistry(key: string): [string, string][] {
-  return [[key, templateRegistry[key].render(PARAMS[key], t, "en").html]];
+/**
+ * One rendered mail from a registry entry. `overrides` is for a template whose
+ * entry can produce more than one mail — a variant is a different document with
+ * different markup in it, so sweeping only the default one leaves the other
+ * unchecked, which is the shape of the bug this file exists for. It is named
+ * separately so a failure says which of the two it was.
+ */
+function fromRegistry(
+  key: string,
+  name = key,
+  overrides: Record<string, string | boolean | null> = {},
+): [string, string][] {
+  return [[name, templateRegistry[key].render({ ...PARAMS[key], ...overrides }, t, "en").html]];
 }
 
 /**
@@ -138,7 +154,12 @@ const MAILS: Record<string, () => [string, string][]> = {
   "password-reset": () => fromRegistry("passwordReset"),
   feedback: () => fromRegistry("feedback"),
   "product-confirmation": () => fromRegistry("productConfirmation"),
-  "session-report": () => fromRegistry("sessionReport"),
+  // Both mails one send produces: the family's, and the copy to staff, which
+  // carries a banner of its own and so has markup no other render reaches.
+  "session-report": () => [
+    ...fromRegistry("sessionReport"),
+    ...fromRegistry("sessionReport", "sessionReport (staff copy)", { copy: "staff" }),
+  ],
   "verify-email": () => fromRegistry("verifyEmail"),
   welcome: () => [...fromRegistry("welcomeParent"), ...fromRegistry("welcomeGedu")],
 

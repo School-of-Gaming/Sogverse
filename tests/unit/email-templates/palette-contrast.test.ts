@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 
 /**
  * Contrast, asserted on the palette itself rather than on any rendering.
@@ -52,6 +52,10 @@ const PAIRS: { name: string; fg: string; bg: string }[] = [
   // The header lockup and any brand-orange inline text, both ≥18px bold or
   // used as emphasis at body size — it clears AA_BODY anyway, comfortably.
   { name: "brand orange on the ground", fg: BRAND.primary, bg: DARK_THEME.bg },
+  // The callout panel: both its uppercase label and its paragraphs, which carry
+  // the same colour on the washed info surface. 13.24:1 — the reason the panel
+  // can drop the accent-coloured title the app's Alert uses and lose nothing.
+  { name: "callout text on the info tint", fg: DARK_THEME.foreground, bg: STATUS_TINT.infoSurface },
 ];
 
 describe("every colour pair a mail may emit is legible", () => {
@@ -74,7 +78,16 @@ describe("every colour pair a mail may emit is legible", () => {
  * survives the reasoning.
  */
 describe("the pairs we rejected are still worth rejecting", () => {
-  const FORBIDDEN: { name: string; fg: string; bg: string; why: string }[] = [
+  // `atLeast` pins a pair whose *nearness* to the floor is load-bearing for the
+  // prose around it: the number lives where the build fails when it stops being
+  // true, instead of rotting in a comment.
+  const FORBIDDEN: {
+    name: string;
+    fg: string;
+    bg: string;
+    why: string;
+    atLeast?: number;
+  }[] = [
     {
       name: "brand purple as body text",
       fg: BRAND.secondary,
@@ -93,9 +106,37 @@ describe("the pairs we rejected are still worth rejecting", () => {
       bg: BRAND.primary,
       why: "the same mistake in the other direction",
     },
+    {
+      name: "white on the info fill",
+      fg: STATUS.infoForeground,
+      bg: STATUS.info,
+      // 3.48:1. The pair globals.css names (--info / --info-foreground) and the
+      // reason `info` is never a fill under a label in a mail: it is mirrored so
+      // the fill and its foreground stay one decision, not so a caller can use
+      // them together at body size.
+      why: "the info colour is an accent here, never a surface with text on it",
+    },
+    {
+      name: "the info colour as the callout's own label",
+      fg: STATUS.info,
+      bg: STATUS_TINT.infoSurface,
+      // 4.46:1 — a hair under the floor, which is the interesting part. The
+      // app's Alert colours its title with the accent and the mail cannot copy
+      // that: at 12px bold there is no large-text exemption to reach for, so the
+      // label is `foreground` and the accent stays in the border and the wash.
+      why: "the one thing the mail's callout does not inherit from the app's Alert",
+      atLeast: 4.4,
+    },
   ];
 
-  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg }) => {
-    expect(contrast(fg, bg)).toBeLessThan(AA_BODY);
+  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg, atLeast }) => {
+    const ratio = contrast(fg, bg);
+    expect(ratio).toBeLessThan(AA_BODY);
+    if (atLeast !== undefined) {
+      expect(
+        ratio,
+        `the "hair under the floor" claim beside this pair assumes at least ${atLeast}:1`,
+      ).toBeGreaterThan(atLeast);
+    }
   });
 });

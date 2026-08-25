@@ -178,6 +178,7 @@ describe("templateRegistry sessionReport", () => {
     geduName: "Marianne",
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
+    copy: "family",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -246,6 +247,40 @@ describe("templateRegistry sessionReport", () => {
     expect(subject).toContain("Thursday, August 20, 2026");
   });
 
+  /**
+   * The select is the whole reason the variant is testable from the admin tool:
+   * a banner nobody can send themselves is a banner nobody can check. The
+   * default option is the family mail, which is what an untouched form posts.
+   */
+  it("renders the staff copy's banner only when the form asks for it", () => {
+    const family = templateRegistry.sessionReport.render(params, t, "en");
+    const staff = templateRegistry.sessionReport.render({ ...params, copy: "staff" }, t, "en");
+
+    expect(staff.html).toContain("Gedu and Admin copy");
+    expect(staff.html).toContain("Every family received their own separate email");
+    expect(family.html).not.toContain("Gedu and Admin copy");
+    // The subject is the family mail's, deliberately: the copy is the same mail
+    // and finds itself in an inbox by the same line.
+    expect(staff.subject).toBe(family.subject);
+  });
+
+  /**
+   * The live send puts the GROUP's name in the child's slot on the staff copy,
+   * so the intro reads as a record of what the group was mailed. The testing
+   * tool has to do the same or its staff render is a mail nobody receives —
+   * right banner, wrong first sentence.
+   */
+  it("puts the group's name in the child's slot on the staff copy", () => {
+    const family = templateRegistry.sessionReport.render(params, t, "en");
+    const staff = templateRegistry.sessionReport.render({ ...params, copy: "staff" }, t, "en");
+
+    // The styled span, not the bare name: the group's name is in the fact table
+    // of both mails, and the child's name is in the sample report's own text.
+    expect(family.html).toContain(styledName("Aino"));
+    expect(staff.html).not.toContain(styledName("Aino"));
+    expect(staff.html).toContain(styledName("Usvalaakso: Kettukallio"));
+  });
+
   it("rejects a sample id it does not know", () => {
     expect(() =>
       templateRegistry.sessionReport.render({ ...params, sample: "1999-01-01" }, t, "en"),
@@ -309,12 +344,32 @@ describe("every template renders in every locale", () => {
       geduName: "Marianne",
       productName: "Minecraft: Cozy Adventures",
       groupName: "Usvalaakso: Kettukallio",
+      copy: "family",
       sample: "en",
       viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",
       productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     },
   };
+
+  /**
+   * One fixture is not always one mail. The session report's builder ships two —
+   * the family's and the staff copy — and the copy's banner is the only thing
+   * that reads the `staffCopy*` keys, so a sweep that only ever asked for the
+   * family mail would let those three keys go missing from four locales without
+   * anything failing. Every variant listed here goes through the same key-leak
+   * guard below; a template with no entry is swept once, as its own fixture.
+   */
+  const TEMPLATE_VARIANTS: Record<string, Record<string, string | boolean | null>[]> = {
+    sessionReport: [{ copy: "family" }, { copy: "staff" }],
+  };
+
+  function variantsOf(key: string): Record<string, string | boolean | null>[] {
+    return (TEMPLATE_VARIANTS[key] ?? [{}]).map((overrides) => ({
+      ...TEMPLATE_PARAMS[key],
+      ...overrides,
+    }));
+  }
 
   it("has a fixture for every registered template", () => {
     expect(Object.keys(TEMPLATE_PARAMS).sort()).toEqual(Object.keys(templateRegistry).sort());
@@ -323,18 +378,21 @@ describe("every template renders in every locale", () => {
   describe.each(SUPPORTED_LOCALES)("%s", (locale) => {
     it.each(Object.keys(templateRegistry))("renders %s", async (key) => {
       const translator = await getEmailTranslator(locale);
-      const { subject, html, replyTo } = templateRegistry[key].render(
-        TEMPLATE_PARAMS[key],
-        translator,
-        locale,
-      );
 
-      expect(subject.trim()).not.toBe("");
-      expect(subject).not.toContain(`email.${key}`);
-      expect(html).toContain("<!DOCTYPE html>");
-      expect(html).toContain(`lang="${locale}"`);
-      expect(html).not.toContain(`email.${key}`);
-      expect(replyTo).toContain("@");
+      for (const params of variantsOf(key)) {
+        const { subject, html, replyTo } = templateRegistry[key].render(
+          params,
+          translator,
+          locale,
+        );
+
+        expect(subject.trim()).not.toBe("");
+        expect(subject).not.toContain(`email.${key}`);
+        expect(html).toContain("<!DOCTYPE html>");
+        expect(html).toContain(`lang="${locale}"`);
+        expect(html).not.toContain(`email.${key}`);
+        expect(replyTo).toContain("@");
+      }
     });
   });
 });

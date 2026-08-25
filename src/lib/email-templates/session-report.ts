@@ -1,6 +1,6 @@
 import { wrapInLayout } from "./layout";
 import { escapeHtml, paragraph, styledName, styledProductName } from "./utils";
-import { ctaButton } from "./blocks";
+import { calloutPanel, ctaButton } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
 import { DARK_THEME } from "@/lib/constants/colors";
 import type { EmailTranslator } from "./translator";
@@ -36,9 +36,20 @@ import type { EmailTranslator } from "./translator";
  * Sent by `POST /api/gedu/sessions/email-report`, when a gedu presses **Send to
  * parents** on a past session's card: one mail per active participation, plus
  * one copy to the gedu with the admins in CC (that copy is the same template
- * with the group's name in the child's slot). The admin testing tool at
- * `/admin/testing` keeps its entry — it is still where the layout and the
- * markdown rendering are iterated, against invented fixture reports.
+ * with the group's name in the child's slot, opened by the banner below). The
+ * admin testing tool at `/admin/testing` keeps its entry — it is still where
+ * the layout and the markdown rendering are iterated, against invented fixture
+ * reports.
+ *
+ * **The staff copy says it is one, at the top, before anything else.** Staff
+ * meet their own copy in an inbox that shows them a To and a CC full of
+ * colleagues, and the reasonable reading of that — the one that keeps being
+ * made — is that a family somewhere received a mail exposing those addresses.
+ * Nothing was ever exposed; the confusion is the defect, so the copy answers it
+ * in the two sentences that settle it: this is a copy of what went to the
+ * families, and each family's mail was its own, addressed to them alone. It is
+ * a variant of the one template rather than a template of its own, because
+ * everything below the banner is deliberately the same mail the families read.
  */
 
 export interface SessionReportEmailOptions {
@@ -57,6 +68,12 @@ export interface SessionReportEmailOptions {
   reportMarkdown: string;
   /** App-generated link to the product's page in My SOG, where the reports live. */
   productUrl: string;
+  /**
+   * Render the copy that goes to the sender and the admins rather than the mail
+   * that goes to a family: the same report, opened by the banner that says so.
+   * Absent means the family mail, which is what every send but one is.
+   */
+  staffCopy?: boolean;
 }
 
 export function sessionReportSubject(
@@ -78,9 +95,12 @@ export function buildSessionReportEmail(
     sessionTime,
     reportMarkdown,
     productUrl,
+    staffCopy = false,
   }: SessionReportEmailOptions,
 ): string {
-  const content = `
+  // The banner carries its own leading break, so the family mail's content is
+  // byte-for-byte what it was before the variant existed.
+  const content = `${staffCopy ? staffCopyBanner(t) : ""}
     ${paragraph(
       t("sessionReport.intro", {
         geduName: styledName(geduName),
@@ -101,6 +121,30 @@ export function buildSessionReportEmail(
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
   `;
   return wrapInLayout({ title: t("sessionReport.title"), content, locale, t });
+}
+
+/**
+ * The staff copy's opening banner: what this mail is, and what the families
+ * received instead.
+ *
+ * **It is the first thing in the card, above the intro**, because the reader
+ * has already seen the thing that worries them — a To and a CC full of
+ * colleagues — before they have read a word, and an explanation further down is
+ * an explanation arriving after the alarm.
+ *
+ * **It is `calloutPanel`, not markup of its own** — the app's `Alert` in its
+ * `info` variant, reaching an inbox: a washed info surface inside a full info
+ * border, with an uppercase label and the body's own text colour. Everything
+ * about how it looks lives in the helper, so the one thing this file decides is
+ * which three strings go in it. It was a brand-orange rule down one edge for a
+ * while, which is a treatment the app has nowhere and which read as a warning —
+ * this is a copy of a report, not an alarm.
+ */
+function staffCopyBanner(t: EmailTranslator): string {
+  return calloutPanel({
+    label: t("sessionReport.staffCopyLabel"),
+    paragraphs: [t("sessionReport.staffCopyBody"), t("sessionReport.staffCopyPrivacy")],
+  });
 }
 
 /**

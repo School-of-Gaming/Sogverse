@@ -5,6 +5,7 @@ import {
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { STATUS_TINT } from "@/lib/constants/colors";
 
 /**
  * POST /api/gedu/sessions/email-report — the fan-out that mails a session
@@ -742,6 +743,38 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // The group's name stands in the child's slot, so the copy reads as a record
     // of what the group was sent rather than as one child's mail.
     expect(copy.htmlContent).toContain("Kettukallio");
+  });
+
+  /**
+   * The copy names itself as one, and the family mails do not.
+   *
+   * This is the route's half of the variant — the builder can render the banner
+   * and still never be asked to. What it prevents is the confusion the banner
+   * was written for (staff reading their own To and CC as a leaked family mail)
+   * and the far worse inverse: a parent told their report is a copy of what
+   * went to the other families.
+   */
+  it("opens the staff copy with the banner and leaves it off every family mail", async () => {
+    await POST(createRequest());
+
+    const copy = staffCopies()[0];
+    // The load-bearing check is the banner's own markup, not its words: these
+    // mails are rendered in each reader's locale, so an English string proves
+    // nothing about the Finnish parent's mail — it would be absent from that one
+    // whether the banner rendered or not. The callout's info border is the
+    // banner's alone in this template and is the same bytes in every locale: the
+    // shell's card and the fact table's rules are the other 1px borders in a
+    // session report and both are `DARK_THEME.border`. (Its twice-declared fill
+    // would do as well, but the colour is the discriminating half either way.)
+    expect(copy.htmlContent).toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    // The English copy's words still earn their place — this sender reads in
+    // `en`, and the marker cannot tell a banner from an empty one.
+    expect(copy.htmlContent).toContain("Gedu and Admin copy");
+    expect(copy.htmlContent).toContain("Every family received their own separate email");
+
+    for (const mail of familyMails()) {
+      expect(mail.htmlContent).not.toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    }
   });
 
   // -- The staff copy when an ADMIN pressed the button (00200) --
