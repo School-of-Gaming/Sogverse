@@ -214,6 +214,23 @@ export interface MyWaitlistRow {
    * the stamped-at-join value, so it shrinks as people ahead leave.
    */
   position: number;
+  /**
+   * When a seat was offered to this family, or null if none ever has been.
+   *
+   * It comes off the `participations` row rather than the position RPC, and
+   * deliberately: the RPC is `SECURITY DEFINER` and counts past the caller's
+   * RLS, so everything it returns is data the caller may not be entitled to —
+   * its comment bounds that surface to an id and an integer. This value is the
+   * caller's own row, readable under their own policies, so it belongs in the
+   * select beside every other field on this shape.
+   *
+   * Whether the offer is still LIVE is derived from it, against
+   * `SEAT_OFFER_WINDOW_DAYS` — the same arithmetic the database does, and the
+   * reason the deadline can be stated without a second round trip. An offer
+   * whose window has closed reads as an ordinary queue place again: the row is
+   * still waitlisted, and an admin may offer it afresh.
+   */
+  seatOfferSentAt: string | null;
 }
 
 /**
@@ -925,6 +942,12 @@ type RawMyUpcomingSessionRow = QueryData<
  * No location embed: a waitlisted card's footer is the queue sentence, so there
  * is no venue line for one to fill.
  *
+ * `seat_offer_sent_at` is the one column here that is not about the product,
+ * and it is selected rather than asked of the position RPC on purpose: that RPC
+ * is SECURITY DEFINER and counts past the caller's RLS, so its answer is
+ * deliberately bounded to an id and an integer. This is the caller's own row,
+ * under their own policies.
+ *
  * Ordered oldest-first by the waitlist stamp, which is neither selected nor
  * needed by the card: it just gives the band a stable order that means
  * something (longest wait at the top) instead of whatever PostgREST returns.
@@ -941,6 +964,7 @@ function buildMyWaitlistQuery(
       `
         id,
         participant_id,
+        seat_offer_sent_at,
         product:products!inner(
           product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
@@ -1025,6 +1049,7 @@ function toMyWaitlistRow(
       durationMinutes: s.duration_minutes,
     })),
     position,
+    seatOfferSentAt: row.seat_offer_sent_at,
   };
 }
 

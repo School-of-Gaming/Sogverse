@@ -41,6 +41,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
     ROUTES.selectProfile,
     ROUTES.resetPin,
     ROUTES.verifyEmail,
+    ROUTES.seatOffer,
     ROUTES.forgotPassword,
     ROUTES.resetPassword,
   ];
@@ -75,7 +76,11 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // a signed-in visitor to their dashboard, and the person clicking a
 // verification link is very often already signed in — that bounce would eat the
 // token before the page ever read it.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.roblox, ROUTES.voice.prefix];
+// ROUTES.seatOffer is public on the same reasoning, with one thing more: the
+// reader is a parent on a shared family device, so they may be signed in as
+// their own child. The signed token in the URL is the authorization, the page
+// renders identically in every auth state, and a gate would only cost the link.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on

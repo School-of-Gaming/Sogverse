@@ -35,7 +35,8 @@
       "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste",
       "robloxSafeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
       "robloxTerms": "Roblox-ohjelman käyttöehdot",
-      "geduContract": "Gedu-sopimus"
+      "geduContract": "Gedu-sopimus",
+      "seatOffer": "Paikkatarjous"
     }
   },
   "notFound": {
@@ -2410,6 +2411,43 @@
       "staffCopyLabel": "Kopio Geduille ja ylläpitäjille",
       "staffCopyBody": "Tämä on kopio raportista, joka lähetettiin ryhmän perheille. Saat sen lähettäjänä tai ylläpitäjänä, et vanhempana.",
       "staffCopyPrivacy": "Jokainen perhe sai oman erillisen viestinsä, joka oli osoitettu vain sen omalle perheelle. Gedujen ja ylläpitäjien osoitteet näkyvät vain tämän viestin vastaanottaja- ja kopiokentissä: yksikään vanhempi ei näe niitä eikä muiden perheiden osoitteita."
+    },
+    "seatOffer": {
+      "heading": "Paikka vapautui",
+      "question": "Haluatko paikan edelleen? Kerro meille kummin päin tahansa – kieltävä vastaus auttaa yhtä paljon, sillä silloin voimme tarjota paikkaa heti seuraavalle perheelle.",
+      "deadlineLabel": "Vastaa viimeistään",
+      "deadlineBody": "{deadline}. Jos emme kuule sinusta siihen mennessä, paikka siirtyy jonossa seuraavalle perheelle.",
+      "accept": "Otan paikan",
+      "decline": "Ei kiitos",
+      "alsoInMySog": "Sama kysymys odottaa Oma SOG -sivulla, jos vastaat mieluummin siellä.",
+      "child": {
+        "subject": "{participantName}: paikka vapautui – {productName}",
+        "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: {participantName} pääsee mukaan – {productName}."
+      },
+      "self": {
+        "subject": "Paikka vapautui – {productName}",
+        "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: pääset mukaan – {productName}."
+      }
+    },
+    "seatOfferStaff": {
+      "participant": "Osallistuja",
+      "contact": "Yhteyshenkilö",
+      "contactEmail": "Sähköposti",
+      "product": "Tuote",
+      "schedule": "Aikataulu",
+      "offeredAt": "Tarjottu",
+      "nextStep": "Paikka on jälleen vapaana. Avaa tuote ja kutsu jonotuslistalta seuraava perhe.",
+      "button": "Avaa tuote",
+      "declined": {
+        "subject": "{participantName} kieltäytyi paikasta – {productName}",
+        "heading": "Paikkatarjouksesta kieltäydyttiin",
+        "body": "Perhe ei voi ottaa paikkaa vastaan ja kertoi siitä meille sen sijaan, että olisi jättänyt asian auki. Heidät on poistettu jonotuslistalta."
+      },
+      "no_response": {
+        "subject": "Paikkatarjoukseen ei vastattu: {participantName} – {productName}",
+        "heading": "Paikkatarjous vanheni",
+        "body": "Vastausaika päättyi ilman vastausta. Perhe on edelleen jonotuslistalla ja paikkaa voi tarjota heille uudelleen, mutta paikka itsessään on nyt vapaa."
+      }
     }
   },
   "legal": {
@@ -3377,5 +3415,33 @@
       "mcHeads": "Piirtää Minecraft-hahmon, joka näkyy liitetyn Minecraft-tilin vieressä. Palvelu ei vaadi mainintaa, joten tämä on kiitos eikä velvollisuus."
     },
     "opensInNewTab": "(avautuu uuteen välilehteen)"
+  },
+  "seatOffer": {
+    "offer": {
+      "title": "Paikka vapautui",
+      "child": "Paikka vapautui: {participantName} pääsee mukaan – {productName}. Haluatko paikan edelleen?",
+      "self": "Paikka vapautui sinulle – {productName}. Haluatko paikan edelleen?",
+      "deadline": "Vastaa viimeistään {deadline}. Sen jälkeen paikka siirtyy jonossa seuraavalle perheelle.",
+      "accept": "Otan paikan",
+      "decline": "Ei kiitos",
+      "confirmTitle": "Luovutko paikasta?",
+      "confirmBody": "Tarjoamme paikkaa jonotuslistalla seuraavalle perheelle, eikä tätä tarjousta voi avata uudelleen.",
+      "confirmAction": "Kyllä, olen varma",
+      "confirmCancel": "Palaa takaisin",
+      "error": "Jokin meni pieleen, eikä vastaustasi tallennettu. Yritä uudelleen tai kirjoita meille osoitteeseen {supportEmail}."
+    },
+    "accepted": {
+      "title": "Paikka on varattu",
+      "body": "Tallensimme paikan teille. Löydät sen Oma SOG -sivulta muiden perheesi ilmoittautumisten joukosta.",
+      "action": "Siirry Oma SOG -sivulle"
+    },
+    "declined": {
+      "title": "Kiitos, kun kerroit",
+      "body": "Poistimme paikan listaltasi. Koska vastasit, voimme antaa sen tänään toiselle perheelle sen sijaan, että se jäisi tyhjäksi."
+    },
+    "invalid": {
+      "title": "Tarjous ei ole enää voimassa",
+      "body": "Paikkatarjous on voimassa {days} päivää, ja tähän on joko jo vastattu tai sen aika on umpeutunut. Jos tämä vaikuttaa virheeltä, kirjoita meille osoitteeseen {supportEmail}, niin selvitämme asian."
+    }
   }
 }

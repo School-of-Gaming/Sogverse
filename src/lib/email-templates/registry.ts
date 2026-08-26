@@ -8,6 +8,12 @@ import {
   PRODUCT_CONFIRMATION_MODES,
 } from "./product-confirmation";
 import { buildVerifyEmailEmail } from "./verify-email";
+import { buildSeatOfferEmail, seatOfferSubject } from "./seat-offer";
+import {
+  buildSeatOfferStaffEmail,
+  seatOfferStaffSubject,
+  SEAT_OFFER_STAFF_REASONS,
+} from "./seat-offer-staff";
 import { buildComponentsReferenceEmail } from "./components-reference";
 import {
   buildSessionReportEmail,
@@ -313,6 +319,59 @@ const verifyEmailParamsSchema = z.object({
   verificationUrl: z.string().url(),
 });
 
+/**
+ * The deadline arrives already formatted, like every other locale-aware value a
+ * builder takes: the live send has the product row and the recipient's locale
+ * and does the formatting once. Here the tester types it, which is the point —
+ * the thing worth checking about this mail is how a long absolute date sits in
+ * the callout beside two half-width buttons, in each locale.
+ */
+const seatOfferParamsSchema = z.object({
+  participantName: z.string().min(1),
+  isSelfSeat: z.boolean(),
+  productName: z.string().min(1),
+  deadline: z.string().min(1),
+  acceptUrl: z.string().url(),
+  declineUrl: z.string().url(),
+});
+
+const seatOfferStaffParamsSchema = z.object({
+  reason: z.enum(SEAT_OFFER_STAFF_REASONS),
+  participantName: z.string().min(1),
+  contactName: z.string().min(1),
+  contactEmail: z.string().email(),
+  productName: z.string().min(1),
+  /** Empty means "this product has no schedule", which drops the row. */
+  productSchedule: z.string().nullable(),
+  offeredAt: z.string().min(1),
+  adminProductUrl: z.string().url(),
+});
+
+/** The seat select, reused from the product-confirmation form's vocabulary. */
+function resolveSeatOffer(params: Record<string, string>): TemplateParams {
+  const { seat, ...rest } = params;
+  return { ...rest, isSelfSeat: seat === "self" };
+}
+
+/** An untouched text field posts its placeholder, so "none" has to be typed. */
+function resolveSeatOfferStaff(params: Record<string, string>): TemplateParams {
+  const { productSchedule, ...rest } = params;
+  return { ...rest, productSchedule: productSchedule.trim() || null };
+}
+
+const SEAT_OFFER_STAFF_REASON_LABELS: Record<
+  (typeof SEAT_OFFER_STAFF_REASONS)[number],
+  string
+> = {
+  declined: "The family said no",
+  no_response: "The window ran out with no answer",
+};
+
+const SEAT_OFFER_STAFF_REASON_OPTIONS = SEAT_OFFER_STAFF_REASONS.map((value) => ({
+  label: SEAT_OFFER_STAFF_REASON_LABELS[value],
+  value,
+}));
+
 const sessionReportParamsSchema = z.object({
   gamerName: z.string().min(1),
   geduName: z.string().min(1),
@@ -454,6 +513,72 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: verifyEmailParamsSchema,
     build: (p, t, locale) => buildVerifyEmailEmail(t, locale, p),
     subject: (_p, t) => t("verifyEmail.subject"),
+  }),
+  seatOffer: defineTemplate({
+    label: "Seat Offer (Parent)",
+    fields: [
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
+      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      {
+        key: "deadline",
+        label: "Deadline (formatted)",
+        placeholder: "Sunday, 31 August at 14:20 GMT+3",
+      },
+      {
+        key: "acceptUrl",
+        label: "Accept URL",
+        placeholder: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
+      },
+      {
+        key: "declineUrl",
+        label: "Decline URL",
+        placeholder: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+      },
+    ],
+    schema: seatOfferParamsSchema,
+    build: (p, t, locale) => buildSeatOfferEmail(t, locale, p),
+    subject: (p, t) => seatOfferSubject(t, p),
+    resolveParams: resolveSeatOffer,
+  }),
+  seatOfferStaff: defineTemplate({
+    label: "Seat Offer (Staff copy)",
+    fields: [
+      {
+        key: "reason",
+        label: "What happened",
+        type: "select",
+        options: SEAT_OFFER_STAFF_REASON_OPTIONS,
+      },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
+      { key: "contactName", label: "Contact Name", placeholder: "Marja Virtanen" },
+      { key: "contactEmail", label: "Contact Email", placeholder: "marja@example.com" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      {
+        key: "productSchedule",
+        label: "Schedule line (empty for none)",
+        placeholder: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
+      },
+      {
+        key: "offeredAt",
+        label: "Offered at (formatted)",
+        placeholder: "Tue, 26 Aug, 14:20 GMT+3",
+      },
+      {
+        key: "adminProductUrl",
+        label: "Admin product URL",
+        placeholder:
+          "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      },
+    ],
+    schema: seatOfferStaffParamsSchema,
+    build: (p, t, locale) => buildSeatOfferStaffEmail(t, locale, p),
+    subject: (p, t) => seatOfferStaffSubject(t, p),
+    resolveParams: resolveSeatOfferStaff,
+    // The live route replies to the family, so a staff reader can answer them
+    // from the mail. A test send that replied to support instead would teach
+    // the wrong thing to whoever is checking it.
+    replyTo: (p) => p.contactEmail,
   }),
   sessionReport: defineTemplate({
     label: "Session Report",

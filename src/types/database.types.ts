@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -736,6 +736,8 @@ export type Database = {
           id: string
           participant_id: string
           product_id: string
+          seat_offer_expiry_notified_at: string | null
+          seat_offer_sent_at: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id: string | null
@@ -750,6 +752,8 @@ export type Database = {
           id?: string
           participant_id: string
           product_id: string
+          seat_offer_expiry_notified_at?: string | null
+          seat_offer_sent_at?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id?: string | null
@@ -764,6 +768,8 @@ export type Database = {
           id?: string
           participant_id?: string
           product_id?: string
+          seat_offer_expiry_notified_at?: string | null
+          seat_offer_sent_at?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id?: string | null
@@ -1888,6 +1894,7 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
+      claim_expired_seat_offer_notifications: { Args: never; Returns: Json }
       claim_group_session_report_email: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json
@@ -2181,6 +2188,14 @@ export type Database = {
         Returns: undefined
       }
       request_my_verification_email: { Args: never; Returns: boolean }
+      respond_seat_offer: {
+        Args: {
+          p_accept: boolean
+          p_offer_sent_at: string
+          p_participation_id: string
+        }
+        Returns: Json
+      }
       search_locations: {
         Args: {
           p_country?: string
@@ -2190,6 +2205,7 @@ export type Database = {
         }
         Returns: Json
       }
+      send_seat_offer: { Args: { p_participation_id: string }; Returns: Json }
       set_gamer_group_note: {
         Args: { p_group_id: string; p_note: string; p_participant_id: string }
         Returns: Json

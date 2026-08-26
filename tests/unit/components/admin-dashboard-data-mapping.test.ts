@@ -546,7 +546,7 @@ describe("the attention queue", () => {
               { id: "g1", name: "Tiistai A" },
               { id: "g2", name: "Tiistai B" },
             ],
-            waitlist: { waitlist_count: 3, open_seats: 1 },
+            waitlist: { waitlist_count: 3, open_seats: 1, live_offer_count: 0 },
             missing_gedu_fee: true,
           }),
         ],

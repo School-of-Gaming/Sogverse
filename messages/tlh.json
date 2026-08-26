@@ -28,7 +28,8 @@
       "verifyEmail": "QIn Daq yIngu’",
       "changePin": "PIN yIchoH",
       "roblox": "Roblox qetlh chenmoHmeH ghojmoH",
-      "geduContract": "Gedu quv chut"
+      "geduContract": "Gedu quv chut",
+      "seatOffer": "quS nob"
     }
   },
   "notFound": {
@@ -2454,6 +2455,43 @@
       "staffCopyLabel": "Gedupu’vaD che’wI’pu’vaD je ja’ghItlh",
       "staffCopyBody": "ja’ghItlhvam luHevpu’ ghom qorDu’pu’. ngeHwI’ SoH pagh che’wI’ SoH; vav SoHbe’.",
       "staffCopyPrivacy": "QIn nIteb Hevpu’ qorDu’ Hoch, ghaHvaD neH. QInvamDaq neH tu’lu’ Gedupu’ che’wI’pu’ je Daqmey: legh pagh vav, legh pagh qorDu’ latlh qorDu’ Daq je."
+    },
+    "seatOffer": {
+      "heading": "quS poSchoHpu’",
+      "question": "DaSuqtaH’a’? HIja’ ghap Qo’ ghap, maH yIja’. Qo’ Daja’chugh, batlh bIvang: latlh qorDu’vaD quS wInoblaH.",
+      "deadlineLabel": "yIjang poH",
+      "deadlineBody": "{deadline}. jangbe’lu’chugh, latlh qorDu’vaD jaH quS.",
+      "accept": "quS vISuq",
+      "decline": "Qo’, qatlho’",
+      "alsoInMySog": "My SOG-Daq je ratlh yu’vam. pa’ DajanglaH.",
+      "child": {
+        "subject": "{participantName}: quS poSchoHpu’ – {productName}",
+        "opening": "quS poSDI’ SoH wIja’ ’e’ wIper. DaH poSchoHpu’: maHvaD ghoSlaH {participantName} – {productName}."
+      },
+      "self": {
+        "subject": "quS poSchoHpu’ – {productName}",
+        "opening": "quS poSDI’ SoH wIja’ ’e’ wIper. DaH poSchoHpu’: maHvaD bIghoSlaH – {productName}."
+      }
+    },
+    "seatOfferStaff": {
+      "participant": "quS ghajwI’",
+      "contact": "rI’wI’",
+      "contactEmail": "QIn Daq",
+      "product": "Doch",
+      "schedule": "poH",
+      "offeredAt": "nobpu’",
+      "nextStep": "poStaH quS. Doch yIpoSmoH ’ej loS tetlhvo’ latlh qorDu’ yIrI’.",
+      "button": "Doch yIpoSmoH",
+      "declined": {
+        "subject": "{participantName} lajQo’ quS – {productName}",
+        "heading": "quS nob lajQo’lu’pu’",
+        "body": "quS laj laHbe’ qorDu’, ’ej pegh rurbe’: maHvaD ja’pu’. loS tetlhvo’ teqlu’pu’."
+      },
+      "no_response": {
+        "subject": "pagh jang: {participantName} – {productName}",
+        "heading": "quS nob poH rInpu’",
+        "body": "jangbe’lu’ ’ej rInpu’ poH. loS tetlhDaq ratlh qorDu’ ’ej latlh nob wIngeHlaH, ’ach DaH poStaH quS."
+      }
     }
   },
   "roblox": {
@@ -2542,6 +2580,34 @@
     "legal": {
       "roblox": "© 2024 Roblox Corporation. Roblox per, Roblox Degh, je Roblox Tilt Roblox Corporation ngoq’a’mey — Amerika Sepmey je latlh Sepmey. chaw’ lo’lu’.",
       "lynx": "Lynx Educate je Lynx Educate Degh Lynx Educate ngoq’a’mey. chaw’ lo’lu’."
+    }
+  },
+  "seatOffer": {
+    "offer": {
+      "title": "quS poSchoHpu’",
+      "child": "{participantName}vaD quS poSchoHpu’ – {productName}. DaSuqtaH’a’?",
+      "self": "SoHvaD quS poSchoHpu’ – {productName}. DaSuqtaH’a’?",
+      "deadline": "yIjang: {deadline}. ghIq latlh qorDu’vaD jaH quS.",
+      "accept": "quS vISuq",
+      "decline": "Qo’, qatlho’",
+      "confirmTitle": "quS Danobqu’’a’?",
+      "confirmBody": "loS tetlhDaq latlh qorDu’vaD quS wInob, ’ej not poSqa’ nobvam.",
+      "confirmAction": "HISlaH, jISovchu’",
+      "confirmCancel": "yIchegh",
+      "error": "Qagh! polbe’lu’ jangwI’lIj. yInIDqa’ pagh {supportEmail}-Daq maHvaD yIghItlh."
+    },
+    "accepted": {
+      "title": "polpu’lu’ quS",
+      "body": "SoHvaD quS wIpolpu’. My SOG-Daq DaSamlaH, qorDu’lIj ghItlhmey latlh tlhej.",
+      "action": "My SOG-Daq yIghoS"
+    },
+    "declined": {
+      "title": "maHvaD Daja’mo’ qatlho’",
+      "body": "tetlhlIjvo’ quS wIteqpu’. bIjangmo’, DaHjaj latlh qorDu’vaD wInoblaH — chIm quS QaQbe’."
+    },
+    "invalid": {
+      "title": "poSbe’chu’ nobvam",
+      "body": "{days} jaj poStaH quS nob, ’ej jangpu’lu’ pagh rInpu’ poH. lugh net Harbe’chugh, {supportEmail}-Daq maHvaD yIghItlh."
     }
   }
 }

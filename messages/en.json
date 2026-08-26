@@ -35,7 +35,8 @@
       "robloxPrivacy": "Roblox Programme Privacy Policy",
       "robloxSafeguarding": "Roblox Programme Child Safeguarding Policy",
       "robloxTerms": "Roblox Programme Terms & Conditions",
-      "geduContract": "Gedu contract"
+      "geduContract": "Gedu contract",
+      "seatOffer": "Seat offer"
     }
   },
   "notFound": {
@@ -3042,6 +3043,43 @@
       "staffCopyLabel": "Gedu and Admin copy",
       "staffCopyBody": "This is a copy of the session report that went to the group’s families. You are reading it as the person who sent it, or as an admin, not as a parent.",
       "staffCopyPrivacy": "Every family received their own separate email, addressed to them alone. The Gedu and admin addresses in this copy’s To and Cc lines appear on this copy only: no parent sees them, and no family sees another family."
+    },
+    "seatOffer": {
+      "heading": "A seat has opened",
+      "question": "Would you still like it? Let us know either way — a no helps just as much, because it lets us offer the place to the next family straight away.",
+      "deadlineLabel": "Please answer by",
+      "deadlineBody": "{deadline}. If we have not heard from you by then, the seat goes to the next family in line.",
+      "accept": "Accept the seat",
+      "decline": "No, thank you",
+      "alsoInMySog": "The same question is waiting for you in My SOG, if you would rather answer there.",
+      "child": {
+        "subject": "{participantName}: a seat has opened in {productName}",
+        "opening": "We promised to write the moment a seat opened. It has: {participantName} can join us — {productName}."
+      },
+      "self": {
+        "subject": "A seat has opened in {productName}",
+        "opening": "We promised to write the moment a seat opened. It has: you can join us — {productName}."
+      }
+    },
+    "seatOfferStaff": {
+      "participant": "Seat for",
+      "contact": "Contact",
+      "contactEmail": "Email",
+      "product": "Product",
+      "schedule": "Schedule",
+      "offeredAt": "Offered",
+      "nextStep": "The seat is free again. Open the product and invite the next family on the waitlist.",
+      "button": "Open the product",
+      "declined": {
+        "subject": "{participantName} declined a seat in {productName}",
+        "heading": "A seat offer was declined",
+        "body": "This family cannot take the seat, and they told us rather than leaving it hanging. They have been taken off the waitlist."
+      },
+      "no_response": {
+        "subject": "No answer to a seat offer for {participantName} in {productName}",
+        "heading": "A seat offer ran out",
+        "body": "The response window closed with no answer. The family is still on the waitlist and can be offered the seat again, but the seat itself is free right now."
+      }
     }
   },
   "legal": {
@@ -3377,5 +3415,33 @@
       "mcHeads": "Draws the Minecraft character shown beside a linked Minecraft account. They ask for nothing in return, so this credit is a thank-you rather than a requirement."
     },
     "opensInNewTab": "(opens in a new tab)"
+  },
+  "seatOffer": {
+    "offer": {
+      "title": "A seat has opened",
+      "child": "A place has opened for {participantName} in {productName}. Would you still like it?",
+      "self": "A place has opened for you in {productName}. Would you still like it?",
+      "deadline": "Please answer by {deadline}. After that the seat goes to the next family in line.",
+      "accept": "Accept the seat",
+      "decline": "No, thank you",
+      "confirmTitle": "Give up the seat?",
+      "confirmBody": "We will offer it to the next family on the waitlist, and this offer cannot be reopened.",
+      "confirmAction": "Yes, I am sure",
+      "confirmCancel": "Go back",
+      "error": "Something went wrong and your answer was not saved. Please try again, or write to us at {supportEmail}."
+    },
+    "accepted": {
+      "title": "The seat is saved",
+      "body": "We have kept the place for you. You will find it in My SOG alongside everything else your family is signed up for.",
+      "action": "Go to My SOG"
+    },
+    "declined": {
+      "title": "Thank you for telling us",
+      "body": "We have taken the place off your list. Because you answered, another family can have it today instead of it standing empty."
+    },
+    "invalid": {
+      "title": "This offer is no longer open",
+      "body": "A seat offer stays open for {days} days, and this one has either been answered already or run out. If that does not sound right, write to us at {supportEmail} and we will look into it."
+    }
   }
 }

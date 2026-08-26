@@ -274,6 +274,8 @@ describe("dragSubjectsFrom", () => {
       group_joined_at: null,
       note: null,
       note_updated_by_first_name: null,
+      seat_offer_sent_at: null,
+      seat_offer_expiry_notified_at: null,
       ...overrides,
     };
   }
@@ -400,6 +402,8 @@ describe("chipGameIdentity", () => {
       group_joined_at: null,
       note: null,
       note_updated_by_first_name: null,
+      seat_offer_sent_at: null,
+      seat_offer_expiry_notified_at: null,
       ...overrides,
     };
   }
@@ -505,6 +509,8 @@ describe("robloxIdsFrom", () => {
       group_joined_at: null,
       note: null,
       note_updated_by_first_name: null,
+      seat_offer_sent_at: null,
+      seat_offer_expiry_notified_at: null,
     };
   }
 

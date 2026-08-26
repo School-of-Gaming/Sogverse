@@ -339,6 +339,25 @@ describe("every template renders in every locale", () => {
       firstName: "Marja",
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
     },
+    seatOffer: {
+      participantName: "Aino",
+      isSelfSeat: false,
+      productName: "Minecraft 101",
+      deadline: "Sunday, 31 August at 14:20 GMT+3",
+      acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
+      declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+    },
+    seatOfferStaff: {
+      reason: "declined",
+      participantName: "Aino",
+      contactName: "Marja Virtanen",
+      contactEmail: "marja@example.com",
+      productName: "Minecraft 101",
+      productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
+      offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
+      adminProductUrl:
+        "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    },
     sessionReport: {
       gamerName: "Aino",
       geduName: "Marianne",
@@ -362,6 +381,12 @@ describe("every template renders in every locale", () => {
    */
   const TEMPLATE_VARIANTS: Record<string, Record<string, string | boolean | null>[]> = {
     sessionReport: [{ copy: "family" }, { copy: "staff" }],
+    // The offer speaks in two voices, and each has its own heading, opening and
+    // subject — four keys per locale that only the self variant reaches.
+    seatOffer: [{ isSelfSeat: false }, { isSelfSeat: true }],
+    // Declined and no-response are three keys apiece, in five locales, and only
+    // the reason they name is ever rendered.
+    seatOfferStaff: [{ reason: "declined" }, { reason: "no_response" }],
   };
 
   function variantsOf(key: string): Record<string, string | boolean | null>[] {

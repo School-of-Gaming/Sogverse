@@ -91,6 +91,25 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     firstName: "Marja",
     verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
   },
+  seatOffer: {
+    participantName: "Aino",
+    isSelfSeat: false,
+    productName: "Minecraft 101",
+    deadline: "Sunday, 31 August at 14:20 GMT+3",
+    acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
+    declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+  },
+  seatOfferStaff: {
+    reason: "declined",
+    participantName: "Aino",
+    contactName: "Marja Virtanen",
+    contactEmail: "marja@example.com",
+    productName: "Minecraft 101",
+    productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
+    offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
+    adminProductUrl:
+      "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+  },
   sessionReport: {
     gamerName: "Aino",
     geduName: "Marianne",
@@ -159,6 +178,15 @@ const MAILS: Record<string, () => [string, string][]> = {
   "session-report": () => [
     ...fromRegistry("sessionReport"),
     ...fromRegistry("sessionReport", "sessionReport (staff copy)", { copy: "staff" }),
+  ],
+  "seat-offer": () => fromRegistry("seatOffer"),
+  // Both flavours of the staff mail: they differ only in two sentences, but a
+  // variant nothing renders is a variant nothing can vouch for.
+  "seat-offer-staff": () => [
+    ...fromRegistry("seatOfferStaff"),
+    ...fromRegistry("seatOfferStaff", "seatOfferStaff (no response)", {
+      reason: "no_response",
+    }),
   ],
   "verify-email": () => fromRegistry("verifyEmail"),
   welcome: () => [...fromRegistry("welcomeParent"), ...fromRegistry("welcomeGedu")],
