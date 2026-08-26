@@ -96,8 +96,17 @@ export const POST = defineRoute({
       case "expired":
         // The card was rendered while the offer was live and pressed after it
         // was not. The sweep runs on the observation, exactly as it does when a
-        // family clicks a lapsed link.
-        after(notifyExpiredSeatOffers({ client: admin, request }));
+        // family clicks a lapsed link — and it is scoped to this row on the
+        // same rule: a credential that names one participation may claim only
+        // that participation, whether it is a signed token or a session that
+        // has just proved ownership of exactly this row.
+        after(
+          notifyExpiredSeatOffers({
+            client: admin,
+            request,
+            participationId: row.id,
+          }),
+        );
         return { outcome: "expired" as const };
       default:
         return { outcome: "invalid" as const };

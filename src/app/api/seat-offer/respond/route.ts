@@ -53,8 +53,20 @@ export const POST = defineRoute({
     // is owed a page and not a wait on somebody else's mail. The RPC would
     // report `expired` for this row too; asking it first would only be a second
     // round trip to reach the same sentence.
+    //
+    // Scoped to the participation the TOKEN names, and that is the whole of
+    // what this credential authorizes: the signature never expires, so a link
+    // leaked out of an old inbox is a permanent trigger, and an unscoped claim
+    // would let it write across the platform and fan staff mail out about
+    // families it has nothing to do with.
     if (isSeatOfferTokenExpired(claims, Date.now())) {
-      after(notifyExpiredSeatOffers({ client: admin, request }));
+      after(
+        notifyExpiredSeatOffers({
+          client: admin,
+          request,
+          participationId: claims.participationId,
+        }),
+      );
       return { outcome: "expired" as const };
     }
 
@@ -97,8 +109,15 @@ export const POST = defineRoute({
         return { outcome: "declined" as const };
       case "expired":
         // The token said live and the row says lapsed — the five days ran out
-        // between the page rendering and the button being pressed.
-        after(notifyExpiredSeatOffers({ client: admin, request }));
+        // between the page rendering and the button being pressed. Scoped to
+        // the token's own participation for the same reason as above.
+        after(
+          notifyExpiredSeatOffers({
+            client: admin,
+            request,
+            participationId: claims.participationId,
+          }),
+        );
         return { outcome: "expired" as const };
       default:
         return { outcome: "invalid" as const };

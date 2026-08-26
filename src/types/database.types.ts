@@ -1894,7 +1894,10 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
-      claim_expired_seat_offer_notifications: { Args: never; Returns: Json }
+      claim_expired_seat_offer_notifications: {
+        Args: { p_participation_id?: string }
+        Returns: Json
+      }
       claim_group_session_report_email: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json

@@ -193,8 +193,12 @@ describe("POST /api/seat-offer/respond", () => {
 
     expect(await response.json()).toEqual({ outcome: "expired" });
     await settleDeferred();
+    // Scoped to the participation the TOKEN names, and nothing wider. The
+    // signature never expires, so an unscoped claim behind this link would be a
+    // permanent trigger for a platform-wide write.
     expect(mockAdminRpc).toHaveBeenCalledWith(
       "claim_expired_seat_offer_notifications",
+      { p_participation_id: PARTICIPATION_ID },
     );
     // Nothing was claimed, so nobody is mailed.
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
@@ -293,6 +297,7 @@ describe("POST /api/seat-offer/respond", () => {
     await settleDeferred();
     expect(mockAdminRpc).toHaveBeenCalledWith(
       "claim_expired_seat_offer_notifications",
+      { p_participation_id: PARTICIPATION_ID },
     );
   });
 

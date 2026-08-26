@@ -174,8 +174,11 @@ describe("POST /api/admin/seat-offers/sweep", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ claimed: 0 });
+    // No participation id: the admin sweep is the one caller entitled to claim
+    // platform-wide. Every family-triggered observation names its own row.
     expect(mockAdminRpc).toHaveBeenCalledWith(
       "claim_expired_seat_offer_notifications",
+      {},
     );
     expect(deferred).toHaveLength(0);
     await settleDeferred();

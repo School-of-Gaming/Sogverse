@@ -100,6 +100,41 @@
 -- decides WHERE an accepted seat lands and so has to be current, while the
 -- billing mode would decide WHETHER to honour the answer at all, and that
 -- question was settled when the offer was sent.
+--
+-- WHO MAY CLAIM WHAT, AND WHY THE CLAIM TAKES A SCOPE
+--
+-- `claim_expired_seat_offer_notifications` takes an optional participation id
+-- and has two modes. NULL claims every lapsed unreported offer platform-wide,
+-- and is what the ADMIN surfaces pass: an admin opening the dashboard or a
+-- groups panel is entitled to observe the whole platform, and a global sweep is
+-- the point of a sweep on mount. A non-NULL id claims that row and nothing
+-- else, and is what every FAMILY-triggered observation passes — the emailed
+-- link and the in-app card alike.
+--
+-- The split is a security boundary. The emailed token names exactly one
+-- participation and its SIGNATURE never expires; the five-day window is checked
+-- against the row, not against the token's age. So an old leaked link is a
+-- credential that goes on working as a trigger forever, and unscoped it was a
+-- permanent, unthrottled trigger for a platform-wide write plus a fan-out of
+-- staff mail about families the clicker has nothing to do with. The rule that
+-- falls out, and that the TypeScript side states in the same words: a
+-- credential that names one row may claim only that row.
+--
+-- THE CLAIM COMMITS BEFORE THE MAIL, AND THAT TRADE IS ACCEPTED
+--
+-- The claim and the mark are one statement, which is what makes the mail
+-- exactly-once — and it means the mark is COMMITTED before the send is even
+-- attempted. A Brevo failure after a successful claim therefore loses that
+-- staff mail permanently: the row is marked notified and no later sweep will
+-- claim it again. That is accepted rather than worked around, because the mail
+-- is a nudge and not the record. The dashboard's attention queue re-raises the
+-- same product on its own — an open seat with no live offer against it is
+-- exactly what it flags — so the fact survives the lost mail in the one place
+-- an admin is already looking. The alternative, holding the claim open across a
+-- third-party call, buys a retry at the cost of duplicate mail under
+-- concurrency and a lock held across the network, which is the worse trade.
+-- With the scoping above, a family-triggered claim risks at most the one mail
+-- about the clicker's own row.
 
 -- ---------------------------------------------------------------------------
 -- 1. The two stamps
@@ -399,7 +434,18 @@ GRANT EXECUTE ON FUNCTION public.respond_seat_offer(uuid, timestamptz, boolean) 
 -- 4. claim_expired_seat_offer_notifications — the lazy sweep
 -- ---------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION public.claim_expired_seat_offer_notifications() RETURNS jsonb
+-- The zero-argument shape this function was first written with. It exists only
+-- on staging, which had 00207 applied before this file was amended to take a
+-- scope; a fresh build from `migrations/` has never seen it and this is a
+-- no-op there. CREATE OR REPLACE cannot change a parameter list — it would
+-- leave an OVERLOAD behind rather than replace anything — so the old signature
+-- is dropped by name before the new one is created. The end-state block at the
+-- bottom asserts exactly one function of this name survives.
+DROP FUNCTION IF EXISTS public.claim_expired_seat_offer_notifications();
+
+CREATE OR REPLACE FUNCTION public.claim_expired_seat_offer_notifications(
+  p_participation_id uuid DEFAULT NULL
+) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -419,6 +465,26 @@ BEGIN
   -- The cost of that is latency (staff hear about a silent family the next time
   -- somebody looks) and the benefit is that nothing has to be provisioned,
   -- monitored or reasoned about at 3am.
+  --
+  -- THE SCOPE ARGUMENT, AND WHY IT IS NOT DECORATION
+  --
+  -- NULL is the platform-wide sweep, and it is what the ADMIN surfaces pass:
+  -- an admin opening the dashboard or a groups panel is entitled to observe
+  -- every lapsed offer, and a global claim is the whole point of a sweep on
+  -- mount. A non-NULL id claims THAT ROW AND NOTHING ELSE, and it is what every
+  -- family-triggered observation passes.
+  --
+  -- The split is a security boundary rather than an optimisation. The emailed
+  -- link is a signed token that names exactly one participation and never
+  -- expires as a signature — the five-day window is checked against the row,
+  -- not against the token's age — so an old leaked link is a credential that
+  -- goes on working as a trigger forever. Unscoped, that made it a permanent,
+  -- unthrottled trigger for a platform-wide write and a fan-out of staff mail
+  -- about families the clicker has nothing to do with. Scoped, the worst a
+  -- leaked link can do is claim the notification for the one row it already
+  -- names. The in-app answer passes its own id for the same reason: a
+  -- credential that names one row may only claim that row, whatever kind of
+  -- credential it is.
   WITH claimed AS (
     UPDATE public.participations p
        SET seat_offer_expiry_notified_at = now()
@@ -426,6 +492,7 @@ BEGIN
        AND p.seat_offer_sent_at IS NOT NULL
        AND p.seat_offer_sent_at + interval '5 days' <= now()
        AND p.seat_offer_expiry_notified_at IS NULL
+       AND (p_participation_id IS NULL OR p.id = p_participation_id)
     RETURNING p.id, p.product_id, p.customer_id, p.participant_id, p.seat_offer_sent_at
   )
   SELECT COALESCE(
@@ -448,10 +515,10 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.claim_expired_seat_offer_notifications() IS 'Claim every seat offer that has run out unanswered and has not been reported to staff, and return what the mails need. One data-modifying CTE does both halves, which is what makes the notification exactly-once under concurrency: a second sweep re-evaluates seat_offer_expiry_notified_at IS NULL after the first commits and claims nothing, with no advisory lock and nothing held across the send. There is deliberately no cron job — expiry is OBSERVED rather than scheduled, by an admin opening a page or by a family clicking a link that has already lapsed. The claimed rows stay waitlisted with their stamp intact, so the offer is still re-offerable and a second silence notifies again. Service-role only; the admin sweep route establishes who is calling.';
+COMMENT ON FUNCTION public.claim_expired_seat_offer_notifications(p_participation_id uuid) IS 'Claim seat offers that have run out unanswered and have not been reported to staff, and return what the mails need. One data-modifying CTE does both halves, which is what makes the notification exactly-once under concurrency: a second sweep re-evaluates seat_offer_expiry_notified_at IS NULL after the first commits and claims nothing, with no advisory lock and nothing held across the send. TWO MODES, and the argument is a security boundary rather than an optimisation. p_participation_id NULL sweeps the whole platform and is what the ADMIN surfaces pass — an admin opening the dashboard or a groups panel is entitled to observe every lapsed offer. A non-NULL id claims that row and nothing else, and is what every FAMILY-triggered observation passes: the emailed link is a signed token naming exactly one participation whose signature never expires, so unscoped it was a permanent unthrottled trigger for a platform-wide write; scoped, the worst a leaked link can do is claim the notification for the row it already names. The in-app answer passes its own id on the same rule — a credential that names one row may only claim that row. There is deliberately no cron job — expiry is OBSERVED rather than scheduled. The claimed rows stay waitlisted with their stamp intact, so the offer is still re-offerable and a second silence notifies again. Service-role only; the route establishes who is calling.';
 
-REVOKE EXECUTE ON FUNCTION public.claim_expired_seat_offer_notifications() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.claim_expired_seat_offer_notifications() TO service_role;
+REVOKE EXECUTE ON FUNCTION public.claim_expired_seat_offer_notifications(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.claim_expired_seat_offer_notifications(uuid) TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 5. promote_from_waitlist — a drag is an admin honouring the offer by hand
@@ -1271,7 +1338,7 @@ BEGIN
   -- are service-role only; the two recreated ones came back as they went in.
   IF NOT has_function_privilege('service_role', 'public.send_seat_offer(uuid)', 'EXECUTE')
      OR NOT has_function_privilege('service_role', 'public.respond_seat_offer(uuid, timestamptz, boolean)', 'EXECUTE')
-     OR NOT has_function_privilege('service_role', 'public.claim_expired_seat_offer_notifications()', 'EXECUTE')
+     OR NOT has_function_privilege('service_role', 'public.claim_expired_seat_offer_notifications(uuid)', 'EXECUTE')
   THEN
     RAISE EXCEPTION 'a seat-offer function is missing its service_role EXECUTE grant';
   END IF;
@@ -1280,10 +1347,37 @@ BEGIN
      OR has_function_privilege('anon', 'public.send_seat_offer(uuid)', 'EXECUTE')
      OR has_function_privilege('authenticated', 'public.respond_seat_offer(uuid, timestamptz, boolean)', 'EXECUTE')
      OR has_function_privilege('anon', 'public.respond_seat_offer(uuid, timestamptz, boolean)', 'EXECUTE')
-     OR has_function_privilege('authenticated', 'public.claim_expired_seat_offer_notifications()', 'EXECUTE')
-     OR has_function_privilege('anon', 'public.claim_expired_seat_offer_notifications()', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'public.claim_expired_seat_offer_notifications(uuid)', 'EXECUTE')
+     OR has_function_privilege('anon', 'public.claim_expired_seat_offer_notifications(uuid)', 'EXECUTE')
   THEN
     RAISE EXCEPTION 'a seat-offer function is callable by a session role — the REVOKE FROM PUBLIC did not take';
+  END IF;
+
+  -- (f) The claim takes a scope, and takes it exactly once. A leftover
+  -- zero-argument overload would still be reachable and would still claim the
+  -- whole platform, so "exactly one function of this name, with one argument"
+  -- is the thing worth asserting rather than "the new one exists".
+  IF (SELECT count(*) FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = 'public'
+         AND p.proname = 'claim_expired_seat_offer_notifications') <> 1
+     OR (SELECT p.pronargs FROM pg_proc p
+           JOIN pg_namespace n ON n.oid = p.pronamespace
+          WHERE n.nspname = 'public'
+            AND p.proname = 'claim_expired_seat_offer_notifications') <> 1
+  THEN
+    RAISE EXCEPTION 'claim_expired_seat_offer_notifications is not the single one-argument function it must be — an unscoped overload would still sweep the platform';
+  END IF;
+
+  -- The scope predicate itself. Losing it is a silent regression: every caller
+  -- goes on working and every family-triggered click quietly claims the
+  -- platform again.
+  SELECT p.prosrc INTO v_src
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public'
+     AND p.proname = 'claim_expired_seat_offer_notifications';
+  IF position('p_participation_id IS NULL OR p.id = p_participation_id' IN v_src) = 0 THEN
+    RAISE EXCEPTION 'claim_expired_seat_offer_notifications lost its scope predicate';
   END IF;
 
   IF NOT has_function_privilege('authenticated', 'public.promote_from_waitlist(uuid, uuid)', 'EXECUTE')

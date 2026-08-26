@@ -314,8 +314,11 @@ describe("POST /api/participations/seat-offer", () => {
 
     expect(await response.json()).toEqual({ outcome: "expired" });
     await settleDeferred();
+    // The session proved ownership of exactly this row, so this is exactly what
+    // it may claim — the same rule the emailed path follows with its token.
     expect(mockAdminRpc).toHaveBeenCalledWith(
       "claim_expired_seat_offer_notifications",
+      { p_participation_id: PARTICIPATION_ID },
     );
   });
 

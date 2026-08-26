@@ -115,46 +115,80 @@ export async function sendSeatOfferStaffEmail(
 }
 
 /**
- * Claim every lapsed, un-notified offer and hand back what the mails need.
+ * Claim lapsed, un-notified offers and hand back what the mails need.
  *
  * The claim and the mark are one statement inside the RPC, so what comes back
  * is the set THIS caller owes a mail for — a concurrent sweep claims nothing.
- * Two callers use it and they need different halves: the admin sweep route
- * wants the count in its response, so it claims in the handler; the public
- * respond route wants nothing at all and lets {@link notifyExpiredSeatOffers}
- * do both after the answer has gone out.
+ *
+ * **`participationId` is a security boundary, not an optimisation, and it is
+ * the one thing a caller has to think about here.** Omitted, the claim is
+ * platform-wide, which is what the ADMIN surfaces want: an admin opening the
+ * dashboard or a groups panel is entitled to observe every lapsed offer, and a
+ * global sweep is the whole point of a sweep on mount. Passed, the claim
+ * touches that row and nothing else, which is what every FAMILY-triggered
+ * observation must do — see {@link notifyExpiredSeatOffers}.
+ *
+ * The two callers also need different halves of the result: the admin sweep
+ * route wants the count in its response, so it claims in the handler; the
+ * respond routes want nothing at all and let {@link notifyExpiredSeatOffers}
+ * claim and mail after the answer has gone out.
  */
 export async function claimExpiredSeatOffers(
   client: AppSupabaseClient,
+  participationId?: string,
 ): Promise<ClaimedSeatOfferExpiries> {
   const { data, error } = await client.rpc(
     "claim_expired_seat_offer_notifications",
+    participationId ? { p_participation_id: participationId } : {},
   );
   if (error) throw error;
   return claimedSeatOfferExpiries.parse(data);
 }
 
 /**
- * Claim and mail in one go, swallowing everything.
+ * How many staff mails are in flight at once.
  *
- * This is the lazy sweep's other trigger: a family clicking a link that has
- * already run out is itself an observation that it ran out, so the click does
- * the work an admin opening a page would otherwise have done. It sweeps
- * everything due rather than only the row that was clicked, because the claim
- * is global, idempotent and cheap — narrowing it would buy nothing and would
- * leave the rest waiting for somebody else to look.
+ * The claimed set is unbounded in principle — an admin sweeping a platform
+ * nobody has looked at for a fortnight can claim any number of offers at once —
+ * and firing the whole array at Brevo in one `Promise.all` is a fan-out with no
+ * ceiling: a burst of concurrent third-party calls, each with its own pair of
+ * Supabase reads behind it, inside a serverless invocation with a wall clock.
+ * Five at a time keeps the concurrency bounded without making a large sweep
+ * serial.
  */
-export async function notifyExpiredSeatOffers({
+const STAFF_MAIL_CONCURRENCY = 5;
+
+/**
+ * Mail staff about each claimed offer, in bounded batches.
+ *
+ * Every send swallows its own failures, so a batch cannot reject and one dead
+ * mail cannot cost the rest of the batch. Batches run one after another; within
+ * a batch the sends are concurrent.
+ *
+ * **The claim is already committed by the time any of this runs, and a lost
+ * mail is lost for good — accepted, on purpose.** The claim and the mark are
+ * one statement, which is what makes the notification exactly-once; the price
+ * is that a Brevo failure afterwards cannot be retried, because no later sweep
+ * will claim that row again. The mail is a nudge, not the record: the
+ * dashboard's attention queue re-raises the same product on its own, since an
+ * open seat with no live offer against it is exactly what it flags. Holding the
+ * claim open across a third-party call would buy the retry at the cost of
+ * duplicate mail under concurrency and a lock held across the network, which is
+ * the worse trade. With the claim scoped, a family-triggered sweep risks at
+ * most the one mail about the clicker's own row.
+ */
+export async function mailClaimedSeatOfferExpiries({
   client,
   request,
+  claimed,
 }: {
   client: AppSupabaseClient;
   request: Request;
+  claimed: ClaimedSeatOfferExpiries;
 }): Promise<void> {
-  try {
-    const claimed = await claimExpiredSeatOffers(client);
+  for (let start = 0; start < claimed.length; start += STAFF_MAIL_CONCURRENCY) {
     await Promise.all(
-      claimed.map((row) =>
+      claimed.slice(start, start + STAFF_MAIL_CONCURRENCY).map((row) =>
         sendSeatOfferStaffEmail({
           client,
           request,
@@ -166,6 +200,45 @@ export async function notifyExpiredSeatOffers({
         }),
       ),
     );
+  }
+}
+
+/**
+ * Claim and mail in one go, swallowing everything.
+ *
+ * This is the lazy sweep's other trigger: a family answering an offer that has
+ * already run out — from the emailed link or from their My SOG card — is itself
+ * an observation that it ran out, so the answer does the work an admin opening
+ * a page would otherwise have done.
+ *
+ * **It claims only the row the caller's credential names, and the admin sweep
+ * route is the only caller that may omit the id.** An emailed link is a signed
+ * token naming one participation, and its signature never expires — the
+ * five-day window is checked against the row, not against the token's age — so
+ * an old leaked link goes on working as a trigger forever. Unscoped, that made
+ * it a permanent, unthrottled trigger for a platform-wide write and a fan-out
+ * of staff mail about families the clicker has nothing to do with. The in-app
+ * answer passes its own id on the same rule rather than because its session is
+ * untrusted: **an unauthenticated-adjacent trigger may only claim what its
+ * credential names**, and a credential that names one row is one row's worth of
+ * authority whatever kind of credential it is. What that costs is the latency
+ * the lazy sweep already accepts — the rest of the platform's lapsed offers
+ * wait for an admin to look, which is exactly what "observed rather than
+ * scheduled" has always meant.
+ */
+export async function notifyExpiredSeatOffers({
+  client,
+  request,
+  participationId,
+}: {
+  client: AppSupabaseClient;
+  request: Request;
+  /** The one row this caller's credential names. Omitted only by an admin sweep. */
+  participationId?: string;
+}): Promise<void> {
+  try {
+    const claimed = await claimExpiredSeatOffers(client, participationId);
+    await mailClaimedSeatOfferExpiries({ client, request, claimed });
   } catch (error) {
     console.error("[seat-offer expiry sweep] failed", { error });
   }

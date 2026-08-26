@@ -552,6 +552,72 @@ describe("seat offers", () => {
     ).not.toContain(lapsed);
   });
 
+  /**
+   * The unscoped mode, stated as its own case rather than left implied by the
+   * one above: an omitted argument claims across products, which is what an
+   * admin's sweep-on-mount is for.
+   */
+  it("claims across every product when no participation is named", async () => {
+    const here = await queue(P_CLUB, TEST_IDS.GAMER);
+    await stamp(here, LAPSED_AT());
+    const elsewhere = await queue(P_DASHBOARD, TEST_IDS.GAMER);
+    await stamp(elsewhere, LAPSED_AT());
+
+    const res = await admin.rpc("claim_expired_seat_offer_notifications");
+    expect(res.error).toBeNull();
+    const ids = claimedSeatOfferExpiries
+      .parse(res.data)
+      .map((row) => row.participation_id);
+    expect(ids).toContain(here);
+    expect(ids).toContain(elsewhere);
+  });
+
+  /**
+   * The scoped mode, and the security boundary behind it. A family-triggered
+   * observation arrives on a credential naming exactly one participation — an
+   * emailed link whose signature never expires, or a session that has just
+   * proved ownership of that row — so it may claim that row and nothing else. A
+   * global claim behind a link that never stops validating is a permanent,
+   * unthrottled trigger for a platform-wide write.
+   */
+  it("claims only the named row, leaving another product's lapsed offer alone", async () => {
+    const named = await queue(P_CLUB, TEST_IDS.GAMER);
+    await stamp(named, LAPSED_AT());
+    const stranger = await queue(P_DASHBOARD, TEST_IDS.GAMER);
+    await stamp(stranger, LAPSED_AT());
+
+    const res = await admin.rpc("claim_expired_seat_offer_notifications", {
+      p_participation_id: named,
+    });
+    expect(res.error).toBeNull();
+    const claimed = claimedSeatOfferExpiries.parse(res.data);
+    expect(claimed.map((row) => row.participation_id)).toEqual([named]);
+
+    expect((await readRow(named))!.seat_offer_expiry_notified_at).not.toBeNull();
+    // The other family's offer is still un-notified, waiting for somebody
+    // entitled to observe the whole platform.
+    expect(
+      (await readRow(stranger))!.seat_offer_expiry_notified_at,
+    ).toBeNull();
+  });
+
+  /**
+   * Scoping narrows the set; it does not relax the predicate. A row named by a
+   * caller whose offer is still live is not something anybody has failed to
+   * answer, so there is nothing to claim.
+   */
+  it("claims nothing when the named row has not lapsed", async () => {
+    const live = await queue(P_CLUB, TEST_IDS.GAMER);
+    await stamp(live, LIVE_AT());
+
+    const res = await admin.rpc("claim_expired_seat_offer_notifications", {
+      p_participation_id: live,
+    });
+    expect(res.error).toBeNull();
+    expect(claimedSeatOfferExpiries.parse(res.data)).toEqual([]);
+    expect((await readRow(live))!.seat_offer_expiry_notified_at).toBeNull();
+  });
+
   // -------------------------------------------------------------------------
   // The constraints, and the transitions that have to respect them
   // -------------------------------------------------------------------------
