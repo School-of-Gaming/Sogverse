@@ -37,6 +37,7 @@ import {
   readDropData,
   readChipDragData,
   resolveDrop,
+  type AutoPlacement,
   type BlockedDropReason,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
@@ -392,7 +393,15 @@ export function GroupsPanelView({
   // it is present in BOTH of its states on such a product — so it never appears
   // or disappears under the reader, and the only thing that can change it is
   // the admin adding or deleting a group, which is their own action.
-  const autoPlacement = autoPlacementFor(billingMode, groups);
+  //
+  // Read from the snapshot itself rather than from the `groups` fallback above:
+  // with no snapshot (the query errored) an empty list is the absence of an
+  // answer, not "this product has no groups", and the note would state the
+  // manual case with a confidence it has not earned. No snapshot, nothing to
+  // say — so the note renders exactly when the panel's real content does.
+  const autoPlacement: AutoPlacement = snapshot
+    ? autoPlacementFor(billingMode, snapshot.groups)
+    : { kind: "none" };
 
   return (
     <div className="space-y-3">

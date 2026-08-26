@@ -30,7 +30,7 @@ import {
  * arrive with the INSERT rather than the placement having been bolted on
  * afterwards.
  *
- * Product UUIDs 660-669 (see the product-helpers allocation registry): five
+ * Product UUIDs 660-66b (see the product-helpers allocation registry): six
  * products, each with its own groups, because the whole matrix is about how
  * many groups a product has and one shared product could not hold three
  * different answers at once.
@@ -41,12 +41,14 @@ const FREE_NO_GROUPS = "00000000-0000-0000-0000-000000000661";
 const FREE_TWO_GROUPS = "00000000-0000-0000-0000-000000000662";
 const MUNI_ONE_GROUP = "00000000-0000-0000-0000-000000000663";
 const PAID_CAMP_ONE_GROUP = "00000000-0000-0000-0000-000000000664";
+const CAPPED_FREE_ONE_GROUP = "00000000-0000-0000-0000-00000000066a";
 
 const GROUP_OF_FREE = "00000000-0000-0000-0000-000000000665";
 const GROUP_A_OF_FREE_TWO = "00000000-0000-0000-0000-000000000666";
 const GROUP_B_OF_FREE_TWO = "00000000-0000-0000-0000-000000000667";
 const GROUP_OF_MUNI = "00000000-0000-0000-0000-000000000668";
 const GROUP_OF_PAID_CAMP = "00000000-0000-0000-0000-000000000669";
+const GROUP_OF_CAPPED_FREE = "00000000-0000-0000-0000-00000000066b";
 
 const ALL_PRODUCTS = [
   FREE_ONE_GROUP,
@@ -54,6 +56,7 @@ const ALL_PRODUCTS = [
   FREE_TWO_GROUPS,
   MUNI_ONE_GROUP,
   PAID_CAMP_ONE_GROUP,
+  CAPPED_FREE_ONE_GROUP,
 ];
 
 // Non-consumer products need a non-null end_date
@@ -106,6 +109,15 @@ describe("automatic placement into a single group (00206)", () => {
       seatCount: null,
     });
 
+    // The same free club, capped at a single seat: the one product here whose
+    // seat cap can be reached, so it is where "the cap answers first" is asked.
+    await createTestProduct(admin, {
+      id: CAPPED_FREE_ONE_GROUP,
+      productType: "consumer_club",
+      billingMode: "free",
+      seatCount: 1,
+    });
+
     // Paid, and comp-enrollable: the refusal in admin_enroll_participant is the
     // pair (consumer_club, paid), so a paid CAMP is the product that reaches
     // the INSERT while still having money on its seat.
@@ -126,6 +138,11 @@ describe("automatic placement into a single group (00206)", () => {
       {
         id: GROUP_OF_PAID_CAMP,
         product_id: PAID_CAMP_ONE_GROUP,
+        name: "The only group",
+      },
+      {
+        id: GROUP_OF_CAPPED_FREE,
+        product_id: CAPPED_FREE_ONE_GROUP,
         name: "The only group",
       },
     ]);
@@ -207,13 +224,48 @@ describe("automatic placement into a single group (00206)", () => {
     });
 
     it("places every signup into the same single group, not just the first", async () => {
-      await register(FREE_ONE_GROUP, "free", TEST_IDS.GAMER);
-      await register(FREE_ONE_GROUP, "free", TEST_IDS.GAMER_2);
+      const firstRes = await register(FREE_ONE_GROUP, "free", TEST_IDS.GAMER);
+      expect(firstRes.error).toBeNull();
+      const secondRes = await register(FREE_ONE_GROUP, "free", TEST_IDS.GAMER_2);
+      expect(secondRes.error).toBeNull();
 
       const first = await seatOn(FREE_ONE_GROUP, TEST_IDS.GAMER);
       const second = await seatOn(FREE_ONE_GROUP, TEST_IDS.GAMER_2);
       expect(first?.group_id).toBe(GROUP_OF_FREE);
       expect(second?.group_id).toBe(GROUP_OF_FREE);
+    });
+
+    it("refuses a signup past the seat cap before it places anybody", async () => {
+      // Ordering, not placement: the cap gate sits ABOVE the group read, so a
+      // full product answers kind='full' and writes nothing at all. Moving the
+      // placement above the gate would still return 'full' — what would give it
+      // away is a second row appearing in the only group, which is why the
+      // absence of that row is the assertion rather than the group id on it.
+      const firstRes = await register(
+        CAPPED_FREE_ONE_GROUP,
+        "free",
+        TEST_IDS.GAMER,
+      );
+      expect(firstRes.error).toBeNull();
+      const seat = await seatOn(CAPPED_FREE_ONE_GROUP, TEST_IDS.GAMER);
+      expect(seat?.group_id).toBe(GROUP_OF_CAPPED_FREE);
+
+      const secondRes = await register(
+        CAPPED_FREE_ONE_GROUP,
+        "free",
+        TEST_IDS.GAMER_2,
+      );
+      expect(secondRes.error).toBeNull();
+      expect(createParticipationRpcResult.parse(secondRes.data).kind).toBe(
+        "full",
+      );
+
+      const { count, error } = await admin
+        .from("participations")
+        .select("id", { count: "exact", head: true })
+        .eq("product_id", CAPPED_FREE_ONE_GROUP);
+      expect(error).toBeNull();
+      expect(count).toBe(1);
     });
   });
 

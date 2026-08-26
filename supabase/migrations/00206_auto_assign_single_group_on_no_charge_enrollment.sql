@@ -25,8 +25,11 @@
 -- `confirm_paid_participation` from a Stripe webhook, on a different
 -- transaction, at a different time — deliberately untouched here, and the
 -- reason this migration is keyed to billing_mode rather than to product_type.
--- The waitlist promotion path is likewise untouched: it already takes a target
--- group as an argument, so it has never landed anyone in the inbox by accident.
+-- The waitlist promotion path is likewise untouched: it takes the target group
+-- as an argument, and that argument defaults to NULL, so a promotion places
+-- somebody in a group or leaves them in the inbox exactly as the admin asked
+-- when they dropped the chip. Which of the two happens is their decision at the
+-- moment they make it, and this migration has no business making it for them.
 --
 -- WHY THE "EXACTLY ONE" READ CANNOT RACE
 --
@@ -397,8 +400,13 @@ GRANT EXECUTE ON FUNCTION public.admin_enroll_participant(uuid, uuid) TO service
 
 DO $assert$
 DECLARE
-  v_src  text;
-  v_name text;
+  v_src      text;
+  v_name     text;
+  -- How many rows each function can seat on the spot, and therefore how many of
+  -- its INSERTs must carry the group: `create_participation` writes a seat in
+  -- two branches (free and external), `admin_enroll_participant` in one.
+  v_expected int;
+  v_found    int;
 BEGIN
   FOREACH v_name IN ARRAY ARRAY['create_participation', 'admin_enroll_participant']
   LOOP
@@ -416,19 +424,39 @@ BEGIN
       RAISE EXCEPTION '% does not gate automatic placement on a no-charge billing mode', v_name;
     END IF;
 
-    IF position('public.product_groups' IN v_src) = 0
-       OR position('LIMIT 2' IN v_src) = 0 THEN
+    -- Probes only the STATEMENT can produce. prosrc carries the body's comments
+    -- too, and `LIMIT 2` is written out in the comment that explains this read —
+    -- a bare table name is one comment edit from the same trap — so a body whose
+    -- code was deleted and whose explanation survived would pass both. A
+    -- `FROM` clause and an aggregate call are prose nobody writes by accident.
+    IF position('FROM public.product_groups' IN v_src) = 0
+       OR position('array_agg(g.id)' IN v_src) = 0 THEN
       RAISE EXCEPTION '% does not read the product''s groups with the bounded exactly-one check', v_name;
     END IF;
 
-    -- --- (b) The INSERT actually carries the group, and not the stamp. -----
+    -- --- (b) EVERY INSERT carries the group, and not the stamp. ------------
     --
     -- The read is worthless if the value it produces never reaches the row, and
     -- a body that computed v_auto_group_id and then inserted the old column
     -- list would look, to a grep for the read alone, exactly like this landed.
-    IF position('status, group_id' IN v_src) = 0
-       OR position('''active'', v_auto_group_id' IN v_src) = 0 THEN
-      RAISE EXCEPTION '% computes an automatic group id but does not insert it — the placement would be dead code', v_name;
+    --
+    -- Counted rather than merely found, because `create_participation` seats
+    -- somebody in two separate branches and a substring test cannot tell one
+    -- updated INSERT from two — leaving the external (municipality) branch
+    -- writing the old column list would be invisible to it, on the very path
+    -- that motivated this migration.
+    v_expected := CASE v_name WHEN 'create_participation' THEN 2 ELSE 1 END;
+
+    v_found := (length(v_src) - length(replace(v_src, 'status, group_id', '')))
+               / length('status, group_id');
+    IF v_found <> v_expected THEN
+      RAISE EXCEPTION '% names group_id in % of its % on-the-spot INSERT column lists', v_name, v_found, v_expected;
+    END IF;
+
+    v_found := (length(v_src) - length(replace(v_src, '''active'', v_auto_group_id', '')))
+               / length('''active'', v_auto_group_id');
+    IF v_found <> v_expected THEN
+      RAISE EXCEPTION '% computes an automatic group id but inserts it in only % of its % seat writes — the placement would be dead code on the rest', v_name, v_found, v_expected;
     END IF;
   END LOOP;
 
