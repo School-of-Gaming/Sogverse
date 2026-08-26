@@ -1482,6 +1482,7 @@
       "about": "Tietoa"
     },
     "accountMenu": "Tilivalikko – {name}",
+    "continueToAccount": "Jatka tilillesi",
     "switchTo": "Vaihda profiiliin"
   },
   "help": {

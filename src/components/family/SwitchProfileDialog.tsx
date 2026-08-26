@@ -65,6 +65,7 @@ export function SwitchProfileDialog({
   oneWayWarning,
 }: SwitchProfileDialogProps) {
   const c = useTranslations("common");
+  const f = useTranslations("family");
   const [isSwitching, setIsSwitching] = useState(false);
   const [switchError, setSwitchError] = useState<string | null>(null);
 
@@ -80,7 +81,11 @@ export function SwitchProfileDialog({
       await commitAccountSwitch(target, redirectUrl);
     } catch (err) {
       setIsSwitching(false);
-      setSwitchError(err instanceof Error ? err.message : c("somethingWentWrong"));
+      // The reader gets the translated line; the server's own words (always
+      // English, and often a bare HTTP status) go to the console for whoever
+      // is debugging it. Same policy on all three switch surfaces.
+      console.error("[switch-profile-dialog] account switch failed:", err);
+      setSwitchError(f("switchFailed"));
     }
   }
 

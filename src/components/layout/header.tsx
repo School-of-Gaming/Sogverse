@@ -99,8 +99,13 @@ export function Header() {
    *     link to login. The menu is built entirely from the role, so there is no
    *     menu to offer yet — but the slot is the only account affordance on the
    *     page and must never be a dead end, so it keeps the exit it had before
-   *     the menu existed. Login is the right one: it is where the session gets
-   *     re-established if the profile read is failing rather than merely slow;
+   *     the menu existed. Login is the right one precisely *because* a
+   *     signed-in visitor never arrives there: the proxy looks their role up
+   *     and bounces them straight to their own dashboard. What the trip buys is
+   *     the repair — it is a full-page navigation, so the RSC reads the profile
+   *     again and hands the root layout a header with its menu in place.
+   *     Nothing about the session is re-established; the session was never the
+   *     thing that failed, the profile read was;
    *   - signed out, a plain link to login, unchanged.
    */
   const accountSlot = isLoading ? (
@@ -119,7 +124,11 @@ export function Header() {
     ) : (
       <Link
         href={ROUTES.login}
-        aria-label={c("signIn")}
+        // Not "Sign in": this reader already is. The label names what the trip
+        // actually does for them — the login route bounces a signed-in visitor
+        // onward to their own account — and it stays role-agnostic, because the
+        // profile that would say which dashboard is the thing that is missing.
+        aria-label={t("continueToAccount")}
         className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <Avatar className="h-8 w-8">

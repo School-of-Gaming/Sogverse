@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -140,6 +147,27 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
    * intent is parked here and spent by the effect below.
    */
   const focusOnOpenRef = useRef<"first" | "last" | null>(null);
+  /**
+   * The row a failed switch has to hand focus back to. Parked here rather than
+   * focused on the spot, because at the moment the failure lands that row is
+   * still disabled — see the effect that spends it.
+   */
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  /** The failure line, for the scroll-into-view effect below. */
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  /**
+   * `open` and `busy` as of the last *committed* render, for one reader: the
+   * focus-out guard. See `handleFocusOut` for why that guard cannot read them
+   * from its own closure. A layout effect rather than `useEffect` because the
+   * guard's decision is made in a microtask, and passive effects are flushed
+   * on a later task than that.
+   */
+  const openRef = useRef(open);
+  const busyRef = useRef(busy);
+  useLayoutEffect(() => {
+    openRef.current = open;
+    busyRef.current = busy;
+  });
 
   useClickOutside(wrapperRef, () => setOpen(false));
 
@@ -170,6 +198,46 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
     if (items.length === 0) return;
     (want === "first" ? items[0] : items[items.length - 1]).focus();
   }, [open]);
+
+  /**
+   * Focus the commit took away, handed back. Disabling the clicked row blurs
+   * it to `<body>`, and a failure that merely re-enables the row leaves the
+   * keyboard outside the panel: arrow keys would re-enter at the top, and a
+   * screen-reader user has no way back to the line that just explained what
+   * went wrong.
+   *
+   * Keyed on `committing` rather than on the error text: two identical
+   * failures in a row set the same string, React bails out of that update, and
+   * an effect watching the message would never run the second time.
+   */
+  useEffect(() => {
+    if (committing) return;
+    const row = restoreFocusRef.current;
+    if (!row) return;
+    restoreFocusRef.current = null;
+    // The panel is rebuilt from a fresh snapshot on every open, so the row can
+    // be gone by the time this runs. The trigger always exists.
+    if (row.isConnected) row.focus();
+    else triggerRef.current?.focus();
+  }, [committing]);
+
+  /**
+   * The failure line is appended last inside a card that caps its height and
+   * scrolls, so on a full household already scrolled down it can land below
+   * the fold — a failed switch would then produce no visible change at all.
+   * Appending at the end and scrolling *down* to it is what keeps this inside
+   * the layout rules: nothing already painted moves, and `block: "nearest"`
+   * scrolls the panel only as far as it takes.
+   *
+   * **Declared after the focus-restore effect on purpose**: both run in the
+   * same commit, so whichever scrolls last decides where the panel rests, and
+   * the message is the thing the reader has to see. Reordering these two
+   * silently scrolls back to the row instead.
+   */
+  useEffect(() => {
+    if (!switchError) return;
+    errorRef.current?.scrollIntoView({ block: "nearest" });
+  }, [switchError]);
 
   // Fetched on mount rather than on open, so the menu opens with its family
   // rows already in hand. Held back entirely for admins and gedus:
@@ -211,11 +279,16 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
 
   /** Opening is also when the row set is snapshotted — see `openedWith`. */
   function openMenu() {
+    // A failure belongs to the switch that produced it, not to the panel. The
+    // panel unmounts on close but this state does not, so without clearing it
+    // an open minutes later would be greeted by an alert about something the
+    // reader has long since moved on from.
+    setSwitchError(null);
     setOpenedWith(switchTargets);
     setOpen(true);
   }
 
-  async function handleSwitch(target: FamilyMember) {
+  async function handleSwitch(target: FamilyMember, clickedRow: HTMLElement) {
     if (busy) return;
     setSwitchError(null);
     setCommitting(true);
@@ -224,6 +297,10 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
       await commitAccountSwitch(target);
       // Both flags stay set through the unload — see their declarations.
     } catch (err) {
+      // Parked, not focused: the row is still disabled at this instant, and
+      // focusing a disabled element does nothing. The effect above spends it
+      // once the re-render has made the row a focusable element again.
+      restoreFocusRef.current = clickedRow;
       setCommitting(false);
       setSwitchingId(null);
       // The reader gets the translated line; the server's own words (always
@@ -286,15 +363,33 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
    * back into. React's `onBlur` is the bubbling `focusout`, so this catches
    * focus leaving any row.
    *
-   * Held off while a commit is in flight: it disables the row that was just
-   * clicked, which blurs it with no `relatedTarget` at all — closing there
-   * would take the failure message down with the panel.
+   * **The decision is deferred to a microtask and made from refs, never from
+   * this render's `open`/`busy`.** Clicking a member row flips `committing`
+   * synchronously, so React commits `disabled` onto the very button that has
+   * focus — and the browser answers that *inside the mutation phase* with a
+   * synchronous `focusout` carrying no `relatedTarget` at all. React dispatches
+   * it into the handler belonging to the render before the commit, where
+   * `busy` is still false, so a guard reading the closure closes the panel at
+   * the exact moment of the commit: the failure line is never seen on one path
+   * and the sign-out spinner never appears on the other. A layout effect is no
+   * better a source, because it too runs after the mutation phase this event
+   * fires inside. A microtask runs once the whole commit is behind us, so by
+   * then the refs say what is actually true.
+   *
+   * `relatedTarget` is read synchronously because it is only valid on the
+   * event; where the browser supplies none, the landing spot is taken from
+   * `document.activeElement`, which in the disabled-row case above is `<body>`
+   * — which is precisely why the `busy` guard is the half doing the work.
+   * Focus genuinely leaving the component still closes the panel.
    */
   function handleFocusOut(event: React.FocusEvent<HTMLDivElement>) {
-    if (!open || busy) return;
     const next = event.relatedTarget;
-    if (next instanceof Node && wrapperRef.current?.contains(next)) return;
-    setOpen(false);
+    queueMicrotask(() => {
+      if (!openRef.current || busyRef.current) return;
+      const landed = next ?? document.activeElement;
+      if (landed && wrapperRef.current?.contains(landed)) return;
+      setOpen(false);
+    });
   }
 
   return (
@@ -484,7 +579,11 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
               everything already painted rather than displacing a row
               mid-list. */}
           {switchError && (
-            <p role="alert" className="px-3 pb-1 pt-2 text-xs text-destructive">
+            <p
+              ref={errorRef}
+              role="alert"
+              className="px-3 pb-1 pt-2 text-xs text-destructive"
+            >
               {switchError}
             </p>
           )}
@@ -560,7 +659,12 @@ function AccountRowItem({
   blocked: boolean;
   /** This is the row that was clicked — it wears the spinner. */
   switching: boolean;
-  onSwitch: (target: FamilyMember) => void;
+  /**
+   * Handed the row element as well as the member: a failed switch has to give
+   * focus back to the button that was pressed, and only the click knows which
+   * one that was.
+   */
+  onSwitch: (target: FamilyMember, row: HTMLElement) => void;
 }) {
   return (
     // `group` is what the chevron's nudge keys on. Nothing else in this row
@@ -571,7 +675,7 @@ function AccountRowItem({
       data-account-menu-item=""
       data-account-menu-blocked={blocked ? "" : undefined}
       disabled={blocked}
-      onClick={() => onSwitch(member)}
+      onClick={(event) => onSwitch(member, event.currentTarget)}
       className={cn(
         ROW_CLASS,
         ACTIONABLE_ROW_CLASS,

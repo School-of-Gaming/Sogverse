@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { AccountMenu } from "@/components/layout/account-menu";
@@ -76,6 +76,32 @@ afterAll(() => {
     writable: true,
     value: realLocation,
   });
+});
+
+/**
+ * jsdom has no layout, so it implements no `scrollIntoView` at all — the
+ * failure line's "scroll me into the panel's view" effect would throw rather
+ * than be skipped. Stubbed here so the call is observable instead.
+ */
+const scrollIntoView = vi.fn();
+Object.defineProperty(Element.prototype, "scrollIntoView", {
+  configurable: true,
+  writable: true,
+  value: scrollIntoView,
+});
+
+/**
+ * Three rows here are real `<a href>`s, and jsdom answers a click on one by
+ * trying to navigate the document — which it cannot do, and reports on stderr
+ * through its virtual console (a `jsdomError`, so no `console.error` spy sees
+ * it either). React's listeners live on the render root, so by the time this
+ * one runs on `document` every handler under test has already had the event;
+ * cancelling here suppresses jsdom's navigation attempt and nothing else.
+ */
+document.addEventListener("click", (event) => {
+  if (event.target instanceof Element && event.target.closest("a[href]")) {
+    event.preventDefault();
+  }
 });
 
 const MY_SOG = messages.dashboardSections.pageTitle;
@@ -174,6 +200,52 @@ function row(text: string) {
   return found;
 }
 
+/**
+ * The component defers its close-on-focus-leave decision to a microtask (the
+ * synchronous `focusout` a disabling row emits arrives before React's own
+ * bookkeeping has caught up, so nothing decided during it can be trusted).
+ * `act` drains that microtask and flushes whatever state it set, which is also
+ * what keeps a "stays open" assertion honest rather than merely early.
+ */
+async function focusOut(el: Element, relatedTarget: Element | null) {
+  await act(async () => {
+    fireEvent.focusOut(el, { relatedTarget });
+  });
+}
+
+/**
+ * Submits the sign-out form and reports whether anything cancelled it on the
+ * way. The listener sits on `document`, past React's own root listener, so it
+ * reads the flag *after* the component's `onSubmit` has had its chance — and
+ * it only reads: a dispatched `submit` event has no navigating default action
+ * in jsdom, so there is nothing here to suppress and nothing to distort.
+ */
+function submitAndReadDefaultPrevented(form: HTMLFormElement) {
+  let prevented: boolean | null = null;
+  function observe(event: Event) {
+    prevented = event.defaultPrevented;
+  }
+  document.addEventListener("submit", observe);
+  try {
+    fireEvent.submit(form);
+  } finally {
+    document.removeEventListener("submit", observe);
+  }
+  return prevented;
+}
+
+/** Puts a switch in flight and hands back the resolver for it. */
+function pendingSwitch() {
+  let settle: () => void = () => {};
+  mockSwitchAccount.mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        settle = resolve;
+      }),
+  );
+  return () => settle();
+}
+
 function isBlocked(el: Element) {
   return el.hasAttribute("disabled") || el.getAttribute("aria-disabled") === "true";
 }
@@ -190,6 +262,7 @@ beforeEach(() => {
   mockTrack.mockClear();
   mockUseFamily.mockReset();
   mockUseFamily.mockReturnValue({ data: FAMILY, isError: false });
+  scrollIntoView.mockClear();
   window.location.href = "http://localhost/";
   // A failed switch logs the server's own words; keep them out of the run.
   consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -236,7 +309,7 @@ describe("AccountMenu — opening and closing", () => {
     expect(menuIsOpen()).toBe(false);
   });
 
-  it("closes when focus leaves the component altogether", () => {
+  it("closes when focus leaves the component altogether", async () => {
     renderMenu(PARENT);
     openMenu();
 
@@ -244,17 +317,38 @@ describe("AccountMenu — opening and closing", () => {
     // page with the keyboard already somewhere else.
     const elsewhere = document.createElement("button");
     document.body.appendChild(elsewhere);
-    fireEvent.focusOut(row(SIGN_OUT), { relatedTarget: elsewhere });
+    await focusOut(row(SIGN_OUT), elsewhere);
 
     expect(menuIsOpen()).toBe(false);
     elsewhere.remove();
   });
 
-  it("stays open while focus moves between its own rows", () => {
+  it("stays open while focus moves between its own rows", async () => {
     renderMenu(PARENT);
     openMenu();
 
-    fireEvent.focusOut(row(MY_SOG), { relatedTarget: row(SETTINGS) });
+    await focusOut(row(MY_SOG), row(SETTINGS));
+
+    expect(menuIsOpen()).toBe(true);
+  });
+
+  it("stays open when a committing row blurs itself with nowhere to hand focus", async () => {
+    // The defect this pins: React commits `disabled` onto the row that has
+    // focus, the browser answers *inside that commit* with a `focusout`
+    // carrying no `relatedTarget`, and a guard reading the pre-commit render's
+    // `busy` closes the panel at the exact moment of the commit — taking the
+    // failure line, or the sign-out spinner, down with it.
+    //
+    // jsdom does not blur an element it disables, so it cannot stage that
+    // ordering; what this test pins is the resulting contract, which the
+    // component now honours from refs read a microtask later: a relatedTarget-
+    // less blur while a commit is in flight leaves the panel open.
+    pendingSwitch();
+    renderMenu(PARENT);
+    openMenu();
+
+    fireEvent.click(row("Aino"));
+    await focusOut(row("Aino"), null);
 
     expect(menuIsOpen()).toBe(true);
   });
@@ -368,8 +462,19 @@ describe("AccountMenu — the Switch to heading", () => {
 });
 
 describe("AccountMenu — when the household is not in hand", () => {
-  it("opens at once while the read is still in flight, with the fixed rows alone", () => {
-    mockUseFamily.mockReturnValue({ data: undefined, isError: false });
+  /**
+   * The menu keys on *no data*, and deliberately never consults the query's
+   * error flag: a read still backing off and a read that gave up produce the
+   * same panel, because there is nothing different to say about them here.
+   * Both flag values are exercised so that "regardless of the error flag" is
+   * pinned rather than assumed — a single case with a hardcoded `isError`
+   * would be decoration.
+   */
+  it.each([
+    ["still in flight", false],
+    ["failed outright", true],
+  ])("opens at once with the fixed rows alone — read %s", (_label, isError) => {
+    mockUseFamily.mockReturnValue({ data: undefined, isError });
     renderMenu(PARENT);
     openMenu();
 
@@ -378,15 +483,6 @@ describe("AccountMenu — when the household is not in hand", () => {
     // nowhere else on the page.
     expect(menuIsOpen()).toBe(true);
     expect(trigger().getAttribute("aria-expanded")).toBe("true");
-    expect(rowTexts()).toEqual([MY_SOG, SETTINGS, SIGN_OUT]);
-  });
-
-  it("falls back the same way when the read fails outright", () => {
-    mockUseFamily.mockReturnValue({ data: undefined, isError: true });
-    renderMenu(PARENT);
-    openMenu();
-
-    expect(menuIsOpen()).toBe(true);
     expect(rowTexts()).toEqual([MY_SOG, SETTINGS, SIGN_OUT]);
   });
 
@@ -505,13 +601,7 @@ describe("AccountMenu — switching to another member", () => {
   it("holds every row disabled from the click onward, spins the one clicked, and never re-enables", async () => {
     // The success path ends in a document unload, so a row that re-enables in
     // the gap lets a fast user fire a second switch.
-    let settle: () => void = () => {};
-    mockSwitchAccount.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          settle = resolve;
-        }),
-    );
+    const settle = pendingSwitch();
 
     renderMenu(PARENT);
     openMenu();
@@ -560,10 +650,78 @@ describe("AccountMenu — switching to another member", () => {
     // Nowhere was navigated to.
     expect(window.location.href).toBe("http://localhost/");
   });
+
+  it("hands focus back to the row that failed, so the keyboard is still inside the panel", async () => {
+    mockSwitchAccount.mockRejectedValue(new Error("switch-account returned 500"));
+
+    renderMenu(PARENT);
+    openMenu();
+
+    fireEvent.click(row("Aino"));
+    await screen.findByRole("alert");
+
+    // Disabling the clicked row blurs it; re-enabling does not hand focus
+    // back. Without this the arrow keys re-enter at the top of the list and a
+    // screen-reader user has no way back to the line they need to read.
+    expect(document.activeElement).toBe(row("Aino"));
+  });
+
+  it("scrolls the failure line into the panel's view", async () => {
+    mockSwitchAccount.mockRejectedValue(new Error("switch-account returned 500"));
+
+    renderMenu(PARENT);
+    openMenu();
+
+    fireEvent.click(row("Aino"));
+    const alert = await screen.findByRole("alert");
+
+    // The line is appended last inside a capped, scrolling card, so on a full
+    // household already scrolled down it lands below the fold and a failed
+    // switch produces no visible change at all.
+    expect(scrollIntoView).toHaveBeenCalled();
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(alert);
+  });
+
+  it("does not greet a later open with an earlier failure", async () => {
+    mockSwitchAccount.mockRejectedValue(new Error("switch-account returned 500"));
+
+    renderMenu(PARENT);
+    openMenu();
+
+    fireEvent.click(row("Aino"));
+    expect(await screen.findByRole("alert")).not.toBe(null);
+
+    openMenu();
+    expect(menuIsOpen()).toBe(false);
+    openMenu();
+
+    // The panel unmounts on close but the message does not, so an open minutes
+    // later would otherwise open on an alert about something long since past.
+    expect(menuIsOpen()).toBe(true);
+    expect(screen.queryByRole("alert")).toBe(null);
+  });
+
+  it("takes every row out of the arrow-key traversal while a switch is in flight", () => {
+    pendingSwitch();
+    renderMenu(PARENT);
+    openMenu();
+
+    fireEvent.click(row("Aino"));
+    // The two links cannot carry `disabled` at all, so the data attribute is
+    // the only thing excluding them — this is that half of the selector. With
+    // no row left to move to, the caret stays where it is rather than landing
+    // on a My SOG row that a click guard would then swallow.
+    press("ArrowDown");
+    expect(document.activeElement).not.toBe(row(MY_SOG));
+    press("End");
+    expect(document.activeElement).not.toBe(row(SIGN_OUT));
+    expect(document.activeElement).toBe(document.body);
+  });
 });
 
 describe("AccountMenu — sign out", () => {
   it("is the canonical form POST, not a client fetch", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { container } = renderMenu(PARENT);
     openMenu();
 
@@ -574,6 +732,15 @@ describe("AccountMenu — sign out", () => {
     expect(form?.getAttribute("method")).toBe("post");
     expect(form?.getAttribute("action")).toBe("/api/auth/signout");
     expect(form?.contains(submit)).toBe(true);
+
+    if (!form) throw new Error("No sign-out form rendered");
+    // The half the markup cannot show: the component lets the native submit
+    // proceed. A `preventDefault` here — or a fetch standing in for the POST —
+    // would leave the cookies the route rewrites unseen by the browser
+    // Supabase singleton, which only a document reload rebuilds.
+    expect(submitAndReadDefaultPrevented(form)).toBe(false);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 
   it("spins its own row and takes the whole menu out of service, and stays that way", () => {

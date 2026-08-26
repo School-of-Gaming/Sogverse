@@ -131,7 +131,11 @@ export function FamilyProfileSelector({
       await commitAccountSwitch(target);
     } catch (err) {
       setCommittingTargetId(null);
-      setSwitchError(err instanceof Error ? err.message : t("switchFailed"));
+      // The reader gets the translated line; the server's own words (always
+      // English, and often a bare HTTP status) go to the console for whoever
+      // is debugging it. Same policy on all three switch surfaces.
+      console.error("[family-profile-selector] account switch failed:", err);
+      setSwitchError(t("switchFailed"));
     }
   }
 
