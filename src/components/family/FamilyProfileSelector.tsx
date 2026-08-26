@@ -13,6 +13,7 @@ import {
   SkeletonTile,
 } from "./ProfileTiles";
 import { ROUTES, MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { byFirstName } from "@/lib/family-order";
 
 /**
  * One-shot URL marker that carries a gamer's "Add Gamer" intent across the
@@ -250,29 +251,6 @@ export function FamilyProfileSelector({
       )}
     </div>
   );
-}
-
-/**
- * Order tiles by first name, collated in the **viewer's own locale** and
- * tie-broken by id — the same comparator the parent dashboard's child sections
- * use, for the same two reasons.
- *
- * The collation is not the runtime's, because a Finnish family's Ämmi belongs
- * after Zeno, and a comparator that agreed with that on the server and
- * disagreed in the browser would rearrange the tiles on hydration, under the
- * cursor of somebody already reaching for one.
- *
- * The id breaks a tie because a first name does not have to be unique: two
- * children in one family may share one, and the family read imposes no order of
- * its own, so a comparator returning 0 would leave that pair in whatever order
- * Postgres happened to answer with — free to differ between two fetches. The id
- * is arbitrary as an ordering; what it buys is the *same* arbitrary order every
- * time.
- */
-function byFirstName(locale: string) {
-  return (a: FamilyMember, b: FamilyMember): number =>
-    a.first_name.localeCompare(b.first_name, locale) ||
-    a.id.localeCompare(b.id);
 }
 
 function navigateToDashboard(role: FamilyMember["role"]) {

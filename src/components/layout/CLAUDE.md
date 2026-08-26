@@ -1,6 +1,6 @@
 # Layout & Scroll Architecture
 
-Shared layout chrome lives here: `header.tsx`, `site-header-shell.tsx`, `dashboard-layout.tsx`, `sidebar.tsx`, `footer.tsx`, plus `locale-picker.tsx` and `copyright.tsx`. This file governs the scroll model these pieces depend on.
+Shared layout chrome lives here: `header.tsx`, `site-header-shell.tsx`, `dashboard-layout.tsx`, `sidebar.tsx`, `footer.tsx`, plus `account-menu.tsx`, `locale-picker.tsx` and `copyright.tsx`. This file governs the scroll model these pieces depend on, and the header's account affordance.
 
 ## Core model
 
@@ -25,6 +25,16 @@ Route-group wrappers:
 **A group earns its own entry by what it puts *around* the header, not by replacing it.** `(voice)` once existed to swap in a simplified header of its own; it now renders the standard one and keeps the group solely for the missing footer. If a future group wants only a different header, it wants a prop on the header, not a route group.
 
 **Rule: the preview route group's layout stays a pass-through.** A full-page preview scene mocks a *specific* page, so it has to compose that page's chrome itself — a dashboard scene renders `Header` + `DashboardLayout` with no sidebar, a public scene renders `Header` + `main` + `Footer`. Putting any chrome in the group layout would either double-wrap a scene or force every scene into one role's shell, which is exactly what moving these routes out of the public group fixed. Adding a shell to a scene means naming it in the scene registry, not editing this layout.
+
+## The account menu
+
+The header avatar is a dropdown, not a link (`account-menu.tsx`). It is the single account affordance on every page: the role's dashboard, the people the viewer can be, settings, and sign-out. There is no dropdown primitive in the kit, so it follows the locale picker's idiom — a `relative` wrapper, `useClickOutside`, an absolutely-positioned `role="menu"` panel — plus Escape-to-close with focus returned to the trigger, and arrow-key movement across the rows, which is what the `menu` role promises.
+
+**Rule: the menu paints whole or not at all.** Parents and gamers get one row per household member, read from the family list on *mount* rather than on open. If that read has not settled when the avatar is clicked, the panel does not paint — no skeleton, no spinner, no partial list. Rows arriving into an open panel would push Settings and Sign out down the list on the data's own schedule, which is the shift the root layout rule forbids. A failed read yields a menu with no family rows rather than a broken one. Admins and gedus never make the read at all (`/api/family/list` is gated to customers and gamers), and their block is one row: themselves.
+
+**Rule: the viewer's own row is inert-active, never disabled-looking.** A primary ring on the avatar, primary text, `aria-current="true"` — it says "you are here", the same thing the profile selector's active tile says. It carries `aria-disabled` because it genuinely cannot be activated, but it must not be greyed out: the row is the answer to "who am I signed in as", not a dead control.
+
+**Rule: a switch initiated here commits through one function, and every row stays disabled until the document unloads.** The commit step is deliberately callable on its own — a follow-up piece gates a gamer-initiated switch behind a parent-PIN dialog, and the dialog needs exactly that function. The `committing` flag is local, set synchronously before the call, and never cleared on success (the full-page navigation is what ends it); it is cleared only on failure, which surfaces as a line at the *end* of the panel so nothing already painted moves.
 
 ## `--header-height`
 
