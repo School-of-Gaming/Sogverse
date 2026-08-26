@@ -308,6 +308,203 @@ where the fix would change what we commit to rather than how it reads.
       destroys it silently, with no error and no visible symptom — the code is simply
       absent at registration.
 
+## Attribution, cookie consent, and the Lynx data export
+
+**Opened 2026-08-26.** Research is complete and written up here; every decision in it is
+still open. Nothing has been applied. The `?ref=` system is untouched and still live.
+
+This sits in this file rather than `TODO.md` because Lynx's original ask is what created
+it and Lynx's data schema is what resolves it — but note that the **cookie-banner half is
+platform-wide, not programme-specific**, and would be true if the Roblox programme did not
+exist.
+
+### What triggered it
+
+SOG's counsel was asked whether the referral design avoids a cookie banner. The question
+put to them described the journey accurately: a `?ref=` value is read from the landing URL,
+held in memory for the visit, written to `profiles.referral_code` at account creation, and
+**never stored on the visitor's device** — so, the team's reasoning went, no banner.
+
+Counsel's answer: the scope of Art 5(3) ePrivacy is very broad, non-compliance risk lies
+mainly with SOG, and what was described "looks like URL-based tracking that is commonly
+used by websites to identify the origin of their inbound source of traffic … such technique
+is considered as a tracking technique requiring a cookie banner (see EDPB guidelines on the
+scope of Art 5(3))."
+
+### What we believed, and why it was wrong
+
+The design's six constraints (`src/lib/referral.ts`) exist to keep this lawful without a
+banner, and the first of them — nothing is ever written to the device — is the one the
+whole position hangs on. **That premise is wrong, and it has been wrong since the day it
+was written.**
+
+EDPB *Guidelines 2/2023 on the technical scope of Art. 5(3)* (v2.0, adopted 7 Oct 2024) is
+the document counsel cites, and §3.1 addresses this exact case. ¶49 describes tracking
+links as "very commonly used by eCommerce websites to identify the origin of their inbound
+source of traffic" — counsel's sentence is near-verbatim from it. The reasoning has two
+limbs, and **neither asks what SOG stores**:
+
+- **¶50 (storage):** distributing the tracked link to the device "does constitute storage,
+  at the very least through the caching mechanism of the client-side software … even if
+  this storage is not permanent."
+- **¶51 (access):** appending the code "constitutes an instruction to the terminal
+  equipment to send back the targeted information."
+
+Art 5(3) is storage **or** access, independently, and ¶6(c) confirms (quoting WP29) that
+they "do not need to be performed by the same party". Our design only ever addressed
+storage. Moving the value server-side does not help either — the proxy reading `?ref=`
+*is* the ¶51 access, and it is already server-side today.
+
+**Where the wrong premise is recorded, and needs correcting regardless of the outcome
+below:** `src/lib/referral.ts` (constraint 1 of the header comment),
+`src/providers/referral-provider.tsx` (the storage note), and the rejected-alternatives
+section of `docs/plans/referral-landing-clicks.md`. All three currently tell a future
+reader that no-device-storage is what keeps us out of ePrivacy scope.
+
+*Provenance, so nobody re-litigates it:* the error entered in the Claude session of
+2026-08-13 (`786f584c-ecc4-4f96-8184-56d9ba45bfbc`), whose first substantive turn asserted
+"no consent needed, and no banner required … Nothing stored on the device means this layer
+simply doesn't apply". The architecture advice in that session was sound and the
+UTM-vs-`ref` reasoning was sound; the legal test underneath them was not. `?ref=` was a
+defensible choice given the premise it was handed.
+
+### The larger finding: `ref` is not our exposure
+
+`src/app/layout.tsx` mounts `<SpeedInsights />` and `<Analytics />` on **every page**,
+public ones included. Per Vercel's own docs, Speed Insights "injects a script that retrieves
+the visitor's Web Vitals by invoking native browser APIs" — which is EDPB §3.2 ¶52–53
+verbatim ("the fact that this information is being produced locally does not preclude the
+application of Article 5(3)").
+
+**So deleting the referral feature entirely would not settle the banner question.** Where
+the exemptions land, checked 2026-08-26:
+
+| | Verdict | Basis |
+|---|---|---|
+| **UK** | Workable | DUAA 2025 Sch A1 ¶5 statistical-purposes exemption, in force 5 Feb 2026 — needs clear info **and a free, simple way to object** |
+| **France** | Doubtful | CNIL Sheet 16 (rev. 4 Jul 2025) audience-measurement exemption exists, but requires IP pseudonymisation (last octet removed) and a clickable opt-out; Vercel hashes the full request and we cannot configure it. CNIL warns "most large audience measurement offerings do not fall within the scope of the exemption, regardless of their configuration" |
+| **Finland** | No | Traficom (guidance page last updated 23 Apr 2026) — analytics require consent and cannot be classed as necessary **or** legitimate interest |
+| **Germany** | No | §25 TDDDG has no audience-measurement carve-out; a tool can only run consent-free by not triggering §25(1) at all |
+
+Two of our markets have no exemption to claim, and one of them is home. ePrivacy is a
+*directive*, so EU-wide operation means 27 national implementations and designing for the
+strictest rather than per-market.
+
+**The one clean no-banner path** is dropping both client scripts and relying on server-side
+data only (Vercel Observability — no script, included on all plans, gives edge requests by
+route, invocations, error rates, durations). That costs visitors, uniques, device and
+browser breakdown, geography, referrers, and all Web Vitals. Audience analytics is the
+thing a banner buys.
+
+### What Lynx actually asked for, and what they meant
+
+Every reference to UTM in Lynx's document, and the reading:
+
+> "Parent/gamer registration should be trackable / attributable to community groups that
+> initiated the outreach (e.g. UTM logic)"
+
+> "A distinct registration link (e.g. sog.gg/register-roblox) that is a superset of the
+> standard SOG sign-up, adding on the Roblox-required fields & auto-capturing the landing
+> page UTM."
+
+> **Parent level:** parent email · created at date · **utm parameter** · contact for
+> marketing consent
+> **Gamer/child accounts:** gamer id · parent email (for linking) · created_at · country ·
+> city · age range · **utm parameter (from parent's data)** · photo/video testimonial
+> consent · promotional use of work consent · case study consent
+
+**They are asking for a per-person record with a provenance label on it — not analytics.**
+The tells:
+
+- The subject is **registration**, never traffic. "(e.g. UTM logic)" is illustrative, not
+  prescriptive.
+- "auto-capturing the **landing page** UTM" describes the mechanism our pipeline already
+  implements: value rides on the landing URL, registration picks it up.
+- The schema is a **per-person export**, and the field is **singular** — "utm parameter",
+  one field, sitting next to `parent email`. Not source/medium/campaign broken out.
+- **Nothing anywhere asks for clicks, impressions, traffic volume, or a conversion rate.**
+
+`utm parameter` as Lynx specify it *is* `referral_code`. We built the thing they asked for
+and gave it a different name. **UTM is a vocabulary, not a capability** — `?ref=x` and
+`?utm_campaign=x` are technically identical, and what differs is only where the value
+lands.
+
+**Vercel cannot be the home for this, and never could.** It has no per-visitor records at
+all, so it cannot answer "which accounts came from group X" and cannot back Lynx's API.
+That was established correctly on 2026-08-13 and has not changed.
+
+**Constraint 2 already matches their spec.** Lynx write "utm parameter (**from parent's
+data**)" — the child's value derived from the parent's, not stored separately. That is
+exactly what constraint 2 does (gamer rows NULL by construction, answered by a join).
+Leave it alone; it is not a constraint we have to break to satisfy them.
+
+### Where that leaves the design
+
+The **pipeline** is right and survives every option: proxy sanitises → `x-referral-code`
+header → root-layout context provider → signup metadata → write-once column. That transport
+problem (a root layout cannot receive `searchParams`; the value must survive client-side
+navigation) is identical whatever the payload is called.
+
+What is wrong is the **vocabulary**, and the argument for changing it is now
+*communication*, not technology: Lynx's spec says "utm parameter" and our column says
+`referral_code`, so every export, conversation and future engineer pays a translation tax.
+The privacy-policy readability argument that originally favoured `ref` weakens once a
+banner exists.
+
+Rough shape if that is the call: keep the pipeline, capture `utm_source` / `utm_medium` /
+`utm_campaign`, expose `utm_campaign` as Lynx's single "utm parameter", migrate existing
+`referral_code` values across. **The sanitiser must widen** — `/^[a-z0-9_-]{1,64}$/` rejects
+a large share of real UTM traffic (ad platforms emit uppercase, dots, plus signs, encoded
+spaces, and Meta macros expand to ad names containing spaces), and the CSV-injection concern
+already documented in `referral.ts` matters *more* once we no longer author the values.
+Case-folding needs deciding deliberately, or `Summer_Sale` and `summer_sale` become two
+campaigns.
+
+### Open decisions — none of these have been asked of anyone
+
+1. **Does the banner ship?** Forced by DE and FI if the Vercel scripts stay. The
+   alternative is dropping both scripts for server-side-only metrics. Kyle's call, informed
+   by counsel.
+2. **Does `ref` become UTM, or stay as it is?** Independent of (1). Satisfies Lynx's
+   vocabulary either way, but only the rename retires the translation tax.
+3. **Can a campaign value still be written at registration for a parent who rejected the
+   banner?** Counsel. This determines whether Lynx's numbers are complete or systematically
+   biased, and it is the last unknown blocking the design.
+4. **Web Analytics Plus ($10/month per team)** buys native UTM parameters and a 24-month
+   window. **Nothing Lynx asked for needs it** — only buy it if SOG wants top-of-funnel for
+   its own reasons, and note it is consent-gated behind a banner while Google and Meta
+   already report their own click counts more accurately.
+
+### The half that is bigger than the banner
+
+Lynx's schema sends them **parent email addresses plus each child's country, city, age
+range and three consent statuses.** The `utm parameter` is the least sensitive field on
+that list. This is third-party sharing of children's personal data and needs a lawful
+basis, Lynx named in the privacy policy, and a data-sharing agreement — flagged on
+2026-08-13 as the item "most likely to be missed", and still not started. **If counsel's
+time is rationed, spend it here rather than on the banner.**
+
+### Knock-ons when this resolves
+
+- **`docs/plans/referral-landing-clicks.md` should be deleted, not built.** Its purpose was
+  a click *denominator*, which Lynx never asked for; both its rejected-alternative
+  arguments (device storage needs a banner; UTM needs the Plus add-on we don't want) have
+  collapsed; and it concedes in its own constraints that ad platforms count clicks better
+  than we can. **Rescue one thing first:** the partner code prefix convention
+  (`lynx-summer-a`, `rblx-launch`), which cannot be retrofitted because the value is
+  immutable once written, and which survives the rename as a `utm_campaign` convention.
+  Worth settling before the first Lynx campaign link goes out.
+- **The privacy policy still says nothing about the referral code, in any locale.** That
+  was item 1 on the "non-negotiable" list from 2026-08-13 ("Update the privacy policy. This
+  is important, needs to happen." — Kyle) and it never shipped. It is a GDPR Art 13
+  transparency gap sitting in production **independent of how the banner question
+  resolves**, and it is the cheapest thing on this page to fix.
+- **`privacy.sections.cookies` answers the wrong question.** It says Vercel's analytics is
+  "cookie-free", which is true and irrelevant — Art 5(3) does not care about the mechanism.
+- **The `?ref=` note under "/roblox CTAs and events are deliberately inert" goes stale** if
+  the rename happens. It is still correct today, and its underlying point (soft navigation
+  keeps the value alive, a hard load destroys it) holds for any payload name.
+
 ## Tone — where the programme documents don't sound like Sogverse
 
 The house standard (set by the existing `/privacy` and `/terms-and-conditions` copy):
