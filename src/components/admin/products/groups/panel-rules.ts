@@ -1,4 +1,5 @@
 import type { GameAccountExternalId } from "@/components/game-account";
+import { isNoChargeBillingMode } from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { RobloxRenderMap } from "@/services/roblox";
 import type {
@@ -282,11 +283,13 @@ export function canCompEnroll(
  * way that happens.
  *
  * The qualifying half mirrors the enrollment writers' own predicate: charges
- * nothing (free, or invoiced off-platform) AND exactly one group. Whether that
- * group has a gedu assigned is deliberately not consulted — an unstaffed group
- * is still the only place the seat can go. The panel only *reflects* the rule;
- * the database is what applies it, and the two can only disagree if one is
- * changed alone, which is why this is written in one place.
+ * nothing AND exactly one group. Whether that group has a gedu assigned is
+ * deliberately not consulted — an unstaffed group is still the only place the
+ * seat can go. The panel only *reflects* the rule; the database is what applies
+ * it, and the two can only disagree if one is changed alone, which is why the
+ * billing half is one named set on each side — `isNoChargeBillingMode` here and
+ * `public.is_no_charge` in the enrollment writers — rather than an IN-list
+ * retyped in both.
  *
  * **Hidden-and-empty is a stable state, which is what makes hiding safe.** Every
  * event that could put a row in the inbox of a qualifying product either
@@ -317,9 +320,7 @@ export function showUnassignedSection(
   unassignedCount: number,
 ): boolean {
   if (unassignedCount > 0) return true;
-  const noCharge =
-    billingMode === "free" || billingMode === "external_contract";
-  return !(noCharge && groups.length === 1);
+  return !(isNoChargeBillingMode(billingMode) && groups.length === 1);
 }
 
 // ---------------------------------------------------------------------------

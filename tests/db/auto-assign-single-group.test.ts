@@ -30,6 +30,19 @@ import {
  * arrive with the INSERT rather than the placement having been bolted on
  * afterwards.
  *
+ * **`public.is_no_charge` is not called directly here, and that is the design.**
+ * Both writers delegate their billing gate to it, but it is granted to nobody:
+ * they are SECURITY DEFINER, so they reach it as their owner, and withholding
+ * the grant is what keeps it out of the Data API — a function reachable by
+ * `authenticated` would owe the authorization spine a classification it has no
+ * business earning. So its truth table is pinned through behaviour instead, and
+ * the matrix below covers the whole enum: 'free' and 'external_contract' each
+ * place a seat, 'paid' leaves one in the inbox. Nothing here asserts the missing
+ * grant either — 00206's own end-state DO block calls the helper across
+ * `enum_range` and checks that no Data API role can execute it, which runs
+ * against every database built from migrations, this suite's included, and is
+ * not at the mercy of how PostgREST words a refusal.
+ *
  * Product UUIDs 660-66b (see the product-helpers allocation registry): six
  * products, each with its own groups, because the whole matrix is about how
  * many groups a product has and one shared product could not hold three

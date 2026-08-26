@@ -75,6 +75,55 @@
 -- the REVOKE FROM PUBLIC and every existing comment in the bodies.
 
 -- ---------------------------------------------------------------------------
+-- "Charges nothing", named once
+-- ---------------------------------------------------------------------------
+--
+-- Both writers below gate their placement on the same two-member subset of
+-- billing_mode, and the predicate was about to be typed out twice in one file.
+-- It is a named function instead, so the rule has one spelling in this database
+-- and a reader meets a sentence rather than a list.
+--
+-- WHAT THE NAME IS FOR. The enum's three members are not three equal
+-- alternatives: `paid` is one thing, and `free` and `external_contract` are two
+-- ways of being the other thing. When the team says "free" out loud it almost
+-- always means both of them — a genuinely free product AND a municipality club,
+-- whose seats are invoiced to the municipality off-platform (municipality clubs
+-- are currently the only consumer of `external_contract`). This function is
+-- where that colloquial "free" lives without the schema losing the distinction:
+-- the two modes still buy different purchase shapes, each gated on its own
+-- mode, so anywhere the answer differs per mode the explicit comparison is
+-- still correct. Ask this one only where the question really is "does anyone
+-- pay us for this seat".
+--
+-- LOCKSTEP WITH TYPESCRIPT. The same set is `NO_CHARGE_BILLING_MODES` /
+-- `isNoChargeBillingMode` in `src/lib/constants/billing.ts`, which the admin
+-- groups panel uses to decide whether to draw the unassigned inbox at all.
+-- Widening one means widening the other in the same change, or the panel and
+-- the database disagree about where a seat lands.
+
+CREATE FUNCTION public.is_no_charge(p_mode public.billing_mode) RETURNS boolean
+    LANGUAGE sql
+    IMMUTABLE
+    PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT p_mode IN ('free', 'external_contract');
+$$;
+
+COMMENT ON FUNCTION public.is_no_charge(public.billing_mode) IS
+  'Whether a seat on a product with this billing mode costs anyone money: true for ''free'' and for ''external_contract'' (municipality clubs, invoiced off-platform — currently the only consumer of that mode), false for ''paid''. The named home of the colloquial "free", which almost always means both. The distinction between the two no-charge modes stays load-bearing elsewhere — each gates its own purchase shape in create_participation — so this is only for the two-versus-paid question. Kept in lockstep with NO_CHARGE_BILLING_MODES / isNoChargeBillingMode in src/lib/constants/billing.ts, which the admin groups panel reads to decide whether to draw the unassigned inbox.';
+
+-- Deliberately granted to nobody. Both callers are SECURITY DEFINER, so this
+-- runs as the definer (its own owner) and needs no caller-side EXECUTE — and
+-- withholding the grant is what keeps it out of the Data API entirely: a
+-- function reachable by `authenticated` would have to be classified in the DB
+-- test suite's authorization spine, and there is nothing here worth exposing to
+-- earn that. The REVOKE is still explicit and load-bearing: a created function
+-- comes back PUBLIC-executable, which would publish it through PostgREST to
+-- `anon` without anyone writing a GRANT.
+REVOKE EXECUTE ON FUNCTION public.is_no_charge(public.billing_mode) FROM PUBLIC;
+
+-- ---------------------------------------------------------------------------
 -- The family self-enrollment path
 -- ---------------------------------------------------------------------------
 
@@ -196,7 +245,7 @@ BEGIN
   -- Safe against a concurrent group edit because the product row is held FOR
   -- UPDATE above — the same lock the group editor takes. LIMIT 2 because the
   -- question is "exactly one?", not "how many?".
-  IF v_product.billing_mode IN ('free', 'external_contract') THEN
+  IF public.is_no_charge(v_product.billing_mode) THEN
     SELECT CASE WHEN count(*) = 1 THEN (array_agg(g.id))[1] END
       INTO v_auto_group_id
       FROM (
@@ -354,7 +403,7 @@ BEGIN
   -- no placement decision left in it. A paid camp or event still lands in the
   -- unassigned inbox — money on the seat is what separates the two, and this
   -- function serves both.
-  IF v_billing_mode IN ('free', 'external_contract') THEN
+  IF public.is_no_charge(v_billing_mode) THEN
     SELECT CASE WHEN count(*) = 1 THEN (array_agg(g.id))[1] END
       INTO v_auto_group_id
       FROM (
@@ -402,12 +451,39 @@ DO $assert$
 DECLARE
   v_src      text;
   v_name     text;
+  v_helper   text;
   -- How many rows each function can seat on the spot, and therefore how many of
   -- its INSERTs must carry the group: `create_participation` writes a seat in
   -- two branches (free and external), `admin_enroll_participant` in one.
   v_expected int;
   v_found    int;
 BEGIN
+  -- --- (0) The shared predicate exists, and answers the truth table. --------
+  --
+  -- Asserted by CALLING it rather than by finding it in the catalog: the whole
+  -- point of naming the set is that two bodies now delegate their gate to it, so
+  -- a helper that exists and returns the wrong thing would silently move every
+  -- municipality seat back into the inbox — the exact outcome this migration was
+  -- written to end.
+  SELECT string_agg(
+           public.is_no_charge(m)::text,
+           ',' ORDER BY m::text
+         )
+    INTO v_helper
+    FROM unnest(enum_range(NULL::public.billing_mode)) AS m;
+  -- Alphabetical by label: external_contract, free, paid.
+  IF v_helper IS DISTINCT FROM 'true,true,false' THEN
+    RAISE EXCEPTION 'is_no_charge does not answer (external_contract, free, paid) as (t, t, f): got %', v_helper;
+  END IF;
+
+  -- Granted to nobody on purpose — see the REVOKE above. `authenticated` would
+  -- drag it into the authorization spine; `anon` would publish it.
+  IF has_function_privilege('authenticated', 'public.is_no_charge(public.billing_mode)', 'EXECUTE')
+     OR has_function_privilege('anon', 'public.is_no_charge(public.billing_mode)', 'EXECUTE')
+  THEN
+    RAISE EXCEPTION 'is_no_charge is executable by a Data API role — the REVOKE FROM PUBLIC did not take';
+  END IF;
+
   FOREACH v_name IN ARRAY ARRAY['create_participation', 'admin_enroll_participant']
   LOOP
     SELECT p.prosrc INTO v_src
@@ -420,8 +496,13 @@ BEGIN
     END IF;
 
     -- --- (a) The placement read landed, and it is gated on billing. ---------
-    IF position('billing_mode IN (''free'', ''external_contract'')' IN v_src) = 0 THEN
-      RAISE EXCEPTION '% does not gate automatic placement on a no-charge billing mode', v_name;
+    --
+    -- Probes the CALL, not the IN-list it replaced: the two-member subset has
+    -- one spelling in this database now, and a body that went back to typing it
+    -- out inline would pass a test written against the old text while quietly
+    -- forking the rule again.
+    IF position('public.is_no_charge(' IN v_src) = 0 THEN
+      RAISE EXCEPTION '% does not gate automatic placement on public.is_no_charge', v_name;
     END IF;
 
     -- Probes only the STATEMENT can produce. prosrc carries the body's comments
