@@ -478,6 +478,14 @@ function parentsOwnSection(clock: FixtureClock): ParentDashboardParticipant {
       endsInDays: 30,
       siteName: CAMP_SITE_NAME,
       waitlistPosition: 2,
+      // A seat offer standing on the parent's own queue place, so the scene
+      // carries both halves of the waitlist story in one render: the child's
+      // Fortnite card is an ordinary place in line, this one has been asked.
+      // Thirty hours in on a five-day window, which puts the block in the
+      // middle of its life rather than at either edge — and, because the leave
+      // link is deliberately hidden while an offer stands, having exactly one
+      // of the two cards offered is the only way to see both affordances.
+      seatOfferedHoursAgo: 30,
     },
   ]);
 }

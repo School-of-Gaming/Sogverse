@@ -8,6 +8,7 @@ import {
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
+  seatOfferAvailability,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
@@ -574,5 +575,44 @@ describe("isSubscriptionShaped / canCompEnroll", () => {
     expect(canCompEnroll("camp", "paid")).toBe(true);
     expect(canCompEnroll("event", "paid")).toBe(true);
     expect(canCompEnroll("municipality_club", "external_contract")).toBe(true);
+  });
+});
+
+describe("seatOfferAvailability", () => {
+  /**
+   * The two conditions `send_seat_offer` refuses on, asked here only to decide
+   * what the panel draws. The three answers are three different things to tell
+   * an admin, and collapsing any pair of them loses the distinction the union
+   * exists for.
+   */
+
+  it("allows a no-charge product with exactly one group", () => {
+    expect(seatOfferAvailability("free", 1)).toEqual({ kind: "available" });
+    expect(seatOfferAvailability("external_contract", 1)).toEqual({
+      kind: "available",
+    });
+  });
+
+  it("says nothing at all on a paid product, whatever its groups", () => {
+    // Not `needsOneGroup` even when the group count is also wrong: the billing
+    // is the answer, it is a property of the product rather than of this page,
+    // and no arrangement of groups would change it.
+    expect(seatOfferAvailability("paid", 1)).toEqual({ kind: "unavailable" });
+    expect(seatOfferAvailability("paid", 0)).toEqual({ kind: "unavailable" });
+    expect(seatOfferAvailability("paid", 3)).toEqual({ kind: "unavailable" });
+  });
+
+  it("names the group count when a no-charge product has the wrong number", () => {
+    // Both directions are the same refusal: with none there is nowhere to place
+    // an acceptance, and with several there is a choice nobody may make on the
+    // family's behalf. The count rides along because the card states it.
+    expect(seatOfferAvailability("free", 0)).toEqual({
+      kind: "needsOneGroup",
+      groupCount: 0,
+    });
+    expect(seatOfferAvailability("free", 2)).toEqual({
+      kind: "needsOneGroup",
+      groupCount: 2,
+    });
   });
 });

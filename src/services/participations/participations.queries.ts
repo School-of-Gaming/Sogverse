@@ -1,13 +1,16 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { getClient } from "@/lib/supabase/client";
+import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
+import { groupsKeys } from "@/services/groups";
 import { CONFIRMATION_POLL_INTERVAL_MS } from "@/lib/constants/participations";
 import type { SessionAudience } from "@/types";
 import {
   ParticipationsService,
   type CreateParticipationInput,
+  type InAppSeatOfferResponseInput,
   type JoinWaitlistInput,
   type LeaveWaitlistInput,
   type MyUpcomingSessionRow,
@@ -154,6 +157,81 @@ export function useLeaveWaitlist() {
         queryClient.invalidateQueries({ queryKey: productKeys.all }),
       ]),
   });
+}
+
+/**
+ * Answer a seat offer from the family's own card.
+ *
+ * Invalidates exactly what leaving a waitlist does, and for the same reasons —
+ * an answer either turns a queue place into a seat or deletes it, so both the
+ * family's own rows and every product seat count move. The invalidation is
+ * **returned** so React Query awaits it before the caller's `onSuccess`, which
+ * is what lets the card hold its committed state until the refetched rows have
+ * landed and the accepted card has become a seat.
+ */
+export function useRespondToSeatOffer() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+  return useMutation({
+    mutationFn: (input: InAppSeatOfferResponseInput) =>
+      service.respondToSeatOffer(input),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: participationKeys.all }),
+        queryClient.invalidateQueries({ queryKey: productKeys.all }),
+      ]),
+  });
+}
+
+/**
+ * Notice, once per mount, that some seat offers may have run out.
+ *
+ * **The feature has no cron job, and this hook is what stands in for one.** An
+ * offer expires by the clock and nothing in a database watches a clock, so the
+ * moment of noticing is an admin arriving at a surface that would care: the
+ * dashboard, whose attention queue subtracts live offers from a product's open
+ * seats, and a product's own groups panel, where the queue is drawn.
+ *
+ * Fire-and-forget in the strict sense — nothing renders its result and nothing
+ * waits on it. The common answer is that it claimed nothing, and **only a
+ * non-empty claim invalidates**: the dashboard's snapshot is a platform-wide
+ * aggregate that the route hydrates precisely so it is not fetched twice, and
+ * refetching it on every mount to learn that nothing changed would give that
+ * work away for free.
+ *
+ * A failure is swallowed. This is housekeeping the admin did not ask for, so a
+ * Brevo outage or a lost request must not put an error in front of a page that
+ * is otherwise fine — the next admin to open either surface sweeps again.
+ */
+export function useSeatOfferSweepOnMount(): void {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+  // React runs an effect twice on mount in development's StrictMode, and this
+  // one sends mail on the far side. The claim is exactly-once inside a single
+  // SQL statement so a double call is harmless — but it is a wasted round trip,
+  // and the guard is one line.
+  const swept = useRef(false);
+
+  useEffect(() => {
+    if (swept.current) return;
+    swept.current = true;
+
+    service
+      .sweepSeatOffers()
+      .then(({ claimed }) => {
+        if (claimed === 0) return;
+        // Something really did lapse: the seat is free again, so the product's
+        // board and the dashboard's queue both have a new answer.
+        queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
+        queryClient.invalidateQueries({ queryKey: groupsKeys.all });
+      })
+      .catch(() => {
+        // Deliberately silent — see the note above.
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mount; the service and client are recreated every render and are not inputs to the decision
+  }, []);
 }
 
 // `initialData` (optional) is the server-prefetched seat counts from the shop

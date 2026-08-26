@@ -58,7 +58,20 @@ export type ProductIssueKind = (typeof PRODUCT_ISSUE_KINDS)[number];
 export type ProductIssueFact =
   | { kind: "unassigned-gamers"; values: { count: number } }
   | { kind: "group-without-gedu"; values: { group: string } }
-  | { kind: "waitlist-open-seats"; values: { waiting: number; open: number } }
+  /**
+   * People queueing while seats stand open. `offers` is how many of those
+   * families are currently holding a live seat offer — always fewer than
+   * `open`, because a product whose open seats are all covered drops off this
+   * list entirely and comes back on its own if one is declined or lapses.
+   *
+   * It rides along so the line can say why the numbers do not add up to the
+   * obvious next move: with two seats open and one offer out, what is left to
+   * do is offer the other one, not the pair.
+   */
+  | {
+      kind: "waitlist-open-seats";
+      values: { waiting: number; open: number; offers: number };
+    }
   | { kind: "missing-gedu-fee" }
   | { kind: "missing-municipality-fee" };
 

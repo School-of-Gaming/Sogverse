@@ -507,6 +507,46 @@ export function usePromoteFromWaitlist(productId: string) {
 }
 
 /**
+ * Offer a waitlisted family the seat that opened.
+ *
+ * **No optimistic patch, deliberately.** Every other action in this panel moves
+ * a chip, and an optimistic patch is what keeps the chip from jumping; this one
+ * moves nothing — it stamps a column and sends a mail — so the only thing to
+ * show is the stamp itself, and the only honest source of that is the server
+ * (the RPC returns the instant it actually wrote, which is what the emailed
+ * deadline is signed over). Inventing a client-side "now" here would draw a
+ * deadline a minute or two away from the one in the family's inbox.
+ *
+ * Keyed into `groupMutationBase` so the pending registry sees it, and settling
+ * through `invalidateGroupChange` so the dashboard's attention queue — which
+ * now subtracts live offers from a product's open seats — stops nagging about a
+ * seat that has just been offered.
+ */
+export function useSendSeatOffer(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "seatOffer"],
+    // The invalidation is awaited INSIDE the mutation rather than left to
+    // onSettled, for the reason `destructiveSettle` above spells out: settling
+    // there would flip the mutation out of `pending` the moment the write
+    // resolved, un-greying the row for the frame or two before the snapshot
+    // carrying the new stamp arrives to replace its Invite control.
+    mutationFn: async ({ participationId }: { participationId: string }) => {
+      await service.sendSeatOffer(productId, participationId);
+      await invalidateGroupChange(queryClient, key);
+    },
+    // The offer did not go out — reconcile with server truth so the row shows
+    // whatever it really has, and let the control come back.
+    onError: () => {
+      invalidateGroupChange(queryClient, key);
+    },
+  });
+}
+
+/**
  * Demote an active gamer to the back of the waitlist (status→waitlisted). Same
  * optimistic-then-settle shape as promote: the chip moves to the end of the
  * waitlist immediately (matching the server's waitlisted_at = now() order), so

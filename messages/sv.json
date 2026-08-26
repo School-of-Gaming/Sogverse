@@ -177,7 +177,8 @@
           "groupWithoutGedu": "Gruppen {group} har ingen Gedu",
           "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
           "missingGeduFee": "Gedu-arvode saknas",
-          "missingMunicipalityFee": "Kommunavgift saknas"
+          "missingMunicipalityFee": "Kommunavgift saknas",
+          "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
         }
       },
       "certification": {
@@ -761,7 +762,18 @@
         "waitlist": {
           "title": "Väntelista",
           "subtitle": "Personer som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv deltagare här för att flytta hen sist i kön.",
-          "empty": "Ingen står på väntelistan."
+          "empty": "Ingen står på väntelistan.",
+          "seatOffer": {
+            "invite": "Bjud in",
+            "inviteAgain": "Bjud in igen",
+            "noAnswer": "Inget svar",
+            "leftDays": "{count, plural, one {# dag kvar} other {# dagar kvar}}",
+            "leftHours": "{count, plural, one {# timme kvar} other {# timmar kvar}}",
+            "leftLastHour": "Mindre än en timme kvar",
+            "liveTitle": "Inbjuden. Erbjudandet gäller till {deadline}.",
+            "expiredTitle": "Erbjudandet gick ut {deadline} utan svar.",
+            "needsOneGroup": "För att bjuda in måste produkten ha exakt en grupp, så att familjen som tackar ja har någonstans att placeras. Nu finns det {count, plural, =0 {inga grupper} one {# grupp} other {# grupper}}."
+          }
         },
         "seatsOverfilled": "{count} av {total} platser – {over} över",
         "blockedMove": {
@@ -1904,6 +1916,21 @@
         "confirmDescriptionSelf": "Du förlorar din plats i kön ({product}).",
         "confirmCta": "Lämna väntelistan",
         "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
+      },
+      "seatOffer": {
+        "title": "En plats har blivit ledig",
+        "bodyChild": "{name} kan få platsen, om du fortfarande vill ha den.",
+        "bodySelf": "Platsen är din, om du fortfarande vill ha den.",
+        "bodyGamer": "Vi har frågat en förälder om du fortfarande vill ha den.",
+        "deadline": "Svara senast {deadline}, annars går platsen till nästa familj i kön.",
+        "lapsed": "Erbjudandet har gått ut. Du står kvar på väntelistan, och platsen kan erbjudas igen.",
+        "accept": "Ta platsen",
+        "decline": "Nej tack",
+        "confirmTitle": "Vill du lämna platsen?",
+        "confirmBodyChild": "{name} förlorar sin plats i kön, och vi erbjuder den till nästa familj.",
+        "confirmBodySelf": "Du förlorar din plats i kön, och vi erbjuder den till nästa familj.",
+        "confirmCta": "Ja, jag är säker",
+        "error": "Något gick fel och ditt svar sparades inte. Försök igen eller skriv till oss på {supportEmail}."
       }
     },
     "help": {

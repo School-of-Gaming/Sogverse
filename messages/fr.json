@@ -177,7 +177,8 @@
           "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
           "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
           "missingGeduFee": "Rémunération Gedu manquante",
-          "missingMunicipalityFee": "Montant commune manquant"
+          "missingMunicipalityFee": "Montant commune manquant",
+          "waitlistOpenSeatsWithOffers": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}} · {offers} en attente de réponse"
         }
       },
       "certification": {
@@ -761,7 +762,18 @@
         "waitlist": {
           "title": "Liste d’attente",
           "subtitle": "Personnes en attente d’une place, numérotées dans leur ordre d’arrivée. Faites-en glisser une dans un groupe pour lui donner une place, ou déposez ici un participant actif pour l’envoyer en fin de liste.",
-          "empty": "Personne n’est sur la liste d’attente."
+          "empty": "Personne n’est sur la liste d’attente.",
+          "seatOffer": {
+            "invite": "Inviter",
+            "inviteAgain": "Inviter à nouveau",
+            "noAnswer": "Sans réponse",
+            "leftDays": "{count, plural, one {# jour restant} other {# jours restants}}",
+            "leftHours": "{count, plural, one {# heure restante} other {# heures restantes}}",
+            "leftLastHour": "Moins d’une heure",
+            "liveTitle": "Invitée. L’offre est valable jusqu’au {deadline}.",
+            "expiredTitle": "L’offre a expiré le {deadline} sans réponse.",
+            "needsOneGroup": "Pour inviter, le produit doit compter exactement un groupe, afin que la famille qui accepte ait une place où aller. Il en compte actuellement {count, plural, =0 {aucun} one {#} other {#}}."
+          }
         },
         "seatsOverfilled": "{count} places sur {total} – {over} en trop",
         "blockedMove": {
@@ -1904,6 +1916,21 @@
         "confirmDescriptionSelf": "Vous perdrez votre place dans la file pour {product}.",
         "confirmCta": "Quitter la liste d’attente",
         "backOfLineWarning": "Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
+      },
+      "seatOffer": {
+        "title": "Une place s’est libérée",
+        "bodyChild": "{name} peut avoir la place, si vous la voulez toujours.",
+        "bodySelf": "La place est à vous, si vous la voulez toujours.",
+        "bodyGamer": "Nous avons demandé à un parent si tu la veux toujours.",
+        "deadline": "Répondez avant le {deadline}, sinon la place ira à la famille suivante sur la liste.",
+        "lapsed": "Cette proposition a expiré. Vous restez sur la liste d’attente, et la place peut vous être proposée de nouveau.",
+        "accept": "Accepter la place",
+        "decline": "Non, merci",
+        "confirmTitle": "Renoncer à la place ?",
+        "confirmBodyChild": "{name} perdra sa place dans la file, et nous la proposerons à la famille suivante.",
+        "confirmBodySelf": "Vous perdrez votre place dans la file, et nous la proposerons à la famille suivante.",
+        "confirmCta": "Oui, j’en suis sûr",
+        "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
       }
     },
     "help": {

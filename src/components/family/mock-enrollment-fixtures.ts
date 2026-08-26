@@ -66,6 +66,13 @@ export interface EnrollmentFixtureSpec {
   /** 1-based place in line, when this enrollment is a waitlist place. */
   waitlistPosition?: number | null;
   /**
+   * Hours ago a seat was offered to this family. Only meaningful alongside
+   * `waitlistPosition`, and given as an offset rather than a stamp so a
+   * scenario reads as "asked yesterday, four days left" rather than as a date
+   * somebody has to check against the five-day window.
+   */
+  seatOfferedHoursAgo?: number;
+  /**
    * The seat is paid for and nobody has been placed in a group yet. Mutually
    * exclusive with `waitlistPosition` by construction — a waitlisted family has
    * no seat to be unplaced in — and the builder does not police it, because a
@@ -104,6 +111,10 @@ export function buildEnrollmentFixture(
       ? null
       : calendarDate(now, spec.endsInDays, FIXTURE_TIMEZONE);
   const waitlistPosition = spec.waitlistPosition ?? null;
+  const seatOfferSentAt =
+    spec.seatOfferedHoursAgo === undefined
+      ? null
+      : new Date(now.getTime() - spec.seatOfferedHoursAgo * 3_600_000).toISOString();
 
   // A waitlisted family holds no seat, so no occurrence of this product is
   // theirs to turn up to — the schedule still renders (it is a fact about the
@@ -157,6 +168,7 @@ export function buildEnrollmentFixture(
     endDate,
     timezone: FIXTURE_TIMEZONE,
     waitlistPosition,
+    seatOfferSentAt,
     awaiting: spec.awaiting ?? false,
     paymentProblem: spec.paymentProblem ?? false,
     cancellation:

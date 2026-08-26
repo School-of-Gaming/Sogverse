@@ -24,6 +24,12 @@ import {
   type JoinWaitlistResponse,
   type LeaveWaitlistResponse,
 } from "./participations.contracts";
+import {
+  seatOfferRespondResponse,
+  seatOfferSweepResponse,
+  type SeatOfferRespondResponse,
+  type SeatOfferSweepResponse,
+} from "./seat-offer.contracts";
 
 /**
  * A venue's name as it comes off the row — the canonical `name` plus the
@@ -356,6 +362,16 @@ export type JoinWaitlistInput = {
 
 export type LeaveWaitlistInput = {
   participationId: string;
+};
+
+/**
+ * A parent's answer to a seat offer, given in My SOG. `accept: false` is a
+ * decline, which deletes the queue place — the same act the emailed "No, thank
+ * you" performs, and the reason the card puts a confirmation in front of it.
+ */
+export type InAppSeatOfferResponseInput = {
+  participationId: string;
+  accept: boolean;
 };
 
 export class ParticipationsService {
@@ -885,6 +901,64 @@ export class ParticipationsService {
       );
     }
     return parseJsonResponse(response, leaveWaitlistResponse);
+  }
+
+  /**
+   * Answer a seat offer from inside My SOG — the same yes-or-no the emailed
+   * links carry, given by a parent who is already signed in.
+   *
+   * The body names only the row: the session is the credential here, and the
+   * route proves the participation belongs to the caller under their own RLS
+   * before it reads the stored stamp. There is no token to send and none to
+   * check.
+   *
+   * **Every outcome is a 200**, including the two the card has to draw as a
+   * lapsed offer rather than as a failure: `expired` is the window closing
+   * between the paint and the press, and `invalid` is the offer having already
+   * been answered or superseded. A rejection from this method therefore means
+   * the request itself did not land, which is the only case the parent should
+   * be asked to try again.
+   */
+  async respondToSeatOffer(
+    input: InAppSeatOfferResponseInput,
+  ): Promise<SeatOfferRespondResponse> {
+    const response = await fetch("/api/participations/seat-offer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to answer the seat offer"),
+      );
+    }
+    return parseJsonResponse(response, seatOfferRespondResponse);
+  }
+
+  /**
+   * Ask the server to notice any seat offers whose five-day window has closed,
+   * and tell staff about them.
+   *
+   * **This is the whole of the feature's clock, and it is an observation rather
+   * than a schedule.** Nothing in a database notices time passing; instead an
+   * admin arriving at a surface that would care about a lapsed offer says so,
+   * and the route claims and mails whatever it finds. The claim is exactly-once
+   * inside one statement, so several admins landing together produce one mail
+   * between them.
+   *
+   * Cheap and usually empty — the common answer is `{ claimed: 0 }`, which is
+   * why callers may fire it on mount without thinking about it.
+   */
+  async sweepSeatOffers(): Promise<SeatOfferSweepResponse> {
+    const response = await fetch("/api/admin/seat-offers/sweep", {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to sweep seat offers"),
+      );
+    }
+    return parseJsonResponse(response, seatOfferSweepResponse);
   }
 }
 

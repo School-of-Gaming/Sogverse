@@ -177,7 +177,8 @@
           "groupWithoutGedu": "Ryhmällä {group} ei ole Gedua",
           "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
           "missingGeduFee": "Gedun palkkio puuttuu",
-          "missingMunicipalityFee": "Kunnan maksu puuttuu"
+          "missingMunicipalityFee": "Kunnan maksu puuttuu",
+          "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
         }
       },
       "certification": {
@@ -761,7 +762,18 @@
         "waitlist": {
           "title": "Jonotuslista",
           "subtitle": "Paikkaa odottavat osallistujat liittymisjärjestyksessä numeroituina. Vedä osallistuja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen osallistuja tähän siirtääksesi hänet jonon perälle.",
-          "empty": "Jonotuslistalla ei ole ketään."
+          "empty": "Jonotuslistalla ei ole ketään.",
+          "seatOffer": {
+            "invite": "Kutsu",
+            "inviteAgain": "Kutsu uudelleen",
+            "noAnswer": "Ei vastausta",
+            "leftDays": "{count, plural, one {# päivä jäljellä} other {# päivää jäljellä}}",
+            "leftHours": "{count, plural, one {# tunti jäljellä} other {# tuntia jäljellä}}",
+            "leftLastHour": "Alle tunti jäljellä",
+            "liveTitle": "Kutsuttu. Tarjous on voimassa {deadline} asti.",
+            "expiredTitle": "Tarjous umpeutui {deadline}, eikä vastausta tullut.",
+            "needsOneGroup": "Kutsuminen edellyttää, että tuotteessa on täsmälleen yksi ryhmä, jotta paikan ottava perhe voidaan sijoittaa. Nyt ryhmiä on {count, plural, =0 {nolla} one {#} other {#}}."
+          }
         },
         "seatsOverfilled": "{count} / {total} paikkaa – {over} yli",
         "blockedMove": {
@@ -1904,6 +1916,21 @@
         "confirmDescriptionSelf": "Menetät paikkasi jonossa ({product}).",
         "confirmCta": "Poistu jonotuslistalta",
         "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
+      },
+      "seatOffer": {
+        "title": "Paikka vapautui",
+        "bodyChild": "{name} voi saada paikan, jos haluat sen edelleen.",
+        "bodySelf": "Paikka on sinun, jos haluat sen edelleen.",
+        "bodyGamer": "Kysyimme vanhemmaltasi, haluatteko paikan edelleen.",
+        "deadline": "Vastaa viimeistään {deadline}, tai paikka siirtyy jonossa seuraavalle perheelle.",
+        "lapsed": "Tarjous umpeutui. Olet yhä jonotuslistalla, ja paikkaa voidaan tarjota uudelleen.",
+        "accept": "Otan paikan",
+        "decline": "Ei kiitos",
+        "confirmTitle": "Luovutko paikasta?",
+        "confirmBodyChild": "{name} menettää paikkansa jonossa, ja tarjoamme paikkaa seuraavalle perheelle.",
+        "confirmBodySelf": "Menetät paikkasi jonossa, ja tarjoamme paikkaa seuraavalle perheelle.",
+        "confirmCta": "Kyllä, olen varma",
+        "error": "Jokin meni pieleen, eikä vastaustasi tallennettu. Yritä uudelleen tai kirjoita meille osoitteeseen {supportEmail}."
       }
     },
     "help": {

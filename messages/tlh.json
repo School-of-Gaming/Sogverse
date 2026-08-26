@@ -225,7 +225,8 @@
           "groupWithoutGedu": "ghom {group} Gedu ghajbe’",
           "waitlistOpenSeats": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH",
           "missingGeduFee": "Gedu Huch Hutlh",
-          "missingMunicipalityFee": "veng Huch Hutlh"
+          "missingMunicipalityFee": "veng Huch Hutlh",
+          "waitlistOpenSeatsWithOffers": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH · {offers} jang loStaH"
         }
       },
       "certification": {
@@ -809,7 +810,18 @@
         "waitlist": {
           "title": "loSwI’pu’",
           "subtitle": "pa’ loStaH ghompu’, ’el poHchaj mI’lu’. ghommeHghaj wa’ yIngeH ’ej pa’ yInob; pagh naDev ghom Sang yIqep, tlha’Daq yIlan.",
-          "empty": "pagh loSwI’pu’ tu’lu’."
+          "empty": "pagh loSwI’pu’ tu’lu’.",
+          "seatOffer": {
+            "invite": "yIrI’",
+            "inviteAgain": "yIrI’qa’",
+            "noAnswer": "jang pagh",
+            "leftDays": "{count, plural, one {# jaj ratlh} other {# jaj ratlh}}",
+            "leftHours": "{count, plural, one {# rep ratlh} other {# rep ratlh}}",
+            "leftLastHour": "wa’ rep puS ratlh",
+            "liveTitle": "rI’lu’. {deadline} poH ratlh nob.",
+            "expiredTitle": "{deadline} – jang pagh. nob He’So’choHpu’.",
+            "needsOneGroup": "wa’ ghom neH ghajnIS ngoq, vaj Daq ghaj laj qorDu’. DaH {count, plural, =0 {pagh} one {#} other {#}} ghom tu’lu’."
+          }
         },
         "seatsOverfilled": "{count} / {total} pa’ – {over} tlhoy law’",
         "blockedMove": {
@@ -1948,6 +1960,21 @@
         "confirmDescriptionSelf": "DaqlIj DachIl. ({product})",
         "confirmCta": "tlhegh yImej",
         "backOfLineWarning": "tlhegh DajeSqa’chugh, tlhegh HeHDaq bIQam."
+      },
+      "seatOffer": {
+        "title": "quS poSchoHpu’",
+        "bodyChild": "quS laj {name}, DaneHtaHchugh.",
+        "bodySelf": "quS DaghajlaH, DaneHtaHchugh.",
+        "bodyGamer": "SoSlI’ vavlI’ je wItlhob.",
+        "deadline": "{deadline} qaSpa’ yIjang, pagh latlh qorDu’vaD jaH quS.",
+        "lapsed": "nob He’So’choHpu’. loS tetlhDaq bIratlh, ’ej quS qanoblaH je.",
+        "accept": "quS vISuq",
+        "decline": "Qo’, qatlho’",
+        "confirmTitle": "quS Danobqu’’a’?",
+        "confirmBodyChild": "loS tetlhDaq Daq chIl {name}, ’ej latlh qorDu’vaD wInob.",
+        "confirmBodySelf": "loS tetlhDaq DaqlIj DachIl, ’ej latlh qorDu’vaD wInob.",
+        "confirmCta": "HISlaH, jISovchu’",
+        "error": "Qagh! polbe’lu’ jangwI’lIj. yInIDqa’ pagh {supportEmail}-Daq maHvaD yIghItlh."
       }
     },
     "help": {

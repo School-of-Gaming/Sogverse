@@ -171,10 +171,20 @@ function useIssueText(issue: ProductIssue): string {
     case "group-without-gedu":
       return t("groupWithoutGedu", { group: issue.values.group });
     case "waitlist-open-seats":
-      return t("waitlistOpenSeats", {
-        waiting: issue.values.waiting,
-        open: issue.values.open,
-      });
+      // Two sentences rather than one with a zero-arm, because "· 0 awaiting an
+      // answer" is a clause about nothing, and every locale would have to spell
+      // out how to suppress it. The common case — nobody has been asked yet —
+      // keeps the line it always had.
+      return issue.values.offers > 0
+        ? t("waitlistOpenSeatsWithOffers", {
+            waiting: issue.values.waiting,
+            open: issue.values.open,
+            offers: issue.values.offers,
+          })
+        : t("waitlistOpenSeats", {
+            waiting: issue.values.waiting,
+            open: issue.values.open,
+          });
     case "missing-gedu-fee":
       return t("missingGeduFee");
     case "missing-municipality-fee":

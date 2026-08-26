@@ -12,6 +12,7 @@ export type {
   JoinWaitlistResponse,
   LeaveWaitlistInput,
   LeaveWaitlistResponse,
+  InAppSeatOfferResponseInput,
 } from "./participations.service";
 export { participationKeys } from "./participations.keys";
 export {
@@ -23,5 +24,7 @@ export {
   useCreateParticipation,
   useJoinWaitlist,
   useLeaveWaitlist,
+  useRespondToSeatOffer,
+  useSeatOfferSweepOnMount,
   useProductSeatCountsRealtime,
 } from "./participations.queries";

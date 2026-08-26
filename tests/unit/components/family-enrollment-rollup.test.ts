@@ -71,6 +71,7 @@ function enrollment(
     endDate: fields.endDate ?? null,
     timezone: TZ,
     waitlistPosition: null,
+    seatOfferSentAt: null,
     awaiting: false,
     paymentProblem: false,
     cancellation: null,

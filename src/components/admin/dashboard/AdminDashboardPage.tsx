@@ -12,6 +12,7 @@ import {
   type AdminDashboardSnapshot,
 } from "@/services/admin-dashboard";
 import { useSetGeduCertified } from "@/services/gedu";
+import { useSeatOfferSweepOnMount } from "@/services/participations";
 import { AdminDashboardPageBody } from "./admin-dashboard-page-body";
 import {
   buildAdminDashboardData,
@@ -70,6 +71,14 @@ export function AdminDashboardPage({
 
   const { data: snapshot } = useAdminDashboard(initialSnapshot);
   const setCertified = useSetGeduCertified();
+
+  // A seat offer runs out by the clock, and there is no clock — so an admin
+  // arriving here *is* the observation. The queue below subtracts live offers
+  // from a product's open seats, which means a lapsed one is precisely a
+  // product that ought to be back on this list. Nothing renders its result and
+  // nothing waits on it; it invalidates only if it actually claimed something,
+  // so the snapshot the route just hydrated is not thrown away for nothing.
+  useSeatOfferSweepOnMount();
 
   const viewerDay = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
 

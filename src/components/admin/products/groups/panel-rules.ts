@@ -261,6 +261,49 @@ export function canCompEnroll(
 }
 
 // ---------------------------------------------------------------------------
+// The seat offer
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether this product can offer a waitlisted family the seat that opened, and
+ * — when it cannot — whether that is worth saying out loud.
+ *
+ * The two conditions are the database's own, and they are asked here only to
+ * decide what the panel draws; `send_seat_offer` refuses independently.
+ *
+ * **The three answers are three different things to tell an admin, which is
+ * why this is a union rather than a boolean.**
+ *
+ *  - `available` — draw the Invite control on every queued row.
+ *  - `needsOneGroup` — a no-charge product whose group count is not one.
+ *    Accepting has to place the child somewhere, and a family is never asked
+ *    to choose between groups, so the offer needs exactly one destination.
+ *    This is **fixable, and the fix is on this very page** — the group columns
+ *    are directly above the waitlist — so the panel says so.
+ *  - `unavailable` — the product charges for its seat. Nothing an admin does
+ *    on this page changes that, and the reason is a property of the product
+ *    rather than of any row, so the panel says nothing at all rather than
+ *    repeating a permanently dead control down the length of the queue.
+ */
+export type SeatOfferAvailability =
+  | { kind: "available" }
+  | { kind: "needsOneGroup"; groupCount: number }
+  | { kind: "unavailable" };
+
+export function seatOfferAvailability(
+  billingMode: BillingMode,
+  groupCount: number,
+): SeatOfferAvailability {
+  // No-charge is `free` or `external_contract` — the two billing modes where
+  // accepting a seat costs the family nothing and creates no Stripe object, so
+  // a yes can be honoured on the spot. A paid seat would need a checkout in the
+  // middle of the answer, which is a different feature.
+  if (billingMode === "paid") return { kind: "unavailable" };
+  if (groupCount !== 1) return { kind: "needsOneGroup", groupCount };
+  return { kind: "available" };
+}
+
+// ---------------------------------------------------------------------------
 // The chip's game identity
 // ---------------------------------------------------------------------------
 

@@ -29,6 +29,7 @@ import {
   readDropData,
   readChipDragData,
   resolveDrop,
+  seatOfferAvailability,
   type BlockedDropReason,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
@@ -68,6 +69,14 @@ export interface GroupsPanelActions {
   onRequestAddGedu: (groupId: string) => void;
   /** Ask the shell to open its participant picker. */
   onRequestAddParticipant: () => void;
+  /**
+   * Offer a queued family the seat that opened. Optional, unlike its
+   * neighbours, because a shell with no mutation behind it should render the
+   * waitlist's offer *states* without an Invite control rather than one that
+   * does nothing. It answers back — see the card's own note on why this one
+   * action needs an outcome.
+   */
+  onSendSeatOffer?: (participationId: string) => Promise<void>;
 }
 
 interface GroupsPanelViewProps {
@@ -373,7 +382,16 @@ export function GroupsPanelView({
       : null;
 
   // Greyed/undraggable chips: an in-flight move/promote/demote OR removal.
+  // An in-flight seat offer is deliberately NOT here: it moves nobody, and
+  // greying a chip would say the person was going somewhere. The row's own
+  // Invite button carries that action's committed state instead.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
+
+  // Whether this product can offer a queued family the seat that opened. Both
+  // halves of the question are already on this side — the billing prop, and the
+  // group count the board is drawn from — so the waitlist card is handed the
+  // answer rather than the inputs.
+  const seatOffers = seatOfferAvailability(billingMode, groups.length);
 
   return (
     <div className="space-y-3">
@@ -488,6 +506,8 @@ export function GroupsPanelView({
               pendingChipIds={busyChipIds}
               gamePlatform={gamePlatform}
               robloxRenders={robloxRenders}
+              seatOffers={seatOffers}
+              onSendSeatOffer={actions.onSendSeatOffer}
             />
           )}
         </div>

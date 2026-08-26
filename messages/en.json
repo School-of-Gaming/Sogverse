@@ -177,7 +177,8 @@
           "groupWithoutGedu": "Group {group} has no Gedu",
           "waitlistOpenSeats": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open",
           "missingGeduFee": "Gedu fee not set",
-          "missingMunicipalityFee": "Municipality fee not set"
+          "missingMunicipalityFee": "Municipality fee not set",
+          "waitlistOpenSeatsWithOffers": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open · {offers} awaiting an answer"
         }
       },
       "certification": {
@@ -761,7 +762,18 @@
         "waitlist": {
           "title": "Waitlist",
           "subtitle": "People waiting for a seat, numbered in the order they joined. Drag one into a group to give them a seat, or drop an active participant here to send them to the back.",
-          "empty": "No one is on the waitlist."
+          "empty": "No one is on the waitlist.",
+          "seatOffer": {
+            "invite": "Invite",
+            "inviteAgain": "Invite again",
+            "noAnswer": "No answer",
+            "leftDays": "{count, plural, one {# day left} other {# days left}}",
+            "leftHours": "{count, plural, one {# hour left} other {# hours left}}",
+            "leftLastHour": "Under an hour left",
+            "liveTitle": "Invited. The offer stands until {deadline}.",
+            "expiredTitle": "The offer ran out on {deadline} with no answer.",
+            "needsOneGroup": "Inviting needs the product to have exactly one group, so a family who says yes has somewhere to go. This one has {count, plural, =0 {no groups} one {# group} other {# groups}}."
+          }
         },
         "seatsOverfilled": "{count} of {total} seats — {over} over",
         "blockedMove": {
@@ -2536,6 +2548,21 @@
         "confirmDescriptionSelf": "You’ll lose your place in line for {product}.",
         "confirmCta": "Leave waitlist",
         "backOfLineWarning": "If you join again later, you’ll start at the back of the line."
+      },
+      "seatOffer": {
+        "title": "A seat has opened",
+        "bodyChild": "{name} can have the place, if you still want it.",
+        "bodySelf": "The place is yours, if you still want it.",
+        "bodyGamer": "We have asked a parent whether you still want it.",
+        "deadline": "Answer by {deadline}, or the place goes to the next family in line.",
+        "lapsed": "This offer has run out. You are still on the waitlist, and the place can be offered again.",
+        "accept": "Accept the place",
+        "decline": "No, thank you",
+        "confirmTitle": "Give up the place?",
+        "confirmBodyChild": "{name} will lose their place in line, and we will offer it to the next family.",
+        "confirmBodySelf": "You will lose your place in line, and we will offer it to the next family.",
+        "confirmCta": "Yes, I am sure",
+        "error": "Something went wrong and your answer was not saved. Please try again, or write to us at {supportEmail}."
       }
     },
     "help": {
