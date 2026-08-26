@@ -869,14 +869,21 @@ describe("every roster row carries exactly one contact email", () => {
 describe("site notes follow in-person, and only in-person", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("gives the in-person camp a venue with both notes and an address", () => {
-    const { data, site } = buildGroupWorkspaceFixture(now, "camp");
+  it("gives the in-person camp a venue with an address and a half-written pair", () => {
+    const { data, site, groupNotes } = buildGroupWorkspaceFixture(now, "camp");
     expect(data.product.is_remote).toBe(false);
     expect(site).not.toBeNull();
     expect(site!.name.trim()).not.toBe("");
     expect(site!.address).not.toBeNull();
+    // The family half is written and the staff half is not, on purpose: that
+    // is the partial-fill state, and this is the only page it can be seen on.
+    // The group notes beside it stay filled on both halves, so the finished
+    // pair is still reviewable in the same render — which is what makes the
+    // half-written site pair a free showing rather than a lost one.
     expect(site!.publicNote).not.toBeNull();
-    expect(site!.staffNote).not.toBeNull();
+    expect(site!.staffNote).toBeNull();
+    expect(groupNotes.publicNote).not.toBeNull();
+    expect(groupNotes.staffNote).not.toBeNull();
   });
 
   it("gives the remote club no venue at all", () => {

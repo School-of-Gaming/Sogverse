@@ -132,15 +132,16 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  * The staff-only overlay on the group's roster: who is new to the group, who
  * has a Gedu note, and how a note is written back.
  *
- * **One object rather than five props, because it is one decision.** Either the
- * caller made a staff-scoped read of this group's membership and can answer all
- * of it, or it did not and answers none of it — there is no surface holding
- * newcomer stamps but no notes. Omitting it is the resting state, and a page
- * that omits it renders exactly the roster it rendered before flair existed.
+ * **One object rather than five props, because it is one decision.** A caller
+ * that made this page's staff-scoped read of the group's membership can answer
+ * all of it at once — there is no surface holding newcomer stamps but no notes,
+ * so five props would be five ways to spell one fact.
  *
  * Every record is keyed by `participant_id`, and **absence is the common case**:
  * most members are neither new nor written about, so a missing key is the answer
- * rather than a gap.
+ * rather than a gap. The value types say `| undefined` for exactly that reason —
+ * a lookup here misses far more often than it hits, and the maps are the answer
+ * to "who is marked", never a guarantee about who is in them.
  */
 export interface RosterMemberFlair {
   /**
@@ -150,11 +151,11 @@ export interface RosterMemberFlair {
    */
   now: Date;
   /** ISO join stamps. A member past the window keeps their key and simply stops rendering a badge. */
-  newcomers: Readonly<Record<string, string>>;
+  newcomers: Readonly<Record<string, string | undefined>>;
   /** Note text. A member with no note has no key; `""` and absent mean the same thing. */
-  notes: Readonly<Record<string, string>>;
+  notes: Readonly<Record<string, string | undefined>>;
   /** Who last wrote each note, where that is known. Read only for members who have one. */
-  noteEditors?: Readonly<Record<string, string>>;
+  noteEditors: Readonly<Record<string, string | undefined>>;
   /**
    * Persist one member's note. **Awaited by the dialog**, which holds its Save
    * disabled until the write lands and closes only then; the trimmed text
@@ -234,11 +235,10 @@ interface GroupWorkspaceProps {
    * that field. Omitted — which is what the gedu shell does, and what a scene
    * does — the site section is exactly what it has always been.
    *
-   * It is the same "one optional capability, or none of it" shape
-   * `memberFlair` below uses: either the caller can offer this and passes a
-   * control, or it cannot and passes nothing. The body only decides *where* it
-   * goes; every string, every mutation and every failure line inside it belong
-   * to whoever built it.
+   * It is a whole capability or none of it: either the caller can offer this
+   * and passes a control, or it cannot and passes nothing. The body only
+   * decides *where* it goes; every string, every mutation and every failure line
+   * inside it belong to whoever built it.
    */
   siteAddressEditor?: ReactNode;
   editingEntryId: string | null;
@@ -297,13 +297,26 @@ interface GroupWorkspaceProps {
   robloxAvatarUrls?: RobloxRenderMap;
   /**
    * The roster's staff-only overlay — newcomer stamps, note markers, and the
-   * note write-back. Omitted, the rail's roster is untouched.
+   * note write-back.
+   *
+   * **Required, because this whole body is staff-only and every shell that
+   * renders it can answer it.** Both live shells build it from the same
+   * staff-scoped read as the roster, so a workspace without it is not a page
+   * anyone can reach — and an optional prop here would leave the roster able to
+   * render a state the product does not have, with no way in to writing a note.
    *
    * It travels with the roster rather than after it: both records are handed in
-   * whole at first paint, so a badge or a lit note button never lands on a row the reader is
-   * already looking at.
+   * whole at first paint, so a badge or a lit note button never lands on a row
+   * the reader is already looking at.
+   *
+   * **"Nothing is marked" is spelled with empty maps, never with an absent
+   * overlay.** A group where nobody is inside the newcomer window and nobody has
+   * been written about hands over the same object with nothing in its records —
+   * which is exactly what the clubs-only badge gate already produces on a camp
+   * (see `derive-roster-flair.ts`, where a non-club product yields an empty
+   * newcomers map and its notes untouched).
    */
-  memberFlair?: RosterMemberFlair;
+  memberFlair: RosterMemberFlair;
   /**
    * The link out of this workspace, rendered at the top of the page. Omitted,
    * the body renders the gedu's own back link ("Back to My SOG"); `null` renders
@@ -820,8 +833,13 @@ function GroupRailCard({
   ) => void | Promise<void>;
   gameStatuses?: Readonly<Record<string, GameAccountStatus>>;
   robloxAvatarUrls?: RobloxRenderMap;
-  /** The roster's staff-only overlay, or `undefined` where there is none. */
-  memberFlair?: RosterMemberFlair;
+  /**
+   * The roster's staff-only overlay, handed down whole. Required here for the
+   * same reason it is required of the page: this card is only ever drawn on the
+   * staff-only workspace, and a roster with no way in to a note is not a state
+   * that page has.
+   */
+  memberFlair: RosterMemberFlair;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -893,20 +911,18 @@ function GroupRailCard({
                   member.roblox_user_id,
                   robloxAvatarUrls,
                 )}
-                newcomerJoinedAt={memberFlair?.newcomers[member.participant_id]}
-                flairNow={memberFlair?.now}
+                newcomerJoinedAt={
+                  memberFlair.newcomers[member.participant_id] ?? null
+                }
+                flairNow={memberFlair.now}
                 hasNote={
-                  (memberFlair?.notes[member.participant_id] ?? "").length > 0
+                  (memberFlair.notes[member.participant_id] ?? "").length > 0
                 }
                 // Handed to every row, not only the ones already written
                 // about: an empty note is what the add flow opens, most of the
                 // roster is that case, and a marker that appeared only on rows
                 // that already had one would leave no way to write the first.
-                onOpenNote={
-                  memberFlair === undefined
-                    ? undefined
-                    : () => setNoteFor(member.participant_id)
-                }
+                onOpenNote={() => setNoteFor(member.participant_id)}
               />
             ))}
           </ul>
@@ -916,25 +932,21 @@ function GroupRailCard({
       {/* One dialog for the whole roster. It stays mounted with the member it
           was opened for until the close lands, so nothing in it changes under
           the reader on the way out. */}
-      {memberFlair !== undefined && (
-        <GamerNoteDialog
-          open={noteFor !== null}
-          onOpenChange={(open) => {
-            if (!open) setNoteFor(null);
-          }}
-          name={noteMember?.first_name ?? ""}
-          note={noteFor === null ? "" : (memberFlair.notes[noteFor] ?? "")}
-          lastEditedBy={
-            noteFor === null
-              ? null
-              : (memberFlair.noteEditors?.[noteFor] ?? null)
-          }
-          onSave={async (text) => {
-            if (noteFor === null) return;
-            await memberFlair.onSaveNote(noteFor, text);
-          }}
-        />
-      )}
+      <GamerNoteDialog
+        open={noteFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setNoteFor(null);
+        }}
+        name={noteMember?.first_name ?? ""}
+        note={noteFor === null ? "" : (memberFlair.notes[noteFor] ?? "")}
+        lastEditedBy={
+          noteFor === null ? null : (memberFlair.noteEditors[noteFor] ?? null)
+        }
+        onSave={async (text) => {
+          if (noteFor === null) return;
+          await memberFlair.onSaveNote(noteFor, text);
+        }}
+      />
     </RailCard>
   );
 }

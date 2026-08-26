@@ -133,20 +133,21 @@ export interface GroupWorkspaceFixture {
    */
   materialUrl: string | null;
   /**
-   * The roster's newcomer stamps and Gedu notes, or `null` where the scenario
-   * shows none.
+   * The roster's newcomer stamps and Gedu notes.
    *
-   * **Two scenarios carry it, and they carry different halves of it.** The club
-   * has both marks; the camp has notes and an **empty** newcomers map, which is
-   * the clubs-only badge rule made visible and the exact shape the live shell
-   * hands a non-club product. A camp passing no flair at all read as though a
-   * note were gated by product type too, which it is not.
+   * **Every scenario carries it, because every live shell does.** The workspace
+   * takes this overlay as a required prop — it is a staff-only page and both
+   * shells build it from the same read as the roster — so a scenario without one
+   * would be a page the product cannot produce, with a roster offering no way in
+   * to a note.
    *
-   * The two roster scenarios beside them are `null` for a different reason —
-   * each exists to show one thing about the identity cell, and a badge or a note
-   * button on those rows would only be something else to look at.
+   * What scenarios differ in is which marks are *lit*: the club has both, the
+   * camp has notes and an **empty** newcomers map (the clubs-only badge rule made
+   * visible, and the exact shape the live shell hands a non-club product), and
+   * the two identity scenarios carry {@link quietMemberFlair} — nothing lit at
+   * all, which is what most real groups look like.
    */
-  memberFlair: MemberFlairFixture | null;
+  memberFlair: MemberFlairFixture;
 }
 
 /** Gedu ids. Real UUIDs because each one renders as an identicon chip. */
@@ -196,16 +197,16 @@ interface ScenarioConfig {
   groupName: string;
   groupNotes: GroupNotesFixture;
   /**
-   * Builds the roster's staff-only overlay from the scene's `now`, or `null`
-   * where the scenario shows none. The club and the camp do — the club with both
-   * marks, the camp with notes and no badges, which is the clubs-only rule made
-   * visible. The two identity scenarios beside them each exist to show one other
-   * thing.
+   * Builds the roster's staff-only overlay from the scene's `now`. Every
+   * scenario builds one, because the workspace requires one: the club with both
+   * marks, the camp with notes and no badges (the clubs-only rule made visible),
+   * and the identity scenarios with {@link quietMemberFlair}, which lights
+   * nothing.
    *
    * `now` is a parameter because the club's stamps are durations back from it; a
    * fixture with no stamps to place ignores it.
    */
-  memberFlair: ((now: Date) => MemberFlairFixture) | null;
+  memberFlair: (now: Date) => MemberFlairFixture;
   /**
    * The other groups running on the same product — the reference rail's
    * peer-cover rows. Both scenarios carry some: the rail's empty state is one
@@ -805,13 +806,12 @@ function clubMemberFlair(now: Date): MemberFlairFixture {
  * a camp started on the same Monday and "new to this group" distinguishes nobody;
  * a note has no such gate, because what a Gedu needs to remember about a child is
  * just as worth writing down on the fourth day of a camp as in the sixth week of a
- * club. So the newcomers map is **empty** — not absent, which would be a page with
- * no flair at all — and the notes go through.
+ * club. So the newcomers map is **empty** and the notes go through.
  *
  * That empty map is precisely what the live wiring produces: the shell asks
  * `showsNewcomerBadge` once and, on a camp, folds no stamps in while folding every
- * note in. A camp scenario passing no flair at all used to imply a gate the product
- * does not have.
+ * note in — an empty map is how "no badges here" is spelled everywhere, because a
+ * page with no overlay at all is not a thing either shell can build.
  *
  * The notes are camp-shaped rather than term-shaped — a week-long thing, written
  * about the days either side of the one being run.
@@ -837,6 +837,20 @@ function campMemberFlair(): MemberFlairFixture {
       [SESSION_FEED_GAMER_IDS.linnea]: "Joonas",
     },
   };
+}
+
+/**
+ * The overlay a group with nothing marked hands over: nobody inside the newcomer
+ * window, nobody written about yet.
+ *
+ * **This is the live shape, not an opt-out.** The workspace requires the overlay,
+ * so "no marks" is three empty records rather than a missing prop — every row
+ * still carries its note button, dimmed, which is exactly what the real page
+ * shows on the majority of rosters. A scenario using this is showing the quiet
+ * roster, not a page without the capability.
+ */
+function quietMemberFlair(): MemberFlairFixture {
+  return { newcomers: {}, notes: {}, noteEditors: {} };
 }
 
 /* ------------------------------------------------------------------ */
@@ -880,7 +894,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
         "Two siblings in this group (Aino and Väinö) — same parent email, so one message reaches both. Siiri needs pairing rather than free choice of partner. Room laptops 3 and 5 have flaky audio. Everything before last autumn predates write-ups, so the oldest entries are blank by design, not by neglect.",
     },
     // A club is the one product long-lived enough for "new to this group" to
-    // mean anything, so it is the only scenario carrying the flair.
+    // mean anything, so it is the only scenario with newcomer badges lit.
     memberFlair: clubMemberFlair,
     peers: [
       { id: "mock-group-b", name: "Monday B", participantCount: 7, gedus: [PETRA] },
@@ -963,13 +977,16 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // seventeen entries long.
     endsInDays: 28,
     isRemote: false,
+    // The site pair is deliberately half-written: the family note is there and
+    // the staff note is not, so the partial-fill ghost is reviewable on a real
+    // page. It costs nothing here because the group notes one panel over are
+    // filled on both sides, so the finished pair is still on show beside it.
     site: {
       name: "Sello Library, Espoo",
       address: "Leppävaarankatu 9, 02600 Espoo",
       publicNote:
         "Drop-off is from 08:00 and pick-up is by 18:00, both at the main entrance on Leppävaarankatu. Come up to the second floor and the group room is on the right, past the study desks. There is a water fountain outside the room, and the café downstairs closes at 16:00.",
-      staffNote:
-        "Room key is at the info desk on the ground floor, signed out under the SOG booking. The projector needs the HDMI adapter from the drawer, not the cable left on the table. Fire exit is the stairwell behind the room, not the lift lobby. The caretaker locks the second floor at 18:00 sharp.",
+      staffNote: null,
     },
     materialUrl: "https://drive.sog.gg/roblox-builders-camp/day-by-day",
     groupName: "Builders red",
@@ -1031,15 +1048,19 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
     groupName: "Thursday A",
+    // The partially-filled notes state: a written family note with the staff
+    // ghost below it, inside the padlocked block, so the one-note group is on
+    // show somewhere. The empty half is deliberate, not an unfinished fixture.
     groupNotes: {
       publicNote:
         "Thursday A are building one shared obstacle course, a few obstacles at a time. Everything each team makes gets snapped into it at the end of the term.",
-      staffNote:
-        "Studio is slow to open on the older laptops — worth starting it before the group arrives. Siiri needs pairing rather than free choice of partner.",
+      staffNote: null,
     },
-    // Kept bare: the only question this scenario is open to answer is what a
-    // Roblox identity cell looks like.
-    memberFlair: null,
+    // The only question this scenario is open to answer is what a Roblox
+    // identity cell looks like, so the roster carries the standard quiet
+    // overlay — every note button dimmed, no badges — rather than none at all,
+    // which is not a state the live page has.
+    memberFlair: quietMemberFlair,
     peers: [
       {
         id: "mock-group-thursday-b",
@@ -1076,15 +1097,17 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     site: null,
     materialUrl: null,
     groupName: "Tuesday A",
+    // The fully-empty notes state: both ghosts showing, which is what a brand-new
+    // group's gedu meets — the state the ghost hints exist to teach.
     groupNotes: {
-      publicNote:
-        "Tuesday A are working through the basics in Python. Nothing needs installing at home — everything runs in the browser.",
-      staffNote:
-        "No game account on this product, so nothing to check against a server. Two of the group are well ahead and want harder problems.",
+      publicNote: null,
+      staffNote: null,
     },
-    // Kept bare for the same reason as the Roblox scenario: the subject here is
-    // the short row, and a mark on it would be a second thing to look at.
-    memberFlair: null,
+    // The same quiet overlay as the Roblox scenario, and for the same reason:
+    // the subject here is the short row, so nothing on it is lit — but the note
+    // button is still on every row, because a roster without one is not a
+    // roster this page can draw.
+    memberFlair: quietMemberFlair,
     peers: [
       {
         id: "mock-group-tuesday-b",
@@ -1169,7 +1192,7 @@ export function buildGroupWorkspaceFixture(
     groupNotes: config.groupNotes,
     site: config.site,
     materialUrl: config.materialUrl,
-    memberFlair: config.memberFlair === null ? null : config.memberFlair(now),
+    memberFlair: config.memberFlair(now),
   };
 }
 

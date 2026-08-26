@@ -42,16 +42,15 @@ export function GamerNoteButton({
     <Button
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7 shrink-0", className)}
+      // The glyph override lives here, not on the icon: the Button base's
+      // `[&_svg]:size-4` out-specifies any size class on the svg itself.
+      className={cn("h-7 w-7 shrink-0 [&_svg]:size-5", className)}
       onClick={onOpen}
       aria-label={t("openNote", { name })}
       title={t("openNote", { name })}
     >
       <NotebookPen
-        className={cn(
-          "h-4 w-4",
-          hasNote ? "text-info" : "text-muted-foreground opacity-50",
-        )}
+        className={hasNote ? "text-info" : "text-muted-foreground opacity-50"}
       />
     </Button>
   );

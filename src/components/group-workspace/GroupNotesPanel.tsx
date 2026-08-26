@@ -39,11 +39,11 @@ export function GroupNotesPanel({
     <TwoAudienceNotesPanel
       copy={{
         heading: t("heading"),
-        add: t("add"),
         edit: t("edit"),
         cancel: t("cancel"),
         save: t("save"),
-        emptyHint: t("emptyHint"),
+        publicEmpty: t("publicEmpty"),
+        staffEmpty: t("staffEmpty"),
         publicLabel: t("publicLabel"),
         publicHint: t("publicHint"),
         publicPlaceholder: t("publicPlaceholder"),
