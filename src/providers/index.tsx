@@ -9,7 +9,10 @@ import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
 import { ReferralProvider } from "./referral-provider";
 import type { AuthenticatedUser, Profile } from "@/types";
-import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
+import {
+  DEFAULT_TIMEZONE,
+  type DetectedLocale,
+} from "@/lib/constants/locales";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -35,6 +38,22 @@ interface ProvidersProps {
    * that no longer carries the param. See `src/providers/referral-provider.tsx`.
    */
   initialReferralCode: string | null;
+  /**
+   * What this request's `Accept-Language` header negotiated to, or `"none"`
+   * when the browser asked only for languages we don't ship. Read from the
+   * header alone — the `locale` cookie and `profiles.locale` are deliberately
+   * not consulted — so the analytics events in `LocaleProvider` can compare the
+   * browser's guess against what the user is actually looking at.
+   *
+   * Not `initial*`, unlike its neighbours: those seed mutable client state that
+   * legitimately diverges from the server's value afterwards (the timezone
+   * provider re-detects, the clock ticks, the referral code has to survive a
+   * refresh that no longer carries the param). This is a stable per-request
+   * fact with nothing to diverge from — a locale change calls `router.refresh()`,
+   * which re-runs the root layout against the same request headers and computes
+   * the same value again.
+   */
+  detectedLocale: DetectedLocale;
   messages: Record<string, unknown>;
 }
 
@@ -46,6 +65,7 @@ export function Providers({
   initialTimezone,
   initialNow,
   initialReferralCode,
+  detectedLocale,
   messages,
 }: ProvidersProps) {
   return (
@@ -55,7 +75,7 @@ export function Providers({
             enough call sites consume `useTimezone()` directly, flip this
             to the viewer's actual zone. Tracked in TODO.md. */}
         <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
-          <LocaleProvider>
+          <LocaleProvider detectedLocale={detectedLocale}>
             <TimezoneProvider initialTimezone={initialTimezone}>
               <NowProvider initialNow={initialNow}>
                 <ReferralProvider initialReferralCode={initialReferralCode}>

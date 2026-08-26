@@ -20,6 +20,7 @@ import {
   SUPPORTED_LOCALES,
   LOCALE_CONFIG,
 } from "@/lib/constants/locales";
+import { trackLocalePickerOpen } from "@/lib/analytics";
 import { cn, isKeyOf } from "@/lib/utils";
 
 // Klingon Empire flag from Wikimedia Commons (by Oren neu dag, public domain).
@@ -59,7 +60,7 @@ function FlagComponent({
 }
 
 export function LocalePicker({ className }: { className?: string }) {
-  const { locale, setLocale } = useLocaleControl();
+  const { locale, setLocale, detectedLocale } = useLocaleControl();
   const c = useTranslations('common');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -71,7 +72,20 @@ export function LocalePicker({ className }: { className?: string }) {
   return (
     <div className={cn("relative", className)} ref={ref}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          // Only the closed → open transition is an event. Someone opening the
+          // dropdown and closing it again has looked at the languages once, and
+          // that one look is what separates "never noticed the selector" from
+          // "noticed it and stayed" for a visitor who never changes locale —
+          // counting the close too would double every such visit.
+          if (!open) {
+            trackLocalePickerOpen({
+              detected: detectedLocale,
+              current: locale,
+            });
+          }
+          setOpen(!open);
+        }}
         className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
         aria-label={c('selectLanguage')}
       >

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { GeduContractPage } from "@/components/gedu/contract/GeduContractPage";
 import {
   GEDU_CONTRACT_CURRENT_VERSION,
+  GEDU_CONTRACT_FALLBACK_LANGUAGE,
+  geduContractLanguageForLocale,
   getGeduContractDocument,
 } from "@/components/gedu/contract/documents";
 import { ROUTES } from "@/lib/constants";
@@ -44,9 +46,16 @@ async function getInitialAcceptances(
  * are accepted.
  *
  * A data shell and nothing else: resolve the signed-in gedu, resolve the
- * document in force, prefetch the acceptances, hand all three to the client
- * body. The proxy has already gated this path to the gedu role, so a missing
- * claim means no session at all rather than the wrong one.
+ * document in force in the language this reader reads, prefetch the acceptances,
+ * hand all three to the client body. The proxy has already gated this path to
+ * the gedu role, so a missing claim means no session at all rather than the
+ * wrong one.
+ *
+ * **Which text is shown follows the locale, and there is no toggle.** The
+ * languages of a version are equally binding, so there is no "original" to offer
+ * beside a translation — there is the agreement, in the words this reader is
+ * already reading the product in. What gets recorded is the text that was on
+ * screen, which the client body encodes into the version it sends.
  */
 export default async function GeduContractRoute() {
   const supabase = await createClient();
@@ -54,10 +63,23 @@ export default async function GeduContractRoute() {
   const userId = data?.claims.sub;
   if (!userId) redirect(ROUTES.login);
 
-  // The current version always has a transcribed document — the constant and
-  // the registry ship together — so a miss means the two were changed apart,
-  // and a 404 is the honest answer rather than a page with no terms on it.
-  const contract = getGeduContractDocument(GEDU_CONTRACT_CURRENT_VERSION);
+  // A locale with no contract text of its own resolves to English, and English
+  // itself may not have been transcribed for an older version — so the lookup
+  // falls back to the language every version is guaranteed to exist in rather
+  // than 404ing a reader out of terms that do exist.
+  const locale = await getLocale();
+  const contract =
+    getGeduContractDocument(
+      GEDU_CONTRACT_CURRENT_VERSION,
+      geduContractLanguageForLocale(locale),
+    ) ??
+    getGeduContractDocument(
+      GEDU_CONTRACT_CURRENT_VERSION,
+      GEDU_CONTRACT_FALLBACK_LANGUAGE,
+    );
+  // Not even the fallback: the constant and the registry ship together, so this
+  // means the two were changed apart, and a 404 is the honest answer rather than
+  // a page with no terms on it.
   if (!contract) notFound();
 
   const initialAcceptances = await getInitialAcceptances(supabase, userId);

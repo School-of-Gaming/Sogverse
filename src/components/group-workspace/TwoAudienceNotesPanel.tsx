@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,12 +26,30 @@ export interface TwoAudienceNotesDraft {
  */
 export interface TwoAudienceNotesCopy {
   heading: string;
-  /** Label on the affordance when there is nothing written yet. */
-  add: string;
   edit: string;
   cancel: string;
   save: string;
-  emptyHint: string;
+  /**
+   * Ghost line standing in for an unwritten public note. It renders bare, with
+   * no banner above it, so it has to **name the audience itself** — it is the
+   * only thing on screen saying who that half is for.
+   *
+   * Both ghosts are worded as **imperatives** ("Add a note…"), and that mood is
+   * load-bearing: visually a ghost differs from a saved note only by italics,
+   * so the imperative is the one cue a screen reader gets that this is an
+   * invitation rather than content. A rewording or translation that drifts
+   * into a descriptive phrasing removes that cue. Each ghost also deliberately
+   * echoes its scope's editor placeholder — keep the pair in step when either
+   * is edited.
+   */
+  publicEmpty: string;
+  /**
+   * Ghost line standing in for an unwritten Gedu note. It renders inside the
+   * padlocked block, which states the audience, so this says what belongs there
+   * rather than restating who reads it. Same imperative-mood and
+   * placeholder-pairing constraints as {@link publicEmpty}.
+   */
+  staffEmpty: string;
   publicLabel: string;
   publicHint: string;
   publicPlaceholder: string;
@@ -89,9 +107,26 @@ interface TwoAudienceNotesPanelProps {
  * Interaction grammar mirrors the session editor exactly, so a Gedu learns it
  * once: the header row with the pencil never moves, the display body and the
  * editor are sibling collapsing regions *below* it, and opening grows the panel
- * downward rather than sliding the pencil out from under the cursor. An empty
- * scope gets a quiet "add a note" affordance rather than an empty box shouting
- * for input — most groups genuinely have nothing standing to say.
+ * downward rather than sliding the pencil out from under the cursor.
+ *
+ * **The display state always renders both slots, with a greyed ghost line
+ * standing in for whichever note has no content.** This reverses an earlier
+ * decision — an empty scope used to get one quiet "add a note" line and a `+`
+ * button, on the reasoning that most groups have nothing standing to say — and
+ * it was reversed on Gedus telling us they never discovered there were two
+ * notes at all. The structure was invisible until the editor was open, so the
+ * feature was invisible to anyone who never opened it. Mirroring the filled
+ * shape is what teaches the split: the ghosts show that there are two places to
+ * write, the bare public ghost names the audience it is for, and the staff
+ * ghost sits *inside* the padlocked block so the banner — the lock beside the
+ * session feed's "Gedus and admins" label — carries the privacy half of the
+ * lesson rather than a sentence claiming it. That is why the staff ghost must
+ * never be rendered beside the block instead of within it. Ghosts are italic
+ * as well as muted, because the real Gedu note is muted too and nothing here
+ * may read as saved content that is not.
+ *
+ * The pencil follows from that: there is no "empty" state to have a different
+ * affordance for, so the header control is always Edit.
  *
  * **Neither field is marked "(optional)"**, though both are. On a gedu surface
  * the marker reads as permission: it lands on somebody at the exact moment they
@@ -173,7 +208,6 @@ export function TwoAudienceNotesPanel({
 
   const hasPublic = publicNote !== null && publicNote.length > 0;
   const hasStaff = staffNote !== null && staffNote.length > 0;
-  const isEmpty = !hasPublic && !hasStaff;
 
   // No divider or top padding of its own: the panel is a whole section of the
   // card it sits in, so its header row *is* that section's heading row.
@@ -192,12 +226,8 @@ export function TwoAudienceNotesPanel({
           aria-expanded={editing}
           className="-my-1 gap-1.5"
         >
-          {isEmpty ? (
-            <Plus className="h-3.5 w-3.5" aria-hidden />
-          ) : (
-            <Pencil className="h-3.5 w-3.5" aria-hidden />
-          )}
-          {isEmpty ? copy.add : copy.edit}
+          <Pencil className="h-3.5 w-3.5" aria-hidden />
+          {copy.edit}
         </Button>
       </div>
 
@@ -206,21 +236,26 @@ export function TwoAudienceNotesPanel({
 
       <CollapsibleRegion open={!editing}>
         <div className="space-y-3 pt-2">
-          {hasPublic && (
+          {hasPublic ? (
             <p className="whitespace-pre-line text-sm leading-relaxed">
               {publicNote}
             </p>
+          ) : (
+            <p className="text-sm italic leading-relaxed text-muted-foreground">
+              {copy.publicEmpty}
+            </p>
           )}
-          {hasStaff && (
-            <StaffNoteBlock>
+          <StaffNoteBlock>
+            {hasStaff ? (
               <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
                 {staffNote}
               </p>
-            </StaffNoteBlock>
-          )}
-          {isEmpty && (
-            <p className="text-sm text-muted-foreground">{copy.emptyHint}</p>
-          )}
+            ) : (
+              <p className="text-sm italic leading-relaxed text-muted-foreground">
+                {copy.staffEmpty}
+              </p>
+            )}
+          </StaffNoteBlock>
         </div>
       </CollapsibleRegion>
 

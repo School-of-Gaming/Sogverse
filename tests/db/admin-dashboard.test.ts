@@ -22,7 +22,9 @@ import {
  *   - an uncertified gedu queued, and a gedu with no `gedu_profiles` row NOT
  *     queued (a data error is excluded, never silently read as uncertified)
  *   - a queued gedu's contract standing against the CURRENT version, where
- *     "accepted an older version" reads the same as "never accepted"
+ *     "accepted an older version" reads the same as "never accepted", either
+ *     equally binding LANGUAGE of the current version counts, and a candidate
+ *     holding both languages reports the first of the two signatures
  *   - the five product issues, each flagged only in the situation it names — a
  *     gedu fee of *zero* is a volunteer session, not a missing fee, and an empty
  *     group is not a group without an educator
@@ -53,14 +55,19 @@ const P_ENDED = "00000000-0000-0000-0000-000000000628";
  * that is NOT current. Its `created_at` is the epoch, which is what keeps it
  * from becoming the current version for every other test running against the
  * same database — current is the greatest `created_at`, and nothing is older
- * than this. The label is shape-impossible for the same reason the fixture ids
+ * than this. It carries a language suffix because every version string does
+ * (00202), and its BASE is shape-impossible for the same reason the fixture ids
  * are: the whitelist holds document labels, and no document is labelled this.
  */
-const OLD_CONTRACT_VERSION = "not-a-version-1970-0000";
+const OLD_CONTRACT_VERSION = "not-a-version-1970-0000/fi";
 const OLD_CONTRACT_CREATED_AT = "1970-01-01T00:00:00Z";
 
-/** The moments the two seeded acceptances carry, chosen so they cannot tie. */
+/** The moments the seeded acceptances carry, chosen so none of them can tie. */
 const SIGNED_CURRENT_AT = "2026-03-04T09:15:00Z";
+const SIGNED_OTHER_LANGUAGE_AT = "2026-03-05T14:20:00Z";
+/** The two signatures of the gedu who signed both texts — first, then second. */
+const SIGNED_BOTH_FIRST_AT = "2026-02-01T08:00:00Z";
+const SIGNED_BOTH_SECOND_AT = "2026-02-02T08:00:00Z";
 const SIGNED_OLD_AT = "2025-05-06T11:30:00Z";
 
 const ALL_PRODUCTS = [
@@ -97,8 +104,12 @@ describe("get_admin_dashboard", () => {
   let queuedGeduId: string | null = null;
   /** A gedu whose `gedu_profiles` row is missing — a data error, not a queue entry. */
   let orphanGeduId: string | null = null;
-  /** Queued, and has accepted the version in force today. */
+  /** Queued, and has accepted the language of the current version the ordering picks. */
   let signedGeduId: string | null = null;
+  /** Queued, and has accepted the OTHER language of that same current version. */
+  let otherLanguageGeduId: string | null = null;
+  /** Queued, and has accepted BOTH languages of the current version. */
+  let bothLanguagesGeduId: string | null = null;
   /** Queued, and has accepted only a version that is no longer current. */
   let staleGeduId: string | null = null;
 
@@ -301,22 +312,35 @@ describe("get_admin_dashboard", () => {
     queuedGeduId = await createGedu("queued", true);
     orphanGeduId = await createGedu("orphan", false);
     signedGeduId = await createGedu("signed", true);
+    otherLanguageGeduId = await createGedu("otherlang", true);
+    bothLanguagesGeduId = await createGedu("bothlang", true);
     staleGeduId = await createGedu("stale", true);
 
     // --- contract standing --------------------------------------------------
     //
     // Seeded through the service-role client rather than by calling the RPC as
     // each gedu, because what is under test here is the dashboard's derivation
-    // of "current", and that wants acceptances with chosen timestamps and a
-    // chosen version. The RPC's own behaviour is gedu-contract.test.ts's job.
-    const current = await admin
+    // of "current", and that wants acceptances with chosen timestamps and
+    // chosen versions. The RPC's own behaviour is gedu-contract.test.ts's job.
+    //
+    // A version string is `<base>/<language>` (00202), and the languages of one
+    // base are the same agreement published twice — so "current" is a BASE, and
+    // both of its texts are it. The rows are read in the RPC's own order, which
+    // is what lets the cases below speak of "the language the queue's pick
+    // lands on" and "the other one" without hardcoding either.
+    const versions = await admin
       .from("gedu_contract_versions")
       .select("version")
       .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    expect(current.error).toBeNull();
-    const currentVersion = current.data!.version;
+      .order("version", { ascending: false });
+    expect(versions.error).toBeNull();
+    const currentBase = versions.data![0].version.split("/")[0];
+    const currentVersions = versions
+      .data!.filter((v) => v.version.split("/")[0] === currentBase)
+      .map((v) => v.version);
+    // The version in force is published in both Finnish and English, and the
+    // cross-language cases below would pass vacuously against one text.
+    expect(currentVersions.length).toBeGreaterThanOrEqual(2);
 
     await admin
       .from("gedu_contract_versions")
@@ -328,15 +352,38 @@ describe("get_admin_dashboard", () => {
     });
     expect(oldVersion.error).toBeNull();
 
-    // The stale gedu signs BOTH an old version and nothing current, which is
-    // the case a naive "has this gedu accepted anything" read gets wrong.
     const acceptances = await admin.from("gedu_contract_acceptances").insert([
       {
         gedu_id: signedGeduId,
-        contract_version: currentVersion,
+        contract_version: currentVersions[0],
         accepted_at: SIGNED_CURRENT_AT,
         signed_name: "Dash signed",
       },
+      // The other equally binding text of the SAME version. A queue comparing
+      // whole version strings would read this signature as no signature.
+      {
+        gedu_id: otherLanguageGeduId,
+        contract_version: currentVersions[1],
+        accepted_at: SIGNED_OTHER_LANGUAGE_AT,
+        signed_name: "Dash otherlang",
+      },
+      // Both texts of one version — two rows for one agreement, which a scalar
+      // subquery would refuse to answer at all. Seeded later-signature-first so
+      // the expected answer cannot come from insertion order.
+      {
+        gedu_id: bothLanguagesGeduId,
+        contract_version: currentVersions[1],
+        accepted_at: SIGNED_BOTH_SECOND_AT,
+        signed_name: "Dash bothlang",
+      },
+      {
+        gedu_id: bothLanguagesGeduId,
+        contract_version: currentVersions[0],
+        accepted_at: SIGNED_BOTH_FIRST_AT,
+        signed_name: "Dash bothlang",
+      },
+      // The stale gedu signs BOTH an old version and nothing current, which is
+      // the case a naive "has this gedu accepted anything" read gets wrong.
       {
         gedu_id: staleGeduId,
         contract_version: OLD_CONTRACT_VERSION,
@@ -362,6 +409,10 @@ describe("get_admin_dashboard", () => {
     // leaving it behind would put a nonsense label in every later read of the
     // whitelist.
     if (signedGeduId) await admin.auth.admin.deleteUser(signedGeduId);
+    if (otherLanguageGeduId)
+      await admin.auth.admin.deleteUser(otherLanguageGeduId);
+    if (bothLanguagesGeduId)
+      await admin.auth.admin.deleteUser(bothLanguagesGeduId);
     if (staleGeduId) await admin.auth.admin.deleteUser(staleGeduId);
     await admin
       .from("gedu_contract_versions")
@@ -405,10 +456,10 @@ describe("get_admin_dashboard", () => {
 
     it("counts this file's new gedus", () => {
       const gedus = snapshot.users.find((u) => u.role === "gedu");
-      // Four were created above and none is certified, so the platform holds at
-      // least four — a relative claim, because CI's database also carries
+      // Six were created above and none is certified, so the platform holds at
+      // least six — a relative claim, because CI's database also carries
       // seed.sql and whatever other files have seeded alongside this one.
-      expect(gedus?.total).toBeGreaterThanOrEqual(4);
+      expect(gedus?.total).toBeGreaterThanOrEqual(6);
     });
   });
 
@@ -446,6 +497,33 @@ describe("get_admin_dashboard", () => {
       );
     });
 
+    it("carries it for a candidate who signed the other language of that version", () => {
+      // The two texts are one agreement, so which one this gedu could read is
+      // not a fact about their standing. A comparison on whole version strings
+      // would report them as unsigned the day the second text was published.
+      const entry = snapshot.certification_queue.find(
+        (g) => g.id === otherLanguageGeduId,
+      );
+      expect(entry).toBeDefined();
+      expect(Date.parse(entry!.contract_accepted_at!)).toBe(
+        Date.parse(SIGNED_OTHER_LANGUAGE_AT),
+      );
+    });
+
+    it("reports the first signature for a candidate who signed both languages", () => {
+      // Two rows for one agreement is a legitimate state, and the queue has to
+      // answer rather than error on it. The answer is the earlier moment: that
+      // is when this person agreed to these terms, and countersigning the other
+      // text afterwards does not move it.
+      const entry = snapshot.certification_queue.find(
+        (g) => g.id === bothLanguagesGeduId,
+      );
+      expect(entry).toBeDefined();
+      expect(Date.parse(entry!.contract_accepted_at!)).toBe(
+        Date.parse(SIGNED_BOTH_FIRST_AT),
+      );
+    });
+
     it("says nothing for a candidate who has signed nothing", () => {
       const entry = snapshot.certification_queue.find(
         (g) => g.id === queuedGeduId,
@@ -457,7 +535,8 @@ describe("get_admin_dashboard", () => {
       // The queue is about standing against the terms in force TODAY, so an
       // out-of-date signature reads the same as no signature. A read that asked
       // "has this gedu accepted anything" would show a date here and tell an
-      // admin the opposite of the truth.
+      // admin the opposite of the truth. The fixture version is encoded like
+      // every other, so what excludes it is its BASE and not its shape.
       const entry = snapshot.certification_queue.find(
         (g) => g.id === staleGeduId,
       );

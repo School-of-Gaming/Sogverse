@@ -88,13 +88,16 @@ outcome count as a partial save rather than a failed one — is a rule about the
 of the record, not about who is looking at it. The two surfaces differ only in which
 mutations they bind (one keyed by group and refreshing the gedu feed, one keyed by product
 and refreshing the product document), so the orchestration takes those mutations as
-arguments and lives once, in the gedu session-details module, with both containers calling
+arguments and lives once, in the group workspace module, with both containers calling
 it. A copy on the admin side would be free to drift, and the drift would be invisible until
 an admin and a gedu saving the same sheet got different answers out of it.
 
 The admin *tree* is deliberately **outside** the family-privacy import zone above, which
-is what makes reaching into `components/gedu/` from admin code allowed rather than a hole:
-the zone exists to keep staff-only data away from families, and an admin is staff.
+is what makes reaching into `components/gedu/` and `components/group-workspace/` from
+admin code allowed rather than a hole: the zone exists to keep staff-only data away from
+families, and an admin is staff. The zone names both directories for the same reason —
+the group workspace is role-agnostic between *staff* roles only, so moving a piece out of
+`components/gedu/` into it is not a way out of the ban.
 
 **Corollary: the gedu components' own strings travel with them.** A string rendered by a
 reused gedu component stays in the namespace that component reads, because there is one

@@ -183,8 +183,9 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
 }
 
 /**
- * The session-report form picks one of the bundled sample reports, a zone to
- * stand in for the parent's, and may paste a markdown body over the sample.
+ * The session-report form picks which of the send's two mails to render, one of
+ * the bundled sample reports, a zone to stand in for the parent's, and may
+ * paste a markdown body over the sample.
  * Testing plumbing, not the live send: `POST /api/gedu/sessions/email-report`
  * reads a real session row and formats in the product's zone, so here the
  * fixture stands in for that row and the select stands in for that zone. The instants are formatted for the
@@ -211,15 +212,47 @@ const VIEWER_TIMEZONE_OPTIONS = [
   { label: "America/New_York", value: "America/New_York" },
 ];
 
+/**
+ * Which of the two mails one send produces. The live route sends both — a
+ * family's, and one copy to the sender with the admins in CC — and they differ
+ * in three places, none of which is visible unless the testing UI can ask for
+ * the other mail: the copy opens with the staff banner, it carries the GROUP's
+ * name where a family's mail carries the child's (so the intro reads as a
+ * record of what the group was sent), and its button points at the sender's own
+ * workspace rather than at a family's enrollment page.
+ *
+ * The first two follow this select. The third stays the tester's to type: the
+ * `productUrl` field is a family-page link, and a workspace URL cannot be
+ * derived here — the live route picks between the gedu workspace and the admin
+ * product page from the sender's role, which this form has no notion of. Change
+ * it by hand when the link is what you are checking.
+ */
+const SESSION_REPORT_COPIES = ["family", "staff"] as const;
+
+const SESSION_REPORT_COPY_LABELS: Record<(typeof SESSION_REPORT_COPIES)[number], string> = {
+  family: "The family mail (what a parent receives)",
+  staff: "The Gedu and Admin copy (sender, admins in CC)",
+};
+
+const SESSION_REPORT_COPY_OPTIONS = SESSION_REPORT_COPIES.map((value) => ({
+  label: SESSION_REPORT_COPY_LABELS[value],
+  value,
+}));
+
 function resolveSessionReport(
-  { sample: sampleId, viewerTimezone, reportMarkdown, ...rest }: SessionReportParams,
+  { sample: sampleId, viewerTimezone, reportMarkdown, copy, ...rest }: SessionReportParams,
   locale: string,
 ): SessionReportEmailOptions {
   const sample =
     SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
     SESSION_REPORT_SAMPLES[0];
+  const staffCopy = copy === "staff";
   return {
     ...rest,
+    // The group's name in the child's slot, as the live send does it — the copy
+    // is a record of what the group was mailed, not one child's report.
+    gamerName: staffCopy ? rest.groupName : rest.gamerName,
+    staffCopy,
     sessionDate: formatDate(sample.startsAt, locale, {
       timeZone: viewerTimezone,
       dateStyle: "full",
@@ -298,6 +331,13 @@ const sessionReportParamsSchema = z.object({
   /** Empty means "use the sample's own markdown". */
   reportMarkdown: z.string(),
   productUrl: z.string().url(),
+  /**
+   * Required rather than defaulted: a schema whose parsed output differs from
+   * its input no longer satisfies the registry's `ZodType<P>`, and the testing
+   * form posts an untouched select's first option anyway, so nothing that
+   * reaches this schema through the UI can omit it.
+   */
+  copy: z.enum(SESSION_REPORT_COPIES),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -422,6 +462,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "geduName", label: "Gedu Name", placeholder: "Marianne" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft: Cozy Adventures" },
       { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
+      { key: "copy", label: "Which copy", type: "select", options: SESSION_REPORT_COPY_OPTIONS },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
       { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {

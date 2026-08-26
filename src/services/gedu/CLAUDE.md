@@ -97,9 +97,10 @@ Certification state is read via `useGeduProfiles` / `useGeduCertificationMap`
 ## The gedu contract
 
 A gedu is an independent contractor, and the terms they work under
-(*Pelikasvattajan sopimusehdot*) are read and accepted **on the platform**. What is
-stored is the whole of what a lawyer asked for and nothing else: which version was
-accepted, when, and who signed — the three facts that decide a dispute.
+(*Pelikasvattajan sopimusehdot* / *Game Educator Terms*) are read and accepted **on
+the platform**. What is stored is the whole of what a lawyer asked for and nothing
+else: which version was accepted — in which language — when, and who signed: the
+facts that decide a dispute.
 
 **Rule: acceptance gates nothing.** Certification remains the platform's only
 blocking lever over an educator, and keeping it the only one is deliberate — two
@@ -126,11 +127,57 @@ anything" read identically in the admin queue. The question an admin is deciding
 against is standing under the terms in force *today*, and both answers to that
 are "not yet".
 
-The current version the *app* asks for is a constant in the contract document's
-own directory (`../../components/gedu/contract/`), because the version is a
-property of the document being shown. The service layer never picks one — it
-accepts whatever it is handed and lets the database refuse a version it does not
-know.
+### One version, two texts, and the version string that carries both
+
+A version of the contract exists in **more than one language, and the languages of
+one version are equally binding** — one agreement published twice, not a source
+text and a courtesy translation of it. Which text a gedu actually read is
+therefore part of the record, so the language is encoded into the version string
+itself: `<base>/<language>`, e.g. `2026-2027/fi` and `2026-2027/en`. The whitelist
+holds one row per language, both sharing the base label and the added-at moment
+that decides which version is current, and an acceptance stores the whole encoded
+string.
+
+Encoding it into the existing value rather than adding a column is what keeps
+everything downstream unchanged: the acceptance is still one text field and one
+foreign key, still the whole of what was signed in one value, and every surface
+that displays a signature shows that value **verbatim** rather than reassembling
+it from parts.
+
+**What it costs is one rule, and it is the rule to remember: "is this gedu
+current" is a question about the base.** Both languages *are* the current version,
+so a gedu who signed one of them must never be re-prompted because a second was
+published or because they switched the app's language. That comparison is made in
+two places and both compare bases: the app's own checks (the contract page, the
+settings card, the dashboard's unsigned band, the admin certification card), and
+the admin dashboard RPC that reports each certification candidate's standing.
+Both halves also answer a double signature the same way: a gedu may have signed
+both texts — two signatures on one agreement, where the first is when they
+agreed — so the RPC reads the *earliest* of the base-matching acceptances, and
+the app's matching helper picks the same row, so every surface names one date.
+
+**Which text is shown follows the reader's locale, and there is no toggle.** A
+Finnish app shows the Finnish text; every other locale shows the English one. Two
+languages published as equals leave no "original" to offer beside a translation,
+and a picker would only invite somebody to sign words they cannot read. What is
+recorded is the document that was on screen, encoded from that document rather
+than from a constant — so the record cannot claim a text the reader never saw.
+
+One language is designated the **fallback**: the one every version is guaranteed
+to have been transcribed into, which a lookup falls back to when the pair asked
+for does not exist (a locale whose language has no text of its own, or an older
+version transcribed only once). That is Finnish today, because that is the
+language a version is drafted in first. It is a guarantee about availability and
+nothing more — it does not make that text the binding one, and copy must not say
+it does.
+
+The current version the *app* asks for is a base-version constant in the contract
+document's own directory (`../../components/gedu/contract/`), alongside the
+document registry, the fallback-language constant, and the small helpers that
+encode a document's stored version, take the base out of a stored one, and pick a
+language from a locale. The version is a property of the document being shown, so
+it lives with the documents. The service layer never picks one — it forwards
+whatever it is handed and lets the database refuse a version it does not know.
 
 ### The write posture: one RPC, no table grant
 
@@ -144,11 +191,14 @@ has one table over, and for the same reason.
 
 Two consequences worth stating plainly:
 
-- **The write is idempotent and the first signature is the one that stands.**
-  Accepting a version already accepted returns the original moment and writes
-  nothing, including when a duplicate arrives concurrently. A reload, a retry or a
-  double-submit is therefore harmless rather than a second signature, and no
-  reader ever sees a record silently re-stamped.
+- **The write is idempotent per encoded version, and the first signature is the
+  one that stands.** Accepting a version already accepted returns the original
+  moment and writes nothing, including when a duplicate arrives concurrently. A
+  reload, a retry or a double-submit is therefore harmless rather than a second
+  signature, and no reader ever sees a record silently re-stamped. Signing the
+  *other* language of the same version does write a second row, and that is
+  correct: it is a second signature on one agreement rather than a re-acceptance,
+  and either row alone already made the gedu current.
 - **The stored name is a snapshot, never a join.** A profile name is editable by
   its owner, so resolving it at read time would answer "what is this person called
   today" when the question is "who signed this". The snapshot is the identity half

@@ -1,10 +1,13 @@
 import type { GeduContractDocument } from "../contract-document";
 
 /**
- * Pelikasvattajan sopimusehdot (Gedu-sopimus), version 2026-2027 — the binding
- * Finnish text, transcribed verbatim from the signed-off source document.
+ * Pelikasvattajan sopimusehdot (Gedu-sopimus), version 2026-2027 — the Finnish
+ * text, transcribed verbatim from the signed-off source document.
  *
- * **This file is a legal instrument, not copy.** Every sentence, clause number,
+ * **This file is a legal instrument, not copy.** It is equally binding with its
+ * English sibling of the same version rather than the source the sibling
+ * translates: the two are one agreement published twice, and a gedu is bound by
+ * whichever they read. Every sentence, clause number,
  * figure and defined term is the source document's own; nothing here is
  * paraphrased, shortened, reordered or modernised, and the en dashes, the
  * spacing inside "17 €:n" and the literal "(1)"/"1)" list markers are the

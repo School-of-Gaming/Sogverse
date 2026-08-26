@@ -268,6 +268,12 @@ describe("dragSubjectsFrom", () => {
       signed_up_at: "2026-01-01T00:00:00Z",
       has_live_subscription: false,
       has_payment_marker: false,
+      // The staff-only flair (00203). The groups panel draws neither mark — a
+      // chip there is a drag handle — so these ride the snapshot for shape
+      // parity and every fixture here carries the null shape.
+      group_joined_at: null,
+      note: null,
+      note_updated_by_first_name: null,
       ...overrides,
     };
   }
@@ -388,6 +394,12 @@ describe("chipGameIdentity", () => {
       signed_up_at: "2026-01-01T00:00:00Z",
       has_live_subscription: false,
       has_payment_marker: false,
+      // The staff-only flair (00203). The groups panel draws neither mark — a
+      // chip there is a drag handle — so these ride the snapshot for shape
+      // parity and every fixture here carries the null shape.
+      group_joined_at: null,
+      note: null,
+      note_updated_by_first_name: null,
       ...overrides,
     };
   }
@@ -488,6 +500,11 @@ describe("robloxIdsFrom", () => {
       signed_up_at: "2026-01-01T00:00:00Z",
       has_live_subscription: false,
       has_payment_marker: false,
+      // The staff-only flair (00203), null-shaped: this suite is about the
+      // Roblox id sweep, and the panel draws neither mark.
+      group_joined_at: null,
+      note: null,
+      note_updated_by_first_name: null,
     };
   }
 

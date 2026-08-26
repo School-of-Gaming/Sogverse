@@ -98,6 +98,12 @@ interface GroupsPanelViewProps {
   opensTime: string;
   /** The shell's one batched Roblox lookup; undefined until (or unless) it lands. */
   robloxRenders?: RobloxRenderMap;
+  /**
+   * Where a group's own details page lives, given its id. Omitted on a shell
+   * with no such page to point at, and each column then renders no link — the
+   * board keeps working as a board.
+   */
+  groupHref?: (groupId: string) => string;
   actions: GroupsPanelActions;
   /**
    * The shell's own overlays — the participant and gedu pickers.
@@ -230,6 +236,7 @@ export function GroupsPanelView({
   opensDate,
   opensTime,
   robloxRenders,
+  groupHref,
   actions,
   overlays,
 }: GroupsPanelViewProps) {
@@ -443,6 +450,7 @@ export function GroupsPanelView({
                 voiceIsOpen={voiceIsOpen}
                 opensDate={opensDate}
                 opensTime={opensTime}
+                groupHref={groupHref}
                 onRename={actions.onRenameGroup}
                 onDelete={actions.onDeleteGroup}
                 onAddGedu={actions.onRequestAddGedu}

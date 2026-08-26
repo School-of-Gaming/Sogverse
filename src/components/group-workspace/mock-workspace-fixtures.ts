@@ -22,7 +22,7 @@ import type {
 } from "@/types";
 
 /**
- * Fixtures for the gedu product-page preview scenes — the product shell, the
+ * Fixtures for the group workspace's preview scenes — the product shell, the
  * groups, the group-level notes, and the session feed that is the page's spine,
  * all computed from a `now` the caller supplies. No absolute dates: whenever the
  * scene is opened it shows a plausible term around today.
@@ -62,17 +62,17 @@ import type {
  * group) because the only question they are open to answer is what the rail's
  * roster looks like.
  */
-export const GEDU_PRODUCT_SCENARIOS = [
+export const GROUP_WORKSPACE_SCENARIOS = [
   "club",
   "camp",
   "roblox",
   "no-platform",
 ] as const;
 
-export type GeduProductScenario = (typeof GEDU_PRODUCT_SCENARIOS)[number];
+export type GroupWorkspaceScenario = (typeof GROUP_WORKSPACE_SCENARIOS)[number];
 
-export function isGeduProductScenario(s: string): s is GeduProductScenario {
-  return (GEDU_PRODUCT_SCENARIOS as readonly string[]).includes(s);
+export function isGroupWorkspaceScenario(s: string): s is GroupWorkspaceScenario {
+  return (GROUP_WORKSPACE_SCENARIOS as readonly string[]).includes(s);
 }
 
 /** The persistent, non-session notes attached to the group itself. */
@@ -96,7 +96,21 @@ export interface SiteFixture {
   staffNote: string | null;
 }
 
-export interface GeduProductPageFixture {
+/**
+ * The roster's staff-only overlay: who is new to the group, who has been written
+ * about, and by whom. Every record is keyed by participant id, and absence is
+ * the ordinary answer — most of a roster is neither.
+ */
+export interface MemberFlairFixture {
+  /** ISO join stamps, one per member still inside the newcomer window. */
+  newcomers: Record<string, string>;
+  /** Note text, one per member a Gedu has written about. */
+  notes: Record<string, string>;
+  /** Who last wrote each note, keyed the same way as `notes`. */
+  noteEditors: Record<string, string>;
+}
+
+export interface GroupWorkspaceFixture {
   data: GeduAssignedProduct;
   entries: SessionFeedEntry[];
   /** The attendance roster, keyed to the same ids as the group roster. */
@@ -118,6 +132,22 @@ export interface GeduProductPageFixture {
    * row. Must never be rendered to a parent or gamer.
    */
   materialUrl: string | null;
+  /**
+   * The roster's newcomer stamps and Gedu notes.
+   *
+   * **Every scenario carries it, because every live shell does.** The workspace
+   * takes this overlay as a required prop — it is a staff-only page and both
+   * shells build it from the same read as the roster — so a scenario without one
+   * would be a page the product cannot produce, with a roster offering no way in
+   * to a note.
+   *
+   * What scenarios differ in is which marks are *lit*: the club has both, the
+   * camp has notes and an **empty** newcomers map (the clubs-only badge rule made
+   * visible, and the exact shape the live shell hands a non-club product), and
+   * the two identity scenarios carry {@link quietMemberFlair} — nothing lit at
+   * all, which is what most real groups look like.
+   */
+  memberFlair: MemberFlairFixture;
 }
 
 /** Gedu ids. Real UUIDs because each one renders as an identicon chip. */
@@ -166,6 +196,17 @@ interface ScenarioConfig {
   materialUrl: string | null;
   groupName: string;
   groupNotes: GroupNotesFixture;
+  /**
+   * Builds the roster's staff-only overlay from the scene's `now`. Every
+   * scenario builds one, because the workspace requires one: the club with both
+   * marks, the camp with notes and no badges (the clubs-only rule made visible),
+   * and the identity scenarios with {@link quietMemberFlair}, which lights
+   * nothing.
+   *
+   * `now` is a parameter because the club's stamps are durations back from it; a
+   * fixture with no stamps to place ignores it.
+   */
+  memberFlair: (now: Date) => MemberFlairFixture;
   /**
    * The other groups running on the same product — the reference rail's
    * peer-cover rows. Both scenarios carry some: the rail's empty state is one
@@ -700,9 +741,121 @@ const ROSTER_SCENARIO_SPECS: readonly EntrySpec[] = [
   },
 ];
 
+/**
+ * The club's staff-only roster overlay: four newcomers and two notes.
+ *
+ * **Four newcomers, evenly spread across the window — one per pip of the
+ * badge's meter.** The badge drains a four-pip block across a member's first
+ * month, so four members spread across the window show every state it has at
+ * once. Emil at one day is the full block, Siiri at ten and Marja at nineteen
+ * are the middle readings, and Hilda at twenty-eight is the last one before the
+ * badge stops altogether. Stacked in one rail they can be read against each
+ * other in a glance.
+ *
+ * **Marja is deliberately one of them.** She is the parent holding a seat of
+ * her own, and an adult is as new to a group as a child is — so the badge has
+ * to sit beside the Parent badge on the same wrapping line without either
+ * displacing the other.
+ *
+ * **Two notes, and one of them is on a newcomer on purpose.** A lit note button
+ * at the end of a row and a badge beside the name are two marks on one row, and
+ * the question a reviewer actually has is whether that row still reads as one
+ * person rather than as a decorated one — which cannot be answered from two
+ * rows each wearing one mark. Siiri carries both. Emil's note is the second, so a note is also
+ * seen on a row that has nothing else on it.
+ *
+ * The two notes are the ones a Gedu really writes: how to pair somebody, and
+ * where a new arrival came from and what they already know. Both are staff
+ * register, never a parent's — the note is private to Gedus and admins, and a
+ * fixture written as if a family might read it would quietly teach the wrong
+ * voice. Mock data, so untranslated English like every other fixture here.
+ *
+ * Stamps are a duration back from `now` — arithmetic between instants, which is
+ * exactly what the badge measures, so no calendar stepping is involved.
+ */
+function clubMemberFlair(now: Date): MemberFlairFixture {
+  const daysAgo = (days: number) =>
+    new Date(now.getTime() - days * 86_400_000).toISOString();
+
+  return {
+    newcomers: {
+      [SESSION_FEED_GAMER_IDS.emil]: daysAgo(1),
+      [SESSION_FEED_GAMER_IDS.siiri]: daysAgo(10),
+      [SESSION_FEED_ADULT_ID]: daysAgo(19),
+      [SESSION_FEED_GAMER_IDS.hilda]: daysAgo(28),
+    },
+    notes: {
+      [SESSION_FEED_GAMER_IDS.siiri]:
+        "Quiet in big groups — pair her rather than letting her pick a partner. Has warmed up a lot since autumn.",
+      [SESSION_FEED_GAMER_IDS.emil]:
+        "Joined from the Monday B waitlist. Knows redstone already — needs stretching, not settling in.",
+    },
+    noteEditors: {
+      [SESSION_FEED_GAMER_IDS.siiri]: "Sanna",
+      [SESSION_FEED_GAMER_IDS.emil]: "Petra",
+    },
+  };
+}
+
+/**
+ * The camp's flair: **notes and no newcomers** — the exact shape the live shell
+ * hands a non-club product.
+ *
+ * The two marks are gated differently and this is the only fixture anywhere that
+ * shows them coming apart. The newcomer badge is clubs-only, because everybody on
+ * a camp started on the same Monday and "new to this group" distinguishes nobody;
+ * a note has no such gate, because what a Gedu needs to remember about a child is
+ * just as worth writing down on the fourth day of a camp as in the sixth week of a
+ * club. So the newcomers map is **empty** and the notes go through.
+ *
+ * That empty map is precisely what the live wiring produces: the shell asks
+ * `showsNewcomerBadge` once and, on a camp, folds no stamps in while folding every
+ * note in — an empty map is how "no badges here" is spelled everywhere, because a
+ * page with no overlay at all is not a thing either shell can build.
+ *
+ * The notes are camp-shaped rather than term-shaped — a week-long thing, written
+ * about the days either side of the one being run.
+ *
+ * **One of them is signed by a Gedu who teaches a different group of this camp**,
+ * which is the cross-group mobility the note's authorization actually grants: any
+ * Gedu on the *product* may read and write any of its notes, because the
+ * substitute covering a session is precisely the person who needs one. The rail
+ * beside this roster names him on Builders green, so the two halves agree.
+ */
+function campMemberFlair(): MemberFlairFixture {
+  return {
+    // Empty on purpose: the clubs-only badge rule, made visible.
+    newcomers: {},
+    notes: {
+      [SESSION_FEED_GAMER_IDS.oskar]:
+        "Youngest in the room and knows it — give him something to show the group on Wednesday and he settles for the rest of the week.",
+      [SESSION_FEED_GAMER_IDS.linnea]:
+        "Picked up early yesterday, back for the full day from now on. Missed the obstacle-course briefing, so she needs catching up before her team starts building.",
+    },
+    noteEditors: {
+      [SESSION_FEED_GAMER_IDS.oskar]: "Sanna",
+      [SESSION_FEED_GAMER_IDS.linnea]: "Joonas",
+    },
+  };
+}
+
+/**
+ * The overlay a group with nothing marked hands over: nobody inside the newcomer
+ * window, nobody written about yet.
+ *
+ * **This is the live shape, not an opt-out.** The workspace requires the overlay,
+ * so "no marks" is three empty records rather than a missing prop — every row
+ * still carries its note button, dimmed, which is exactly what the real page
+ * shows on the majority of rosters. A scenario using this is showing the quiet
+ * roster, not a page without the capability.
+ */
+function quietMemberFlair(): MemberFlairFixture {
+  return { newcomers: {}, notes: {}, noteEditors: {} };
+}
+
 /* ------------------------------------------------------------------ */
 
-const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
+const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink.** A remote weekly club a year and a bit into its run,
    * carrying every state the feed can be in at once: sessions finished on both
@@ -740,6 +893,9 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       staffNote:
         "Two siblings in this group (Aino and Väinö) — same parent email, so one message reaches both. Siiri needs pairing rather than free choice of partner. Room laptops 3 and 5 have flaky audio. Everything before last autumn predates write-ups, so the oldest entries are blank by design, not by neglect.",
     },
+    // A club is the one product long-lived enough for "new to this group" to
+    // mean anything, so it is the only scenario with newcomer badges lit.
+    memberFlair: clubMemberFlair,
     peers: [
       { id: "mock-group-b", name: "Monday B", participantCount: 7, gedus: [PETRA] },
       {
@@ -821,13 +977,16 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     // seventeen entries long.
     endsInDays: 28,
     isRemote: false,
+    // The site pair is deliberately half-written: the family note is there and
+    // the staff note is not, so the partial-fill ghost is reviewable on a real
+    // page. It costs nothing here because the group notes one panel over are
+    // filled on both sides, so the finished pair is still on show beside it.
     site: {
       name: "Sello Library, Espoo",
       address: "Leppävaarankatu 9, 02600 Espoo",
       publicNote:
         "Drop-off is from 08:00 and pick-up is by 18:00, both at the main entrance on Leppävaarankatu. Come up to the second floor and the group room is on the right, past the study desks. There is a water fountain outside the room, and the café downstairs closes at 16:00.",
-      staffNote:
-        "Room key is at the info desk on the ground floor, signed out under the SOG booking. The projector needs the HDMI adapter from the drawer, not the cable left on the table. Fire exit is the stairwell behind the room, not the lift lobby. The caretaker locks the second floor at 18:00 sharp.",
+      staffNote: null,
     },
     materialUrl: "https://drive.sog.gg/roblox-builders-camp/day-by-day",
     groupName: "Builders red",
@@ -837,6 +996,10 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       staffNote:
         "Venue laptops are slow to load Studio — start them ten minutes early. Lunch is 12:30, there is a proper break at 15:00, and the room has to be clear by 18:00.",
     },
+    // Notes, and an empty newcomers map — the one place the two gates are shown
+    // coming apart, and the exact shape the live shell hands a non-club product.
+    // See `campMemberFlair`.
+    memberFlair: campMemberFlair,
     peers: [
       {
         id: "mock-group-blue",
@@ -885,12 +1048,19 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
     groupName: "Thursday A",
+    // The partially-filled notes state: a written family note with the staff
+    // ghost below it, inside the padlocked block, so the one-note group is on
+    // show somewhere. The empty half is deliberate, not an unfinished fixture.
     groupNotes: {
       publicNote:
         "Thursday A are building one shared obstacle course, a few obstacles at a time. Everything each team makes gets snapped into it at the end of the term.",
-      staffNote:
-        "Studio is slow to open on the older laptops — worth starting it before the group arrives. Siiri needs pairing rather than free choice of partner.",
+      staffNote: null,
     },
+    // The only question this scenario is open to answer is what a Roblox
+    // identity cell looks like, so the roster carries the standard quiet
+    // overlay — every note button dimmed, no badges — rather than none at all,
+    // which is not a state the live page has.
+    memberFlair: quietMemberFlair,
     peers: [
       {
         id: "mock-group-thursday-b",
@@ -927,12 +1097,17 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     site: null,
     materialUrl: null,
     groupName: "Tuesday A",
+    // The fully-empty notes state: both ghosts showing, which is what a brand-new
+    // group's gedu meets — the state the ghost hints exist to teach.
     groupNotes: {
-      publicNote:
-        "Tuesday A are working through the basics in Python. Nothing needs installing at home — everything runs in the browser.",
-      staffNote:
-        "No game account on this product, so nothing to check against a server. Two of the group are well ahead and want harder problems.",
+      publicNote: null,
+      staffNote: null,
     },
+    // The same quiet overlay as the Roblox scenario, and for the same reason:
+    // the subject here is the short row, so nothing on it is lit — but the note
+    // button is still on every row, because a roster without one is not a
+    // roster this page can draw.
+    memberFlair: quietMemberFlair,
     peers: [
       {
         id: "mock-group-tuesday-b",
@@ -944,10 +1119,10 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   },
 };
 
-export function buildGeduProductPageFixture(
+export function buildGroupWorkspaceFixture(
   now: Date,
-  scenario: GeduProductScenario,
-): GeduProductPageFixture {
+  scenario: GroupWorkspaceScenario,
+): GroupWorkspaceFixture {
   const config = SCENARIOS[scenario];
 
   const feed = buildSessionFeedFixture(now, {
@@ -1017,6 +1192,7 @@ export function buildGeduProductPageFixture(
     groupNotes: config.groupNotes,
     site: config.site,
     materialUrl: config.materialUrl,
+    memberFlair: config.memberFlair(now),
   };
 }
 
@@ -1140,6 +1316,13 @@ function buildRoster(
         // mutually exclusive and this is the other side of that.
         parent_email: null,
         participant_email: "marja.korhonen@example.com",
+        // The staff-only flair (00203) is null-shaped on every roster entry
+        // here, on purpose: the scene feeds both marks through the page body's
+        // own `RosterMemberFlair` prop, and rows do not read flair off a roster
+        // entry. Filling these in would be a second source for one fact.
+        group_joined_at: null,
+        note: null,
+        note_updated_by_first_name: null,
       };
     }
     const detail = details[person.id];
@@ -1169,6 +1352,11 @@ function buildRoster(
       // A child's contact is their linked parent's address; their own profile
       // email is the synthetic handle and is never emitted.
       participant_email: null,
+      // Null-shaped for the same reason as the adult row above: the scene's
+      // flair travels through the page body's `RosterMemberFlair` prop.
+      group_joined_at: null,
+      note: null,
+      note_updated_by_first_name: null,
     };
   });
 }

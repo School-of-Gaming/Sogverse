@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import type { SessionFeedGamer } from "@/components/gedu/session-feed";
+import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { useNow } from "@/providers";
@@ -18,18 +19,24 @@ import {
   useSetSiteNotes,
   type GeduGroupFeed,
 } from "@/services/gedu-sessions";
+import { useSetGamerGroupNote } from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
 } from "@/services/roblox";
 import type { GeduAssignedProduct } from "@/types";
-import { SessionDetailsBackLink } from "./BackLink";
-import { GeduProductPageBody } from "./GeduProductPageBody";
+import { SessionDetailsBackLink } from "@/components/group-workspace/BackLink";
+import { deriveRosterFlairMaps } from "@/components/group-workspace/derive-roster-flair";
+import { createGameUsernameSave } from "@/components/group-workspace/game-username-save";
+import {
+  GroupWorkspace,
+  type RosterMemberFlair,
+} from "@/components/group-workspace/GroupWorkspace";
+import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
+import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
+import type { SiteNotesDraft } from "@/components/group-workspace/SiteNotesPanel";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
-import type { GroupNotesDraft } from "./GroupNotesPanel";
-import { createSessionEntrySaves } from "./session-entry-saves";
-import type { SiteNotesDraft } from "./SiteNotesPanel";
 
 /**
  * The data shell behind `/gedu/clubs|camps|events/[id]` — the gedu's group
@@ -53,6 +60,12 @@ import type { SiteNotesDraft } from "./SiteNotesPanel";
  * read.** They are the same children, but only one of the two is invalidated
  * when a gedu fixes a game username, and a roster that does not refresh after
  * its own edit is worse than a slightly indirect one.
+ *
+ * **The staff flair rides that same copy and costs no third read.** Newcomer
+ * stamps and Gedu notes are fields on the feed's roster rows, so this page never
+ * asks `get_group_staff_overlay` — that RPC exists for the voice room, which
+ * owns no roster document at all. What the shell does instead is fold those
+ * fields into the one flair object the body takes, against the page's own clock.
  *
  * **Both reads are usually already answered before this renders.** The route's
  * server half runs the same pair and hydrates them into the cache, so a direct
@@ -168,6 +181,10 @@ function Workspace({
   // returns. The dispatch happens inside the save handler instead.
   const updateMinecraft = useUpdateGroupMemberMinecraft(groupId);
   const updateRoblox = useUpdateGroupMemberRoblox(groupId);
+  // The one write behind the roster's staff flair. It invalidates all four
+  // documents that carry the same note — this page's feed among them — so the
+  // rail relights its own button without anything here refetching by hand.
+  const setGamerNote = useSetGamerGroupNote(groupId);
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -287,6 +304,52 @@ function Workspace({
   );
 
   /**
+   * The roster's staff-only overlay, built from **the same roster copy the rail
+   * renders** — the feed's, not the assignment document's.
+   *
+   * That is the whole reason both readers carry the three flair fields: the
+   * shell throws the assignment document's roster away above, so a page built
+   * from that copy would show no badge and no note with nothing failing.
+   *
+   * **Absence is how "none" is spelled.** A NULL from the RPC is left out of the
+   * map rather than written in as a null, because every consumer downstream —
+   * the row's `hasNote`, the dialog's seed, the badge's own window check — reads
+   * a missing key as the answer rather than as a gap.
+   *
+   * The turn itself — the clubs-only gate, and absence being how "none" is
+   * spelled — is next door rather than here, because the admin group details
+   * page folds the same document into the same overlay and must produce the same
+   * maps. What this shell owns is only the gate's *input*: the product type it
+   * reads it from.
+   *
+   * The clock is the page's own — frozen with the feed while a session editor is
+   * open — so a newcomer meter answers off the same instant as everything
+   * around it rather than inventing one.
+   */
+  const drawsNewcomerBadge = showsNewcomerBadge(product.product.product_type);
+  const flairMaps = useMemo(
+    () => deriveRosterFlairMaps(feed.roster, drawsNewcomerBadge),
+    [feed.roster, drawsNewcomerBadge],
+  );
+
+  /**
+   * The flair the body takes, with the write attached.
+   *
+   * **The mutation's promise goes straight through.** The dialog holds its own
+   * `committing` flag, awaits this and closes only once it lands, so nothing
+   * here derives a disabled state from `isPending` — that flag flips false a
+   * beat before the dialog closes, which is exactly the frame the button must
+   * not re-enable in.
+   */
+  const memberFlair: RosterMemberFlair = {
+    now,
+    ...flairMaps,
+    onSaveNote: async (participantId, text) => {
+      await setGamerNote.mutateAsync({ participantId, note: text });
+    },
+  };
+
+  /**
    * Save and Send for one session card — the diff, the write ordering and the
    * failure classification — bound to this group's entries and this surface's
    * mutations.
@@ -334,63 +397,21 @@ function Workspace({
    * A gedu correcting a child's game username, with the platform's real round
    * trip behind it.
    *
-   * The route resolves the name server-side and stores the account key beside
-   * it, so a save that finds an account lands **verified** — the status here is
-   * read off what came back rather than guessed at, and a name the platform does
-   * not know lands `unverified` with the name still saved. A clear needs no
-   * lookup and no status at all.
-   *
-   * **The platform decides which write happens, and it is the product's rather
-   * than the row's**: one roster shows one identity, so there is no per-child
-   * question to ask here. A product whose topic names no platform renders no
-   * editor at all, so this cannot be reached with a null one — and it returns
-   * quietly rather than throwing if it somehow is, because a roster row is not
-   * the place to surface a programming error.
+   * **The same implementation the admin group details page runs**, imported
+   * rather than reproduced: the platform dispatch and the
+   * checking/verified/unverified machine are rules about the write, not about
+   * who is making it. What this shell hands over is which platform, which
+   * mutations, and where the statuses live.
    */
-  const handleSaveGameUsername = async (gamerId: string, username: string) => {
-    if (platform === null) return;
-    const trimmed = username.trim();
-    const value = trimmed.length === 0 ? null : trimmed;
-
-    /** The write for this product's platform, answering with the stored key. */
-    const save = async (): Promise<string | number | null> =>
-      platform === "minecraft"
-        ? (
-            await updateMinecraft.mutateAsync({
-              gamerId,
-              minecraftUsername: value,
-            })
-          ).minecraft_uuid
-        : (
-            await updateRoblox.mutateAsync({ gamerId, robloxUsername: value })
-          ).roblox_user_id;
-
-    if (value === null) {
-      await save();
-      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
-      return;
-    }
-
-    setGameStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
-    try {
-      // Presence of the key is the whole of "verified" — nothing reads its
-      // value, which is how a dashed Mojang UUID and a Roblox integer share one
-      // branch without being pretended to be the same value space.
-      const externalId = await save();
-      setGameStatuses((prev) => ({
-        ...prev,
-        [gamerId]: externalId === null ? "unverified" : "verified",
-      }));
-    } catch (error) {
-      // A refused write says nothing about the name, so the row goes back to
-      // whatever its account says rather than claiming a failed check.
-      setGameStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
-      throw error;
-    }
-  };
+  const handleSaveGameUsername = createGameUsernameSave({
+    platform,
+    updateMinecraft,
+    updateRoblox,
+    setGameStatuses,
+  });
 
   return (
-    <GeduProductPageBody
+    <GroupWorkspace
       data={data}
       entries={entries}
       // The very instant `entries` were built from — frozen while an editor is
@@ -425,6 +446,7 @@ function Workspace({
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
+      memberFlair={memberFlair}
     />
   );
 }

@@ -15,7 +15,10 @@ import { ROUTES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import { useGeduContractAcceptances } from "@/services/gedu";
-import { GEDU_CONTRACT_CURRENT_VERSION } from "./documents";
+import {
+  findGeduContractAcceptance,
+  GEDU_CONTRACT_CURRENT_VERSION,
+} from "./documents";
 
 /**
  * The gedu's own standing under the contract, on the settings page: what they
@@ -43,12 +46,14 @@ export function GeduContractSettingsCard({ geduId }: { geduId: string }) {
   const timeZone = useTimezone();
 
   const { data: acceptances } = useGeduContractAcceptances(geduId);
+  // Matched on the base version: a stored version names its language too, and
+  // both languages of one version are the same agreement, so either signature
+  // answers this card's question. The row that answers it is then shown with its
+  // full stored version, because which text was signed is part of the record.
   const acceptance =
     acceptances === undefined
       ? undefined
-      : (acceptances.find(
-          (row) => row.contract_version === GEDU_CONTRACT_CURRENT_VERSION,
-        ) ?? null);
+      : findGeduContractAcceptance(acceptances, GEDU_CONTRACT_CURRENT_VERSION);
 
   return (
     <Card>

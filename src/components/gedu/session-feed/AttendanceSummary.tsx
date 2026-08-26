@@ -1,32 +1,23 @@
 "use client";
 
-import { useId, useState } from "react";
-import { Check, ChevronDown, Minus, UserRound, X } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   ATTENDANCE_TONE,
   attendanceMarkState,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
-import { attendanceTally } from "./entry-state";
 import type { AttendanceMarks, SessionFeedGamer } from "./types";
-import { CollapsibleRegion } from "./CollapsibleRegion";
 
 /**
- * The attendance line under a past session, expanding to the per-gamer list.
+ * The attendance chips under a past session — one per gamer, always visible.
  *
- * **The headline answers whichever question is still open.** While the roster is
- * only part-marked it reports progress — "5 of 8 marked" — because that is the
- * number the gedu came back for; once every child has an answer it switches to
- * the one that matters afterwards, "6 of 8 present". A part-marked sheet showing
- * a present count would be read as the final tally by everyone who saw it, which
- * is the one misreading this surface cannot afford: attendance is what a gedu is
- * paid on.
- *
- * The names are a follow-up question, so they live behind a disclosure that
- * grows downward from the summary row. The summary row itself never moves, which
- * is what keeps a second click from landing on whatever the expansion pushed
- * into its place.
+ * This used to be a "5 of 8 marked" summary line with the chips behind a
+ * disclosure. The owner removed both on purpose: a roster is single figures to
+ * low tens, so the chips cost no meaningful space, and the count was a worse
+ * answer than the chips themselves — the reader's next question was always
+ * "which ones", which is what the chips say at a glance. Do not reintroduce a
+ * collapse here without a ruling.
  */
 export function AttendanceSummary({
   roster,
@@ -36,73 +27,47 @@ export function AttendanceSummary({
   attendance: AttendanceMarks;
 }) {
   const t = useTranslations("gedu.sessionFeed");
-  const [open, setOpen] = useState(false);
-  const namesId = useId();
-  const { present, marked, total, complete } = attendanceTally(
-    roster,
-    attendance,
-  );
 
-  if (total === 0) return null;
+  if (roster.length === 0) return null;
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-controls={namesId}
-        className="flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        <UserRound className="h-3.5 w-3.5" aria-hidden />
-        <span className="tabular-nums">
-          {complete
-            ? t("attendanceSummary", { present, total })
-            : t("attendanceMarkedCount", { marked, total })}
-        </span>
-        <ChevronDown
-          aria-hidden
-          className={cn(
-            "h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none",
-            open && "rotate-180",
-          )}
-        />
-      </button>
-
-      <CollapsibleRegion open={open} id={namesId}>
-        <ul className="flex flex-wrap gap-1.5 pt-2">
-          {roster.map((gamer) => {
-            const mark = attendance[gamer.id];
-            // The colours are the shared mark tones — the same map the family's
-            // own chip reads, so "present is a small positive and absent is
-            // neutral, never destructive" is decided once for both surfaces. The
-            // glyph below stays this set's own: three states here against the
-            // family's two, so the dash is spent on the unanswered one.
-            const tone = ATTENDANCE_TONE[attendanceMarkState(mark)];
-            return (
-              <li
-                key={gamer.id}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
-                  tone.border,
-                  tone.text,
-                )}
-              >
-                <MarkGlyph mark={mark} />
-                <span className="sr-only">
-                  {mark === "present"
-                    ? t("presentLabel")
-                    : mark === "absent"
-                      ? t("absentLabel")
-                      : t("unmarkedLabel")}
-                </span>
-                {gamer.firstName}
-              </li>
-            );
-          })}
-        </ul>
-      </CollapsibleRegion>
-    </div>
+    // Named list: the label is what a screen reader announces in place of the
+    // removed summary line, and it is also what distinguishes this list from
+    // the record editor's visible "Attendance" legend text in queries.
+    <ul
+      aria-label={t("attendanceLegend")}
+      className="flex flex-wrap gap-1.5"
+    >
+      {roster.map((gamer) => {
+        const mark = attendance[gamer.id];
+        // The colours are the shared mark tones — the same map the family's
+        // own chip reads, so "present is a small positive and absent is
+        // neutral, never destructive" is decided once for both surfaces. The
+        // glyph below stays this set's own: three states here against the
+        // family's two, so the dash is spent on the unanswered one.
+        const tone = ATTENDANCE_TONE[attendanceMarkState(mark)];
+        return (
+          <li
+            key={gamer.id}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
+              tone.border,
+              tone.text,
+            )}
+          >
+            <MarkGlyph mark={mark} />
+            <span className="sr-only">
+              {mark === "present"
+                ? t("presentLabel")
+                : mark === "absent"
+                  ? t("absentLabel")
+                  : t("unmarkedLabel")}
+            </span>
+            {gamer.firstName}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

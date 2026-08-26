@@ -2,11 +2,15 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { GamerService, type GamerUpdate } from "./gamers.service";
+import {
+  GamerService,
+  type GamerProfileEdit,
+  type GamerUpdate,
+} from "./gamers.service";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { robloxKeys } from "@/services/roblox/roblox.queries";
 import { familyKeys } from "@/services/family";
-import type { CreateGamerInput } from "@/types";
+import type { CreateGamerInput, GamerProfile } from "@/types";
 
 export const gamerKeys = {
   all: ["gamers"] as const,
@@ -114,7 +118,15 @@ export function useUpdateGamer() {
   });
 }
 
-export function useGamerProfile(gamerId: string) {
+/**
+ * `initialData` is for a server component that has already read the row and is
+ * handing it down: the island paints complete on its first frame with nothing
+ * arriving late enough to move anything.
+ */
+export function useGamerProfile(
+  gamerId: string,
+  { initialData }: { initialData?: GamerProfile } = {},
+) {
   const supabase = getClient();
   const service = new GamerService(supabase);
 
@@ -122,6 +134,46 @@ export function useGamerProfile(gamerId: string) {
     queryKey: gamerKeys.gamerProfile(gamerId),
     queryFn: () => service.getGamerProfile(gamerId),
     enabled: !!gamerId,
+    initialData,
+  });
+}
+
+/**
+ * An admin correcting the birth date / gender on a gamer's profile row.
+ *
+ * The write returns the stored row, so the cache is *set* from it before being
+ * invalidated: the card reads its values back from this key, and seeding it
+ * means the saved state is on screen in the same tick the save resolves rather
+ * than a refetch later. The invalidate that follows is what keeps any other
+ * mounted reader of the same key honest.
+ *
+ * Scope stops at the profile key on purpose. Age also appears on the group and
+ * roster surfaces, but those read it through their own RPC-backed keys on pages
+ * this admin is not looking at; dragging them into a refetch from here would
+ * cost every one of those queries for a value nobody is reading.
+ */
+export function useUpdateGamerProfile() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  return useMutation({
+    mutationFn: ({
+      gamerId,
+      edit,
+    }: {
+      gamerId: string;
+      edit: GamerProfileEdit;
+    }) => service.updateGamerProfile(gamerId, edit),
+    onSuccess: (profile, variables) => {
+      queryClient.setQueryData(
+        gamerKeys.gamerProfile(variables.gamerId),
+        profile,
+      );
+      queryClient.invalidateQueries({
+        queryKey: gamerKeys.gamerProfile(variables.gamerId),
+      });
+    },
   });
 }
 

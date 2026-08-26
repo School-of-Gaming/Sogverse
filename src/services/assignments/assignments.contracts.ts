@@ -96,6 +96,30 @@ export const geduAssignedProduct = z.object({
              * definitions is how the two drift.
              */
             participant_email: z.string().nullable(),
+            /**
+             * The staff-only flair (00203), emitted for every roster row — note
+             * or no note, stamp or no stamp.
+             *
+             * `group_joined_at` is when this seat entered **this group**, as
+             * against the product-wide signup date: a move between two groups of
+             * one product resets it. It is emitted unconditionally because a
+             * timestamp is a *fact* and the clubs-only newcomer rule is a
+             * *presentation* rule the client applies through
+             * `showsNewcomerBadge`; null here means the seat predates the column
+             * (there was deliberately no backfill), never "not a club".
+             *
+             * `note` is the (group, member) staff note, null when no row exists
+             * — the absence of a row is what "no note" means everywhere.
+             * `note_updated_by_first_name` is null alongside a note only when
+             * the editor's account is gone, and the surface then shows the note
+             * with no editor line.
+             *
+             * Kept in parity with the gedu feed's roster entry, which is the
+             * copy every rendered roster actually comes from.
+             */
+            group_joined_at: z.string().nullable(),
+            note: z.string().nullable(),
+            note_updated_by_first_name: z.string().nullable(),
           })
         )
         .nullable(),

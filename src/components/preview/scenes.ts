@@ -228,7 +228,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-contract",
     title: "Gedu contract",
     description:
-      "The page a Game Educator reads and signs their contract on: the Finnish terms verbatim, with the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
+      "The page a Game Educator reads and signs their contract on: the terms verbatim in your own locale's language, with the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -273,6 +273,27 @@ export const PREVIEW_SCENES = [
         label: "No game identity — the short row",
         description:
           "The topic that names no game account, where every roster row is the short one.",
+      },
+    ],
+  },
+  {
+    surface: "voice-room",
+    title: "Voice room",
+    description:
+      "The scheduled group room over a fixture context — zone cards, control dock, chat and the participant rail. The rail is where the staff flair is judged; the family scenario is the check that none of it is there.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "gedu",
+        label: "Gedu — mid-session",
+        description:
+          "The staff view: newcomer badges across the window and two notes, on the real rail.",
+      },
+      {
+        slug: "gamer",
+        label: "Gamer — the same room",
+        description:
+          "The same room with no staff overlay at all, which is what a child's client can build.",
       },
     ],
   },

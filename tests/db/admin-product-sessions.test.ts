@@ -321,7 +321,9 @@ describe("admin product sessions", () => {
     it("refuses every non-admin caller", async () => {
       // The gedu is in here on purpose. This read answers a question about a
       // PRODUCT — every group on it — which is not a question a gedu's own
-      // workspace asks, and get_gedu_group_feed remains theirs.
+      // workspace asks. The widening runs one way only: 00204 let an admin read
+      // get_gedu_group_feed, so the admin page can render one group through the
+      // gedu page's body, but nothing lets a gedu read across a whole product.
       for (const client of [geduAuth, customerAuth, gamerAuth]) {
         const { error } = await client.rpc("get_admin_product_sessions", {
           p_product_id: PRODUCT,

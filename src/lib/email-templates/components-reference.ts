@@ -1,7 +1,14 @@
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { wrapInLayout } from "./layout";
-import { ctaButton, ctaButtonRow, inlineLink, bulletList, sectionLabel } from "./blocks";
+import {
+  calloutPanel,
+  ctaButton,
+  ctaButtonRow,
+  inlineLink,
+  bulletList,
+  sectionLabel,
+} from "./blocks";
 import { heading, paragraph, pinnedFill, styledName, styledProductName } from "./utils";
 
 /**
@@ -119,10 +126,13 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * faithfully a client renders it — and brand colour inside a sentence is a
    * rule this directory settled against. Emphasis in a mail is weight.
    *
-   * Also not shown: the status colours. `globals.css` has destructive/success/
-   * warning/info; `colors.ts` mirrors none of them, because no mail has needed
-   * one and an unverified colour on this page would be an invitation rather than
-   * a reference. Mirror them when a mail actually needs one, and verify then.
+   * Also not shown as a swatch: the info colour. It is mirrored now, because a
+   * mail needed it — but a swatch paints the token's name *on* the fill, and
+   * white on this blue is under AA. There is no legible label to put on it, so
+   * showing it that way would be showing a pairing no mail may emit. It appears
+   * below in the only shape it takes: the callout's border and wash. The other
+   * status colours (destructive/success/warning) are still unmirrored; mirror
+   * one when a mail needs it, and measure it then.
    */
   const palette = `
     ${section("Palette")}
@@ -227,9 +237,40 @@ export function buildComponentsReferenceEmail(locale: string): string {
     )}
   `;
 
+  /*
+   * CALLOUT
+   *
+   * The app's `Alert` in its `info` variant, reaching an inbox: a wash of the
+   * info colour inside a full border of it, both flattened out of alpha and
+   * composited over the message panel, with the app's `rounded-lg` corner.
+   *
+   * It is for something about the mail rather than in it — the one that exists
+   * is the session report's staff copy, opening by saying that it is a copy and
+   * that each family's mail was its own. A mail that has nothing to say about
+   * itself does not need one.
+   *
+   * Its text is the body's colour rather than the accent, which is the app's one
+   * deviation and a measured one: the info blue on this wash is just under AA at
+   * a label's size, and no fidelity work rescues a colour that fails contrast.
+   * The border is quiet by design — everything the panel means is in its words.
+   */
+  const callout = `
+    ${section("Callout")}
+    ${entry(
+      "calloutPanel",
+      calloutPanel({
+        label: "Attention",
+        paragraphs: [
+          "A callout, for what the reader has to be told before the mail itself.",
+          "And a second, so the rhythm of a pair is the shape you are looking at.",
+        ],
+      }),
+    )}
+  `;
+
   return wrapInLayout({
     title: "Email components",
-    content: `${heading("Email components")}${palette}${buttons}${text}`,
+    content: `${heading("Email components")}${palette}${buttons}${text}${callout}`,
     locale,
   });
 }

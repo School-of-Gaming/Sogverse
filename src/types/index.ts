@@ -345,6 +345,35 @@ export type {
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 // ---------------------------------------------------------------------------
+// member flair (00203) — the two staff-only marks a gedu reads off a roster
+// before they read a single name: how new a member is to the group, and what
+// the last person to run it wrote down about them.
+// ---------------------------------------------------------------------------
+
+// gamer_group_notes — one row per (group, member). No Data API role holds a
+// grant on this table and RLS is on with no policy at all: every read rides a
+// roster document or `get_group_staff_overlay`, every write goes through
+// `set_gamer_group_note`, and all of those are SECURITY DEFINER. So these
+// aliases exist for the service-role side (db tests, admin tooling) rather than
+// for browser queries — the same arrangement as the session tables above.
+//
+// No Update alias: the write RPC upserts, and a trimmed-empty save deletes the
+// row rather than updating it to an empty string, so nothing in the app makes a
+// bare UPDATE statement for one to name.
+export type GamerGroupNote = Database["public"]["Tables"]["gamer_group_notes"]["Row"];
+export type GamerGroupNoteInsert = Database["public"]["Tables"]["gamer_group_notes"]["Insert"];
+
+// get_group_staff_overlay / set_gamer_group_note — both return JSONB, so the
+// generated types are `Json`. The structured shapes are derived from the zod
+// contracts the service and the db tests both parse through. Re-exported here so
+// consumers keep importing their types from "@/types".
+export type {
+  GamerGroupNoteResult,
+  GroupStaffOverlay,
+  GroupStaffOverlayMember,
+} from "@/services/member-flair/member-flair.contracts";
+
+// ---------------------------------------------------------------------------
 // voice zones (00103) — the persisted half of the discrete-zone voice model.
 // See src/components/voice/CLAUDE.md for the discrete-zone voice model.
 // Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these
@@ -434,6 +463,31 @@ export interface GeduAssignedProductRosterEntry {
    * `@gamer.sogverse.internal` handle rather than a mailbox.
    */
   participant_email: string | null;
+  /**
+   * When this seat entered **this group** — not when it was taken on the
+   * product. A move between two groups of one product resets it, which is the
+   * whole claim the newcomer badge makes. Null when the seat predates the
+   * column: there was deliberately no backfill, so launch day is quiet.
+   *
+   * Emitted unconditionally, on camps and events too. The timestamp is a
+   * **fact**; whether to draw a badge from it is a **presentation** rule, and
+   * that rule lives in one place (`showsNewcomerBadge`) rather than in four
+   * RPCs.
+   */
+  group_joined_at: string | null;
+  /**
+   * The staff-only note about this member **in this group**, and null when
+   * nobody has written one — the absence of a row is what "no note" means
+   * everywhere. It does not follow a member moved to another group.
+   */
+  note: string | null;
+  /**
+   * Who last wrote that note, for the "Last edited by {first name}" line. Null
+   * with no note, and null alongside one only when the editor's account is gone
+   * (the column is ON DELETE SET NULL) — the note stands and the surface shows
+   * no editor line.
+   */
+  note_updated_by_first_name: string | null;
 }
 
 export interface GeduAssignedProductGroupGedu {

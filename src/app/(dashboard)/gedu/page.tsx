@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { GeduDashboardPage } from "@/components/gedu/GeduDashboardPage";
-import { GEDU_CONTRACT_CURRENT_VERSION } from "@/components/gedu/contract/documents";
+import {
+  GEDU_CONTRACT_CURRENT_VERSION,
+  geduContractBaseVersion,
+} from "@/components/gedu/contract/documents";
 import { createClient } from "@/lib/supabase/server";
 // Imported from the service module rather than the package index because that
 // index re-exports `"use client"` query hooks, which a server component would
@@ -98,6 +101,11 @@ async function getIsCertified(): Promise<boolean> {
  * that they have already signed, while an unsigned one shown nothing never
  * learns that anything is owed. The contract page is the authority in both
  * cases, and it reads its own answer.
+ *
+ * The comparison is between base versions. A stored version carries the language
+ * of the text that was signed, and the languages of one version are the same
+ * agreement — so a gedu who signed the Finnish text and reads the app in English
+ * has nothing owed, and must not meet a band saying otherwise.
  */
 async function getHasAcceptedContract(): Promise<boolean> {
   try {
@@ -109,7 +117,9 @@ async function getHasAcceptedContract(): Promise<boolean> {
       userId,
     );
     return acceptances.some(
-      (row) => row.contract_version === GEDU_CONTRACT_CURRENT_VERSION,
+      (row) =>
+        geduContractBaseVersion(row.contract_version) ===
+        GEDU_CONTRACT_CURRENT_VERSION,
     );
   } catch {
     return false;

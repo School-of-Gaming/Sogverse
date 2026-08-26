@@ -48,7 +48,6 @@ import {
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import { GroupsPanel } from "./groups/groups-panel";
-import { AdminProductSessionsPanel } from "./sessions/admin-sessions-panel";
 import { ProductStatusChip } from "./product-status-chip";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -180,11 +179,10 @@ export function ProductDetailsPage({
         opensTime={voice.opensTime}
       />
 
-      {/* Last on the page, and the only section here fed by a slow read. Its
-          skeleton gives way to a body of a different height, and putting it
-          under everything else is what makes that free: there is nothing below
-          it for the change to push around. */}
-      <AdminProductSessionsPanel productId={productId} />
+      {/* What happened *inside* a group — its standing notes, its venue's, its
+          roster and its whole session record — is no longer re-composed at the
+          foot of this page. Each group's header above links to its own page,
+          which renders the gedu's workspace for that group unchanged. */}
     </div>
   );
 }

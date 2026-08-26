@@ -118,17 +118,19 @@ interface GeduContractDocumentViewProps {
  * not be able to tell that two different renderers drew them.
  *
  * The caller owns the page around the document — the title chrome, the accept
- * affordance, the scroll container — and any note explaining that the terms are
- * in Finnish whatever the reader's locale.
+ * affordance, the scroll container — and any note explaining which of the
+ * contract's equally binding languages this text is, and why it is that one.
  */
 export function GeduContractDocumentView({
   document,
 }: GeduContractDocumentViewProps) {
   return (
     <article
-      // `lang` on the article, not the page: the document is Finnish in every
-      // locale, and a screen reader reading Finnish sentences with an English
-      // voice is unusable.
+      // `lang` on the article, not the page: the document's language is a
+      // property of the text rather than of the app around it — a Finnish
+      // reader with the app in English meets Finnish clauses either way — and a
+      // screen reader reading Finnish sentences with an English voice is
+      // unusable.
       lang={document.language}
       className="mx-auto max-w-3xl text-sm leading-relaxed sm:text-base"
     >

@@ -4,7 +4,7 @@ import {
   sessionReportSubject,
 } from "@/lib/email-templates/session-report";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { BRAND } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS_TINT } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
 
@@ -104,6 +104,93 @@ describe("buildSessionReportEmail", () => {
     const body = html.slice(from, to);
     expect(body).not.toContain(BRAND.primary);
     expect(body).not.toContain(BRAND.secondary);
+  });
+});
+
+/**
+ * The staff copy is the same mail with one thing added, and both halves of that
+ * matter: the banner has to be there when the copy is asked for, and it has to
+ * be absent from every family mail — a parent reading "this is a copy that went
+ * to the group's families" would be worse than the confusion the banner exists
+ * to end.
+ */
+describe("the staff copy's banner", () => {
+  const LABEL = "Gedu and Admin copy";
+  const IS_A_COPY = "This is a copy of the session report that went to the group";
+  const PRIVACY = "Every family received their own separate email";
+
+  it("opens the staff copy by saying what it is and what the families got", () => {
+    const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
+
+    expect(html).toContain(LABEL);
+    expect(html).toContain(IS_A_COPY);
+    expect(html).toContain(PRIVACY);
+  });
+
+  it("says all of it above the intro, where the reader's alarm already is", () => {
+    const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
+
+    // The gedu's name is in the intro sentence and nowhere else in the mail.
+    const intro = html.indexOf("Marianne");
+    expect(intro).toBeGreaterThan(0);
+    expect(html.indexOf(LABEL)).toBeLessThan(intro);
+    expect(html.indexOf(PRIVACY)).toBeLessThan(intro);
+  });
+
+  it("is absent from the mail a family receives", () => {
+    for (const html of [
+      buildSessionReportEmail(t, "en", base),
+      buildSessionReportEmail(t, "en", { ...base, staffCopy: false }),
+    ]) {
+      expect(html).not.toContain(LABEL);
+      expect(html).not.toContain(IS_A_COPY);
+      expect(html).not.toContain(PRIVACY);
+    }
+  });
+
+  /**
+   * The flag's default is the family mail: an absent `staffCopy` and an explicit
+   * `false` produce the identical document, byte for byte. That is what this
+   * pins — two renders of the current builder against each other, not this
+   * builder against the one that predated the flag, which no assertion here can
+   * reach.
+   */
+  it("renders the same family mail whether the flag is absent or false", () => {
+    expect(buildSessionReportEmail(t, "en", { ...base, staffCopy: false })).toBe(
+      buildSessionReportEmail(t, "en", base),
+    );
+  });
+
+  /**
+   * The banner is the app's `Alert` in its `info` variant, not a treatment of
+   * its own: a washed info surface inside a full info border. It carried a 3px
+   * brand-orange rule down one edge before that, which is a shape the app has
+   * nowhere and which read as a warning — so the brand colours are asserted
+   * *absent* here, not merely relocated.
+   */
+  it("takes its prominence from the info border and wash, not from coloured text", () => {
+    const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
+    // The banner's own cell, from its opening tag to its close, so nothing the
+    // shell around it emits can satisfy or break these.
+    const start = html.lastIndexOf("<td ", html.indexOf(LABEL));
+    const banner = html.slice(start, html.indexOf("</td>", start));
+
+    // The Alert's full 1px border, in the info colour flattened out of alpha.
+    expect(banner).toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    expect(banner).not.toContain("border-left:");
+    // The wash, declared twice so Gmail's dark theme leaves the fill alone.
+    expect(banner).toContain(
+      `background-color:${STATUS_TINT.infoSurface};background-image:linear-gradient(${STATUS_TINT.infoSurface},${STATUS_TINT.infoSurface})`,
+    );
+    // No brand colour anywhere in it: the accent moved, it did not move over.
+    expect(banner).not.toContain(BRAND.primary);
+    expect(banner).not.toContain(BRAND.secondary);
+    // Every colour the banner's own text carries is the body's — the app's
+    // Alert tints its title with the accent, and at this size that pairing is
+    // below AA (`palette-contrast.test.ts` pins it as rejected).
+    for (const color of banner.matchAll(/<p style="[^"]*color:(#[0-9a-fA-F]{6})/g)) {
+      expect(color[1]).toBe(DARK_THEME.foreground);
+    }
   });
 });
 

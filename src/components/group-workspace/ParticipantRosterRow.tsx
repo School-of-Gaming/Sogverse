@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
+import { GamerNoteButton, NewcomerBadge } from "@/components/member-flair";
 import {
   gameFigureHeight,
   GAME_PLATFORMS,
@@ -67,6 +68,47 @@ interface ParticipantRosterRowProps {
     participantId: string,
     username: string,
   ) => void | Promise<void>;
+  /**
+   * When this person joined the group the roster belongs to, as an ISO stamp,
+   * or `null` where that is not recorded or the badge does not apply — the
+   * newcomer badge's clock.
+   *
+   * **This is the per-member half of the flair, and the only half that is
+   * optional.** Most of a roster is past the window or was never stamped, and a
+   * `null` here simply renders no badge; what a caller cannot do is decline the
+   * capability, because the badge's gate is the *data* — the stamp comes off a
+   * staff-scoped read, and this row is only ever drawn on a staff-only page.
+   *
+   * Paired with {@link flairNow} — a badge without a clock would have to invent
+   * one, and a clock it invented would disagree with the page around it.
+   */
+  newcomerJoinedAt: string | null;
+  /**
+   * The instant the newcomer badge's meter is measured against — the caller's
+   * request-stable clock, the same one everything else on the page answers off.
+   */
+  flairNow: Date;
+  /**
+   * Whether a Gedu has written a note about this person in this group. It only
+   * lights the note button at the end of the row; the note's *text* never
+   * reaches this row, which merely opens the dialog that holds it.
+   *
+   * Arrives with the roster rather than after it — so the button is painted in
+   * its final state in the first frame, rather than lighting up under a reader
+   * who is already looking at the row.
+   */
+  hasNote: boolean;
+  /**
+   * Open this person's Gedu note — the caller owns the dialog, because one
+   * roster can only have one open.
+   *
+   * **Every row gets it**, including the majority with nothing written yet:
+   * opening an empty note *is* the add flow, and gating the affordance on
+   * {@link hasNote} would leave no way to write the first one. That is also why
+   * it is required rather than a capability a caller can withhold — a roster on
+   * this page with no way in to a note is not a state the product has.
+   */
+  onOpenNote: () => void;
   /**
    * Where the platform's check for this child's name has got to, when one is in
    * flight or has just landed. Omitted, the row derives its own resting state
@@ -141,6 +183,15 @@ interface ParticipantRosterRowProps {
  * The one thing that does add height is the line saying a save was refused, and
  * that is a direct answer to the button the gedu just pressed rather than
  * something arriving on the data's own schedule.
+ *
+ * **Staff flair is a required fact of this row, not an extra.** A newcomer badge
+ * on the identity line and a note button at the end of it come off a
+ * staff-scoped read, and the only page that draws this row is the staff-only
+ * group workspace — so the capability is never in question and the row does not
+ * pretend it can be. What *is* per-member is which marks are lit: a `null` join
+ * stamp renders no badge, and a member nobody has written about gets the same
+ * note button, dimmed. Both facts arrive in the same payload as the roster, so
+ * neither lands beside a name that is already on screen.
  */
 export function ParticipantRosterRow({
   participant,
@@ -148,6 +199,10 @@ export function ParticipantRosterRow({
   onSaveGameUsername,
   gameStatus,
   avatarUrl,
+  newcomerJoinedAt,
+  flairNow,
+  hasNote,
+  onOpenNote,
 }: ParticipantRosterRowProps) {
   const t = useTranslations("gedu.sessionDetails");
   const c = useTranslations("common");
@@ -171,19 +226,43 @@ export function ParticipantRosterRow({
   }
   const detail = detailParts.join(" · ");
 
+  const avatar = <Identicon id={participant.participant_id} size={32} />;
+
   return (
     <li className="space-y-1.5 rounded-md border border-border bg-card p-2.5">
       <div className="flex min-w-0 items-start gap-2.5">
-        <Avatar className="h-8 w-8 shrink-0">
-          <Identicon id={participant.participant_id} size={32} />
-        </Avatar>
+        <Avatar className="h-8 w-8 shrink-0">{avatar}</Avatar>
         <div className="min-w-0 flex-1 space-y-1">
           {/* A div, not a p: the adult variant's Badge renders a div, and a
               block element inside a p is invalid HTML — the browser closes the
               p early and React fails hydration on the mismatch. */}
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-medium leading-tight">
             <span className="truncate">{participant.first_name}</span>
-            {isAdult ? (
+            {/* Order on this line: the name, then this person's own detail,
+                then their role badge, and the newcomer badge last. The middle
+                slot is the child's age and gender or — on an adult row — the
+                Parent badge, since a parent has no such detail; the voice room
+                follows the same rule with the game username in that slot. An
+                adult can be new to a group like anyone else, so this is not a
+                child-only mark.
+
+                **The newcomer badge goes last because it is the one thing here
+                that can arrive late.** On this page it does not — the flair
+                comes in the same payload as the roster — but the rule is shared
+                with the voice room, where the overlay lands a round trip after
+                the row paints, and a mark that appears at the end of the run is
+                absorbed by the line's slack instead of shoving a role badge
+                sideways. One order, both surfaces, and no surface has to
+                remember why.
+
+                All four queue in one wrapping line and never displace one
+                another. */}
+            {!isAdult && detail && (
+              <span className="text-[11px] font-normal text-muted-foreground">
+                {detail}
+              </span>
+            )}
+            {isAdult && (
               /* The same badge and the same word the admin surfaces use for a
                  customer profile, read off the shared role constants rather
                  than restated — a second spelling of "Parent" is a second
@@ -196,13 +275,11 @@ export function ParticipantRosterRow({
               >
                 {c(ROLE_LABEL_KEYS.customer)}
               </Badge>
-            ) : (
-              detail && (
-                <span className="text-[11px] font-normal text-muted-foreground">
-                  {detail}
-                </span>
-              )
             )}
+            {/* Renders nothing for a member with no stamp or one past the
+                window, which is most of a roster — the per-member gate lives
+                in the badge rather than in a condition here. */}
+            <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
           </div>
           {!isAdult && platform !== null && (
             <GameIdentityCell
@@ -214,6 +291,11 @@ export function ParticipantRosterRow({
             />
           )}
         </div>
+        <GamerNoteButton
+          name={participant.first_name}
+          hasNote={hasNote}
+          onOpen={onOpenNote}
+        />
       </div>
       {contactEmail !== null && <ContactEmailCell email={contactEmail} />}
     </li>
@@ -325,7 +407,9 @@ function GameIdentityCell({
             the controls inside stay `h-7`, centered in it. Read off the constant
             rather than restated, because that height belongs to the shared row
             and has already changed once. */}
-        <div className={cn("flex items-center gap-1.5", gameFigureHeight("full"))}>
+        <div
+          className={cn("flex items-center gap-1.5", gameFigureHeight("full"))}
+        >
           <label className="sr-only" htmlFor={inputId}>
             {t("gameUsernameLabel", { platform: platformName })}
           </label>
@@ -344,7 +428,9 @@ function GameIdentityCell({
             // is the one person who can type past the wire schema and only find
             // out on save.
             maxLength={GAME_USERNAME_MAX_LENGTH}
-            placeholder={t("gameUsernamePlaceholder", { platform: platformName })}
+            placeholder={t("gameUsernamePlaceholder", {
+              platform: platformName,
+            })}
             className="h-7 w-40 min-w-0 flex-1 px-2 py-0 text-xs"
           />
           <Button

@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Groups",
+        "attendanceAndReports": "Attendance & reports",
         "subtitle": "Drag each participant into the group they’ll play with. Add Gedus to lead each group.",
         "addGroup": "Add group",
         "loading": "Loading…",
@@ -799,12 +800,9 @@
         "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
       },
       "sessions": {
-        "title": "Sessions",
-        "groupSelectorAria": "Choose a group",
-        "untitledGroup": "Untitled group",
-        "noGroups": "This product has no groups yet, so there is nothing recorded against it.",
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
+        "railGroupHeading": "Group",
         "addressLabel": "Venue address",
         "addressPlaceholder": "Street, postal code, city",
         "addAddress": "Add address",
@@ -827,12 +825,6 @@
       "joined": "Joined",
       "unknown": "Unknown",
       "referralCode": "Referral code",
-      "ageYears": "{age, plural, one {# year old} other {# years old}}",
-      "gender": {
-        "boy": "Boy",
-        "girl": "Girl",
-        "non_binary": "Non-binary"
-      },
       "linkedGamers": "Linked Gamers",
       "linkedParents": "Linked Parents",
       "unnamedGamer": "Unnamed Gamer",
@@ -843,6 +835,21 @@
       "unassignedGroup": "No group assigned",
       "needsGroup": "Needs group assignment",
       "untitledProduct": "Untitled product",
+      "gamerDetails": {
+        "title": "Personal details",
+        "edit": "Edit personal details",
+        "birthMonthLabel": "Birth month",
+        "birthYearLabel": "Birth year",
+        "genderLabel": "Gender",
+        "genderUnset": "Not specified",
+        "saveError": "Couldn’t save these details. Please try again.",
+        "gender": {
+          "boy": "Boy",
+          "girl": "Girl",
+          "non_binary": "Non-binary"
+        },
+        "ageYears": "{age, plural, one {# year old} other {# years old}}"
+      },
       "gameAccounts": {
         "title": "Game accounts",
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
@@ -1322,7 +1329,6 @@
       "noRecordLabel": "No record",
       "emptyFeed": "This group has no sessions yet.",
       "noNotesYet": "No notes on this one yet.",
-      "attendanceSummary": "{present} of {total} present",
       "presentLabel": "Present",
       "absentLabel": "Absent",
       "unmarkedLabel": "Not marked",
@@ -1352,11 +1358,11 @@
     },
     "groupNotes": {
       "heading": "About this group",
-      "add": "Add",
       "edit": "Edit",
       "cancel": "Cancel",
       "save": "Save",
-      "emptyHint": "Add a group note — anything that stays true between sessions.",
+      "publicEmpty": "Add a note for families — how this group works, what carries over between sessions.",
+      "staffEmpty": "Add the standing things another Gedu should know about this group.",
       "publicLabel": "Note for families",
       "publicHint": "Never include private or sensitive information about a gamer.",
       "publicPlaceholder": "How this group works, what carries over between sessions…",
@@ -1369,11 +1375,11 @@
       "heading": "Site notes",
       "sharedCaption": "{site} — shared by every product running at this site, so an edit here changes them everywhere.",
       "addressLabel": "Address",
-      "add": "Add",
       "edit": "Edit",
       "cancel": "Cancel",
       "save": "Save",
-      "emptyHint": "Add a site note — anything that stays true about the venue itself.",
+      "publicEmpty": "Add a note for families — which door to use, where to wait, what to bring.",
+      "staffEmpty": "Add what the next Gedu at this site needs to know — keys, kit, room quirks.",
       "publicLabel": "Note for families",
       "publicHint": "Never include private or sensitive information here.",
       "publicPlaceholder": "Which door to use, where to wait, what to bring…",
@@ -1385,7 +1391,7 @@
     "contract": {
       "back": "Back to My SOG",
       "pageTitle": "Your Gedu contract",
-      "intro": "These are the terms you work under as a Game Educator for School of Gaming. The contract is binding in Finnish, so it is shown exactly as written whatever language you read the rest of the app in.",
+      "intro": "These are the terms you work under as a Game Educator for School of Gaming. The agreement is published in both English and Finnish — the version you see follows your app language, and both are equally binding.",
       "acceptLead": "By signing below you confirm that you have read these terms and accept them as they stand. We record which version you accepted, when, and the name you signed under — nothing else.",
       "acceptCta": "Sign, date and accept",
       "acceptedTitle": "You have accepted these terms",
@@ -1442,6 +1448,15 @@
   "groups": {
     "materialAction": "Teaching materials",
     "materialStaffOnly": "Gedu only — families never see this link"
+  },
+  "memberFlair": {
+    "newcomer": "New",
+    "newcomerTooltip": "New to this group — joined {days, plural, =0 {today} one {# day ago} other {# days ago}}",
+    "openNote": "Gedu note about {name}",
+    "noteTitle": "Note about {name}",
+    "notePrivacy": "Only Gedus and admins can see this note. It stays with this group, session to session.",
+    "notePlaceholder": "Anything to note about {name} in this group.",
+    "noteLastEdited": "Last edited by {name}"
   },
   "richText": {
     "bold": "Bold",
@@ -3023,7 +3038,10 @@
       "dateLabel": "Date",
       "timeLabel": "Time",
       "productButton": "View in My SOG",
-      "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG."
+      "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG.",
+      "staffCopyLabel": "Gedu and Admin copy",
+      "staffCopyBody": "This is a copy of the session report that went to the group’s families. You are reading it as the person who sent it, or as an admin, not as a parent.",
+      "staffCopyPrivacy": "Every family received their own separate email, addressed to them alone. The Gedu and admin addresses in this copy’s To and Cc lines appear on this copy only: no parent sees them, and no family sees another family."
     }
   },
   "legal": {

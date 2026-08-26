@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { MaterialLink } from "@/components/ui/material-link";
 import { PersonChipList } from "@/components/ui/person-chip";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import { GamerNoteDialog } from "@/components/member-flair";
 import {
   SessionFeed,
   type SessionEntryDraft,
@@ -39,11 +40,18 @@ import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
 
 /**
- * The gedu's product page: the assigned group's *workspace*, with the session
- * feed as its spine. It is the body of `/gedu/clubs|camps|events/[id]`, and the
- * same body a full-page preview scene renders over fixtures. It deliberately
- * takes everything as props — no query, no clock of its own beyond the shared
- * providers — which is what lets one body serve both shells.
+ * One group of one product, as the people running it work it: the group's
+ * *workspace*, with the session feed as its spine. It is the body of the gedu's
+ * `/gedu/clubs|camps|events/[id]`, the body of the admin's group details page,
+ * and the same body a full-page preview scene renders over fixtures. It
+ * deliberately takes everything as props — no query, no clock of its own beyond
+ * the shared providers — which is what lets one body serve every shell.
+ *
+ * **The design below is written from the gedu's side**, because a gedu is who
+ * this page is *for*. The admin surface exists to show an admin exactly what the
+ * gedu teaching the group sees, so every rule here holds there unchanged — an
+ * admin-shaped variation of any of it would be the drift the shared body exists
+ * to prevent.
  *
  * The shape, and why:
  *
@@ -120,6 +128,42 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  * Both notes are **site-scoped**: they are shared by every product running
  * there, which is why the panel that renders them says so by name.
  */
+/**
+ * The staff-only overlay on the group's roster: who is new to the group, who
+ * has a Gedu note, and how a note is written back.
+ *
+ * **One object rather than five props, because it is one decision.** A caller
+ * that made this page's staff-scoped read of the group's membership can answer
+ * all of it at once — there is no surface holding newcomer stamps but no notes,
+ * so five props would be five ways to spell one fact.
+ *
+ * Every record is keyed by `participant_id`, and **absence is the common case**:
+ * most members are neither new nor written about, so a missing key is the answer
+ * rather than a gap. The value types say `| undefined` for exactly that reason —
+ * a lookup here misses far more often than it hits, and the maps are the answer
+ * to "who is marked", never a guarantee about who is in them.
+ */
+export interface RosterMemberFlair {
+  /**
+   * The instant the newcomer badge's meter is measured against. The caller's, so the
+   * badge answers off the same clock as everything else on the page — a scene's
+   * frozen instant, a live page's request-stable now.
+   */
+  now: Date;
+  /** ISO join stamps. A member past the window keeps their key and simply stops rendering a badge. */
+  newcomers: Readonly<Record<string, string | undefined>>;
+  /** Note text. A member with no note has no key; `""` and absent mean the same thing. */
+  notes: Readonly<Record<string, string | undefined>>;
+  /** Who last wrote each note, where that is known. Read only for members who have one. */
+  noteEditors: Readonly<Record<string, string | undefined>>;
+  /**
+   * Persist one member's note. **Awaited by the dialog**, which holds its Save
+   * disabled until the write lands and closes only then; the trimmed text
+   * arrives here, and an empty string means "clear it".
+   */
+  onSaveNote: (participantId: string, text: string) => void | Promise<void>;
+}
+
 export interface ProductSite {
   name: string;
   /** Street address, family-facing. `null` when the venue record has none. */
@@ -130,7 +174,7 @@ export interface ProductSite {
   staffNote: string | null;
 }
 
-interface GeduProductPageBodyProps {
+interface GroupWorkspaceProps {
   data: GeduAssignedProduct;
   /**
    * Newest first: the future sessions inside the horizon (furthest away first,
@@ -157,8 +201,9 @@ interface GeduProductPageBodyProps {
   sourceTimeZone: string;
   /**
    * Staff-only lesson/material URL, or `null` when unset. **Never render this on
-   * a surface a parent or gamer can reach** — this page is gedu-only, which is
-   * the only reason no visibility check happens here.
+   * a surface a parent or gamer can reach** — this workspace is staff-only
+   * (gedu and admin), which is the only reason no visibility check happens
+   * here.
    */
   materialUrl: string | null;
   /** The group's standing public note, independent of any session. */
@@ -185,6 +230,17 @@ interface GeduProductPageBodyProps {
   onSiteNotesEditingChange: (editing: boolean) => void;
   /** Persist the venue's shared notes. Awaited by the panel. */
   onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
+  /**
+   * A control that writes the venue's **address**, for a shell whose viewer owns
+   * that field. Omitted — which is what the gedu shell does, and what a scene
+   * does — the site section is exactly what it has always been.
+   *
+   * It is a whole capability or none of it: either the caller can offer this
+   * and passes a control, or it cannot and passes nothing. The body only
+   * decides *where* it goes; every string, every mutation and every failure line
+   * inside it belong to whoever built it.
+   */
+  siteAddressEditor?: ReactNode;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -239,9 +295,59 @@ interface GeduProductPageBodyProps {
    * verified name and needs nothing handed in.
    */
   robloxAvatarUrls?: RobloxRenderMap;
+  /**
+   * The roster's staff-only overlay — newcomer stamps, note markers, and the
+   * note write-back.
+   *
+   * **Required, because this whole body is staff-only and every shell that
+   * renders it can answer it.** Both live shells build it from the same
+   * staff-scoped read as the roster, so a workspace without it is not a page
+   * anyone can reach — and an optional prop here would leave the roster able to
+   * render a state the product does not have, with no way in to writing a note.
+   *
+   * It travels with the roster rather than after it: both records are handed in
+   * whole at first paint, so a badge or a lit note button never lands on a row
+   * the reader is already looking at.
+   *
+   * **"Nothing is marked" is spelled with empty maps, never with an absent
+   * overlay.** A group where nobody is inside the newcomer window and nobody has
+   * been written about hands over the same object with nothing in its records —
+   * which is exactly what the clubs-only badge gate already produces on a camp
+   * (see `derive-roster-flair.ts`, where a non-club product yields an empty
+   * newcomers map and its notes untouched).
+   */
+  memberFlair: RosterMemberFlair;
+  /**
+   * The link out of this workspace, rendered at the top of the page. Omitted,
+   * the body renders the gedu's own back link ("Back to My SOG"); `null` renders
+   * none at all — the admin shell passes `null` because its frame already
+   * carries a back link that has to hold its position across the skeleton and
+   * the loaded state, and a second one inside the body would double it. The way
+   * out of a workspace belongs to whoever brought you in.
+   */
+  backLink?: ReactNode;
+  /**
+   * The route THIS workspace lives at — where leaving a voice room joined from
+   * here lands. Omitted, it is the gedu route for this product, which is right
+   * for the gedu shell and wrong for any other: an admin leaving a room would
+   * be bounced through /gedu to /admin instead of back to the group they were
+   * looking at. Same ownership rule as {@link backLink}.
+   */
+  workspaceHref?: string;
+  /**
+   * What the rail's first card is called. Omitted, it is the gedu's "My Group",
+   * which is the possessive that makes the pair with "Other groups" read as one
+   * distinction — and which is a claim only the gedu teaching the group can
+   * make. An admin holds no group, so their shell passes the category word
+   * instead; the card carries the group's own *name* either way, so what this
+   * chooses is only how the heading relates the card to its reader. Same
+   * ownership rule as {@link backLink}: a string that is about who brought you
+   * here belongs to whoever did.
+   */
+  groupHeading?: string;
 }
 
-export function GeduProductPageBody({
+export function GroupWorkspace({
   data,
   entries,
   feedNow,
@@ -257,6 +363,7 @@ export function GeduProductPageBody({
   siteNotesEditing,
   onSiteNotesEditingChange,
   onSaveSiteNotes,
+  siteAddressEditor,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
@@ -264,7 +371,11 @@ export function GeduProductPageBody({
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
-}: GeduProductPageBodyProps) {
+  memberFlair,
+  backLink,
+  workspaceHref: workspaceHrefProp,
+  groupHeading,
+}: GroupWorkspaceProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
   const locale = useLocale();
@@ -306,13 +417,12 @@ export function GeduProductPageBody({
    * is the point of covering somebody's room for ten minutes rather than
    * inheriting their page.
    */
-  const workspaceHref = ROUTES.gedu.assignedProduct(
-    data.product.product_type,
-    data.product.id,
-  );
+  const workspaceHref =
+    workspaceHrefProp ??
+    ROUTES.gedu.assignedProduct(data.product.product_type, data.product.id);
 
   return (
-    // Wide, because this is a gedu surface and gedus are at a desk. The reading
+    // Wide, because this is a staff surface and staff are at a desk. The reading
     // column inside is still capped; the extra width buys the reference rail.
     //
     // No horizontal padding of its own: the dashboard layout this body renders
@@ -320,7 +430,9 @@ export function GeduProductPageBody({
     // here double-pads the phone (where the two gutters are most of the screen)
     // while doing nothing at all on the desktop this page is designed for.
     <div className="mx-auto max-w-7xl py-6 sm:py-10">
-      <SessionDetailsBackLink />
+      {/* `undefined` means "the gedu default", `null` means "the shell already
+          has one" — so this is an explicit check, not `??`. */}
+      {backLink === undefined ? <SessionDetailsBackLink /> : backLink}
 
       {/* The masthead is a two-column row on desktop: identity on the left,
           the one outward action on the right. A family-facing link out to a
@@ -348,7 +460,9 @@ export function GeduProductPageBody({
                   the message files. */}
               <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
                 <Users className="h-4 w-4" aria-hidden />
-                {t("participantCount", { count: assignedGroup.participant_count })}
+                {t("participantCount", {
+                  count: assignedGroup.participant_count,
+                })}
               </span>
             </p>
           )}
@@ -379,6 +493,7 @@ export function GeduProductPageBody({
           {assignedGroup && (
             <GroupRailCard
               group={assignedGroup}
+              heading={groupHeading}
               isRemote={data.product.is_remote}
               voiceIsOpen={voiceState.voiceIsOpen}
               opensDate={voiceState.opensDate}
@@ -388,6 +503,7 @@ export function GeduProductPageBody({
               onSaveGameUsername={onSaveGameUsername}
               gameStatuses={gameStatuses}
               robloxAvatarUrls={robloxAvatarUrls}
+              memberFlair={memberFlair}
             />
           )}
 
@@ -432,6 +548,7 @@ export function GeduProductPageBody({
                       editing={siteNotesEditing}
                       onEditingChange={onSiteNotesEditingChange}
                       onSave={onSaveSiteNotes}
+                      addressEditor={siteAddressEditor}
                     />
                   </div>
                 )}
@@ -650,12 +767,13 @@ function rosterAvatarUrl(
  * This group: its own room's Join, the gedus teaching it, then every child with
  * their parent's email and the copy-all helper.
  *
- * **It is titled "My Group", and it carries its size top-right.** "Group" was
- * ambiguous on a page whose other rail card is called "Other groups" — the
- * possessive is what makes the pair read as one distinction rather than as two
- * unrelated headings. The count sits in the same corner every peer row puts its
- * own, so "mine has eight, that one has six" is one horizontal glance rather
- * than a hunt.
+ * **It is titled "My Group" by default, and it carries its size top-right.**
+ * "Group" was ambiguous on a page whose other rail card is called "Other
+ * groups" — the possessive is what makes the pair read as one distinction
+ * rather than as two unrelated headings. That possessive is the gedu's, though,
+ * so a shell whose reader owns no group hands in its own heading instead. The
+ * count sits in the same corner every peer row puts its own, so "mine has
+ * eight, that one has six" is one horizontal glance rather than a hunt.
  *
  * **The Join lives here, at the top of the card, and nowhere else on the page.**
  * A voice room belongs to a group, and this card is the group — so the button
@@ -677,9 +795,16 @@ function rosterAvatarUrl(
  * which is the price of having the Join within reach, and it is paid in the
  * right order: the Join and the copy-all row sit above the roster inside this
  * card, so the two urgent things are still the first two things.
+ *
+ * **It owns the one note dialog.** The button lives on a row, but the dialog does
+ * not: eight rows holding eight dialogs would be eight parsers and eight drafts
+ * for a surface that can only ever have one open. The card holds *which* member
+ * is open instead, and the dialog reads that member's note out of the record it
+ * was handed.
  */
 function GroupRailCard({
   group,
+  heading,
   isRemote,
   voiceIsOpen,
   opensDate,
@@ -689,8 +814,11 @@ function GroupRailCard({
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
+  memberFlair,
 }: {
   group: GeduAssignedProductGroup;
+  /** The card's heading, or `undefined` for the gedu's "My Group". */
+  heading?: string;
   isRemote: boolean;
   voiceIsOpen: boolean;
   opensDate: string;
@@ -705,6 +833,13 @@ function GroupRailCard({
   ) => void | Promise<void>;
   gameStatuses?: Readonly<Record<string, GameAccountStatus>>;
   robloxAvatarUrls?: RobloxRenderMap;
+  /**
+   * The roster's staff-only overlay, handed down whole. Required here for the
+   * same reason it is required of the page: this card is only ever drawn on the
+   * staff-only workspace, and a roster with no way in to a note is not a state
+   * that page has.
+   */
+  memberFlair: RosterMemberFlair;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -713,10 +848,19 @@ function GroupRailCard({
     () => deduplicateEmails(roster.map(rosterContactEmail)),
     [roster],
   );
+  /**
+   * Whose note is open — an id, not the note itself, so the dialog always shows
+   * what the record currently holds rather than a copy taken when it opened.
+   */
+  const [noteFor, setNoteFor] = useState<string | null>(null);
+  const noteMember =
+    noteFor === null
+      ? null
+      : (roster.find((member) => member.participant_id === noteFor) ?? null);
 
   return (
     <RailCard
-      title={t("railGroupHeading")}
+      title={heading ?? t("railGroupHeading")}
       trailing={<ParticipantCount count={group.participant_count} />}
     >
       {isRemote && (
@@ -767,11 +911,42 @@ function GroupRailCard({
                   member.roblox_user_id,
                   robloxAvatarUrls,
                 )}
+                newcomerJoinedAt={
+                  memberFlair.newcomers[member.participant_id] ?? null
+                }
+                flairNow={memberFlair.now}
+                hasNote={
+                  (memberFlair.notes[member.participant_id] ?? "").length > 0
+                }
+                // Handed to every row, not only the ones already written
+                // about: an empty note is what the add flow opens, most of the
+                // roster is that case, and a marker that appeared only on rows
+                // that already had one would leave no way to write the first.
+                onOpenNote={() => setNoteFor(member.participant_id)}
               />
             ))}
           </ul>
         )}
       </div>
+
+      {/* One dialog for the whole roster. It stays mounted with the member it
+          was opened for until the close lands, so nothing in it changes under
+          the reader on the way out. */}
+      <GamerNoteDialog
+        open={noteFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setNoteFor(null);
+        }}
+        name={noteMember?.first_name ?? ""}
+        note={noteFor === null ? "" : (memberFlair.notes[noteFor] ?? "")}
+        lastEditedBy={
+          noteFor === null ? null : (memberFlair.noteEditors[noteFor] ?? null)
+        }
+        onSave={async (text) => {
+          if (noteFor === null) return;
+          await memberFlair.onSaveNote(noteFor, text);
+        }}
+      />
     </RailCard>
   );
 }

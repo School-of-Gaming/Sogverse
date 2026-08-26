@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Groupes",
+        "attendanceAndReports": "Présences et comptes rendus",
         "subtitle": "Faites glisser chaque participant dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
         "addGroup": "Ajouter un groupe",
         "loading": "Chargement…",
@@ -799,12 +800,9 @@
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
       },
       "sessions": {
-        "title": "Séances",
-        "groupSelectorAria": "Choisir un groupe",
-        "untitledGroup": "Groupe sans titre",
-        "noGroups": "Ce produit n’a pas encore de groupe, il n’y a donc rien d’enregistré.",
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
+        "railGroupHeading": "Groupe",
         "addressLabel": "Adresse du lieu",
         "addressPlaceholder": "Rue, code postal, ville",
         "addAddress": "Ajouter une adresse",
@@ -827,12 +825,6 @@
       "joined": "Inscrit le",
       "unknown": "Inconnu",
       "referralCode": "Code de provenance",
-      "ageYears": "{age, plural, one {# an} other {# ans}}",
-      "gender": {
-        "boy": "Garçon",
-        "girl": "Fille",
-        "non_binary": "Non binaire"
-      },
       "linkedGamers": "Joueurs associés",
       "linkedParents": "Parents associés",
       "unnamedGamer": "Joueur sans nom",
@@ -843,6 +835,21 @@
       "unassignedGroup": "Aucun groupe attribué",
       "needsGroup": "Doit être affecté à un groupe",
       "untitledProduct": "Produit sans titre",
+      "gamerDetails": {
+        "title": "Informations personnelles",
+        "edit": "Modifier les informations personnelles",
+        "birthMonthLabel": "Mois de naissance",
+        "birthYearLabel": "Année de naissance",
+        "genderLabel": "Genre",
+        "genderUnset": "Non précisé",
+        "saveError": "Impossible d’enregistrer ces informations. Veuillez réessayer.",
+        "gender": {
+          "boy": "Garçon",
+          "girl": "Fille",
+          "non_binary": "Non binaire"
+        },
+        "ageYears": "{age, plural, one {# an} other {# ans}}"
+      },
       "gameAccounts": {
         "title": "Comptes de jeu",
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
@@ -1322,7 +1329,6 @@
       "noRecordLabel": "Aucun compte rendu",
       "emptyFeed": "Ce groupe n’a pas encore de séances.",
       "noNotesYet": "Aucune note pour cette séance pour l’instant.",
-      "attendanceSummary": "{present} présents sur {total}",
       "presentLabel": "Présent",
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",
@@ -1352,11 +1358,11 @@
     },
     "groupNotes": {
       "heading": "À propos du groupe",
-      "add": "Ajouter",
       "edit": "Modifier",
       "cancel": "Annuler",
       "save": "Enregistrer",
-      "emptyHint": "Ajoutez une note de groupe — tout ce qui reste vrai d’une séance à l’autre.",
+      "publicEmpty": "Ajoutez une note pour les familles — comment ce groupe fonctionne, ce qui se poursuit d’une séance à l’autre.",
+      "staffEmpty": "Ajoutez ce qu’un autre Gedu doit savoir en permanence sur ce groupe.",
       "publicLabel": "Note pour les familles",
       "publicHint": "N’indiquez jamais d’informations privées ou sensibles concernant un gamer.",
       "publicPlaceholder": "Comment ce groupe fonctionne, ce qui se poursuit d’une séance à l’autre…",
@@ -1369,11 +1375,11 @@
       "heading": "Notes sur le lieu",
       "sharedCaption": "{site} — tous les produits organisés sur ce lieu affichent les mêmes notes : une modification ici les change partout.",
       "addressLabel": "Adresse",
-      "add": "Ajouter",
       "edit": "Modifier",
       "cancel": "Annuler",
       "save": "Enregistrer",
-      "emptyHint": "Ajoutez une note sur le lieu — tout ce qui concerne les locaux eux-mêmes.",
+      "publicEmpty": "Ajoutez une note pour les familles — par quelle porte entrer, où attendre, quoi apporter.",
+      "staffEmpty": "Ajoutez ce que le prochain Gedu sur place doit savoir — clés, matériel, particularités de la salle.",
       "publicLabel": "Note pour les familles",
       "publicHint": "N’indiquez jamais d’informations privées ou sensibles ici.",
       "publicPlaceholder": "Par quelle porte entrer, où attendre, quoi apporter…",
@@ -1385,7 +1391,7 @@
     "contract": {
       "back": "Retour à Mon SOG",
       "pageTitle": "Votre contrat Gedu",
-      "intro": "Voici les conditions qui encadrent votre travail d’animation pour School of Gaming. Le contrat fait foi en finnois : il s’affiche donc tel quel, quelle que soit la langue dans laquelle vous lisez le reste de l’application.",
+      "intro": "Voici les conditions qui encadrent votre travail d’animation pour School of Gaming. Le contrat est publié en anglais et en finnois : vous le lisez dans la langue de l’application, et les deux versions font également foi.",
       "acceptLead": "En signant ci-dessous, vous confirmez avoir lu ces conditions et les accepter telles quelles. Nous enregistrons la version acceptée, la date et le nom signé — rien d’autre.",
       "acceptCta": "Signer, dater et accepter",
       "acceptedTitle": "Vous avez accepté ces conditions",
@@ -1442,6 +1448,15 @@
   "groups": {
     "materialAction": "Supports pédagogiques",
     "materialStaffOnly": "Gedus uniquement — les familles ne voient jamais ce lien"
+  },
+  "memberFlair": {
+    "newcomer": "Nouveau",
+    "newcomerTooltip": "Nouveau dans ce groupe — {days, plural, =0 {aujourd’hui} one {il y a # jour} other {il y a # jours}}",
+    "openNote": "Note pour les Gedus au sujet de {name}",
+    "noteTitle": "Note au sujet de {name}",
+    "notePrivacy": "Cette note est visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
+    "notePlaceholder": "Notes au sujet de {name} dans ce groupe.",
+    "noteLastEdited": "Dernière modification par {name}"
   },
   "richText": {
     "bold": "Gras",
@@ -2391,7 +2406,10 @@
       "dateLabel": "Date",
       "timeLabel": "Heure",
       "productButton": "Ouvrir dans Mon SOG",
-      "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG."
+      "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG.",
+      "staffCopyLabel": "Copie pour les Gedus et les admins",
+      "staffCopyBody": "Ceci est une copie du compte rendu envoyé aux familles du groupe. Vous la recevez en tant qu’expéditeur ou en tant qu’administrateur, et non en tant que parent.",
+      "staffCopyPrivacy": "Chaque famille a reçu son propre e-mail, adressé à elle seule. Les adresses des Gedus et des admins qui figurent dans les champs À et Cc de cette copie n’apparaissent que sur cette copie : aucun parent ne les voit, et aucune famille n’en voit une autre."
     }
   },
   "legal": {

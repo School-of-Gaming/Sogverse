@@ -67,6 +67,16 @@ import { TEST_IDS } from "./constants";
  *                  keyed by location and shared across products, so writing
  *                  notes on the seeded Test School would race the gedu feed's
  *                  suite in a parallel worker)
+ *   650-658        member-flair.test.ts (650 is the club the two marks are
+ *                  exercised on, with sister groups 651/652 taught by two
+ *                  different gedus — which is what makes every cross-group case
+ *                  in that file about the PRODUCT rather than the group; 653 is
+ *                  a product neither gedu teaches, with its group 654, so a
+ *                  refusal there is the actor half alone; 655-658 are the
+ *                  trigger's own product and its three groups, kept apart
+ *                  because two of those cases delete rows — 658 is created and
+ *                  deleted inside the ON DELETE SET NULL cascade case — and
+ *                  neither may disturb a roster another block asserts on)
  *   637            write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

@@ -12,9 +12,9 @@ import {
   buildGeduDashboardFixture,
 } from "@/components/gedu/mock-dashboard-fixtures";
 import {
-  GEDU_PRODUCT_SCENARIOS,
-  buildGeduProductPageFixture,
-} from "@/components/gedu/session-details/mock-product-page-fixtures";
+  GROUP_WORKSPACE_SCENARIOS,
+  buildGroupWorkspaceFixture,
+} from "@/components/group-workspace/mock-workspace-fixtures";
 import {
   FAMILY_PRODUCT_SCENARIOS,
   buildFamilyProductPageFixture,
@@ -149,7 +149,7 @@ describe("registry scenarios match their fixtures", () => {
   });
 
   it("gedu product page", () => {
-    expect(slugsFor("gedu-product")).toEqual([...GEDU_PRODUCT_SCENARIOS]);
+    expect(slugsFor("gedu-product")).toEqual([...GROUP_WORKSPACE_SCENARIOS]);
   });
 
   it("parent dashboard", () => {
@@ -707,8 +707,8 @@ describe("identicon fixture ids are real UUIDs", () => {
 
   it("every gedu chip and roster row in every product-page scenario", () => {
     const now = new Date("2026-02-11T09:00:00Z");
-    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
-      const { data } = buildGeduProductPageFixture(now, scenario);
+    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
+      const { data } = buildGroupWorkspaceFixture(now, scenario);
       for (const group of data.groups) {
         for (const gedu of group.gedus) {
           expect(gedu.id, `${scenario}/${group.name}`).toMatch(UUID_V4);
@@ -756,8 +756,8 @@ describe("identicon fixture ids are real UUIDs", () => {
 
   it("keeps the same ids across two builds, so avatars never change under a reload", () => {
     const now = new Date("2026-02-11T09:00:00Z");
-    const first = buildGeduProductPageFixture(now, "club");
-    const second = buildGeduProductPageFixture(now, "club");
+    const first = buildGroupWorkspaceFixture(now, "club");
+    const second = buildGroupWorkspaceFixture(now, "club");
     expect(first.data.groups[0].gedus.map((g) => g.id)).toEqual(
       second.data.groups[0].gedus.map((g) => g.id),
     );
@@ -773,20 +773,20 @@ describe("identicon fixture ids are real UUIDs", () => {
 describe("every scenario exercises the reference rail's other-groups card", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  function peerCountFor(scenario: (typeof GEDU_PRODUCT_SCENARIOS)[number]) {
-    const { data } = buildGeduProductPageFixture(now, scenario);
+  function peerCountFor(scenario: (typeof GROUP_WORKSPACE_SCENARIOS)[number]) {
+    const { data } = buildGroupWorkspaceFixture(now, scenario);
     return data.groups.filter((g) => g.id !== data.my_group_id).length;
   }
 
   it("gives every scenario at least one peer group", () => {
-    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
+    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
       expect(peerCountFor(scenario), scenario).toBeGreaterThan(0);
     }
   });
 
   it("covers a peer group with nobody teaching it yet", () => {
-    const unstaffed = GEDU_PRODUCT_SCENARIOS.flatMap((scenario) => {
-      const { data } = buildGeduProductPageFixture(now, scenario);
+    const unstaffed = GROUP_WORKSPACE_SCENARIOS.flatMap((scenario) => {
+      const { data } = buildGroupWorkspaceFixture(now, scenario);
       return data.groups.filter(
         (g) => g.id !== data.my_group_id && g.gedus.length === 0,
       );
@@ -816,8 +816,8 @@ describe("every roster row carries exactly one contact email", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
   it("gives everyone in every scenario an address, and only one kind", () => {
-    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
-      const { data } = buildGeduProductPageFixture(now, scenario);
+    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
+      const { data } = buildGroupWorkspaceFixture(now, scenario);
       for (const group of data.groups) {
         for (const row of group.roster ?? []) {
           const where = `${scenario}/${row.first_name}`;
@@ -832,8 +832,8 @@ describe("every roster row carries exactly one contact email", () => {
   });
 
   it("includes an adult seat, with its child-shaped fields empty", () => {
-    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
-      const { data } = buildGeduProductPageFixture(now, scenario);
+    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
+      const { data } = buildGroupWorkspaceFixture(now, scenario);
       const roster = data.groups.find((g) => g.id === data.my_group_id)?.roster;
       const adults = (roster ?? []).filter((r) => r.participant_email !== null);
       expect(adults.length, scenario).toBe(1);
@@ -848,7 +848,7 @@ describe("every roster row carries exactly one contact email", () => {
   });
 
   it("includes one address long enough to stress the row", () => {
-    const { data } = buildGeduProductPageFixture(now, "club");
+    const { data } = buildGroupWorkspaceFixture(now, "club");
     const roster = data.groups.find((g) => g.id === data.my_group_id)?.roster;
     const longest = Math.max(
       ...(roster ?? []).map(
@@ -869,18 +869,25 @@ describe("every roster row carries exactly one contact email", () => {
 describe("site notes follow in-person, and only in-person", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("gives the in-person camp a venue with both notes and an address", () => {
-    const { data, site } = buildGeduProductPageFixture(now, "camp");
+  it("gives the in-person camp a venue with an address and a half-written pair", () => {
+    const { data, site, groupNotes } = buildGroupWorkspaceFixture(now, "camp");
     expect(data.product.is_remote).toBe(false);
     expect(site).not.toBeNull();
     expect(site!.name.trim()).not.toBe("");
     expect(site!.address).not.toBeNull();
+    // The family half is written and the staff half is not, on purpose: that
+    // is the partial-fill state, and this is the only page it can be seen on.
+    // The group notes beside it stay filled on both halves, so the finished
+    // pair is still reviewable in the same render — which is what makes the
+    // half-written site pair a free showing rather than a lost one.
     expect(site!.publicNote).not.toBeNull();
-    expect(site!.staffNote).not.toBeNull();
+    expect(site!.staffNote).toBeNull();
+    expect(groupNotes.publicNote).not.toBeNull();
+    expect(groupNotes.staffNote).not.toBeNull();
   });
 
   it("gives the remote club no venue at all", () => {
-    const { data, site } = buildGeduProductPageFixture(now, "club");
+    const { data, site } = buildGroupWorkspaceFixture(now, "club");
     expect(data.product.is_remote).toBe(true);
     expect(site).toBeNull();
   });
@@ -895,7 +902,7 @@ describe("the club scenario stays the kitchen sink", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
   it("carries 50+ past entries with a realistic mix of states", () => {
-    const { entries } = buildGeduProductPageFixture(now, "club");
+    const { entries } = buildGroupWorkspaceFixture(now, "club");
     const past = entries.filter((e) => e.kind !== "future");
     expect(past.length).toBeGreaterThan(50);
 
@@ -911,7 +918,7 @@ describe("the club scenario stays the kitchen sink", () => {
     // what the attendance model exists for: notes present with nothing marked,
     // and a roster started then abandoned — both render their body *and* their
     // alert, and only the fully-marked ones are clear.
-    const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
+    const { entries, feedRoster } = buildGroupWorkspaceFixture(now, "club");
     const pastEntries = entries.filter((e) => e.kind === "past");
     const markedCount = (entry: (typeof pastEntries)[number]) =>
       feedRoster.filter((g) => entry.attendance[g.id] !== undefined).length;
@@ -933,7 +940,7 @@ describe("the club scenario stays the kitchen sink", () => {
   });
 
   it("puts notes on at least one future session, so its editor has a filled state", () => {
-    const { entries } = buildGeduProductPageFixture(now, "club");
+    const { entries } = buildGroupWorkspaceFixture(now, "club");
     const noted = entries.filter(
       (e) =>
         e.kind === "future" && (e.report !== null || e.staffNote !== null),
@@ -942,7 +949,7 @@ describe("the club scenario stays the kitchen sink", () => {
   });
 
   it("spans more than a year, so the month dividers cross a New Year", () => {
-    const { entries } = buildGeduProductPageFixture(now, "club");
+    const { entries } = buildGroupWorkspaceFixture(now, "club");
     const oldest = entries[entries.length - 1].startsAt;
     const newest = entries[0].startsAt;
     const months =
@@ -952,7 +959,7 @@ describe("the club scenario stays the kitchen sink", () => {
   });
 
   it("varies its recap copy rather than repeating one note 53 times", () => {
-    const { entries } = buildGeduProductPageFixture(now, "club");
+    const { entries } = buildGroupWorkspaceFixture(now, "club");
     const notes = entries
       .filter((e) => e.kind === "past")
       .map((e) => e.report)
@@ -972,18 +979,18 @@ describe("the camp scenario owes exactly its newest day", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
   it("has one past session still owing its attendance, and only one", () => {
-    const { entries, feedRoster } = buildGeduProductPageFixture(now, "camp");
+    const { entries, feedRoster } = buildGroupWorkspaceFixture(now, "camp");
     expect(countEntriesNeedingAttention(entries, feedRoster)).toBe(1);
   });
 
   it("owes its most recent day rather than one buried in the run", () => {
-    const { entries, feedRoster } = buildGeduProductPageFixture(now, "camp");
+    const { entries, feedRoster } = buildGroupWorkspaceFixture(now, "camp");
     const past = entries.filter((e) => e.kind !== "future");
     expect(entryNeedsAttention(past[0], feedRoster)).toBe(true);
   });
 
   it("still runs several days, so the daily cadence is visible", () => {
-    const { entries } = buildGeduProductPageFixture(now, "camp");
+    const { entries } = buildGroupWorkspaceFixture(now, "camp");
     expect(entries.filter((e) => e.kind === "past").length).toBeGreaterThan(3);
   });
 
@@ -1000,7 +1007,7 @@ describe("the camp scenario owes exactly its newest day", () => {
    * seven, however the fixture is written.
    */
   it("carries a long future block, and is end-dated so it may", () => {
-    const { data, entries } = buildGeduProductPageFixture(now, "camp");
+    const { data, entries } = buildGroupWorkspaceFixture(now, "camp");
     expect(data.product.end_date).not.toBeNull();
 
     const future = entries.filter((e) => e.kind === "future");
@@ -1012,7 +1019,7 @@ describe("the camp scenario owes exactly its newest day", () => {
   it("leaves most of that future bare, so the reveal is not all prose", () => {
     // A camp gedu plans two or three days ahead, not seventeen — and the
     // collapsed block has to look right when most of what it holds is a date.
-    const { entries } = buildGeduProductPageFixture(now, "camp");
+    const { entries } = buildGroupWorkspaceFixture(now, "camp");
     const future = entries.filter((e) => e.kind === "future");
     const noted = future.filter(
       (e) => e.report !== null || e.staffNote !== null,
@@ -1025,7 +1032,7 @@ describe("the camp scenario owes exactly its newest day", () => {
     // An end-dated product emits occurrences up to its end and no further, so a
     // fixture whose spec list outran its end date would be describing sessions
     // the real expansion would never produce.
-    const { data, entries } = buildGeduProductPageFixture(now, "camp");
+    const { data, entries } = buildGroupWorkspaceFixture(now, "camp");
     const endsAt = new Date(`${data.product.end_date}T23:59:59.999Z`);
     for (const entry of entries) {
       expect(entry.startsAt.getTime()).toBeLessThanOrEqual(endsAt.getTime());
@@ -1044,7 +1051,7 @@ describe("club reports are markdown, at realistic lengths", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
   function clubReports(): string[] {
-    const { entries } = buildGeduProductPageFixture(now, "club");
+    const { entries } = buildGroupWorkspaceFixture(now, "club");
     return entries
       .map((e) => (e.kind === "past" || e.kind === "future" ? e.report : null))
       .filter((r): r is string => r !== null);
@@ -1080,7 +1087,7 @@ describe("club reports are markdown, at realistic lengths", () => {
    */
   it("leads with a full dated write-up, and makes it the longest one", () => {
     // The newest past entry, so it is the first report on the page.
-    const { entries } = buildGeduProductPageFixture(now, "club");
+    const { entries } = buildGroupWorkspaceFixture(now, "club");
     const newest = entries.filter((e) => e.kind === "past")[0].report ?? "";
 
     expect(newest.length).toBeGreaterThan(1400);
@@ -1101,8 +1108,8 @@ describe("club reports are markdown, at realistic lengths", () => {
   });
 
   it("leaves no unresolved date placeholder in any report", () => {
-    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
-      const { entries } = buildGeduProductPageFixture(now, scenario);
+    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
+      const { entries } = buildGroupWorkspaceFixture(now, scenario);
       for (const entry of entries) {
         if (entry.kind !== "past" && entry.kind !== "future") continue;
         expect(entry.report ?? "", scenario).not.toContain("{date}");
@@ -1136,7 +1143,7 @@ describe("the club scenario shows every state a past session can wear", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
   it("carries flagged, complete and silent entries", () => {
-    const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
+    const { entries, feedRoster } = buildGroupWorkspaceFixture(now, "club");
     const states = entries.map((e) => entryCompleteness(e, feedRoster));
     expect(states).toContain("needs_attention");
     expect(states).toContain("complete");
@@ -1155,7 +1162,7 @@ describe("the club scenario shows every state a past session can wear", () => {
    * without failing anything above.
    */
   it("flags a week for a missing register and a week for a missing report", () => {
-    const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
+    const { entries, feedRoster } = buildGroupWorkspaceFixture(now, "club");
     const flagged = entries.filter(
       (e) => entryCompleteness(e, feedRoster) === "needs_attention",
     );
@@ -1182,8 +1189,8 @@ describe("the club scenario shows every state a past session can wear", () => {
    */
   it("authors no skipped session anywhere, in either scenario", () => {
     const RENDERABLE = ["future", "past", "no_record"];
-    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
-      const { entries } = buildGeduProductPageFixture(now, scenario);
+    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
+      const { entries } = buildGroupWorkspaceFixture(now, scenario);
       for (const entry of entries) {
         expect(RENDERABLE, `${scenario}/${entry.id}`).toContain(entry.kind);
       }
@@ -1302,7 +1309,7 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
 
   it("names the camp's venue with the same string its product page does", () => {
     const camp = summaries().find((a) => a.productType === "camp");
-    const { site } = buildGeduProductPageFixture(now, "camp");
+    const { site } = buildGroupWorkspaceFixture(now, "camp");
     expect(camp?.siteName).toBe(site?.name);
   });
 

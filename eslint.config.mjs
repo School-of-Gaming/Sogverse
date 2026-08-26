@@ -97,9 +97,16 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": ["error", {
         patterns: [
           {
-            group: ["@/components/gedu/*"],
+            // Both halves of the staff workspace: the gedu tree, and the
+            // role-agnostic group workspace the gedu and admin shells both
+            // render. The second is role-agnostic between *staff* roles only —
+            // it draws the staff note, the roster and the completeness ladder —
+            // so it sits on the staff side of this line exactly as the gedu
+            // tree does, and moving a piece from one to the other must never be
+            // a way out of the zone.
+            group: ["@/components/gedu/*", "@/components/group-workspace/*"],
             message:
-              "Family surfaces must not import gedu workspace code — the privacy line is structural. Shared feed pieces live in @/components/session-feed.",
+              "Family surfaces must not import staff workspace code — the privacy line is structural. Shared feed pieces live in @/components/session-feed.",
           },
           {
             // The service-layer half of the same line, and in practice the more

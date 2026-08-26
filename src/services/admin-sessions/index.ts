@@ -12,5 +12,4 @@ export { adminProductSessions } from "./admin-sessions.contracts";
 export type {
   AdminProductSessions,
   AdminSessionGroup,
-  AdminSessionRosterEntry,
 } from "./admin-sessions.contracts";

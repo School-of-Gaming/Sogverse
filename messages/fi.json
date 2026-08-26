@@ -701,6 +701,7 @@
       },
       "groupsPanel": {
         "title": "Ryhmät",
+        "attendanceAndReports": "Läsnäolot ja koosteet",
         "subtitle": "Vedä jokainen osallistuja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
         "addGroup": "Lisää ryhmä",
         "loading": "Ladataan…",
@@ -799,12 +800,9 @@
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
       },
       "sessions": {
-        "title": "Kerrat",
-        "groupSelectorAria": "Valitse ryhmä",
-        "untitledGroup": "Nimetön ryhmä",
-        "noGroups": "Tällä tuotteella ei ole vielä ryhmiä, joten mitään ei ole kirjattu.",
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
+        "railGroupHeading": "Ryhmä",
         "addressLabel": "Toimipaikan osoite",
         "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
         "addAddress": "Lisää osoite",
@@ -827,12 +825,6 @@
       "joined": "Liittynyt",
       "unknown": "Tuntematon",
       "referralCode": "Viittauskoodi",
-      "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
-      "gender": {
-        "boy": "Poika",
-        "girl": "Tyttö",
-        "non_binary": "Muunsukupuolinen"
-      },
       "linkedGamers": "Liitetyt pelaajat",
       "linkedParents": "Liitetyt vanhemmat",
       "unnamedGamer": "Nimetön pelaaja",
@@ -843,6 +835,21 @@
       "unassignedGroup": "Ei ryhmää määritetty",
       "needsGroup": "Tarvitsee ryhmän",
       "untitledProduct": "Nimetön tuote",
+      "gamerDetails": {
+        "title": "Henkilötiedot",
+        "edit": "Muokkaa henkilötietoja",
+        "birthMonthLabel": "Syntymäkuukausi",
+        "birthYearLabel": "Syntymävuosi",
+        "genderLabel": "Sukupuoli",
+        "genderUnset": "Ei määritelty",
+        "saveError": "Tietojen tallentaminen epäonnistui. Yritä uudelleen.",
+        "gender": {
+          "boy": "Poika",
+          "girl": "Tyttö",
+          "non_binary": "Muunsukupuolinen"
+        },
+        "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}"
+      },
       "gameAccounts": {
         "title": "Pelitilit",
         "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
@@ -1322,7 +1329,6 @@
       "noRecordLabel": "Ei kirjausta",
       "emptyFeed": "Tällä ryhmällä ei ole vielä kertoja.",
       "noNotesYet": "Tälle kerralle ei ole vielä muistiinpanoja.",
-      "attendanceSummary": "{present}/{total} paikalla",
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
       "unmarkedLabel": "Ei merkintää",
@@ -1352,11 +1358,11 @@
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
-      "add": "Lisää",
       "edit": "Muokkaa",
       "cancel": "Peruuta",
       "save": "Tallenna",
-      "emptyHint": "Lisää ryhmämuistiinpano — mikä tahansa asia, joka pysyy samana kerrasta toiseen.",
+      "publicEmpty": "Lisää muistiinpano perheille — miten tämä ryhmä toimii ja mitä siirtyy kerrasta toiseen.",
+      "staffEmpty": "Lisää pysyvät asiat, jotka toisen Gedun on hyvä tietää tästä ryhmästä.",
       "publicLabel": "Muistiinpano perheille",
       "publicHint": "Älä koskaan kirjoita tähän pelaajaa koskevia yksityisiä tai arkaluonteisia tietoja.",
       "publicPlaceholder": "Miten tämä ryhmä toimii ja mitä siirtyy kerrasta toiseen…",
@@ -1369,11 +1375,11 @@
       "heading": "Toimipaikan muistiinpanot",
       "sharedCaption": "{site} — kaikki tässä toimipaikassa järjestettävät tuotteet näkevät samat muistiinpanot, joten muokkaus näkyy niissä kaikissa.",
       "addressLabel": "Osoite",
-      "add": "Lisää",
       "edit": "Muokkaa",
       "cancel": "Peruuta",
       "save": "Tallenna",
-      "emptyHint": "Lisää muistiinpano toimipaikasta — mikä tahansa asia, joka koskee tilaa itseään.",
+      "publicEmpty": "Lisää muistiinpano perheille — mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan.",
+      "staffEmpty": "Lisää se, mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta — avaimet, välineet, tilan erityispiirteet.",
       "publicLabel": "Muistiinpano perheille",
       "publicHint": "Älä koskaan kirjoita tähän yksityisiä tai arkaluonteisia tietoja.",
       "publicPlaceholder": "Mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan…",
@@ -1385,7 +1391,7 @@
     "contract": {
       "back": "Takaisin Omaan SOGiin",
       "pageTitle": "Gedu-sopimuksesi",
-      "intro": "Nämä ovat ehdot, joiden mukaisesti työskentelet pelikasvattajana School of Gamingille. Sopimus on sitova suomeksi, joten se näytetään sellaisenaan riippumatta siitä, millä kielellä luet muuta sovellusta.",
+      "intro": "Nämä ovat ehdot, joiden mukaisesti työskentelet pelikasvattajana School of Gamingille. Sopimus on julkaistu sekä suomeksi että englanniksi – näet sen sovelluksen kielellä, ja molemmat kieliversiot ovat yhtä sitovia.",
       "acceptLead": "Allekirjoittamalla vahvistat, että olet lukenut nämä ehdot ja hyväksyt ne sellaisinaan. Tallennamme vain sen, minkä version hyväksyit, milloin hyväksyit sen ja millä nimellä allekirjoitit.",
       "acceptCta": "Allekirjoita, päivää ja hyväksy",
       "acceptedTitle": "Olet hyväksynyt nämä ehdot",
@@ -1442,6 +1448,15 @@
   "groups": {
     "materialAction": "Opetusmateriaalit",
     "materialStaffOnly": "Vain Geduille — perheet eivät näe tätä linkkiä"
+  },
+  "memberFlair": {
+    "newcomer": "Uusi",
+    "newcomerTooltip": "Uusi tässä ryhmässä — liittyi {days, plural, =0 {tänään} one {# päivä sitten} other {# päivää sitten}}",
+    "openNote": "Muistiinpano Geduille pelaajasta {name}",
+    "noteTitle": "Muistiinpano pelaajasta {name}",
+    "notePrivacy": "Vain Gedut ja ylläpitäjät näkevät tämän muistiinpanon. Se pysyy tässä ryhmässä kerrasta toiseen.",
+    "notePlaceholder": "Muistiinpanoja pelaajasta {name} tässä ryhmässä.",
+    "noteLastEdited": "Viimeksi muokannut {name}"
   },
   "richText": {
     "bold": "Lihavointi",
@@ -2391,7 +2406,10 @@
       "dateLabel": "Päivä",
       "timeLabel": "Aika",
       "productButton": "Avaa Oma SOG",
-      "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}."
+      "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}.",
+      "staffCopyLabel": "Kopio Geduille ja ylläpitäjille",
+      "staffCopyBody": "Tämä on kopio raportista, joka lähetettiin ryhmän perheille. Saat sen lähettäjänä tai ylläpitäjänä, et vanhempana.",
+      "staffCopyPrivacy": "Jokainen perhe sai oman erillisen viestinsä, joka oli osoitettu vain sen omalle perheelle. Gedujen ja ylläpitäjien osoitteet näkyvät vain tämän viestin vastaanottaja- ja kopiokentissä: yksikään vanhempi ei näe niitä eikä muiden perheiden osoitteita."
     }
   },
   "legal": {

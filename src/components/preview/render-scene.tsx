@@ -4,8 +4,9 @@ import { isFamilyProductScenario } from "@/components/family/product-page/mock-f
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
 import { isGeduContractScenario } from "@/components/gedu/contract/mock-contract-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
-import { isGeduProductScenario } from "@/components/gedu/session-details/mock-product-page-fixtures";
+import { isGroupWorkspaceScenario } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
+import { isVoiceRoomScenario } from "@/components/voice/mock-room-fixtures";
 import {
   findConfirmationNotice,
   isPreviewScenario,
@@ -27,6 +28,7 @@ import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
+import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
 /**
  * What each scene renders for a given scenario.
@@ -95,8 +97,12 @@ const SCENE_RENDERERS: Record<
     return <GeduContractScene scenario={scenario} />;
   },
   "gedu-product": (scenario) => {
-    if (!isGeduProductScenario(scenario)) notFound();
+    if (!isGroupWorkspaceScenario(scenario)) notFound();
     return <GeduProductPageScene scenario={scenario} />;
+  },
+  "voice-room": (scenario) => {
+    if (!isVoiceRoomScenario(scenario)) notFound();
+    return <VoiceRoomScene scenario={scenario} />;
   },
   // Two surfaces, one body and one set of fixtures. The audience is the whole
   // difference between them, which is exactly what the pair of scenes is for:

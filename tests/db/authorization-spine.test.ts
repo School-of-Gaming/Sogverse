@@ -116,19 +116,31 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
 
   // --- the session feed ----------------------------------------------------
   //
-  // Every one of these opens with the gedu role guard and then asks a SECOND
-  // question — "do you teach this group / run anything at this building / does
-  // this child sit on your roster" — which a NULL argument can only answer no
-  // to. So the positive half of the matrix is unassertable here for the same
+  // Every one of these opens with a role guard admitting a gedu — and, on the
+  // ones annotated below, an admin as well — and then asks a SECOND question:
+  // "do you teach this group / run anything at this building / does this child
+  // sit on your roster", which a NULL argument can only answer no to. So the
+  // positive half of the matrix is unassertable here for the same
   // reason it is on get_gedu_assigned_product, and for the same reason it is
   // not a hole: each names the file that drives its permitted path against a
   // real fixture.
+  // Widened to admins by 00204, and for the same reason the writers below were:
+  // the admin product page's per-group GROUP DETAILS page renders the gedu
+  // workspace's page body unchanged, so it has to be fed the same document. An
+  // admin passes the role guard AND the assignment half outright — that half is
+  // a statement about staff reach over one product and has never been one about
+  // an admin. The negative half is untouched: a customer and a gamer are still
+  // refused on the first statement, which is what keeps the gedu-only material
+  // link and the three staff notes off every family surface.
   get_gedu_group_feed: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "past the role guard, a NULL group is a group the caller does not teach, " +
-      "so the assignment half of the gate refuses with a second 42501. The " +
-      "positive path is covered by gedu-session-feed.test.ts.",
+      "past the role guard, a NULL group is a group no gedu teaches, so the " +
+      "assignment half of the gate refuses one with a second 42501. An admin " +
+      "passes that half and gets a null-shaped document back rather than a " +
+      "refusal, so the annotation is carried for the gedu alone — it is per " +
+      "function, not per role. Positive paths: gedu-session-feed.test.ts for " +
+      "both roles.",
   },
   // The one that CAN be asserted positively: it takes no id at all, only the
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
@@ -191,22 +203,66 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "gedu-session-feed.test.ts for the gedu, admin-product-sessions.test.ts " +
       "for the admin.",
   },
+  // The two game-username writers, widened to admins by 00205 — the last pair
+  // on this surface to be, and for the reason the rest were: the admin group
+  // details page renders the gedu workspace's roster body unchanged, and that
+  // roster carries an inline username editor. A surface that draws the control
+  // has to serve it. The widening grants an admin nothing new — the same edit is
+  // already theirs on /admin/users/[id], on any user and with no group involved
+  // — so what moved is which surface the action is reachable from, not who may
+  // take it.
   set_group_member_minecraft: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "no NULL child participates in a group the caller teaches, so the target " +
-      "half of the gate refuses with a second 42501. Positive path: " +
-      "gedu-session-feed.test.ts.",
+      "no NULL child participates in a group the caller teaches, so for a gedu " +
+      "the group half of the gate refuses with a second 42501. An admin passes " +
+      "that half and is refused by the target-role check instead — no NULL " +
+      "profile is a gamer — which is 23514 rather than a forbidden one, so the " +
+      "annotation is carried for the gedu alone; it is per function, not per " +
+      "role. Positive paths: gedu-session-feed.test.ts for both roles.",
   },
   // The Roblox twin (00195). Same guard, same scope check, same target role
   // check — and therefore the same reason its permitted half cannot be asserted
-  // on NULL arguments.
+  // on NULL arguments. Widened in the same change as its twin, deliberately:
+  // one roster editor serves both platforms, so widening one alone would ship a
+  // control that saves on a Minecraft group and refuses on a Roblox one.
   set_group_member_roblox: {
-    permittedRoles: ["gedu"],
+    permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
-      "no NULL child participates in a group the caller teaches, so the target " +
-      "half of the gate refuses with a second 42501. Positive path: " +
-      "gedu-session-feed.test.ts.",
+      "no NULL child participates in a group the caller teaches, so for a gedu " +
+      "the group half of the gate refuses with a second 42501. An admin passes " +
+      "that half and is refused by the target-role check instead, which is " +
+      "23514. Positive paths: gedu-session-feed.test.ts for both roles.",
+  },
+
+  // --- the member flair ----------------------------------------------------
+  //
+  // The two staff-only marks a gedu meets before a session starts (00203): the
+  // newcomer badge's join stamp and the per-(group, member) note. Both admit an
+  // ADMIN beside any gedu assigned to ANY group of the group's product, with
+  // full read/write parity between the two — a substitute standing in for
+  // another group is exactly the person who needs the note. So the negative
+  // half of the matrix is the interesting one here: a customer and a gamer are
+  // refused on the first statement, which is what makes the flair gated by data
+  // access rather than by a viewer prop a refactor could drop.
+  get_group_staff_overlay: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "a NULL group is a group no gedu teaches, so the ownership half of the " +
+      "gate refuses one with a second 42501. An admin passes that half and gets " +
+      "a null-shaped document back rather than a refusal, so the annotation is " +
+      "carried for the gedu alone — it is per function, not per role. Positive " +
+      "path, for both roles: member-flair.test.ts.",
+  },
+  set_gamer_group_note: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments, for BOTH permitted roles — no " +
+      "gedu teaches the product of a NULL group, and no NULL participant sits " +
+      "in a NULL group, which is the target check an admin is deliberately " +
+      "still bound by. That target check is also what stands in for a " +
+      "write-IDOR loop entry, the notes table carrying no write grant for any " +
+      "client role. Positive path, for both roles: member-flair.test.ts.",
   },
 
   // --- the guard primitives themselves -------------------------------------

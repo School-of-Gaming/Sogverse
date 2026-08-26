@@ -6,9 +6,11 @@ import { useTranslations } from "next-intl";
 import { robloxAccountId } from "@/components/game-account";
 import { useLiveRobloxRenders, type RobloxRenderMap } from "@/services/roblox";
 import { useVoiceRoom } from "./VoiceRoomProvider";
+import { useVoiceMemberFlair } from "./VoiceMemberFlairProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { ParticipantRow } from "./ParticipantRow";
 import type { VoiceParticipant, LockState } from "./hooks/types";
+import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
 
 /**
  * The figure URL for one participant, with the row's three meanings intact.
@@ -38,7 +40,12 @@ export function ParticipantList() {
     isModerator,
   } = useVoiceRoom();
 
-  const t = useTranslations('voice');
+  const t = useTranslations("voice");
+  // The staff-only overlay, or null for every viewer who is not staff — which
+  // is every family member in the call. Resolved once for the list, exactly as
+  // the Roblox renders below are, because it is a fact about the viewer rather
+  // than about any one row.
+  const flair = useVoiceMemberFlair();
 
   // One batched lookup for the room, and it lives here because the row must
   // stay dumb: the thumbnails API is rate-limited per IP across the entire
@@ -75,7 +82,7 @@ export function ParticipantList() {
     <section className="space-y-2">
       <h2 className="flex items-center gap-2 text-sm font-medium">
         <Users className="h-4 w-4" />
-        {t('participants')}
+        {t("participants")}
       </h2>
 
       {participants.map((p) => (
@@ -83,16 +90,21 @@ export function ParticipantList() {
           key={p.sessionId}
           participant={p}
           gameAvatarUrl={gameAvatarUrlFor(p, robloxRenders)}
-          lockState={lockStates.get(p.sessionId) ?? { audio: false, video: false }}
+          lockState={
+            lockStates.get(p.sessionId) ?? { audio: false, video: false }
+          }
           isLocalOwner={isModerator}
+          flair={flair}
           onMute={(track) => muteParticipant(p.sessionId, track)}
-          onLock={(track, locked) => lockParticipant(p.sessionId, track, locked)}
+          onLock={(track, locked) =>
+            lockParticipant(p.sessionId, track, locked)
+          }
         />
       ))}
 
       {participants.length === 0 && (
         <p className="text-center text-sm text-muted-foreground">
-          {t('noParticipantsYet')}
+          {t("noParticipantsYet")}
         </p>
       )}
     </section>
@@ -105,6 +117,7 @@ function ParticipantRowWithGlow({
   gameAvatarUrl,
   lockState,
   isLocalOwner,
+  flair,
   onMute,
   onLock,
 }: {
@@ -113,11 +126,22 @@ function ParticipantRowWithGlow({
   gameAvatarUrl: string | null | undefined;
   lockState: LockState;
   isLocalOwner: boolean;
+  /** The viewer's staff overlay, or `null` where they have none. */
+  flair: VoiceMemberFlair | null;
   onMute: (track: "audio" | "video") => void;
   onLock: (track: "audio" | "video", locked: boolean) => void;
 }) {
   const avatarRef = useRef<HTMLDivElement>(null);
   useSpeakingGlow(avatarRef, participant.sessionId, participant.audioOn);
+  // A note belongs to a seat in this group, so the staff who are *running* the
+  // session are not targets for one — a Gedu cannot take a note about
+  // themselves, about the Gedu covering with them, or about a visiting admin.
+  // Gating on the overlay's own member set rather than on the row's role is
+  // what makes that true for a Gedu who holds a seat in some other group: the
+  // question is membership of *this* one.
+  const memberFlair =
+    flair !== null && flair.members.has(participant.userId) ? flair : null;
+  const note = memberFlair?.notes[participant.userId] ?? "";
 
   return (
     <ParticipantRow
@@ -125,6 +149,17 @@ function ParticipantRowWithGlow({
       lockState={lockState}
       isModView={isLocalOwner}
       avatarRef={avatarRef}
+      newcomerJoinedAt={flair?.newcomers[participant.userId]}
+      flairNow={flair?.now}
+      hasNote={note !== ""}
+      // Absent for a viewer with no overlay, which is what keeps a child's row
+      // a plain avatar with no button semantics to announce.
+      onOpenNote={
+        memberFlair === null
+          ? undefined
+          : () =>
+              memberFlair.onOpenNote(participant.userId, participant.userName)
+      }
       onMute={onMute}
       onLock={onLock}
     />

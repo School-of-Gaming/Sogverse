@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
-import { SessionDetailsBackLink } from "./BackLink";
+import { SessionDetailsBackLink } from "@/components/group-workspace/BackLink";
 
 /**
  * The group workspace while its two reads are in the air.

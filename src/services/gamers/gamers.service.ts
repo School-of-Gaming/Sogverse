@@ -1,4 +1,11 @@
-import type { Profile, ParentGamer, CreateGamerInput, GamerProfile, AppSupabaseClient } from "@/types";
+import type {
+  Profile,
+  ParentGamer,
+  CreateGamerInput,
+  GamerProfile,
+  GenderType,
+  AppSupabaseClient,
+} from "@/types";
 import { isGamerProfile } from "@/types";
 import { ApiError } from "@/lib/api/api-error";
 
@@ -15,6 +22,21 @@ export interface GamerUpdate {
   password?: string;
   minecraftUsername?: string | null;
   robloxUsername?: string | null;
+}
+
+/**
+ * The two facts a gamer's own profile row holds beyond the link to their
+ * account: when they were born and, optionally, their gender.
+ *
+ * Both are written together because they are edited together — the admin card
+ * that owns them saves the whole pair on one button, so there is no partial
+ * shape to express. `gender` is genuinely nullable: "not specified" is an
+ * answer, and clearing it is a write of `null` rather than an omission.
+ */
+export interface GamerProfileEdit {
+  /** `YYYY-MM-DD`, composed by `assembleGamerDateOfBirth`. */
+  dateOfBirth: string;
+  gender: GenderType | null;
 }
 
 export class GamerService {
@@ -78,6 +100,39 @@ export class GamerService {
 
     if (error) throw error;
     return data as GamerProfile;
+  }
+
+  /**
+   * Writes a gamer's birth date and gender, returning the stored row.
+   *
+   * **Through the injected client rather than an API route.** Nothing here
+   * needs a server-side secret: `gamer_profiles` already carries a `FOR ALL`
+   * admin policy over `is_admin()` and `authenticated` already holds UPDATE on
+   * the table, so the caller's own session is the authorization — and adding a
+   * route would only put our own re-check of `is_admin()` in front of the
+   * database's. The `date_of_birth <= CURRENT_DATE` CHECK still stands behind
+   * it: the editor's month select is clamped against the year beside it, so the
+   * UI cannot compose a future date in the first place, and the CHECK is there
+   * to fail loudly rather than store one if anything else ever tries.
+   *
+   * The updated row is returned (rather than the caller re-reading it) so the
+   * mutation can seed the profile cache with it: the card that saves is showing
+   * the very row that changed, and a refetch round trip between the click and
+   * the new value is exactly the gap a stale readout lives in.
+   */
+  async updateGamerProfile(
+    gamerId: string,
+    edit: GamerProfileEdit,
+  ): Promise<GamerProfile> {
+    const { data, error } = await this.supabase
+      .from("gamer_profiles")
+      .update({ date_of_birth: edit.dateOfBirth, gender: edit.gender })
+      .eq("user_id", gamerId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 
   async createGamerAccount(

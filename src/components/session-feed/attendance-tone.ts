@@ -47,7 +47,11 @@ export interface AttendanceTone {
 
 export const ATTENDANCE_TONE: Record<AttendanceMarkState, AttendanceTone> = {
   present: { text: "text-success", border: "border-success/40" },
-  absent: { text: "text-muted-foreground", border: "border-border" },
+  // Warning, not muted: absent and unmarked sat one shade of grey apart and
+  // could not be told apart at a glance (owner ruling, 2026-08-25). Warning is
+  // still deliberately short of destructive — an absence is a fact to notice,
+  // not a fault to punish, on the family surface as much as the staff ones.
+  absent: { text: "text-warning", border: "border-warning/40" },
   // The state still asking for something, so it is the one that stays faint and
   // keeps a dashed edge instead of settling in beside the answered chips.
   unmarked: {

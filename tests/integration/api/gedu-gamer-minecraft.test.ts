@@ -6,7 +6,8 @@ import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/minecraft — a gedu fixing a group member's
- * Minecraft username.
+ * Minecraft username, and since 00205 an admin making the same fix from the
+ * admin group details page.
  *
  * What this file is responsible for is the *route*: the role gate, the shape of
  * the path parameter, the Mojang round trip, and what reaches the RPC. It is
@@ -60,6 +61,15 @@ function mockAuthenticatedGedu() {
   });
 }
 
+/** The same edit, made by an admin from the group details page (00205). */
+function mockAuthenticatedAdmin() {
+  mockRequireRole.mockResolvedValue({
+    user: { id: "admin-1" },
+    profile: { role: "admin" },
+    supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
+  });
+}
+
 function mockRpcSuccess(
   username: string | null,
   uuid: string | null,
@@ -92,7 +102,10 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
     expect(response.status).toBe(401);
   });
 
-  it("gates on the gedu role", async () => {
+  // A customer and a gamer are still refused, and the gate is what refuses
+  // them: naming `admin` beside `gedu` widens who may press save on the roster
+  // and takes nothing away from the family half of the platform.
+  it("gates on the gedu or admin role", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     );
@@ -103,7 +116,45 @@ describe("PATCH /api/gedu/gamers/[gamerId]/minecraft", () => {
     );
 
     expect(response.status).toBe(403);
-    expect(mockRequireRole).toHaveBeenCalledWith("gedu", expect.any(Object));
+    expect(mockRequireRole).toHaveBeenCalledWith(
+      ["gedu", "admin"],
+      expect.any(Object),
+    );
+    // A refused caller must not reach the write, nor spend a Mojang request.
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+  });
+
+  /**
+   * **An admin's save reaches the RPC, and reaches it as the same call.** The
+   * admin group details page renders the gedu workspace's roster body
+   * unchanged, so what an admin presses is the gedu's editor — the assertion
+   * worth making is therefore not merely that the gate lets them past but that
+   * nothing downstream forks on who they are. Which child an admin may edit is
+   * still the RPC's answer, proved against a real database rather than here.
+   */
+  it("lets an admin make the same edit, sending the same call", async () => {
+    mockAuthenticatedAdmin();
+    mockLookupMinecraftUser.mockResolvedValue({
+      username: "Notch",
+      uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+    });
+    mockRpcSuccess("Notch", "069a79f4-44e9-4726-a5be-fca90e38aaf5");
+
+    const response = await PATCH(
+      createRequest({ minecraftUsername: "notch" }),
+      routeContext(),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith("set_group_member_minecraft", {
+      p_participant_id: GAMER_ID,
+      p_minecraft_username: "Notch",
+      p_minecraft_uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+    });
+    expect(data.minecraft_username).toBe("Notch");
+    expect(data.minecraft_uuid).toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5");
   });
 
   // **The decision, on a gedu's edit: no name is refused for its shape.** A
