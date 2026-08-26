@@ -69,43 +69,46 @@ interface ParticipantRosterRowProps {
     username: string,
   ) => void | Promise<void>;
   /**
-   * When this person joined the group the roster belongs to, as an ISO stamp —
-   * the newcomer badge's clock.
+   * When this person joined the group the roster belongs to, as an ISO stamp,
+   * or `null` where that is not recorded or the badge does not apply — the
+   * newcomer badge's clock.
    *
-   * **A staff-only overlay fact**, and the gate is the data rather than a viewer
-   * prop: the stamp comes off a staff-scoped read, so a surface a family sees
-   * has nothing to pass and the badge cannot appear there. Omitted (or `null`)
-   * the row renders exactly what it rendered before the badge existed.
+   * **This is the per-member half of the flair, and the only half that is
+   * optional.** Most of a roster is past the window or was never stamped, and a
+   * `null` here simply renders no badge; what a caller cannot do is decline the
+   * capability, because the badge's gate is the *data* — the stamp comes off a
+   * staff-scoped read, and this row is only ever drawn on a staff-only page.
    *
    * Paired with {@link flairNow} — a badge without a clock would have to invent
    * one, and a clock it invented would disagree with the page around it.
    */
-  newcomerJoinedAt?: string | null;
+  newcomerJoinedAt: string | null;
   /**
    * The instant the newcomer badge's meter is measured against — the caller's
    * request-stable clock, the same one everything else on the page answers off.
    */
-  flairNow?: Date;
+  flairNow: Date;
   /**
    * Whether a Gedu has written a note about this person in this group. It only
    * lights the note button at the end of the row; the note's *text* never
    * reaches this row, which merely opens the dialog that holds it.
    *
-   * Another staff-only overlay fact, arriving with the roster rather than after
-   * it — so the button is painted in its final state in the first frame, rather
-   * than lighting up under a reader who is already looking at the row.
+   * Arrives with the roster rather than after it — so the button is painted in
+   * its final state in the first frame, rather than lighting up under a reader
+   * who is already looking at the row.
    */
-  hasNote?: boolean;
+  hasNote: boolean;
   /**
-   * Open this person's Gedu note. **Its presence is what puts the note button
-   * at the end of the row**, so a surface that does not pass it renders the row
-   * it always did, with no trailing control at all.
+   * Open this person's Gedu note — the caller owns the dialog, because one
+   * roster can only have one open.
    *
-   * Every row gets it where notes are available, including the majority with
-   * nothing written yet: opening an empty note *is* the add flow, and gating the
-   * affordance on {@link hasNote} would leave no way to write the first one.
+   * **Every row gets it**, including the majority with nothing written yet:
+   * opening an empty note *is* the add flow, and gating the affordance on
+   * {@link hasNote} would leave no way to write the first one. That is also why
+   * it is required rather than a capability a caller can withhold — a roster on
+   * this page with no way in to a note is not a state the product has.
    */
-  onOpenNote?: () => void;
+  onOpenNote: () => void;
   /**
    * Where the platform's check for this child's name has got to, when one is in
    * flight or has just landed. Omitted, the row derives its own resting state
@@ -181,11 +184,14 @@ interface ParticipantRosterRowProps {
  * that is a direct answer to the button the gedu just pressed rather than
  * something arriving on the data's own schedule.
  *
- * **Staff flair is optional and additive.** A newcomer badge on the identity
- * line and a note button at the end of it are facts only a staff-scoped read
- * supplies, so a caller that has none passes none and this row is byte-for-byte
- * the row it was before either existed. Both arrive in the same payload as the
- * roster, so neither lands beside a name that is already on screen.
+ * **Staff flair is a required fact of this row, not an extra.** A newcomer badge
+ * on the identity line and a note button at the end of it come off a
+ * staff-scoped read, and the only page that draws this row is the staff-only
+ * group workspace — so the capability is never in question and the row does not
+ * pretend it can be. What *is* per-member is which marks are lit: a `null` join
+ * stamp renders no badge, and a member nobody has written about gets the same
+ * note button, dimmed. Both facts arrive in the same payload as the roster, so
+ * neither lands beside a name that is already on screen.
  */
 export function ParticipantRosterRow({
   participant,
@@ -270,9 +276,10 @@ export function ParticipantRosterRow({
                 {c(ROLE_LABEL_KEYS.customer)}
               </Badge>
             )}
-            {flairNow !== undefined && (
-              <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
-            )}
+            {/* Renders nothing for a member with no stamp or one past the
+                window, which is most of a roster — the per-member gate lives
+                in the badge rather than in a condition here. */}
+            <NewcomerBadge joinedAt={newcomerJoinedAt} now={flairNow} />
           </div>
           {!isAdult && platform !== null && (
             <GameIdentityCell
@@ -284,13 +291,11 @@ export function ParticipantRosterRow({
             />
           )}
         </div>
-        {onOpenNote !== undefined && (
-          <GamerNoteButton
-            name={participant.first_name}
-            hasNote={hasNote === true}
-            onOpen={onOpenNote}
-          />
-        )}
+        <GamerNoteButton
+          name={participant.first_name}
+          hasNote={hasNote}
+          onOpen={onOpenNote}
+        />
       </div>
       {contactEmail !== null && <ContactEmailCell email={contactEmail} />}
     </li>

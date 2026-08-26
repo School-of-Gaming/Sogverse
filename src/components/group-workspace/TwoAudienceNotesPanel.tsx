@@ -33,12 +33,21 @@ export interface TwoAudienceNotesCopy {
    * Ghost line standing in for an unwritten public note. It renders bare, with
    * no banner above it, so it has to **name the audience itself** — it is the
    * only thing on screen saying who that half is for.
+   *
+   * Both ghosts are worded as **imperatives** ("Add a note…"), and that mood is
+   * load-bearing: visually a ghost differs from a saved note only by italics,
+   * so the imperative is the one cue a screen reader gets that this is an
+   * invitation rather than content. A rewording or translation that drifts
+   * into a descriptive phrasing removes that cue. Each ghost also deliberately
+   * echoes its scope's editor placeholder — keep the pair in step when either
+   * is edited.
    */
   publicEmpty: string;
   /**
    * Ghost line standing in for an unwritten Gedu note. It renders inside the
    * padlocked block, which states the audience, so this says what belongs there
-   * rather than restating who reads it.
+   * rather than restating who reads it. Same imperative-mood and
+   * placeholder-pairing constraints as {@link publicEmpty}.
    */
   staffEmpty: string;
   publicLabel: string;
@@ -109,12 +118,12 @@ interface TwoAudienceNotesPanelProps {
  * feature was invisible to anyone who never opened it. Mirroring the filled
  * shape is what teaches the split: the ghosts show that there are two places to
  * write, the bare public ghost names the audience it is for, and the staff
- * ghost sits *inside* the padlocked block so the banner — lock plus "Gedu
- * note" — carries the privacy half of the lesson rather than a sentence
- * claiming it. That is why the staff ghost must never be rendered beside the
- * block instead of within it. Ghosts are italic as well as muted, because the
- * real Gedu note is muted too and nothing here may read as saved content that
- * is not.
+ * ghost sits *inside* the padlocked block so the banner — the lock beside the
+ * session feed's "Gedus and admins" label — carries the privacy half of the
+ * lesson rather than a sentence claiming it. That is why the staff ghost must
+ * never be rendered beside the block instead of within it. Ghosts are italic
+ * as well as muted, because the real Gedu note is muted too and nothing here
+ * may read as saved content that is not.
  *
  * The pencil follows from that: there is no "empty" state to have a different
  * affordance for, so the header control is always Edit.
