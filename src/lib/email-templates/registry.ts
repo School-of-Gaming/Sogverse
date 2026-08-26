@@ -333,6 +333,7 @@ const seatOfferParamsSchema = z.object({
   deadline: z.string().min(1),
   acceptUrl: z.string().url(),
   declineUrl: z.string().url(),
+  dashboardUrl: z.string().url(),
 });
 
 const seatOfferStaffParamsSchema = z.object({
@@ -538,6 +539,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         label: "Decline URL",
         placeholder: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
       },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
     ],
     schema: seatOfferParamsSchema,
     build: (p, t, locale) => buildSeatOfferEmail(t, locale, p),
@@ -581,10 +583,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     build: (p, t, locale) => buildSeatOfferStaffEmail(t, locale, p),
     subject: (p, t) => seatOfferStaffSubject(t, p),
     resolveParams: resolveSeatOfferStaff,
-    // The live route replies to the family, so a staff reader can answer them
-    // from the mail. A test send that replied to support instead would teach
-    // the wrong thing to whoever is checking it.
-    replyTo: (p) => p.contactEmail,
+    // No `replyTo` override, and that is the accurate answer rather than an
+    // omission: the live send replies to the support inbox, which is what the
+    // default here already produces. It used to point at the family, back when
+    // the mail went to that inbox instead of to the admins themselves.
   }),
   sessionReport: defineTemplate({
     label: "Session Report",

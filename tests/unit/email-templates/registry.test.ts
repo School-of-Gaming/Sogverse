@@ -346,6 +346,7 @@ describe("every template renders in every locale", () => {
       deadline: "Sunday, 31 August at 14:20 GMT+3",
       acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
       declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+      dashboardUrl: "https://sogverse.sog.gg/parent",
     },
     seatOfferStaff: {
       reason: "declined",

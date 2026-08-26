@@ -2447,6 +2447,7 @@
       "accept": "Ta platsen",
       "decline": "Nej tack",
       "alsoInMySog": "Samma fråga väntar i Min SOG, om du hellre svarar där.",
+      "dashboardButton": "Svara i Min SOG",
       "child": {
         "subject": "{participantName}: en plats har blivit ledig – {productName}",
         "opening": "Vi lovade att höra av oss så snart en plats blev ledig. Nu har det hänt: {participantName} kan vara med – {productName}."
@@ -2457,13 +2458,13 @@
       }
     },
     "seatOfferStaff": {
-      "participant": "Deltagare",
+      "participant": "Plats för",
       "contact": "Kontakt",
       "contactEmail": "E-post",
       "product": "Produkt",
       "schedule": "Schema",
       "offeredAt": "Erbjöds",
-      "nextStep": "Platsen är ledig igen. Öppna produkten och bjud in nästa familj på väntelistan.",
+      "nextStep": "Erbjudandet är över och platsen är ledig igen. Öppna produkten, se kön och skicka nästa inbjudan.",
       "button": "Öppna produkten",
       "declined": {
         "subject": "{participantName} tackade nej till en plats i {productName}",

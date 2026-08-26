@@ -151,10 +151,15 @@ export function SeatOfferBlock({
   }
 
   return (
-    <div className="w-full space-y-3 rounded-md border border-primary/40 bg-primary/5 p-3 text-left">
+    // `info`, the tone this product uses for "we are telling you something" —
+    // the same one the awaiting-placement card and its icon already wear a few
+    // lines up, and the one the mail's own callout panel is built from. The
+    // Accept button below keeps the default (primary) variant: the block is the
+    // notice, the button is the action, and they are not the same claim.
+    <div className="w-full space-y-3 rounded-md border border-info/40 bg-info/5 p-3 text-left">
       <div className="flex items-start gap-2">
         <CalendarClock
-          className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+          className="mt-0.5 h-4 w-4 shrink-0 text-info"
           aria-hidden
         />
         <div className="min-w-0 space-y-1">
@@ -182,19 +187,19 @@ export function SeatOfferBlock({
         // Stacked on a phone and side by side from tablet width up. Stacked is
         // not a fallback here: at the 360px floor this block has about 290px of
         // its own, and "Accepter la place" beside "Non, merci" does not fit in
-        // it. Accept comes first in both arrangements, because it is the answer
-        // a family reaching this block is overwhelmingly about to give.
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            className="sm:flex-1"
-            disabled={committing || lapsed}
-            onClick={() => void answer(true)}
-          >
-            {inFlight === "accept" && (
-              <Loader2 className="animate-spin" aria-hidden />
-            )}
-            {t("accept")}
-          </Button>
+        // it.
+        //
+        // **The order is the app-wide convention: affirmative on the right side
+        // by side, affirmative on TOP when stacked — one DOM order, reversed by
+        // the stacking direction.** So Decline is authored first and Accept
+        // last, which puts Accept in the right-hand cell from `sm` up; and
+        // `flex-col-reverse` flips the narrow arrangement so Accept is the top
+        // button rather than the bottom one. Two things follow from writing it
+        // this way rather than swapping the JSX at a breakpoint: the affirmative
+        // is last in the DOM at every width, so tab order and screen-reader
+        // order never disagree with the convention; and the pair is authored
+        // once, so a later edit cannot move one arrangement without the other.
+        <div className="flex flex-col-reverse gap-2 sm:flex-row">
           <Button
             variant="outline"
             className="sm:flex-1"
@@ -208,6 +213,16 @@ export function SeatOfferBlock({
               <Loader2 className="animate-spin" aria-hidden />
             )}
             {t("decline")}
+          </Button>
+          <Button
+            className="sm:flex-1"
+            disabled={committing || lapsed}
+            onClick={() => void answer(true)}
+          >
+            {inFlight === "accept" && (
+              <Loader2 className="animate-spin" aria-hidden />
+            )}
+            {t("accept")}
           </Button>
         </div>
       )}

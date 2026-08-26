@@ -2447,6 +2447,7 @@
       "accept": "Accepter la place",
       "decline": "Non, merci",
       "alsoInMySog": "La même question vous attend dans Mon SOG, si vous préférez répondre là-bas.",
+      "dashboardButton": "Répondre dans Mon SOG",
       "child": {
         "subject": "{participantName} : une place s’est libérée pour {productName}",
         "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : {participantName} peut nous rejoindre — {productName}."
@@ -2457,13 +2458,13 @@
       }
     },
     "seatOfferStaff": {
-      "participant": "Participant",
+      "participant": "Place pour",
       "contact": "Contact",
       "contactEmail": "E-mail",
       "product": "Produit",
       "schedule": "Horaires",
       "offeredAt": "Proposée le",
-      "nextStep": "La place est de nouveau libre. Ouvrez le produit et invitez la famille suivante sur la liste d’attente.",
+      "nextStep": "La proposition est terminée et la place est de nouveau libre. Ouvrez le produit pour voir la file d’attente et envoyer la prochaine invitation.",
       "button": "Ouvrir le produit",
       "declined": {
         "subject": "{participantName} a refusé une place pour {productName}",

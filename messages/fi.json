@@ -2447,6 +2447,7 @@
       "accept": "Otan paikan",
       "decline": "Ei kiitos",
       "alsoInMySog": "Sama kysymys odottaa Oma SOG -sivulla, jos vastaat mieluummin siellä.",
+      "dashboardButton": "Vastaa Oma SOG -sivulla",
       "child": {
         "subject": "{participantName}: paikka vapautui – {productName}",
         "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: {participantName} pääsee mukaan – {productName}."
@@ -2457,13 +2458,13 @@
       }
     },
     "seatOfferStaff": {
-      "participant": "Osallistuja",
+      "participant": "Kenelle paikka",
       "contact": "Yhteyshenkilö",
       "contactEmail": "Sähköposti",
       "product": "Tuote",
       "schedule": "Aikataulu",
       "offeredAt": "Tarjottu",
-      "nextStep": "Paikka on jälleen vapaana. Avaa tuote ja kutsu jonotuslistalta seuraava perhe.",
+      "nextStep": "Tarjous on päättynyt ja paikka on jälleen vapaana. Avaa tuote, katso jonotuslista ja lähetä seuraava kutsu.",
       "button": "Avaa tuote",
       "declined": {
         "subject": "{participantName} kieltäytyi paikasta – {productName}",

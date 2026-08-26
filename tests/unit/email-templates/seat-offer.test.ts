@@ -21,6 +21,7 @@ beforeAll(async () => {
 const ACCEPT_URL = "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept";
 const DECLINE_URL = "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline";
 const DEADLINE = "Sunday, 31 August at 14:20 GMT+3";
+const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
 
 const offer = {
   participantName: "Aino",
@@ -29,6 +30,7 @@ const offer = {
   deadline: DEADLINE,
   acceptUrl: ACCEPT_URL,
   declineUrl: DECLINE_URL,
+  dashboardUrl: DASHBOARD_URL,
 };
 
 describe("buildSeatOfferEmail", () => {
@@ -55,11 +57,15 @@ describe("buildSeatOfferEmail", () => {
   });
 
   /**
-   * Two buttons, one ask. `ctaButtonRow` forbids two filled brand buttons, so
-   * the emphasis has to land on exactly one of them — and it is Accept, because
-   * the mail wants an answer either way but is asking them to come.
+   * Two buttons, one ask, in the app's own footer order. `ctaButtonRow` forbids
+   * two filled brand buttons, so the emphasis lands on exactly one of them —
+   * Accept, because the mail wants an answer either way but is asking them to
+   * come. **The order is the other half and it is the half that regresses
+   * silently**: DOM order runs negative-then-affirmative, so Decline is the
+   * left cell and Accept the right one, which is what a reader meets in My SOG
+   * and in every dialog in the app.
    */
-  it("emphasizes Accept and outlines Decline", () => {
+  it("puts Decline left and the emphasized Accept right", () => {
     const html = buildSeatOfferEmail(t, "en", offer);
     // Only the row's own cells are `width="50%"`, so this picks out the two
     // buttons and nothing else on the page. Asserting on the border rather than
@@ -71,10 +77,31 @@ describe("buildSeatOfferEmail", () => {
     ].map((match) => ({ style: match[1], href: match[2] }));
 
     expect(cells).toHaveLength(2);
-    expect(cells[0].href).toBe(ACCEPT_URL);
-    expect(cells[0].style).not.toContain("border:1px solid");
-    expect(cells[1].href).toBe(DECLINE_URL);
-    expect(cells[1].style).toContain("border:1px solid");
+    expect(cells[0].href).toBe(DECLINE_URL);
+    expect(cells[0].style).toContain("border:1px solid");
+    expect(cells[1].href).toBe(ACCEPT_URL);
+    expect(cells[1].style).not.toContain("border:1px solid");
+  });
+
+  /**
+   * The one filled brand button in the mail is My SOG, under the sentence
+   * promising the same question is waiting there. It is deliberately not one of
+   * the two answers: `ctaButtonRow`'s type keeps those at secondary/outline
+   * whatever else the mail carries, so the primary variant was free to mark the
+   * in-app path — which lands a signed-in parent on their own card rather than
+   * on a page that knows only what a token carries.
+   */
+  it("gives the primary variant to My SOG and to nothing else", () => {
+    const html = buildSeatOfferEmail(t, "en", offer);
+    expect(html).toContain(`href="${DASHBOARD_URL}"`);
+
+    // The primary fill is the one variant that carries the `cta-on-brand` pin
+    // (a near-black label on the brand orange), so counting the pin counts the
+    // primary buttons — and there must be exactly one.
+    const pinned = [
+      ...html.matchAll(/<a href="([^"]*)"[^>]*class="cta-on-brand"/g),
+    ].map((match) => match[1]);
+    expect(pinned).toEqual([DASHBOARD_URL]);
   });
 
   it("speaks in the second person when the seat is the parent's own", () => {
@@ -160,6 +187,35 @@ describe("buildSeatOfferStaffEmail", () => {
     expect(seatOfferStaffSubject(t, lapsed)).toBe(
       "No answer to a seat offer for Aino in Minecraft 101",
     );
+  });
+
+  /**
+   * **Everything the two reasons share has to be true of both of them.** The
+   * variant owns the whole of what happened; the shared copy is written for a
+   * reader who does not yet know which mail they are holding. The failure this
+   * pins is specific and was real: shared copy narrating a decline made the
+   * no-answer mail read as an accusation the family never earned.
+   */
+  it("shares nothing between the two reasons that only one of them makes true", () => {
+    const declined = buildSeatOfferStaffEmail(t, "en", staff);
+    const lapsed = buildSeatOfferStaffEmail(t, "en", {
+      ...staff,
+      reason: "no_response",
+    });
+
+    // Everything outside the three variant keys is byte-identical, so the
+    // shared half can be isolated by taking what the two mails have in common.
+    const shared = declined
+      .split("\n")
+      .filter((line) => lapsed.includes(line))
+      .join("\n");
+
+    for (const word of ["declin", "refus", "said no", "no answer", "ran out"]) {
+      expect(shared.toLowerCase()).not.toContain(word);
+    }
+    // …and what the shared half *does* say is the part that is true either way:
+    // the offer is over and somebody should invite the next family.
+    expect(shared).toContain("the seat is open again");
   });
 
   it("escapes HTML in the contact's name", () => {

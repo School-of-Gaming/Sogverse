@@ -128,15 +128,15 @@ export function SeatOfferResponse({
           <p className="text-muted-foreground">{t("offer.confirmBody")}</p>
         </div>
         {failed ? <Failure message={t("offer.error", { supportEmail: SUPPORT_EMAIL })} /> : null}
-        <div className="flex w-full flex-col gap-2">
-          <Button
-            variant="destructive"
-            disabled={committing}
-            onClick={() => void answer(false)}
-          >
-            {committing ? <Loader2 className="animate-spin" aria-hidden /> : null}
-            {t("offer.confirmAction")}
-          </Button>
+        {/* The app-wide convention: the affirmative is authored last in the DOM
+            and lands on top when the pair is stacked. This panel is stacked at
+            every width — it is a narrow column centred on a page of its own,
+            with no side-by-side arrangement to reconcile — so `flex-col-reverse`
+            is the whole of it: the button that commits the step sits above
+            Cancel, and it is still the last thing in the DOM, which is where the
+            keyboard and a screen reader meet it. The affirmative here is the
+            confirmation itself, because the panel exists to ask it. */}
+        <div className="flex w-full flex-col-reverse gap-2">
           <Button
             variant="outline"
             disabled={committing}
@@ -146,6 +146,14 @@ export function SeatOfferResponse({
             }}
           >
             {t("offer.confirmCancel")}
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={committing}
+            onClick={() => void answer(false)}
+          >
+            {committing ? <Loader2 className="animate-spin" aria-hidden /> : null}
+            {t("offer.confirmAction")}
           </Button>
         </div>
       </div>
@@ -167,11 +175,9 @@ export function SeatOfferResponse({
         </p>
       </div>
       {failed ? <Failure message={t("offer.error", { supportEmail: SUPPORT_EMAIL })} /> : null}
-      <div className="flex w-full flex-col gap-2">
-        <Button disabled={committing} onClick={() => void answer(true)}>
-          {committing ? <Loader2 className="animate-spin" aria-hidden /> : null}
-          {t("offer.accept")}
-        </Button>
+      {/* Same convention and the same single arrangement as the confirmation
+          step above: Accept is authored last and, stacked, sits on top. */}
+      <div className="flex w-full flex-col-reverse gap-2">
         <Button
           variant="outline"
           disabled={committing}
@@ -181,6 +187,10 @@ export function SeatOfferResponse({
           }}
         >
           {t("offer.decline")}
+        </Button>
+        <Button disabled={committing} onClick={() => void answer(true)}>
+          {committing ? <Loader2 className="animate-spin" aria-hidden /> : null}
+          {t("offer.accept")}
         </Button>
       </div>
     </div>

@@ -407,13 +407,36 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   /** The one interactive element a waitlisted card has, and adults only. */
   const onLeaveWaitlist = waitlisted ? billing?.onLeaveWaitlist : undefined;
   const onRespondToSeatOffer = billing?.onRespondToSeatOffer;
+  /**
+   * **A live offer supersedes the place in line, so the position is not drawn
+   * while the block is.** "You're #3 in line" and "a seat has opened, will you
+   * take it?" are two answers to one question, and only the second is still
+   * true: their turn has come up. Left in, the number would read as a queue the
+   * family is still waiting out, directly under the thing saying they are not.
+   *
+   * It follows the block exactly — the live offer *and* the in-view-lapsed
+   * latch — because the lapsed block is still the block, still saying a seat was
+   * offered, and a position reappearing under it on the clock's own schedule is
+   * the shift the latch exists to prevent. When no block renders (a fresh load
+   * of an expired or absent offer) the position shows as it always did.
+   *
+   * **No new shift class comes with this.** The removal and the block's arrival
+   * are one edit driven by one snapshot: the same refetch that grows the card by
+   * a block shrinks it by a line, and both are already inside the cost the
+   * block's own note at the end of the card accounts for. The leave link steps
+   * aside on the same trigger, a few lines down, for a different reason.
+   */
+  const showsWaitlistPosition = waitlisted && seatOffer === null;
   // Whether the footer has anything to say, asked before it is drawn. The five
   // branches below are exclusive by construction, and on the one card where
   // none of them lands — a running enrollment whose product has no slots yet —
-  // the row is left out rather than rendered empty.
+  // the row is left out rather than rendered empty. A waitlisted card with an
+  // offer standing on it is now a second such card: its position line is
+  // superseded and its leave link has stood down, so the row would be a band of
+  // nothing between the schedule and the block.
   const hasFooter =
     endedOn !== null ||
-    waitlisted ||
+    showsWaitlistPosition ||
     awaiting ||
     (running && hasVoiceRoom && hasNext) ||
     (running && !hasVoiceRoom && siteName !== null);
@@ -614,13 +637,17 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     </span>
                   </span>
                 )}
-                {endedOn === null && waitlisted && (
+                {endedOn === null && showsWaitlistPosition && (
                   // The place in line leads the sentence, in body text rather than
                   // on the corner: the corner is this product's grammar for "this
                   // needs attention", and a queue position is information, not a
                   // fault. `tabular-nums` so the digits keep their width when
                   // somebody ahead gives up their spot — the one number on this
                   // page that can change while a parent is looking at it.
+                  //
+                  // Absent entirely once a seat has been offered — see
+                  // `showsWaitlistPosition` above: a family being asked whether
+                  // they want the seat is not in line for it any more.
                   <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
                     <Hourglass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                     <span className="min-w-0 tabular-nums">
@@ -711,7 +738,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           {/* **Last in the card, and the order is load-bearing.** An offer
               lands on a card that is already on screen — a background refetch,
               or a page a parent left open — so anywhere further up it would
-              push the schedule, the queue position and the leave link down the
+              push the eyebrow, the product's name and the schedule down the
               viewport while somebody was reading them. At the end of the run it
               grows into the card's own slack instead, and everything already
               painted inside the card holds its place. It also reads right
@@ -720,10 +747,12 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               **What it does not do is cost nothing, and the remainder is worth
               naming.** This card sits in a vertical stack of cards, so the
               block appearing makes the card taller and pushes every card below
-              it down the page — and the leave link stepping aside a few lines
-              up (it hides while an offer stands, because "No, thank you" is the
-              same act with better words on it) changes the same height in the
-              other direction. Both are edits on data's own schedule, which is
+              it down the page — while the footer above shrinks in the same
+              edit, because both of the things it had to say are superseded by
+              the block: the place in line (their turn is up, so they are not in
+              line) and the leave link ("No, thank you" is the same act with
+              better words on it). All of it is one snapshot's worth of change
+              and all of it is on data's own schedule, which is
               the kind this rule does not permit. End-of-run is the best of the
               three options rather than a clean one: reserving the block's space
               on every waitlisted card would hold a hole open on the many cards

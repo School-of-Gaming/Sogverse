@@ -95,6 +95,12 @@ function adminTableStub(table: string) {
         ],
         error: null,
       }),
+      // The staff mail's recipient list: every admin account, resolved at send
+      // time off the role column rather than hardcoded to an inbox.
+      eq: async () => ({
+        data: [{ email: "ada@sog.gg" }, { email: "bo@sog.gg" }],
+        error: null,
+      }),
     }),
   };
 }
@@ -195,7 +201,8 @@ describe("POST /api/admin/seat-offers/sweep", () => {
     await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
     const sent = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(sent.toEmail).toBe("help@sog.gg");
+    // Every admin account, resolved off the role column at send time.
+    expect(sent.toEmail).toEqual(["ada@sog.gg", "bo@sog.gg"]);
     expect(sent.subject).toContain("No answer");
   });
 

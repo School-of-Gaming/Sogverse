@@ -2491,6 +2491,7 @@
       "accept": "quS vISuq",
       "decline": "Qo’, qatlho’",
       "alsoInMySog": "My SOG-Daq je ratlh yu’vam. pa’ DajanglaH.",
+      "dashboardButton": "My SOG-Daq yIjang",
       "child": {
         "subject": "{participantName}: quS poSchoHpu’ – {productName}",
         "opening": "quS poSDI’ SoH wIja’ ’e’ wIper. DaH poSchoHpu’: maHvaD ghoSlaH {participantName} – {productName}."
@@ -2501,13 +2502,13 @@
       }
     },
     "seatOfferStaff": {
-      "participant": "quS ghajwI’",
+      "participant": "quSvaD ghot",
       "contact": "rI’wI’",
       "contactEmail": "QIn Daq",
       "product": "Doch",
       "schedule": "poH",
       "offeredAt": "nobpu’",
-      "nextStep": "poStaH quS. Doch yIpoSmoH ’ej loS tetlhvo’ latlh qorDu’ yIrI’.",
+      "nextStep": "rInpu’ nob ’ej poStaH quS. Doch yIpoSmoH, loS tetlh yIlegh ’ej nob veb yIngeH.",
       "button": "Doch yIpoSmoH",
       "declined": {
         "subject": "{participantName} lajQo’ quS – {productName}",

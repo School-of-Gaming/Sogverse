@@ -276,7 +276,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // observed by somebody opening a page that would care, and this is that call.
   "src/app/api/admin/seat-offers/sweep/route.ts": {
     adminClient:
-      "claim_expired_seat_offer_notifications is service_role-only, along with the rest of the seat-offer trio, and the staff mails it feeds read a family whose row the caller has no policy on",
+      "claim_expired_seat_offer_notifications is service_role-only, along with the rest of the seat-offer trio, and the staff mails it feeds read a family whose row the caller has no policy on, and resolve their own recipients from the role column — every admin account, which is in nobody else's view",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
@@ -865,7 +865,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // path".
   "src/app/api/participations/seat-offer/route.ts": {
     adminClient:
-      "respond_seat_offer is service_role-only because its public sibling has no session to guard on; the caller's ownership of the row is established first, on the caller's own client under their own RLS, and the staff mail reads a product and profiles they hold no policy on",
+      "respond_seat_offer is service_role-only because its public sibling has no session to guard on; the caller's ownership of the row is established first, on the caller's own client under their own RLS, and the staff mail reads a product and profiles they hold no policy on — including the role column it resolves its admin recipients from",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
@@ -879,7 +879,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/seat-offer/respond/route.ts": {
     adminClient:
-      "there is no session on this path at all — the signed token is the authorization — so every read and the write behind it run on the service-role client, and the token's compare-and-swap inside respond_seat_offer is what narrows that to one participation and one offer",
+      "there is no session on this path at all — the signed token is the authorization — so every read and the write behind it run on the service-role client — the staff mail's admin recipient list included — and the token's compare-and-swap inside respond_seat_offer is what narrows that to one participation and one offer",
     handlers: {
       POST: {
         posture: {

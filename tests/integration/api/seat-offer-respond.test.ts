@@ -94,6 +94,12 @@ function adminTableStub(table: string) {
         ],
         error: null,
       }),
+      // The staff mail's recipient list: every admin account, resolved at send
+      // time off the role column rather than hardcoded to an inbox.
+      eq: async () => ({
+        data: [{ email: "ada@sog.gg" }, { email: "bo@sog.gg" }],
+        error: null,
+      }),
     }),
   };
 }
@@ -238,10 +244,12 @@ describe("POST /api/seat-offer/respond", () => {
     await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     const sent = mockSendTransactionalEmail.mock.calls[0][0];
-    // The support inbox, and a Reply-To pointing back at the family so a staff
-    // member can answer them from the mail.
-    expect(sent.toEmail).toBe("help@sog.gg");
-    expect(sent.replyToEmail).toBe("marja@example.com");
+    // Every admin account, because the thing this mail asks for is done in the
+    // admin UI — and a Reply-To on the support inbox, because nothing here is
+    // waiting on the family: the offer is over and the next step is inviting
+    // somebody else.
+    expect(sent.toEmail).toEqual(["ada@sog.gg", "bo@sog.gg"]);
+    expect(sent.replyToEmail).toBe("help@sog.gg");
     expect(sent.subject).toContain("declined");
   });
 

@@ -42,10 +42,20 @@ export interface SeatOfferStaffEmailOptions {
  * The staff mail that turns one family's answer into the next family's
  * invitation.
  *
- * It goes to the support inbox rather than to every admin individually — the
- * decision the owner made for this flow, and the same inbox a family replying
- * to anything else lands in, so the seat and the conversation about it are in
- * one place.
+ * It goes to **every admin account**, resolved at send time from the role
+ * column — the same recipient list the feedback notification uses, and for the
+ * same reason: what this mail asks for is done in the admin UI, so it goes to
+ * the people who can do it rather than to an inbox they would have to be
+ * watching. Its Reply-To is the support inbox all the same; see the send site
+ * for which half of the two-kinds convention that answers.
+ *
+ * **Everything the two reasons share has to be true of both of them.** The
+ * variant owns the whole of what happened — the subject, the heading and one
+ * sentence — and every other word in the mail is written as though the reader
+ * does not yet know which of the two they are holding: the offer is over, the
+ * seat is open again, somebody should invite whoever is next. The failure mode
+ * this guards against is the shared copy quietly narrating a decline, which
+ * makes the no-answer mail read like an accusation the family never earned.
  *
  * It is built with the default (English) translator, like every other mail we
  * send to ourselves: the recipient is staff, and a mail that changed language
@@ -62,10 +72,11 @@ export function buildSeatOfferStaffEmail(
     [t("seatOfferStaff.contact"), escapeHtml(opts.contactName)],
     // Displayed, never linked — the same treatment the feedback mail gives an
     // address, and for the same reason: a client that invents its own link
-    // paints a link we did not write in a colour we did not choose. This mail's
-    // Reply-To is not this address (it is the family's, so replying answers
-    // them), which makes the defusing the only thing standing between a staff
-    // reader and an accidental send.
+    // paints a link we did not write in a colour we did not choose. This mail
+    // replies to the support inbox rather than to the family, so the address
+    // here is a fact about the case and not a control: a live mailto beside it
+    // would be the one obvious thing to click on a mail whose actual next step
+    // is the button at the bottom.
     [t("seatOfferStaff.contactEmail"), defuseAutolinks(escapeHtml(opts.contactEmail))],
     [t("seatOfferStaff.product"), escapeHtml(opts.productName)],
     ...(opts.productSchedule

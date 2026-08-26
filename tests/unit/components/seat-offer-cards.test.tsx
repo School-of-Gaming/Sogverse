@@ -23,7 +23,9 @@ import type { ProductGroupsSnapshot } from "@/types";
  *     place. Same data, opposite answers, decided by which of them the card was
  *     mounted on — the whole of the no-shift-on-time's-schedule rule here.
  *  4. **The leave-waitlist link steps aside while an offer stands**, because
- *     "No, thank you" is the same act with the right words on it.
+ *     "No, thank you" is the same act with the right words on it — and so does
+ *     the place in line, because a family whose turn has come up is not in line
+ *     any more.
  *  5. **Disabled and spinning are two states.** The buttons stay inert through
  *     a refusal and the spinner does not, and the spinner sits on whichever
  *     button was pressed — neither is visible to anything but a render.
@@ -269,6 +271,53 @@ describe("EnrollmentCard — the family's seat offer", () => {
     renderFamilyCard(null, vi.fn());
     expect(screen.getByText("parent.waitlist.leave.trigger")).toBeTruthy();
     expect(screen.queryByText(`${FAMILY}.title`)).toBeNull();
+  });
+
+  /**
+   * The two halves of the supersession, pinned against each other. "You're #3
+   * in line" and "a seat has opened, will you take it?" answer the same
+   * question and only the second is still true — so the position line is a
+   * property of *not* having an offer, and nothing else on the card may bring
+   * it back.
+   */
+  it("drops the place in line while an offer stands, and keeps it otherwise", () => {
+    const position = `parent.waitlist.footerReassuranceCustomer({"position":3})`;
+
+    const { unmount } = renderFamilyCard(OFFERED_TWO_DAYS_AGO, vi.fn());
+    expect(screen.getByText(`${FAMILY}.title`)).toBeTruthy();
+    expect(screen.queryByText(position)).toBeNull();
+    unmount();
+
+    renderFamilyCard(null, vi.fn());
+    expect(screen.getByText(position)).toBeTruthy();
+  });
+
+  /**
+   * The latch reaches this too. A block held in place because the window closed
+   * under the reader is still a block saying a seat was offered, and a position
+   * reappearing beneath it would be the page changing on the clock's own
+   * schedule — the exact move the latch exists to prevent.
+   */
+  it("keeps the place in line away while the lapsed block is still latched", () => {
+    const { rerender } = renderFamilyCard(OFFERED_ALMOST_OUT, vi.fn());
+
+    act(() => {
+      clock.now = new Date(NOW.getTime() + 120_000);
+    });
+    rerender(
+      <EnrollmentCard
+        enrollment={waitlistedEnrollment(OFFERED_ALMOST_OUT)}
+        audience="customer"
+        gamerFirstName="Aino"
+        onLeaveWaitlist={() => {}}
+        onRespondToSeatOffer={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(`${FAMILY}.lapsed`)).toBeTruthy();
+    expect(
+      screen.queryByText(`parent.waitlist.footerReassuranceCustomer({"position":3})`),
+    ).toBeNull();
   });
 
   it("draws no block at all for an offer that lapsed before the visit", () => {
