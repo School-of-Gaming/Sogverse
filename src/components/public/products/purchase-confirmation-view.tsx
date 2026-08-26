@@ -269,8 +269,9 @@ export function PurchaseConfirmationView({
           </CardContent>
         </Card>
 
-        {/* My SOG is the primary action (right on desktop, top on mobile via
-            flex-col-reverse); Keep browsing is the secondary, on the left. */}
+        {/* The app-wide button order shape — root `CLAUDE.md`, "Button Order".
+            My SOG is the affirmative (last in the DOM, so right in a row and
+            top in a stack); Keep browsing is the negative, on the left. */}
         <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
           <Link
             href={ROUTES.shop}

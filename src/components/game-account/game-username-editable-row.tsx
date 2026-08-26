@@ -338,15 +338,9 @@ export function GameUsernameEditableRow({
             })}
             className="h-8 min-w-0 flex-1 px-2 py-0 text-xs"
           />
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => void commit()}
-            aria-label={t("save")}
-            className="h-8 w-8 shrink-0 p-0"
-          >
-            <Check className="h-3.5 w-3.5" aria-hidden />
-          </Button>
+          {/* Cancel then Save — the app-wide button order (root `CLAUDE.md`,
+              "Button Order") puts the affirmative last, so it reads rightmost.
+              This row never stacks, so it needs no `flex-col-reverse`. */}
           <Button
             type="button"
             variant="ghost"
@@ -356,6 +350,15 @@ export function GameUsernameEditableRow({
             className="h-8 w-8 shrink-0 p-0"
           >
             <X className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => void commit()}
+            aria-label={t("save")}
+            className="h-8 w-8 shrink-0 p-0"
+          >
+            <Check className="h-3.5 w-3.5" aria-hidden />
           </Button>
         </div>
       </div>

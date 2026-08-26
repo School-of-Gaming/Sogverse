@@ -166,7 +166,13 @@ export function ImageActionConfirmDialog({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 border-t border-border p-6 pt-4 sm:flex-row sm:justify-end">
+        {/* A hand-rolled footer (it owns the divider and the panel's padding),
+            so it restates the app-wide button order shape itself — root
+            `CLAUDE.md`, "Button Order": [negative, affirmative] in the DOM,
+            `flex-col-reverse` so the affirmative is right in a row and top in
+            a stack. Confirming the removal is the affirmative answer here even
+            though it renders destructive. */}
+        <div className="flex flex-col-reverse gap-2 border-t border-border p-6 pt-4 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"

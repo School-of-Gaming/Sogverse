@@ -105,7 +105,7 @@ interface SessionFeedItemProps {
    *
    * The feed is what shuts this editor — on cancel, and on a save that has
    * landed — so the feed is also what has to put focus back on the control that
-   * opened it. Save and Cancel live *inside* the region that goes `inert` the
+   * opened it. Cancel and Save live *inside* the region that goes `inert` the
    * moment it shuts, so the focused element stops being focusable in the same
    * frame and the browser drops focus to the document body; a keyboard user who
    * saved would land at the top of the page and have to tab back through the
@@ -296,7 +296,7 @@ export function SessionFeedItem({
    * Three conditions, and the last is this feed's own. There has to be a
    * write-up to attribute — the shared trimmed test, so a report of one newline
    * signs nothing — and somebody to name. And **the chip is withheld while this
-   * entry's editor is open**: Save and Cancel sit in the bottom-right corner of
+   * entry's editor is open**: Cancel and Save sit in the bottom-right corner of
    * the expanded card, exactly where the chip hangs, and a chip floating over an
    * unsaved draft would be claiming authorship of text that is not stored yet.
    * It comes back when the editor closes, over whatever was actually saved.

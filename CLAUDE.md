@@ -140,6 +140,18 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 
 **Corollary: if you cannot tell which category a call falls into, you do not yet understand the query — go and find out.** Hedging with a timer is what that uncertainty used to buy, and it bought a loading state that was wrong in both directions: a flash on the fast path, and dead air on the slow one. The container keeping its final size across loading and loaded is what the layout rule needs; the skeleton was never the part doing that work.
 
+### Button Order
+
+**Rule: where two buttons answer one question — one affirmatively, one negatively — the affirmative sits on the RIGHT in a row and on TOP in a stack.** Confirm/Cancel, Save/Discard, Accept/Decline, Remove/Keep browsing. The **affirmative** is the action the surface exists to ask about, *including* a destructive one — a red Remove in a confirm dialog is still the answer to the dialog's question — and Cancel, Back, Close and Decline are the negative. One order everywhere is the whole point: whoever confirmed the last dialog already knows where this one's confirm button is, and muscle memory that is right most of the time is worse than none at all. Right-in-a-row is the desktop convention; top-in-a-stack is the platform one (Apple HIG stacked alerts, Material stacked dialogs).
+
+**The geometry is not limited to a literal yes and no: any two-action row with one clear primary and one secondary alternative takes the same positions** — a keep-browsing beside a go-to-my-SOG, an explore-the-shop beside a create-an-account. The primary is the one the surface is steering toward, it goes right and on top, and the alternative sits beside it exactly where a Cancel would.
+
+**One DOM order satisfies both, so there is one authoring shape: children in `[negative, affirmative]` order inside `flex flex-col-reverse gap-* sm:flex-row` — plus `sm:justify-end` where the row is a footer.** Last-in-DOM is rightmost in a row and, reversed, topmost in a stack, so the affirmative is always the last child and nobody has to re-derive the reading order per surface. Plain `flex-col` is the bug this replaces: same DOM, and the affirmative lands at the bottom. `DialogFooter` and `ConfirmDialog` bake the shape in — a dialog gets it by using them; a hand-rolled row states the classes itself.
+
+**A button followed by a muted text link is not a pair, and must not be col-reversed.** A submit button with a quiet "Back to login" beneath it is one primary action plus an escape hatch — the link is typographically subordinate, not the other half of a choice — so it stays DOM `[affirmative, link]` under plain `flex-col` with the link below, which is where a reader expects the way out. The rule engages when both halves are *buttons*; a future sweep that flips these on pattern alone would be reversing them wrongly.
+
+**It binds emailed button rows too.** Mail buttons never stack — a 50/50 table row is a row at every width — so there is nothing for `col-reverse` to do, and the affirmative simply stays on the right, reading the same way the app has already taught.
+
 ### Date & Time Formatting
 
 **Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**
