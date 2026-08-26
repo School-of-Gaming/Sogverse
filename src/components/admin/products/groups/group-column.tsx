@@ -158,6 +158,18 @@ export function GroupColumn({
                       placeholder={t("group.namePlaceholder")}
                       aria-invalid={!draft.trim() || undefined}
                     />
+                    {/* Button-order convention (root CLAUDE.md): negative
+                        before affirmative, so cancel sits left of save. */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={cancelEdit}
+                      aria-label={t("group.cancelEditAria")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                     <Button
                       type="button"
                       variant="ghost"
@@ -168,16 +180,6 @@ export function GroupColumn({
                       aria-label={t("group.saveNameAria")}
                     >
                       <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={cancelEdit}
-                      aria-label={t("group.cancelEditAria")}
-                    >
-                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                   {!draft.trim() && (
