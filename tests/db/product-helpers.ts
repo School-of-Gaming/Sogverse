@@ -77,6 +77,12 @@ import { TEST_IDS } from "./constants";
  *                  because two of those cases delete rows — 658 is created and
  *                  deleted inside the ON DELETE SET NULL cascade case — and
  *                  neither may disturb a roster another block asserts on)
+ *   660-669        auto-assign-single-group.test.ts (five products 660-664 —
+ *                  a free club with one group, one with none, one with two, a
+ *                  municipality club with one, and a paid camp with one — plus
+ *                  their five groups 665-669. One product per row of the
+ *                  matrix, because the thing under test is how many groups a
+ *                  product has and no single product can hold three answers)
  *   637            write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather
