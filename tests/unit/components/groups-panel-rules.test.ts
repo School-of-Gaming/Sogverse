@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  autoPlacementFor,
   canCompEnroll,
   chipGameIdentity,
   dragSubjectsFrom,
@@ -9,6 +8,7 @@ import {
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
+  showUnassignedSection,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
@@ -572,55 +572,52 @@ describe("isSubscriptionShaped / canCompEnroll", () => {
   });
 });
 
-describe("autoPlacementFor", () => {
-  // The panel's copy of the database's placement predicate: a product that
-  // charges nothing AND has exactly one group seats new enrollments in it.
-  // Every case below moves exactly one half of that.
+describe("showUnassignedSection", () => {
+  // The inbox is hidden on exactly one combination — the product qualifies for
+  // automatic placement (charges nothing AND has exactly one group) and nobody
+  // is waiting in it — because there the rule is said by the card's absence
+  // rather than by a caption. Every case below moves one input off that
+  // combination and expects the card back.
   //
-  // The three negative answers are deliberately distinct values rather than one
-  // "not automatic": each is a different sentence to an admin asking whether
-  // their product is ready — one names a missing step they can take, one names
-  // a decision that stays theirs, and one says this product never qualifies.
-  const one = [{ name: "Wednesdays" }];
-  const two = [{ name: "Group A" }, { name: "Group B" }];
+  // Only the length of the group list is read, but the parameter is typed to
+  // rows with an id so that passing the waitlist or the inbox in that slot is a
+  // compile error — hence real ids here rather than bare names.
+  const none: readonly { id: string }[] = [];
+  const one = [{ id: "75a6920e-dcdf-411b-bd8a-698c851f3335" }];
+  const two = [...one, { id: "3a83c4ea-3a0b-4f73-88f1-d716117834c3" }];
+  const three = [...two, { id: "0af8e50a-acdc-4c17-adec-16941f981927" }];
 
-  it("names the single group on a product that charges nothing", () => {
-    expect(autoPlacementFor("free", one)).toEqual({
-      kind: "single",
-      groupName: "Wednesdays",
-    });
-    expect(autoPlacementFor("external_contract", one)).toEqual({
-      kind: "single",
-      groupName: "Wednesdays",
-    });
+  it("hides an empty inbox on a no-charge product with exactly one group", () => {
+    expect(showUnassignedSection("free", one, 0)).toBe(false);
+    expect(showUnassignedSection("external_contract", one, 0)).toBe(false);
   });
 
-  it("asks for a group when a no-charge product has none", () => {
-    // The one negative state with a fix, and the fix is one click.
-    expect(autoPlacementFor("free", [])).toEqual({ kind: "noGroups" });
-    expect(autoPlacementFor("external_contract", [])).toEqual({
-      kind: "noGroups",
-    });
+  it("shows the inbox whenever anyone is actually in it", () => {
+    // The half that must never be traded away: a gamer with no group who is
+    // off screen is a gamer nobody can seat. Qualifying or not, they show.
+    expect(showUnassignedSection("free", one, 1)).toBe(true);
+    expect(showUnassignedSection("external_contract", one, 3)).toBe(true);
   });
 
-  it("hands several groups back to the admin", () => {
-    // Not the same answer as having none: nothing is missing here, the choice
-    // is simply a human's to make.
-    expect(autoPlacementFor("free", two)).toEqual({ kind: "manyGroups" });
-    expect(autoPlacementFor("external_contract", two)).toEqual({
-      kind: "manyGroups",
-    });
-    expect(autoPlacementFor("free", [...two, { name: "Group C" }])).toEqual({
-      kind: "manyGroups",
-    });
+  it("shows the inbox on a no-charge product with no groups", () => {
+    // Nothing to place into, so every arriving seat lands here.
+    expect(showUnassignedSection("free", none, 0)).toBe(true);
+    expect(showUnassignedSection("external_contract", none, 0)).toBe(true);
   });
 
-  it("disqualifies a product that charges, whatever its groups", () => {
-    // The billing half of the predicate settles it on its own: a paid seat is
-    // written by the Stripe webhook, which places nobody, so the group count is
-    // never even consulted.
-    expect(autoPlacementFor("paid", one)).toEqual({ kind: "charged" });
-    expect(autoPlacementFor("paid", [])).toEqual({ kind: "charged" });
-    expect(autoPlacementFor("paid", two)).toEqual({ kind: "charged" });
+  it("shows the inbox on a no-charge product with several groups", () => {
+    // Which group a child belongs in is a decision that stays a human's, so
+    // the seat waits here and the admin needs to see it waiting.
+    expect(showUnassignedSection("free", two, 0)).toBe(true);
+    expect(showUnassignedSection("external_contract", two, 0)).toBe(true);
+    expect(showUnassignedSection("free", three, 0)).toBe(true);
+  });
+
+  it("shows the inbox on a paid product, whatever its groups", () => {
+    // The billing half settles it on its own: a paid seat is written by the
+    // Stripe webhook, which places nobody, so the group count never matters.
+    expect(showUnassignedSection("paid", one, 0)).toBe(true);
+    expect(showUnassignedSection("paid", none, 0)).toBe(true);
+    expect(showUnassignedSection("paid", two, 0)).toBe(true);
   });
 });

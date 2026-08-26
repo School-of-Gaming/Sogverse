@@ -703,12 +703,6 @@
         "title": "Ryhmät",
         "attendanceAndReports": "Läsnäolot ja koosteet",
         "subtitle": "Vedä jokainen osallistuja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
-        "autoPlacement": {
-          "single": "Uudet osallistujat sijoitetaan automaattisesti ryhmään {group}.",
-          "noGroups": "Lisää ryhmä, niin uudet osallistujat sijoitetaan siihen automaattisesti.",
-          "manyGroups": "Uudet osallistujat jäävät tänne – automaattinen sijoitus vaatii täsmälleen yhden ryhmän.",
-          "charged": "Uudet osallistujat jäävät tänne – automaattinen sijoitus koskee vain tuotteita, jotka ovat perheille maksuttomia."
-        },
         "addGroup": "Lisää ryhmä",
         "loading": "Ladataan…",
         "genderBoy": "poika",

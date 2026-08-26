@@ -10,8 +10,7 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
 import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
-import { AutoPlacementNote } from "./auto-placement-note";
-import { chipGameIdentity, type AutoPlacement } from "./panel-rules";
+import { chipGameIdentity } from "./panel-rules";
 
 interface UnassignedCardProps {
   participations: GroupParticipationDetail[];
@@ -21,13 +20,6 @@ interface UnassignedCardProps {
   gamePlatform: GamePlatform | null;
   /** The panel's one batched Roblox lookup; undefined until it lands. */
   robloxRenders: RobloxRenderMap | undefined;
-  /**
-   * Where the *next* participant will land, stated in this card's header — this
-   * card being the alternative destination, and therefore the thing the answer
-   * is about. `null` when the panel has no snapshot to answer from, which is the
-   * one case where saying nothing is more honest than guessing.
-   */
-  autoPlacement: AutoPlacement | null;
 }
 
 export function UnassignedCard({
@@ -35,7 +27,6 @@ export function UnassignedCard({
   pendingChipIds,
   gamePlatform,
   robloxRenders,
-  autoPlacement,
 }: UnassignedCardProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { setNodeRef, isOver } = useDroppable({
@@ -53,26 +44,18 @@ export function UnassignedCard({
       )}
     >
       <CardHeader className="pb-3">
-        {/* Title block left, placement answer right-packed into the row's own
-            slack — so the answer costs no row of its own and the board below it
-            never moves to make space for it. */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="min-w-0 space-y-1.5">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Inbox className="h-5 w-5 text-muted-foreground" />
-              {t("unassigned.title")}
-              {participations.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {participations.length}
-                </Badge>
-              )}
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              {t("unassigned.subtitle")}
-            </p>
-          </div>
-          {autoPlacement && <AutoPlacementNote placement={autoPlacement} />}
-        </div>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Inbox className="h-5 w-5 text-muted-foreground" />
+          {t("unassigned.title")}
+          {participations.length > 0 && (
+            <Badge variant="secondary" className="ml-1">
+              {participations.length}
+            </Badge>
+          )}
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          {t("unassigned.subtitle")}
+        </p>
       </CardHeader>
       <CardContent>
         {participations.length === 0 ? (

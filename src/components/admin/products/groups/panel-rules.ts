@@ -265,53 +265,61 @@ export function canCompEnroll(
 // ---------------------------------------------------------------------------
 
 /**
- * The panel's answer to the question an admin who has just been handed a
- * product actually asks: *have I done everything needed for gamers to be seated
- * automatically — and if not, what is missing, or why does this product not
- * qualify?* Each state is one of those three answers.
+ * Whether the panel draws the Unassigned card at all.
  *
- *  - `single` — yes, nothing left to do: the seat is placed in this group
- *    without anyone touching it, and the group is named so the admin can see
- *    which one.
- *  - `noGroups` — the "what do I need to do" answer, and the only state whose
- *    fix is one click: automatic placement needs a group to place people into.
- *  - `manyGroups` — the "why not here" answer: which of several groups a child
- *    belongs in is a decision that stays a human's, so the seat waits.
- *  - `charged` — the "why not ever" answer: a seat on a product that charges is
- *    written by the Stripe webhook on its own transaction, and that writer
- *    places nobody.
+ * The rule is communicated by the card's *absence*, not by a caption: on a
+ * product where every arriving seat is written straight into the only group
+ * there is, an inbox is a box nothing can ever land in, and an empty box
+ * captioned "nothing lands here" is worse than no box. So the section is hidden
+ * on exactly one combination — the product qualifies for automatic placement
+ * AND nobody is sitting in the inbox — and shows in every other case, which is
+ * how a paid product, a product with no groups and a product with several all
+ * go on looking exactly as they did.
  *
- * The three negative states are all "the seat waits in the inbox", and they are
- * kept apart because the *reason* is the whole of what the admin came for.
+ * **Anyone actually waiting wins, always.** A gamer with no group who is not on
+ * screen is a gamer nobody can seat, so a non-empty inbox shows the card even
+ * on a qualifying product. Rows that predate the placement rule are the main
+ * way that happens.
+ *
+ * The qualifying half mirrors the enrollment writers' own predicate: charges
+ * nothing (free, or invoiced off-platform) AND exactly one group. Whether that
+ * group has a gedu assigned is deliberately not consulted — an unstaffed group
+ * is still the only place the seat can go. The panel only *reflects* the rule;
+ * the database is what applies it, and the two can only disagree if one is
+ * changed alone, which is why this is written in one place.
+ *
+ * **Hidden-and-empty is a stable state, which is what makes hiding safe.** Every
+ * event that could put a row in the inbox of a qualifying product either
+ * disqualifies the product or fills the inbox, and both draw the card:
+ *
+ *  - a new enrollment is placed in the only group, so the inbox stays empty;
+ *  - deleting that group leaves zero groups, which disqualifies the product on
+ *    its own — and where the group had members, they are reset to unassigned,
+ *    so the inbox fills as well;
+ *  - adding a second group disqualifies the product on the spot;
+ *  - a chip can only be dragged into the inbox while the card is drawn, so a
+ *    drag can fill a visible inbox but can never reach a hidden one.
+ *
+ * So there is no path to a hidden card with someone inside it. Four edits can
+ * flip the answer — adding a group, deleting one, the last inbox row being
+ * moved out, and the product's billing mode being changed — and each is an
+ * admin's own action rather than data landing on its own schedule. The one
+ * caveat is that the acting admin need not be *this* one: another admin's edit
+ * arrives here on a refetch, exactly as it already does for the chips.
+ *
+ * `groups` is only ever measured, never read — the type is narrowed to rows
+ * with an id purely so that handing it the waitlist or the inbox by mistake is
+ * a compile error rather than a plausible-looking wrong answer.
  */
-export type AutoPlacement =
-  | { kind: "single"; groupName: string }
-  | { kind: "noGroups" }
-  | { kind: "manyGroups" }
-  | { kind: "charged" };
-
-/**
- * Mirrors the enrollment writers' own predicate: a product that charges nothing
- * AND has exactly one group seats new participations in that group instead of
- * in the unassigned inbox.
- *
- * Whether the single group has a gedu assigned is deliberately not consulted —
- * an unstaffed group is still the only place the seat can go.
- *
- * The panel only *describes* this; the database is what does it. The two can
- * only disagree if one of them is changed alone, which is why the predicate is
- * written here in one place rather than inlined into the note that renders it.
- */
-export function autoPlacementFor(
+export function showUnassignedSection(
   billingMode: BillingMode,
-  groups: readonly { name: string }[],
-): AutoPlacement {
-  if (billingMode !== "free" && billingMode !== "external_contract") {
-    return { kind: "charged" };
-  }
-  const only = groups.length === 1 ? groups[0] : undefined;
-  if (only) return { kind: "single", groupName: only.name };
-  return groups.length === 0 ? { kind: "noGroups" } : { kind: "manyGroups" };
+  groups: readonly { id: string }[],
+  unassignedCount: number,
+): boolean {
+  if (unassignedCount > 0) return true;
+  const noCharge =
+    billingMode === "free" || billingMode === "external_contract";
+  return !(noCharge && groups.length === 1);
 }
 
 // ---------------------------------------------------------------------------
