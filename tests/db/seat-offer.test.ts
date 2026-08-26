@@ -40,6 +40,8 @@ const GROUP_TWO_A = "00000000-0000-0000-0000-000000000675";
 const GROUP_TWO_B = "00000000-0000-0000-0000-000000000676";
 const P_NO_GROUPS = "00000000-0000-0000-0000-000000000677";
 const P_DASHBOARD = "00000000-0000-0000-0000-000000000678";
+const P_CANCELLED = "00000000-0000-0000-0000-000000000679";
+const GROUP_CANCELLED = "00000000-0000-0000-0000-00000000067a";
 
 const ALL_PRODUCTS = [
   P_CLUB,
@@ -47,6 +49,7 @@ const ALL_PRODUCTS = [
   P_TWO_GROUPS,
   P_NO_GROUPS,
   P_DASHBOARD,
+  P_CANCELLED,
 ];
 
 /** An instant well inside the window, and one well outside it. */
@@ -117,11 +120,28 @@ describe("seat offers", () => {
       .eq("id", P_DASHBOARD);
     expect(fee.error).toBeNull();
 
+    // The offerable shape in every respect EXCEPT that the product has been
+    // cancelled — free, capped, waitlist on, exactly one group. Everything the
+    // answer re-resolves therefore still says yes, which is what makes the
+    // refusal below about the product's standing and nothing else.
+    await createTestProduct(admin, {
+      id: P_CANCELLED,
+      billingMode: "free",
+      seatCount: 1,
+      waitlistEnabled: true,
+      status: "cancelled",
+    });
+
     const groups = await admin.from("product_groups").insert([
       { id: GROUP_CLUB, product_id: P_CLUB, name: "Club group" },
       { id: GROUP_PAID, product_id: P_PAID, name: "Paid group" },
       { id: GROUP_TWO_A, product_id: P_TWO_GROUPS, name: "Two A" },
       { id: GROUP_TWO_B, product_id: P_TWO_GROUPS, name: "Two B" },
+      {
+        id: GROUP_CANCELLED,
+        product_id: P_CANCELLED,
+        name: "Cancelled club group",
+      },
     ]);
     expect(groups.error).toBeNull();
   });
@@ -506,6 +526,63 @@ describe("seat offers", () => {
     expect(res.error).toBeNull();
     expect(respondSeatOfferRpcResult.parse(res.data).kind).toBe("accepted");
     expect((await readRow(participation))!.status).toBe("active");
+  });
+
+  /**
+   * The boundary of the grandfathering, and the one fact an honoured invite
+   * always requires: the product it names still exists and still stands.
+   *
+   * Everything else the answer could re-read is deliberately not re-read — a
+   * product flipped to paid mid-window still honours the free seat, and a
+   * product that gained a second group still seats the family, unassigned. The
+   * product itself is not one of those terms. This fixture is offerable in
+   * every other respect (free, capped, exactly one group, a live stamp well
+   * inside the window), so `stale` here can only be the cancellation.
+   *
+   * `stale` rather than a kind of its own, because the public landing route
+   * folds everything but accepted/declined/expired into one generic `invalid`:
+   * a distinguishable answer would let an unauthenticated caller ask which
+   * products have been cancelled.
+   */
+  it("refuses an answer on a product that has been cancelled, and moves nothing", async () => {
+    const participation = await queue(P_CANCELLED);
+    const sentAt = await stamp(participation, LIVE_AT());
+
+    const res = await admin.rpc("respond_seat_offer", {
+      p_participation_id: participation,
+      p_offer_sent_at: sentAt,
+      p_accept: true,
+    });
+    expect(res.error).toBeNull();
+    expect(respondSeatOfferRpcResult.parse(res.data)).toEqual({ kind: "stale" });
+
+    // The row is exactly as it was: still queueing, still carrying its offer.
+    expect(await readRow(participation)).toMatchObject({
+      status: "waitlisted",
+      group_id: null,
+      seat_offer_sent_at: sentAt,
+    });
+  });
+
+  /**
+   * Declining is refused on the same terms, and the point is the DELETE: an
+   * answer the product no longer supports must not spend the family's place in
+   * a queue either. Accept and decline reach the guard before they diverge.
+   */
+  it("refuses a decline on a cancelled product without deleting the row", async () => {
+    const participation = await queue(P_CANCELLED);
+    const sentAt = await stamp(participation, LIVE_AT());
+
+    const res = await admin.rpc("respond_seat_offer", {
+      p_participation_id: participation,
+      p_offer_sent_at: sentAt,
+      p_accept: false,
+    });
+    expect(res.error).toBeNull();
+    expect(respondSeatOfferRpcResult.parse(res.data)).toEqual({ kind: "stale" });
+    expect(await readRow(participation)).toMatchObject({
+      status: "waitlisted",
+    });
   });
 
   it("answers not_found for a participation that does not exist", async () => {

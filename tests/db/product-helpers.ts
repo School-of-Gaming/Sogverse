@@ -77,7 +77,7 @@ import { TEST_IDS } from "./constants";
  *                  because two of those cases delete rows — 658 is created and
  *                  deleted inside the ON DELETE SET NULL cascade case — and
  *                  neither may disturb a roster another block asserts on)
- *   670-678        seat-offer.test.ts (670 is the offerable club — free, capped
+ *   670-67a        seat-offer.test.ts (670 is the offerable club — free, capped
  *                  and with exactly ONE group, 671, because "exactly one" is
  *                  the condition the offer exists to depend on; 672/673 are a
  *                  PAID club and its group, 674 with groups 675/676 is the
@@ -88,7 +88,12 @@ import { TEST_IDS } from "./constants";
  *                  attention product: capped, queued, no groups and its gedu
  *                  fee set, so the waitlist flag is the ONLY issue it can
  *                  raise and "the product dropped out of the list" is
- *                  assertable rather than merely likely)
+ *                  assertable rather than merely likely. 679 is a CANCELLED
+ *                  club with group 67a, otherwise shaped exactly like 670 —
+ *                  its own product for the same reason the refusals above have
+ *                  theirs: flipping 670's status inside a case and flipping it
+ *                  back leaves every later case in this file depending on a
+ *                  restore that a failed assertion would have skipped)
  *   637            write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

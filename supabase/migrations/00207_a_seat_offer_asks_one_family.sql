@@ -101,6 +101,35 @@
 -- billing mode would decide WHETHER to honour the answer at all, and that
 -- question was settled when the offer was sent.
 --
+-- WHERE THE GRANDFATHERING STOPS: THE PRODUCT ITSELF
+--
+-- The boundary of all of the above, and the one thing the re-resolution does
+-- re-check: THE PRODUCT, BY ID. The grandfathering covers the TERMS the offer
+-- went out on — what the seat costs, where it lands, how full the product is.
+-- It has never covered the product's own existence and standing. If at answer
+-- time the product is no longer valid, the invite is invalid too, because the
+-- one fact an honoured invite always requires is that the product it names
+-- still exists and still stands. An invitation to a cancelled club is an
+-- invitation to nothing, and honouring it would seat a family into something
+-- that is not going to happen — which is worse for them than a refusal, not
+-- better.
+--
+-- So `respond_seat_offer` reads the product's status on the lock it was already
+-- taking, and a MISSING or `cancelled` product ends the answer as `stale` —
+-- the same outcome an already-answered offer produces, and the same generic
+-- `invalid` on the public wire, because a distinguishable answer would let an
+-- unauthenticated caller ask which products have been cancelled. The missing
+-- case is reachable rather than theoretical: participations cascade on a
+-- product delete, so a product dropped between reading the participation and
+-- taking the lock takes the row with it.
+--
+-- What is deliberately NOT guarded here is a product that has merely RUN OUT —
+-- an end date in the past, which `effective_status` reports as `expired` or
+-- `completed`. That product still exists and still stands; nothing has been
+-- withdrawn. Whether a seat offer should be sendable or answerable on one is a
+-- separate question and is left open on purpose rather than settled by a guard
+-- nobody decided on.
+--
 -- WHO MAY CLAIM WHAT, AND WHY THE CLAIM TAKES A SCOPE
 --
 -- `claim_expired_seat_offer_notifications` takes an optional participation id
@@ -314,13 +343,14 @@ CREATE OR REPLACE FUNCTION public.respond_seat_offer(
     SET search_path TO ''
     AS $$
 DECLARE
-  v_product_id     uuid;
-  v_status         public.participation_status;
-  v_sent_at        timestamptz;
-  v_customer_id    uuid;
-  v_participant_id uuid;
-  v_group_id       uuid;
-  v_group_count    integer;
+  v_product_id      uuid;
+  v_product_status  public.product_status;
+  v_status          public.participation_status;
+  v_sent_at         timestamptz;
+  v_customer_id     uuid;
+  v_participant_id  uuid;
+  v_group_id        uuid;
+  v_group_count     integer;
 BEGIN
   SELECT product_id INTO v_product_id
     FROM public.participations
@@ -330,8 +360,31 @@ BEGIN
   END IF;
 
   -- The same gate lock, so an admin drag-promoting this very row and a parent
-  -- pressing Accept cannot both write it.
-  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
+  -- pressing Accept cannot both write it. The status rides back on the lock
+  -- rather than being read in a second statement, because the answer has to be
+  -- the one the lock is holding still.
+  SELECT status INTO v_product_status
+    FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- THE ONE FACT AN HONOURED INVITE ALWAYS REQUIRES: the product still exists
+  -- and still stands. Everything else about the offer is grandfathered (see the
+  -- header) — the terms it went out on survive an admin's edit, because we
+  -- asked and they said yes. The product itself is not one of those terms. An
+  -- invitation to a club that has been cancelled is an invitation to nothing,
+  -- and seating a family into it would be worse than refusing them.
+  --
+  -- NOT FOUND is reachable even though the participation was found a statement
+  -- ago: participations.product_id cascades on delete, so a product dropped
+  -- between the two takes the row with it and this lock finds nothing.
+  --
+  -- Both answer `stale`, which is the outcome every other "this is no longer
+  -- open" case already produces — deliberately not a new kind. The public
+  -- landing route maps everything but accepted/declined/expired to one generic
+  -- `invalid`, and a distinguishable answer here would let an unauthenticated
+  -- caller ask which products have been cancelled.
+  IF NOT FOUND OR v_product_status = 'cancelled'::public.product_status THEN
+    RETURN jsonb_build_object('kind', 'stale');
+  END IF;
 
   SELECT status, seat_offer_sent_at, customer_id, participant_id
     INTO v_status, v_sent_at, v_customer_id, v_participant_id
@@ -425,7 +478,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamptz, p_accept boolean) IS 'A family''s answer to a seat offer, under the product gate lock. Compare-and-swap on p_offer_sent_at against the stored stamp: every way an offer ends moves that value, so a used link, a stale tab and a superseded offer all come back ''stale'' with no revocation table anywhere. The five-day window is re-checked here rather than trusted from the token, because the in-app path (a parent pressing Accept in My SOG) carries no token. ACCEPT activates the seat and places it in the product''s single group, resolved again at answer time — if the product no longer has exactly one group the seat is still granted and lands unassigned, because a placement question is ours and not a reason to withdraw an invitation. There is no seat-count gate, deliberately: the same capacity override promote_from_waitlist makes, with a stronger claim behind it, so a product that refilled while the family was deciding goes one over. DECLINE hard-deletes the row, matching leave_my_waitlist_spot, and returns the four identifiers the staff mail names because they cannot be read afterwards. No EXECUTE grant to authenticated: the public landing route has no session to guard on — the signed token is the authorization — and the in-app route establishes the parent''s ownership before calling.';
+COMMENT ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamptz, p_accept boolean) IS 'A family''s answer to a seat offer, under the product gate lock. Compare-and-swap on p_offer_sent_at against the stored stamp: every way an offer ends moves that value, so a used link, a stale tab and a superseded offer all come back ''stale'' with no revocation table anywhere. The five-day window is re-checked here rather than trusted from the token, because the in-app path (a parent pressing Accept in My SOG) carries no token. THE PRODUCT IS RE-CHECKED BY ID ON THE LOCK: a MISSING or ''cancelled'' product answers ''stale'' and grants nothing. That is the boundary of this function''s grandfathering — the TERMS the offer went out on survive an admin''s edit (the billing mode is deliberately not re-read), but the product''s own existence and standing are not terms, and the one fact an honoured invite always requires is that the product it names still exists and stands. A product that has merely run out of dates is NOT guarded: it still exists and nothing has been withdrawn. ACCEPT activates the seat and places it in the product''s single group, resolved again at answer time — if the product no longer has exactly one group the seat is still granted and lands unassigned, because a placement question is ours and not a reason to withdraw an invitation. There is no seat-count gate, deliberately: the same capacity override promote_from_waitlist makes, with a stronger claim behind it, so a product that refilled while the family was deciding goes one over. DECLINE hard-deletes the row, matching leave_my_waitlist_spot, and returns the four identifiers the staff mail names because they cannot be read afterwards. No EXECUTE grant to authenticated: the public landing route has no session to guard on — the signed token is the authorization — and the in-app route establishes the parent''s ownership before calling.';
 
 REVOKE EXECUTE ON FUNCTION public.respond_seat_offer(uuid, timestamptz, boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.respond_seat_offer(uuid, timestamptz, boolean) TO service_role;
@@ -1309,6 +1362,18 @@ BEGIN
    WHERE n.nspname = 'public' AND p.proname = 'send_seat_offer';
   IF position('date_trunc(''milliseconds''' IN v_src) = 0 THEN
     RAISE EXCEPTION 'send_seat_offer stamps sub-millisecond precision — no emailed token could ever match it';
+  END IF;
+
+  -- (c2) The answer still checks the product by id. This is the boundary of the
+  -- grandfathering the header states: the terms are grandfathered, the product
+  -- is not. Losing this guard is silent — every caller goes on working and a
+  -- family is quietly seated into a cancelled club — so the predicate is
+  -- asserted rather than trusted to survive the next rewrite.
+  SELECT p.prosrc INTO v_src
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'respond_seat_offer';
+  IF position('NOT FOUND OR v_product_status = ''cancelled''' IN v_src) = 0 THEN
+    RAISE EXCEPTION 'respond_seat_offer no longer refuses a missing or cancelled product — an invite would outlive the product it names';
   END IF;
 
   -- (d) The two recreated readers kept the fields this migration added, and
