@@ -49,7 +49,7 @@ interface SessionPlanEditorProps {
  *
  * Both fields are technically optional and neither says so — a marker there
  * would read as permission to skip the only two things this editor exists for.
- * The Save/Cancel row stays pinned at the bottom so neither field growing under
+ * The Cancel/Save row stays pinned at the bottom so neither field growing under
  * the writer moves it.
  */
 export function SessionPlanEditor({

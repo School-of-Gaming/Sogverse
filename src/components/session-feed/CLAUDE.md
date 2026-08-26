@@ -227,7 +227,7 @@ refactor, and the field is named *last edited by* rather than *author* precisely
 claim on screen stays true. Both halves of the pair — the id that seeds the identicon and
 the first name — are required before anybody is named; either half missing is nobody.
 
-**Rule: the staff feed hides the chip while that entry's editor is open.** Save and Cancel
+**Rule: the staff feed hides the chip while that entry's editor is open.** Cancel and Save
 sit in the bottom-right corner of the expanded card, exactly where the chip hangs, and a
 chip floating over an unsaved draft would be claiming authorship of text that is not stored
 yet. It returns when the editor closes, over whatever was actually saved. Folding a saved
