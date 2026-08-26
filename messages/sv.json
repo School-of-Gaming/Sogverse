@@ -721,7 +721,7 @@
         },
         "unassigned": {
           "title": "Otilldelade",
-          "subtitle": "Personer som har betalat men ännu inte är i en grupp. Dra dem in i en för att placera dem.",
+          "subtitle": "Personer som ännu inte är i en grupp. Dra dem in i en för att placera dem.",
           "empty": "Alla har en grupp.",
           "addParticipant": "Lägg till deltagare",
           "removeParticipant": "Ta bort deltagare"

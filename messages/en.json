@@ -721,7 +721,7 @@
         },
         "unassigned": {
           "title": "Unassigned",
-          "subtitle": "People who’ve paid but aren’t in a group yet. Drag them into one to place them.",
+          "subtitle": "People who aren’t in a group yet. Drag them into one to place them.",
           "empty": "Everyone has a group.",
           "addParticipant": "Add participant",
           "removeParticipant": "Remove participant"

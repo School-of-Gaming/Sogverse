@@ -721,7 +721,7 @@
         },
         "unassigned": {
           "title": "Sans groupe",
-          "subtitle": "Personnes qui ont payé mais ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
+          "subtitle": "Personnes qui ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
           "empty": "Tout le monde a un groupe.",
           "addParticipant": "Ajouter un participant",
           "removeParticipant": "Retirer le participant"
