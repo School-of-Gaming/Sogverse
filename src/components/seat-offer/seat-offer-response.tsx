@@ -89,7 +89,7 @@ export function SeatOfferResponse({
 
   if (step === "accepted") {
     return (
-      <Outcome icon={<CircleCheck className="h-12 w-12 text-success" />} title={t("accepted.title")} body={t("accepted.body")}>
+      <Outcome icon={<CircleCheck className="h-12 w-12 text-success" aria-hidden />} title={t("accepted.title")} body={t("accepted.body")}>
         <Link href={ROUTES.login} className={buttonVariants()}>
           {t("accepted.action")}
         </Link>
@@ -100,7 +100,7 @@ export function SeatOfferResponse({
   if (step === "declined") {
     return (
       <Outcome
-        icon={<Heart className="h-12 w-12 text-primary" />}
+        icon={<Heart className="h-12 w-12 text-primary" aria-hidden />}
         title={t("declined.title")}
         body={t("declined.body")}
       />
@@ -110,7 +110,7 @@ export function SeatOfferResponse({
   if (step === "expired" || step === "invalid") {
     return (
       <Outcome
-        icon={<CalendarClock className="h-12 w-12 text-muted-foreground" />}
+        icon={<CalendarClock className="h-12 w-12 text-muted-foreground" aria-hidden />}
         title={t("invalid.title")}
         body={t("invalid.body", {
           days: SEAT_OFFER_WINDOW_DAYS,
@@ -134,7 +134,7 @@ export function SeatOfferResponse({
             disabled={committing}
             onClick={() => void answer(false)}
           >
-            {committing ? <Loader2 className="animate-spin" /> : null}
+            {committing ? <Loader2 className="animate-spin" aria-hidden /> : null}
             {t("offer.confirmAction")}
           </Button>
           <Button
@@ -154,7 +154,7 @@ export function SeatOfferResponse({
 
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-      <CalendarClock className="h-12 w-12 text-primary" />
+      <CalendarClock className="h-12 w-12 text-primary" aria-hidden />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{t("offer.title")}</h1>
         <p className="text-muted-foreground">
@@ -169,7 +169,7 @@ export function SeatOfferResponse({
       {failed ? <Failure message={t("offer.error", { supportEmail: SUPPORT_EMAIL })} /> : null}
       <div className="flex w-full flex-col gap-2">
         <Button disabled={committing} onClick={() => void answer(true)}>
-          {committing ? <Loader2 className="animate-spin" /> : null}
+          {committing ? <Loader2 className="animate-spin" aria-hidden /> : null}
           {t("offer.accept")}
         </Button>
         <Button

@@ -11,7 +11,7 @@ import type { ProductGroupsSnapshot } from "@/types";
  *
  * The arithmetic behind it is tested on its own (`seat-offer-state.test.ts`);
  * this file is about the decisions only a rendered card makes, and there are
- * four of them worth pinning:
+ * five of them worth pinning:
  *
  *  1. **A live offer replaces the Invite button.** That absence *is* the
  *     double-send guard an admin can see, and it is invisible to any test of
@@ -24,6 +24,9 @@ import type { ProductGroupsSnapshot } from "@/types";
  *     mounted on — the whole of the no-shift-on-time's-schedule rule here.
  *  4. **The leave-waitlist link steps aside while an offer stands**, because
  *     "No, thank you" is the same act with the right words on it.
+ *  5. **Disabled and spinning are two states.** The buttons stay inert through
+ *     a refusal and the spinner does not, and the spinner sits on whichever
+ *     button was pressed — neither is visible to anything but a render.
  */
 
 // Keys echo, so an assertion names the copy the card reached for rather than
@@ -228,7 +231,9 @@ function waitlistedEnrollment(
 
 function renderFamilyCard(
   seatOfferSentAt: string | null,
-  onRespondToSeatOffer?: (accept: boolean) => Promise<"accepted" | "expired">,
+  onRespondToSeatOffer?: (
+    accept: boolean,
+  ) => Promise<"accepted" | "declined" | "expired">,
 ) {
   return render(
     <EnrollmentCard
@@ -306,7 +311,7 @@ describe("EnrollmentCard — the family's seat offer", () => {
     // which is an answer and not a fault, so the block flips exactly as it
     // would have on the clock alone.
     const respond = vi.fn().mockResolvedValue("expired" as const);
-    renderFamilyCard(OFFERED_ALMOST_OUT, respond);
+    const { container } = renderFamilyCard(OFFERED_ALMOST_OUT, respond);
 
     await act(async () => {
       screen.getByText(`${FAMILY}.accept`).closest("button")?.click();
@@ -317,6 +322,49 @@ describe("EnrollmentCard — the family's seat offer", () => {
     expect(
       screen.queryByText(new RegExp(`${FAMILY}.error`)),
     ).toBeNull();
+
+    // The buttons stay inert — that latch survives the refusal on purpose —
+    // but nothing is still working, so nothing may still be spinning. The two
+    // used to be one flag, and this state was the one where that showed.
+    expect(container.querySelector(".animate-spin")).toBeNull();
+    expect(
+      screen.getByText(`${FAMILY}.accept`).closest("button")?.disabled,
+    ).toBe(true);
+  });
+
+  it("spins the button the parent actually pressed", async () => {
+    // Declining goes through a confirmation that closes on confirm, so the
+    // block is on screen for the whole of the request — and the spinner has to
+    // be on Decline, not on the button nobody touched. The promise never
+    // settles, which is what holds the in-flight frame still to look at.
+    const respond = vi.fn(() => new Promise<"declined">(() => {}));
+    renderFamilyCard(OFFERED_TWO_DAYS_AGO, respond);
+
+    await act(async () => {
+      screen.getByText(`${FAMILY}.decline`).closest("button")?.click();
+    });
+    await act(async () => {
+      screen.getByText(`${FAMILY}.confirmCta`).closest("button")?.click();
+    });
+
+    expect(respond).toHaveBeenCalledWith(false);
+    expect(
+      screen
+        .getByText(`${FAMILY}.decline`)
+        .closest("button")
+        ?.querySelector(".animate-spin"),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByText(`${FAMILY}.accept`)
+        .closest("button")
+        ?.querySelector(".animate-spin"),
+    ).toBeNull();
+    // Both inert either way: one answer is in flight and the other must not be
+    // reachable behind it.
+    expect(
+      screen.getByText(`${FAMILY}.accept`).closest("button")?.disabled,
+    ).toBe(true);
   });
 
   it("offers the child their own copy to read and no way to answer it", () => {

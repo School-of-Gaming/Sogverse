@@ -523,7 +523,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "deadline",
         label: "Deadline (formatted)",
-        placeholder: "Sunday, 31 August at 14:20 GMT+3",
+        // Exactly what the live send produces for `en` — a 24-hour clock, and
+        // month before day. A placeholder that sets the value differently to
+        // the code teaches whoever is testing the mail the wrong shape.
+        placeholder: "Monday, August 31 at 14:20 GMT+3",
       },
       {
         key: "acceptUrl",
@@ -562,7 +565,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "offeredAt",
         label: "Offered at (formatted)",
-        placeholder: "Tue, 26 Aug, 14:20 GMT+3",
+        // What the live staff send produces — pinned to the 24-hour clock like
+        // every other seat-offer surface, so the stamp staff read matches the
+        // one on the admin card.
+        placeholder: "Wed, Aug 26, 14:20 GMT+3",
       },
       {
         key: "adminProductUrl",

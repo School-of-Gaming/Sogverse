@@ -1,7 +1,5 @@
-import { DARK_THEME } from "@/lib/constants/colors";
-import { RADIUS } from "@/lib/constants/radius";
 import { wrapInLayout } from "./layout";
-import { ctaButton } from "./blocks";
+import { ctaButton, factTable } from "./blocks";
 import { defuseAutolinks, escapeHtml, heading, paragraph } from "./utils";
 import type { EmailTranslator } from "./translator";
 
@@ -76,23 +74,10 @@ export function buildSeatOfferStaffEmail(
     [t("seatOfferStaff.offeredAt"), escapeHtml(opts.offeredAt)],
   ];
 
-  const lastIndex = rows.length - 1;
-  const factTable = rows
-    .map(
-      ([label, value], index) => `
-            <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;${index === lastIndex ? "" : `border-bottom:1px solid ${DARK_THEME.border};`}width:140px;">${label}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;${index === lastIndex ? "" : `border-bottom:1px solid ${DARK_THEME.border};`}">${value}</td>
-            </tr>`,
-    )
-    .join("");
-
   const content = `
     ${heading(title)}
     ${paragraph(t(`seatOfferStaff.${opts.reason}.body`))}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};">
-      ${factTable}
-    </table>
+    ${factTable(rows)}
     ${paragraph(t("seatOfferStaff.nextStep"))}
     ${ctaButton({ href: opts.adminProductUrl, label: t("seatOfferStaff.button") })}
   `;

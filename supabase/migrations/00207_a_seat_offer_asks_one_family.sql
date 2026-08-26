@@ -75,6 +75,31 @@
 -- the rest expire. An accepted offer is ALWAYS honoured, even if the product
 -- refilled while the family was deciding — same deliberate capacity override
 -- `promote_from_waitlist` already makes, and for a stronger reason: we asked.
+--
+-- WHAT AN ANSWER RE-RESOLVES, AND WHAT IT KNOWINGLY DOES NOT
+--
+-- `respond_seat_offer` re-reads the product's GROUP COUNT at answer time rather
+-- than trusting the one `send_seat_offer` saw: if the product no longer has
+-- exactly one group the seat is still granted and lands unassigned, because a
+-- placement question is ours and is not a reason to withdraw an invitation.
+--
+-- It deliberately does NOT re-check BILLING MODE. A product flipped from
+-- no-charge to paid while a family was deciding still honours the free seat
+-- they accept — the offer went out saying the seat cost them nothing, and an
+-- accepted invite is always honoured. It is also exactly what a billing-mode
+-- flip does everywhere else: the flip is unguarded in both directions and
+-- grandfathers existing participants (free enrollees on a product that turns
+-- paid keep their seats unbilled), because no path in the subscription
+-- lifecycle reads the product's billing mode. Re-checking here would make this
+-- the one place a family loses something to an admin's edit, and it would do it
+-- at the worst possible moment — after we asked and they said yes. The window
+-- is five days, so the exposure is at most five days of one unbilled seat on a
+-- product an admin has just re-priced.
+--
+-- The two conditions are therefore not symmetrical on purpose: the group count
+-- decides WHERE an accepted seat lands and so has to be current, while the
+-- billing mode would decide WHETHER to honour the answer at all, and that
+-- question was settled when the offer was sent.
 
 -- ---------------------------------------------------------------------------
 -- 1. The two stamps
@@ -108,9 +133,16 @@ ALTER TABLE public.participations
   CHECK (seat_offer_expiry_notified_at IS NULL
          OR seat_offer_sent_at IS NOT NULL);
 
--- The sweep's exact predicate, as a partial index. Offers are rare and
--- short-lived, so the index holds a handful of rows out of the whole table and
--- the claim never has to look at the rest.
+-- A partial index over a deliberate SUPERSET of the sweep's predicate. The
+-- sweep also filters on status and on the five-day time bound; neither is in
+-- the index condition, on purpose. The status is implied — a CHECK forbids an
+-- offer stamp on anything but a waitlisted row, so every row this index holds
+-- is already waitlisted — and the time bound is a moving one, which an index
+-- predicate cannot be: baking `now()` into it is not allowed and baking a fixed
+-- instant into it would make the index wrong the moment it was built. What is
+-- left are the two stable halves, and they are the ones that do the work.
+-- Offers are rare and short-lived, so this holds a handful of rows out of the
+-- whole table and the claim never has to look at the rest.
 CREATE INDEX IF NOT EXISTS idx_participations_unnotified_seat_offers
   ON public.participations (seat_offer_sent_at)
   WHERE seat_offer_sent_at IS NOT NULL
@@ -820,8 +852,14 @@ GRANT EXECUTE ON FUNCTION public.get_product_groups_with_details(uuid) TO servic
 -- stored.
 --
 -- The count rides in the emitted object too, so the page can word the line as
--- "4 waitlisted · 2 seats open · 1 invited" rather than leaving an admin to
--- wonder why a product with people in the queue vanished from the list.
+-- "4 waitlisted · 2 seats open · 1 invited". What that buys is the REDUCED
+-- urgency of an item that is still on the list: an admin reading it can see
+-- that one of the two open seats has already been asked about, and that only
+-- the other one wants them. It explains nothing about a product that has
+-- LEFT the list — a product with no attention item emits no object at all, so
+-- there is no line anywhere carrying the count that would account for its
+-- absence. That is accepted: the vanished product is the case where there is
+-- genuinely nothing to do.
 
 CREATE OR REPLACE FUNCTION public.get_admin_dashboard() RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER

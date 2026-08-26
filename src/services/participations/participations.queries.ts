@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { groupsKeys } from "@/services/groups";
@@ -203,8 +203,20 @@ export function useRespondToSeatOffer() {
  * A failure is swallowed. This is housekeeping the admin did not ask for, so a
  * Brevo outage or a lost request must not put an error in front of a page that
  * is otherwise fine — the next admin to open either surface sweeps again.
+ *
+ * **It returns whether it has settled — succeeded or failed — so a caller can
+ * sequence its own read behind it instead of being interrupted by one.** A
+ * caller that does so passes `invalidateDashboard: false` and gates its query
+ * on the returned flag; a caller that does not gets the invalidation, which is
+ * the right shape for a surface whose read is cheap enough to redo.
+ *
+ * @returns `false` until the sweep has settled, then `true` for the rest of the
+ * mount. Settled, not succeeded: a failed sweep is housekeeping that did not
+ * happen, and must never hold a page's own data behind it.
  */
-export function useSeatOfferSweepOnMount(): void {
+export function useSeatOfferSweepOnMount({
+  invalidateDashboard = true,
+}: { invalidateDashboard?: boolean } = {}): boolean {
   const queryClient = useQueryClient();
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
@@ -213,6 +225,7 @@ export function useSeatOfferSweepOnMount(): void {
   // SQL statement so a double call is harmless — but it is a wasted round trip,
   // and the guard is one line.
   const swept = useRef(false);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     if (swept.current) return;
@@ -223,15 +236,26 @@ export function useSeatOfferSweepOnMount(): void {
       .then(({ claimed }) => {
         if (claimed === 0) return;
         // Something really did lapse: the seat is free again, so the product's
-        // board and the dashboard's queue both have a new answer.
-        queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
+        // board has a new answer. The dashboard's is suppressed where that page
+        // is already waiting on this sweep — invalidating a read it has been
+        // holding back is the interruption the sequencing exists to avoid.
+        if (invalidateDashboard) {
+          queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
+        }
         queryClient.invalidateQueries({ queryKey: groupsKeys.all });
       })
       .catch(() => {
         // Deliberately silent — see the note above.
+      })
+      .finally(() => {
+        // Both branches, deliberately: a caller gating a read on this is asking
+        // when the sweep stopped being in the way, not whether it worked.
+        setSettled(true);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mount; the service and client are recreated every render and are not inputs to the decision
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mount; the service and client are recreated every render, and `invalidateDashboard` is a call-site constant, so none of them are inputs to the decision
   }, []);
+
+  return settled;
 }
 
 // `initialData` (optional) is the server-prefetched seat counts from the shop

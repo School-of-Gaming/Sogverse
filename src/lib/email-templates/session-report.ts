@@ -108,7 +108,7 @@ export function buildSessionReportEmail(
         productName: styledProductName(productName),
       }),
     )}
-    ${factTable([
+    ${ruledFacts([
       [t("sessionReport.groupLabel"), groupName],
       [t("sessionReport.dateLabel"), sessionDate],
       [t("sessionReport.timeLabel"), sessionTime],
@@ -152,8 +152,19 @@ function staffCopyBanner(t: EmailTranslator): string {
  * values carry the line; the label column is as narrow as its longest label
  * and does not wrap, so the values line up whatever the locale calls "group".
  * The last rule doubles as the line between the facts and the report.
+ *
+ * **Deliberately not `factTable` from `blocks.ts`, and not a variant of it.**
+ * The shared one is the box every mail we send to *ourselves* states its facts
+ * in — a full border, a radius, and no rule under the last row, because the
+ * box's own edge already closes the list. This is the opposite arrangement on
+ * every one of those points: open rules rather than a box, uppercase labels
+ * sized to their own content, and a final rule that is load-bearing because it
+ * is what separates the facts from the report below them. Absorbing it would
+ * mean a helper with a knob for each of those, which is a style engine rather
+ * than a block — and the two would still never be corrected together, since a
+ * change to one of them is precisely a change the other must not take.
  */
-function factTable(rows: [label: string, value: string][]): string {
+function ruledFacts(rows: [label: string, value: string][]): string {
   const rendered = rows
     .map(
       ([label, value]) => `

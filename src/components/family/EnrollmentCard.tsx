@@ -711,10 +711,27 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           {/* **Last in the card, and the order is load-bearing.** An offer
               lands on a card that is already on screen — a background refetch,
               or a page a parent left open — so anywhere further up it would
-              push the schedule and the queue position down the viewport while
-              somebody was reading them. At the end of the run it grows into the
-              card's own slack and nothing already painted moves. It also reads
-              right there, as the one thing on this card there is to do. */}
+              push the schedule, the queue position and the leave link down the
+              viewport while somebody was reading them. At the end of the run it
+              grows into the card's own slack instead, and everything already
+              painted inside the card holds its place. It also reads right
+              there, as the one thing on this card there is to do.
+
+              **What it does not do is cost nothing, and the remainder is worth
+              naming.** This card sits in a vertical stack of cards, so the
+              block appearing makes the card taller and pushes every card below
+              it down the page — and the leave link stepping aside a few lines
+              up (it hides while an offer stands, because "No, thank you" is the
+              same act with better words on it) changes the same height in the
+              other direction. Both are edits on data's own schedule, which is
+              the kind this rule does not permit. End-of-run is the best of the
+              three options rather than a clean one: reserving the block's space
+              on every waitlisted card would hold a hole open on the many cards
+              that never receive an offer, and putting it higher would move the
+              card's own contents as well as the cards below. What is bought is
+              that nothing *inside* the card moves under the reader; what is
+              paid is the stack below it. A later tidy-up that reorders this on
+              aesthetic grounds gives back the bought half silently. */}
           {seatOffer !== null && (
             <SeatOfferBlock
               offer={seatOffer}

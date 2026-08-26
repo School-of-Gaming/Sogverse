@@ -3,6 +3,7 @@ import { RADIUS } from "@/lib/constants/radius";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
+import { factTable } from "./blocks";
 import { defuseAutolinks, escapeHtml, heading, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
@@ -44,32 +45,29 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
       </tr>`
     : "";
 
+  // The same box the seat-offer staff mail states its facts in — one helper, so
+  // a correction to how a staff mail reads reaches both. The label column is
+  // narrower than the default because these four labels are single words and
+  // the value column is where the mail is actually read. The table carries its
+  // own 16px of bottom margin, so the cell holding it adds none: the spacing is
+  // unchanged from when this markup was written out by hand here.
+  const facts = factTable(
+    [
+      [t("feedback.from"), escapedName],
+      [t("feedback.role"), escapedRole],
+      [t("feedback.emailLabel"), escapedEmail],
+      [t("feedback.sent"), escapeHtml(opts.sentAt)],
+    ],
+    { labelWidth: "100px" },
+  );
+
   const content = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td>${heading(t("feedback.heading"))}</td>
       </tr>
       <tr>
-        <td style="padding-bottom:16px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};">
-            <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};width:100px;">${t("feedback.from")}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};">${escapedName}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">${t("feedback.role")}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};">${escapedRole}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">${t("feedback.emailLabel")}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};">${escapedEmail}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;">${t("feedback.sent")}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;">${escapeHtml(opts.sentAt)}</td>
-            </tr>
-          </table>
-        </td>
+        <td>${facts}</td>
       </tr>
       <tr>
         <td style="font-size:14px;font-weight:bold;color:${DARK_THEME.foreground};padding-bottom:8px;">

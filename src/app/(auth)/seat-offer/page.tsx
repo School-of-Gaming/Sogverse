@@ -56,7 +56,7 @@ export default async function SeatOfferPage({
     const t = await getTranslations("seatOffer");
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-        <CalendarClock className="h-12 w-12 text-muted-foreground" />
+        <CalendarClock className="h-12 w-12 text-muted-foreground" aria-hidden />
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">{t("invalid.title")}</h1>
           <p className="text-muted-foreground">
@@ -82,13 +82,16 @@ export default async function SeatOfferPage({
       // page could use the reader's own zone and the mail cannot; two different
       // clock faces for one deadline is worse than one that is explicit about
       // which zone it is in. Explicit components rather than dateStyle, because
-      // `Intl` refuses to combine that with `timeZoneName`.
+      // `Intl` refuses to combine that with `timeZoneName`. `hour12: false` for
+      // the same "one deadline, one clock face" reason: `en` alone would set
+      // this as "02:20 PM" while the mail and the in-app cards say "14:20".
       deadline={formatDate(state.deadline, locale, {
         weekday: "long",
         day: "numeric",
         month: "long",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false,
         timeZoneName: "short",
         timeZone: state.timeZone,
       })}

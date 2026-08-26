@@ -64,6 +64,12 @@ export function buildSeatOfferEmail(
     ${paragraph(t("seatOffer.question"))}
     ${calloutPanel({
       label: t("seatOffer.deadlineLabel"),
+      // No `escapeHtml` on the deadline, and that is a statement about where it
+      // comes from rather than an oversight: every path that reaches this
+      // builder produces it with `Intl`, from a timestamp and a zone, so there
+      // is no user-authored character in it — and the one other path, an admin
+      // typing it into the testing registry, is admin-only input on a mail
+      // addressed to whoever typed it.
       paragraphs: [t("seatOffer.deadlineBody", { deadline })],
     })}
     ${ctaButtonRow(

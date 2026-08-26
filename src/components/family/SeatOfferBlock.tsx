@@ -42,8 +42,10 @@ interface SeatOfferBlockProps {
  * painted (a refetch, a page the parent left open), and anywhere above the
  * card's own footer it would shove the queue position and the schedule down the
  * viewport while somebody was reading them. At the end of the run it grows into
- * the card's own slack and nothing already on screen moves. It also reads
- * correctly there, as the one thing on the card there is to *do*.
+ * the card's own slack instead, and nothing already painted *inside the card*
+ * moves — the card itself still grows, and the cards stacked below it still go
+ * down the page, which is the residual the call site names in full. It also
+ * reads correctly there, as the one thing on the card there is to *do*.
  *
  * **Decline is behind a confirmation and accept is not**, exactly as on the
  * emailed landing page and for the same reason: accepting is recoverable, while
@@ -64,6 +66,17 @@ interface SeatOfferBlockProps {
  * server says `expired`, and that is the lapsed state, not an error. The only
  * thing that surfaces as a failure is a request that never landed, which is the
  * only case where pressing again is the right advice.
+ *
+ * **"Still disabled" and "still working" are two states, held separately.** The
+ * house rule keeps the buttons inert from the click all the way through to the
+ * card leaving — that latch survives a refusal on purpose — but the spinner is
+ * a claim about a request that is still open, and a refusal closes one. Held as
+ * one flag they were the same claim, so an expired answer left the block saying
+ * the offer had lapsed with a spinner still turning under it. The spinner sits
+ * on whichever button was actually pressed, too: declining goes through a
+ * confirmation that closes on confirm, so the block is on screen for the whole
+ * of that request and a spinner nailed to Accept was pointing at the button
+ * nobody had touched.
  */
 export function SeatOfferBlock({
   offer,
@@ -81,6 +94,15 @@ export function SeatOfferBlock({
   // the lapsed state below — so the flag stays set and a second tap on a phone
   // cannot spend the seat twice.
   const [committing, setCommitting] = useState(false);
+  // **Which button is spinning, which is a different question from whether the
+  // buttons are disabled** — and the two were one boolean until an expired
+  // answer left a spinner turning forever under a sentence saying the offer had
+  // lapsed. `committing` is the house rule's latch and stays set through the
+  // terminal states; this one is the request's own lifetime and clears on every
+  // settle. It also names *which* action is in flight, because the answer can
+  // come from either button and a spinner that always sat on Accept was
+  // reporting the wrong one whenever a parent declined.
+  const [inFlight, setInFlight] = useState<"accept" | "decline" | null>(null);
   const [failed, setFailed] = useState(false);
   // The server's own verdict, once it has one. It outranks the clock: a
   // `stale` answer (already used, or superseded by a fresh offer) is not
@@ -107,6 +129,7 @@ export function SeatOfferBlock({
   async function answer(accept: boolean) {
     if (!onRespond) return;
     setCommitting(true);
+    setInFlight(accept ? "accept" : "decline");
     setFailed(false);
     try {
       const outcome = await onRespond(accept);
@@ -118,6 +141,12 @@ export function SeatOfferBlock({
     } catch {
       setFailed(true);
       setCommitting(false);
+    } finally {
+      // Every settle, including the ones `committing` deliberately survives:
+      // the request is over, so nothing is still spinning. On the two outcomes
+      // that swap the card the caller's promise resolves only after the refetch
+      // has landed, so this clears into a component that is already leaving.
+      setInFlight(null);
     }
   }
 
@@ -161,7 +190,9 @@ export function SeatOfferBlock({
             disabled={committing || lapsed}
             onClick={() => void answer(true)}
           >
-            {committing && <Loader2 className="animate-spin" aria-hidden />}
+            {inFlight === "accept" && (
+              <Loader2 className="animate-spin" aria-hidden />
+            )}
             {t("accept")}
           </Button>
           <Button
@@ -173,6 +204,9 @@ export function SeatOfferBlock({
               setConfirmingDecline(true);
             }}
           >
+            {inFlight === "decline" && (
+              <Loader2 className="animate-spin" aria-hidden />
+            )}
             {t("decline")}
           </Button>
         </div>

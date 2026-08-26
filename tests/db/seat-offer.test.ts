@@ -18,7 +18,7 @@ import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboa
  * The seat offer (migration 00207): the three service-role RPCs, the two
  * CHECK constraints behind them, and the two readers they changed.
  *
- * Product UUIDs 660-668 (see the product-helpers allocation registry). Four
+ * Product UUIDs 670-678 (see the product-helpers allocation registry). Four
  * differently-shaped products rather than one that gets reconfigured, because
  * every refusal here is about a shape — a paid product, a product with two
  * groups, a product with none — and a case proving a refusal must not be
@@ -52,6 +52,18 @@ const ALL_PRODUCTS = [
 /** An instant well inside the window, and one well outside it. */
 const LIVE_AT = () => new Date(Date.now() - 60_000);
 const LAPSED_AT = () => new Date(Date.now() - SEAT_OFFER_WINDOW_MS - 60_000);
+/**
+ * Five minutes short of the deadline — the window's *far* edge, from inside.
+ *
+ * `LAPSED_AT` alone only proves the SQL window is no longer than the TypeScript
+ * constant. This one proves it is no shorter, and the pair is what actually
+ * holds the two literals in lockstep: between them the interval in the three
+ * functions is bracketed to `SEAT_OFFER_WINDOW_MS` within five minutes, so a
+ * migration that moved `interval '5 days'` to four days or six without moving
+ * the constant fails here rather than in somebody's inbox.
+ */
+const ALMOST_LAPSED_AT = () =>
+  new Date(Date.now() - SEAT_OFFER_WINDOW_MS + 5 * 60_000);
 
 describe("seat offers", () => {
   let admin: SupabaseClient<Database>;
@@ -474,6 +486,26 @@ describe("seat offers", () => {
     const parsed = respondSeatOfferRpcResult.parse(res.data);
     expect(parsed.kind).toBe("expired");
     expect((await readRow(participation))!.status).toBe("waitlisted");
+  });
+
+  /**
+   * The other side of the same window, and the reason both cases exist. The
+   * refusal above says the offer is dead five days and a minute after it was
+   * sent; this one says it is alive five minutes before that, which is what
+   * makes a shortened SQL interval fail rather than pass quietly.
+   */
+  it("still honours an answer five minutes before the window closes", async () => {
+    const participation = await queue(P_CLUB);
+    const sentAt = await stamp(participation, ALMOST_LAPSED_AT());
+
+    const res = await admin.rpc("respond_seat_offer", {
+      p_participation_id: participation,
+      p_offer_sent_at: sentAt,
+      p_accept: true,
+    });
+    expect(res.error).toBeNull();
+    expect(respondSeatOfferRpcResult.parse(res.data).kind).toBe("accepted");
+    expect((await readRow(participation))!.status).toBe("active");
   });
 
   it("answers not_found for a participation that does not exist", async () => {

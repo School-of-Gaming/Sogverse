@@ -517,10 +517,17 @@ export function usePromoteFromWaitlist(productId: string) {
  * deadline is signed over). Inventing a client-side "now" here would draw a
  * deadline a minute or two away from the one in the family's inbox.
  *
- * Keyed into `groupMutationBase` so the pending registry sees it, and settling
- * through `invalidateGroupChange` so the dashboard's attention queue — which
- * now subtracts live offers from a product's open seats — stops nagging about a
- * seat that has just been offered.
+ * **It greys no chip, and `useGroupPending` deliberately classifies it into
+ * nothing.** The key sits under `groupMutationBase` like every other action
+ * here, so the registry's filter selects it — but there is no branch for it,
+ * because greying a chip is how this panel says "this person is going
+ * somewhere" and an invite moves nobody. The in-flight state belongs to the
+ * row's own Invite button, which holds itself committed from the click until
+ * the control is replaced.
+ *
+ * Settling through `invalidateGroupChange` so the dashboard's attention queue —
+ * which now subtracts live offers from a product's open seats — stops nagging
+ * about a seat that has just been offered.
  */
 export function useSendSeatOffer(productId: string) {
   const queryClient = useQueryClient();
@@ -530,10 +537,14 @@ export function useSendSeatOffer(productId: string) {
   return useMutation({
     mutationKey: [...groupMutationBase(productId), "seatOffer"],
     // The invalidation is awaited INSIDE the mutation rather than left to
-    // onSettled, for the reason `destructiveSettle` above spells out: settling
-    // there would flip the mutation out of `pending` the moment the write
-    // resolved, un-greying the row for the frame or two before the snapshot
-    // carrying the new stamp arrives to replace its Invite control.
+    // onSettled, which is `destructiveSettle`'s trick above applied to a
+    // different consumer. There it keeps a mutation `pending` so an element
+    // stays greyed; here nothing greys and what depends on the timing is the
+    // PROMISE this hook hands back. The row's Invite button clears its
+    // committed state when that promise settles, so resolving in onSettled —
+    // the moment the write returns, before the snapshot carrying the new stamp
+    // has landed — would re-enable the button for the frame or two before the
+    // control it belongs to is replaced.
     mutationFn: async ({ participationId }: { participationId: string }) => {
       await service.sendSeatOffer(productId, participationId);
       await invalidateGroupChange(queryClient, key);

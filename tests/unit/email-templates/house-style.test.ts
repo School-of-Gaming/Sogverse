@@ -179,7 +179,14 @@ const MAILS: Record<string, () => [string, string][]> = {
     ...fromRegistry("sessionReport"),
     ...fromRegistry("sessionReport", "sessionReport (staff copy)", { copy: "staff" }),
   ],
-  "seat-offer": () => fromRegistry("seatOffer"),
+  // Both voices of the parent mail. Every sentence moves between the second and
+  // the third person on `isSelfSeat`, and the two are swept for the same reason
+  // the staff mail's two flavours are: a variant nothing renders is a variant
+  // nothing can vouch for.
+  "seat-offer": () => [
+    ...fromRegistry("seatOffer"),
+    ...fromRegistry("seatOffer", "seatOffer (own seat)", { isSelfSeat: true }),
+  ],
   // Both flavours of the staff mail: they differ only in two sentences, but a
   // variant nothing renders is a variant nothing can vouch for.
   "seat-offer-staff": () => [

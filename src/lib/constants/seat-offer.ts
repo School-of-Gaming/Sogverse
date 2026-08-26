@@ -16,8 +16,12 @@
  * **Changing it is a two-file edit**: this constant and a migration that
  * recreates all three functions with the new interval. A change made in one
  * place alone is silent — the token would outlive the row's own window, or die
- * before it — so the db test that asserts the two agree is the thing to read
- * next if this ever moves.
+ * before it — so the db tests that assert the two agree are the thing to read
+ * next if this ever moves. They come as a **pair**, and both halves are load
+ * bearing: one answers just past the deadline and must be refused, the other
+ * answers just short of it and must be honoured. Either alone bounds the SQL
+ * interval from one side only, and a window silently shortened to four days
+ * passes a test that checks nothing but expiry.
  *
  * Five days is the owner's choice: long enough that a family who checks their
  * mail at the weekend still answers, short enough that a seat is not held out

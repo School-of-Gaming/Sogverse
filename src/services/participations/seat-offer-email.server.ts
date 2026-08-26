@@ -334,6 +334,7 @@ async function sendStaff({
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
       timeZoneName: "short",
       timeZone: product.timezone,
     }),
@@ -371,6 +372,13 @@ async function sendStaff({
  *
  * Explicit components rather than `dateStyle`/`timeStyle`, because `Intl`
  * refuses to combine either of those with `timeZoneName`.
+ *
+ * **`hour12: false` is pinned rather than left to the locale**, because `en`
+ * would otherwise set this deadline as "02:20 PM" while the two in-app cards
+ * that state the same instant set it as "14:20". One offer, read in an inbox
+ * and again in My SOG, has to carry one clock face — a family comparing the two
+ * should see the same digits rather than have to convert. The other four
+ * locales already resolve to a 24-hour clock, so this changes only `en`.
  */
 function formatDeadline(
   sentAt: string,
@@ -383,6 +391,7 @@ function formatDeadline(
     month: "long",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
     timeZoneName: "short",
     timeZone,
   });
