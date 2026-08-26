@@ -95,9 +95,12 @@ export function Header() {
    *   - signed in with a profile, the avatar is the trigger of the account
    *     menu, which owns everything that used to hang off this slot (the
    *     dashboard trip, the family switch, settings, sign-out);
-   *   - signed in with the profile row still in flight, the identicon alone.
-   *     The menu is built entirely from the role, so there is no partial menu
-   *     to offer — and an empty one would be worse than none;
+   *   - signed in with the profile row still in flight, the identicon behind a
+   *     link to login. The menu is built entirely from the role, so there is no
+   *     menu to offer yet — but the slot is the only account affordance on the
+   *     page and must never be a dead end, so it keeps the exit it had before
+   *     the menu existed. Login is the right one: it is where the session gets
+   *     re-established if the profile read is failing rather than merely slow;
    *   - signed out, a plain link to login, unchanged.
    */
   const accountSlot = isLoading ? (
@@ -114,11 +117,15 @@ export function Header() {
         firstName={profile.first_name}
       />
     ) : (
-      <span className="rounded-md">
+      <Link
+        href={ROUTES.login}
+        aria-label={c("signIn")}
+        className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
         <Avatar className="h-8 w-8">
           <Identicon id={user.id} size={32} />
         </Avatar>
-      </span>
+      </Link>
     )
   ) : (
     <Link

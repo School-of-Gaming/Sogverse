@@ -1525,7 +1525,8 @@
       "yty": "Yty",
       "about": "maH"
     },
-    "accountMenu": "qa’ De’wI’"
+    "accountMenu": "qa’ De’wI’ – {name}",
+    "switchTo": "pong yIchoH"
   },
   "help": {
     "title": "boQ",

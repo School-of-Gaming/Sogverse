@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FamilyService, type FamilyMember } from "@/services/family";
+import { commitAccountSwitch, type FamilyMember } from "@/services/family";
 import { ProfileTile, ProfileTilesRow } from "./ProfileTiles";
 
 interface SwitchProfileDialogProps {
@@ -74,10 +74,10 @@ export function SwitchProfileDialog({
     setSwitchError(null);
 
     try {
-      await new FamilyService().switchAccount(target.id);
-      // Full-page nav so the new session cookies hydrate the root layout
-      // (browser Supabase singleton is seeded at construction time).
-      window.location.href = redirectUrl;
+      // The redirect override is this surface's whole reason for passing one:
+      // it carries an intent marker across the switch, so it lands somewhere
+      // other than the target's own dashboard.
+      await commitAccountSwitch(target, redirectUrl);
     } catch (err) {
       setIsSwitching(false);
       setSwitchError(err instanceof Error ? err.message : c("somethingWentWrong"));

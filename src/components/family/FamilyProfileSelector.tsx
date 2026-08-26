@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/providers/auth-provider";
-import { FamilyService, useFamily, type FamilyMember } from "@/services/family";
+import {
+  commitAccountSwitch,
+  useFamily,
+  type FamilyMember,
+} from "@/services/family";
 import { AddGamerDialog } from "./AddGamerDialog";
 import { SwitchProfileDialog } from "./SwitchProfileDialog";
 import {
@@ -124,11 +128,7 @@ export function FamilyProfileSelector({
     setCommittingTargetId(target.id);
 
     try {
-      const service = new FamilyService();
-      await service.switchAccount(target.id);
-      // Full-page navigation so the new session cookies hydrate the root
-      // layout (browser Supabase singleton is seeded at construction time).
-      navigateToDashboard(target.role);
+      await commitAccountSwitch(target);
     } catch (err) {
       setCommittingTargetId(null);
       setSwitchError(err instanceof Error ? err.message : t("switchFailed"));
@@ -251,9 +251,4 @@ export function FamilyProfileSelector({
       )}
     </div>
   );
-}
-
-function navigateToDashboard(role: FamilyMember["role"]) {
-  window.location.href =
-    role === "customer" ? ROUTES.customer.dashboard : ROUTES.gamer.dashboard;
 }

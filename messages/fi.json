@@ -1481,7 +1481,8 @@
       "yty": "Yty",
       "about": "Tietoa"
     },
-    "accountMenu": "Tilivalikko"
+    "accountMenu": "Tilivalikko – {name}",
+    "switchTo": "Vaihda profiiliin"
   },
   "help": {
     "title": "Apu",

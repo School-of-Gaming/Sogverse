@@ -1481,7 +1481,8 @@
       "yty": "Yty",
       "about": "Om oss"
     },
-    "accountMenu": "Kontomeny"
+    "accountMenu": "Kontomeny – {name}",
+    "switchTo": "Byt profil"
   },
   "help": {
     "title": "Hjälp",

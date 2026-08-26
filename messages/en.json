@@ -1481,7 +1481,8 @@
       "yty": "Yty",
       "about": "About"
     },
-    "accountMenu": "Account menu"
+    "accountMenu": "Account menu – {name}",
+    "switchTo": "Switch to"
   },
   "help": {
     "title": "Help",
