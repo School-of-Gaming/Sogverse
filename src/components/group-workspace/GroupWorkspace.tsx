@@ -155,7 +155,7 @@ export interface RosterMemberFlair {
   /** Note text. A member with no note has no key; `""` and absent mean the same thing. */
   notes: Readonly<Record<string, string | undefined>>;
   /** Who last wrote each note, where that is known. Read only for members who have one. */
-  noteEditors?: Readonly<Record<string, string | undefined>>;
+  noteEditors: Readonly<Record<string, string | undefined>>;
   /**
    * Persist one member's note. **Awaited by the dialog**, which holds its Save
    * disabled until the write lands and closes only then; the trimmed text
@@ -940,14 +940,13 @@ function GroupRailCard({
         name={noteMember?.first_name ?? ""}
         note={noteFor === null ? "" : (memberFlair.notes[noteFor] ?? "")}
         lastEditedBy={
-          noteFor === null ? null : (memberFlair.noteEditors?.[noteFor] ?? null)
+          noteFor === null ? null : (memberFlair.noteEditors[noteFor] ?? null)
         }
         onSave={async (text) => {
           if (noteFor === null) return;
           await memberFlair.onSaveNote(noteFor, text);
         }}
       />
-
     </RailCard>
   );
 }
