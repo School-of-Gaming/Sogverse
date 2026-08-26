@@ -422,6 +422,57 @@ export function SettingsSectionContent() {
         </CardContent>
       </Card>
 
+      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
+
+      {showGameAccounts && (
+        <>
+          <GameAccountCard
+            platform="minecraft"
+            title={t('minecraftAccount')}
+            description={t('minecraftDescription')}
+            username={mcAccount?.minecraft_username ?? null}
+            externalId={mcAccount?.minecraft_uuid ?? null}
+            onSave={(value) => updateMyMc.mutateAsync(value)}
+            note={
+              /* A courtesy credit, not a licence condition — mc-heads asks for
+                 nothing and encourages this. One home is enough for a thank-you,
+                 and this is the page where a person is looking at their own skin,
+                 so it is the one that earns it. An anchor is fine here: the
+                 no-off-site-links rule governs staff-authored copy shown to
+                 families, not the app's own chrome. */
+              <p className="text-xs text-muted-foreground">
+                {t.rich('mcHeadsAttribution', {
+                  link: (chunks) => (
+                    <a
+                      href="https://mc-heads.net"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
+              </p>
+            }
+          />
+
+          <GameAccountCard
+            platform="roblox"
+            title={t('robloxAccount')}
+            description={t('robloxDescription')}
+            username={robloxAccount?.roblox_username ?? null}
+            externalId={robloxAccount?.roblox_user_id ?? null}
+            onSave={(value) => updateMyRoblox.mutateAsync(value)}
+          />
+        </>
+      )}
+
+      {/* Security sits at the foot of the page for every role — the exit and
+          the rarely-used credential actions come after the things people came
+          to edit. The one card allowed below it is the gedu contract card:
+          that one must stay last (see its comment), so this ordering is
+          load-bearing, not aesthetic. */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -471,52 +522,6 @@ export function SettingsSectionContent() {
           )}
         </CardContent>
       </Card>
-
-      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
-
-      {showGameAccounts && (
-        <>
-          <GameAccountCard
-            platform="minecraft"
-            title={t('minecraftAccount')}
-            description={t('minecraftDescription')}
-            username={mcAccount?.minecraft_username ?? null}
-            externalId={mcAccount?.minecraft_uuid ?? null}
-            onSave={(value) => updateMyMc.mutateAsync(value)}
-            note={
-              /* A courtesy credit, not a licence condition — mc-heads asks for
-                 nothing and encourages this. One home is enough for a thank-you,
-                 and this is the page where a person is looking at their own skin,
-                 so it is the one that earns it. An anchor is fine here: the
-                 no-off-site-links rule governs staff-authored copy shown to
-                 families, not the app's own chrome. */
-              <p className="text-xs text-muted-foreground">
-                {t.rich('mcHeadsAttribution', {
-                  link: (chunks) => (
-                    <a
-                      href="https://mc-heads.net"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:text-foreground"
-                    >
-                      {chunks}
-                    </a>
-                  ),
-                })}
-              </p>
-            }
-          />
-
-          <GameAccountCard
-            platform="roblox"
-            title={t('robloxAccount')}
-            description={t('robloxDescription')}
-            username={robloxAccount?.roblox_username ?? null}
-            externalId={robloxAccount?.roblox_user_id ?? null}
-            onSave={(value) => updateMyRoblox.mutateAsync(value)}
-          />
-        </>
-      )}
 
       {/* Last on the page, and that is a layout decision rather than a ranking
           one. This is the only card here whose body is decided by a read the
