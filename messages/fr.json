@@ -704,8 +704,10 @@
         "attendanceAndReports": "Présences et comptes rendus",
         "subtitle": "Faites glisser chaque participant dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
         "autoPlacement": {
-          "single": "Les nouveaux participants sont placés automatiquement dans {group}.",
-          "manual": "Les nouveaux participants restent dans Sans groupe jusqu’à ce que vous les placiez : le placement automatique exige que le produit ait exactement un groupe."
+          "single": "Les nouveaux participants rejoignent {group} automatiquement.",
+          "noGroups": "Ajoutez un groupe et les nouveaux participants le rejoindront automatiquement.",
+          "manyGroups": "Les nouveaux participants restent ici : le placement automatique exige exactement un groupe.",
+          "charged": "Les nouveaux participants restent ici : le placement automatique ne s’applique qu’aux produits gratuits pour les familles."
         },
         "addGroup": "Ajouter un groupe",
         "loading": "Chargement…",

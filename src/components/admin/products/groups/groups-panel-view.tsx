@@ -11,14 +11,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  AlertTriangle,
-  Info,
-  Plus,
-  Trash2,
-  UserPlus,
-  Users,
-} from "lucide-react";
+import { AlertTriangle, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +30,6 @@ import {
   readDropData,
   readChipDragData,
   resolveDrop,
-  type AutoPlacement,
   type BlockedDropReason,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
@@ -384,24 +376,19 @@ export function GroupsPanelView({
   // Greyed/undraggable chips: an in-flight move/promote/demote OR removal.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
 
-  // Where the NEXT enrollment will land. Rendered only on a product that
-  // charges nothing, where the answer is not always "the inbox" and is worth
-  // stating; on a paid product this is `none` and nothing is drawn, because
-  // "everyone arrives unplaced" is what the panel has always looked like.
-  //
-  // It sits above the inbox because that is the thing it is talking about, and
-  // it is present in BOTH of its states on such a product — so it never appears
-  // or disappears under the reader, and the only thing that can change it is
-  // the admin adding or deleting a group, which is their own action.
+  // Where the NEXT participant will land, handed to the inbox card that states
+  // it in its own header. Every product has an answer — the settled one names
+  // the group, the other three say why the seat waits — and only the admin
+  // adding or deleting a group moves between them, which is their own action.
   //
   // Read from the snapshot itself rather than from the `groups` fallback above:
   // with no snapshot (the query errored) an empty list is the absence of an
   // answer, not "this product has no groups", and the note would state the
-  // manual case with a confidence it has not earned. No snapshot, nothing to
+  // no-groups case with a confidence it has not earned. No snapshot, nothing to
   // say — so the note renders exactly when the panel's real content does.
-  const autoPlacement: AutoPlacement = snapshot
+  const autoPlacement = snapshot
     ? autoPlacementFor(billingMode, snapshot.groups)
-    : { kind: "none" };
+    : null;
 
   return (
     <div className="space-y-3">
@@ -459,24 +446,12 @@ export function GroupsPanelView({
         </div>
 
         <div className="space-y-3">
-          {autoPlacement.kind !== "none" && (
-            <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span>
-                {autoPlacement.kind === "single"
-                  ? t("autoPlacement.single", {
-                      group: autoPlacement.groupName,
-                    })
-                  : t("autoPlacement.manual")}
-              </span>
-            </p>
-          )}
-
           <UnassignedCard
             participations={unassigned}
             pendingChipIds={busyChipIds}
             gamePlatform={gamePlatform}
             robloxRenders={robloxRenders}
+            autoPlacement={autoPlacement}
           />
 
           {hasGroups ? (

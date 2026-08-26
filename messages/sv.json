@@ -705,7 +705,9 @@
         "subtitle": "Dra varje deltagare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
         "autoPlacement": {
           "single": "Nya deltagare placeras automatiskt i {group}.",
-          "manual": "Nya deltagare hamnar i Otilldelade tills du placerar dem — automatisk placering kräver att produkten har exakt en grupp."
+          "noGroups": "Lägg till en grupp, så placeras nya deltagare automatiskt i den.",
+          "manyGroups": "Nya deltagare hamnar här – automatisk placering kräver exakt en grupp.",
+          "charged": "Nya deltagare hamnar här – automatisk placering gäller bara produkter som är gratis för familjerna."
         },
         "addGroup": "Lägg till grupp",
         "loading": "Laddar…",

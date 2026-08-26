@@ -576,6 +576,11 @@ describe("autoPlacementFor", () => {
   // The panel's copy of the database's placement predicate: a product that
   // charges nothing AND has exactly one group seats new enrollments in it.
   // Every case below moves exactly one half of that.
+  //
+  // The three negative answers are deliberately distinct values rather than one
+  // "not automatic": each is a different sentence to an admin asking whether
+  // their product is ready — one names a missing step they can take, one names
+  // a decision that stays theirs, and one says this product never qualifies.
   const one = [{ name: "Wednesdays" }];
   const two = [{ name: "Group A" }, { name: "Group B" }];
 
@@ -590,20 +595,32 @@ describe("autoPlacementFor", () => {
     });
   });
 
-  it("falls back to the inbox with no groups or with several", () => {
-    expect(autoPlacementFor("free", [])).toEqual({ kind: "manual" });
-    expect(autoPlacementFor("free", two)).toEqual({ kind: "manual" });
-    expect(autoPlacementFor("external_contract", two)).toEqual({
-      kind: "manual",
+  it("asks for a group when a no-charge product has none", () => {
+    // The one negative state with a fix, and the fix is one click.
+    expect(autoPlacementFor("free", [])).toEqual({ kind: "noGroups" });
+    expect(autoPlacementFor("external_contract", [])).toEqual({
+      kind: "noGroups",
     });
   });
 
-  it("says nothing at all about a product that charges", () => {
-    // Not "manual": a paid seat always lands in the inbox, which is what the
-    // panel has always looked like, so there is nothing to explain and the
-    // note is not rendered.
-    expect(autoPlacementFor("paid", one)).toEqual({ kind: "none" });
-    expect(autoPlacementFor("paid", [])).toEqual({ kind: "none" });
-    expect(autoPlacementFor("paid", two)).toEqual({ kind: "none" });
+  it("hands several groups back to the admin", () => {
+    // Not the same answer as having none: nothing is missing here, the choice
+    // is simply a human's to make.
+    expect(autoPlacementFor("free", two)).toEqual({ kind: "manyGroups" });
+    expect(autoPlacementFor("external_contract", two)).toEqual({
+      kind: "manyGroups",
+    });
+    expect(autoPlacementFor("free", [...two, { name: "Group C" }])).toEqual({
+      kind: "manyGroups",
+    });
+  });
+
+  it("disqualifies a product that charges, whatever its groups", () => {
+    // The billing half of the predicate settles it on its own: a paid seat is
+    // written by the Stripe webhook, which places nobody, so the group count is
+    // never even consulted.
+    expect(autoPlacementFor("paid", one)).toEqual({ kind: "charged" });
+    expect(autoPlacementFor("paid", [])).toEqual({ kind: "charged" });
+    expect(autoPlacementFor("paid", two)).toEqual({ kind: "charged" });
   });
 });

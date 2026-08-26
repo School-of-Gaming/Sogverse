@@ -265,44 +265,53 @@ export function canCompEnroll(
 // ---------------------------------------------------------------------------
 
 /**
- * What the panel has to say about where the *next* enrollment will land.
+ * The panel's answer to the question an admin who has just been handed a
+ * product actually asks: *have I done everything needed for gamers to be seated
+ * automatically — and if not, what is missing, or why does this product not
+ * qualify?* Each state is one of those three answers.
  *
- *  - `none` — nothing to say, so nothing is rendered. Every seat on a product
- *    that charges arrives in the inbox, which is what the panel has always
- *    looked like and needs no explanation.
- *  - `single` — the seat will be placed in this group without anyone touching
- *    it, and the group is named so the admin can see which one.
- *  - `manual` — the seat will wait in the inbox, because automatic placement
- *    needs exactly one group and this product has none or several.
+ *  - `single` — yes, nothing left to do: the seat is placed in this group
+ *    without anyone touching it, and the group is named so the admin can see
+ *    which one.
+ *  - `noGroups` — the "what do I need to do" answer, and the only state whose
+ *    fix is one click: automatic placement needs a group to place people into.
+ *  - `manyGroups` — the "why not here" answer: which of several groups a child
+ *    belongs in is a decision that stays a human's, so the seat waits.
+ *  - `charged` — the "why not ever" answer: a seat on a product that charges is
+ *    written by the Stripe webhook on its own transaction, and that writer
+ *    places nobody.
+ *
+ * The three negative states are all "the seat waits in the inbox", and they are
+ * kept apart because the *reason* is the whole of what the admin came for.
  */
 export type AutoPlacement =
-  | { kind: "none" }
   | { kind: "single"; groupName: string }
-  | { kind: "manual" };
+  | { kind: "noGroups" }
+  | { kind: "manyGroups" }
+  | { kind: "charged" };
 
 /**
  * Mirrors the enrollment writers' own predicate: a product that charges nothing
  * AND has exactly one group seats new participations in that group instead of
- * in the unassigned inbox. Zero groups has nowhere to put anybody; two or more
- * is a placement decision that stays a human's; and a paid seat is written by
- * the Stripe webhook on a different transaction, which never places anyone.
+ * in the unassigned inbox.
  *
  * Whether the single group has a gedu assigned is deliberately not consulted —
  * an unstaffed group is still the only place the seat can go.
  *
  * The panel only *describes* this; the database is what does it. The two can
  * only disagree if one of them is changed alone, which is why the predicate is
- * written here in one place rather than inlined into the note.
+ * written here in one place rather than inlined into the note that renders it.
  */
 export function autoPlacementFor(
   billingMode: BillingMode,
   groups: readonly { name: string }[],
 ): AutoPlacement {
   if (billingMode !== "free" && billingMode !== "external_contract") {
-    return { kind: "none" };
+    return { kind: "charged" };
   }
   const only = groups.length === 1 ? groups[0] : undefined;
-  return only ? { kind: "single", groupName: only.name } : { kind: "manual" };
+  if (only) return { kind: "single", groupName: only.name };
+  return groups.length === 0 ? { kind: "noGroups" } : { kind: "manyGroups" };
 }
 
 // ---------------------------------------------------------------------------
