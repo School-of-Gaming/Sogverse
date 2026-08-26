@@ -1031,11 +1031,13 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
     groupName: "Thursday A",
+    // The partially-filled notes state: a written family note with the staff
+    // ghost beside it, so the one-note group is on show somewhere. The empty
+    // half is deliberate, not an unfinished fixture.
     groupNotes: {
       publicNote:
         "Thursday A are building one shared obstacle course, a few obstacles at a time. Everything each team makes gets snapped into it at the end of the term.",
-      staffNote:
-        "Studio is slow to open on the older laptops — worth starting it before the group arrives. Siiri needs pairing rather than free choice of partner.",
+      staffNote: null,
     },
     // Kept bare: the only question this scenario is open to answer is what a
     // Roblox identity cell looks like.
@@ -1076,11 +1078,11 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     site: null,
     materialUrl: null,
     groupName: "Tuesday A",
+    // The fully-empty notes state: both ghosts showing, which is what a brand-new
+    // group's gedu meets — the state the ghost hints exist to teach.
     groupNotes: {
-      publicNote:
-        "Tuesday A are working through the basics in Python. Nothing needs installing at home — everything runs in the browser.",
-      staffNote:
-        "No game account on this product, so nothing to check against a server. Two of the group are well ahead and want harder problems.",
+      publicNote: null,
+      staffNote: null,
     },
     // Kept bare for the same reason as the Roblox scenario: the subject here is
     // the short row, and a mark on it would be a second thing to look at.
