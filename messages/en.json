@@ -703,6 +703,10 @@
         "title": "Groups",
         "attendanceAndReports": "Attendance & reports",
         "subtitle": "Drag each participant into the group they’ll play with. Add Gedus to lead each group.",
+        "autoPlacement": {
+          "single": "New participants are placed in {group} automatically.",
+          "manual": "New participants wait in Unassigned until you place them — automatic placement needs the product to have exactly one group."
+        },
         "addGroup": "Add group",
         "loading": "Loading…",
         "genderBoy": "boy",

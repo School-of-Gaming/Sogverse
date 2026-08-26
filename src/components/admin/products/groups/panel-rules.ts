@@ -261,6 +261,51 @@ export function canCompEnroll(
 }
 
 // ---------------------------------------------------------------------------
+// Automatic placement into a single group
+// ---------------------------------------------------------------------------
+
+/**
+ * What the panel has to say about where the *next* enrollment will land.
+ *
+ *  - `none` — nothing to say, so nothing is rendered. Every seat on a product
+ *    that charges arrives in the inbox, which is what the panel has always
+ *    looked like and needs no explanation.
+ *  - `single` — the seat will be placed in this group without anyone touching
+ *    it, and the group is named so the admin can see which one.
+ *  - `manual` — the seat will wait in the inbox, because automatic placement
+ *    needs exactly one group and this product has none or several.
+ */
+export type AutoPlacement =
+  | { kind: "none" }
+  | { kind: "single"; groupName: string }
+  | { kind: "manual" };
+
+/**
+ * Mirrors the enrollment writers' own predicate: a product that charges nothing
+ * AND has exactly one group seats new participations in that group instead of
+ * in the unassigned inbox. Zero groups has nowhere to put anybody; two or more
+ * is a placement decision that stays a human's; and a paid seat is written by
+ * the Stripe webhook on a different transaction, which never places anyone.
+ *
+ * Whether the single group has a gedu assigned is deliberately not consulted —
+ * an unstaffed group is still the only place the seat can go.
+ *
+ * The panel only *describes* this; the database is what does it. The two can
+ * only disagree if one of them is changed alone, which is why the predicate is
+ * written here in one place rather than inlined into the note.
+ */
+export function autoPlacementFor(
+  billingMode: BillingMode,
+  groups: readonly { name: string }[],
+): AutoPlacement {
+  if (billingMode !== "free" && billingMode !== "external_contract") {
+    return { kind: "none" };
+  }
+  const only = groups.length === 1 ? groups[0] : undefined;
+  return only ? { kind: "single", groupName: only.name } : { kind: "manual" };
+}
+
+// ---------------------------------------------------------------------------
 // The chip's game identity
 // ---------------------------------------------------------------------------
 

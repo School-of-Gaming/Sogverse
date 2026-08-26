@@ -703,6 +703,10 @@
         "title": "Groupes",
         "attendanceAndReports": "Présences et comptes rendus",
         "subtitle": "Faites glisser chaque participant dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
+        "autoPlacement": {
+          "single": "Les nouveaux participants sont placés automatiquement dans {group}.",
+          "manual": "Les nouveaux participants restent dans Sans groupe jusqu’à ce que vous les placiez : le placement automatique exige que le produit ait exactement un groupe."
+        },
         "addGroup": "Ajouter un groupe",
         "loading": "Chargement…",
         "genderBoy": "garçon",

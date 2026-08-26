@@ -11,7 +11,14 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { AlertTriangle, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  Info,
+  Plus,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +29,7 @@ import { BlockedMoveDialog } from "./blocked-move-dialog";
 import { ParticipantChip } from "./participant-chip";
 import { GroupColumn } from "./group-column";
 import {
+  autoPlacementFor,
   canCompEnroll,
   chipGameIdentity,
   dragSubjectsFrom,
@@ -375,6 +383,17 @@ export function GroupsPanelView({
   // Greyed/undraggable chips: an in-flight move/promote/demote OR removal.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
 
+  // Where the NEXT enrollment will land. Rendered only on a product that
+  // charges nothing, where the answer is not always "the inbox" and is worth
+  // stating; on a paid product this is `none` and nothing is drawn, because
+  // "everyone arrives unplaced" is what the panel has always looked like.
+  //
+  // It sits above the inbox because that is the thing it is talking about, and
+  // it is present in BOTH of its states on such a product — so it never appears
+  // or disappears under the reader, and the only thing that can change it is
+  // the admin adding or deleting a group, which is their own action.
+  const autoPlacement = autoPlacementFor(billingMode, groups);
+
   return (
     <div className="space-y-3">
       {/* The header is inside the DndContext so the "Add participant" button can
@@ -431,6 +450,19 @@ export function GroupsPanelView({
         </div>
 
         <div className="space-y-3">
+          {autoPlacement.kind !== "none" && (
+            <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>
+                {autoPlacement.kind === "single"
+                  ? t("autoPlacement.single", {
+                      group: autoPlacement.groupName,
+                    })
+                  : t("autoPlacement.manual")}
+              </span>
+            </p>
+          )}
+
           <UnassignedCard
             participations={unassigned}
             pendingChipIds={busyChipIds}

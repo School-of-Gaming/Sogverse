@@ -703,6 +703,10 @@
         "title": "Grupper",
         "attendanceAndReports": "Närvaro och sammanfattningar",
         "subtitle": "Dra varje deltagare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
+        "autoPlacement": {
+          "single": "Nya deltagare placeras automatiskt i {group}.",
+          "manual": "Nya deltagare hamnar i Otilldelade tills du placerar dem — automatisk placering kräver att produkten har exakt en grupp."
+        },
         "addGroup": "Lägg till grupp",
         "loading": "Laddar…",
         "genderBoy": "pojke",

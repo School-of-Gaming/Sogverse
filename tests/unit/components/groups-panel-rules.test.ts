@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  autoPlacementFor,
   canCompEnroll,
   chipGameIdentity,
   dragSubjectsFrom,
@@ -568,5 +569,41 @@ describe("isSubscriptionShaped / canCompEnroll", () => {
     expect(canCompEnroll("camp", "paid")).toBe(true);
     expect(canCompEnroll("event", "paid")).toBe(true);
     expect(canCompEnroll("municipality_club", "external_contract")).toBe(true);
+  });
+});
+
+describe("autoPlacementFor", () => {
+  // The panel's copy of the database's placement predicate: a product that
+  // charges nothing AND has exactly one group seats new enrollments in it.
+  // Every case below moves exactly one half of that.
+  const one = [{ name: "Wednesdays" }];
+  const two = [{ name: "Group A" }, { name: "Group B" }];
+
+  it("names the single group on a product that charges nothing", () => {
+    expect(autoPlacementFor("free", one)).toEqual({
+      kind: "single",
+      groupName: "Wednesdays",
+    });
+    expect(autoPlacementFor("external_contract", one)).toEqual({
+      kind: "single",
+      groupName: "Wednesdays",
+    });
+  });
+
+  it("falls back to the inbox with no groups or with several", () => {
+    expect(autoPlacementFor("free", [])).toEqual({ kind: "manual" });
+    expect(autoPlacementFor("free", two)).toEqual({ kind: "manual" });
+    expect(autoPlacementFor("external_contract", two)).toEqual({
+      kind: "manual",
+    });
+  });
+
+  it("says nothing at all about a product that charges", () => {
+    // Not "manual": a paid seat always lands in the inbox, which is what the
+    // panel has always looked like, so there is nothing to explain and the
+    // note is not rendered.
+    expect(autoPlacementFor("paid", one)).toEqual({ kind: "none" });
+    expect(autoPlacementFor("paid", [])).toEqual({ kind: "none" });
+    expect(autoPlacementFor("paid", two)).toEqual({ kind: "none" });
   });
 });

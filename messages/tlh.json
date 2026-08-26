@@ -751,6 +751,10 @@
         "title": "ghommey",
         "attendanceAndReports": "pawwI’pu’ qonta’ je",
         "subtitle": "QujmeH ghomvaD Hoch ghom yIngeH. ghom DevmeH Gedupu’ yIchu’.",
+        "autoPlacement": {
+          "single": "De’wI’ chu’pu’ {group}Daq ngeH. yIngeHnISbe’.",
+          "manual": "ngu’be’pu’Daq loS chu’pu’. wa’ ghom neH ghajchugh De’, ngeH De’wI’."
+        },
         "addGroup": "ghom yIchu’",
         "loading": "tIjwI’…",
         "genderBoy": "loDHom",
