@@ -63,6 +63,12 @@ import {
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
+import { GeduContractSettingsCardView } from "@/components/gedu/contract/gedu-contract-settings-card-view";
+import {
+  findGeduContractAcceptance,
+  GEDU_CONTRACT_CURRENT_VERSION,
+} from "@/components/gedu/contract/documents";
+import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
 import { useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -74,7 +80,7 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { UserRole, VoiceZone } from "@/types";
+import type { GeduContractAcceptance, UserRole, VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -2658,6 +2664,104 @@ export default function AdminUIComponentsPage() {
         </p>
         <MinecraftPasswordResetDemo />
       </Section>
+
+      <Section title="Gedu contract — settings card">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The card at the foot of a gedu&rsquo;s settings page, in every state it
+          has. The first is what the page paints before the acceptance read
+          answers &mdash; and what a <em>failed</em> read leaves on screen, since
+          the card has no other way to say so.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          However many signatures are on file, the card names exactly one: the
+          earliest acceptance of the version in force. A second season adds no
+          height, and a gedu who signed only last season reads as{" "}
+          <em>Not accepted</em>.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The settings page is one column wide, so each state wraps later there
+          than in these columns.
+        </p>
+        <GeduContractSettingsCardDemo />
+      </Section>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Gedu contract — settings card                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * When the fixture educator signed each version. Fixed literals, unlike the
+ * contract scene's clock-relative one: the card renders the date absolutely, so
+ * nothing here goes stale — and a moment that moved would move the line it is
+ * printed on, which is the one thing this section exists to hold still.
+ */
+const CONTRACT_CARD_SIGNED_AT = "2026-03-14T09:12:00.000Z";
+const CONTRACT_CARD_LAST_SEASON_SIGNED_AT = "2025-08-19T14:40:00.000Z";
+
+/**
+ * A season whose text is no longer in the document registry, so its version
+ * string is written out rather than derived from a document the way the current
+ * one is. That is what a superseded version is by the time a card meets it:
+ * data read back off a row, which is exactly how the matcher treats it.
+ */
+const CONTRACT_CARD_LAST_SEASON_VERSION = "2025-2026/fi";
+
+const CONTRACT_CARD_CURRENT_ROW = buildGeduContractAcceptance({
+  acceptedAt: CONTRACT_CARD_SIGNED_AT,
+});
+
+const CONTRACT_CARD_LAST_SEASON_ROW = buildGeduContractAcceptance({
+  acceptedAt: CONTRACT_CARD_LAST_SEASON_SIGNED_AT,
+  version: CONTRACT_CARD_LAST_SEASON_VERSION,
+});
+
+/** What the settings page's read can come back holding. */
+const CONTRACT_CARD_CASES: readonly {
+  label: string;
+  /** `undefined` is the read not having answered yet. */
+  acceptances: GeduContractAcceptance[] | undefined;
+}[] = [
+  { label: "No answer yet", acceptances: undefined },
+  { label: "No signature", acceptances: [] },
+  { label: "One signature", acceptances: [CONTRACT_CARD_CURRENT_ROW] },
+  {
+    label: "Two seasons signed",
+    acceptances: [CONTRACT_CARD_LAST_SEASON_ROW, CONTRACT_CARD_CURRENT_ROW],
+  },
+];
+
+/**
+ * The four answers side by side, so their bottom edges can be read against each
+ * other — the card is the only one on the settings page whose height its data
+ * decides, and whether the four can be made one height is the open question
+ * about it.
+ *
+ * The rows go through the real matcher rather than being hand-picked, so what
+ * each column shows is what the data shell would have handed the card, not a
+ * claim about it. `items-start` is load-bearing: a stretching grid would give
+ * every column the tallest card's height and erase the comparison.
+ */
+function GeduContractSettingsCardDemo() {
+  return (
+    <div className="grid items-start gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-4">
+      {CONTRACT_CARD_CASES.map(({ label, acceptances }) => (
+        <div key={label} className="space-y-3">
+          <DemoCaption>{label}</DemoCaption>
+          <GeduContractSettingsCardView
+            acceptance={
+              acceptances === undefined
+                ? undefined
+                : findGeduContractAcceptance(
+                    acceptances,
+                    GEDU_CONTRACT_CURRENT_VERSION,
+                  )
+            }
+          />
+        </div>
+      ))}
     </div>
   );
 }
