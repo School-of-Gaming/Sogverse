@@ -168,7 +168,7 @@
       "attention": {
         "title": "Vaatii huomiota",
         "allClearTitle": "Kaikki kunnossa",
-        "allClearBody": "Jokainen pelaaja on sijoitettu, jokaisella ryhmällä on Gedu, mistään tuotteesta ei puutu palkkiota tai maksua, eikä kukaan odota hyväksyntäpäätöstä.",
+        "allClearLine": "Sogversessa on rauha. Voit levätä nyt, ylläpitäjäseikkailija.",
         "productsLabel": "Huomiota vaativat tuotteet",
         "productsHeading": "Tuotteet",
         "issues": {
@@ -180,8 +180,8 @@
         }
       },
       "certification": {
-        "label": "Hyväksyntää odottavat Gedut",
-        "heading": "Odottaa hyväksyntää",
+        "title": "Gedujen hyväksyntä",
+        "description": "Hyväksyntä ratkaisee, kenet voi liittää ryhmään ja kuka voi valvoa pikahuoneita. Mikään tässä ei vaadi päätöstä tänään – osa odottaa vielä omia papereitaan.",
         "justNow": "Hyväksytty juuri nyt: {count}",
         "empty": "Kukaan ei odota hyväksyntäpäätöstä.",
         "unnamed": "Nimetön Gedu",

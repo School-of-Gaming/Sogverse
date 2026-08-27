@@ -41,13 +41,21 @@ import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
  */
 
 /**
- * **Two scenarios**, and they cannot coexist: an empty queue and a full one are
- * the same components in their two states.
+ * **Two scenarios**, and they cannot coexist: a full attention queue and an
+ * empty one are the same component in its two states.
  *
  * `busy` is the platform under real load — sixty products, twenty-one of them
- * needing something, five gedus waiting on a decision. `quiet` is six products
- * with nothing wrong anywhere, which is the only way to see the all-clear state
- * on a page that is otherwise doing its job.
+ * needing something, five gedus not yet certified. `quiet` is six products with
+ * nothing wrong anywhere, which is the only way to see the all-clear header on a
+ * page that is otherwise doing its job.
+ *
+ * **`quiet` still lists gedus, and that is the combination worth having.** The
+ * two sections are independent now — attention is products, certification is
+ * standing information below it — so the interesting scene is the one that shows
+ * a collapsed attention panel *above a populated certification list*: an admin
+ * with genuinely nothing to do, looking at people they cannot do anything about
+ * yet. Emptying both would have shown two empty states and hidden the pairing
+ * the split exists for.
  */
 export const ADMIN_DASHBOARD_SCENARIOS = ["busy", "quiet"] as const;
 
@@ -92,6 +100,13 @@ export const ADMIN_DASHBOARD_NOW = new Date("2026-08-17T09:20:00+03:00");
 
 /** Today, as the bare calendar date it is in the schedule's own zone. */
 const TODAY = "2026-08-17";
+
+/**
+ * How many of the uncertified gedus the quiet scenario lists — the oldest two,
+ * which are also the two who have not accepted the contract, so the scene shows
+ * the state an admin is least able to act on.
+ */
+const QUIET_GEDU_COUNT = 2;
 
 /** How many weeks either side of today the week view can be stepped through. */
 const WEEKS_BEFORE = 2;
@@ -1040,7 +1055,13 @@ export function buildAdminDashboardFixture(
     // no adjustment to disclose. The live page decides this per snapshot.
     timeZoneAbbrev: null,
     products,
-    uncertifiedGedus: quiet ? [] : uncertifiedGedus(locale),
+    // Both scenarios list gedus: certification is no longer part of the
+    // attention queue, so an empty queue says nothing about who is waiting on a
+    // decision. `quiet` takes the two oldest, which is the pair that shows a
+    // clear panel above a list an admin cannot clear today.
+    uncertifiedGedus: quiet
+      ? uncertifiedGedus(locale).slice(-QUIET_GEDU_COUNT)
+      : uncertifiedGedus(locale),
     users: quiet ? QUIET_USER_STATS : BUSY_USER_STATS,
     weeks,
     currentWeekIndex,
@@ -1051,7 +1072,12 @@ export function buildAdminDashboardFixture(
 /**
  * Plausible platform numbers — one parent to roughly one and a half gamers, most
  * addresses verified, and rather more gedus registered than certified, which is
- * the whole reason the certification queue above exists.
+ * the whole reason the certification section above exists.
+ *
+ * Both rows agree with the certification list the same scenario builds: `busy`
+ * is nineteen gedus with twelve certified against its five listed, `quiet` is
+ * five with three certified against its two. A strip counting a gedu the list
+ * below it cannot account for is the drift a fixture exists to make impossible.
  */
 const BUSY_USER_STATS: AdminDashboardData["users"] = [
   { role: "customer", total: 214, verified: 191, certified: null },
@@ -1063,7 +1089,7 @@ const BUSY_USER_STATS: AdminDashboardData["users"] = [
 const QUIET_USER_STATS: AdminDashboardData["users"] = [
   { role: "customer", total: 12, verified: 9, certified: null },
   { role: "gamer", total: 18, verified: null, certified: null },
-  { role: "gedu", total: 3, verified: 3, certified: 3 },
+  { role: "gedu", total: 5, verified: 5, certified: 3 },
   { role: "admin", total: 2, verified: 2, certified: null },
 ];
 
