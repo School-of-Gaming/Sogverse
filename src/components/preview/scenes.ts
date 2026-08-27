@@ -358,8 +358,7 @@ export const PREVIEW_SCENES = [
       {
         slug: "quiet",
         label: "Quiet platform — all clear",
-        description:
-          "The collapsed all-clear header, over a certification list an admin cannot clear today.",
+        description: "The all-clear header, which a full queue cannot show.",
       },
     ],
   },

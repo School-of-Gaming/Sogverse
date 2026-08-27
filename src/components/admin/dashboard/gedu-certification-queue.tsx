@@ -29,9 +29,18 @@ import type { UncertifiedGedu } from "./admin-dashboard-data";
  * resolves when the row has actually been certified; only then does the row
  * leave the list. That ordering is what lets a failure be shown *on the row that
  * failed* — a list that removed the row optimistically would have nowhere left
- * to put the error, and the admin would be told nothing at all. In the preview
- * the callback resolves immediately and writes nothing, so a reload restores
- * every row.
+ * to put the error, and the admin would be told nothing at all.
+ *
+ * **A row leaves only when both halves agree: the promise resolves, and the
+ * list stops offering that id.** The second half is the pruning below, and it is
+ * a requirement on every shell rather than an implementation detail of one. Live
+ * it is satisfied because the mutation awaits its own invalidation, so the
+ * refetched snapshot has already dropped the id by the time the promise settles;
+ * in the preview the scene holds the certified ids in React state and filters
+ * them out of the list it hands down, which is the same shape with a `Set` where
+ * the RPC is. A shell that resolved without dropping the id would leave the row
+ * on screen with its button stuck at "Certifying…" for the rest of the sitting,
+ * because that flag is deliberately never cleared on success.
  *
  * **The receipt lives here now, and that is a simplification.** It used to be
  * held by the attention panel a level up, for one reason: this section was

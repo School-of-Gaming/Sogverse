@@ -181,9 +181,8 @@
       },
       "certification": {
         "title": "Gedu certification",
-        "description": "Certification is what lets a Gedu be assigned to groups and moderate instant rooms.",
         "justNow": "{count} certified just now",
-        "empty": "Nobody is waiting on a certification decision.",
+        "empty": "No Gedus are awaiting certification.",
         "unnamed": "Unnamed Gedu",
         "registered": "registered {when}",
         "certify": "Certify",

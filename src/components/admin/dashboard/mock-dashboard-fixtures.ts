@@ -103,8 +103,8 @@ const TODAY = "2026-08-17";
 
 /**
  * How many of the uncertified gedus the quiet scenario lists — the oldest two,
- * which are also the two who have not accepted the contract, so the scene shows
- * the state an admin is least able to act on.
+ * both of whom are among those who have not accepted the contract, so the scene
+ * shows the state an admin is least able to act on.
  */
 const QUIET_GEDU_COUNT = 2;
 
@@ -1075,14 +1075,14 @@ export function buildAdminDashboardFixture(
  * the whole reason the certification section above exists.
  *
  * Both rows agree with the certification list the same scenario builds: `busy`
- * is nineteen gedus with twelve certified against its five listed, `quiet` is
+ * is nineteen gedus with fourteen certified against its five listed, `quiet` is
  * five with three certified against its two. A strip counting a gedu the list
  * below it cannot account for is the drift a fixture exists to make impossible.
  */
 const BUSY_USER_STATS: AdminDashboardData["users"] = [
   { role: "customer", total: 214, verified: 191, certified: null },
   { role: "gamer", total: 342, verified: null, certified: null },
-  { role: "gedu", total: 19, verified: 17, certified: 12 },
+  { role: "gedu", total: 19, verified: 17, certified: 14 },
   { role: "admin", total: 4, verified: 4, certified: null },
 ];
 

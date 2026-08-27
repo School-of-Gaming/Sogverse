@@ -181,9 +181,8 @@
       },
       "certification": {
         "title": "Certification des Gedus",
-        "description": "La certification permet à un Gedu d’être affecté à un groupe et de modérer les salons instantanés.",
         "justNow": "{count} certifiés à l’instant",
-        "empty": "Personne n’attend une décision de certification.",
+        "empty": "Aucun Gedu n’est en attente de certification.",
         "unnamed": "Gedu sans nom",
         "registered": "inscrit {when}",
         "certify": "Certifier",

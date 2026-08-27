@@ -229,9 +229,8 @@
       },
       "certification": {
         "title": "Gedu patlh",
-        "description": "patlh ghajbogh Gedu neH ghomDaq lanlu’laH ’ej pa’mey che’laH.",
         "justNow": "DaH patlh nobta’: {count}",
-        "empty": "patlh loSwI’ tu’be’lu’.",
+        "empty": "patlh ghaj Hoch Gedupu’.",
         "unnamed": "pong Hutlh Gedu",
         "registered": "ghItlhta’ {when}",
         "certify": "patlh yInob",

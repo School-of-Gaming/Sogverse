@@ -75,15 +75,24 @@ export function NeedsAttentionPanel({
  * Nothing on this page resolves a product issue: every card in the grid is a
  * link out to the product that owns the problem, so the panel cannot collapse in
  * response to anything the reader does here. It changes shape on a fresh
- * document, which is not a shift at all. The one exception is honest and worth
- * naming rather than papering over: the dashboard's snapshot is a React Query
- * entry, so a window-focus refetch or the certification section's own
- * invalidation can bring back a document in which *another* admin fixed the last
- * product issue, and the panel would collapse under a reader who is looking at
- * the section below it. That is rare by construction — it needs a second admin
- * finishing the last issue inside the same minute — and it is the only path to
- * it. Reserving a queue's worth of space against that possibility would cost
- * every clear morning the whole point of this state.
+ * document, which is not a shift at all.
+ *
+ * What can move it is a refetch. The snapshot is a React Query entry with a
+ * one-minute `staleTime` and the library's defaults otherwise, so it comes back
+ * on window focus once the entry is stale, on reconnect, and on the invalidation
+ * the certification section's own write fires. If *another* admin cleared the
+ * last product issue in between, this panel collapses and everything below it
+ * rises under whoever is reading. **Reconnect is the path worth naming**, and
+ * the one easy to miss when reasoning about this: a focus refetch lands as a
+ * returning reader looks at the page again, but a laptop waking or a wifi blip
+ * fires while they are sitting in front of it doing nothing.
+ *
+ * So it is a genuine shift on data's own schedule, it takes a second admin to
+ * cause, and it is not particular to this state — the grid re-rendered on those
+ * same refetches before the all-clear could collapse at all. It is accepted
+ * rather than defended: the alternative is holding a queue's worth of empty
+ * space open every clear morning against a cross-admin race, which spends the
+ * entire point of this state to buy it.
  */
 function AllClearPanel() {
   const t = useTranslations("admin.dashboard.attention");
@@ -96,11 +105,18 @@ function AllClearPanel() {
           `justify-end` keeps it packed right wherever it lands. */}
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 space-y-0">
         {/* The wordmark is the card's heading, in the pixel face the cup beside
-            it is drawn in. `leading-relaxed` because Press Start 2P sets roughly
-            one em per glyph and inherits none of the tight leading a normal
-            title wants; `text-sm` because at the title's own size the longest
-            locale would set this wider than a phone. */}
-        <CardTitle className="font-display text-sm leading-relaxed text-primary sm:text-base">
+            it is drawn in, and every class here is cancelling something
+            `CardTitle` assumes about a normal title. `leading-relaxed` because
+            Press Start 2P sets roughly one em per glyph and wants none of the
+            tight leading; `tracking-normal` because the base class ships
+            `tracking-tight`, which tailwind-merge has no reason to drop, and
+            negative letter-spacing smudges pixel glyphs into their neighbours;
+            `text-sm` because at the title's own size the longest locale would
+            set this wider than a phone. The one diacritic any locale puts in
+            this face is Swedish's ä (U+00E4), which is inside the `latin`
+            subset the font is loaded with, so it renders in the pixel face
+            rather than falling back mid-word. */}
+        <CardTitle className="font-display text-sm leading-relaxed tracking-normal text-primary sm:text-base">
           {t("allClearTitle")}
         </CardTitle>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">

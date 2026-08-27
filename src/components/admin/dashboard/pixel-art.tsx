@@ -31,9 +31,16 @@ import { cn } from "@/lib/utils";
  *
  * Upper case is the full-strength token and lower case its shade — the whole
  * shading vocabulary a sprite this size can use. A glyph the map does not know
- * draws nothing, which is what `.` relies on.
+ * draws nothing, which is what `.` relies on: the type is `Partial` so that
+ * missing entry is a `string | undefined` the compiler can see, rather than a
+ * lie the lookup tells its caller.
+ *
+ * **Only `P`, `p` and `f` are on screen today** — they are the cup. `M` and `F`
+ * are reachable only through `FIREWORK_BURST` below, which is deliberately not
+ * rendered, so anybody retuning these tokens should know that changing those two
+ * changes nothing an admin sees.
  */
-const PIXEL_COLORS: Record<string, string> = {
+const PIXEL_COLORS: Partial<Record<string, string>> = {
   ".": "",
   P: "bg-primary",
   p: "bg-primary/55",
