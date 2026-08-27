@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { CalendarClock } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { SeatOfferResponse } from "@/components/seat-offer/seat-offer-response";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import {
+  SeatOfferOutcomeCard,
+  SeatOfferResponse,
+} from "@/components/seat-offer/seat-offer-response";
 import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/constants/locales";
-import { SEAT_OFFER_WINDOW_DAYS } from "@/lib/constants/seat-offer";
 import { resolveSeatOfferLink } from "@/lib/seat-offer.server";
 import { formatDate } from "@/lib/utils";
 
@@ -52,23 +52,11 @@ export default async function SeatOfferPage({
   const locale = isSupportedLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
   const state = await resolveSeatOfferLink(tokenStr, locale);
 
-  if (state.kind !== "offer") {
-    const t = await getTranslations("seatOffer");
-    return (
-      <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-        <CalendarClock className="h-12 w-12 text-muted-foreground" aria-hidden />
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{t("invalid.title")}</h1>
-          <p className="text-muted-foreground">
-            {t("invalid.body", {
-              days: SEAT_OFFER_WINDOW_DAYS,
-              supportEmail: SUPPORT_EMAIL,
-            })}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // The same card an answer of `invalid` lands on, drawn by the same component
+  // — a link that was dead on arrival and one that died between the mail and
+  // the press are one thing to the family reading it, and were two hand-copies
+  // of one panel until this shared them.
+  if (state.kind !== "offer") return <SeatOfferOutcomeCard outcome="invalid" />;
 
   return (
     <SeatOfferResponse

@@ -11,7 +11,13 @@ import { SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { SEAT_OFFER_WINDOW_DAYS } from "@/lib/constants/seat-offer";
 import { parseJsonResponse } from "@/lib/api/json-response";
-import { seatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
+import {
+  seatOfferRespondResponse,
+  type SeatOfferRespondResponse,
+} from "@/services/participations/seat-offer.contracts";
+
+/** What answering did — the wire's own word for it. */
+type Outcome = SeatOfferRespondResponse["outcome"];
 
 interface SeatOfferResponseProps {
   token: string;
@@ -27,6 +33,18 @@ interface SeatOfferResponseProps {
    * — it only chooses which of this component's own steps is showing.
    */
   initialIntent: "accept" | "decline" | null;
+  /**
+   * How an answer reaches the server, for the one caller that must not let it.
+   *
+   * Omitted everywhere in the product — the live page has a token and a route,
+   * and this component owns the call. A fixture-driven preview scene passes its
+   * own responder instead, so the two buttons render their real committing and
+   * spinning states and land on the real terminal card with nothing leaving the
+   * browser. That is the whole reason the seam exists: the alternative was a
+   * scene that either fired a POST at a made-up token or faked the panel it was
+   * supposed to be showing.
+   */
+  respond?: (accept: boolean) => Promise<Outcome>;
 }
 
 /**
@@ -51,6 +69,7 @@ export function SeatOfferResponse({
   productName,
   deadline,
   initialIntent,
+  respond,
 }: SeatOfferResponseProps) {
   const t = useTranslations("seatOffer");
   const [step, setStep] = useState<
@@ -68,17 +87,8 @@ export function SeatOfferResponse({
     setCommitting(true);
     setFailed(false);
     try {
-      const response = await fetch("/api/seat-offer/respond", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, accept }),
-      });
-      if (!response.ok) throw new Error(String(response.status));
-      const { outcome } = await parseJsonResponse(
-        response,
-        seatOfferRespondResponse,
-      );
-      setStep(outcome);
+      const send = respond ?? ((yes: boolean) => postAnswer(token, yes));
+      setStep(await send(accept));
     } catch {
       // The one path back to the buttons: the answer did not land, so the
       // family has to be able to press again.
@@ -87,37 +97,11 @@ export function SeatOfferResponse({
     }
   }
 
-  if (step === "accepted") {
-    return (
-      <Outcome icon={<CircleCheck className="h-12 w-12 text-success" aria-hidden />} title={t("accepted.title")} body={t("accepted.body")}>
-        <Link href={ROUTES.login} className={buttonVariants()}>
-          {t("accepted.action")}
-        </Link>
-      </Outcome>
-    );
-  }
-
-  if (step === "declined") {
-    return (
-      <Outcome
-        icon={<Heart className="h-12 w-12 text-primary" aria-hidden />}
-        title={t("declined.title")}
-        body={t("declined.body")}
-      />
-    );
-  }
-
-  if (step === "expired" || step === "invalid") {
-    return (
-      <Outcome
-        icon={<CalendarClock className="h-12 w-12 text-muted-foreground" aria-hidden />}
-        title={t("invalid.title")}
-        body={t("invalid.body", {
-          days: SEAT_OFFER_WINDOW_DAYS,
-          supportEmail: SUPPORT_EMAIL,
-        })}
-      />
-    );
+  // Every step but the two that still have a question in them is a terminal
+  // card, and all three are the same component — which is also what the page
+  // renders on its own for a link that was dead before it was opened.
+  if (step !== "offer" && step !== "confirmDecline") {
+    return <SeatOfferOutcomeCard outcome={step} />;
   }
 
   if (step === "confirmDecline") {
@@ -195,6 +179,82 @@ export function SeatOfferResponse({
       </div>
     </div>
   );
+}
+
+/**
+ * Where a seat offer ends up: kept, given back, or gone.
+ *
+ * Exported because two callers render it without ever asking a question. The
+ * landing page resolves the token before its first frame, so a dead link is a
+ * terminal card *instead of* the offer rather than after it — and the preview
+ * scenes reach the three cards directly, since only one of them can ever be on
+ * screen. It takes the wire's own `outcome` word so no caller has to translate
+ * between the answer it got and the card it draws.
+ *
+ * `expired` and `invalid` share a card on purpose: the wire keeps them apart
+ * because one is a fact about a window and the other is a refusal to say, and a
+ * family reads the same sentence for both.
+ */
+export function SeatOfferOutcomeCard({ outcome }: { outcome: Outcome }) {
+  const t = useTranslations("seatOffer");
+
+  if (outcome === "accepted") {
+    return (
+      <Outcome
+        icon={<CircleCheck className="h-12 w-12 text-success" aria-hidden />}
+        title={t("accepted.title")}
+        body={t("accepted.body")}
+      >
+        <Link href={ROUTES.login} className={buttonVariants()}>
+          {t("accepted.action")}
+        </Link>
+      </Outcome>
+    );
+  }
+
+  if (outcome === "declined") {
+    return (
+      <Outcome
+        icon={<Heart className="h-12 w-12 text-primary" aria-hidden />}
+        title={t("declined.title")}
+        body={t("declined.body")}
+      />
+    );
+  }
+
+  return (
+    <Outcome
+      icon={
+        <CalendarClock className="h-12 w-12 text-muted-foreground" aria-hidden />
+      }
+      title={t("invalid.title")}
+      body={t("invalid.body", {
+        days: SEAT_OFFER_WINDOW_DAYS,
+        supportEmail: SUPPORT_EMAIL,
+      })}
+    />
+  );
+}
+
+/**
+ * The answer, as the product sends it.
+ *
+ * A module function rather than an inline body so the component's own call site
+ * reads as "send the answer, however this instance sends it" — the preview seam
+ * above swaps exactly this out.
+ */
+async function postAnswer(token: string, accept: boolean): Promise<Outcome> {
+  const response = await fetch("/api/seat-offer/respond", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, accept }),
+  });
+  if (!response.ok) throw new Error(String(response.status));
+  const { outcome } = await parseJsonResponse(
+    response,
+    seatOfferRespondResponse,
+  );
+  return outcome;
 }
 
 /** One terminal card: a mark, a sentence, and at most one thing to do next. */

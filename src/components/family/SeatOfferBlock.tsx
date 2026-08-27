@@ -37,6 +37,11 @@ interface SeatOfferBlockProps {
 /**
  * The offer, on the family's own card in My SOG.
  *
+ * **It is drawn as the card's last section rather than as a panel of its own**
+ * — an info-toned rule across the top, an info icon and heading under it, and
+ * no border, radius or fill anywhere. See the note on the container below for
+ * why a bordered tinted box was wrong here and what was tried instead.
+ *
  * **The block is a mark that arrives late and therefore sits at the very end of
  * the card — do not move it up.** An offer lands on a card that is already
  * painted (a refetch, a page the parent left open), and anywhere above the
@@ -151,19 +156,42 @@ export function SeatOfferBlock({
   }
 
   return (
-    // `info`, the tone this product uses for "we are telling you something" —
-    // the same one the awaiting-placement card and its icon already wear a few
-    // lines up, and the one the mail's own callout panel is built from. The
-    // Accept button below keeps the default (primary) variant: the block is the
-    // notice, the button is the action, and they are not the same claim.
-    <div className="w-full space-y-3 rounded-md border border-info/40 bg-info/5 p-3 text-left">
+    // **A section of the card, not a card inside it.** The tone is still `info`
+    // — this product's colour for "we are telling you something", the one the
+    // awaiting-placement line a few rows up already wears and the one the mail's
+    // own callout panel is built from — but it is carried by the rule, the icon
+    // and the heading rather than by a box. A rounded, bordered, tinted panel
+    // inset inside an already rounded, bordered, tinted card reads as a second
+    // card nested in the first, which is a claim about hierarchy that is not
+    // true: this is the card's own last section.
+    //
+    // A top rule with padding under it is the house's existing vocabulary for
+    // exactly that — the shape every other in-card section here takes — and the
+    // rule is drawn in the section's own tone so the colour survives the box
+    // going. The left-accent bar was the other candidate and was dropped: a
+    // vertical rule down the side of a passage reads as a callout or a quote,
+    // and it already means "a feed's spine" everywhere else in this codebase.
+    // A tint without the border cannot work inset either — a sharp-cornered
+    // rectangle floating inside a rounded card looks like a rendering fault —
+    // and the full-bleed version of it would have to cancel the card's own
+    // padding with negative margins, coupling this component to a number that
+    // lives in `EnrollmentCard`.
+    //
+    // The Accept button below keeps the default (primary) variant: the block is
+    // the notice, the button is the action, and they are not the same claim.
+    <div className="w-full space-y-3 border-t border-info/25 pt-4 text-left">
       <div className="flex items-start gap-2">
         <CalendarClock
           className="mt-0.5 h-4 w-4 shrink-0 text-info"
           aria-hidden
         />
         <div className="min-w-0 space-y-1">
-          <p className="text-sm font-semibold leading-snug">{t("title")}</p>
+          {/* The heading takes the tone the border box used to carry. With no
+              fill behind it, the icon alone is a small mark to hang a section
+              on; the icon and the title together are the section's marker. */}
+          <p className="text-sm font-semibold leading-snug text-info">
+            {t("title")}
+          </p>
           <p className="text-sm leading-snug text-muted-foreground">
             {onRespond === undefined
               ? t("bodyGamer")
