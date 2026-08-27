@@ -142,7 +142,16 @@ export function SeatOfferBlock({
       // the refetch that has already settled by the time this resolves, so
       // there is nothing to do for them. The other two mean the offer was gone
       // before the press landed.
-      if (outcome === "expired" || outcome === "invalid") setRefused(true);
+      if (outcome === "expired" || outcome === "invalid") {
+        setRefused(true);
+        // A late accept refused by the server lands in the same lapsed state
+        // the clock produces — where Decline deliberately stays live — so the
+        // latch must clear here, or the one button that state exists to keep
+        // pressable is dead until a reload. `invalid` means the row itself is
+        // gone: nothing pressed here can succeed, so the latch holds until the
+        // refetch removes the block.
+        if (outcome === "expired") setCommitting(false);
+      }
     } catch {
       setFailed(true);
       setCommitting(false);
@@ -228,10 +237,17 @@ export function SeatOfferBlock({
         // order never disagree with the convention; and the pair is authored
         // once, so a later edit cannot move one arrangement without the other.
         <div className="flex flex-col-reverse gap-2 sm:flex-row">
+          {/* **Decline survives the deadline; Accept does not.** The window
+              stops a seat being claimed after we have offered it to somebody
+              else, and none of that reasoning reaches a family telling us they
+              cannot come — that answer is wanted whenever it arrives, and the
+              database honours it for as long as the row exists (00208). So this
+              button stays live in the lapsed state and only `committing` can
+              take it away. */}
           <Button
             variant="outline"
             className="sm:flex-1"
-            disabled={committing || lapsed}
+            disabled={committing}
             onClick={() => {
               setFailed(false);
               setConfirmingDecline(true);

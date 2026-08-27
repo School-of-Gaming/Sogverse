@@ -2555,7 +2555,7 @@
         "bodySelf": "The place is yours, if you still want it.",
         "bodyGamer": "We have asked a parent whether you still want it.",
         "deadline": "Answer by {deadline}, or the place goes to the next family in line.",
-        "lapsed": "This offer has run out. You are still on the waitlist, and the place can be offered again.",
+        "lapsed": "This offer has run out, so your turn moves to the back of the waitlist. If you no longer need a place at all, you can still tell us.",
         "accept": "Accept the place",
         "decline": "No, thank you",
         "confirmTitle": "Give up the place?",
@@ -3467,9 +3467,22 @@
       "title": "Thank you for telling us",
       "body": "We have taken the place off your list. Because you answered, another family can have it today instead of it standing empty."
     },
+    "expired": {
+      "title": "This offer has run out",
+      "body": "A seat offer stays open for {days} days, and this one closed before we heard from you, so the seat went to the next family in line.",
+      "declinePrompt": "You are still on the waitlist. If your family no longer needs a place at all, you can tell us now and free it for someone else.",
+      "declineAction": "Give up our place",
+      "confirmTitle": "Give up your place?",
+      "confirmBody": "We will take you off the waitlist. Joining again later would start you at the back of the queue."
+    },
+    "used": {
+      "title": "This link has already been used",
+      "body": "This invitation has been answered. Everything your family is signed up for, and every place you are waiting on, is in My SOG.",
+      "action": "Go to My SOG"
+    },
     "invalid": {
-      "title": "This offer is no longer open",
-      "body": "A seat offer stays open for {days} days, and this one has either been answered already or run out. If that does not sound right, write to us at {supportEmail} and we will look into it."
+      "title": "This link did not work",
+      "body": "It may have been cut short by your email app, or copied only part of the way. Try opening it from the email again, or write to us at {supportEmail} and we will help."
     }
   }
 }

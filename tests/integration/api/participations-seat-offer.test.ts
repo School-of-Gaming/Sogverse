@@ -279,6 +279,7 @@ describe("POST /api/participations/seat-offer", () => {
         product_id: PRODUCT_ID,
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
+        within_window: true,
       },
       error: null,
     });
@@ -296,6 +297,37 @@ describe("POST /api/participations/seat-offer", () => {
       "ada@sog.gg",
       "bo@sog.gg",
     ]);
+  });
+
+  /**
+   * The lapsed block in My SOG keeps its Decline button live, because a family
+   * telling us they cannot come is news we want whenever it arrives and the
+   * database honours it (00208). What must NOT come with it is a second staff
+   * mail: they were already told this offer went unanswered when it was swept,
+   * so raising the same family again would ask an admin to act on something
+   * they have finished with.
+   */
+  it("frees the row on a late decline without mailing staff a second time", async () => {
+    mockAuthenticatedCustomer();
+    mockAdminRpc.mockResolvedValue({
+      data: {
+        kind: "declined",
+        participation_id: PARTICIPATION_ID,
+        product_id: PRODUCT_ID,
+        customer_id: CUSTOMER_ID,
+        participant_id: GAMER_ID,
+        within_window: false,
+      },
+      error: null,
+    });
+
+    const response = await POST(request(decline));
+
+    // The family gets the same answer either way — the lateness is the route's
+    // business and never theirs.
+    expect(await response.json()).toEqual({ outcome: "declined" });
+    await settleDeferred();
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
   it("answers `expired` and sweeps when the window closed under the card", async () => {
@@ -331,6 +363,7 @@ describe("POST /api/participations/seat-offer", () => {
         product_id: PRODUCT_ID,
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
+        within_window: true,
       },
       error: null,
     });

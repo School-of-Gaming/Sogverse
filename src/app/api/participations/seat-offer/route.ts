@@ -81,21 +81,32 @@ export const POST = defineRoute({
       case "accepted":
         return { outcome: "accepted" as const };
       case "declined":
-        after(
-          sendSeatOfferStaffEmail({
-            client: admin,
-            request,
-            reason: "declined",
-            customerId: parsed.data.customer_id,
-            participantId: parsed.data.participant_id,
-            productId: parsed.data.product_id,
-            sentAt: row.seat_offer_sent_at,
-          }),
-        );
+        // Mailed only when the answer beat the deadline. The lapsed block in My
+        // SOG keeps its Decline button live for exactly the same reason the
+        // emailed link does — a family telling us they cannot come is news we
+        // want whenever it arrives — but staff were already told this offer
+        // went unanswered, so a second mail would raise a case they have
+        // finished with. See migration 00208 for where `within_window` is
+        // decided.
+        if (parsed.data.within_window) {
+          after(
+            sendSeatOfferStaffEmail({
+              client: admin,
+              request,
+              reason: "declined",
+              customerId: parsed.data.customer_id,
+              participantId: parsed.data.participant_id,
+              productId: parsed.data.product_id,
+              sentAt: row.seat_offer_sent_at,
+            }),
+          );
+        }
         return { outcome: "declined" as const };
       case "expired":
-        // The card was rendered while the offer was live and pressed after it
-        // was not. The sweep runs on the observation, exactly as it does when a
+        // The card was rendered while the offer was live and ACCEPT was pressed
+        // after it was not — the only answer the window still refuses, since
+        // 00208 honours a decline for as long as the row exists.
+        // The sweep runs on the observation, exactly as it does when a
         // family clicks a lapsed link — and it is scoped to this row on the
         // same rule: a credential that names one participation may claim only
         // that participation, whether it is a signed token or a session that

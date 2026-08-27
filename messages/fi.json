@@ -1923,7 +1923,7 @@
         "bodySelf": "Paikka on sinun, jos haluat sen edelleen.",
         "bodyGamer": "Kysyimme vanhemmaltasi, haluatteko paikan edelleen.",
         "deadline": "Vastaa viimeistään {deadline}, tai paikka siirtyy jonossa seuraavalle perheelle.",
-        "lapsed": "Tarjous umpeutui. Olet yhä jonotuslistalla, ja paikkaa voidaan tarjota uudelleen.",
+        "lapsed": "Tarjous ehti umpeutua, joten vuorosi siirtyy jonotuslistan loppuun. Jos et enää tarvitse paikkaa, voit silti kertoa siitä meille.",
         "accept": "Otan paikan",
         "decline": "Ei kiitos",
         "confirmTitle": "Luovutko paikasta?",
@@ -3467,9 +3467,22 @@
       "title": "Kiitos, kun kerroit",
       "body": "Poistimme paikan listaltasi. Koska vastasit, voimme antaa sen tänään toiselle perheelle sen sijaan, että se jäisi tyhjäksi."
     },
+    "expired": {
+      "title": "Tarjouksen aika umpeutui",
+      "body": "Paikkatarjous on voimassa {days} päivää, ja tämä ehti umpeutua ennen kuin saimme vastauksesi. Paikka siirtyi jonossa seuraavalle perheelle.",
+      "declinePrompt": "Olet edelleen jonotuslistalla. Jos perheesi ei enää tarvitse paikkaa, voit kertoa siitä nyt, niin se vapautuu jollekin toiselle.",
+      "declineAction": "Luovun paikasta",
+      "confirmTitle": "Luovutko paikastasi?",
+      "confirmBody": "Poistamme sinut jonotuslistalta. Jos liityt myöhemmin uudelleen, aloitat jonon lopusta."
+    },
+    "used": {
+      "title": "Tämä linkki on jo käytetty",
+      "body": "Tähän kutsuun on jo vastattu. Löydät Oma SOG -sivulta kaikki perheesi ilmoittautumiset ja jonotuspaikat.",
+      "action": "Siirry Oma SOG -sivulle"
+    },
     "invalid": {
-      "title": "Tarjous ei ole enää voimassa",
-      "body": "Paikkatarjous on voimassa {days} päivää, ja tähän on joko jo vastattu tai sen aika on umpeutunut. Jos tämä vaikuttaa virheeltä, kirjoita meille osoitteeseen {supportEmail}, niin selvitämme asian."
+      "title": "Linkki ei toiminut",
+      "body": "Linkki on voinut katketa sähköpostiohjelmassa tai kopioitua vain osittain. Avaa se uudelleen sähköpostista tai kirjoita meille osoitteeseen {supportEmail}, niin autamme."
     }
   }
 }

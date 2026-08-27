@@ -52,38 +52,61 @@ export default async function SeatOfferPage({
   const locale = isSupportedLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
   const state = await resolveSeatOfferLink(tokenStr, locale);
 
-  // The same card an answer of `invalid` lands on, drawn by the same component
-  // — a link that was dead on arrival and one that died between the mail and
-  // the press are one thing to the family reading it, and were two hand-copies
-  // of one panel until this shared them.
-  if (state.kind !== "offer") return <SeatOfferOutcomeCard outcome="invalid" />;
+  // A link we could not read, and one whose offer has already been spent, are
+  // two different sentences and two different cards — drawn by the same
+  // component, which takes the resolver's own word for which. See
+  // `resolveSeatOfferLink` for why saying "used" out loud is in bounds and
+  // saying anything at all to a bad signature is not.
+  if (state.kind === "used" || state.kind === "invalid") {
+    return <SeatOfferOutcomeCard outcome={state.kind} />;
+  }
+
+  const initialIntent =
+    answer === "accept" || answer === "decline" ? answer : null;
+
+  // A lapsed offer is still a page with an answer on it: the seat has gone, but
+  // giving up the place in the queue is an act the window never governed, so it
+  // goes to the same component and the same route.
+  if (state.kind === "expired") {
+    return (
+      <SeatOfferResponse
+        token={tokenStr ?? ""}
+        offer={{ kind: "expired" }}
+        initialIntent={initialIntent}
+      />
+    );
+  }
 
   return (
     <SeatOfferResponse
       // `tokenStr` is non-null on this branch — `resolveSeatOfferLink` answers
       // `invalid` for a null token, and that branch returned above.
       token={tokenStr ?? ""}
-      participantName={state.participantName}
-      isSelfSeat={state.isSelfSeat}
-      productName={state.productName}
-      // The product's zone, with the zone named, matching the mail exactly. A
-      // page could use the reader's own zone and the mail cannot; two different
-      // clock faces for one deadline is worse than one that is explicit about
-      // which zone it is in. Explicit components rather than dateStyle, because
-      // `Intl` refuses to combine that with `timeZoneName`. `hour12: false` for
-      // the same "one deadline, one clock face" reason: `en` alone would set
-      // this as "02:20 PM" while the mail and the in-app cards say "14:20".
-      deadline={formatDate(state.deadline, locale, {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZoneName: "short",
-        timeZone: state.timeZone,
-      })}
-      initialIntent={answer === "accept" || answer === "decline" ? answer : null}
+      offer={{
+        kind: "open",
+        participantName: state.participantName,
+        isSelfSeat: state.isSelfSeat,
+        productName: state.productName,
+        // The product's zone, with the zone named, matching the mail exactly. A
+        // page could use the reader's own zone and the mail cannot; two
+        // different clock faces for one deadline is worse than one that is
+        // explicit about which zone it is in. Explicit components rather than
+        // dateStyle, because `Intl` refuses to combine that with
+        // `timeZoneName`. `hour12: false` for the same "one deadline, one clock
+        // face" reason: `en` alone would set this as "02:20 PM" while the mail
+        // and the in-app cards say "14:20".
+        deadline: formatDate(state.deadline, locale, {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZoneName: "short",
+          timeZone: state.timeZone,
+        }),
+      }}
+      initialIntent={initialIntent}
     />
   );
 }

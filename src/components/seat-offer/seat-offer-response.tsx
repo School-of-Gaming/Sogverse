@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CalendarClock, CircleCheck, Heart, Loader2 } from "lucide-react";
+import { CalendarClock, CircleCheck, Heart, Loader2, MailX } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -12,25 +12,61 @@ import { ROUTES } from "@/lib/constants/routes";
 import { SEAT_OFFER_WINDOW_DAYS } from "@/lib/constants/seat-offer";
 import { parseJsonResponse } from "@/lib/api/json-response";
 import {
-  seatOfferRespondResponse,
-  type SeatOfferRespondResponse,
+  emailedSeatOfferRespondResponse,
+  type EmailedSeatOfferRespondResponse,
 } from "@/services/participations/seat-offer.contracts";
 
 /** What answering did — the wire's own word for it. */
-type Outcome = SeatOfferRespondResponse["outcome"];
+type Outcome = EmailedSeatOfferRespondResponse["outcome"];
 
-interface SeatOfferResponseProps {
-  token: string;
+/**
+ * The outcomes that end the page.
+ *
+ * `expired` is excluded on purpose and is the whole shape of this feature: a
+ * lapsed offer is not a full stop any more, because the family can still give
+ * the place back from it. It is a step below, not a card.
+ */
+type TerminalOutcome = Exclude<Outcome, "expired">;
+
+/** An offer still inside its window, with everything the panel prints. */
+interface OpenOffer {
+  /** Whoever holds the queued place — a child, or the parent themselves. */
   participantName: string;
   isSelfSeat: boolean;
   productName: string;
   /** Already formatted, in the product's zone, with the zone named. */
   deadline: string;
+}
+
+/** The offer as the server resolved it, before the first frame. */
+type ResolvedOffer = ({ kind: "open" } & OpenOffer) | { kind: "expired" };
+
+/**
+ * Which panel is showing.
+ *
+ * **The step and the outcome are the same piece of state**, because they are
+ * the same thing to the reader: one panel is on screen at a time and each
+ * replaces the last outright. The open offer's own fields ride inside the step
+ * rather than being read off the prop, so there is no arrangement of this state
+ * that can put the asking panel on screen with nothing to ask about.
+ */
+type Step =
+  | ({ kind: "offer" } & OpenOffer)
+  | { kind: "expired" }
+  | { kind: "confirmDecline" }
+  | { kind: "answered"; outcome: TerminalOutcome };
+
+interface SeatOfferResponseProps {
+  token: string;
+  offer: ResolvedOffer;
   /**
    * The button the family pressed in the mail. `decline` opens the confirmation
    * straight away, so pressing "No, thank you" in an inbox does not mean
-   * pressing it again from scratch on arrival. It cannot answer on their behalf
-   * — it only chooses which of this component's own steps is showing.
+   * pressing it again from scratch on arrival — and it does that on a lapsed
+   * offer too, which is the one place the two states share a path. It cannot
+   * answer on their behalf: it only chooses which of this component's own steps
+   * is showing. `accept` on a lapsed offer is ignored, because there is no
+   * accepting left to do.
    */
   initialIntent: "accept" | "decline" | null;
   /**
@@ -48,33 +84,45 @@ interface SeatOfferResponseProps {
 }
 
 /**
- * The two answers, and the three terminal cards one of them leads to.
+ * The answers a family can give from their inbox, and the cards they lead to.
  *
- * **The step and the outcome are the same piece of state**, because they are
- * the same thing to the reader: one panel is on screen at a time and each
- * replaces the last outright. Nothing survives a change here, so nothing is
- * reserved and nothing moves — the layout rule has nothing to say about a panel
- * swapped for a different panel.
+ * One panel is on screen at a time and each replaces the last outright (see
+ * {@link Step}). Nothing survives a change here, so nothing is reserved and
+ * nothing moves — the layout rule has nothing to say about a panel swapped for
+ * a different panel.
  *
  * **Decline is behind a confirmation and accept is not**, which is not
  * symmetry-for-its-own-sake missing: accepting is the recoverable direction (a
  * family who changes their mind can write to us and give the seat back), while
  * declining deletes a place in a queue that took months to reach. A stray tap
  * on a phone should not be able to spend that.
+ *
+ * **A lapsed offer still has one answer in it.** The five-day window stops a
+ * seat being *claimed* after we have offered it elsewhere; none of that
+ * reasoning reaches a family telling us they cannot come, and that is the one
+ * piece of news we most want. So the expired panel is a step of this component
+ * rather than a terminal card, carrying the decline and not the accept, and the
+ * database honours it (00208). It is also where an accept that lost the race
+ * lands: the server answers `expired`, and the family is put in front of the
+ * one answer still open to them instead of a dead end.
  */
 export function SeatOfferResponse({
   token,
-  participantName,
-  isSelfSeat,
-  productName,
-  deadline,
+  offer,
   initialIntent,
   respond,
 }: SeatOfferResponseProps) {
   const t = useTranslations("seatOffer");
-  const [step, setStep] = useState<
-    "offer" | "confirmDecline" | "accepted" | "declined" | "expired" | "invalid"
-  >(initialIntent === "decline" ? "confirmDecline" : "offer");
+  // Where the page starts, and where "back" goes from the confirmation — the
+  // same value, because the confirmation is reached from exactly one panel and
+  // has to return to it. Derived from the prop on every render rather than
+  // captured in state: it is a fact about the link, and the link does not
+  // change while the page is open.
+  const base: Step =
+    offer.kind === "open" ? { ...offer, kind: "offer" } : { kind: "expired" };
+  const [step, setStep] = useState<Step>(
+    initialIntent === "decline" ? { kind: "confirmDecline" } : base,
+  );
   // Set synchronously before the request and cleared only where the reader
   // needs to try again. Every other outcome swaps the panel, and the swap is
   // what takes the buttons off screen — so the flag stays set and the button
@@ -88,30 +136,51 @@ export function SeatOfferResponse({
     setFailed(false);
     try {
       const send = respond ?? ((yes: boolean) => postAnswer(token, yes));
-      setStep(await send(accept));
+      const outcome = await send(accept);
+      // An accept that arrived a moment too late does not end the visit: it
+      // moves the reader onto the lapsed panel, which still has the decline on
+      // it. The buttons there are live again for that reason, so the latch is
+      // released with them.
+      if (outcome === "expired") {
+        setStep({ kind: "expired" });
+        setCommitting(false);
+        return;
+      }
+      setStep({ kind: "answered", outcome });
     } catch {
-      // The one path back to the buttons: the answer did not land, so the
+      // The one other path back to the buttons: the answer did not land, so the
       // family has to be able to press again.
       setFailed(true);
       setCommitting(false);
     }
   }
 
-  // Every step but the two that still have a question in them is a terminal
-  // card, and all three are the same component — which is also what the page
-  // renders on its own for a link that was dead before it was opened.
-  if (step !== "offer" && step !== "confirmDecline") {
-    return <SeatOfferOutcomeCard outcome={step} />;
+  const failure = failed ? (
+    <Failure message={t("offer.error", { supportEmail: SUPPORT_EMAIL })} />
+  ) : null;
+
+  if (step.kind === "answered") {
+    return <SeatOfferOutcomeCard outcome={step.outcome} />;
   }
 
-  if (step === "confirmDecline") {
+  if (step.kind === "confirmDecline") {
+    // Two shapes of the same act, so two shapes of the same question. Inside
+    // the window the family is handing back a seat we are holding for them;
+    // after it the seat has gone and what they are giving up is their place in
+    // the queue. Naming the wrong one would be the page telling them something
+    // untrue at the moment they are deciding.
+    const lapsed = base.kind === "expired";
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{t("offer.confirmTitle")}</h1>
-          <p className="text-muted-foreground">{t("offer.confirmBody")}</p>
+          <h1 className="text-2xl font-bold">
+            {lapsed ? t("expired.confirmTitle") : t("offer.confirmTitle")}
+          </h1>
+          <p className="text-muted-foreground">
+            {lapsed ? t("expired.confirmBody") : t("offer.confirmBody")}
+          </p>
         </div>
-        {failed ? <Failure message={t("offer.error", { supportEmail: SUPPORT_EMAIL })} /> : null}
+        {failure}
         {/* The app-wide convention: the affirmative is authored last in the DOM
             and lands on top when the pair is stacked. This panel is stacked at
             every width — it is a narrow column centred on a page of its own,
@@ -126,7 +195,7 @@ export function SeatOfferResponse({
             disabled={committing}
             onClick={() => {
               setFailed(false);
-              setStep("offer");
+              setStep(base);
             }}
           >
             {t("offer.confirmCancel")}
@@ -144,21 +213,60 @@ export function SeatOfferResponse({
     );
   }
 
+  if (step.kind === "expired") {
+    return (
+      <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
+        <CalendarClock
+          className="h-12 w-12 text-muted-foreground"
+          aria-hidden
+        />
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">{t("expired.title")}</h1>
+          <p className="text-muted-foreground">
+            {t("expired.body", { days: SEAT_OFFER_WINDOW_DAYS })}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t("expired.declinePrompt")}
+          </p>
+        </div>
+        {failure}
+        {/* One button, so there is no pair to order: the convention governs two
+            buttons answering one question, and this panel asks nothing. The
+            outline variant is the same weight the decline carries on the live
+            offer, because it is the same act. */}
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={committing}
+          onClick={() => {
+            setFailed(false);
+            setStep({ kind: "confirmDecline" });
+          }}
+        >
+          {t("expired.declineAction")}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       <CalendarClock className="h-12 w-12 text-primary" aria-hidden />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{t("offer.title")}</h1>
         <p className="text-muted-foreground">
-          {isSelfSeat
-            ? t("offer.self", { productName })
-            : t("offer.child", { participantName, productName })}
+          {step.isSelfSeat
+            ? t("offer.self", { productName: step.productName })
+            : t("offer.child", {
+                participantName: step.participantName,
+                productName: step.productName,
+              })}
         </p>
         <p className="text-sm text-muted-foreground">
-          {t("offer.deadline", { deadline })}
+          {t("offer.deadline", { deadline: step.deadline })}
         </p>
       </div>
-      {failed ? <Failure message={t("offer.error", { supportEmail: SUPPORT_EMAIL })} /> : null}
+      {failure}
       {/* Same convention and the same single arrangement as the confirmation
           step above: Accept is authored last and, stacked, sits on top. */}
       <div className="flex w-full flex-col-reverse gap-2">
@@ -167,7 +275,7 @@ export function SeatOfferResponse({
           disabled={committing}
           onClick={() => {
             setFailed(false);
-            setStep("confirmDecline");
+            setStep({ kind: "confirmDecline" });
           }}
         >
           {t("offer.decline")}
@@ -182,20 +290,24 @@ export function SeatOfferResponse({
 }
 
 /**
- * Where a seat offer ends up: kept, given back, or gone.
+ * Where a seat offer ends up: kept, given back, spent, or unreadable.
  *
  * Exported because two callers render it without ever asking a question. The
- * landing page resolves the token before its first frame, so a dead link is a
- * terminal card *instead of* the offer rather than after it — and the preview
- * scenes reach the three cards directly, since only one of them can ever be on
- * screen. It takes the wire's own `outcome` word so no caller has to translate
- * between the answer it got and the card it draws.
+ * landing page resolves the token before its first frame, so a link that is
+ * already over is a terminal card *instead of* the offer rather than after it —
+ * and the preview scenes reach the cards directly, since only one of them can
+ * ever be on screen. It takes the wire's own `outcome` word so no caller has to
+ * translate between the answer it got and the card it draws.
  *
- * `expired` and `invalid` share a card on purpose: the wire keeps them apart
- * because one is a fact about a window and the other is a refusal to say, and a
- * family reads the same sentence for both.
+ * `expired` is not among them, and that is not an omission: a lapsed offer
+ * still has a decline in it, so it is a step of {@link SeatOfferResponse} with
+ * a button on it rather than a card with nothing to do.
  */
-export function SeatOfferOutcomeCard({ outcome }: { outcome: Outcome }) {
+export function SeatOfferOutcomeCard({
+  outcome,
+}: {
+  outcome: TerminalOutcome;
+}) {
   const t = useTranslations("seatOffer");
 
   if (outcome === "accepted") {
@@ -222,16 +334,28 @@ export function SeatOfferOutcomeCard({ outcome }: { outcome: Outcome }) {
     );
   }
 
+  if (outcome === "used") {
+    return (
+      <Outcome
+        icon={<CircleCheck className="h-12 w-12 text-muted-foreground" aria-hidden />}
+        title={t("used.title")}
+        body={t("used.body")}
+      >
+        {/* The one thing worth doing from here, and the reason this card can
+            afford to say so little: whatever became of the offer, My SOG is
+            where it is written down. */}
+        <Link href={ROUTES.login} className={buttonVariants()}>
+          {t("used.action")}
+        </Link>
+      </Outcome>
+    );
+  }
+
   return (
     <Outcome
-      icon={
-        <CalendarClock className="h-12 w-12 text-muted-foreground" aria-hidden />
-      }
+      icon={<MailX className="h-12 w-12 text-muted-foreground" aria-hidden />}
       title={t("invalid.title")}
-      body={t("invalid.body", {
-        days: SEAT_OFFER_WINDOW_DAYS,
-        supportEmail: SUPPORT_EMAIL,
-      })}
+      body={t("invalid.body", { supportEmail: SUPPORT_EMAIL })}
     />
   );
 }
@@ -252,7 +376,7 @@ async function postAnswer(token: string, accept: boolean): Promise<Outcome> {
   if (!response.ok) throw new Error(String(response.status));
   const { outcome } = await parseJsonResponse(
     response,
-    seatOfferRespondResponse,
+    emailedSeatOfferRespondResponse,
   );
   return outcome;
 }

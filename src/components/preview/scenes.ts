@@ -352,8 +352,15 @@ export const PREVIEW_SCENES = [
     chrome: "auth",
     scenarios: [
       { slug: "live", label: "The offer" },
+      {
+        slug: "expired",
+        label: "Window closed",
+        description:
+          "The seat has gone, but declining has not — the one answer the deadline never governed.",
+      },
       { slug: "accepted", label: "Seat accepted" },
       { slug: "declined", label: "Seat declined" },
+      { slug: "used", label: "Link already used" },
       { slug: "dead-link", label: "Dead link" },
     ],
   },

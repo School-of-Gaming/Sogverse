@@ -327,7 +327,15 @@ describe("EnrollmentCard — the family's seat offer", () => {
     expect(screen.getByText("parent.waitlist.leave.trigger")).toBeTruthy();
   });
 
-  it("keeps the block in place when the window closes under the reader", () => {
+  /**
+   * The window binds accepting and nothing else (00208), and the two buttons
+   * are where that shows on this card: the seat can no longer be claimed, but
+   * a family telling us they cannot come is news we want whenever it arrives
+   * and is the one answer that frees the row. So Accept goes inert and Decline
+   * stays live — asserted as a pair, because either one alone would pass while
+   * the rule was half implemented.
+   */
+  it("keeps the block in place when the window closes, and keeps Decline live", () => {
     const { rerender } = renderFamilyCard(OFFERED_ALMOST_OUT, vi.fn());
     expect(screen.getByText(`${FAMILY}.accept`)).toBeTruthy();
 
@@ -345,14 +353,50 @@ describe("EnrollmentCard — the family's seat offer", () => {
       />,
     );
 
-    // Same block, same buttons, same place — and both inert.
+    // Same block, same buttons, same place — and the block now says so.
     expect(screen.getByText(`${FAMILY}.lapsed`)).toBeTruthy();
     expect(
       screen.getByText(`${FAMILY}.accept`).closest("button")?.disabled,
     ).toBe(true);
     expect(
       screen.getByText(`${FAMILY}.decline`).closest("button")?.disabled,
+    ).toBe(false);
+  });
+
+  /**
+   * The same split on a card that reached the lapsed state through a SERVER
+   * REFUSAL rather than through the clock. The two routes in are different —
+   * one is the deadline passing under the reader, the other is an `expired`
+   * answer to a press — and the committing latch is what tells them apart:
+   * held, as it is for every other terminal answer, it leaves Decline dead on
+   * exactly the visit where the parent has just proved they are trying to
+   * answer. So the latch clears here and nowhere else.
+   *
+   * `invalid` is deliberately not the same case and keeps the latch: there the
+   * row itself is gone, nothing pressed could succeed, and the refetch takes
+   * the block away.
+   */
+  it("leaves Decline pressable after the server refuses a late accept", async () => {
+    const respond = vi.fn().mockResolvedValue("expired" as const);
+    const { container } = renderFamilyCard(OFFERED_ALMOST_OUT, respond);
+
+    await act(async () => {
+      screen.getByText(`${FAMILY}.accept`).closest("button")?.click();
+    });
+
+    expect(respond).toHaveBeenCalledWith(true);
+    expect(screen.getByText(`${FAMILY}.lapsed`)).toBeTruthy();
+    // The seat cannot be claimed any more…
+    expect(
+      screen.getByText(`${FAMILY}.accept`).closest("button")?.disabled,
     ).toBe(true);
+    // …and the one answer the window never governed is still there to give.
+    expect(
+      screen.getByText(`${FAMILY}.decline`).closest("button")?.disabled,
+    ).toBe(false);
+    // Nothing is still in flight, so nothing may still be spinning — the
+    // clearing latch must not bring a spinner back with it.
+    expect(container.querySelector(".animate-spin")).toBeNull();
   });
 
   it("draws a server refusal as the lapsed state rather than an error", async () => {

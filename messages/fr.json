@@ -1923,7 +1923,7 @@
         "bodySelf": "La place est à vous, si vous la voulez toujours.",
         "bodyGamer": "Nous avons demandé à un parent si tu la veux toujours.",
         "deadline": "Répondez avant le {deadline}, sinon la place ira à la famille suivante sur la liste.",
-        "lapsed": "Cette proposition a expiré. Vous restez sur la liste d’attente, et la place peut vous être proposée de nouveau.",
+        "lapsed": "Cette proposition a expiré, votre tour passe donc à la fin de la liste d’attente. Si vous n’avez plus besoin de place, vous pouvez toujours nous le dire.",
         "accept": "Accepter la place",
         "decline": "Non, merci",
         "confirmTitle": "Renoncer à la place ?",
@@ -3467,9 +3467,22 @@
       "title": "Merci de nous l’avoir dit",
       "body": "Nous avons retiré la place de votre liste. Grâce à votre réponse, une autre famille pourra en profiter dès aujourd’hui au lieu de la laisser vide."
     },
+    "expired": {
+      "title": "Cette proposition a expiré",
+      "body": "Une proposition de place reste ouverte {days} jours, et celle-ci s’est refermée avant que nous ayons de vos nouvelles : la place est allée à la famille suivante sur la liste.",
+      "declinePrompt": "Vous restez sur la liste d’attente. Si votre famille n’a plus besoin de place du tout, vous pouvez nous le dire maintenant et la libérer pour quelqu’un d’autre.",
+      "declineAction": "Renoncer à notre place",
+      "confirmTitle": "Renoncer à votre place ?",
+      "confirmBody": "Nous vous retirerons de la liste d’attente. Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
+    },
+    "used": {
+      "title": "Ce lien a déjà été utilisé",
+      "body": "Cette invitation a reçu une réponse. Toutes les inscriptions de votre famille, et chaque place que vous attendez, sont dans Mon SOG.",
+      "action": "Aller sur Mon SOG"
+    },
     "invalid": {
-      "title": "Cette proposition n’est plus valable",
-      "body": "Une proposition de place reste ouverte {days} jours, et celle-ci a déjà reçu une réponse ou bien expiré. Si cela vous semble incorrect, écrivez-nous à {supportEmail} et nous regarderons."
+      "title": "Ce lien n’a pas fonctionné",
+      "body": "Il a peut-être été coupé par votre messagerie, ou copié seulement en partie. Essayez de l’ouvrir à nouveau depuis l’e-mail, ou écrivez-nous à {supportEmail} et nous vous aiderons."
     }
   }
 }

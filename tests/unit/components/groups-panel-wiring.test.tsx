@@ -586,3 +586,24 @@ describe("GroupsPanel — the seat offer's two preconditions reach the waitlist"
     expect(mutations.move).not.toHaveBeenCalled();
   });
 });
+
+describe("GroupsPanel — the two features meet on one product", () => {
+  it("offers the seat and drops the inbox in the same render", () => {
+    // The union neither describe above can see: both predicates key on the
+    // same product shape — no charge, exactly one group — so the product that
+    // qualifies for a seat offer is precisely the product whose arrivals are
+    // seated automatically and whose inbox is therefore not drawn. Each half is
+    // pinned on its own above; what this adds is that they hold *together*,
+    // because the shipped page has to answer both at once. A regression that
+    // re-coupled them — an inbox reappearing to host the invited family, an
+    // offer withheld because there is nowhere unassigned to land — would leave
+    // every case above green.
+    renderPanel("consumer_club", "free");
+
+    expect(waitlistCard.props?.seatOffers).toEqual({ kind: "available" });
+    expect(waitlistCard.props?.onSendSeatOffer).toBeTypeOf("function");
+    expect(
+      screen.queryByText("admin.products.groupsPanel.unassigned.title"),
+    ).toBeNull();
+  });
+});

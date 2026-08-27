@@ -53,7 +53,25 @@ const PRODUCT_ID = "11111111-1111-1111-1111-111111111111";
 const CUSTOMER_ID = "66666666-6666-4666-8666-666666666666";
 const GAMER_ID = "77777777-7777-4777-8777-777777777777";
 
+/**
+ * The row the dead-end resolution reads when the compare-and-swap refuses.
+ * `null` is a row that has gone; the shapes below are the ones that decide
+ * between `used` and `expired`.
+ */
+const participationRow: {
+  value: { status: string; seat_offer_sent_at: string | null } | null;
+} = { value: null };
+
 function adminTableStub(table: string) {
+  if (table === "participations") {
+    return {
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: participationRow.value, error: null }),
+        }),
+      }),
+    };
+  }
   if (table === "products") {
     return {
       select: () => ({
@@ -121,6 +139,7 @@ describe("POST /api/seat-offer/respond", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     deferred.length = 0;
+    participationRow.value = null;
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "m1" });
     mockAdminRpc.mockResolvedValue({
       data: {
@@ -182,7 +201,7 @@ describe("POST /api/seat-offer/respond", () => {
    * and it does so without asking the RPC first, because the answer is already
    * known.
    */
-  it("answers `expired` for a lapsed token and sweeps the expiries", async () => {
+  it("answers `expired` for a lapsed ACCEPT and sweeps the expiries", async () => {
     mockAdminRpc.mockResolvedValue({ data: [], error: null });
     const token = await createSeatOfferToken(
       PARTICIPATION_ID,
@@ -201,6 +220,68 @@ describe("POST /api/seat-offer/respond", () => {
       { p_participation_id: PARTICIPATION_ID },
     );
     // Nothing was claimed, so nobody is mailed.
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The other half of the same token, and the whole of 00208 seen from the
+   * route: the short-circuit above is scoped to `accept`, so a NO past the
+   * deadline is not answered locally at all — it goes to the RPC, which
+   * honours it and deletes the row.
+   */
+  it("sends a lapsed DECLINE to the compare-and-swap rather than refusing it", async () => {
+    mockAdminRpc.mockResolvedValue({
+      data: {
+        kind: "declined",
+        participation_id: PARTICIPATION_ID,
+        product_id: PRODUCT_ID,
+        customer_id: CUSTOMER_ID,
+        participant_id: GAMER_ID,
+        within_window: false,
+      },
+      error: null,
+    });
+    const sentAt = new Date(Date.now() - SEAT_OFFER_WINDOW_MS - 1000);
+    const token = await createSeatOfferToken(PARTICIPATION_ID, sentAt);
+
+    const response = await POST(request({ token, accept: false }));
+
+    expect(await response.json()).toEqual({ outcome: "declined" });
+    expect(mockAdminRpc).toHaveBeenCalledWith("respond_seat_offer", {
+      p_participation_id: PARTICIPATION_ID,
+      p_offer_sent_at: sentAt.toISOString(),
+      p_accept: false,
+    });
+    // No sweep either: the row is gone, so there is no lapsed offer left to
+    // report and nothing for a claim to find.
+    expect(mockAdminRpc).not.toHaveBeenCalledWith(
+      "claim_expired_seat_offer_notifications",
+      expect.anything(),
+    );
+  });
+
+  /**
+   * And the mail that must NOT go with it. Staff were told nobody answered
+   * when the offer was swept; a second mail days later would raise a family an
+   * admin has already dealt with and ask them to act on it again.
+   */
+  it("mails nobody about a decline that arrived after the deadline", async () => {
+    mockAdminRpc.mockResolvedValue({
+      data: {
+        kind: "declined",
+        participation_id: PARTICIPATION_ID,
+        product_id: PRODUCT_ID,
+        customer_id: CUSTOMER_ID,
+        participant_id: GAMER_ID,
+        within_window: false,
+      },
+      error: null,
+    });
+
+    const response = await POST(request({ token: await liveToken(), accept: false }));
+
+    expect(await response.json()).toEqual({ outcome: "declined" });
+    await settleDeferred();
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
@@ -236,6 +317,7 @@ describe("POST /api/seat-offer/respond", () => {
         product_id: PRODUCT_ID,
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
+        within_window: true,
       },
       error: null,
     });
@@ -257,21 +339,71 @@ describe("POST /api/seat-offer/respond", () => {
     expect(sent.subject).toContain("declined");
   });
 
-  it("answers `invalid` when the row no longer carries this offer", async () => {
+  // -- What a refused compare-and-swap is told --
+  //
+  // The signature verified, so the holder was sent this exact offer and may be
+  // told it is over. Which of the ways it ended is deliberately never said —
+  // all three shapes below answer `used`, and the row is read once to tell
+  // "over" from "still open under a cancelled product".
+
+  it("answers `used` when the family already accepted", async () => {
     mockAdminRpc.mockResolvedValue({ data: { kind: "stale" }, error: null });
+    // Active, and the CHECK forbids an offer stamp on a row in that state.
+    participationRow.value = { status: "active", seat_offer_sent_at: null };
 
     const response = await POST(request({ token: await liveToken(), accept: true }));
 
-    expect(await response.json()).toEqual({ outcome: "invalid" });
+    expect(await response.json()).toEqual({ outcome: "used" });
     await settleDeferred();
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
-  /** A stranger's id and one that never existed are answered identically. */
-  it("answers `invalid` when there is no such participation", async () => {
-    mockAdminRpc.mockResolvedValue({ data: { kind: "not_found" }, error: null });
+  it("answers `used` when a newer invitation has replaced this one", async () => {
+    mockAdminRpc.mockResolvedValue({ data: { kind: "stale" }, error: null });
+    // Still queued, still carrying an offer — a different one. Stored can only
+    // ever be newer, because every token is minted from a stored stamp.
+    participationRow.value = {
+      status: "waitlisted",
+      seat_offer_sent_at: new Date(Date.now() + 60_000).toISOString(),
+    };
 
     const response = await POST(request({ token: await liveToken(), accept: true }));
+
+    expect(await response.json()).toEqual({ outcome: "used" });
+  });
+
+  /**
+   * The row is gone — declined, left, or cascaded away with its product. A
+   * valid signature is proof we minted this link against a real offer, so a
+   * missing row is that offer having been spent rather than an id that never
+   * existed.
+   */
+  it("answers `used` when the row has gone", async () => {
+    mockAdminRpc.mockResolvedValue({ data: { kind: "not_found" }, error: null });
+    participationRow.value = null;
+
+    const response = await POST(request({ token: await liveToken(), accept: true }));
+
+    expect(await response.json()).toEqual({ outcome: "used" });
+  });
+
+  /**
+   * The one refusal that must stay generic. The row still holds this exact
+   * offer inside its window, so the CAS refused for the reason it will not
+   * name: the product was cancelled or deleted. Answering `used` would be
+   * false, and answering anything specific would let an unauthenticated caller
+   * ask which products have been withdrawn.
+   */
+  it("answers `invalid` when the offer stands but the product does not", async () => {
+    mockAdminRpc.mockResolvedValue({ data: { kind: "stale" }, error: null });
+    const sentAt = new Date(Date.now() - 1000);
+    participationRow.value = {
+      status: "waitlisted",
+      seat_offer_sent_at: sentAt.toISOString(),
+    };
+    const token = await createSeatOfferToken(PARTICIPATION_ID, sentAt);
+
+    const response = await POST(request({ token, accept: true }));
 
     expect(await response.json()).toEqual({ outcome: "invalid" });
   });
@@ -313,6 +445,7 @@ describe("POST /api/seat-offer/respond", () => {
         product_id: PRODUCT_ID,
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
+        within_window: true,
       },
       error: null,
     });

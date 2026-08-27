@@ -1923,7 +1923,7 @@
         "bodySelf": "Platsen är din, om du fortfarande vill ha den.",
         "bodyGamer": "Vi har frågat en förälder om du fortfarande vill ha den.",
         "deadline": "Svara senast {deadline}, annars går platsen till nästa familj i kön.",
-        "lapsed": "Erbjudandet har gått ut. Du står kvar på väntelistan, och platsen kan erbjudas igen.",
+        "lapsed": "Erbjudandet har gått ut, så din tur flyttas sist i väntelistan. Om du inte längre behöver någon plats kan du fortfarande säga till.",
         "accept": "Ta platsen",
         "decline": "Nej tack",
         "confirmTitle": "Vill du lämna platsen?",
@@ -3467,9 +3467,22 @@
       "title": "Tack för att du sa till",
       "body": "Vi har tagit bort platsen från din lista. Tack vare ditt svar kan en annan familj få den redan i dag i stället för att den står tom."
     },
+    "expired": {
+      "title": "Erbjudandet har gått ut",
+      "body": "Ett platserbjudande är öppet i {days} dagar, och det här hann gå ut innan vi hörde från dig, så platsen gick vidare till nästa familj i kön.",
+      "declinePrompt": "Du står kvar på väntelistan. Om familjen inte längre behöver någon plats kan du säga till nu, så frigörs den för någon annan.",
+      "declineAction": "Lämna platsen",
+      "confirmTitle": "Vill du lämna din plats?",
+      "confirmBody": "Vi tar bort dig från väntelistan. Går du med igen senare börjar du sist i kön."
+    },
+    "used": {
+      "title": "Den här länken är redan använd",
+      "body": "Inbjudan har besvarats. Allt familjen är anmäld till, och varje plats du väntar på, finns i Min SOG.",
+      "action": "Gå till Min SOG"
+    },
     "invalid": {
-      "title": "Erbjudandet är inte längre öppet",
-      "body": "Ett platserbjudande är öppet i {days} dagar, och det här har antingen redan besvarats eller gått ut. Om det inte stämmer, skriv till oss på {supportEmail} så tittar vi på det."
+      "title": "Länken fungerade inte",
+      "body": "Den kan ha kapats av ditt e-postprogram eller kopierats bara till hälften. Försök öppna den från e-postmeddelandet igen, eller skriv till oss på {supportEmail} så hjälper vi till."
     }
   }
 }

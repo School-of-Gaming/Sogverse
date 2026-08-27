@@ -48,47 +48,61 @@ export function SeatOfferScene({ scenario }: { scenario: SeatOfferScenario }) {
   const locale = resolveLocale(useLocale());
   const [deadline] = useState(() => seatOfferFixtureDeadline(now));
 
-  if (scenario !== "live") {
-    return <SeatOfferOutcomeCard outcome={TERMINAL_CARD[scenario]} />;
+  // The lapsed panel is the live component too, not a card: a family whose
+  // window closed can still give the place back, so the scenario has a button
+  // on it and walks into the declined card the same way the live offer does.
+  if (scenario === "live" || scenario === "expired") {
+    return (
+      <SeatOfferResponse
+        // Never sent anywhere: `respond` below replaces the whole call, token
+        // and all.
+        token={SEAT_OFFER_FIXTURE.token}
+        offer={
+          scenario === "expired"
+            ? { kind: "expired" }
+            : {
+                kind: "open",
+                participantName: SEAT_OFFER_FIXTURE.participantName,
+                isSelfSeat: false,
+                productName: SEAT_OFFER_FIXTURE.productName,
+                // Formatted exactly as the route formats it — the product's
+                // zone with the zone named, and a 24-hour clock face, so the
+                // page and the mail state one deadline rather than two readings
+                // of it.
+                deadline: formatDate(deadline, locale, {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                  timeZoneName: "short",
+                  timeZone: SEAT_OFFER_FIXTURE.timeZone,
+                }),
+              }
+        }
+        initialIntent={null}
+        respond={answerTruthfully}
+      />
+    );
   }
 
-  return (
-    <SeatOfferResponse
-      // Never sent anywhere: `respond` below replaces the whole call, token and
-      // all.
-      token={SEAT_OFFER_FIXTURE.token}
-      participantName={SEAT_OFFER_FIXTURE.participantName}
-      isSelfSeat={false}
-      productName={SEAT_OFFER_FIXTURE.productName}
-      // Formatted exactly as the route formats it — the product's zone with the
-      // zone named, and a 24-hour clock face, so the page and the mail state one
-      // deadline rather than two readings of it.
-      deadline={formatDate(deadline, locale, {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZoneName: "short",
-        timeZone: SEAT_OFFER_FIXTURE.timeZone,
-      })}
-      initialIntent={null}
-      respond={answerTruthfully}
-    />
-  );
+  return <SeatOfferOutcomeCard outcome={TERMINAL_CARD[scenario]} />;
 }
 
 /** Which card each terminal scenario is: the wire's word, not the URL's. */
 const TERMINAL_CARD = {
   accepted: "accepted",
   declined: "declined",
-  // Every unusable link — expired, already answered, or never an offer — reads
-  // the same sentence, and `invalid` is the wire's name for that card.
+  // A link whose offer has been spent — answered, promoted, withdrawn or
+  // replaced — as against one we could not read at all. Two sentences now,
+  // because a signature we minted may be told its offer is over and a forged
+  // one may be told nothing.
+  used: "used",
   "dead-link": "invalid",
 } as const satisfies Record<
-  Exclude<SeatOfferScenario, "live">,
-  "accepted" | "declined" | "invalid"
+  Exclude<SeatOfferScenario, "live" | "expired">,
+  "accepted" | "declined" | "used" | "invalid"
 >;
 
 /**
@@ -96,9 +110,10 @@ const TERMINAL_CARD = {
  *
  * Truthful rather than pinned to one outcome, because both directions have a
  * card behind them and the point of the live scenario is that either button
- * really reaches its own. The server's refusals (`expired`, `invalid`) are not
- * produced here: those are what the `dead-link` scenario is for, and a responder
- * that refused would make the accept path unreachable.
+ * really reaches its own. It answers for the lapsed panel too, where only the
+ * decline is reachable. The server's refusals (`expired`, `used`, `invalid`)
+ * are not produced here: those are what the other scenarios are for, and a
+ * responder that refused would make the accept path unreachable.
  */
 function answerTruthfully(accept: boolean) {
   return Promise.resolve(accept ? ("accepted" as const) : ("declined" as const));

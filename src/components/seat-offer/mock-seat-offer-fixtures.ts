@@ -7,7 +7,7 @@ import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
  * feature that **cannot be looked at without a live token**: the link carries a
  * signed credential naming a real waitlisted row, so short of minting one by
  * hand the only state anybody could reach was the dead-link card, by putting
- * rubbish in the query string. These fixtures are what make the other three
+ * rubbish in the query string. These fixtures are what make the rest
  * reviewable.
  *
  * There is no avatar anywhere on this page and therefore no identicon to feed,
@@ -19,18 +19,28 @@ import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
  * The states the page can be met in, and the URL segments they are served on.
  *
  * These are **the values of the one piece of state the page keys on**, which is
- * why there are four of them rather than one busy page: the panel replaces
+ * why there is a link per state rather than one busy page: the panel replaces
  * itself outright, so no two of these can ever be compared side by side however
- * the scene is written. Accepting or declining inside the live scenario walks
- * into the same cards `accepted` and `declined` serve — the answer is inert but
- * the panel really changes — so those two links are a way to *arrive* at a card
- * rather than the only way to see it. `dead-link` is the one no press can reach
- * from the live offer, because the fixture responder answers truthfully.
+ * the scene is written.
+ *
+ * Two of them are *arrival points* rather than the only way to see a card.
+ * Accepting or declining inside `live` walks into the same panels `accepted`
+ * and `declined` serve — the answer is inert but the panel really changes — and
+ * declining inside `expired` reaches the declined card too, by the same route
+ * the live offer takes.
+ *
+ * `expired` is the one that is not a card at all. A lapsed offer still has an
+ * answer in it, so the scenario exists to show the decline affordance sitting
+ * under copy that says the seat has gone; its confirmation step works against
+ * local state like every other. `used` and `dead-link` are the two nobody can
+ * press their way to, because the fixture responder answers truthfully.
  */
 export const SEAT_OFFER_SCENARIOS = [
   "live",
+  "expired",
   "accepted",
   "declined",
+  "used",
   "dead-link",
 ] as const;
 

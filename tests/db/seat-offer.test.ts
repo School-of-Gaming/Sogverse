@@ -18,12 +18,12 @@ import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboa
  * The seat offer (migration 00207): the three service-role RPCs, the two
  * CHECK constraints behind them, and the two readers they changed.
  *
- * Product UUIDs 670-678 (see the product-helpers allocation registry). Four
+ * Product UUIDs 670-67a (see the product-helpers allocation registry). Six
  * differently-shaped products rather than one that gets reconfigured, because
  * every refusal here is about a shape — a paid product, a product with two
- * groups, a product with none — and a case proving a refusal must not be
- * reachable only while some earlier case has left the fixture in the right
- * state.
+ * groups, a product with none, a cancelled one — and a case proving a refusal
+ * must not be reachable only while some earlier case has left the fixture in
+ * the right state.
  *
  * The three RPCs are granted to `service_role` alone, so every call in this
  * file goes through the admin client. That is not the spine's business — it
@@ -199,6 +199,23 @@ describe("seat offers", () => {
       .single();
     expect(res.error).toBeNull();
     return res.data!.seat_offer_sent_at!;
+  }
+
+  /**
+   * Put a queued row at a known place in the line. `queue` stamps `now()`, so
+   * two rows inserted back to back can tie; the one case that asserts an
+   * ordering sets both positions explicitly rather than trusting insertion
+   * order to have separated them.
+   */
+  async function setQueuePosition(
+    participationId: string,
+    waitlistedAt: Date,
+  ): Promise<void> {
+    const res = await admin
+      .from("participations")
+      .update({ waitlisted_at: waitlistedAt.toISOString() })
+      .eq("id", participationId);
+    expect(res.error).toBeNull();
   }
 
   async function readRow(participationId: string) {
@@ -491,9 +508,15 @@ describe("seat offers", () => {
 
   /**
    * The window is enforced here as well as in the token, because the in-app
-   * path carries no token at all.
+   * path carries no token at all — and since 00208 it binds ACCEPT and nothing
+   * else, which is why this case names the answer it is refusing.
+   *
+   * The stamp surviving is the load-bearing half. It is what the emailed link
+   * is signed over, so leaving it in place is what keeps the late decline below
+   * answerable and what lets the landing page tell a lapsed offer apart from a
+   * spent one.
    */
-  it("refuses an answer after the window has closed", async () => {
+  it("refuses an ACCEPT after the window has closed, and moves nothing", async () => {
     const participation = await queue(P_CLUB);
     const sentAt = await stamp(participation, LAPSED_AT());
 
@@ -505,7 +528,75 @@ describe("seat offers", () => {
     expect(res.error).toBeNull();
     const parsed = respondSeatOfferRpcResult.parse(res.data);
     expect(parsed.kind).toBe("expired");
-    expect((await readRow(participation))!.status).toBe("waitlisted");
+
+    const row = (await readRow(participation))!;
+    expect(row.status).toBe("waitlisted");
+    expect(row.seat_offer_sent_at).toBe(sentAt);
+  });
+
+  /**
+   * The other direction through the same closed window, and the whole of
+   * 00208. The deadline exists to stop a seat being CLAIMED after we have
+   * offered it elsewhere; none of that reasoning reaches a family telling us
+   * they cannot come, and that is the one answer that frees a row. So a decline
+   * lands for as long as the participation exists, however late it is.
+   */
+  it("honours a DECLINE after the window has closed, and deletes the row", async () => {
+    const participation = await queue(P_CLUB);
+    const sentAt = await stamp(participation, LAPSED_AT());
+
+    const res = await admin.rpc("respond_seat_offer", {
+      p_participation_id: participation,
+      p_offer_sent_at: sentAt,
+      p_accept: false,
+    });
+    expect(res.error).toBeNull();
+    const parsed = respondSeatOfferRpcResult.parse(res.data);
+    expect(parsed.kind).toBe("declined");
+    if (parsed.kind !== "declined") throw new Error("unreachable");
+    // Same four identifiers as an in-window decline: the staff mail's builder
+    // does not know which kind of decline it is looking at, and must not have
+    // to.
+    expect(parsed.customer_id).toBe(TEST_IDS.CUSTOMER);
+    expect(parsed.participant_id).toBe(TEST_IDS.GAMER);
+    expect(parsed.product_id).toBe(P_CLUB);
+
+    expect(await readRow(participation)).toBeNull();
+  });
+
+  /**
+   * `within_window` is the only thing that tells the two declines apart, and
+   * the pair is asserted in one case because the flag means nothing alone: an
+   * in-window no is news an admin is waiting for and is mailed, a late one
+   * lands after the no-response mail has already gone and mails nobody. The
+   * family reads the same thank-you either way, which is why this never crosses
+   * the public wire — it exists for the route and for no other reader.
+   */
+  it("reports whether a decline beat the deadline", async () => {
+    const inTime = await queue(P_CLUB, TEST_IDS.GAMER);
+    const inTimeSentAt = await stamp(inTime, LIVE_AT());
+    const late = await queue(P_DASHBOARD, TEST_IDS.GAMER_2);
+    const lateSentAt = await stamp(late, LAPSED_AT());
+
+    const first = await admin.rpc("respond_seat_offer", {
+      p_participation_id: inTime,
+      p_offer_sent_at: inTimeSentAt,
+      p_accept: false,
+    });
+    expect(first.error).toBeNull();
+    const inTimeParsed = respondSeatOfferRpcResult.parse(first.data);
+    if (inTimeParsed.kind !== "declined") throw new Error("unreachable");
+    expect(inTimeParsed.within_window).toBe(true);
+
+    const second = await admin.rpc("respond_seat_offer", {
+      p_participation_id: late,
+      p_offer_sent_at: lateSentAt,
+      p_accept: false,
+    });
+    expect(second.error).toBeNull();
+    const lateParsed = respondSeatOfferRpcResult.parse(second.data);
+    if (lateParsed.kind !== "declined") throw new Error("unreachable");
+    expect(lateParsed.within_window).toBe(false);
   });
 
   /**
@@ -676,6 +767,63 @@ describe("seat offers", () => {
     expect(
       (await readRow(stranger))!.seat_offer_expiry_notified_at,
     ).toBeNull();
+  });
+
+  /**
+   * Silence costs the place in line, and the claim is where it is spent
+   * (00208). Asserted as a REORDERING against a family who was behind, because
+   * that is the only form the cost has: a lone row's `waitlisted_at` moving
+   * proves a write happened, while the pair proves the queue can now make
+   * progress past a family who stopped reading their mail. Without it the same
+   * silent family is asked first again on the next seat, and everybody behind
+   * waits another full window for an answer that never comes.
+   *
+   * The two offer stamps are checked as survivors in the same case, because
+   * they are what the cost is NOT allowed to take with it: the offer stamp is
+   * what the emailed link compares against, so clearing it here would make the
+   * late decline unanswerable and would leave the landing page unable to tell a
+   * lapsed link from a spent one.
+   */
+  it("moves a silent family behind the one that was queued after them", async () => {
+    const silent = await queue(P_CLUB, TEST_IDS.GAMER);
+    const behind = await queue(P_CLUB, TEST_IDS.GAMER_2);
+    // Explicit positions rather than insertion order: `queue` stamps `now()`
+    // for both, and two rows written in the same millisecond would make the
+    // starting order the thing under test rather than the assumption.
+    await setQueuePosition(silent, new Date(Date.now() - 7_200_000));
+    await setQueuePosition(behind, new Date(Date.now() - 3_600_000));
+
+    const sentAt = await stamp(silent, LAPSED_AT());
+
+    const silentBefore = (await readRow(silent))!.waitlisted_at!;
+    const behindBefore = (await readRow(behind))!.waitlisted_at!;
+    expect(new Date(silentBefore).getTime()).toBeLessThan(
+      new Date(behindBefore).getTime(),
+    );
+
+    const res = await admin.rpc("claim_expired_seat_offer_notifications", {
+      p_participation_id: silent,
+    });
+    expect(res.error).toBeNull();
+    expect(
+      claimedSeatOfferExpiries.parse(res.data).map((row) => row.participation_id),
+    ).toEqual([silent]);
+
+    const after = (await readRow(silent))!;
+    const other = (await readRow(behind))!;
+    // The whole point: the order has flipped.
+    expect(new Date(after.waitlisted_at!).getTime()).toBeGreaterThan(
+      new Date(other.waitlisted_at!).getTime(),
+    );
+    // And only the claimed row moved — the claim's scope governs this write
+    // exactly as it governs the notification mark.
+    expect(other.waitlisted_at).toBe(behindBefore);
+
+    // Still queued, still holding the offer it was invited on, and now marked
+    // as reported.
+    expect(after.status).toBe("waitlisted");
+    expect(after.seat_offer_sent_at).toBe(sentAt);
+    expect(after.seat_offer_expiry_notified_at).not.toBeNull();
   });
 
   /**

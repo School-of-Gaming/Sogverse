@@ -54,7 +54,14 @@ export type SendSeatOfferRpcResult = z.infer<typeof sendSeatOfferRpcResult>;
  *   the seat is granted either way).
  * - `declined` — the row is gone, and the identifiers ride back because the
  *   staff mail names them and they cannot be read after the delete.
- * - `expired` — the offer was real and the five days ran out.
+ *   `within_window` says whether the answer beat the deadline, and it is the
+ *   only thing that tells an in-window decline from a late one: the first is
+ *   news an admin is waiting for and mails them, the second lands after the
+ *   no-response mail has already gone and frees the row quietly. The family
+ *   reads the same thank-you either way, so this never crosses the public wire.
+ * - `expired` — the five days ran out and the answer was ACCEPT. A decline is
+ *   honoured however late it is (00208), so this kind can no longer come back
+ *   from one.
  * - `stale` — the stamp no longer matches: already answered, superseded by a
  *   re-offer, or an old link. Deliberately one kind rather than three, because
  *   the family-facing answer is the same sentence.
@@ -75,6 +82,8 @@ export const respondSeatOfferRpcResult = z.discriminatedUnion("kind", [
     product_id: z.string(),
     customer_id: z.string(),
     participant_id: z.string(),
+    /** False when the deadline had already passed. Decides the staff mail. */
+    within_window: z.boolean(),
   }),
   z.object({
     kind: z.literal("expired"),
@@ -132,18 +141,54 @@ export const inAppSeatOfferRespondBody = z.object({
 });
 
 /**
- * The answer both respond routes give, and the states the landing page renders.
+ * The answer the IN-APP respond route gives — a parent pressing Accept or
+ * Decline on their own card in My SOG, where the session is the credential.
  *
- * `stale` and `not_found` collapse into `invalid` on the wire on purpose: a
- * public endpoint that distinguished "this offer was answered" from "no such
- * offer" would answer questions about rows the caller has shown no right to
- * ask about. The family reads the same sentence for both anyway.
+ * `stale` and `not_found` collapse into `invalid`, and here that is not a
+ * disclosure decision but a plain description: the caller has already proved
+ * the row is theirs, so the only thing left to say is that the card is showing
+ * something no longer true and a refetch is the fix.
  */
 export const seatOfferRespondResponse = z.object({
   outcome: z.enum(["accepted", "declined", "expired", "invalid"]),
 });
 
 export type SeatOfferRespondResponse = z.infer<typeof seatOfferRespondResponse>;
+
+/**
+ * The answer the EMAILED respond route gives, and the states the landing page
+ * renders. One outcome wider than the in-app answer, and the signature is what
+ * buys the extra width:
+ *
+ * - `used` — the offer this link was minted for has been consumed. The family
+ *   accepted it, an admin drag-promoted them, they declined, they left the
+ *   waitlist, or a newer invitation replaced this one. **Which of those it was
+ *   is deliberately not said**, and that is the whole design of this outcome: a
+ *   parent re-opening the mail of an offer their family already answered must
+ *   not read "this expired", but they also do not need the platform narrating
+ *   their own history back at them from a page carrying no session. The card
+ *   points at My SOG, where the truth of what happened actually lives.
+ * - `invalid` stays what it always was: we could not read this link at all.
+ *
+ * **Telling `used` from `invalid` is a disclosure, and it is in bounds only
+ * because the token is verified first.** A valid HMAC proves we minted this
+ * exact link for this exact offer, so saying it has been used tells the holder
+ * about their own row and nothing else. Everything with a bad signature — a
+ * forged token, a truncated one, a guessed participation id — still gets the
+ * one generic `invalid`, so nothing here lets a caller ask which participation
+ * ids exist.
+ *
+ * `expired` is on both lists and is no longer terminal on either: since 00208 a
+ * lapsed offer can still be declined, so the page it names is a question rather
+ * than a full stop.
+ */
+export const emailedSeatOfferRespondResponse = z.object({
+  outcome: z.enum(["accepted", "declined", "expired", "used", "invalid"]),
+});
+
+export type EmailedSeatOfferRespondResponse = z.infer<
+  typeof emailedSeatOfferRespondResponse
+>;
 
 /**
  * Response of POST /api/admin/seat-offers/sweep. Only the count crosses the
