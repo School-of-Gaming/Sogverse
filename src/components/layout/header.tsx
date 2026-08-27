@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Settings } from "lucide-react";
 import sogLogoSimple from "@/assets/brand/sog-logo-simple.svg";
 import { SogWordmark } from "@/components/brand/sog-wordmark";
 import { Avatar } from "@/components/ui/avatar";
@@ -12,27 +11,11 @@ import { Identicon } from "@/components/ui/identicon";
 import { UnknownAvatar } from "@/components/ui/unknown-avatar";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
-import {
-  ROLE_DASHBOARD_PATHS,
-  ROUTES,
-  SENDER_NAME,
-  type UserRole,
-} from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROUTES, SENDER_NAME } from "@/lib/constants";
+import { AccountMenu } from "@/components/layout/account-menu";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 import { trackDashboardNav } from "@/lib/analytics";
-
-// Dashboard route prefixes used to detect whether the user is currently on a
-// dashboard. Drives the avatar's active-ring state for roles whose avatar
-// links to the dashboard rather than the family selector.
-const DASHBOARD_PREFIXES = ["/admin", "/parent", "/gamer", "/gedu"];
-
-// Roles whose header avatar routes to the family profile selector instead of
-// their dashboard. Parents and gamers share one household, so the avatar is
-// the "switch to another family member" affordance for both. Gedus and admins
-// have a single profile, so their avatar goes to the dashboard alongside the
-// logo.
-const SELECTOR_ROLES = new Set<UserRole>(["customer", "gamer"]);
 
 /** The badge's true viewBox, handed to `next/image` so it reserves the right box. */
 const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
@@ -75,19 +58,10 @@ export function Header() {
   ];
 
   const isHome = pathname === ROUTES.home;
-  const isOnDashboard = DASHBOARD_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(p + "/"),
-  );
-  const isOnSelectProfile =
-    pathname === ROUTES.selectProfile ||
-    pathname.startsWith(ROUTES.selectProfile + "/");
-  const isOnSettings =
-    pathname === ROUTES.settings || pathname.startsWith(ROUTES.settings + "/");
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
-  const usesSelector = !!profile?.role && SELECTOR_ROLES.has(profile.role);
 
   // Logo destination: every signed-in role goes to its own dashboard (parents
   // and gamers route straight there, past the family-selector interstitial).
@@ -111,45 +85,67 @@ export function Header() {
   // `hidden`, from announcing a link to the dashboard as "School of Gaming".
   const logoLabel = logoHref === ROUTES.home ? SENDER_NAME : dashboardLabel;
 
-  // Avatar destination:
-  //   - while auth is resolving, the slot stays non-interactive (a span);
-  //   - signed-in parents/gamers go to the family profile selector;
-  //   - other signed-in roles go to their dashboard;
-  //   - signed-out visitors go to login.
-  const avatarHref = isLoading
-    ? null
-    : user
-      ? usesSelector
-        ? ROUTES.selectProfile
-        : (dashboardPath ?? ROUTES.login)
-      : ROUTES.login;
-  // The active-ring state tracks the avatar's link target the same way the
-  // logo's own state tracks its.
-  const isOnAvatarTarget =
-    avatarHref === ROUTES.selectProfile ? isOnSelectProfile : isOnDashboard;
-  const avatarLabel = user
-    ? usesSelector
-      ? t("selectProfile")
-      : c("dashboard")
-    : c("signIn");
-
-  const avatarContent = isLoading ? (
-    <UnknownAvatar faded />
+  /**
+   * The account slot, in its four states — all of them the same 32px box in
+   * the same place, so nothing on the strip moves as auth resolves:
+   *
+   *   - while auth is resolving, a non-interactive faded silhouette. The slot
+   *     must not become a control that a hurried click could fire before we
+   *     know whose account it belongs to;
+   *   - signed in with a profile, the avatar is the trigger of the account
+   *     menu, which owns everything that used to hang off this slot (the
+   *     dashboard trip, the family switch, settings, sign-out);
+   *   - signed in with the profile row still in flight, the identicon behind a
+   *     link to login. The menu is built entirely from the role, so there is no
+   *     menu to offer yet — but the slot is the only account affordance on the
+   *     page and must never be a dead end, so it keeps the exit it had before
+   *     the menu existed. Login is the right one precisely *because* a
+   *     signed-in visitor never arrives there: the proxy looks their role up
+   *     and bounces them straight to their own dashboard. What the trip buys is
+   *     the repair — it is a full-page navigation, so the RSC reads the profile
+   *     again and hands the root layout a header with its menu in place.
+   *     Nothing about the session is re-established; the session was never the
+   *     thing that failed, the profile read was;
+   *   - signed out, a plain link to login, unchanged.
+   */
+  const accountSlot = isLoading ? (
+    <span className="rounded-md">
+      <Avatar className="h-8 w-8">
+        <UnknownAvatar faded />
+      </Avatar>
+    </span>
   ) : user ? (
-    <Identicon id={profile?.id || user.id} size={32} />
+    profile ? (
+      <AccountMenu
+        userId={profile.id}
+        role={profile.role}
+        firstName={profile.first_name}
+      />
+    ) : (
+      <Link
+        href={ROUTES.login}
+        // Not "Sign in": this reader already is. The label names what the trip
+        // actually does for them — the login route bounces a signed-in visitor
+        // onward to their own account — and it stays role-agnostic, because the
+        // profile that would say which dashboard is the thing that is missing.
+        aria-label={t("continueToAccount")}
+        className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        <Avatar className="h-8 w-8">
+          <Identicon id={user.id} size={32} />
+        </Avatar>
+      </Link>
+    )
   ) : (
-    <UnknownAvatar />
-  );
-
-  const avatarFrame = (
-    <Avatar
-      className={cn(
-        "h-8 w-8 transition-shadow",
-        isOnAvatarTarget && "ring-2 ring-primary",
-      )}
+    <Link
+      href={ROUTES.login}
+      aria-label={c("signIn")}
+      className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
     >
-      {avatarContent}
-    </Avatar>
+      <Avatar className="h-8 w-8">
+        <UnknownAvatar />
+      </Avatar>
+    </Link>
   );
 
   /**
@@ -280,8 +276,8 @@ export function Header() {
           overflows visibly instead of wrapping quietly inside its own box.
 
           The padding on the *right* is deliberately kept: it separates the last
-          link from the cog by the gap plus 8px, so the nav words and the
-          account chrome don't read as one run.
+          link from the locale picker by the gap plus 8px, so the nav words and
+          the account chrome don't read as one run.
         */}
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="-ml-2 flex items-center sm:gap-2">
@@ -303,45 +299,12 @@ export function Header() {
             })}
           </div>
 
+          {/* The settings cog used to sit here, ahead of the picker. It is now
+              a row in the account menu: one affordance behind the avatar rather
+              than two icons competing for the narrowest part of the strip. */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {user && (
-              <Link
-                href={ROUTES.settings}
-                aria-label={c("settings")}
-                aria-current={isOnSettings ? "page" : undefined}
-                className={cn(
-                  "rounded-md p-1 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring",
-                  isOnSettings ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                <Settings className="h-5 w-5" />
-              </Link>
-            )}
             <LocalePicker />
-            {avatarHref ? (
-              <Link
-                href={avatarHref}
-                aria-label={avatarLabel}
-                aria-current={isOnAvatarTarget ? "page" : undefined}
-                className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                onClick={() => {
-                  // Only the gedu avatar links straight to the dashboard;
-                  // parents'/gamers' avatar opens the family selector, where the
-                  // self-tile click is tracked instead.
-                  if (profile?.role === "gedu") {
-                    trackDashboardNav({
-                      role: "gedu",
-                      method: "avatar",
-                      from: pathname,
-                    });
-                  }
-                }}
-              >
-                {avatarFrame}
-              </Link>
-            ) : (
-              <span className="rounded-md">{avatarFrame}</span>
-            )}
+            {accountSlot}
           </div>
         </div>
       </nav>

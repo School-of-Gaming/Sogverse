@@ -1494,7 +1494,9 @@
       "yty": "Yty",
       "about": "Om oss"
     },
-    "selectProfile": "Byt profil"
+    "accountMenu": "Kontomeny – {name}",
+    "continueToAccount": "Fortsätt till ditt konto",
+    "switchTo": "Byt profil"
   },
   "help": {
     "title": "Hjälp",

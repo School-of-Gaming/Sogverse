@@ -1538,7 +1538,9 @@
       "yty": "Yty",
       "about": "maH"
     },
-    "selectProfile": "qa’ choH"
+    "accountMenu": "qa’ De’wI’ – {name}",
+    "continueToAccount": "qa’lIj yIghoS",
+    "switchTo": "pong yIchoH"
   },
   "help": {
     "title": "boQ",

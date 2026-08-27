@@ -225,6 +225,19 @@ component importing from it would get a client reference rather than the object,
 and a surface that hydrates this cache entry server-side has to name the very key
 the hook reads.
 
+**Three surfaces seed `geduContractKeys.acceptances(geduId)` server-side, and
+they do not all answer a failed read the same way.** The contract page and the
+admin user-detail page seed it *optionally*: a read that throws answers `null`,
+no `initialData` is passed, the browser fetches on mount, and the panel or the
+standing line shows nothing until it does — the page around it is worth
+rendering without them. The settings page seeds it *mandatorily*: there is no
+`null`, a failed read throws and the route errors, which is an owner-ruled
+deviation for a low-traffic page that already hard-depends on a server identity
+read — and what it buys is a card with exactly two states in code rather than a
+third that only a rare error ever renders. That seed also carries the moment it
+was read as `initialDataUpdatedAt`, so a payload replayed out of the router
+cache is aged rather than stamped fresh for the whole 60-second `staleTime`.
+
 **The admin dashboard's key is deliberately not invalidated by the acceptance
 mutation.** That entry only ever exists in an *admin's* browser — a gedu's session
 cannot call the dashboard read at all — so an invalidation from a gedu-side write

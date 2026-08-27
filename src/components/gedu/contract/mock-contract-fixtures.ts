@@ -7,7 +7,12 @@ import {
 } from "./documents";
 
 /**
- * Fixtures for the contract page's preview scene.
+ * Fixtures for the surfaces that render the contract over made-up data: the
+ * page's preview scene, and the settings card's section of the style guide.
+ * They share one educator and one acceptance shape and differ only in the
+ * moment — the scene's is relative to a clock, the style guide's are fixed
+ * literals — which is why the row builder below takes it rather than deciding
+ * it.
  *
  * **Two scenarios, because the page has exactly two states and they cannot
  * share a render.** Either the terms are waiting to be signed or they have
@@ -62,12 +67,36 @@ const FIXTURE_SIGNED_VERSION = FIXTURE_SIGNED_DOCUMENT
   : `${GEDU_CONTRACT_CURRENT_VERSION}/${GEDU_CONTRACT_FALLBACK_LANGUAGE}`;
 
 /**
+ * One acceptance row by the fixture educator, at the moment the caller names.
+ *
+ * The moment is the caller's because the two fixture surfaces want opposite
+ * things from it: the scene's has to follow a clock (a hardcoded timestamp
+ * reads as "signed twelve days ago" for one week and as ancient history
+ * forever after), while the style guide's has to sit still, since what it shows
+ * is the card's height and a date that drifts is a height that drifts with it.
+ *
+ * The version is always the current one, derived above — every fixture surface
+ * renders the card as it stands today.
+ */
+export function buildGeduContractAcceptance({
+  acceptedAt,
+}: {
+  acceptedAt: string;
+}): GeduContractAcceptance {
+  return {
+    gedu_id: FIXTURE_GEDU_ID,
+    contract_version: FIXTURE_SIGNED_VERSION,
+    accepted_at: acceptedAt,
+    signed_name: FIXTURE_SIGNER_NAME,
+  };
+}
+
+/**
  * The page's state for one scenario, relative to the caller's `now`.
  *
- * The acceptance moment is derived rather than hardcoded, for the reason every
- * dated fixture here is: a fixed timestamp reads as "signed twelve days ago"
- * for one week and as ancient history forever after. It is instant arithmetic
- * on an instant — no wall clock involved — so no zone or DST reasoning applies.
+ * The acceptance moment is derived rather than hardcoded, for the reason given
+ * above. It is instant arithmetic on an instant — no wall clock involved — so
+ * no zone or DST reasoning applies.
  */
 export function buildGeduContractFixture(
   now: Date,
@@ -78,13 +107,10 @@ export function buildGeduContractFixture(
   }
   return {
     signerName: FIXTURE_SIGNER_NAME,
-    acceptance: {
-      gedu_id: FIXTURE_GEDU_ID,
-      contract_version: FIXTURE_SIGNED_VERSION,
-      accepted_at: new Date(
+    acceptance: buildGeduContractAcceptance({
+      acceptedAt: new Date(
         now.getTime() - SIGNED_DAYS_AGO * 24 * 60 * 60 * 1000,
       ).toISOString(),
-      signed_name: FIXTURE_SIGNER_NAME,
-    },
+    }),
   };
 }
