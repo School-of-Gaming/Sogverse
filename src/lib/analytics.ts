@@ -7,23 +7,26 @@ import type {
 
 /**
  * How a user reached their dashboard ("My SOG").
- *   - "logo"             — the SOG logo in the header (all dashboard roles).
- *   - "account_menu"     — the My SOG / Dashboard row in the header's account
- *                          menu (all roles). Replaces "avatar", whose series
- *                          ended when the avatar stopped being a link and
- *                          became the menu trigger — the mechanism changed, so
- *                          the name changed with it rather than letting a
- *                          two-click path report under a one-click name.
- *   - "profile_selector" — picking their own tile on /select-profile
- *                          (parents/gamers).
+ *   - "logo"         — the SOG logo in the header (all dashboard roles).
+ *   - "account_menu" — the My SOG / Dashboard row in the header's account
+ *                      menu (all roles). Replaces "avatar", whose series
+ *                      ended when the avatar stopped being a link and
+ *                      became the menu trigger — the mechanism changed, so
+ *                      the name changed with it rather than letting a
+ *                      two-click path report under a one-click name.
+ *
+ * Exactly the two header affordances, on purpose. A "profile_selector" value
+ * (the self-tile on /select-profile) existed until August 2026 and was
+ * retired: it mostly measured the post-login landing flow, which is a
+ * different question from "which chrome affordance do people choose", and
+ * mixing the two made the event answer neither.
  */
-export type DashboardNavMethod = "logo" | "account_menu" | "profile_selector";
+export type DashboardNavMethod = "logo" | "account_menu";
 
 /**
  * Records how a user chose to navigate to their dashboard, so we can compare
- * the logo vs. avatar vs. profile-selector paths per role. `from` is the route
- * they clicked from (their previous screen) — for the profile-selector path
- * this is always /select-profile, since that's where the self-tile lives.
+ * the logo vs. account-menu paths per role. `from` is the route they clicked
+ * from (their previous screen).
  *
  * Vercel Web Analytics sends the event via `navigator.sendBeacon`, so it
  * survives the full-page navigation the selector triggers. Event properties

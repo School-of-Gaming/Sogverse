@@ -1,13 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LogOut } from "lucide-react";
-import { useAuth } from "@/providers";
 import { Button } from "@/components/ui/button";
 import { FamilyProfileSelector } from "@/components/family";
 import type { FamilyMember } from "@/services/family";
-import { trackDashboardNav } from "@/lib/analytics";
 
 /**
  * Body of the family profile selector page. The page-level layout owns the
@@ -30,8 +27,6 @@ export function SelectProfileView({
 }) {
   const t = useTranslations("selectProfile");
   const c = useTranslations("common");
-  const pathname = usePathname();
-  const { profile } = useAuth();
 
   return (
     <div className="w-full max-w-3xl space-y-10 sm:space-y-12">
@@ -42,18 +37,10 @@ export function SelectProfileView({
         autoOpenAddGamerFromUrl
         initialFamily={initialFamily}
         onSelfClick={() => {
-          // Parents/gamers reaching their dashboard by choosing their own
-          // tile. track() is sendBeacon-backed, so it survives the full-page
-          // navigation kicked off just below.
-          if (profile?.role === "customer" || profile?.role === "gamer") {
-            trackDashboardNav({
-              role: profile.role,
-              method: "profile_selector",
-              from: pathname,
-            });
-          }
           // Full-page navigation so the proxy/root layout re-run and the
-          // dashboard hydrates against fresh session cookies.
+          // dashboard hydrates against fresh session cookies. Deliberately
+          // not tracked: dashboard_nav compares the two header affordances,
+          // and this click is the post-login landing flow, not one of them.
           window.location.href = selfDashboardPath;
         }}
       />
