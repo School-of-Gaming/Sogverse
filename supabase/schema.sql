@@ -474,12 +474,17 @@ DECLARE
   v_participant_role public.user_role;
   v_customer_id      uuid;
   v_participation_id uuid;
+  v_auto_group_id    uuid;
 BEGIN
   PERFORM public.assert_admin();
 
+  -- FOR UPDATE since 00206: the automatic placement below counts this product's
+  -- groups, and the lock is what stops that count from being taken against a
+  -- group list another admin is in the middle of changing. Same lock, same
+  -- order (product, then participations) as every other participation writer.
   SELECT product_type, billing_mode, for_gamers, for_parents
     INTO v_product_type, v_billing_mode, v_for_gamers, v_for_parents
-    FROM public.products WHERE id = p_product_id;
+    FROM public.products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'product % does not exist', p_product_id
       USING ERRCODE = 'no_data_found';
@@ -532,12 +537,29 @@ BEGIN
     END IF;
   END IF;
 
+  -- AUTOMATIC PLACEMENT (00206). A no-charge product with exactly one group has
+  -- no placement decision left in it. A paid camp or event still lands in the
+  -- unassigned inbox — money on the seat is what separates the two, and this
+  -- function serves both.
+  IF public.is_no_charge(v_billing_mode) THEN
+    SELECT CASE WHEN count(*) = 1 THEN (array_agg(g.id))[1] END
+      INTO v_auto_group_id
+      FROM (
+        SELECT id FROM public.product_groups
+         WHERE product_id = p_product_id
+         LIMIT 2
+      ) g;
+  END IF;
+
   -- The partial unique index on (product_id, participant_id) for non-reserving
   -- statuses is the source of truth for "already enrolled"; it raises 23505 and
   -- the route maps that to 409. Re-checking it here would be a race, not a
   -- safeguard.
-  INSERT INTO public.participations (product_id, participant_id, customer_id, status)
-  VALUES (p_product_id, p_participant_id, v_customer_id, 'active')
+  --
+  -- group_joined_at is absent on purpose: the BEFORE INSERT trigger stamps it
+  -- from group_id, and the table comment forbids writing it by hand.
+  INSERT INTO public.participations (product_id, participant_id, customer_id, status, group_id)
+  VALUES (p_product_id, p_participant_id, v_customer_id, 'active', v_auto_group_id)
   RETURNING id INTO v_participation_id;
 
   RETURN jsonb_build_object(
@@ -552,7 +574,7 @@ $$;
 -- Name: FUNCTION admin_enroll_participant(p_product_id uuid, p_participant_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) IS 'Admin-gated comp-enrollment: drops a participant onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event. Since 00173 it also enforces the audience: a customer profile takes a seat as their own customer and needs for_parents, anyone else is resolved through the parent link and needs for_gamers. Renamed from admin_enroll_gamer in 00175 — it has not only enrolled gamers since 00173.';
+COMMENT ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) IS 'Admin-gated comp-enrollment: drops a participant onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event. Since 00173 it also enforces the audience: a customer profile takes a seat as their own customer and needs for_parents, anyone else is resolved through the parent link and needs for_gamers. Renamed from admin_enroll_gamer in 00175 — it has not only enrolled gamers since 00173. Since 00206 it places the seat automatically when the product charges nothing (billing_mode free or external_contract) AND has exactly one group, matching the family self-enrollment path; a PAID camp or event still lands in the unassigned inbox, as does any product with zero or several groups, and whether the single group has a gedu assigned is not consulted. That placement is why the product read now takes FOR UPDATE — the group count has to be taken under the same lock the group editor holds. group_joined_at is never written here; a trigger stamps it from group_id.';
 
 
 --
@@ -914,6 +936,113 @@ $$;
 
 
 --
+-- Name: claim_expired_seat_offer_notifications(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.claim_expired_seat_offer_notifications(p_participation_id uuid DEFAULT NULL::uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_claimed jsonb;
+BEGIN
+  -- One statement, and that is the design. The UPDATE both selects the rows to
+  -- notify about and marks them notified, so the set it returns is the set this
+  -- caller owns: a concurrent sweep re-evaluates
+  -- `seat_offer_expiry_notified_at IS NULL` after this one commits and finds
+  -- nothing. Exactly-once by construction, with no advisory lock and nothing
+  -- held across the Brevo call.
+  --
+  -- There is no cron job. Expiry is observed rather than scheduled — an admin
+  -- opening the dashboard or the groups panel runs this, and so does a family
+  -- clicking a link that has already run out, which is itself an observation.
+  -- The cost of that is latency (staff hear about a silent family the next time
+  -- somebody looks) and the benefit is that nothing has to be provisioned,
+  -- monitored or reasoned about at 3am.
+  --
+  -- THE SCOPE ARGUMENT, AND WHY IT IS NOT DECORATION
+  --
+  -- NULL is the platform-wide sweep, and it is what the ADMIN surfaces pass:
+  -- an admin opening the dashboard or a groups panel is entitled to observe
+  -- every lapsed offer, and a global claim is the whole point of a sweep on
+  -- mount. A non-NULL id claims THAT ROW AND NOTHING ELSE, and it is what every
+  -- family-triggered observation passes.
+  --
+  -- The split is a security boundary rather than an optimisation. The emailed
+  -- link is a signed token that names exactly one participation and never
+  -- expires as a signature — the five-day window is checked against the row,
+  -- not against the token's age — so an old leaked link is a credential that
+  -- goes on working as a trigger forever. Unscoped, that made it a permanent,
+  -- unthrottled trigger for a platform-wide write and a fan-out of staff mail
+  -- about families the clicker has nothing to do with. Scoped, the worst a
+  -- leaked link can do is claim the notification for the one row it already
+  -- names. The in-app answer passes its own id for the same reason: a
+  -- credential that names one row may only claim that row, whatever kind of
+  -- credential it is.
+  --
+  -- SILENCE COSTS THE PLACE IN LINE, AND IT IS SPENT HERE
+  --
+  -- The claim is also where the family goes to the back of the queue. An offer
+  -- that ran out unanswered is a turn that came up and was not taken, and
+  -- holding the position through it would mean the same family is asked first
+  -- again next time while everybody behind them waits a second round for an
+  -- answer that never comes.
+  --
+  -- `clock_timestamp()`, NOT `now()`, and that is the 00117 rule rather than a
+  -- preference: `waitlisted_at` is the key that ORDERS ROWS AGAINST EACH OTHER,
+  -- and `now()` is frozen at transaction start — so a platform-wide sweep
+  -- claiming three lapsed offers in one statement would stamp all three
+  -- identically and leave their new order to the `id` tiebreaker rather than to
+  -- anything meaningful. `seat_offer_expiry_notified_at` beside it keeps
+  -- `now()` for the opposite reason: it is a deadline-shaped record of when we
+  -- told staff, compared against nothing but itself.
+  --
+  -- The two offer stamps are deliberately LEFT ALONE. `seat_offer_sent_at`
+  -- surviving is what the emailed token's compare-and-swap still matches
+  -- against — a late decline has to keep working, and the landing page tells an
+  -- expired link apart from a used one by exactly that value — and the notified
+  -- stamp is what makes this claim exactly-once. A re-offer replaces both, so
+  -- the row is still re-offerable and a second silence notifies again.
+  WITH claimed AS (
+    UPDATE public.participations p
+       SET seat_offer_expiry_notified_at = now(),
+           waitlisted_at                 = clock_timestamp()
+     WHERE p.status = 'waitlisted'::public.participation_status
+       AND p.seat_offer_sent_at IS NOT NULL
+       AND p.seat_offer_sent_at + interval '5 days' <= now()
+       AND p.seat_offer_expiry_notified_at IS NULL
+       AND (p_participation_id IS NULL OR p.id = p_participation_id)
+    RETURNING p.id, p.product_id, p.customer_id, p.participant_id, p.seat_offer_sent_at
+  )
+  SELECT COALESCE(
+           jsonb_agg(
+             jsonb_build_object(
+               'participation_id', c.id,
+               'product_id',       c.product_id,
+               'customer_id',      c.customer_id,
+               'participant_id',   c.participant_id,
+               'sent_at',          c.seat_offer_sent_at
+             )
+             ORDER BY c.seat_offer_sent_at, c.id
+           ),
+           '[]'::jsonb
+         )
+    INTO v_claimed
+    FROM claimed c;
+
+  RETURN v_claimed;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION claim_expired_seat_offer_notifications(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.claim_expired_seat_offer_notifications(p_participation_id uuid) IS 'Claim seat offers that have run out unanswered and have not been reported to staff, and return what the mails need. One data-modifying CTE does both halves, which is what makes the notification exactly-once under concurrency: a second sweep re-evaluates seat_offer_expiry_notified_at IS NULL after the first commits and claims nothing, with no advisory lock and nothing held across the send. TWO MODES, and the argument is a security boundary rather than an optimisation. p_participation_id NULL sweeps the whole platform and is what the ADMIN surfaces pass — an admin opening the dashboard or a groups panel is entitled to observe every lapsed offer. A non-NULL id claims that row and nothing else, and is what every FAMILY-triggered observation passes: the emailed link is a signed token naming exactly one participation whose signature never expires, so unscoped it was a permanent unthrottled trigger for a platform-wide write; scoped, the worst a leaked link can do is claim the notification for the row it already names. The in-app answer passes its own id on the same rule — a credential that names one row may only claim that row. There is deliberately no cron job — expiry is OBSERVED rather than scheduled. SILENCE COSTS THE PLACE IN LINE: the same statement re-stamps waitlisted_at with clock_timestamp(), moving each claimed family to the back of the queue, because a turn that came up and was not taken must not be offered first again while everybody behind waits another round. clock_timestamp() rather than now() on the 00117 rule — waitlisted_at orders rows against each other, and a sweep claiming several rows in one frozen transaction time would stamp them all identically. The two offer stamps are left alone: seat_offer_sent_at is what the emailed token still compares against (a late decline keeps working, and the landing page tells an expired link from a used one by that value) and the notified stamp is what makes this claim exactly-once. The claimed rows stay waitlisted, so the offer is still re-offerable and a second silence notifies again. Service-role only; the route establishes who is calling.';
+
+
+--
 -- Name: claim_group_session_report_email(uuid, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1151,6 +1280,7 @@ DECLARE
   v_existing_status       public.participation_status;
   v_participation_id      UUID;
   v_is_parent             BOOLEAN;
+  v_auto_group_id         UUID;
 BEGIN
   SELECT * INTO v_product FROM public.products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
@@ -1246,15 +1376,37 @@ BEGIN
     END IF;
   END IF;
 
+  -- AUTOMATIC PLACEMENT (00206), for the two branches below that seat somebody
+  -- on the spot. A no-charge product with exactly one group has no placement
+  -- decision left in it, so the seat goes straight into that group instead of
+  -- into the unassigned inbox; zero groups has nowhere to put anyone, and two
+  -- or more is a real decision that stays a human's. NULL out of this read is
+  -- the unassigned inbox, which is what every enrollment did before.
+  --
+  -- Safe against a concurrent group edit because the product row is held FOR
+  -- UPDATE above — the same lock the group editor takes. LIMIT 2 because the
+  -- question is "exactly one?", not "how many?".
+  IF public.is_no_charge(v_product.billing_mode) THEN
+    SELECT CASE WHEN count(*) = 1 THEN (array_agg(g.id))[1] END
+      INTO v_auto_group_id
+      FROM (
+        SELECT id FROM public.product_groups
+         WHERE product_id = p_product_id
+         LIMIT 2
+      ) g;
+  END IF;
+
   IF p_purchase_shape = 'free' THEN
     IF v_product.billing_mode <> 'free' THEN
       RAISE EXCEPTION 'product is not free'
         USING ERRCODE = 'check_violation';
     END IF;
+    -- group_joined_at is absent on purpose: the BEFORE INSERT trigger stamps it
+    -- from group_id, and the table comment forbids writing it by hand.
     INSERT INTO public.participations (
-      product_id, participant_id, customer_id, status
+      product_id, participant_id, customer_id, status, group_id
     ) VALUES (
-      p_product_id, p_participant_id, p_customer_id, 'active'
+      p_product_id, p_participant_id, p_customer_id, 'active', v_auto_group_id
     )
     RETURNING id INTO v_participation_id;
     RETURN jsonb_build_object(
@@ -1272,9 +1424,9 @@ BEGIN
         USING ERRCODE = 'check_violation';
     END IF;
     INSERT INTO public.participations (
-      product_id, participant_id, customer_id, status
+      product_id, participant_id, customer_id, status, group_id
     ) VALUES (
-      p_product_id, p_participant_id, p_customer_id, 'active'
+      p_product_id, p_participant_id, p_customer_id, 'active', v_auto_group_id
     )
     RETURNING id INTO v_participation_id;
     RETURN jsonb_build_object(
@@ -1291,6 +1443,13 @@ BEGIN
   RETURN jsonb_build_object('kind', 'validated');
 END;
 $$;
+
+
+--
+-- Name: FUNCTION create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) IS 'The family self-enrollment gate: validates one signup against the product (audience, effective status, registration window, currency, purchase shape, duplicate seat, seat cap) and then either writes the seat or reports that the caller may go and take the money. The two no-charge shapes — free and external (municipality, invoiced off-platform) — insert an active row here and now; the paid shapes return kind=''validated'' and nothing is written until confirm_paid_participation runs from the Stripe webhook, so an abandoned Checkout leaves nothing behind. Holds the product row FOR UPDATE from its first statement, which is what makes the seat-cap count and the group read below race-free against a concurrent signup or group edit. Since 00206 the two instant-active branches place the seat automatically when the product charges nothing AND has exactly one group: that combination has no placement decision left in it, so the row lands in that group rather than in the unassigned inbox. Zero groups, two or more groups, or any paid product still land group_id NULL — the inbox — and whether the single group has a gedu assigned is not consulted. group_joined_at is never written here; a trigger stamps it from group_id. service_role only: this function has no auth.uid() and trusts the calling route to have pinned p_customer_id to the session user.';
 
 
 --
@@ -1882,8 +2041,9 @@ BEGIN
   --   * `groups_without_gedu` — a group with members and no educator assigned. An
   --                           EMPTY group is not flagged: an admin building the
   --                           term's groups ahead of time has not made a mistake.
-  --   * `waitlist`          — people queueing while seats stand open, which is
-  --                           only meaningful on a capped product with the queue
+  --   * `waitlist`          — people queueing while seats stand open AND those
+  --                           seats have not all been offered to somebody. Only
+  --                           meaningful on a capped product with the queue
   --                           switched on. NULL when there is nothing to say.
   --   * `missing_gedu_fee`  — NULL, not zero. Zero is a volunteer session, which
   --                           is a decision somebody made; NULL is a blank field.
@@ -1913,8 +2073,14 @@ BEGIN
                'waitlist',
                  CASE WHEN wl.open_seats IS NOT NULL
                       THEN jsonb_build_object(
-                             'waitlist_count', wl.waitlist_count,
-                             'open_seats',     wl.open_seats
+                             'waitlist_count',   wl.waitlist_count,
+                             'open_seats',       wl.open_seats,
+                             -- How many of those open seats already have a
+                             -- family thinking about them (00207). Emitted so
+                             -- the page can say why the number of open seats
+                             -- and the size of the queue do not by themselves
+                             -- explain the flag.
+                             'live_offer_count', wl.live_offer_count
                            )
                  END,
                'missing_gedu_fee', (c.primary_gedu_fee_cents IS NULL),
@@ -1958,15 +2124,33 @@ BEGIN
                           )
                  ), '[]'::jsonb) AS items
         ) gw
+        -- The waitlist flag asks "is there something for an admin to do here",
+        -- not "is this product in an interesting state" (00207). An open seat
+        -- that has already been offered to a family is being dealt with, so it
+        -- is subtracted before the comparison; a product whose every open seat
+        -- carries a live offer drops out of the queue entirely. When that family
+        -- declines, or the five days run out, the live count falls and the flag
+        -- comes back on its own — which is exactly why the count is derived
+        -- from the stamp rather than stored anywhere.
         LEFT JOIN LATERAL (
           SELECT psc.waitlist_count,
-                 c.seat_count - psc.active_count AS open_seats
+                 c.seat_count - psc.active_count AS open_seats,
+                 lo.n                            AS live_offer_count
             FROM public.product_seat_counts psc
+            CROSS JOIN LATERAL (
+              SELECT count(*)::integer AS n
+                FROM public.participations po
+               WHERE po.product_id = c.id
+                 AND po.status = 'waitlisted'
+                 AND po.seat_offer_sent_at IS NOT NULL
+                 AND po.seat_offer_sent_at + interval '5 days' > now()
+            ) lo
            WHERE psc.product_id = c.id
              AND c.waitlist_enabled
              AND psc.waitlist_count > 0
              AND c.seat_count IS NOT NULL
              AND psc.active_count < c.seat_count
+             AND (c.seat_count - psc.active_count) > lo.n
         ) wl ON true
        WHERE ua.n > 0
           OR jsonb_array_length(gw.items) > 0
@@ -2073,7 +2257,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
@@ -3436,7 +3620,17 @@ BEGIN
                      -- the three roster readers, not for a reader of this one.
                      'group_joined_at',                p.group_joined_at,
                      'note',                           gn.note,
-                     'note_updated_by_first_name',     ned.first_name
+                     'note_updated_by_first_name',     ned.first_name,
+                     -- The seat-offer stamps (00207), identical in all three
+                     -- arms for the same reason. NULL here and on the
+                     -- unassigned arm by construction — the CHECK forbids an
+                     -- offer stamp on anything but a waitlisted row — and read
+                     -- for real only on the waitlist arm, where the card draws
+                     -- the offer's standing. Whether an offer is LIVE is
+                     -- derived from sent_at on the reader's side, against the
+                     -- same five-day window this file states everywhere else.
+                     'seat_offer_sent_at',             p.seat_offer_sent_at,
+                     'seat_offer_expiry_notified_at',  p.seat_offer_expiry_notified_at
                    )
                    ORDER BY p.updated_at, p.id
                  )
@@ -3504,7 +3698,11 @@ BEGIN
              -- arm the same shape as the other two.
              'group_joined_at',                p.group_joined_at,
              'note',                           gn.note,
-             'note_updated_by_first_name',     ned.first_name
+             'note_updated_by_first_name',     ned.first_name,
+             -- NULL here too, and by a constraint rather than by a join that
+             -- misses: an ACTIVE seat cannot carry an offer stamp at all.
+             'seat_offer_sent_at',             p.seat_offer_sent_at,
+             'seat_offer_expiry_notified_at',  p.seat_offer_expiry_notified_at
            )
            ORDER BY p.updated_at, p.id
          ), '[]'::jsonb)
@@ -3551,6 +3749,10 @@ BEGIN
   -- decides something: demotion leaves the Checkout Session id in place, so a
   -- family that paid and was later demoted is distinguishable here from one
   -- that only ever queued.
+  --
+  -- The two seat-offer stamps (00207) are the same story one step further on:
+  -- this is the ONLY arm where either can be non-NULL, and the waitlist card is
+  -- the only reader of them. They ride on the other two arms for shape parity.
   SELECT COALESCE(jsonb_agg(
            jsonb_build_object(
              'id',                             p.id,
@@ -3579,7 +3781,9 @@ BEGIN
              -- roster, not through this arm.
              'group_joined_at',                p.group_joined_at,
              'note',                           gn.note,
-             'note_updated_by_first_name',     ned.first_name
+             'note_updated_by_first_name',     ned.first_name,
+             'seat_offer_sent_at',             p.seat_offer_sent_at,
+             'seat_offer_expiry_notified_at',  p.seat_offer_expiry_notified_at
            )
            ORDER BY p.waitlisted_at, p.id
          ), '[]'::jsonb)
@@ -3621,7 +3825,7 @@ $$;
 -- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. Since 00203 all three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document today — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. Since 00203 all three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document today — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one. Since 00207 all three branches also carry seat_offer_sent_at and seat_offer_expiry_notified_at, on exactly the same terms: only the WAITLIST branch can hold a non-NULL value (a CHECK forbids an offer stamp on any other status) and only the waitlist card reads them, but the expression is identical in all three so the shape stays one shape. Whether an offer is LIVE is derived on the reader''s side from sent_at plus the five-day window.';
 
 
 --
@@ -3882,6 +4086,25 @@ BEGIN
   RETURN get_user_role() = 'admin';
 END;
 $$;
+
+
+--
+-- Name: is_no_charge(public.billing_mode); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_no_charge(p_mode public.billing_mode) RETURNS boolean
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT p_mode IN ('free', 'external_contract');
+$$;
+
+
+--
+-- Name: FUNCTION is_no_charge(p_mode public.billing_mode); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.is_no_charge(p_mode public.billing_mode) IS 'Whether a seat on a product with this billing mode costs anyone money: true for ''free'' and for ''external_contract'' (municipality clubs, invoiced off-platform — currently the only consumer of that mode), false for ''paid''. The named home of the colloquial "free", which almost always means both. The distinction between the two no-charge modes stays load-bearing elsewhere — each gates its own purchase shape in create_participation — so this is only for the two-versus-paid question. Kept in lockstep with NO_CHARGE_BILLING_MODES / isNoChargeBillingMode in src/lib/constants/billing.ts, which the admin groups panel reads to decide whether to draw the unassigned inbox.';
 
 
 --
@@ -4332,10 +4555,20 @@ BEGIN
   -- waitlist is a deliberate admin capacity override. waitlisted_at cleared so
   -- they leave the waitlist ordering. The uq_participations_active_or_waitlisted
   -- index already guaranteed no other in-set row exists for this (product,gamer).
+  --
+  -- The two offer stamps go with it (00207). An admin dragging a row that
+  -- carries a live offer is answering it on the family's behalf — granting
+  -- exactly the seat the offer asked about — so the offer is over, and the
+  -- emailed link stops validating on its own because it no longer matches. The
+  -- clear is unconditional rather than guarded: the CHECK forbids an offer
+  -- stamp on a non-waitlisted row, so leaving one behind would fail this very
+  -- UPDATE.
   UPDATE public.participations
      SET status = 'active',
          group_id = p_group_id,
-         waitlisted_at = NULL
+         waitlisted_at = NULL,
+         seat_offer_sent_at = NULL,
+         seat_offer_expiry_notified_at = NULL
    WHERE id = p_participation_id;
 
   RETURN jsonb_build_object(
@@ -4346,6 +4579,13 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION promote_from_waitlist(p_participation_id uuid, p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid) IS 'Admin-gated promotion of a waitlisted participation into a seat, under the product gate lock. No seat-count gate by design — promoting from a full waitlist is a deliberate capacity override. Clears waitlisted_at so the row leaves the queue ordering, and since 00207 clears the two seat-offer stamps with it: an admin dragging an invited row is honouring that offer by hand, which ends it, and the emailed link stops validating on its own because it no longer matches the row. The clear is unconditional because the CHECK forbids an offer stamp on a non-waitlisted row.';
 
 
 --
@@ -4618,6 +4858,199 @@ $$;
 
 
 --
+-- Name: respond_seat_offer(uuid, timestamp with time zone, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_id        uuid;
+  v_product_status    public.product_status;
+  v_status            public.participation_status;
+  v_sent_at           timestamptz;
+  v_customer_id       uuid;
+  v_participant_id    uuid;
+  v_group_id          uuid;
+  v_group_count       integer;
+  v_within_window     boolean;
+  v_already_notified  boolean;
+BEGIN
+  SELECT product_id INTO v_product_id
+    FROM public.participations
+   WHERE id = p_participation_id;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  -- The same gate lock, so an admin drag-promoting this very row and a parent
+  -- pressing Accept cannot both write it. The status rides back on the lock
+  -- rather than being read in a second statement, because the answer has to be
+  -- the one the lock is holding still.
+  SELECT status INTO v_product_status
+    FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- THE ONE FACT AN HONOURED INVITE ALWAYS REQUIRES: the product still exists
+  -- and still stands. Everything else about the offer is grandfathered (see the
+  -- header) — the terms it went out on survive an admin's edit, because we
+  -- asked and they said yes. The product itself is not one of those terms. An
+  -- invitation to a club that has been cancelled is an invitation to nothing,
+  -- and seating a family into it would be worse than refusing them.
+  --
+  -- NOT FOUND is reachable even though the participation was found a statement
+  -- ago: participations.product_id cascades on delete, so a product dropped
+  -- between the two takes the row with it and this lock finds nothing.
+  --
+  -- Both answer `stale`, which is the outcome every other "this is no longer
+  -- open" case already produces — deliberately not a new kind. THIS IS ALSO THE
+  -- ONE REFUSAL THAT STAYS GENERIC ALL THE WAY OUT. A `stale` answer is re-read
+  -- against the row by the caller, and every shape that means the offer was
+  -- consumed — accepted, promoted, declined, withdrawn, superseded — resolves
+  -- to `used`. A row still holding this exact offer inside its window cannot be
+  -- any of those, so it is this guard that refused, and it resolves to the
+  -- generic `invalid` instead: a distinguishable answer would let an
+  -- unauthenticated caller ask which products have been cancelled.
+  IF NOT FOUND OR v_product_status = 'cancelled'::public.product_status THEN
+    RETURN jsonb_build_object('kind', 'stale');
+  END IF;
+
+  -- The notified stamp is read HERE, in the same statement as the identifiers
+  -- and for the same reason: the DELETE below takes the column with it, and
+  -- after that nothing can tell whether staff were ever told this offer went
+  -- unanswered. See the header for why the answer matters and why this read is
+  -- deliberately unlocked.
+  SELECT status,
+         seat_offer_sent_at,
+         customer_id,
+         participant_id,
+         seat_offer_expiry_notified_at IS NOT NULL
+    INTO v_status, v_sent_at, v_customer_id, v_participant_id, v_already_notified
+    FROM public.participations
+   WHERE id = p_participation_id;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  -- The compare-and-swap, and the whole of this feature's replay protection.
+  -- Every way an offer ends moves this value: accepting clears it, declining
+  -- deletes the row, re-offering replaces it. So a link, a stale tab and a
+  -- second click all fail here rather than in a revocation table that does not
+  -- exist. `IS DISTINCT FROM` because a NULL stamp must compare unequal to
+  -- everything rather than swallow the test three-valued.
+  --
+  -- The status test below can only fire if the CHECK constraint has been
+  -- broken, since an offer stamp cannot survive on a non-waitlisted row. It is
+  -- here because a silent seat grant would be the failure mode otherwise.
+  IF v_sent_at IS NULL
+     OR v_sent_at IS DISTINCT FROM p_offer_sent_at
+     OR v_status <> 'waitlisted'::public.participation_status THEN
+    RETURN jsonb_build_object('kind', 'stale');
+  END IF;
+
+  -- The window is enforced HERE and not only in the token, because the in-app
+  -- path carries no token at all: a parent pressing Accept on their My SOG card
+  -- names a participation and nothing else.
+  --
+  -- THE WINDOW BINDS ACCEPT AND NOTHING ELSE, AND THAT ASYMMETRY IS THE POINT
+  --
+  -- The deadline exists to stop a seat being claimed after we have given up
+  -- waiting and offered it to somebody else. Nothing about that reasoning
+  -- reaches a DECLINE: a family saying "we cannot come" is giving something
+  -- back, and there is no hour of the day when we would rather not know. A
+  -- refusal there would be the database insisting a family keep a place they
+  -- have just told us they do not want, purely because they answered late.
+  --
+  -- So the window is read once into a flag and tested only on the accept side.
+  -- The flag rides back on the DECLINE result because the ROUTE has to tell an
+  -- answer that beat the deadline from one that did not, even though the family
+  -- does not. It is computed here rather than by the caller because this
+  -- transaction is the only place the stamp and the clock are read together
+  -- under the lock.
+  v_within_window := v_sent_at + interval '5 days' > now();
+
+  IF p_accept AND NOT v_within_window THEN
+    RETURN jsonb_build_object(
+      'kind',             'expired',
+      'participation_id', p_participation_id,
+      'product_id',       v_product_id
+    );
+  END IF;
+
+  IF p_accept THEN
+    -- The single group, resolved again at answer time rather than trusted from
+    -- send time: an admin may have added or removed one while the family was
+    -- deciding. If the answer is no longer unambiguous the seat is STILL
+    -- granted and simply lands unassigned — we asked, they said yes, and a
+    -- placement question is ours to sort out, not a reason to refuse them.
+    SELECT count(*) INTO v_group_count
+      FROM public.product_groups
+     WHERE product_id = v_product_id;
+
+    IF v_group_count = 1 THEN
+      SELECT id INTO v_group_id
+        FROM public.product_groups
+       WHERE product_id = v_product_id;
+    ELSE
+      v_group_id := NULL;
+    END IF;
+
+    -- No seat-count gate, deliberately — the same capacity override
+    -- promote_from_waitlist makes, with a stronger claim behind it: this seat
+    -- was offered by name and accepted. A product that refilled in the meantime
+    -- goes one over rather than taking back an invitation.
+    UPDATE public.participations
+       SET status                        = 'active'::public.participation_status,
+           group_id                      = v_group_id,
+           waitlisted_at                 = NULL,
+           seat_offer_sent_at            = NULL,
+           seat_offer_expiry_notified_at = NULL
+     WHERE id = p_participation_id;
+
+    RETURN jsonb_build_object(
+      'kind',             'accepted',
+      'participation_id', p_participation_id,
+      'product_id',       v_product_id,
+      'group_id',         v_group_id,
+      'customer_id',      v_customer_id,
+      'participant_id',   v_participant_id
+    );
+  END IF;
+
+  -- Declining gives up the place in line, exactly as leave_my_waitlist_spot
+  -- does — a family who cannot come has no queue position to keep warm, and the
+  -- staff mail this triggers is what turns their answer into the next family's
+  -- invitation. The identifiers are read above, before the row is gone, because
+  -- the mail names all four.
+  --
+  -- Reachable after the window has closed as well as inside it, which is the
+  -- whole of the asymmetry above. The two flags below are what tell the caller
+  -- which of the two it just did AND whether anybody has already been told this
+  -- offer lapsed — and after this statement neither question has an answer left
+  -- anywhere, because the row that held both is gone.
+  DELETE FROM public.participations WHERE id = p_participation_id;
+
+  RETURN jsonb_build_object(
+    'kind',             'declined',
+    'participation_id', p_participation_id,
+    'product_id',       v_product_id,
+    'customer_id',      v_customer_id,
+    'participant_id',   v_participant_id,
+    'within_window',    v_within_window,
+    'already_notified', v_already_notified
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean) IS 'A family''s answer to a seat offer, under the product gate lock. Compare-and-swap on p_offer_sent_at against the stored stamp: every way an offer ends moves that value, so a used link, a stale tab and a superseded offer all come back ''stale'' with no revocation table anywhere. The five-day window is re-checked here rather than trusted from the token, because the in-app path (a parent pressing Accept in My SOG) carries no token. THE WINDOW BINDS ACCEPT ALONE. A DECLINE succeeds for as long as the row exists, late or not: the deadline is there to stop a seat being claimed after we have offered it elsewhere, and none of that reasoning reaches a family giving a place back. THE DECLINED RESULT CARRIES TWO FLAGS AND THEY ANSWER DIFFERENT QUESTIONS. within_window says the answer beat the deadline. already_notified says seat_offer_expiry_notified_at was set when we read it — read before the DELETE, because the DELETE takes the column with it and after that nothing can tell whether staff were ever told this offer went unanswered. The caller mails on within_window OR NOT already_notified, which skips the mail only where the no-response mail demonstrably went: expiry here is OBSERVED rather than scheduled, so an offer nobody looked at between its fifth day and a late answer was never reported, and treating lateness alone as proof of notification made staff learn less from an answer than from silence. The already_notified read is deliberately not locked against a concurrent sweep — this transaction holds the product gate lock, not the participation row — so the worst case is one duplicate staff mail, which is the recoverable direction. THE PRODUCT IS RE-CHECKED BY ID ON THE LOCK: a MISSING or ''cancelled'' product answers ''stale'' and grants nothing. That is the boundary of this function''s grandfathering — the TERMS the offer went out on survive an admin''s edit (the billing mode is deliberately not re-read), but the product''s own existence and standing are not terms, and the one fact an honoured invite always requires is that the product it names still exists and stands. A product that has merely run out of dates is NOT guarded: it still exists and nothing has been withdrawn. That guard is also the one refusal that stays generic all the way out to the reader: every other ''stale'' resolves to ''used'' when the caller re-reads the row, and only a row still holding this exact live offer resolves to ''invalid'', because a distinguishable answer would let an unauthenticated caller ask which products have been cancelled. ACCEPT activates the seat and places it in the product''s single group, resolved again at answer time — if the product no longer has exactly one group the seat is still granted and lands unassigned, because a placement question is ours and not a reason to withdraw an invitation. There is no seat-count gate, deliberately: the same capacity override promote_from_waitlist makes, with a stronger claim behind it, so a product that refilled while the family was deciding goes one over. DECLINE hard-deletes the row, matching leave_my_waitlist_spot, and returns the four identifiers the staff mail names because they cannot be read afterwards. No EXECUTE grant to authenticated: the public landing route has no session to guard on — the signed token is the authorization — and the in-app route establishes the parent''s ownership before calling.';
+
+
+--
 -- Name: search_locations(text, public.location_type[], integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4782,6 +5215,135 @@ $$;
 --
 
 COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) IS 'Cross-country location search over two match sources merged before ranking: the stored fold on locations (canonical names, name_i18n alternates, official codes; exact > term-prefix > infix) and postal_codes joined to the municipality each code reaches (exact code > code prefix, no infix). Diacritic-insensitive both ways; one folded needle serves both arms. A place matching both ways appears once, at its better rank, and the total counts the deduped union. Returns {total, results[]} where results carry each hit''s ancestor chain nearest-first, ranked then places before venues, then broadest-first by the stored depth, and capped server-side. p_types and p_country restrict both arms, and the restriction applies to the total as well as the page. Retired rows are excluded from matches, but the ancestor walk still climbs through them so a chain renders whole. SECURITY INVOKER, so the caller''s RLS on locations and postal_codes applies unchanged; needles shorter than two characters return an empty result without reading either table.';
+
+
+--
+-- Name: send_seat_offer(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.send_seat_offer(p_participation_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product        public.products;
+  v_product_id     uuid;
+  v_status         public.participation_status;
+  v_sent_at        timestamptz;
+  v_customer_id    uuid;
+  v_participant_id uuid;
+  v_group_count    integer;
+BEGIN
+  SELECT product_id INTO v_product_id
+    FROM public.participations
+   WHERE id = p_participation_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Participation not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- The product gate lock, the same one every other waitlist transition takes.
+  -- It serializes two admins pressing Invite on the same row at once, which is
+  -- what makes the live-offer test below decide the replay rather than racing.
+  SELECT * INTO v_product FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- Re-read under the lock: a promotion or a leave can land between the two.
+  SELECT status, seat_offer_sent_at, customer_id, participant_id
+    INTO v_status, v_sent_at, v_customer_id, v_participant_id
+    FROM public.participations
+   WHERE id = p_participation_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Participation not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Already moved on. Not an error: the admin is looking at a snapshot, and the
+  -- panel refetches rather than arguing.
+  IF v_status <> 'waitlisted'::public.participation_status THEN
+    RETURN jsonb_build_object('kind', 'noop', 'status', v_status::text);
+  END IF;
+
+  -- A seat offer says "come and join us", with no invoice attached and nothing
+  -- for the family to agree to beyond turning up. On a paid product that
+  -- sentence would be false — accepting would seat them with no subscription
+  -- behind the seat — so the offer exists only where a seat costs the family
+  -- nothing: free products, and the municipality clubs we invoice the
+  -- municipality for.
+  --
+  -- Asked through `public.is_no_charge` (00206) rather than spelled out as an
+  -- IN-list, so the two-versus-paid question has ONE spelling in this database:
+  -- widening the no-charge set must not leave this gate behind. 00206 sorts
+  -- before this file, so the helper exists by the time a from-scratch build runs
+  -- this line — there is no ordering hazard, and none of the other seat-offer
+  -- functions needs the helper (`respond_seat_offer` deliberately never reads
+  -- billing mode at all — see the header — and the dashboard's live-offer read
+  -- asks about offers, not about price).
+  IF NOT public.is_no_charge(v_product.billing_mode) THEN
+    RAISE EXCEPTION 'seat offers are only made on no-charge products'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Accepting has to place the child somewhere, and the family is never asked
+  -- to choose. One group is the only arrangement where the answer is
+  -- unambiguous, so it is the only arrangement that may be offered — an admin
+  -- with two groups makes the placement decision themselves, by dragging.
+  SELECT count(*) INTO v_group_count
+    FROM public.product_groups
+   WHERE product_id = v_product_id;
+  IF v_group_count <> 1 THEN
+    RAISE EXCEPTION 'product % has % groups; a seat offer needs exactly one',
+                    v_product_id, v_group_count
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- A live offer already stands. Answer with the stamp that is actually on the
+  -- row and flag the replay: `idempotent` is the only thing telling a
+  -- double-click apart from a first send, and the mail keys on it — exactly the
+  -- signal `join_waitlist` returns for the same reason. Note what it does NOT
+  -- do: it does not refresh the deadline. A family looking at a mail with a
+  -- date on it must not have that date moved under them by an admin pressing a
+  -- button twice.
+  IF v_sent_at IS NOT NULL AND v_sent_at + interval '5 days' > now() THEN
+    RETURN jsonb_build_object(
+      'kind',             'offered',
+      'participation_id', p_participation_id,
+      'product_id',       v_product_id,
+      'customer_id',      v_customer_id,
+      'participant_id',   v_participant_id,
+      'sent_at',          v_sent_at,
+      'idempotent',       TRUE
+    );
+  END IF;
+
+  -- No offer, or an expired one. An expired offer is re-offerable outright: the
+  -- family did not answer, the seat is still open, and asking again is the
+  -- whole point. The old notification stamp goes with it, so a second silence
+  -- notifies staff a second time.
+  --
+  -- date_trunc('milliseconds', …) — see the header. The token is signed over
+  -- this instant and compared back through a JavaScript Date.
+  UPDATE public.participations
+     SET seat_offer_sent_at             = date_trunc('milliseconds', now()),
+         seat_offer_expiry_notified_at  = NULL
+   WHERE id = p_participation_id
+  RETURNING seat_offer_sent_at INTO v_sent_at;
+
+  RETURN jsonb_build_object(
+    'kind',             'offered',
+    'participation_id', p_participation_id,
+    'product_id',       v_product_id,
+    'customer_id',      v_customer_id,
+    'participant_id',   v_participant_id,
+    'sent_at',          v_sent_at,
+    'idempotent',       FALSE
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION send_seat_offer(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.send_seat_offer(p_participation_id uuid) IS 'Offer an open seat to one waitlisted family, under the product gate lock. Refuses anything but a no-charge product (free or external_contract) and anything but exactly one group — accepting has to place the child, and the family is never asked to choose. Stamps seat_offer_sent_at with now() truncated to MILLISECONDS, which is load-bearing: the emailed token is signed over that exact instant and compared back through a JavaScript Date, which cannot hold microseconds. Returns the stored stamp (never the caller''s idea of it) plus idempotent — false only on the call that wrote a stamp, true when a LIVE offer was already standing. The mail keys on idempotent = false, the same signal join_waitlist returns for the same reason; a replay deliberately does not refresh the deadline, because a family reading a date in their inbox must not have it moved. An EXPIRED offer is re-offerable and clears the old expiry-notification stamp with it. No EXECUTE grant to authenticated: the admin route calls it through the service-role client, having established the admin''s identity itself.';
 
 
 --
@@ -6320,6 +6882,10 @@ CREATE TABLE public.participations (
     waitlisted_at timestamp with time zone,
     stripe_checkout_session_id text,
     group_joined_at timestamp with time zone,
+    seat_offer_sent_at timestamp with time zone,
+    seat_offer_expiry_notified_at timestamp with time zone,
+    CONSTRAINT chk_participations_offer_notice_needs_offer CHECK (((seat_offer_expiry_notified_at IS NULL) OR (seat_offer_sent_at IS NOT NULL))),
+    CONSTRAINT chk_participations_offer_only_when_waitlisted CHECK (((seat_offer_sent_at IS NULL) OR (status = 'waitlisted'::public.participation_status))),
     CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
 );
 
@@ -6350,6 +6916,20 @@ COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Ch
 --
 
 COMMENT ON COLUMN public.participations.group_joined_at IS 'When this seat entered its CURRENT group. NULL when the seat holds no group, and NULL for every row that predates the column — there was deliberately no backfill, because a group move leaves no trace and signed_up_at is not a join date for anyone who has ever been moved. A move between two groups of one product RESETS it: the member is new to THAT group, which is the whole claim the newcomer badge makes. Stamped only by trg_participations_stamp_group_joined_at, which is the column''s only writer — no RPC and no policy-driven UPDATE sets it, because group_id has at least five writers (including the ON DELETE SET NULL cascade from product_groups) and a trigger is the only point that sees all of them. A consequence with no undo, accepted for v1: an accidental move on the admin drag board, corrected with a second move back, re-stamps both times — the member reads as new to a group they never really left, for the length of the badge window, and no UI clears the stamp. The mislabel is rare, bounded at 30 days, and its harm is a Gedu welcoming someone they already know; a per-member clear affordance is the known follow-up if it starts to matter.';
+
+
+--
+-- Name: COLUMN participations.seat_offer_sent_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.seat_offer_sent_at IS 'When a seat offer was last sent to this waitlisted family, truncated to milliseconds. NULL on every row that has never been offered a seat and on every row whose offer has been answered — accepting clears it, declining deletes the row, and re-offering after expiry replaces it. Only ever set on a waitlisted row (chk_participations_offer_only_when_waitlisted), which is what lets every status transition treat "clear the offer" as unconditional. Whether the offer is LIVE is derived from this and nothing else: seat_offer_sent_at + interval ''5 days'' > now(). The millisecond truncation is load-bearing rather than cosmetic — the emailed token is signed over this exact instant and compared back through JavaScript, whose Date cannot represent microseconds.';
+
+
+--
+-- Name: COLUMN participations.seat_offer_expiry_notified_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When staff were emailed that this offer ran out with no answer. Orthogonal to whether the offer is live or expired: it records that a notification happened, not the offer''s standing. Claimed atomically by claim_expired_seat_offer_notifications, whose UPDATE ... WHERE seat_offer_expiry_notified_at IS NULL is what makes the mail exactly-once under concurrency with no lock held across the send. Cleared whenever a fresh offer is stamped, so a re-offer that expires again notifies again.';
 
 
 --
@@ -7472,6 +8052,13 @@ CREATE INDEX idx_participations_group ON public.participations USING btree (grou
 --
 
 CREATE INDEX idx_participations_participant ON public.participations USING btree (participant_id);
+
+
+--
+-- Name: idx_participations_unnotified_seat_offers; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_participations_unnotified_seat_offers ON public.participations USING btree (seat_offer_sent_at) WHERE ((seat_offer_sent_at IS NOT NULL) AND (seat_offer_expiry_notified_at IS NULL));
 
 
 --
@@ -9428,6 +10015,14 @@ GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_rea
 
 
 --
+-- Name: FUNCTION claim_expired_seat_offer_notifications(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.claim_expired_seat_offer_notifications(p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.claim_expired_seat_offer_notifications(p_participation_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION claim_group_session_report_email(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
 --
 
@@ -9783,6 +10378,13 @@ GRANT ALL ON FUNCTION public.is_admin() TO service_role;
 
 
 --
+-- Name: FUNCTION is_no_charge(p_mode public.billing_mode); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.is_no_charge(p_mode public.billing_mode) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION is_parent_of(gamer_uuid uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -9926,6 +10528,14 @@ REVOKE ALL ON FUNCTION public.reset_email_verification_on_email_change() FROM PU
 
 
 --
+-- Name: FUNCTION respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean) TO service_role;
+
+
+--
 -- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -9933,6 +10543,14 @@ REVOKE ALL ON FUNCTION public.search_locations(p_query text, p_types public.loca
 GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO anon;
 GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO authenticated;
 GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO service_role;
+
+
+--
+-- Name: FUNCTION send_seat_offer(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.send_seat_offer(p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.send_seat_offer(p_participation_id uuid) TO service_role;
 
 
 --
