@@ -503,7 +503,22 @@ function UnauthenticatedOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="flex flex-col gap-2">
+    /* The app-wide button order shape — root `CLAUDE.md`, "Button Order":
+       DOM [secondary, primary] under `flex-col-reverse`, so signing in reads
+       on top. This pair only ever stacks, so there is no `sm:flex-row` half.
+       The rendered order is what it has always been; only the authoring
+       shape changed, so the whole app states this one way round. */
+    <div className="flex flex-col-reverse gap-2">
+      <Link
+        href={createAccountHref}
+        className={buttonVariants({
+          size: "lg",
+          variant: "outline",
+          className: "w-full text-base",
+        })}
+      >
+        {t("ctaCreateAccount")}
+      </Link>
       <Link
         href={signInHref}
         className={buttonVariants({
@@ -518,16 +533,6 @@ function UnauthenticatedOverlay({
             "Sign in to register"; that is left as-is on purpose, as a copy
             decision to make on its own rather than a mechanical sweep. */}
         {t(`ctaSignIn.${productType}`)}
-      </Link>
-      <Link
-        href={createAccountHref}
-        className={buttonVariants({
-          size: "lg",
-          variant: "outline",
-          className: "w-full text-base",
-        })}
-      >
-        {t("ctaCreateAccount")}
       </Link>
     </div>
   );

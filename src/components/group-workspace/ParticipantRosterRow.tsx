@@ -176,10 +176,12 @@ interface ParticipantRosterRowProps {
  * only fully opaque on hover or keyboard focus, so eight of them don't turn the
  * rail into a toolbar), but always present rather than revealed on hover, since
  * an affordance that only exists under the cursor doesn't exist on a
- * touchscreen. Opening it swaps the line for a small input *in place*, with Save
- * and Cancel to its right; nothing below moves, because the input is the same
- * height as the line it replaced — and the same is true of the check that
- * follows the save, which lands in a slot that was already holding its space.
+ * touchscreen. Opening it swaps the line for a small input *in place*, with
+ * Cancel and Save to its right in that order — the app-wide button order (root
+ * `CLAUDE.md`, "Button Order") puts the affirmative rightmost. Nothing below
+ * moves when the editor opens, because the input is the same height as the line
+ * it replaced — and the same is true of the check that follows the save, which
+ * lands in a slot that was already holding its space.
  * The one thing that does add height is the line saying a save was refused, and
  * that is a direct answer to the button the gedu just pressed rather than
  * something arriving on the data's own schedule.
@@ -433,6 +435,20 @@ function GameIdentityCell({
             })}
             className="h-7 w-40 min-w-0 flex-1 px-2 py-0 text-xs"
           />
+          {/* Cancel then Save — the app-wide button order (root `CLAUDE.md`,
+              "Button Order") puts the affirmative last, so it reads rightmost.
+              This row never stacks, so it needs no `flex-col-reverse`. */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={committing}
+            onClick={() => setDraft(null)}
+            aria-label={t("gameUsernameCancel")}
+            className="h-7 w-7 shrink-0 p-0"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden />
+          </Button>
           <Button
             type="button"
             size="sm"
@@ -446,17 +462,6 @@ function GameIdentityCell({
               <Check className="h-3.5 w-3.5" aria-hidden />
             )}
             {t("gameUsernameSave")}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={committing}
-            onClick={() => setDraft(null)}
-            aria-label={t("gameUsernameCancel")}
-            className="h-7 w-7 shrink-0 p-0"
-          >
-            <X className="h-3.5 w-3.5" aria-hidden />
           </Button>
         </div>
         {failed && (

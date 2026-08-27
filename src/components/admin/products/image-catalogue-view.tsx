@@ -349,20 +349,11 @@ function SelectedImagePanel({
               maxLength={PRODUCT_IMAGE_LABEL_MAX_LENGTH}
               onChange={(e) => setDraft(e.target.value)}
             />
+            {/* Cancel first, Save last — the app-wide button order (root
+                `CLAUDE.md`, "Button Order") puts the affirmative on the right.
+                This row is narrow enough never to stack, so it needs no
+                `flex-col-reverse`. */}
             <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                disabled={committing}
-                onClick={saveName}
-              >
-                {committing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-                {c("save")}
-              </Button>
               <Button
                 type="button"
                 size="sm"
@@ -376,6 +367,19 @@ function SelectedImagePanel({
               >
                 <X className="h-4 w-4" />
                 {c("cancel")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={committing}
+                onClick={saveName}
+              >
+                {committing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                {c("save")}
               </Button>
             </div>
           </div>

@@ -78,7 +78,7 @@ interface SessionRecordEditorProps {
  * family's billing, and none of that is designed. A mock offering the control
  * would be inventing the half nobody has agreed to.
  *
- * The Save/Cancel row is pinned at the bottom, so neither field growing under
+ * The Cancel/Save row is pinned at the bottom, so neither field growing under
  * the writer moves the buttons they are heading for.
  *
  * **A save in flight greys the whole editor and never drops what was typed.**
@@ -210,7 +210,7 @@ export function SessionRecordEditor({
 }
 
 /**
- * The Save/Cancel row both session editors end on, with the failure line above
+ * The Cancel/Save row both session editors end on, with the failure line above
  * it.
  *
  * **The error sits above the buttons, not below them.** It is the answer to the

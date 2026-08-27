@@ -212,14 +212,17 @@ function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      // Button order convention: footers are authored DOM-order [secondary, …,
-      // primary]. On desktop (sm:flex-row sm:justify-end) that reads left→right
-      // as secondary…primary (primary on the right). On mobile we keep the same
-      // order with plain `flex-col` — secondary on top, primary on the bottom
-      // (thumb-reachable) — so the primary action is the "last" one in both
-      // layouts (rightmost ≙ bottommost). `gap-2` (not `space-x`) so the stacked
+      // The app-wide button order rule (root `CLAUDE.md`, "Button Order"):
+      // affirmative on the right in a row, on top in a stack. Footers are
+      // authored DOM-order [negative, …, affirmative], and this one class list
+      // places them both ways — `sm:flex-row sm:justify-end` reads left→right
+      // with the affirmative last (rightmost), and `flex-col-reverse` stacks
+      // that same last child on top. `gap-2` (not `space-x`) so the stacked
       // mobile buttons get vertical spacing too.
-      className={cn("mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end", className)}
+      className={cn(
+        "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        className
+      )}
       {...props}
     />
   );
