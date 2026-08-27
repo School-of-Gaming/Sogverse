@@ -211,20 +211,13 @@ export async function mailClaimedSeatOfferExpiries({
  * an observation that it ran out, so the answer does the work an admin opening
  * a page would otherwise have done.
  *
- * **It claims only the row the caller's credential names, and the admin sweep
- * route is the only caller that may omit the id.** An emailed link is a signed
- * token naming one participation, and its signature never expires — the
- * five-day window is checked against the row, not against the token's age — so
- * an old leaked link goes on working as a trigger forever. Unscoped, that made
- * it a permanent, unthrottled trigger for a platform-wide write and a fan-out
- * of staff mail about families the clicker has nothing to do with. The in-app
- * answer passes its own id on the same rule rather than because its session is
- * untrusted: **an unauthenticated-adjacent trigger may only claim what its
- * credential names**, and a credential that names one row is one row's worth of
- * authority whatever kind of credential it is. What that costs is the latency
- * the lazy sweep already accepts — the rest of the platform's lapsed offers
- * wait for an admin to look, which is exactly what "observed rather than
- * scheduled" has always meant.
+ * **`participationId` is required, and that is the scoping invariant stated to
+ * the compiler rather than to the reader.** Every caller arrives on a
+ * credential naming exactly one participation — an emailed link whose signature
+ * never expires, or a session that has just proved ownership of that row — and
+ * such a trigger may claim only what its credential names. The admin sweep is
+ * the one caller entitled to observe the whole platform, and it claims through
+ * {@link claimExpiredSeatOffers} directly.
  */
 export async function notifyExpiredSeatOffers({
   client,
@@ -233,8 +226,8 @@ export async function notifyExpiredSeatOffers({
 }: {
   client: AppSupabaseClient;
   request: Request;
-  /** The one row this caller's credential names. Omitted only by an admin sweep. */
-  participationId?: string;
+  /** The one row this caller's credential names. */
+  participationId: string;
 }): Promise<void> {
   try {
     const claimed = await claimExpiredSeatOffers(client, participationId);

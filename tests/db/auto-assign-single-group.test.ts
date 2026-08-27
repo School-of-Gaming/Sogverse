@@ -248,12 +248,15 @@ describe("automatic placement into a single group (00206)", () => {
       expect(second?.group_id).toBe(GROUP_OF_FREE);
     });
 
-    it("refuses a signup past the seat cap before it places anybody", async () => {
-      // Ordering, not placement: the cap gate sits ABOVE the group read, so a
-      // full product answers kind='full' and writes nothing at all. Moving the
-      // placement above the gate would still return 'full' — what would give it
-      // away is a second row appearing in the only group, which is why the
-      // absence of that row is the assertion rather than the group id on it.
+    it("refuses a signup past the seat cap, writing and placing nothing", async () => {
+      // The cap gate and the placement on the same product, in that order, and
+      // both halves are needed. The first signup is BELOW the cap and is
+      // genuinely placed, which is what stops the refusal below from passing on
+      // a product where placement is simply broken. The second is AT the cap: it
+      // answers 'full', and the product afterwards is exactly what the first
+      // signup left — one row, one placement, one `group_joined_at`. So the
+      // refusal wrote nothing and placed nobody, which is the whole of what the
+      // gate sitting above the group read is observable as.
       const firstRes = await register(
         CAPPED_FREE_ONE_GROUP,
         "free",
@@ -262,6 +265,7 @@ describe("automatic placement into a single group (00206)", () => {
       expect(firstRes.error).toBeNull();
       const seat = await seatOn(CAPPED_FREE_ONE_GROUP, TEST_IDS.GAMER);
       expect(seat?.group_id).toBe(GROUP_OF_CAPPED_FREE);
+      expect(seat?.group_joined_at).not.toBeNull();
 
       const secondRes = await register(
         CAPPED_FREE_ONE_GROUP,
@@ -273,12 +277,23 @@ describe("automatic placement into a single group (00206)", () => {
         "full",
       );
 
-      const { count, error } = await admin
+      // Every row on the product, read past RLS. Asserted as the whole set
+      // rather than as a count: a count of one would also be satisfied by the
+      // refused signup having placed itself and the seated row having lost its
+      // group, and this way the placement stamp is pinned to the one signup
+      // that was entitled to it.
+      const { data: rows, error } = await admin
         .from("participations")
-        .select("id", { count: "exact", head: true })
+        .select("participant_id, group_id, group_joined_at")
         .eq("product_id", CAPPED_FREE_ONE_GROUP);
       expect(error).toBeNull();
-      expect(count).toBe(1);
+      expect(rows).toEqual([
+        {
+          participant_id: TEST_IDS.GAMER,
+          group_id: GROUP_OF_CAPPED_FREE,
+          group_joined_at: seat!.group_joined_at,
+        },
+      ]);
     });
   });
 

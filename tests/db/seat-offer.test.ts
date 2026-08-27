@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  callServiceRoleRpcRaw,
+  createAdminTestClient,
+  createAuthenticatedClient,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
@@ -505,6 +509,61 @@ describe("seat offers", () => {
     });
     expect(res.error).toBeNull();
     expect(respondSeatOfferRpcResult.parse(res.data)).toEqual({ kind: "stale" });
+  });
+
+  /**
+   * An answer carrying no stamp at all, which is the input the first line of
+   * the compare-and-swap exists for.
+   *
+   * `IS DISTINCT FROM` is what makes a mismatched stamp a refusal rather than a
+   * NULL swallowing the test three-valued — but `NULL IS DISTINCT FROM NULL` is
+   * FALSE, so a row carrying no offer, answered with no stamp, compares EQUAL
+   * on a value neither side has and would fall straight through to acceptance.
+   * `v_sent_at IS NULL` is the clause that refuses that first, and the
+   * un-offered row is the only shape that reaches it: against a row that IS
+   * holding an offer the mismatch clause has already caught the same NULL.
+   *
+   * Both halves in one case, because they pin different clauses and only the
+   * second one is load-bearing — a body that dropped `v_sent_at IS NULL` would
+   * still pass the first half on its own.
+   *
+   * Called past the generated types, which type every RPC argument as
+   * non-nullable and so cannot express the value under test.
+   */
+  it("refuses an answer with no stamp, both against a live offer and against none", async () => {
+    const offered = await queue(P_CLUB, TEST_IDS.GAMER);
+    const sentAt = await stamp(offered, LIVE_AT());
+    const unoffered = await queue(P_CLUB, TEST_IDS.GAMER_2);
+
+    const againstOffer = await callServiceRoleRpcRaw("respond_seat_offer", {
+      p_participation_id: offered,
+      p_offer_sent_at: null,
+      p_accept: true,
+    });
+    expect(respondSeatOfferRpcResult.parse(againstOffer)).toEqual({
+      kind: "stale",
+    });
+    // Still queued, still holding the offer it was invited on.
+    expect(await readRow(offered)).toMatchObject({
+      status: "waitlisted",
+      seat_offer_sent_at: sentAt,
+    });
+
+    const withoutOffer = await callServiceRoleRpcRaw("respond_seat_offer", {
+      p_participation_id: unoffered,
+      p_offer_sent_at: null,
+      p_accept: true,
+    });
+    expect(respondSeatOfferRpcResult.parse(withoutOffer)).toEqual({
+      kind: "stale",
+    });
+    // The half that matters: without the NULL clause this row would now hold a
+    // seat granted on a stamp nobody ever wrote.
+    expect(await readRow(unoffered)).toMatchObject({
+      status: "waitlisted",
+      group_id: null,
+      seat_offer_sent_at: null,
+    });
   });
 
   /**

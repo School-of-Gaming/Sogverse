@@ -266,6 +266,34 @@ export function canCompEnroll(
 // ---------------------------------------------------------------------------
 
 /**
+ * The enrollment writers' own predicate: a product where an arriving seat is
+ * written straight into the only group there is. Charges nothing AND has
+ * exactly one group — and deliberately nothing else, in particular not whether
+ * that group has a gedu assigned, because an unstaffed group is still the only
+ * place the seat can go.
+ *
+ * **One function, because two panel decisions ask this exact question and it
+ * has to be the same question.** Whether the Unassigned card is drawn at all
+ * and whether a waitlisted family can be offered a seat are two readings of one
+ * rule; derived independently they could only drift apart, and the drift would
+ * be invisible because each reads correct on its own.
+ *
+ * **This is also where the lockstep with the SQL is anchored.** The panel only
+ * *reflects* the rule — the database applies it, in the enrollment writers and
+ * in `send_seat_offer`'s CHECKs — so the two can disagree only if one is
+ * changed alone. The billing half is one named set on each side,
+ * `isNoChargeBillingMode` here and `public.is_no_charge` there, rather than an
+ * IN-list retyped in both: a fourth billing mode added later arrives here as
+ * "does not auto-place" and is refused there too, by construction.
+ */
+export function autoPlacesIntoSingleGroup(
+  billingMode: BillingMode,
+  groupCount: number,
+): boolean {
+  return isNoChargeBillingMode(billingMode) && groupCount === 1;
+}
+
+/**
  * Whether the panel draws the Unassigned card at all.
  *
  * The rule is communicated by the card's *absence*, not by a caption: on a
@@ -282,14 +310,9 @@ export function canCompEnroll(
  * on a qualifying product. Rows that predate the placement rule are the main
  * way that happens.
  *
- * The qualifying half mirrors the enrollment writers' own predicate: charges
- * nothing AND exactly one group. Whether that group has a gedu assigned is
- * deliberately not consulted — an unstaffed group is still the only place the
- * seat can go. The panel only *reflects* the rule; the database is what applies
- * it, and the two can only disagree if one is changed alone, which is why the
- * billing half is one named set on each side — `isNoChargeBillingMode` here and
- * `public.is_no_charge` in the enrollment writers — rather than an IN-list
- * retyped in both.
+ * The qualifying half is {@link autoPlacesIntoSingleGroup}, which is also what
+ * the seat offer asks, so the card's absence and the Invite control can only
+ * ever be reasoning about the same product.
  *
  * **Hidden-and-empty is a stable state, which is what makes hiding safe.** Every
  * event that could put a row in the inbox of a qualifying product either
@@ -310,9 +333,12 @@ export function canCompEnroll(
  * caveat is that the acting admin need not be *this* one: another admin's edit
  * arrives here on a refetch, exactly as it already does for the chips.
  *
- * `groups` is only ever measured, never read — the type is narrowed to rows
- * with an id purely so that handing it the waitlist or the inbox by mistake is
- * a compile error rather than a plausible-looking wrong answer.
+ * `groups` is only ever measured, never read, and is still typed as rows with
+ * an id rather than as the count the predicate wants: the two arguments beside
+ * it are a billing mode and a number, so a list handed over in the wrong slot —
+ * the waitlist, the inbox — is caught by the compiler here instead of returning
+ * a plausible-looking wrong answer. The measuring happens at the call below, so
+ * that protection costs nothing the shared predicate has to know about.
  */
 export function showUnassignedSection(
   billingMode: BillingMode,
@@ -320,7 +346,7 @@ export function showUnassignedSection(
   unassignedCount: number,
 ): boolean {
   if (unassignedCount > 0) return true;
-  return !(isNoChargeBillingMode(billingMode) && groups.length === 1);
+  return !autoPlacesIntoSingleGroup(billingMode, groups.length);
 }
 
 // ---------------------------------------------------------------------------
@@ -360,16 +386,16 @@ export function seatOfferAvailability(
   // No-charge — the two billing modes where accepting a seat costs the family
   // nothing and creates no Stripe object, so a yes can be honoured on the spot.
   // A paid seat would need a checkout in the middle of the answer, which is a
-  // different feature.
-  //
-  // Read from the named set rather than an inline allow-list, so this control,
-  // `showUnassignedSection` above and the SQL's `public.is_no_charge` can only
-  // disagree if the set itself changes. A fourth billing mode added later
-  // arrives here as `unavailable` — no control drawn, nothing offered — and
-  // the database refuses it too, so the two agree by construction.
-  const noCharge = isNoChargeBillingMode(billingMode);
-  if (!noCharge) return { kind: "unavailable" };
-  if (groupCount !== 1) return { kind: "needsOneGroup", groupCount };
+  // different feature. Asked on its own here, and not only through the shared
+  // predicate below, because the three answers need the two halves apart: the
+  // billing half is permanent and silent, the group half is fixable on this
+  // page and is said out loud.
+  if (!isNoChargeBillingMode(billingMode)) return { kind: "unavailable" };
+  // The same rule the Unassigned card is hidden by — an offer needs exactly one
+  // destination for the same reason an inbox has nothing to catch.
+  if (!autoPlacesIntoSingleGroup(billingMode, groupCount)) {
+    return { kind: "needsOneGroup", groupCount };
+  }
   return { kind: "available" };
 }
 

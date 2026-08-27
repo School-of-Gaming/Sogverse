@@ -161,11 +161,14 @@ describe("buildSeatOfferStaffEmail", () => {
   });
 
   /**
-   * The address is shown and never linked. Replying is how a staff member
-   * answers this family, and the mail's Reply-To is already their address — a
-   * second, differently-styled route to the same place is a question about
-   * which one is real, and a client that invents the link paints it in a colour
-   * we did not choose.
+   * The address is shown and never linked. Reply-To on this mail is the support
+   * inbox rather than the family: nothing here is waiting on an answer from
+   * them — the offer is over and the next step is inviting somebody else — and
+   * on a decline their row is already deleted. So a live mailto would make the
+   * one obvious control on the mail point at the person it is not about. The
+   * address rides along as a fact, defused, for the rare case where writing to
+   * them is genuinely the right move, and a client that invents the link paints
+   * it in a colour we did not choose.
    */
   it("defuses the family's address rather than linking it", () => {
     const html = buildSeatOfferStaffEmail(t, "en", staff);

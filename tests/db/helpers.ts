@@ -106,8 +106,41 @@ export async function callRpcRaw(
 }
 
 /**
+ * Calls an RPC as `service_role` with an arbitrary argument object, and hands
+ * back the JSON it returned.
+ *
+ * Same reason `callRpcRaw` exists one function up — the generated argument
+ * types cannot express a NULL that a SQL parameter genuinely accepts, and
+ * casting around them is the suppression the code-style rule warns about — but
+ * for the service-role RPCs, where the RESULT is the thing under test rather
+ * than the SQLSTATE of a refusal. A raise still throws, because a test asking
+ * what a function answered has nothing to say about a call that never ran.
+ */
+export async function callServiceRoleRpcRaw(
+  functionName: string,
+  args: Record<string, unknown>
+): Promise<unknown> {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(args),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `${functionName} failed: ${response.status} ${await response.text()}`
+    );
+  }
+  return response.json();
+}
+
+/**
  * PATCHes rows over PostgREST with an arbitrary body, for the same reason
- * `callRpcRaw` exists one function up: some values a test has to send are ones
+ * `callRpcRaw` exists two functions up: some values a test has to send are ones
  * the generated types forbid, and that prohibition is frequently the very
  * guarantee under test.
  *

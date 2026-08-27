@@ -1,6 +1,5 @@
 import { after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
-import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   isSeatOfferTokenExpired,
@@ -9,13 +8,10 @@ import {
 import { resolveSeatOfferDeadEnd } from "@/lib/seat-offer.server";
 import {
   emailedSeatOfferRespondResponse,
-  respondSeatOfferRpcResult,
   seatOfferRespondBody,
 } from "@/services/participations/seat-offer.contracts";
-import {
-  notifyExpiredSeatOffers,
-  sendSeatOfferStaffEmail,
-} from "@/services/participations/seat-offer-email.server";
+import { settleSeatOfferAnswer } from "@/services/participations/seat-offer-answer.server";
+import { notifyExpiredSeatOffers } from "@/services/participations/seat-offer-email.server";
 
 /**
  * POST /api/seat-offer/respond — a family answering a seat offer from the link
@@ -39,14 +35,10 @@ import {
  *
  * **A late DECLINE is honoured, and only a late ACCEPT is refused.** The window
  * exists to stop a seat being claimed after we have offered it elsewhere, so it
- * binds one direction (00208). The staff mail then goes out on
- * `within_window || !already_notified` (00209): a decline that beat the
- * deadline is the news that turns one family's no into the next family's
- * invitation, and a late one is skipped only where the no-response mail
- * demonstrably went. Expiry here is observed rather than swept on a timer, so
- * an offer nobody opened a page about was never reported to anybody — and the
- * decline deletes the row that was the last evidence of it, which is why the
- * flag has to be read inside the same transaction.
+ * binds one direction (00208), and it is why the short-circuit below reads
+ * `body.accept` before it decides anything. What the answer then owes staff —
+ * the declined arm's mail, and the sweep a lapsed one triggers — is settled
+ * with the in-app route's, in `seat-offer-answer.server.ts`.
  */
 export const POST = defineRoute({
   posture: "public",
@@ -89,78 +81,36 @@ export const POST = defineRoute({
       return { outcome: "expired" as const };
     }
 
+    // The instant the token was signed over, back as an ISO string. It survives
+    // the round trip only because the stamp was truncated to milliseconds when
+    // it was written — see migration 00207. The staff mail reads the same value
+    // for the line an admin places the offer by.
+    const sentAt = new Date(claims.sentAtMs).toISOString();
+
     const { data, error } = await admin.rpc("respond_seat_offer", {
       p_participation_id: claims.participationId,
-      // The instant the token was signed over, back as an ISO string. It
-      // survives the round trip only because the stamp was truncated to
-      // milliseconds when it was written — see migration 00207.
-      p_offer_sent_at: new Date(claims.sentAtMs).toISOString(),
+      p_offer_sent_at: sentAt,
       p_accept: body.accept,
     });
     if (error) throw error;
 
-    const parsed = respondSeatOfferRpcResult.safeParse(data);
-    if (!parsed.success) {
-      throw new ApiError(
-        `respond_seat_offer returned an unexpected shape: ${parsed.error.message}`,
-        500,
-      );
-    }
+    // Everything the answer owes staff, and the sweep a lapsed one triggers,
+    // decided in the one place both respond routes share.
+    const settled = settleSeatOfferAnswer({
+      client: admin,
+      request,
+      data,
+      participationId: claims.participationId,
+      sentAt,
+    });
+    if (settled) return { outcome: settled };
 
-    switch (parsed.data.kind) {
-      case "accepted":
-        return { outcome: "accepted" as const };
-      case "declined":
-        // The answer that turns one family's no into the next family's
-        // invitation. The row is already gone, which is why the RPC hands back
-        // the four identifiers rather than leaving them to be read.
-        //
-        // **The mail is skipped only where the no-response mail demonstrably
-        // went.** A late no lands after the offer was swept and staff were
-        // told nobody answered, so mailing again would raise a family an admin
-        // has finished dealing with — but that sweep is an OBSERVATION, not a
-        // schedule, so "late" is no evidence at all that it ever happened. If
-        // nobody opened a page between the fifth day and this click, nobody was
-        // told; the delete below has just removed the row that said so, and
-        // this answer would be the quietest thing that ever happened to the
-        // offer. So both flags are read: in time, or nobody has heard yet.
-        if (parsed.data.within_window || !parsed.data.already_notified) {
-          after(
-            sendSeatOfferStaffEmail({
-              client: admin,
-              request,
-              reason: "declined",
-              customerId: parsed.data.customer_id,
-              participantId: parsed.data.participant_id,
-              productId: parsed.data.product_id,
-              sentAt: new Date(claims.sentAtMs).toISOString(),
-            }),
-          );
-        }
-        return { outcome: "declined" as const };
-      case "expired":
-        // The token said live and the row says lapsed — the five days ran out
-        // between the page rendering and Accept being pressed. Only an accept
-        // can land here now, since the RPC honours a decline whenever the row
-        // still exists. Scoped to the token's own participation for the same
-        // reason as above.
-        after(
-          notifyExpiredSeatOffers({
-            client: admin,
-            request,
-            participationId: claims.participationId,
-          }),
-        );
-        return { outcome: "expired" as const };
-      default: {
-        // `stale` or `not_found`: the compare-and-swap refused. The reader
-        // pressed from a tab that was live when it rendered, so the panel they
-        // land on should say what re-opening the mail would have said — which
-        // is the same read the landing page does, and the same three answers,
-        // so the two surfaces cannot disagree about one link.
-        const outcome = await resolveSeatOfferDeadEnd(claims, admin);
-        return { outcome };
-      }
-    }
+    // `stale` or `not_found`: the compare-and-swap refused. The reader pressed
+    // from a tab that was live when it rendered, so the panel they land on
+    // should say what re-opening the mail would have said — which is the same
+    // read the landing page does, and the same three answers, so the two
+    // surfaces cannot disagree about one link.
+    const outcome = await resolveSeatOfferDeadEnd(claims, admin);
+    return { outcome };
   },
 });

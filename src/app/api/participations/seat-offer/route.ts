@@ -1,16 +1,10 @@
-import { after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
-import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   inAppSeatOfferRespondBody,
-  respondSeatOfferRpcResult,
   seatOfferRespondResponse,
 } from "@/services/participations/seat-offer.contracts";
-import {
-  notifyExpiredSeatOffers,
-  sendSeatOfferStaffEmail,
-} from "@/services/participations/seat-offer-email.server";
+import { settleSeatOfferAnswer } from "@/services/participations/seat-offer-answer.server";
 
 /**
  * POST /api/participations/seat-offer — the same answer, given from inside My
@@ -21,7 +15,8 @@ import {
  * is authorized by the session and has no token. Collapsing them would mean one
  * handler that accepts either, which is one handler where a missing token can
  * be read as "must be the session path" — precisely the shape that turns two
- * safe doors into one unsafe one.
+ * safe doors into one unsafe one. What the two genuinely share starts after the
+ * RPC has answered, and lives in `seat-offer-answer.server.ts`.
  *
  * **The ownership check runs on the CALLER'S own client, before the RPC.** The
  * write itself has to go through the service-role client (`respond_seat_offer`
@@ -69,60 +64,20 @@ export const POST = defineRoute({
     });
     if (error) throw error;
 
-    const parsed = respondSeatOfferRpcResult.safeParse(data);
-    if (!parsed.success) {
-      throw new ApiError(
-        `respond_seat_offer returned an unexpected shape: ${parsed.error.message}`,
-        500,
-      );
-    }
+    // Everything the answer owes staff, and the sweep a lapsed one triggers,
+    // decided in the one place both respond routes share.
+    const settled = settleSeatOfferAnswer({
+      client: admin,
+      request,
+      data,
+      participationId: row.id,
+      sentAt: row.seat_offer_sent_at,
+    });
 
-    switch (parsed.data.kind) {
-      case "accepted":
-        return { outcome: "accepted" as const };
-      case "declined":
-        // The lapsed block in My SOG keeps its Decline button live for exactly
-        // the same reason the emailed link does — a family telling us they
-        // cannot come is news we want whenever it arrives. What decides the
-        // mail is whether anybody has heard about this offer yet. An answer
-        // that beat the deadline always mails; a late one mails unless the
-        // no-response mail demonstrably went, because expiry is observed rather
-        // than scheduled and an offer nobody looked at was reported to nobody.
-        // The delete has just taken the stamp that said so, which is why both
-        // flags are decided inside the RPC (00209).
-        if (parsed.data.within_window || !parsed.data.already_notified) {
-          after(
-            sendSeatOfferStaffEmail({
-              client: admin,
-              request,
-              reason: "declined",
-              customerId: parsed.data.customer_id,
-              participantId: parsed.data.participant_id,
-              productId: parsed.data.product_id,
-              sentAt: row.seat_offer_sent_at,
-            }),
-          );
-        }
-        return { outcome: "declined" as const };
-      case "expired":
-        // The card was rendered while the offer was live and ACCEPT was pressed
-        // after it was not — the only answer the window still refuses, since
-        // 00208 honours a decline for as long as the row exists.
-        // The sweep runs on the observation, exactly as it does when a
-        // family clicks a lapsed link — and it is scoped to this row on the
-        // same rule: a credential that names one participation may claim only
-        // that participation, whether it is a signed token or a session that
-        // has just proved ownership of exactly this row.
-        after(
-          notifyExpiredSeatOffers({
-            client: admin,
-            request,
-            participationId: row.id,
-          }),
-        );
-        return { outcome: "expired" as const };
-      default:
-        return { outcome: "invalid" as const };
-    }
+    // `stale` or `not_found` comes back as `invalid`, and here that is a plain
+    // description rather than a disclosure decision: the caller has already
+    // proved the row is theirs, so the only thing left to say is that the card
+    // is showing something no longer true and a refetch is the fix.
+    return { outcome: settled ?? ("invalid" as const) };
   },
 });
