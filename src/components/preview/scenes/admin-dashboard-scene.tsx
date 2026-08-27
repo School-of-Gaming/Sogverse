@@ -55,10 +55,12 @@ export function AdminDashboardScene({
   const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
 
   /**
-   * Certifications belong to the scenario they were made in, and the two
-   * scenarios share gedu ids. Without this, certifying somebody in `busy` and
-   * then switching to `quiet` would show a list already missing a row nobody
-   * touched there — a preview lying about its own starting state.
+   * Certifications belong to the scenario they were made in. The two scenarios
+   * are the same component at the same position in the tree, so React keeps
+   * this state across a step between them unless it is told not to — and
+   * without the reset, certifying somebody in `busy`, stepping to `quiet` and
+   * stepping back would show `busy` already missing a row nobody touched there:
+   * a preview lying about its own starting state.
    */
   const [shownScenario, setShownScenario] = useState(scenario);
   if (shownScenario !== scenario) {

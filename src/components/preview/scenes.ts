@@ -358,7 +358,8 @@ export const PREVIEW_SCENES = [
       {
         slug: "quiet",
         label: "Quiet platform — all clear",
-        description: "The all-clear header, which a full queue cannot show.",
+        description:
+          "The empty states, which a platform under load has no way to reach.",
       },
     ],
   },
