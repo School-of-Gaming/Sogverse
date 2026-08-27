@@ -416,9 +416,12 @@ export function useDeleteGroup(productId: string) {
 
 /**
  * Admin comp-enrollment mutation — drops a participant (a child, or an adult on
- * a for-parents product) directly into a product (status='active',
- * group_id=NULL). Invalidates the product's groups snapshot so the new chip
- * appears in the Unassigned card. Kept as a plain mutation: it doesn't go
+ * a for-parents product) directly into a product (status='active'). The seat's
+ * group is the enrollment RPC's decision, not this mutation's: a product that
+ * charges nothing and has exactly one group seats them in it, everything else
+ * lands group_id=NULL. So the invalidated snapshot is also how the caller finds
+ * out where the chip went — it may appear in a group column rather than in the
+ * Unassigned card. Kept as a plain mutation: it doesn't go
  * through apply_group_changes (enrollment lifecycle, not group structure) and
  * the picker lacks the full participation row to optimistically insert, so it
  * just refetches on success.

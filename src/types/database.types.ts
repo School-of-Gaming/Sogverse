@@ -2108,6 +2108,10 @@ export type Database = {
       }
       immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_no_charge: {
+        Args: { p_mode: Database["public"]["Enums"]["billing_mode"] }
+        Returns: boolean
+      }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_voice_group_moderator: {

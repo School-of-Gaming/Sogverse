@@ -8,6 +8,7 @@ import {
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
+  showUnassignedSection,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
@@ -568,5 +569,55 @@ describe("isSubscriptionShaped / canCompEnroll", () => {
     expect(canCompEnroll("camp", "paid")).toBe(true);
     expect(canCompEnroll("event", "paid")).toBe(true);
     expect(canCompEnroll("municipality_club", "external_contract")).toBe(true);
+  });
+});
+
+describe("showUnassignedSection", () => {
+  // The inbox is hidden on exactly one combination — the product qualifies for
+  // automatic placement (charges nothing AND has exactly one group) and nobody
+  // is waiting in it — because there the rule is said by the card's absence
+  // rather than by a caption. Every case below moves one input off that
+  // combination and expects the card back.
+  //
+  // Only the length of the group list is read, but the parameter is typed to
+  // rows with an id so that passing the waitlist or the inbox in that slot is a
+  // compile error — hence real ids here rather than bare names.
+  const none: readonly { id: string }[] = [];
+  const one = [{ id: "75a6920e-dcdf-411b-bd8a-698c851f3335" }];
+  const two = [...one, { id: "3a83c4ea-3a0b-4f73-88f1-d716117834c3" }];
+  const three = [...two, { id: "0af8e50a-acdc-4c17-adec-16941f981927" }];
+
+  it("hides an empty inbox on a no-charge product with exactly one group", () => {
+    expect(showUnassignedSection("free", one, 0)).toBe(false);
+    expect(showUnassignedSection("external_contract", one, 0)).toBe(false);
+  });
+
+  it("shows the inbox whenever anyone is actually in it", () => {
+    // The half that must never be traded away: a gamer with no group who is
+    // off screen is a gamer nobody can seat. Qualifying or not, they show.
+    expect(showUnassignedSection("free", one, 1)).toBe(true);
+    expect(showUnassignedSection("external_contract", one, 3)).toBe(true);
+  });
+
+  it("shows the inbox on a no-charge product with no groups", () => {
+    // Nothing to place into, so every arriving seat lands here.
+    expect(showUnassignedSection("free", none, 0)).toBe(true);
+    expect(showUnassignedSection("external_contract", none, 0)).toBe(true);
+  });
+
+  it("shows the inbox on a no-charge product with several groups", () => {
+    // Which group a child belongs in is a decision that stays a human's, so
+    // the seat waits here and the admin needs to see it waiting.
+    expect(showUnassignedSection("free", two, 0)).toBe(true);
+    expect(showUnassignedSection("external_contract", two, 0)).toBe(true);
+    expect(showUnassignedSection("free", three, 0)).toBe(true);
+  });
+
+  it("shows the inbox on a paid product, whatever its groups", () => {
+    // The billing half settles it on its own: a paid seat is written by the
+    // Stripe webhook, which places nobody, so the group count never matters.
+    expect(showUnassignedSection("paid", one, 0)).toBe(true);
+    expect(showUnassignedSection("paid", none, 0)).toBe(true);
+    expect(showUnassignedSection("paid", two, 0)).toBe(true);
   });
 });

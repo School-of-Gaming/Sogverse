@@ -1,4 +1,5 @@
 import type { GameAccountExternalId } from "@/components/game-account";
+import { isNoChargeBillingMode } from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { RobloxRenderMap } from "@/services/roblox";
 import type {
@@ -258,6 +259,68 @@ export function canCompEnroll(
   billingMode: BillingMode,
 ): boolean {
   return !isSubscriptionShaped(productType, billingMode);
+}
+
+// ---------------------------------------------------------------------------
+// Automatic placement into a single group
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether the panel draws the Unassigned card at all.
+ *
+ * The rule is communicated by the card's *absence*, not by a caption: on a
+ * product where every arriving seat is written straight into the only group
+ * there is, an inbox is a box nothing can ever land in, and an empty box
+ * captioned "nothing lands here" is worse than no box. So the section is hidden
+ * on exactly one combination — the product qualifies for automatic placement
+ * AND nobody is sitting in the inbox — and shows in every other case, which is
+ * how a paid product, a product with no groups and a product with several all
+ * go on looking exactly as they did.
+ *
+ * **Anyone actually waiting wins, always.** A gamer with no group who is not on
+ * screen is a gamer nobody can seat, so a non-empty inbox shows the card even
+ * on a qualifying product. Rows that predate the placement rule are the main
+ * way that happens.
+ *
+ * The qualifying half mirrors the enrollment writers' own predicate: charges
+ * nothing AND exactly one group. Whether that group has a gedu assigned is
+ * deliberately not consulted — an unstaffed group is still the only place the
+ * seat can go. The panel only *reflects* the rule; the database is what applies
+ * it, and the two can only disagree if one is changed alone, which is why the
+ * billing half is one named set on each side — `isNoChargeBillingMode` here and
+ * `public.is_no_charge` in the enrollment writers — rather than an IN-list
+ * retyped in both.
+ *
+ * **Hidden-and-empty is a stable state, which is what makes hiding safe.** Every
+ * event that could put a row in the inbox of a qualifying product either
+ * disqualifies the product or fills the inbox, and both draw the card:
+ *
+ *  - a new enrollment is placed in the only group, so the inbox stays empty;
+ *  - deleting that group leaves zero groups, which disqualifies the product on
+ *    its own — and where the group had members, they are reset to unassigned,
+ *    so the inbox fills as well;
+ *  - adding a second group disqualifies the product on the spot;
+ *  - a chip can only be dragged into the inbox while the card is drawn, so a
+ *    drag can fill a visible inbox but can never reach a hidden one.
+ *
+ * So there is no path to a hidden card with someone inside it. Four edits can
+ * flip the answer — adding a group, deleting one, the last inbox row being
+ * moved out, and the product's billing mode being changed — and each is an
+ * admin's own action rather than data landing on its own schedule. The one
+ * caveat is that the acting admin need not be *this* one: another admin's edit
+ * arrives here on a refetch, exactly as it already does for the chips.
+ *
+ * `groups` is only ever measured, never read — the type is narrowed to rows
+ * with an id purely so that handing it the waitlist or the inbox by mistake is
+ * a compile error rather than a plausible-looking wrong answer.
+ */
+export function showUnassignedSection(
+  billingMode: BillingMode,
+  groups: readonly { id: string }[],
+  unassignedCount: number,
+): boolean {
+  if (unassignedCount > 0) return true;
+  return !(isNoChargeBillingMode(billingMode) && groups.length === 1);
 }
 
 // ---------------------------------------------------------------------------

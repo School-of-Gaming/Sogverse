@@ -715,7 +715,7 @@
         },
         "unassigned": {
           "title": "Nimeämättömät",
-          "subtitle": "Osallistujat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
+          "subtitle": "Osallistujat, jotka eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
           "empty": "Kaikilla on ryhmä.",
           "addParticipant": "Lisää osallistuja",
           "removeParticipant": "Poista osallistuja"

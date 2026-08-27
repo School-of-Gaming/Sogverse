@@ -372,6 +372,47 @@ describe("GroupsPanel — a blocked drop writes nothing", () => {
   });
 });
 
+describe("GroupsPanel — the inbox says the placement rule by being absent", () => {
+  // The card carries no caption about automatic placement any more; on a
+  // product that seats every arrival in its only group, it is simply not
+  // drawn. These pin that the predicate reaches the render — the rules suite
+  // proves the predicate itself.
+  //
+  // Accepted blind spot: this file mocks @dnd-kit wholesale, so nothing here
+  // pins that a `{ toGroupId: null }` drop is *unreachable* while the card is
+  // hidden. That safety rests on dnd-kit's own registration behaviour — a
+  // droppable that never mounts is never registered and so is never offered as
+  // `over` — which was verified by reading the library, not by a test.
+  const INBOX_TITLE = "admin.products.groupsPanel.unassigned.title";
+
+  it("drops the card on a no-charge product with one group and nobody waiting", () => {
+    // The base fixture is exactly that shape: one group, empty inbox.
+    renderPanel("consumer_club", "free");
+
+    expect(screen.queryByText(INBOX_TITLE)).toBeNull();
+  });
+
+  it("keeps the card the moment someone is actually unassigned", () => {
+    // Same product, same single group — a gamer with no group must never be
+    // invisible, so their presence alone brings the card back.
+    snapshotOverride = {
+      ...snapshot,
+      unassigned: [participation("0a4c9f2e-8b71-4a3d-9f60-5c2e1d7b4a83")],
+    };
+    renderPanel("consumer_club", "free");
+
+    expect(screen.getByText(INBOX_TITLE)).toBeTruthy();
+  });
+
+  it("keeps the card on a paid product with the same single group", () => {
+    // The billing half on its own: a paid seat is written by the webhook,
+    // which places nobody, so the inbox is where arrivals wait.
+    renderPanel("consumer_club", "paid");
+
+    expect(screen.getByText(INBOX_TITLE)).toBeTruthy();
+  });
+});
+
 describe("GroupsPanel — the topic decides which identity a chip draws", () => {
   // One child holding both handles, sitting in the inbox — so every case below
   // differs only in the topic the panel was rendered with.
