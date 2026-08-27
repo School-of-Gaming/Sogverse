@@ -140,6 +140,26 @@ export const groupParticipationDetail = z.object({
   group_joined_at: z.string().nullable(),
   note: z.string().nullable(),
   note_updated_by_first_name: z.string().nullable(),
+  /**
+   * The seat offer (00207), on exactly the terms the flair above it rides on:
+   * emitted identically in all three arms, and non-null only on the waitlist
+   * one — a CHECK forbids an offer stamp on any status but `waitlisted`, so
+   * these are null on a grouped or unassigned chip by construction rather than
+   * by a join that missed.
+   *
+   * Unlike the flair, this pair *is* read by a reader of this document: the
+   * waitlist card shows whether a family has been asked and how long they have
+   * left. Whether an offer is LIVE is derived here rather than sent — a stored
+   * "offered" flag would need sweeping back out when the window closed, and a
+   * derived one is simply true or false whenever anybody asks. The window is
+   * `SEAT_OFFER_WINDOW_DAYS`.
+   *
+   * `seat_offer_expiry_notified_at` says staff have already been told this
+   * offer lapsed. It is orthogonal to live-vs-expired: it records a
+   * notification, not the offer's standing.
+   */
+  seat_offer_sent_at: z.string().nullable(),
+  seat_offer_expiry_notified_at: z.string().nullable(),
 });
 
 export const groupGeduDetail = z.object({

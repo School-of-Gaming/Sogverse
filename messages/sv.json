@@ -35,7 +35,8 @@
       "robloxPrivacy": "Integritetspolicy för Roblox-programmet",
       "robloxSafeguarding": "Barnskyddspolicy för Roblox-programmet",
       "robloxTerms": "Användarvillkor för Roblox-programmet",
-      "geduContract": "Gedu-avtal"
+      "geduContract": "Gedu-avtal",
+      "seatOffer": "Platserbjudande"
     }
   },
   "notFound": {
@@ -176,7 +177,8 @@
           "groupWithoutGedu": "Gruppen {group} har ingen Gedu",
           "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
           "missingGeduFee": "Gedu-arvode saknas",
-          "missingMunicipalityFee": "Kommunavgift saknas"
+          "missingMunicipalityFee": "Kommunavgift saknas",
+          "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
         }
       },
       "certification": {
@@ -760,7 +762,18 @@
         "waitlist": {
           "title": "Väntelista",
           "subtitle": "Personer som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv deltagare här för att flytta hen sist i kön.",
-          "empty": "Ingen står på väntelistan."
+          "empty": "Ingen står på väntelistan.",
+          "seatOffer": {
+            "invite": "Bjud in",
+            "inviteAgain": "Bjud in igen",
+            "noAnswer": "Inget svar",
+            "leftDays": "{count, plural, one {# dag kvar} other {# dagar kvar}}",
+            "leftHours": "{count, plural, one {# timme kvar} other {# timmar kvar}}",
+            "leftLastHour": "Mindre än en timme kvar",
+            "liveTitle": "Inbjuden. Erbjudandet gäller till {deadline}.",
+            "expiredTitle": "Erbjudandet gick ut {deadline} utan svar.",
+            "needsOneGroup": "För att bjuda in måste produkten ha exakt en grupp, så att familjen som tackar ja har någonstans att placeras. Nu finns det {count, plural, =0 {inga grupper} one {# grupp} other {# grupper}}."
+          }
         },
         "seatsOverfilled": "{count} av {total} platser – {over} över",
         "blockedMove": {
@@ -1903,6 +1916,21 @@
         "confirmDescriptionSelf": "Du förlorar din plats i kön ({product}).",
         "confirmCta": "Lämna väntelistan",
         "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
+      },
+      "seatOffer": {
+        "title": "En plats har blivit ledig",
+        "bodyChild": "{name} kan få platsen, om du fortfarande vill ha den.",
+        "bodySelf": "Platsen är din, om du fortfarande vill ha den.",
+        "bodyGamer": "Vi har frågat en förälder om du fortfarande vill ha den.",
+        "deadline": "Svara senast {deadline}, annars går platsen till nästa familj i kön.",
+        "lapsed": "Erbjudandet har gått ut. Du står kvar på väntelistan, och platsen kan erbjudas igen.",
+        "accept": "Ta platsen",
+        "decline": "Nej tack",
+        "confirmTitle": "Vill du lämna platsen?",
+        "confirmBodyChild": "{name} förlorar sin plats i kön, och vi erbjuder den till nästa familj.",
+        "confirmBodySelf": "Du förlorar din plats i kön, och vi erbjuder den till nästa familj.",
+        "confirmCta": "Ja, jag är säker",
+        "error": "Något gick fel och ditt svar sparades inte. Försök igen eller skriv till oss på {supportEmail}."
       }
     },
     "help": {
@@ -2410,6 +2438,44 @@
       "staffCopyLabel": "Kopia till Gedus och administratörer",
       "staffCopyBody": "Det här är en kopia av rapporten som skickades till gruppens familjer. Du får den som avsändare eller som administratör, inte som förälder.",
       "staffCopyPrivacy": "Varje familj fick ett eget separat mejl, adresserat enbart till dem. Adresserna till Gedus och administratörer i den här kopians Till- och Kopia-fält finns bara på den här kopian: ingen förälder ser dem, och ingen familj ser en annan familj."
+    },
+    "seatOffer": {
+      "heading": "En plats har blivit ledig",
+      "question": "Vill du fortfarande ha den? Hör av dig hur det än blir — ett nej hjälper lika mycket, för då kan vi erbjuda platsen till nästa familj direkt.",
+      "deadlineLabel": "Svara senast",
+      "deadlineBody": "{deadline}. Hör vi inget från dig innan dess går platsen vidare till nästa familj i kön.",
+      "accept": "Ta platsen",
+      "decline": "Nej tack",
+      "alsoInMySog": "Samma fråga väntar i Min SOG, om du hellre svarar där.",
+      "dashboardButton": "Svara i Min SOG",
+      "child": {
+        "subject": "{participantName}: en plats har blivit ledig – {productName}",
+        "opening": "Vi lovade att höra av oss så snart en plats blev ledig. Nu har det hänt: {participantName} kan vara med – {productName}."
+      },
+      "self": {
+        "subject": "En plats har blivit ledig – {productName}",
+        "opening": "Vi lovade att höra av oss så snart en plats blev ledig. Nu har det hänt: du kan vara med – {productName}."
+      }
+    },
+    "seatOfferStaff": {
+      "participant": "Plats för",
+      "contact": "Kontakt",
+      "contactEmail": "E-post",
+      "product": "Produkt",
+      "schedule": "Schema",
+      "offeredAt": "Erbjöds",
+      "nextStep": "Erbjudandet är över och platsen är ledig igen. Öppna produkten, se kön och skicka nästa inbjudan.",
+      "button": "Öppna produkten",
+      "declined": {
+        "subject": "{participantName} tackade nej till en plats i {productName}",
+        "heading": "Ett platserbjudande tackades nej till",
+        "body": "Familjen kan inte ta platsen och sa till i stället för att låta den hänga. De har tagits bort från väntelistan."
+      },
+      "no_response": {
+        "subject": "Inget svar på ett platserbjudande för {participantName} i {productName}",
+        "heading": "Ett platserbjudande gick ut",
+        "body": "Svarstiden gick ut utan svar. Familjen står kvar på väntelistan och kan erbjudas platsen igen, men själva platsen är ledig nu."
+      }
     }
   },
   "legal": {
@@ -3377,5 +3443,33 @@
       "mcHeads": "Ritar den Minecraft-figur som visas bredvid ett länkat Minecraft-konto. De begär ingenting i gengäld, så det här är ett tack snarare än ett krav."
     },
     "opensInNewTab": "(öppnas i en ny flik)"
+  },
+  "seatOffer": {
+    "offer": {
+      "title": "En plats har blivit ledig",
+      "child": "En plats har blivit ledig för {participantName} i {productName}. Vill du fortfarande ha den?",
+      "self": "En plats har blivit ledig för dig i {productName}. Vill du fortfarande ha den?",
+      "deadline": "Svara senast {deadline}. Därefter går platsen vidare till nästa familj i kön.",
+      "accept": "Ta platsen",
+      "decline": "Nej tack",
+      "confirmTitle": "Vill du lämna platsen?",
+      "confirmBody": "Vi erbjuder den till nästa familj på väntelistan, och det här erbjudandet går inte att öppna igen.",
+      "confirmAction": "Ja, jag är säker",
+      "confirmCancel": "Tillbaka",
+      "error": "Något gick fel och ditt svar sparades inte. Försök igen eller skriv till oss på {supportEmail}."
+    },
+    "accepted": {
+      "title": "Platsen är sparad",
+      "body": "Vi har hållit platsen åt er. Du hittar den i Min SOG tillsammans med allt annat familjen är anmäld till.",
+      "action": "Gå till Min SOG"
+    },
+    "declined": {
+      "title": "Tack för att du sa till",
+      "body": "Vi har tagit bort platsen från din lista. Tack vare ditt svar kan en annan familj få den redan i dag i stället för att den står tom."
+    },
+    "invalid": {
+      "title": "Erbjudandet är inte längre öppet",
+      "body": "Ett platserbjudande är öppet i {days} dagar, och det här har antingen redan besvarats eller gått ut. Om det inte stämmer, skriv till oss på {supportEmail} så tittar vi på det."
+    }
   }
 }

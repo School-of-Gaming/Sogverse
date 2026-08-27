@@ -15,7 +15,9 @@ import {
   usePromoteFromWaitlist,
   useRemoveGedu,
   useRenameGroup,
+  useSendSeatOffer,
 } from "@/services/groups";
+import { useSeatOfferSweepOnMount } from "@/services/participations";
 import type { ProductAudience } from "@/components/public/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
@@ -108,6 +110,14 @@ export function GroupsPanel({
   const removeParticipant = useAdminRemoveParticipantFromProduct(productId);
   const promote = usePromoteFromWaitlist(productId);
   const demote = useDemoteToWaitlist(productId);
+  const sendSeatOffer = useSendSeatOffer(productId);
+
+  // Opening this panel is one of the two observations that notice a seat offer
+  // has run out — there is no cron job, by design, and this is an admin looking
+  // at the exact queue an unanswered offer is sitting in. Fire-and-forget: it
+  // claims and mails nothing in the common case, and invalidates on its own
+  // when it does claim something.
+  useSeatOfferSweepOnMount();
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
   const [participantPickerOpen, setParticipantPickerOpen] = useState(false);
@@ -161,6 +171,11 @@ export function GroupsPanel({
     onRemoveGedu: (groupId, geduId) => removeGedu.mutate({ groupId, geduId }),
     onRequestAddGedu: setPickerForGroupId,
     onRequestAddParticipant: () => setParticipantPickerOpen(true),
+    // `mutateAsync`, unlike every intent above it: the row's Invite button has
+    // to know whether the offer went out, because a failed one leaves the row
+    // looking exactly as it did and the admin has to be able to press again.
+    onSendSeatOffer: (participationId) =>
+      sendSeatOffer.mutateAsync({ participationId }),
   };
 
   const groupBeingStaffed = snapshot?.groups.find(

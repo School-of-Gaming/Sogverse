@@ -665,7 +665,7 @@ const PRODUCT_ISSUE_SPECS: readonly {
     productId: "consumer-club-11",
     issues: [
       { kind: "unassigned-gamers", values: { count: 2 } },
-      { kind: "waitlist-open-seats", values: { waiting: 3, open: 8 } },
+      { kind: "waitlist-open-seats", values: { waiting: 3, open: 8, offers: 2 } },
     ],
   },
   {
@@ -705,13 +705,13 @@ const PRODUCT_ISSUE_SPECS: readonly {
   },
   {
     productId: "consumer-club-3",
-    issues: [{ kind: "waitlist-open-seats", values: { waiting: 3, open: 4 } }],
+    issues: [{ kind: "waitlist-open-seats", values: { waiting: 3, open: 4, offers: 0 } }],
   },
   {
     // One open seat, so the counted half of the waitlist line is seen in its
     // singular form somewhere in the scene.
     productId: "municipality-club-4",
-    issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1 } }],
+    issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1, offers: 0 } }],
   },
   {
     productId: "consumer-club-6",

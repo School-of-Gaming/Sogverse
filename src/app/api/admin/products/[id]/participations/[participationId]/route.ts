@@ -1,13 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   adminRemoveParticipationRpcResult,
   demoteToWaitlistRpcResult,
   promoteFromWaitlistRpcResult,
   waitlistTransitionBody,
 } from "@/services/participations/participations.contracts";
+import { sendSeatOfferRpcResult } from "@/services/participations/seat-offer.contracts";
+import { sendSeatOfferEmail } from "@/services/participations/seat-offer-email.server";
 
 /** Both handlers address one participation on one product, by URL path. */
 const routeParams = z.object({
@@ -132,17 +135,27 @@ export const DELETE = defineRoute({
 /**
  * PATCH /api/admin/products/[id]/participations/[participationId]
  *
- * Admin waitlist status transitions from the groups-panel drag UI:
+ * Admin waitlist actions on one row:
  *  - `promote` — a waitlisted gamer dragged into a group/unassigned. Gives them
  *    a seat via promote_from_waitlist (status→active, group set, waitlisted_at
  *    cleared). No seat-count gate — a deliberate admin capacity override.
  *  - `demote` — an active gamer dragged onto the waitlist. Sends them to the
  *    back via demote_to_waitlist (status→waitlisted, group cleared).
+ *  - `invite` — the seat offer (00207). Grants nothing: it stamps the row and
+ *    mails the family to ask whether they can still come.
  *
- * Same shape as the DELETE handler above: the user-context client against an
- * admin-guarded RPC. Both RPCs re-check the caller's role internally (like
- * apply_group_changes, their drag-UI sibling), so they must run with the
- * caller's JWT — a service-role call has no auth.uid() and would be Forbidden.
+ * The first two are the user-context client against an admin-guarded RPC. Both
+ * re-check the caller's role internally (like apply_group_changes, their
+ * drag-UI sibling), so they must run with the caller's JWT — a service-role
+ * call has no auth.uid() and would be Forbidden.
+ *
+ * **`invite` is the one action here that goes through the admin client, and the
+ * reason is not about admins.** `send_seat_offer` is granted to `service_role`
+ * alone because its two siblings have to be: the family answers from a PUBLIC
+ * landing page with no session for a guard primitive to read, and the three
+ * functions share one authorization model rather than splitting the feature
+ * across two. The admin's identity is established by this route's own role
+ * gate, above, which is where it belongs.
  *
  * **No product-type gate.** This route used to refuse consumer clubs outright,
  * which would have wrongly blocked every *free* club the moment clubs became
@@ -176,7 +189,7 @@ export const PATCH = defineRoute({
   // status.
   errorStatus: { "55000": 400 },
 
-  handler: async ({ supabase, user, params, body }) => {
+  handler: async ({ request, supabase, user, params, body }) => {
     const { id: productId, participationId } = params;
 
     // IDOR guard: the participation must belong to THIS product (else a
@@ -212,7 +225,49 @@ export const PATCH = defineRoute({
 
     // Dispatch to the matching RPC and validate its Json result shape before
     // responding (the db tests parse real RPC output through the same schemas).
-    if (body.action === "promote") {
+    if (body.action === "invite") {
+      const { data, error } = await createAdminClient().rpc("send_seat_offer", {
+        p_participation_id: participationId,
+      });
+      if (error) throw error;
+
+      const offer = sendSeatOfferRpcResult.safeParse(data);
+      if (!offer.success) {
+        throw new ApiError(
+          `send_seat_offer returned an unexpected shape: ${offer.error.message}`,
+          500,
+        );
+      }
+
+      // The stamp is committed; the mail follows it, after the response rather
+      // than inside it, exactly as the waitlist-join confirmation does. The
+      // helper swallows its own failures, so a Brevo outage leaves an offer
+      // standing with no mail behind it — which the admin can fix by pressing
+      // Invite again once the window lapses, and which is strictly better than
+      // handing them a 500 for a row that was successfully stamped.
+      //
+      // `!idempotent` is the whole of the double-click protection, and it comes
+      // from inside the RPC under the product gate lock rather than from a
+      // second query racing the first. A replay reports the ORIGINAL sent_at,
+      // so re-mailing would send a second copy of a mail whose deadline had not
+      // moved — two inboxes' worth of the same question.
+      if (offer.data.kind === "offered" && !offer.data.idempotent) {
+        after(
+          sendSeatOfferEmail({
+            // The admin client, not the caller's: this send reads the family's
+            // profile and the product on a path whose whole authorization is
+            // this route's role gate.
+            client: createAdminClient(),
+            request,
+            participationId,
+            customerId: offer.data.customer_id,
+            participantId: offer.data.participant_id,
+            productId,
+            sentAt: offer.data.sent_at,
+          }),
+        );
+      }
+    } else if (body.action === "promote") {
       const { data, error } = await supabase.rpc("promote_from_waitlist", {
         p_participation_id: participationId,
         p_group_id: body.groupId ?? undefined,

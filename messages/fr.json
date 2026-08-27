@@ -35,7 +35,8 @@
       "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
       "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
       "robloxTerms": "Conditions générales du Programme Roblox",
-      "geduContract": "Contrat Gedu"
+      "geduContract": "Contrat Gedu",
+      "seatOffer": "Proposition de place"
     }
   },
   "notFound": {
@@ -176,7 +177,8 @@
           "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
           "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
           "missingGeduFee": "Rémunération Gedu manquante",
-          "missingMunicipalityFee": "Montant commune manquant"
+          "missingMunicipalityFee": "Montant commune manquant",
+          "waitlistOpenSeatsWithOffers": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}} · {offers} en attente de réponse"
         }
       },
       "certification": {
@@ -760,7 +762,18 @@
         "waitlist": {
           "title": "Liste d’attente",
           "subtitle": "Personnes en attente d’une place, numérotées dans leur ordre d’arrivée. Faites-en glisser une dans un groupe pour lui donner une place, ou déposez ici un participant actif pour l’envoyer en fin de liste.",
-          "empty": "Personne n’est sur la liste d’attente."
+          "empty": "Personne n’est sur la liste d’attente.",
+          "seatOffer": {
+            "invite": "Inviter",
+            "inviteAgain": "Inviter à nouveau",
+            "noAnswer": "Sans réponse",
+            "leftDays": "{count, plural, one {# jour restant} other {# jours restants}}",
+            "leftHours": "{count, plural, one {# heure restante} other {# heures restantes}}",
+            "leftLastHour": "Moins d’une heure",
+            "liveTitle": "Invitée. L’offre est valable jusqu’au {deadline}.",
+            "expiredTitle": "L’offre a expiré le {deadline} sans réponse.",
+            "needsOneGroup": "Pour inviter, le produit doit compter exactement un groupe, afin que la famille qui accepte ait une place où aller. Il en compte actuellement {count, plural, =0 {aucun} one {#} other {#}}."
+          }
         },
         "seatsOverfilled": "{count} places sur {total} – {over} en trop",
         "blockedMove": {
@@ -1903,6 +1916,21 @@
         "confirmDescriptionSelf": "Vous perdrez votre place dans la file pour {product}.",
         "confirmCta": "Quitter la liste d’attente",
         "backOfLineWarning": "Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
+      },
+      "seatOffer": {
+        "title": "Une place s’est libérée",
+        "bodyChild": "{name} peut avoir la place, si vous la voulez toujours.",
+        "bodySelf": "La place est à vous, si vous la voulez toujours.",
+        "bodyGamer": "Nous avons demandé à un parent si tu la veux toujours.",
+        "deadline": "Répondez avant le {deadline}, sinon la place ira à la famille suivante sur la liste.",
+        "lapsed": "Cette proposition a expiré. Vous restez sur la liste d’attente, et la place peut vous être proposée de nouveau.",
+        "accept": "Accepter la place",
+        "decline": "Non, merci",
+        "confirmTitle": "Renoncer à la place ?",
+        "confirmBodyChild": "{name} perdra sa place dans la file, et nous la proposerons à la famille suivante.",
+        "confirmBodySelf": "Vous perdrez votre place dans la file, et nous la proposerons à la famille suivante.",
+        "confirmCta": "Oui, j’en suis sûr",
+        "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
       }
     },
     "help": {
@@ -2410,6 +2438,44 @@
       "staffCopyLabel": "Copie pour les Gedus et les admins",
       "staffCopyBody": "Ceci est une copie du compte rendu envoyé aux familles du groupe. Vous la recevez en tant qu’expéditeur ou en tant qu’administrateur, et non en tant que parent.",
       "staffCopyPrivacy": "Chaque famille a reçu son propre e-mail, adressé à elle seule. Les adresses des Gedus et des admins qui figurent dans les champs À et Cc de cette copie n’apparaissent que sur cette copie : aucun parent ne les voit, et aucune famille n’en voit une autre."
+    },
+    "seatOffer": {
+      "heading": "Une place s’est libérée",
+      "question": "La voulez-vous toujours ? Dites-le-nous dans un sens comme dans l’autre — un non aide tout autant, car il nous permet de proposer la place à la famille suivante sans attendre.",
+      "deadlineLabel": "Merci de répondre avant le",
+      "deadlineBody": "{deadline}. Sans réponse de votre part d’ici là, la place ira à la famille suivante sur la liste.",
+      "accept": "Accepter la place",
+      "decline": "Non, merci",
+      "alsoInMySog": "La même question vous attend dans Mon SOG, si vous préférez répondre là-bas.",
+      "dashboardButton": "Répondre dans Mon SOG",
+      "child": {
+        "subject": "{participantName} : une place s’est libérée pour {productName}",
+        "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : {participantName} peut nous rejoindre — {productName}."
+      },
+      "self": {
+        "subject": "Une place s’est libérée pour {productName}",
+        "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : vous pouvez nous rejoindre — {productName}."
+      }
+    },
+    "seatOfferStaff": {
+      "participant": "Place pour",
+      "contact": "Contact",
+      "contactEmail": "E-mail",
+      "product": "Produit",
+      "schedule": "Horaires",
+      "offeredAt": "Proposée le",
+      "nextStep": "La proposition est terminée et la place est de nouveau libre. Ouvrez le produit pour voir la file d’attente et envoyer la prochaine invitation.",
+      "button": "Ouvrir le produit",
+      "declined": {
+        "subject": "{participantName} a refusé une place pour {productName}",
+        "heading": "Une proposition de place a été refusée",
+        "body": "La famille ne peut pas prendre la place et nous l’a dit plutôt que de la laisser en suspens. Elle a été retirée de la liste d’attente."
+      },
+      "no_response": {
+        "subject": "Aucune réponse à une proposition de place pour {participantName} — {productName}",
+        "heading": "Une proposition de place a expiré",
+        "body": "Le délai de réponse s’est écoulé sans réponse. La famille reste sur la liste d’attente et peut recevoir une nouvelle proposition, mais la place elle-même est libre dès maintenant."
+      }
     }
   },
   "legal": {
@@ -3377,5 +3443,33 @@
       "mcHeads": "Dessine le personnage Minecraft affiché à côté d’un compte Minecraft associé. Rien ne nous oblige à les citer : ils ne demandent rien en retour, et ce crédit est un remerciement."
     },
     "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
+  },
+  "seatOffer": {
+    "offer": {
+      "title": "Une place s’est libérée",
+      "child": "Une place s’est libérée pour {participantName} — {productName}. La voulez-vous toujours ?",
+      "self": "Une place s’est libérée pour vous — {productName}. La voulez-vous toujours ?",
+      "deadline": "Merci de répondre avant le {deadline}. Passé ce délai, la place ira à la famille suivante sur la liste.",
+      "accept": "Accepter la place",
+      "decline": "Non, merci",
+      "confirmTitle": "Renoncer à la place ?",
+      "confirmBody": "Nous la proposerons à la famille suivante sur la liste d’attente, et cette proposition ne pourra pas être rouverte.",
+      "confirmAction": "Oui, j’en suis sûr",
+      "confirmCancel": "Retour",
+      "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
+    },
+    "accepted": {
+      "title": "La place est réservée",
+      "body": "Nous avons gardé la place pour vous. Vous la retrouverez dans Mon SOG, avec toutes les autres inscriptions de votre famille.",
+      "action": "Aller sur Mon SOG"
+    },
+    "declined": {
+      "title": "Merci de nous l’avoir dit",
+      "body": "Nous avons retiré la place de votre liste. Grâce à votre réponse, une autre famille pourra en profiter dès aujourd’hui au lieu de la laisser vide."
+    },
+    "invalid": {
+      "title": "Cette proposition n’est plus valable",
+      "body": "Une proposition de place reste ouverte {days} jours, et celle-ci a déjà reçu une réponse ou bien expiré. Si cela vous semble incorrect, écrivez-nous à {supportEmail} et nous regarderons."
+    }
   }
 }

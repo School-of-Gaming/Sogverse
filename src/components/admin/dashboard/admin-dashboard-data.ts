@@ -32,6 +32,19 @@ import type { ProductType, UserRole } from "@/types";
  * queue inverts that — it scatters one product's three problems across three
  * lists and makes the admin reassemble them — so the categories survive only as
  * the *lines inside a product's card*, which is where they belong.
+ *
+ * **The ranking is STATE-prioritized and deliberately TIME-BLIND.** This list is
+ * the whole of it: the queue ranks by the KIND of wrong and never by imminence,
+ * so a group with no educator starting tomorrow ranks identically to one
+ * starting next month, and a missing fee on a club that opens this week still
+ * sits below an unassigned child on one that opens in the spring. Nothing here
+ * reads a start date, and that is a chosen boundary rather than an oversight —
+ * weighting the queue by how soon a product needs its problem solved is a
+ * different design with its own questions (what horizon counts as urgent,
+ * whether a near date can outrank a worse kind of wrong, what a product with no
+ * start date does), and it is a future conversation rather than a missing half
+ * of this one. Written down so the next reader recognises it as a decision
+ * instead of rediscovering it as a bug.
  */
 export const PRODUCT_ISSUE_KINDS = [
   "unassigned-gamers",
@@ -58,7 +71,20 @@ export type ProductIssueKind = (typeof PRODUCT_ISSUE_KINDS)[number];
 export type ProductIssueFact =
   | { kind: "unassigned-gamers"; values: { count: number } }
   | { kind: "group-without-gedu"; values: { group: string } }
-  | { kind: "waitlist-open-seats"; values: { waiting: number; open: number } }
+  /**
+   * People queueing while seats stand open. `offers` is how many of those
+   * families are currently holding a live seat offer — always fewer than
+   * `open`, because a product whose open seats are all covered drops off this
+   * list entirely and comes back on its own if one is declined or lapses.
+   *
+   * It rides along so the line can say why the numbers do not add up to the
+   * obvious next move: with two seats open and one offer out, what is left to
+   * do is offer the other one, not the pair.
+   */
+  | {
+      kind: "waitlist-open-seats";
+      values: { waiting: number; open: number; offers: number };
+    }
   | { kind: "missing-gedu-fee" }
   | { kind: "missing-municipality-fee" };
 

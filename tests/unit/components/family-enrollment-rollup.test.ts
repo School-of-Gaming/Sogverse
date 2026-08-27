@@ -71,6 +71,7 @@ function enrollment(
     endDate: fields.endDate ?? null,
     timezone: TZ,
     waitlistPosition: null,
+    seatOfferSentAt: null,
     awaiting: false,
     paymentProblem: false,
     cancellation: null,
@@ -275,6 +276,10 @@ function waitlistRow(
     },
     slots: [FRIDAY_SLOT],
     position: 3,
+    // No seat has been offered to this family, which is the ordinary case for
+    // a queue place — the roll-up carries the stamp through untouched, and the
+    // card is what decides whether to draw anything from it.
+    seatOfferSentAt: null,
     ...rest,
   };
 }

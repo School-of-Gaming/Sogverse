@@ -166,13 +166,23 @@ export const adminEnrollParticipantBody = z.object({
 
 /**
  * Body of PATCH /api/admin/products/[id]/participations/[participationId] — the
- * admin waitlist status transitions driven by the groups-panel drag UI.
- * `promote` carries the drop target (`groupId` null = unassigned inbox);
- * `demote` sends an active gamer to the back of the waitlist (no target).
+ * admin waitlist actions on one row.
+ *
+ * `promote` and `demote` are the groups-panel drag UI: `promote` carries the
+ * drop target (`groupId` null = unassigned inbox); `demote` sends an active
+ * gamer to the back of the waitlist (no target).
+ *
+ * `invite` is the seat offer (00207) and is a different kind of act, which is
+ * why it is a third action rather than a flag on `promote`: it grants nothing.
+ * It asks a waitlisted family whether they can still come, and the seat moves
+ * only if they say yes. It carries no target because the product it is allowed
+ * on has exactly one group by definition — that is the condition that makes the
+ * question answerable without asking the family to choose.
  */
 export const waitlistTransitionBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("promote"), groupId: z.string().nullable() }),
   z.object({ action: z.literal("demote") }),
+  z.object({ action: z.literal("invite") }),
 ]);
 
 export type WaitlistTransitionBody = z.infer<typeof waitlistTransitionBody>;

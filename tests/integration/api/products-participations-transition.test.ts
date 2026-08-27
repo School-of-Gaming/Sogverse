@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+// The seat-offer mail signs its link with this secret and builds its origin
+// from getOrigin(), which falls back to NEXT_PUBLIC_SITE_URL when the request
+// carries no trusted Host. Both are read lazily, but set them before the
+// imports so nothing can capture an unset value.
+process.env.PIN_COOKIE_SECRET = "integration-test-pin-secret";
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+
 import { NextResponse } from "next/server";
 import { PATCH } from "@/app/api/admin/products/[id]/participations/[participationId]/route";
 import { asString } from "../../helpers/json";
@@ -29,6 +37,95 @@ const mockRpc = vi.fn();
 const mockParticipationRead = vi.fn();
 const mockProductRead = vi.fn();
 
+// `invite` is the one action here that goes through the service-role client,
+// because `send_seat_offer` is granted to nobody else — its two siblings answer
+// a family who has no session at all, and the three share one authorization
+// model. The admin's identity is still established by the route's role gate.
+const mockAdminRpc = vi.fn();
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    rpc: (...args: unknown[]) => mockAdminRpc(...args),
+    from: (table: string) => adminTableStub(table),
+  }),
+}));
+
+const mockSendTransactionalEmail = vi.fn();
+vi.mock("@/lib/brevo", () => ({
+  sendTransactionalEmail: (...args: unknown[]) =>
+    mockSendTransactionalEmail(...args),
+}));
+
+// The stamp is committed before the mail is attempted, so the send is handed to
+// the platform's post-response hook rather than awaited inside the answer.
+// Capture the deferred work instead of letting the hook run it, so these tests
+// can assert the route deferred and then settle the send deliberately.
+const deferred: unknown[] = [];
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return {
+    ...actual,
+    after: (work: unknown) => {
+      deferred.push(work);
+    },
+  };
+});
+
+/**
+ * Let the eagerly-started deferred send settle. `after()` receives an
+ * already-running promise, so anything it rejects with would otherwise surface
+ * after the test had passed — and a send left mid-flight would land its Brevo
+ * call in whichever test happens to be running when it resolves.
+ */
+async function settleDeferred(): Promise<void> {
+  await Promise.all(deferred);
+}
+
+/** The two reads the seat-offer mail makes through the service-role client. */
+function adminTableStub(table: string) {
+  if (table === "products") {
+    return {
+      select: () => ({
+        eq: () => ({
+          order: () => ({
+            single: async () => ({
+              data: {
+                product_type: "municipality_club",
+                timezone: "Europe/Helsinki",
+                product_translations: [{ locale: "en", name: "Minecraft 101" }],
+                schedule_slots: [{ weekday: 1, start_time: "16:00:00" }],
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    };
+  }
+  return {
+    select: () => ({
+      in: async () => ({
+        data: [
+          {
+            id: CUSTOMER_ID,
+            first_name: "Marja",
+            last_name: "Virtanen",
+            email: "marja@example.com",
+            locale: "en",
+          },
+          {
+            id: GAMER_ID,
+            first_name: "Aino",
+            last_name: null,
+            email: "aino@gamer.sogverse.internal",
+            locale: null,
+          },
+        ],
+        error: null,
+      }),
+    }),
+  };
+}
+
 /** `participations` and `products` are read through the same client stub. */
 function tableStub(table: string) {
   const read = table === "participations" ? mockParticipationRead : mockProductRead;
@@ -40,6 +137,9 @@ function tableStub(table: string) {
 const PRODUCT_ID = "11111111-1111-1111-1111-111111111111";
 const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
 const GROUP_ID = "55555555-5555-5555-5555-555555555555";
+const CUSTOMER_ID = "66666666-6666-4666-8666-666666666666";
+const GAMER_ID = "77777777-7777-4777-8777-777777777777";
+const SENT_AT = "2026-08-26T10:00:00.123+00:00";
 
 const params = Promise.resolve({
   id: PRODUCT_ID,
@@ -82,6 +182,23 @@ function mockNonAdmin() {
 
 const promote = { action: "promote", groupId: GROUP_ID };
 const demote = { action: "demote" };
+const invite = { action: "invite" };
+
+/** What `send_seat_offer` answers on the call that actually stamped the row. */
+function freshOffer() {
+  return {
+    data: {
+      kind: "offered",
+      participation_id: PARTICIPATION_ID,
+      product_id: PRODUCT_ID,
+      customer_id: CUSTOMER_ID,
+      participant_id: GAMER_ID,
+      sent_at: SENT_AT,
+      idempotent: false,
+    },
+    error: null,
+  };
+}
 
 describe("PATCH /api/admin/products/[id]/participations/[participationId]", () => {
   beforeEach(() => {
@@ -105,7 +222,14 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
       },
       error: null,
     });
+    mockAdminRpc.mockResolvedValue(freshOffer());
+    mockSendTransactionalEmail.mockResolvedValue({ messageId: "m1" });
+    deferred.length = 0;
     vi.spyOn(console, "info").mockImplementation(() => undefined);
+  });
+
+  afterEach(async () => {
+    await settleDeferred();
   });
 
   // -- Auth --
@@ -323,6 +447,128 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
     const response = await PATCH(patchRequest(promote), { params });
 
     expect(response.status).toBe(200);
+  });
+
+  // -- The seat offer --
+
+  it("offers the seat and mails the family, after the answer has gone out", async () => {
+    mockAuthenticatedAdmin();
+
+    const response = await PATCH(patchRequest(invite), { params });
+
+    expect(response.status).toBe(200);
+    expect(mockAdminRpc).toHaveBeenCalledWith("send_seat_offer", {
+      p_participation_id: PARTICIPATION_ID,
+    });
+    // Deferred, not awaited: the stamp is committed and the admin's click must
+    // not wait on Brevo.
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    expect(deferred).toHaveLength(1);
+
+    await settleDeferred();
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.toEmail).toBe("marja@example.com");
+    expect(sent.subject).toContain("Aino");
+    // The link carries the token and points at the public landing page, on the
+    // trusted origin rather than the request's Host.
+    expect(sent.htmlContent).toContain(
+      "https://test.sogverse.local/seat-offer?token=",
+    );
+  });
+
+  /**
+   * The double-click, and the only thing that tells it apart from a first send.
+   * A replay reports the ORIGINAL sent_at, so re-mailing would put a second
+   * copy of one question — with an unchanged deadline — in a family's inbox.
+   */
+  it("sends nothing when the RPC reports a live offer was already standing", async () => {
+    mockAuthenticatedAdmin();
+    mockAdminRpc.mockResolvedValue({
+      data: { ...freshOffer().data, idempotent: true },
+      error: null,
+    });
+
+    const response = await PATCH(patchRequest(invite), { params });
+
+    expect(response.status).toBe(200);
+    expect(deferred).toHaveLength(0);
+    await settleDeferred();
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  it("sends nothing when the row has already moved on", async () => {
+    mockAuthenticatedAdmin();
+    mockAdminRpc.mockResolvedValue({
+      data: { kind: "noop", status: "active" },
+      error: null,
+    });
+
+    const response = await PATCH(patchRequest(invite), { params });
+
+    expect(response.status).toBe(200);
+    expect(deferred).toHaveLength(0);
+    await settleDeferred();
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The stamp is committed by the time the send runs, so a Brevo outage is
+   * never a reason to answer the admin with a failure. The offer stands with no
+   * mail behind it, which the admin can fix by inviting again once the window
+   * lapses.
+   */
+  it("answers 200 even when the send throws", async () => {
+    mockAuthenticatedAdmin();
+    mockSendTransactionalEmail.mockRejectedValue(new Error("brevo is down"));
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await PATCH(patchRequest(invite), { params });
+    await settleDeferred();
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    spy.mockRestore();
+  });
+
+  /**
+   * Both refusals the RPC raises — a paid product, and a product without
+   * exactly one group — are check violations, which the shared table already
+   * answers 400 for. The admin UI does not offer the button in either case;
+   * this pins what happens if it is reached anyway.
+   */
+  it("maps the RPC's refusals to 400 and sends nothing", async () => {
+    mockAuthenticatedAdmin();
+    mockAdminRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message: "seat offers are only made on no-charge products",
+      },
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await PATCH(patchRequest(invite), { params });
+
+    expect(response.status).toBe(400);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("still applies the IDOR guard to an invite", async () => {
+    mockAuthenticatedAdmin();
+    mockParticipationRead.mockResolvedValue({
+      data: {
+        id: PARTICIPATION_ID,
+        product_id: "99999999-9999-4999-8999-999999999999",
+      },
+      error: null,
+    });
+
+    const response = await PATCH(patchRequest(invite), { params });
+
+    expect(response.status).toBe(404);
+    expect(mockAdminRpc).not.toHaveBeenCalled();
   });
 
   it("writes an audit line naming the admin, the product and the action", async () => {

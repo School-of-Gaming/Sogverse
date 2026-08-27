@@ -23,6 +23,10 @@ import {
   PARENT_DASHBOARD_SCENARIOS,
   buildParentDashboardFixture,
 } from "@/components/parent/mock-dashboard-fixtures";
+import {
+  SEAT_OFFER_SCENARIOS,
+  seatOfferFixtureDeadline,
+} from "@/components/seat-offer/mock-seat-offer-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import {
   attendanceTally,
@@ -45,6 +49,7 @@ import {
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
+import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
 
 /**
  * The preview registry is the only thing standing between a link on the style
@@ -224,6 +229,34 @@ describe("registry scenarios match their fixtures", () => {
     expect(slugsFor("shop")).toEqual([...SHOP_BROWSE_SCENARIOS]);
   });
 
+  it("seat-offer landing page", () => {
+    expect(slugsFor("seat-offer")).toEqual([...SEAT_OFFER_SCENARIOS]);
+  });
+
+});
+
+/**
+ * The seat-offer scene's deadline is derived from the render clock rather than
+ * written down, and both ends of that arithmetic matter. A deadline already
+ * behind the reader would render the offer panel promising a window that has
+ * closed — the exact contradiction the fixture is anchored to `now` to avoid —
+ * and one further out than the real window would show a family a promise the
+ * product cannot make.
+ */
+describe("the seat-offer scene's deadline", () => {
+  const now = new Date("2026-02-11T20:00:00Z");
+  const deadline = seatOfferFixtureDeadline(now);
+
+  it("lands ahead of the reader and inside the product's own window", () => {
+    expect(deadline.getTime()).toBeGreaterThan(now.getTime());
+    expect(deadline.getTime() - now.getTime()).toBeLessThan(
+      SEAT_OFFER_WINDOW_MS,
+    );
+  });
+
+  it("leaves more than a day on the clock, so the sentence names a real window", () => {
+    expect(deadline.getTime() - now.getTime()).toBeGreaterThan(86_400_000);
+  });
 });
 
 /**

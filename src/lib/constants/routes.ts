@@ -177,6 +177,20 @@ export const ROUTES = {
    * otherwise be bounced to the PIN pad and never verify).
    */
   verifyEmail: "/verify-email",
+  /**
+   * Landing page for the seat-offer email link. Public and session-agnostic for
+   * the same reason `verifyEmail` is, with one extra: the person clicking is a
+   * parent on a family device, so they may well be signed in as their own
+   * child. The signed `?token=` names the offer and IS the authorization, and
+   * an auth-gated route would bounce that reader somewhere before the token was
+   * ever read.
+   *
+   * Unlike `verifyEmail`, nothing here acts on the GET. Accepting a seat is not
+   * idempotent and it grants something, so the page only renders and the two
+   * answers are POSTs behind buttons — an inbox scanner following the link must
+   * never take a seat on a family's behalf.
+   */
+  seatOffer: "/seat-offer",
   selectProfile: "/select-profile",
   help: "/help",
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */

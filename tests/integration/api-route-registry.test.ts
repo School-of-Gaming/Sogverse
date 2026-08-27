@@ -188,6 +188,9 @@ const TESTS = {
   robloxAccount: "tests/integration/api/roblox-account.test.ts",
   robloxAvatars: "tests/integration/api/roblox-avatars.test.ts",
   robloxVerify: "tests/integration/api/roblox-verify.test.ts",
+  seatOfferRespond: "tests/integration/api/seat-offer-respond.test.ts",
+  seatOfferSweep: "tests/integration/api/admin-seat-offers-sweep.test.ts",
+  seatOfferInApp: "tests/integration/api/participations-seat-offer.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -250,6 +253,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   "src/app/api/admin/products/[id]/participations/[participationId]/route.ts": {
+    adminClient:
+      "the `invite` action alone; send_seat_offer is granted to service_role only because its two siblings answer a family with no session at all, and the three seat-offer functions share one authorization model. The admin's identity is established by this route's own role gate, and the promote/demote actions still run on the user client",
     handlers: {
       DELETE: {
         posture: ADMIN_ONLY,
@@ -263,6 +268,20 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         // shape a per-file view of coverage hides, and the reason check 4 is
         // per handler rather than per file.
         test: TESTS.productsParticipationsTransition,
+      },
+    },
+  },
+
+  // The lazy expiry sweep. There is no cron job behind seat offers: expiry is
+  // observed by somebody opening a page that would care, and this is that call.
+  "src/app/api/admin/seat-offers/sweep/route.ts": {
+    adminClient:
+      "claim_expired_seat_offer_notifications is service_role-only, along with the rest of the seat-offer trio, and the staff mails it feeds read a family whose row the caller has no policy on, and resolve their own recipients from the role column — every admin account, which is in nobody else's view",
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.seatOfferSweep,
       },
     },
   },
@@ -839,6 +858,41 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // Answering a seat offer from inside My SOG. The session is the credential
+  // here and there is no token — the public sibling below is the other way
+  // round, and they are two routes on purpose: one handler taking either would
+  // be one handler where a missing token can be read as "must be the session
+  // path".
+  "src/app/api/participations/seat-offer/route.ts": {
+    adminClient:
+      "respond_seat_offer is service_role-only because its public sibling has no session to guard on; the caller's ownership of the row is established first, on the caller's own client under their own RLS, and the staff mail reads a product and profiles they hold no policy on — including the role column it resolves its admin recipients from",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "json", schema: "inAppSeatOfferRespondBody" },
+        test: TESTS.seatOfferInApp,
+      },
+    },
+  },
+
+  // --- Seat offers (public) ------------------------------------------------
+
+  "src/app/api/seat-offer/respond/route.ts": {
+    adminClient:
+      "there is no session on this path at all — the signed token is the authorization — so every read and the write behind it run on the service-role client — the staff mail's admin recipient list included — and the token's compare-and-swap inside respond_seat_offer is what narrows that to one participation and one offer",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "public",
+          reason:
+            "a family answers a seat offer from the link in their inbox, and the person clicking has no usable session: on a shared family tablet a parent is as likely to be signed in as their own child as as themselves, and bouncing them would simply lose the link. The signed token names one participation and one exact offer instant, both HMAC'd under PIN_COOKIE_SECRET with a `seat-offer:` domain prefix, and the RPC behind it compares that instant against the row before writing — so possession of the link authorizes exactly one answer to exactly one offer and expires with it. Every unrecognised token gets one generic 200 answer, so the route confirms nothing about which participation ids exist. Nothing acts on a GET: the emailed buttons land on a page that only renders, and this POST is what that page's own buttons call, so a mail scanner following the link cannot take a seat",
+        },
+        body: { kind: "json", schema: "seatOfferRespondBody" },
+        test: TESTS.seatOfferRespond,
+      },
+    },
+  },
+
   // --- Roblox --------------------------------------------------------------
 
   "src/app/api/roblox/account/route.ts": {
@@ -1050,6 +1104,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "resolves a PIN-reset token to a user id with no session in hand; shared by the reset page and the reset route",
   "src/lib/email-verification.server.ts":
     "redeems an emailed verification token, which authorizes itself — the reader may hold no session or somebody else's, and `email_verified_at` has no write grant outside the service role",
+  "src/lib/seat-offer.server.ts":
+    "reads an emailed seat offer for its landing page, which authorizes itself — the reader may hold no session or their own child's, and the page renders identically either way. It only reads: accepting is a POST behind a button, so a mail scanner following the link reaches this and stops",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/select-profile/page.tsx":

@@ -13,6 +13,7 @@ import type {
   FamilyEnrollmentSummary,
   FamilyParticipantEnrollments,
 } from "@/components/family/enrollment-rollup";
+import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
 import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
 import { ParentHelpSection } from "./ParentHelpSection";
 
@@ -203,6 +204,7 @@ export function ParentDashboardPageBody({
   onJoinClick,
   onLeaveWaitlist,
   leavingParticipationIds,
+  onRespondToSeatOffer,
 }: {
   /** The parent's children, in the order their sections appear. */
   gamers: readonly ParentDashboardParticipant[];
@@ -267,6 +269,21 @@ export function ParentDashboardPageBody({
    * which is exactly the re-enable the disabled-state rule forbids.
    */
   leavingParticipationIds?: ReadonlySet<string>;
+  /**
+   * A parent answered a seat offer — yes or no — on one of these cards.
+   *
+   * Unlike every other action on this page it **returns** something, because
+   * two of the server's four answers ("the window closed", "already answered")
+   * are not failures and the card has to draw them as a lapsed offer rather
+   * than as an error. The card owns the decline confirmation and the committed
+   * state; the shell owns the mutation. There is no in-flight set beside this
+   * one for the same reason: the block that fired it keeps its own flag and
+   * stays committed until the answer resolves.
+   */
+  onRespondToSeatOffer?: (
+    action: ParentEnrollmentAction,
+    accept: boolean,
+  ) => Promise<SeatOfferRespondResponse["outcome"]>;
 }) {
   const t = useTranslations("dashboardSections");
   const f = useTranslations("family");
@@ -458,6 +475,14 @@ export function ParentDashboardPageBody({
                           leavingWaitlist={leavingParticipationIds?.has(
                             enrollment.participationId,
                           )}
+                          onRespondToSeatOffer={
+                            onRespondToSeatOffer &&
+                            ((accept) =>
+                              onRespondToSeatOffer(
+                                { seat: "gamer", gamer, enrollment },
+                                accept,
+                              ))
+                          }
                         />
                       ))}
                     </div>
@@ -543,6 +568,11 @@ export function ParentDashboardPageBody({
                     leavingWaitlist={leavingParticipationIds?.has(
                       enrollment.participationId,
                     )}
+                    onRespondToSeatOffer={
+                      onRespondToSeatOffer &&
+                      ((accept) =>
+                        onRespondToSeatOffer({ seat: "self", enrollment }, accept))
+                    }
                   />
                 ))}
               </div>

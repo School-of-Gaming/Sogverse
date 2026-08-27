@@ -42,9 +42,10 @@
 // prefixing exists for. One payload under this key carries NO prefix — the PIN
 // unlock cookie signs `${userId}:${sessionId}` bare — and it still cannot
 // collide: its verifier derives both components from the caller's own JWT
-// rather than the token, and a UUID can never begin with a prefix string. Any
-// FOURTH payload under this key must carry its own prefix; do not add another
-// bare one.
+// rather than the token, and a UUID can never begin with a prefix string. The
+// fourth payload class is the seat offer (`seat-offer:`, in
+// `seat-offer-token.ts`), which followed this rule. Any FIFTH must carry its
+// own prefix too; do not add another bare one.
 //
 // The changed-address reset watches `profiles.email` (a DB trigger), which is
 // the only email this app ever changes. An auth-side change that bypassed

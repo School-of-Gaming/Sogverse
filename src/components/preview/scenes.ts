@@ -50,9 +50,11 @@ import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/
  * `"dashboard"` is the shell every non-admin role meets — header plus the
  * dashboard layout, no sidebar. `"admin"` is the same layout with the sidebar
  * the admin role actually gets, and it is a separate kind because that sidebar
- * takes a third of the width on a surface designed to use width.
+ * takes a third of the width on a surface designed to use width. `"auth"` is
+ * the signed-out shell — the public one with its `<main>` centring a single
+ * narrow column, which is the whole geometry of a page whose body is one card.
  */
-export type PreviewChromeKind = "public" | "dashboard" | "admin";
+export type PreviewChromeKind = "public" | "auth" | "dashboard" | "admin";
 
 export interface PreviewScenarioMeta {
   /** URL segment — `/preview/{surface}/{slug}`. */
@@ -340,6 +342,19 @@ export const PREVIEW_SCENES = [
     chrome: "dashboard",
     scenarios: [
       { slug: "active-club", label: "Club — remote, session in progress" },
+    ],
+  },
+  {
+    surface: "seat-offer",
+    title: "Seat-offer landing page",
+    description:
+      "The page the seat-offer mail links to, in each state it can be met in. Answering reaches no backend and still moves the panel: accept and decline hold their real committing states and land on the real card, and the decline confirmation works against local state.",
+    chrome: "auth",
+    scenarios: [
+      { slug: "live", label: "The offer" },
+      { slug: "accepted", label: "Seat accepted" },
+      { slug: "declined", label: "Seat declined" },
+      { slug: "dead-link", label: "Dead link" },
     ],
   },
   {

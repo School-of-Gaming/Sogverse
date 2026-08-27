@@ -546,7 +546,7 @@ describe("the attention queue", () => {
               { id: "g1", name: "Tiistai A" },
               { id: "g2", name: "Tiistai B" },
             ],
-            waitlist: { waitlist_count: 3, open_seats: 1 },
+            waitlist: { waitlist_count: 3, open_seats: 1, live_offer_count: 0 },
             missing_gedu_fee: true,
           }),
         ],
@@ -567,13 +567,37 @@ describe("the attention queue", () => {
       { kind: "unassigned-gamers", values: { count: 1 } },
       { kind: "group-without-gedu", values: { group: "Tiistai A" } },
       { kind: "group-without-gedu", values: { group: "Tiistai B" } },
-      { kind: "waitlist-open-seats", values: { waiting: 3, open: 1 } },
+      { kind: "waitlist-open-seats", values: { waiting: 3, open: 1, offers: 0 } },
       { kind: "missing-gedu-fee" },
     ]);
     // Two group lines on one card need two keys.
     expect(new Set(data.products[0].issues.map((issue) => issue.id)).size).toBe(
       5,
     );
+  });
+
+  it("carries the live seat-offer count into the waitlist fact", () => {
+    // The RPC only lists a product whose open seats exceed its live offers, so
+    // this is the shape the card has to explain: four queued, two seats free,
+    // one family already asked — and therefore one offer still to send. The
+    // count would be silently droppable without this case, and the line would
+    // go back to reading as though nobody had been asked at all.
+    const data = build(
+      snapshot({
+        attention_products: [
+          attentionProduct({
+            id: "club",
+            waitlist: { waitlist_count: 4, open_seats: 2, live_offer_count: 1 },
+          }),
+        ],
+      }),
+    );
+
+    expect(
+      data.products[0].issues.map(({ id: _id, ...issue }) => issue),
+    ).toEqual([
+      { kind: "waitlist-open-seats", values: { waiting: 4, open: 2, offers: 1 } },
+    ]);
   });
 
   it("prefers the viewer's locale for a product's name, falling back to English", () => {

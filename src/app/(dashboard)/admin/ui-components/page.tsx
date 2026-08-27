@@ -1324,6 +1324,19 @@ function EnrollmentCardDemo() {
         slots: [futureSlot(now, 6, "15:00", 90, FIXTURE_TIMEZONE)],
         waitlistPosition: 3,
       }),
+      // The same queue place, asked. Thirty hours into a five-day window, so
+      // the deadline reads as a real moment rather than as either edge of the
+      // window. It belongs in the matrix beside the other two for exactly the
+      // reason they are there: the block is worded three ways, and only the
+      // child's copy has no way to answer it.
+      seatOffered: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-seat-offered",
+        productName: "Valheim Survival Club",
+        slots: [futureSlot(now, 6, "15:00", 90, FIXTURE_TIMEZONE)],
+        waitlistPosition: 3,
+        seatOfferedHoursAgo: 30,
+      }),
       inPerson: build({
         participationId: "demo-enrollment-in-person",
         productName: "Cosmic Builders Camp",
@@ -1351,6 +1364,12 @@ function EnrollmentCardDemo() {
   // The confirm dialog in front of it is pure UI and works.
   const inert = () => {};
 
+  // The seat offer's answer, inert the same way. It resolves rather than
+  // rejecting, which leaves the buttons committed and the spinner running —
+  // which is what a real answer leaves behind, since the refetch that follows
+  // takes the card off the waitlist band entirely.
+  const inertAnswer = () => Promise.resolve("accepted" as const);
+
   // One card. The three arms take different props rather than one `audience`
   // string, which is the point: the child's card cannot be handed a portal or a
   // leave handler at all, and the parent's own seat has no `onJoinClick` to
@@ -1372,6 +1391,7 @@ function EnrollmentCardDemo() {
           audience="self"
           onOpenPortal={inert}
           onLeaveWaitlist={inert}
+          onRespondToSeatOffer={inertAnswer}
         />
       );
     }
@@ -1383,17 +1403,22 @@ function EnrollmentCardDemo() {
         onOpenPortal={inert}
         onJoinClick={inert}
         onLeaveWaitlist={inert}
+        onRespondToSeatOffer={inertAnswer}
       />
     );
   };
 
-  // The two states whose footer is worded three ways. They are the matrix.
+  // The states whose footer is worded three ways. They are the matrix.
   const compared: readonly {
     label: string;
     enrollment: (typeof cards)[keyof typeof cards];
   }[] = [
     { label: "Awaiting placement", enrollment: cards.awaiting },
     { label: "Waitlisted", enrollment: cards.waitlisted },
+    // Directly under the plain queue place, because the pair is the comparison
+    // worth having: the leave link stands down when the offer arrives, and
+    // seeing the two rows together is the only way to notice that.
+    { label: "Seat offered", enrollment: cards.seatOffered },
   ];
 
   // Everything else, one wording each, at a width the card reads at.

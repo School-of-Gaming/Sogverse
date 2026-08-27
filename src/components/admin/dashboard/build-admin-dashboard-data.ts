@@ -222,11 +222,15 @@ function toProductAttention(
   }
 
   if (product.waitlist !== null) {
-    const { waitlist_count: waiting, open_seats: open } = product.waitlist;
+    const {
+      waitlist_count: waiting,
+      open_seats: open,
+      live_offer_count: offers,
+    } = product.waitlist;
     issues.push({
       id: `${product.id}-waitlist-open-seats`,
       kind: "waitlist-open-seats",
-      values: { waiting, open },
+      values: { waiting, open, offers },
     });
   }
 

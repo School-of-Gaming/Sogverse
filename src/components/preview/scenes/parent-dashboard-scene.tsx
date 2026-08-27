@@ -65,6 +65,13 @@ export function ParentDashboardScene({
       // dialog in front of the leave is pure UI and works for real.
       onJoinClick={noop}
       onLeaveWaitlist={noop}
+      // The seat-offer block's buttons are real, and answering leaves them in
+      // the state a real answer leaves them in: committed, spinner running,
+      // both disabled. On the live page the refetch that follows takes the card
+      // off the waitlist band entirely, so there is nothing after that state to
+      // show — and a scene that let the buttons spring back would be showing a
+      // frame the disabled-state rule exists to prevent.
+      onRespondToSeatOffer={acceptedForever}
     />
   );
 }
@@ -123,3 +130,8 @@ function FixtureBillingCard({
 }
 
 function noop() {}
+
+/** Answers yes and then never changes anything — see the prop's note above. */
+function acceptedForever() {
+  return Promise.resolve("accepted" as const);
+}

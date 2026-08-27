@@ -24,6 +24,12 @@ import {
   type JoinWaitlistResponse,
   type LeaveWaitlistResponse,
 } from "./participations.contracts";
+import {
+  seatOfferRespondResponse,
+  seatOfferSweepResponse,
+  type SeatOfferRespondResponse,
+  type SeatOfferSweepResponse,
+} from "./seat-offer.contracts";
 
 /**
  * A venue's name as it comes off the row — the canonical `name` plus the
@@ -214,6 +220,23 @@ export interface MyWaitlistRow {
    * the stamped-at-join value, so it shrinks as people ahead leave.
    */
   position: number;
+  /**
+   * When a seat was offered to this family, or null if none ever has been.
+   *
+   * It comes off the `participations` row rather than the position RPC, and
+   * deliberately: the RPC is `SECURITY DEFINER` and counts past the caller's
+   * RLS, so everything it returns is data the caller may not be entitled to —
+   * its comment bounds that surface to an id and an integer. This value is the
+   * caller's own row, readable under their own policies, so it belongs in the
+   * select beside every other field on this shape.
+   *
+   * Whether the offer is still LIVE is derived from it, against
+   * `SEAT_OFFER_WINDOW_DAYS` — the same arithmetic the database does, and the
+   * reason the deadline can be stated without a second round trip. An offer
+   * whose window has closed reads as an ordinary queue place again: the row is
+   * still waitlisted, and an admin may offer it afresh.
+   */
+  seatOfferSentAt: string | null;
 }
 
 /**
@@ -339,6 +362,16 @@ export type JoinWaitlistInput = {
 
 export type LeaveWaitlistInput = {
   participationId: string;
+};
+
+/**
+ * A parent's answer to a seat offer, given in My SOG. `accept: false` is a
+ * decline, which deletes the queue place — the same act the emailed "No, thank
+ * you" performs, and the reason the card puts a confirmation in front of it.
+ */
+export type InAppSeatOfferResponseInput = {
+  participationId: string;
+  accept: boolean;
 };
 
 export class ParticipationsService {
@@ -869,6 +902,64 @@ export class ParticipationsService {
     }
     return parseJsonResponse(response, leaveWaitlistResponse);
   }
+
+  /**
+   * Answer a seat offer from inside My SOG — the same yes-or-no the emailed
+   * links carry, given by a parent who is already signed in.
+   *
+   * The body names only the row: the session is the credential here, and the
+   * route proves the participation belongs to the caller under their own RLS
+   * before it reads the stored stamp. There is no token to send and none to
+   * check.
+   *
+   * **Every outcome is a 200**, including the two the card has to draw as a
+   * lapsed offer rather than as a failure: `expired` is the window closing
+   * between the paint and the press, and `invalid` is the offer having already
+   * been answered or superseded. A rejection from this method therefore means
+   * the request itself did not land, which is the only case the parent should
+   * be asked to try again.
+   */
+  async respondToSeatOffer(
+    input: InAppSeatOfferResponseInput,
+  ): Promise<SeatOfferRespondResponse> {
+    const response = await fetch("/api/participations/seat-offer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to answer the seat offer"),
+      );
+    }
+    return parseJsonResponse(response, seatOfferRespondResponse);
+  }
+
+  /**
+   * Ask the server to notice any seat offers whose five-day window has closed,
+   * and tell staff about them.
+   *
+   * **This is the whole of the feature's clock, and it is an observation rather
+   * than a schedule.** Nothing in a database notices time passing; instead an
+   * admin arriving at a surface that would care about a lapsed offer says so,
+   * and the route claims and mails whatever it finds. The claim is exactly-once
+   * inside one statement, so several admins landing together produce one mail
+   * between them.
+   *
+   * Cheap and usually empty — the common answer is `{ claimed: 0 }`, which is
+   * why callers may fire it on mount without thinking about it.
+   */
+  async sweepSeatOffers(): Promise<SeatOfferSweepResponse> {
+    const response = await fetch("/api/admin/seat-offers/sweep", {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to sweep seat offers"),
+      );
+    }
+    return parseJsonResponse(response, seatOfferSweepResponse);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -925,6 +1016,12 @@ type RawMyUpcomingSessionRow = QueryData<
  * No location embed: a waitlisted card's footer is the queue sentence, so there
  * is no venue line for one to fill.
  *
+ * `seat_offer_sent_at` is the one column here that is not about the product,
+ * and it is selected rather than asked of the position RPC on purpose: that RPC
+ * is SECURITY DEFINER and counts past the caller's RLS, so its answer is
+ * deliberately bounded to an id and an integer. This is the caller's own row,
+ * under their own policies.
+ *
  * Ordered oldest-first by the waitlist stamp, which is neither selected nor
  * needed by the card: it just gives the band a stable order that means
  * something (longest wait at the top) instead of whatever PostgREST returns.
@@ -941,6 +1038,7 @@ function buildMyWaitlistQuery(
       `
         id,
         participant_id,
+        seat_offer_sent_at,
         product:products!inner(
           product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
@@ -1025,6 +1123,7 @@ function toMyWaitlistRow(
       durationMinutes: s.duration_minutes,
     })),
     position,
+    seatOfferSentAt: row.seat_offer_sent_at,
   };
 }
 
