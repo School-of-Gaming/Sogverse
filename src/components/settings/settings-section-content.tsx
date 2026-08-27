@@ -14,7 +14,10 @@ import { GameAccountCard } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
+import {
+  GeduContractSettingsCard,
+  type GeduContractSeed,
+} from "@/components/gedu/contract/gedu-contract-settings-card";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
@@ -25,7 +28,11 @@ import { useLocationsByIds, type LocationWithChain } from "@/services/locations"
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
-import { isGamerProfile, type ProfileUpdate, type SpokenLanguageCode } from "@/types";
+import {
+  isGamerProfile,
+  type ProfileUpdate,
+  type SpokenLanguageCode,
+} from "@/types";
 
 /**
  * A keyed location read, as the picker's own value shape. The two are already
@@ -37,7 +44,20 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
   return { location: row, ancestors: row.ancestors };
 }
 
-export function SettingsSectionContent() {
+export function SettingsSectionContent({
+  geduContractSeed,
+}: {
+  /**
+   * A gedu's contract acceptances as the route read them, with the moment it
+   * read them. Threaded straight through to the card's data shell, which seeds
+   * the very cache entry the hook reads.
+   *
+   * **Absent means "not a gedu", and nothing else.** The route reads only for a
+   * gedu and fails rather than render this page without an answer, so there is
+   * no failed-read value to carry and no third state for the card to be in.
+   */
+  geduContractSeed?: GeduContractSeed;
+}) {
   const t = useTranslations('settings');
   const c = useTranslations('common');
   const { user, profile, refreshProfile } = useAuth();
@@ -422,6 +442,62 @@ export function SettingsSectionContent() {
         </CardContent>
       </Card>
 
+      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
+
+      {showGameAccounts && (
+        <>
+          <GameAccountCard
+            platform="minecraft"
+            title={t('minecraftAccount')}
+            description={t('minecraftDescription')}
+            username={mcAccount?.minecraft_username ?? null}
+            externalId={mcAccount?.minecraft_uuid ?? null}
+            onSave={(value) => updateMyMc.mutateAsync(value)}
+            note={
+              /* A courtesy credit, not a licence condition — mc-heads asks for
+                 nothing and encourages this. One home is enough for a thank-you,
+                 and this is the page where a person is looking at their own skin,
+                 so it is the one that earns it. An anchor is fine here: the
+                 no-off-site-links rule governs staff-authored copy shown to
+                 families, not the app's own chrome. */
+              <p className="text-xs text-muted-foreground">
+                {t.rich('mcHeadsAttribution', {
+                  link: (chunks) => (
+                    <a
+                      href="https://mc-heads.net"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
+              </p>
+            }
+          />
+
+          <GameAccountCard
+            platform="roblox"
+            title={t('robloxAccount')}
+            description={t('robloxDescription')}
+            username={robloxAccount?.roblox_username ?? null}
+            externalId={robloxAccount?.roblox_user_id ?? null}
+            onSave={(value) => updateMyRoblox.mutateAsync(value)}
+          />
+        </>
+      )}
+
+      {/* The seed's presence is the role test: the route reads these rows only
+          for a gedu, so a viewer who is not one has nothing to hand down and no
+          card to render. */}
+      {user && geduContractSeed && (
+        <GeduContractSettingsCard geduId={user.id} seed={geduContractSeed} />
+      )}
+
+      {/* Security is the last card on the page for every role — an owner
+          ruling. The exit and the rarely-used credential actions come after the
+          things people came to edit. */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -471,61 +547,6 @@ export function SettingsSectionContent() {
           )}
         </CardContent>
       </Card>
-
-      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
-
-      {showGameAccounts && (
-        <>
-          <GameAccountCard
-            platform="minecraft"
-            title={t('minecraftAccount')}
-            description={t('minecraftDescription')}
-            username={mcAccount?.minecraft_username ?? null}
-            externalId={mcAccount?.minecraft_uuid ?? null}
-            onSave={(value) => updateMyMc.mutateAsync(value)}
-            note={
-              /* A courtesy credit, not a licence condition — mc-heads asks for
-                 nothing and encourages this. One home is enough for a thank-you,
-                 and this is the page where a person is looking at their own skin,
-                 so it is the one that earns it. An anchor is fine here: the
-                 no-off-site-links rule governs staff-authored copy shown to
-                 families, not the app's own chrome. */
-              <p className="text-xs text-muted-foreground">
-                {t.rich('mcHeadsAttribution', {
-                  link: (chunks) => (
-                    <a
-                      href="https://mc-heads.net"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:text-foreground"
-                    >
-                      {chunks}
-                    </a>
-                  ),
-                })}
-              </p>
-            }
-          />
-
-          <GameAccountCard
-            platform="roblox"
-            title={t('robloxAccount')}
-            description={t('robloxDescription')}
-            username={robloxAccount?.roblox_username ?? null}
-            externalId={robloxAccount?.roblox_user_id ?? null}
-            onSave={(value) => updateMyRoblox.mutateAsync(value)}
-          />
-        </>
-      )}
-
-      {/* Last on the page, and that is a layout decision rather than a ranking
-          one. This is the only card here whose body is decided by a read the
-          server did not seed, so it is the only one that can grow after the
-          first paint — and at the foot of the page there is nothing under it
-          to push down when it does. Anywhere higher it would have to hold a
-          slot open at the taller of its two states, leaving a visible hole in
-          the shorter one. */}
-      {isGedu && user && <GeduContractSettingsCard geduId={user.id} />}
     </div>
   );
 }

@@ -1,24 +1,35 @@
 "use client";
 
-import Link from "next/link";
-import { BadgeCheck, FileSignature, ScrollText } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
-import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
-import { useTimezone } from "@/providers";
 import { useGeduContractAcceptances } from "@/services/gedu";
+import type { GeduContractAcceptance } from "@/types";
 import {
   findGeduContractAcceptance,
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "./documents";
+import { GeduContractSettingsCardView } from "./gedu-contract-settings-card-view";
+
+/**
+ * A gedu's acceptances as the settings route read them, carrying the moment it
+ * read them.
+ *
+ * **There is no failure value.** The route reads these rows outright and errors
+ * if it cannot, so a rendered settings page always has them — which is what
+ * gives the card below two states instead of three.
+ *
+ * `fetchedAt` is the seed's own age, and it is threaded rather than left to
+ * default because a *rendered* payload can be served again out of the router
+ * cache on a back-navigation. Stamped at the moment of the read, a payload
+ * minutes old arrives already stale and the browser asks again; left unstamped,
+ * React Query would treat it as fetched just now and sit on it for the whole
+ * 60-second `staleTime`. Clock skew between the two machines can shift that by a
+ * little, and the worst it buys is one extra fetch.
+ */
+export interface GeduContractSeed {
+  /** Every version this gedu has accepted, newest first. */
+  acceptances: GeduContractAcceptance[];
+  /** `Date.now()` on the server, at the moment the rows were read. */
+  fetchedAt: number;
+}
 
 /**
  * The gedu's own standing under the contract, on the settings page: what they
@@ -29,87 +40,36 @@ import {
  * signature given anywhere else is a signature given without the text in front
  * of it. Both states link to the same page; only the invitation differs.
  *
- * The read is a keyed lookup of a bounded set — at most one row per version
- * ever published — so it lands in a frame or two and gets **no** loading
- * affordance at all: the card's heading and description are there from the
- * first paint and the body is simply empty until the answer arrives.
+ * This is the card's data shell — one read, and the choice of which row answers
+ * it. The card itself is presentational and lives beside this file, so its
+ * states can be looked at side by side without a query behind them.
  *
- * **Nothing is reserved for it, because the card is last on the settings
- * page.** The heading above the body does not move whatever lands in it, and
- * there is nothing below to be pushed down — so a slot held open at the taller
- * of the two states would buy no stability and cost a visible hole in the
- * shorter one. The placement is what makes that true; see the settings page.
+ * **The seed is mandatory, so the card has exactly two states.** The route
+ * fetches the rows and hands them over or fails outright, which means there is
+ * no "not answered yet" for this card to render: it is born signed or unsigned,
+ * paints at its final height on the first frame, and never grows into an answer
+ * a hydration later. Passing the seed to the hook rather than rendering it
+ * directly is what keeps the accept mutation's invalidation reaching this card.
  */
-export function GeduContractSettingsCard({ geduId }: { geduId: string }) {
-  const t = useTranslations("gedu.contract.settings");
-  const locale = useLocale();
-  const timeZone = useTimezone();
-
-  const { data: acceptances } = useGeduContractAcceptances(geduId);
+export function GeduContractSettingsCard({
+  geduId,
+  seed,
+}: {
+  geduId: string;
+  seed: GeduContractSeed;
+}) {
+  const { data: acceptances } = useGeduContractAcceptances(geduId, {
+    initialData: seed.acceptances,
+    initialDataUpdatedAt: seed.fetchedAt,
+  });
   // Matched on the base version: a stored version names its language too, and
   // both languages of one version are the same agreement, so either signature
   // answers this card's question. The row that answers it is then shown with its
   // full stored version, because which text was signed is part of the record.
-  const acceptance =
-    acceptances === undefined
-      ? undefined
-      : findGeduContractAcceptance(acceptances, GEDU_CONTRACT_CURRENT_VERSION);
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <ScrollText className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
-        </div>
-        <CardDescription>{t("description")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {acceptance === undefined ? null : acceptance === null ? (
-            <>
-              <p className="font-medium text-warning">{t("notAcceptedTitle")}</p>
-              <p className="text-sm text-muted-foreground">
-                {t("notAcceptedBody")}
-              </p>
-              <Link
-                href={ROUTES.gedu.contract}
-                className={buttonVariants({ variant: "default" })}
-              >
-                <FileSignature className="h-4 w-4" />
-                {t("readAndAccept")}
-              </Link>
-            </>
-          ) : (
-            <>
-              <p className="flex items-center gap-2 font-medium text-success">
-                <BadgeCheck className="h-5 w-5 shrink-0" aria-hidden />
-                {t("acceptedTitle")}
-              </p>
-              {/* The name as it was signed, on its own line — the same
-                  handwriting the signing dialog drew it in. */}
-              <p className="font-cursive text-2xl leading-none">
-                {acceptance.signed_name}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("acceptedDetail", {
-                  version: acceptance.contract_version,
-                  date: formatDate(acceptance.accepted_at, locale, {
-                    dateStyle: "long",
-                    timeZone,
-                  }),
-                })}
-              </p>
-              <Link
-                href={ROUTES.gedu.contract}
-                className={buttonVariants({ variant: "outline" })}
-              >
-                {t("view")}
-              </Link>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+  const acceptance = findGeduContractAcceptance(
+    acceptances,
+    GEDU_CONTRACT_CURRENT_VERSION,
   );
+
+  return <GeduContractSettingsCardView acceptance={acceptance} />;
 }

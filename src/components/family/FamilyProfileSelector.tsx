@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/providers/auth-provider";
-import { FamilyService, useFamily, type FamilyMember } from "@/services/family";
+import {
+  commitAccountSwitch,
+  useFamily,
+  type FamilyMember,
+} from "@/services/family";
 import { AddGamerDialog } from "./AddGamerDialog";
 import { SwitchProfileDialog } from "./SwitchProfileDialog";
 import {
@@ -13,6 +17,7 @@ import {
   SkeletonTile,
 } from "./ProfileTiles";
 import { ROUTES, MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { byFirstName } from "@/lib/family-order";
 
 /**
  * One-shot URL marker that carries a gamer's "Add Gamer" intent across the
@@ -123,14 +128,14 @@ export function FamilyProfileSelector({
     setCommittingTargetId(target.id);
 
     try {
-      const service = new FamilyService();
-      await service.switchAccount(target.id);
-      // Full-page navigation so the new session cookies hydrate the root
-      // layout (browser Supabase singleton is seeded at construction time).
-      navigateToDashboard(target.role);
+      await commitAccountSwitch(target);
     } catch (err) {
       setCommittingTargetId(null);
-      setSwitchError(err instanceof Error ? err.message : t("switchFailed"));
+      // The reader gets the translated line; the server's own words (always
+      // English, and often a bare HTTP status) go to the console for whoever
+      // is debugging it. Same policy on all three switch surfaces.
+      console.error("[family-profile-selector] account switch failed:", err);
+      setSwitchError(t("switchFailed"));
     }
   }
 
@@ -250,32 +255,4 @@ export function FamilyProfileSelector({
       )}
     </div>
   );
-}
-
-/**
- * Order tiles by first name, collated in the **viewer's own locale** and
- * tie-broken by id — the same comparator the parent dashboard's child sections
- * use, for the same two reasons.
- *
- * The collation is not the runtime's, because a Finnish family's Ämmi belongs
- * after Zeno, and a comparator that agreed with that on the server and
- * disagreed in the browser would rearrange the tiles on hydration, under the
- * cursor of somebody already reaching for one.
- *
- * The id breaks a tie because a first name does not have to be unique: two
- * children in one family may share one, and the family read imposes no order of
- * its own, so a comparator returning 0 would leave that pair in whatever order
- * Postgres happened to answer with — free to differ between two fetches. The id
- * is arbitrary as an ordering; what it buys is the *same* arbitrary order every
- * time.
- */
-function byFirstName(locale: string) {
-  return (a: FamilyMember, b: FamilyMember): number =>
-    a.first_name.localeCompare(b.first_name, locale) ||
-    a.id.localeCompare(b.id);
-}
-
-function navigateToDashboard(role: FamilyMember["role"]) {
-  window.location.href =
-    role === "customer" ? ROUTES.customer.dashboard : ROUTES.gamer.dashboard;
 }

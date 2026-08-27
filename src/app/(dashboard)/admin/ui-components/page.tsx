@@ -63,6 +63,12 @@ import {
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
+import { GeduContractSettingsCardView } from "@/components/gedu/contract/gedu-contract-settings-card-view";
+import {
+  findGeduContractAcceptance,
+  GEDU_CONTRACT_CURRENT_VERSION,
+} from "@/components/gedu/contract/documents";
+import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
 import { useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -74,7 +80,7 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { UserRole, VoiceZone } from "@/types";
+import type { GeduContractAcceptance, UserRole, VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -2658,6 +2664,85 @@ export default function AdminUIComponentsPage() {
         </p>
         <MinecraftPasswordResetDemo />
       </Section>
+
+      <Section title="Gedu contract — settings card">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The contract card on a gedu&rsquo;s settings page, in both the states
+          it has. The settings route reads the acceptances before the page
+          renders and fails if it cannot, so the card is born signed or unsigned
+          and there is no third thing for it to be.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The database keeps one acceptance row per signed version &mdash; the
+          legal record of what was agreed and when, which a new version does not
+          make untrue. The card names exactly one of them: the earliest
+          acceptance of the version <em>in force</em>. So a second season on file
+          renders identically to one, and a gedu who signed only last season
+          reads as <em>Not accepted</em>.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The settings page is one column wide, so each state wraps later there
+          than in these columns.
+        </p>
+        <GeduContractSettingsCardDemo />
+      </Section>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Gedu contract — settings card                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * When the fixture educator signed each version. Fixed literals, unlike the
+ * contract scene's clock-relative one: the card renders the date absolutely, so
+ * nothing here goes stale — and a moment that moved would move the line it is
+ * printed on, which is the one thing this section exists to hold still.
+ */
+const CONTRACT_CARD_SIGNED_AT = "2026-03-14T09:12:00.000Z";
+
+const CONTRACT_CARD_CURRENT_ROW = buildGeduContractAcceptance({
+  acceptedAt: CONTRACT_CARD_SIGNED_AT,
+});
+
+/** What the settings page's read comes back holding — the card's two states. */
+const CONTRACT_CARD_CASES: readonly {
+  label: string;
+  acceptances: GeduContractAcceptance[];
+}[] = [
+  { label: "No signature", acceptances: [] },
+  // A second row for an older version would render this column pixel for pixel:
+  // the card names the earliest acceptance of the version in force and nothing
+  // else. Two identical renders are one state, so there is one column.
+  { label: "Signed", acceptances: [CONTRACT_CARD_CURRENT_ROW] },
+];
+
+/**
+ * Both answers side by side, so their bottom edges can be read against each
+ * other — the card is the only one on the settings page whose height its data
+ * decides, and whether the two can be made one height is the open question
+ * about it.
+ *
+ * The rows go through the real matcher rather than being hand-picked, so what
+ * each column shows is what the data shell would have handed the card, not a
+ * claim about it. `items-start` is load-bearing: a stretching grid would give
+ * both columns the taller card's height and erase the comparison.
+ */
+function GeduContractSettingsCardDemo() {
+  return (
+    <div className="grid items-start gap-x-6 gap-y-8 md:grid-cols-2">
+      {CONTRACT_CARD_CASES.map(({ label, acceptances }) => (
+        <div key={label} className="space-y-3">
+          <DemoCaption>{label}</DemoCaption>
+          <GeduContractSettingsCardView
+            acceptance={findGeduContractAcceptance(
+              acceptances,
+              GEDU_CONTRACT_CURRENT_VERSION,
+            )}
+          />
+        </div>
+      ))}
     </div>
   );
 }

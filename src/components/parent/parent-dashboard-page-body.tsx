@@ -402,21 +402,23 @@ export function ParentDashboardPageBody({
                     >
                       {gamer.firstName}
                     </h2>
-                    {/* The identity page — name, game accounts — kept as a quiet
-                        affordance beside the heading: managing a child is a
-                        sometimes action, and a loud button here would compete
-                        with the cards for the first thing read. `ml-auto` so a
-                        long name wraps against the heading's space, not the
-                        link's. */}
+                    {/* The identity page — name, game accounts. An outline
+                        button, not a ghost one: this is a mobile-first surface
+                        and ghost affordances are hover-discovered, so on touch
+                        a quiet grey link reads as a label. The border is what
+                        says "pressable". The repetition cost is bounded — most
+                        families have one or two gamers; three or more is very
+                        rare. `ml-auto` so a long name wraps against the
+                        heading's space, not the link's. */}
                     <Link
                       href={`${ROUTES.customer.gamers}/${gamer.id}`}
                       aria-label={f("manageGamerAria", {
                         name: gamer.firstName,
                       })}
                       className={buttonVariants({
-                        variant: "ghost",
+                        variant: "outline",
                         size: "sm",
-                        className: "ml-auto shrink-0 text-muted-foreground",
+                        className: "ml-auto shrink-0",
                       })}
                     >
                       <UserCog className="h-4 w-4" aria-hidden />

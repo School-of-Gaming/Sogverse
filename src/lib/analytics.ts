@@ -8,13 +8,16 @@ import type {
 /**
  * How a user reached their dashboard ("My SOG").
  *   - "logo"             — the SOG logo in the header (all dashboard roles).
- *   - "avatar"           — the header avatar going straight to the dashboard
- *                          (gedus only; parents/gamers' avatar opens the
- *                          family selector instead).
+ *   - "account_menu"     — the My SOG / Dashboard row in the header's account
+ *                          menu (all roles). Replaces "avatar", whose series
+ *                          ended when the avatar stopped being a link and
+ *                          became the menu trigger — the mechanism changed, so
+ *                          the name changed with it rather than letting a
+ *                          two-click path report under a one-click name.
  *   - "profile_selector" — picking their own tile on /select-profile
  *                          (parents/gamers).
  */
-export type DashboardNavMethod = "logo" | "avatar" | "profile_selector";
+export type DashboardNavMethod = "logo" | "account_menu" | "profile_selector";
 
 /**
  * Records how a user chose to navigate to their dashboard, so we can compare

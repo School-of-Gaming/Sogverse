@@ -1481,7 +1481,9 @@
       "yty": "Yty",
       "about": "About"
     },
-    "selectProfile": "Switch profile"
+    "accountMenu": "Account menu – {name}",
+    "continueToAccount": "Continue to your account",
+    "switchTo": "Switch to"
   },
   "help": {
     "title": "Help",
