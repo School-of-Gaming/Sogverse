@@ -768,7 +768,11 @@ describe("AccountMenu — sign out", () => {
 });
 
 describe("AccountMenu — analytics", () => {
-  it("keeps the gedu avatar's dashboard event on the row that inherited the trip", () => {
+  // The event answers: who (role), from where, and which of the two chrome
+  // affordances — the logo or this row. Every role emits under
+  // "account_menu"; the old gedu-only "avatar" series ended when the avatar
+  // became the menu trigger.
+  it("emits dashboard_nav with method account_menu for a gedu", () => {
     renderMenu(GEDU);
     openMenu();
 
@@ -776,17 +780,21 @@ describe("AccountMenu — analytics", () => {
 
     expect(mockTrack).toHaveBeenCalledWith("dashboard_nav", {
       role: "gedu",
-      method: "avatar",
+      method: "account_menu",
       from: "/",
     });
   });
 
-  it("does not invent the event for a role that never had it", () => {
+  it("emits the same event for a parent — no role is exempt", () => {
     renderMenu(PARENT);
     openMenu();
 
     fireEvent.click(row(MY_SOG));
 
-    expect(mockTrack).not.toHaveBeenCalled();
+    expect(mockTrack).toHaveBeenCalledWith("dashboard_nav", {
+      role: "customer",
+      method: "account_menu",
+      from: "/",
+    });
   });
 });

@@ -443,16 +443,15 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
               active={isOnDashboard}
               disabled={busy}
               onNavigate={() => {
-                // The gedu avatar was the one avatar that linked straight to a
-                // dashboard, and this row inherits that trip — so it inherits
-                // the event too. No other role's avatar was ever tracked here.
-                if (role === "gedu") {
-                  trackDashboardNav({
-                    role: "gedu",
-                    method: "avatar",
-                    from: pathname,
-                  });
-                }
+                // The event answers: who (role), from where, and which of the
+                // two chrome affordances — the logo or this row. Every role
+                // emits; the gedu-only "avatar" series ended when the avatar
+                // became the menu trigger (see DashboardNavMethod).
+                trackDashboardNav({
+                  role,
+                  method: "account_menu",
+                  from: pathname,
+                });
                 setOpen(false);
               }}
               icon={<LayoutDashboard className="h-4 w-4 shrink-0" />}
