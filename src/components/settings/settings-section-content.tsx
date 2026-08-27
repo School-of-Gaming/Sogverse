@@ -25,7 +25,12 @@ import { useLocationsByIds, type LocationWithChain } from "@/services/locations"
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
-import { isGamerProfile, type ProfileUpdate, type SpokenLanguageCode } from "@/types";
+import {
+  isGamerProfile,
+  type GeduContractAcceptance,
+  type ProfileUpdate,
+  type SpokenLanguageCode,
+} from "@/types";
 
 /**
  * A keyed location read, as the picker's own value shape. The two are already
@@ -37,7 +42,18 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
   return { location: row, ancestors: row.ancestors };
 }
 
-export function SettingsSectionContent() {
+export function SettingsSectionContent({
+  initialGeduContractAcceptances = null,
+}: {
+  /**
+   * A gedu's contract acceptances, prefetched by the route — or `null` when
+   * that read failed *or* the viewer is not a gedu, in which case the card this
+   * seeds is never rendered. It is threaded straight through to the card's data
+   * shell, which seeds the very cache entry the hook reads; `null` means do not
+   * seed, so the hook fetches on mount rather than settling on a wrong answer.
+   */
+  initialGeduContractAcceptances?: GeduContractAcceptance[] | null;
+}) {
   const t = useTranslations('settings');
   const c = useTranslations('common');
   const { user, profile, refreshProfile } = useAuth();
@@ -470,9 +486,9 @@ export function SettingsSectionContent() {
 
       {/* Security sits at the foot of the page for every role — the exit and
           the rarely-used credential actions come after the things people came
-          to edit. The one card allowed below it is the gedu contract card:
-          that one must stay last (see its comment), so this ordering is
-          load-bearing, not aesthetic. */}
+          to edit. The one card allowed below it is the gedu contract card,
+          which keeps the last slot for the reason its own comment gives, so
+          this ordering is load-bearing, not aesthetic. */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -523,14 +539,22 @@ export function SettingsSectionContent() {
         </CardContent>
       </Card>
 
-      {/* Last on the page, and that is a layout decision rather than a ranking
-          one. This is the only card here whose body is decided by a read the
-          server did not seed, so it is the only one that can grow after the
-          first paint — and at the foot of the page there is nothing under it
-          to push down when it does. Anywhere higher it would have to hold a
-          slot open at the taller of its two states, leaving a visible hole in
-          the shorter one. */}
-      {isGedu && user && <GeduContractSettingsCard geduId={user.id} />}
+      {/* Last on the page, and still a layout decision rather than a ranking
+          one — but the thing it now guards against is rare. The route seeds
+          this card's read, so on the ordinary visit it is born in its real
+          state and paints at its final height like every other card here.
+          What is left is the degraded path: when that server read fails the
+          seed is withheld, the browser asks again, and the card grows when the
+          answer lands. Last is where that growth pushes nothing. Anywhere
+          higher it would have to hold a slot open at the taller of its two
+          states for a case that almost never happens, leaving a visible hole
+          in the shorter one on every ordinary visit. */}
+      {isGedu && user && (
+        <GeduContractSettingsCard
+          geduId={user.id}
+          initialAcceptances={initialGeduContractAcceptances}
+        />
+      )}
     </div>
   );
 }

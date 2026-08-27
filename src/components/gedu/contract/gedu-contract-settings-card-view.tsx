@@ -37,8 +37,14 @@ export function GeduContractSettingsCardView({
   /**
    * This gedu's acceptance of the version in force: the row when they have
    * signed it, `null` when they have not, and `undefined` while the answer is
-   * still in flight — which is also what a failed read looks like, since the
-   * card has no separate way to say so.
+   * still in flight.
+   *
+   * **`undefined` is the degraded path, not the ordinary one.** The settings
+   * route prefetches the rows, so on an ordinary visit the card is handed an
+   * answer before it first renders; this branch is reached only when that
+   * server read failed and the browser is fetching the rows itself. It is also
+   * what a failed *client* read leaves on screen, since the card has no
+   * separate way to say so.
    */
   acceptance: GeduContractAcceptance | null | undefined;
 }) {

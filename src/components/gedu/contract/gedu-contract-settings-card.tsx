@@ -1,6 +1,7 @@
 "use client";
 
 import { useGeduContractAcceptances } from "@/services/gedu";
+import type { GeduContractAcceptance } from "@/types";
 import {
   findGeduContractAcceptance,
   GEDU_CONTRACT_CURRENT_VERSION,
@@ -20,20 +21,33 @@ import { GeduContractSettingsCardView } from "./gedu-contract-settings-card-view
  * it. The card itself is presentational and lives beside this file, so its
  * states can be looked at side by side without a query behind them.
  *
- * The read is a keyed lookup of a bounded set — at most one row per version
- * ever published — so it lands in a frame or two and gets **no** loading
- * affordance at all: the card's heading and description are there from the
- * first paint and the body is simply empty until the answer arrives.
+ * **The read is seeded from the route's own prefetch**, so the ordinary visit
+ * paints the card in its real state — signed or not — on the first frame, with
+ * no loading affordance at all and no growth after it. `null` for the prefetch
+ * is not an empty list: it means the server read failed, so no `initialData` is
+ * passed and the browser asks again. Until it answers the card's body is empty
+ * rather than showing the sign prompt, because telling somebody who has already
+ * signed that they have not is the one wrong answer here.
  *
- * **Nothing is reserved for it, because the card is last on the settings
- * page.** The heading above the body does not move whatever lands in it, and
- * there is nothing below to be pushed down when it does — so a slot held open
- * at the taller of the two states would buy no stability and cost a visible
- * hole in the shorter one. The placement is what makes that true; see the
- * settings page.
+ * **Nothing is reserved for that rare late answer, because the card is last on
+ * the settings page.** The heading above the body does not move whatever lands
+ * in it, and there is nothing below to be pushed down when it does — so a slot
+ * held open at the taller of the two states would buy stability only on the
+ * degraded path and cost a visible hole in the shorter state on every other
+ * visit. The placement is what makes that true; see the settings page.
  */
-export function GeduContractSettingsCard({ geduId }: { geduId: string }) {
-  const { data: acceptances } = useGeduContractAcceptances(geduId);
+export function GeduContractSettingsCard({
+  geduId,
+  initialAcceptances,
+}: {
+  geduId: string;
+  /** Prefetched rows, or `null` when that read failed. */
+  initialAcceptances: GeduContractAcceptance[] | null;
+}) {
+  const { data: acceptances } = useGeduContractAcceptances(
+    geduId,
+    initialAcceptances === null ? undefined : { initialData: initialAcceptances },
+  );
   // Matched on the base version: a stored version names its language too, and
   // both languages of one version are the same agreement, so either signature
   // answers this card's question. The row that answers it is then shown with its

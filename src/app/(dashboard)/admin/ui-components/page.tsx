@@ -2667,16 +2667,20 @@ export default function AdminUIComponentsPage() {
 
       <Section title="Gedu contract — settings card">
         <p className="text-sm text-muted-foreground -mt-2">
-          The card at the foot of a gedu&rsquo;s settings page, in every state it
-          has. The first is what the page paints before the acceptance read
-          answers &mdash; and what a <em>failed</em> read leaves on screen, since
-          the card has no other way to say so.
+          The card at the foot of a gedu&rsquo;s settings page: two domain
+          states, plus the degraded one. The settings route seeds the acceptance
+          read, so the empty first column is painted only when that server read
+          failed and the browser is fetching the rows itself &mdash; and it is
+          what a failed client read leaves on screen too, since the card has no
+          other way to say so.
         </p>
         <p className="text-sm text-muted-foreground">
-          However many signatures are on file, the card names exactly one: the
-          earliest acceptance of the version in force. A second season adds no
-          height, and a gedu who signed only last season reads as{" "}
-          <em>Not accepted</em>.
+          The database keeps one acceptance row per signed version &mdash; the
+          legal record of what was agreed and when, which a new version does not
+          make untrue. The card names exactly one of them: the earliest
+          acceptance of the version <em>in force</em>. So a second season on file
+          renders identically to one, and a gedu who signed only last season
+          reads as <em>Not accepted</em>.
         </p>
         <p className="text-sm text-muted-foreground">
           The settings page is one column wide, so each state wraps later there
@@ -2699,23 +2703,9 @@ export default function AdminUIComponentsPage() {
  * printed on, which is the one thing this section exists to hold still.
  */
 const CONTRACT_CARD_SIGNED_AT = "2026-03-14T09:12:00.000Z";
-const CONTRACT_CARD_LAST_SEASON_SIGNED_AT = "2025-08-19T14:40:00.000Z";
-
-/**
- * A season whose text is no longer in the document registry, so its version
- * string is written out rather than derived from a document the way the current
- * one is. That is what a superseded version is by the time a card meets it:
- * data read back off a row, which is exactly how the matcher treats it.
- */
-const CONTRACT_CARD_LAST_SEASON_VERSION = "2025-2026/fi";
 
 const CONTRACT_CARD_CURRENT_ROW = buildGeduContractAcceptance({
   acceptedAt: CONTRACT_CARD_SIGNED_AT,
-});
-
-const CONTRACT_CARD_LAST_SEASON_ROW = buildGeduContractAcceptance({
-  acceptedAt: CONTRACT_CARD_LAST_SEASON_SIGNED_AT,
-  version: CONTRACT_CARD_LAST_SEASON_VERSION,
 });
 
 /** What the settings page's read can come back holding. */
@@ -2725,23 +2715,22 @@ const CONTRACT_CARD_CASES: readonly {
   acceptances: GeduContractAcceptance[] | undefined;
 }[] = [
   // Not a domain state — the card has exactly two of those (signed / not
-  // signed). This is what paints while the unseeded read is in flight, and
-  // the owner's ruling is that it is to be understood (and eventually
-  // rendered) as a loading state, not presented as a third thing the card
-  // can "be".
-  { label: "Loading", acceptances: undefined },
+  // signed). This is the degraded path: the settings route seeds the read, so
+  // an unanswered one means that server read failed and the browser is
+  // fetching the rows itself. It is to be understood (and eventually rendered)
+  // as a loading state, not presented as a third thing the card can "be".
+  { label: "Seed failed — refetching", acceptances: undefined },
   { label: "No signature", acceptances: [] },
+  // A second row for an older version would render this column pixel for pixel:
+  // the card names the earliest acceptance of the version in force and nothing
+  // else. Two identical renders are one state, so there is one column.
   { label: "One signature", acceptances: [CONTRACT_CARD_CURRENT_ROW] },
-  {
-    label: "Two seasons signed",
-    acceptances: [CONTRACT_CARD_LAST_SEASON_ROW, CONTRACT_CARD_CURRENT_ROW],
-  },
 ];
 
 /**
- * The four answers side by side, so their bottom edges can be read against each
+ * The three answers side by side, so their bottom edges can be read against each
  * other — the card is the only one on the settings page whose height its data
- * decides, and whether the four can be made one height is the open question
+ * decides, and whether the three can be made one height is the open question
  * about it.
  *
  * The rows go through the real matcher rather than being hand-picked, so what
@@ -2751,7 +2740,7 @@ const CONTRACT_CARD_CASES: readonly {
  */
 function GeduContractSettingsCardDemo() {
   return (
-    <div className="grid items-start gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid items-start gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
       {CONTRACT_CARD_CASES.map(({ label, acceptances }) => (
         <div key={label} className="space-y-3">
           <DemoCaption>{label}</DemoCaption>
