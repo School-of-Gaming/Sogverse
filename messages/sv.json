@@ -1923,7 +1923,7 @@
         "bodySelf": "Platsen är din, om du fortfarande vill ha den.",
         "bodyGamer": "Vi har frågat en förälder om du fortfarande vill ha den.",
         "deadline": "Svara senast {deadline}, annars går platsen till nästa familj i kön.",
-        "lapsed": "Erbjudandet har gått ut, så din tur flyttas sist i väntelistan. Om du inte längre behöver någon plats kan du fortfarande säga till.",
+        "lapsed": "Erbjudandet har gått ut, så platsen går inte längre att ta emot. Om du inte längre behöver någon plats hjälper det ändå att säga till.",
         "accept": "Ta platsen",
         "decline": "Nej tack",
         "confirmTitle": "Vill du lämna platsen?",
@@ -3469,7 +3469,7 @@
     },
     "expired": {
       "title": "Erbjudandet har gått ut",
-      "body": "Ett platserbjudande är öppet i {days} dagar, och det här hann gå ut innan vi hörde från dig, så platsen gick vidare till nästa familj i kön.",
+      "body": "Ett platserbjudande är öppet i {days} dagar, och det här hann gå ut innan vi hörde från dig.",
       "declinePrompt": "Du står kvar på väntelistan. Om familjen inte längre behöver någon plats kan du säga till nu, så frigörs den för någon annan.",
       "declineAction": "Lämna platsen",
       "confirmTitle": "Vill du lämna din plats?",
@@ -3477,7 +3477,7 @@
     },
     "used": {
       "title": "Den här länken är redan använd",
-      "body": "Inbjudan har besvarats. Allt familjen är anmäld till, och varje plats du väntar på, finns i Min SOG.",
+      "body": "Inbjudan är inte längre öppen. Allt familjen är anmäld till, och varje plats du väntar på, finns i Min SOG.",
       "action": "Gå till Min SOG"
     },
     "invalid": {

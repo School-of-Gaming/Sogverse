@@ -1967,7 +1967,7 @@
         "bodySelf": "quS DaghajlaH, DaneHtaHchugh.",
         "bodyGamer": "SoSlI’ vavlI’ je wItlhob.",
         "deadline": "{deadline} qaSpa’ yIjang, pagh latlh qorDu’vaD jaH quS.",
-        "lapsed": "rInpu’ nob poH, vaj tetlh bIHDaq bIjaH. quS DaHechbe’chugh, DaH je maHvaD yIja’.",
+        "lapsed": "rInpu’ nob poH, vaj quS DaSuqlaHbe’. quS DaHechbe’chugh, DaH je maHvaD yIja’ — bIQaH.",
         "accept": "quS vISuq",
         "decline": "Qo’, qatlho’",
         "confirmTitle": "quS Danobqu’’a’?",
@@ -2635,7 +2635,7 @@
     },
     "expired": {
       "title": "rInpu’ poH",
-      "body": "{days} jaj neH poStaH quS nob, ’ej bIjangpa’ SoQchoHpu’. latlh qorDu’vaD jaHpu’ quS.",
+      "body": "{days} jaj neH poStaH quS nob, ’ej bIjangpa’ SoQchoHpu’.",
       "declinePrompt": "loS tetlhDaq SoHtaH. quS DaHechbe’chugh, DaH maHvaD yIja’ — vaj latlhvaD poSchoH.",
       "declineAction": "quS vIlon",
       "confirmTitle": "loS DaqlIj Danobqu’’a’?",
@@ -2643,7 +2643,7 @@
     },
     "used": {
       "title": "lo’pu’lu’ Hevam",
-      "body": "jangpu’lu’ nobvam. My SOG-Daq bIH Hoch: qorDu’lIj ghItlhmey ’ej loS DaqmeylIj.",
+      "body": "poSbe’choHpu’ nobvam. My SOG-Daq bIH Hoch: qorDu’lIj ghItlhmey ’ej loS DaqmeylIj.",
       "action": "My SOG-Daq yIghoS"
     },
     "invalid": {

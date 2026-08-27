@@ -39,10 +39,14 @@ import {
  *
  * **A late DECLINE is honoured, and only a late ACCEPT is refused.** The window
  * exists to stop a seat being claimed after we have offered it elsewhere, so it
- * binds one direction (00208). A decline that beat the deadline mails staff,
- * because it is the news that turns one family's no into the next family's
- * invitation; a late one does not, because that mail already went when the
- * offer was swept and nobody is waiting on this answer any more.
+ * binds one direction (00208). The staff mail then goes out on
+ * `within_window || !already_notified` (00209): a decline that beat the
+ * deadline is the news that turns one family's no into the next family's
+ * invitation, and a late one is skipped only where the no-response mail
+ * demonstrably went. Expiry here is observed rather than swept on a timer, so
+ * an offer nobody opened a page about was never reported to anybody — and the
+ * decline deletes the row that was the last evidence of it, which is why the
+ * flag has to be read inside the same transaction.
  */
 export const POST = defineRoute({
   posture: "public",
@@ -111,14 +115,16 @@ export const POST = defineRoute({
         // invitation. The row is already gone, which is why the RPC hands back
         // the four identifiers rather than leaving them to be read.
         //
-        // **Only an in-window no is mailed.** A late one arrives after the
-        // offer was swept and staff were already told nobody answered, so a
-        // second mail would raise a family an admin has finished dealing with
-        // and ask them to act on news they have already acted on. The row is
-        // freed either way; `within_window` is the only thing that can tell the
-        // two apart, and it is decided inside the RPC because that is where the
-        // stamp and the clock are read together.
-        if (parsed.data.within_window) {
+        // **The mail is skipped only where the no-response mail demonstrably
+        // went.** A late no lands after the offer was swept and staff were
+        // told nobody answered, so mailing again would raise a family an admin
+        // has finished dealing with — but that sweep is an OBSERVATION, not a
+        // schedule, so "late" is no evidence at all that it ever happened. If
+        // nobody opened a page between the fifth day and this click, nobody was
+        // told; the delete below has just removed the row that said so, and
+        // this answer would be the quietest thing that ever happened to the
+        // offer. So both flags are read: in time, or nobody has heard yet.
+        if (parsed.data.within_window || !parsed.data.already_notified) {
           after(
             sendSeatOfferStaffEmail({
               client: admin,

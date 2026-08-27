@@ -280,6 +280,7 @@ describe("POST /api/participations/seat-offer", () => {
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
         within_window: true,
+        already_notified: false,
       },
       error: null,
     });
@@ -302,33 +303,46 @@ describe("POST /api/participations/seat-offer", () => {
   /**
    * The lapsed block in My SOG keeps its Decline button live, because a family
    * telling us they cannot come is news we want whenever it arrives and the
-   * database honours it (00208). What must NOT come with it is a second staff
-   * mail: they were already told this offer went unanswered when it was swept,
-   * so raising the same family again would ask an admin to act on something
-   * they have finished with.
+   * database honours it (00208). Whether staff hear about it is decided by
+   * whether they have heard about this offer at all (00209) — and the two
+   * halves are asserted as a PAIR, because either alone passes while the rule
+   * is half implemented.
+   *
+   * Already swept: staff have the no-response mail, and a second one would ask
+   * an admin to act on something they have finished with. Never swept: nobody
+   * was ever told, because expiry is observed rather than scheduled — and the
+   * decline has just deleted the row that was the last evidence of the offer,
+   * so this mail is the only one there will ever be.
    */
-  it("frees the row on a late decline without mailing staff a second time", async () => {
-    mockAuthenticatedCustomer();
-    mockAdminRpc.mockResolvedValue({
-      data: {
-        kind: "declined",
-        participation_id: PARTICIPATION_ID,
-        product_id: PRODUCT_ID,
-        customer_id: CUSTOMER_ID,
-        participant_id: GAMER_ID,
-        within_window: false,
-      },
-      error: null,
-    });
+  it.each([
+    { already_notified: true, mails: 0, told: "staff already had the mail" },
+    { already_notified: false, mails: 1, told: "nobody had heard yet" },
+  ])(
+    "frees the row on a late decline and mails $mails time(s) when $told",
+    async ({ already_notified, mails }) => {
+      mockAuthenticatedCustomer();
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "declined",
+          participation_id: PARTICIPATION_ID,
+          product_id: PRODUCT_ID,
+          customer_id: CUSTOMER_ID,
+          participant_id: GAMER_ID,
+          within_window: false,
+          already_notified,
+        },
+        error: null,
+      });
 
-    const response = await POST(request(decline));
+      const response = await POST(request(decline));
 
-    // The family gets the same answer either way — the lateness is the route's
-    // business and never theirs.
-    expect(await response.json()).toEqual({ outcome: "declined" });
-    await settleDeferred();
-    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
-  });
+      // The family gets the same answer either way — the lateness and who has
+      // been told are the route's business and never theirs.
+      expect(await response.json()).toEqual({ outcome: "declined" });
+      await settleDeferred();
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(mails);
+    },
+  );
 
   it("answers `expired` and sweeps when the window closed under the card", async () => {
     mockAuthenticatedCustomer();
@@ -364,6 +378,7 @@ describe("POST /api/participations/seat-offer", () => {
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
         within_window: true,
+        already_notified: false,
       },
       error: null,
     });

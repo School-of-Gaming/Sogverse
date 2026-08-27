@@ -238,6 +238,7 @@ describe("POST /api/seat-offer/respond", () => {
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
         within_window: false,
+        already_notified: true,
       },
       error: null,
     });
@@ -261,29 +262,46 @@ describe("POST /api/seat-offer/respond", () => {
   });
 
   /**
-   * And the mail that must NOT go with it. Staff were told nobody answered
-   * when the offer was swept; a second mail days later would raise a family an
-   * admin has already dealt with and ask them to act on it again.
+   * And what decides whether the mail goes with it — asserted as a PAIR,
+   * because either half passes on its own while the rule is half implemented.
+   *
+   * A late no is skipped only where the no-response mail demonstrably went.
+   * Expiry is observed rather than swept on a timer, so if nobody opened a page
+   * between the fifth day and this click, nobody was ever told — and the
+   * decline has just deleted the row that was the last evidence of the offer.
+   * Skipping on lateness alone would make staff learn less from an answer than
+   * they would have learned from silence.
    */
-  it("mails nobody about a decline that arrived after the deadline", async () => {
-    mockAdminRpc.mockResolvedValue({
-      data: {
-        kind: "declined",
-        participation_id: PARTICIPATION_ID,
-        product_id: PRODUCT_ID,
-        customer_id: CUSTOMER_ID,
-        participant_id: GAMER_ID,
-        within_window: false,
-      },
-      error: null,
-    });
+  it.each([
+    { already_notified: true, mails: 0, told: "staff already had the mail" },
+    { already_notified: false, mails: 1, told: "nobody had heard yet" },
+  ])(
+    "mails $mails time(s) about a late decline when $told",
+    async ({ already_notified, mails }) => {
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "declined",
+          participation_id: PARTICIPATION_ID,
+          product_id: PRODUCT_ID,
+          customer_id: CUSTOMER_ID,
+          participant_id: GAMER_ID,
+          within_window: false,
+          already_notified,
+        },
+        error: null,
+      });
 
-    const response = await POST(request({ token: await liveToken(), accept: false }));
+      const response = await POST(
+        request({ token: await liveToken(), accept: false }),
+      );
 
-    expect(await response.json()).toEqual({ outcome: "declined" });
-    await settleDeferred();
-    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
-  });
+      // The family reads the same thank-you either way — the lateness and who
+      // has been told are the route's business and never theirs.
+      expect(await response.json()).toEqual({ outcome: "declined" });
+      await settleDeferred();
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(mails);
+    },
+  );
 
   // -- The answers --
 
@@ -318,6 +336,7 @@ describe("POST /api/seat-offer/respond", () => {
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
         within_window: true,
+        already_notified: false,
       },
       error: null,
     });
@@ -409,6 +428,49 @@ describe("POST /api/seat-offer/respond", () => {
   });
 
   /**
+   * The classification path that `expired` can be reached by from a DECLINE,
+   * and the reason the panel must not treat the two the same.
+   *
+   * The window binds accept alone, so a late no goes to the RPC and is normally
+   * honoured. Here it is refused — by the product guard, which answers the
+   * generic `stale` because a distinguishable one would let an unauthenticated
+   * caller ask which products have been cancelled. The dead-end read then finds
+   * a row still holding this exact offer with the window behind it and calls
+   * that `expired`, which is true of the offer and says nothing about the
+   * product.
+   *
+   * So `expired` on a decline means "nothing was written", not "the seat is
+   * gone" — the same word for two different facts, told apart only by which
+   * button produced it. Pinned here because it is the route's half of the
+   * component fix: the panel reads this answer and must not offer the same
+   * button again.
+   */
+  it("answers `expired` to a lapsed DECLINE the product guard refused", async () => {
+    mockAdminRpc.mockResolvedValue({ data: { kind: "stale" }, error: null });
+    const sentAt = new Date(Date.now() - SEAT_OFFER_WINDOW_MS - 1000);
+    // Still queued, still holding this exact offer — so nothing consumed it,
+    // and the CAS can only have been refused by the guard.
+    participationRow.value = {
+      status: "waitlisted",
+      seat_offer_sent_at: sentAt.toISOString(),
+    };
+    const token = await createSeatOfferToken(PARTICIPATION_ID, sentAt);
+
+    const response = await POST(request({ token, accept: false }));
+
+    expect(await response.json()).toEqual({ outcome: "expired" });
+    // The decline reached the database and was refused there — this is not the
+    // accept short-circuit, which never calls the RPC at all.
+    expect(mockAdminRpc).toHaveBeenCalledWith("respond_seat_offer", {
+      p_participation_id: PARTICIPATION_ID,
+      p_offer_sent_at: sentAt.toISOString(),
+      p_accept: false,
+    });
+    await settleDeferred();
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  /**
    * The token said live and the row says lapsed — the window ran out between
    * the page rendering and the button being pressed.
    */
@@ -446,6 +508,7 @@ describe("POST /api/seat-offer/respond", () => {
         customer_id: CUSTOMER_ID,
         participant_id: GAMER_ID,
         within_window: true,
+        already_notified: false,
       },
       error: null,
     });

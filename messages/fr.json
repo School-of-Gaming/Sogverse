@@ -1923,7 +1923,7 @@
         "bodySelf": "La place est à vous, si vous la voulez toujours.",
         "bodyGamer": "Nous avons demandé à un parent si tu la veux toujours.",
         "deadline": "Répondez avant le {deadline}, sinon la place ira à la famille suivante sur la liste.",
-        "lapsed": "Cette proposition a expiré, votre tour passe donc à la fin de la liste d’attente. Si vous n’avez plus besoin de place, vous pouvez toujours nous le dire.",
+        "lapsed": "Cette proposition a expiré, la place ne peut donc plus être acceptée. Si vous n’avez plus besoin de place, nous le dire nous aide toujours.",
         "accept": "Accepter la place",
         "decline": "Non, merci",
         "confirmTitle": "Renoncer à la place ?",
@@ -3469,7 +3469,7 @@
     },
     "expired": {
       "title": "Cette proposition a expiré",
-      "body": "Une proposition de place reste ouverte {days} jours, et celle-ci s’est refermée avant que nous ayons de vos nouvelles : la place est allée à la famille suivante sur la liste.",
+      "body": "Une proposition de place reste ouverte {days} jours, et celle-ci s’est refermée avant que nous ayons de vos nouvelles.",
       "declinePrompt": "Vous restez sur la liste d’attente. Si votre famille n’a plus besoin de place du tout, vous pouvez nous le dire maintenant et la libérer pour quelqu’un d’autre.",
       "declineAction": "Renoncer à notre place",
       "confirmTitle": "Renoncer à votre place ?",
@@ -3477,7 +3477,7 @@
     },
     "used": {
       "title": "Ce lien a déjà été utilisé",
-      "body": "Cette invitation a reçu une réponse. Toutes les inscriptions de votre famille, et chaque place que vous attendez, sont dans Mon SOG.",
+      "body": "Cette invitation n’est plus ouverte. Toutes les inscriptions de votre famille, et chaque place que vous attendez, sont dans Mon SOG.",
       "action": "Aller sur Mon SOG"
     },
     "invalid": {

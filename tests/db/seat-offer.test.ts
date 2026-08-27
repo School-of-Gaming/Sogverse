@@ -15,8 +15,9 @@ import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
 
 /**
- * The seat offer (migration 00207): the three service-role RPCs, the two
- * CHECK constraints behind them, and the two readers they changed.
+ * The seat offer (migration 00207, carried forward by 00208 and 00209): the
+ * three service-role RPCs, the two CHECK constraints behind them, and the two
+ * readers they changed.
  *
  * Product UUIDs 670-67a (see the product-helpers allocation registry). Six
  * differently-shaped products rather than one that gets reconfigured, because
@@ -565,12 +566,15 @@ describe("seat offers", () => {
   });
 
   /**
-   * `within_window` is the only thing that tells the two declines apart, and
-   * the pair is asserted in one case because the flag means nothing alone: an
-   * in-window no is news an admin is waiting for and is mailed, a late one
-   * lands after the no-response mail has already gone and mails nobody. The
-   * family reads the same thank-you either way, which is why this never crosses
-   * the public wire — it exists for the route and for no other reader.
+   * `within_window` tells the two declines apart, and the pair is asserted in
+   * one case because the flag means nothing alone: an in-window no is news an
+   * admin is waiting for, a late one is not necessarily. The family reads the
+   * same thank-you either way, which is why this never crosses the public wire
+   * — it exists for the route and for no other reader.
+   *
+   * Neither row here has been swept, so `already_notified` is false on both:
+   * the flag is the OTHER half of the mail decision (00209) and is asserted on
+   * its own below.
    */
   it("reports whether a decline beat the deadline", async () => {
     const inTime = await queue(P_CLUB, TEST_IDS.GAMER);
@@ -587,6 +591,7 @@ describe("seat offers", () => {
     const inTimeParsed = respondSeatOfferRpcResult.parse(first.data);
     if (inTimeParsed.kind !== "declined") throw new Error("unreachable");
     expect(inTimeParsed.within_window).toBe(true);
+    expect(inTimeParsed.already_notified).toBe(false);
 
     const second = await admin.rpc("respond_seat_offer", {
       p_participation_id: late,
@@ -597,6 +602,57 @@ describe("seat offers", () => {
     const lateParsed = respondSeatOfferRpcResult.parse(second.data);
     if (lateParsed.kind !== "declined") throw new Error("unreachable");
     expect(lateParsed.within_window).toBe(false);
+    expect(lateParsed.already_notified).toBe(false);
+  });
+
+  /**
+   * The hole 00209 closes, seen from the database.
+   *
+   * Expiry here is OBSERVED, not scheduled: the no-response mail goes out the
+   * first time somebody opens a page that would care. So "late" is no evidence
+   * at all that staff were told — if nobody looked between the fifth day and
+   * the family's answer, nobody was told, and the DELETE below removes the only
+   * column that could ever have said so. `already_notified` is that column,
+   * read before the row goes.
+   *
+   * Both halves in one case, because either alone passes while the rule is half
+   * implemented: a body that hardcoded `false` would satisfy the unswept row,
+   * and one that hardcoded `true` would satisfy the swept one.
+   */
+  it("reports whether staff had already been told, reading it before the delete", async () => {
+    const unswept = await queue(P_CLUB, TEST_IDS.GAMER);
+    const unsweptSentAt = await stamp(unswept, LAPSED_AT());
+    const swept = await queue(P_DASHBOARD, TEST_IDS.GAMER_2);
+    const sweptSentAt = await stamp(
+      swept,
+      LAPSED_AT(),
+      new Date().toISOString(),
+    );
+
+    const first = await admin.rpc("respond_seat_offer", {
+      p_participation_id: unswept,
+      p_offer_sent_at: unsweptSentAt,
+      p_accept: false,
+    });
+    expect(first.error).toBeNull();
+    const unsweptParsed = respondSeatOfferRpcResult.parse(first.data);
+    if (unsweptParsed.kind !== "declined") throw new Error("unreachable");
+    // Nobody has heard about this offer at all. The route mails on this.
+    expect(unsweptParsed.already_notified).toBe(false);
+    expect(await readRow(unswept)).toBeNull();
+
+    const second = await admin.rpc("respond_seat_offer", {
+      p_participation_id: swept,
+      p_offer_sent_at: sweptSentAt,
+      p_accept: false,
+    });
+    expect(second.error).toBeNull();
+    const sweptParsed = respondSeatOfferRpcResult.parse(second.data);
+    if (sweptParsed.kind !== "declined") throw new Error("unreachable");
+    // Staff already have a mail about this one, so the route stays quiet — and
+    // the flag survived the delete that took the stamp behind it.
+    expect(sweptParsed.already_notified).toBe(true);
+    expect(await readRow(swept)).toBeNull();
   });
 
   /**
@@ -630,10 +686,11 @@ describe("seat offers", () => {
    * every other respect (free, capped, exactly one group, a live stamp well
    * inside the window), so `stale` here can only be the cancellation.
    *
-   * `stale` rather than a kind of its own, because the public landing route
-   * folds everything but accepted/declined/expired into one generic `invalid`:
-   * a distinguishable answer would let an unauthenticated caller ask which
-   * products have been cancelled.
+   * `stale` rather than a kind of its own, and it is the one `stale` that stays
+   * generic all the way out to the reader: every other one resolves to `used`
+   * when the route re-reads the row, and only a row still holding this exact
+   * live offer resolves to the generic `invalid`. A distinguishable answer
+   * would let an unauthenticated caller ask which products have been cancelled.
    */
   it("refuses an answer on a product that has been cancelled, and moves nothing", async () => {
     const participation = await queue(P_CANCELLED);

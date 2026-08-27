@@ -4,10 +4,11 @@ import { z } from "zod";
  * Wire shapes for the seat offer: an admin invites one waitlisted family to a
  * seat that has opened, and they answer from their inbox or from My SOG.
  *
- * The RPC-result schemas here are written from the function bodies in migration
- * 00207 (`send_seat_offer`, `respond_seat_offer`,
- * `claim_expired_seat_offer_notifications`), which return `Json` in codegen. The
- * db tests parse real RPC output through them in CI.
+ * The RPC-result schemas here are written from the function bodies that are
+ * currently the last word on each function — 00207 for `send_seat_offer`, 00208
+ * for `claim_expired_seat_offer_notifications`, 00209 for `respond_seat_offer`
+ * — all of which return `Json` in codegen. The db tests parse real RPC output
+ * through them in CI.
  */
 
 /**
@@ -53,12 +54,15 @@ export type SendSeatOfferRpcResult = z.infer<typeof sendSeatOfferRpcResult>;
  *   unassigned, if the product stopped having exactly one while they decided —
  *   the seat is granted either way).
  * - `declined` — the row is gone, and the identifiers ride back because the
- *   staff mail names them and they cannot be read after the delete.
- *   `within_window` says whether the answer beat the deadline, and it is the
- *   only thing that tells an in-window decline from a late one: the first is
- *   news an admin is waiting for and mails them, the second lands after the
- *   no-response mail has already gone and frees the row quietly. The family
- *   reads the same thank-you either way, so this never crosses the public wire.
+ *   staff mail names them and they cannot be read after the delete. Two flags
+ *   ride back with them, answering different questions: `within_window` says
+ *   the answer beat the deadline, `already_notified` says the row's expiry had
+ *   been claimed and reported before this call read it. The caller mails on
+ *   `within_window || !already_notified`, because expiry here is observed
+ *   rather than scheduled — an offer nobody looked at between its fifth day and
+ *   a late answer was never reported to anyone, and the delete takes the last
+ *   evidence of it with it. The family reads the same thank-you either way, so
+ *   neither flag crosses the public wire.
  * - `expired` — the five days ran out and the answer was ACCEPT. A decline is
  *   honoured however late it is (00208), so this kind can no longer come back
  *   from one.
@@ -82,8 +86,15 @@ export const respondSeatOfferRpcResult = z.discriminatedUnion("kind", [
     product_id: z.string(),
     customer_id: z.string(),
     participant_id: z.string(),
-    /** False when the deadline had already passed. Decides the staff mail. */
+    /** False when the deadline had already passed. */
     within_window: z.boolean(),
+    /**
+     * True when this offer's lapse had already been claimed and mailed to
+     * staff. Read before the delete, because the delete removes the stamp it
+     * comes from — and it is the half of the staff-mail decision that keeps a
+     * late no from being quieter than no answer at all.
+     */
+    already_notified: z.boolean(),
   }),
   z.object({
     kind: z.literal("expired"),

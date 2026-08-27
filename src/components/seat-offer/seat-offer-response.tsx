@@ -137,12 +137,26 @@ export function SeatOfferResponse({
     try {
       const send = respond ?? ((yes: boolean) => postAnswer(token, yes));
       const outcome = await send(accept);
-      // An accept that arrived a moment too late does not end the visit: it
-      // moves the reader onto the lapsed panel, which still has the decline on
-      // it. The buttons there are live again for that reason, so the latch is
+      // `expired` means two different things depending on which button
+      // produced it, and only the press knows which.
+      //
+      // On an ACCEPT it is an answer: the seat can no longer be claimed, so the
+      // reader moves onto the lapsed panel, which still has the decline on it.
+      // The buttons there are live again for that reason, so the latch is
       // released with them.
+      //
+      // On a DECLINE it is a refusal wearing the same word. The database
+      // honours a late no for as long as the row exists, so a decline can only
+      // come back `expired` when the compare-and-swap was refused for the one
+      // reason it will not name — the product was cancelled or deleted — and
+      // the dead-end read then resolves a still-live lapsed row to `expired`.
+      // Nothing was written. Showing the lapsed panel here would put the reader
+      // back in front of the button they just pressed, with no word about why,
+      // and every further press would do the same: a silent loop with no exit.
+      // So it is reported as the failure it is.
       if (outcome === "expired") {
-        setStep({ kind: "expired" });
+        if (accept) setStep({ kind: "expired" });
+        else setFailed(true);
         setCommitting(false);
         return;
       }

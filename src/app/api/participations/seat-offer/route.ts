@@ -81,14 +81,16 @@ export const POST = defineRoute({
       case "accepted":
         return { outcome: "accepted" as const };
       case "declined":
-        // Mailed only when the answer beat the deadline. The lapsed block in My
-        // SOG keeps its Decline button live for exactly the same reason the
-        // emailed link does — a family telling us they cannot come is news we
-        // want whenever it arrives — but staff were already told this offer
-        // went unanswered, so a second mail would raise a case they have
-        // finished with. See migration 00208 for where `within_window` is
-        // decided.
-        if (parsed.data.within_window) {
+        // The lapsed block in My SOG keeps its Decline button live for exactly
+        // the same reason the emailed link does — a family telling us they
+        // cannot come is news we want whenever it arrives. What decides the
+        // mail is whether anybody has heard about this offer yet. An answer
+        // that beat the deadline always mails; a late one mails unless the
+        // no-response mail demonstrably went, because expiry is observed rather
+        // than scheduled and an offer nobody looked at was reported to nobody.
+        // The delete has just taken the stamp that said so, which is why both
+        // flags are decided inside the RPC (00209).
+        if (parsed.data.within_window || !parsed.data.already_notified) {
           after(
             sendSeatOfferStaffEmail({
               client: admin,

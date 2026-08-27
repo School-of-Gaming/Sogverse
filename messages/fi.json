@@ -1923,7 +1923,7 @@
         "bodySelf": "Paikka on sinun, jos haluat sen edelleen.",
         "bodyGamer": "Kysyimme vanhemmaltasi, haluatteko paikan edelleen.",
         "deadline": "Vastaa viimeistään {deadline}, tai paikka siirtyy jonossa seuraavalle perheelle.",
-        "lapsed": "Tarjous ehti umpeutua, joten vuorosi siirtyy jonotuslistan loppuun. Jos et enää tarvitse paikkaa, voit silti kertoa siitä meille.",
+        "lapsed": "Tarjous ehti umpeutua, eikä paikkaa voi enää ottaa vastaan. Jos et enää tarvitse paikkaa, kerro siitä silti. Se auttaa meitä.",
         "accept": "Otan paikan",
         "decline": "Ei kiitos",
         "confirmTitle": "Luovutko paikasta?",
@@ -3469,7 +3469,7 @@
     },
     "expired": {
       "title": "Tarjouksen aika umpeutui",
-      "body": "Paikkatarjous on voimassa {days} päivää, ja tämä ehti umpeutua ennen kuin saimme vastauksesi. Paikka siirtyi jonossa seuraavalle perheelle.",
+      "body": "Paikkatarjous on voimassa {days} päivää, ja tämä ehti umpeutua ennen kuin saimme vastauksesi.",
       "declinePrompt": "Olet edelleen jonotuslistalla. Jos perheesi ei enää tarvitse paikkaa, voit kertoa siitä nyt, niin se vapautuu jollekin toiselle.",
       "declineAction": "Luovun paikasta",
       "confirmTitle": "Luovutko paikastasi?",
@@ -3477,7 +3477,7 @@
     },
     "used": {
       "title": "Tämä linkki on jo käytetty",
-      "body": "Tähän kutsuun on jo vastattu. Löydät Oma SOG -sivulta kaikki perheesi ilmoittautumiset ja jonotuspaikat.",
+      "body": "Tämä kutsu ei ole enää voimassa. Löydät Oma SOG -sivulta kaikki perheesi ilmoittautumiset ja jonotuspaikat.",
       "action": "Siirry Oma SOG -sivulle"
     },
     "invalid": {

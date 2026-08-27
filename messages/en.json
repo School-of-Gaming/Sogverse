@@ -2555,7 +2555,7 @@
         "bodySelf": "The place is yours, if you still want it.",
         "bodyGamer": "We have asked a parent whether you still want it.",
         "deadline": "Answer by {deadline}, or the place goes to the next family in line.",
-        "lapsed": "This offer has run out, so your turn moves to the back of the waitlist. If you no longer need a place at all, you can still tell us.",
+        "lapsed": "This offer has run out, so the place can no longer be accepted. If you no longer need a place at all, telling us still helps.",
         "accept": "Accept the place",
         "decline": "No, thank you",
         "confirmTitle": "Give up the place?",
@@ -3469,7 +3469,7 @@
     },
     "expired": {
       "title": "This offer has run out",
-      "body": "A seat offer stays open for {days} days, and this one closed before we heard from you, so the seat went to the next family in line.",
+      "body": "A seat offer stays open for {days} days, and this one closed before we heard from you.",
       "declinePrompt": "You are still on the waitlist. If your family no longer needs a place at all, you can tell us now and free it for someone else.",
       "declineAction": "Give up our place",
       "confirmTitle": "Give up your place?",
@@ -3477,7 +3477,7 @@
     },
     "used": {
       "title": "This link has already been used",
-      "body": "This invitation has been answered. Everything your family is signed up for, and every place you are waiting on, is in My SOG.",
+      "body": "This invitation is no longer open. Everything your family is signed up for, and every place you are waiting on, is in My SOG.",
       "action": "Go to My SOG"
     },
     "invalid": {
