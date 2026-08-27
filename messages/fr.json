@@ -181,7 +181,7 @@
       },
       "certification": {
         "title": "Certification des Gedus",
-        "description": "La certification permet à un Gedu d’être affecté à un groupe et de modérer les salons instantanés. Rien ici n’exige de décision aujourd’hui : certains attendent encore leurs propres documents.",
+        "description": "La certification permet à un Gedu d’être affecté à un groupe et de modérer les salons instantanés.",
         "justNow": "{count} certifiés à l’instant",
         "empty": "Personne n’attend une décision de certification.",
         "unnamed": "Gedu sans nom",

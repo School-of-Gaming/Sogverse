@@ -181,7 +181,7 @@
       },
       "certification": {
         "title": "Gedujen hyväksyntä",
-        "description": "Hyväksyntä ratkaisee, kenet voi liittää ryhmään ja kuka voi valvoa pikahuoneita. Mikään tässä ei vaadi päätöstä tänään – osa odottaa vielä omia papereitaan.",
+        "description": "Hyväksyntä ratkaisee, kenet voi liittää ryhmään ja kuka voi valvoa pikahuoneita.",
         "justNow": "Hyväksytty juuri nyt: {count}",
         "empty": "Kukaan ei odota hyväksyntäpäätöstä.",
         "unnamed": "Nimetön Gedu",

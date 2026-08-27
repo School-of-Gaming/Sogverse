@@ -181,7 +181,7 @@
       },
       "certification": {
         "title": "Gedu-certifiering",
-        "description": "Certifieringen avgör vem som kan kopplas till en grupp och moderera snabbrum. Ingenting här kräver ett beslut i dag – några väntar fortfarande på sina egna papper.",
+        "description": "Certifieringen avgör vem som kan kopplas till en grupp och moderera snabbrum.",
         "justNow": "{count} certifierade nyss",
         "empty": "Ingen väntar på ett certifieringsbeslut.",
         "unnamed": "Namnlös Gedu",
