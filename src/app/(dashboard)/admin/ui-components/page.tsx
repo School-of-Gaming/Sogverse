@@ -2724,7 +2724,12 @@ const CONTRACT_CARD_CASES: readonly {
   /** `undefined` is the read not having answered yet. */
   acceptances: GeduContractAcceptance[] | undefined;
 }[] = [
-  { label: "No answer yet", acceptances: undefined },
+  // Not a domain state — the card has exactly two of those (signed / not
+  // signed). This is what paints while the unseeded read is in flight, and
+  // the owner's ruling is that it is to be understood (and eventually
+  // rendered) as a loading state, not presented as a third thing the card
+  // can "be".
+  { label: "Loading", acceptances: undefined },
   { label: "No signature", acceptances: [] },
   { label: "One signature", acceptances: [CONTRACT_CARD_CURRENT_ROW] },
   {
