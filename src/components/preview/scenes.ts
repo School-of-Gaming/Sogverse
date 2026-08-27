@@ -368,7 +368,7 @@ export const PREVIEW_SCENES = [
     surface: "admin-dashboard",
     title: "Admin dashboard (draft redesign)",
     description:
-      "The /admin redesign over fixtures, pinned to a fixed Monday: the users strip, the needs-attention queue, and the week's schedule. Filters, week steps and Certify work against local state.",
+      "The /admin redesign over fixtures, pinned to a fixed Monday: the users strip, the needs-attention queue, Gedu certification, and the week's schedule. Filters, week steps and Certify work against local state.",
     chrome: "admin",
     scenarios: [
       {
@@ -380,7 +380,8 @@ export const PREVIEW_SCENES = [
       {
         slug: "quiet",
         label: "Quiet platform — all clear",
-        description: "The all-clear, which a full queue cannot show.",
+        description:
+          "The empty states, which a platform under load has no way to reach.",
       },
     ],
   },

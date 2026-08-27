@@ -169,7 +169,7 @@
       "attention": {
         "title": "Behöver åtgärd",
         "allClearTitle": "Allt är klart",
-        "allClearBody": "Alla spelare är placerade, varje grupp har en Gedu, ingen produkt saknar arvode eller avgift och ingen väntar på ett certifieringsbeslut.",
+        "allClearLine": "Det är lugnt i Sogverse. Du får vila nu, adminäventyrare.",
         "productsLabel": "Produkter som behöver åtgärd",
         "productsHeading": "Produkter",
         "issues": {
@@ -182,10 +182,9 @@
         }
       },
       "certification": {
-        "label": "Geduer som väntar på certifiering",
-        "heading": "Väntar på certifiering",
+        "title": "Gedu-certifiering",
         "justNow": "{count} certifierade nyss",
-        "empty": "Ingen väntar på ett certifieringsbeslut.",
+        "empty": "Ingen Gedu väntar på certifiering.",
         "unnamed": "Namnlös Gedu",
         "registered": "registrerades {when}",
         "certify": "Certifiera",

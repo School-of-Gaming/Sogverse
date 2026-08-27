@@ -169,7 +169,7 @@
       "attention": {
         "title": "À traiter",
         "allClearTitle": "Tout est en ordre",
-        "allClearBody": "Chaque joueur est placé, chaque groupe a un Gedu, aucun produit n’attend une rémunération ou un montant, et personne n’attend une décision de certification.",
+        "allClearLine": "Sogverse est en paix. Reposez-vous, âme aventurière.",
         "productsLabel": "Produits à traiter",
         "productsHeading": "Produits",
         "issues": {
@@ -182,10 +182,9 @@
         }
       },
       "certification": {
-        "label": "Gedus en attente de certification",
-        "heading": "En attente de certification",
+        "title": "Certification des Gedus",
         "justNow": "{count} certifiés à l’instant",
-        "empty": "Personne n’attend une décision de certification.",
+        "empty": "Aucun Gedu n’est en attente de certification.",
         "unnamed": "Gedu sans nom",
         "registered": "inscrit {when}",
         "certify": "Certifier",

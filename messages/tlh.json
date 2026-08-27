@@ -217,7 +217,7 @@
       "attention": {
         "title": "poQ Qu’",
         "allClearTitle": "Hoch QaQ",
-        "allClearBody": "Hoch toy’wI’ ghomDaq tu’lu’, Hoch ghom ghajbej Gedu, Hoch De’ ghaj Huch, ’ej patlh loSwI’ tu’be’lu’.",
+        "allClearLine": "jot Sogverse. DaH yileS, ra’wI’ lengwI’.",
         "productsLabel": "poQwI’ De’mey",
         "productsHeading": "De’mey",
         "issues": {
@@ -230,10 +230,9 @@
         }
       },
       "certification": {
-        "label": "patlh loSbogh Gedupu’",
-        "heading": "patlh loSlI’",
+        "title": "Gedu patlh",
         "justNow": "DaH patlh nobta’: {count}",
-        "empty": "patlh loSwI’ tu’be’lu’.",
+        "empty": "patlh ghaj Hoch Gedupu’.",
         "unnamed": "pong Hutlh Gedu",
         "registered": "ghItlhta’ {when}",
         "certify": "patlh yInob",

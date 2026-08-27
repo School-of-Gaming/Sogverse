@@ -161,8 +161,8 @@ verification. Each has a surface that shows it; none has a surface that
   is genuinely actionable or merely unusual — a list that cries wolf gets ignored
   within a week and is worse than no list. Known candidates: unassigned
   participants on a running product, a product with no gedu, a past session with
-  no report, an unverified gedu awaiting approval, a family subscription in a
-  payment-problem state, a waitlist with free seats above it.
+  no report, a family subscription in a payment-problem state, a waitlist with
+  free seats above it.
 - [ ] **Decide where it lives and how it stays cheap.** A dashboard section is the
   ask, but every condition is a query and the surface loads on every admin visit
   — so it wants one aggregate read (a view or an RPC returning counts plus enough

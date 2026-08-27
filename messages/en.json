@@ -168,8 +168,8 @@
       },
       "attention": {
         "title": "Needs attention",
-        "allClearTitle": "All clear",
-        "allClearBody": "Every gamer is placed, every group has a Gedu, no product is missing a fee, and nobody is waiting on a certification decision.",
+        "allClearTitle": "All Clear",
+        "allClearLine": "Sogverse is at peace. You may rest now, admin adventurer.",
         "productsLabel": "Products needing attention",
         "productsHeading": "Products",
         "issues": {
@@ -182,10 +182,9 @@
         }
       },
       "certification": {
-        "label": "Gedus awaiting certification",
-        "heading": "Awaiting certification",
+        "title": "Gedu certification",
         "justNow": "{count} certified just now",
-        "empty": "Nobody is waiting on a certification decision.",
+        "empty": "No Gedus are awaiting certification.",
         "unnamed": "Unnamed Gedu",
         "registered": "registered {when}",
         "certify": "Certify",

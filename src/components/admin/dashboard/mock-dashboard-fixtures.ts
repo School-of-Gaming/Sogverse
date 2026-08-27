@@ -41,13 +41,17 @@ import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
  */
 
 /**
- * **Two scenarios**, and they cannot coexist: an empty queue and a full one are
- * the same components in their two states.
+ * **Two scenarios**, and they cannot coexist: a full attention queue and an
+ * empty one are the same component in its two states.
  *
  * `busy` is the platform under real load — sixty products, twenty-one of them
- * needing something, five gedus waiting on a decision. `quiet` is six products
- * with nothing wrong anywhere, which is the only way to see the all-clear state
- * on a page that is otherwise doing its job.
+ * needing something, five gedus not yet certified. `quiet` is six products with
+ * nothing wrong anywhere and nobody left to certify.
+ *
+ * **Both sections are empty in `quiet`, not just the queue.** They are
+ * independent now — attention is products, certification is standing
+ * information below it — so each owns an empty state that a platform under load
+ * can never reach, and one scenario carries both.
  */
 export const ADMIN_DASHBOARD_SCENARIOS = ["busy", "quiet"] as const;
 
@@ -1040,6 +1044,9 @@ export function buildAdminDashboardFixture(
     // no adjustment to disclose. The live page decides this per snapshot.
     timeZoneAbbrev: null,
     products,
+    // Empty on both sides in `quiet`: certification is its own section now, so
+    // it needs its own empty state, and this is the only scenario that can show
+    // one.
     uncertifiedGedus: quiet ? [] : uncertifiedGedus(locale),
     users: quiet ? QUIET_USER_STATS : BUSY_USER_STATS,
     weeks,
@@ -1051,19 +1058,25 @@ export function buildAdminDashboardFixture(
 /**
  * Plausible platform numbers — one parent to roughly one and a half gamers, most
  * addresses verified, and rather more gedus registered than certified, which is
- * the whole reason the certification queue above exists.
+ * the whole reason the certification section above exists.
+ *
+ * Both rows agree with the certification list the same scenario builds: `busy`
+ * is nineteen gedus with fourteen certified against its five listed, `quiet` is
+ * five with all five certified against an empty list. A strip claiming an
+ * uncertified gedu the card below it says nothing about is the drift a fixture
+ * exists to make impossible.
  */
 const BUSY_USER_STATS: AdminDashboardData["users"] = [
   { role: "customer", total: 214, verified: 191, certified: null },
   { role: "gamer", total: 342, verified: null, certified: null },
-  { role: "gedu", total: 19, verified: 17, certified: 12 },
+  { role: "gedu", total: 19, verified: 17, certified: 14 },
   { role: "admin", total: 4, verified: 4, certified: null },
 ];
 
 const QUIET_USER_STATS: AdminDashboardData["users"] = [
   { role: "customer", total: 12, verified: 9, certified: null },
   { role: "gamer", total: 18, verified: null, certified: null },
-  { role: "gedu", total: 3, verified: 3, certified: 3 },
+  { role: "gedu", total: 5, verified: 5, certified: 5 },
   { role: "admin", total: 2, verified: 2, certified: null },
 ];
 

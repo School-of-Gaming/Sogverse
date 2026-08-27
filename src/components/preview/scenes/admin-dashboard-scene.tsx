@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import { AdminDashboardPageBody } from "@/components/admin/dashboard/admin-dashboard-page-body";
 import {
@@ -19,10 +19,18 @@ import { resolveLocale } from "@/lib/constants/locales";
  * would open, and clicking one leaves the preview, which is the honest behaviour
  * for a link whose whole purpose is to be the way out of the queue.
  *
- * The certify action resolves immediately and writes nothing. The queue's own
- * behaviour is unchanged by that — the row leaves the list, the counted receipt
- * appears — which is the point of the action being a callback: the preview and
- * the live page differ only in what happens at the far end of it.
+ * **Certify works, against local state, and it has to be this shell that makes
+ * it work.** The queue drops a row once the write resolves *and* the list it was
+ * given stops offering that id — the second half is what protects it from a
+ * receipt that outlives the fact, when somebody un-certifies an account from the
+ * users list while this page is open. Live, the mutation awaits its own
+ * invalidation, so the refetched snapshot has already dropped the id by the time
+ * the promise resolves. A scene that resolved an untouched fixture would satisfy
+ * the first half and fail the second, and the row would sit at "Certifying…"
+ * for the rest of the sitting — the button is deliberately never re-enabled on
+ * success, because live the row is about to disappear. So the certified ids are
+ * held here and filtered out of the list, which is the same two-part shape the
+ * live path has, with a `Set` where the RPC is.
  *
  * The fixture is memoised rather than rebuilt per render. Nothing in it depends
  * on a live clock — the whole scene is pinned to a fixed Monday morning, because
@@ -39,15 +47,41 @@ export function AdminDashboardScene({
   scenario: AdminDashboardScenario;
 }) {
   const locale = resolveLocale(useLocale());
-  const data = useMemo(
+  const fixture = useMemo(
     () => buildAdminDashboardFixture(scenario, locale),
     [scenario, locale],
   );
 
-  return (
-    <AdminDashboardPageBody
-      data={data}
-      onCertifyGedu={() => Promise.resolve()}
-    />
+  const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
+
+  /**
+   * Certifications belong to the scenario they were made in. The two scenarios
+   * are the same component at the same position in the tree, so React keeps
+   * this state across a step between them unless it is told not to — and
+   * without the reset, certifying somebody in `busy`, stepping to `quiet` and
+   * stepping back would show `busy` already missing a row nobody touched there:
+   * a preview lying about its own starting state.
+   */
+  const [shownScenario, setShownScenario] = useState(scenario);
+  if (shownScenario !== scenario) {
+    setShownScenario(scenario);
+    setCertified(new Set());
+  }
+
+  const data = useMemo(
+    () => ({
+      ...fixture,
+      uncertifiedGedus: fixture.uncertifiedGedus.filter(
+        (gedu) => !certified.has(gedu.id),
+      ),
+    }),
+    [fixture, certified],
   );
+
+  const handleCertify = useCallback((geduId: string) => {
+    setCertified((current) => new Set(current).add(geduId));
+    return Promise.resolve();
+  }, []);
+
+  return <AdminDashboardPageBody data={data} onCertifyGedu={handleCertify} />;
 }
