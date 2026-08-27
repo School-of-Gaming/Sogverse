@@ -1,15 +1,14 @@
+import type { GeduContractSeed } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // Imported from the service module rather than the package index because that
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
-import type { GeduContractAcceptance } from "@/types";
+import type { AppSupabaseClient } from "@/types";
 
 /**
- * The signed-in gedu's contract acceptances, prefetched so the settings card is
- * born in its real state — signed, or not — rather than growing into it a
- * hydration after the page is up.
+ * The signed-in gedu's contract acceptances, and the moment they were read.
  *
  * Read with the viewer's **own** RLS-scoped client, never the admin one: the
  * `gedus_read_own_contract_acceptances` policy already scopes a gedu to their
@@ -18,23 +17,19 @@ import type { GeduContractAcceptance } from "@/types";
  * hop earlier, so both paths share one shape and the seed cannot disagree with
  * the refetch.
  *
- * **Failure answers `null`, not an empty list** — the same distinction the
- * contract page and the parent dashboard draw. An empty list is a perfectly
- * ordinary real answer (a gedu who has not signed yet), so a seed of `[]` after
- * a transient error would tell somebody who has already signed that they have
- * not, and leave it on screen with nothing to correct it. `null` means *do not
- * seed*: the shell passes no `initialData` at all, the hook fetches on mount,
- * and the card shows an empty body until it answers.
+ * **A failure is not caught.** It throws, and the page throws with it — see the
+ * route below for why this page does not degrade the way its neighbours do. The
+ * moment is stamped here, next to the read it describes, so a payload replayed
+ * from the router cache is aged rather than taken for fresh.
  */
-async function getInitialGeduContractAcceptances(
+async function readGeduContractSeed(
+  supabase: AppSupabaseClient,
   geduId: string,
-): Promise<GeduContractAcceptance[] | null> {
-  try {
-    const supabase = await createClient();
-    return await new GeduContractService(supabase).getAcceptances(geduId);
-  } catch {
-    return null;
-  }
+): Promise<GeduContractSeed> {
+  const acceptances = await new GeduContractService(supabase).getAcceptances(
+    geduId,
+  );
+  return { acceptances, fetchedAt: Date.now() };
 }
 
 /**
@@ -48,18 +43,35 @@ async function getInitialGeduContractAcceptances(
  * **Only a gedu is read for.** The card is not rendered for anyone else, so a
  * query for anyone else would be a round trip for a component that will not
  * exist — the role is resolved from the `getClaims()`-verified profile, never
- * from request input.
+ * from request input. That also makes the seed's presence the role test the body
+ * uses: it exists exactly when this route saw a gedu.
+ *
+ * **This page renders whole or it fails, which is a deliberate deviation from
+ * the parent dashboard's precedent.** That dashboard swallows a failed prefetch
+ * and seeds nothing, because its seeds *enrich* a page that is already useful
+ * without them and it is the highest-traffic page we have — degrading there
+ * keeps a working page working. Nothing of the sort is true here: this page
+ * already hard-depends on a server identity read to render at all, it is a
+ * low-traffic utility page, and the owner ruled for two-state simplicity over a
+ * third state that exists only for an error nobody sees. So the read throws and
+ * the page errors like any other server render.
+ *
+ * The accepted cost, stated plainly: a gedu's settings visit blocks on this read
+ * before the first byte.
  */
 export default async function SettingsPage() {
   const userWithProfile = await getUserWithProfile();
-  const initialGeduContractAcceptances =
-    userWithProfile?.profile?.role === "gedu"
-      ? await getInitialGeduContractAcceptances(userWithProfile.user.id)
-      : null;
+  if (userWithProfile?.profile?.role !== "gedu") {
+    return <SettingsSectionContent />;
+  }
 
-  return (
-    <SettingsSectionContent
-      initialGeduContractAcceptances={initialGeduContractAcceptances}
-    />
+  // One client, threaded — the same shape the sibling /gedu/contract route
+  // uses. The read helper takes it rather than building a second one.
+  const supabase = await createClient();
+  const geduContractSeed = await readGeduContractSeed(
+    supabase,
+    userWithProfile.user.id,
   );
+
+  return <SettingsSectionContent geduContractSeed={geduContractSeed} />;
 }

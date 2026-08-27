@@ -14,7 +14,10 @@ import { GameAccountCard } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
+import {
+  GeduContractSettingsCard,
+  type GeduContractSeed,
+} from "@/components/gedu/contract/gedu-contract-settings-card";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
@@ -27,7 +30,6 @@ import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraf
 import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
 import {
   isGamerProfile,
-  type GeduContractAcceptance,
   type ProfileUpdate,
   type SpokenLanguageCode,
 } from "@/types";
@@ -43,16 +45,18 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
 }
 
 export function SettingsSectionContent({
-  initialGeduContractAcceptances = null,
+  geduContractSeed,
 }: {
   /**
-   * A gedu's contract acceptances, prefetched by the route — or `null` when
-   * that read failed *or* the viewer is not a gedu, in which case the card this
-   * seeds is never rendered. It is threaded straight through to the card's data
-   * shell, which seeds the very cache entry the hook reads; `null` means do not
-   * seed, so the hook fetches on mount rather than settling on a wrong answer.
+   * A gedu's contract acceptances as the route read them, with the moment it
+   * read them. Threaded straight through to the card's data shell, which seeds
+   * the very cache entry the hook reads.
+   *
+   * **Absent means "not a gedu", and nothing else.** The route reads only for a
+   * gedu and fails rather than render this page without an answer, so there is
+   * no failed-read value to carry and no third state for the card to be in.
    */
-  initialGeduContractAcceptances?: GeduContractAcceptance[] | null;
+  geduContractSeed?: GeduContractSeed;
 }) {
   const t = useTranslations('settings');
   const c = useTranslations('common');
@@ -484,11 +488,16 @@ export function SettingsSectionContent({
         </>
       )}
 
-      {/* Security sits at the foot of the page for every role — the exit and
-          the rarely-used credential actions come after the things people came
-          to edit. The one card allowed below it is the gedu contract card,
-          which keeps the last slot for the reason its own comment gives, so
-          this ordering is load-bearing, not aesthetic. */}
+      {/* The seed's presence is the role test: the route reads these rows only
+          for a gedu, so a viewer who is not one has nothing to hand down and no
+          card to render. */}
+      {user && geduContractSeed && (
+        <GeduContractSettingsCard geduId={user.id} seed={geduContractSeed} />
+      )}
+
+      {/* Security is the last card on the page for every role — an owner
+          ruling. The exit and the rarely-used credential actions come after the
+          things people came to edit. */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -538,23 +547,6 @@ export function SettingsSectionContent({
           )}
         </CardContent>
       </Card>
-
-      {/* Last on the page, and still a layout decision rather than a ranking
-          one — but the thing it now guards against is rare. The route seeds
-          this card's read, so on the ordinary visit it is born in its real
-          state and paints at its final height like every other card here.
-          What is left is the degraded path: when that server read fails the
-          seed is withheld, the browser asks again, and the card grows when the
-          answer lands. Last is where that growth pushes nothing. Anywhere
-          higher it would have to hold a slot open at the taller of its two
-          states for a case that almost never happens, leaving a visible hole
-          in the shorter one on every ordinary visit. */}
-      {isGedu && user && (
-        <GeduContractSettingsCard
-          geduId={user.id}
-          initialAcceptances={initialGeduContractAcceptances}
-        />
-      )}
     </div>
   );
 }

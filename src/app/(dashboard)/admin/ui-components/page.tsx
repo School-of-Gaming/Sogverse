@@ -2667,12 +2667,10 @@ export default function AdminUIComponentsPage() {
 
       <Section title="Gedu contract — settings card">
         <p className="text-sm text-muted-foreground -mt-2">
-          The card at the foot of a gedu&rsquo;s settings page: two domain
-          states, plus the degraded one. The settings route seeds the acceptance
-          read, so the empty first column is painted only when that server read
-          failed and the browser is fetching the rows itself &mdash; and it is
-          what a failed client read leaves on screen too, since the card has no
-          other way to say so.
+          The contract card on a gedu&rsquo;s settings page, in both the states
+          it has. The settings route reads the acceptances before the page
+          renders and fails if it cannot, so the card is born signed or unsigned
+          and there is no third thing for it to be.
         </p>
         <p className="text-sm text-muted-foreground">
           The database keeps one acceptance row per signed version &mdash; the
@@ -2708,51 +2706,40 @@ const CONTRACT_CARD_CURRENT_ROW = buildGeduContractAcceptance({
   acceptedAt: CONTRACT_CARD_SIGNED_AT,
 });
 
-/** What the settings page's read can come back holding. */
+/** What the settings page's read comes back holding — the card's two states. */
 const CONTRACT_CARD_CASES: readonly {
   label: string;
-  /** `undefined` is the read not having answered yet. */
-  acceptances: GeduContractAcceptance[] | undefined;
+  acceptances: GeduContractAcceptance[];
 }[] = [
-  // Not a domain state — the card has exactly two of those (signed / not
-  // signed). This is the degraded path: the settings route seeds the read, so
-  // an unanswered one means that server read failed and the browser is
-  // fetching the rows itself. It is to be understood (and eventually rendered)
-  // as a loading state, not presented as a third thing the card can "be".
-  { label: "Seed failed — refetching", acceptances: undefined },
   { label: "No signature", acceptances: [] },
   // A second row for an older version would render this column pixel for pixel:
   // the card names the earliest acceptance of the version in force and nothing
   // else. Two identical renders are one state, so there is one column.
-  { label: "One signature", acceptances: [CONTRACT_CARD_CURRENT_ROW] },
+  { label: "Signed", acceptances: [CONTRACT_CARD_CURRENT_ROW] },
 ];
 
 /**
- * The three answers side by side, so their bottom edges can be read against each
+ * Both answers side by side, so their bottom edges can be read against each
  * other — the card is the only one on the settings page whose height its data
- * decides, and whether the three can be made one height is the open question
+ * decides, and whether the two can be made one height is the open question
  * about it.
  *
  * The rows go through the real matcher rather than being hand-picked, so what
  * each column shows is what the data shell would have handed the card, not a
  * claim about it. `items-start` is load-bearing: a stretching grid would give
- * every column the tallest card's height and erase the comparison.
+ * both columns the taller card's height and erase the comparison.
  */
 function GeduContractSettingsCardDemo() {
   return (
-    <div className="grid items-start gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid items-start gap-x-6 gap-y-8 md:grid-cols-2">
       {CONTRACT_CARD_CASES.map(({ label, acceptances }) => (
         <div key={label} className="space-y-3">
           <DemoCaption>{label}</DemoCaption>
           <GeduContractSettingsCardView
-            acceptance={
-              acceptances === undefined
-                ? undefined
-                : findGeduContractAcceptance(
-                    acceptances,
-                    GEDU_CONTRACT_CURRENT_VERSION,
-                  )
-            }
+            acceptance={findGeduContractAcceptance(
+              acceptances,
+              GEDU_CONTRACT_CURRENT_VERSION,
+            )}
           />
         </div>
       ))}

@@ -1,4 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+// First among the imports, and load-bearing: the `vi.mock` factories below run
+// during this file's import phase, and each reads its module body out of here.
+// An import placed after the components would not have been evaluated yet.
+import {
+  gameAccountModule,
+  geduCoverageEditorModule,
+  homeLocationFieldModule,
+  locationsServiceModule,
+  minecraftServiceModule,
+  providersModule,
+  robloxServiceModule,
+  usersServiceModule,
+} from "../../mocks/settings-page";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
@@ -28,51 +41,29 @@ import type { Profile } from "@/types";
  */
 
 // --------------------------------------------------------------------------
-// The signed-in user. Swapped per test before render.
+// The signed-in user, and the page scaffolding around the card under test.
+// Every body but the contract card's is shared with the seed test — this card
+// reads none of these hooks, and the profile form around it is not what is
+// under test.
 // --------------------------------------------------------------------------
 const auth: { profile: Profile } = { profile: createMockProfile() };
 
-vi.mock("@/providers", () => ({
-  useAuth: () => ({
-    user: { id: auth.profile.id },
-    profile: auth.profile,
-    refreshProfile: vi.fn(),
-  }),
-}));
-
-// --------------------------------------------------------------------------
-// Data hooks: this card reads none of them, and the profile form around it is
-// not what is under test. Each returns the shape its call site destructures.
-// --------------------------------------------------------------------------
-vi.mock("@/services/users", () => ({
-  useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
-  useSendVerificationEmail: () => ({ mutate: vi.fn() }),
-}));
-vi.mock("@/services/locations", () => ({
-  useLocationsByIds: () => ({ data: undefined }),
-}));
-vi.mock("@/services/minecraft", () => ({
-  useMyMinecraftAccount: () => ({ data: null }),
-  useUpdateMyMinecraft: () => ({ mutateAsync: vi.fn() }),
-}));
-vi.mock("@/services/roblox", () => ({
-  useMyRobloxAccount: () => ({ data: null }),
-  useUpdateMyRoblox: () => ({ mutateAsync: vi.fn() }),
-}));
-
-// Neighbouring sections of the page, stubbed so this file is about the one
-// card. They own their own network reads and their own tests.
-vi.mock("@/components/game-account", () => ({
-  GameAccountCard: () => <div data-testid="game-account-card" />,
-}));
-vi.mock("@/components/gedu/gedu-coverage-editor", () => ({
-  GeduCoverageEditor: () => <div data-testid="gedu-coverage-editor" />,
-}));
+vi.mock("@/providers", () => providersModule(() => auth.profile));
+vi.mock("@/services/users", () => usersServiceModule());
+vi.mock("@/services/locations", () => locationsServiceModule());
+vi.mock("@/services/minecraft", () => minecraftServiceModule());
+vi.mock("@/services/roblox", () => robloxServiceModule());
+vi.mock("@/components/game-account", () => gameAccountModule());
+vi.mock("@/components/gedu/gedu-coverage-editor", () =>
+  geduCoverageEditorModule(),
+);
+vi.mock("@/components/locations/home-location-field", () =>
+  homeLocationFieldModule(),
+);
+// Not shared: the seed test renders this card for real, and stubbing it is what
+// keeps this file about the Security card alone.
 vi.mock("@/components/gedu/contract/gedu-contract-settings-card", () => ({
   GeduContractSettingsCard: () => <div data-testid="gedu-contract-card" />,
-}));
-vi.mock("@/components/locations/home-location-field", () => ({
-  HomeLocationField: () => <div data-testid="home-location-field" />,
 }));
 
 // --- Helpers --------------------------------------------------------------

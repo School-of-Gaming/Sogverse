@@ -1,4 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+// First among the imports, and load-bearing: the `vi.mock` factories below run
+// during this file's import phase, and each reads its module body out of here.
+// An import placed after the components would not have been evaluated yet.
+import {
+  gameAccountModule,
+  geduCoverageEditorModule,
+  homeLocationFieldModule,
+  locationsServiceModule,
+  minecraftServiceModule,
+  providersModule,
+  robloxServiceModule,
+  usersServiceModule,
+} from "../../mocks/settings-page";
 import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,66 +20,48 @@ import messages from "@/../messages/en.json";
 import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
+import { geduContractKeys } from "@/services/gedu";
 import { createMockProfile } from "../../mocks/supabase";
-import type { Profile } from "@/types";
+import type { GeduContractAcceptance, Profile } from "@/types";
 
 /**
- * **The gedu contract settings card is born in its real state.**
+ * **The gedu contract settings card is born in its real state, and there is no
+ * other state it can be in.**
  *
- * The settings route reads the acceptances server-side and hands them down, so
- * the card renders signed-or-not on its very first frame rather than growing
- * into it a fetch later. Both halves of that are pinned here: the card putting
- * the seed straight into the query cache instead of waiting for the network,
- * and the page body carrying the route's prefetch down to it.
+ * The settings route reads the acceptances server-side and hands them down —
+ * or fails, so a rendered page always has them. That is what makes the card a
+ * two-state component, and what is pinned here is the whole of that claim: the
+ * seed alone is enough to paint the real answer, it lands on the key every
+ * other reader of these rows shares, and the page body carries it down.
  *
- * The degraded path is pinned alongside them, because it is the reason the card
- * still sits last on the page. A `null` seed means the server read failed, and
- * the card must then show *nothing* — never "not accepted", which would tell a
- * gedu who has signed that they have not.
+ * **The query client here is the app's, not a convenient one.** "It fetched
+ * nothing" is only worth asserting under the configuration production runs —
+ * the 60-second `staleTime` and React Query's own `refetchOnMount` — because a
+ * client told not to refetch would pass that assertion whatever the card did.
+ * It is also what gives the last case its teeth: a seed stamped with the moment
+ * the server read it goes stale on schedule, so a payload replayed out of the
+ * router cache is asked about again instead of standing for a minute.
  */
 
 // --------------------------------------------------------------------------
-// The signed-in user, and the two providers the card and its page body read.
+// The signed-in user, and the page scaffolding the card renders inside.
 // --------------------------------------------------------------------------
 const auth: { profile: Profile } = {
   profile: createMockProfile({ role: "gedu" }),
 };
 
-vi.mock("@/providers", () => ({
-  useAuth: () => ({
-    user: { id: auth.profile.id },
-    profile: auth.profile,
-    refreshProfile: vi.fn(),
-  }),
-  useTimezone: () => "Europe/Helsinki",
-}));
-
-// Neighbouring sections of the settings page, stubbed so this file is about the
-// contract card alone. They own their own reads and their own tests.
-vi.mock("@/services/users", () => ({
-  useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
-  useSendVerificationEmail: () => ({ mutate: vi.fn() }),
-}));
-vi.mock("@/services/locations", () => ({
-  useLocationsByIds: () => ({ data: undefined }),
-}));
-vi.mock("@/services/minecraft", () => ({
-  useMyMinecraftAccount: () => ({ data: null }),
-  useUpdateMyMinecraft: () => ({ mutateAsync: vi.fn() }),
-}));
-vi.mock("@/services/roblox", () => ({
-  useMyRobloxAccount: () => ({ data: null }),
-  useUpdateMyRoblox: () => ({ mutateAsync: vi.fn() }),
-}));
-vi.mock("@/components/game-account", () => ({
-  GameAccountCard: () => <div data-testid="game-account-card" />,
-}));
-vi.mock("@/components/gedu/gedu-coverage-editor", () => ({
-  GeduCoverageEditor: () => <div data-testid="gedu-coverage-editor" />,
-}));
-vi.mock("@/components/locations/home-location-field", () => ({
-  HomeLocationField: () => <div data-testid="home-location-field" />,
-}));
+vi.mock("@/providers", () => providersModule(() => auth.profile));
+vi.mock("@/services/users", () => usersServiceModule());
+vi.mock("@/services/locations", () => locationsServiceModule());
+vi.mock("@/services/minecraft", () => minecraftServiceModule());
+vi.mock("@/services/roblox", () => robloxServiceModule());
+vi.mock("@/components/game-account", () => gameAccountModule());
+vi.mock("@/components/gedu/gedu-coverage-editor", () =>
+  geduCoverageEditorModule(),
+);
+vi.mock("@/components/locations/home-location-field", () =>
+  homeLocationFieldModule(),
+);
 
 /**
  * The read behind the hook, stood in for by one that never answers. That is
@@ -92,23 +87,31 @@ const ACCEPTED_TITLE = messages.gedu.contract.settings.acceptedTitle;
 const NOT_ACCEPTED_TITLE = messages.gedu.contract.settings.notAcceptedTitle;
 const CARD_TITLE = messages.gedu.contract.settings.title;
 
+/** The seed as the route builds it: the rows, stamped at the read. */
+const freshSeed = (acceptances: GeduContractAcceptance[]) => ({
+  acceptances,
+  fetchedAt: Date.now(),
+});
+
 /**
- * A client that will not refetch behind the assertions, so what a first render
- * shows is the seed and nothing else. The query function would reach the
- * globally-mocked Supabase client, which answers nothing — which is the point:
- * a seeded card must not need it.
+ * A client configured exactly as `QueryProvider` configures the app's: a
+ * one-minute `staleTime` and nothing else overridden. Anything looser would
+ * make "no fetch" a property of the test rather than of the card.
  */
 function renderWithQuery(ui: ReactNode) {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, refetchOnMount: false } },
+    defaultOptions: { queries: { staleTime: 60 * 1000 } },
   });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <NextIntlClientProvider locale="en" messages={messages}>
-        {ui}
-      </NextIntlClientProvider>
-    </QueryClientProvider>,
-  );
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <NextIntlClientProvider locale="en" messages={messages}>
+          {ui}
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    ),
+  };
 }
 
 beforeEach(() => {
@@ -123,7 +126,7 @@ describe("the card's server seed", () => {
     renderWithQuery(
       <GeduContractSettingsCard
         geduId={auth.profile.id}
-        initialAcceptances={[SIGNED_ROW]}
+        seed={freshSeed([SIGNED_ROW])}
       />,
     );
 
@@ -136,57 +139,63 @@ describe("the card's server seed", () => {
     expect(getAcceptances).not.toHaveBeenCalled();
   });
 
-  it("renders the prompt from a seeded empty list", () => {
+  it("renders the sign prompt from a seeded empty list, with no fetch in between", () => {
     renderWithQuery(
-      <GeduContractSettingsCard
-        geduId={auth.profile.id}
-        initialAcceptances={[]}
-      />,
+      <GeduContractSettingsCard geduId={auth.profile.id} seed={freshSeed([])} />,
     );
 
-    // `[]` is a real answer — this gedu has signed nothing — and the seed is
-    // trusted with it, which is exactly why a *failed* read must not be
-    // flattened into one.
+    // `[]` is a real answer — this gedu has signed nothing — and it is trusted
+    // as one, which it can be because a read that failed never reaches here:
+    // the route throws instead of handing over an empty list.
     expect(screen.getByText(NOT_ACCEPTED_TITLE)).toBeTruthy();
+    expect(getAcceptances).not.toHaveBeenCalled();
   });
 
-  it("shows neither answer when the seed was withheld", () => {
-    renderWithQuery(
+  it("seeds the shared cache key, not a copy of its own", () => {
+    const { queryClient } = renderWithQuery(
       <GeduContractSettingsCard
         geduId={auth.profile.id}
-        initialAcceptances={null}
+        seed={freshSeed([SIGNED_ROW])}
       />,
     );
 
-    // The degraded path: the server read failed, the browser is asking again,
-    // and until it answers the card says nothing rather than guessing.
-    expect(screen.queryByText(ACCEPTED_TITLE)).toBeNull();
-    expect(screen.queryByText(NOT_ACCEPTED_TITLE)).toBeNull();
+    // The very entry the hook reads and the accept mutation invalidates. A seed
+    // that landed anywhere else would still render this card correctly and
+    // leave every other reader of these rows fetching.
+    expect(
+      queryClient.getQueryData(geduContractKeys.acceptances(auth.profile.id)),
+    ).toEqual([SIGNED_ROW]);
+  });
+
+  it("asks again when the seed is older than the staleTime", () => {
+    renderWithQuery(
+      <GeduContractSettingsCard
+        geduId={auth.profile.id}
+        seed={{
+          acceptances: [SIGNED_ROW],
+          // Five minutes old — what a back-navigation served from the router
+          // cache hands over. Without the stamp React Query would call this
+          // fresh and sit on it.
+          fetchedAt: Date.now() - 5 * 60 * 1000,
+        }}
+      />,
+    );
+
+    // Still painted from the seed, immediately — being stale is not being
+    // absent, and the card never blanks while the refetch is in flight.
+    expect(screen.getByText(ACCEPTED_TITLE)).toBeTruthy();
     expect(getAcceptances).toHaveBeenCalledTimes(1);
-    // The heading is there from the first paint either way — it is what a late
-    // answer lands under without moving it.
-    expect(screen.getByText(CARD_TITLE)).toBeTruthy();
   });
 });
 
 describe("the settings page body's threading", () => {
-  it("hands the route's prefetch down, so the card paints signed on first render", () => {
+  it("hands the route's seed down, so the card paints signed on first render", () => {
     renderWithQuery(
-      <SettingsSectionContent initialGeduContractAcceptances={[SIGNED_ROW]} />,
+      <SettingsSectionContent geduContractSeed={freshSeed([SIGNED_ROW])} />,
     );
 
     expect(screen.getByText(ACCEPTED_TITLE)).toBeTruthy();
-  });
-
-  it("keeps a withheld seed withheld rather than turning it into an empty list", () => {
-    renderWithQuery(
-      <SettingsSectionContent initialGeduContractAcceptances={null} />,
-    );
-
-    // The card is mounted — its heading is up — but its body is empty, which is
-    // the whole difference between "we could not read" and "nothing signed".
-    expect(screen.getByText(CARD_TITLE)).toBeTruthy();
-    expect(screen.queryByText(NOT_ACCEPTED_TITLE)).toBeNull();
+    expect(getAcceptances).not.toHaveBeenCalled();
   });
 
   it("renders no contract card at all for a non-gedu", () => {

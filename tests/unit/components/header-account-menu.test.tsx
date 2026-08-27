@@ -663,7 +663,10 @@ describe("AccountMenu — switching to another member", () => {
     // Disabling the clicked row blurs it; re-enabling does not hand focus
     // back. Without this the arrow keys re-enter at the top of the list and a
     // screen-reader user has no way back to the line they need to read.
-    expect(document.activeElement).toBe(row("Aino"));
+    // waitFor, not a bare expect: the restore runs in an effect keyed on the
+    // committing flag, which can flush a beat after the alert renders — under
+    // a loaded parallel suite the bare assertion raced it and flaked.
+    await waitFor(() => expect(document.activeElement).toBe(row("Aino")));
   });
 
   it("scrolls the failure line into the panel's view", async () => {

@@ -75,20 +75,17 @@ const FIXTURE_SIGNED_VERSION = FIXTURE_SIGNED_DOCUMENT
  * forever after), while the style guide's has to sit still, since what it shows
  * is the card's height and a date that drifts is a height that drifts with it.
  *
- * The version defaults to the current one; a caller naming its own is naming a
- * version whose text is no longer registered, which is a string this module
- * cannot derive.
+ * The version is always the current one, derived above — every fixture surface
+ * renders the card as it stands today.
  */
 export function buildGeduContractAcceptance({
   acceptedAt,
-  version = FIXTURE_SIGNED_VERSION,
 }: {
   acceptedAt: string;
-  version?: string;
 }): GeduContractAcceptance {
   return {
     gedu_id: FIXTURE_GEDU_ID,
-    contract_version: version,
+    contract_version: FIXTURE_SIGNED_VERSION,
     accepted_at: acceptedAt,
     signed_name: FIXTURE_SIGNER_NAME,
   };

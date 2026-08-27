@@ -26,27 +26,22 @@ import type { GeduContractAcceptance } from "@/types";
  * and picking the one that stands is domain logic about versions and languages
  * rather than anything to do with how the card looks.
  *
- * **Nothing here is reserved.** The heading and description are the same three
- * lines in every state and do not move; the body below them is empty, three
- * blocks or four, and that difference is the card's height difference. See the
- * data shell for why the settings page can afford it.
+ * **Nothing here is reserved, and nothing needs to be.** The heading and
+ * description are the same three lines in both states and do not move; the body
+ * below them is three blocks or four, and that difference is the card's height
+ * difference. The route reads the rows before the page renders at all, so the
+ * card is born in whichever state it is in and never changes height on its own.
  */
 export function GeduContractSettingsCardView({
   acceptance,
 }: {
   /**
    * This gedu's acceptance of the version in force: the row when they have
-   * signed it, `null` when they have not, and `undefined` while the answer is
-   * still in flight.
-   *
-   * **`undefined` is the degraded path, not the ordinary one.** The settings
-   * route prefetches the rows, so on an ordinary visit the card is handed an
-   * answer before it first renders; this branch is reached only when that
-   * server read failed and the browser is fetching the rows itself. It is also
-   * what a failed *client* read leaves on screen, since the card has no
-   * separate way to say so.
+   * signed it, `null` when they have not. Two states and no third — the settings
+   * route fails rather than render this page without an answer, so "still in
+   * flight" is not something this card can be.
    */
-  acceptance: GeduContractAcceptance | null | undefined;
+  acceptance: GeduContractAcceptance | null;
 }) {
   const t = useTranslations("gedu.contract.settings");
   const locale = useLocale();
@@ -63,7 +58,7 @@ export function GeduContractSettingsCardView({
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {acceptance === undefined ? null : acceptance === null ? (
+          {acceptance === null ? (
             <>
               <p className="font-medium text-warning">{t("notAcceptedTitle")}</p>
               <p className="text-sm text-muted-foreground">
