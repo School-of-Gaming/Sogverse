@@ -262,8 +262,16 @@ BEGIN
   -- behind the seat — so the offer exists only where a seat costs the family
   -- nothing: free products, and the municipality clubs we invoice the
   -- municipality for.
-  IF v_product.billing_mode NOT IN ('free'::public.billing_mode,
-                                    'external_contract'::public.billing_mode) THEN
+  --
+  -- Asked through `public.is_no_charge` (00206) rather than spelled out as an
+  -- IN-list, so the two-versus-paid question has ONE spelling in this database:
+  -- widening the no-charge set must not leave this gate behind. 00206 sorts
+  -- before this file, so the helper exists by the time a from-scratch build runs
+  -- this line — there is no ordering hazard, and none of the other seat-offer
+  -- functions needs the helper (`respond_seat_offer` deliberately never reads
+  -- billing mode at all — see the header — and the dashboard's live-offer read
+  -- asks about offers, not about price).
+  IF NOT public.is_no_charge(v_product.billing_mode) THEN
     RAISE EXCEPTION 'seat offers are only made on no-charge products'
       USING ERRCODE = 'check_violation';
   END IF;
@@ -1364,6 +1372,19 @@ BEGIN
     RAISE EXCEPTION 'send_seat_offer stamps sub-millisecond precision — no emailed token could ever match it';
   END IF;
 
+  -- (c1) The offer gate asks the ONE named predicate, not its own IN-list.
+  -- Probes the CALL for the same reason 00206 does: the two-versus-paid question
+  -- has a single spelling in this database now, and a body that went back to
+  -- typing the two modes out inline would keep passing every behavioural test
+  -- while quietly forking the rule — the fork only becomes visible on the day
+  -- somebody widens the no-charge set and this gate does not move with it.
+  SELECT p.prosrc INTO v_src
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'send_seat_offer';
+  IF position('public.is_no_charge(' IN v_src) = 0 THEN
+    RAISE EXCEPTION 'send_seat_offer does not gate the offer on public.is_no_charge';
+  END IF;
+
   -- (c2) The answer still checks the product by id. This is the boundary of the
   -- grandfathering the header states: the terms are grandfathered, the product
   -- is not. Losing this guard is silent — every caller goes on working and a
@@ -1374,6 +1395,21 @@ BEGIN
    WHERE n.nspname = 'public' AND p.proname = 'respond_seat_offer';
   IF position('NOT FOUND OR v_product_status = ''cancelled''' IN v_src) = 0 THEN
     RAISE EXCEPTION 'respond_seat_offer no longer refuses a missing or cancelled product — an invite would outlive the product it names';
+  END IF;
+
+  -- (c3) And the answer still does NOT read billing mode — the other half of
+  -- that same boundary, asserted NEGATIVELY because it is the half a helpful
+  -- rewrite breaks. The grandfathering is load-bearing: the offer went out
+  -- saying the seat costs nothing, so a product flipped to paid mid-window is
+  -- still honoured, and a later hand tidying "every no-charge gate" onto the
+  -- shared predicate would take a seat away from a family at the worst possible
+  -- moment — after we asked and they said yes. Adopting is_no_charge in
+  -- send_seat_offer is exactly the change that makes this function look
+  -- inconsistent, which is why the omission is pinned here rather than left to
+  -- the header comment to defend.
+  IF position('public.is_no_charge(' IN v_src) > 0
+     OR position('billing_mode' IN v_src) > 0 THEN
+    RAISE EXCEPTION 'respond_seat_offer reads the product''s billing mode — the offer''s terms are grandfathered on purpose and an accepted invite must always be honoured';
   END IF;
 
   -- (d) The two recreated readers kept the fields this migration added, and

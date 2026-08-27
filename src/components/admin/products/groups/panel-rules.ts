@@ -357,18 +357,17 @@ export function seatOfferAvailability(
   billingMode: BillingMode,
   groupCount: number,
 ): SeatOfferAvailability {
-  // No-charge is `free` or `external_contract` — the two billing modes where
-  // accepting a seat costs the family nothing and creates no Stripe object, so
-  // a yes can be honoured on the spot. A paid seat would need a checkout in the
-  // middle of the answer, which is a different feature.
+  // No-charge — the two billing modes where accepting a seat costs the family
+  // nothing and creates no Stripe object, so a yes can be honoured on the spot.
+  // A paid seat would need a checkout in the middle of the answer, which is a
+  // different feature.
   //
-  // **Named as an allow-list rather than as "not paid", which is the same shape
-  // the SQL states its refusal in.** A fourth billing mode added later arrives
-  // here as `unavailable` — no control drawn, nothing offered — and the
-  // database refuses it too, so the two agree by construction. Written as a
-  // denylist it would arrive as `available`, and the panel would offer a seat
-  // the RPC is bound to reject.
-  const noCharge = billingMode === "free" || billingMode === "external_contract";
+  // Read from the named set rather than an inline allow-list, so this control,
+  // `showUnassignedSection` above and the SQL's `public.is_no_charge` can only
+  // disagree if the set itself changes. A fourth billing mode added later
+  // arrives here as `unavailable` — no control drawn, nothing offered — and
+  // the database refuses it too, so the two agree by construction.
+  const noCharge = isNoChargeBillingMode(billingMode);
   if (!noCharge) return { kind: "unavailable" };
   if (groupCount !== 1) return { kind: "needsOneGroup", groupCount };
   return { kind: "available" };
