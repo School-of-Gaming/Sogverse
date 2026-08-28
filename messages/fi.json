@@ -510,7 +510,6 @@
       "consents": {
         "version": "Versio {version}",
         "noVersion": "Ei julkaistua versiota",
-        "empty": "Suostumusasiakirjoja ei ole rekisteröity.",
         "none": "Ei mitään"
       },
       "hints": {

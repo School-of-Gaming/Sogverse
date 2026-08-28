@@ -3,7 +3,10 @@
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { consentDocumentMeta } from "@/lib/constants/consent-documents";
+import {
+  CONSENT_DOCUMENTS,
+  consentDocumentMeta,
+} from "@/lib/constants/consent-documents";
 import { useConsentDocuments } from "@/services/products";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
@@ -26,8 +29,16 @@ import type { FormState } from "../product-form-state";
  * none" on the overwhelming majority of products, which is exactly what it
  * should say.
  *
- * The list is the registry itself: rows arrive by migration, so what is offered
- * is what is published, and there is nothing here to create or edit.
+ * **The checkboxes do not wait on the network.** Registry rows arrive by
+ * migration and `CONSENT_DOCUMENTS` ships in the same deploy, so the slug, the
+ * name and the link of every document this deploy can offer are known before
+ * the page renders — and the rows are rendered from that map, immediately.
+ * Deriving them from the query instead put two rows on screen a round trip
+ * after first paint, which pushed the Listing section and the submit button
+ * down the page on data's own schedule: exactly the shift the layout rule
+ * forbids. The query is still made, and it still contributes the one thing the
+ * bundle genuinely cannot know — which revision of each document is current
+ * right now.
  */
 export function ConsentsSection({
   state,
@@ -40,55 +51,82 @@ export function ConsentsSection({
   const tNames = useTranslations("consentDocuments.names");
   const { data: documents } = useConsentDocuments();
 
+  // Slug → current version, once the query lands. `undefined` for a slug means
+  // "nothing to say about its version": either the read has not landed yet, or
+  // the database has no such document at all. Both render the same — no caption
+  // — because both are the absence of a fact rather than a fact worth stating.
+  const versions =
+    documents === undefined
+      ? undefined
+      : new Map(documents.map((doc) => [doc.slug, doc.currentVersion]));
+
+  // The map's own order, which is the order the documents are meant to be read
+  // in, followed by any slug the database knows and this deploy does not.
+  //
+  // **Appending the drift rows at the END is load-bearing, not cosmetic.** They
+  // can only appear once the query resolves, and a late row inserted anywhere
+  // but the end of the run moves every row after it — plus the Listing section
+  // and the submit button below. At the end it grows into the slack the form
+  // already has beneath the list and nothing painted moves. A later tidy-up
+  // that sorts this list alphabetically would reintroduce the shift silently,
+  // and would look like an improvement.
+  const knownSlugs = Object.keys(CONSENT_DOCUMENTS);
+  const driftSlugs = (documents ?? [])
+    .map((doc) => doc.slug)
+    .filter((slug) => consentDocumentMeta(slug) === null);
+
   return (
     <FormSection
       title={t("sections.consents")}
       description={t("sections.consentsDescription")}
     >
-      {/* The registry is seeded by migration and is never empty in practice; the
-          line exists so an empty read reads as an empty registry rather than as
-          a section that failed to render. */}
-      {documents !== undefined && documents.length === 0 && (
-        <p className="text-sm text-muted-foreground">{t("consents.empty")}</p>
-      )}
       <div className="space-y-2">
-        {documents?.map((doc) => {
-          const meta = consentDocumentMeta(doc.slug);
-          const checked = state.requiredConsentSlugs.has(doc.slug);
+        {[...knownSlugs, ...driftSlugs].map((slug) => {
+          const meta = consentDocumentMeta(slug);
+          const checked = state.requiredConsentSlugs.has(slug);
+          const version = versions?.get(slug);
           return (
             <label
-              key={doc.slug}
+              key={slug}
               className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                "flex cursor-pointer items-center gap-3 rounded-md border p-3 text-sm transition-colors",
                 checked
                   ? "border-primary bg-primary/5"
                   : "border-input hover:border-foreground/30",
               )}
             >
               <Checkbox
-                className="mt-1"
                 checked={checked}
                 onChange={() => {
                   const next = new Set(state.requiredConsentSlugs);
-                  if (next.has(doc.slug)) next.delete(doc.slug);
-                  else next.add(doc.slug);
+                  if (next.has(slug)) next.delete(slug);
+                  else next.add(slug);
                   setState({ ...state, requiredConsentSlugs: next });
                 }}
               />
-              <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 flex-1 items-baseline gap-3">
                 {/* A slug this deploy cannot name shows the slug itself: loud
                     rather than broken, and it tells whoever sees it exactly
                     what to report. Registry rows arrive by migration and the
                     name map ships in the same deploy, so this can only be a
                     defect in the change that added the row. */}
-                <div className="font-medium">
-                  {meta === null ? doc.slug : tNames(meta.nameKey)}
-                </div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {doc.currentVersion === null
-                    ? t("consents.noVersion")
-                    : t("consents.version", { version: doc.currentVersion })}
-                </div>
+                <span className="truncate font-medium">
+                  {meta === null ? slug : tNames(meta.nameKey)}
+                </span>
+                {/* The current version is the one thing here that has to come
+                    from the database, so it lands a round trip after the row
+                    does. `ml-auto` puts it at the trailing end of a row that
+                    already has its final height, so its arrival grows leftward
+                    into that row's own slack and nothing on screen moves. Its
+                    position is therefore load-bearing: moved ahead of the name,
+                    it would shove the name sideways when it appeared. */}
+                {version !== undefined && (
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                    {version === null
+                      ? t("consents.noVersion")
+                      : t("consents.version", { version })}
+                  </span>
+                )}
               </div>
             </label>
           );

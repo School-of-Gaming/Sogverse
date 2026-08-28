@@ -159,11 +159,29 @@ describe("a product that requires consents", () => {
       />,
     );
 
+    // A listener OUTSIDE React's root container, so it sees the native click
+    // only after React has dispatched the anchor's own handler. React attaches
+    // its listeners to the root container rather than to each element, so a
+    // listener on the `<label>` itself would run *before* the handler and prove
+    // nothing; this one runs after, which is what makes it a test of the
+    // handler rather than of event order.
+    const escaped = vi.fn();
+    container.parentElement!.addEventListener("click", escaped);
+
     fireEvent.click(links(container)[0]);
 
-    // Reading a document is not agreeing to it. The whole box is a label, so
-    // without the anchor stopping the click this would have toggled.
+    // Two claims, separated because only the second one is about our code.
+    //
+    // The box staying unticked is the DOM's own guarantee and would hold with
+    // the anchor's onClick deleted: the activation algorithm gives a `<label>`
+    // no activation behaviour when the click's target lies inside an
+    // interactive descendant, and jsdom implements that. So this pins the
+    // browser-level contract the component leans on — not the handler.
     expect(onConsentChange).not.toHaveBeenCalled();
+    // The handler is what this one pins: `e.stopPropagation()` on the anchor
+    // means the click never leaves the panel, so removing it makes this fail
+    // while the assertion above goes on passing.
+    expect(escaped).not.toHaveBeenCalled();
   });
 
   it("reports the slug and the new value when a box is ticked", () => {

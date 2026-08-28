@@ -510,7 +510,6 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "Ingen publicerad version",
-        "empty": "Inga samtyckesdokument är registrerade.",
         "none": "Inga"
       },
       "hints": {

@@ -510,7 +510,6 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "No published version",
-        "empty": "No consent documents are registered.",
         "none": "None"
       },
       "hints": {

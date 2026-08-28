@@ -46,6 +46,7 @@ export type Database = {
       consent_acceptances: {
         Row: {
           accepted_at: string
+          accepted_by: string
           customer_id: string
           document_slug: string
           document_version: string
@@ -55,6 +56,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string
+          accepted_by: string
           customer_id: string
           document_slug: string
           document_version: string
@@ -64,6 +66,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string
+          accepted_by?: string
           customer_id?: string
           document_slug?: string
           document_version?: string
@@ -72,6 +75,20 @@ export type Database = {
           product_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "consent_acceptances_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "consent_acceptances_customer_id_fkey"
             columns: ["customer_id"]
@@ -2327,6 +2344,7 @@ export type Database = {
       }
       record_required_consents: {
         Args: {
+          p_accepted_by: string
           p_consented_documents: string[]
           p_customer_id: string
           p_participant_id: string

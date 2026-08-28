@@ -22,6 +22,9 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *   - translation BEFORE-DELETE trigger doesn't trip on wipe-and-replace
  *     (the upsert-then-delete-leftovers ordering is the load-bearing
  *     piece — see migration 00046 header comment).
+ *   - the required-consent set (00210) replaces, clears on an empty array, and
+ *     clears on an OMITTED argument too — the tag's defaulted-parameter footgun
+ *     landing on a legally-loaded field, recorded as such.
  *   - turning the waitlist off deletes the queue behind it (00171), with the
  *     live-subscription carve-out that stops the delete cascading a
  *     subscription Stripe still bills.
@@ -43,6 +46,12 @@ const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
 // predicate that lost its product scoping — one uncap wiping every queue in
 // the database — would pass the migration's own assertions and every test.
 const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
+// The two consent documents 00210 seeded. Written out rather than imported from
+// the app's registry map: what these cases assert is that the RPC stored the
+// slug it was handed, and a constant shared with the code under test would let a
+// renamed slug pass on both sides at once.
+const CONSENT_TERMS = "roblox-programme-terms";
+const CONSENT_PRIVACY = "roblox-privacy-policy";
 
 describe("update_product", () => {
   /** Service-role client — bypasses RLS, used to seed and to read back. */
@@ -677,6 +686,107 @@ describe("update_product", () => {
       .eq("id", PRODUCT_ID)
       .single();
     expect(row?.region_lock_country).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // 00210 — the consent documents enrolling on the product requires
+  // -------------------------------------------------------------------------
+  //
+  // A child SET rather than a column, so it has the wipe-and-replace shape the
+  // translations and prices above have — and the defaulted-parameter shape the
+  // tag has, which is what makes the last case here a live footgun rather than
+  // a curiosity.
+
+  /** Base arguments for a save that leaves the requirement set alone to vary. */
+  function consentUpdateArgs(name: string) {
+    return {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid" as const,
+      p_translations: [{ locale: "en", name, short_description: "" }],
+      p_topic: "minecraft_java" as const,
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en" as const,
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+    };
+  }
+
+  async function requiredConsents() {
+    const { data } = await admin
+      .from("product_required_consents")
+      .select("document_slug")
+      .eq("product_id", PRODUCT_ID)
+      .order("document_slug");
+    return (data ?? []).map((r) => r.document_slug);
+  }
+
+  it("replaces the requirement set rather than merging into it", async () => {
+    await freshProduct();
+    const seeded = await admin
+      .from("product_required_consents")
+      .insert([
+        { product_id: PRODUCT_ID, document_slug: CONSENT_TERMS },
+        { product_id: PRODUCT_ID, document_slug: CONSENT_PRIVACY },
+      ]);
+    expect(seeded.error).toBeNull();
+
+    const { error } = await adminAuth.rpc("update_product", {
+      ...consentUpdateArgs("Consents replaced"),
+      p_required_consent_slugs: [CONSENT_PRIVACY],
+    });
+    expect(error).toBeNull();
+
+    // The terms are gone, not merged with. A writer that only ever inserted
+    // would leave both here and look correct on the case above it.
+    expect(await requiredConsents()).toEqual([CONSENT_PRIVACY]);
+  });
+
+  it("clears the requirement set when handed an empty array", async () => {
+    await freshProduct();
+    const seeded = await admin
+      .from("product_required_consents")
+      .insert({ product_id: PRODUCT_ID, document_slug: CONSENT_TERMS });
+    expect(seeded.error).toBeNull();
+
+    const { error } = await adminAuth.rpc("update_product", {
+      ...consentUpdateArgs("Consents cleared"),
+      p_required_consent_slugs: [],
+    });
+    expect(error).toBeNull();
+    expect(await requiredConsents()).toEqual([]);
+  });
+
+  it("ALSO clears the requirement set when p_required_consent_slugs is omitted — a documented live footgun", async () => {
+    // This is the tag's footgun on a legally-loaded field, and it is recorded as
+    // one deliberately. The parameter is DEFAULTED, this RPC assigns every
+    // editable property on every call, and NULL means "requires nothing" — so a
+    // save that simply forgets the field silently drops a product's enrolment
+    // conditions, and the next family enrols agreeing to nothing at all.
+    //
+    // It is not fixable at this layer: an omission and an explicit clear are the
+    // same call, and the clear has to stay expressible. What stops it happening
+    // is the wire schema demanding the field on every update, which is upstream
+    // of here — and this case is the reason that demand is load-bearing rather
+    // than tidy. Past acceptances are untouched either way: dropping a
+    // requirement says nothing about what earlier enrolments agreed to.
+    await freshProduct();
+    const seeded = await admin
+      .from("product_required_consents")
+      .insert({ product_id: PRODUCT_ID, document_slug: CONSENT_TERMS });
+    expect(seeded.error).toBeNull();
+
+    const { error } = await adminAuth.rpc(
+      "update_product",
+      // p_required_consent_slugs deliberately absent.
+      consentUpdateArgs("Consents forgotten"),
+    );
+    expect(error).toBeNull();
+    expect(await requiredConsents()).toEqual([]);
   });
 
   // -------------------------------------------------------------------------

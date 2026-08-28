@@ -1171,9 +1171,17 @@ function RequiredConsents({
                         href={meta.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        // The label wrapping this box would toggle the checkbox
-                        // on any click inside it. Reading the document is not
-                        // agreeing to it, so the anchor keeps its own click.
+                        // Belt and braces, and the braces are the DOM's: a
+                        // `<label>` has no activation behaviour when the click
+                        // lands inside an interactive descendant, so the box
+                        // does not toggle when this anchor is clicked even
+                        // with this handler gone. That guarantee lives in a
+                        // spec nobody reading this file can see, and reading
+                        // the document must never be mistaken for agreeing to
+                        // it, so the click is stopped here as well. The unit
+                        // test pins the two claims separately — the browser's
+                        // and this handler's — rather than crediting one for
+                        // the other's work.
                         onClick={(e) => e.stopPropagation()}
                         className="font-medium text-primary underline-offset-2 hover:underline"
                       >
