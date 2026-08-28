@@ -102,6 +102,7 @@ const validBody = {
   prices: [],
   holiday_calendar_ids: [],
   required_consent_slugs: [],
+  marketing_consent_types: [],
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
@@ -339,6 +340,72 @@ describe("POST /api/admin/products/[id]/update", () => {
     expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
+  // The optional marketing asks, which are not an `update_product` parameter at
+  // all: the set is keyed on the product, so it is replaced by a second call.
+
+  it("replaces the marketing ask set on every save, empty array included", async () => {
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: { ...validBody, marketing_consent_types: ["lynx_educate"] },
+      }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "admin_set_product_marketing_consents",
+      { p_product_id: PRODUCT_ID, p_consent_types: ["lynx_educate"] },
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    // Clearing is an empty array rather than an omission, exactly as the
+    // requirement set above: the writer treats NULL and [] alike, so the array
+    // says what it means and the wire schema demands it on every save.
+    expect(mockUserRpc.mock.calls[1]).toEqual([
+      "admin_set_product_marketing_consents",
+      { p_product_id: PRODUCT_ID, p_consent_types: [] },
+    ]);
+  });
+
+  it("returns 400 when the marketing field is missing", async () => {
+    // The load-bearing half: the writer replaces the whole set, so a forgotten
+    // field on an edit about something else would leave a stale ask behind.
+    mockAuthenticatedAdmin();
+    const { marketing_consent_types: _types, ...noTypes } = validBody;
+    const response = await POST(updateRequest({ data: noTypes }), { params });
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a consent type outside the enum", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      updateRequest({
+        data: { ...validBody, marketing_consent_types: ["nonsense"] },
+      }),
+      { params },
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("warns rather than errors when the marketing write fails", async () => {
+    mockAuthenticatedAdmin();
+    mockUserRpc.mockImplementation(async (fn: string) =>
+      fn === "update_product"
+        ? { data: PRODUCT_ID, error: null }
+        : { data: null, error: { message: "product does not exist" } },
+    );
+
+    const response = await POST(updateRequest(), { params });
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.product_id).toBe(PRODUCT_ID);
+    expect(json.warning).toMatch(/marketing consents were not applied/);
+    expect(json.warning).toMatch(/edit page/);
+  });
+
   it("returns 400 when the region lock field is missing", async () => {
     // The same wire-level guard the tag needs, and for a consequence that is
     // arguably worse: an omitted field would silently open a product to every
@@ -384,8 +451,12 @@ describe("POST /api/admin/products/[id]/update", () => {
   it("writes the chosen entry after the RPC, and passes no path to it", async () => {
     mockAuthenticatedAdmin();
     const order: string[] = [];
-    mockUserRpc.mockImplementation(async () => {
-      order.push("rpc");
+    // Recorded by name rather than as a bare "rpc": two functions are called
+    // here now, and both of the writes after `update_product` are keyed on the
+    // id it returns — so the ordering claim is about which came first, not just
+    // how many there were.
+    mockUserRpc.mockImplementation(async (fn: string) => {
+      order.push(fn);
       return { data: PRODUCT_ID, error: null };
     });
     mockUserLinkSelect.mockImplementation(async () => {
@@ -397,7 +468,11 @@ describe("POST /api/admin/products/[id]/update", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ product_id: PRODUCT_ID });
-    expect(order).toEqual(["rpc", "link"]);
+    expect(order).toEqual([
+      "update_product",
+      "admin_set_product_marketing_consents",
+      "link",
+    ]);
     expect(mockUserUpdate).toHaveBeenCalledWith({ image_id: IMAGE_ID });
     expect(mockUserUpdateEq).toHaveBeenCalledWith("id", PRODUCT_ID);
     // The served column is derived by a database trigger, so the route neither

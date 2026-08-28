@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { LYNX_EDUCATE_URL } from "@/lib/constants/marketing-consents";
 import {
   useMyMarketingConsents,
   useSetMarketingConsent,
@@ -131,7 +132,7 @@ export function MarketingPreferencesCard() {
                   {t.rich("lynxEducate", {
                     link: (chunks) => (
                       <a
-                        href="https://lynxeducate.com"
+                        href={LYNX_EDUCATE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:text-foreground"

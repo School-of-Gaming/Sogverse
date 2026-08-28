@@ -397,6 +397,8 @@
         "registrationDescription": "Pick when parents can start signing up.",
         "consents": "Required consents",
         "consentsDescription": "Documents a parent must agree to before they can sign up.",
+        "marketingConsents": "Optional marketing",
+        "marketingConsentsDescription": "Marketing a parent is asked about while signing up. A parent may decline, and the seat is unaffected.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -527,7 +529,13 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "No published version",
-        "none": "None"
+        "none": "None",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Parents are asked whether they want to share their contact details with our partner Lynx Educate."
+          }
+        }
       },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
@@ -1808,6 +1816,10 @@
         "agree": "I have read and agree to these documents.",
         "bundles": {
           "robloxProgramme": "I have read and agree to the Roblox Programme <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+        },
+        "marketing": {
+          "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers.",
+          "hint": "Optional — you can change this anytime in your settings."
         }
       },
       "whoAreYouSigningUp": {

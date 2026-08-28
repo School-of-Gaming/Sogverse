@@ -334,6 +334,12 @@ export function ProductDetailPage({
           requiredConsentSlugs={product.product_required_consents.map(
             (consent) => consent.document_slug,
           )}
+          // The other embed on the same read, and the same reasoning: what a
+          // product asks at signup is not on the browse row, because a card
+          // never names it.
+          marketingConsentTypes={product.product_marketing_consents.map(
+            (consent) => consent.consent_type,
+          )}
           state={state}
           authState={authState}
           regionGate={regionGate}

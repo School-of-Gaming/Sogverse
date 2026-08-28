@@ -6,6 +6,7 @@ import {
   type SignupPanelViewProps,
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
+import type { MarketingConsentType } from "@/types";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
 
 /**
@@ -100,6 +101,11 @@ function panel({
     requiredConsentSlugs: [],
     consentAgreements: new Set<string>(),
     onConsentAgreementChange: () => {},
+    // No optional marketing ask by default: that is what nearly every
+    // product looks like, and the block is absent when the set is empty.
+    marketingConsentTypes: [],
+    marketingConsents: new Set<MarketingConsentType>(),
+    onMarketingConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",

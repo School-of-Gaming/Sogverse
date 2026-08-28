@@ -397,6 +397,8 @@
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
         "consents": "Consentements obligatoires",
         "consentsDescription": "Documents qu’un parent doit accepter avant de s’inscrire.",
+        "marketingConsents": "Marketing facultatif",
+        "marketingConsentsDescription": "Marketing proposé au parent au moment de l’inscription. Un parent peut refuser, et la place n’est pas affectée.",
         "visibility": "Catalogue",
         "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
@@ -527,7 +529,13 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "Aucune version publiée",
-        "none": "Aucun"
+        "none": "Aucun",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Il est demandé aux parents s’ils souhaitent partager leurs coordonnées avec notre partenaire Lynx Educate."
+          }
+        }
       },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
@@ -1808,6 +1816,10 @@
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
           "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
+        },
+        "marketing": {
+          "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
+          "hint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres."
         }
       },
       "whoAreYouSigningUp": {

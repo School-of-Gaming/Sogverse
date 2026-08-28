@@ -15,7 +15,10 @@ import { useLocale } from "next-intl";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { AudienceSection } from "./sections/audience-section";
 import { BillingSection } from "./sections/billing-section";
-import { ConsentsSection } from "./sections/consents-section";
+import {
+  ConsentsSection,
+  MarketingConsentsSection,
+} from "./sections/consents-section";
 import { FeesSection } from "./sections/fees-section";
 import { IdentitySection } from "./sections/identity-section";
 import { RegistrationSection } from "./sections/registration-section";
@@ -206,6 +209,11 @@ export function ProductFormShell({
           no `config`, because the enrolment conditions are a generic mechanism
           with no per-type rule behind them. */}
       <ConsentsSection state={state} setState={setState} />
+      {/* Directly beneath, in the order the panel puts them in front of a
+          parent: the conditions first, then the question they may decline.
+          Separate sections rather than one, because a condition and a question
+          are what an admin most needs to be unable to confuse. */}
+      <MarketingConsentsSection state={state} setState={setState} />
       <VisibilitySection state={state} setState={setState} />
 
       {error && (

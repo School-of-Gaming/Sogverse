@@ -11,6 +11,7 @@ import {
 import { resolveRegionGate } from "@/components/public/products/region-lock/region-gate";
 import type { RegionLockScenarioMeta } from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { ConfirmedHomeLocation } from "@/components/public/products/signup-panel-view";
+import type { MarketingConsentType } from "@/types";
 import { previewSceneHref } from "../href";
 
 /**
@@ -40,16 +41,23 @@ export function ProductDetailScene({
   scenario,
   regionLock,
   requiredConsentSlugs,
+  marketingConsentTypes,
 }: {
   scenario: PreviewScenario;
   regionLock?: RegionLockScenarioMeta;
   /**
    * The enrolment conditions this scenario's product requires. Absent on every
    * ordinary scenario, which is what the live page looks like for nearly every
-   * product; the required-consents scenario is the one that sets it, standing
-   * in for the detail query's `product_required_consents` embed.
+   * product; the consent-asks scenario is the one that sets it, standing in for
+   * the detail query's `product_required_consents` embed.
    */
   requiredConsentSlugs?: readonly string[];
+  /**
+   * The optional marketing this scenario's product asks about — the same
+   * scenario sets both, standing in for the `product_marketing_consents` embed,
+   * because a panel is judged with its conditions and its asks side by side.
+   */
+  marketingConsentTypes?: readonly MarketingConsentType[];
 }) {
   // A place confirmed in the panel's dialog, held exactly where the live
   // route's data shell holds it — so the pick outranks the scenario's seeded
@@ -78,6 +86,7 @@ export function ProductDetailScene({
         <PreviewSignupPanel
           product={product}
           requiredConsentSlugs={requiredConsentSlugs}
+          marketingConsentTypes={marketingConsentTypes}
           state={fixture.state}
           authState={fixture.authState}
           summaryHref={summaryHref}

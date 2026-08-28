@@ -397,6 +397,8 @@
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
         "consents": "Obligatoriska samtycken",
         "consentsDescription": "Dokument som en förälder måste godkänna innan anmälan.",
+        "marketingConsents": "Valfri marknadsföring",
+        "marketingConsentsDescription": "Marknadsföring som en förälder tillfrågas om vid anmälan. En förälder kan tacka nej, och platsen påverkas inte.",
         "visibility": "Listning",
         "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
@@ -527,7 +529,13 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "Ingen publicerad version",
-        "none": "Inga"
+        "none": "Inga",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Föräldrar tillfrågas om de vill dela sina kontaktuppgifter med vår partner Lynx Educate."
+          }
+        }
       },
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
@@ -1808,6 +1816,10 @@
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
           "robloxProgramme": "Jag har läst och godkänner Roblox-programmets <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
+        },
+        "marketing": {
+          "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden.",
+          "hint": "Valfritt — du kan ändra detta när som helst i dina inställningar."
         }
       },
       "whoAreYouSigningUp": {

@@ -445,6 +445,8 @@
         "registrationDescription": "ghItlh tagh poH yIwIv.",
         "consents": "poQlu’bogh chaw’mey",
         "consentsDescription": "ghItlhmey lulajnIS vavpu’ ’e’ poQlu’.",
+        "marketingConsents": "ra’be’lu’bogh QIn",
+        "marketingConsentsDescription": "ghItlhmey rurbe’. vav tlhob neH. jangbe’chugh vav, quSDaj chIlbe’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -575,7 +577,13 @@
       "consents": {
         "version": "’ay’ {version}",
         "noVersion": "pagh ’ay’ ngeHlu’pu’",
-        "none": "pagh"
+        "none": "pagh",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "boqwI’maj Lynx Educate-vaD De’Daj nob ’e’ chaw’ ’e’ tlhoblu’ vav."
+          }
+        }
       },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
@@ -1852,6 +1860,10 @@
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
           "robloxProgramme": "<terms>Roblox Programme Terms & Conditions</terms>, <privacy>Roblox Programme Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
+        },
+        "marketing": {
+          "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH.",
+          "hint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH."
         }
       },
       "whoAreYouSigningUp": {

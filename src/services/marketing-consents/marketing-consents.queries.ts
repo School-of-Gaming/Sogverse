@@ -30,17 +30,27 @@ export const marketingConsentKeys = {
  * At most two rows, read by primary-key prefix — a near-instant indexed call, so
  * a consumer renders nothing while it flies inside a container that already has
  * its final size rather than a skeleton or a spinner. What a consumer *must*
- * do is treat `undefined` as "not answered yet" and keep any control that would
- * write a consent disabled until it resolves: a toggle seeded from an
- * unresolved read would send the opposite of what is on file.
+ * do is treat `undefined` as "not answered yet" and never let an unresolved
+ * read decide a write: a control rendered *from* server state (the settings
+ * toggle) has to stay disabled until it lands, or it would send the opposite of
+ * what is on file, while a control that merely *seeds* from it (the signup
+ * panel's optional box) may render immediately and let a reader's own edit
+ * outrank a late answer.
+ *
+ * **`enabled` is not a convenience.** The query is only meaningful for a
+ * signed-in customer: `anon` holds no grant on the table at all, and an ADMIN's
+ * own SELECT policy widens the unfiltered select to every parent's rows — so a
+ * caller that cannot promise a customer session must switch it off rather than
+ * pass whatever comes back into a checkbox.
  */
-export function useMyMarketingConsents() {
+export function useMyMarketingConsents({ enabled = true } = {}) {
   const supabase = getClient();
   const service = new MarketingConsentsService(supabase);
 
   return useQuery({
     queryKey: marketingConsentKeys.mine(),
     queryFn: () => service.getMyConsents(),
+    enabled,
   });
 }
 

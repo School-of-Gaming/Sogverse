@@ -78,6 +78,10 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
       { calendar_id: "cal-1", holiday_calendars: { name: "Finland" } },
     ],
     product_required_consents: [{ document_slug: "roblox-programme-terms" }],
+    // The optional ask set, stored on its own join table beside the required
+    // one. Populated here rather than left empty because the seeding of the
+    // *optional* picker is the half with a filter in it — see the tests below.
+    product_marketing_consents: [{ consent_type: "lynx_educate" }],
   };
 }
 
@@ -108,6 +112,9 @@ describe("existingFormState", () => {
     expect(state.requiredConsentSlugs).toEqual(
       new Set(["roblox-programme-terms"]),
     );
+    // The optional ask set, off its own join table. Same round trip, opposite
+    // filtering rule — see `products-build` for the type this one does drop.
+    expect(state.marketingConsentTypes).toEqual(new Set(["lynx_educate"]));
     // The id alone reaches form state; the label and the path stay derived.
     expect(state.imageId).toBe("3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43");
     expect(state.forGamers).toBe(true);

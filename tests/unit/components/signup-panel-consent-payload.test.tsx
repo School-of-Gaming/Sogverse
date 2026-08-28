@@ -76,6 +76,15 @@ vi.mock("@/services/users", () => ({
   useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
 }));
 
+// The optional marketing ask is a different feature on the same panel and has
+// its own file; here it is stubbed to nothing so this one stays about the
+// required documents. Both hooks are real React Query calls, and there is no
+// QueryClientProvider around these renders.
+vi.mock("@/services/marketing-consents", () => ({
+  useMyMarketingConsents: () => ({ data: undefined }),
+  useSetMarketingConsent: () => ({ mutate: vi.fn() }),
+}));
+
 import { SignupPanel } from "@/components/public/products/signup-panel";
 import type { AuthState } from "@/components/public/products/signup-panel-view";
 
@@ -124,6 +133,7 @@ describe("the agreed documents reach the enrolment request", () => {
       <SignupPanel
         product={PRODUCT}
         requiredConsentSlugs={[TERMS, PRIVACY]}
+        marketingConsentTypes={[]}
         state={{
           kind: "open",
           seatCount: null,
@@ -153,6 +163,7 @@ describe("the agreed documents reach the enrolment request", () => {
       <SignupPanel
         product={PRODUCT}
         requiredConsentSlugs={[TERMS, PRIVACY]}
+        marketingConsentTypes={[]}
         state={{ kind: "full_waitlist", seatCount: 8 }}
         authState={AUTH}
         regionGate={{ kind: "unlocked" }}
@@ -177,6 +188,7 @@ describe("the agreed documents reach the enrolment request", () => {
       <SignupPanel
         product={PRODUCT}
         requiredConsentSlugs={[]}
+        marketingConsentTypes={[]}
         state={{
           kind: "open",
           seatCount: null,

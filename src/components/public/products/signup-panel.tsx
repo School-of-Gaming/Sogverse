@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ProductBrowseRow } from "@/types";
+import type { MarketingConsentType, ProductBrowseRow } from "@/types";
 import { AddGamerDialog } from "@/components/family";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { ROUTES } from "@/lib/constants";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
+import {
+  useMyMarketingConsents,
+  useSetMarketingConsent,
+} from "@/services/marketing-consents";
 import {
   useCreateParticipation,
   useJoinWaitlist,
@@ -55,6 +59,11 @@ interface SignupPanelProps {
    * conditions. The detail page reads them off its own query's embed.
    */
   requiredConsentSlugs: readonly string[];
+  /**
+   * The marketing consents this product's panel asks about — beside `product`
+   * for the same reason the slugs are, and off the same detail-query embed.
+   */
+  marketingConsentTypes: readonly MarketingConsentType[];
   state: RegistrationState;
   authState: AuthState;
   /**
@@ -104,6 +113,7 @@ const waitlistErrorMessage = (error: unknown) =>
 export function SignupPanel({
   product,
   requiredConsentSlugs,
+  marketingConsentTypes,
   state,
   authState,
   regionGate,
@@ -112,6 +122,32 @@ export function SignupPanel({
 }: SignupPanelProps) {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
+
+  /**
+   * What this parent's account already says about the consents this product
+   * asks about — the seed for the optional boxes.
+   *
+   * **Switched off unless there is a question to seed and somebody to seed it
+   * for.** The read is only correct for a signed-in customer, and on the
+   * overwhelming majority of products there is no box for it to fill, so a
+   * product asking nothing makes no call at all. It is a primary-key-prefixed
+   * read of at most two rows on the products that do ask — near-instant, so the
+   * panel renders the box immediately rather than waiting or drawing a
+   * skeleton, and the tick arrives a frame or two later without moving
+   * anything.
+   */
+  const { data: myMarketingConsents } = useMyMarketingConsents({
+    enabled: authState.kind === "ready" && marketingConsentTypes.length > 0,
+  });
+  const seededMarketingConsents =
+    myMarketingConsents === undefined
+      ? undefined
+      : new Set(
+          myMarketingConsents
+            .filter((row) => row.granted)
+            .map((row) => row.consent_type),
+        );
+
   // Pricing / gamer selection / agreed / locale+currency — the view props
   // shared verbatim with the preview panel. This panel only adds the live
   // mutation actions on top, so the demo can't drift from the real UI.
@@ -119,6 +155,8 @@ export function SignupPanel({
     product,
     authState,
     requiredConsentSlugs,
+    marketingConsentTypes,
+    seededMarketingConsents,
   );
 
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -128,6 +166,7 @@ export function SignupPanel({
   const createMutation = useCreateParticipation();
   const waitlistMutation = useJoinWaitlist();
   const updateProfile = useUpdateProfile();
+  const setMarketingConsent = useSetMarketingConsent();
 
   // Per CLAUDE.md "Loading & Disabled State": flip true synchronously *before*
   // the mutation so there's no render where the button is enabled between
@@ -165,10 +204,55 @@ export function SignupPanel({
   const consentedDocuments = () =>
     fields.consentsAgreed ? [...fields.requiredConsentSlugs] : [];
 
+  /**
+   * **The optional marketing answers, sent alongside the enrolment — one place,
+   * both doors.**
+   *
+   * Called from the submit handler and the waitlist handler, because the parent
+   * answered one panel and it would be indefensible for which button they
+   * pressed to decide whether their answer was recorded.
+   *
+   * **Fire-and-forget, and that is a hard requirement rather than a shortcut.**
+   * Nothing about this is allowed to block, delay or fail the enrolment: it is
+   * not awaited, its outcome never touches `committing` or `submitError`, and a
+   * rejection is logged and dropped. A parent who came to buy a seat must not
+   * be told their purchase failed because a mailing-list preference did — and
+   * the answer is not lost either way, since the same question is waiting on
+   * their settings page.
+   *
+   * **Nothing is sent when nothing changed**, which is the ordinary case: the
+   * hook hands over only the boxes that now differ from what the account says.
+   * The RPC is idempotent and would swallow a no-op, but its event log records
+   * *changes*, and asking it to reject page-loads is the client making work out
+   * of a question it already knows the answer to.
+   *
+   * It runs at the click rather than on the enrolment's success, so an
+   * enrolment that then fails still records what the parent said. That is the
+   * right way round: the answer is about their mailbox, not about the seat, and
+   * a withdrawal in particular must not be conditional on a purchase going
+   * through.
+   */
+  const recordMarketingAnswers = () => {
+    for (const change of fields.marketingConsentChanges) {
+      setMarketingConsent.mutate(
+        { ...change, source: "enrolment" },
+        {
+          onError: (error) => {
+            console.error(
+              "[signup-panel] marketing consent write failed",
+              error,
+            );
+          },
+        },
+      );
+    }
+  };
+
   const handleSubmit = () => {
     if (!fields.selectedParticipantId || !purchaseShape) return;
     setSubmitError(null);
     setCommitting(true);
+    recordMarketingAnswers();
     const input: CreateParticipationInput = {
       productId: product.id,
       // The parent's own id when they picked their own row. The route pins
@@ -219,6 +303,7 @@ export function SignupPanel({
     if (!fields.selectedParticipantId) return;
     setSubmitError(null);
     setCommitting(true);
+    recordMarketingAnswers();
     waitlistMutation.mutate(
       {
         productId: product.id,

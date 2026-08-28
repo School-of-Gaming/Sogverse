@@ -16,7 +16,11 @@ import {
   type ConsentDocumentBundle,
   type RequiredConsentDisplayRow,
 } from "@/lib/constants/consent-documents";
-import type { ProductType } from "@/types";
+import {
+  describeMarketingConsents,
+  type MarketingConsentAskRow,
+} from "@/lib/constants/marketing-consents";
+import type { MarketingConsentType, ProductType } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
@@ -224,6 +228,31 @@ export interface SignupPanelViewProps {
    */
   consentAgreements: ReadonlySet<string>;
   onConsentAgreementChange: (rowKey: string, agreed: boolean) => void;
+  /**
+   * **The product's optional marketing asks**, as stored — the partners whose
+   * mailing list this product offers a parent on the way past. Empty on nearly
+   * every product, and the optional block ceases to exist when it is.
+   *
+   * Like the requirement set above, it rides in on the product read, so the
+   * block's existence is settled before the panel paints. Unlike it, these
+   * NEVER gate the CTA: a row here is a question the reader may decline, and a
+   * declined question is a complete answer that leaves the seat untouched.
+   */
+  marketingConsentTypes: readonly MarketingConsentType[];
+  /**
+   * Which of those the reader has ticked, seeded from their account's own
+   * stored answer and overlaid with anything they change here.
+   *
+   * The one thing on the panel whose value may legitimately change after first
+   * paint on data's own schedule — the account read lands a round trip late —
+   * and it is allowed to because only the *tick* moves. The box, its sentence
+   * and its hint are all on screen from the first frame, so nothing shifts.
+   */
+  marketingConsents: ReadonlySet<MarketingConsentType>;
+  onMarketingConsentChange: (
+    consentType: MarketingConsentType,
+    granted: boolean,
+  ) => void;
   onSubmit: () => void;
   /** Separate from onSubmit — the waitlist branch calls this. */
   onJoinWaitlist: () => void;
@@ -1030,6 +1059,18 @@ function SignupForm(
         onRulesAgreedChange={props.onAgreedChange}
       />
 
+      {/* Below the conditions and above the button: the last thing on the panel
+          before the CTA, and deliberately NOT a row inside the section above.
+          See the component's own note — the section above is one act the button
+          names, and a box that does not gate it must not be able to be mistaken
+          for one of its rows. Its existence comes off the product read, so it
+          is here or absent from the first paint; only its tick arrives late. */}
+      <OptionalMarketingSection
+        rows={describeMarketingConsents(props.marketingConsentTypes)}
+        granted={props.marketingConsents}
+        onGrantedChange={props.onMarketingConsentChange}
+      />
+
       <Button
         size="lg"
         variant={props.variant ?? "default"}
@@ -1206,6 +1247,85 @@ function RequiredConsentSection({
         onAgreedChange={onRulesAgreedChange}
         sentence={ruleText}
       />
+    </div>
+  );
+}
+
+/**
+ * **The optional ask: a partner's mailing list, offered on the way past.**
+ *
+ * Everything about it is chosen to say "this is not one of those" to a reader
+ * who has just met the Required consent section, because the single most
+ * expensive mistake here would be a parent believing they had to tick it:
+ *
+ * - **It stands outside the section above**, with no heading of its own. That
+ *   section is one act — everything a parent must agree to, which the CTA names
+ *   as one step — and a row inside it that did not gate the button would be a
+ *   box the reader cannot tell from the ones that do.
+ * - **It has no box around it.** The panel's rule is that a border means you
+ *   can act on it, and the required rows spend that border on being the thing
+ *   standing between the reader and the button. This is a plain line with a
+ *   checkbox: still clickable, visibly lighter.
+ * - **It says it is optional in its own words**, under the sentence, and names
+ *   where the answer can be changed later — because it *can* be, which is the
+ *   deepest difference between this and everything above it. A required consent
+ *   is a statement about the moment of enrolment and cannot be unmade; this is
+ *   a standing permission about a mailbox, and the parent owns it afterwards.
+ *
+ * **The partner is a link, and it opens in a new tab** — the same treatment a
+ * consent document's name gets, for the same two reasons. A parent asked to
+ * hand their address to somebody has to be able to look at who that somebody
+ * is, and the panel behind them is holding a half-filled form that must survive
+ * the reading.
+ *
+ * **Nothing here touches the CTA.** No leaf in the button's checklist, no entry
+ * in `formReady`: declining is a complete answer, and a button that waited on
+ * one would be a requirement wearing an optional label.
+ *
+ * Renders nothing at all when the product asks for nothing, which is nearly
+ * every product. There is no space held open for it: the ask set arrives with
+ * the product read and cannot appear under a reader mid-form.
+ */
+function OptionalMarketingSection({
+  rows,
+  granted,
+  onGrantedChange,
+}: {
+  rows: readonly MarketingConsentAskRow[];
+  granted: ReadonlySet<MarketingConsentType>;
+  onGrantedChange: (consentType: MarketingConsentType, next: boolean) => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel.consents.marketing");
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-3">
+      {rows.map(({ type, ask }) => (
+        <label
+          key={type}
+          className="flex cursor-pointer items-start gap-3 text-xs"
+        >
+          <Checkbox
+            className="mt-0.5"
+            checked={granted.has(type)}
+            onChange={(e) => onGrantedChange(type, e.target.checked)}
+          />
+          <span className="text-muted-foreground">
+            {t.rich(ask.sentenceKey, {
+              link: (chunks) => (
+                <ConsentSentenceLink href={ask.href}>
+                  {chunks}
+                </ConsentSentenceLink>
+              ),
+            })}
+            {/* Under the sentence rather than beside it: at rail width there is
+                no beside, and the sentence is what the tick means while this is
+                a note about the tick. */}
+            <span className="mt-1 block text-muted-foreground/80">
+              {t("hint")}
+            </span>
+          </span>
+        </label>
+      ))}
     </div>
   );
 }

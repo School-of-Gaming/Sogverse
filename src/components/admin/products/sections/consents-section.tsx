@@ -9,6 +9,10 @@ import {
   consentDocumentMeta,
   isBundledConsentSlug,
 } from "@/lib/constants/consent-documents";
+import {
+  ATTACHABLE_MARKETING_CONSENT_TYPES,
+  MARKETING_CONSENT_ASKS,
+} from "@/lib/constants/marketing-consents";
 import { useConsentDocuments } from "@/services/products";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
@@ -215,6 +219,92 @@ export function ConsentsSection({
                     {label}
                   </span>
                 )}
+              </div>
+            </label>
+          );
+        })}
+      </div>
+    </FormSection>
+  );
+}
+
+/**
+ * **The optional marketing asks: which partners' mailing lists this product's
+ * signup panel offers a parent, on the way past.**
+ *
+ * Its own section beside the required one, not a group inside it, and the
+ * separation is the whole point. The section above holds *conditions*: a parent
+ * who declines cannot enrol, the agreement is per seat, and it can never be
+ * withdrawn. This holds *questions*: declining is a complete answer, the seat is
+ * unaffected, the consent is account-level, and the parent can switch it off in
+ * settings that evening. Two headings is how an admin sees which of those they
+ * are turning on — a shared heading reading "Consents" would make the most
+ * consequential distinction on this page a matter of reading captions.
+ *
+ * **Offered on every product type**, like the required section and for the same
+ * reason: the database has no per-type rule here, and a `product-type-config`
+ * flag would be inventing one the rest of the app does not know about.
+ *
+ * **`school_of_gaming` is deliberately not on this list**, which is why the
+ * rows come from `ATTACHABLE_MARKETING_CONSENT_TYPES` rather than from the enum.
+ * Our own mailing list is asked for at registration, on the account that holds
+ * the answer; attaching it to a product would ask an account-level question a
+ * second time with nothing new to say.
+ *
+ * **The rows do not wait on the network**, and here there is not even a query to
+ * wait on: what a marketing consent is and who it names ships in the bundle, so
+ * every row is on screen at first paint and nothing below it can be pushed down
+ * later.
+ */
+export function MarketingConsentsSection({
+  state,
+  setState,
+}: {
+  state: FormState;
+  setState: React.Dispatch<React.SetStateAction<FormState>>;
+}) {
+  const t = useTranslations("admin.products");
+  const tMarketing = useTranslations("admin.products.consents.marketing");
+
+  return (
+    <FormSection
+      title={t("sections.marketingConsents")}
+      description={t("sections.marketingConsentsDescription")}
+    >
+      <div className="space-y-2">
+        {ATTACHABLE_MARKETING_CONSENT_TYPES.map((type) => {
+          const checked = state.marketingConsentTypes.has(type);
+          const { sentenceKey } = MARKETING_CONSENT_ASKS[type];
+          return (
+            <label
+              key={type}
+              className={cn(
+                "flex cursor-pointer gap-3 rounded-md border p-3 text-sm transition-colors",
+                checked
+                  ? "border-primary bg-primary/5"
+                  : "border-input hover:border-foreground/30",
+              )}
+            >
+              <Checkbox
+                className="mt-0.5"
+                checked={checked}
+                onChange={() => {
+                  const next = new Set(state.marketingConsentTypes);
+                  if (checked) next.delete(type);
+                  else next.add(type);
+                  setState({ ...state, marketingConsentTypes: next });
+                }}
+              />
+              <div className="min-w-0 flex-1 space-y-1">
+                <span className="block truncate font-medium">
+                  {tMarketing(`${sentenceKey}.label`)}
+                </span>
+                {/* What the parent will actually be asked, in one line — the
+                    question an admin is turning on is the thing they need to
+                    read, and a partner's name alone does not say it. */}
+                <p className="text-xs text-muted-foreground">
+                  {tMarketing(`${sentenceKey}.description`)}
+                </p>
               </div>
             </label>
           );

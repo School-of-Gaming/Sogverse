@@ -200,6 +200,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     locations: null,
     product_holiday_calendars: [],
     product_required_consents: [],
+    product_marketing_consents: [],
   };
 }
 
