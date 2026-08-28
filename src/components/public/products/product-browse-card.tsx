@@ -19,9 +19,9 @@ import {
   scheduleCardLines,
 } from "./format-product-schedule";
 import {
+  type BrowseCardFooterLeft,
   type LocationLine,
   type ProductBrowseCardViewProps,
-  type SeatBarValue,
 } from "./browse-card-shell";
 import { ProductBrowseCardView } from "./product-browse-card-view";
 import { productTagLabelKey } from "./product-tag";
@@ -113,34 +113,48 @@ export function useBrowseCardViewProps(
   });
 
   const schedule = formatProductSchedule({ product, locale: uiLocale, timeZone, now });
-  const price = formatProductPrice({
-    prices: product.product_prices,
-    billingMode: product.billing_mode,
-    productType: product.product_type,
-    currency,
-    locale: uiLocale,
-  });
 
   const scheduleLines = scheduleCardLines(schedule);
 
-  const isMuniClub = product.product_type === "municipality_club";
-
-  // Muni clubs are externally funded — show a seat-fill bar in the footer
-  // instead of a price. `total: null` (no seat count set yet) leaves the
-  // footer-left empty; non-muni products get no bar and keep their price.
+  // Muni clubs are externally funded — the footer shows a seat-fill bar instead
+  // of a price. `total: null` (no seat count set yet) renders nothing, leaving
+  // the footer-left empty; every other product states its price there.
   //
   // This bar is the only seat information on any browse card. Nothing else here
   // reads `seat_count`, deliberately: caps are legal on every product type now,
   // and the meta row used to print the capacity of any capped non-muni product
   // — a number that reads as availability and is at its most misleading on a
   // product that is full. Fullness belongs to the details page.
-  const seatBar: SeatBarValue | undefined = isMuniClub
-    ? {
-        filled: participationsCount,
-        total: product.seat_count,
-        waitlistEnabled: product.waitlist_enabled,
-      }
-    : undefined;
+  //
+  // **The second test is what makes the price line's missing external shape a
+  // compile-time fact rather than a convention.** `chk_products_external_contract_muni`
+  // already guarantees `external_contract` implies `municipality_club`, so it
+  // can never independently decide this branch — but the database's word is not
+  // something the compiler can read, and `formatProductPrice` refuses an
+  // externally-contracted product by its argument type. Testing the column here
+  // is what narrows `billing_mode` for the call below; drop it and the
+  // formatter stops type-checking, which is the point.
+  const footerLeft: BrowseCardFooterLeft =
+    product.product_type === "municipality_club" ||
+    product.billing_mode === "external_contract"
+      ? {
+          kind: "seats",
+          seats: {
+            filled: participationsCount,
+            total: product.seat_count,
+            waitlistEnabled: product.waitlist_enabled,
+          },
+        }
+      : {
+          kind: "price",
+          price: formatProductPrice({
+            prices: product.product_prices,
+            billingMode: product.billing_mode,
+            productType: product.product_type,
+            currency,
+            locale: uiLocale,
+          }),
+        };
 
   // The badge-or-nothing decision (gamers-only stays unbadged) lives in
   // product-audience.ts with the rest of the audience vocabulary, so this
@@ -178,8 +192,7 @@ export function useBrowseCardViewProps(
     audienceLabel,
     locationLine,
     spokenLanguageCode: product.spoken_language_code,
-    price,
-    seatBar,
+    footerLeft,
     state,
     detailHref: detailHref ?? ROUTES.shopProduct(product.id),
   };

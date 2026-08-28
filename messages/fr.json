@@ -1626,7 +1626,6 @@
       "perMonth": "{price} / mois",
       "upfrontTotal": "{price}",
       "free": "Gratuit",
-      "externalContract": "Financé par votre commune",
       "notAvailableInCurrency": "Pas en {currency}",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
@@ -1822,8 +1821,7 @@
       "subscriptionHint": "Facturé mensuellement · résiliable à tout moment.",
       "free": "Gratuit",
       "freeHint": "Aucun paiement nécessaire.",
-      "external": "Gratuit pour vous · payé par votre commune",
-      "externalHint": "Aucun paiement nécessaire — votre commune prend en charge le coût.",
+      "external": "Pris en charge par votre commune",
       "upfrontHint": "Paiement unique.",
       "notAvailable": "Les tarifs ne sont pas encore disponibles en {currency}.",
       "cadenceMonth": "/ mois",
@@ -2439,7 +2437,8 @@
       "price": {
         "subscription": "{amount} / mois",
         "upfront": "{amount} (paiement unique)",
-        "free": "Gratuit"
+        "free": "Gratuit",
+        "external": "Pris en charge par votre commune"
       },
       "nextTitle": "La suite",
       "next": {

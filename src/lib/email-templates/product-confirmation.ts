@@ -17,15 +17,28 @@ import type { ProductType } from "@/types";
  */
 
 /**
- * The one axis this mail branches on. Three of the four are price shapes and
- * the fourth is an outcome, which is not an oversight: a waitlist join has no
+ * The one axis this mail branches on. Four of the five are price shapes and
+ * the fifth is an outcome, which is not an oversight: a waitlist join has no
  * price to state, so the mode that has no price is the mode that changes the
  * whole mail.
+ *
+ * **`external` and `free` are two different price shapes, not one.** Both cost
+ * the family nothing at our till, and the mail used to collapse them into
+ * `free` on exactly that reasoning. It was wrong in the reader's hands: most
+ * municipalities run their clubs at no charge to families, but some levy a
+ * small fee of their own, and a parent who has already been told that by their
+ * municipality reads our "Free" as a contradiction of something they know.
+ * `external` names who bears the cost and stays silent on everything either
+ * side of it: what the municipality then asks of the family is not ours to
+ * answer and is not news to them, and how we settle up with the municipality is
+ * our arrangement rather than theirs to read. So it is a price line and no
+ * "what happens next" bullet at all.
  */
 export const PRODUCT_CONFIRMATION_MODES = [
   "subscription",
   "upfront",
   "free",
+  "external",
   "waitlist",
 ] as const;
 
@@ -48,7 +61,7 @@ interface ProductConfirmationEmailOptions {
    * The price, already formatted in the reader's locale and currency by the
    * caller. Formatting lives with the caller because it needs the product's
    * prices and the currency config; the builder stays a pure string composer.
-   * Null on the modes that state no amount (`free`, `waitlist`).
+   * Null on the modes that state no amount (`free`, `external`, `waitlist`).
    */
   priceAmount: string | null;
   /** App-generated My SOG link. */
@@ -122,13 +135,19 @@ export function buildProductConfirmationEmail(
       ? t(`productConfirmation.self.subheading.${productType}`, { productName: product })
       : t(`productConfirmation.subheading.${productType}`, { participantName: name, productName: product });
 
+  // A municipality registration contributes no money line here, and that is the
+  // whole of what this mail has to say about its cost. The bullet it used to
+  // take said there was nothing to pay; the honest replacements were all some
+  // version of who we invoice, which is our arrangement with the municipality
+  // and not a thing a parent has any use for. So the list is the placement
+  // sentence alone, and the price line above carries the fact by itself.
   const nextItems = isWaitlist
     ? [t("productConfirmation.waitlist.next1"), t("productConfirmation.waitlist.next2")]
     : [
         isSelfSeat
           ? t("productConfirmation.next.placementSelf")
           : t("productConfirmation.next.placement", { participantName: name }),
-        t(`productConfirmation.next.${mode}`),
+        ...(mode === "external" ? [] : [t(`productConfirmation.next.${mode}`)]),
       ];
 
   const content = `
@@ -165,6 +184,8 @@ function priceLine(
           );
     case "free":
       return paragraph(`${label}: ${t("productConfirmation.price.free")}`);
+    case "external":
+      return paragraph(`${label}: ${t("productConfirmation.price.external")}`);
     case "waitlist":
       return "";
   }

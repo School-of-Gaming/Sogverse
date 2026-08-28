@@ -81,26 +81,7 @@ export interface ProductBrowseCardViewProps {
    * treatment as the locale picker in the site header.
    */
   spokenLanguageCode: SpokenLanguageCode;
-  price: ProductPriceLine;
-  /**
-   * Municipality clubs are externally funded, so their footer shows a
-   * seat-fill bar instead of a price. Provide this (even with `total: null`)
-   * for a muni club to replace the price block; a `null` total — a muni club
-   * whose seat count isn't set yet — leaves the footer-left empty. Omit
-   * entirely for priced products (the shop), which keep the price block.
-   *
-   * This bar is the *only* seat information any browse card carries, and it is
-   * deliberately confined to municipality clubs: schools are the known-scarce
-   * case where a family needs to see the fill before opening anything. Every
-   * other card says nothing about capacity — a card once printed a product's
-   * seat *count* beside the age line, which read as availability and was
-   * exactly wrong on a full product. Fullness is discovered on the details
-   * page, whose full panels (waitlist CTA / closed notice) already say it
-   * properly. Two consequences are accepted: a full product with a waitlist
-   * looks like an open one until it is clicked, and a full one without a
-   * waitlist renders as an inert card whose CTA label is the only explanation.
-   */
-  seatBar?: SeatBarValue;
+  footerLeft: BrowseCardFooterLeft;
   state: RegistrationState;
   /**
    * Detail-page URL. Required, and deliberately so: whether the card opens is
@@ -119,6 +100,37 @@ export type SeatBarValue = {
   total: number | null;
   waitlistEnabled: boolean;
 };
+
+/**
+ * The footer's left-hand slot — one value, not two props that have to agree.
+ *
+ * A municipality club is funded off-platform and says how full it is; every
+ * other product says what it costs. Those are alternatives, and they used to be
+ * modelled as a required `price` plus an optional `seatBar` whose *presence*
+ * was documented as "the muni signal" — a comment doing a type's job, and one
+ * that left a price line sitting unread behind every muni card. As a union the
+ * slot holds exactly one of the two, and `ProductPriceLine` no longer carries
+ * an external shape at all: a product whose cost we do not state cannot be
+ * handed to the price block, because there is no line to hand it.
+ *
+ * The seat bar is the *only* seat information any browse card carries, and it
+ * is deliberately confined to municipality clubs: schools are the known-scarce
+ * case where a family needs to see the fill before opening anything. Every
+ * other card says nothing about capacity — a card once printed a product's seat
+ * *count* beside the age line, which read as availability and was exactly wrong
+ * on a full product. Fullness is discovered on the details page, whose full
+ * panels (waitlist CTA / closed notice) already say it properly. Two
+ * consequences are accepted: a full product with a waitlist looks like an open
+ * one until it is clicked, and a full one without a waitlist renders as an
+ * inert card whose CTA label is the only explanation.
+ *
+ * A `seats` slot whose `total` is null — a muni club with no cap set — renders
+ * nothing, leaving the footer-left empty. That is a real state, unlike the
+ * price line it replaced.
+ */
+export type BrowseCardFooterLeft =
+  | { kind: "seats"; seats: SeatBarValue }
+  | { kind: "price"; price: ProductPriceLine };
 
 export type LocationLine = {
   kind: "in_person" | "online" | "online_muni";
@@ -193,12 +205,10 @@ export function useBrowseCardShell(
  */
 export function BrowseCardFooter({
   shell,
-  seatBar,
-  price,
+  footerLeft,
 }: {
   shell: BrowseCardShell;
-  seatBar: SeatBarValue | undefined;
-  price: ProductPriceLine;
+  footerLeft: BrowseCardFooterLeft;
 }) {
   const t = useTranslations("productBrowse.card");
   const { cta, openHref, isEnded } = shell;
@@ -222,23 +232,23 @@ export function BrowseCardFooter({
            CTA to the price, so the two read as one phrase that has drifted
            apart. They are not one phrase. */
         <div className="flex items-center justify-between gap-6">
-          {/* Muni clubs swap the price for a seat-availability bar;
-              everything else keeps the price. `seatBar` present (even with a
-              null total) is the muni signal — a null total renders nothing,
-              leaving the footer-left empty. */}
-          {seatBar !== undefined ? (
+          {/* Seats or a price — the slot's own type says it is exactly one of
+              them, so there is no third combination for this branch to get
+              wrong. A `seats` slot with no cap set renders nothing, leaving the
+              footer-left empty. */}
+          {footerLeft.kind === "seats" ? (
             <SeatAvailabilityBar
               className="flex-1"
-              seatCount={seatBar.total}
+              seatCount={footerLeft.seats.total}
               seatsLeft={
-                seatBar.total === null
+                footerLeft.seats.total === null
                   ? 0
-                  : Math.max(0, seatBar.total - seatBar.filled)
+                  : Math.max(0, footerLeft.seats.total - footerLeft.seats.filled)
               }
-              waitlistEnabled={seatBar.waitlistEnabled}
+              waitlistEnabled={footerLeft.seats.waitlistEnabled}
             />
           ) : (
-            <PriceBlock price={price} />
+            <PriceBlock price={footerLeft.price} />
           )}
           {/* An openable card answers with a worded hint and a chevron; a
               dead end answers in the same place, at the same size, muted and
@@ -313,9 +323,11 @@ export function StretchedCardLink({
 /**
  * The footer's left-hand slot on a priced product.
  *
- * Private to this module: the five branches are the footer's business and
+ * Private to this module: the four branches are the footer's business and
  * nothing outside it has a reason to reach for one, so a second copy could
- * only ever drift from this one.
+ * only ever drift from this one. There were five until the externally-funded
+ * one was removed — no card could reach it, because a municipality club takes
+ * the seat-bar half of the slot instead, and it now cannot be expressed.
  */
 function PriceBlock({ price }: { price: ProductPriceLine }) {
   const t = useTranslations("productBrowse.card");
@@ -328,12 +340,6 @@ function PriceBlock({ price }: { price: ProductPriceLine }) {
         <StatusChip tone="primary" size="md">
           {t("free")}
         </StatusChip>
-      );
-    case "external":
-      return (
-        <span className="text-xs text-muted-foreground">
-          {t("externalContract")}
-        </span>
       );
     case "subscription":
       // Consumer clubs bill as a flat monthly subscription.

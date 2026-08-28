@@ -1842,10 +1842,12 @@ describe("POST /api/checkout/products/create", () => {
       expect(htmlContent).not.toContain("evil.com");
     });
 
-    // Owner decision: a municipality registration is invoiced to the school
-    // off-platform, so from the family's side it is the free case exactly, and
-    // it sends the free-mode mail rather than one of its own.
-    it("mails the same free-mode confirmation for a municipality registration", async () => {
+    // A municipality registration says who bears the cost rather than "Free":
+    // some municipalities charge families a small fee of their own, so a "Free"
+    // here contradicts what the family was told by their own council. This
+    // asserts the negative too — the free-mode wording must not reach a
+    // municipality mail.
+    it("mails the external-mode confirmation for a municipality registration", async () => {
       mockAuthenticatedCustomer();
       mockAdmin({ product: MUNI_CLUB });
       mockAdminRpc.mockResolvedValueOnce({
@@ -1868,7 +1870,9 @@ describe("POST /api/checkout/products/create", () => {
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
       expect(sent.toEmail).toBe("parent@example.test");
-      expect(sent.htmlContent).toContain("Price: Free");
+      expect(sent.htmlContent).toContain("Price: Paid for by your municipality");
+      expect(sent.htmlContent).not.toContain("Price: Free");
+      expect(sent.htmlContent).not.toContain("nothing to pay for this one");
     });
 
     it("speaks in the second person when the parent took the seat themselves", async () => {

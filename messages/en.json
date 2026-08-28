@@ -1626,7 +1626,6 @@
       "perMonth": "{price} / month",
       "upfrontTotal": "{price}",
       "free": "Free",
-      "externalContract": "Funded by your municipality",
       "notAvailableInCurrency": "Not in {currency}",
       "endedNote": "This one’s wrapped — keep an eye out for the next one.",
       "viewDetails": "View",
@@ -1822,8 +1821,7 @@
       "subscriptionHint": "Billed monthly · cancel anytime.",
       "free": "Free",
       "freeHint": "No payment needed.",
-      "external": "Free to you · paid by your municipality",
-      "externalHint": "No payment needed — your municipality covers the cost.",
+      "external": "Paid for by your municipality",
       "upfrontHint": "One-time payment.",
       "notAvailable": "Pricing isn’t available in {currency} yet.",
       "cadenceMonth": "/ month",
@@ -3074,7 +3072,8 @@
       "price": {
         "subscription": "{amount} / month",
         "upfront": "{amount} (one-time)",
-        "free": "Free"
+        "free": "Free",
+        "external": "Paid for by your municipality"
       },
       "nextTitle": "What happens next",
       "next": {

@@ -175,8 +175,8 @@ const PRODUCT_CONFIRMATION_MODE_OPTIONS = PRODUCT_CONFIRMATION_MODES.map((value)
  * the boolean the builder takes, defaulting to the child case — which is what an
  * unfilled field in the testing UI means, and what every seat was before
  * for-parents products existed. The price is cleared on the modes that state no
- * amount, so a test render of a free signup or a waitlist join carries no price
- * at all, which is what the live mail carries.
+ * amount, so a test render of a free signup, a municipality registration or a
+ * waitlist join carries no price at all, which is what the live mail carries.
  */
 function resolveProductConfirmation(params: Record<string, string>): TemplateParams {
   const { seat, priceAmount, ...rest } = params;

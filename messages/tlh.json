@@ -1670,7 +1670,6 @@
       "perMonth": "{price} / jar",
       "upfrontTotal": "{price}",
       "free": "Huch Hutlh",
-      "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe’",
       "endedNote": "rInpu’ – veb yIloS.",
       "viewDetails": "yIlegh",
@@ -1866,8 +1865,7 @@
       "subscriptionHint": "jar Hoch Huch lo’ · DaH yIqIl ’e’ DaneHchugh, yIqIl.",
       "free": "Huch pagh",
       "freeHint": "Huch poQbe’.",
-      "external": "Huch pagh SoH · veng Huch nob",
-      "externalHint": "Huch poQbe’ — veng Huch nob.",
+      "external": "veng Huch nob",
       "upfrontHint": "wa’logh Huch.",
       "notAvailable": "{currency} Huch DaH ghajbe’.",
       "cadenceMonth": "/ jar",
@@ -2483,7 +2481,8 @@
       "price": {
         "subscription": "{amount} / jar",
         "upfront": "{amount} (wa’logh DIl)",
-        "free": "wagh Hutlh"
+        "free": "wagh Hutlh",
+        "external": "veng Huch nob"
       },
       "nextTitle": "qaStaHvIS",
       "next": {

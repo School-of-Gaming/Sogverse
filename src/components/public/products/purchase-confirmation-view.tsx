@@ -304,8 +304,11 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 // The price line for the summary. Subscriptions read "€X / month", one-time
-// camps/events read "€X (one-time)". External (municipality) and unavailable
-// shapes never reach a paid confirmation, so they show no price line.
+// camps/events read "€X (one-time)". External (municipality) shows no price
+// line — it never claimed one, and a page that has said nothing about the cost
+// has said nothing wrong; the emailed twin carries a line here only because it
+// had a false one to replace. Unavailable never reaches a paid confirmation at
+// all.
 function priceText(
   option: PricingOption,
   locale: string,

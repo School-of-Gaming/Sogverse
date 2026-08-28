@@ -7,8 +7,9 @@ import type { PricingOption } from "./pricing-options";
 
 // Single-option price display. There is one purchase option per product, so
 // this is purely informational — no selection. Consumer clubs show the
-// monthly subscription price; camps/paid events the upfront total; free and
-// municipality (external) products show a no-payment note.
+// monthly subscription price; camps/paid events the upfront total; free
+// products a no-payment note, and municipality (external) ones who bears the
+// cost instead.
 
 // **This section carries no box**, and that is the panel's one rule doing its
 // work: a border means you can act on it. Elsewhere in the panel a bordered box
@@ -104,14 +105,14 @@ function OptionRow({
         </div>
       );
     case "external":
-      return (
-        <div>
-          <p className="text-base font-bold">{t("external")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("externalHint")}
-          </p>
-        </div>
-      );
+      // The one option with no second line. It used to carry a hint saying no
+      // payment was needed, which is only true of our till: some municipalities
+      // ask families for a small fee of their own, and a parent who has been
+      // told that by their council reads ours as a contradiction. Everything
+      // honest that could stand there instead was a description of who invoices
+      // whom — our arrangement with the municipality, not a fact a family has
+      // any use for — so the line above states who bears the cost and stops.
+      return <p className="text-base font-bold">{t("external")}</p>;
     case "unavailable":
       return (
         <div>

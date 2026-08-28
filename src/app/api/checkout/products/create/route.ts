@@ -255,13 +255,16 @@ export const POST = defineRoute({
       // to fire and forget: the helper swallows its own failures and cannot
       // throw, so a Brevo outage never surfaces as an unhandled rejection.
       //
-      // **Both no-charge outcomes send the same mail.** A municipality
-      // registration is invoiced to the school off-platform, so from the
-      // family's side it is the free case exactly — nothing to pay, nothing to
-      // manage, a seat that is already theirs — and `free` is the mode that
-      // says so. Owner decision; a distinct `external` mode was considered and
-      // turned down as copy that would differ from this one only in ways a
-      // parent has no use for.
+      // **The two no-charge outcomes send different mails.** They used to send
+      // the same one — a municipality registration is invoiced off-platform, so
+      // from our till it is the free case exactly — and that reasoning stopped
+      // at our till. Most municipalities carry the whole cost, but some ask
+      // families for a small fee of their own, which the municipality has
+      // already told them about; our "Free" then contradicts something the
+      // reader knows, and a confirmation mail is a bad place to be corrected by
+      // your own council. `external` names who bears the cost and stops there:
+      // what the municipality then asks of a family is not ours to state, and
+      // how we settle up with the municipality is not theirs to read.
       after(
         sendProductConfirmationEmail({
           client: admin,
@@ -269,7 +272,7 @@ export const POST = defineRoute({
           customerId: user.id,
           participantId,
           productId,
-          mode: "free",
+          mode: rpcJson.kind === "external_active" ? "external" : "free",
         }),
       );
 

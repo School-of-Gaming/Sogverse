@@ -1626,7 +1626,6 @@
       "perMonth": "{price} / mån",
       "upfrontTotal": "{price}",
       "free": "Gratis",
-      "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
@@ -1822,8 +1821,7 @@
       "subscriptionHint": "Faktureras månadsvis · avsluta när som helst.",
       "free": "Gratis",
       "freeHint": "Ingen betalning behövs.",
-      "external": "Gratis för dig · betalas av din kommun",
-      "externalHint": "Ingen betalning behövs – din kommun täcker kostnaden.",
+      "external": "Bekostas av din kommun",
       "upfrontHint": "Engångsbetalning.",
       "notAvailable": "Pris inte tillgängligt i {currency} ännu.",
       "cadenceMonth": "/ mån",
@@ -2439,7 +2437,8 @@
       "price": {
         "subscription": "{amount} / månad",
         "upfront": "{amount} (engångsbetalning)",
-        "free": "Gratis"
+        "free": "Gratis",
+        "external": "Bekostas av din kommun"
       },
       "nextTitle": "Vad händer nu",
       "next": {

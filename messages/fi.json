@@ -1626,7 +1626,6 @@
       "perMonth": "{price} / kk",
       "upfrontTotal": "{price}",
       "free": "Maksuton",
-      "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
@@ -1822,8 +1821,7 @@
       "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
       "free": "Maksuton",
       "freeHint": "Maksua ei tarvita.",
-      "external": "Sinulle maksuton · kuntasi maksaa",
-      "externalHint": "Maksua ei tarvita – kuntasi kattaa kustannukset.",
+      "external": "Kustannettu kunnan toimesta",
       "upfrontHint": "Kertamaksu.",
       "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
       "cadenceMonth": "/ kk",
@@ -2439,7 +2437,8 @@
       "price": {
         "subscription": "{amount} / kk",
         "upfront": "{amount} (kertamaksu)",
-        "free": "Ilmainen"
+        "free": "Ilmainen",
+        "external": "Kustannettu kunnan toimesta"
       },
       "nextTitle": "Mitä seuraavaksi tapahtuu",
       "next": {

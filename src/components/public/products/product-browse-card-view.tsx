@@ -67,8 +67,7 @@ export function ProductBrowseCardView({
   audienceLabel,
   locationLine,
   spokenLanguageCode,
-  price,
-  seatBar,
+  footerLeft,
   state,
   detailHref,
   tag,
@@ -167,7 +166,7 @@ export function ProductBrowseCardView({
           </p>
         )}
 
-        <BrowseCardFooter shell={shell} seatBar={seatBar} price={price} />
+        <BrowseCardFooter shell={shell} footerLeft={footerLeft} />
       </CardContent>
 
       {/* Nothing on this card owns a click of its own — the overlaid chips are
