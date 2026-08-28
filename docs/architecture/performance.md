@@ -28,13 +28,18 @@ RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` w
 
 ## Real-user data (Speed Insights)
 
-Vercel Speed Insights collects Core Web Vitals (TTFB/FCP/LCP/INP/CLS plus a Real Experience Score) from real production visitors. There is **no official read API** (the documented Speed Insights API is intake-only) — `npm run perf:insights` (`scripts/speed-insights.mjs`) pulls the data through the internal endpoint the dashboard itself uses and prints overview percentiles plus per-route breakdowns with sample sizes. It authenticates with the local Vercel CLI login (any `school-of-gaming` team member's token works; `VERCEL_TOKEN` overrides). A Claude session cannot execute it itself — the permission classifier blocks access to the CLI token file — so ask the user to run it (`! npm run perf:insights`). If it starts 404ing, the internal API moved: re-capture the request URL from the dashboard's network tab and update the script's paths.
+Vercel Speed Insights collects Core Web Vitals (TTFB/FCP/LCP/INP/CLS plus a Real Experience Score) from real production visitors. Two readers, both owned by `../runbooks/vercel-analytics.md`:
+
+- **`vercel metrics` for a specific question.** The vitals are first-class metrics there, sliceable by route, device, day and `attribution_target` — the CSS path of the LCP element, which is what turns an LCP number into a diagnosis. It rides the CLI's own login, so it needs no token handling and any session can run it. The Pro plan serves the latest 30 days only.
+- **`npm run perf:insights` (`scripts/speed-insights.mjs`) for a broad periodic pull** — every metric × device × percentile plus per-route breakdowns in one command. No official read API stands behind it (the documented Speed Insights API is intake-only), so it calls the internal endpoint the dashboard itself uses, authenticating with the local Vercel CLI login; a session that cannot read that token file asks the owner to run it (`! npm run perf:insights`). If it starts 404ing, the internal API moved: re-capture the request URL from the dashboard's network tab and update the script's paths.
+
+The two count samples differently, so compare a snapshot's `n` only against snapshots taken with the same reader; the pageview counter is the series that is comparable throughout.
 
 How to read the numbers:
 
 - **p75 is the warm steady state** — what most visits get. **p90–p99 is the cold-start / heavy tail**, and the good/improvable/poor distribution says how many real pageviews land in it. This is the honest resolution of "cold starts pollute the test, warm caches make it too easy": the two conditions are separated by percentile, both are real, and the distribution gives their mix. Don't chase one synthetic number that blends them.
-- **Sample sizes are thin** (~300 DAU): most routes collect under 100 datapoints per month, so route-level p75s are directional only. Before/after regression testing stays with the controlled benchmark protocol (benchmark log under the F1 completed entry); Speed Insights is the ambient monitor — watch the overall p75 and the poor-bucket share over time.
-- **On a thin enough route, p75 *is* the cold number, and the bullet above stops applying.** The warm/cold-by-percentile split assumes visits arrive close enough together that something stays warm between them. Below roughly one visit per cache lifetime that assumption inverts: nothing the route touches is ever resident, so there is no warm population to occupy p75 and the percentile split no longer separates two conditions, because only one of them happens. `/schools/[municipalityName]/[id]` at ~1 visit/day measured ~1100ms cold against a ~170ms warm steady state — the warm figure is what a developer clicking twice sees and what almost no real visitor ever gets. (Those are pre-fix numbers, kept because the *gap* between them is the lesson; that route's cold cost was mostly one read, since removed — see the F6 entry under Completed.) **Read a route's `n` before reading its p75 as steady state**; under ~100/30d, treat it as the cold number.
+- **Sample sizes are thin outside the busiest routes.** Around 350–550 daily visitors (5,590 uniques over the 30 days to 2026-08-28, though a municipal opening carried most of that week), so the handful of routes the family loop passes through collect hundreds of datapoints a month while the long tail collects tens — and a tail route's p75 is directional only. Before/after regression testing stays with the controlled benchmark protocol (benchmark log under the F1 completed entry); Speed Insights is the ambient monitor — watch the overall p75 and the poor-bucket share over time.
+- **On a thin enough route, p75 *is* the cold number, and the bullet above stops applying.** The warm/cold-by-percentile split assumes visits arrive close enough together that something stays warm between them. Below roughly one visit per cache lifetime that assumption inverts: nothing the route touches is ever resident, so there is no warm population to occupy p75 and the percentile split no longer separates two conditions, because only one of them happens. `/schools/[municipalityName]/[id]` at ~1 visit/day measured ~1100ms cold against a ~170ms warm steady state — the warm figure is what a developer clicking twice sees and what almost no real visitor ever gets. (Those are pre-fix numbers, kept because the *gap* between them is the lesson; that route's cold cost was mostly one read, since removed — see the F6 entry under Completed.) **Read a route's `n` before reading its p75 as steady state**; under ~100/30d, treat it as the cold number. **And the cache unit can be narrower than the route.** Where the cold cost is a per-(asset, variant) cache fill rather than a per-route one, a well-trafficked route still holds thin sub-populations, and the cold number surfaces as a device split rather than as a low `n` — read the exposure off the cache's own key, not off the route's traffic. F9 is the worked case.
 
 ### Snapshot log
 
@@ -55,6 +60,20 @@ Append-only, like the benchmark log. Format: `date · window · scope → headli
   **Verdict: B+.** Interaction quality is excellent (INP p75 48ms desktop, CLS near-perfect — the app *feels* fast once loaded) and the core family loop has good TTFB at real sample sizes. What holds the grade down: first paint is mediocre with no headroom (FCP 74–75% good, p75 sitting on the 1.8s threshold; LCP scrapes under 2.5s), and the worst experiences cluster on *entry* surfaces — `/schools` poor, the ~6% cold tail, the voice-room entry LCP — i.e. slowest exactly where first impressions form, while committed users get the fast path. Path to A+: F2 first (converts the worst numbers on the most impression-sensitive surface into edge-CDN hits), then the F5 hotspots, with Server-Timing instrumentation before diagnosing them so "slow" becomes "why".
 
   > **Annotation (2026-08-17): the `/schools` half of this verdict is pre-fix.** It was graded before F6 was diagnosed, so it reads the worst entry-surface number as F2's dynamic-render tax; the probe since attributed ~75% of that route's cold path to a whole-country municipality read, now removed (see Completed). The verdict itself stands as written — it is a point-in-time grade of a point-in-time pull, and the next pull gets its own. What changes is the path to A+: the biggest single `/schools` number is addressed, and the *rest* of that route, plus every other public page, is still F2.
+
+- **2026-08-28 · last 30 days · production, both devices** — datapoints: TTFB 8,462 desktop / 8,414 mobile, against **41,653 pageviews, 30,501 of them in the final seven days** — the municipal opening and its aftermath, roughly eight times the pre-opening baseline. Pulled with `vercel metrics`; read the 08-13 entry's `n` as a different instrument, not as a traffic comparison.
+
+  | p75 / p90 / p95 / p99 | Desktop | Mobile |
+  |---|---|---|
+  | TTFB | 232 / 627 / 1177 / 2916 ms | 261 / 593 / 926 / 2259 ms |
+  | FCP | 1218 / 2372 / 3301 / 6936 ms | 1037 / 1615 / 2272 / 4916 ms |
+  | LCP | 1395 / 2765 / 4382 / 13273 ms | 1207 / 1910 / 2678 / 5515 ms |
+  | INP | 56 / 97 / 191 / 647 ms | 96 / 170 / 334 / 793 ms |
+  | CLS | 0.001 / 0.015 / 0.047 / 0.225 | 0.000 / 0.002 / 0.049 / 0.364 |
+
+  Reading: every vital's p75 is inside the good band on both devices, and it held there through the traffic spike rather than in spite of it. Against 08-13: desktop TTFB 397 → 232, FCP 1859 → 1218, LCP 2076 → 1395; mobile moved the same way. What is left is tail-shaped and one-sided — desktop LCP p99 13.3s against mobile's 5.5s — and it has an owner in F9. F2 improved without being addressed (home TTFB p75 627 → 489 desktop, 331 → 268 mobile) and still holds the public pages off the edge.
+
+  **Verdict: A−.** Both weaknesses the B+ named are gone: first paint now has real headroom (FCP p75 ~600ms below the 1.8s threshold, LCP ~1.1s below 2.5s, on both devices) and entry surfaces are no longer where the worst numbers cluster. Interaction quality held while traffic multiplied — INP p75 56ms desktop, CLS a rounding error — which is the part a load spike would have broken if anything were going to. What keeps it off A+ is that the heavy tail did not shrink with the medians; it moved, from route-asymmetric to device-asymmetric, and now sits almost entirely on desktop LCP, where a quarter of shop visits pay a multi-second image encode. Path to A+: F9's two loose ends first — they are cheap, and they are where the tail actually lives — then F2, which is still the standing structural item and is now the largest thing between the public pages and an edge-CDN TTFB.
 
 ## Incidents
 
@@ -121,16 +140,14 @@ An earlier version of this note claimed every hook pairing server-prefetched `in
 
 What does happen, by design: after a minute the data is stale, so a background refetch can fire on a later remount/window-focus. That's the intended freshness behavior (seat counts especially), invisible to the user, and not waste. No action needed.
 
-### F5 — Route hotspots from real-user data (2026-08-13 pull; causes not yet investigated)
+### F5 — Route hotspots from real-user data (2026-08-13 pull)
 
-The first Speed Insights pull (see Real-user data) surfaced four routes worth a look. Numbers are 30-day p75s from production RUM; none has a confirmed root cause yet — a bullet graduates to its own finding when investigated.
+The first Speed Insights pull (see Real-user data) surfaced four routes worth a look. Numbers are 30-day p75s from production RUM — a bullet graduates to its own finding when its cause is established.
 
 - **`/admin` TTFB 1307ms (improvable, n=95).** The admin dashboard does heavy server work per load. Cause uninvestigated.
 - **`/parent/unlock` TTFB 920ms desktop / 1065ms mobile — and the top mobile route by traffic (n=98).** The PIN unlock page is the most user-visible slow TTFB in the family flow.
 - **`/voice/group/[id]` LCP 4552ms desktop (POOR, n=81) — but INP excellent (72ms, n=403).** The room feels fine once loaded; the entry paint is the problem. Hypothesis: the video/participant tile arrives late and is the LCP element.
-- **`/shop/[id]` LCP ~3.2s on both devices (improvable).** Hypothesis: the product hero image (sizing/priority).
-
-  > **Annotation (2026-08-18): the hypothesized fix ships with `feat/next-image-product-banner`.** Product images now render through the Vercel image optimizer — the detail hero is preloaded (`priority`) and arrives as a right-sized WebP (~100–250 kB) instead of the stored 2–4 MB PNG original, and browse-card images are right-sized per viewport the same way. **After the next release, re-pull Speed Insights and read `/shop/[id]` LCP against this pull's ~3.2s p75** (and `/shop`'s LCP alongside it). Two reading cautions: mind the thin-route rule above, and expect a brief first-encounter tail while the optimizer's per-(image, width) cache fills — WebP-only over AVIF was priced on exactly that tail (`next.config.ts` records the reasoning and the traffic threshold at which AVIF flips back on). The branch's actual motivation was Supabase Cached Egress, which Speed Insights cannot see — read that meter on the Supabase dashboard (Organization → Usage) in the same pass.
+- **`/shop/[id]` LCP ~3.2s on both devices (improvable).** Hypothesis confirmed — it is the product picture. Investigated, fixed for mobile, made worse for desktop; graduated to **F9**, which covers `/shop` alongside it.
 
 ### F7 — Account creation is the registration-path ceiling; enrolment is not (measured 2026-08-21)
 
@@ -178,6 +195,33 @@ The 43-club / 645-seat Helsinki municipal opening, watched live on prod at Small
 Read the load column against 2 cores: the whole excursion above 2.0 lasted **about six minutes**, and memory never came near exhaustion. Note also that `reg/min` *peaks at 09:02* — a minute after the seat rush — because cold families were still completing signups while the pre-registered had already claimed and left.
 
 > **The watcher's JSONL was gitignored, local to one machine, and has been deleted — this section is the record.** That is deliberate: a raw log nobody can reach is worse than a summary everybody can, because it invites re-derivation that will never happen. A future opening captures its numbers here the same way, and the two are then comparable in one place.
+
+### F9 — The image optimizer halved mobile LCP and tripled desktop's (measured 2026-08-28)
+
+Product pictures began rendering through the Vercel image optimizer in production on **2026-08-19**. Nine days of real-user data say it did exactly what it was for on mobile, and inverted on desktop.
+
+`/shop` LCP by device, across three windows inside the 30-day retention:
+
+| window | desktop p75 | p90 | p99 | n | mobile p75 | n |
+|---|---|---|---|---|---|---|
+| Jul 29 – Aug 14 | 2600 | 4352 | 8952 | 29 | 3834 | 14 |
+| Aug 14 – 21 | 5616 | 21164 | 31016 | 69 | 3288 | 110 |
+| Aug 21 – 28 | **8796** | 18748 | **43516** | 99 | **1444** | 235 |
+
+`/shop/[id]` runs the same shape: desktop 2356 → 2688 → **7168** (p99 5292 → 28236 → 29856), mobile 3340 → 2860 → **1884**. Both routes, both directions, one change.
+
+- **It is the picture, not the server.** Desktop `/shop` TTFB p75 is 242ms and falling; FCP p75 is 2876ms. The ~6s between FCP and LCP is the image landing, and `attribution_target` names the LCP element outright on both routes — on both it is the 3:2 product frame's `img`, the one frame every surface paints a product picture through (`src/components/ui/`).
+- **Desktop is bimodal, and that is the whole diagnosis.** `/shop` desktop p50 1992ms against p75 8796ms; `/shop/[id]` p50 1464 against p75 7168. Half of desktop visits are fine and a quarter fall off a cliff between them. That is a cache-miss population, not a slow page — a uniformly slow page has no such step.
+- **A miss costs seconds, and essentially every transform is one.** Optimizer transformations run 3–15/day sitewide against ~14 desktop `/shop` LCP samples/day, and their duration p75 runs 0.3–4.7s depending on the day. A count that low is the *opposite* of reassurance: it means almost every encode is a first encounter, paid synchronously in front of somebody's LCP.
+- **The mechanism was predicted; only the word "brief" was wrong.** `next.config.ts` records the AVIF-vs-WebP decision and prices it on exactly this first-encounter tail, at exactly this traffic. The tail has not amortized in nine days and desktop got worse across every window, so whatever traffic level makes first encounters statistical noise, this site is not at it — and that reads as evidence WebP alone is already the wrong side of the line, not as an argument to revisit the format. The fix worth building is to stop paying an encode in front of a visitor at all: warm the widths when a picture is published, rather than when a family opens the shop.
+- **The exposure unit is (image, width), not the route.** By the thin-route rule above both shop routes are now thick, and mobile shows it. Desktop still degrades because its `srcset` widths are its own set — a route can carry plenty of traffic while each variant stays cold. This is the refinement folded into that rule.
+
+Two loose ends, both cheap, neither yet investigated:
+
+- **The browse cards lazy-load.** Only the detail hero opts into eager fetching. On a three-column desktop grid the whole first row is above the fold, so the LCP candidate's request starts after layout and then queues behind a cold encode. Making the first row eager removes the serial half without touching the encode itself.
+- **The most-transformed width is the largest one Next offers, and also the slowest** — 3840px, 27 of ~95 transforms in seven days, duration p75 averaging 1.57s with 5s peaks, all sourced from the product-images bucket. Every call site states a real `sizes` and none should resolve to that width, so something is requesting it off-markup. It is the most expensive encode we produce.
+
+**Not measured here:** the change's actual motivation was Supabase Cached Egress, which Speed Insights cannot see. Read that meter on the Supabase dashboard (Organization → Usage) before judging the change overall — a desktop LCP regression and an egress win are both real and neither cancels the other.
 
 ## Recommended improvements
 
