@@ -86,15 +86,15 @@ const SCENE_RENDERERS: Record<
         />
       );
     }
-    // TEMP — strip before merge. The same page with filler under the panel, so
-    // the sticky rail's two-end clamp can be judged by scrolling a rail that is
-    // taller than the window.
+    // TEMP — strip before merge. The same page with extra fake consent rows
+    // inside the panel, so the sticky rail's two-end clamp can be judged by
+    // scrolling a panel that is taller than the window.
     if (scenario === REQUIRED_CONSENTS_TALL_SCENARIO.slug) {
       return (
         <ProductDetailScene
           scenario={REQUIRED_CONSENTS_TALL_SCENARIO.baseScenario}
           requiredConsentSlugs={REQUIRED_CONSENTS_TALL_SCENARIO.documentSlugs}
-          tallFiller
+          fillerConsents={REQUIRED_CONSENTS_TALL_SCENARIO.fillerConsentLabels}
         />
       );
     }

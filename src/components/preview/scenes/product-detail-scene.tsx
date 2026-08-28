@@ -12,8 +12,6 @@ import { resolveRegionGate } from "@/components/public/products/region-lock/regi
 import type { RegionLockScenarioMeta } from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { ConfirmedHomeLocation } from "@/components/public/products/signup-panel-view";
 import { previewSceneHref } from "../href";
-// TEMP — strip before merge.
-import { TempTallSignupFiller } from "./temp-tall-signup-filler";
 
 /**
  * The public product detail page, rendered from a scenario fixture.
@@ -42,7 +40,8 @@ export function ProductDetailScene({
   scenario,
   regionLock,
   requiredConsentSlugs,
-  tallFiller = false,
+  // TEMP — strip before merge.
+  fillerConsents,
 }: {
   scenario: PreviewScenario;
   regionLock?: RegionLockScenarioMeta;
@@ -53,10 +52,12 @@ export function ProductDetailScene({
    * in for the detail query's `product_required_consents` embed.
    */
   requiredConsentSlugs?: readonly string[];
-  // TEMP — strip before merge. Stacks filler under the signup panel so the
-  // sticky rail is taller than a 1080p viewport and the two-end clamp can be
-  // judged by scrolling. Only the `required-consents-tall` scenario sets it.
-  tallFiller?: boolean;
+  // TEMP — strip before merge. Obviously-fake extra consent rows for INSIDE the
+  // panel's Required consent section, so the panel itself is taller than a
+  // 1080p viewport and the two-end clamp can be judged by scrolling a rail whose
+  // CTA sits at its very bottom. Only the `required-consents-tall` scenario
+  // sets it.
+  fillerConsents?: readonly string[];
 }) {
   // A place confirmed in the panel's dialog, held exactly where the live
   // route's data shell holds it — so the pick outranks the scenario's seeded
@@ -82,15 +83,14 @@ export function ProductDetailScene({
     <ProductDetailPageBody
       product={product}
       signupPanel={
-        <>
-        {/* TEMP — strip before merge. ABOVE the panel deliberately: the point
-            of the scenario is a rail whose CTA sits at its very bottom, which
-            is the shape a genuinely tall panel has and the one the clamp has to
-            make reachable. */}
-        {tallFiller && <TempTallSignupFiller />}
         <PreviewSignupPanel
           product={product}
           requiredConsentSlugs={requiredConsentSlugs}
+          // TEMP — strip before merge. The height comes from INSIDE the panel:
+          // extra fake consent rows in its own Required consent section, which
+          // is the shape a genuinely tall panel has and the one the clamp has to
+          // make reachable.
+          fillerConsents={fillerConsents}
           state={fixture.state}
           authState={fixture.authState}
           summaryHref={summaryHref}
@@ -108,7 +108,6 @@ export function ProductDetailScene({
           }
           onLocationPicked={setConfirmed}
         />
-        </>
       }
       // Read from the registration state exactly as the live route reads it,
       // which keeps the phone-width jump button on a blocked page: it scrolls

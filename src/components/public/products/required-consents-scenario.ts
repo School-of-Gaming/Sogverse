@@ -29,16 +29,32 @@ interface RequiredConsentsScenarioMeta {
 
 // TEMP — strip before merge.
 //
-// The same scenario with filler stacked under the signup panel, so the rail is
-// unmistakably taller than a 1080p viewport and the two-end sticky clamp can be
-// judged by scrolling rather than by measurement. It exists to be looked at
-// once; nothing in the product depends on it, and the filler component it
-// renders goes with it.
-export const REQUIRED_CONSENTS_TALL_SCENARIO: RequiredConsentsScenarioMeta = {
+// The same scenario with extra fake consent rows INSIDE the panel's own
+// Required consent section, so the panel is unmistakably taller than a 1080p
+// viewport — CTA at its very bottom — and the two-end sticky clamp can be
+// judged by scrolling rather than by measurement. The height has to come from
+// the panel itself: filler stacked around it would move the rail without
+// growing the thing being clamped.
+//
+// The labels are literal English on purpose and are obviously not consents.
+// They live here, in data, rather than in the component — which is also what
+// keeps them clear of the i18n lint rule (`jsx-only`, so a string reaching JSX
+// through a prop is not a literal) and, more to the point, out of the real
+// consent-document map and the message files.
+export const REQUIRED_CONSENTS_TALL_SCENARIO: RequiredConsentsScenarioMeta & {
+  fillerConsentLabels: readonly string[];
+} = {
   slug: "required-consents-tall",
-  label: "Required consents — TEMPORARY tall-panel filler",
+  label: "Required consents — TEMPORARY tall panel",
   baseScenario: "consumer-club",
   documentSlugs: ["roblox-programme-terms", "roblox-privacy-policy"],
+  fillerConsentLabels: [
+    "Temp filler consent A — not a real consent",
+    "Temp filler consent B — not a real consent",
+    "Temp filler consent C — not a real consent",
+    "Temp filler consent D — not a real consent",
+    "Temp filler consent E — not a real consent",
+  ],
 };
 
 export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {

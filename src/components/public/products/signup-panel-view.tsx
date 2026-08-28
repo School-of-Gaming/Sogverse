@@ -227,6 +227,14 @@ export interface SignupPanelViewProps {
   locale: string;
   /** See `SignupRegionGate`. Absent on every unlocked product. */
   regionGate?: SignupRegionGate;
+  // TEMP — strip before merge.
+  //
+  // Preview-only. Obviously-fake extra consent rows to render inside the
+  // Required consent section, so the panel outgrows a 1080p viewport and the
+  // sticky rail's clamp can be judged against real panel content below the
+  // fold. Only the `required-consents-tall` scenario passes it; the live
+  // adapter has no path to it at all.
+  previewFillerConsents?: readonly string[];
 }
 
 // ---------- Why the panel is flat ----------
@@ -1014,6 +1022,8 @@ function SignupForm(
         onDocumentsAgreedChange={props.onConsentsAgreedChange}
         rulesAgreed={props.agreed}
         onRulesAgreedChange={props.onAgreedChange}
+        // TEMP — strip before merge.
+        fillerConsents={props.previewFillerConsents}
       />
 
       <Button
@@ -1063,14 +1073,30 @@ function SignupForm(
  * list and changes no sentence, where a per-document sentence would need one
  * more translated string in five locales every time.
  *
- * **The links sit outside the clickable box, above it.** Reading comes before
- * agreeing, so the documents are what the reader meets first, and putting them
- * outside the `<label>` is what makes "clicking a link must not tick the box" a
- * structural fact rather than a handler that could be deleted. They open in a
- * new tab, deliberately and not as a stylistic default — the panel behind them
- * is holding a chosen child, a possibly half-answered location question and a
- * ticked box or two, and navigating away would throw all of it out to read a
- * document the panel is *asking* them to read.
+ * **The links sit INSIDE the clickable box, above the checkbox.** One box is one
+ * consent unit: the documents a parent is agreeing to and the sentence agreeing
+ * to them share an edge, so there is never a question about which checkbox
+ * covers which papers. Reading still comes before agreeing, so the list is what
+ * the reader meets first inside the box. They open in a new tab, deliberately
+ * and not as a stylistic default — the panel behind them is holding a chosen
+ * child, a possibly half-answered location question and a ticked box or two, and
+ * navigating away would throw all of it out to read a document the panel is
+ * *asking* them to read.
+ *
+ * **The whole box stays clickable, and a click on a link reads rather than
+ * ticks.** That is not a handler, it is the DOM: a `<label>`'s activation
+ * behaviour is skipped outright when the click lands on an interactive
+ * descendant, and an `<a href>` is one — so the link navigates and the box does
+ * not toggle, in every engine and in jsdom. Nothing on the box listens for
+ * clicks itself, so there is nothing for an anchor to `stopPropagation` away
+ * from; adding one would buy no safety here and would silently break any
+ * delegated listener an ancestor later wants. A row that grows its own
+ * `onClick` is the moment to revisit that, and the tests pin which mechanism is
+ * doing the work so the change cannot pass unnoticed.
+ *
+ * The one exception is a slug this deploy cannot name: it is plain text, not a
+ * link, so clicking it ticks the box like any other part of the row. There is
+ * nothing to read there, so there is nothing being interrupted.
  *
  * **A slug this deploy cannot name is still listed, and still gated.** It
  * appears as its raw slug with no link to follow. It looks wrong, which is
@@ -1087,6 +1113,8 @@ function RequiredConsentSection({
   onDocumentsAgreedChange,
   rulesAgreed,
   onRulesAgreedChange,
+  // TEMP — strip before merge.
+  fillerConsents,
 }: {
   productType: ProductType;
   /**
@@ -1109,6 +1137,8 @@ function RequiredConsentSection({
   onDocumentsAgreedChange: (next: boolean) => void;
   rulesAgreed: boolean;
   onRulesAgreedChange: (next: boolean) => void;
+  // TEMP — strip before merge. See `previewFillerConsents` on the view's props.
+  fillerConsents?: readonly string[];
 }) {
   const t = useTranslations("productDetail.signupPanel");
   const tRules = useTranslations("productDetail.signupPanel.rules");
@@ -1127,38 +1157,44 @@ function RequiredConsentSection({
     <div className="space-y-2">
       <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
       {slugs.length > 0 && (
-        <>
-          {/* A list, because that is what it is: the reader is being told which
-              documents this seat comes with before being asked about them. */}
-          <ul className="space-y-1 text-xs">
-            {slugs.map((slug) => {
-              const meta = consentDocumentMeta(slug);
-              return (
-                <li key={slug}>
-                  {meta === null ? (
-                    // Never an anchor with nowhere to go — an empty href
-                    // resolves to the page the reader is already on.
-                    <span className="font-medium text-foreground">{slug}</span>
-                  ) : (
-                    <a
-                      href={meta.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-primary underline-offset-2 hover:underline"
-                    >
-                      {tNames(meta.nameKey)}
-                    </a>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          <ConsentRow
-            agreed={documentsAgreed}
-            onAgreedChange={onDocumentsAgreedChange}
-            sentence={t("consents.agree")}
-          />
-        </>
+        <ConsentRow
+          agreed={documentsAgreed}
+          onAgreedChange={onDocumentsAgreedChange}
+          sentence={t("consents.agree")}
+          lead={
+            /* A list, because that is what it is: the reader is being told which
+               documents this seat comes with before being asked about them —
+               inside the box that asks, so the papers and the tick are one
+               unit. */
+            <ul className="mb-3 space-y-1 text-xs">
+              {slugs.map((slug) => {
+                const meta = consentDocumentMeta(slug);
+                return (
+                  <li key={slug}>
+                    {meta === null ? (
+                      // Never an anchor with nowhere to go — an empty href
+                      // resolves to the page the reader is already on.
+                      <span className="font-medium text-foreground">{slug}</span>
+                    ) : (
+                      <a
+                        href={meta.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {tNames(meta.nameKey)}
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          }
+        />
+      )}
+      {/* TEMP — strip before merge. Obviously-fake extra rows, preview-only. */}
+      {fillerConsents !== undefined && (
+        <TempFillerConsentRows labels={fillerConsents} />
       )}
       {/* Ours, and always last: whatever else a product attaches to a seat, the
           final thing a parent agrees to before the button is the one thing
@@ -1182,15 +1218,24 @@ function RequiredConsentSection({
  * they say. No nested box: unlike the gamer picker — whose outer box wraps a
  * border-per-selectable-row — each row is a single choice, so a box-in-a-box
  * would just be visual noise.
+ *
+ * `lead` is whatever the row is about, above the sentence and inside the same
+ * box — the document list, on the one row that has one. It is a slot rather
+ * than a list prop because the box's job is to hold one consent unit whole, not
+ * to know what kind of thing is being consented to; a caller passing links
+ * accepts that a click on one reads instead of ticking, which the DOM gives for
+ * free (see the section's note above).
  */
 function ConsentRow({
   agreed,
   onAgreedChange,
   sentence,
+  lead,
 }: {
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   sentence: string;
+  lead?: React.ReactNode;
 }) {
   return (
     <label
@@ -1201,6 +1246,7 @@ function ConsentRow({
           : "border-border bg-muted/30 hover:bg-accent/50",
       )}
     >
+      {lead}
       <div className="flex items-start gap-3 text-xs">
         <Checkbox
           className="mt-0.5"
@@ -1210,6 +1256,41 @@ function ConsentRow({
         <span className="text-muted-foreground">{sentence}</span>
       </div>
     </label>
+  );
+}
+
+// TEMP — strip before merge.
+//
+// Extra obviously-fake consent rows, rendered inside the Required consent
+// section by the `required-consents-tall` preview scenario and nowhere else.
+// Their only job is to make the signup panel itself taller than a 1080p
+// viewport, so the sticky rail's two-end clamp can be judged by scrolling a
+// panel whose CTA really does sit at its very bottom.
+//
+// They are the same `ConsentRow` the real rows are, because a mock made of a
+// different control would not be the thing being judged. They tick, because a
+// dead checkbox in a scene is a lie about the surface; and they gate nothing,
+// because they are not consents — the CTA never looks at them.
+//
+// Removal is this component, the `fillerConsents` prop it is called through,
+// the `previewFillerConsents` prop feeding that, and the scenario's labels.
+function TempFillerConsentRows({ labels }: { labels: readonly string[] }) {
+  const [agreed, setAgreed] = useState<readonly boolean[]>(() =>
+    labels.map(() => false),
+  );
+  return (
+    <>
+      {labels.map((label, index) => (
+        <ConsentRow
+          key={label}
+          agreed={agreed[index] ?? false}
+          onAgreedChange={(next) =>
+            setAgreed((prev) => prev.map((v, i) => (i === index ? next : v)))
+          }
+          sentence={label}
+        />
+      ))}
+    </>
   );
 }
 

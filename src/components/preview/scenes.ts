@@ -149,7 +149,7 @@ export const PREVIEW_SCENES = [
         slug: REQUIRED_CONSENTS_TALL_SCENARIO.slug,
         label: REQUIRED_CONSENTS_TALL_SCENARIO.label,
         description:
-          "TEMPORARY. Filler under the panel so the sticky rail outgrows the window; delete with the branch.",
+          "TEMPORARY. Fake extra consent rows so the panel itself outgrows the window; delete with the branch.",
       },
     ],
   },

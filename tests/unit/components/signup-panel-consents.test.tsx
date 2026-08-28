@@ -18,9 +18,11 @@ import { ROUTES } from "@/lib/constants";
  * echo their keys, so nothing here depends on English wording.
  *
  * What is worth pinning: the section is never empty, the documents are named as
- * links a reader can follow before agreeing, one tick covers all of them, the
- * CTA names the section until every row in it is ticked, and a slug this deploy
- * cannot name is still listed and still gates.
+ * links a reader can follow before agreeing and sit inside the very box that
+ * consents to them, clicking one reads instead of ticking while clicking
+ * anywhere else in the box ticks, one tick covers all of them, the CTA names the
+ * section until every row in it is ticked, and a slug this deploy cannot name is
+ * still listed and still gates.
  */
 vi.mock("next-intl", () => {
   type PlainValue = string | number;
@@ -160,6 +162,20 @@ describe("a product that requires consents", () => {
     expect(container.textContent).toContain("consents.agree");
   });
 
+  it("lists the documents inside the box that consents to them", () => {
+    const { container } = render(
+      <SignupPanelView
+        {...panel({ requiredConsentSlugs: [TERMS, PRIVACY] })}
+      />,
+    );
+
+    // One box is one consent unit: a parent can see which checkbox covers which
+    // papers because they share an edge. This is the structural half of the
+    // behaviour pinned in the two tests below.
+    const label = container.querySelector("label:has(input)");
+    expect(label?.querySelectorAll("a")).toHaveLength(2);
+  });
+
   it("does not tick the box when a document link is clicked", () => {
     const onConsentsAgreedChange = vi.fn();
     const { container } = render(
@@ -177,20 +193,35 @@ describe("a product that requires consents", () => {
 
     // Two claims, separated because they are guaranteed by different things.
     //
-    // The box staying unticked is now STRUCTURAL: the links are rendered above
-    // the `<label>`, not inside it, so no click on one can reach the input. The
-    // assertion below is what would catch a future edit that moved the list
-    // back into the box — where it would need a handler again.
+    // The box staying unticked is the DOM's own rule: a `<label>`'s activation
+    // behaviour is skipped when the click lands on an interactive descendant,
+    // and an `<a href>` inside the box is one. A link reads; it does not tick.
     expect(onConsentsAgreedChange).not.toHaveBeenCalled();
-    // The other half, pinned separately: the anchor really is outside the
-    // label. Without this, a component that moved the list inside the box and
-    // added a `stopPropagation` would pass the assertion above while having
-    // quietly changed which mechanism is doing the work.
-    const label = container.querySelector("label:has(input)");
-    expect(label?.querySelector("a")).toBeNull();
-    // Nothing stops the click, because nothing needs to: it never entered a
-    // label in the first place.
+    // The other half, pinned separately: WHICH mechanism is doing that work.
+    // Nothing swallows the click on its way out, so the assertion above cannot
+    // be being satisfied by a `stopPropagation` on the anchor — and a future
+    // edit that reached for one instead of relying on the DOM would fail here
+    // rather than pass quietly.
     expect(escaped).toHaveBeenCalled();
+  });
+
+  it("ticks when the box is clicked anywhere but a link", () => {
+    const onConsentsAgreedChange = vi.fn();
+    const { container } = render(
+      <SignupPanelView
+        {...panel({
+          requiredConsentSlugs: [TERMS, PRIVACY],
+          onConsentsAgreedChange,
+        })}
+      />,
+    );
+
+    // The other side of the same coin, and the reason the whole box stays
+    // clickable: everything in it that is not a link is the tick target,
+    // including the padding the document list sits in.
+    fireEvent.click(container.querySelector("label:has(input)")!);
+
+    expect(onConsentsAgreedChange).toHaveBeenCalledWith(true);
   });
 
   it("reports the new value when the documents box is ticked", () => {

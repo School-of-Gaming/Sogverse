@@ -47,6 +47,10 @@ interface PreviewSignupPanelProps {
    * to none so every ordinary scenario stays exactly as it was.
    */
   requiredConsentSlugs?: readonly string[];
+  // TEMP — strip before merge. Obviously-fake extra consent rows for the
+  // `required-consents-tall` scenario, handed straight to the view so the panel
+  // outgrows the window. Nothing outside that scenario sets it.
+  fillerConsents?: readonly string[];
   state: RegistrationState;
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
@@ -75,6 +79,8 @@ const NO_CONSENTS: readonly string[] = [];
 export function PreviewSignupPanel({
   product,
   requiredConsentSlugs = NO_CONSENTS,
+  // TEMP — strip before merge.
+  fillerConsents,
   state,
   authState,
   summaryHref,
@@ -133,6 +139,8 @@ export function PreviewSignupPanel({
         onSubmit={goToSummary}
         onJoinWaitlist={goToSummary}
         submitting={committing}
+        // TEMP — strip before merge.
+        previewFillerConsents={fillerConsents}
       />
       <SetLocationDialog
         open={locationDialogOpen}
