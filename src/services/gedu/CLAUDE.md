@@ -1,4 +1,4 @@
-# Gedu profiles, self-registration, certification & the contract
+# Gedu profiles, self-registration, certification, the contract & the record check
 
 Game educators ("gedu") self-register like parents and are **certified by an admin**
 before they can be assigned to work. This directory owns the gedu extension table
@@ -17,9 +17,10 @@ confirmed address — in a fixed order, and never one glyph standing for both.
 - **`gedu_profiles`** — the 1:1 extension table for gedus (the gedu analogue of
   `customer_profiles`/`gamer_profiles`): `user_id` PK, `certified` (bool, default false),
   `certified_at`, `certified_by` (FK → profiles, `ON DELETE SET NULL` so losing the
-  certifying admin never silently de-certifies a working gedu). RLS: admin reads all, a
-  gedu reads its own; **no table-level write grant** — writes go only through the RPC
-  below so the audit columns can't be forged.
+  certifying admin never silently de-certifies a working gedu), plus the criminal record
+  check's own trio in the same shape (`criminal_record_check_passed` / `_at` / `_by`).
+  RLS: admin reads all, a gedu reads its own; **no table-level write grant** — writes go
+  only through the RPCs below so the audit columns can't be forged.
 - Other gedu data (name, phone, `spoken_languages`, `locale`) lives on `profiles`;
   coverage lives in `gedu_locations` (see `../locations/`).
 
@@ -93,6 +94,45 @@ open to an uncertified gedu.
 Certification state is read via `useGeduProfiles` / `useGeduCertificationMap`
 (lists/picker) and `useGeduProfile` (detail, seeded with a server fetch).
 `useSetGeduCertified` invalidates the whole `gedu-profiles` key on success.
+
+## The criminal record check
+
+Finnish law (504/2002) requires a person working with children to present a
+**criminal record extract** — a *rikostaustaote* — and two of its properties
+decide the whole design:
+
+- **The educator obtains it themselves**, from the Legal Register Centre. We
+  never request it, receive it, or hold it.
+- **We may not keep it.** The law permits recording only that an acceptable
+  extract was presented, and when.
+
+**Rule: the document is never stored, and there is nowhere to store it.** No
+file, no reference number, no issue date, no offence data — the schema is a
+boolean plus an audit pair, and that is the entire fact the platform is allowed
+to hold. A field that would carry anything out of the extract is not a feature
+to add later; it is the thing the statute forbids.
+
+**Rule: the check gates nothing.** Exactly like contract acceptance, a missing
+or withdrawn check does not narrow a gedu's access, hide a surface or fail a
+call anywhere. Certification stays the platform's only blocking lever over an
+educator, for the same reason it is the contract's: independent gates on one
+person are how an account ends up in a state nobody can explain. What the check
+buys is *visibility* — the admin certification queue reports it so the decision
+is better informed, not pre-empted.
+
+**Rule: `set_gedu_criminal_record_check(gedu_id, passed)` is the only way in.**
+Admin-only (guard-first `assert_admin()`), refuses a target that is not a gedu,
+and stamps the moment and the acting admin server-side; withdrawing the check
+nulls both. Granted to `authenticated` alone — an admin calls it with their own
+session, and there is no backend caller because nothing server-side can look at
+a document. The extension table carries no write grant, so the audit pair cannot
+be written by the person it is about.
+
+The stamp is non-null **exactly when** the flag is true, which is why the admin
+dashboard's queue ships only the moment: a second field beside it would be
+derivable from the first and could only ever contradict it. The acting admin is
+audit-only — nothing renders it — and its FK is `ON DELETE SET NULL`, so a
+departed admin leaves the check recorded without the name.
 
 ## The gedu contract
 

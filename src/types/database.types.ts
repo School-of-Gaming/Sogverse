@@ -418,18 +418,27 @@ export type Database = {
           certified: boolean
           certified_at: string | null
           certified_by: string | null
+          criminal_record_check_at: string | null
+          criminal_record_check_by: string | null
+          criminal_record_check_passed: boolean
           user_id: string
         }
         Insert: {
           certified?: boolean
           certified_at?: string | null
           certified_by?: string | null
+          criminal_record_check_at?: string | null
+          criminal_record_check_by?: string | null
+          criminal_record_check_passed?: boolean
           user_id: string
         }
         Update: {
           certified?: boolean
           certified_at?: string | null
           certified_by?: string | null
+          criminal_record_check_at?: string | null
+          criminal_record_check_by?: string | null
+          criminal_record_check_passed?: boolean
           user_id?: string
         }
         Relationships: [
@@ -443,6 +452,20 @@ export type Database = {
           {
             foreignKeyName: "gedu_profiles_certified_by_fkey"
             columns: ["certified_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_profiles_criminal_record_check_by_fkey"
+            columns: ["criminal_record_check_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_profiles_criminal_record_check_by_fkey"
+            columns: ["criminal_record_check_by"]
             isOneToOne: false
             referencedRelation: "user_search_index"
             referencedColumns: ["id"]
@@ -2219,6 +2242,10 @@ export type Database = {
       }
       set_gedu_certified: {
         Args: { p_certified: boolean; p_gedu_id: string }
+        Returns: undefined
+      }
+      set_gedu_criminal_record_check: {
+        Args: { p_gedu_id: string; p_passed: boolean }
         Returns: undefined
       }
       set_group_member_minecraft: {
