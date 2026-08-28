@@ -88,6 +88,23 @@ CREATE TYPE public.location_type AS ENUM (
 
 
 --
+-- Name: marketing_consent_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.marketing_consent_type AS ENUM (
+    'school_of_gaming',
+    'lynx_educate'
+);
+
+
+--
+-- Name: TYPE marketing_consent_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold. school_of_gaming is our own mailing list, asked for at parent registration. lynx_educate is our partner''s, asked for only on products an admin has attached it to — see product_marketing_consents. An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT (00210), has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
+
+
+--
 -- Name: participation_status; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -649,6 +666,70 @@ $$;
 --
 
 COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, or one with a LIVE Stripe subscription — a family_subscriptions row whose status is anything but ''cancelled'' — which must be cancelled through Stripe first, or the cancel would orphan it; otherwise delegates to cancel_participation. A dunning-dead subscription is stored as ''cancelled'' and does NOT refuse: admin removal is the only exit such a seat has, so counting it would strand the seat forever. Product type is not consulted — a free club has no parent-facing cancel, so this is its only exit.';
+
+
+--
+-- Name: admin_set_product_marketing_consents(uuid, public.marketing_consent_type[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  -- A NULL element is refused BEFORE the replacing DELETE, which is 00211's
+  -- lesson carried over verbatim: `NOT (col = ANY (array))` is three-valued, so
+  -- an array holding a NULL makes the predicate match nothing and quietly
+  -- degrades a wipe-and-replace into a merge. `unnest(NULL::…[])` yields no
+  -- rows, so an omitted array — the ordinary "asks nothing" shape — passes
+  -- straight through here.
+  IF EXISTS (
+    SELECT 1 FROM unnest(p_consent_types) AS c WHERE c IS NULL
+  ) THEN
+    RAISE EXCEPTION
+      'the marketing-consent list contains a NULL entry, which is not a consent'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The product must exist. Unlike the required-consents writer, whose foreign
+  -- key into the document whitelist does its validating for it, this one's only
+  -- FK is the product itself — and on a call that clears the set there is no
+  -- INSERT for that FK to fire on, so a typo'd id would silently delete nothing
+  -- and report success.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.products WHERE id = p_product_id
+  ) THEN
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  DELETE FROM public.product_marketing_consents
+   WHERE product_id = p_product_id
+     AND NOT (consent_type = ANY (
+       COALESCE(p_consent_types, ARRAY[]::public.marketing_consent_type[])
+     ));
+
+  -- ON CONFLICT DO NOTHING rather than a blind insert after a blind delete: the
+  -- pair is a SET replacement, and leaving an unchanged row in place keeps the
+  -- delete from churning rows an admin did not touch.
+  IF p_consent_types IS NOT NULL
+     AND array_length(p_consent_types, 1) > 0 THEN
+    INSERT INTO public.product_marketing_consents (product_id, consent_type)
+    SELECT p_product_id, c
+      FROM unnest(p_consent_types) AS c
+    ON CONFLICT (product_id, consent_type) DO NOTHING;
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) IS 'Replace the set of marketing consents a product''s signup panel asks about, admin-only and guard-first on assert_admin. The only writer of product_marketing_consents: that table carries no write grant for any Data API role, and an inline INSERT from the admin product form would need one, because the form reaches this as the admin''s own session role. NULL and an empty array both mean "asks nothing", which is how a set is cleared. A NULL ELEMENT is refused before the replacing DELETE runs — 00211''s lesson, one system over: `NOT (col = ANY (array))` is three-valued, so a NULL inside the array would match nothing and turn the wipe-and-replace into a merge. An unknown product is refused explicitly rather than by a foreign key, because a call that CLEARS the set performs no insert for an FK to fire on and would otherwise report success for a product that does not exist.';
 
 
 --
@@ -4760,6 +4841,81 @@ COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date dat
 
 
 --
+-- Name: record_registration_marketing_consent(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.record_registration_marketing_consent(p_customer_id uuid, p_granted boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_current boolean;
+BEGIN
+  IF p_customer_id IS NULL OR p_granted IS NULL THEN
+    RAISE EXCEPTION
+      'a registration marketing consent needs both a customer and an answer'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The role invariant `set_marketing_consent` gets from assert_role, read off
+  -- the named profile instead because there is no session here to ask about.
+  -- A missing profile fails the same test and gets the same refusal: both mean
+  -- "this is not a parent's mailbox".
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.profiles p
+     WHERE p.id = p_customer_id
+       AND p.role = 'customer'
+  ) THEN
+    RAISE EXCEPTION
+      'marketing consent belongs to a customer profile (% is not one)',
+      p_customer_id
+      USING ERRCODE = 'raise_exception';
+  END IF;
+
+  -- FOR UPDATE so a retry racing the original serializes rather than both
+  -- concluding they are the change. A row that does not exist locks nothing,
+  -- which is the harmless half — the ON CONFLICT below settles a first-answer
+  -- race, and the losing side writes an event for a state it genuinely set.
+  SELECT mc.granted
+    INTO v_current
+    FROM public.marketing_consents mc
+   WHERE mc.customer_id = p_customer_id
+     AND mc.consent_type = 'school_of_gaming'
+   FOR UPDATE;
+
+  -- IS NOT DISTINCT FROM, not `=`: no row at all yields NULL, and NULL is
+  -- distinct from both true and false, which is the intended reading. Never
+  -- answered is not the same state as answered no, so a parent declining on the
+  -- sign-up form is a change and gets its event.
+  IF v_current IS NOT DISTINCT FROM p_granted THEN
+    RETURN;
+  END IF;
+
+  INSERT INTO public.marketing_consents (
+    customer_id, consent_type, granted, updated_at
+  )
+  VALUES (p_customer_id, 'school_of_gaming', p_granted, now())
+  ON CONFLICT (customer_id, consent_type) DO UPDATE
+    SET granted    = EXCLUDED.granted,
+        updated_at = EXCLUDED.updated_at;
+
+  INSERT INTO public.marketing_consent_events (
+    customer_id, consent_type, granted, source
+  )
+  VALUES (p_customer_id, 'school_of_gaming', p_granted, 'registration');
+END;
+$$;
+
+
+--
+-- Name: FUNCTION record_registration_marketing_consent(p_customer_id uuid, p_granted boolean); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.record_registration_marketing_consent(p_customer_id uuid, p_granted boolean) IS 'Record the marketing answer given on the parent sign-up form — the state row and its event row together, in one transaction. The register route called PostgREST twice for this and two calls are two transactions, so a failed second write left marketing_consents asserting an answer that marketing_consent_events could not corroborate; on the one consent whose value is provable provenance, an opt-in nobody can evidence is worse than none. Deliberately narrower than set_marketing_consent: the consent type is hardcoded to school_of_gaming (ours is the only list asked for at registration — the partner''s is asked on products, per 00220) and the source is hardcoded to `registration`, so neither can be forged through this function. The customer IS a parameter because no session exists yet, which is why the only EXECUTE grant is to service_role: a parameter naming the subject can be aimed at somebody, so nothing reachable may call it. It still tests that the named profile is a `customer`, which is the invariant assert_role gives the self-service writer, read from the only place available here. Appends an event only when the state actually MOVES, so a retried registration request records nothing twice — and a first explicit "no" IS a move, because an absent row means never asked.';
+
+
+--
 -- Name: record_required_consents(uuid, uuid, uuid, uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5990,6 +6146,84 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+
+--
+-- Name: set_marketing_consent(public.marketing_consent_type, boolean, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_customer_id uuid;
+  v_current     boolean;
+BEGIN
+  PERFORM public.assert_role('customer');
+
+  IF p_consent_type IS NULL OR p_granted IS NULL THEN
+    RAISE EXCEPTION 'a marketing consent needs both a type and an answer'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- 'registration' is refused here and only ever written by the register route
+  -- through the service-role client, before the account has a session at all.
+  -- See the header: source is the one field on an event that nothing else can
+  -- corroborate, so the source with no live caller is the one a live caller may
+  -- not claim. NULL is refused by the same statement rather than by a NOT NULL
+  -- further down, so the message names the real problem.
+  IF p_source IS NULL OR p_source NOT IN ('settings', 'enrolment') THEN
+    RAISE EXCEPTION
+      'marketing consent source must be settings or enrolment (got %)',
+      COALESCE(p_source, 'NULL')
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_customer_id := (SELECT auth.uid());
+
+  -- FOR UPDATE so two submissions racing on the same toggle serialize rather
+  -- than both concluding they are the change. A row that does not exist locks
+  -- nothing, which is the harmless half: the ON CONFLICT below is what settles
+  -- a first-answer race, and the losing side writes an event for a state it
+  -- genuinely did set.
+  SELECT mc.granted
+    INTO v_current
+    FROM public.marketing_consents mc
+   WHERE mc.customer_id = v_customer_id
+     AND mc.consent_type = p_consent_type
+   FOR UPDATE;
+
+  -- IS NOT DISTINCT FROM, not `=`: no row at all yields NULL here, and NULL is
+  -- distinct from both true and false — which is the intended reading. "Never
+  -- answered" is not the same state as "answered no", so a parent explicitly
+  -- declining for the first time is a CHANGE and gets its event, while a
+  -- re-submission of an answer already on file is not and does not.
+  IF v_current IS NOT DISTINCT FROM p_granted THEN
+    RETURN;
+  END IF;
+
+  INSERT INTO public.marketing_consents (
+    customer_id, consent_type, granted, updated_at
+  )
+  VALUES (v_customer_id, p_consent_type, p_granted, now())
+  ON CONFLICT (customer_id, consent_type) DO UPDATE
+    SET granted    = EXCLUDED.granted,
+        updated_at = EXCLUDED.updated_at;
+
+  INSERT INTO public.marketing_consent_events (
+    customer_id, consent_type, granted, source
+  )
+  VALUES (v_customer_id, p_consent_type, p_granted, p_source);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) IS 'The one self-service writer of a marketing consent: the settings toggle and the product signup panel both call it, so the two paths cannot drift. Guard-first on assert_role(''customer'') — gamers and gedus hold no marketing consents, and an admin toggles their own on their own parent account rather than through here, because the answer belongs to whoever owns the mailbox. The customer is auth.uid() and is never a parameter, so there is nothing for a caller to aim at another family. REFUSES p_source = ''registration'': that source is written only by the register route through the service-role client, before a session exists, and it is the one field on an event nothing else can corroborate. IDEMPOTENT AND HONEST ABOUT IT — submitting the state already on file succeeds and appends NO event, because a change log that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. A first explicit "no" IS a change: an absent row means never answered, which is not the same state as a recorded refusal.';
 
 
 --
@@ -7293,6 +7527,89 @@ COMMENT ON COLUMN public.locations.depth IS 'Distance from the root: 0 for a cou
 
 
 --
+-- Name: marketing_consent_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.marketing_consent_events (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    customer_id uuid NOT NULL,
+    consent_type public.marketing_consent_type NOT NULL,
+    granted boolean NOT NULL,
+    source text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_marketing_consent_events_source CHECK ((source = ANY (ARRAY['registration'::text, 'settings'::text, 'enrolment'::text])))
+);
+
+
+--
+-- Name: TABLE marketing_consent_events; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.marketing_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a marketing consent, and the evidence behind whatever marketing_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writers are set_marketing_consent and the register route''s service-role client — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing: a log of "changes" that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. Rows carry NO unique constraint — granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates.';
+
+
+--
+-- Name: COLUMN marketing_consent_events.granted; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.marketing_consent_events.granted IS 'The state that was SET by this event, not the delta. Reading the log as a sequence of states is what makes a row meaningful on its own, and it is what lets the current-state table be reconstructed from the log if it ever has to be audited against it.';
+
+
+--
+-- Name: COLUMN marketing_consent_events.source; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.marketing_consent_events.source IS 'Which surface the answer came from: `registration` (the checkbox on the parent sign-up form), `settings` (the toggle on their own account page), or `enrolment` (the ask inside a product signup panel). This is the one field on an event that no other field can corroborate, which is why set_marketing_consent REFUSES `registration`: that source is written only by the register route through the service-role client, before the account has a session at all, so a value a client could send would be a provenance claim nothing checks. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
+
+
+--
+-- Name: COLUMN marketing_consent_events.created_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.marketing_consent_events.created_at IS 'When the answer was given, stamped by the server. A client never supplies it — a timestamp the consenting party chooses proves nothing about when they consented.';
+
+
+--
+-- Name: marketing_consents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.marketing_consents (
+    customer_id uuid NOT NULL,
+    consent_type public.marketing_consent_type NOT NULL,
+    granted boolean NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE marketing_consents; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.marketing_consents IS 'The CURRENT answer to "may we mail this parent about this thing" — one row per (customer, consent type), and the row every send reads. Deliberately not derived from marketing_consent_events: a send must not fold a history to learn whether it may run, and the present tense must not depend on a log a retention policy could one day trim. An ABSENT row means never asked or never answered, which is not the same as `granted = false` (a parent who said no) — both are "do not mail", and only one of them is a decision the parent made. Account-level on purpose: the subject of a marketing consent is a mailbox, and a mailbox belongs to one adult rather than to one seat, which is the exact inverse of consent_acceptances (00210) and its per-enrolment key. REVOCABLE by construction — that is what makes this a separate system from the non-revocable enrolment conditions, per 00210''s own mandate. Written by set_marketing_consent and by the register route''s service-role client and by nothing else: no Data API role holds a write grant.';
+
+
+--
+-- Name: COLUMN marketing_consents.customer_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.marketing_consents.customer_id IS 'The adult who holds the permission, always a profile with role `customer`. Gamers and gedus hold none — a child''s synthetic address reaches nobody, and a gedu''s relationship with us is a contract (00201) rather than a mailing list — and the RPC''s role guard is what enforces that rather than a CHECK, because a role is a mutable property of a profile and a CHECK would freeze it at insert time. ON DELETE CASCADE: a permission to mail somebody who no longer exists is not a record worth keeping, and the audit trail cascades with them for the same reason.';
+
+
+--
+-- Name: COLUMN marketing_consents.granted; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.marketing_consents.granted IS 'True means we may mail; false means the parent said no. NOT NULL and no third state — "not asked" is the absence of the row, so a NULL here would be a second spelling of a state the primary key already expresses by omission.';
+
+
+--
+-- Name: COLUMN marketing_consents.updated_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.marketing_consents.updated_at IS 'When this state was last CHANGED, stamped server-side. Not a call counter: set_marketing_consent leaves the row untouched when the submitted state already matches, so this is the moment the parent last actually moved the toggle. The full history is in marketing_consent_events.';
+
+
+--
 -- Name: minecraft_accounts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -7534,6 +7851,30 @@ COMMENT ON CONSTRAINT chk_product_images_path_matches_sha256 ON public.product_i
 --
 
 COMMENT ON CONSTRAINT chk_product_images_sha256_is_a_hash ON public.product_images IS 'Lowercase hex, exactly 64 characters. The column IS the identity of a picture, so a value that is not a hash is a row that can never be found again by the bytes it claims to name.';
+
+
+--
+-- Name: product_marketing_consents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_marketing_consents (
+    product_id uuid NOT NULL,
+    consent_type public.marketing_consent_type NOT NULL
+);
+
+
+--
+-- Name: TABLE product_marketing_consents; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.product_marketing_consents IS 'The admin-picked set: which marketing consents a product''s signup panel ASKS a parent about. Empty for almost every product — the Lynx Educate partnership is what this exists for. A row here is an ask and never a requirement: declining is a complete answer and the seat is unaffected, which is the whole line between this table and product_required_consents (00210). Written only by admin_set_product_marketing_consents; no Data API role holds a write grant, so the join table has exactly one writer. Readable through the product''s own read predicate, exactly as product_prices, schedule_slots and product_required_consents are, because the shop has to tell a stranger what signing up would ask them. ON DELETE CASCADE from products: an ask is a property of a product and means nothing without it.';
+
+
+--
+-- Name: COLUMN product_marketing_consents.consent_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_marketing_consents.consent_type IS 'Which permission the panel asks for. The consent itself is account-level, so a parent who already answered on another product is asked once and their existing answer stands — this column decides whether the question is PUT, never where the answer is stored.';
 
 
 --
@@ -8173,6 +8514,22 @@ ALTER TABLE ONLY public.locations
 
 
 --
+-- Name: marketing_consent_events marketing_consent_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.marketing_consent_events
+    ADD CONSTRAINT marketing_consent_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: marketing_consents marketing_consents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.marketing_consents
+    ADD CONSTRAINT marketing_consents_pkey PRIMARY KEY (customer_id, consent_type);
+
+
+--
 -- Name: minecraft_accounts minecraft_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8258,6 +8615,14 @@ ALTER TABLE ONLY public.product_images
 
 ALTER TABLE ONLY public.product_images
     ADD CONSTRAINT product_images_sha256_key UNIQUE (sha256);
+
+
+--
+-- Name: product_marketing_consents product_marketing_consents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_marketing_consents
+    ADD CONSTRAINT product_marketing_consents_pkey PRIMARY KEY (product_id, consent_type);
 
 
 --
@@ -8539,6 +8904,13 @@ CREATE INDEX idx_locations_search_blob ON public.locations USING gin (search_blo
 --
 
 CREATE INDEX idx_locations_type ON public.locations USING btree (type);
+
+
+--
+-- Name: idx_marketing_consent_events_customer; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_marketing_consent_events_customer ON public.marketing_consent_events USING btree (customer_id);
 
 
 --
@@ -9314,6 +9686,22 @@ ALTER TABLE ONLY public.locations
 
 
 --
+-- Name: marketing_consent_events marketing_consent_events_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.marketing_consent_events
+    ADD CONSTRAINT marketing_consent_events_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: marketing_consents marketing_consents_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.marketing_consents
+    ADD CONSTRAINT marketing_consents_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
 -- Name: minecraft_accounts minecraft_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9407,6 +9795,14 @@ ALTER TABLE ONLY public.product_holiday_calendars
 
 ALTER TABLE ONLY public.product_holiday_calendars
     ADD CONSTRAINT product_holiday_calendars_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: product_marketing_consents product_marketing_consents_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_marketing_consents
+    ADD CONSTRAINT product_marketing_consents_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
 
 
 --
@@ -9866,6 +10262,20 @@ CREATE POLICY admins_read_gedu_contract_acceptances ON public.gedu_contract_acce
 
 
 --
+-- Name: marketing_consent_events admins_read_marketing_consent_events; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_marketing_consent_events ON public.marketing_consent_events FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: marketing_consents admins_read_marketing_consents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_marketing_consents ON public.marketing_consents FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
 -- Name: locations anon_read_locations; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -9963,6 +10373,20 @@ CREATE POLICY customers_read_own_consent_acceptances ON public.consent_acceptanc
 --
 
 CREATE POLICY customers_read_own_customer_profile ON public.customer_profiles FOR SELECT TO authenticated USING ((user_id = auth.uid()));
+
+
+--
+-- Name: marketing_consent_events customers_read_own_marketing_consent_events; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY customers_read_own_marketing_consent_events ON public.marketing_consent_events FOR SELECT TO authenticated USING ((customer_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: marketing_consents customers_read_own_marketing_consents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY customers_read_own_marketing_consents ON public.marketing_consents FOR SELECT TO authenticated USING ((customer_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -10131,6 +10555,18 @@ ALTER TABLE public.holiday_calendars ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: marketing_consent_events; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.marketing_consent_events ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_consents; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.marketing_consents ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: minecraft_accounts; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -10214,6 +10650,12 @@ ALTER TABLE public.product_holiday_calendars ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.product_images ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: product_marketing_consents; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.product_marketing_consents ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: product_prices; Type: ROW SECURITY; Schema: public; Owner: -
@@ -10303,6 +10745,13 @@ CREATE POLICY public_reads_consent_documents ON public.consent_documents FOR SEL
 --
 
 CREATE POLICY read_product_holiday_calendars_via_product ON public.product_holiday_calendars FOR SELECT TO authenticated, anon USING (public.can_read_product(product_id));
+
+
+--
+-- Name: product_marketing_consents read_product_marketing_consents_via_product; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY read_product_marketing_consents_via_product ON public.product_marketing_consents FOR SELECT TO authenticated, anon USING (public.can_read_product(product_id));
 
 
 --
@@ -10611,6 +11060,15 @@ GRANT ALL ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_parti
 REVOKE ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) TO service_role;
 
 
 --
@@ -11157,6 +11615,14 @@ GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date d
 
 
 --
+-- Name: FUNCTION record_registration_marketing_consent(p_customer_id uuid, p_granted boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.record_registration_marketing_consent(p_customer_id uuid, p_granted boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.record_registration_marketing_consent(p_customer_id uuid, p_granted boolean) TO service_role;
+
+
+--
 -- Name: FUNCTION record_required_consents(p_product_id uuid, p_customer_id uuid, p_participant_id uuid, p_accepted_by uuid, p_consented_documents text[]); Type: ACL; Schema: public; Owner: -
 --
 
@@ -11285,6 +11751,15 @@ GRANT ALL ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_
 --
 
 REVOKE ALL ON FUNCTION public.set_location_depth() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) TO service_role;
 
 
 --
@@ -11584,6 +12059,22 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.locations TO authenticated;
 
 
 --
+-- Name: TABLE marketing_consent_events; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.marketing_consent_events TO authenticated;
+GRANT ALL ON TABLE public.marketing_consent_events TO service_role;
+
+
+--
+-- Name: TABLE marketing_consents; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.marketing_consents TO authenticated;
+GRANT ALL ON TABLE public.marketing_consents TO service_role;
+
+
+--
 -- Name: TABLE minecraft_accounts; Type: ACL; Schema: public; Owner: -
 --
 
@@ -11651,6 +12142,15 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_holiday_calendars TO a
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_images TO authenticated;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_images TO service_role;
+
+
+--
+-- Name: TABLE product_marketing_consents; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.product_marketing_consents TO anon;
+GRANT SELECT ON TABLE public.product_marketing_consents TO authenticated;
+GRANT ALL ON TABLE public.product_marketing_consents TO service_role;
 
 
 --
