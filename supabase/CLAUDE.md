@@ -175,6 +175,32 @@ a migration PR (run via the Bash tool):
 6. Commit migration + updated types + tests together in the PR. `schema.sql` is not part
    of it.
 
+### Never amend a pushed migration
+
+**Rule: once a migration has been pushed to staging, it is never edited — every change
+ships as a NEW numbered migration applied with a plain `npx supabase db push`.** The
+CLI tracks applied migrations by version, so an edited already-pushed file gets
+"Remote database is up to date" and its new statements **never execute on staging** —
+only CI's fresh-from-`migrations/` database ever runs them. That silently turns "I
+added an assertion" into "I added an assertion that has never executed anywhere"; if
+the addition is assertion-only, a wrong assertion can even pass CI vacuously. The
+edit-then-hand-apply-via-psql workaround was used for a while and worked, but the
+manual apply is the fragile step and its failure mode is exactly the staging-vs-files
+drift the migration system exists to prevent — hence the ruling (2026-08-27). Accepted
+costs: fix-up migrations in history, and a replacement function's assertion block must
+deliberately re-assert the invariants of the migration it supersedes (re-derive them;
+a hand-copy dropped a clause once). psql remains the right tool for *checking* staging
+state and reconciling drift that already happened — see
+`docs/runbooks/remote-supabase-psql.md` — just not as a workflow.
+
+The same version-matching behaviour has a second edge: a new file whose **version
+number already exists in remote history is silently treated as applied** — the name is
+ignored, its SQL never runs, and `migration list` looks fine. Verify candidate numbers
+against `supabase_migrations.schema_migrations` via psql at push time (see the
+collision rules below), and if it has already happened: psql-verify the objects
+positively AND negatively, apply the file directly with `psql -f` where idempotent,
+and renumber it to a unique version before it merges.
+
 ### Staging is shared, and migration numbers are contended
 
 Two branches pushing to staging in the same week collide in two distinct ways, and a

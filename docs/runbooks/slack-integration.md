@@ -177,3 +177,68 @@ Two mechanics are **unverified** — confirm them in a sandbox before relying on
 - The customer-visible sibling field is the object's `description`, which parents do read in
   the hosted billing portal.
 - Put nothing sensitive in either.
+
+## Editing the message template: paste, don't click
+
+Editing the workflow's message template field-by-field is slow — each variable is a
+picker click — so build the whole template and paste it in one shot. Verified working
+2026-08-14.
+
+The template field is a **Draft.js** editor. Two consequences:
+
+- **Replacing the DOM/`innerHTML` does nothing.** Draft's ContentState is the source of
+  truth and the next render discards outside mutation. Don't offer this.
+- **Pasted HTML *is* parsed, including variable chips.** Put the template on the
+  clipboard as a **CF_HTML flavour** and paste — the chips reconstruct.
+
+A chip is a span whose `data-template-variable` attribute holds this JSON
+(double-quoted attribute, so inner quotes are `&quot;`):
+
+```json
+{"variableKey":"0","dynamicValue":{"type":"dynamic",
+ "step":{"type":"trigger","triggerSchemaId":"stripe.api.v1_checkout_session_completed"},
+ "propertyPath":["metadata"],"triggerSourceType":"trigger_payload","mapKey":"productName"}}
+```
+
+`propertyPath` is the object path; `mapKey` names the key inside a map and is **free
+text**, so a key need not have appeared in any past event. Omit `mapKey` for plain
+fields (`["amount_total"]`, `["customer_details","name"]`). Sequential `variableKey`
+values work. Slack's labelled-link form is literal text around a chip —
+`&lt;CHIP|Admin product&gt;` — so only the URL is dynamic.
+
+Two traps that cost real time:
+
+- **Keep the HTML pure ASCII.** .NET's `DataObject.SetData("HTML Format", …)` mangles
+  non-ASCII on the way to the clipboard — use entities (`&#183;`). The plain-text
+  fallback flavour is fine as-is.
+- **Run PowerShell with `-STA`**, and build the CF_HTML header manually with **byte**
+  offsets (`Version:0.9`, `StartHTML`, `EndHTML`, `StartFragment`, `EndFragment`). Set
+  both the HTML flavour and a plain-text fallback on one `DataObject`.
+
+**A Checkout Session has several metadata maps — pick the right one in the chip.** The
+picker offers all of them: `metadata` (the session's own — **the Slack keys live
+here**), `invoice_creation.invoice_data.metadata` (the finance snapshot, one-off
+purchases only), `subscription_data.metadata` (subscription checkouts only). Pointing a
+chip at the wrong map never resolves.
+
+Constraints that rule out the obvious approaches:
+
+- **Workflows have no API** — the workflow endpoints all 404 (missing endpoint, not a
+  permissions wall). Dashboard-only: a session cannot read or edit a workflow and must
+  ask for a screenshot of the trigger, conditions, and template.
+- **Workflows and Stripe Apps are per-mode** — an app installed on live shows "App not
+  installed" in test mode and needs installing again there.
+- **`stripe trigger` fires test-mode events only**, so a live workflow cannot be
+  exercised synthetically — only by a real purchase.
+
+## Link previews (unfurls)
+
+The message's three links all unfurl. The shop link unfurls correctly (real product
+image and name, built on purpose by the product metadata). The two admin links unfurl
+as the useless "Sign In" card — a gated URL 307s to `/login`, a public page with a
+genuine OG card — tripling every message's height. The owner's ruling (2026-08-23):
+exactly one preview, the shop link. The decided fix is
+`docs/plans/suppress-admin-link-unfurls.md`; when it lands, this section gains the
+result. Verified dead ends (do not re-try): robots.txt is live and correct but is not
+the lever; the labelled-link form still unfurls; there is no Stripe-side or Slack-side
+per-link toggle; backticking a URL kills the unfurl and the clickability together.

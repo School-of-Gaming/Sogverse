@@ -4,7 +4,7 @@
 
 **Both of this plan's load-bearing premises have collapsed, and the feature it extends may
 itself be renamed or retired.** The full investigation, with sources, is in
-`ROBLOX-TODO.md` under *Attribution, cookie consent, and the Lynx data export*; read that
+`docs/roblox-todo.md` under *Attribution, cookie consent, and the Lynx data export*; read that
 before touching anything here.
 
 What changed:
@@ -30,7 +30,7 @@ What changed:
   and tracks UTM natively — so *"the owner does not want the add-on"* is a decision worth
   re-taking rather than a constraint, and it would delete every implementation step below.
 
-**The likely end-state is deletion, not resumption** — `ROBLOX-TODO.md` now carries the
+**The likely end-state is deletion, not resumption** — `docs/roblox-todo.md` now carries the
 reasoning, and this file's remaining value is the one thing worth rescuing first:
 
 > **The partner code prefix convention.** Codes issued to or for a partner are prefixed with
@@ -41,7 +41,7 @@ reasoning, and this file's remaining value is the one thing worth rescuing first
 
 Everything below is preserved as written on the day it was decided. It is a record of a
 decision made on a premise now known to be false — not a specification. Nothing in it should
-be built without the open decisions in `ROBLOX-TODO.md` being answered first.
+be built without the open decisions in `docs/roblox-todo.md` being answered first.
 
 ---
 

@@ -596,7 +596,7 @@ then Model B swaps, then new RPCs.
 #### The triage, machine-readably
 
 Every module that used the service-role client at triage time, with the write model it
-landed on. The route-layer refactor instance in `docs/refactor-playbook.md` consumes
+landed on. The route-layer refactor (`docs/architecture/route-boundary.md`) consumes
 this as its own step-2 classification, so keep the shape stable and re-derive rather
 than edit when the surface changes. `shape` is the conversion shape above (`1`
 grant-plus-guard, `2` new RPC, `3` Model B swap) or `-` for a module that stayed Model

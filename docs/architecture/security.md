@@ -29,8 +29,8 @@ Innermost first. Each layer's own doc is the source of truth; this is the index.
 | Auth flows | Sign-out as form POST answered with a 303 (CSRF-safe); password changes only via the emailed reset flow; role promotion server-side only — signup metadata never decides a role | root `CLAUDE.md` (Auth architecture) |
 
 The pattern behind the first two rows — converting correctness-by-convention into
-correctness-by-mechanism with a build-failing completeness check — is generalized in
-`../refactor-playbook.md`.
+correctness-by-mechanism with a build-failing completeness check — is codified as the
+correctness-by-mechanism rule in the root `CLAUDE.md` (Code Style).
 
 ## Accepted risks
 
