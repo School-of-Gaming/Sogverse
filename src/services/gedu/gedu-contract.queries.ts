@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   useQuery,
   useMutation,
@@ -75,6 +76,48 @@ export function useGeduContractAcceptances(
     initialData: options?.initialData,
     initialDataUpdatedAt: options?.initialDataUpdatedAt,
   });
+}
+
+/**
+ * Every gedu's acceptances, keyed by educator for O(1) lookup in a list.
+ *
+ * `isError` and `isPending` travel with the map because an absent entry is
+ * ambiguous on its own — it means "this educator has signed nothing" only when
+ * the read succeeded, and "we do not know yet" otherwise. A surface that
+ * *asserts* something to the reader has to stay silent until it can tell those
+ * apart; the users list does exactly that, and holds both of its gedu marks
+ * back until this and the certification read have both answered.
+ */
+export interface GeduContractAcceptanceLookup {
+  /** geduId → that educator's acceptances. An absent key means none. */
+  map: Map<string, GeduContractAcceptance[]>;
+  isError: boolean;
+  isPending: boolean;
+}
+
+export function useGeduContractAcceptanceMap(): GeduContractAcceptanceLookup {
+  const supabase = getClient();
+  const service = new GeduContractService(supabase);
+
+  const { data, isError, isPending } = useQuery({
+    queryKey: geduContractKeys.allAcceptances(),
+    queryFn: () => service.getAllAcceptances(),
+  });
+
+  const map = useMemo(() => {
+    const byGedu = new Map<string, GeduContractAcceptance[]>();
+    for (const row of data ?? []) {
+      const rows = byGedu.get(row.gedu_id);
+      if (rows === undefined) byGedu.set(row.gedu_id, [row]);
+      else rows.push(row);
+    }
+    return byGedu;
+  }, [data]);
+
+  return useMemo(
+    () => ({ map, isError, isPending }),
+    [map, isError, isPending],
+  );
 }
 
 /**

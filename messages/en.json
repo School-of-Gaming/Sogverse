@@ -248,10 +248,26 @@
       "previousVersion": "Previously accepted version {version} on {date}.",
       "queueAccepted": "Contract accepted {date}",
       "queueNotAccepted": "Contract not accepted",
-      "confirmTitle": "Certify without an accepted contract?",
-      "confirmBody": "Certification does not require an accepted contract, so you can certify them anyway.",
-      "confirmWarning": "This Gedu has not accepted the contract that is in force. Certified, they can be assigned to groups before they have agreed to the terms they work under.",
-      "confirmAction": "Certify anyway"
+      "rowNotAccepted": "Has not accepted the contract in force"
+    },
+    "geduCriminalRecordCheck": {
+      "heading": "Criminal record check",
+      "recorded": "Criminal record extract presented",
+      "recordedOn": "Criminal record extract presented on {date}",
+      "notRecorded": "No criminal record extract recorded",
+      "notRecordedDetail": "This Gedu obtains the extract themselves from the Legal Register Centre and shows it to you. It must be less than six months old when they present it, and we keep no copy of it — only this record that it was shown.",
+      "recordLabel": "I have seen an acceptable criminal record extract for this Gedu",
+      "error": "Couldn’t update the criminal record check. Please try again.",
+      "queueRecorded": "Extract recorded {date}",
+      "queueNotRecorded": "Extract not recorded",
+      "rowNotRecorded": "Has not presented a criminal record extract"
+    },
+    "geduCertifyWarnings": {
+      "title": "Certify anyway?",
+      "body": "Certification requires neither of these, so you can certify them anyway.",
+      "action": "Certify anyway",
+      "contractWarning": "This Gedu has not accepted the contract that is in force. Certified, they can be assigned to groups before they have agreed to the terms they work under.",
+      "checkWarning": "This Gedu has not presented a criminal record extract. Certified, they can be assigned to groups before anyone has seen it."
     },
     "products": {
       "types": {
@@ -1434,6 +1450,19 @@
         "view": "View the contract"
       },
       "acceptedMeta": "Version {version}, accepted on {date}"
+    },
+    "criminalRecordCheck": {
+      "title": "Your criminal record extract",
+      "howItWorks": "Before an admin certifies you, you also present a criminal record extract for working with children (rikostaustaote). You order it yourself from the Legal Register Centre, and it must be less than six months old when you show it to us.",
+      "noCopyKept": "We keep no copy of the extract and record nothing out of it — only that an acceptable one was shown, and when.",
+      "recorded": "Your criminal record extract has been recorded.",
+      "recordedOn": "Your criminal record extract was recorded on {date}.",
+      "stillNeeded": "Still to do: show us your criminal record extract.",
+      "notice": {
+        "title": "You haven’t shown us your criminal record extract",
+        "body": "Before you can be certified, you present a criminal record extract for working with children. You order it yourself from the Legal Register Centre.",
+        "action": "Read how it works"
+      }
     }
   },
   "productType": {

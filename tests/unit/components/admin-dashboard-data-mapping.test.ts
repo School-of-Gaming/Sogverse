@@ -739,6 +739,46 @@ describe("the certification queue", () => {
     );
     expect(losAngeles[0].contractAcceptedOn).toBe("Aug 15, 2026");
   });
+
+  it("dates a criminal record check in the viewer's zone, independently of the contract", () => {
+    // The same midnight-straddling instant as above, on the other standing —
+    // and the two candidates disagree with each other on both counts, which is
+    // what would catch a mapping that read one field into the other.
+    const candidates = [
+      {
+        id: "38763617-b031-49af-9fd4-3320e7509019",
+        first_name: "Venla",
+        last_name: "Salminen",
+        created_at: "2026-08-15T09:20:00+03:00",
+        contract_accepted_at: null,
+        criminal_record_check_at: "2026-08-16T00:40:00+03:00",
+      },
+      {
+        id: "4889fea4-0602-438f-adfe-2cef72d485ff",
+        first_name: "Helmi",
+        last_name: "Koskinen",
+        created_at: "2026-06-17T09:20:00+03:00",
+        contract_accepted_at: "2026-08-16T00:40:00+03:00",
+        criminal_record_check_at: null,
+      },
+    ];
+
+    const helsinki = buildCertificationQueue(candidates, "en", NOW, HELSINKI);
+    expect(helsinki[0].criminalRecordCheckOn).toBe("Aug 16, 2026");
+    expect(helsinki[0].contractAcceptedOn).toBeNull();
+    // No check recorded, and one recorded as unacceptable, are the same false
+    // in the column and so the same null on the wire: both mean the check has
+    // not been satisfied, and the queue does not pretend to tell them apart.
+    expect(helsinki[1].criminalRecordCheckOn).toBeNull();
+
+    const losAngeles = buildCertificationQueue(
+      candidates,
+      "en",
+      NOW,
+      LOS_ANGELES,
+    );
+    expect(losAngeles[0].criminalRecordCheckOn).toBe("Aug 15, 2026");
+  });
 });
 
 describe("an empty platform", () => {

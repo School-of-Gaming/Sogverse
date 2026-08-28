@@ -1,5 +1,8 @@
 import { useTranslations } from "next-intl";
-import { GeduContractNotice } from "./gedu-contract-notice";
+import {
+  GeduContractNotice,
+  GeduCriminalRecordCheckNotice,
+} from "./gedu-next-step-notice";
 
 /**
  * The gedu dashboard while its assignment summaries are still in the air.
@@ -25,15 +28,20 @@ import { GeduContractNotice } from "./gedu-contract-notice";
  */
 export function GeduDashboardSkeleton({
   /**
-   * The one thing on this page that is *not* waiting on a network call, so it
-   * is drawn for real rather than ghosted — the reader can read the notice and
-   * click through to sign while the summaries are still in the air. It is first
-   * in both this and the loaded body, so it lands in the same place across the
-   * swap and moves nothing.
+   * The things on this page that are *not* waiting on a network call, so the
+   * band they decide is drawn for real rather than ghosted — the reader can
+   * read it and click through while the summaries are still in the air. It is
+   * first in both this and the loaded body, and the same one of the three
+   * branches is taken in each, so it lands in the same place across the swap
+   * and moves nothing.
    */
   contractAccepted,
+  criminalRecordCheckPassed,
+  certified,
 }: {
   contractAccepted: boolean;
+  criminalRecordCheckPassed: boolean;
+  certified: boolean;
 }) {
   const t = useTranslations("dashboardSections");
 
@@ -44,7 +52,11 @@ export function GeduDashboardSkeleton({
         {t("loadingAssignments")}
       </p>
 
-      {!contractAccepted && <GeduContractNotice />}
+      {!contractAccepted ? (
+        <GeduContractNotice />
+      ) : !criminalRecordCheckPassed && !certified ? (
+        <GeduCriminalRecordCheckNotice />
+      ) : null}
 
       {/* The section pill's bar, at the height the real one occupies. */}
       <div

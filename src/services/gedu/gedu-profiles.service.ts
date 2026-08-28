@@ -5,8 +5,14 @@ import { walkPages } from "@/lib/supabase/paging";
 // certifier joins through the certified_by FK (disambiguated from user_id, which
 // is the other FK to profiles). Nullable — an un-certified gedu, or a backfilled
 // one, has no certifier.
+//
+// The criminal record check's flag and moment are selected; its `_by` column is
+// deliberately NOT. That column is audit only — nothing on any surface renders
+// the admin who recorded the check — and a column no reader has is one nobody
+// can accidentally start rendering. (`certified_by` is selected because the
+// certification card does name the certifying admin.)
 const GEDU_PROFILE_COLUMNS =
-  "user_id, certified, certified_at, certified_by, certifier:profiles!gedu_profiles_certified_by_fkey(first_name, last_name)";
+  "user_id, certified, certified_at, certified_by, criminal_record_check_passed, criminal_record_check_at, certifier:profiles!gedu_profiles_certified_by_fkey(first_name, last_name)";
 
 /** Shared builder so the embedded-certifier row type is inferred, not hand-written. */
 function geduProfilesQuery(supabase: AppSupabaseClient) {
@@ -42,6 +48,48 @@ export async function isGeduCertified(
     .single();
   if (error) throw error;
   return data.certified;
+}
+
+/**
+ * What the platform is allowed to know about one educator's criminal record
+ * extract, and the whole of it: whether an acceptable one has been presented,
+ * and when.
+ *
+ * There is no document, no reference number and no issue date here because
+ * there are none anywhere — Finnish law 504/2002 has the educator obtain the
+ * extract themselves and permits recording only the fact and the moment (see
+ * ./CLAUDE.md). `recordedAt` is non-null exactly when `passed` is true.
+ */
+export interface GeduCriminalRecordCheck {
+  passed: boolean;
+  recordedAt: string | null;
+}
+
+/**
+ * One gedu's criminal record check standing, read from their own row.
+ *
+ * Server-side, for the gedu surfaces that have to decide before first paint
+ * whether to say anything about it — RLS lets a gedu read their own
+ * `gedu_profiles` row, and every gedu has exactly one, so an absent row is a
+ * real error rather than "no check". Callers decide what a thrown error means:
+ * the contract page treats it as *unknown* and simply makes no claim, while the
+ * dashboard's next-step band fails toward showing the band, because the two
+ * ways of being wrong are not symmetrical there.
+ */
+export async function getGeduCriminalRecordCheck(
+  supabase: AppSupabaseClient,
+  userId: string,
+): Promise<GeduCriminalRecordCheck> {
+  const { data, error } = await supabase
+    .from("gedu_profiles")
+    .select("criminal_record_check_passed, criminal_record_check_at")
+    .eq("user_id", userId)
+    .single();
+  if (error) throw error;
+  return {
+    passed: data.criminal_record_check_passed,
+    recordedAt: data.criminal_record_check_at,
+  };
 }
 
 export class GeduProfilesService {
@@ -82,6 +130,25 @@ export class GeduProfilesService {
       p_gedu_id: geduId,
       p_certified: certified,
     });
+    if (error) throw error;
+  }
+
+  /**
+   * Record — or withdraw — that an admin has seen an acceptable criminal record
+   * extract (*rikostaustaote*) for this educator.
+   *
+   * The same shape as `setCertified` one column over, and for the same reason:
+   * the flag, the moment and the acting admin are all stamped inside the RPC,
+   * and `gedu_profiles` carries no write grant, so this is the only door in.
+   * **Nothing out of the extract is passed, because there is nowhere to put
+   * it** — Finnish law 504/2002 lets us record only that an acceptable document
+   * was presented and when (see ./CLAUDE.md).
+   */
+  async setCriminalRecordCheck(geduId: string, passed: boolean): Promise<void> {
+    const { error } = await this.supabase.rpc(
+      "set_gedu_criminal_record_check",
+      { p_gedu_id: geduId, p_passed: passed },
+    );
     if (error) throw error;
   }
 }

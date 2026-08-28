@@ -144,6 +144,23 @@ export interface UncertifiedGedu {
    * would otherwise have no use for.
    */
   contractAcceptedOn: string | null;
+  /**
+   * When an admin recorded seeing this candidate's criminal record extract,
+   * already formatted as a calendar date in the viewer's zone — or `null` where
+   * no check has been recorded.
+   *
+   * `null` covers "nobody has looked yet" and "somebody looked and it was not
+   * acceptable" together, because on the wire it is one field and in the
+   * database it is one boolean: both mean the check has not been satisfied, and
+   * that is the whole of what an admin is weighing here. It informs the
+   * decision and gates nothing — an educator with no extract on record is still
+   * certifiable, over the same confirmation an unsigned one gets.
+   *
+   * Pre-formatted for the reason `contractAcceptedOn` is: it is an `Intl`
+   * product rather than translated copy, and the two are derived at one call
+   * site so the queue never needs a timezone of its own.
+   */
+  criminalRecordCheckOn: string | null;
 }
 
 /**

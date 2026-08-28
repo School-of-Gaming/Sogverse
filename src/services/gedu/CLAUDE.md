@@ -87,7 +87,10 @@ open to an uncertified gedu.
 - **Surfaces**: a positive-only certification mark on the admin users list — a shield on a
   gedu who is certified, and nothing at all otherwise, so an uncertified educator is
   simply unmarked rather than badged; a certify/de-certify card on the admin user-detail
-  page.
+  page. The users list's other two gedu marks are **negative**-only (see the record
+  check's surfaces below), and the row's mark order is fixed and documented in the
+  component, because the group is right-packed and late arrivals have to insert at its
+  left end.
 - **Backfill**: every gedu that existed before this feature was marked certified
   (`certified_by` NULL) — they were all admin-invited and already trusted.
 
@@ -131,8 +134,56 @@ be written by the person it is about.
 The stamp is non-null **exactly when** the flag is true, which is why the admin
 dashboard's queue ships only the moment: a second field beside it would be
 derivable from the first and could only ever contradict it. The acting admin is
-audit-only — nothing renders it — and its FK is `ON DELETE SET NULL`, so a
-departed admin leaves the check recorded without the name.
+audit-only — nothing renders it, and the shared profile-columns constant does not
+even select it — and its FK is `ON DELETE SET NULL`, so a departed admin leaves
+the check recorded without the name.
+
+### Surfaces
+
+**Admin.** The user-detail certification card carries the standing *and* the one
+control that changes it — a checkbox an admin ticks to say they have seen an
+acceptable extract, untickable again with no confirmation, exactly as
+de-certifying asks nothing. The dashboard's certification queue carries a second
+standing chip per row beside the contract's. Both certify affordances share one
+confirm dialog that names whichever prerequisites are missing, one warning line
+each, so a row missing both is asked once rather than twice. The users list
+gains a **negative-only** warning mark on gedu rows — nothing when the check is
+recorded, a tinted mark when it is not — shown regardless of certification,
+because the accounts worth finding are the legacy ones certified before either
+fact was ever recorded.
+
+**Gedu.** The contract page explains the process (you obtain the extract
+yourself, it must be under six months old when presented, we keep no copy) and
+states this reader's own standing under it; that explanation is unconditional
+and the standing is not, so a failed read prints the process and no claim. My
+SOG shows a next-step band when the contract is signed, the check is not
+recorded and the account is not yet certified — the contract band takes priority
+and only one band is ever shown, because the two are steps of one process in the
+order they happen.
+
+**Icon language: `ClipboardCheck` / `ClipboardX`,** one pair across every
+surface. It is deliberately distinct from the contract's `FileCheck` /
+`FileWarning` and from certification's `ShieldCheck` / `ShieldAlert`: three
+facts about one educator can appear on one row, and a glyph that stood for two
+of them would make a scanned column unreadable.
+
+### Reads and writes
+
+`useSetGeduCriminalRecordCheck` calls the RPC and invalidates the whole
+`gedu-profiles` root, exactly as `useSetGeduCertified` does — the flag lives on
+that row, so the detail card, the users list and the picker are all reading what
+it just changed. It deliberately does **not** invalidate the admin dashboard's
+key: recording a check neither adds anybody to the certification queue nor takes
+anybody out, and that queue's own copy of the stamp refreshes on its next read.
+(Certifying *does* invalidate it, because that is the write that moves a row.)
+
+The flag rides the shared `gedu_profiles` column list, so every surface already
+reading certification state gets it in the same request. The gedu-facing
+surfaces read it server-side from the educator's own row instead, because both
+decide something above the fold and neither can afford an answer that arrives
+after the first paint — and the two answer a failed read *differently*: the
+contract page's status line is an assertion and stays silent, while the
+dashboard band is a nudge and fails toward showing itself.
 
 ## The gedu contract
 

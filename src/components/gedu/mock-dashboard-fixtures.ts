@@ -100,6 +100,12 @@ export interface GeduDashboardFixture {
   certified: boolean;
   /** Whether the contract band is on the page. */
   contractAccepted: boolean;
+  /**
+   * Whether an admin has recorded this gedu's criminal record extract. With
+   * `contractAccepted` and `certified` it decides which of the two next-step
+   * bands is on the page, or neither — the body shows at most one.
+   */
+  criminalRecordCheckPassed: boolean;
 }
 
 const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
@@ -411,19 +417,23 @@ export function buildGeduDashboardFixture(
     }),
     certified: scenario !== "uncertified",
     /**
-     * **The band is on two of the three, and off on `clubs-only`.**
+     * **One band per scenario, and the three scenarios cover all three
+     * answers.**
      *
-     * Signed and unsigned cannot share a render, so one scenario has to carry
-     * each — and the interesting one is the band sitting *above a full page*,
-     * where what is being judged is whether it reads as unmissable without
-     * burying the work under it. `default` therefore carries it, and
-     * `uncertified` does too, because a brand-new account has neither signed
-     * nor been certified and pairing them anywhere else would be inventing a
-     * gedu who exists only in a fixture. `clubs-only` is the signed page, which
-     * puts the no-band composition on the scenario whose own subject is the
-     * grid.
+     * The body shows at most one next-step band, so the two of them and the
+     * absence of both cannot share a render and each needs a scenario of its
+     * own. `default` carries the *contract* band, because the interesting
+     * composition is a band sitting above a full page — what is being judged is
+     * whether it reads as unmissable without burying the work under it.
+     * `uncertified` carries the *record check* band: an account that has signed
+     * the terms and is waiting on an admin is exactly where presenting an
+     * extract is the outstanding step, and it puts the band on the empty page
+     * so both widths of it are visible somewhere. `clubs-only` is the page with
+     * neither, which puts the no-band composition on the scenario whose own
+     * subject is the grid.
      */
-    contractAccepted: scenario === "clubs-only",
+    contractAccepted: scenario !== "default",
+    criminalRecordCheckPassed: scenario === "clubs-only",
   };
 }
 

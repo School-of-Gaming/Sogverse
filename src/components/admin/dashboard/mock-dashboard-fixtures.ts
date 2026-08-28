@@ -768,6 +768,12 @@ const PRODUCT_ISSUE_SPECS: readonly {
  * state is the one the row's tint and its confirm dialog are drawn for and a
  * scene with one of each would only show whether the two are distinguishable —
  * not whether a column of them is scannable.
+ *
+ * **The record check varies independently of the contract, and every
+ * combination of the two appears.** The confirm dialog names whichever
+ * standings are missing, so a queue where the two always agreed would never
+ * raise the one-warning shapes at all — and the row a reader has to be able to
+ * scan is precisely the one that is fine on one count and not the other.
  */
 const UNCERTIFIED_GEDU_SPECS: readonly {
   id: string;
@@ -780,36 +786,48 @@ const UNCERTIFIED_GEDU_SPECS: readonly {
    * own future would be a fact the live page could not produce.
    */
   acceptedAt: string | null;
+  /**
+   * When an admin recorded seeing their criminal record extract, or `null`.
+   * Same clock discipline as the acceptance above, and never before the
+   * registration: nobody presents an extract to a platform they have not
+   * joined.
+   */
+  checkedAt: string | null;
 }[] = [
   {
     id: PERSON_IDS.venlaSalminen,
     name: "Venla Salminen",
     registeredAt: "2026-08-15T09:20:00+03:00",
     acceptedAt: "2026-08-16T18:40:00+03:00",
+    checkedAt: null,
   },
   {
     id: PERSON_IDS.topiasJarvinen,
     name: "Topias Järvinen",
     registeredAt: "2026-08-12T09:20:00+03:00",
     acceptedAt: null,
+    checkedAt: "2026-08-14T13:15:00+03:00",
   },
   {
     id: PERSON_IDS.iidaLehtonen,
     name: "Iida Lehtonen",
     registeredAt: "2026-08-08T09:20:00+03:00",
     acceptedAt: "2026-08-08T11:05:00+03:00",
+    checkedAt: "2026-08-11T09:50:00+03:00",
   },
   {
     id: PERSON_IDS.onniRantanen,
     name: "Onni Rantanen",
     registeredAt: "2026-07-27T09:20:00+03:00",
     acceptedAt: null,
+    checkedAt: null,
   },
   {
     id: PERSON_IDS.helmiKoskinen,
     name: "Helmi Koskinen",
     registeredAt: "2026-06-17T09:20:00+03:00",
     acceptedAt: null,
+    checkedAt: null,
   },
 ];
 
@@ -827,6 +845,13 @@ function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
       spec.acceptedAt === null
         ? null
         : formatDate(spec.acceptedAt, locale, {
+            dateStyle: "medium",
+            timeZone: ADMIN_DASHBOARD_TIMEZONE,
+          }),
+    criminalRecordCheckOn:
+      spec.checkedAt === null
+        ? null
+        : formatDate(spec.checkedAt, locale, {
             dateStyle: "medium",
             timeZone: ADMIN_DASHBOARD_TIMEZONE,
           }),

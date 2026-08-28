@@ -14,6 +14,10 @@ import { createClient } from "@/lib/supabase/server";
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
+import {
+  getGeduCriminalRecordCheck,
+  type GeduCriminalRecordCheck,
+} from "@/services/gedu/gedu-profiles.service";
 import type { AppSupabaseClient, GeduContractAcceptance } from "@/types";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,8 +46,32 @@ async function getInitialAcceptances(
 }
 
 /**
- * `/gedu/contract` — the terms a Game Educator works under, and the place they
- * are accepted.
+ * Where this gedu stands on the criminal record check, for the section that
+ * explains it above the terms.
+ *
+ * **Failure answers `null`, and `null` means *unknown*.** The section's
+ * explanation of how the process works is printed either way — it is true of
+ * everybody — but the standing line is a claim about this reader, and telling
+ * somebody who presented an extract last month that they still owe one is worse
+ * than telling them nothing. This is the opposite posture to the dashboard's
+ * next-step band, which fails toward showing itself; the difference is that a
+ * band is a nudge and a status line is an assertion.
+ */
+async function getCriminalRecordCheck(
+  supabase: AppSupabaseClient,
+  geduId: string,
+): Promise<GeduCriminalRecordCheck | null> {
+  try {
+    return await getGeduCriminalRecordCheck(supabase, geduId);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * `/gedu/contract` — the terms a Game Educator works under, the place they are
+ * accepted, and the explanation of the criminal record extract that has to be
+ * presented alongside them.
  *
  * A data shell and nothing else: resolve the signed-in gedu, resolve the
  * document in force in the language this reader reads, prefetch the acceptances,
@@ -82,13 +110,17 @@ export default async function GeduContractRoute() {
   // a page with no terms on it.
   if (!contract) notFound();
 
-  const initialAcceptances = await getInitialAcceptances(supabase, userId);
+  const [initialAcceptances, criminalRecordCheck] = await Promise.all([
+    getInitialAcceptances(supabase, userId),
+    getCriminalRecordCheck(supabase, userId),
+  ]);
 
   return (
     <GeduContractPage
       geduId={userId}
       contract={contract}
       initialAcceptances={initialAcceptances}
+      criminalRecordCheck={criminalRecordCheck}
     />
   );
 }

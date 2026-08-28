@@ -2,13 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BadgeCheck, FileSignature } from "lucide-react";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  ClipboardCheck,
+  ClipboardX,
+  FileSignature,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
+import type { GeduCriminalRecordCheck } from "@/services/gedu/gedu-profiles.service";
 import type { GeduContractAcceptance } from "@/types";
 import type { GeduContractDocument } from "./contract-document";
 import { GeduContractDocumentView } from "./gedu-contract-document-view";
@@ -33,6 +40,7 @@ import { GeduContractSigningDialog } from "./gedu-contract-signing-dialog";
 export function GeduContractPageBody({
   contract,
   acceptance,
+  criminalRecordCheck,
   signerName,
   committing,
   acceptFailed,
@@ -40,6 +48,17 @@ export function GeduContractPageBody({
   onAccept,
 }: {
   contract: GeduContractDocument;
+  /**
+   * This gedu's criminal record check standing, or `null` where the server read
+   * failed and it is therefore unknown.
+   *
+   * It is a prop rather than a query because it has to be settled before the
+   * first paint: the section sits above the terms, and one that arrived a
+   * hydration later would push a document somebody had already started reading
+   * down the page. `null` renders the explanation with no status line — the
+   * process is worth stating either way, and a standing is not.
+   */
+  criminalRecordCheck: GeduCriminalRecordCheck | null;
   /**
    * This gedu's acceptance of the version on screen — of either of its equally
    * binding languages, which is why the host matches on the base version: the
@@ -80,6 +99,19 @@ export function GeduContractPageBody({
         <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
         <p className="text-muted-foreground">{t("intro")}</p>
       </header>
+
+      {/* The second thing that has to happen before an educator is certified,
+          and it is here rather than on a page of its own because there is
+          nothing to *do* about it on the platform: the extract is obtained by
+          the educator from the Legal Register Centre and shown to us in person.
+          What this section is for is telling them that, and telling them where
+          they stand.
+
+          Above the terms rather than below the signing panel, because it is the
+          one block on this page whose content is fully decided by the server:
+          the panel beneath can still arrive a beat late when its prefetch
+          failed, and anything under it would be pushed down when it does. */}
+      <CriminalRecordCheckSection standing={criminalRecordCheck} />
 
       {/* The document draws its own h1 — the contract's own title, which is not
           this page's title and must not be reworded into one. */}
@@ -177,5 +209,62 @@ export function GeduContractPageBody({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * The criminal record extract: what the educator has to do about it, and
+ * whether it has been done.
+ *
+ * **The explanation is unconditional and the standing is not.** How the process
+ * works — you obtain the extract yourself, it must be under six months old when
+ * you present it, we keep no copy — is true whatever we happen to know about
+ * this reader, and it is the part that answers the question somebody arriving
+ * here actually has. The standing is a claim about *them*, so it is made only
+ * when the read behind it landed: `null` prints no line rather than a
+ * reassuring or an alarming guess.
+ *
+ * **"We keep no copy" is stated to the person it protects.** It is the reason
+ * the platform has no upload button and no field to type a reference into, and
+ * an educator handing over a document about their own criminal history is
+ * exactly who is owed that sentence.
+ */
+function CriminalRecordCheckSection({
+  standing,
+}: {
+  standing: GeduCriminalRecordCheck | null;
+}) {
+  const t = useTranslations("gedu.criminalRecordCheck");
+  const locale = useLocale();
+  const timeZone = useTimezone();
+
+  return (
+    <section className="space-y-3 rounded-lg border border-border p-5">
+      <h2 className="text-lg font-semibold">{t("title")}</h2>
+      <p className="text-sm text-muted-foreground">{t("howItWorks")}</p>
+      <p className="text-sm text-muted-foreground">{t("noCopyKept")}</p>
+      {standing === null ? null : standing.passed ? (
+        <p className="flex items-center gap-2 text-sm font-medium text-success">
+          <ClipboardCheck className="h-4 w-4 shrink-0" aria-hidden />
+          {standing.recordedAt
+            ? t("recordedOn", {
+                date: formatDate(standing.recordedAt, locale, {
+                  dateStyle: "long",
+                  timeZone,
+                }),
+              })
+            : t("recorded")}
+        </p>
+      ) : (
+        // Informational rather than alarming: nothing is broken and nothing is
+        // taken away — the check gates none of this account's access — it is a
+        // thing still owed, which is the same register the dashboard's
+        // next-step band uses for it.
+        <p className="flex items-center gap-2 text-sm font-medium text-warning">
+          <ClipboardX className="h-4 w-4 shrink-0" aria-hidden />
+          {t("stillNeeded")}
+        </p>
+      )}
+    </section>
   );
 }
