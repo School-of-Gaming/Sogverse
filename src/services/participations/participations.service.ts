@@ -12,6 +12,7 @@ import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
 import {
   parseJsonResponse,
+  readApiError,
   readErrorMessage,
 } from "@/lib/api/json-response";
 import {
@@ -313,6 +314,16 @@ export type CreateParticipationInput = {
   participantId: string;
   purchaseShape: PurchaseShape;
   currency: SupportedCurrency;
+  /**
+   * The consent documents the parent ticked, as slugs — empty on the
+   * overwhelming majority of products, which require none.
+   *
+   * Required here although the wire field is optional, and the asymmetry is the
+   * point: the wire has to tolerate an omission so the database gets to give
+   * the authoritative refusal, while a *caller* stating the answer explicitly
+   * is what keeps a new signup surface from forgetting the question exists.
+   */
+  consentedDocuments: string[];
 };
 
 /**
@@ -358,6 +369,9 @@ export type {
 export type JoinWaitlistInput = {
   productId: string;
   participantId: string;
+  /** Ticked consent document slugs — see `CreateParticipationInput`. A queue
+   *  place is held to the same enrolment conditions as a seat. */
+  consentedDocuments: string[];
 };
 
 export type LeaveWaitlistInput = {
@@ -859,9 +873,10 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Failed to start checkout"),
-      );
+      // An `ApiError` rather than a bare `Error`: the panel branches on the
+      // consent-refusal code this route can attach, and only this shape carries
+      // it. The message is unchanged either way.
+      throw await readApiError(response, "Failed to start checkout");
     }
     return parseJsonResponse(response, createParticipationResponse);
   }
@@ -873,9 +888,9 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Failed to join waitlist"),
-      );
+      // Same shape as the signup door above, and for the same reason: this
+      // route can refuse a stale consent list too.
+      throw await readApiError(response, "Failed to join waitlist");
     }
     return parseJsonResponse(response, joinWaitlistResponse);
   }

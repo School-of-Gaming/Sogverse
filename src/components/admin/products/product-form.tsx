@@ -15,6 +15,7 @@ import { useLocale } from "next-intl";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { AudienceSection } from "./sections/audience-section";
 import { BillingSection } from "./sections/billing-section";
+import { ConsentsSection } from "./sections/consents-section";
 import { FeesSection } from "./sections/fees-section";
 import { IdentitySection } from "./sections/identity-section";
 import { RegistrationSection } from "./sections/registration-section";
@@ -199,6 +200,12 @@ export function ProductFormShell({
       <BillingSection state={state} setState={setState} config={config} />
       <FeesSection state={state} setState={setState} config={config} />
       <RegistrationSection state={state} setState={setState} config={config} />
+      {/* After the registration timing and before the listing toggle: the two
+          signup-act questions sit together, in the order a parent meets them —
+          when the door opens, then what they agree to on the way through. Takes
+          no `config`, because the enrolment conditions are a generic mechanism
+          with no per-type rule behind them. */}
+      <ConsentsSection state={state} setState={setState} />
       <VisibilitySection state={state} setState={setState} />
 
       {error && (

@@ -24,6 +24,26 @@ export type CreateParticipationResponse = z.infer<
 >;
 
 /**
+ * The consent documents the parent ticked on their way to this request — the
+ * slugs of `consent_documents` rows, one per box. Shared by both enrolment
+ * doors, because a place in a queue is held to the same conditions as a seat.
+ *
+ * **Optional on the wire, and deliberately not validated against anything.**
+ * The only authority on what a product requires is the database, and
+ * `record_required_consents` inside the enrolment RPC is what compares the two:
+ * it refuses with `check_violation` naming every document the caller left out,
+ * and both enrolment routes disclose that message verbatim. A shape rule here
+ * could only produce a second, vaguer refusal for the same fact — and an
+ * *absent* field is the same claim as an empty array, so omitting it reaches
+ * the RPC and gets the authoritative answer rather than a 400 that says less.
+ *
+ * Sending a slug the product does not require is not an error either: the RPC
+ * writes one acceptance per REQUIRED document and ignores the rest, so a client
+ * holding a stale requirement set records nothing extra.
+ */
+const consentedDocuments = z.array(z.string()).optional();
+
+/**
  * Request body of POST /api/checkout/products/create. The purchase shape and
  * currency are enums rather than free strings so the route never has to ask
  * "is this one of the four we support?" after the fact — and the coherence
@@ -43,6 +63,7 @@ export const createCheckoutBody = z.object({
     "external",
   ] as const satisfies readonly PurchaseShape[]),
   currency: z.enum(SUPPORTED_CURRENCIES),
+  consentedDocuments,
 });
 
 /**
@@ -57,6 +78,7 @@ export const createCheckoutBody = z.object({
 export const joinWaitlistBody = z.object({
   productId: z.string().uuid("productId must be a UUID"),
   participantId: z.string().uuid("participantId must be a UUID"),
+  consentedDocuments,
 });
 
 /**

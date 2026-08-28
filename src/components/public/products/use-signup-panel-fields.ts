@@ -10,6 +10,10 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants/currency";
 import {
+  consentRowSlugs,
+  describeRequiredConsents,
+} from "@/lib/constants/consent-documents";
+import {
   firstChargeAnchor,
   formatFirstChargeDate,
 } from "@/lib/stripe/first-charge-anchor";
@@ -47,9 +51,48 @@ export interface SignupPanelFields {
   onSelectParticipant: (participantId: string) => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
+  /**
+   * The consent documents this product requires, as slugs, in the order the
+   * panel groups them. Empty on nearly every product.
+   *
+   * **A slug this deploy cannot name stays in here.** The panel offers it as its
+   * raw slug with no link to read, and it still gates the CTA — dropping it
+   * would let an enrolment through without a consent the product legally
+   * requires, which is the one outcome worse than an ugly row.
+   */
+  requiredConsentSlugs: readonly string[];
+  /**
+   * Which consent rows the parent has ticked, by row key — the keys
+   * `describeRequiredConsents` gives the same slugs.
+   *
+   * One entry per *bundle*, not per document: a programme hands its documents
+   * over together and they cannot be accepted apart, so the sentence names them
+   * all and one tick answers it. Two bundles on one product would be two ticks,
+   * because they are two separate things being agreed to.
+   *
+   * Never seeded: empty at mount on every product, however many times this
+   * family has enrolled before.
+   */
+  consentAgreements: ReadonlySet<string>;
+  onConsentAgreementChange: (rowKey: string, agreed: boolean) => void;
+  /**
+   * Whether every required row is ticked — vacuously true on a product that
+   * requires nothing, which is nearly all of them.
+   *
+   * The adapters read this to decide whether there is a consent to send; the
+   * view derives the same fact from the rows it is actually painting, so a row
+   * on screen and unticked blocks the CTA whatever anyone else believes.
+   */
+  consentsAgreed: boolean;
   currency: SupportedCurrency;
   locale: string;
 }
+
+/**
+ * What a consent row's stamp joins its slugs on: NUL, the one byte a slug
+ * cannot contain, so no two different slug lists can stamp the same string.
+ */
+const STAMP_SEPARATOR = "\u0000";
 
 export function useSignupPanelFields(
   product: Pick<
@@ -62,6 +105,16 @@ export function useSignupPanelFields(
     | "timezone"
   >,
   authState: AuthState,
+  /**
+   * The consent documents enrolling on this product requires, as slugs.
+   *
+   * A separate argument rather than a column on the `Pick` above, because the
+   * requirement set is not on the browse row: `BROWSE_SELECT` is a deliberate
+   * promise about what the anon shop listing publishes, and a card never names
+   * a product's enrolment conditions. The detail page reads them off its own
+   * query's embed and hands them in; the preview twin hands in a literal.
+   */
+  requiredConsentSlugs: readonly string[],
 ): SignupPanelFields {
   // Platform is EUR-only; Stripe Adaptive Pricing handles the customer's local
   // currency at checkout. See src/lib/constants/currency.ts.
@@ -146,6 +199,45 @@ export function useSignupPanelFields(
 
   const [agreed, setAgreed] = useState(false);
 
+  // Every box starts unticked, and there is no path that seeds one. These are
+  // per-enrolment conditions: a family enrolling a second child, or re-joining
+  // a term later, is agreeing again, and a pre-ticked box would make that
+  // agreement something the platform asserted on their behalf rather than
+  // something they did.
+  //
+  // **Each agreement is stamped with the slugs its OWN row covered, and does
+  // not survive that set changing.** A bundle's sentence names its documents
+  // whatever the product stores, but the tick only ever sends what is required
+  // — so a requirement added under a long-open tab, or arriving in the refetch
+  // the enrolment routes trigger when the database refuses a stale list, must
+  // not be carried by a click made before it was on screen.
+  //
+  // **Per row rather than over the whole set**, which is the one thing that
+  // changed when the section grew from one box to one per bundle: a brand-new
+  // drift document arrives as its own unticked row, and is no reason to
+  // un-agree to a programme whose own documents did not move.
+  //
+  // Comparing stamps during render rather than clearing them from an effect
+  // keeps every tick and the slugs it belongs to consistent in every frame. A
+  // stamp is the row's slugs joined on the separator below, so a caller
+  // rebuilding the array each render (which both adapters do) does not count as
+  // a change.
+  const [stamps, setStamps] = useState<ReadonlyMap<string, string>>(
+    () => new Map<string, string>(),
+  );
+  const rows = describeRequiredConsents(requiredConsentSlugs);
+  const currentStamps = new Map(
+    rows.map((row) => [
+      row.key,
+      consentRowSlugs(row, requiredConsentSlugs).join(STAMP_SEPARATOR),
+    ]),
+  );
+  const consentAgreements = new Set(
+    rows
+      .filter((row) => stamps.get(row.key) === currentStamps.get(row.key))
+      .map((row) => row.key),
+  );
+
   return {
     productType: product.product_type,
     forGamers: product.for_gamers,
@@ -155,6 +247,18 @@ export function useSignupPanelFields(
     onSelectParticipant: setUserPickedParticipantId,
     agreed,
     onAgreedChange: setAgreed,
+    requiredConsentSlugs,
+    consentAgreements,
+    onConsentAgreementChange: (rowKey, agreed) =>
+      setStamps((prev) => {
+        const next = new Map(prev);
+        if (agreed) next.set(rowKey, currentStamps.get(rowKey) ?? "");
+        else next.delete(rowKey);
+        return next;
+      }),
+    // Vacuously true on a product that requires nothing, which is nearly all of
+    // them — so the consent step costs the ordinary panel nothing.
+    consentsAgreed: consentAgreements.size === rows.length,
     currency,
     locale,
   };

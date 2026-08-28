@@ -208,6 +208,19 @@ export interface FormState {
   registrationOpensHour: string;
   registrationOpensMinute: string;
 
+  // Required consents
+  //
+  // The consent documents a parent must agree to before enrolling, as the slugs
+  // of `consent_documents` rows. A Set for the same reason `holidayCalendarIds`
+  // is one: the control is a list of independent checkboxes and the payload
+  // builder flattens it with `Array.from`.
+  //
+  // Offered on every product type, deliberately: the mechanism is generic — a
+  // product requires whichever published documents it requires — and a per-type
+  // flag would be inventing a rule the database does not have. Empty is the
+  // ordinary state and the default.
+  requiredConsentSlugs: Set<string>;
+
   // Visibility
   isVisible: boolean;
 }
@@ -289,6 +302,9 @@ export function initialState(
     registrationOpensDate: "",
     registrationOpensHour: "10",
     registrationOpensMinute: "00",
+    // Nothing required until somebody says otherwise. A default requirement
+    // would put a legal condition in front of families nobody decided to ask.
+    requiredConsentSlugs: new Set(),
     isVisible: false,
   };
 }

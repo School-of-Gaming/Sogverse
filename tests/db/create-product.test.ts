@@ -21,6 +21,15 @@ import { deleteTestProducts } from "./product-helpers";
  * it returns are collected and deleted in afterAll instead.
  */
 
+/**
+ * The two consent documents 00210 seeded. Named here rather than imported from
+ * the app's registry map on purpose: what this file asserts is that the RPC
+ * wrote the slug it was handed, and a constant shared with the code under test
+ * would make a renamed slug pass on both sides at once.
+ */
+const CONSENT_TERMS = "roblox-programme-terms";
+const CONSENT_PRIVACY = "roblox-privacy-policy";
+
 describe("create_product", () => {
   /** Service-role client — bypasses RLS, used to read back and to clean up. */
   let admin: SupabaseClient<Database>;
@@ -54,10 +63,15 @@ describe("create_product", () => {
    * `p_tag` and `p_region_lock_country` are the arguments each case varies —
    * the two defaulted, CHECK-less columns whose absence from the INSERT list
    * would look exactly like the ordinary "untagged and unlocked" product.
+   * `p_required_consent_slugs` (00210) is a third of the same kind, and the one
+   * that does not land on the parent row at all: it is delegated to
+   * set_product_required_consents, so a create that stopped calling that writer
+   * would look exactly like the ordinary product requiring nothing.
    */
   async function createProduct(
     tag?: "neuroinclusive" | "beginner" | "advanced",
     regionLockCountry?: string,
+    requiredConsentSlugs?: string[],
   ) {
     const { data, error } = await adminAuth.rpc("create_product", {
       p_product_type: "consumer_club",
@@ -91,6 +105,11 @@ describe("create_product", () => {
       ...(regionLockCountry === undefined
         ? {}
         : { p_region_lock_country: regionLockCountry }),
+      // Same shape once more: an omitted argument is how "requires nothing"
+      // reaches the join table, which is what almost every product wants.
+      ...(requiredConsentSlugs === undefined
+        ? {}
+        : { p_required_consent_slugs: requiredConsentSlugs }),
     });
     expect(error).toBeNull();
     expect(data).not.toBeNull();
@@ -166,6 +185,41 @@ describe("create_product", () => {
       .eq("id", id)
       .single();
     expect(row?.region_lock_country).toBeNull();
+  });
+
+  it("writes the consent documents enrolling on it will require", async () => {
+    // The one child set that does NOT ride on an inline INSERT: create_product
+    // is SECURITY INVOKER and product_required_consents carries no write grant
+    // for `authenticated`, so the rows can only arrive through the guarded
+    // writer. A create that stopped calling it would leave the product
+    // requiring nothing, which is indistinguishable from the ordinary case
+    // without a read-back like this one.
+    const id = await createProduct(undefined, undefined, [
+      CONSENT_TERMS,
+      CONSENT_PRIVACY,
+    ]);
+
+    const { data } = await admin
+      .from("product_required_consents")
+      .select("document_slug")
+      .eq("product_id", id)
+      .order("document_slug");
+    expect((data ?? []).map((r) => r.document_slug)).toEqual(
+      [CONSENT_PRIVACY, CONSENT_TERMS].sort(),
+    );
+  });
+
+  it("requires nothing when p_required_consent_slugs is omitted", async () => {
+    // Requiring nothing is the state of almost every product, and it has to be
+    // reachable without a wire shape for "explicitly null" — the same argument
+    // the tag and region-lock cases above make about their own defaults.
+    const id = await createProduct();
+
+    const { data } = await admin
+      .from("product_required_consents")
+      .select("document_slug")
+      .eq("product_id", id);
+    expect(data).toEqual([]);
   });
 
   it("refuses a malformed country code with a CHECK violation", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
@@ -52,6 +52,52 @@ export interface MunicipalityBackLink {
  * and two string literals is how they stop agreeing.
  */
 const SIGNUP_PANEL_ANCHOR_ID = "product-signup";
+
+/**
+ * Publishes an element's own height as `--signup-rail-height` on that element.
+ *
+ * It exists for exactly one thing: the signup rail's two-end sticky clamp is
+ * `min(header offset, 100vh - panel height - gap)`, and CSS cannot measure a
+ * box. So JS supplies the one number CSS cannot derive and CSS does the rest,
+ * which keeps the whole mechanism a single declaration rather than a scroll
+ * handler.
+ *
+ * **Written to the DOM rather than held in React state, deliberately.** The
+ * value feeds nothing but a sticky inset, and a sticky inset changes where a
+ * box *pins*, never where it is painted in flow — so there is nothing for a
+ * re-render to do, and a state update here would re-render the whole page body
+ * every time the panel changed height. The variable has a `0px` default in
+ * `globals.css`, which is the value that makes the clamp a no-op: the
+ * server-rendered frame therefore behaves exactly as it always did, and the
+ * first measurement only ever *lowers* the inset, on a panel genuinely taller
+ * than the window.
+ *
+ * A `ResizeObserver` rather than a one-off read, because the panel changes
+ * height on its own schedule — a countdown finishing, a location section
+ * answering itself, a consent list arriving with the product — and a stale
+ * height would clamp to the wrong place. Window resizes are watched too: the
+ * viewport is the other half of the comparison and it does not move the
+ * element.
+ */
+function usePublishedHeight(
+  ref: React.RefObject<HTMLElement | null>,
+  property: string,
+) {
+  useEffect(() => {
+    const element = ref.current;
+    if (element === null) return;
+    const measure = () =>
+      element.style.setProperty(property, `${element.offsetHeight}px`);
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [ref, property]);
+}
 
 export interface ProductDetailPageBodyProps {
   /**
@@ -189,6 +235,9 @@ export function ProductDetailPageBody({
   // destination. A "{name} Clubs" heading with no name is not an option, and
   // neither is the generic label pointed at one municipality's listing, which
   // would name a destination it does not go to.
+  const signupRailRef = useRef<HTMLDivElement>(null);
+  usePublishedHeight(signupRailRef, "--signup-rail-height");
+
   const municipalityNode = municipalityOf(product.locations);
   const municipality =
     municipalitySlug !== undefined && municipalityNode !== null
@@ -426,15 +475,18 @@ export function ProductDetailPageBody({
           as tall as the signup rail spanning beside it, which would draw the
           card's border a long way past the last thing in it.
 
-          **No reserved scrollbar gutter here**, unlike the signup rail, and the
-          difference is the point: that rail reserves one because the panel
-          re-renders on a clock and a scrollbar appearing mid-swap would shift
-          its controls sideways. Nothing in this card has a clock — four facts
-          resolved at render — so a scrollbar cannot arrive on its own schedule,
-          and 15px of a 256px rail held open for one that can never appear is
-          just dead space. `max-h` + `overflow-y-auto` stay as the safety valve
-          for a short viewport, where the scrollbar would be a response to the
-          reader's own window rather than a surprise. */}
+          **This card keeps `max-h` + `overflow-y-auto`, where the signup rail
+          has neither, and the difference is worth stating.** That rail is
+          clamped at both ends instead (see it below), because it holds the CTA
+          and a panel whose bottom cannot be reached is a panel that cannot be
+          bought from. This card holds four facts resolved at render, nothing to
+          act on and no clock, so on the rare short viewport an internal scroll
+          is a plain safety valve — it costs a reader nothing to have to scroll a
+          reference card, and it is not worth a second measured inset. No
+          scrollbar gutter is reserved: nothing here re-renders on its own
+          schedule, so a scrollbar cannot appear under a parked cursor, and 15px
+          of a 256px rail held open for one that can never arrive is dead
+          space. */}
       <div className="lg:col-start-2 lg:row-start-3 lg:min-w-0 lg:self-start 2xl:col-start-2 2xl:row-start-2 2xl:row-span-2 2xl:sticky 2xl:top-[calc(var(--header-height)+1.5rem)] 2xl:max-h-[calc(100vh-var(--header-height)-3rem)] 2xl:overflow-y-auto">
         <ProductOverviewCard product={product} railFrom2xl />
       </div>
@@ -468,18 +520,26 @@ export function ProductDetailPageBody({
       )}
 
       {/* The signup rail. Sticks below the site header (`--header-height`, the
-          same variable the header itself is sized from) and scrolls internally
-          if the panel ever outgrows the viewport — the shop's filter rail
-          exactly, mirrored to the right-hand side. `self-start` is what lets it
-          stick at all: a stretched grid item is already as tall as its row.
-          `scrollbar-gutter: stable` is not decoration: the panel swaps state on
-          a clock (a countdown running out re-renders it), and a scrollbar
-          materialising at that moment would pull every control inside the panel
-          sideways under a parked cursor — which is the one thing the panel's own
-          no-shift work exists to prevent. Reserving the gutter costs a permanent
-          ~15px of the rail's width and buys the guarantee. Nothing else here
-          constrains the panel: no fixed height, no `overflow-hidden`, so it
-          keeps rendering every state at its own natural size.
+          same variable the header itself is sized from). `self-start` is what
+          lets it stick at all: a stretched grid item is already as tall as its
+          row. Nothing here constrains the panel — no max height, no
+          `overflow`— so it renders every state at its own natural size and the
+          page is the only thing that scrolls.
+
+          **Two-end clamping, so a tall panel is fully reachable.** A panel that
+          fits under the header is pinned there, exactly as it always was. One
+          taller than the viewport cannot be: pinned at the top, its bottom —
+          the CTA — sits below the fold with no way to reach it, and an internal
+          scrollbar is not the answer (a panel with its own scroll region inside
+          a scrolling page is two scrolls fighting for the same wheel). So the
+          sticky inset is `min(header offset, viewport − panel height − gap)`:
+          on a tall panel that resolves negative, which makes the rail scroll up
+          with the page until its BOTTOM meets the viewport bottom and clamp
+          there. Scrolling down reaches the CTA; scrolling back up releases it
+          and the panel's top returns. The single measured input is the panel's
+          own height, published as `--signup-rail-height` by the observer below
+          — CSS does the arithmetic, and a sticky inset changes only where a box
+          pins, never where it is painted in flow, so nothing shifts.
 
           It is also the jump button's target. The landing offset is CSS's job,
           not the scroll helper's — `scroll-mt` reads the same
@@ -489,7 +549,8 @@ export function ProductDetailPageBody({
           the panel is sticky and nothing jumps to it. */}
       <div
         id={SIGNUP_PANEL_ANCHOR_ID}
-        className="scroll-mt-[calc(var(--header-height)+1rem)] lg:col-start-3 lg:row-start-2 lg:row-span-3 lg:self-start lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:overflow-y-auto lg:[scrollbar-gutter:stable] 2xl:col-start-4 2xl:row-span-2"
+        ref={signupRailRef}
+        className="scroll-mt-[calc(var(--header-height)+1rem)] lg:col-start-3 lg:row-start-2 lg:row-span-3 lg:self-start lg:sticky lg:top-[min(calc(var(--header-height)+1.5rem),calc(100vh-var(--signup-rail-height)-1.5rem))] 2xl:col-start-4 2xl:row-span-2"
       >
         {signupPanel}
       </div>

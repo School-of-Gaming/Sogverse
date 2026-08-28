@@ -41,6 +41,12 @@ interface PreviewSignupPanelProps {
     | "start_date"
     | "timezone"
   >;
+  /**
+   * The consent documents this scenario's product requires, as slugs — the
+   * scene's half of what the live route reads off the product embed. Defaulted
+   * to none so every ordinary scenario stays exactly as it was.
+   */
+  requiredConsentSlugs?: readonly string[];
   state: RegistrationState;
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
@@ -61,8 +67,14 @@ interface PreviewSignupPanelProps {
 // commit takes, short enough not to annoy someone clicking through demos.
 const FAKE_COMMIT_MS = 600;
 
+// Hoisted so the default is one stable array rather than a fresh literal per
+// render — the hook holds it in state-shaped props and a new identity every
+// render is churn nobody asked for.
+const NO_CONSENTS: readonly string[] = [];
+
 export function PreviewSignupPanel({
   product,
+  requiredConsentSlugs = NO_CONSENTS,
   state,
   authState,
   summaryHref,
@@ -71,7 +83,7 @@ export function PreviewSignupPanel({
   onLocationPicked,
 }: PreviewSignupPanelProps) {
   const router = useRouter();
-  const fields = useSignupPanelFields(product, authState);
+  const fields = useSignupPanelFields(product, authState, requiredConsentSlugs);
   const [committing, setCommitting] = useState(false);
   // The location dialog is the panel adapter's, here as in production — the
   // view asks for it and this is what owns whether it is open.

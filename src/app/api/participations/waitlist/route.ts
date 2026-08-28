@@ -8,6 +8,7 @@ import {
   leaveWaitlistResponse,
   leaveWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
+import { consentRefusalError } from "@/services/participations/consent-refusal";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 
 /**
@@ -35,7 +36,8 @@ export const POST = defineRoute({
 
   // The RPC's messages are written for the parent to read — "waitlist is not
   // enabled for this product", "product … does not exist" — and the UI shows
-  // them verbatim. They name no row the caller was not already holding.
+  // them verbatim. They name no row the caller was not already holding. The
+  // consent refusal is the one exception and is swapped for a code below.
   discloseErrorMessages:
     "the guarded RPC's messages are the user-facing explanation of a refused join",
 
@@ -43,9 +45,18 @@ export const POST = defineRoute({
     const { data, error } = await supabase.rpc("join_product_waitlist", {
       p_product_id: body.productId,
       p_participant_id: body.participantId,
+      // Same enrolment conditions as the signup door, enforced in the same
+      // shared function the RPC calls — a queue place unconsented would first
+      // meet the conditions at promotion, which is the moment a family is least
+      // able to decline. Nothing is checked here; the RPC's check violation is
+      // the refusal, and this route already discloses its message.
+      p_consented_documents: body.consentedDocuments,
     });
 
-    if (error) throw error;
+    // Same one exception the signup door makes, for the same reason: the
+    // consent refusal names raw slugs and describes a page the reader is no
+    // longer looking at, so it becomes a code the panel refetches on.
+    if (error) throw consentRefusalError(error) ?? error;
 
     const parsed = joinWaitlistRpcResult.safeParse(data);
     if (!parsed.success) {

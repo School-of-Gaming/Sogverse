@@ -27,12 +27,21 @@ import type { RegistrationState } from "@/components/public/products/derive-regi
  * an identical one somewhere lower on the page.
  *
  * Translations are stubbed to echo their keys, so nothing here depends on
- * English wording.
+ * English wording. `rich` echoes the key and then hands it to whatever tag
+ * functions the call passed, so the rules row's linked policy name renders as
+ * the anchor it really is rather than vanishing from the panel's height.
  */
-vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
-    values ? `${key}:${JSON.stringify(values)}` : key,
-}));
+vi.mock("next-intl", () => {
+  type TagFn = (chunks: unknown) => unknown;
+  const t = (key: string, values?: Record<string, unknown>) =>
+    values ? `${key}:${JSON.stringify(values)}` : key;
+  t.rich = (key: string, values?: Record<string, TagFn>) =>
+    Object.values(values ?? {}).reduce<unknown>(
+      (chunks, tag) => tag(chunks),
+      key,
+    );
+  return { useTranslations: () => t };
+});
 
 // Real UUID, hardcoded: the gamer picker hashes it into an identicon, and a
 // readable stand-in renders a degenerate one. Never generated at test time —
@@ -67,6 +76,11 @@ function panel(state: RegistrationState): SignupPanelViewProps {
     onAddGamer: () => {},
     agreed: true,
     onAgreedChange: () => {},
+    // No enrolment conditions: the ordinary product, which is what every
+    // assertion in this file is about.
+    requiredConsentSlugs: [],
+    consentAgreements: new Set<string>(),
+    onConsentAgreementChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",

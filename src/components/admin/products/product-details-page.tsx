@@ -9,6 +9,7 @@ import {
   Clock,
   Coins,
   Copy,
+  FileCheck,
   Globe2,
   Landmark,
   Link2,
@@ -36,6 +37,10 @@ import { ProductOverviewCard } from "@/components/public/products/product-overvi
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
+import {
+  consentDocumentMeta,
+  describeRequiredConsents,
+} from "@/lib/constants/consent-documents";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -313,6 +318,11 @@ function OperationalFacts({
   // about what a tag is called. Plain text, no chip: this is the admin panel,
   // and the chip treatment belongs to the surfaces families read.
   const tTag = useTranslations("productTag");
+  // The document names, from the same namespace the shop panel labels its
+  // checkboxes with, so the admin reading this row and the parent ticking the
+  // box are looking at one name for one document.
+  const tConsent = useTranslations("consentDocuments.names");
+  const tConsentBundle = useTranslations("consentDocuments.bundles");
 
   // Render a per-session fee from its stored cents. The state is derived from
   // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
@@ -471,6 +481,44 @@ function OperationalFacts({
             )}
           </Fact>
         )}
+
+        {/* The enrolment conditions. Always rendered, on every type, because
+            the setting exists on every type — "None" is the ordinary answer and
+            an absent row would leave an admin unable to tell "requires nothing"
+            apart from "this page does not say".
+
+            A slug this deploy cannot name renders as the raw slug, which is the
+            same loud-not-broken answer the form's checkbox gives: registry rows
+            arrive by migration and the name map ships with them, so an unnamed
+            slug is a defect worth seeing rather than a state worth hiding.
+
+            Bundled documents are reported as the bundle, because that is the
+            unit the form offered — an admin who ticked one box should not read
+            two lines back and wonder what they picked. Anything outside a
+            bundle is still listed on its own. */}
+        <Fact icon={FileCheck} label={t("detailsPage.fields.requiredConsents")}>
+          {product.product_required_consents.length === 0 ? (
+            <span className="text-muted-foreground">{t("consents.none")}</span>
+          ) : (
+            <ul>
+              {describeRequiredConsents(
+                product.product_required_consents.map((c) => c.document_slug),
+              ).map((row) => {
+                if (row.kind === "bundle") {
+                  return (
+                    <li key={row.key}>{tConsentBundle(row.bundle.labelKey)}</li>
+                  );
+                }
+                const meta = consentDocumentMeta(row.slug);
+                return (
+                  <li key={row.key}>
+                    {meta === null ? row.slug : tConsent(meta.nameKey)}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Fact>
 
         {/* Staff-only, and it lives on its own embedded row for exactly that
             reason — `products` is anon-readable by column selection, so the

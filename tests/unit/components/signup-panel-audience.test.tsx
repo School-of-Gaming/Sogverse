@@ -25,12 +25,22 @@ import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
  *    depending on which row is lit.
  *
  * Translations are stubbed to echo their keys, so nothing here depends on
- * English wording.
+ * English wording. `rich` echoes the key and then hands it to whatever tag
+ * functions the call passed — the rules sentence is rich text (it names the
+ * Anti-Bullying policy as a link), and a stub that dropped the tags would drop
+ * the key these assertions read.
  */
-vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
-    values ? `${key}:${JSON.stringify(values)}` : key,
-}));
+vi.mock("next-intl", () => {
+  type TagFn = (chunks: unknown) => unknown;
+  const t = (key: string, values?: Record<string, unknown>) =>
+    values ? `${key}:${JSON.stringify(values)}` : key;
+  t.rich = (key: string, values?: Record<string, TagFn>) =>
+    Object.values(values ?? {}).reduce<unknown>(
+      (chunks, tag) => tag(chunks),
+      key,
+    );
+  return { useTranslations: () => t };
+});
 
 // Real UUIDs, hardcoded: every row here carries an identicon, and a readable
 // stand-in renders a degenerate one. Never generated at test time.
@@ -85,6 +95,11 @@ function panel({
     onAddGamer: () => {},
     agreed: true,
     onAgreedChange: () => {},
+    // No enrolment conditions: the ordinary product, which is what every
+    // assertion in this file is about.
+    requiredConsentSlugs: [],
+    consentAgreements: new Set<string>(),
+    onConsentAgreementChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",

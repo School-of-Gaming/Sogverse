@@ -350,6 +350,7 @@
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
+          "requiredConsents": "Vaaditut suostumukset",
           "visibility": "Näkyvyys"
         },
         "copyLink": "Kopioi julkinen linkki",
@@ -394,6 +395,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
+        "consents": "Vaaditut suostumukset",
+        "consentsDescription": "Asiakirjat, jotka vanhemman on hyväksyttävä ennen ilmoittautumista.",
         "visibility": "Listaus",
         "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
       },
@@ -520,6 +523,11 @@
       },
       "regionLock": {
         "none": "Ei maakohtaista rajausta"
+      },
+      "consents": {
+        "version": "Versio {version}",
+        "noVersion": "Ei julkaistua versiota",
+        "none": "Ei mitään"
       },
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
@@ -1759,7 +1767,7 @@
       "ctaSubmitting": "Hetki…",
       "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
       "ctaAllSet": "Olet valmis",
-      "ctaAgreeRules": "Hyväksy säännöt",
+      "ctaAgreeConsent": "Anna vaadittu suostumus",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaSignIn": {
         "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
@@ -1778,13 +1786,19 @@
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
       "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
       "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
-      "rulesHeading": "Säännöt",
       "rules": {
-        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
-        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
-        "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
-        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
-        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
+        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
+        "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
+        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan."
+      },
+      "consents": {
+        "heading": "Vaadittu suostumus",
+        "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
+        "bundles": {
+          "robloxProgramme": "Olen lukenut ja hyväksyn Roblox-ohjelman <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Kenet ilmoitat?",
@@ -3517,6 +3531,15 @@
     "invalid": {
       "title": "Linkki ei toiminut",
       "body": "Linkki on voinut katketa sähköpostiohjelmassa tai kopioitua vain osittain. Avaa se uudelleen sähköpostista tai kirjoita meille osoitteeseen {supportEmail}, niin autamme."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Roblox-ohjelman käyttöehdot",
+      "robloxPrivacyPolicy": "Roblox-ohjelman tietosuojaseloste"
+    },
+    "bundles": {
+      "robloxProgramme": "Roblox-ohjelman asiakirjat"
     }
   }
 }

@@ -350,6 +350,7 @@
           "registrationOpensAt": "Registration opens",
           "tag": "Designed for",
           "regionLock": "Region lock",
+          "requiredConsents": "Required consents",
           "visibility": "Visibility"
         },
         "copyLink": "Copy public link",
@@ -394,6 +395,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
+        "consents": "Required consents",
+        "consentsDescription": "Documents a parent must agree to before they can sign up.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -520,6 +523,11 @@
       },
       "regionLock": {
         "none": "Not region locked"
+      },
+      "consents": {
+        "version": "Version {version}",
+        "noVersion": "No published version",
+        "none": "None"
       },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
@@ -1759,7 +1767,7 @@
       "ctaSubmitting": "One moment…",
       "ctaAddGamer": "Add a gamer to continue",
       "ctaAllSet": "You’re all set",
-      "ctaAgreeRules": "Agree to the rules",
+      "ctaAgreeConsent": "Give the required consent",
       "ctaWaitlist": "Join the waitlist",
       "ctaSignIn": {
         "consumer_club": "Sign in to register",
@@ -1778,13 +1786,19 @@
       "nonCustomerNote": "Only parents can register a gamer here.",
       "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
-      "rulesHeading": "The Rules",
       "rules": {
-        "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
-        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
-        "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
-        "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
-        "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
+        "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>.",
+        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
+        "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
+        "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>.",
+        "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>."
+      },
+      "consents": {
+        "heading": "Required consent",
+        "agree": "I have read and agree to these documents.",
+        "bundles": {
+          "robloxProgramme": "I have read and agree to the Roblox Programme <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Who are you enrolling?",
@@ -3517,6 +3531,15 @@
     "invalid": {
       "title": "This link did not work",
       "body": "It may have been cut short by your email app, or copied only part of the way. Try opening it from the email again, or write to us at {supportEmail} and we will help."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Roblox Programme Terms & Conditions",
+      "robloxPrivacyPolicy": "Roblox Programme Privacy Policy"
+    },
+    "bundles": {
+      "robloxProgramme": "Roblox Programme documents"
     }
   }
 }

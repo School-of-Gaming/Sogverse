@@ -50,6 +50,10 @@ describe("loadMessages", () => {
     expect(messages.roblox.legal.privacy).toBe(en.roblox.legal.privacy);
     expect(messages.roblox.legal.safeguarding).toBe(en.roblox.legal.safeguarding);
     expect(messages.roblox.legal.terms).toBe(en.roblox.legal.terms);
+
+    // The signup panel's consent checkboxes name the same two documents, so
+    // they are labelled the same way — the sentence around them stays Klingon.
+    expect(messages.consentDocuments).toEqual(en.consentDocuments);
   });
 
   it("leaves everything Klingon does translate in Klingon", async () => {
@@ -60,6 +64,11 @@ describe("loadMessages", () => {
     expect(messages.roblox.legal.roblox).toBe(tlh.roblox.legal.roblox);
     expect(messages.metadata.pages.about).toBe(tlh.metadata.pages.about);
     expect(messages.header.nav).toEqual(tlh.header.nav);
+    // The consent *sentence* is ordinary product copy, unlike the document
+    // names and the bundle label it points at.
+    expect(messages.productDetail.signupPanel.consents.agree).toBe(
+      tlh.productDetail.signupPanel.consents.agree,
+    );
   });
 
   it("hands every other locale its own catalog, unmerged", async () => {

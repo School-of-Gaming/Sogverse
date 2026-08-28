@@ -1,5 +1,20 @@
 import { vi } from "vitest";
 
+// jsdom implements no layout, so it ships no `ResizeObserver` at all — a
+// component that measures itself throws on mount rather than measuring
+// something wrong. An inert stand-in is the honest stub: every element in jsdom
+// reports a zero box, so a real implementation would have nothing to report and
+// a callback that never fires is exactly what these tests should see. The
+// components that use one are written to render correctly before their first
+// measurement (a sticky inset that starts at its unmeasured default, a scroll
+// affordance that starts hidden), which is what makes that safe.
+class InertResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+vi.stubGlobal("ResizeObserver", InertResizeObserver);
+
 // Mock Next.js router
 vi.mock("next/navigation", () => ({
   useRouter: () => ({

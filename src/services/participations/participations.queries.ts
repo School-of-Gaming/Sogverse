@@ -18,6 +18,7 @@ import {
   type ParticipationCounts,
 } from "./participations.service";
 import { productKeys } from "../products";
+import { isConsentRefusal } from "./consent-refusal";
 import { participationKeys } from "./participations.keys";
 
 /**
@@ -317,6 +318,8 @@ export function useCreateParticipation() {
       queryClient.invalidateQueries({ queryKey: participationKeys.all });
       queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
+    onError: (error, variables) =>
+      refetchProductOnConsentRefusal(queryClient, error, variables.productId),
   });
 }
 
@@ -330,7 +333,29 @@ export function useJoinWaitlist() {
       queryClient.invalidateQueries({ queryKey: participationKeys.all });
       queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
+    onError: (error, variables) =>
+      refetchProductOnConsentRefusal(queryClient, error, variables.productId),
   });
+}
+
+/**
+ * The one failure whose remedy is fresher product data.
+ *
+ * An enrolment refused for missing consent means the product started requiring
+ * a document after this page read it, so the panel is asking for the wrong set
+ * and would go on asking for it: a retry would resend exactly the list the
+ * database just refused, forever. Invalidating the detail query is what lets
+ * the parent try again for real — the new document appears in the panel, the
+ * tick it was never given is dropped, and the second attempt is a different
+ * request. Both doors share it because both can be refused this way.
+ */
+function refetchProductOnConsentRefusal(
+  queryClient: ReturnType<typeof useQueryClient>,
+  error: unknown,
+  productId: string,
+) {
+  if (!isConsentRefusal(error)) return;
+  queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
 }
 
 /**

@@ -16,6 +16,7 @@ export type HolidayCalendarWithDates = HolidayCalendar & {
 
 export const referenceKeys = {
   holidayCalendars: ["products", "holiday-calendars"] as const,
+  consentDocuments: ["products", "consent-documents"] as const,
 };
 
 export function useHolidayCalendars() {
@@ -32,6 +33,72 @@ export function useHolidayCalendars() {
       return data as HolidayCalendarWithDates[];
     },
   });
+}
+
+/**
+ * One consent document the platform has published, with the version that is
+ * current *right now* — the row with the greatest `created_at` for that slug,
+ * which is the same derivation the enrolment RPC makes when it stamps an
+ * acceptance.
+ *
+ * `currentVersion` is null only for a slug with no published version at all,
+ * which is a data state only a migration could create. The admin form says so
+ * rather than hiding the document: a product requiring it would fail to enrol
+ * anybody, and that is worth seeing before it is picked.
+ */
+export interface ConsentDocumentOption {
+  slug: string;
+  currentVersion: string | null;
+}
+
+/**
+ * Every consent document a product can be made to require.
+ *
+ * A direct read through the caller's own client, like the holiday calendars
+ * above: the table is a list of published document slugs with no personal data
+ * in it, readable by `anon` and `authenticated` alike under migration 00210, so
+ * a route would add nothing but a hop.
+ *
+ * The "current version" is resolved here rather than in SQL because PostgREST
+ * has no greatest-n-per-group: the versions ride in on the embed and the
+ * greatest `created_at` is picked in JS, with `version` descending as the
+ * tiebreaker — the *same* order the database's own writer uses, so the version
+ * an admin is shown is the version an enrolment would record.
+ */
+export function useConsentDocuments() {
+  const supabase = getClient();
+
+  return useQuery<ConsentDocumentOption[]>({
+    queryKey: referenceKeys.consentDocuments,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("consent_documents")
+        .select("slug, consent_document_versions(version, created_at)")
+        .order("slug");
+      if (error) throw error;
+      return data.map((row) => ({
+        slug: row.slug,
+        currentVersion: currentVersionOf(row.consent_document_versions),
+      }));
+    },
+  });
+}
+
+function currentVersionOf(
+  versions: { version: string; created_at: string }[],
+): string | null {
+  let current: { version: string; created_at: string } | null = null;
+  for (const candidate of versions) {
+    if (
+      current === null ||
+      candidate.created_at > current.created_at ||
+      (candidate.created_at === current.created_at &&
+        candidate.version > current.version)
+    ) {
+      current = candidate;
+    }
+  }
+  return current?.version ?? null;
 }
 
 export interface UpdateSiteNotesInput {

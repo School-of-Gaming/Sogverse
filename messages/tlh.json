@@ -398,6 +398,7 @@
           "registrationOpensAt": "ghIH poSchoH",
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
+          "requiredConsents": "poQlu’bogh chaw’mey",
           "visibility": "leghlu"
         },
         "copyLink": "Hoch He yIghItlhqa'",
@@ -442,6 +443,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
+        "consents": "poQlu’bogh chaw’mey",
+        "consentsDescription": "ghItlhmey lulajnIS vavpu’ ’e’ poQlu’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -568,6 +571,11 @@
       },
       "regionLock": {
         "none": "Sep ngaQbe’ — Hoch qo’vaD"
+      },
+      "consents": {
+        "version": "’ay’ {version}",
+        "noVersion": "pagh ’ay’ ngeHlu’pu’",
+        "none": "pagh"
       },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
@@ -1803,7 +1811,7 @@
       "ctaSubmitting": "yIloS…",
       "ctaAddGamer": "QujwI’ yIchel ’ej taH",
       "ctaAllSet": "bIghuHrup",
-      "ctaAgreeRules": "chutmey yIlaj",
+      "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
       "ctaWaitlist": "tetlh DaqaD",
       "ctaSignIn": {
         "consumer_club": "qonmeH yI’el",
@@ -1822,13 +1830,19 @@
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
       "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
       "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
-      "rulesHeading": "chutmey",
       "rules": {
-        "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
-        "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
-        "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
-        "camp": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
-        "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj."
+        "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "camp": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’."
+      },
+      "consents": {
+        "heading": "poQlu’bogh chaw’",
+        "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
+        "bundles": {
+          "robloxProgramme": "<terms>Roblox Programme Terms & Conditions</terms>, <privacy>Roblox Programme Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "’Iv muvbogh SoH?",

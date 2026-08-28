@@ -350,6 +350,7 @@
           "registrationOpensAt": "Ouverture des inscriptions",
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
+          "requiredConsents": "Consentements obligatoires",
           "visibility": "Visibilité"
         },
         "copyLink": "Copier le lien public",
@@ -394,6 +395,8 @@
         },
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
+        "consents": "Consentements obligatoires",
+        "consentsDescription": "Documents qu’un parent doit accepter avant de s’inscrire.",
         "visibility": "Catalogue",
         "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
@@ -520,6 +523,11 @@
       },
       "regionLock": {
         "none": "Aucune restriction par pays"
+      },
+      "consents": {
+        "version": "Version {version}",
+        "noVersion": "Aucune version publiée",
+        "none": "Aucun"
       },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
@@ -1759,7 +1767,7 @@
       "ctaSubmitting": "Un instant…",
       "ctaAddGamer": "Ajoutez un joueur pour continuer",
       "ctaAllSet": "Tout est prêt",
-      "ctaAgreeRules": "Acceptez les règles",
+      "ctaAgreeConsent": "Donnez le consentement requis",
       "ctaWaitlist": "Rejoindre la liste d’attente",
       "ctaSignIn": {
         "consumer_club": "Connectez-vous pour vous inscrire",
@@ -1778,13 +1786,19 @@
       "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
       "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
-      "rulesHeading": "Les règles",
       "rules": {
-        "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
-        "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
-        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
-        "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
-        "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques."
+        "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+        "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
+        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
+        "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+        "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>."
+      },
+      "consents": {
+        "heading": "Consentement requis",
+        "agree": "J’ai lu et j’accepte ces documents.",
+        "bundles": {
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Qui inscrivez-vous ?",
@@ -3517,6 +3531,15 @@
     "invalid": {
       "title": "Ce lien n’a pas fonctionné",
       "body": "Il a peut-être été coupé par votre messagerie, ou copié seulement en partie. Essayez de l’ouvrir à nouveau depuis l’e-mail, ou écrivez-nous à {supportEmail} et nous vous aiderons."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Conditions générales du Programme Roblox",
+      "robloxPrivacyPolicy": "Politique de confidentialité du Programme Roblox"
+    },
+    "bundles": {
+      "robloxProgramme": "Documents du Programme Roblox"
     }
   }
 }

@@ -102,6 +102,15 @@ import { TEST_IDS } from "./constants";
  *                  theirs: flipping 670's status inside a case and flipping it
  *                  back leaves every later case in this file depending on a
  *                  restore that a failed assertion would have skipped)
+ *   680-683        required-consents.test.ts (four products, because the thing
+ *                  under test is what a product REQUIRES and no single product
+ *                  can hold four answers: 680 is a free club requiring both
+ *                  Roblox documents, 681 the paid twin whose shape writes no
+ *                  participation at all, 682 a club requiring nothing — the
+ *                  control that proves the gate is inert where no consent is
+ *                  asked — and 683 the queue's own club, kept apart from 680 so
+ *                  the already-enrolled gate can never stand in for the consent
+ *                  refusal the waitlist cases are asserting)
  *   637            write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

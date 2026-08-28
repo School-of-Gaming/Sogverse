@@ -13,6 +13,7 @@ import {
   useJoinWaitlist,
   type CreateParticipationInput,
 } from "@/services/participations";
+import { isConsentRefusal } from "@/services/participations/consent-refusal";
 import { useUpdateProfile } from "@/services/users";
 import { purchaseShapeFor } from "./pricing-options";
 import type { RegionGate } from "./region-lock/region-gate";
@@ -45,6 +46,15 @@ interface SignupPanelProps {
     | "start_date"
     | "timezone"
   >;
+  /**
+   * The consent documents enrolling on this product requires, as slugs.
+   *
+   * Beside `product` rather than on it: the requirement set is not a column on
+   * the browse row, and it is not one on purpose — `BROWSE_SELECT` publishes
+   * what a shop card paints and a card never names a product's enrolment
+   * conditions. The detail page reads them off its own query's embed.
+   */
+  requiredConsentSlugs: readonly string[];
   state: RegistrationState;
   authState: AuthState;
   /**
@@ -67,8 +77,33 @@ interface SignupPanelProps {
   onLocationConfirmed: (confirmed: ConfirmedHomeLocation) => void;
 }
 
+/**
+ * What the panel says when an enrolment fails.
+ *
+ * Almost every refusal arrives as a sentence the database wrote for the parent
+ * to read — registration has not opened, the waitlist is off — and the panel
+ * shows it verbatim, which is the whole reason those two routes disclose their
+ * messages at all. The consent refusal is the exception: the route replaces it
+ * with a code (see `consent-refusal.ts`), the mutation hook answers by
+ * refetching the product so the newly required document appears, and the line
+ * beside the button falls back to the same generic one it already shows for
+ * anything with no message of its own. There is deliberately no bespoke copy
+ * for it — the useful half of the answer is the panel changing under the
+ * reader, not a sentence explaining a race they did not see.
+ */
+function failureMessage(error: unknown, fallback: string): string {
+  if (isConsentRefusal(error)) return fallback;
+  return error instanceof Error ? error.message : fallback;
+}
+
+const signupErrorMessage = (error: unknown) =>
+  failureMessage(error, "Could not sign up");
+const waitlistErrorMessage = (error: unknown) =>
+  failureMessage(error, "Could not join waitlist");
+
 export function SignupPanel({
   product,
+  requiredConsentSlugs,
   state,
   authState,
   regionGate,
@@ -80,7 +115,11 @@ export function SignupPanel({
   // Pricing / gamer selection / agreed / locale+currency — the view props
   // shared verbatim with the preview panel. This panel only adds the live
   // mutation actions on top, so the demo can't drift from the real UI.
-  const fields = useSignupPanelFields(product, authState);
+  const fields = useSignupPanelFields(
+    product,
+    authState,
+    requiredConsentSlugs,
+  );
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
@@ -109,6 +148,23 @@ export function SignupPanel({
 
   const purchaseShape = purchaseShapeFor(fields.pricingOption);
 
+  /**
+   * The documents the parent agreed to, in the product's own order.
+   *
+   * The panel groups the required slugs into rows and asks about each row, but
+   * the wire shape is the flat list either way: every row ticked means every
+   * required document agreed to, so this is the required list itself — or
+   * nothing at all while any row is outstanding, which the CTA already stops
+   * from being sent. Read from the required list at click time rather than from
+   * anything held beside it: each tick is stamped with the slugs its own row
+   * covered (see `useSignupPanelFields`), so a requirement that changed under a
+   * long-open tab has already dropped that row's tick, and this cannot send a
+   * slug the parent was not shown. The RPC refuses a short list regardless,
+   * which is the guarantee that matters.
+   */
+  const consentedDocuments = () =>
+    fields.consentsAgreed ? [...fields.requiredConsentSlugs] : [];
+
   const handleSubmit = () => {
     if (!fields.selectedParticipantId || !purchaseShape) return;
     setSubmitError(null);
@@ -122,6 +178,7 @@ export function SignupPanel({
       participantId: fields.selectedParticipantId,
       purchaseShape,
       currency: fields.currency,
+      consentedDocuments: consentedDocuments(),
     };
     createMutation.mutate(input, {
       onSuccess: (response) => {
@@ -150,8 +207,10 @@ export function SignupPanel({
         setCommitting(false);
       },
       onError: (err) => {
+        // Released on every error outcome, which is what makes the retry the
+        // refetch below sets up actually clickable.
         setCommitting(false);
-        setSubmitError(err instanceof Error ? err.message : "Could not sign up");
+        setSubmitError(signupErrorMessage(err));
       },
     });
   };
@@ -161,7 +220,11 @@ export function SignupPanel({
     setSubmitError(null);
     setCommitting(true);
     waitlistMutation.mutate(
-      { productId: product.id, participantId: fields.selectedParticipantId },
+      {
+        productId: product.id,
+        participantId: fields.selectedParticipantId,
+        consentedDocuments: consentedDocuments(),
+      },
       {
         onSuccess: (response) => {
           // Mirror the free-signup branch: land the parent on the summary
@@ -170,9 +233,7 @@ export function SignupPanel({
         },
         onError: (err) => {
           setCommitting(false);
-          setSubmitError(
-            err instanceof Error ? err.message : "Could not join waitlist",
-          );
+          setSubmitError(waitlistErrorMessage(err));
         },
       },
     );

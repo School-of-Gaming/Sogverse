@@ -10,6 +10,20 @@
    track as references. @theme guarantees the variable lands in :root. */
 @theme {
   --header-height: 4rem;
+
+  /* The measured height of the product page's sticky signup rail, written onto
+     that element by a ResizeObserver so its sticky inset can clamp at both ends
+     (`min(header offset, 100vh - this - gap)`) — CSS cannot measure a box, so
+     this is the one number JS has to supply.
+
+     Declared here so it always resolves: an undefined custom property inside a
+     `calc()` invalidates the whole declaration, which would leave the rail with
+     no sticky inset at all in the server-rendered frame. Zero is the value that
+     makes the clamp a no-op, so the default IS the old pin-under-the-header
+     behaviour, and the first measurement only ever lowers it. Same @theme
+     reason as the header height above: it is only ever read from an
+     arbitrary-value utility, which the optimizer does not track. */
+  --signup-rail-height: 0px;
 }
 
 /* SOG Brand Theme - Dark by default */

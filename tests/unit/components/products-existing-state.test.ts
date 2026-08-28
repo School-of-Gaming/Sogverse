@@ -77,6 +77,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     product_holiday_calendars: [
       { calendar_id: "cal-1", holiday_calendars: { name: "Finland" } },
     ],
+    product_required_consents: [{ document_slug: "roblox-programme-terms" }],
   };
 }
 
@@ -101,6 +102,12 @@ describe("existingFormState", () => {
     expect(state.startMode).toBe("date"); // start_date set, no threshold
     expect(state.signupThreshold).toBe("");
     expect(state.holidayCalendarIds).toEqual(new Set(["cal-1"]));
+    // The stored requirement set, straight through. Unlike the region lock
+    // below, a slug the app cannot name is deliberately NOT filtered out —
+    // dropping one would let the next save clear a legal condition silently.
+    expect(state.requiredConsentSlugs).toEqual(
+      new Set(["roblox-programme-terms"]),
+    );
     // The id alone reaches form state; the label and the path stay derived.
     expect(state.imageId).toBe("3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43");
     expect(state.forGamers).toBe(true);
@@ -256,6 +263,18 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.end_date).toBe(null);
     expect(input.signup_threshold).toBe(null);
     expect(input.holiday_calendar_ids).toEqual(["cal-1"]);
+    // Travels on every save, empty array included: the RPC replaces the whole
+    // requirement set, so an omission would clear it rather than preserve it.
+    //
+    // The fixture stores half of the Roblox bundle, which is the drift case the
+    // bundling has to answer: the form offers the pair as one row and ticks it
+    // on either half, so a save writes the whole pair. Completing rather than
+    // trimming is the safe direction — the screen said the bundle was required,
+    // and no unrelated edit may quietly drop a legal condition.
+    expect(input.required_consent_slugs).toEqual([
+      "roblox-programme-terms",
+      "roblox-privacy-policy",
+    ]);
     // The link round-trips on every save, path never on the wire at all.
     expect(input.image_id).toBe("3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43");
     // Consumer clubs charge a monthly subscription; the single price_cents
