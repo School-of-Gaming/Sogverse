@@ -1757,11 +1757,11 @@
       "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
       "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
       "rules": {
-        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
-        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
-        "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
-        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
-        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
+        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
+        "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
+        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan."
       },
       "consents": {
         "heading": "Vaadittu suostumus",

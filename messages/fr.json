@@ -1757,11 +1757,11 @@
       "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
       "rules": {
-        "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
-        "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
-        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
-        "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
-        "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques."
+        "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+        "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
+        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
+        "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+        "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>."
       },
       "consents": {
         "heading": "Consentement requis",

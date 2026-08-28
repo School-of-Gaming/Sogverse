@@ -71,6 +71,14 @@ const ENGLISH_UNDER_KLINGON = [
   // whole; filed where it is, `tlh` writes the sentence in Klingon and spells
   // the two document names in English inside it, which is exactly the split
   // this exemption is trying to draw.
+  //
+  // The same split, same shape, one namespace over: the rules sentences under
+  // `productDetail.signupPanel.rules` name the Anti-Bullying and Discipline
+  // policy inside a `<policy>` tag, and that page's own copy (`discipline`) and
+  // its labels are exempted above. So `tlh` writes those sentences in Klingon
+  // too, with the English policy name inside the tag. Nothing here needs a new
+  // entry — the point of recording it is that the next such sentence does not
+  // either.
   "consentDocuments",
   "roblox.legal.privacy",
   "roblox.legal.safeguarding",

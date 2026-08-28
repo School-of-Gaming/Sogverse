@@ -1801,11 +1801,11 @@
       "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
       "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
       "rules": {
-        "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
-        "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
-        "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
-        "camp": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
-        "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj."
+        "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "camp": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+        "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’."
       },
       "consents": {
         "heading": "poQlu’bogh chaw’",

@@ -1757,11 +1757,11 @@
       "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
       "rules": {
-        "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
-        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
-        "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
-        "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
-        "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
+        "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>.",
+        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
+        "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
+        "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>.",
+        "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>."
       },
       "consents": {
         "heading": "Required consent",

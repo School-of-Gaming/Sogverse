@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Identicon } from "@/components/ui/identicon";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
-import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
 import {
   consentDocumentMeta,
   describeRequiredConsents,
@@ -1076,6 +1076,13 @@ function SignupForm(
  * heading was doing — giving the CTA's prompt a visible referent — is now done
  * by the section's own, so the row is left to be a sentence and a checkbox.
  *
+ * **And its sentence names its own document, exactly as a bundle's does.** The
+ * rules row is a consent to our Anti-Bullying and Discipline policy, so the
+ * words that name that policy are the link to it — the reader can read what
+ * they are being asked to agree to from inside the box that asks. Every row in
+ * the section therefore behaves the same way, which is the point: a parent must
+ * not be able to tell our rules from a product's documents by their treatment.
+ *
  * **One checkbox per bundle, not per document — and the sentence IS the
  * consent.** A programme hands its terms and its privacy policy over together
  * and they cannot be accepted apart — a parent who agreed to one and not the
@@ -1161,10 +1168,23 @@ function RequiredConsentSection({
   // holds the seat, so the self variant is keyed on the one rule that needs it
   // rather than duplicating three identical sentences into a parallel group
   // that would then have to be kept in step in five locales.
+  //
+  // Rich text, like a bundle's sentence and for the same reason: the rules
+  // sentence names the policy it is a consent to, and the name is the link.
+  // All five variants carry the one `<policy>` tag, so the tag map is written
+  // once here rather than per variant — a locale that drops it would render its
+  // own words unlinked rather than lose the clause.
+  const policyTag = {
+    policy: (chunks: React.ReactNode) => (
+      <ConsentSentenceLink href={ROUTES.antiBullying}>
+        {chunks}
+      </ConsentSentenceLink>
+    ),
+  };
   const ruleText =
     selfSeat && productType === "municipality_club"
-      ? tRules("municipality_club_self")
-      : tRules(productType);
+      ? tRules.rich("municipality_club_self", policyTag)
+      : tRules.rich(productType, policyTag);
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
@@ -1241,14 +1261,7 @@ function BundleConsentRow({
       meta === null ? (
         <span className="font-medium text-foreground">{chunks}</span>
       ) : (
-        <a
-          href={meta.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-primary underline-offset-2 hover:underline"
-        >
-          {chunks}
-        </a>
+        <ConsentSentenceLink href={meta.href}>{chunks}</ConsentSentenceLink>
       );
   }
   return (
@@ -1257,6 +1270,34 @@ function BundleConsentRow({
       onAgreedChange={onAgreedChange}
       sentence={t.rich(bundle.sentenceKey, tags)}
     />
+  );
+}
+
+/**
+ * A document named inside a consent sentence, as the link that opens it.
+ *
+ * One treatment for every such name, wherever it appears: a bundle's documents
+ * and the rules row's policy are the same kind of thing to a reader, so telling
+ * them apart by weight or colour would be inventing a distinction the section
+ * does not have. New tab, for the reason on the section above — the panel is
+ * holding a half-filled form the reader is meant to come back to.
+ */
+function ConsentSentenceLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-primary underline-offset-2 hover:underline"
+    >
+      {children}
+    </a>
   );
 }
 
@@ -1271,10 +1312,10 @@ function BundleConsentRow({
  * border-per-selectable-row — each row is a single choice, so a box-in-a-box
  * would just be visual noise.
  *
- * `sentence` takes a node rather than a string because a bundle's sentence
- * carries its own links inline; a caller passing links accepts that a click on
- * one reads instead of ticking, which the DOM gives for free (see the section's
- * note above).
+ * `sentence` takes a node rather than a string because a consent sentence
+ * carries its own links inline — a bundle's documents, the rules row's policy;
+ * a caller passing links accepts that a click on one reads instead of ticking,
+ * which the DOM gives for free (see the section's note above).
  *
  * `lead` is the one thing a row can carry that its sentence cannot say: the raw
  * slug of a document this deploy has no name and no sentence for. Everything

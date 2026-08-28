@@ -20,10 +20,15 @@ import { ROUTES } from "@/lib/constants";
  *
  * What is worth pinning: the section is never empty, a bundle is ONE row whose
  * sentence carries a link per document inside the very box that consents to
- * them, clicking a link reads instead of ticking while clicking anywhere else
- * in the box ticks, the CTA names the section until every row in it is ticked,
- * and a slug this deploy cannot name still gets a row of its own and still
- * gates.
+ * them, the rules row's sentence does the same for the Anti-Bullying policy,
+ * clicking a link reads instead of ticking while clicking anywhere else in the
+ * box ticks, the CTA names the section until every row in it is ticked, and a
+ * slug this deploy cannot name still gets a row of its own and still gates.
+ *
+ * Because every row's links now live inside that row, the link assertions are
+ * scoped to a row rather than to the panel: a count taken over the whole
+ * container would be answering a question about two rows at once, and would
+ * pass on a document link that had escaped into the rules row.
  */
 vi.mock("next-intl", async () => {
   const { createElement, Fragment } = await import("react");
@@ -120,6 +125,17 @@ const checkboxes = (c: HTMLElement) => [
 
 const links = (c: HTMLElement) => [...c.querySelectorAll("a")];
 
+/**
+ * Every consent row in the section, in DOM order — documents first, ours last.
+ * A row is exactly the clickable box: the `<label>` that holds a checkbox.
+ */
+const rows = (c: HTMLElement) => [
+  ...c.querySelectorAll<HTMLElement>("label:has(input)"),
+];
+
+/** Ours, which is always the final row — see the ordering test below. */
+const rulesRow = (c: HTMLElement) => rows(c)[rows(c).length - 1];
+
 describe("a product with no required consents", () => {
   it("still renders the section, holding the rules row alone", () => {
     const { container } = render(<SignupPanelView {...panel()} />);
@@ -132,7 +148,11 @@ describe("a product with no required consents", () => {
     expect(container.textContent).not.toContain("robloxProgramme");
     expect(container.textContent).not.toContain("consents.agree");
     expect(checkboxes(container)).toHaveLength(1);
-    expect(links(container)).toHaveLength(0);
+    // The one link on a bare panel belongs to the rules row: its sentence names
+    // the policy it consents to. Nothing else links, because nothing else is
+    // here.
+    expect(links(container)).toHaveLength(1);
+    expect(links(rulesRow(container))).toHaveLength(1);
     expect(cta(container).textContent).toContain("ctaActive");
     expect(cta(container).disabled).toBe(false);
   });
@@ -172,7 +192,9 @@ describe("a bundle of documents", () => {
   it("points each link at its own document, in a new tab", () => {
     const { container } = render(<SignupPanelView {...bundled()} />);
 
-    const anchors = links(container);
+    // Scoped to the bundle's own row: the rules row below carries a link too,
+    // and this claim is about the two documents this box consents to.
+    const anchors = links(rows(container)[0]);
     expect(anchors.map((a) => a.getAttribute("href"))).toEqual([
       ROUTES.robloxTerms,
       ROUTES.robloxPrivacy,
@@ -322,7 +344,87 @@ describe("a bundle of documents", () => {
     // documents whatever the product stores, so it is still one row and still
     // two links — the wire payload is the half that is actually required.
     expect(checkboxes(container)).toHaveLength(2);
-    expect(links(container)).toHaveLength(2);
+    expect(links(rows(container)[0])).toHaveLength(2);
+  });
+});
+
+/**
+ * **Ours, and the same kind of row as a product's.** The rules sentence is a
+ * consent to the Anti-Bullying and Discipline policy, so it names that policy
+ * as a link into the box that ticks — which means every claim already made
+ * about a bundle's links has to hold here too, or the section has two kinds of
+ * row a reader can tell apart.
+ */
+describe("the rules row", () => {
+  it("names the policy as a link to it, in a new tab", () => {
+    const { container } = render(<SignupPanelView {...panel()} />);
+
+    const [anchor, ...rest] = links(rulesRow(container));
+    // One link, inside the very box that consents to the policy — not a note
+    // beside the section, where a reader ticking the box would never meet it.
+    expect(rest).toHaveLength(0);
+    expect(anchor.getAttribute("href")).toBe(ROUTES.antiBullying);
+    expect(anchor.getAttribute("target")).toBe("_blank");
+    // Both tokens: `noopener` is the security half, `noreferrer` the one older
+    // engines need to get it.
+    expect(anchor.getAttribute("rel")).toContain("noopener");
+    expect(anchor.getAttribute("rel")).toContain("noreferrer");
+  });
+
+  it("carries the same link whichever variant the product asks for", () => {
+    // Four product types and a self-seat variant author five sentences, and a
+    // sentence that lost its tag would render its own words unlinked — silently
+    // dropping the policy from the one row that is about the policy.
+    for (const props of [
+      panel({ productType: "camp" }),
+      panel({ productType: "event" }),
+      panel({ productType: "municipality_club" }),
+      panel({
+        productType: "municipality_club",
+        authState: {
+          kind: "ready",
+          participants: [{ ...CHILD, isSelf: true }],
+          gamerCount: 0,
+        },
+      }),
+    ]) {
+      const { container } = render(<SignupPanelView {...props} />);
+      expect(links(rulesRow(container)).map((a) => a.getAttribute("href"))).toEqual(
+        [ROUTES.antiBullying],
+      );
+    }
+  });
+
+  it("does not tick the box when the policy link is clicked", () => {
+    const onAgreedChange = vi.fn();
+    const { container } = render(
+      <SignupPanelView {...panel({ agreed: false, onAgreedChange })} />,
+    );
+
+    // A listener OUTSIDE React's root container, so it sees the native click
+    // only after React has dispatched any handler of ours.
+    const escaped = vi.fn();
+    container.parentElement!.addEventListener("click", escaped);
+
+    fireEvent.click(links(rulesRow(container))[0]);
+
+    // The same two claims the bundle row makes, for the same two reasons: the
+    // box stays unticked because a `<label>`'s activation behaviour is skipped
+    // on an interactive descendant, and the click still escapes — so nothing
+    // here is being held up by a `stopPropagation` on the anchor.
+    expect(onAgreedChange).not.toHaveBeenCalled();
+    expect(escaped).toHaveBeenCalled();
+  });
+
+  it("ticks when the box is clicked anywhere but the link", () => {
+    const onAgreedChange = vi.fn();
+    const { container } = render(
+      <SignupPanelView {...panel({ agreed: false, onAgreedChange })} />,
+    );
+
+    fireEvent.click(rulesRow(container));
+
+    expect(onAgreedChange).toHaveBeenCalledWith(true);
   });
 });
 
@@ -339,8 +441,9 @@ describe("a required slug in no bundle", () => {
     expect(container.textContent).toContain(UNKNOWN);
     expect(container.textContent).toContain("consents.agree");
     // Never an anchor with nowhere to go: an empty href resolves to the page
-    // the reader is already on.
-    expect(links(container)).toHaveLength(0);
+    // the reader is already on. Scoped to the drift row — the rules row beneath
+    // it has a real destination and keeps its link.
+    expect(links(rows(container)[0])).toHaveLength(0);
     expect(checkboxes(container)).toHaveLength(2);
   });
 

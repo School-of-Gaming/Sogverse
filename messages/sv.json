@@ -1757,11 +1757,11 @@
       "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
       "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
       "rules": {
-        "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
-        "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
-        "municipality_club_self": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att min plats erbjuds nästa familj på väntelistan.",
-        "camp": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
-        "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende."
+        "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>.",
+        "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
+        "municipality_club_self": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att min plats erbjuds nästa familj på väntelistan.",
+        "camp": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>.",
+        "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>."
       },
       "consents": {
         "heading": "Obligatoriskt samtycke",
