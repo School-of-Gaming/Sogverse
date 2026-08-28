@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  CONSENT_DOCUMENTS,
   CONSENT_DOCUMENT_BUNDLES,
   completeConsentBundles,
+  consentRowSlugs,
   describeRequiredConsents,
   isBundledConsentSlug,
 } from "@/lib/constants/consent-documents";
@@ -10,11 +12,11 @@ import {
  * **Documents that are only ever required together.**
  *
  * The bundle is a UI grouping over an unchanged wire shape: the admin form
- * offers one checkbox, the database still stores one slug per document and
- * records one acceptance row per document. These three helpers are the whole of
- * that grouping, so they are where the all-or-nothing promise is pinned —
- * including the drift case the promise exists for, a stored set holding half a
- * bundle.
+ * offers one checkbox, the signup panel offers one sentence to tick, and the
+ * database still stores one slug per document and records one acceptance row
+ * per document. These helpers are the whole of that grouping, so they are where
+ * the all-or-nothing promise is pinned — including the drift case the promise
+ * exists for, a stored set holding half a bundle.
  */
 const TERMS = "roblox-programme-terms";
 const PRIVACY = "roblox-privacy-policy";
@@ -29,6 +31,21 @@ describe("the bundle registry", () => {
     // Anything outside a bundle still needs a row of its own in the form, so
     // this is the question that decides whether it gets one.
     expect(isBundledConsentSlug(UNKNOWN)).toBe(false);
+  });
+
+  it("points every sentence tag at a document its own bundle covers", () => {
+    // The sentence a parent ticks names its documents inline, one named tag
+    // each, and the tags are what turn into links. A tag pointed at a slug the
+    // bundle does not cover would send a parent off to read a document their
+    // tick does not consent to — invisible in the rendered sentence, and the
+    // reason this is asserted rather than trusted to review.
+    for (const bundle of CONSENT_DOCUMENT_BUNDLES) {
+      const tagged = Object.values(bundle.sentenceTags);
+      expect([...tagged].sort()).toEqual([...bundle.slugs].sort());
+      for (const slug of tagged) {
+        expect(CONSENT_DOCUMENTS[slug]).toBeDefined();
+      }
+    }
   });
 });
 
@@ -86,5 +103,40 @@ describe("describing a stored set for a reader", () => {
 
   it("says nothing about a product that requires nothing", () => {
     expect(describeRequiredConsents([])).toEqual([]);
+  });
+});
+
+/**
+ * What one row accounts for — the signup panel stamps each tick with it, so an
+ * agreement lives exactly as long as the thing it was given for.
+ */
+describe("the slugs behind a row", () => {
+  const rowFor = (required: readonly string[], key: string) => {
+    const row = describeRequiredConsents(required).find((r) => r.key === key);
+    if (row === undefined) throw new Error(`no row ${key}`);
+    return row;
+  };
+
+  it("gives a whole bundle every slug it holds", () => {
+    const required = [TERMS, PRIVACY];
+    expect(
+      consentRowSlugs(rowFor(required, "roblox-programme"), required),
+    ).toEqual([TERMS, PRIVACY]);
+  });
+
+  it("gives a half-stored bundle only the half that is required", () => {
+    // The sentence still names both documents — it is one authored string — but
+    // the tick can only send what the product actually requires, and the stamp
+    // has to describe what was sent. So completing the other half later changes
+    // the stamp and drops the tick, which is the behaviour this exists for.
+    expect(consentRowSlugs(rowFor([PRIVACY], "roblox-programme"), [
+      PRIVACY,
+    ])).toEqual([PRIVACY]);
+  });
+
+  it("gives an unbundled document itself", () => {
+    expect(consentRowSlugs(rowFor([UNKNOWN], UNKNOWN), [UNKNOWN])).toEqual([
+      UNKNOWN,
+    ]);
   });
 });

@@ -1765,7 +1765,10 @@
       },
       "consents": {
         "heading": "Consentement requis",
-        "agree": "J’ai lu et j’accepte ces documents."
+        "agree": "J’ai lu et j’accepte ces documents.",
+        "bundles": {
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Qui inscrivez-vous ?",

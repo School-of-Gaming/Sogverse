@@ -70,9 +70,11 @@ export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {
    */
   baseScenario: "consumer-club",
   /**
-   * Both Roblox documents, because two is where the section's shape shows: one
-   * box could be mistaken for a second rules box, and two make it obvious that
-   * each document is agreed to separately.
+   * The whole Roblox bundle, which is the shape worth looking at: two documents
+   * arriving as ONE row, whose sentence names them both inline as links. What a
+   * scene is for is judging that sentence at rail width in a real locale —
+   * whether it wraps, where the links land, and whether the row still reads as
+   * one act next to the rules row beneath it.
    */
   documentSlugs: ["roblox-programme-terms", "roblox-privacy-policy"],
 };

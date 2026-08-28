@@ -10,7 +10,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Identicon } from "@/components/ui/identicon";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
-import { consentDocumentMeta } from "@/lib/constants/consent-documents";
+import {
+  consentDocumentMeta,
+  describeRequiredConsents,
+  type ConsentDocumentBundle,
+  type RequiredConsentDisplayRow,
+} from "@/lib/constants/consent-documents";
 import type { ProductType } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
@@ -207,15 +212,18 @@ export interface SignupPanelViewProps {
    */
   requiredConsentSlugs: readonly string[];
   /**
-   * Whether the parent has agreed to ALL of them, as one fact.
+   * Which of the consent rows those slugs group into the parent has ticked, by
+   * row key.
    *
-   * Not a per-document map: the documents a product requires are handed over
-   * together and cannot be accepted apart — a parent who agrees to one and not
-   * the other has not met the product's conditions, so there was never a
-   * partial state worth modelling. Never seeded; see `useSignupPanelFields`.
+   * One entry per *bundle*, not per document: a programme's documents are handed
+   * over together and cannot be accepted apart — a parent who agrees to the
+   * terms but not the privacy policy has not met the product's conditions — so
+   * one authored sentence names them all and one tick answers it. What earns a
+   * second entry is a second bundle, or a slug belonging to no bundle at all.
+   * Never seeded; see `useSignupPanelFields`.
    */
-  consentsAgreed: boolean;
-  onConsentsAgreedChange: (next: boolean) => void;
+  consentAgreements: ReadonlySet<string>;
+  onConsentAgreementChange: (rowKey: string, agreed: boolean) => void;
   onSubmit: () => void;
   /** Separate from onSubmit — the waitlist branch calls this. */
   onJoinWaitlist: () => void;
@@ -816,11 +824,17 @@ function SignupForm(
   // stops the CTA. The wrong-country half never reaches this component — it
   // replaced the form upstream — and `unlocked` renders nothing at all.
   const needsLocation = props.regionGate?.gate.kind === "no_location";
-  // The product's documents, agreed to. Vacuously true on the products that
-  // require none, which is nearly all of them — so this step costs the ordinary
-  // panel nothing and does not appear in its CTA checklist at all.
-  const consentsSatisfied =
-    props.requiredConsentSlugs.length === 0 || props.consentsAgreed;
+  // The product's documents, grouped the way the parent will meet them: one row
+  // per bundle, plus a row for anything belonging to no bundle. Derived here
+  // rather than taken as a prop so the gate below and the rows on screen cannot
+  // disagree — an unticked row a reader can see always blocks the button.
+  const consentRows = describeRequiredConsents(props.requiredConsentSlugs);
+  // Vacuously true on the products that require nothing, which is nearly all of
+  // them — so this step costs the ordinary panel nothing and does not appear in
+  // its CTA checklist at all.
+  const consentsSatisfied = consentRows.every((row) =>
+    props.consentAgreements.has(row.key),
+  );
   const formReady =
     props.selectedParticipantId !== null &&
     props.agreed &&
@@ -1017,9 +1031,9 @@ function SignupForm(
       <RequiredConsentSection
         productType={props.productType}
         selfSeat={selectedIsSelf}
-        slugs={props.requiredConsentSlugs}
-        documentsAgreed={props.consentsAgreed}
-        onDocumentsAgreedChange={props.onConsentsAgreedChange}
+        rows={consentRows}
+        agreements={props.consentAgreements}
+        onAgreementChange={props.onConsentAgreementChange}
         rulesAgreed={props.agreed}
         onRulesAgreedChange={props.onAgreedChange}
         // TEMP — strip before merge.
@@ -1062,29 +1076,25 @@ function SignupForm(
  * heading was doing — giving the CTA's prompt a visible referent — is now done
  * by the section's own, so the row is left to be a sentence and a checkbox.
  *
- * **The documents row is one checkbox covering all of them, not one per
- * document.** A product hands its documents over together and they cannot be
- * accepted apart — a parent who agreed to the terms but not the privacy policy
- * has not met the conditions and cannot enrol — so a box per document offered a
- * choice that does not exist and made the common case two clicks instead of
- * one. The database still records one acceptance row per document against its
- * own version; that is the server's bookkeeping of one act, and it does not
- * need a control each. The shape also scales: a third document lengthens the
- * list and changes no sentence, where a per-document sentence would need one
- * more translated string in five locales every time.
+ * **One checkbox per bundle, not per document — and the sentence IS the
+ * consent.** A programme hands its terms and its privacy policy over together
+ * and they cannot be accepted apart — a parent who agreed to one and not the
+ * other has not met the conditions and cannot enrol — so the pair is one row,
+ * and its label is one authored sentence naming both documents inline, each
+ * name a link. The database still records one acceptance row per document
+ * against its own version; that is the server's bookkeeping of one act, and it
+ * does not need a control each.
  *
- * **The links sit INSIDE the clickable box, above the checkbox.** One box is one
- * consent unit: the documents a parent is agreeing to and the sentence agreeing
- * to them share an edge, so there is never a question about which checkbox
- * covers which papers. Reading still comes before agreeing, so the list is what
- * the reader meets first inside the box. They open in a new tab, deliberately
- * and not as a stylistic default — the panel behind them is holding a chosen
- * child, a possibly half-answered location question and a ticked box or two, and
- * navigating away would throw all of it out to read a document the panel is
- * *asking* them to read.
+ * **Inline, rather than a list of links above a generic "I agree to these
+ * documents".** What a parent is agreeing to is a sentence, and a sentence that
+ * points at its own documents by name is the thing they can actually read back
+ * to themselves. The cost is that each bundle's sentence is authored per
+ * locale with its own fixed named tags — and that is the point rather than the
+ * price: no locale has to format a variadic list of document names into a
+ * grammatical sentence, because every locale simply writes one.
  *
- * **The whole box stays clickable, and a click on a link reads rather than
- * ticks.** That is not a handler, it is the DOM: a `<label>`'s activation
+ * **The links are inside the clickable box, and a click on one reads rather
+ * than ticks.** That is not a handler, it is the DOM: a `<label>`'s activation
  * behaviour is skipped outright when the click lands on an interactive
  * descendant, and an `<a href>` is one — so the link navigates and the box does
  * not toggle, in every engine and in jsdom. Nothing on the box listens for
@@ -1094,23 +1104,27 @@ function SignupForm(
  * `onClick` is the moment to revisit that, and the tests pin which mechanism is
  * doing the work so the change cannot pass unnoticed.
  *
- * The one exception is a slug this deploy cannot name: it is plain text, not a
- * link, so clicking it ticks the box like any other part of the row. There is
- * nothing to read there, so there is nothing being interrupted.
+ * They open in a new tab, deliberately and not as a stylistic default — the
+ * panel behind them is holding a chosen child, a possibly half-answered location
+ * question and a ticked box or two, and navigating away would throw all of it
+ * out to read a document the panel is *asking* them to read.
  *
- * **A slug this deploy cannot name is still listed, and still gated.** It
- * appears as its raw slug with no link to follow. It looks wrong, which is
- * correct: registry rows arrive by migration and the name map ships in the same
- * deploy, so this is a defect to notice — and the alternative, dropping it from
- * the list, would let the enrolment through without a consent the product
- * legally requires.
+ * **A slug belonging to no bundle is still offered, and still gates.** It has no
+ * sentence of its own and nothing to link to, so it gets a row carrying the
+ * generic sentence with its raw slug above it, as plain text — clicking it ticks
+ * the box like any other part of the row, because there is nothing to read there
+ * and so nothing being interrupted. Today that is exactly the drift case, a slug
+ * the database knows and this deploy does not: registry rows arrive by migration
+ * and the map ships in the same deploy, so it is a defect to notice. It looks
+ * wrong, which is correct — and the alternative, dropping it, would let the
+ * enrolment through without a consent the product legally requires.
  */
 function RequiredConsentSection({
   productType,
   selfSeat,
-  slugs,
-  documentsAgreed,
-  onDocumentsAgreedChange,
+  rows,
+  agreements,
+  onAgreementChange,
   rulesAgreed,
   onRulesAgreedChange,
   // TEMP — strip before merge.
@@ -1125,16 +1139,15 @@ function RequiredConsentSection({
    */
   selfSeat: boolean;
   /**
-   * The documents this product requires. Empty on nearly every product, and the
-   * documents row is then absent — leaving the heading and the rules row, which
-   * is the baseline every panel shows. Nothing is reserved for a row that is
-   * not there: the requirement set arrives with the product read and cannot
-   * change under a reader mid-form, so there is no late arrival to hold room
-   * for.
+   * What this product requires, grouped into the rows a parent meets. Empty on
+   * nearly every product, leaving the heading and the rules row — the baseline
+   * every panel shows. Nothing is reserved for rows that are not there: the
+   * requirement set arrives with the product read and cannot change under a
+   * reader mid-form, so there is no late arrival to hold room for.
    */
-  slugs: readonly string[];
-  documentsAgreed: boolean;
-  onDocumentsAgreedChange: (next: boolean) => void;
+  rows: readonly RequiredConsentDisplayRow[];
+  agreements: ReadonlySet<string>;
+  onAgreementChange: (rowKey: string, agreed: boolean) => void;
   rulesAgreed: boolean;
   onRulesAgreedChange: (next: boolean) => void;
   // TEMP — strip before merge. See `previewFillerConsents` on the view's props.
@@ -1142,7 +1155,6 @@ function RequiredConsentSection({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   const tRules = useTranslations("productDetail.signupPanel.rules");
-  const tNames = useTranslations("consentDocuments.names");
   // Exactly one of the four rules third-persons a child: the municipality
   // club's, which is a consent about "my child's seat" opening for the next
   // family. The other three are about conduct and read identically whoever
@@ -1156,41 +1168,29 @@ function RequiredConsentSection({
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
-      {slugs.length > 0 && (
-        <ConsentRow
-          agreed={documentsAgreed}
-          onAgreedChange={onDocumentsAgreedChange}
-          sentence={t("consents.agree")}
-          lead={
-            /* A list, because that is what it is: the reader is being told which
-               documents this seat comes with before being asked about them —
-               inside the box that asks, so the papers and the tick are one
-               unit. */
-            <ul className="mb-3 space-y-1 text-xs">
-              {slugs.map((slug) => {
-                const meta = consentDocumentMeta(slug);
-                return (
-                  <li key={slug}>
-                    {meta === null ? (
-                      // Never an anchor with nowhere to go — an empty href
-                      // resolves to the page the reader is already on.
-                      <span className="font-medium text-foreground">{slug}</span>
-                    ) : (
-                      <a
-                        href={meta.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-primary underline-offset-2 hover:underline"
-                      >
-                        {tNames(meta.nameKey)}
-                      </a>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          }
-        />
+      {rows.map((row) =>
+        row.kind === "bundle" ? (
+          <BundleConsentRow
+            key={row.key}
+            bundle={row.bundle}
+            agreed={agreements.has(row.key)}
+            onAgreedChange={(next) => onAgreementChange(row.key, next)}
+          />
+        ) : (
+          <ConsentRow
+            key={row.key}
+            agreed={agreements.has(row.key)}
+            onAgreedChange={(next) => onAgreementChange(row.key, next)}
+            sentence={t("consents.agree")}
+            lead={
+              /* Never an anchor with nowhere to go — an empty href resolves to
+                 the page the reader is already on. */
+              <span className="mb-3 block text-xs font-medium text-foreground">
+                {row.slug}
+              </span>
+            }
+          />
+        ),
       )}
       {/* TEMP — strip before merge. Obviously-fake extra rows, preview-only. */}
       {fillerConsents !== undefined && (
@@ -1209,22 +1209,76 @@ function RequiredConsentSection({
 }
 
 /**
+ * **One bundle, as the sentence that consents to it.**
+ *
+ * The label is the bundle's own authored sentence, rendered as rich text so
+ * each named tag becomes a link to the document it names — `<terms>…</terms>`
+ * and `<privacy>…</privacy>` on the Roblox bundle, whose slugs the bundle's
+ * `sentenceTags` map supplies. A component per bundle rather than a loop with
+ * hooks in it, and it is also what keeps the tag map local to the row it
+ * belongs to.
+ *
+ * A tag pointed at a document this deploy cannot name renders its own words as
+ * plain text instead of as an anchor. It should be unreachable — a bundle only
+ * ever names documents from the same map — but a link the renderer will not
+ * trust must degrade to its label rather than to an anchor with nowhere to go,
+ * because an empty href resolves to the page the reader is already on.
+ */
+function BundleConsentRow({
+  bundle,
+  agreed,
+  onAgreedChange,
+}: {
+  bundle: ConsentDocumentBundle;
+  agreed: boolean;
+  onAgreedChange: (next: boolean) => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel.consents.bundles");
+  const tags: Record<string, (chunks: React.ReactNode) => React.ReactNode> = {};
+  for (const [tag, slug] of Object.entries(bundle.sentenceTags)) {
+    const meta = consentDocumentMeta(slug);
+    tags[tag] = (chunks) =>
+      meta === null ? (
+        <span className="font-medium text-foreground">{chunks}</span>
+      ) : (
+        <a
+          href={meta.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary underline-offset-2 hover:underline"
+        >
+          {chunks}
+        </a>
+      );
+  }
+  return (
+    <ConsentRow
+      agreed={agreed}
+      onAgreedChange={onAgreedChange}
+      sentence={t.rich(bundle.sentenceKey, tags)}
+    />
+  );
+}
+
+/**
  * One thing to agree to: a sentence and a checkbox in a bordered box that
  * lights when ticked, the whole box clickable.
  *
- * Shared by both rows rather than written twice, because "the two rows are
+ * Shared by every row rather than written per kind, because "the rows are
  * indistinguishable" is the point of the section — a reader must not be able to
  * tell our rules from a product's documents by their treatment, only by what
  * they say. No nested box: unlike the gamer picker — whose outer box wraps a
  * border-per-selectable-row — each row is a single choice, so a box-in-a-box
  * would just be visual noise.
  *
- * `lead` is whatever the row is about, above the sentence and inside the same
- * box — the document list, on the one row that has one. It is a slot rather
- * than a list prop because the box's job is to hold one consent unit whole, not
- * to know what kind of thing is being consented to; a caller passing links
- * accepts that a click on one reads instead of ticking, which the DOM gives for
- * free (see the section's note above).
+ * `sentence` takes a node rather than a string because a bundle's sentence
+ * carries its own links inline; a caller passing links accepts that a click on
+ * one reads instead of ticking, which the DOM gives for free (see the section's
+ * note above).
+ *
+ * `lead` is the one thing a row can carry that its sentence cannot say: the raw
+ * slug of a document this deploy has no name and no sentence for. Everything
+ * nameable is named inside the sentence, so nothing else uses this slot.
  */
 function ConsentRow({
   agreed,
@@ -1234,7 +1288,7 @@ function ConsentRow({
 }: {
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
-  sentence: string;
+  sentence: React.ReactNode;
   lead?: React.ReactNode;
 }) {
   return (

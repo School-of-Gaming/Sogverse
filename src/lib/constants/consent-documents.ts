@@ -93,9 +93,42 @@ export interface ConsentDocumentBundle {
   id: string;
   /**
    * Key under the `consentDocuments.bundles` message namespace, named the same
-   * way and for the same reason as a document's own `nameKey`.
+   * way and for the same reason as a document's own `nameKey`. It *names* the
+   * set — an admin-facing label — which is why it lives beside the document
+   * names in a namespace `tlh` serves in English.
    */
   labelKey: "robloxProgramme";
+  /**
+   * Key under the `productDetail.signupPanel.consents.bundles` message
+   * namespace: the sentence a parent actually ticks.
+   *
+   * **Deliberately a second key rather than a reuse of `labelKey`**, even
+   * though the two spell the same word today. They index different namespaces
+   * governed by different rules: a label that names a document is served in
+   * English under `tlh` (a link label has to call a document what the document
+   * calls itself), while this is ordinary product copy and is written in
+   * Klingon like every other sentence on the panel — with the English document
+   * names sitting inside its tags. Collapsing them into one key would put the
+   * sentence inside the English-under-Klingon carve-out and delete the joke.
+   */
+  sentenceKey: "robloxProgramme";
+  /**
+   * The named rich-text tags the sentence carries, each mapped to the document
+   * that tag links to.
+   *
+   * **This is why a bundle is the panel's unit and not just the admin form's.**
+   * The sentence is the consent, so the documents are named *inside* it and each
+   * name is its own link — which means the sentence has to be authored per
+   * bundle, per locale, with a fixed set of tags this map can fill in. No
+   * variadic list formatting, and every locale writes a natural sentence rather
+   * than a stub with a list bolted under it.
+   *
+   * The values are exactly this bundle's `slugs`; the reading order is the
+   * sentence's, so this map's own order says nothing. A unit test pins the two
+   * against each other, because a tag pointed at a slug outside the bundle
+   * would link a parent to a document their tick does not cover.
+   */
+  sentenceTags: Readonly<Record<string, string>>;
   /** The documents, in the order they should be read. */
   slugs: readonly string[];
 }
@@ -104,6 +137,11 @@ export const CONSENT_DOCUMENT_BUNDLES: readonly ConsentDocumentBundle[] = [
   {
     id: "roblox-programme",
     labelKey: "robloxProgramme",
+    sentenceKey: "robloxProgramme",
+    sentenceTags: {
+      terms: "roblox-programme-terms",
+      privacy: "roblox-privacy-policy",
+    },
     slugs: ["roblox-programme-terms", "roblox-privacy-policy"],
   },
 ];
@@ -148,26 +186,41 @@ export function completeConsentBundles(slugs: readonly string[]): string[] {
 }
 
 /**
- * One line of a read-only "what this product requires" list: either a bundle,
- * named as the unit it is, or a single document that belongs to no bundle.
+ * One line of a product's requirement set: either a bundle, named as the unit
+ * it is, or a single document that belongs to no bundle.
+ *
+ * The same rows serve two readers, which is the point of having one function
+ * produce them: the admin details page states what a product requires, and the
+ * public signup panel offers one tickable row per line. A bundle is therefore
+ * the unit at both ends — an admin attaches one, a parent agrees to one — and
+ * neither surface can invent a grouping the other does not have.
  */
 export type RequiredConsentDisplayRow =
   | { kind: "bundle"; key: string; bundle: ConsentDocumentBundle }
   | { kind: "document"; key: string; slug: string };
 
 /**
- * A product's stored requirement set, as the rows an admin should read.
+ * A product's stored requirement set, as rows.
  *
  * Bundles collapse to one line each — the same unit the form offers, so what an
- * admin picked and what the details page reports back are the same sentence —
- * and anything left over is listed on its own, whether it is a document with no
- * bundle or a slug this deploy cannot even name. Nothing is dropped: a set is
- * still fully described by its rows, which is what makes this safe to render in
- * place of the raw list.
+ * admin picked, what the details page reports back and what a parent ticks are
+ * the same thing — and anything left over is listed on its own, whether it is a
+ * document with no bundle or a slug this deploy cannot even name. Nothing is
+ * dropped: a set is still fully described by its rows, which is what makes this
+ * safe to render in place of the raw list.
  *
  * A bundle appears when ANY of its documents is stored, matching the form's own
  * reading of a half-set — the product does require the programme's documents,
  * and the form heals the missing half on its next save.
+ *
+ * **A `document` row has no sentence and no link, so it is a fallback and not a
+ * shape to design toward.** A bundle is what carries an authored sentence and
+ * the links inside it; a document standing outside every bundle can only be
+ * offered as its raw slug beside the generic sentence. Today that means exactly
+ * the drift case — a slug the database knows and this deploy does not — because
+ * every document `CONSENT_DOCUMENTS` names belongs to a bundle. A new document
+ * that a parent should be able to *read* before ticking wants a bundle of its
+ * own with a sentence to match, not a loose entry.
  */
 export function describeRequiredConsents(
   slugs: readonly string[],
@@ -185,4 +238,28 @@ export function describeRequiredConsents(
     rows.push({ kind: "document", key: slug, slug });
   }
   return rows;
+}
+
+/**
+ * Which of a product's required slugs one row actually accounts for.
+ *
+ * The signup panel stamps each tick with this, so an agreement survives exactly
+ * as long as the thing it was given for. A bundle row's sentence names every
+ * document in the bundle whatever the product stores, but what the tick *sends*
+ * is only the stored half — so a requirement set that grows under a long-open
+ * tab has to drop that row's tick, while leaving the ticks on rows nothing
+ * happened to. Stamping the whole requirement set instead would clear every row
+ * whenever any of them changed, which is a rule about the wrong thing.
+ *
+ * A row nothing requires yields an empty list, which no row this function is
+ * handed can be: `describeRequiredConsents` only emits a bundle row when the
+ * product stores at least one of its documents.
+ */
+export function consentRowSlugs(
+  row: RequiredConsentDisplayRow,
+  required: readonly string[],
+): string[] {
+  if (row.kind === "document") return [row.slug];
+  const stored = new Set(required);
+  return row.bundle.slugs.filter((slug) => stored.has(slug));
 }

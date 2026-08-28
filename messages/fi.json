@@ -1765,7 +1765,10 @@
       },
       "consents": {
         "heading": "Vaadittu suostumus",
-        "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne."
+        "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
+        "bundles": {
+          "robloxProgramme": "Olen lukenut ja hyväksyn Roblox-ohjelman <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Kenet ilmoitat?",

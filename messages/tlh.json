@@ -1809,7 +1809,10 @@
       },
       "consents": {
         "heading": "poQlu’bogh chaw’",
-        "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj."
+        "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
+        "bundles": {
+          "robloxProgramme": "<terms>Roblox Programme Terms & Conditions</terms>, <privacy>Roblox Programme Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "’Iv muvbogh SoH?",

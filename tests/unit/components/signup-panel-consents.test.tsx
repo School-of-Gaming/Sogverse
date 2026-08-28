@@ -12,24 +12,47 @@ import { ROUTES } from "@/lib/constants";
  * **The panel's Required consent section.**
  *
  * One section, always present, holding one tickable row per thing the parent is
- * agreeing to: the product's own documents when it attaches any, and — always,
- * last — our rules. The panel is presentational, so this drives it directly with
- * props: no mutation, no query client, no router. Translations are stubbed to
- * echo their keys, so nothing here depends on English wording.
+ * agreeing to: one row per bundle of the product's documents, one row for any
+ * slug belonging to no bundle, and — always, last — our rules. The panel is
+ * presentational, so this drives it directly with props: no mutation, no query
+ * client, no router. Translations are stubbed to echo their keys, so nothing
+ * here depends on English wording.
  *
- * What is worth pinning: the section is never empty, the documents are named as
- * links a reader can follow before agreeing and sit inside the very box that
- * consents to them, clicking one reads instead of ticking while clicking
- * anywhere else in the box ticks, one tick covers all of them, the CTA names the
- * section until every row in it is ticked, and a slug this deploy cannot name is
- * still listed and still gates.
+ * What is worth pinning: the section is never empty, a bundle is ONE row whose
+ * sentence carries a link per document inside the very box that consents to
+ * them, clicking a link reads instead of ticking while clicking anywhere else
+ * in the box ticks, the CTA names the section until every row in it is ticked,
+ * and a slug this deploy cannot name still gets a row of its own and still
+ * gates.
  */
-vi.mock("next-intl", () => {
+vi.mock("next-intl", async () => {
+  const { createElement, Fragment } = await import("react");
+  type TagFn = (chunks: unknown) => import("react").ReactNode;
   type PlainValue = string | number;
   const echo = (key: string, values?: Record<string, PlainValue>) =>
     values ? `${key}:${JSON.stringify(values)}` : key;
   const t = (key: string, values?: Record<string, PlainValue>) =>
     echo(key, values);
+  // Each named tag wraps its own name, SIDE BY SIDE after the echoed key —
+  // which is the shape a real bundle sentence has (two links in one sentence).
+  // Nesting them, as a reduce would, produces an anchor inside an anchor and
+  // would make the two-link assertions below meaningless.
+  t.rich = (key: string, values?: Record<string, PlainValue | TagFn>) => {
+    const plain: Record<string, PlainValue> = {};
+    const tags: [string, TagFn][] = [];
+    for (const [name, value] of Object.entries(values ?? {})) {
+      if (typeof value === "function") tags.push([name, value]);
+      else plain[name] = value;
+    }
+    return createElement(
+      Fragment,
+      null,
+      echo(key, plain),
+      ...tags.map(([name, tag]) =>
+        createElement(Fragment, { key: name }, tag(name)),
+      ),
+    );
+  };
   return { useTranslations: () => t };
 });
 
@@ -43,6 +66,8 @@ const CHILD: SignupParticipantChoice = {
 
 const TERMS = "roblox-programme-terms";
 const PRIVACY = "roblox-privacy-policy";
+/** The key `describeRequiredConsents` gives the Roblox pair's single row. */
+const ROBLOX_BUNDLE = "roblox-programme";
 
 function panel(
   overrides: Partial<SignupPanelViewProps> = {},
@@ -72,8 +97,8 @@ function panel(
     agreed: true,
     onAgreedChange: () => {},
     requiredConsentSlugs: [],
-    consentsAgreed: false,
-    onConsentsAgreedChange: () => {},
+    consentAgreements: new Set<string>(),
+    onConsentAgreementChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
@@ -102,8 +127,9 @@ describe("a product with no required consents", () => {
     // The heading is not conditional: the rules live under it, so the section
     // exists on every product and this is the baseline every panel shows.
     expect(container.textContent).toContain("consents.heading");
-    // No document list, no document sentence — nothing is reserved for a row
+    // No bundle sentence, no fallback sentence — nothing is reserved for a row
     // that is not there.
+    expect(container.textContent).not.toContain("robloxProgramme");
     expect(container.textContent).not.toContain("consents.agree");
     expect(checkboxes(container)).toHaveLength(1);
     expect(links(container)).toHaveLength(0);
@@ -117,20 +143,34 @@ describe("a product with no required consents", () => {
     );
 
     // One label for the whole section, whichever row inside it is outstanding —
-    // the two rows look alike, so pointing at one of them by name would be
-    // pointing at something the reader cannot pick out.
+    // the rows look alike, so pointing at one of them by name would be pointing
+    // at something the reader cannot pick out.
     expect(cta(container).textContent).toBe("ctaAgreeConsent");
     expect(cta(container).disabled).toBe(true);
   });
 });
 
-describe("a product that requires consents", () => {
-  it("names every document in a link that opens in a new tab", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panel({ requiredConsentSlugs: [TERMS, PRIVACY] })}
-      />,
-    );
+describe("a bundle of documents", () => {
+  const bundled = (overrides: Partial<SignupPanelViewProps> = {}) =>
+    panel({ requiredConsentSlugs: [TERMS, PRIVACY], ...overrides });
+
+  it("is ONE row, whose sentence names both documents as links", () => {
+    const { container } = render(<SignupPanelView {...bundled()} />);
+
+    // The pair is handed over together and cannot be accepted apart, so a
+    // second box would offer a choice that does not exist. The second checkbox
+    // here is the rules row, which is ticked.
+    const boxes = checkboxes(container);
+    expect(boxes).toHaveLength(2);
+    expect(boxes[0].checked).toBe(false);
+    // The sentence IS the consent: it is the bundle's own authored string, not
+    // a generic one with a list bolted above it.
+    expect(container.textContent).toContain("robloxProgramme");
+    expect(container.textContent).not.toContain("consents.agree");
+  });
+
+  it("points each link at its own document, in a new tab", () => {
+    const { container } = render(<SignupPanelView {...bundled()} />);
 
     const anchors = links(container);
     expect(anchors.map((a) => a.getAttribute("href"))).toEqual([
@@ -146,42 +186,20 @@ describe("a product that requires consents", () => {
     }
   });
 
-  it("offers ONE unticked box for the documents, plus the rules row", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panel({ requiredConsentSlugs: [TERMS, PRIVACY] })}
-      />,
-    );
+  it("keeps both links inside the box that consents to them", () => {
+    const { container } = render(<SignupPanelView {...bundled()} />);
 
-    // Two documents, one consent: the pair is handed over together and cannot
-    // be accepted apart, so a second box would offer a choice that does not
-    // exist. The second checkbox here is the rules row, which is ticked.
-    const boxes = checkboxes(container);
-    expect(boxes).toHaveLength(2);
-    expect(boxes[0].checked).toBe(false);
-    expect(container.textContent).toContain("consents.agree");
-  });
-
-  it("lists the documents inside the box that consents to them", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panel({ requiredConsentSlugs: [TERMS, PRIVACY] })}
-      />,
-    );
-
-    // One box is one consent unit: a parent can see which checkbox covers which
-    // papers because they share an edge. This is the structural half of the
-    // behaviour pinned in the two tests below.
+    // One box is one consent unit, and the sentence in it is what the parent is
+    // agreeing to — so the documents it names cannot sit anywhere else. This is
+    // the structural half of the behaviour pinned in the two tests below.
     const label = container.querySelector("label:has(input)");
     expect(label?.querySelectorAll("a")).toHaveLength(2);
   });
 
   it("does not tick the box when a document link is clicked", () => {
-    const onConsentsAgreedChange = vi.fn();
+    const onConsentAgreementChange = vi.fn();
     const { container } = render(
-      <SignupPanelView
-        {...panel({ requiredConsentSlugs: [TERMS], onConsentsAgreedChange })}
-      />,
+      <SignupPanelView {...bundled({ onConsentAgreementChange })} />,
     );
 
     // A listener OUTSIDE React's root container, so it sees the native click
@@ -196,7 +214,7 @@ describe("a product that requires consents", () => {
     // The box staying unticked is the DOM's own rule: a `<label>`'s activation
     // behaviour is skipped when the click lands on an interactive descendant,
     // and an `<a href>` inside the box is one. A link reads; it does not tick.
-    expect(onConsentsAgreedChange).not.toHaveBeenCalled();
+    expect(onConsentAgreementChange).not.toHaveBeenCalled();
     // The other half, pinned separately: WHICH mechanism is doing that work.
     // Nothing swallows the click on its way out, so the assertion above cannot
     // be being satisfied by a `stopPropagation` on the anchor — and a future
@@ -206,50 +224,36 @@ describe("a product that requires consents", () => {
   });
 
   it("ticks when the box is clicked anywhere but a link", () => {
-    const onConsentsAgreedChange = vi.fn();
+    const onConsentAgreementChange = vi.fn();
     const { container } = render(
-      <SignupPanelView
-        {...panel({
-          requiredConsentSlugs: [TERMS, PRIVACY],
-          onConsentsAgreedChange,
-        })}
-      />,
+      <SignupPanelView {...bundled({ onConsentAgreementChange })} />,
     );
 
     // The other side of the same coin, and the reason the whole box stays
     // clickable: everything in it that is not a link is the tick target,
-    // including the padding the document list sits in.
+    // including the words of the sentence between the two links.
     fireEvent.click(container.querySelector("label:has(input)")!);
 
-    expect(onConsentsAgreedChange).toHaveBeenCalledWith(true);
+    expect(onConsentAgreementChange).toHaveBeenCalledWith(ROBLOX_BUNDLE, true);
   });
 
-  it("reports the new value when the documents box is ticked", () => {
-    const onConsentsAgreedChange = vi.fn();
+  it("reports its own row key when the checkbox is ticked", () => {
+    const onConsentAgreementChange = vi.fn();
     const { container } = render(
-      <SignupPanelView
-        {...panel({
-          requiredConsentSlugs: [TERMS, PRIVACY],
-          onConsentsAgreedChange,
-        })}
-      />,
+      <SignupPanelView {...bundled({ onConsentAgreementChange })} />,
     );
 
     fireEvent.click(checkboxes(container)[0]);
 
-    expect(onConsentsAgreedChange).toHaveBeenCalledWith(true);
+    // The key, not a bare boolean: a product with two bundles has two rows, and
+    // the caller has to know which one moved.
+    expect(onConsentAgreementChange).toHaveBeenCalledWith(ROBLOX_BUNDLE, true);
   });
 
-  it("blocks the CTA and names the section while the documents are unticked", () => {
+  it("blocks the CTA and names the section while the bundle is unticked", () => {
     const onSubmit = vi.fn();
     const { container } = render(
-      <SignupPanelView
-        {...panel({
-          requiredConsentSlugs: [TERMS, PRIVACY],
-          consentsAgreed: false,
-          onSubmit,
-        })}
-      />,
+      <SignupPanelView {...bundled({ onSubmit })} />,
     );
 
     expect(cta(container).textContent).toBe("ctaAgreeConsent");
@@ -261,9 +265,8 @@ describe("a product that requires consents", () => {
   it("still blocks the CTA when only the rules row is outstanding", () => {
     const { container } = render(
       <SignupPanelView
-        {...panel({
-          requiredConsentSlugs: [TERMS, PRIVACY],
-          consentsAgreed: true,
+        {...bundled({
+          consentAgreements: new Set([ROBLOX_BUNDLE]),
           agreed: false,
         })}
       />,
@@ -275,13 +278,12 @@ describe("a product that requires consents", () => {
     expect(cta(container).disabled).toBe(true);
   });
 
-  it("releases the CTA once both rows are ticked", () => {
+  it("releases the CTA once every row is ticked", () => {
     const onSubmit = vi.fn();
     const { container } = render(
       <SignupPanelView
-        {...panel({
-          requiredConsentSlugs: [TERMS, PRIVACY],
-          consentsAgreed: true,
+        {...bundled({
+          consentAgreements: new Set([ROBLOX_BUNDLE]),
           onSubmit,
         })}
       />,
@@ -295,9 +297,8 @@ describe("a product that requires consents", () => {
   it("puts the rules row last, below the documents", () => {
     const { container } = render(
       <SignupPanelView
-        {...panel({
-          requiredConsentSlugs: [TERMS],
-          consentsAgreed: true,
+        {...bundled({
+          consentAgreements: new Set([ROBLOX_BUNDLE]),
           agreed: false,
         })}
       />,
@@ -310,21 +311,36 @@ describe("a product that requires consents", () => {
     expect(boxes[0].checked).toBe(true);
     expect(boxes[1].checked).toBe(false);
   });
+
+  it("is one row even when the product stores only half the bundle", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ requiredConsentSlugs: [TERMS] })} />,
+    );
+
+    // A half-set should be unreachable from the admin form, but it can predate
+    // the bundle or arrive by hand. The sentence names the programme's
+    // documents whatever the product stores, so it is still one row and still
+    // two links — the wire payload is the half that is actually required.
+    expect(checkboxes(container)).toHaveLength(2);
+    expect(links(container)).toHaveLength(2);
+  });
 });
 
-describe("a required slug this deploy cannot name", () => {
+describe("a required slug in no bundle", () => {
   const UNKNOWN = "some-future-document";
 
-  it("is still listed, as the slug itself and with no link", () => {
+  it("gets a row of its own, as the slug itself and with no link", () => {
     const { container } = render(
       <SignupPanelView {...panel({ requiredConsentSlugs: [UNKNOWN] })} />,
     );
 
+    // No bundle means no authored sentence and nothing to link to, so the row
+    // falls back to the generic sentence with the raw slug above it.
     expect(container.textContent).toContain(UNKNOWN);
+    expect(container.textContent).toContain("consents.agree");
     // Never an anchor with nowhere to go: an empty href resolves to the page
     // the reader is already on.
     expect(links(container)).toHaveLength(0);
-    // The documents row is offered exactly as it is for a named document.
     expect(checkboxes(container)).toHaveLength(2);
   });
 
@@ -335,8 +351,31 @@ describe("a required slug this deploy cannot name", () => {
 
     // The whole point of the fallback: dropping an unnameable requirement
     // would let the enrolment through without a consent the product legally
-    // requires, which is worse than an ugly list entry.
+    // requires, which is worse than an ugly row.
     expect(cta(container).disabled).toBe(true);
     expect(cta(container).textContent).toBe("ctaAgreeConsent");
+  });
+
+  it("keys its tick on the slug, and stands beside a bundle rather than in it", () => {
+    const onConsentAgreementChange = vi.fn();
+    const { container } = render(
+      <SignupPanelView
+        {...panel({
+          requiredConsentSlugs: [TERMS, PRIVACY, UNKNOWN],
+          consentAgreements: new Set([ROBLOX_BUNDLE]),
+          onConsentAgreementChange,
+        })}
+      />,
+    );
+
+    // Three rows: the bundle (ticked), the drift slug (not), the rules
+    // (ticked) — so the one unticked box is the drift row, and it alone is
+    // still holding the button.
+    const boxes = checkboxes(container);
+    expect(boxes.map((b) => b.checked)).toEqual([true, false, true]);
+    expect(cta(container).disabled).toBe(true);
+
+    fireEvent.click(boxes[1]);
+    expect(onConsentAgreementChange).toHaveBeenCalledWith(UNKNOWN, true);
   });
 });

@@ -1765,7 +1765,10 @@
       },
       "consents": {
         "heading": "Obligatoriskt samtycke",
-        "agree": "Jag har läst och godkänner dessa dokument."
+        "agree": "Jag har läst och godkänner dessa dokument.",
+        "bundles": {
+          "robloxProgramme": "Jag har läst och godkänner Roblox-programmets <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Vem anmäler du?",

@@ -151,14 +151,16 @@ export function SignupPanel({
   /**
    * The documents the parent agreed to, in the product's own order.
    *
-   * One tick covers the whole list, so this is the list itself — or nothing at
-   * all when the box is unticked, which the CTA already stops from being sent.
-   * Read from the required list at click time rather than from anything held
-   * beside it: the agreement is stamped with the set it was given for (see
-   * `useSignupPanelFields`), so a requirement that changed under a long-open
-   * tab has already dropped the tick, and this cannot send a slug the parent
-   * was not shown. The RPC refuses a short list regardless, which is the
-   * guarantee that matters.
+   * The panel groups the required slugs into rows and asks about each row, but
+   * the wire shape is the flat list either way: every row ticked means every
+   * required document agreed to, so this is the required list itself — or
+   * nothing at all while any row is outstanding, which the CTA already stops
+   * from being sent. Read from the required list at click time rather than from
+   * anything held beside it: each tick is stamped with the slugs its own row
+   * covered (see `useSignupPanelFields`), so a requirement that changed under a
+   * long-open tab has already dropped that row's tick, and this cannot send a
+   * slug the parent was not shown. The RPC refuses a short list regardless,
+   * which is the guarantee that matters.
    */
   const consentedDocuments = () =>
     fields.consentsAgreed ? [...fields.requiredConsentSlugs] : [];

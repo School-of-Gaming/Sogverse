@@ -1765,7 +1765,10 @@
       },
       "consents": {
         "heading": "Required consent",
-        "agree": "I have read and agree to these documents."
+        "agree": "I have read and agree to these documents.",
+        "bundles": {
+          "robloxProgramme": "I have read and agree to the Roblox Programme <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Who are you enrolling?",

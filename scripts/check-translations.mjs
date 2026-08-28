@@ -62,6 +62,15 @@ const ENGLISH_UNDER_KLINGON = [
   // label has to call a document what the document itself is called, and both
   // of these documents are served in English under `tlh`, exactly as the
   // `roblox.legal.*` labels pointing at the same two pages already are.
+  //
+  // Which is why the signup panel's *bundle sentence* — the one a parent
+  // actually ticks, with those two names inside its `<terms>` / `<privacy>`
+  // tags — is authored under `productDetail.signupPanel.consents.bundles`
+  // instead, deliberately outside this list. A subtree root exempts everything
+  // beneath it, so a sentence filed in here would have been served in English
+  // whole; filed where it is, `tlh` writes the sentence in Klingon and spells
+  // the two document names in English inside it, which is exactly the split
+  // this exemption is trying to draw.
   "consentDocuments",
   "roblox.legal.privacy",
   "roblox.legal.safeguarding",

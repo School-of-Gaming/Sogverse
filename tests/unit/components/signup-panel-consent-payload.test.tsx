@@ -5,18 +5,42 @@ import { fireEvent, render } from "@testing-library/react";
  * **What the panel actually sends once the boxes are ticked.**
  *
  * The gate itself is tested against the view (`signup-panel-consents`); this is
- * the other half — that the adapter turns one tick into the whole list of slugs
- * the enrolment routes read, on both doors. Both are worth pinning separately:
- * a CTA that unlocks while the request goes out short would leave the database
- * refusing an enrolment the parent had every reason to think they had
- * completed.
+ * the other half — that the adapter turns a bundle's single tick into the whole
+ * list of slugs the enrolment routes read, on both doors. Both are worth
+ * pinning separately: a CTA that unlocks while the request goes out short would
+ * leave the database refusing an enrolment the parent had every reason to think
+ * they had completed.
+ *
+ * The panel groups slugs into rows and the wire shape does not: one bundle row
+ * covering two documents still sends two slugs, which is exactly the seam a
+ * grouping change could break silently.
  */
-vi.mock("next-intl", () => {
+vi.mock("next-intl", async () => {
+  const { createElement, Fragment } = await import("react");
+  type TagFn = (chunks: unknown) => import("react").ReactNode;
   type PlainValue = string | number;
   const echo = (key: string, values?: Record<string, PlainValue>) =>
     values ? `${key}:${JSON.stringify(values)}` : key;
   const t = (key: string, values?: Record<string, PlainValue>) =>
     echo(key, values);
+  // The bundle row's label is rich text with a tag per document; the tags are
+  // rendered side by side so a real anchor exists per link, as in the panel.
+  t.rich = (key: string, values?: Record<string, PlainValue | TagFn>) => {
+    const plain: Record<string, PlainValue> = {};
+    const tags: [string, TagFn][] = [];
+    for (const [name, value] of Object.entries(values ?? {})) {
+      if (typeof value === "function") tags.push([name, value]);
+      else plain[name] = value;
+    }
+    return createElement(
+      Fragment,
+      null,
+      echo(key, plain),
+      ...tags.map(([name, tag]) =>
+        createElement(Fragment, { key: name }, tag(name)),
+      ),
+    );
+  };
   return { useTranslations: () => t, useLocale: () => "en" };
 });
 
@@ -84,7 +108,7 @@ const cta = (c: HTMLElement) => {
   return buttons[buttons.length - 1];
 };
 
-/** Tick every row of the Required consent section: documents, then rules. */
+/** Tick every row of the Required consent section: bundles, then rules. */
 function agreeToEverything(container: HTMLElement) {
   for (const box of boxes(container)) fireEvent.click(box);
 }
@@ -95,7 +119,7 @@ beforeEach(() => {
 });
 
 describe("the agreed documents reach the enrolment request", () => {
-  it("sends the whole required list on a signup, from one tick", () => {
+  it("sends both slugs on a signup, from the bundle's one tick", () => {
     const { container } = render(
       <SignupPanel
         product={PRODUCT}
