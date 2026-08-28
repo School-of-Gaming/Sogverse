@@ -132,6 +132,8 @@ The pattern that works: hold a local `committing` boolean, flip it true *synchro
 
 Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late and does not close the gap. The flag has to be live before any render after the click.
 
+The pattern stays inline per screen — **do not extract it into a shared `useCommittingMutation`-style hook.** That was tried and failed: screens differ in how they leave (full unload vs. view swap vs. `useTransition`), in which outcomes clear the flag, and in what other pending states compose in, so the abstraction dissolved into per-call-site configuration. This prose rule exists *because* the hook didn't work.
+
 **Rule: the loading affordance is a property of the call, chosen when you write it — never something discovered at runtime.** You are the one writing the query. You know whether it is a cached read, an indexed lookup of a bounded set, or a heavy aggregate over a third party. That knowledge picks the affordance; a timer that waits to find out does not. There are three categories and nothing else:
 
 1. **Already cached, or resolvable synchronously** → **no loading state at all**, ever. React Query knows this for you, and it is the strongest signal available because it costs nothing.
@@ -276,11 +278,11 @@ The style guide demos components; a *page-level* change has to be judged as a pa
 
 ### Customer Enrollment & Billing
 
-See `docs/products-architecture.md` for the purchase / participation flow and the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events).
+See `docs/architecture/products.md` for the purchase / participation flow and the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events).
 
 ### Voice Chat (Daily.co)
 
-The full voice architecture auto-loads from colocated `CLAUDE.md` files when you work under `src/components/voice/` (scheduled group rooms) and `src/components/voice/instant/` (instant rooms). The 9-approach Web Audio investigation behind the volume workaround remains in `docs/chrome-webrtc-volume-bug.md` as history.
+The full voice architecture auto-loads from colocated `CLAUDE.md` files when you work under `src/components/voice/` (scheduled group rooms) and `src/components/voice/instant/` (instant rooms). The 9-approach Web Audio investigation behind the volume workaround remains in `docs/records/chrome-webrtc-volume-bug.md` as history.
 
 **Rule: Realtime hooks must only invalidate queries — never make Supabase data queries in callbacks.** Same deadlock risk as `onAuthStateChange`.
 
@@ -310,9 +312,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |
 
-- `docs/` holds the docs a human deliberately maintains and that don't map to one directory: cross-cutting architecture spanning many systems (products, db-authorization, performance), point-in-time records (security audit, bug/fix write-ups, gap analyses), and ops runbooks (slack, admin quota, stripe testing). When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
-- `docs/plans/` holds decided, ready-to-build implementation plans, each self-contained enough for a fresh session to execute without prior context. A plan is **deleted** when its work lands — a file sitting there means the work is still open. See its own `CLAUDE.md`.
-- `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`. **When an item is fully done with nothing left to discuss, delete it — don't check it off (`[x]`).** `TODO.md` tracks open work, not a changelog; the record of what was done lives in git history and in the docs/code the work produced. Leave `[ ]`/`[x]` only for partially-done items where the checked sub-points still give context for the open ones.
+- `docs/` holds the docs a human deliberately maintains and that don't map to one directory, organized by doc *type* — each subdirectory owns its rules in its own `CLAUDE.md`: `architecture/` (living cross-cutting systems and repo-wide topics), `investigations/` (researched, nothing decided), `plans/` (decided and ready to build; **deleted** when the work lands), `runbooks/` (procedures run against live systems), `records/` (frozen stories behind how something got the way it is), `feedback/` (outside input — things to consider, not to do). `docs/CLAUDE.md` carries the category map and house style; a doc fitting no category sits at `docs/` top level. When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
+- `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`. **When an item is fully done with nothing left to discuss, delete it — don't check it off (`[x]`).** `TODO.md` tracks open work, not a changelog; the record of what was done lives in git history and in the docs/code the work produced. Leave `[ ]`/`[x]` only for partially-done items where the checked sub-points still give context for the open ones. **Additions need the owner's explicit approval**: TODO.md is the owner's backlog — a statement of where the project's attention goes — so on finding something worth tracking, propose it with its justification and write it in only once approved. A mention in a work summary is not approval. (Items an approved plan or the owner's own instruction already names are fine.)
 
 **Rule: Docs state their rules self-containedly — never cite a specific code symbol as an illustration.** A pointer like "see `getParticipationsForGamers` in `participations.service.ts`" rots silently: the function gets renamed, moved, or deleted, and the doc goes on citing something that no longer exists or no longer makes the point. Describe the *shape* of the code instead, so the rule stands on its own. Two things stay fair game: naming an API the rule mandates (a rule like "resolve redirect targets through `resolveInternalPath()`" *is* that name — it cannot be stated without it), and directory or module references used for navigation, which are stable.
 
@@ -373,3 +374,14 @@ work under `tests/`). Two things worth knowing from anywhere:
 **Rule: `npm run lint` must produce zero errors and zero warnings.** Our lint config is strict on purpose. When lint flags a line, resist the urge to silence it with a one-line patch (a cast, a disable comment, a throwaway rename). Stop and ask: *why* is the linter unhappy? The flagged line is usually a symptom — the real problem is often a design issue one or two levels up (wrong type at the boundary, a function doing two things, state living in the wrong place, a missing abstraction). Fix the underlying cause so the warning goes away naturally.
 
 **Rule: Suppressing a lint rule (`eslint-disable`, `// @ts-expect-error`, etc.) requires strong justification and an inline `--` description explaining it.** Suppression is a last resort, not a shortcut. Only suppress when you've concluded the rule genuinely does not apply to this specific case — and write *why* directly next to the disable comment in the form `// eslint-disable-next-line some-rule -- reason here`. "Lint was noisy" is not a justification. This is mechanically enforced by `@eslint-community/eslint-comments/require-description` — an undescribed disable will fail lint.
+
+### Convert recurring bug classes to correctness-by-mechanism
+
+**Rule: when the same class of bug keeps recurring on a surface — or a single instance would be expensive (money, auth, children's data) — and the rules for doing it right exist only as convention (docs, comments, review culture), the fix is the *class*, not the instance: convert the surface to correctness-by-mechanism.** Four steps, in order:
+
+1. **Enumerate the surface as a regeneration command** (a grep, a glob, a catalog query) — never a frozen list; snapshots drift, commands don't.
+2. **Classify every element by intent, machine-readably** — annotations a test can consume. The classification answers one question: *what would a missing guard mean here — a bug, or the design?* An element that can't be classified is the first finding.
+3. **Build the CI completeness check**: every element carries exactly one classification, and every classification names its verifier. This is the load-bearing step — allowlist growth is the failure mode of every allowlist design, and the completeness check is what polices it.
+4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
+
+The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).

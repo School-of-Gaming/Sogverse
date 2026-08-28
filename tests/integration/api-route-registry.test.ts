@@ -4,7 +4,7 @@ import { join, relative } from "node:path";
 import type { UserRole } from "@/types";
 
 /**
- * The route verification spine — docs/route-boundary-architecture.md §3.3.
+ * The route verification spine — docs/architecture/route-boundary.md §3.3.
  *
  * The HTTP route boundary has the same shape of problem the database
  * authorization layer had: the right way to write a route exists and is mostly

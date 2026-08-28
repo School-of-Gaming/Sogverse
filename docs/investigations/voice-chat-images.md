@@ -1,12 +1,10 @@
-# Images in voice-room chat — investigation
+# Images in voice-room chat
 
-> **STATUS: INVESTIGATION, NOT A DECIDED PLAN. DO NOT BUILD FROM THIS FILE.**
->
-> This does not meet the bar `docs/plans/CLAUDE.md` sets for a plan: the shape is not
-> agreed and several product decisions are open (see **Open questions**). It lives here
-> so the constraints and the rejected alternatives are not lost and do not have to be
-> re-derived. Turn it into a plan by settling the open questions, then rewrite it in the
-> plan format and drop this banner.
+**Status: investigation, nothing decided — do not build from this file.** Several
+product decisions are open (see **Open questions**); this exists so the constraints and
+rejected alternatives are not re-derived. Researched August 2026. If committed to, it
+becomes a `docs/plans/` plan and this file is deleted. (It previously sat in
+`docs/plans/` under an apologetic banner because no investigations home existed yet.)
 
 ## What was asked
 

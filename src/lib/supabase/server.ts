@@ -39,7 +39,7 @@ export async function createClient(): Promise<AppSupabaseClient> {
 
 // `getClaims()` verifies the access token locally against the project's
 // published ES256 JWKS — no GoTrue round-trip, unlike `getUser()` (see
-// docs/performance.md, the getUser→getClaims migration). The proxy remains the
+// docs/architecture/performance.md, the getUser→getClaims migration). The proxy remains the
 // single token-refresh point, so by the time these helpers run the request's
 // cookie already holds a fresh token to verify.
 type ServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -76,7 +76,7 @@ export async function getUser() {
 // render), so there's no cross-request leakage. Must be created at module scope
 // to memoize; wrapping it inside a component would silently do nothing. Only
 // dedupes calls within one render — the proxy and `requireRole` are separate
-// requests and keep their own lookups. See docs/performance.md (I2, step 1).
+// requests and keep their own lookups. See docs/architecture/performance.md (I2, step 1).
 export const getUserWithProfile = cache(async () => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();

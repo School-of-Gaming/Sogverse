@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
     // At this site's traffic (~300 DAU; product pages see a visit or two a
     // day) that first-encounter tail is a large share of all real visits, and
     // on thin routes those slow hits land in the p75 Speed Insights grades
-    // (docs/performance.md: "on a thin enough route, p75 IS the cold number"),
+    // (docs/architecture/performance.md: "on a thin enough route, p75 IS the cold number"),
     // while AVIF's byte saving amortizes to nothing at the same traffic.
     // Costs concentrate where we are measured; benefits don't. This is
     // traffic-dependent — revisit if the site grows busy enough that first

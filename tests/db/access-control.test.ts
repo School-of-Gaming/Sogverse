@@ -13,7 +13,7 @@ import { createAdminTestClient } from "./helpers";
  * The *function*-grant allowlists that used to live here are gone. They proved
  * someone had meant to expose a function, not that its body enforced anything —
  * an admin-only RPC with a forgotten role check passed them. They are superseded
- * by authorization-spine.test.ts (docs/db-authorization-architecture.md §3.4),
+ * by authorization-spine.test.ts (docs/architecture/db-authorization.md §3.4),
  * whose checks 1, 2 and 5 together require every function exposed to
  * `authenticated` to be classified as role-gated (and then behaviourally proven
  * to refuse every other role) or self-scoping (and then named to a scope test),

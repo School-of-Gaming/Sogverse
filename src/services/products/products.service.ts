@@ -291,7 +291,7 @@ export type ProductWriteResult = {
 
 // Shape accepted by /api/admin/products/create. Mirrors create_product() RPC
 // args, plus `image_id` — which the route writes in a second statement after
-// the RPC rather than through it (see docs/products-architecture.md).
+// the RPC rather than through it (see docs/architecture/products.md).
 //
 // `translations` must contain at least one entry, and at least one of those
 // entries must have locale 'en' or 'fi'. The RPC enforces the same rule;

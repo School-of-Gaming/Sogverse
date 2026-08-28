@@ -6,8 +6,8 @@ target: every handler on the surface carries one machine-readable classification
 handler that authenticates its caller does so through shared code, every JSON body is
 validated against a schema, every handler has an integration test, and the spine fails
 the build when any of that stops being true. This is the second instance of the
-hindsight-refactor loop (`docs/refactor-playbook.md`); the first was
-`docs/db-authorization-architecture.md`, whose §1 problem statement this doc repeats one
+correctness-by-mechanism loop (the rule in the root `CLAUDE.md`, Code Style); the first was
+`docs/architecture/db-authorization.md`, whose §1 problem statement this doc repeats one
 layer up. This doc stays the source of truth for how the HTTP boundary is enforced.
 
 **Execution contract.** Written so a fresh session can act on it:
@@ -106,7 +106,7 @@ the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts 
 
 ### The Model-A registry seed
 
-The db-auth refactor's Phase 3 triage CSV (`docs/db-authorization-architecture.md` §5,
+The db-auth refactor's Phase 3 triage CSV (`docs/architecture/db-authorization.md` §5,
 "The triage, machine-readably") classifies every module that used the service-role
 client, with one-clause justifications: 14 route modules justified as Model A, one
 partial (feedback: user-client write, admin-client notification fan-out), 3 non-route

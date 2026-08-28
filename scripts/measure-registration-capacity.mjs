@@ -14,7 +14,7 @@
  * ## Why this exists
  *
  * Written for the 2026-08-24 Helsinki municipal registration opening (~43 clubs
- * opening at one instant). `docs/performance.md` § F7 records what it found and
+ * opening at one instant). `docs/architecture/performance.md` § F7 records what it found and
  * is the place to read before running it again — most usefully, that the
  * bottleneck is Supabase Auth rather than Postgres, so the number this reports
  * moves with GoTrue's limits and barely at all with query tuning.

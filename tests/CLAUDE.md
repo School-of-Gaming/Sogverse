@@ -16,7 +16,9 @@ duplicating across files) and `helpers/`. Two Vitest configs drive them:
 | **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP | `.spec.ts`, Playwright |
 
 `npm run test` runs `unit/` + `integration/` (the jsdom config). `npm run test:smoke`
-runs Playwright.
+runs Playwright. To run a single file, use `npx vitest run <file>` — never
+`npm run test -- --run <file>`: the npm script already carries `--run`, so the doubled
+flag is a vitest error ("Expected a single value for option --run").
 
 ## The smoke check is a build gate first
 

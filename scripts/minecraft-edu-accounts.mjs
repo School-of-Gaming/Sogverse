@@ -8,7 +8,7 @@
  * new pool of names, release the licences, delete, create, verify, and emit the
  * CSV the admin hands to gedus.
  *
- * See `docs/minecraft-education-accounts.md` for the runbook and for the
+ * See `docs/runbooks/minecraft-education-accounts.md` for the runbook and for the
  * platform constraints the design works around — they are not obvious, and
  * every one of them was discovered the expensive way.
  *

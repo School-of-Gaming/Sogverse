@@ -131,7 +131,7 @@ export type GeduLocation = Database["public"]["Tables"]["gedu_locations"]["Row"]
 export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"]["Insert"];
 
 // ---------------------------------------------------------------------------
-// products (see docs/products-architecture.md)
+// products (see docs/architecture/products.md)
 // ---------------------------------------------------------------------------
 
 // Enums
@@ -245,7 +245,7 @@ export type { ProductBrowseRow } from "@/services/products/products.service";
 
 // ---------------------------------------------------------------------------
 // products — participations, payments, family subs (00039)
-// See docs/products-architecture.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
+// See docs/architecture/products.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
 // ---------------------------------------------------------------------------
 
 // Enums
@@ -259,7 +259,7 @@ export type ParticipationInsert = Database["public"]["Tables"]["participations"]
 
 /**
  * Derived 3-state placement vocabulary for participations.
- * See products-architecture.md §3 "Participation state vocabulary":
+ * See docs/architecture/products.md §3 "Participation state vocabulary":
  *   - 'waitlisted'  — `status = 'waitlisted'`
  *   - 'unassigned'  — `status = 'active' AND group_id IS NULL`
  *   - 'assigned'    — `status = 'active' AND group_id IS NOT NULL`
@@ -299,7 +299,7 @@ export type ProductSeatCount = Database["public"]["Tables"]["product_seat_counts
 
 // ---------------------------------------------------------------------------
 // products — groups & gedu assignments (00049)
-// See docs/products-architecture.md §4.1, §5.4, §6.1a.
+// See docs/architecture/products.md §4.1, §5.4, §6.1a.
 // ---------------------------------------------------------------------------
 
 // product_groups
@@ -612,7 +612,7 @@ export type ParticipationSubscriptionState = Omit<
 
 /**
  * The identity a locally-verified JWT actually guarantees. `getClaims()`
- * (see docs/performance.md) yields only the signed claims — `id` (`sub`) and
+ * (see docs/architecture/performance.md) yields only the signed claims — `id` (`sub`) and
  * `email` — not the fully-populated GoTrue `User` that `getUser()` returned.
  * Derived from `User` via `Pick` so the field types track the SDK; every
  * server auth helper (`getUser`, `getUserWithProfile`, `requireRole`) and the
@@ -627,7 +627,7 @@ export type AuthenticatedUser = Pick<User, "id" | "email">;
  * `auth.getUser()`.
  *
  * `getUser()` is a GoTrue HTTP round-trip; on the per-request / per-RSC-prefetch
- * server path it fans out into the F1 auth-waterfall (see docs/performance.md).
+ * server path it fans out into the F1 auth-waterfall (see docs/architecture/performance.md).
  * Server identity must instead come from `auth.getClaims()` (local ES256
  * verification, no round-trip). Subtracting `getUser` from the type makes a
  * server-side `supabase.auth.getUser()` a *compile* error — the structural

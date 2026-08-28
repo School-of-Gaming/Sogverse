@@ -1,23 +1,14 @@
-# Slack Integration
+# Slack Integration — purchase notifications
 
-Two separate things live under this heading, and only the first exists:
+**Purchase notifications to the internal staff channel** are live, and **no Sogverse code
+runs in the path**: a Stripe Dashboard Workflow reads Checkout Session metadata and the
+Stripe app for Slack posts the message. Sogverse's only contribution is writing the
+metadata when it creates the session. Everything you might change is in the Stripe
+Dashboard, not in this repo — do not build an app-side helper to get these notifications.
+(Sogverse sending a Slack message *itself* is a separate, unbuilt idea: see
+`../investigations/slack-sending-from-sogverse.md`.)
 
-1. **Purchase notifications to the internal staff channel** — live, and **no Sogverse code
-   runs in the path**. A Stripe Dashboard Workflow reads Checkout Session metadata and the
-   Stripe app for Slack posts the message. Sogverse's only contribution is writing the
-   metadata when it creates the session.
-2. **Sogverse sending a Slack message itself** (an admin composing one from the dashboard,
-   an app event notifying a channel) — **not built.** A design sketch is at the bottom.
-
-If you are here because purchase notifications need changing, everything you want is in
-part 1 and most of it is in the Stripe Dashboard, not in this repo. Do not build the
-app-side helper to get them.
-
----
-
-## 1. Purchase notifications — Stripe Workflow → Slack
-
-### Shape of the mechanism
+## Shape of the mechanism
 
 - A **Stripe Dashboard Workflow** triggers on a Stripe event, optionally retrieves related
   Stripe objects, and posts a templated message through the first-party **Stripe Workflows
@@ -27,7 +18,7 @@ app-side helper to get them.
 - **Sogverse's half of the contract is metadata on the Checkout Session** — everything the
   message says that Stripe does not already know comes from there.
 
-### One-time setup
+## One-time setup
 
 1. Install **Stripe Workflows for Slack** from the Stripe App Marketplace.
 2. Connect the Slack workspace in the app's settings.
@@ -51,7 +42,7 @@ and repoint to the staff channel only once the message reads correctly. Two ways
 Account limit: 50 workflows in total, all of which may be active. Workflows have drafts,
 versioning, and per-run observability in the Dashboard — a failed run is diagnosable there.
 
-### Why there is no raw Stripe → Slack webhook
+## Why there is no raw Stripe → Slack webhook
 
 - Stripe delivers raw event JSON; a Slack **incoming webhook** accepts only a
   `{"text": …}` / Block Kit body and rejects anything else. Pointing a Stripe webhook
@@ -62,7 +53,7 @@ versioning, and per-run observability in the Dashboard — a failed run is diagn
 - **An incoming-webhook URL is a bearer secret** — anyone holding it can post to the
   channel. Never commit one, and never paste one into a doc, a test, or a comment.
 
-### Trigger
+## Trigger
 
 - **Use `checkout.session.completed`.** It covers both subscription purchases (clubs) and
   one-off purchases (camps, events). Be precise about what it means, though: it fires when
@@ -95,7 +86,7 @@ versioning, and per-run observability in the Dashboard — a failed run is diagn
   participation — an asynchronous payment still unpaid, or a zero-collecting one-off
   session — and staff have no way to tell those messages from real signups.
 
-### What a Stripe event payload can and cannot tell you
+## What a Stripe event payload can and cannot tell you
 
 This is the part most likely to be re-learned the hard way.
 
@@ -111,7 +102,7 @@ This is the part most likely to be re-learned the hard way.
   object, something reachable via a `Retrieve a …` workflow step, or a value written into
   metadata at creation time.
 
-### The metadata contract
+## The metadata contract
 
 The Checkout Session's metadata is the interface between Sogverse and the workflow. Some
 keys are load-bearing for our own code — the products webhook and the paid-confirmation page
@@ -148,7 +139,7 @@ spoofed origin is a phishing vector aimed at our own team.
 leaves the code correct while links in already-posted messages go stale. Acceptable because
 such a message is read within minutes of the purchase.
 
-### Message template mechanics
+## Message template mechanics
 
 - Slack mrkdwn is supported: `*bold*`, `_italic_`, `~strike~`, inline and fenced code, block
   quotes, `:emoji:`, and lists. Line breaks are preserved.
@@ -161,7 +152,7 @@ Two mechanics are **unverified** — confirm them in a sandbox before relying on
 - whether a variable interpolates *inside* a URL string;
 - the exact variable path the Dashboard's picker uses for metadata keys.
 
-### Operational cautions
+## Operational cautions
 
 - **The channel is not a complete signup feed — only paid Stripe checkouts appear.** A free
   product, a municipality (externally-contracted) club and a waitlist join all confirm their
@@ -178,7 +169,7 @@ Two mechanics are **unverified** — confirm them in a sandbox before relying on
   code does the same — both render as a zero amount. A partial promotion or a proration
   shows a reduced figure rather than the list price.
 
-### Metadata visibility
+## Metadata visibility
 
 - **Metadata is never shown to customers** — absent from Checkout, receipts, invoices and
   the billing portal. It *is* visible to anyone with Stripe Dashboard access, and now to
@@ -187,101 +178,67 @@ Two mechanics are **unverified** — confirm them in a sandbox before relying on
   the hosted billing portal.
 - Put nothing sensitive in either.
 
----
+## Editing the message template: paste, don't click
 
-## 2. Sending Slack messages from Sogverse — not built
+Editing the workflow's message template field-by-field is slow — each variable is a
+picker click — so build the whole template and paste it in one shot. Verified working
+2026-08-14.
 
-> **Status: proposed.** A design for the app posting to Slack itself — an admin composing a
-> message from the dashboard, or a server-side event notifying a channel. It is **not** how
-> purchase notifications work (see part 1) and building it is not required for them.
+The template field is a **Draft.js** editor. Two consequences:
 
-It follows the same pattern as the existing
-[WhatsApp](../src/services/whatsapp/CLAUDE.md) and
-[Discord](../src/app/api/discord/CLAUDE.md) integrations — a lib helper holds the API
-client, a server-side route holds the secret, and (optionally) a service + React Query hook
-drives it from the UI. No new abstraction is needed.
+- **Replacing the DOM/`innerHTML` does nothing.** Draft's ContentState is the source of
+  truth and the next render discards outside mutation. Don't offer this.
+- **Pasted HTML *is* parsed, including variable chips.** Put the template on the
+  clipboard as a **CF_HTML flavour** and paste — the chips reconstruct.
 
-The bot token never leaves the server. For UI-triggered sends the browser calls our own
-admin-gated route, which calls the helper.
+A chip is a span whose `data-template-variable` attribute holds this JSON
+(double-quoted attribute, so inner quotes are `&quot;`):
 
-### How much you build depends on the trigger
-
-| Trigger | What you build |
-|---|---|
-| **Server-side event** (notify a channel when X happens) | Just the lib helper + env var. Call it from where the event already lives, wrapped in `after()`. |
-| **Admin action in the UI** | Lib helper + admin-only send route + service/hook + env var. |
-| **Two-way (Slack calls back)** — slash commands, buttons | Add a signature-verified events route modeled on the Discord interactions route, plus `SLACK_SIGNING_SECRET`. Out of scope for simple sending. |
-
-### Proposed files
-
-| File | Purpose |
-|---|---|
-| `src/lib/slack.ts` | Slack Web API client — reads `SLACK_BOT_TOKEN`, exposes `sendSlackMessage(channel, text)` |
-| `src/app/api/admin/slack/send/route.ts` | Admin-only send endpoint — `requireRole("admin")`, validate body, call the helper *(only for UI-triggered sends)* |
-| `src/services/slack/slack.service.ts` | `fetch()` wrapper to the route above *(only for UI-triggered sends)* |
-| `src/services/slack/slack.queries.ts` | React Query `useMutation` hook *(only for UI-triggered sends)* |
-
-### Environment variables
-
-| Variable | Where | Purpose |
-|---|---|---|
-| `SLACK_BOT_TOKEN` | `.env.local` + Vercel | Bot User OAuth Token (`xoxb-…`); authorizes API calls |
-| `SLACK_DEFAULT_CHANNEL` | `.env.local` + Vercel | Optional default channel ID (e.g. `C0XXXXXXX`) |
-
-Add the token to Vercel with `vercel env add --sensitive` on Preview/Production (Vercel
-rejects `--sensitive` on Development).
-
-### Slack app setup
-
-Done once at [api.slack.com/apps](https://api.slack.com/apps) — this is a **separate app**
-from the Stripe Workflows for Slack app in part 1:
-
-1. Create a Slack app for the workspace
-2. Add the **Bot Token Scope** `chat:write` (add `chat:write.public` to post to public
-   channels the bot hasn't been invited to)
-3. Install the app to the workspace — this mints the `xoxb-` token. **Installation may
-   require a workspace admin's approval** depending on the workspace's app-management
-   settings.
-4. Invite the bot to the target channel (`/invite @yourbot`), or use its channel ID
-
-Creating the app and posting to a channel need no admin role — only the install step may be
-gated by an admin approval.
-
-### Implementation notes
-
-- **Slack signals failure in the response body, not the HTTP status.** `chat.postMessage`
-  returns HTTP 200 with `{ "ok": false, "error": "..." }` on logical failures (bad channel,
-  missing scope). Check the body's `ok` flag, not the response status — this differs from
-  WhatsApp/Daily, which use HTTP status codes.
-- **Fire-and-forget on server-side events.** Wrap the send in `after()` so a Slack outage
-  can't fail the user's request.
-- **Audit trail (optional).** The WhatsApp integration logs every outbound message to its
-  own table. Mirror that if you want a record of what Sogverse posted; skippable for
-  fire-and-forget notifications.
-
-### Reference sketch
-
-```typescript
-// src/lib/slack.ts
-const SLACK_API = "https://slack.com/api/chat.postMessage";
-
-function getToken(): string {
-  const token = process.env.SLACK_BOT_TOKEN;
-  if (!token) throw new Error("Missing SLACK_BOT_TOKEN environment variable");
-  return token;
-}
-
-export async function sendSlackMessage(channel: string, text: string) {
-  const res = await fetch(SLACK_API, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-      "Content-Type": "application/json; charset=utf-8",
-    },
-    body: JSON.stringify({ channel, text }),
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error ?? "Unknown Slack API error");
-  return { ts: data.ts as string };
-}
+```json
+{"variableKey":"0","dynamicValue":{"type":"dynamic",
+ "step":{"type":"trigger","triggerSchemaId":"stripe.api.v1_checkout_session_completed"},
+ "propertyPath":["metadata"],"triggerSourceType":"trigger_payload","mapKey":"productName"}}
 ```
+
+`propertyPath` is the object path; `mapKey` names the key inside a map and is **free
+text**, so a key need not have appeared in any past event. Omit `mapKey` for plain
+fields (`["amount_total"]`, `["customer_details","name"]`). Sequential `variableKey`
+values work. Slack's labelled-link form is literal text around a chip —
+`&lt;CHIP|Admin product&gt;` — so only the URL is dynamic.
+
+Two traps that cost real time:
+
+- **Keep the HTML pure ASCII.** .NET's `DataObject.SetData("HTML Format", …)` mangles
+  non-ASCII on the way to the clipboard — use entities (`&#183;`). The plain-text
+  fallback flavour is fine as-is.
+- **Run PowerShell with `-STA`**, and build the CF_HTML header manually with **byte**
+  offsets (`Version:0.9`, `StartHTML`, `EndHTML`, `StartFragment`, `EndFragment`). Set
+  both the HTML flavour and a plain-text fallback on one `DataObject`.
+
+**A Checkout Session has several metadata maps — pick the right one in the chip.** The
+picker offers all of them: `metadata` (the session's own — **the Slack keys live
+here**), `invoice_creation.invoice_data.metadata` (the finance snapshot, one-off
+purchases only), `subscription_data.metadata` (subscription checkouts only). Pointing a
+chip at the wrong map never resolves.
+
+Constraints that rule out the obvious approaches:
+
+- **Workflows have no API** — the workflow endpoints all 404 (missing endpoint, not a
+  permissions wall). Dashboard-only: a session cannot read or edit a workflow and must
+  ask for a screenshot of the trigger, conditions, and template.
+- **Workflows and Stripe Apps are per-mode** — an app installed on live shows "App not
+  installed" in test mode and needs installing again there.
+- **`stripe trigger` fires test-mode events only**, so a live workflow cannot be
+  exercised synthetically — only by a real purchase.
+
+## Link previews (unfurls)
+
+The message's three links all unfurl. The shop link unfurls correctly (real product
+image and name, built on purpose by the product metadata). The two admin links unfurl
+as the useless "Sign In" card — a gated URL 307s to `/login`, a public page with a
+genuine OG card — tripling every message's height. The owner's ruling (2026-08-23):
+exactly one preview, the shop link. The decided fix is
+`docs/plans/suppress-admin-link-unfurls.md`; when it lands, this section gains the
+result. Verified dead ends (do not re-try): robots.txt is live and correct but is not
+the lever; the labelled-link form still unfurls; there is no Stripe-side or Slack-side
+per-link toggle; backticking a URL kills the unfurl and the clickability together.

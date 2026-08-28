@@ -3,7 +3,7 @@
 The platform serves roughly **fifteen server requests for every page a person actually
 views**, and almost all of the excess is Next.js link prefetching that — on this app's
 architecture — cannot deliver anything a click can use. This document names the system
-that produces that ratio, ties together the findings in `docs/performance.md` that each
+that produces that ratio, ties together the findings in `docs/architecture/performance.md` that each
 saw one face of it, and frames the remedy decision. It ends with a recommendation, but
 the decision is the owner's and is deliberately not being rushed: nothing here is urgent,
 because nothing here is currently failing.
@@ -13,7 +13,7 @@ turned out to be the symptom, not the subject. One narrow cut has shipped (the f
 footer legal links no longer prefetch — commit `8bf965de` on `dev`); everything else is
 proposed only.
 
-**How to read this doc.** Like F7 in `docs/performance.md`, every claim is tagged.
+**How to read this doc.** Like F7 in `docs/architecture/performance.md`, every claim is tagged.
 *Measured* means someone ran the query and the date and instrument are given — the
 production numbers below were pulled 2026-08-25 against the `sogverse` Vercel project
 (`vercel metrics`/`vercel usage`, production environment), independently re-run to
@@ -123,7 +123,7 @@ costs nothing.* Attempts to break it:
   only; on click it issues the full dynamic RSC request exactly as it would with no
   prefetch. F1's own benchmark is consistent: prefetches completing at median 93ms while
   every real navigation still paid its full render.
-- **"It warms the lambda."** The strongest salvage of `docs/performance.md`'s "prefetches
+- **"It warms the lambda."** The strongest salvage of `docs/architecture/performance.md`'s "prefetches
   warm caches before clicks" — and it fails on timing plus deployment shape. This is a
   single-bundle deployment: the first request to *any* route warms the function every
   route shares (established in the F6 method notes). The document request that painted
@@ -220,7 +220,7 @@ The case, quantified where possible:
 - **Why now rather than with the next architecture step:** the default is simply wrong
   for this architecture, and it actively misleads — it polluted this investigation's
   data, it inflates every capacity number F8-style planning reads, and the standing
-  `docs/performance.md` claim built on it steers future sessions toward keeping it.
+  `docs/architecture/performance.md` claim built on it steers future sessions toward keeping it.
 
 **Ranked alternatives, and why each is not the recommendation** (per the house
 convention: rejected for reasons a future session can dispute, so it doesn't rebuild
@@ -239,7 +239,7 @@ them):
 2. **(d) Cheapen each request (advisory JWT role, I2 step 2) — deferred, bar not met.**
    It removes the proxy's role lookup, whose measured upper bound at the worst minute of
    the year was ~2 connections' occupancy and negligible CPU, further reduced by the PIN
-   carve-out. `docs/performance.md` already gates this on a trace showing the residual
+   carve-out. `docs/architecture/performance.md` already gates this on a trace showing the residual
    lookups matter; these numbers are that trace's first half and they argue the bar is
    *not* met — and after (a), the request count that multiplies the lookup drops several
    fold, moving the bar further away. Pick it up per the existing guidance: when already
@@ -310,7 +310,7 @@ the credit burn rather than zeroing it. The bill is mostly the 12× traffic year
 amplification is the part of it that buys nothing. No limit was exceeded and none is
 near.
 
-## Proposed edits to `docs/performance.md` (not made here)
+## Proposed edits to `docs/architecture/performance.md` (not made here)
 
 - **The prefetch paragraph above "Real-user data"** (currently: reverted
   `prefetch={false}`, "now a net positive — prefetches warm caches before clicks"):
@@ -334,6 +334,6 @@ This doc is connective tissue, not a rehash: F1 priced a prefetch, F2 explains w
 route is dynamic, F3 prices the role lookup, F7 established that the shared box's CPU
 and GoTrue's pool are coupled, F8 measured what an opening does to all of it — and each
 was written without the request *count* being anyone's subject. The count is this doc's
-subject. When a remedy ships, its measurements belong in `docs/performance.md`'s log
+subject. When a remedy ships, its measurements belong in `docs/architecture/performance.md`'s log
 like any other improvement, with this doc updated to point at them; if (c) eventually
 retires the fully-dynamic architecture, this doc retires with it.

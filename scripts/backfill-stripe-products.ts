@@ -61,7 +61,7 @@
  * change and can otherwise drift indefinitely.
  *
  * Either mode exits non-zero if any product we own is left carrying **no tax
- * code** — that is the claim the finance audit procedure in `docs/stripe.md`
+ * code** — that is the claim the finance audit procedure in `docs/runbooks/stripe.md`
  * rests on, and it is meant to be checkable rather than assumed. Report mode
  * checks every owned product; `--apply` re-checks whatever it did not manage to
  * bring into line (a failed write, a skipped duplicate, an orphan, a row it
@@ -548,7 +548,7 @@ async function main(): Promise<void> {
     console.log("");
   }
 
-  // The audit claim in docs/stripe.md — "every product we own carries an
+  // The audit claim in docs/runbooks/stripe.md — "every product we own carries an
   // explicit tax code" — stated as a check rather than an assumption.
   if (noTaxCode.length > 0) {
     console.log(
@@ -629,7 +629,7 @@ async function main(): Promise<void> {
   // skipped duplicate, an orphan, a row with no derivable shape. Applying the
   // desired state always writes a tax code, so anything reached above is
   // covered; anything else still has to be asserted, or an apply run could exit
-  // 0 having left the claim in docs/stripe.md untested.
+  // 0 having left the claim in docs/runbooks/stripe.md untested.
   console.log("");
   const stillNoTaxCode = noTaxCode.filter(
     (entry) => !inDesiredState.has(entry.stripeProduct.id),

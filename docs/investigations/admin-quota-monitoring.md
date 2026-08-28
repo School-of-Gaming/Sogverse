@@ -1,6 +1,13 @@
 # Admin Quota Monitoring
 
-Research and implementation plan for adding Daily.co and Brevo usage/quota monitoring to the admin dashboard.
+**Status: investigation, not committed.** Researched June 2026; re-checked 2026-08-28 —
+nothing has been built (no admin quotas page or API route exists; the Daily.co and Brevo
+wrappers the plan builds on are still where it says). The external facts (rates,
+endpoints, free-tier limits) were **not** re-verified against Daily.co/Brevo and are old
+enough to re-check before building. If this is ever committed to, it becomes a
+`docs/plans/` plan and this file is deleted.
+
+Research and implementation sketch for adding Daily.co and Brevo usage/quota monitoring to the admin dashboard.
 
 ## Overview
 

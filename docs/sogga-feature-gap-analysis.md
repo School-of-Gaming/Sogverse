@@ -1,6 +1,12 @@
-# SOGA Feature Gap Analysis
+# SOGGA Feature Gap Analysis
 
-Features and capabilities present in the legacy SOGA platform (Gamers' Arena) that are **not present in Sogverse** and **not replaced by a Sogverse equivalent**. Each item is rated for business priority and estimated technical complexity if rebuilt for Sogverse using its modern stack (Next.js 16, Supabase, Stripe, TypeScript).
+> **Likely stale — treat with suspicion (flagged 2026-08-28).** This is a June 2026
+> snapshot, written when Sogverse was months younger; some gaps may since be closed and
+> the priorities may no longer hold. Kept at `docs/` top level deliberately — the owner
+> may delete it rather than maintain it. Verify any item against current code before
+> acting on it.
+
+Features and capabilities present in the legacy SOGGA platform (Gamers' Arena) that are **not present in Sogverse** and **not replaced by a Sogverse equivalent**. Each item is rated for business priority and estimated technical complexity if rebuilt for Sogverse using its modern stack (Next.js 16, Supabase, Stripe, TypeScript).
 
 **Priority labels:** `Critical` | `High` | `Medium` | `Low`
 **Complexity labels:** `Low` | `Medium` | `High` | `Very High`
@@ -94,7 +100,7 @@ Features and capabilities present in the legacy SOGA platform (Gamers' Arena) th
 **Description:** Period-based invoicing for educators. Invoicing periods are created monthly (or custom ranges). Each lesson generates invoicing line items linked to a GEDU, club, and pricing tier. Line items have a status workflow: Unhandled > Processed/Rejected > Invoiced. Educators can view their own invoicing data; admins manage statuses. The UI includes period selection, line item tables, amount summaries, and status controls.
 
 **Priority:** `Critical`
-**Complexity:** `Very High` — Multiple tables (invoicing periods, invoicing lines, club pricing), a status state machine, business rules for line generation from lessons, period management, role-based views (GEDU sees own data, admin sees all), and financial reporting UI. This is one of the most complex SOGA features.
+**Complexity:** `Very High` — Multiple tables (invoicing periods, invoicing lines, club pricing), a status state machine, business rules for line generation from lessons, period management, role-based views (GEDU sees own data, admin sees all), and financial reporting UI. This is one of the most complex SOGGA features.
 
 ---
 

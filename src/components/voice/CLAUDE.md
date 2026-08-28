@@ -115,7 +115,7 @@ Analysis:  createMediaStreamSource(MediaStream([track])) → AnalyserNode   ← 
 
 **Rule: Silence remote audio with `element.muted`, NOT `element.volume` — and never route WebRTC playback through the Web Audio graph.** Two stacked platform limits force this:
 - **iOS Safari (iPhone) ignores `element.volume` entirely** — it's not settable in JS and always reads `1` (Apple's "Safari HTML5 Audio and Video Guide"; works on desktop + iPad, *not* iPhone). So the old `volume = 0` silencing was a no-op on iPhone and *every soft zone leaked audio there*. `element.muted` **is** honored on iOS, so it's the one cross-platform control. The routing is binary anyway (the volume-slider UI was dropped), so a mute maps cleanly — see TODO.md if a per-participant volume is ever revived (it can't work on iPhone via the web audio APIs, so it'd be desktop-only).
-- **Chrome** (full history in `docs/chrome-webrtc-volume-bug.md`): routing a `MediaStreamAudioSourceNode` to a destination kills WebRTC audio; `createMediaElementSource` on a MediaStream element silences the analyser and ignores GainNode boost. So: a separate `createMediaStreamSource` (not `createMediaElementSource`) for the analyser, never connected to `ctx.destination`; and `await ctx.resume()` before creating nodes.
+- **Chrome** (full history in `docs/records/chrome-webrtc-volume-bug.md`): routing a `MediaStreamAudioSourceNode` to a destination kills WebRTC audio; `createMediaElementSource` on a MediaStream element silences the analyser and ignores GainNode boost. So: a separate `createMediaStreamSource` (not `createMediaElementSource`) for the analyser, never connected to `ctx.destination`; and `await ctx.resume()` before creating nodes.
 
 ## Moderator controls
 

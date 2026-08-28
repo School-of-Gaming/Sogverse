@@ -60,7 +60,7 @@ documents a retired-but-listed value on `participation_status`. The migration
 recreates one RPC (plus its grants); the other six functions only compare literals.
 
 **Already recorded** as a schema lock-in follow-up in
-`docs/stripe-participations-review-followups.md`; this entry adds the evidence and the
+`docs/records/stripe-participations-review-2026-08.md`; this entry adds the evidence and the
 ranking, not a new ask.
 
 ### 2. `purchase_shape` — qualifies (size S/M)
