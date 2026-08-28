@@ -205,6 +205,14 @@ export const POST = defineRoute({
         p_customer_id: user.id,
         p_purchase_shape: purchaseShape,
         p_currency: currency,
+        // The enrolment conditions the parent ticked. Passed straight through
+        // and never checked here: `record_required_consents` inside the RPC is
+        // what compares them against the product's requirement set, under the
+        // same product-gate lock as every other signup rule, and it refuses
+        // with a check violation naming what is missing. Doing it here as well
+        // would put a second copy of the rule outside the lock, where it could
+        // read a requirement set that changed a moment later.
+        p_consented_documents: body.consentedDocuments,
       },
     );
 

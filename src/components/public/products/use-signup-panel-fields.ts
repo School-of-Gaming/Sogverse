@@ -47,6 +47,20 @@ export interface SignupPanelFields {
   onSelectParticipant: (participantId: string) => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
+  /**
+   * The consent documents this product requires, as slugs, in the order the
+   * panel renders them. Empty on nearly every product.
+   *
+   * **A slug this deploy cannot name stays in here.** The panel renders it with
+   * the slug as its own label and no link to read, and it still gates the CTA —
+   * dropping it would let an enrolment through without a consent the product
+   * legally requires, which is the one outcome worse than an ugly checkbox.
+   */
+  requiredConsentSlugs: readonly string[];
+  /** Which of them the parent has ticked. Never seeded — always empty at mount,
+   *  on every product, however many times this family has enrolled before. */
+  consentedSlugs: ReadonlySet<string>;
+  onConsentChange: (slug: string, next: boolean) => void;
   currency: SupportedCurrency;
   locale: string;
 }
@@ -62,6 +76,16 @@ export function useSignupPanelFields(
     | "timezone"
   >,
   authState: AuthState,
+  /**
+   * The consent documents enrolling on this product requires, as slugs.
+   *
+   * A separate argument rather than a column on the `Pick` above, because the
+   * requirement set is not on the browse row: `BROWSE_SELECT` is a deliberate
+   * promise about what the anon shop listing publishes, and a card never names
+   * a product's enrolment conditions. The detail page reads them off its own
+   * query's embed and hands them in; the preview twin hands in a literal.
+   */
+  requiredConsentSlugs: readonly string[],
 ): SignupPanelFields {
   // Platform is EUR-only; Stripe Adaptive Pricing handles the customer's local
   // currency at checkout. See src/lib/constants/currency.ts.
@@ -146,6 +170,17 @@ export function useSignupPanelFields(
 
   const [agreed, setAgreed] = useState(false);
 
+  // Every box starts unticked, and there is no path that seeds one. These are
+  // per-enrolment conditions: a family enrolling a second child, or re-joining
+  // a term later, is agreeing again, and a pre-ticked box would make that
+  // agreement something the platform asserted on their behalf rather than
+  // something they did. The Set is keyed by slug so the state survives a
+  // requirement set that changes under a long-open tab — a slug that stops
+  // being required simply stops being read.
+  const [consentedSlugs, setConsentedSlugs] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+
   return {
     productType: product.product_type,
     forGamers: product.for_gamers,
@@ -155,6 +190,15 @@ export function useSignupPanelFields(
     onSelectParticipant: setUserPickedParticipantId,
     agreed,
     onAgreedChange: setAgreed,
+    requiredConsentSlugs,
+    consentedSlugs,
+    onConsentChange: (slug, next) =>
+      setConsentedSlugs((current) => {
+        const updated = new Set(current);
+        if (next) updated.add(slug);
+        else updated.delete(slug);
+        return updated;
+      }),
     currency,
     locale,
   };

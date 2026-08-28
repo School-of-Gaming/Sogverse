@@ -43,6 +43,12 @@ export const POST = defineRoute({
     const { data, error } = await supabase.rpc("join_product_waitlist", {
       p_product_id: body.productId,
       p_participant_id: body.participantId,
+      // Same enrolment conditions as the signup door, enforced in the same
+      // shared function the RPC calls — a queue place unconsented would first
+      // meet the conditions at promotion, which is the moment a family is least
+      // able to decline. Nothing is checked here; the RPC's check violation is
+      // the refusal, and this route already discloses its message.
+      p_consented_documents: body.consentedDocuments,
     });
 
     if (error) throw error;

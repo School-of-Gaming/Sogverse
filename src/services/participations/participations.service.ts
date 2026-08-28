@@ -313,6 +313,16 @@ export type CreateParticipationInput = {
   participantId: string;
   purchaseShape: PurchaseShape;
   currency: SupportedCurrency;
+  /**
+   * The consent documents the parent ticked, as slugs — empty on the
+   * overwhelming majority of products, which require none.
+   *
+   * Required here although the wire field is optional, and the asymmetry is the
+   * point: the wire has to tolerate an omission so the database gets to give
+   * the authoritative refusal, while a *caller* stating the answer explicitly
+   * is what keeps a new signup surface from forgetting the question exists.
+   */
+  consentedDocuments: string[];
 };
 
 /**
@@ -358,6 +368,9 @@ export type {
 export type JoinWaitlistInput = {
   productId: string;
   participantId: string;
+  /** Ticked consent document slugs — see `CreateParticipationInput`. A queue
+   *  place is held to the same enrolment conditions as a seat. */
+  consentedDocuments: string[];
 };
 
 export type LeaveWaitlistInput = {

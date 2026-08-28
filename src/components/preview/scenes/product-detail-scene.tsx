@@ -39,9 +39,17 @@ import { previewSceneHref } from "../href";
 export function ProductDetailScene({
   scenario,
   regionLock,
+  requiredConsentSlugs,
 }: {
   scenario: PreviewScenario;
   regionLock?: RegionLockScenarioMeta;
+  /**
+   * The enrolment conditions this scenario's product requires. Absent on every
+   * ordinary scenario, which is what the live page looks like for nearly every
+   * product; the required-consents scenario is the one that sets it, standing
+   * in for the detail query's `product_required_consents` embed.
+   */
+  requiredConsentSlugs?: readonly string[];
 }) {
   // A place confirmed in the panel's dialog, held exactly where the live
   // route's data shell holds it — so the pick outranks the scenario's seeded
@@ -69,6 +77,7 @@ export function ProductDetailScene({
       signupPanel={
         <PreviewSignupPanel
           product={product}
+          requiredConsentSlugs={requiredConsentSlugs}
           state={fixture.state}
           authState={fixture.authState}
           summaryHref={summaryHref}

@@ -101,6 +101,7 @@ const validBody = {
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
   holiday_calendar_ids: [],
+  required_consent_slugs: [],
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
@@ -300,6 +301,42 @@ describe("POST /api/admin/products/[id]/update", () => {
     // takes: null → undefined → dropped key → the RPC's DEFAULT NULL.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_region_lock_country).toBeUndefined();
+  });
+
+  it("replaces the requirement set on every save, empty array included", async () => {
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: {
+          ...validBody,
+          required_consent_slugs: ["roblox-privacy-policy"],
+        },
+      }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({
+        p_required_consent_slugs: ["roblox-privacy-policy"],
+      }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    // Clearing is an empty array here rather than an omission: the RPC hands
+    // this to the requirement set's single writer, which treats NULL and []
+    // alike, so the array says what it means and the wire schema demands it.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_required_consent_slugs).toEqual([]);
+  });
+
+  it("returns 400 when the required consent field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { required_consent_slugs: _slugs, ...noSlugs } = validBody;
+    const response = await POST(updateRequest({ data: noSlugs }), { params });
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the region lock field is missing", async () => {

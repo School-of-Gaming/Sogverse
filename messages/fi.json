@@ -333,6 +333,7 @@
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
+          "requiredConsents": "Vaaditut suostumukset",
           "visibility": "Näkyvyys"
         },
         "copyLink": "Kopioi julkinen linkki",
@@ -377,6 +378,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
+        "consents": "Vaaditut suostumukset",
+        "consentsDescription": "Asiakirjat, jotka vanhemman on hyväksyttävä ennen ilmoittautumista. Useimmat tuotteet eivät vaadi mitään.",
         "visibility": "Listaus",
         "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
       },
@@ -503,6 +506,12 @@
       },
       "regionLock": {
         "none": "Ei maakohtaista rajausta"
+      },
+      "consents": {
+        "version": "Versio {version}",
+        "noVersion": "Ei julkaistua versiota",
+        "empty": "Suostumusasiakirjoja ei ole rekisteröity.",
+        "none": "Ei mitään"
       },
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
@@ -1730,6 +1739,7 @@
       "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
       "ctaAllSet": "Olet valmis",
       "ctaAgreeRules": "Hyväksy säännöt",
+      "ctaAgreeConsents": "Hyväksy vaaditut asiakirjat",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaSignIn": {
         "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
@@ -1755,6 +1765,10 @@
         "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
         "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
         "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
+      },
+      "consents": {
+        "heading": "Vaaditut asiakirjat",
+        "item": "Olen lukenut seuraavan asiakirjan ja hyväksyn sen: <link>{document}</link>"
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Kenet ilmoitat?",
@@ -3487,6 +3501,12 @@
     "invalid": {
       "title": "Linkki ei toiminut",
       "body": "Linkki on voinut katketa sähköpostiohjelmassa tai kopioitua vain osittain. Avaa se uudelleen sähköpostista tai kirjoita meille osoitteeseen {supportEmail}, niin autamme."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Roblox-ohjelman käyttöehdot",
+      "robloxPrivacyPolicy": "Roblox-ohjelman tietosuojaseloste"
     }
   }
 }

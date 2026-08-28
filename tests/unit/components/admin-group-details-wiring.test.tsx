@@ -199,6 +199,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     schedule_slots: [],
     locations: null,
     product_holiday_calendars: [],
+    product_required_consents: [],
   };
 }
 

@@ -333,6 +333,7 @@
           "registrationOpensAt": "Registration opens",
           "tag": "Designed for",
           "regionLock": "Region lock",
+          "requiredConsents": "Required consents",
           "visibility": "Visibility"
         },
         "copyLink": "Copy public link",
@@ -377,6 +378,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
+        "consents": "Required consents",
+        "consentsDescription": "Documents a parent must agree to before they can sign up. Most products require none.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -503,6 +506,12 @@
       },
       "regionLock": {
         "none": "Not region locked"
+      },
+      "consents": {
+        "version": "Version {version}",
+        "noVersion": "No published version",
+        "empty": "No consent documents are registered.",
+        "none": "None"
       },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
@@ -1730,6 +1739,7 @@
       "ctaAddGamer": "Add a gamer to continue",
       "ctaAllSet": "You’re all set",
       "ctaAgreeRules": "Agree to the rules",
+      "ctaAgreeConsents": "Agree to the required documents",
       "ctaWaitlist": "Join the waitlist",
       "ctaSignIn": {
         "consumer_club": "Sign in to register",
@@ -1755,6 +1765,10 @@
         "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
         "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
+      },
+      "consents": {
+        "heading": "Required documents",
+        "item": "I have read and agree to the <link>{document}</link>."
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Who are you enrolling?",
@@ -3487,6 +3501,12 @@
     "invalid": {
       "title": "This link did not work",
       "body": "It may have been cut short by your email app, or copied only part of the way. Try opening it from the email again, or write to us at {supportEmail} and we will help."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Roblox Programme Terms & Conditions",
+      "robloxPrivacyPolicy": "Roblox Programme Privacy Policy"
     }
   }
 }

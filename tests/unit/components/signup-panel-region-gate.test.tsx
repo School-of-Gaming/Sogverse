@@ -81,6 +81,11 @@ function panel(
     // makes "the location step outranks it" a real assertion rather than a tie.
     agreed: true,
     onAgreedChange: () => {},
+    // No enrolment conditions: the ordinary product, which is what every
+    // assertion in this file is about.
+    requiredConsentSlugs: [],
+    consentedSlugs: new Set<string>(),
+    onConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",

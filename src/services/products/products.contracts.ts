@@ -127,6 +127,22 @@ const productDataBase = z.object({
   schedule_slots: z.array(scheduleSlotInput),
   prices: z.array(priceInput),
   holiday_calendar_ids: z.array(z.string()),
+  // The consent documents a parent must agree to before enrolling — slugs from
+  // `consent_documents`, empty for almost every product.
+  //
+  // Required and never optional, and the update half is the load-bearing one
+  // again: `update_product` replaces the whole requirement set on every call, so
+  // an omitted field would silently drop a product's enrolment conditions. An
+  // empty array is the explicit "requires nothing", and the RPC treats it and
+  // NULL alike — which is why this one, unlike `tag` and `region_lock_country`,
+  // is a plain array rather than required-nullable: the empty case is already
+  // expressible without a null.
+  //
+  // Only shape is checked here. An unknown slug is refused by the foreign key
+  // into `consent_documents` — the whitelist lives in the database, admins are
+  // trusted, and a slug this deploy has never heard of is a broken deploy rather
+  // than an attack.
+  required_consent_slugs: z.array(z.string()),
   // Per-session operating fees, a single EUR amount in integer cents. State is
   // derived from the value (the form enforces it): null = unknown/none,
   // 0 = volunteer (free), > 0 = a real fee. Gedu fees are int >= 0 here; the

@@ -306,6 +306,32 @@ describe("POST /api/participations/waitlist", () => {
     });
   });
 
+  it("hands the ticked consent documents to the RPC, untouched", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: {
+        participation_id: PARTICIPATION_ID,
+        waitlist_position: 3,
+        status: "waitlisted",
+        idempotent: false,
+      },
+      error: null,
+    });
+
+    await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        consentedDocuments: ["roblox-programme-terms"],
+      }),
+    );
+
+    // A queue place is held to the same enrolment conditions as a seat, by the
+    // same function inside the database — nothing about them is checked here.
+    const args = mockRpc.mock.calls[0][1];
+    expect(args.p_consented_documents).toEqual(["roblox-programme-terms"]);
+  });
+
   it("is idempotent — returns the existing row's position when the gamer is already on the waitlist", async () => {
     mockAuthenticatedCustomer();
     // The RPC itself short-circuits on existing participation rows; the route

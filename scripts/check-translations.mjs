@@ -55,6 +55,13 @@ const ENGLISH_UNDER_KLINGON = [
   "metadata.pages.robloxPrivacy",
   "metadata.pages.robloxSafeguarding",
   "metadata.pages.robloxTerms",
+  // The two consent documents a product can require, named. Their *names* only
+  // — the sentence a parent ticks, its heading and the CTA that points at it
+  // are ordinary product copy and stay in Klingon. A link label has to call a
+  // document what the document itself is called, and both of these documents
+  // are served in English under `tlh`, exactly as the `roblox.legal.*` labels
+  // pointing at the same two pages already are.
+  "consentDocuments",
   "roblox.legal.privacy",
   "roblox.legal.safeguarding",
   "roblox.legal.terms",

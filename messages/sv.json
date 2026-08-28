@@ -333,6 +333,7 @@
           "registrationOpensAt": "Anmälan öppnar",
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
+          "requiredConsents": "Obligatoriska samtycken",
           "visibility": "Synlighet"
         },
         "copyLink": "Kopiera den publika länken",
@@ -377,6 +378,8 @@
         },
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
+        "consents": "Obligatoriska samtycken",
+        "consentsDescription": "Dokument som en förälder måste godkänna innan anmälan. De flesta produkter kräver inga.",
         "visibility": "Listning",
         "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
@@ -503,6 +506,12 @@
       },
       "regionLock": {
         "none": "Ingen landsbegränsning"
+      },
+      "consents": {
+        "version": "Version {version}",
+        "noVersion": "Ingen publicerad version",
+        "empty": "Inga samtyckesdokument är registrerade.",
+        "none": "Inga"
       },
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
@@ -1730,6 +1739,7 @@
       "ctaAddGamer": "Lägg till en gamer först",
       "ctaAllSet": "Du är klar",
       "ctaAgreeRules": "Godkänn reglerna",
+      "ctaAgreeConsents": "Godkänn de obligatoriska dokumenten",
       "ctaWaitlist": "Gå med på väntelistan",
       "ctaSignIn": {
         "consumer_club": "Logga in för att anmäla",
@@ -1755,6 +1765,10 @@
         "municipality_club_self": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att min plats erbjuds nästa familj på väntelistan.",
         "camp": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
         "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende."
+      },
+      "consents": {
+        "heading": "Obligatoriska dokument",
+        "item": "Jag har läst och godkänner följande dokument: <link>{document}</link>"
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Vem anmäler du?",
@@ -3487,6 +3501,12 @@
     "invalid": {
       "title": "Länken fungerade inte",
       "body": "Den kan ha kapats av ditt e-postprogram eller kopierats bara till hälften. Försök öppna den från e-postmeddelandet igen, eller skriv till oss på {supportEmail} så hjälper vi till."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Användarvillkor för Roblox-programmet",
+      "robloxPrivacyPolicy": "Integritetspolicy för Roblox-programmet"
     }
   }
 }

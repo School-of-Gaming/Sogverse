@@ -579,6 +579,12 @@ function buildSharedFields(
         })
       : [],
     holiday_calendar_ids: Array.from(state.holidayCalendarIds),
+    // The enrolment conditions, on every save including the empty array that
+    // means "requires nothing" — the RPC replaces the whole set on every call,
+    // so an omitted answer would drop a product's conditions rather than
+    // preserve them. Not gated by any type config: the mechanism is generic and
+    // the database has no per-type rule for it to mirror.
+    required_consent_slugs: Array.from(state.requiredConsentSlugs),
     primary_gedu_fee_cents: feeDraftToCents(
       state.primaryGeduFee.status,
       state.primaryGeduFee.amount,
@@ -843,6 +849,15 @@ export function existingFormState(
     })),
     holidayCalendarIds: new Set(
       product.product_holiday_calendars.map((h) => h.calendar_id),
+    ),
+    // Straight through from the join table. A stored slug this deploy cannot
+    // name is deliberately NOT filtered out the way an un-seeded region lock is
+    // — the checkbox renders the raw slug and stays ticked, so a save made for
+    // some other reason cannot silently drop a legal condition the product
+    // really carries. The write contract admits any string for exactly this
+    // reason; the foreign key is what refuses a slug that is not published.
+    requiredConsentSlugs: new Set(
+      product.product_required_consents.map((c) => c.document_slug),
     ),
     signupThreshold:
       product.signup_threshold != null ? String(product.signup_threshold) : "",

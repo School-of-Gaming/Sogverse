@@ -39,6 +39,7 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@/services/products", () => ({
   useHolidayCalendars: () => ({ data: [] }),
+  useConsentDocuments: () => ({ data: [] }),
 }));
 
 // Both browse the database for rows this test has no opinion about; the ProseMirror

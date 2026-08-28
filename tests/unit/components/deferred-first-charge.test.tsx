@@ -53,7 +53,11 @@ function clubStarting(startDate: string | null): ProductBrowseRow {
 }
 
 function firstChargeDateFor(product: ProductBrowseRow): string | null {
-  const { result } = renderHook(() => useSignupPanelFields(product, READY));
+  // No required consents: this test is about the first-charge projection, and
+  // the enrolment conditions are a different field of the same hook.
+  const { result } = renderHook(() =>
+    useSignupPanelFields(product, READY, []),
+  );
   return result.current.firstChargeDate;
 }
 

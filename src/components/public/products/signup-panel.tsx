@@ -45,6 +45,15 @@ interface SignupPanelProps {
     | "start_date"
     | "timezone"
   >;
+  /**
+   * The consent documents enrolling on this product requires, as slugs.
+   *
+   * Beside `product` rather than on it: the requirement set is not a column on
+   * the browse row, and it is not one on purpose — `BROWSE_SELECT` publishes
+   * what a shop card paints and a card never names a product's enrolment
+   * conditions. The detail page reads them off its own query's embed.
+   */
+  requiredConsentSlugs: readonly string[];
   state: RegistrationState;
   authState: AuthState;
   /**
@@ -69,6 +78,7 @@ interface SignupPanelProps {
 
 export function SignupPanel({
   product,
+  requiredConsentSlugs,
   state,
   authState,
   regionGate,
@@ -80,7 +90,11 @@ export function SignupPanel({
   // Pricing / gamer selection / agreed / locale+currency — the view props
   // shared verbatim with the preview panel. This panel only adds the live
   // mutation actions on top, so the demo can't drift from the real UI.
-  const fields = useSignupPanelFields(product, authState);
+  const fields = useSignupPanelFields(
+    product,
+    authState,
+    requiredConsentSlugs,
+  );
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
@@ -109,6 +123,22 @@ export function SignupPanel({
 
   const purchaseShape = purchaseShapeFor(fields.pricingOption);
 
+  /**
+   * The ticked documents, in the product's own order and narrowed to what it
+   * actually requires.
+   *
+   * Derived at click time from the required list rather than sent as the raw
+   * ticked set: a requirement dropped while this tab sat open would otherwise
+   * travel as a slug the product no longer asks for. The RPC ignores an extra
+   * slug anyway — this just keeps the request saying only what it means. The
+   * CTA is what stops a *short* list from ever being sent; the RPC refuses one
+   * regardless, which is the guarantee that matters.
+   */
+  const consentedDocuments = () =>
+    fields.requiredConsentSlugs.filter((slug) =>
+      fields.consentedSlugs.has(slug),
+    );
+
   const handleSubmit = () => {
     if (!fields.selectedParticipantId || !purchaseShape) return;
     setSubmitError(null);
@@ -122,6 +152,7 @@ export function SignupPanel({
       participantId: fields.selectedParticipantId,
       purchaseShape,
       currency: fields.currency,
+      consentedDocuments: consentedDocuments(),
     };
     createMutation.mutate(input, {
       onSuccess: (response) => {
@@ -161,7 +192,11 @@ export function SignupPanel({
     setSubmitError(null);
     setCommitting(true);
     waitlistMutation.mutate(
-      { productId: product.id, participantId: fields.selectedParticipantId },
+      {
+        productId: product.id,
+        participantId: fields.selectedParticipantId,
+        consentedDocuments: consentedDocuments(),
+      },
       {
         onSuccess: (response) => {
           // Mirror the free-signup branch: land the parent on the summary

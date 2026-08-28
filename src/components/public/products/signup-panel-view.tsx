@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Identicon } from "@/components/ui/identicon";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { consentDocumentMeta } from "@/lib/constants/consent-documents";
 import type { ProductType } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
@@ -195,6 +196,19 @@ export interface SignupPanelViewProps {
   onAddGamer: () => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
+  /**
+   * **The product's enrolment conditions**: the published documents a parent
+   * must agree to before a seat can be taken, as slugs. Empty on nearly every
+   * product, and the whole consent section ceases to exist when it is.
+   *
+   * The list is settled before the panel paints — it rides in on the same
+   * product read as the price and the schedule — so no checkbox can appear
+   * under a parent part-way through the form.
+   */
+  requiredConsentSlugs: readonly string[];
+  /** Which of them are ticked. Never seeded; see `useSignupPanelFields`. */
+  consentedSlugs: ReadonlySet<string>;
+  onConsentChange: (slug: string, next: boolean) => void;
   onSubmit: () => void;
   /** Separate from onSubmit — the waitlist branch calls this. */
   onJoinWaitlist: () => void;
@@ -432,7 +446,9 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 //
 // **A disabled CTA is an instruction.** It names the single next missing step,
 // in the order the sections stand on the page: add a gamer → set your location
-// → agree to the rules → wait for the window. The label points at the nearest
+// → agree to the rules → agree to the documents → wait for the window. The
+// documents step exists only on a product that requires some, which is very
+// few of them. The label points at the nearest
 // unfinished thing above the button, so following it is a walk down the panel
 // rather than a hunt.
 //
@@ -778,14 +794,24 @@ function SignupForm(
   // stops the CTA. The wrong-country half never reaches this component — it
   // replaced the form upstream — and `unlocked` renders nothing at all.
   const needsLocation = props.regionGate?.gate.kind === "no_location";
+  // Every required document, ticked. Vacuously true on the products that
+  // require none, which is nearly all of them — so this step costs the ordinary
+  // panel nothing and does not appear in its CTA checklist at all.
+  const allConsentsAgreed = props.requiredConsentSlugs.every((slug) =>
+    props.consentedSlugs.has(slug),
+  );
   const formReady =
-    props.selectedParticipantId !== null && props.agreed && !needsLocation;
+    props.selectedParticipantId !== null &&
+    props.agreed &&
+    allConsentsAgreed &&
+    !needsLocation;
   const clickable = formReady && props.active && !props.submitting;
 
   // The CTA doubles as the instruction for the parent's next step: while it's
   // disabled it names exactly what's still missing, in the order they can act
-  // on it (add a gamer → set your location → agree to the rules → wait for the
-  // window), which is the order the sections stand in on the page. The same
+  // on it (add a gamer → set your location → agree to the rules → agree to the
+  // documents → wait for the window), which is the order the sections stand in
+  // on the page. The same
   // checklist runs whether or not registration is open, so a parent can finish
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
@@ -810,9 +836,17 @@ function SignupForm(
         ? t("regionLock.setLocation")
         : !props.agreed
           ? t("ctaAgreeRules")
-          : props.active
-            ? props.ctaLabelActive
-            : t("ctaReadyWaiting");
+          : // The documents come after the rules because their section does:
+            // the rules box is on every panel and the documents are the extra
+            // this product asks for, so they are appended below rather than
+            // wedged between the rules and the button a reader has already
+            // learned sit together. On a product requiring none the leaf is
+            // unreachable, and the checklist is the one it has always been.
+            !allConsentsAgreed
+            ? t("ctaAgreeConsents")
+            : props.active
+              ? props.ctaLabelActive
+              : t("ctaReadyWaiting");
 
   return (
     <div className="space-y-4">
@@ -968,6 +1002,19 @@ function SignupForm(
         onAgreedChange={props.onAgreedChange}
       />
 
+      {/* The extra conditions this particular product attaches to a seat, below
+          the rules every product carries. Absent entirely on a product that
+          requires none — no heading, no empty box, nothing reserved — because
+          the requirement set arrives with the product read and cannot change
+          under a reader mid-form, so there is no late arrival to hold room for. */}
+      {props.requiredConsentSlugs.length > 0 && (
+        <RequiredConsents
+          slugs={props.requiredConsentSlugs}
+          consented={props.consentedSlugs}
+          onConsentChange={props.onConsentChange}
+        />
+      )}
+
       <Button
         size="lg"
         variant={props.variant ?? "default"}
@@ -1041,6 +1088,105 @@ function RulesCheckbox({
         <span className="text-muted-foreground">{ruleText}</span>
       </div>
     </label>
+  );
+}
+
+/**
+ * **The product's enrolment conditions, one tickable sentence per document.**
+ *
+ * The same control the rules box is — a bordered, clickable box that lights
+ * when ticked — repeated once per required document, because a parent who has
+ * met the rules box on every other product already knows what this is. One box
+ * per document rather than one covering all of them: each is a separate
+ * agreement to a separate text, recorded as its own row against its own
+ * version, and a single box would record several agreements from one click.
+ *
+ * **The document name is a link, and it opens in a new tab.** That is the whole
+ * reason the sentence is rich text rather than a label beside a link: the words
+ * a parent clicks have to be the name of the thing they are agreeing to. The
+ * new tab is deliberate and not a stylistic default — the panel behind it is
+ * holding a chosen child, a ticked rules box and possibly a half-answered
+ * location question, and navigating away would throw all of it out to read a
+ * document the panel is *asking* them to read.
+ *
+ * **Clicking the link must not tick the box.** The whole box is a `<label>`, so
+ * a click anywhere inside it toggles the input — including on the anchor, which
+ * would tick a box for a document at the exact moment the reader said they
+ * wanted to read it first. The anchor stops the click from reaching the label,
+ * and the navigation still happens because that is the anchor's own default,
+ * not something the label was doing for it.
+ *
+ * **A slug this deploy cannot name still renders, still gates, and carries no
+ * link.** The label falls back to the raw slug and the sentence loses its
+ * anchor rather than gaining one that points nowhere. It looks wrong, which is
+ * correct: registry rows arrive by migration and the name map ships in the same
+ * deploy, so this is a defect to notice — and the alternative, dropping the
+ * checkbox, would let the enrolment through without a consent the product
+ * legally requires.
+ */
+function RequiredConsents({
+  slugs,
+  consented,
+  onConsentChange,
+}: {
+  slugs: readonly string[];
+  consented: ReadonlySet<string>;
+  onConsentChange: (slug: string, next: boolean) => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel");
+  const tNames = useTranslations("consentDocuments.names");
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
+      {slugs.map((slug) => {
+        const meta = consentDocumentMeta(slug);
+        const checked = consented.has(slug);
+        const name = meta === null ? slug : tNames(meta.nameKey);
+        return (
+          <label
+            key={slug}
+            className={cn(
+              "block cursor-pointer rounded-md border p-4 transition-colors",
+              checked
+                ? "border-primary bg-primary/5"
+                : "border-border bg-muted/30 hover:bg-accent/50",
+            )}
+          >
+            <div className="flex items-start gap-3 text-xs">
+              <Checkbox
+                className="mt-0.5"
+                checked={checked}
+                onChange={(e) => onConsentChange(slug, e.target.checked)}
+              />
+              <span className="text-muted-foreground">
+                {t.rich("consents.item", {
+                  document: name,
+                  link: (chunks) =>
+                    meta === null ? (
+                      <span className="font-medium text-foreground">
+                        {chunks}
+                      </span>
+                    ) : (
+                      <a
+                        href={meta.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        // The label wrapping this box would toggle the checkbox
+                        // on any click inside it. Reading the document is not
+                        // agreeing to it, so the anchor keeps its own click.
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {chunks}
+                      </a>
+                    ),
+                })}
+              </span>
+            </div>
+          </label>
+        );
+      })}
+    </div>
   );
 }
 

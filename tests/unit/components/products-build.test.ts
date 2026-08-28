@@ -1441,6 +1441,7 @@ function mockDetailRow(
     ],
     locations: null,
     product_holiday_calendars: [],
+    product_required_consents: [],
     ...overrides,
   };
 }

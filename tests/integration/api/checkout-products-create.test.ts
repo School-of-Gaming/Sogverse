@@ -557,6 +557,56 @@ describe("POST /api/checkout/products/create", () => {
     });
   });
 
+  it("hands the ticked consent documents to the RPC, untouched", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: FREE_EVENT });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+      error: null,
+    });
+
+    await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+        consentedDocuments: ["roblox-programme-terms"],
+      }),
+    );
+
+    // Passed straight through and never checked here: the RPC compares them
+    // against the product's requirement set under the same product-gate lock
+    // as every other signup rule, and refuses with a check violation naming
+    // whatever is missing.
+    const args = mockAdminRpc.mock.calls[0][1];
+    expect(args.p_consented_documents).toEqual(["roblox-programme-terms"]);
+  });
+
+  it("omits the argument when the client sent no consents at all", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: FREE_EVENT });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+      error: null,
+    });
+
+    await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+      }),
+    );
+
+    // An absent field and an empty array are the same claim, so the omission
+    // reaches the RPC's DEFAULT NULL rather than being turned into a 400 that
+    // says less than the database's own refusal would.
+    const args = mockAdminRpc.mock.calls[0][1];
+    expect(args.p_consented_documents).toBeUndefined();
+  });
+
   // ── Free consumer club ────────────────────────────────────────────
   //
   // The route resolves the purchase shape's coherence with `billing_mode`

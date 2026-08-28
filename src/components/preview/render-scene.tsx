@@ -18,6 +18,7 @@ import {
   REGION_LOCK_BASE_SCENARIO,
   findRegionLockScenario,
 } from "@/components/public/products/region-lock/region-lock-scenarios";
+import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -67,6 +68,17 @@ const SCENE_RENDERERS: Record<
         <ProductDetailScene
           scenario={REGION_LOCK_BASE_SCENARIO}
           regionLock={regionLock}
+        />
+      );
+    }
+    // Same page again, on a product that attaches conditions to a seat. Like
+    // the region-lock trio it shares the surface but not the fixtures: one club
+    // fixture, with the requirement set as the only thing that varies.
+    if (scenario === REQUIRED_CONSENTS_SCENARIO.slug) {
+      return (
+        <ProductDetailScene
+          scenario={REQUIRED_CONSENTS_SCENARIO.baseScenario}
+          requiredConsentSlugs={REQUIRED_CONSENTS_SCENARIO.documentSlugs}
         />
       );
     }

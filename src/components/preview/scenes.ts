@@ -4,6 +4,7 @@ import {
   PREVIEW_SCENARIOS,
 } from "@/components/public/products/mock-detail-fixtures";
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
+import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
 
 /**
  * The **full-page preview scene registry**.
@@ -130,9 +131,16 @@ export const PREVIEW_SCENES = [
     surface: "products",
     title: "Product detail page",
     description:
-      "The public product page a parent lands on from the shop, once per state its signup panel can be met in: registration window, audience, and region lock.",
+      "The public product page a parent lands on from the shop, once per state its signup panel can be met in: registration window, audience, region lock, and required consents.",
     chrome: "public",
-    scenarios: [...PRODUCT_SCENARIOS, ...REGION_LOCK_SCENARIO_META],
+    scenarios: [
+      ...PRODUCT_SCENARIOS,
+      ...REGION_LOCK_SCENARIO_META,
+      {
+        slug: REQUIRED_CONSENTS_SCENARIO.slug,
+        label: REQUIRED_CONSENTS_SCENARIO.label,
+      },
+    ],
   },
   {
     surface: "confirmation",

@@ -120,6 +120,7 @@ const validBody = {
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
   holiday_calendar_ids: [],
+  required_consent_slugs: [],
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
@@ -335,6 +336,41 @@ describe("POST /api/admin/products/create", () => {
     // supabase-js drops the key, and the RPC's DEFAULT NULL writes "unlocked".
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_region_lock_country).toBeUndefined();
+  });
+
+  it("passes the required consent slugs through as an array, always", async () => {
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: {
+          ...validBody,
+          required_consent_slugs: ["roblox-programme-terms"],
+        },
+      }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({
+        p_required_consent_slugs: ["roblox-programme-terms"],
+      }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Never an omission, unlike the tag and the lock above: an empty array is
+    // the ordinary "requires nothing", the RPC reads it exactly as it reads
+    // NULL, and passing it keeps this line identical to the update route's,
+    // where an omission would drop a product's conditions.
+    const empty = mockUserRpc.mock.calls[0][1];
+    expect(empty.p_required_consent_slugs).toEqual([]);
+  });
+
+  it("returns 400 when the required consent field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { required_consent_slugs: _slugs, ...noSlugs } = validBody;
+    const response = await POST(createRequest({ data: noSlugs }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the region lock field is missing", async () => {

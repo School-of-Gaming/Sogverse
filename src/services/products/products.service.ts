@@ -156,7 +156,7 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason))), product_required_consents(document_slug)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -187,7 +187,7 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name)), product_required_consents(document_slug)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -358,6 +358,17 @@ export type CreateProductInput = {
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
+  /**
+   * The consent documents a parent must agree to before enrolling, as slugs
+   * from `consent_documents`. Empty on almost every product — the Roblox
+   * programme is what this exists for.
+   *
+   * A plain array rather than the required-nullable shape `tag` and
+   * `region_lock_country` take: an empty array already says "requires nothing",
+   * and the RPC reads NULL and `[]` identically, so there is no second answer a
+   * null would express.
+   */
+  required_consent_slugs: string[];
   // Per-session operating fees in integer cents. null = unknown/none,
   // 0 = volunteer, > 0 = a fee (see products.contracts.ts).
   primary_gedu_fee_cents: number | null;
@@ -419,6 +430,10 @@ export type UpdateProductInput = {
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
+  /** Required consent document slugs — see CreateProductInput. The update half
+   *  is the load-bearing one: the RPC replaces the whole requirement set on
+   *  every call, so the answer has to travel on every save. */
+  required_consent_slugs: string[];
   // Per-session operating fees in integer cents — see CreateProductInput.
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;

@@ -381,6 +381,7 @@
           "registrationOpensAt": "ghIH poSchoH",
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
+          "requiredConsents": "poQlu’bogh chaw’mey",
           "visibility": "leghlu"
         },
         "copyLink": "Hoch He yIghItlhqa'",
@@ -425,6 +426,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
+        "consents": "poQlu’bogh chaw’mey",
+        "consentsDescription": "ghItlhmey lulajnIS vavpu’ ’e’ poQlu’. motlh pagh poQlu’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -551,6 +554,12 @@
       },
       "regionLock": {
         "none": "Sep ngaQbe’ — Hoch qo’vaD"
+      },
+      "consents": {
+        "version": "’ay’ {version}",
+        "noVersion": "pagh ’ay’ ngeHlu’pu’",
+        "empty": "chaw’ ghItlhmey tu’lu’be’.",
+        "none": "pagh"
       },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
@@ -1774,6 +1783,7 @@
       "ctaAddGamer": "QujwI’ yIchel ’ej taH",
       "ctaAllSet": "bIghuHrup",
       "ctaAgreeRules": "chutmey yIlaj",
+      "ctaAgreeConsents": "poQlu’bogh ghItlhmey yIlaj",
       "ctaWaitlist": "tetlh DaqaD",
       "ctaSignIn": {
         "consumer_club": "qonmeH yI’el",
@@ -1799,6 +1809,10 @@
         "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
         "camp": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
         "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj."
+      },
+      "consents": {
+        "heading": "poQlu’bogh ghItlhmey",
+        "item": "<link>{document}</link> vIlaDpu’ ’ej vIlaj."
       },
       "whoAreYouSigningUp": {
         "consumer_club": "’Iv muvbogh SoH?",

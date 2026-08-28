@@ -1389,6 +1389,13 @@ function buildBaseProduct(
         ? []
         : buildPriceRows(id, config.priceCentsEur),
     schedule_slots: scheduleSlots,
+    // Empty on every product scenario, exactly as the region lock is null on
+    // every one: what a product requires is a property of that product, and
+    // there is no ordinary club whose page should be showing consent boxes.
+    // The required-consents scenario supplies its own set to the panel rather
+    // than writing one onto a fixture, because the panel is the only thing on
+    // this page that reads them.
+    product_required_consents: [],
     holidays: pickHolidays(productType),
   };
 }

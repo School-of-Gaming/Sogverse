@@ -101,6 +101,12 @@ export const POST = defineRoute({
       p_schedule_slots: body.schedule_slots,
       p_prices: body.prices,
       p_holiday_calendar_ids: body.holiday_calendar_ids,
+      // The enrolment conditions, unconditionally and as an array — never
+      // `?? undefined`. An empty array is the ordinary "requires nothing", the
+      // RPC reads it exactly as it reads NULL, and passing it through keeps this
+      // line identical to the update route's, where an omission would drop a
+      // product's requirement set instead of clearing it deliberately.
+      p_required_consent_slugs: body.required_consent_slugs,
       p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
       p_assistant_gedu_fee_cents: body.assistant_gedu_fee_cents ?? undefined,
       p_municipality_fee_cents: body.municipality_fee_cents ?? undefined,
