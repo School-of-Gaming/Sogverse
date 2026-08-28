@@ -285,7 +285,13 @@ export function GeduCertificationCard({
             section is a statement by whoever ticked the box, not a file
             viewer, and the copy says so.
 
-            **Exactly one line changes when the box is ticked.** The process
+            **Exactly one node changes when the box is ticked.** One residual
+            is accepted: the recorded line carries a name and a date where the
+            missing line carries neither, so on a squeezed card in the widest
+            locale it can wrap to a second line the other state does not have.
+            Admin surfaces are desktop-default and at desk widths both states
+            are one line; reserving a second line there would be a hole in
+            every ordinary visit. The process
             paragraph under the status line is state-neutral on purpose: it
             describes how the extract is obtained and presented, which is as
             true after the tick as before it. Written as the *absence* of a

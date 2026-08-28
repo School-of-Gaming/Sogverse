@@ -226,8 +226,9 @@ export function GeduContractPageBody({
  * **Its label is a styled paragraph, not a heading, and that is load-bearing.**
  * This page already has two h1s by design — its own title, and the contract
  * document's, which is the document's and must not be reworded into a section
- * title. An h2 sitting between them would make the document's h1 read as this
- * section's child in the outline. So the label takes the same uppercase-label
+ * title. An h2 sitting between them would hand the page's heading list a level
+ * this section never earned, splitting the two h1s with a rank that belongs to
+ * neither. So the label takes the same uppercase-label
  * treatment the admin certification card gives its section labels: it looks
  * like a heading and is not one, and the page's outline is exactly what it was
  * before this section existed.

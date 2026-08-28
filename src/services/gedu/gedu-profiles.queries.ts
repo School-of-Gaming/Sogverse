@@ -117,10 +117,11 @@ export function useSetGeduCertified() {
  * educators and this write does not certify anybody — but the queue renders the
  * fact itself: each row carries a standing chip for the check, and whether the
  * certify button raises the missing-prerequisite confirmation is decided by the
- * same stamp. Left stale, a dashboard open in another tab goes on warning about
- * an extract the admin has just recorded. That entry only ever exists in an
- * admin's own browser, and this is an admin's write, so it is always there to
- * invalidate.
+ * same stamp. Left stale, the admin who ticks the box on a user page and
+ * client-side-navigates back to the dashboard meets a cached snapshot still
+ * warning about the extract they just recorded — and a certify click there
+ * would assert it as fact. That entry only ever exists in an admin's own
+ * browser, and this is an admin's write, so it is always there to invalidate.
  *
  * **Both invalidations are returned rather than fired and forgotten**, so
  * `mutateAsync` settles only once the refetches have landed. Dropped, the

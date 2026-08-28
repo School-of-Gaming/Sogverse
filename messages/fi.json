@@ -255,12 +255,12 @@
       "recorded": "Rikosrekisteriote kirjattu",
       "recordedOn": "Rikosrekisteriote kirjattu {date}",
       "recordedByOn": "Rikosrekisteriotteen kirjasi {name} {date}",
-      "notRecorded": "Rikosrekisteriotetta ei ole esitetty",
+      "notRecorded": "Rikosrekisteriotetta ei ole kirjattu",
       "processDetail": "Gedu hankkii otteen itse Oikeusrekisterikeskuksesta ja esittää sen sinulle. Otteen on oltava esitettäessä alle kuusi kuukautta vanha. Emme säilytä siitä kopiota – vain merkinnän siitä, että asianmukainen ote on esitetty.",
       "recordLabel": "Olen nähnyt tämän Gedun asianmukaisen rikosrekisteriotteen",
       "error": "Rikostaustan selvityksen päivitys epäonnistui. Yritä uudelleen.",
-      "queueRecorded": "Ote esitetty {date}",
-      "queueNotRecorded": "Otetta ei ole esitetty",
+      "queueRecorded": "Ote kirjattu {date}",
+      "queueNotRecorded": "Otetta ei ole kirjattu",
       "rowNotRecorded": "Ei ole esittänyt rikosrekisteriotetta"
     },
     "geduCertifyWarnings": {
@@ -1456,8 +1456,8 @@
       "title": "Rikosrekisteriotteesi",
       "howItWorks": "Ennen kuin sinut hyväksytään, esität myös lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen (rikostaustaote). Tilaat sen itse Oikeusrekisterikeskuksesta, ja sen on oltava alle kuusi kuukautta vanha, kun näytät sen meille.",
       "noCopyKept": "Emme säilytä otteesta kopiota emmekä kirjaa siitä mitään – vain sen, että asianmukainen ote on esitetty ja milloin.",
-      "recorded": "Rikosrekisteriotteesi on merkitty esitetyksi.",
-      "recordedOn": "Rikosrekisteriotteesi merkittiin esitetyksi {date}.",
+      "recorded": "Rikosrekisteriotteesi on kirjattu.",
+      "recordedOn": "Rikosrekisteriotteesi kirjattiin {date}.",
       "stillNeeded": "Vielä tekemättä: näytä meille rikosrekisteriotteesi.",
       "notice": {
         "title": "Et ole vielä näyttänyt meille rikosrekisteriotettasi",
