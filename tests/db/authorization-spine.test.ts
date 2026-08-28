@@ -70,6 +70,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   apply_group_changes: { permittedRoles: ["admin"] },
   create_product: { permittedRoles: ["admin"] },
   update_product: { permittedRoles: ["admin"] },
+  // The single writer of product_required_consents (00210). It exists as its own
+  // RPC rather than as an inline INSERT because create_product is SECURITY
+  // INVOKER: an inline write there would run as the admin's own session role and
+  // would need a table write grant on the join table, which is the Data API
+  // surface that migration keeps at zero. Exposed to `authenticated` for exactly
+  // that reason, and guard-first like every other admin RPC. The positive half of
+  // the matrix IS assertable with no fixture: an admin passes the guard and the
+  // all-NULL call deletes nothing and inserts nothing rather than raising.
+  set_product_required_consents: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
   // The admin product page's whole session record (00200). Its second question
   // is "does this product exist", which a NULL id answers with P0002 rather

@@ -43,6 +43,120 @@ export type Database = {
           },
         ]
       }
+      consent_acceptances: {
+        Row: {
+          accepted_at: string
+          customer_id: string
+          document_slug: string
+          document_version: string
+          id: string
+          participant_id: string
+          product_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          customer_id: string
+          document_slug: string
+          document_version: string
+          id?: string
+          participant_id: string
+          product_id: string
+        }
+        Update: {
+          accepted_at?: string
+          customer_id?: string
+          document_slug?: string
+          document_version?: string
+          id?: string
+          participant_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_document_fkey"
+            columns: ["document_slug", "document_version"]
+            isOneToOne: false
+            referencedRelation: "consent_document_versions"
+            referencedColumns: ["document_slug", "version"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consent_document_versions: {
+        Row: {
+          created_at: string
+          document_slug: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          document_slug: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          document_slug?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_document_versions_document_slug_fkey"
+            columns: ["document_slug"]
+            isOneToOne: false
+            referencedRelation: "consent_documents"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      consent_documents: {
+        Row: {
+          created_at: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       customer_profiles: {
         Row: {
           pin_hash: string | null
@@ -1028,6 +1142,36 @@ export type Database = {
           },
         ]
       }
+      product_required_consents: {
+        Row: {
+          document_slug: string
+          product_id: string
+        }
+        Insert: {
+          document_slug: string
+          product_id: string
+        }
+        Update: {
+          document_slug?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_required_consents_document_slug_fkey"
+            columns: ["document_slug"]
+            isOneToOne: false
+            referencedRelation: "consent_documents"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "product_required_consents_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_seat_counts: {
         Row: {
           active_count: number
@@ -1929,6 +2073,7 @@ export type Database = {
       }
       create_participation: {
         Args: {
+          p_consented_documents?: string[]
           p_currency: string
           p_customer_id: string
           p_participant_id: string
@@ -1957,6 +2102,7 @@ export type Database = {
           p_product_type: Database["public"]["Enums"]["product_type"]
           p_region_lock_country?: string
           p_registration_opens_at: string
+          p_required_consent_slugs?: string[]
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
@@ -2129,11 +2275,16 @@ export type Database = {
         Returns: boolean
       }
       join_product_waitlist: {
-        Args: { p_participant_id: string; p_product_id: string }
+        Args: {
+          p_consented_documents?: string[]
+          p_participant_id: string
+          p_product_id: string
+        }
         Returns: Json
       }
       join_waitlist: {
         Args: {
+          p_consented_documents?: string[]
           p_customer_id: string
           p_participant_id: string
           p_product_id: string
@@ -2173,6 +2324,15 @@ export type Database = {
           p_status: string
         }
         Returns: Json
+      }
+      record_required_consents: {
+        Args: {
+          p_consented_documents: string[]
+          p_customer_id: string
+          p_participant_id: string
+          p_product_id: string
+        }
+        Returns: undefined
       }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
@@ -2255,6 +2415,10 @@ export type Database = {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
       }
+      set_product_required_consents: {
+        Args: { p_product_id: string; p_slugs: string[] }
+        Returns: undefined
+      }
       set_site_notes: {
         Args: {
           p_gedu_note: string
@@ -2288,6 +2452,7 @@ export type Database = {
           p_primary_gedu_fee_cents?: number
           p_region_lock_country?: string
           p_registration_opens_at: string
+          p_required_consent_slugs?: string[]
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number

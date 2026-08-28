@@ -61,6 +61,28 @@ export type GeduContractVersion =
 export type GeduContractAcceptance =
   Database["public"]["Tables"]["gedu_contract_acceptances"]["Row"];
 
+// consent_documents / consent_document_versions / product_required_consents /
+// consent_acceptances (00210) — the enrolment-consent feature.
+//
+// Row aliases only, for the same reason the gedu contract has none: not one of
+// these four tables carries a write grant for any Data API role. Documents and
+// versions arrive by migration, a product's requirement set is written by
+// `set_product_required_consents`, and an acceptance is written by
+// `record_required_consents` from inside the two enrolment RPCs — so an Insert
+// type here would name a statement nothing in the app is allowed to make.
+//
+// A ConsentAcceptance is a NON-REVOCABLE enrolment condition and carries no
+// revoked state by design; the revocable marketing/media consents are a
+// separate future system and must not be folded into these types.
+export type ConsentDocument =
+  Database["public"]["Tables"]["consent_documents"]["Row"];
+export type ConsentDocumentVersion =
+  Database["public"]["Tables"]["consent_document_versions"]["Row"];
+export type ProductRequiredConsent =
+  Database["public"]["Tables"]["product_required_consents"]["Row"];
+export type ConsentAcceptance =
+  Database["public"]["Tables"]["consent_acceptances"]["Row"];
+
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];
