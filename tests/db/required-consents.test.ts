@@ -77,10 +77,14 @@ describe("product required consents (00210)", () => {
   let admin: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
   /**
-   * A signed-in admin, for the comp-enrolment door (00212). It has to be a real
-   * session rather than the service-role client: `admin_enroll_participant`
-   * guards on the caller's live role AND stamps the acceptance with
-   * `auth.uid()`, and a service-role connection has neither.
+   * A signed-in admin, for every RPC here that is guard-first on
+   * `assert_admin` — the requirement-set writer and the comp-enrolment door
+   * (00212). It has to be a real session rather than the service-role client:
+   * the guard resolves the caller's role from their `profiles` row via
+   * `auth.uid()`, and a service-role connection has no uid, so its role reads
+   * NULL and every such call is refused with 42501 before its body runs.
+   * `admin_enroll_participant` additionally stamps the acceptance with
+   * `auth.uid()`, which the service-role client could not supply either.
    */
   let adminAuth: SupabaseClient<Database>;
   /** The same two callers as raw PostgREST tokens, for the NULL-element cases. */
@@ -566,13 +570,19 @@ describe("product required consents (00210)", () => {
         p_product_id: PRODUCT_REQUIRES_NOTHING,
         p_slugs: [TERMS],
       });
-      // The canonical forbidden SQLSTATE every guard primitive raises.
+      // The canonical forbidden SQLSTATE every guard primitive raises — and
+      // here it is the GUARD raising it, not a missing grant: the function is
+      // granted to `authenticated`, which this caller is, so the EXECUTE
+      // privilege is held and the body is what refuses. The success cases below
+      // stand on the same footing (a signed-in admin, not the service-role
+      // client, which has no auth.uid() for the guard to read), so a refusal
+      // here cannot be the calling context rather than the role.
       expect(res.error?.code).toBe("42501");
       expect(await requirementsFor(PRODUCT_REQUIRES_NOTHING)).toEqual([]);
     });
 
     it("replaces the set rather than merging into it", async () => {
-      const res = await admin.rpc("set_product_required_consents", {
+      const res = await adminAuth.rpc("set_product_required_consents", {
         p_product_id: PRODUCT_FREE_REQUIRES,
         p_slugs: [PRIVACY],
       });
@@ -581,7 +591,7 @@ describe("product required consents (00210)", () => {
     });
 
     it("clears the set when handed nothing", async () => {
-      const res = await admin.rpc("set_product_required_consents", {
+      const res = await adminAuth.rpc("set_product_required_consents", {
         p_product_id: PRODUCT_FREE_REQUIRES,
         p_slugs: [],
       });
@@ -609,7 +619,7 @@ describe("product required consents (00210)", () => {
     });
 
     it("refuses a document the platform has never published", async () => {
-      const res = await admin.rpc("set_product_required_consents", {
+      const res = await adminAuth.rpc("set_product_required_consents", {
         p_product_id: PRODUCT_REQUIRES_NOTHING,
         p_slugs: ["NOT-A-DOCUMENT-THIS-PLATFORM-PUBLISHES"],
       });
