@@ -69,7 +69,7 @@ automated checks we have are incomplete in specific, known ways:
    write-path IDOR loop and no completeness check tying the exposed surface to a test.
 
 The history makes the stakes concrete. The 2026-03 security audit
-(`docs/SECURITY_REPORT.md`) found, among others: a trigger that trusted user-supplied
+(`docs/records/security-audit-2026-03.md`) found, among others: a trigger that trusted user-supplied
 metadata to assign roles (privilege escalation to admin), an RLS policy that let any
 customer link themselves to any child (IDOR), and a financial RPC granted to every
 authenticated user with no internal role check (unlimited token minting). These were

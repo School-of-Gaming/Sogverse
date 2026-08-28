@@ -8,7 +8,11 @@
 >
 > **Also note:** the token economy this report's financial findings (#3, #4, #6, #10) describe — `adjust_token_balance()`, `process_enrollment_charges()`, the `token_transactions` / `enrollment_charges` tables — was retired wholesale when Products v2 replaced the Sorg token / weekly-charge model with direct Stripe payments per participation (dropped in `00052_drop_sorg_enrollment_cron.sql` and `00059_drop_sorg_tokens.sql`). Those code paths no longer exist, so those findings are now moot by removal rather than only by patch. Findings #1, #2, #5, #7, #8, #9 remain verifiable against current code (`#5`'s `commit_group_changes` was renamed to `apply_group_changes`).
 >
-> **Addendum:** items identified after the 2026-03 audit are recorded in the *Addendum — Post-Audit Notes* section near the end (currently A1: the password-reset `token_hash` query-string channel), kept out of the numbered findings above so the original audit's counts stay intact.
+> **This is a frozen record of the 2026-03 audit and its remediation.** The *current*
+> security posture — the enforcement map, the standing accepted risks (including the
+> post-audit `token_hash` query-string item once recorded here as an addendum), and what
+> the next audit has to cover — lives in `docs/architecture/security.md`. New findings
+> and accepted risks go there, not here.
 
 ---
 
@@ -624,7 +628,9 @@ CSP is set dynamically per-request in `src/proxy.ts` with a **nonce-based `scrip
 - `'strict-dynamic'` allows dynamically loaded chunks (Next.js code splitting, Daily.co dynamic import) to execute when loaded by a nonce'd script
 - In development, falls back to `'unsafe-inline' 'unsafe-eval'` because Next.js HMR injects scripts outside the SSR pipeline
 
-#### Remaining CSP gaps
+#### CSP gaps at close of remediation
+
+(The *current* accepted-risk status of CSP lives in `docs/architecture/security.md`; the below is the state as recorded at the time.)
 
 - **`style-src 'unsafe-inline'`**: Removing `'unsafe-inline'` from `style-src` would require nonce-ing every `<style>` tag. This is impractical with Tailwind CSS v4 (injects `<style>` tags at build time), `next/font` (inline styles for font variables), and JSX `style` props. The attack it prevents — CSS-based data exfiltration via selector side-channels — requires an existing HTML injection point and is an extremely niche vector. Accepted risk.
 - **`img-src https:` wildcard — CLOSED (2026-04-15).** Previously required because admins pasted arbitrary HTTPS URLs into `products.image_url`. Product images now live in the `product-images` Supabase Storage bucket, and `img-src` is scoped to `'self' data: blob: <supabase-host>` in `src/proxy.ts`. An HTML-injection attacker can no longer beacon visitors' IPs via `<img src="https://evil.example/...">`.
@@ -765,48 +771,10 @@ These go beyond individual fixes to prevent future classes of the same vulnerabi
 2. **CLAUDE.md rules** — codified the recurring patterns (SECURITY DEFINER access control, RLS IDOR prevention, SELECT FOR UPDATE for financial data) so they are enforced during AI-assisted development.
 3. **Private-by-default convention** — all new PostgreSQL functions get `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless explicitly allowlisted.
 
-### If reopening this audit
-
-- Run `npm run test:db` — the access control tests will catch any regressions in function grants or missing RLS.
-- Review any migrations added after `00009_access_control_helpers` for new SECURITY DEFINER functions or tables without RLS.
-- Run https://securityheaders.com against the production domain to verify headers are served correctly.
-
----
-
-## Addendum — Post-Audit Notes
-
-Items identified after the 2026-03 audit window, recorded here for continuity. These are **not** part of the original 10 findings (the Executive Summary table and "9 of 10 fixed" narrative above describe the 2026-03 pen test only) and are tracked separately.
-
-### A1. Password-reset `token_hash` transits the query string (server logs + analytics) — Accepted
-
-**Severity:** LOW (informational within our trust model)
-**Location:** `src/app/api/auth/forgot-password/route.ts`, `src/components/auth/reset-password-form.tsx`
-**CWE:** CWE-598 (Information Exposure Through Query Strings)
-**Date recorded:** 2026-07-01
-**Status:** Accepted (conscious tradeoff)
-
-#### Context
-
-The password-reset flow was reworked (branch `fix/reset-password-link-scanner`) to resist corporate email link-scanners (SafeLinks / Proofpoint / etc.), which pre-fetch links and burn Supabase's single-use `action_link` (a bare GET on `/auth/v1/verify`) before the real user clicks. The new flow emails a link to our own `/reset-password` page carrying Supabase's `hashed_token` in the query string; the page consumes it via `supabase.auth.verifyOtp({ token_hash, type: 'recovery' })` only on form **submit** — a POST a passive scanner never makes. This is the Supabase-documented token_hash pattern.
-
-#### Exposure
-
-The recovery token is **live** in the URL from email-click until submit, so it reaches the places a query string is normally recorded:
-
-- **Vercel server access logs** — every `GET /reset-password?token_hash=…&email=…` is logged with the full URL.
-- **Vercel Web Analytics / Speed Insights** (`<Analytics />` / `<SpeedInsights />` in `src/app/layout.tsx`) fire a pageview at load; no `beforeSend` scrub is configured, so the query can be shipped to Vercel's pipeline.
-
-`Referrer-Policy: strict-origin-when-cross-origin` (Finding #7) closes the cross-origin `Referer` vector but neither of these two. The `email` param (the recipient's own address, used as the password-manager username hint) rides the same channel.
-
-#### Why accepted
-
-- **No privilege boundary is crossed.** The only readers of Vercel logs and analytics are admins, who are always-trusted and already hold full access to every account (see the `handle_new_user` role model, Finding #1). An admin reading a recovery token from a log gains nothing they don't already have — there is no escalation.
-- **The token is single-use and short-TTL.** It must be used before the real user submits and before it expires, and is void the moment either happens.
-- **The fragment alternative cuts the wrong way here.** Moving the token to the URL fragment (`#token_hash=…`) would close all three vectors at once (fragments are never sent to the server, never in `Referer`, not captured by pageview URLs) and is viable because we consume the token client-side — **but** fragments can be dropped by the very corporate link-rewriters this feature exists to serve, trading the feature's core robustness for a privacy gain our trust model already neutralizes.
-
-#### Revisit if
-
-The trust model changes — e.g. non-admin access to Vercel logs/analytics, or log/analytics forwarding to a third-party SIEM. Mitigation at that point: add a `beforeSend` scrub stripping `token_hash`/`email` on `<Analytics />` and `<SpeedInsights />`, and reconsider the fragment.
+*(The "if reopening this audit" checklist and the post-audit accepted-risk addendum that
+used to close this report were living content, and moved to `docs/architecture/security.md`
+— see "Continuous verification", "Next audit coverage", and the accepted-risks entry on
+the password-reset `token_hash` query-string channel.)*
 
 ---
 

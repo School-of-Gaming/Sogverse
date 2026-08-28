@@ -20,7 +20,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * against. When that table lands, extend the policy AND this test
  * together (positive: enrolled-family customer can read; negative:
  * customer with no enrollment cannot). See
- * docs/products-architecture.md § "Extend site_details read
+ * docs/architecture/products.md § "Extend site_details read
  * policy to purchasing customers" for the planned policy shape.
  */
 

@@ -218,7 +218,7 @@ export async function proxy(request: NextRequest) {
   // ES256 JWKS, so there's no GoTrue round-trip on the hot path. The
   // getSession() it calls internally still refreshes the token when it's within
   // the expiry margin — writing new cookies via the handler above — so the
-  // proxy remains the single token-refresh point. See docs/performance.md.
+  // proxy remains the single token-refresh point. See docs/architecture/performance.md.
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims.sub ?? null;
   const sessionId = claimsData?.claims.session_id ?? null;

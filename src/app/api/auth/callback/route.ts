@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     if (!error) {
       // Read the just-exchanged session's claims to determine the role.
       // getClaims() verifies the freshly-minted token locally (no GoTrue
-      // round-trip) — see docs/performance.md.
+      // round-trip) — see docs/architecture/performance.md.
       const { data: claimsData } = await supabase.auth.getClaims();
       const userId = claimsData?.claims.sub;
 

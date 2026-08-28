@@ -294,7 +294,7 @@ Checking only `column = auth.uid()` is insufficient — also verify the user is 
 to reference the target entity (prevents IDOR).
 
 **Rule: an exposed function's *body* is verified, not just its grant.** The DB test
-suite's **authorization spine** (`docs/db-authorization-architecture.md` §3.4) queries the
+suite's **authorization spine** (`docs/architecture/db-authorization.md` §3.4) queries the
 PostgreSQL catalogs and requires every function reachable by `authenticated` to be one of
 two things, with nothing escaping both:
 

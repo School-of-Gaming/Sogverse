@@ -3,9 +3,9 @@
 **Status:** living template. Use it when a backend surface has accumulated
 correctness-by-convention and needs converting to correctness-by-mechanism. Extracted
 from two instances of the same arc: the 2026-03 security remediation
-(`docs/SECURITY_REPORT.md`) and the DB authorization refactor
-(`docs/db-authorization-architecture.md`). Each future instance gets its own doc
-following `db-authorization-architecture.md`'s shape (problem → current state →
+(`docs/records/security-audit-2026-03.md`) and the DB authorization refactor
+(`docs/architecture/db-authorization.md`). Each future instance gets its own doc
+following `architecture/db-authorization.md`'s shape (problem → current state →
 solution → justification → phased plan → out-of-scope); this doc only holds the
 template those docs instantiate.
 
@@ -62,15 +62,15 @@ without the last two is an audit, not a fix.
 
 | Surface | Status | Where |
 |---|---|---|
-| DB grants + RLS presence | Done (2026-03) | `docs/SECURITY_REPORT.md`; enforced by the DB access-control test |
-| DB function bodies + RLS behavior | Done (2026-07) | `docs/db-authorization-architecture.md`; enforced by the verification-spine DB tests |
-| HTTP route layer | Done (2026-07) | `docs/route-boundary-architecture.md`; enforced by the route posture registry's integration tests |
+| DB grants + RLS presence | Done (2026-03) | `docs/records/security-audit-2026-03.md`; enforced by the DB access-control test |
+| DB function bodies + RLS behavior | Done (2026-07) | `docs/architecture/db-authorization.md`; enforced by the verification-spine DB tests |
+| HTTP route layer | Done (2026-07) | `docs/architecture/route-boundary.md`; enforced by the route posture registry's integration tests |
 | Data validity (constraints) | Future | Deferred by the db-auth doc's out-of-scope list; instances accumulate in `TODO.md` |
 
 ## Next instance stub: the HTTP route layer
 
 Superseded 2026-07-27: the full instance doc now exists at
-`docs/route-boundary-architecture.md`. The seed below is kept as the record of what a
+`docs/architecture/route-boundary.md`. The seed below is kept as the record of what a
 stub should contain.
 
 - **Surface:** route handlers under `src/app/api/` (enumerate by glob over `route.ts`

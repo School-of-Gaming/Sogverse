@@ -2,7 +2,7 @@ import type { Participation, ParticipationState } from "@/types";
 
 /**
  * Resolve a participation row's placement state. See
- * docs/products-architecture.md §3 "Participation state vocabulary".
+ * docs/architecture/products.md §3 "Participation state vocabulary".
  *
  * Parents never see these labels directly — `unassigned` and `assigned`
  * both render as "Confirmed" today. The split exists for admin surfaces

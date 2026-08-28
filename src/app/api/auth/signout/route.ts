@@ -10,7 +10,7 @@ import { PIN_COOKIE_NAME } from "@/lib/pin-session";
 //
 // POST (not GET) + SameSite=Lax cookies prevents forced-logout CSRF —
 // cross-origin top-level POST navigations don't carry Lax cookies, so a
-// malicious page can't trigger sign-out. See docs/SECURITY_REPORT.md #8.
+// malicious page can't trigger sign-out. See docs/records/security-audit-2026-03.md #8.
 // The handler reads only `request.url`, so it takes the platform `Request`
 // rather than the framework's subclass — Next.js passes one either way.
 export async function POST(request: Request) {

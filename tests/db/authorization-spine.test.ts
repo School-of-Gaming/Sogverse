@@ -8,7 +8,7 @@ import { accessTokenFor, callRpcRaw, createAdminTestClient } from "./helpers";
 import { TEST_CREDENTIALS } from "./constants";
 
 /**
- * The verification spine — docs/db-authorization-architecture.md §3.4.
+ * The verification spine — docs/architecture/db-authorization.md §3.4.
  *
  * Four of the five checks live here (the write-path IDOR loop is check 3, in
  * write-idor.test.ts, because it needs table fixtures rather than catalog

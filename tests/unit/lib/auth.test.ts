@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 
 // requireRole verifies identity via `supabase.auth.getClaims()` (local ES256
-// JWKS verification — see docs/performance.md) and derives the user id from
+// JWKS verification — see docs/architecture/performance.md) and derives the user id from
 // `claims.sub`. These tests mock the server client to pin that contract; every
 // *route* test mocks requireRole wholesale, so this is the only coverage of
 // requireRole's real body.

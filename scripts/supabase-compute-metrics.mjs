@@ -29,7 +29,7 @@
  * testing, so a reading taken the instant a burst starts will show the box idle.
  * For anything real-time, read the edge logs instead; use this for the trend.
  *
- * See `docs/performance.md` § F7 for what these looked like under a registration
+ * See `docs/architecture/performance.md` § F7 for what these looked like under a registration
  * burst, and for the Auth-log search strings that reveal GoTrue's connection
  * pool state — which no metric here exposes.
  */
