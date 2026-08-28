@@ -111,7 +111,19 @@ import { TEST_IDS } from "./constants";
  *                  asked — and 683 the queue's own club, kept apart from 680 so
  *                  the already-enrolled gate can never stand in for the consent
  *                  refusal the waitlist cases are asserting)
- *   637            write-idor.test.ts's product_images entry. It sits outside
+ *   690-691        marketing-consents.test.ts (two products, and the pair is the
+ *                  whole point: 690 is PUBLISHED, so its marketing-consent ask
+ *                  is readable by a stranger browsing the shop, and 691 is
+ *                  CANCELLED, so the same ask is readable by nobody but an
+ *                  admin. `can_read_product` is what separates them, and a
+ *                  single product cannot hold both answers)
+ *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
+ *                  backing the case that the ask-set writer refuses an unknown
+ *                  product even on a call that clears. Declared here for the
+ *                  same reason 6ff is: allocate it to a real fixture and that
+ *                  case quietly starts pointing at a row that exists, which is
+ *                  the one thing it must never do
+ *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather
  *                  than the id being squeezed in somewhere it would collide.

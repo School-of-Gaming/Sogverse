@@ -79,6 +79,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the matrix IS assertable with no fixture: an admin passes the guard and the
   // all-NULL call deletes nothing and inserts nothing rather than raising.
   set_product_required_consents: { permittedRoles: ["admin"] },
+  // The single writer of product_marketing_consents (00220) — the revocable
+  // consent system's mirror of the RPC directly above, and its own RPC for the
+  // same reason: the admin product form reaches it as the admin's own session
+  // role, and an inline INSERT would need a table write grant the migration
+  // deliberately never issues. The positive half of the matrix IS assertable
+  // with no fixture: an admin passes the guard and is then refused by the
+  // product-existence check with `no_data_found`, which is an error but not the
+  // forbidden one.
+  admin_set_product_marketing_consents: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
   // The admin product page's whole session record (00200). Its second question
   // is "does this product exist", which a NULL id answers with P0002 rather
@@ -109,6 +118,26 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // `no_data_found` — an error, but not the forbidden one, which is exactly what
   // the positive half of the matrix asserts.
   join_product_waitlist: { permittedRoles: ["customer"] },
+  // The one self-service writer of a marketing consent (00220). Role-gated
+  // rather than self-scoping despite naming no subject — the same shape
+  // `accept_gedu_contract` carries below, and the same reasoning: its first
+  // statement IS a guard primitive, which is what check 1 reads, and the two
+  // classifications are exclusive. The scoping property is real and is enforced
+  // in the body rather than by this table (the row is keyed to auth.uid() and
+  // there is no argument that could aim it at another family); the RLS scope
+  // half is pinned by marketing-consents.test.ts.
+  //
+  // The role gate is the load-bearing half here and is why this is the right
+  // classification of the two: a marketing consent belongs to the purchasing
+  // customer, and a gamer, a gedu and an ADMIN are all refused — the admin
+  // deliberately, because an admin who is also a parent toggles their consents
+  // on that customer account rather than through this function. A self-scoping
+  // classification would prove nothing about any of that.
+  //
+  // The positive half of the matrix IS assertable with no fixture: a customer
+  // passes the guard and is then refused by the NULL consent type with
+  // check_violation, which is not the forbidden error.
+  set_marketing_consent: { permittedRoles: ["customer"] },
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
