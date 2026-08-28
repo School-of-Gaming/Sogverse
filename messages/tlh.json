@@ -1047,6 +1047,8 @@
       "passwordPlaceholder": "HoS mu’mey yIchenmoH",
       "confirmPasswordPlaceholder": "mu’mey yIchel",
       "location": "Daq",
+      "marketingConsentLabel": "noH Quj yejHaD QIn HevmeH vIchaw’.",
+      "marketingConsentHint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH.",
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
       "weakPassword": "mu’ pegh nap yIlo’Qo’! mu’ pegh tIn yIchel, pagh latlhDaq Dalo’be’bogh wa’",

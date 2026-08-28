@@ -68,6 +68,7 @@ export const POST = defineRoute({
       homeLocationId,
       locale: requestedLocale,
       referralCode,
+      marketingConsent,
     } = body;
 
     // The schema takes this as a plain string and leaves the format rule here,
@@ -228,6 +229,58 @@ export const POST = defineRoute({
       });
     } catch (error) {
       console.error("[auth/register] welcome email failed", error);
+    }
+
+    // The marketing answer, and the one write in this handler that a *client*
+    // can never make: `marketing_consents` carries no Data API write grant, and
+    // `set_marketing_consent` refuses the `registration` source precisely so
+    // that this provenance can only be claimed from here, with the service-role
+    // client, on the account this request has just created (see 00220's header).
+    //
+    // LAST, deliberately. It is the least important thing this route does and
+    // the only one with no user-visible consequence if it fails, so it goes
+    // after the mail — nothing above it can be delayed or broken by a consent
+    // write, and the parent's account, their profile extras and their welcome
+    // link are all already settled by the time it runs.
+    //
+    // WRITTEN EVEN WHEN THEY DECLINED. An absent row means "never asked", a
+    // `granted = false` row means "asked and said no", and this form asked — so
+    // recording the refusal is what makes the settings card's later read a
+    // definite answer rather than a shrug. An absent field is read as a decline
+    // for the same reason the form always sends one: see the contract.
+    //
+    // NEVER FATAL, on the same reasoning as the home-location write above and
+    // then some: losing an opt-in under-markets, which is the safe direction to
+    // fail in, and there is nothing here worth destroying a working account
+    // over. The pair is all-or-nothing — a failed state write skips the event —
+    // because an event asserting a state that is not on file is worse than no
+    // record at all, and the log exists to corroborate the state table.
+    try {
+      const granted = marketingConsent ?? false;
+
+      const { error: consentError } = await admin
+        .from("marketing_consents")
+        .upsert(
+          {
+            customer_id: userId,
+            consent_type: "school_of_gaming",
+            granted,
+          },
+          { onConflict: "customer_id,consent_type" },
+        );
+      if (consentError) throw consentError;
+
+      const { error: consentEventError } = await admin
+        .from("marketing_consent_events")
+        .insert({
+          customer_id: userId,
+          consent_type: "school_of_gaming",
+          granted,
+          source: "registration",
+        });
+      if (consentEventError) throw consentEventError;
+    } catch (error) {
+      console.error("[auth/register] marketing consent write failed", error);
     }
 
     return { userId };

@@ -999,6 +999,8 @@
       "passwordPlaceholder": "Luo vahva salasana",
       "confirmPasswordPlaceholder": "Vahvista salasanasi",
       "location": "Sijainti",
+      "marketingConsentLabel": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
+      "marketingConsentHint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa asetuksissasi.",
       "creatingAccount": "Luodaan tiliä...",
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
       "weakPassword": "Salasana on liian helppo arvata — kokeile pidempää tai sellaista, jota et käytä muualla",

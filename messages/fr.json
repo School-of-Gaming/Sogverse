@@ -999,6 +999,8 @@
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
       "location": "Localisation",
+      "marketingConsentLabel": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+      "marketingConsentHint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres.",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "weakPassword": "Ce mot de passe est trop facile à deviner — essayez-en un plus long, ou un que vous n'utilisez nulle part ailleurs",

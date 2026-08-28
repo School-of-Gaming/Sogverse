@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
@@ -37,6 +38,14 @@ const registerSchema = z.object({
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
+
+/**
+ * The marketing hint's id, named once so the paragraph and the checkbox that
+ * points at it cannot drift apart. A literal rather than a `useId()` for the
+ * same reason every other field on this page has a literal id — one page, one
+ * form, one of each.
+ */
+const MARKETING_CONSENT_HINT_ID = "marketingConsentHint";
 
 /** Just the machine-readable half of a refusal; the message is read separately. */
 const refusalCode = z.object({ code: z.string().optional() });
@@ -90,6 +99,9 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
+  // Unticked by default, and it stays that way unless the parent ticks it: an
+  // opt-in that arrives pre-ticked is not an opt-in.
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -136,6 +148,12 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // permanent ability to rewrite their own attribution; the grant is the
           // thing we are refusing, and the trigger is what lets us.
           referralCode: referralCode ?? undefined,
+          // Always an explicit boolean, never omitted. The schema takes it as
+          // optional so an older client that predates the box can still
+          // register — but a form that *shows* the question has an answer
+          // either way, and "unticked" is a decision the parent made rather
+          // than a field they were never asked about.
+          marketingConsent,
         }),
       });
 
@@ -288,6 +306,35 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               disabled={isLoading}
             />
           </Field>
+          {/* Deliberately not a `Field`: that primitive puts a label above its
+              control, and a checkbox is named by the sentence beside it — a
+              label above one would be a second name for the same thing. So the
+              sentence is the label and the hint sits under it, indented past
+              the box (pl-6 = the 1rem box plus the gap-2) so it reads as part
+              of the same answer rather than as loose text. `aria-describedby`
+              is what a Field would have wired for us. */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="marketingConsent"
+              className="flex cursor-pointer items-start gap-2 text-sm"
+            >
+              <Checkbox
+                id="marketingConsent"
+                className="mt-0.5"
+                checked={marketingConsent}
+                onChange={(e) => setMarketingConsent(e.target.checked)}
+                disabled={isLoading}
+                aria-describedby={MARKETING_CONSENT_HINT_ID}
+              />
+              <span>{t('register.marketingConsentLabel')}</span>
+            </label>
+            <p
+              id={MARKETING_CONSENT_HINT_ID}
+              className="pl-6 text-xs text-muted-foreground"
+            >
+              {t('register.marketingConsentHint')}
+            </p>
+          </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

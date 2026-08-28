@@ -999,6 +999,8 @@
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
       "location": "Location",
+      "marketingConsentLabel": "School of Gaming may send me news and offers by email.",
+      "marketingConsentHint": "Optional — you can change this anytime in your settings.",
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
       "weakPassword": "That password is too easy to guess — try a longer one, or one you don't use anywhere else",

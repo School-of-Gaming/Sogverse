@@ -999,6 +999,8 @@
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
       "location": "Plats",
+      "marketingConsentLabel": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
+      "marketingConsentHint": "Valfritt — du kan ändra detta när som helst i dina inställningar.",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "weakPassword": "Det lösenordet är för lätt att gissa — prova ett längre, eller ett som du inte använder någon annanstans",
