@@ -41,12 +41,17 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   `source_image_hostname`; `.request_duration_ms` is what that miss cost the visitor who
   triggered it. A low count is not reassurance: at a few transforms a day every one is a
   cold encode, paid synchronously in front of somebody's LCP.
-- **`npm run perf:insights` (`scripts/speed-insights.mjs`) is still the broad periodic
-  pull** — every metric × device × percentile plus per-route breakdowns in one command,
-  and the only reader for the internal `speed-insights/v2` endpoints. Use `vercel
-  metrics` for a specific question, the script for a snapshot. Per-route `n` is the
-  traffic proxy for route-level visit rates either way; `../architecture/performance.md`
-  owns how to read the numbers.
+- **`npm run perf:insights` (`scripts/speed-insights.mjs`) is the broad periodic pull,
+  and it holds one number `vercel metrics` cannot produce at all: the
+  good/improvable/poor **distribution** — the share of real pageviews in each bucket.**
+  `vercel metrics` filters accept dimensions only, the measure is not one
+  (`-f "lcp_ms ge 2500"` → `invalid_query`), and there is no rating dimension, so no
+  combination of flags gets there. Percentiles are reproducible; bucket shares are not.
+  That matters because `../architecture/performance.md` grades on the poor-bucket share
+  as well as p75 — **a snapshot pulled only from `vercel metrics` is missing half of
+  what a verdict is supposed to weigh.** Use `vercel metrics` for a specific question,
+  the script for a snapshot, and do not retire the script on the strength of the metrics
+  path covering "most" of it.
 - **Web Analytics internal endpoint — verified working 2026-08-18:**
   `https://vercel.com/api/web-analytics/v2/overview` and `.../v2/timeseries` with
   `teamId=<team slug>&projectId=...&environment=production&from=<ISO>&to=<ISO>`,
@@ -57,12 +62,22 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   (`api.vercel.com/v1/query/web-analytics/visits/aggregate`, groupBy
   time/route/country/referrer). Prefer it for anything durable; shape unverified as of
   2026-08-18.
-- **Auth: `vercel metrics` rides the CLI's own login and needs no token handling**, so a
-  Claude session can run it directly — prefer it for that reason alone. Only the
-  internal endpoints and `scripts/speed-insights.mjs` need the token itself (the CLI
-  auth file under the user profile; `VERCEL_TOKEN` overrides), and the permission
-  classifier blocks a session from reading that file — have the owner run the script
-  via `!`.
+- **Auth: `vercel metrics` rides the CLI's own login and needs no token handling**, so
+  any session can run it directly — prefer it for that reason alone.
+- **The script's auth is the fragile half, and it is currently broken (verified
+  2026-08-28).** The CLI auth file (under the user profile; `VERCEL_TOKEN` overrides)
+  now holds a short-lived OAuth access token — `token`, `expiresAt`, `refreshToken` —
+  and the CLI refreshes it for its own calls. The script reads `token` raw, honouring
+  neither field, so once it expires every call returns **403
+  `{"code":"forbidden","invalidToken":true}`** while `vercel metrics` goes on working
+  from the same file. On this machine the stored token expired 2026-08-23 and the script
+  has been failing since. **Fix: re-run `vercel login` (interactive — the owner runs it
+  via `!`), then re-run the script.**
+- **Read the script's failure code before assuming the endpoint moved.** 404 means the
+  internal API moved (re-capture the request URL from the dashboard's network tab and
+  update the script's paths); **403 `invalidToken` means the stored token expired** and
+  the endpoint is fine. The two want opposite responses, and the 403 is by far the more
+  likely of the pair.
 - Baseline for scale judgments: **2026-08-18, last 7d prod: 3,866 pageviews / 622
   devices** (~550 pv/day, ~90 visitors/day).
 - **Domain → branch mapping (verified 2026-08-18):** `sogverse.sog.gg` = production,

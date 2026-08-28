@@ -31,9 +31,9 @@ RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` w
 Vercel Speed Insights collects Core Web Vitals (TTFB/FCP/LCP/INP/CLS plus a Real Experience Score) from real production visitors. Two readers, both owned by `../runbooks/vercel-analytics.md`:
 
 - **`vercel metrics` for a specific question.** The vitals are first-class metrics there, sliceable by route, device, day and `attribution_target` — the CSS path of the LCP element, which is what turns an LCP number into a diagnosis. It rides the CLI's own login, so it needs no token handling and any session can run it. The Pro plan serves the latest 30 days only.
-- **`npm run perf:insights` (`scripts/speed-insights.mjs`) for a broad periodic pull** — every metric × device × percentile plus per-route breakdowns in one command. No official read API stands behind it (the documented Speed Insights API is intake-only), so it calls the internal endpoint the dashboard itself uses, authenticating with the local Vercel CLI login; a session that cannot read that token file asks the owner to run it (`! npm run perf:insights`). If it starts 404ing, the internal API moved: re-capture the request URL from the dashboard's network tab and update the script's paths.
+- **`npm run perf:insights` (`scripts/speed-insights.mjs`) for a broad periodic pull** — every metric × device × percentile plus per-route breakdowns in one command. No official read API stands behind it (the documented Speed Insights API is intake-only), so it calls the internal endpoint the dashboard itself uses, authenticating with the local Vercel CLI login.
 
-The two count samples differently, so compare a snapshot's `n` only against snapshots taken with the same reader; the pageview counter is the series that is comparable throughout.
+**The two are not interchangeable, and a snapshot needs the script.** Percentiles come from either, but the **good/improvable/poor distribution comes only from the script** — `vercel metrics` filters accept dimensions, the measure is not one, and there is no rating dimension, so the bucket shares cannot be reached from that side at all. A grade below weighs the poor-bucket share as well as p75, so a pull made only with `vercel metrics` cannot produce a complete one. They also count samples differently: compare a snapshot's `n` only against snapshots taken with the same reader, and use the pageview counter for anything that has to be comparable throughout.
 
 How to read the numbers:
 
@@ -62,6 +62,8 @@ Append-only, like the benchmark log. Format: `date · window · scope → headli
   > **Annotation (2026-08-17): the `/schools` half of this verdict is pre-fix.** It was graded before F6 was diagnosed, so it reads the worst entry-surface number as F2's dynamic-render tax; the probe since attributed ~75% of that route's cold path to a whole-country municipality read, now removed (see Completed). The verdict itself stands as written — it is a point-in-time grade of a point-in-time pull, and the next pull gets its own. What changes is the path to A+: the biggest single `/schools` number is addressed, and the *rest* of that route, plus every other public page, is still F2.
 
 - **2026-08-28 · last 30 days · production, both devices** — datapoints: TTFB 8,462 desktop / 8,414 mobile, against **41,653 pageviews, 30,501 of them in the final seven days** — the municipal opening and its aftermath, roughly eight times the pre-opening baseline. Pulled with `vercel metrics`; read the 08-13 entry's `n` as a different instrument, not as a traffic comparison.
+
+  **Percentiles only — this entry carries no good/improvable/poor shares.** The script that produces them was failing on an expired CLI token (see the runbook), so the grade below weighs p75 and the tail percentiles without the bucket distribution the 08-13 grade had. It is a partial instrument, and the gap runs in a known direction: percentiles say how bad the bad visits are, shares say how many there are. **Re-pull the distribution once the script's auth is restored and annotate the verdict.**
 
   | p75 / p90 / p95 / p99 | Desktop | Mobile |
   |---|---|---|
