@@ -90,16 +90,21 @@ function renderForm() {
   const form = view.container.querySelector("form");
   if (!form) throw new Error("no form");
 
-  function checkbox(id: string) {
-    const input = view.container.querySelector<HTMLInputElement>(`#${id}`);
-    if (!input) throw new Error(`no checkbox #${id}`);
+  // The one checkbox on the form: the marketing opt-in. It is rendered by the
+  // shared `CheckboxRow`, which generates its own ids, so it is found by role
+  // rather than by a literal id the form no longer chooses.
+  function marketingBox() {
+    const input = view.container.querySelector<HTMLInputElement>(
+      'input[type="checkbox"]',
+    );
+    if (!input) throw new Error("no marketing consent checkbox");
     return input;
   }
 
   return {
     ...view,
     fill,
-    checkbox,
+    marketingBox,
     // Async, because the handler awaits the route and then the sign-in: the
     // state updates that follow both land after the event has been dispatched.
     submit: () =>
@@ -169,12 +174,12 @@ describe("RegisterForm", () => {
     const form = renderForm();
 
     // An opt-in that arrives pre-ticked is not an opt-in.
-    expect(form.checkbox("marketingConsent").checked).toBe(false);
+    expect(form.marketingBox().checked).toBe(false);
   });
 
   it("sends the opt-in when the parent ticks the box", async () => {
     const form = renderForm();
-    fireEvent.click(form.checkbox("marketingConsent"));
+    fireEvent.click(form.marketingBox());
 
     await form.submit();
 
@@ -204,7 +209,7 @@ describe("RegisterForm", () => {
 
     await form.submit();
 
-    expect(form.checkbox("marketingConsent").disabled).toBe(true);
+    expect(form.marketingBox().disabled).toBe(true);
   });
 
   it("signs in and hands the navigation its fallback on success", async () => {

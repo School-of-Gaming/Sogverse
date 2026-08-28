@@ -25,7 +25,6 @@ describe("CheckboxRow", () => {
     const onCheckedChange = vi.fn();
     const { container } = render(
       <CheckboxRow
-        variant="plain"
         checked={false}
         onCheckedChange={onCheckedChange}
         label="Send me news about clubs."
@@ -43,7 +42,6 @@ describe("CheckboxRow", () => {
     const onCheckedChange = vi.fn();
     render(
       <CheckboxRow
-        variant="boxed"
         checked
         onCheckedChange={onCheckedChange}
         label="I agree to the policy."
@@ -58,7 +56,6 @@ describe("CheckboxRow", () => {
   it("names the box with the sentence alone and describes it with the hint", () => {
     render(
       <CheckboxRow
-        variant="plain"
         checked={false}
         onCheckedChange={() => undefined}
         label="Send me news about clubs."
@@ -81,10 +78,25 @@ describe("CheckboxRow", () => {
     );
   });
 
+  it("renders the tag's word, which is the only thing distinguishing a required row from an optional one", () => {
+    // There is one visual shape, so a reader — and a screen reader walking the
+    // row — has nothing but this word to go on. A regression that dropped it
+    // would leave two identical rows saying nothing about which gates the CTA.
+    render(
+      <CheckboxRow
+        checked={false}
+        onCheckedChange={() => undefined}
+        label="I agree to the policy."
+        tag="Required"
+      />,
+    );
+
+    expect(screen.getByText("Required")).not.toBeNull();
+  });
+
   it("points at no description when there is no hint", () => {
     render(
       <CheckboxRow
-        variant="plain"
         checked={false}
         onCheckedChange={() => undefined}
         label="Send me news about clubs."
@@ -100,14 +112,12 @@ describe("CheckboxRow", () => {
     render(
       <>
         <CheckboxRow
-          variant="plain"
           checked={false}
           onCheckedChange={() => undefined}
           label="Our own mailing list."
           hint="First hint."
         />
         <CheckboxRow
-          variant="plain"
           checked={false}
           onCheckedChange={() => undefined}
           label="A partner's mailing list."

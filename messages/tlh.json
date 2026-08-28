@@ -95,7 +95,11 @@
     "roleParent": "vav/SoS",
     "roleGamer": "toy’wI’",
     "roleGedu": "Gedu",
-    "gedus": "Gedupu’"
+    "gedus": "Gedupu’",
+    "consentTag": {
+      "required": "poQlu’",
+      "optional": "ra’be’lu’"
+    }
   },
   "about": {
     "hero": {
@@ -443,10 +447,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
-        "consents": "poQlu’bogh chaw’mey",
-        "consentsDescription": "ghItlhmey lulajnIS vavpu’ ’e’ poQlu’.",
-        "marketingConsents": "ra’be’lu’bogh QIn",
-        "marketingConsentsDescription": "ghItlhmey rurbe’. vav tlhob neH. jangbe’chugh vav, quSDaj chIlbe’.",
+        "consents": "chaw’mey",
+        "consentsDescription": "nuq lajnIS vav, nuq tlhoblu’ je. poQlu’bogh ghItlhmey lulajnIS. ra’be’lu’bogh tlhobmey lujangbe’laH ’ej quS chIlbe’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -581,7 +583,7 @@
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "boqwI’maj Lynx Educate-vaD De’Daj nob ’e’ chaw’ ’e’ tlhoblu’ vav."
+            "description": "DawIvchugh, ilmoittautumisDaq ra’be’lu’bogh tlhob chel: boqwI’maj Lynx Educate-vaD De’chaj lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
           }
         }
       },
@@ -1856,7 +1858,7 @@
         "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’."
       },
       "consents": {
-        "heading": "poQlu’bogh chaw’",
+        "heading": "chaw’",
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
           "robloxProgramme": "<terms>Roblox Programme Terms & Conditions</terms>, <privacy>Roblox Programme Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
@@ -2154,10 +2156,8 @@
     "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID.",
     "marketing": {
       "title": "QIn chaw’mey",
-      "description": "ra’be’lu’ — QIn DaneHbogh yIwIv. reH DachoHlaH.",
       "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
-      "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH.",
-      "saveFailed": "wIv pollu’be’. yIboq."
+      "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH."
     }
   },
   "tools": {

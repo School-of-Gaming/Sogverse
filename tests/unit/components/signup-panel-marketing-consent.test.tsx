@@ -179,6 +179,30 @@ describe("a product that asks for a partner's marketing", () => {
     expect(rows(container)[2].contains(boxes[2])).toBe(true);
   });
 
+  it("labels every row in words — Required on the gates, Optional on the ask", () => {
+    const { container } = render(
+      <SignupPanelView
+        {...asking({
+          requiredConsentSlugs: [TERMS, PRIVACY],
+          consentAgreements: new Set([ROBLOX_BUNDLE]),
+        })}
+      />,
+    );
+
+    // **The chips are the whole of the distinction now.** Every consent row is
+    // the same bordered control — the border marks the click target, not the
+    // stakes — so a parent who cannot tell the bundle and our rules from the
+    // partner's mailing list has nothing else to go on, and a regression that
+    // dropped a chip would be invisible to every other assertion in this file.
+    // The rules row is chipped too: it sits in the same stack, under the same
+    // heading, and gates the CTA exactly as the bundle does.
+    const [bundle, rules, marketing] = rows(container);
+    expect(bundle.textContent).toContain("required");
+    expect(rules.textContent).toContain("required");
+    expect(marketing.textContent).toContain("optional");
+    expect(marketing.textContent).not.toContain("required");
+  });
+
   it("names the partner as a link, in a new tab", () => {
     const { container } = render(<SignupPanelView {...asking()} />);
 

@@ -102,7 +102,11 @@
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
-    "gedus": "Geduer"
+    "gedus": "Geduer",
+    "consentTag": {
+      "required": "Obligatoriskt",
+      "optional": "Valfritt"
+    }
   },
   "about": {
     "hero": {
@@ -395,10 +399,8 @@
         },
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
-        "consents": "Obligatoriska samtycken",
-        "consentsDescription": "Dokument som en förälder måste godkänna innan anmälan.",
-        "marketingConsents": "Valfri marknadsföring",
-        "marketingConsentsDescription": "Marknadsföring som en förälder tillfrågas om vid anmälan. En förälder kan tacka nej, och platsen påverkas inte.",
+        "consents": "Samtycken",
+        "consentsDescription": "Vad en förälder godkänner, och vad hen tillfrågas om, på vägen genom anmälan. Obligatoriska dokument måste godkännas innan en plats kan tas, medan marknadsföringsfrågor kan avböjas.",
         "visibility": "Listning",
         "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
@@ -533,7 +535,7 @@
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Föräldrar tillfrågas om de vill dela sina kontaktuppgifter med vår partner Lynx Educate."
+            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sina kontaktuppgifter med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
           }
         }
       },
@@ -1812,7 +1814,7 @@
         "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>."
       },
       "consents": {
-        "heading": "Obligatoriskt samtycke",
+        "heading": "Samtycke",
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
           "robloxProgramme": "Jag har läst och godkänner Roblox-programmets <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
@@ -2110,10 +2112,8 @@
     "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen.",
     "marketing": {
       "title": "Marknadsföringsinställningar",
-      "description": "Valfritt — välj vilken marknadsföring du vill få. Du kan ändra detta när som helst.",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
-      "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden.",
-      "saveFailed": "Vi kunde inte spara valet. Försök igen."
+      "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden."
     }
   },
   "tools": {

@@ -9,56 +9,66 @@ import {
   minecraftServiceModule,
   providersModule,
   robloxServiceModule,
-  usersServiceModule,
 } from "../../mocks/settings-page";
 import type { ReactNode } from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { MarketingPreferencesCard } from "@/components/settings/marketing-preferences-card";
 import { UserMarketingConsentsCard } from "@/components/admin/user-marketing-consents-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
 import type { MarketingConsent, MarketingConsentType, Profile } from "@/types";
 
 /**
- * **A marketing consent is answered by ticking a box, so the box is the whole
- * of the contract with the user** — what it is seeded from, when it may be
- * clicked, and exactly what one click sends.
+ * **A marketing consent is answered by ticking a box inside the Profile card,
+ * and committed by that card's Save button** — so the contract under test spans
+ * both: what the boxes are seeded from, when they may be clicked, and exactly
+ * which writes one Save makes.
  *
- * Two claims carry the most weight here and neither is visible from reading the
- * component. The first is that a box is *not clickable before the read lands*:
- * a checkbox seeded from an unresolved read is seeded from `false`, so an
- * already-opted-in parent clicking early would send an answer already on file,
- * the RPC would no-op it, and the box would spring back. The second is that the
- * box stays disabled from the click until the write settles, which `isPending`
- * alone does not give (it flips false a render before the outcome handlers run)
- * — so the mutation mock here deliberately never settles, and what is asserted
- * is that the control is still disabled while it hangs.
+ * The consents used to be a card of their own that committed on every tick.
+ * That made them the settings page's only auto-saver, on a page where every
+ * other control waits for Save, so they moved into the Profile card. Three
+ * claims carry the weight here and none is visible from reading the component:
  *
- * The admin block is the read-only other end: it must render both consents
- * whatever the database holds, and a customer with no rows at all has to read
- * as *not granted* rather than as a blank.
+ * - A box is **not clickable before the read lands**: seeded from an unresolved
+ *   read it would be seeded from `false`, and an already-opted-in parent could
+ *   untick something they had never ticked.
+ * - A Save writes **only the consents that actually changed** — an unchanged one
+ *   would still cost a round trip and still stamp a "source: settings" touch
+ *   nobody made.
+ * - A consent write that fails **still leaves the profile saved**, so the card
+ *   shows the error and no success line, and the boxes keep the parent's choice
+ *   so pressing Save again retries exactly what is still outstanding.
+ *
+ * The admin block at the end is the read-only other end, and is untouched by all
+ * of this: it must render both consents whatever the database holds, and a
+ * customer with no rows at all has to read as *not granted* rather than a blank.
  */
 
 // --------------------------------------------------------------------------
-// The service, stood in for. `mine` and `forCustomer` are separate handles
+// The services, stood in for. `mine` and `forCustomer` are separate handles
 // because the two surfaces read different queries and one test renders both.
 // --------------------------------------------------------------------------
 const mine: { data: MarketingConsent[] | undefined } = { data: [] };
 const forCustomer: { data: MarketingConsent[] | undefined } = { data: [] };
-const setConsentMutate = vi.fn();
+const setConsentAsync = vi.fn();
+const updateProfileAsync = vi.fn();
 
 vi.mock("@/services/marketing-consents", () => ({
   useMyMarketingConsents: () => ({ data: mine.data }),
   useMarketingConsentsForCustomer: () => ({ data: forCustomer.data }),
-  useSetMarketingConsent: () => ({ mutate: setConsentMutate }),
+  useSetMarketingConsent: () => ({ mutateAsync: setConsentAsync }),
 }));
 
-// The settings page body's scaffolding, for the role-gating case at the end.
+// Not the shared factory: this file asserts on the profile write itself, and
+// the factory hands out a fresh spy per render.
+vi.mock("@/services/users", () => ({
+  useUpdateProfile: () => ({ mutateAsync: updateProfileAsync }),
+  useSendVerificationEmail: () => ({ mutate: vi.fn() }),
+}));
+
 const auth: { profile: Profile } = { profile: createMockProfile() };
 vi.mock("@/providers", () => providersModule(() => auth.profile));
-vi.mock("@/services/users", () => usersServiceModule());
 vi.mock("@/services/locations", () => locationsServiceModule());
 vi.mock("@/services/minecraft", () => minecraftServiceModule());
 vi.mock("@/services/roblox", () => robloxServiceModule());
@@ -95,10 +105,33 @@ function renderIntl(ui: ReactNode) {
   );
 }
 
-/** The catalogue's own copy, so a wording change cannot hide a regression. */
+/** The settings page as a parent meets it, with the marketing group on it. */
+function renderSettings() {
+  auth.profile = createMockProfile({ role: "customer" });
+  return renderIntl(<SettingsSectionContent />);
+}
+
+/**
+ * The two marketing boxes, in render order (ours, then the partner's).
+ *
+ * Read off the DOM rather than by test id, and deliberately *not* by taking
+ * every checkbox on the page: the spoken-language group above renders its own,
+ * so the marketing boxes are found inside the group its legend names.
+ */
+function marketingBoxes() {
+  const legend = screen.getByText(messages.settings.marketing.title);
+  const group = legend.closest("fieldset");
+  if (!group) throw new Error("the marketing group rendered no fieldset");
+  return Array.from(
+    group.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
+  );
+}
+
+const saveButton = () => screen.getByRole("button", { name: /save changes/i });
+
+const GROUP_TITLE = messages.settings.marketing.title;
 const SOG_LABEL = messages.settings.marketing.schoolOfGaming;
-const CARD_TITLE = messages.settings.marketing.title;
-const SAVE_FAILED = messages.settings.marketing.saveFailed;
+const PROFILE_SAVED = messages.settings.profileUpdated;
 const NOT_GRANTED = messages.admin.users.marketing.notGranted;
 const GRANTED = messages.admin.users.marketing.granted;
 
@@ -107,11 +140,13 @@ beforeEach(() => {
   mine.data = [];
   forCustomer.data = [];
   auth.profile = createMockProfile();
+  updateProfileAsync.mockResolvedValue(undefined);
+  setConsentAsync.mockResolvedValue(undefined);
 });
 
-// --- The settings card ----------------------------------------------------
+// --- The marketing group inside the Profile card --------------------------
 
-describe("the settings marketing card", () => {
+describe("the marketing preferences group", () => {
   it("seeds each box from the stored answer, School of Gaming first", () => {
     mine.data = [
       // Deliberately the partner's row first: Postgres orders an enum by
@@ -120,9 +155,9 @@ describe("the settings marketing card", () => {
       consentRow("lynx_educate", true),
       consentRow("school_of_gaming", false),
     ];
-    renderIntl(<MarketingPreferencesCard />);
+    renderSettings();
 
-    const [sog, lynx] = screen.getAllByRole<HTMLInputElement>("checkbox");
+    const [sog, lynx] = marketingBoxes();
     expect(sog.closest("label")?.textContent).toContain("School of Gaming");
     expect(lynx.closest("label")?.textContent).toContain("Lynx Educate");
     expect(sog.checked).toBe(false);
@@ -131,9 +166,9 @@ describe("the settings marketing card", () => {
 
   it("renders a consent with no row at all as unticked", () => {
     mine.data = [consentRow("school_of_gaming", true)];
-    renderIntl(<MarketingPreferencesCard />);
+    renderSettings();
 
-    const [sog, lynx] = screen.getAllByRole<HTMLInputElement>("checkbox");
+    const [sog, lynx] = marketingBoxes();
     expect(sog.checked).toBe(true);
     // Never asked and answered no are different states in the database and the
     // same state on screen: both are "we may not mail you".
@@ -142,21 +177,32 @@ describe("the settings marketing card", () => {
 
   it("disables both boxes until the read resolves", () => {
     mine.data = undefined;
-    renderIntl(<MarketingPreferencesCard />);
+    renderSettings();
 
-    for (const box of screen.getAllByRole<HTMLInputElement>("checkbox")) {
-      expect(box.disabled).toBe(true);
-    }
+    for (const box of marketingBoxes()) expect(box.disabled).toBe(true);
   });
 
-  it("commits a tick immediately, naming the type, the answer and the source", () => {
+  it("keeps a tick as an unsaved edit — nothing is written until Save", () => {
     mine.data = [];
-    renderIntl(<MarketingPreferencesCard />);
+    renderSettings();
 
-    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.click(marketingBoxes()[1]);
 
-    expect(setConsentMutate).toHaveBeenCalledTimes(1);
-    expect(setConsentMutate.mock.calls[0][0]).toEqual({
+    expect(marketingBoxes()[1].checked).toBe(true);
+    expect(setConsentAsync).not.toHaveBeenCalled();
+    expect(updateProfileAsync).not.toHaveBeenCalled();
+  });
+
+  it("writes only the consents that changed, naming the answer and the source", async () => {
+    // Ours is already on and untouched; the partner's is switched on. One write.
+    mine.data = [consentRow("school_of_gaming", true)];
+    renderSettings();
+
+    fireEvent.click(marketingBoxes()[1]);
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(setConsentAsync).toHaveBeenCalledTimes(1));
+    expect(setConsentAsync.mock.calls[0][0]).toEqual({
       consentType: "lynx_educate",
       granted: true,
       // `settings` is one of the two sources the RPC accepts; `registration` is
@@ -165,63 +211,89 @@ describe("the settings marketing card", () => {
     });
   });
 
-  it("commits an untick as an explicit no", () => {
+  it("writes an untick as an explicit no", async () => {
     mine.data = [consentRow("school_of_gaming", true)];
-    renderIntl(<MarketingPreferencesCard />);
+    renderSettings();
 
-    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    fireEvent.click(marketingBoxes()[0]);
+    fireEvent.click(saveButton());
 
-    expect(setConsentMutate.mock.calls[0][0]).toEqual({
+    await waitFor(() => expect(setConsentAsync).toHaveBeenCalledTimes(1));
+    expect(setConsentAsync.mock.calls[0][0]).toEqual({
       consentType: "school_of_gaming",
       granted: false,
       source: "settings",
     });
   });
 
-  it("keeps the clicked box disabled while its write is in flight, and leaves the other one alone", () => {
-    // The mock never calls `onSettled`, which is the whole point: this is the
-    // window `isPending` closes too early and a fast second click would land in.
-    mine.data = [];
-    renderIntl(<MarketingPreferencesCard />);
+  it("writes nothing at all when no box was touched", async () => {
+    mine.data = [consentRow("school_of_gaming", true)];
+    renderSettings();
 
-    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    fireEvent.click(saveButton());
 
-    const [sog, lynx] = screen.getAllByRole<HTMLInputElement>("checkbox");
-    expect(sog.disabled).toBe(true);
-    expect(lynx.disabled).toBe(false);
+    await screen.findByText(PROFILE_SAVED);
+    expect(updateProfileAsync).toHaveBeenCalledTimes(1);
+    expect(setConsentAsync).not.toHaveBeenCalled();
   });
 
-  it("re-enables the box and shows the failure when the write is refused", () => {
-    setConsentMutate.mockImplementation(
-      (
-        _vars: unknown,
-        options: { onError: (error: Error) => void; onSettled: () => void },
-      ) => {
-        options.onError(new Error("nope"));
-        options.onSettled();
-      },
-    );
+  it("saves the profile and the consents on one click, profile first", async () => {
+    const order: string[] = [];
+    updateProfileAsync.mockImplementation(async () => {
+      order.push("profile");
+    });
+    setConsentAsync.mockImplementation(async () => {
+      order.push("consent");
+    });
     mine.data = [];
-    renderIntl(<MarketingPreferencesCard />);
+    renderSettings();
 
-    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    fireEvent.click(marketingBoxes()[0]);
+    fireEvent.click(saveButton());
 
-    // The parent stays on this page through a failure, so the box has to come
-    // back for a retry to be possible at all — and it still shows server state,
-    // which a write that never landed leaves untouched.
-    const [sog] = screen.getAllByRole<HTMLInputElement>("checkbox");
-    expect(sog.disabled).toBe(false);
-    expect(sog.checked).toBe(false);
-    expect(screen.getByText(SAVE_FAILED)).toBeTruthy();
+    await screen.findByText(PROFILE_SAVED);
+    // The consent RPCs are separate writes and go after the profile row, so a
+    // refused consent cannot roll back a profile update that already landed —
+    // and cannot stop one from being attempted.
+    expect(order).toEqual(["profile", "consent"]);
+  });
+
+  it("shows the failure and no success line when a consent write is refused, leaving the choice on screen to retry", async () => {
+    setConsentAsync.mockRejectedValue(new Error("consent refused"));
+    mine.data = [];
+    renderSettings();
+
+    fireEvent.click(marketingBoxes()[0]);
+    fireEvent.click(saveButton());
+
+    await screen.findByText("consent refused");
+    // The profile half did land; saying "saved" would be a card claiming more
+    // than happened.
+    expect(updateProfileAsync).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(PROFILE_SAVED)).toBeNull();
+    // The edit is local and the failed write left it alone, so Save again
+    // re-attempts exactly the consent that is still outstanding.
+    expect(marketingBoxes()[0].checked).toBe(true);
+  });
+
+  it("disables the boxes while a save is in flight", async () => {
+    // Never resolves: this is the window a second click would land in.
+    updateProfileAsync.mockImplementation(() => new Promise(() => {}));
+    mine.data = [];
+    renderSettings();
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(marketingBoxes()[0].disabled).toBe(true));
+    expect(marketingBoxes()[1].disabled).toBe(true);
   });
 });
 
-describe("who gets the settings marketing card", () => {
+describe("who gets the marketing preferences group", () => {
   it("renders it for a parent", () => {
-    auth.profile = createMockProfile({ role: "customer" });
-    renderIntl(<SettingsSectionContent />);
+    renderSettings();
 
-    expect(screen.getByText(CARD_TITLE)).toBeTruthy();
+    expect(screen.getByText(GROUP_TITLE)).toBeTruthy();
     expect(screen.getByText(SOG_LABEL)).toBeTruthy();
   });
 
@@ -229,7 +301,14 @@ describe("who gets the settings marketing card", () => {
     auth.profile = createMockProfile({ role: "gedu" });
     renderIntl(<SettingsSectionContent />);
 
-    expect(screen.queryByText(CARD_TITLE)).toBeNull();
+    expect(screen.queryByText(GROUP_TITLE)).toBeNull();
+  });
+
+  it("renders none for a gamer, whose address reaches nobody", () => {
+    auth.profile = createMockProfile({ role: "gamer" });
+    renderIntl(<SettingsSectionContent />);
+
+    expect(screen.queryByText(GROUP_TITLE)).toBeNull();
   });
 });
 

@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
@@ -38,14 +38,6 @@ const registerSchema = z.object({
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
-
-/**
- * The marketing hint's id, named once so the paragraph and the checkbox that
- * points at it cannot drift apart. A literal rather than a `useId()` for the
- * same reason every other field on this page has a literal id — one page, one
- * form, one of each.
- */
-const MARKETING_CONSENT_HINT_ID = "marketingConsentHint";
 
 /** Just the machine-readable half of a refusal; the message is read separately. */
 const refusalCode = z.object({ code: z.string().optional() });
@@ -308,33 +300,21 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           </Field>
           {/* Deliberately not a `Field`: that primitive puts a label above its
               control, and a checkbox is named by the sentence beside it — a
-              label above one would be a second name for the same thing. So the
-              sentence is the label and the hint sits under it, indented past
-              the box (pl-6 = the 1rem box plus the gap-2) so it reads as part
-              of the same answer rather than as loose text. `aria-describedby`
-              is what a Field would have wired for us. */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="marketingConsent"
-              className="flex cursor-pointer items-start gap-2 text-sm"
-            >
-              <Checkbox
-                id="marketingConsent"
-                className="mt-0.5"
-                checked={marketingConsent}
-                onChange={(e) => setMarketingConsent(e.target.checked)}
-                disabled={isLoading}
-                aria-describedby={MARKETING_CONSENT_HINT_ID}
-              />
-              <span>{t('register.marketingConsentLabel')}</span>
-            </label>
-            <p
-              id={MARKETING_CONSENT_HINT_ID}
-              className="pl-6 text-xs text-muted-foreground"
-            >
-              {t('register.marketingConsentHint')}
-            </p>
-          </div>
+              label above one would be a second name for the same thing. The
+              shared row is the composition instead: the sentence is the label,
+              the hint sits under it in the same column, and `aria-describedby`
+              is wired for us.
+
+              No `tag`. The chip exists to tell a required row from an optional
+              one, and this is the only consent on the page — a lone "Optional"
+              would be answering a contrast the reader has no other half of. */}
+          <CheckboxRow
+            checked={marketingConsent}
+            onCheckedChange={setMarketingConsent}
+            disabled={isLoading}
+            label={t('register.marketingConsentLabel')}
+            hint={t('register.marketingConsentHint')}
+          />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

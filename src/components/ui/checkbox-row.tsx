@@ -7,42 +7,37 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 /**
- * The row's classes, by variant, size and lit state. Only the container is
- * described here — the box, the sentence column and the trailing slot are fixed
- * geometry, because a caller free to re-space them is a caller free to
+ * The row's container classes, by size and state. Only the container is
+ * described here — the box, the sentence column, the chip and the trailing slot
+ * are fixed geometry, because a caller free to re-space them is a caller free to
  * re-invent the composition this component exists to stop being re-invented.
  */
-const checkboxRowVariants = cva("flex items-start transition-colors", {
-  variants: {
-    variant: {
-      plain: "gap-2",
-      boxed: "gap-3 rounded-md border p-3",
+const checkboxRowVariants = cva(
+  "flex items-start gap-3 rounded-md border p-3 transition-colors",
+  {
+    variants: {
+      size: {
+        sm: "text-sm",
+        xs: "text-xs",
+      },
+      checked: {
+        true: "border-primary bg-primary/5",
+        false: "border-input",
+      },
+      disabled: {
+        true: "cursor-not-allowed opacity-60",
+        false: "cursor-pointer",
+      },
     },
-    size: {
-      sm: "text-sm",
-      xs: "text-xs",
-    },
-    checked: { true: "", false: "" },
-    disabled: {
-      true: "cursor-not-allowed opacity-60",
-      false: "cursor-pointer",
-    },
+    compoundVariants: [
+      // The hover fill is the border's promise being kept — it lights the same
+      // area the click will act on. A ticked row already carries its own fill
+      // and a disabled one is not a target, so neither takes it.
+      { checked: false, disabled: false, class: "hover:bg-accent/50" },
+    ],
+    defaultVariants: { size: "sm", checked: false, disabled: false },
   },
-  compoundVariants: [
-    // The lit border is the whole point of the boxed variant, and it exists
-    // only there: a plain row that changed colour when ticked would be
-    // borrowing the weight the gate spends its border on.
-    { variant: "boxed", checked: true, class: "border-primary bg-primary/5" },
-    { variant: "boxed", checked: false, class: "border-input" },
-    {
-      variant: "boxed",
-      checked: false,
-      disabled: false,
-      class: "hover:bg-accent/50",
-    },
-  ],
-  defaultVariants: { variant: "plain", size: "sm", checked: false, disabled: false },
-});
+);
 
 export interface CheckboxRowProps {
   checked: boolean;
@@ -73,34 +68,30 @@ export interface CheckboxRowProps {
    * A word parked at the end of the row's first line, in a muted chip —
    * "Required", "Optional".
    *
-   * **This is how a surface holding both kinds of row tells them apart.** The
-   * two variants below are a difference in *weight*, and a list that alternated
-   * between them would read as a rendering fault rather than as a distinction;
-   * so a surface that must show required and optional rows together renders
-   * every one of them `boxed` and says which is which in words here. A worded
-   * chip also survives being read by someone who cannot see the border at all,
-   * which no amount of variant styling does.
+   * **This is the only thing that ever says which kind of question a row is.**
+   * The border says the row is clickable and nothing more, so a surface holding
+   * both a condition and an ask distinguishes them in words here, never by
+   * styling one of them lighter. A word also survives being read by someone who
+   * cannot see the row at all, which no amount of border treatment does.
+   *
+   * A row that has nothing to contrast with takes no chip: on a page with one
+   * consent on it, "Optional" is answering a question nobody asked.
    *
    * The component owns the chip's look and the caller supplies only the word —
-   * a node, so it can be a translated string. It is the app's outline badge,
-   * deliberately muted and never primary-filled: a label that competed with the
+   * a node, so it is always a translated string. It is the app's outline badge,
+   * deliberately muted and never primary-filled: a chip that competed with the
    * checkbox for attention would be answering the row's question for the reader.
    *
-   * Right-packed for the same reason `trailing` is, though nothing about it
-   * arrives late: it is settled at first paint, so it moves nothing and only
-   * has to stay out of the sentence's way.
+   * Right-packed like `trailing`, though nothing about it arrives late: it is
+   * settled at first paint, so it moves nothing and only has to stay out of the
+   * sentence's way.
    */
   tag?: React.ReactNode;
   /**
-   * Quiet row, or gate. See the component note — this is a required prop
-   * because it is a decision about what the row *is*, and a default would let
-   * it be made by not making it.
-   */
-  variant: "plain" | "boxed";
-  /**
-   * The two text scales the app actually uses: `sm` for a form or a settings
-   * card, `xs` for the product panel's rail, where the row shares a 20rem
-   * column with everything else in a signup form.
+   * The two text scales the app uses: `sm` for a full-width form (the
+   * registration card, the admin product form), `xs` for the product panel's
+   * rail, where the row shares a 20rem column with everything else in a signup
+   * form.
    */
   size?: "sm" | "xs";
   /**
@@ -118,9 +109,9 @@ export interface CheckboxRowProps {
    */
   trailing?: React.ReactNode;
   /**
-   * Margins only — the row's own spacing is the component's. A caller reaching
-   * for padding, borders or text size here wants a variant instead, and should
-   * say so rather than paint over one.
+   * Margins only — the row's own spacing, border, padding and text size are the
+   * component's, and a caller painting over them is re-opening the drift this
+   * replaced.
    */
   className?: string;
 }
@@ -129,40 +120,43 @@ export interface CheckboxRowProps {
  * **A checkbox and the sentence it belongs to, as one clickable row.**
  *
  * The app has one checkbox *primitive* and had as many compositions around it
- * as there were surfaces asking a question — a registration form, a settings
- * card, a signup panel, an admin form — each hand-assembling the same label,
- * gap, hint indent and `mt-0.5` from memory, and each drifting from the others
- * by a gap unit here and a hover treatment there. This is that composition,
- * once. **New checkbox-with-a-sentence surfaces reach for this rather than
- * assembling their own.**
+ * as there were surfaces asking a question — a registration form, a signup
+ * panel, an admin product form — each hand-assembling the same label, gap, hint
+ * indent and `mt-0.5` from memory, and each drifting from the others by a gap
+ * unit here and a hover treatment there. This is that composition, once. **New
+ * consent-shaped surfaces reach for this rather than assembling their own.**
  *
- * **Two variants, because there are two kinds of question and they must not
- * look alike.** `plain` is the optional ask — a mailing list offered on the way
- * past, a preference in a settings card — a quiet line whose whole weight is
- * its sentence. `boxed` is the required gate: a bordered container that lights
- * to `primary` when ticked, which is what gives a legal agreement the visible
- * weight of the thing standing between a reader and the button. Flattening the
- * two into one look would go wrong in both directions at once — a marketing
- * opt-in wearing a gate's border reads as something a parent has to accept to
- * proceed, and a required consent rendered as a quiet line reads as fine print
- * to be scrolled past. So `variant` is required and has no default.
+ * **Its scope is a question asked on its own, not a checkbox inside a form.**
+ * The settings page's marketing preferences are plain checkboxes in a fieldset,
+ * because inside a form of bare fields a pair of bordered rows would be the only
+ * boxed controls on the page: there the form's idiom wins. This is for the
+ * standalone ask — a consent in a signup panel, an opt-in under a registration
+ * form, a condition an admin attaches to a product.
  *
- * **But the variant is chosen per surface, not per row.** Two weights standing
- * side by side in one list read as a UI clash rather than as a distinction — the
- * lighter rows look like the heavier ones failed to render. So a surface where
- * every row is optional (a registration form, a settings card) is `plain`
- * throughout, and a surface that has to show required and optional rows together
- * is `boxed` throughout and says which is which in words, with `tag`. The
- * variant carries the weight of the surface; the chip carries the difference
- * inside it.
+ * **There is one shape, and it is bordered, because the border is what says
+ * where you may click.** A checkbox glyph is 16px square; the sentence beside it
+ * is not obviously part of the same target, and a bare row leaves a reader
+ * guessing whether they have to hit the little box. The border draws the target,
+ * and then the whole row really is one — the box, the sentence, the hint, the
+ * chip and the trailing slot all toggle it, because the row is a `<label>` and
+ * the browser gives that for free. On a phone, where the glyph is well under the
+ * comfortable touch minimum and the row is comfortably over it, this is the
+ * difference between a control that works and one that is missed twice before it
+ * is hit.
  *
- * **The whole row is the click target.** It is a `<label>`, so the box, the
- * sentence, the hint and the trailing slot all toggle it, and the browser gives
- * that for free. The input's accessible name comes from `aria-labelledby`
- * pointing at the sentence rather than from the label's text content, because
- * the content also holds the hint and whatever `trailing` carries — without it,
- * a screen reader would read the hint twice, once as part of the name and again
- * as the description.
+ * **So the border is not a weight, and must never be spent as one.** An earlier
+ * draft had a quiet unbordered variant for optional asks and the bordered one
+ * for required gates; that made the affordance mean two things at once, and the
+ * quiet rows read as the loud ones failing to render. Required and optional look
+ * identical here on purpose, and the difference between them is carried in words
+ * by `tag` — which is legible to a reader who cannot see the row, as a border
+ * never was.
+ *
+ * The input's accessible name comes from `aria-labelledby` pointing at the
+ * sentence rather than from the label's text content, because the content also
+ * holds the chip, the hint and whatever `trailing` carries — without it, a
+ * screen reader would read the hint twice, once as part of the name and again as
+ * the description.
  *
  * The box pins to the first line of a wrapping sentence (`mt-0.5`) rather than
  * centring on the whole block, which is what keeps a three-line consent from
@@ -177,7 +171,6 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
       label,
       hint,
       tag,
-      variant,
       size = "sm",
       trailing,
       className,
@@ -195,7 +188,7 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
     return (
       <label
         className={cn(
-          checkboxRowVariants({ variant, size, checked, disabled }),
+          checkboxRowVariants({ size, checked, disabled }),
           className,
         )}
       >
@@ -233,7 +226,10 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
             )}
           </span>
           {hint !== undefined && (
-            <span id={hintId} className="mt-1 block text-xs text-muted-foreground">
+            <span
+              id={hintId}
+              className="mt-1 block text-xs text-muted-foreground"
+            >
               {hint}
             </span>
           )}

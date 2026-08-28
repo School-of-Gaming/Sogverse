@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Identicon } from "@/components/ui/identicon";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
@@ -495,13 +495,19 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 // panel rather than a hunt.
 //
 // **Everything a parent has to agree to lives in ONE section, and it is the last
-// one before the button.** Required consent is a single heading holding one
-// tickable row per thing being agreed to: the product's own documents when it
-// attaches any, and — always, at the bottom — our rules. They are the same
-// control in the same box, because they are the same act, and the CTA therefore
-// names one step rather than walking a reader through two headings that look
-// alike. A new thing to agree to becomes another row in this section, above the
-// rules row; it does not become a section of its own.
+// one before the button.** Consent is a single heading holding one tickable row
+// per thing being agreed to: the product's own documents when it attaches any,
+// and — always, at the bottom — our rules. They are the same control in the same
+// box, because they are the same act, and the CTA therefore names one step
+// rather than walking a reader through two headings that look alike. A new thing
+// to agree to becomes another row in this section, above the rules row; it does
+// not become a section of its own.
+//
+// **Every consent row wears a chip, and the chip is the only thing saying which
+// rows gate the button.** The optional marketing row below the section is the
+// same bordered control as the gates above it — the border draws the click
+// target, not the stakes — so "Required" and "Optional" are what a reader (and
+// a screen reader) tells them apart by.
 //
 // **Actions live in the sections, never in the CTA.** A section that needs
 // something offers its own affordance: the dashed add-a-gamer row inside the
@@ -1062,9 +1068,10 @@ function SignupForm(
       {/* Below the conditions and above the button: the last thing on the panel
           before the CTA, and deliberately NOT a row inside the section above.
           See the component's own note — the section above is one act the button
-          names, and a box that does not gate it must not be able to be mistaken
-          for one of its rows. Its existence comes off the product read, so it
-          is here or absent from the first paint; only its tick arrives late. */}
+          names, and this question does not gate it. What tells the two apart is
+          the chip on every row, not the treatment of the box. Its existence
+          comes off the product read, so it is here or absent from the first
+          paint; only its tick arrives late. */}
       <OptionalMarketingSection
         rows={describeMarketingConsents(props.marketingConsentTypes)}
         granted={props.marketingConsents}
@@ -1097,15 +1104,26 @@ function SignupForm(
  * to: the product's own required documents when it attaches any, and — always,
  * last — our rules. Both rows are the same control, a bordered clickable box
  * that lights when ticked, because they are the same act. The heading names the
- * act rather than the paperwork ("Required consent"), which is also what the
- * disabled CTA points at, so a reader following the button lands on a section
- * rather than on one of two boxes they cannot tell apart.
+ * act rather than the paperwork ("Consent"), which is also what the disabled
+ * CTA points at, so a reader following the button lands on a section rather
+ * than on one of two boxes they cannot tell apart.
+ *
+ * **The heading says "Consent" and not "Required consent", because every row
+ * now says which it is.** The word "Required" moved from the heading onto the
+ * rows themselves, where it can also stand beside the "Optional" chip on the
+ * marketing row below and be read as the contrast it is. A heading claiming
+ * "required" over a stack whose rows carry their own chips would be saying it
+ * twice in the section and not at all outside it.
  *
  * **The rules row carries no heading of its own.** It used to be its own titled
  * section, and beside a second titled section of identically-shaped boxes that
  * title stopped meaning anything: two headings, two boxes, one act. What the
  * heading was doing — giving the CTA's prompt a visible referent — is now done
- * by the section's own, so the row is left to be a sentence and a checkbox.
+ * by the section's own, so the row is left to be a sentence and a checkbox. It
+ * carries the "Required" chip like every other row here: it sits in the same
+ * stack, under the same heading, at the same spacing, and it gates the CTA
+ * exactly as they do, so singling it out by omission would be a distinction
+ * with nothing behind it.
  *
  * **And its sentence names its own document, exactly as a bundle's does.** The
  * rules row is a consent to our Anti-Bullying and Discipline policy, so the
@@ -1228,13 +1246,18 @@ function RequiredConsentSection({
             key={row.key}
             agreed={agreements.has(row.key)}
             onAgreedChange={(next) => onAgreementChange(row.key, next)}
-            sentence={t("consents.agree")}
-            lead={
-              /* Never an anchor with nowhere to go — an empty href resolves to
-                 the page the reader is already on. */
-              <span className="mb-3 block text-xs font-medium text-foreground">
-                {row.slug}
-              </span>
+            sentence={
+              <>
+                {/* The raw slug at the head of the sentence rather than in a
+                    slot of its own: it is part of what this row is asking, and
+                    a row that names a document has to name it where the reader
+                    is already looking. Never an anchor with nowhere to go — an
+                    empty href resolves to the page the reader is already on. */}
+                <span className="mb-2 block font-medium text-foreground">
+                  {row.slug}
+                </span>
+                {t("consents.agree")}
+              </>
             }
           />
         ),
@@ -1262,11 +1285,14 @@ function RequiredConsentSection({
  *   section is one act — everything a parent must agree to, which the CTA names
  *   as one step — and a row inside it that did not gate the button would be a
  *   box the reader cannot tell from the ones that do.
- * - **It has no box around it.** The panel's rule is that a border means you
- *   can act on it, and the required rows spend that border on being the thing
- *   standing between the reader and the button. This is a plain line with a
- *   checkbox: still clickable, visibly lighter.
- * - **It says it is optional in its own words**, under the sentence, and names
+ * - **It says "Optional" on the row itself**, in the chip every row in the
+ *   consent area now carries. This used to be done by *withholding* the border
+ *   the required rows wear — a plain line beside boxed gates, visibly lighter.
+ *   That is gone: the border marks the click target, not the stakes, so
+ *   spending it on weight left the lighter rows reading as gates that had
+ *   failed to render, and left the distinction invisible to anyone not looking
+ *   at the screen. A word says it to everybody.
+ * - **It says it is optional in its own words** too, under the sentence, and names
  *   where the answer can be changed later — because it *can* be, which is the
  *   deepest difference between this and everything above it. A required consent
  *   is a statement about the moment of enrolment and cannot be unmade; this is
@@ -1296,35 +1322,34 @@ function OptionalMarketingSection({
   onGrantedChange: (consentType: MarketingConsentType, next: boolean) => void;
 }) {
   const t = useTranslations("productDetail.signupPanel.consents.marketing");
+  const tTag = useTranslations("common.consentTag");
   if (rows.length === 0) return null;
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
+      {/* The hint goes under the sentence rather than beside it: at rail width
+          there is no beside, and the sentence is what the tick means while this
+          is a note about the tick. The chip says *that* the row is optional;
+          the hint says what that means and where the answer can be changed. */}
       {rows.map(({ type, ask }) => (
-        <label
+        <CheckboxRow
           key={type}
-          className="flex cursor-pointer items-start gap-3 text-xs"
-        >
-          <Checkbox
-            className="mt-0.5"
-            checked={granted.has(type)}
-            onChange={(e) => onGrantedChange(type, e.target.checked)}
-          />
-          <span className="text-muted-foreground">
-            {t.rich(ask.sentenceKey, {
-              link: (chunks) => (
-                <ConsentSentenceLink href={ask.href}>
-                  {chunks}
-                </ConsentSentenceLink>
-              ),
-            })}
-            {/* Under the sentence rather than beside it: at rail width there is
-                no beside, and the sentence is what the tick means while this is
-                a note about the tick. */}
-            <span className="mt-1 block text-muted-foreground/80">
-              {t("hint")}
+          size="xs"
+          tag={tTag("optional")}
+          checked={granted.has(type)}
+          onCheckedChange={(next) => onGrantedChange(type, next)}
+          label={
+            <span className="text-muted-foreground">
+              {t.rich(ask.sentenceKey, {
+                link: (chunks) => (
+                  <ConsentSentenceLink href={ask.href}>
+                    {chunks}
+                  </ConsentSentenceLink>
+                ),
+              })}
             </span>
-          </span>
-        </label>
+          }
+          hint={t("hint")}
+        />
       ))}
     </div>
   );
@@ -1404,55 +1429,45 @@ function ConsentSentenceLink({
 }
 
 /**
- * One thing to agree to: a sentence and a checkbox in a bordered box that
- * lights when ticked, the whole box clickable.
+ * One thing to agree to: the shared `CheckboxRow`, carrying the sentence and
+ * the "Required" chip.
  *
  * Shared by every row rather than written per kind, because "the rows are
  * indistinguishable" is the point of the section — a reader must not be able to
  * tell our rules from a product's documents by their treatment, only by what
- * they say. No nested box: unlike the gamer picker — whose outer box wraps a
- * border-per-selectable-row — each row is a single choice, so a box-in-a-box
- * would just be visual noise.
+ * they say.
+ *
+ * **The chip is on every row in this section, including the rules row.** It
+ * carries the whole of the required/optional distinction now: the row and the
+ * optional marketing row beneath the section are the same control wearing the
+ * same border, because the border marks the click target rather than the
+ * stakes. A gate with no chip beside a chipped one would read as the lighter of
+ * the two, which is the reverse of the truth.
  *
  * `sentence` takes a node rather than a string because a consent sentence
- * carries its own links inline — a bundle's documents, the rules row's policy;
- * a caller passing links accepts that a click on one reads instead of ticking,
- * which the DOM gives for free (see the section's note above).
- *
- * `lead` is the one thing a row can carry that its sentence cannot say: the raw
- * slug of a document this deploy has no name and no sentence for. Everything
- * nameable is named inside the sentence, so nothing else uses this slot.
+ * carries its own links inline — a bundle's documents, the rules row's policy,
+ * and the raw slug that heads a drift row. A caller passing links accepts that
+ * a click on one reads instead of ticking, which the DOM gives for free (see
+ * the section's note above).
  */
 function ConsentRow({
   agreed,
   onAgreedChange,
   sentence,
-  lead,
 }: {
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   sentence: React.ReactNode;
-  lead?: React.ReactNode;
 }) {
+  const tTag = useTranslations("common.consentTag");
   return (
-    <label
-      className={cn(
-        "block cursor-pointer rounded-md border p-4 transition-colors",
-        agreed
-          ? "border-primary bg-primary/5"
-          : "border-border bg-muted/30 hover:bg-accent/50",
-      )}
-    >
-      {lead}
-      <div className="flex items-start gap-3 text-xs">
-        <Checkbox
-          className="mt-0.5"
-          checked={agreed}
-          onChange={(e) => onAgreedChange(e.target.checked)}
-        />
-        <span className="text-muted-foreground">{sentence}</span>
-      </div>
-    </label>
+    <CheckboxRow
+      size="xs"
+      tag={tTag("required")}
+      checked={agreed}
+      onCheckedChange={onAgreedChange}
+      label={<span className="text-muted-foreground">{sentence}</span>}
+    />
   );
 }
 

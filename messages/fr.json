@@ -102,7 +102,11 @@
     "roleParent": "Parent",
     "roleGamer": "Joueur",
     "roleGedu": "Gedu",
-    "gedus": "Gedus"
+    "gedus": "Gedus",
+    "consentTag": {
+      "required": "Obligatoire",
+      "optional": "Facultatif"
+    }
   },
   "about": {
     "hero": {
@@ -395,10 +399,8 @@
         },
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
-        "consents": "Consentements obligatoires",
-        "consentsDescription": "Documents qu’un parent doit accepter avant de s’inscrire.",
-        "marketingConsents": "Marketing facultatif",
-        "marketingConsentsDescription": "Marketing proposé au parent au moment de l’inscription. Un parent peut refuser, et la place n’est pas affectée.",
+        "consents": "Consentements",
+        "consentsDescription": "Ce qu’un parent accepte, et ce qui lui est demandé, au moment de l’inscription. Les documents obligatoires doivent être acceptés avant de réserver une place ; les questions marketing peuvent être refusées.",
         "visibility": "Catalogue",
         "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
@@ -533,7 +535,7 @@
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Il est demandé aux parents s’ils souhaitent partager leurs coordonnées avec notre partenaire Lynx Educate."
+            "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent partager leurs coordonnées avec Lynx Educate. Un parent peut refuser, et la place n’est pas affectée."
           }
         }
       },
@@ -1812,7 +1814,7 @@
         "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>."
       },
       "consents": {
-        "heading": "Consentement requis",
+        "heading": "Consentement",
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
           "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
@@ -2110,10 +2112,8 @@
     "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer.",
     "marketing": {
       "title": "Préférences marketing",
-      "description": "Facultatif — choisissez le marketing que vous souhaitez recevoir. Vous pouvez modifier ces choix à tout moment.",
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
-      "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
-      "saveFailed": "Nous n’avons pas pu enregistrer cette préférence. Veuillez réessayer."
+      "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres."
     }
   },
   "tools": {

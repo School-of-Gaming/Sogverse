@@ -70,19 +70,22 @@ export function robloxServiceModule() {
 }
 
 /**
- * `@/services/marketing-consents` — the parent-only marketing card's read and
+ * `@/services/marketing-consents` — the parent-only marketing group's read and
  * write, answered with an empty (but *resolved*) list.
  *
  * `[]` rather than `undefined`: a resolved read with no rows is the ordinary
- * state of a parent who has never been asked, and it is what leaves the card's
- * boxes enabled. A test that cares about the unresolved state overrides this
- * module itself rather than reaching for a second factory here.
+ * state of a parent who has never been asked, and it is what leaves the boxes
+ * enabled. A test that cares about the unresolved state overrides this module
+ * itself rather than reaching for a second factory here.
+ *
+ * The writer exposes `mutateAsync`, because the Profile card's Save awaits each
+ * consent write in turn rather than firing and forgetting.
  */
 export function marketingConsentsServiceModule() {
   return {
     useMyMarketingConsents: () => ({ data: [] }),
     useMarketingConsentsForCustomer: () => ({ data: [] }),
-    useSetMarketingConsent: () => ({ mutate: vi.fn() }),
+    useSetMarketingConsent: () => ({ mutateAsync: vi.fn() }),
   };
 }
 

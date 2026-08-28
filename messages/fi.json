@@ -102,7 +102,11 @@
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
     "roleGedu": "Gedu",
-    "gedus": "Gedut"
+    "gedus": "Gedut",
+    "consentTag": {
+      "required": "Pakollinen",
+      "optional": "Vapaaehtoinen"
+    }
   },
   "about": {
     "hero": {
@@ -395,10 +399,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
-        "consents": "Vaaditut suostumukset",
-        "consentsDescription": "Asiakirjat, jotka vanhemman on hyväksyttävä ennen ilmoittautumista.",
-        "marketingConsents": "Vapaaehtoinen markkinointi",
-        "marketingConsentsDescription": "Markkinointi, josta vanhemmalta kysytään ilmoittautumisen yhteydessä. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan.",
+        "consents": "Suostumukset",
+        "consentsDescription": "Mitä vanhempi hyväksyy ja mitä häneltä kysytään ilmoittautumisen yhteydessä. Pakolliset asiakirjat on hyväksyttävä ennen paikan varaamista, ja markkinointikysymyksistä voi kieltäytyä.",
         "visibility": "Listaus",
         "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
       },
@@ -533,7 +535,7 @@
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Vanhemmilta kysytään, haluavatko he jakaa yhteystietonsa kumppanimme Lynx Educaten kanssa."
+            "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, saako heidän yhteystietonsa jakaa Lynx Educaten kanssa. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan."
           }
         }
       },
@@ -1812,7 +1814,7 @@
         "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan."
       },
       "consents": {
-        "heading": "Vaadittu suostumus",
+        "heading": "Suostumus",
         "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
         "bundles": {
           "robloxProgramme": "Olen lukenut ja hyväksyn Roblox-ohjelman <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>."
@@ -2110,10 +2112,8 @@
     "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen.",
     "marketing": {
       "title": "Markkinointiasetukset",
-      "description": "Vapaaehtoinen — valitse, millaista markkinointia haluat saada. Voit muuttaa valintoja milloin tahansa.",
       "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
-      "lynxEducate": "Yhteystietoni saa jakaa luotetun kumppanimme <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia ja tarjouksia.",
-      "saveFailed": "Valinnan tallennus epäonnistui. Yritä uudelleen."
+      "lynxEducate": "Yhteystietoni saa jakaa luotetun kumppanimme <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia ja tarjouksia."
     }
   },
   "tools": {

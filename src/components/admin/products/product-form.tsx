@@ -17,7 +17,6 @@ import { AudienceSection } from "./sections/audience-section";
 import { BillingSection } from "./sections/billing-section";
 import {
   ConsentsSection,
-  MarketingConsentsSection,
 } from "./sections/consents-section";
 import { FeesSection } from "./sections/fees-section";
 import { IdentitySection } from "./sections/identity-section";
@@ -205,15 +204,13 @@ export function ProductFormShell({
       <RegistrationSection state={state} setState={setState} config={config} />
       {/* After the registration timing and before the listing toggle: the two
           signup-act questions sit together, in the order a parent meets them —
-          when the door opens, then what they agree to on the way through. Takes
-          no `config`, because the enrolment conditions are a generic mechanism
-          with no per-type rule behind them. */}
+          when the door opens, then what they agree to on the way through. One
+          section holding the conditions and the optional asks alike, in the
+          order the panel puts them in front of a parent, with every row saying
+          in words which kind it is. Takes no `config`, because the enrolment
+          conditions are a generic mechanism with no per-type rule behind
+          them. */}
       <ConsentsSection state={state} setState={setState} />
-      {/* Directly beneath, in the order the panel puts them in front of a
-          parent: the conditions first, then the question they may decline.
-          Separate sections rather than one, because a condition and a question
-          are what an admin most needs to be unable to confuse. */}
-      <MarketingConsentsSection state={state} setState={setState} />
       <VisibilitySection state={state} setState={setState} />
 
       {error && (

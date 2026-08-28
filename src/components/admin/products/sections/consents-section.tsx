@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import {
   CONSENT_DOCUMENTS,
   CONSENT_DOCUMENT_BUNDLES,
@@ -18,22 +17,40 @@ import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
 
 /**
- * **The enrolment conditions: which published documents a parent must agree to
- * before they can take a seat on this product.**
+ * **What a parent meets on the way through this product's signup: the documents
+ * they must agree to, and the marketing they are asked about.**
  *
  * Its own section rather than a field inside another, because it is a third
  * question none of the existing sections asks: Audience says who may hold a
  * seat, Registration timing says when the door opens, and this says what a
- * parent has to agree to on the way through it. It sits directly after
- * Registration timing and before Listing — the two of them together are the
- * signup act, in the order a parent meets them.
+ * parent has to agree to — and what they are offered — on the way through it. It
+ * sits directly after Registration timing and before Listing; the two of them
+ * together are the signup act, in the order a parent meets them.
+ *
+ * **One section, not two, and the chips are why.** The conditions and the asks
+ * were two headed sections for a while, on the reasoning that a condition and a
+ * question are what an admin most needs to be unable to confuse. The rows are
+ * now the shared `CheckboxRow`, which wears one bordered shape everywhere —
+ * the border marks the click target, not the stakes — so telling the two apart
+ * fell to the "Required" / "Optional" chip each row carries. With the
+ * distinction stated on every row, a second heading was repeating in a title
+ * what the rows already say, and separating rows that an admin reads as one
+ * list: everything this product will put in front of a parent, in the order
+ * they will meet it.
+ *
+ * The difference itself has not softened. A required row is a *condition*: a
+ * parent who declines cannot enrol, the agreement is per seat, and it can never
+ * be withdrawn. A marketing row is a *question*: declining is a complete
+ * answer, the seat is unaffected, the consent is account-level, and the parent
+ * can switch it off in settings that evening. That is what each row's chip and
+ * its caption say.
  *
  * **Offered on every product type**, with no `product-type-config` flag gating
  * it. The database has no per-type rule here — any product may point at any
- * published document — and a flag would be inventing one in the UI that nothing
- * else knows about. Empty is the ordinary state, so the section reads as "no,
- * none" on the overwhelming majority of products, which is exactly what it
- * should say.
+ * published document, and any product may carry any attachable ask — and a flag
+ * would be inventing one in the UI that nothing else knows about. Empty is the
+ * ordinary state for the required half, so it reads as "no, none" on the
+ * overwhelming majority of products, which is exactly what it should say.
  *
  * **One row per bundle, not per document.** A programme's terms and its privacy
  * policy are published together and a product requiring one without the other
@@ -44,6 +61,12 @@ import type { FormState } from "../product-form-state";
  * bundled documents are named in the row's caption, because "which documents am
  * I attaching" is exactly the question a one-line label would stop answering.
  *
+ * **`school_of_gaming` is deliberately not among the marketing rows**, which is
+ * why they come from `ATTACHABLE_MARKETING_CONSENT_TYPES` rather than from the
+ * enum. Our own mailing list is asked for at registration, on the account that
+ * holds the answer; attaching it to a product would ask an account-level
+ * question a second time with nothing new to say.
+ *
  * **The rows do not wait on the network.** Registry rows arrive by migration and
  * `CONSENT_DOCUMENTS` ships in the same deploy, so the slug, the name and the
  * link of every document this deploy can offer are known before the page
@@ -52,7 +75,9 @@ import type { FormState } from "../product-form-state";
  * which pushed the Listing section and the submit button down the page on
  * data's own schedule: exactly the shift the layout rule forbids. The query is
  * still made, and it still contributes the one thing the bundle genuinely
- * cannot know — which revision of each document is current right now.
+ * cannot know — which revision of each document is current right now. The
+ * marketing rows have no query behind them at all: what a marketing consent is
+ * and who it names ships in the bundle.
  */
 export function ConsentsSection({
   state,
@@ -64,6 +89,8 @@ export function ConsentsSection({
   const t = useTranslations("admin.products");
   const tNames = useTranslations("consentDocuments.names");
   const tBundles = useTranslations("consentDocuments.bundles");
+  const tMarketing = useTranslations("admin.products.consents.marketing");
+  const tTag = useTranslations("common.consentTag");
   const { data: documents } = useConsentDocuments();
 
   // Slug → current version, once the query lands. `undefined` for a slug means
@@ -93,13 +120,13 @@ export function ConsentsSection({
 
   // Slugs the database knows and this deploy does not.
   //
-  // **Appending the drift rows at the END is load-bearing, not cosmetic.** They
-  // can only appear once the query resolves, and a late row inserted anywhere
-  // but the end of the run moves every row after it — plus the Listing section
-  // and the submit button below. At the end it grows into the slack the form
-  // already has beneath the list and nothing painted moves. A later tidy-up
-  // that sorts this list alphabetically would reintroduce the shift silently,
-  // and would look like an improvement.
+  // **Appending the drift rows at the END of the required run is load-bearing,
+  // not cosmetic.** They can only appear once the query resolves, and a late row
+  // inserted anywhere but the end of a run moves every row after it — plus the
+  // marketing rows, the Listing section and the submit button below. Appended,
+  // it grows into the slack the form already has and nothing painted moves. A
+  // later tidy-up that sorts this list alphabetically would reintroduce the
+  // shift silently, and would look like an improvement.
   const driftSlugs = (documents ?? [])
     .map((doc) => doc.slug)
     .filter((slug) => consentDocumentMeta(slug) === null);
@@ -128,58 +155,52 @@ export function ConsentsSection({
             state.requiredConsentSlugs.has(slug),
           );
           return (
-            <label
+            <CheckboxRow
               key={bundle.id}
-              className={cn(
-                "flex cursor-pointer gap-3 rounded-md border p-3 text-sm transition-colors",
-                checked
-                  ? "border-primary bg-primary/5"
-                  : "border-input hover:border-foreground/30",
-              )}
-            >
-              <Checkbox
-                className="mt-0.5"
-                checked={checked}
-                onChange={() => {
-                  const next = new Set(state.requiredConsentSlugs);
-                  // All or nothing, in both directions — which is what makes a
-                  // half-bundle unreachable from this screen and heals one that
-                  // somehow already exists.
-                  for (const slug of bundle.slugs) {
-                    if (checked) next.delete(slug);
-                    else next.add(slug);
-                  }
-                  setSlugs(next);
-                }}
-              />
-              <div className="min-w-0 flex-1 space-y-1">
-                <span className="block truncate font-medium">
-                  {tBundles(bundle.labelKey)}
-                </span>
-                {/* What is actually being attached. One line per document, all
-                    of them known at first paint, so this caption's height is
-                    settled before the query lands; only the versions arrive
-                    late, and they arrive at the trailing end of a line that
-                    already has its final height. Moved ahead of the name, a
-                    version would shove the name sideways when it appeared. */}
-                <ul className="space-y-0.5 text-xs text-muted-foreground">
-                  {bundle.slugs.map((slug) => {
-                    const meta = consentDocumentMeta(slug);
-                    const label = versionLabel(slug);
-                    return (
-                      <li key={slug} className="flex items-baseline gap-3">
-                        <span className="truncate">
-                          {meta === null ? slug : tNames(meta.nameKey)}
-                        </span>
-                        {label !== null && (
-                          <span className="ml-auto shrink-0">{label}</span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </label>
+              tag={tTag("required")}
+              checked={checked}
+              onCheckedChange={() => {
+                const next = new Set(state.requiredConsentSlugs);
+                // All or nothing, in both directions — which is what makes a
+                // half-bundle unreachable from this screen and heals one that
+                // somehow already exists.
+                for (const slug of bundle.slugs) {
+                  if (checked) next.delete(slug);
+                  else next.add(slug);
+                }
+                setSlugs(next);
+              }}
+              label={
+                <>
+                  <span className="block truncate font-medium">
+                    {tBundles(bundle.labelKey)}
+                  </span>
+                  {/* What is actually being attached. One line per document,
+                      all of them known at first paint, so this caption's height
+                      is settled before the query lands; only the versions
+                      arrive late, and they arrive at the trailing end of a line
+                      that already has its final height. Moved ahead of the
+                      name, a version would shove the name sideways when it
+                      appeared. */}
+                  <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                    {bundle.slugs.map((slug) => {
+                      const meta = consentDocumentMeta(slug);
+                      const label = versionLabel(slug);
+                      return (
+                        <li key={slug} className="flex items-baseline gap-3">
+                          <span className="truncate">
+                            {meta === null ? slug : tNames(meta.nameKey)}
+                          </span>
+                          {label !== null && (
+                            <span className="ml-auto shrink-0">{label}</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              }
+            />
           );
         })}
         {[...looseSlugs, ...driftSlugs].map((slug) => {
@@ -187,126 +208,67 @@ export function ConsentsSection({
           const checked = state.requiredConsentSlugs.has(slug);
           const label = versionLabel(slug);
           return (
-            <label
+            <CheckboxRow
               key={slug}
-              className={cn(
-                "flex cursor-pointer items-center gap-3 rounded-md border p-3 text-sm transition-colors",
-                checked
-                  ? "border-primary bg-primary/5"
-                  : "border-input hover:border-foreground/30",
-              )}
-            >
-              <Checkbox
-                checked={checked}
-                onChange={() => {
-                  const next = new Set(state.requiredConsentSlugs);
-                  if (next.has(slug)) next.delete(slug);
-                  else next.add(slug);
-                  setSlugs(next);
-                }}
-              />
-              <div className="flex min-w-0 flex-1 items-baseline gap-3">
-                {/* A slug this deploy cannot name shows the slug itself: loud
-                    rather than broken, and it tells whoever sees it exactly
-                    what to report. Registry rows arrive by migration and the
-                    name map ships in the same deploy, so this can only be a
-                    defect in the change that added the row. */}
-                <span className="truncate font-medium">
-                  {meta === null ? slug : tNames(meta.nameKey)}
-                </span>
-                {label !== null && (
-                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                    {label}
+              tag={tTag("required")}
+              checked={checked}
+              onCheckedChange={() => {
+                const next = new Set(state.requiredConsentSlugs);
+                if (next.has(slug)) next.delete(slug);
+                else next.add(slug);
+                setSlugs(next);
+              }}
+              label={
+                <span className="flex min-w-0 items-baseline gap-3">
+                  {/* A slug this deploy cannot name shows the slug itself: loud
+                      rather than broken, and it tells whoever sees it exactly
+                      what to report. Registry rows arrive by migration and the
+                      name map ships in the same deploy, so this can only be a
+                      defect in the change that added the row. */}
+                  <span className="truncate font-medium">
+                    {meta === null ? slug : tNames(meta.nameKey)}
                   </span>
-                )}
-              </div>
-            </label>
+                  {label !== null && (
+                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                      {label}
+                    </span>
+                  )}
+                </span>
+              }
+            />
           );
         })}
-      </div>
-    </FormSection>
-  );
-}
-
-/**
- * **The optional marketing asks: which partners' mailing lists this product's
- * signup panel offers a parent, on the way past.**
- *
- * Its own section beside the required one, not a group inside it, and the
- * separation is the whole point. The section above holds *conditions*: a parent
- * who declines cannot enrol, the agreement is per seat, and it can never be
- * withdrawn. This holds *questions*: declining is a complete answer, the seat is
- * unaffected, the consent is account-level, and the parent can switch it off in
- * settings that evening. Two headings is how an admin sees which of those they
- * are turning on — a shared heading reading "Consents" would make the most
- * consequential distinction on this page a matter of reading captions.
- *
- * **Offered on every product type**, like the required section and for the same
- * reason: the database has no per-type rule here, and a `product-type-config`
- * flag would be inventing one the rest of the app does not know about.
- *
- * **`school_of_gaming` is deliberately not on this list**, which is why the
- * rows come from `ATTACHABLE_MARKETING_CONSENT_TYPES` rather than from the enum.
- * Our own mailing list is asked for at registration, on the account that holds
- * the answer; attaching it to a product would ask an account-level question a
- * second time with nothing new to say.
- *
- * **The rows do not wait on the network**, and here there is not even a query to
- * wait on: what a marketing consent is and who it names ships in the bundle, so
- * every row is on screen at first paint and nothing below it can be pushed down
- * later.
- */
-export function MarketingConsentsSection({
-  state,
-  setState,
-}: {
-  state: FormState;
-  setState: React.Dispatch<React.SetStateAction<FormState>>;
-}) {
-  const t = useTranslations("admin.products");
-  const tMarketing = useTranslations("admin.products.consents.marketing");
-
-  return (
-    <FormSection
-      title={t("sections.marketingConsents")}
-      description={t("sections.marketingConsentsDescription")}
-    >
-      <div className="space-y-2">
+        {/* The optional asks, after every condition. Same list, same control,
+            same border — the chip and the caption are what say a parent may
+            decline these and cannot decline the rows above. */}
         {ATTACHABLE_MARKETING_CONSENT_TYPES.map((type) => {
           const checked = state.marketingConsentTypes.has(type);
           const { sentenceKey } = MARKETING_CONSENT_ASKS[type];
           return (
-            <label
+            <CheckboxRow
               key={type}
-              className={cn(
-                "flex cursor-pointer gap-3 rounded-md border p-3 text-sm transition-colors",
-                checked
-                  ? "border-primary bg-primary/5"
-                  : "border-input hover:border-foreground/30",
-              )}
-            >
-              <Checkbox
-                className="mt-0.5"
-                checked={checked}
-                onChange={() => {
-                  const next = new Set(state.marketingConsentTypes);
-                  if (checked) next.delete(type);
-                  else next.add(type);
-                  setState({ ...state, marketingConsentTypes: next });
-                }}
-              />
-              <div className="min-w-0 flex-1 space-y-1">
-                <span className="block truncate font-medium">
-                  {tMarketing(`${sentenceKey}.label`)}
-                </span>
-                {/* What the parent will actually be asked, in one line — the
-                    question an admin is turning on is the thing they need to
-                    read, and a partner's name alone does not say it. */}
-                <p className="text-xs text-muted-foreground">
-                  {tMarketing(`${sentenceKey}.description`)}
-                </p>
-              </div>
-            </label>
+              tag={tTag("optional")}
+              checked={checked}
+              onCheckedChange={() => {
+                const next = new Set(state.marketingConsentTypes);
+                if (checked) next.delete(type);
+                else next.add(type);
+                setState({ ...state, marketingConsentTypes: next });
+              }}
+              label={
+                <>
+                  <span className="block truncate font-medium">
+                    {tMarketing(`${sentenceKey}.label`)}
+                  </span>
+                  {/* What ticking this actually does, in one line — the admin
+                      is turning on a question, not a requirement, and the
+                      partner's name alone does not say that. */}
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {tMarketing(`${sentenceKey}.description`)}
+                  </span>
+                </>
+              }
+            />
           );
         })}
       </div>

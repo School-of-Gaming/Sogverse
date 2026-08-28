@@ -26,7 +26,6 @@ import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
@@ -362,10 +361,10 @@ function VoiceAvatarDemo() {
 /* ------------------------------------------------------------------ */
 
 /**
- * The primitive's own states, and nothing else. Every labelled composition
- * around it — the plain row, the boxed gate, hints, sizes, the trailing slot —
- * lives in the Checkbox row section below, which is the one place they can be
- * compared side by side.
+ * The primitive's own states, and nothing else. The labelled consent
+ * compositions built on it — a sentence, a hint, a Required/Optional chip in a
+ * bordered clickable row — are `CheckboxRow`, and they are judged on the
+ * surfaces that use them rather than from a demo card here.
  */
 function CheckboxDemo() {
   const [newsletter, setNewsletter] = useState(false);
@@ -388,233 +387,6 @@ function CheckboxDemo() {
         Disabled (checked)
       </label>
     </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Checkbox Row Demo                                                  */
-/* ------------------------------------------------------------------ */
-
-/**
- * The labelled row, in every shape the app's four checkbox surfaces ask for.
- *
- * The two variants sit in the same section deliberately: the whole reason the
- * component refuses a default `variant` is that a quiet ask and a required gate
- * must not be mistakable for one another, and that is a claim you can only
- * check by seeing them beside each other.
- */
-function CheckboxRowDemo() {
-  const [news, setNews] = useState(false);
-  const [partner, setPartner] = useState(true);
-  const [gateOff, setGateOff] = useState(false);
-  const [gateOn, setGateOn] = useState(true);
-  const [requiredRow, setRequiredRow] = useState(true);
-  const [optionalRow, setOptionalRow] = useState(false);
-  const [longPlain, setLongPlain] = useState(false);
-  const [longBoxed, setLongBoxed] = useState(true);
-  const [subscribed, setSubscribed] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
-    "idle",
-  );
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // A write that lands a beat after the click, so the trailing status really
-  // does arrive after the row has painted — which is the only way to see that
-  // its arrival moves nothing.
-  const toggleSubscribed = (next: boolean) => {
-    setSubscribed(next);
-    setSaveStatus("saving");
-    if (saveTimer.current !== null) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => setSaveStatus("saved"), 700);
-  };
-  useEffect(
-    () => () => {
-      if (saveTimer.current !== null) clearTimeout(saveTimer.current);
-    },
-    [],
-  );
-
-  return (
-    <>
-      <p className="max-w-prose text-sm text-muted-foreground">
-        A checkbox and the sentence it belongs to, as one clickable{" "}
-        <code>&lt;label&gt;</code>. <code>plain</code> is the optional ask;{" "}
-        <code>boxed</code> is the required gate, whose border lights to primary
-        once ticked. <code>variant</code> has no default — the choice is what
-        the row <em>is</em>, and it is made per surface: a list that mixed the
-        two weights would read as a rendering fault, so a surface holding both
-        kinds goes <code>boxed</code> throughout and names the difference with{" "}
-        <code>tag</code>.
-      </p>
-
-      <SubSection title="Plain — the optional ask">
-        <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
-          <CheckboxRow
-            variant="plain"
-            checked={news}
-            onCheckedChange={setNews}
-            label="Send me news about clubs, camps and events."
-            hint="Optional. You can change this any time in your settings."
-          />
-          <CheckboxRow
-            variant="plain"
-            size="xs"
-            checked={partner}
-            onCheckedChange={setPartner}
-            label={
-              <span className="text-muted-foreground">
-                Share my email with Lynx Educate so they can tell me about their
-                programmes.
-              </span>
-            }
-            hint="Optional. You can change this any time in your settings."
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Boxed — the required gate">
-        {/* Two independent rows rather than one toggled row: both lightings
-            have to be on screen at once, or the unchecked and checked states
-            are compared from memory. */}
-        <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
-          <CheckboxRow
-            variant="boxed"
-            checked={gateOff}
-            onCheckedChange={setGateOff}
-            label="I agree to the Anti-Bullying and Discipline policy."
-          />
-          <CheckboxRow
-            variant="boxed"
-            checked={gateOn}
-            onCheckedChange={setGateOn}
-            label="I agree to the Anti-Bullying and Discipline policy."
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Boxed + tag — required and optional together">
-        {/* The enrol panel's and the admin product form's shape. Both rows are
-            boxed, because two weights in one list read as a rendering fault
-            rather than as a distinction; the chip is what says which is which,
-            in words a screen reader gets too. */}
-        <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
-          <CheckboxRow
-            variant="boxed"
-            tag="Required"
-            checked={requiredRow}
-            onCheckedChange={setRequiredRow}
-            label="I agree to the Anti-Bullying and Discipline policy."
-          />
-          <CheckboxRow
-            variant="boxed"
-            tag="Optional"
-            checked={optionalRow}
-            onCheckedChange={setOptionalRow}
-            label="Share my email with Lynx Educate so they can tell me about their programmes."
-            hint="Optional. You can change this any time in your settings."
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Multi-line label">
-        {/* `mt-0.5` on the box, so a wrapping sentence keeps its checkbox on
-            the first line instead of centring it down the paragraph. */}
-        <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
-          <CheckboxRow
-            variant="plain"
-            checked={longPlain}
-            onCheckedChange={setLongPlain}
-            label="By enrolling I confirm the details above are correct, that I have read the programme description, and that I understand the monthly subscription continues until I cancel it."
-            hint="The box stays pinned to the first line."
-          />
-          <CheckboxRow
-            variant="boxed"
-            size="xs"
-            checked={longBoxed}
-            onCheckedChange={setLongBoxed}
-            label={
-              <span className="text-muted-foreground">
-                I agree to the Roblox programme terms and the Roblox programme
-                privacy policy, which together cover how my child takes part and
-                what we record about them while they do.
-              </span>
-            }
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Composed label — title over details">
-        {/* The admin form's shape, and it needs no prop of its own: a title
-            line with detail lines under it is a `label` made of nodes. */}
-        <div className="max-w-md">
-          <CheckboxRow
-            variant="boxed"
-            checked
-            onCheckedChange={() => undefined}
-            label={
-              <>
-                <span className="block truncate font-medium">
-                  Roblox programme documents
-                </span>
-                <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                  <li className="flex items-baseline gap-3">
-                    <span className="truncate">Programme terms</span>
-                    <span className="ml-auto shrink-0">v3</span>
-                  </li>
-                  <li className="flex items-baseline gap-3">
-                    <span className="truncate">Privacy policy</span>
-                    <span className="ml-auto shrink-0">v2</span>
-                  </li>
-                </ul>
-              </>
-            }
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Disabled">
-        <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
-          <CheckboxRow
-            variant="plain"
-            disabled
-            checked={false}
-            onCheckedChange={() => undefined}
-            label="Send me news about clubs, camps and events."
-            hint="Disabled until the account's stored answer has loaded."
-          />
-          <CheckboxRow
-            variant="boxed"
-            disabled
-            checked
-            onCheckedChange={() => undefined}
-            label="I agree to the Anti-Bullying and Discipline policy."
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Trailing status">
-        {/* Toggle it: the status lands ~700ms later, at the end of the row,
-            where the slack already is — the box, the sentence and the hint do
-            not move when it arrives. */}
-        <div className="max-w-md">
-          <CheckboxRow
-            variant="plain"
-            checked={subscribed}
-            onCheckedChange={toggleSubscribed}
-            label="Send me news about clubs, camps and events."
-            hint="Each toggle commits immediately — there is no Save button."
-            trailing={
-              saveStatus === "saved" ? (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Check className="h-3.5 w-3.5" />
-                  Saved
-                </span>
-              ) : undefined
-            }
-          />
-        </div>
-      </SubSection>
-    </>
   );
 }
 
@@ -2360,10 +2132,6 @@ export default function AdminUIComponentsPage() {
 
       <Section title="Checkbox">
         <CheckboxDemo />
-      </Section>
-
-      <Section title="Checkbox row">
-        <CheckboxRowDemo />
       </Section>
 
       <Section title="Avatar & Identicon">
