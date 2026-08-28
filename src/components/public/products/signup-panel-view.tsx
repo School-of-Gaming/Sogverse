@@ -235,14 +235,6 @@ export interface SignupPanelViewProps {
   locale: string;
   /** See `SignupRegionGate`. Absent on every unlocked product. */
   regionGate?: SignupRegionGate;
-  // TEMP — strip before merge.
-  //
-  // Preview-only. Obviously-fake extra consent rows to render inside the
-  // Required consent section, so the panel outgrows a 1080p viewport and the
-  // sticky rail's clamp can be judged against real panel content below the
-  // fold. Only the `required-consents-tall` scenario passes it; the live
-  // adapter has no path to it at all.
-  previewFillerConsents?: readonly string[];
 }
 
 // ---------- Why the panel is flat ----------
@@ -1036,8 +1028,6 @@ function SignupForm(
         onAgreementChange={props.onConsentAgreementChange}
         rulesAgreed={props.agreed}
         onRulesAgreedChange={props.onAgreedChange}
-        // TEMP — strip before merge.
-        fillerConsents={props.previewFillerConsents}
       />
 
       <Button
@@ -1134,8 +1124,6 @@ function RequiredConsentSection({
   onAgreementChange,
   rulesAgreed,
   onRulesAgreedChange,
-  // TEMP — strip before merge.
-  fillerConsents,
 }: {
   productType: ProductType;
   /**
@@ -1157,8 +1145,6 @@ function RequiredConsentSection({
   onAgreementChange: (rowKey: string, agreed: boolean) => void;
   rulesAgreed: boolean;
   onRulesAgreedChange: (next: boolean) => void;
-  // TEMP — strip before merge. See `previewFillerConsents` on the view's props.
-  fillerConsents?: readonly string[];
 }) {
   const t = useTranslations("productDetail.signupPanel");
   const tRules = useTranslations("productDetail.signupPanel.rules");
@@ -1211,10 +1197,6 @@ function RequiredConsentSection({
             }
           />
         ),
-      )}
-      {/* TEMP — strip before merge. Obviously-fake extra rows, preview-only. */}
-      {fillerConsents !== undefined && (
-        <TempFillerConsentRows labels={fillerConsents} />
       )}
       {/* Ours, and always last: whatever else a product attaches to a seat, the
           final thing a parent agrees to before the button is the one thing
@@ -1351,41 +1333,6 @@ function ConsentRow({
         <span className="text-muted-foreground">{sentence}</span>
       </div>
     </label>
-  );
-}
-
-// TEMP — strip before merge.
-//
-// Extra obviously-fake consent rows, rendered inside the Required consent
-// section by the `required-consents-tall` preview scenario and nowhere else.
-// Their only job is to make the signup panel itself taller than a 1080p
-// viewport, so the sticky rail's two-end clamp can be judged by scrolling a
-// panel whose CTA really does sit at its very bottom.
-//
-// They are the same `ConsentRow` the real rows are, because a mock made of a
-// different control would not be the thing being judged. They tick, because a
-// dead checkbox in a scene is a lie about the surface; and they gate nothing,
-// because they are not consents — the CTA never looks at them.
-//
-// Removal is this component, the `fillerConsents` prop it is called through,
-// the `previewFillerConsents` prop feeding that, and the scenario's labels.
-function TempFillerConsentRows({ labels }: { labels: readonly string[] }) {
-  const [agreed, setAgreed] = useState<readonly boolean[]>(() =>
-    labels.map(() => false),
-  );
-  return (
-    <>
-      {labels.map((label, index) => (
-        <ConsentRow
-          key={label}
-          agreed={agreed[index] ?? false}
-          onAgreedChange={(next) =>
-            setAgreed((prev) => prev.map((v, i) => (i === index ? next : v)))
-          }
-          sentence={label}
-        />
-      ))}
-    </>
   );
 }
 

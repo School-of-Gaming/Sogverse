@@ -4,11 +4,7 @@ import {
   PREVIEW_SCENARIOS,
 } from "@/components/public/products/mock-detail-fixtures";
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
-import {
-  REQUIRED_CONSENTS_SCENARIO,
-  // TEMP — strip before merge.
-  REQUIRED_CONSENTS_TALL_SCENARIO,
-} from "@/components/public/products/required-consents-scenario";
+import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
 
 /**
  * The **full-page preview scene registry**.
@@ -143,13 +139,6 @@ export const PREVIEW_SCENES = [
       {
         slug: REQUIRED_CONSENTS_SCENARIO.slug,
         label: REQUIRED_CONSENTS_SCENARIO.label,
-      },
-      // TEMP — strip before merge.
-      {
-        slug: REQUIRED_CONSENTS_TALL_SCENARIO.slug,
-        label: REQUIRED_CONSENTS_TALL_SCENARIO.label,
-        description:
-          "TEMPORARY. Fake extra consent rows so the panel itself outgrows the window; delete with the branch.",
       },
     ],
   },
