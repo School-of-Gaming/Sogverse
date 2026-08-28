@@ -64,20 +64,23 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   2026-08-18.
 - **Auth: `vercel metrics` rides the CLI's own login and needs no token handling**, so
   any session can run it directly — prefer it for that reason alone.
-- **The script's auth is the fragile half, and it is currently broken (verified
-  2026-08-28).** The CLI auth file (under the user profile; `VERCEL_TOKEN` overrides)
-  now holds a short-lived OAuth access token — `token`, `expiresAt`, `refreshToken` —
-  and the CLI refreshes it for its own calls. The script reads `token` raw, honouring
-  neither field, so once it expires every call returns **403
-  `{"code":"forbidden","invalidToken":true}`** while `vercel metrics` goes on working
-  from the same file. On this machine the stored token expired 2026-08-23 and the script
-  has been failing since. **Fix: re-run `vercel login` (interactive — the owner runs it
-  via `!`), then re-run the script.**
-- **Read the script's failure code before assuming the endpoint moved.** 404 means the
-  internal API moved (re-capture the request URL from the dashboard's network tab and
-  update the script's paths); **403 `invalidToken` means the stored token expired** and
-  the endpoint is fine. The two want opposite responses, and the 403 is by far the more
-  likely of the pair.
+- **The script reads the CLI's auth file directly, and that file moves.** The CLI keeps
+  a short-lived OAuth access token (`token`, `expiresAt`, `refreshToken`) and refreshes
+  it for its own calls; `VERCEL_TOKEN` still overrides. On Windows the CLI moved the
+  file from `%APPDATA%/com.vercel.cli/Data` to `%APPDATA%/xdg.data/com.vercel.cli`
+  **without deleting the old one**, so a machine logged in across the move keeps a live
+  file and a frozen one, and reading the frozen one yields a token that looks fine and
+  is rejected. The script checks every known location and **skips any candidate whose
+  `expiresAt` has passed**, so a newer file wins wherever the CLI puts it next. When it
+  reports the token expired, run `vercel login` — interactive, so the owner runs it via
+  `!` — and retry.
+- **Read the script's failure mode before assuming the endpoint moved.** "Vercel token
+  expired" is the script's own check and wants `vercel login`. A raw **403
+  `invalidToken`** means a token that is unexpired but not accepted — a revoked login,
+  or a `VERCEL_TOKEN` scoped to the public API rather than the dashboard endpoints. Only
+  a **404** means the internal API moved: re-capture the request URL from the
+  dashboard's network tab and update the script's paths. The three want different
+  responses and the 404 is the rarest.
 - Baseline for scale judgments: **2026-08-18, last 7d prod: 3,866 pageviews / 622
   devices** (~550 pv/day, ~90 visitors/day).
 - **Domain → branch mapping (verified 2026-08-18):** `sogverse.sog.gg` = production,

@@ -63,7 +63,17 @@ Append-only, like the benchmark log. Format: `date · window · scope → headli
 
 - **2026-08-28 · last 30 days · production, both devices** — datapoints: TTFB 8,462 desktop / 8,414 mobile, against **41,653 pageviews, 30,501 of them in the final seven days** — the municipal opening and its aftermath, roughly eight times the pre-opening baseline. Pulled with `vercel metrics`; read the 08-13 entry's `n` as a different instrument, not as a traffic comparison.
 
-  **Percentiles only — this entry carries no good/improvable/poor shares.** The script that produces them was failing on an expired CLI token (see the runbook), so the grade below weighs p75 and the tail percentiles without the bucket distribution the 08-13 grade had. It is a partial instrument, and the gap runs in a known direction: percentiles say how bad the bad visits are, shares say how many there are. **Re-pull the distribution once the script's auth is restored and annotate the verdict.**
+  Bucket shares, from the same window (good / improvable / poor):
+
+  | | Desktop | Mobile |
+  |---|---|---|
+  | TTFB | 92.5% / 4.9% / 2.6% | 93.7% / 4.9% / 1.5% |
+  | FCP | 85.1% / 8.8% / 6.1% | 92.1% / 5.0% / 2.9% |
+  | LCP | 88.3% / 6.0% / 5.7% | 94.3% / 3.6% / 2.1% |
+  | INP | 95.5% / 3.1% / 1.4% | 91.9% / 5.3% / 2.8% |
+  | CLS | 97.0% / 2.2% / 0.9% | 97.6% / 0.7% / 1.6% |
+
+  Against 08-13: FCP good 74–75% → 85.1% desktop / 92.1% mobile, and the TTFB poor bucket ~6% → 2.6% / 1.5%. **The shares also locate the tail more precisely than the percentiles did, and not entirely where F9 puts it.** Desktop's two largest poor buckets are FCP 6.1% and LCP 5.7% — and FCP is upstream of any image, so part of desktop's poor LCP is inherited from a slow first paint rather than caused by the picture. Those two populations overlap heavily (a slow FCP drags LCP with it), so do not add them. F9's evidence is route-scoped and unaffected — on the shop routes TTFB and FCP are healthy and the FCP→LCP gap is the image — but site-wide, desktop's poor bucket has two owners and F2 is the larger of them.
 
   | p75 / p90 / p95 / p99 | Desktop | Mobile |
   |---|---|---|
@@ -75,7 +85,7 @@ Append-only, like the benchmark log. Format: `date · window · scope → headli
 
   Reading: every vital's p75 is inside the good band on both devices, and it held there through the traffic spike rather than in spite of it. Against 08-13: desktop TTFB 397 → 232, FCP 1859 → 1218, LCP 2076 → 1395; mobile moved the same way. What is left is tail-shaped and one-sided — desktop LCP p99 13.3s against mobile's 5.5s — and it has an owner in F9. F2 improved without being addressed (home TTFB p75 627 → 489 desktop, 331 → 268 mobile) and still holds the public pages off the edge.
 
-  **Verdict: A−.** Both weaknesses the B+ named are gone: first paint now has real headroom (FCP p75 ~600ms below the 1.8s threshold, LCP ~1.1s below 2.5s, on both devices) and entry surfaces are no longer where the worst numbers cluster. Interaction quality held while traffic multiplied — INP p75 56ms desktop, CLS a rounding error — which is the part a load spike would have broken if anything were going to. What keeps it off A+ is that the heavy tail did not shrink with the medians; it moved, from route-asymmetric to device-asymmetric, and now sits almost entirely on desktop LCP, where a quarter of shop visits pay a multi-second image encode. Path to A+: F9's two loose ends first — they are cheap, and they are where the tail actually lives — then F2, which is still the standing structural item and is now the largest thing between the public pages and an edge-CDN TTFB.
+  **Verdict: A−.** Both weaknesses the B+ named are gone: first paint now has real headroom (FCP p75 ~600ms below the 1.8s threshold, LCP ~1.1s below 2.5s, on both devices) and entry surfaces are no longer where the worst numbers cluster. Interaction quality held while traffic multiplied — INP p75 56ms desktop, CLS a rounding error — which is the part a load spike would have broken if anything were going to. What keeps it off A+ is that the heavy tail did not shrink with the medians; it moved, from route-asymmetric to device-asymmetric, and now sits on desktop — where it splits between a slow first paint (FCP poor 6.1%) and the shop routes' image encode (LCP poor 5.7%, F9). Path to A+: take F9's two loose ends first because they are cheap and narrowly scoped, but **F2 is the bigger half and the structural one** — desktop FCP is the largest poor bucket on the site, it sits upstream of every image, and it is the dynamic-render path F2 has always described.
 
 ## Incidents
 
