@@ -395,8 +395,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
-        "consents": "Required consents",
-        "consentsDescription": "Documents a parent must agree to before they can sign up.",
+        "consents": "Consents",
+        "consentsDescription": "What a parent agrees to, and what they are asked, on the way through signup. Required documents must be accepted before a seat can be taken; marketing questions may be declined.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -527,7 +527,13 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "No published version",
-        "none": "None"
+        "none": "None",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether to share their contact details with Lynx Educate. They may decline, and the seat is unaffected."
+          }
+        }
       },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
@@ -891,6 +897,14 @@
         "title": "Game accounts",
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
       },
+      "marketing": {
+        "title": "Marketing preferences",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Granted",
+        "notGranted": "Not granted",
+        "since": "since {date}"
+      },
       "participationStatus": {
         "active": "Active",
         "waitlisted": "Waitlisted",
@@ -991,6 +1005,8 @@
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
       "location": "Location",
+      "marketingConsentLabel": "School of Gaming may send me news and offers by email.",
+      "marketingConsentHint": "Optional — you can change this anytime in your settings.",
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
       "weakPassword": "That password is too easy to guess — try a longer one, or one you don't use anywhere else",
@@ -1788,10 +1804,14 @@
         "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>."
       },
       "consents": {
-        "heading": "Required consent",
+        "heading": "Consent",
         "agree": "I have read and agree to these documents.",
         "bundles": {
           "robloxProgramme": "I have read and agree to the Roblox Programme <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+        },
+        "marketing": {
+          "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers.",
+          "hint": "Optional — you can change this anytime in your settings."
         }
       },
       "whoAreYouSigningUp": {
@@ -2713,7 +2733,12 @@
     "sendVerificationEmail": "Send verification email",
     "verificationEmailSent": "Verification email sent — check your inbox.",
     "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
-    "verificationEmailFailed": "We couldn’t send the verification email. Please try again."
+    "verificationEmailFailed": "We couldn’t send the verification email. Please try again.",
+    "marketing": {
+      "title": "Marketing preferences",
+      "schoolOfGaming": "School of Gaming may send me news and offers by email.",
+      "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers."
+    }
   },
   "tools": {
     "uncertified": {

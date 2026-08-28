@@ -7,6 +7,7 @@ import {
   geduCoverageEditorModule,
   homeLocationFieldModule,
   locationsServiceModule,
+  marketingConsentsServiceModule,
   minecraftServiceModule,
   providersModule,
   robloxServiceModule,
@@ -53,6 +54,9 @@ vi.mock("@/services/users", () => usersServiceModule());
 vi.mock("@/services/locations", () => locationsServiceModule());
 vi.mock("@/services/minecraft", () => minecraftServiceModule());
 vi.mock("@/services/roblox", () => robloxServiceModule());
+vi.mock("@/services/marketing-consents", () =>
+  marketingConsentsServiceModule(),
+);
 vi.mock("@/components/game-account", () => gameAccountModule());
 vi.mock("@/components/gedu/gedu-coverage-editor", () =>
   geduCoverageEditorModule(),

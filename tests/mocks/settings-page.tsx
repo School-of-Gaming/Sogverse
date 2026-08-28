@@ -69,6 +69,30 @@ export function robloxServiceModule() {
   };
 }
 
+/**
+ * `@/services/marketing-consents` — the parent-only marketing group's read and
+ * write, answered with an empty (but *resolved*) list.
+ *
+ * `[]` rather than `undefined`: a resolved read with no rows is the ordinary
+ * state of a parent who has never been asked, and it is what leaves the boxes
+ * enabled. A test that cares about the unresolved state overrides this module
+ * itself rather than reaching for a second factory here.
+ *
+ * The writer exposes `mutateAsync`, because the Profile card's Save awaits each
+ * consent write in turn rather than firing and forgetting.
+ */
+export function marketingConsentsServiceModule() {
+  return {
+    // `isError` is stated rather than left off: a failed read is its own state
+    // on the settings page (the boxes render enabled against an empty baseline
+    // instead of staying disabled), so a factory that omitted the flag would
+    // leave every consumer relying on `undefined` reading as false.
+    useMyMarketingConsents: () => ({ data: [], isError: false }),
+    useMarketingConsentsForCustomer: () => ({ data: [] }),
+    useSetMarketingConsent: () => ({ mutateAsync: vi.fn() }),
+  };
+}
+
 /** `@/components/game-account` — a neighbouring section, reduced to a marker. */
 export function gameAccountModule() {
   return {

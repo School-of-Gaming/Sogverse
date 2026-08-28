@@ -46,6 +46,22 @@ export const registerParentBody = z.object({
    * value becomes NULL and the signup succeeds.
    */
   referralCode: z.string().optional(),
+  /**
+   * Whether the parent ticked the optional School of Gaming marketing box.
+   *
+   * **Optional, and absent means `false`** — a registration must never fail
+   * over a marketing preference, and a client that predates the checkbox (a
+   * cached bundle, a page open across a deploy) sends no key at all. Reading
+   * that silence as "no" is the only safe direction: the worst it costs is a
+   * mail nobody was promised, and the parent can turn it on from settings.
+   *
+   * The route writes the answer either way, so the recorded state is a
+   * decision rather than a gap — but that is the *route's* reading of an
+   * absent field, not the schema making one up. Nothing here defaults it,
+   * because a default would erase the difference between a form that asked and
+   * a client that never could.
+   */
+  marketingConsent: z.boolean().optional(),
 });
 
 export type RegisterParentBody = z.infer<typeof registerParentBody>;

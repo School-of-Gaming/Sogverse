@@ -131,7 +131,7 @@ export const PREVIEW_SCENES = [
     surface: "products",
     title: "Product detail page",
     description:
-      "The public product page a parent lands on from the shop, once per state its signup panel can be met in: registration window, audience, region lock, and required consents.",
+      "The public product page a parent lands on from the shop, once per state its signup panel can be met in: registration window, audience, region lock, and the consent asks — required and optional together.",
     chrome: "public",
     scenarios: [
       ...PRODUCT_SCENARIOS,

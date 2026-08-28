@@ -1,6 +1,7 @@
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
+import type { AttachableMarketingConsentType } from "@/lib/constants/marketing-consents";
 import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
@@ -221,6 +222,20 @@ export interface FormState {
   // ordinary state and the default.
   requiredConsentSlugs: Set<string>;
 
+  // Optional marketing asks
+  //
+  // The marketing consents this product's signup panel ASKS a parent about,
+  // as `marketing_consent_type` values. A Set for the same reason the slugs
+  // above are one, and — despite looking like the same field — a completely
+  // different kind of answer: a row here never blocks an enrolment, and the
+  // consent it names is account-level and revocable from settings, whereas a
+  // required document is a per-seat, non-revocable condition. Empty on almost
+  // every product and the default.
+  // Narrowed to the types a form can actually offer rather than to the whole
+  // enum: `school_of_gaming` is asked at registration and belongs to no
+  // product, so a state that could hold it would be a state no screen can show.
+  marketingConsentTypes: Set<AttachableMarketingConsentType>;
+
   // Visibility
   isVisible: boolean;
 }
@@ -305,6 +320,9 @@ export function initialState(
     // Nothing required until somebody says otherwise. A default requirement
     // would put a legal condition in front of families nobody decided to ask.
     requiredConsentSlugs: new Set(),
+    // Nothing asked until somebody says otherwise. A default ask would put a
+    // partner's marketing question in front of families nobody decided to ask.
+    marketingConsentTypes: new Set(),
     isVisible: false,
   };
 }

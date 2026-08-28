@@ -6,6 +6,7 @@ import type {
   BillingMode,
   ProductStatus,
   SpokenLanguageCode,
+  MarketingConsentType,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
 import type { SupportedCurrency } from "@/lib/constants/currency";
@@ -156,7 +157,7 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason))), product_required_consents(document_slug)",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason))), product_required_consents(document_slug), product_marketing_consents(consent_type)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -187,7 +188,7 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name)), product_required_consents(document_slug)",
+      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name)), product_required_consents(document_slug), product_marketing_consents(consent_type)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -369,6 +370,17 @@ export type CreateProductInput = {
    * null would express.
    */
   required_consent_slugs: string[];
+  /**
+   * The marketing consents this product's signup panel ASKS a parent about —
+   * never requires. Empty on almost every product; the Lynx Educate partnership
+   * is what it exists for.
+   *
+   * A plain array for the same reason the slugs above are one: an empty array
+   * already says "asks nothing", and the writer behind it reads NULL and `[]`
+   * identically. The route calls that writer *after* the product RPC, because
+   * the set is keyed on a product id the RPC is what produces.
+   */
+  marketing_consent_types: MarketingConsentType[];
   // Per-session operating fees in integer cents. null = unknown/none,
   // 0 = volunteer, > 0 = a fee (see products.contracts.ts).
   primary_gedu_fee_cents: number | null;
@@ -434,6 +446,11 @@ export type UpdateProductInput = {
    *  is the load-bearing one: the RPC replaces the whole requirement set on
    *  every call, so the answer has to travel on every save. */
   required_consent_slugs: string[];
+  /** Marketing consents the panel asks about — see CreateProductInput. The
+   *  update half is the load-bearing one for the same reason: the writer
+   *  replaces the whole ask set on every call, so the answer has to travel on
+   *  every save. */
+  marketing_consent_types: MarketingConsentType[];
   // Per-session operating fees in integer cents — see CreateProductInput.
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;

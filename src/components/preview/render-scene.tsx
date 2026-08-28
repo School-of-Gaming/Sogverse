@@ -71,14 +71,18 @@ const SCENE_RENDERERS: Record<
         />
       );
     }
-    // Same page again, on a product that attaches conditions to a seat. Like
-    // the region-lock trio it shares the surface but not the fixtures: one club
-    // fixture, with the requirement set as the only thing that varies.
+    // Same page again, on a product that asks a parent for something extra —
+    // conditions it must agree to, and a partner's mailing list it may decline.
+    // Like the region-lock trio it shares the surface but not the fixtures: one
+    // club fixture, with the two ask sets as the only things that vary.
     if (scenario === REQUIRED_CONSENTS_SCENARIO.slug) {
       return (
         <ProductDetailScene
           scenario={REQUIRED_CONSENTS_SCENARIO.baseScenario}
           requiredConsentSlugs={REQUIRED_CONSENTS_SCENARIO.documentSlugs}
+          marketingConsentTypes={
+            REQUIRED_CONSENTS_SCENARIO.marketingConsentTypes
+          }
         />
       );
     }

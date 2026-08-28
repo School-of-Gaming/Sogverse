@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -795,6 +795,84 @@ export type Database = {
           },
         ]
       }
+      marketing_consent_events: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          created_at: string
+          customer_id: string
+          granted: boolean
+          id: string
+          source: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          created_at?: string
+          customer_id: string
+          granted: boolean
+          id?: string
+          source: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["marketing_consent_type"]
+          created_at?: string
+          customer_id?: string
+          granted?: boolean
+          id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_consent_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_consent_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          customer_id: string
+          granted: boolean
+          updated_at: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          customer_id: string
+          granted: boolean
+          updated_at?: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["marketing_consent_type"]
+          customer_id?: string
+          granted?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_consents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_consents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       minecraft_accounts: {
         Row: {
           minecraft_username: string | null
@@ -1149,6 +1227,29 @@ export type Database = {
           sha256?: string
         }
         Relationships: []
+      }
+      product_marketing_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          product_id: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          product_id: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["marketing_consent_type"]
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_marketing_consents_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_prices: {
         Row: {
@@ -2055,6 +2156,13 @@ export type Database = {
         Args: { p_participation_id: string; p_product_id: string }
         Returns: Json
       }
+      admin_set_product_marketing_consents: {
+        Args: {
+          p_consent_types: Database["public"]["Enums"]["marketing_consent_type"][]
+          p_product_id: string
+        }
+        Returns: undefined
+      }
       apply_group_changes: {
         Args: {
           p_added_groups?: Json
@@ -2365,6 +2473,10 @@ export type Database = {
         }
         Returns: Json
       }
+      record_registration_marketing_consent: {
+        Args: { p_customer_id: string; p_granted: boolean }
+        Returns: undefined
+      }
       record_required_consents: {
         Args: {
           p_accepted_by: string
@@ -2455,6 +2567,14 @@ export type Database = {
         }
         Returns: Json
       }
+      set_marketing_consent: {
+        Args: {
+          p_consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          p_granted: boolean
+          p_source: string
+        }
+        Returns: undefined
+      }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
@@ -2523,6 +2643,7 @@ export type Database = {
         | "expired"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
+      marketing_consent_type: "school_of_gaming" | "lynx_educate"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
       payment_purpose:
         | "bundle"
@@ -2684,6 +2805,7 @@ export const Constants = {
       ],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
+      marketing_consent_type: ["school_of_gaming", "lynx_educate"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],
       payment_purpose: [
         "bundle",

@@ -7,7 +7,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // the account it creates is never privileged, the metadata reaching the profile
 // trigger is exactly what the browser used to send, the welcome mail is bound
 // to the address Supabase actually stored, and a send that fails costs the
-// registration nothing.
+// registration nothing. It also covers the one write here that no client can
+// ever make: the marketing consent stamped `source: 'registration'`, which the
+// self-service RPC refuses precisely so that this route's service-role client
+// is the whole of that provenance.
 
 // The verification token is an HMAC over PIN_COOKIE_SECRET, read lazily at mint
 // time — set before the route is imported.
@@ -26,6 +29,7 @@ vi.mock("@/lib/auth", () => ({
 const mockCreateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 const mockProfileUpdate = vi.fn();
+const mockConsentRpc = vi.fn();
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -35,18 +39,27 @@ vi.mock("@/lib/supabase/admin", () => ({
         deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
       },
     },
+    // One table and no more: the profile, for the optional home location and
+    // the locale. The marketing-consent pair used to be reachable here too and
+    // deliberately is not any more — those two writes are one RPC now (00221),
+    // so a `from("marketing_consents")` reappearing is the non-atomic pair
+    // coming back and this mock fails on it.
     from: (table: string) => {
-      // The route touches exactly one table, and only for the optional home
-      // location. Anything else appearing here is a change worth failing on.
-      if (table !== "profiles") {
-        throw new Error(`Unexpected table in admin mock: ${table}`);
+      if (table === "profiles") {
+        return {
+          update: (row: Record<string, unknown>) => ({
+            eq: (column: string, value: string) =>
+              mockProfileUpdate({ row, column, value }),
+          }),
+        };
       }
-      return {
-        update: (row: Record<string, unknown>) => ({
-          eq: (column: string, value: string) =>
-            mockProfileUpdate({ row, column, value }),
-        }),
-      };
+      throw new Error(`Unexpected table in admin mock: ${table}`);
+    },
+    rpc: (fn: string, args: Record<string, unknown>) => {
+      if (fn === "record_registration_marketing_consent") {
+        return mockConsentRpc(args);
+      }
+      throw new Error(`Unexpected rpc in admin mock: ${fn}`);
     },
   }),
 }));
@@ -102,6 +115,7 @@ describe("POST /api/auth/register", () => {
       error: null,
     });
     mockProfileUpdate.mockResolvedValue({ error: null });
+    mockConsentRpc.mockResolvedValue({ error: null });
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
 
@@ -262,6 +276,95 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(200);
     expect(signupMetadata()).not.toHaveProperty("referral_code");
+  });
+
+  // -- Marketing consent --
+  //
+  // The registration checkbox is the one place `source: 'registration'` can be
+  // written from: the RPC every signed-in surface uses refuses that value, so
+  // the service-role call below is the whole of its provenance.
+
+  it("records a ticked opt-in through the one RPC that carries the registration provenance", async () => {
+    const response = await POST(
+      registerRequest({ ...validBody, marketingConsent: true }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockConsentRpc).toHaveBeenCalledTimes(1);
+    // The route names the customer and the answer, and nothing else. Neither
+    // the consent type nor the `registration` source is a parameter — 00221
+    // hardcodes both, so this route cannot stamp that provenance onto the
+    // partner's list and nothing a client can reach can claim it at all.
+    expect(mockConsentRpc).toHaveBeenCalledWith({
+      p_customer_id: NEW_USER_ID,
+      p_granted: true,
+    });
+  });
+
+  // **The state row and its event row are one transaction now.** They used to
+  // be two PostgREST calls, and two calls are two transactions: a failed second
+  // one left `marketing_consents` asserting an answer `marketing_consent_events`
+  // could not corroborate. The admin mock throws on any `from("marketing_*")`,
+  // so a regression back to the pair fails loudly rather than by an assertion
+  // count — but pin the single call here too, because that is the property.
+  it("makes exactly one write for the pair, never two", async () => {
+    await POST(registerRequest({ ...validBody, marketingConsent: true }));
+
+    expect(mockConsentRpc).toHaveBeenCalledTimes(1);
+  });
+
+  // The write is last on purpose — it is the least important thing this route
+  // does and the only one with no user-visible consequence if it fails, so
+  // nothing above it can be delayed or broken by it. Pinned here because the
+  // ordering is a decision rather than an accident of where the code was typed.
+  it("writes the consent only after the welcome mail has gone out", async () => {
+    await POST(registerRequest({ ...validBody, marketingConsent: true }));
+
+    expect(mockConsentRpc.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mockSendTransactionalEmail.mock.invocationCallOrder[0],
+    );
+  });
+
+  // An absent row would mean "never asked"; this form asked, so a parent who
+  // left the box alone gets a recorded `false` — which is what makes their
+  // settings page show a definite answer rather than a shrug.
+  it("records a decline when the body carries no answer at all", async () => {
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(mockConsentRpc).toHaveBeenCalledWith({
+      p_customer_id: NEW_USER_ID,
+      p_granted: false,
+    });
+  });
+
+  // Losing an opt-in under-markets, which is the safe direction to fail in.
+  // Destroying a working account over one is not. There is no half-written
+  // state to check for any more: the RPC either committed both rows or neither.
+  it("still registers when the consent write is refused", async () => {
+    mockConsentRpc.mockResolvedValue({
+      error: { code: "42501", message: "permission denied" },
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await POST(
+      registerRequest({ ...validBody, marketingConsent: true }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ userId: NEW_USER_ID });
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
+
+  it("returns 400 for a marketing answer that is not a boolean", async () => {
+    const response = await POST(
+      registerRequest({ ...validBody, marketingConsent: "yes" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
   // -- The welcome mail --

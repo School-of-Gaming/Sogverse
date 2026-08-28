@@ -395,8 +395,8 @@
         },
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
-        "consents": "Obligatoriska samtycken",
-        "consentsDescription": "Dokument som en förälder måste godkänna innan anmälan.",
+        "consents": "Samtycken",
+        "consentsDescription": "Vad en förälder godkänner, och vad hen tillfrågas om, på vägen genom anmälan. Obligatoriska dokument måste godkännas innan en plats kan tas, medan marknadsföringsfrågor kan avböjas.",
         "visibility": "Listning",
         "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
@@ -527,7 +527,13 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "Ingen publicerad version",
-        "none": "Inga"
+        "none": "Inga",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sina kontaktuppgifter med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
+          }
+        }
       },
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
@@ -891,6 +897,14 @@
         "title": "Spelkonton",
         "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
       },
+      "marketing": {
+        "title": "Marknadsföringsinställningar",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Godkänt",
+        "notGranted": "Inte godkänt",
+        "since": "sedan {date}"
+      },
       "participationStatus": {
         "active": "Aktiv",
         "waitlisted": "På väntelista",
@@ -991,6 +1005,8 @@
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
       "location": "Plats",
+      "marketingConsentLabel": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
+      "marketingConsentHint": "Valfritt — du kan ändra detta när som helst i dina inställningar.",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "weakPassword": "Det lösenordet är för lätt att gissa — prova ett längre, eller ett som du inte använder någon annanstans",
@@ -1788,10 +1804,14 @@
         "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>."
       },
       "consents": {
-        "heading": "Obligatoriskt samtycke",
+        "heading": "Samtycke",
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
           "robloxProgramme": "Jag har läst och godkänner Roblox-programmets <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
+        },
+        "marketing": {
+          "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden.",
+          "hint": "Valfritt — du kan ändra detta när som helst i dina inställningar."
         }
       },
       "whoAreYouSigningUp": {
@@ -2078,7 +2098,12 @@
     "sendVerificationEmail": "Skicka verifieringsmejl",
     "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
     "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
-    "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen."
+    "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen.",
+    "marketing": {
+      "title": "Marknadsföringsinställningar",
+      "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
+      "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden."
+    }
   },
   "tools": {
     "uncertified": {

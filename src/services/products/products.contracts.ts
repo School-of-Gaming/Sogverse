@@ -143,6 +143,26 @@ const productDataBase = z.object({
   // trusted, and a slug this deploy has never heard of is a broken deploy rather
   // than an attack.
   required_consent_slugs: z.array(z.string()),
+  // The marketing consents the signup panel ASKS about — never requires.
+  //
+  // Required and never optional, mirroring the slugs above and for the same
+  // load-bearing reason: the writer behind it replaces the whole ask set on
+  // every call, so an omitted field on an update would silently drop a
+  // product's asks. An empty array is the explicit "asks nothing", which the
+  // writer reads exactly as it reads NULL — so, again unlike `tag` and
+  // `region_lock_country`, this is a plain array rather than required-nullable.
+  //
+  // Unlike the slugs, this one is narrowed here rather than left to a foreign
+  // key: the values are a Postgres ENUM, so an unknown one is a type error
+  // rather than a missing row, and the enum is exactly what codegen gives us to
+  // check against. Note that the schema admits `school_of_gaming` while the
+  // admin form deliberately never offers it (see
+  // `ATTACHABLE_MARKETING_CONSENT_TYPES`): what a product may *store* is a
+  // database question, and what a form *offers* is a product decision — the
+  // wire is not the place to re-litigate the second.
+  marketing_consent_types: z.array(
+    z.enum(Constants.public.Enums.marketing_consent_type),
+  ),
   // Per-session operating fees, a single EUR amount in integer cents. State is
   // derived from the value (the form enforces it): null = unknown/none,
   // 0 = volunteer (free), > 0 = a real fee. Gedu fees are int >= 0 here; the

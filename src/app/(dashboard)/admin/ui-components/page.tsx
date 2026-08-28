@@ -360,66 +360,33 @@ function VoiceAvatarDemo() {
 /*  Checkbox Demo                                                      */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The primitive's own states, and nothing else. The labelled consent
+ * compositions built on it — a sentence, a hint, a Required/Optional chip in a
+ * bordered clickable row — are `CheckboxRow`, and they are judged on the
+ * surfaces that use them rather than from a demo card here.
+ */
 function CheckboxDemo() {
-  const [agreed, setAgreed] = useState(true);
   const [newsletter, setNewsletter] = useState(false);
-  const [boxed, setBoxed] = useState(true);
 
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-6">
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <Checkbox
-            checked={newsletter}
-            onChange={(e) => setNewsletter(e.target.checked)}
-          />
-          Unchecked / checked (toggle me)
-        </label>
-        <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
-          <Checkbox checked={false} disabled />
-          Disabled
-        </label>
-        <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
-          <Checkbox checked disabled />
-          Disabled (checked)
-        </label>
-      </div>
-
-      <div className="flex flex-wrap items-start gap-6">
-        {/* Multi-line label: `mt-0.5` pins the box to the first line. */}
-        <label className="flex max-w-md items-start gap-2 text-xs cursor-pointer">
-          <Checkbox
-            className="mt-0.5"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-          />
-          <span className="text-muted-foreground">
-            By registering I agree to the program rules and the cancellation
-            policy. This label wraps onto multiple lines, so the box pins to the
-            first line rather than centering on the whole block.
-          </span>
-        </label>
-
-        {/* The boxed gate the signup panel uses: the container itself reacts. */}
-        <label
-          className={`flex max-w-md cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors ${
-            boxed
-              ? "border-primary bg-primary/5"
-              : "border-input hover:bg-accent/50"
-          }`}
-        >
-          <Checkbox
-            className="mt-0.5"
-            checked={boxed}
-            onChange={(e) => setBoxed(e.target.checked)}
-          />
-          <span className="text-muted-foreground">
-            The container border lights to primary once checked, giving the
-            required agreement visible weight instead of reading as fine print.
-          </span>
-        </label>
-      </div>
-    </>
+    <div className="flex flex-wrap items-center gap-6">
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <Checkbox
+          checked={newsletter}
+          onChange={(e) => setNewsletter(e.target.checked)}
+        />
+        Unchecked / checked (toggle me)
+      </label>
+      <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+        <Checkbox checked={false} disabled />
+        Disabled
+      </label>
+      <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+        <Checkbox checked disabled />
+        Disabled (checked)
+      </label>
+    </div>
   );
 }
 

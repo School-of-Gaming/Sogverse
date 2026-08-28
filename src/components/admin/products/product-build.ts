@@ -15,6 +15,10 @@ import {
   SUPPORTED_CURRENCIES,
 } from "@/lib/constants";
 import { completeConsentBundles } from "@/lib/constants/consent-documents";
+import {
+  ATTACHABLE_MARKETING_CONSENT_TYPES,
+  isAttachableMarketingConsent,
+} from "@/lib/constants/marketing-consents";
 import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
@@ -592,6 +596,19 @@ function buildSharedFields(
     required_consent_slugs: completeConsentBundles(
       Array.from(state.requiredConsentSlugs),
     ),
+    // The optional marketing asks, on every save including the empty array that
+    // means "asks nothing" — the writer replaces the whole set on every call,
+    // so an omitted answer would leave a stale ask behind rather than preserve
+    // an intended one.
+    //
+    // In registry order rather than the Set's insertion order, so two admins
+    // ticking the same boxes in different orders send the same payload. There
+    // is no bundle-completion step here and there never will be: a marketing
+    // ask is one consent standing alone, not a document that only makes sense
+    // beside another.
+    marketing_consent_types: ATTACHABLE_MARKETING_CONSENT_TYPES.filter((type) =>
+      state.marketingConsentTypes.has(type),
+    ),
     primary_gedu_fee_cents: feeDraftToCents(
       state.primaryGeduFee.status,
       state.primaryGeduFee.amount,
@@ -865,6 +882,18 @@ export function existingFormState(
     // reason; the foreign key is what refuses a slug that is not published.
     requiredConsentSlugs: new Set(
       product.product_required_consents.map((c) => c.document_slug),
+    ),
+    // Straight through from its own join table, and — unlike the requirement
+    // set above — a stored type this deploy cannot offer IS dropped here, which
+    // is the same asymmetry `describeMarketingConsents` makes on the family
+    // side. A required document kept ticked protects a legal condition from a
+    // save made for some other reason; a marketing ask has no such condition to
+    // protect, and keeping one the form cannot show would leave a checkbox
+    // state nobody can see or clear.
+    marketingConsentTypes: new Set(
+      product.product_marketing_consents
+        .map((c) => c.consent_type)
+        .filter((type) => isAttachableMarketingConsent(type)),
     ),
     signupThreshold:
       product.signup_threshold != null ? String(product.signup_threshold) : "",

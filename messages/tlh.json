@@ -443,8 +443,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
-        "consents": "poQlu’bogh chaw’mey",
-        "consentsDescription": "ghItlhmey lulajnIS vavpu’ ’e’ poQlu’.",
+        "consents": "chaw’mey",
+        "consentsDescription": "nuq lajnIS vav, nuq tlhoblu’ je. poQlu’bogh ghItlhmey lulajnIS. ra’be’lu’bogh tlhobmey lujangbe’laH ’ej quS chIlbe’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -575,7 +575,13 @@
       "consents": {
         "version": "’ay’ {version}",
         "noVersion": "pagh ’ay’ ngeHlu’pu’",
-        "none": "pagh"
+        "none": "pagh",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: boqwI’maj Lynx Educate-vaD De’chaj lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
+          }
+        }
       },
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
@@ -939,6 +945,14 @@
         "title": "QujmeH tetlh",
         "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."
       },
+      "marketing": {
+        "title": "QIn chaw’mey",
+        "schoolOfGaming": "noH Quj yejHaD",
+        "lynxEducate": "Lynx Educate",
+        "granted": "chaw’lu’",
+        "notGranted": "chaw’be’lu’",
+        "since": "{date}vo’"
+      },
       "participationStatus": {
         "active": "vangtaH",
         "waitlisted": "loStaH",
@@ -1039,6 +1053,8 @@
       "passwordPlaceholder": "HoS mu’mey yIchenmoH",
       "confirmPasswordPlaceholder": "mu’mey yIchel",
       "location": "Daq",
+      "marketingConsentLabel": "noH Quj yejHaD QIn HevmeH vIchaw’.",
+      "marketingConsentHint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH.",
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
       "weakPassword": "mu’ pegh nap yIlo’Qo’! mu’ pegh tIn yIchel, pagh latlhDaq Dalo’be’bogh wa’",
@@ -1832,10 +1848,14 @@
         "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’."
       },
       "consents": {
-        "heading": "poQlu’bogh chaw’",
+        "heading": "chaw’",
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
           "robloxProgramme": "<terms>Roblox Programme Terms & Conditions</terms>, <privacy>Roblox Programme Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
+        },
+        "marketing": {
+          "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH.",
+          "hint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH."
         }
       },
       "whoAreYouSigningUp": {
@@ -2122,7 +2142,12 @@
     "sendVerificationEmail": "ngu’meH QIn yIngeH",
     "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
     "verificationEmailRateLimited": "law’qu’ Datlhobpu’! yIloS. tugh yInID je.",
-    "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID."
+    "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID.",
+    "marketing": {
+      "title": "QIn chaw’mey",
+      "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
+      "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH."
+    }
   },
   "tools": {
     "uncertified": {

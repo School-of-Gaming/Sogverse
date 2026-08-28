@@ -83,6 +83,29 @@ export type ProductRequiredConsent =
 export type ConsentAcceptance =
   Database["public"]["Tables"]["consent_acceptances"]["Row"];
 
+// marketing_consents / marketing_consent_events / product_marketing_consents
+// (00220) — the REVOCABLE marketing-consent feature, and deliberately not the
+// same system as the four aliases above. A ConsentAcceptance is a
+// non-revocable enrolment condition keyed per seat; a MarketingConsent is
+// account-level, carries a current state, and can be switched off from
+// settings at any time. Nothing should ever widen one set of types into the
+// other — see 00210's header and 00220's.
+//
+// Row aliases only, on the same reasoning as the enrolment-consent block: none
+// of these three tables carries a write grant for any Data API role. A parent's
+// own answer is written by `set_marketing_consent` (or, at registration, by the
+// register route's service-role client), and a product's ask set by
+// `admin_set_product_marketing_consents` — so an Insert type here would name a
+// statement nothing in the app is allowed to make.
+export type MarketingConsentType =
+  Database["public"]["Enums"]["marketing_consent_type"];
+export type MarketingConsent =
+  Database["public"]["Tables"]["marketing_consents"]["Row"];
+export type MarketingConsentEvent =
+  Database["public"]["Tables"]["marketing_consent_events"]["Row"];
+export type ProductMarketingConsent =
+  Database["public"]["Tables"]["product_marketing_consents"]["Row"];
+
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];

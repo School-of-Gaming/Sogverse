@@ -395,8 +395,8 @@
         },
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
-        "consents": "Consentements obligatoires",
-        "consentsDescription": "Documents qu’un parent doit accepter avant de s’inscrire.",
+        "consents": "Consentements",
+        "consentsDescription": "Ce qu’un parent accepte, et ce qui lui est demandé, au moment de l’inscription. Les documents obligatoires doivent être acceptés avant de réserver une place ; les questions marketing peuvent être refusées.",
         "visibility": "Catalogue",
         "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
@@ -527,7 +527,13 @@
       "consents": {
         "version": "Version {version}",
         "noVersion": "Aucune version publiée",
-        "none": "Aucun"
+        "none": "Aucun",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent partager leurs coordonnées avec Lynx Educate. Un parent peut refuser, et la place n’est pas affectée."
+          }
+        }
       },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
@@ -891,6 +897,14 @@
         "title": "Comptes de jeu",
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
       },
+      "marketing": {
+        "title": "Préférences marketing",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Accordé",
+        "notGranted": "Non accordé",
+        "since": "depuis le {date}"
+      },
       "participationStatus": {
         "active": "Actif",
         "waitlisted": "En liste d’attente",
@@ -991,6 +1005,8 @@
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
       "location": "Localisation",
+      "marketingConsentLabel": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+      "marketingConsentHint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres.",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "weakPassword": "Ce mot de passe est trop facile à deviner — essayez-en un plus long, ou un que vous n'utilisez nulle part ailleurs",
@@ -1788,10 +1804,14 @@
         "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>."
       },
       "consents": {
-        "heading": "Consentement requis",
+        "heading": "Consentement",
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
           "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
+        },
+        "marketing": {
+          "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
+          "hint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres."
         }
       },
       "whoAreYouSigningUp": {
@@ -2078,7 +2098,12 @@
     "sendVerificationEmail": "Envoyer l’e-mail de vérification",
     "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
     "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
-    "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer."
+    "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer.",
+    "marketing": {
+      "title": "Préférences marketing",
+      "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+      "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres."
+    }
   },
   "tools": {
     "uncertified": {

@@ -202,9 +202,12 @@ export function ProductFormShell({
       <RegistrationSection state={state} setState={setState} config={config} />
       {/* After the registration timing and before the listing toggle: the two
           signup-act questions sit together, in the order a parent meets them —
-          when the door opens, then what they agree to on the way through. Takes
-          no `config`, because the enrolment conditions are a generic mechanism
-          with no per-type rule behind them. */}
+          when the door opens, then what they agree to on the way through. One
+          section holding the conditions and the optional asks alike, in the
+          order the panel puts them in front of a parent, with every row saying
+          in words which kind it is. Takes no `config`, because the enrolment
+          conditions are a generic mechanism with no per-type rule behind
+          them. */}
       <ConsentsSection state={state} setState={setState} />
       <VisibilitySection state={state} setState={setState} />
 

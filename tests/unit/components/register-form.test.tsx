@@ -23,7 +23,9 @@ import { mockSupabaseClient } from "../../setup";
  *    translated message rather than whatever the server wrote;
  *  - a 400 carrying the weak-password code is the other refusal the parent can
  *    act on, and it too gets its own translated message — the generic one tells
- *    them to go and sign in, which is wrong when no account exists.
+ *    them to go and sign in, which is wrong when no account exists;
+ *  - the optional marketing box, which starts unticked and whose answer travels
+ *    in the same body as an explicit boolean either way.
  *
  * The translations are stubbed to echo the key, so the assertions are about
  * which key the form reaches for, not about wording in `messages/`.
@@ -88,9 +90,21 @@ function renderForm() {
   const form = view.container.querySelector("form");
   if (!form) throw new Error("no form");
 
+  // The one checkbox on the form: the marketing opt-in. It is rendered by the
+  // shared `CheckboxRow`, which generates its own ids, so it is found by role
+  // rather than by a literal id the form no longer chooses.
+  function marketingBox() {
+    const input = view.container.querySelector<HTMLInputElement>(
+      'input[type="checkbox"]',
+    );
+    if (!input) throw new Error("no marketing consent checkbox");
+    return input;
+  }
+
   return {
     ...view,
     fill,
+    marketingBox,
     // Async, because the handler awaits the route and then the sign-in: the
     // state updates that follow both land after the event has been dispatched.
     submit: () =>
@@ -152,6 +166,50 @@ describe("RegisterForm", () => {
     await form.submit();
 
     expect(postedBody()).not.toHaveProperty("homeLocationId");
+  });
+
+  // -- The optional marketing box --
+
+  it("starts with the marketing box unticked", () => {
+    const form = renderForm();
+
+    // An opt-in that arrives pre-ticked is not an opt-in.
+    expect(form.marketingBox().checked).toBe(false);
+  });
+
+  it("sends the opt-in when the parent ticks the box", async () => {
+    const form = renderForm();
+    fireEvent.click(form.marketingBox());
+
+    await form.submit();
+
+    expect(postedBody().marketingConsent).toBe(true);
+  });
+
+  // The schema takes the field as optional so a client that predates the box
+  // can still register — but this form always has an answer, and an untouched
+  // box is a decline the parent made rather than a question nobody asked. So
+  // the key is present on every request this form makes, and the route's
+  // absent-means-false reading is never exercised from here.
+  it("always sends an explicit boolean, false when the box was left alone", async () => {
+    const form = renderForm();
+
+    await form.submit();
+
+    expect(postedBody()).toHaveProperty("marketingConsent");
+    expect(postedBody().marketingConsent).toBe(false);
+  });
+
+  // Disabled from the loading flag like every other control on the form, so a
+  // parent cannot change their answer between the POST and the navigation it
+  // leads to. The success path leaves the flag set — the document is unloading
+  // — which is the frame this reads.
+  it("leaves the marketing box disabled through the navigation", async () => {
+    const form = renderForm();
+
+    await form.submit();
+
+    expect(form.marketingBox().disabled).toBe(true);
   });
 
   it("signs in and hands the navigation its fallback on success", async () => {

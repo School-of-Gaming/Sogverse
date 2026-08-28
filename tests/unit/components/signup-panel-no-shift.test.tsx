@@ -5,6 +5,7 @@ import {
   type AuthState,
   type SignupPanelViewProps,
 } from "@/components/public/products/signup-panel-view";
+import type { MarketingConsentType } from "@/types";
 import type { RegistrationState } from "@/components/public/products/derive-registration-state";
 
 /**
@@ -81,6 +82,11 @@ function panel(state: RegistrationState): SignupPanelViewProps {
     requiredConsentSlugs: [],
     consentAgreements: new Set<string>(),
     onConsentAgreementChange: () => {},
+    // No optional marketing ask by default: that is what nearly every
+    // product looks like, and the block is absent when the set is empty.
+    marketingConsentTypes: [],
+    marketingConsents: new Set<MarketingConsentType>(),
+    onMarketingConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",

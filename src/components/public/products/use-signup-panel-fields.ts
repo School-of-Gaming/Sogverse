@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
-import type { ProductBrowseRow, ProductType } from "@/types";
+import type {
+  MarketingConsentType,
+  ProductBrowseRow,
+  ProductType,
+} from "@/types";
 import { resolveLocale } from "@/lib/constants/locales";
 import {
   CURRENCY_CONFIG,
@@ -13,6 +17,7 @@ import {
   consentRowSlugs,
   describeRequiredConsents,
 } from "@/lib/constants/consent-documents";
+import { describeMarketingConsents } from "@/lib/constants/marketing-consents";
 import {
   firstChargeAnchor,
   formatFirstChargeDate,
@@ -84,6 +89,48 @@ export interface SignupPanelFields {
    * on screen and unticked blocks the CTA whatever anyone else believes.
    */
   consentsAgreed: boolean;
+  /**
+   * The marketing consents this product ASKS about, as stored. Empty on almost
+   * every product, and the optional block ceases to exist when it is.
+   *
+   * Rides in from the product read like the required slugs above, which is what
+   * keeps the block's *existence* settled before the panel paints — only which
+   * boxes are ticked can change afterwards.
+   */
+  marketingConsentTypes: readonly MarketingConsentType[];
+  /**
+   * Which of those the reader currently has ticked: their account's stored
+   * answer, overlaid with anything they have changed in this panel.
+   *
+   * **Seeded, and the deliberate inverse of `consentAgreements` above.** A
+   * required consent is a per-enrolment event, so a pre-ticked box would be the
+   * platform asserting an agreement on the family's behalf. A marketing consent
+   * is a single account-level state with a present tense — the panel is showing
+   * a parent what we currently believe about their mailbox, and showing them
+   * `false` when the answer on file is `true` would be showing them something
+   * untrue and inviting them to "fix" it into a withdrawal.
+   */
+  marketingConsents: ReadonlySet<MarketingConsentType>;
+  onMarketingConsentChange: (
+    consentType: MarketingConsentType,
+    granted: boolean,
+  ) => void;
+  /**
+   * What submitting would change about the account, and nothing else — one
+   * entry per asked consent whose box now differs from what was seeded.
+   *
+   * Empty is the overwhelmingly common case (a parent who did not touch the
+   * box), and empty means no call at all: the RPC is idempotent, but an event
+   * log that recorded non-changes is exactly what its own migration refused to
+   * build, so the client should not make it work to reject them either.
+   *
+   * Derived every render rather than computed at click time, so an adapter's
+   * handler reads whatever was true in the frame the parent clicked in.
+   */
+  marketingConsentChanges: readonly {
+    consentType: MarketingConsentType;
+    granted: boolean;
+  }[];
   currency: SupportedCurrency;
   locale: string;
 }
@@ -115,6 +162,49 @@ export function useSignupPanelFields(
    * query's embed and hands them in; the preview twin hands in a literal.
    */
   requiredConsentSlugs: readonly string[],
+  /**
+   * The marketing consents this product asks about, off the same product read.
+   * Beside the product rather than on it for the reason the slugs above are:
+   * `BROWSE_SELECT` publishes what a shop card paints, and a card never names
+   * what signing up would ask.
+   */
+  marketingConsentTypes: readonly MarketingConsentType[],
+  /**
+   * What the reader's account currently says about those consents — the set of
+   * types they have granted — or `undefined` while that read has not answered.
+   *
+   * **An argument rather than a query made in here**, unlike everything else
+   * this hook derives. Two reasons, and either alone would settle it: the
+   * preview twin has no session to read one for and must not fire the call, and
+   * the read is only correct for a signed-in customer — an admin calling it
+   * gets every parent's rows, because their own SELECT policy is what widens
+   * it. So the adapter that knows who is looking owns the read, and this owns
+   * what the panel does with the answer.
+   *
+   * `undefined` is not the same as an empty set: nothing is known yet. It reads
+   * as "not granted" for rendering, because a box has to be drawn either way
+   * and unticked is the safe direction — the box, its sentence and its hint are
+   * all on screen from the first frame, so only the tick can change when the
+   * answer lands, and nothing moves.
+   *
+   * **What that costs, stated plainly rather than argued away.** An edit
+   * outranks a late seed, and an edit is recorded by the box having been
+   * *touched*, not by its value differing from anything. So a parent who is
+   * already opted in, and who ticks and unticks this box before their account's
+   * answer arrives, submits an unticked box that counts as an edit — and the
+   * enrolment records a withdrawal of a consent they never meant to withdraw.
+   *
+   * This is the accepted behaviour, and the rule it follows is the one worth
+   * keeping: **what the box shows at submit is what is recorded.** The
+   * alternative — treating a touched box that happens to match the eventual seed
+   * as no answer at all — would mean the panel silently discarding an unticked
+   * box a parent was looking at when they pressed the button, which is the worse
+   * failure of the two and the harder one to explain. A consent is account-level
+   * and revocable from settings that evening, so the cost of the case above is a
+   * mailing list the parent can switch back on; the cost of the alternative is a
+   * control that does not do what it says while you watch it.
+   */
+  seededMarketingConsents: ReadonlySet<MarketingConsentType> | undefined,
 ): SignupPanelFields {
   // Platform is EUR-only; Stripe Adaptive Pricing handles the customer's local
   // currency at checkout. See src/lib/constants/currency.ts.
@@ -238,6 +328,50 @@ export function useSignupPanelFields(
       .map((row) => row.key),
   );
 
+  // ---------------------------------------------------------------------
+  // The optional marketing asks
+  //
+  // **Seeded from the account, and an edit outranks a seed that lands after
+  // it.** The saved-value-plus-edit-wrapper shape the settings page uses on its
+  // home-location field, for the same reason: the seed arrives a round trip
+  // after the panel paints, and a parent who ticked the box in that gap must
+  // not watch their tick undone by an answer they were not waiting for.
+  //
+  // A Map rather than a Set of edited types, because `false` is a real edit —
+  // it is a *withdrawal*, the whole point of a revocable consent — and a bare
+  // set could not tell it from "not touched".
+  //
+  // Nothing here is keyed to the enrolment: the required ticks above are
+  // stamped with the slugs they covered and dropped when the set moves, and
+  // that machinery is deliberately absent here. A marketing answer is about the
+  // reader's mailbox rather than about this seat, so a product changing what it
+  // asks has nothing to say about an answer they have already given.
+  // ---------------------------------------------------------------------
+  const [marketingEdits, setMarketingEdits] = useState<
+    ReadonlyMap<MarketingConsentType, boolean>
+  >(() => new Map<MarketingConsentType, boolean>());
+
+  const marketingRows = describeMarketingConsents(marketingConsentTypes);
+  const seededValue = (consentType: MarketingConsentType) =>
+    seededMarketingConsents?.has(consentType) ?? false;
+  const marketingValue = (consentType: MarketingConsentType) => {
+    const edit = marketingEdits.get(consentType);
+    return edit === undefined ? seededValue(consentType) : edit;
+  };
+
+  const marketingConsents = new Set(
+    marketingRows.map((row) => row.type).filter(marketingValue),
+  );
+  // Only over the rows actually on screen. A stored type this deploy cannot
+  // name is not rendered, so it has no box for the reader to have moved and
+  // nothing to send about it.
+  const marketingConsentChanges = marketingRows
+    .filter((row) => marketingValue(row.type) !== seededValue(row.type))
+    .map((row) => ({
+      consentType: row.type,
+      granted: marketingValue(row.type),
+    }));
+
   return {
     productType: product.product_type,
     forGamers: product.for_gamers,
@@ -259,6 +393,18 @@ export function useSignupPanelFields(
     // Vacuously true on a product that requires nothing, which is nearly all of
     // them — so the consent step costs the ordinary panel nothing.
     consentsAgreed: consentAgreements.size === rows.length,
+    marketingConsentTypes,
+    marketingConsents,
+    onMarketingConsentChange: (consentType, granted) =>
+      setMarketingEdits((prev) => {
+        const next = new Map(prev);
+        // Recorded either way — an untick is an answer, not the absence of one,
+        // and deleting the entry would hand the box back to a seed that says
+        // the opposite.
+        next.set(consentType, granted);
+        return next;
+      }),
+    marketingConsentChanges,
     currency,
     locale,
   };
