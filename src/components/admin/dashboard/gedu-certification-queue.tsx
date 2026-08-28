@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   BadgeCheck,
-  ClipboardCheck,
-  ClipboardX,
   Clock,
   FileCheck,
   FileWarning,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CertifyWithWarningsDialog } from "@/components/admin/certify-with-warnings-dialog";
@@ -211,10 +210,15 @@ function GeduRow({
         {/* The other two halves of what an admin is deciding on, at the density
             the rest of the row reads at: one glyph and a few words each. Each
             subject keeps its own glyph — a shield is certification, a mail
-            check is a confirmed address, a document is a signature and a
-            clipboard is the record check — and no glyph ever stands for two of
-            them. Only the missing state is tinted, because it is the one worth
-            catching an eye that is scanning a column of rows.
+            check is a confirmed address, a document is a signature and a pair
+            of scales is the record check — and no glyph ever stands for two of
+            them. The scales replaced a clipboard pair that was too close to the
+            document at this size to tell apart in a scanned column; they are a
+            different shape family and read "law" cold. One glyph covers both
+            states here, as it does on every other surface — the colour and the
+            words carry the standing. Only the missing state is tinted, because
+            it is the one worth catching an eye that is scanning a column of
+            rows.
 
             They keep their full width and take a line of their own when the row
             runs out of room — the desk layout puts everything on one line, and
@@ -243,11 +247,7 @@ function GeduRow({
             checkedOn === null ? "text-warning" : "text-muted-foreground",
           )}
         >
-          {checkedOn === null ? (
-            <ClipboardX className="h-3 w-3" aria-hidden />
-          ) : (
-            <ClipboardCheck className="h-3 w-3" aria-hidden />
-          )}
+          <Scale className="h-3 w-3" aria-hidden />
           {checkedOn === null
             ? check("queueNotRecorded")
             : check("queueRecorded", { date: checkedOn })}

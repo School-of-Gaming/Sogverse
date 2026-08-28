@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  BadgeCheck,
-  ClipboardCheck,
-  ClipboardX,
-  FileSignature,
-} from "lucide-react";
+import { ArrowLeft, BadgeCheck, FileSignature, Scale } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -228,6 +222,15 @@ export function GeduContractPageBody({
  * the platform has no upload button and no field to type a reference into, and
  * an educator handing over a document about their own criminal history is
  * exactly who is owed that sentence.
+ *
+ * **Its label is a styled paragraph, not a heading, and that is load-bearing.**
+ * This page already has two h1s by design — its own title, and the contract
+ * document's, which is the document's and must not be reworded into a section
+ * title. An h2 sitting between them would make the document's h1 read as this
+ * section's child in the outline. So the label takes the same uppercase-label
+ * treatment the admin certification card gives its section labels: it looks
+ * like a heading and is not one, and the page's outline is exactly what it was
+ * before this section existed.
  */
 function CriminalRecordCheckSection({
   standing,
@@ -240,12 +243,16 @@ function CriminalRecordCheckSection({
 
   return (
     <section className="space-y-3 rounded-lg border border-border p-5">
-      <h2 className="text-lg font-semibold">{t("title")}</h2>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("title")}
+      </p>
       <p className="text-sm text-muted-foreground">{t("howItWorks")}</p>
       <p className="text-sm text-muted-foreground">{t("noCopyKept")}</p>
+      {/* One glyph for the check across every surface it appears on, admin and
+          gedu alike; the colour and the words carry which way it stands. */}
       {standing === null ? null : standing.passed ? (
         <p className="flex items-center gap-2 text-sm font-medium text-success">
-          <ClipboardCheck className="h-4 w-4 shrink-0" aria-hidden />
+          <Scale className="h-4 w-4 shrink-0" aria-hidden />
           {standing.recordedAt
             ? t("recordedOn", {
                 date: formatDate(standing.recordedAt, locale, {
@@ -261,7 +268,7 @@ function CriminalRecordCheckSection({
         // thing still owed, which is the same register the dashboard's
         // next-step band uses for it.
         <p className="flex items-center gap-2 text-sm font-medium text-warning">
-          <ClipboardX className="h-4 w-4 shrink-0" aria-hidden />
+          <Scale className="h-4 w-4 shrink-0" aria-hidden />
           {t("stillNeeded")}
         </p>
       )}

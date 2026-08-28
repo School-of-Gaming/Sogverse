@@ -252,10 +252,11 @@
     },
     "geduCriminalRecordCheck": {
       "heading": "Criminal record check",
-      "recorded": "Criminal record extract presented",
-      "recordedOn": "Criminal record extract presented on {date}",
+      "recorded": "Criminal record extract recorded",
+      "recordedOn": "Criminal record extract recorded on {date}",
+      "recordedByOn": "Criminal record extract recorded by {name} on {date}",
       "notRecorded": "No criminal record extract recorded",
-      "notRecordedDetail": "This Gedu obtains the extract themselves from the Legal Register Centre and shows it to you. It must be less than six months old when they present it, and we keep no copy of it — only this record that it was shown.",
+      "processDetail": "The Gedu obtains the extract themselves from the Legal Register Centre and presents it to you. It must be less than six months old when presented, and we keep no copy of it — only the record that an acceptable one was shown.",
       "recordLabel": "I have seen an acceptable criminal record extract for this Gedu",
       "error": "Couldn’t update the criminal record check. Please try again.",
       "queueRecorded": "Extract recorded {date}",
@@ -1453,7 +1454,7 @@
     },
     "criminalRecordCheck": {
       "title": "Your criminal record extract",
-      "howItWorks": "Before an admin certifies you, you also present a criminal record extract for working with children (rikostaustaote). You order it yourself from the Legal Register Centre, and it must be less than six months old when you show it to us.",
+      "howItWorks": "Before an admin certifies you, you also present a criminal record extract for working with children (rikosrekisteriote). You order it yourself from the Legal Register Centre, and it must be less than six months old when you show it to us.",
       "noCopyKept": "We keep no copy of the extract and record nothing out of it — only that an acceptable one was shown, and when.",
       "recorded": "Your criminal record extract has been recorded.",
       "recordedOn": "Your criminal record extract was recorded on {date}.",

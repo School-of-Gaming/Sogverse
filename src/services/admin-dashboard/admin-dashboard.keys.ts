@@ -1,11 +1,12 @@
 /**
  * One key, because there is one query. The hierarchy is still written out so a
  * mutation elsewhere that changes what the dashboard says can invalidate
- * `adminDashboardKeys.all` and have this read follow — and four of them do:
+ * `adminDashboardKeys.all` and have this read follow — and five of them do:
  * certifying a gedu (the shell that owns the action, since the gedu mutation is
- * a general one), every action in the admin group panel including waitlist
- * promote/demote (the groups feature invalidates both keys together), and
- * creating or updating a product.
+ * a general one), recording or withdrawing a gedu's criminal record check
+ * (which the queue reports on every row it renders), every action in the admin
+ * group panel including waitlist promote/demote (the groups feature invalidates
+ * both keys together), and creating or updating a product.
  *
  * They are all *admin* writes, which is the line: this entry only ever exists in
  * an admin's own cache, so a customer-side write has nothing here to invalidate

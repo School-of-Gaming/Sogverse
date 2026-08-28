@@ -12,7 +12,8 @@ import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboa
  * other: an admin saw an acceptable criminal record extract (rikostaustaote),
  * and when. The document is obtained by the educator and never reaches us, so
  * everything below tests the *record* rather than any content — that the audit
- * pair is stamped by the server, that withdrawing the check clears it, and that
+ * pair is stamped by the server, that withdrawing the check clears it, that the
+ * stamp and the flag cannot be made to disagree (00214's CHECK), and that
  * nobody but an admin, calling the RPC, can write any of it.
  *
  * **Its own fixtures, not the seeded gedu.** The columns are ordinary columns on
@@ -208,6 +209,80 @@ describe("gedu criminal record check", () => {
         criminal_record_check_passed: true,
       });
       expect(error).not.toBeNull();
+    });
+  });
+
+  describe("the stamp and the flag cannot disagree", () => {
+    /**
+     * The invariant the RPC maintains, enforced by a CHECK since 00214.
+     *
+     * Two admin surfaces read different halves of it — the dashboard's
+     * certification queue ships only `criminal_record_check_at` and reads NULL
+     * as "no check", while the users list reads only
+     * `criminal_record_check_passed` — so a disagreeing row would have the two
+     * describing one educator differently. Nothing reachable through the app can
+     * write it: the table has no Data API write grant and the RPC sets both
+     * columns in one statement. These cases go around all of that with the
+     * service-role client, which is the only way to aim a write at the
+     * constraint itself.
+     */
+    it("refuses a stamp left behind a false flag", async () => {
+      const { error } = await admin
+        .from("gedu_profiles")
+        .update({
+          criminal_record_check_passed: false,
+          criminal_record_check_at: new Date().toISOString(),
+        })
+        .eq("user_id", subjectGeduId!);
+      // 23514 is check_violation. A moment attached to a check nobody recorded
+      // is a record of nothing, and the queue would read it as a recorded check.
+      expect(error?.code).toBe("23514");
+
+      const row = await checkRow(subjectGeduId!);
+      expect(row.criminal_record_check_passed).toBe(false);
+      expect(row.criminal_record_check_at).toBeNull();
+    });
+
+    it("refuses a true flag with no stamp", async () => {
+      const { error } = await admin
+        .from("gedu_profiles")
+        .update({
+          criminal_record_check_passed: true,
+          criminal_record_check_at: null,
+        })
+        .eq("user_id", subjectGeduId!);
+      // The other half: the users list would print the check as recorded while
+      // the queue printed it as missing.
+      expect(error?.code).toBe("23514");
+
+      const row = await checkRow(subjectGeduId!);
+      expect(row.criminal_record_check_passed).toBe(false);
+    });
+
+    it("admits the two states the RPC actually writes", async () => {
+      // The constraint has to be an equivalence rather than a one-way ban, so
+      // the pair the RPC produces on each side of the toggle still goes in.
+      const recorded = await admin
+        .from("gedu_profiles")
+        .update({
+          criminal_record_check_passed: true,
+          criminal_record_check_at: new Date().toISOString(),
+        })
+        .eq("user_id", subjectGeduId!);
+      expect(recorded.error).toBeNull();
+
+      const withdrawn = await admin
+        .from("gedu_profiles")
+        .update({
+          criminal_record_check_passed: false,
+          criminal_record_check_at: null,
+        })
+        .eq("user_id", subjectGeduId!);
+      expect(withdrawn.error).toBeNull();
+
+      const row = await checkRow(subjectGeduId!);
+      expect(row.criminal_record_check_passed).toBe(false);
+      expect(row.criminal_record_check_at).toBeNull();
     });
   });
 

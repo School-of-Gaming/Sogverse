@@ -41,10 +41,9 @@
 
 import { useState } from "react";
 import {
-  ClipboardCheck,
-  ClipboardX,
   FileCheck,
   FileWarning,
+  Scale,
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
@@ -63,7 +62,7 @@ import {
   useGeduProfile,
   useSetGeduCertified,
   useSetGeduCriminalRecordCheck,
-  type GeduCertification,
+  type GeduCertificationDetail,
 } from "@/services/gedu";
 import { useTimezone } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";
@@ -71,7 +70,7 @@ import { formatDate } from "@/lib/utils";
 
 interface GeduCertificationCardProps {
   geduId: string;
-  initial: GeduCertification | null;
+  initial: GeduCertificationDetail | null;
   /**
    * The gedu's acceptances, newest first, fetched alongside `initial` — or
    * `null` where that read failed. It seeds the very cache entry the hook reads,
@@ -116,8 +115,29 @@ export function GeduCertificationCard({
    */
   const checkPassed =
     data == null ? undefined : data.criminal_record_check_passed;
-  const certifierName = data?.certifier
-    ? [data.certifier.first_name, data.certifier.last_name].filter(Boolean).join(" ")
+  const certifierName = personName(data?.certifier);
+  /**
+   * The admin who recorded the extract, when there is one to name.
+   *
+   * `null` covers two different things and the copy treats them as one: nothing
+   * recorded, and a recorder whose account has since been deleted — the FK is
+   * `ON DELETE SET NULL`, so losing an admin leaves the check standing without
+   * the name. Either way the line falls back to the date alone, which is the
+   * same shape certification uses one field up.
+   */
+  const recorderName = personName(data?.recorder);
+  /**
+   * The moment the check was recorded, formatted once. Since 00214 a CHECK
+   * constraint makes it non-null exactly when the flag is true, so `null` here
+   * alongside a true flag is a row the database would refuse — the copy still
+   * has a line for it, because a claim printed with no date is better than a
+   * crash.
+   */
+  const recordedDate = data?.criminal_record_check_at
+    ? formatDate(data.criminal_record_check_at, locale, {
+        dateStyle: "long",
+        timeZone,
+      })
     : null;
 
   /**
@@ -265,37 +285,52 @@ export function GeduCertificationCard({
             section is a statement by whoever ticked the box, not a file
             viewer, and the copy says so.
 
-            The acting admin is deliberately not rendered. It is stored, and
-            it is audit only. */}
+            **Exactly one line changes when the box is ticked.** The process
+            paragraph under the status line is state-neutral on purpose: it
+            describes how the extract is obtained and presented, which is as
+            true after the tick as before it. Written as the *absence* of a
+            record it could only be shown in one of the two states, and its
+            appearing and disappearing moved the checkbox out from under the
+            cursor that had just clicked it. */}
         <div className="space-y-2 border-t border-border pt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {rt("heading")}
           </p>
           {checkPassed === undefined ? null : (
             <>
+              {/* One glyph for the check on every surface, and the scales are
+                  it. The pair this replaces was `ClipboardCheck` /
+                  `ClipboardX`, which lost to the contract's `FileCheck` /
+                  `FileWarning`: a clipboard and a document are the same
+                  rectangle-with-lines at 16px, and admins could not tell the
+                  two subjects apart in a scanned column. Scales are a
+                  different shape family and read "law" cold. State is carried
+                  by colour and words, as it already is here. */}
               {checkPassed ? (
                 <p className="flex items-center gap-2 text-sm font-medium text-success">
-                  <ClipboardCheck className="h-4 w-4 shrink-0" aria-hidden />
-                  {data?.criminal_record_check_at
-                    ? rt("recordedOn", {
-                        date: formatDate(data.criminal_record_check_at, locale, {
-                          dateStyle: "long",
-                          timeZone,
-                        }),
-                      })
-                    : rt("recorded")}
+                  <Scale className="h-4 w-4 shrink-0" aria-hidden />
+                  {/* The recording admin beside the date, exactly as the
+                      verdict above names the certifying one — and the date
+                      alone where there is no name to give, which is what a
+                      departed admin leaves behind (`ON DELETE SET NULL`). */}
+                  {recordedDate === null
+                    ? rt("recorded")
+                    : recorderName
+                      ? rt("recordedByOn", {
+                          name: recorderName,
+                          date: recordedDate,
+                        })
+                      : rt("recordedOn", { date: recordedDate })}
                 </p>
               ) : (
-                <>
-                  <p className="flex items-center gap-2 text-sm font-medium text-warning">
-                    <ClipboardX className="h-4 w-4 shrink-0" aria-hidden />
-                    {rt("notRecorded")}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {rt("notRecordedDetail")}
-                  </p>
-                </>
+                <p className="flex items-center gap-2 text-sm font-medium text-warning">
+                  <Scale className="h-4 w-4 shrink-0" aria-hidden />
+                  {rt("notRecorded")}
+                </p>
               )}
+              <p className="text-sm text-muted-foreground">
+                {rt("processDetail")}
+              </p>
               {/* A checkbox rather than a button, because what an admin is
                   doing is recording a standing fact about a person — the same
                   kind of thing the tick means everywhere else — and because
@@ -321,13 +356,15 @@ export function GeduCertificationCard({
         </div>
 
         {/* The standing, under a rule that separates it from the verdict above
-            without making it a second card. It is last in the card and the card
-            is followed by the coverage editor, so the one state that arrives
-            late — a failed server read answering from the browser instead —
-            grows the card downward rather than moving anything the admin was
-            pointing at. Nothing is reserved for it: with the seed in place it is
-            never absent, and a slot held open for an anomaly is a hole in every
-            ordinary visit. */}
+            without making it a second card. It is last in the card, and every
+            control an admin came here to use is above it, so the one state that
+            arrives late — a failed server read answering from the browser
+            instead — grows the card downward past nothing anybody was about to
+            click. (What follows the card on the page is more cards; they move
+            down with it, and none of them is what the reader is looking at
+            while this one finishes loading.) Nothing is reserved for it: with
+            the seed in place it is never absent, and a slot held open for an
+            anomaly is a hole in every ordinary visit. */}
         <div className="space-y-2 border-t border-border pt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {ct("heading")}
@@ -395,4 +432,20 @@ export function GeduCertificationCard({
       />
     </Card>
   );
+}
+
+/**
+ * An embedded profile's display name, or `null` where there is no profile to
+ * name — an absent embed, or one whose row is all blanks.
+ *
+ * Both audit names on this card go through it, so the certifying admin and the
+ * recording admin are written the same way and neither can drift into printing
+ * a lone space for a half-filled profile.
+ */
+function personName(
+  person: { first_name: string | null; last_name: string | null } | null | undefined,
+): string | null {
+  if (!person) return null;
+  const name = [person.first_name, person.last_name].filter(Boolean).join(" ");
+  return name === "" ? null : name;
 }

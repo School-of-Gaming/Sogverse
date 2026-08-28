@@ -12,6 +12,7 @@ export {
   isGeduCertified,
   getGeduCriminalRecordCheck,
   type GeduCertification,
+  type GeduCertificationDetail,
   type GeduCriminalRecordCheck,
 } from "./gedu-profiles.service";
 export {

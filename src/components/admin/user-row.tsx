@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ClipboardX, FileWarning, MailCheck, ShieldCheck } from "lucide-react";
+import {
+  FileWarning,
+  MailCheck,
+  Scale,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
@@ -137,27 +143,31 @@ export function UserRow({
         </div>
         <div className="flex items-center gap-2">
           {warnings?.contract && (
-            <FileWarning
-              className="h-4 w-4 text-warning"
-              aria-label={contract('rowNotAccepted')}
+            <StandingMark
+              icon={FileWarning}
+              tone="warning"
+              label={contract('rowNotAccepted')}
             />
           )}
           {warnings?.criminalRecordCheck && (
-            <ClipboardX
-              className="h-4 w-4 text-warning"
-              aria-label={check('rowNotRecorded')}
+            <StandingMark
+              icon={Scale}
+              tone="warning"
+              label={check('rowNotRecorded')}
             />
           )}
           {user.role === "gedu" && certified === true && (
-            <ShieldCheck
-              className="h-4 w-4 text-success"
-              aria-label={t('certification.certified')}
+            <StandingMark
+              icon={ShieldCheck}
+              tone="success"
+              label={t('certification.certified')}
             />
           )}
           {emailVerified && (
-            <MailCheck
-              className="h-4 w-4 text-success"
-              aria-label={t('emailVerified')}
+            <StandingMark
+              icon={MailCheck}
+              tone="success"
+              label={t('emailVerified')}
             />
           )}
           <Badge className={ROLE_BADGE_STYLES[user.role]}>
@@ -200,5 +210,39 @@ export function UserRow({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * One standing mark in the row's right-packed group.
+ *
+ * **The label is carried twice, and both are needed.** `aria-label` on a
+ * `role="img"` wrapper is what a screen reader announces; the native `title` is
+ * what a mouse gets on hover, and this is a desk surface an admin scans a whole
+ * column of — a glyph that only announces itself to assistive tech is a glyph a
+ * sighted admin has to learn by opening a row. They take the same string
+ * deliberately: one meaning, one wording, no second phrasing to keep in step.
+ *
+ * The wrapper exists because the icons do not take a `title` prop; it is a
+ * `flex` span the same size as the glyph, so the group's spacing is unchanged.
+ * The icon itself is `aria-hidden` — the wrapper is already the image, and
+ * labelling both would announce it twice.
+ */
+function StandingMark({
+  icon: Icon,
+  tone,
+  label,
+}: {
+  icon: LucideIcon;
+  tone: "success" | "warning";
+  label: string;
+}) {
+  return (
+    <span role="img" aria-label={label} title={label} className="flex">
+      <Icon
+        className={`h-4 w-4 ${tone === "success" ? "text-success" : "text-warning"}`}
+        aria-hidden
+      />
+    </span>
   );
 }

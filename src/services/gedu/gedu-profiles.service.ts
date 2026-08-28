@@ -6,20 +6,53 @@ import { walkPages } from "@/lib/supabase/paging";
 // is the other FK to profiles). Nullable — an un-certified gedu, or a backfilled
 // one, has no certifier.
 //
-// The criminal record check's flag and moment are selected; its `_by` column is
-// deliberately NOT. That column is audit only — nothing on any surface renders
-// the admin who recorded the check — and a column no reader has is one nobody
-// can accidentally start rendering. (`certified_by` is selected because the
-// certification card does name the certifying admin.)
+// The criminal record check's flag and moment ride the list read; the admin who
+// recorded it does not, because no list surface names them — the users list and
+// the assignment picker only ask *whether* the check stands. That name is read
+// by the detail select below.
 const GEDU_PROFILE_COLUMNS =
   "user_id, certified, certified_at, certified_by, criminal_record_check_passed, criminal_record_check_at, certifier:profiles!gedu_profiles_certified_by_fkey(first_name, last_name)";
 
-/** Shared builder so the embedded-certifier row type is inferred, not hand-written. */
+/**
+ * The list columns plus the two audit names the user-detail card prints: the
+ * admin who certified this educator, and the admin who recorded their criminal
+ * record extract.
+ *
+ * **This is the admin-facing read and only the admin-facing read.** The recorder
+ * embed reaches into another admin's `profiles` row, which admin RLS permits and
+ * a gedu's own session does not — so the gedu-facing standing reads below select
+ * the flag and the moment from their own row and nothing else. Splitting the two
+ * selects is what keeps that true by construction: there is no column list an
+ * educator could be handed that names the admin who looked at their document.
+ */
+const GEDU_PROFILE_DETAIL_COLUMNS = `${GEDU_PROFILE_COLUMNS}, criminal_record_check_by, recorder:profiles!gedu_profiles_criminal_record_check_by_fkey(first_name, last_name)` as const;
+
+/**
+ * Shared builder so the embedded-certifier row type is inferred, not
+ * hand-written. It asks for the exact count because its one caller walks pages
+ * and needs to know when to stop.
+ */
 function geduProfilesQuery(supabase: AppSupabaseClient) {
-  return supabase.from("gedu_profiles").select(GEDU_PROFILE_COLUMNS);
+  return supabase
+    .from("gedu_profiles")
+    .select(GEDU_PROFILE_COLUMNS, { count: "exact" });
+}
+
+/** The same, for the one read that also names the two acting admins. */
+function geduProfileDetailQuery(supabase: AppSupabaseClient) {
+  return supabase.from("gedu_profiles").select(GEDU_PROFILE_DETAIL_COLUMNS);
 }
 
 export type GeduCertification = QueryData<ReturnType<typeof geduProfilesQuery>>[number];
+
+/**
+ * One gedu's row as the admin user-detail card reads it — the list shape plus
+ * the certifying and recording admins' names. A superset of `GeduCertification`,
+ * so anything taking the narrower shape takes this too.
+ */
+export type GeduCertificationDetail = QueryData<
+  ReturnType<typeof geduProfileDetailQuery>
+>[number];
 
 /**
  * Whether a gedu's account has been admin-certified.
@@ -107,17 +140,16 @@ export class GeduProfilesService {
    */
   async getAll(): Promise<GeduCertification[]> {
     return walkPages("getAllGeduProfiles", (from, to) =>
-      this.supabase
-        .from("gedu_profiles")
-        .select(GEDU_PROFILE_COLUMNS, { count: "exact" })
-        .order("user_id")
-        .range(from, to),
+      geduProfilesQuery(this.supabase).order("user_id").range(from, to),
     );
   }
 
-  /** Certification state for a single gedu, or null if none exists. */
-  async getOne(geduId: string): Promise<GeduCertification | null> {
-    const { data, error } = await geduProfilesQuery(this.supabase)
+  /**
+   * Certification state for a single gedu, or null if none exists — read
+   * through the detail select, so the card can name both acting admins.
+   */
+  async getOne(geduId: string): Promise<GeduCertificationDetail | null> {
+    const { data, error } = await geduProfileDetailQuery(this.supabase)
       .eq("user_id", geduId)
       .maybeSingle();
     if (error) throw error;

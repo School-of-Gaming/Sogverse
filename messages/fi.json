@@ -252,22 +252,23 @@
     },
     "geduCriminalRecordCheck": {
       "heading": "Rikostaustan selvitys",
-      "recorded": "Rikostaustaote esitetty",
-      "recordedOn": "Rikostaustaote esitetty {date}",
-      "notRecorded": "Rikostaustaotetta ei ole esitetty",
-      "notRecordedDetail": "Gedu hankkii otteen itse Oikeusrekisterikeskuksesta ja esittää sen sinulle. Otteen on oltava esitettäessä alle kuusi kuukautta vanha. Emme säilytä siitä kopiota – vain tämän merkinnän siitä, että ote on esitetty.",
-      "recordLabel": "Olen nähnyt tämän Gedun asianmukaisen rikostaustaotteen",
+      "recorded": "Rikosrekisteriote kirjattu",
+      "recordedOn": "Rikosrekisteriote kirjattu {date}",
+      "recordedByOn": "Rikosrekisteriotteen kirjasi {name} {date}",
+      "notRecorded": "Rikosrekisteriotetta ei ole esitetty",
+      "processDetail": "Gedu hankkii otteen itse Oikeusrekisterikeskuksesta ja esittää sen sinulle. Otteen on oltava esitettäessä alle kuusi kuukautta vanha. Emme säilytä siitä kopiota – vain merkinnän siitä, että asianmukainen ote on esitetty.",
+      "recordLabel": "Olen nähnyt tämän Gedun asianmukaisen rikosrekisteriotteen",
       "error": "Rikostaustan selvityksen päivitys epäonnistui. Yritä uudelleen.",
       "queueRecorded": "Ote esitetty {date}",
       "queueNotRecorded": "Otetta ei ole esitetty",
-      "rowNotRecorded": "Ei ole esittänyt rikostaustaotetta"
+      "rowNotRecorded": "Ei ole esittänyt rikosrekisteriotetta"
     },
     "geduCertifyWarnings": {
       "title": "Hyväksytäänkö silti?",
       "body": "Hyväksyntä ei edellytä kumpaakaan näistä, joten voit hyväksyä hänet silti.",
       "action": "Hyväksy silti",
       "contractWarning": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
-      "checkWarning": "Tämä Gedu ei ole esittänyt rikostaustaotetta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin kukaan on nähnyt otetta."
+      "checkWarning": "Tämä Gedu ei ole esittänyt rikosrekisteriotetta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin kukaan on nähnyt otetta."
     },
     "products": {
       "types": {
@@ -1452,15 +1453,15 @@
       "acceptedMeta": "Versio {version}, hyväksytty {date}"
     },
     "criminalRecordCheck": {
-      "title": "Rikostaustaotteesi",
-      "howItWorks": "Ennen kuin sinut hyväksytään, esität myös lasten kanssa työskentelyä varten annettavan rikostaustaotteen. Tilaat sen itse Oikeusrekisterikeskuksesta, ja sen on oltava alle kuusi kuukautta vanha, kun näytät sen meille.",
+      "title": "Rikosrekisteriotteesi",
+      "howItWorks": "Ennen kuin sinut hyväksytään, esität myös lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen (rikostaustaote). Tilaat sen itse Oikeusrekisterikeskuksesta, ja sen on oltava alle kuusi kuukautta vanha, kun näytät sen meille.",
       "noCopyKept": "Emme säilytä otteesta kopiota emmekä kirjaa siitä mitään – vain sen, että asianmukainen ote on esitetty ja milloin.",
-      "recorded": "Rikostaustaotteesi on merkitty esitetyksi.",
-      "recordedOn": "Rikostaustaotteesi merkittiin esitetyksi {date}.",
-      "stillNeeded": "Vielä tekemättä: näytä meille rikostaustaotteesi.",
+      "recorded": "Rikosrekisteriotteesi on merkitty esitetyksi.",
+      "recordedOn": "Rikosrekisteriotteesi merkittiin esitetyksi {date}.",
+      "stillNeeded": "Vielä tekemättä: näytä meille rikosrekisteriotteesi.",
       "notice": {
-        "title": "Et ole vielä näyttänyt meille rikostaustaotettasi",
-        "body": "Ennen hyväksyntää esität lasten kanssa työskentelyä varten annettavan rikostaustaotteen. Tilaat sen itse Oikeusrekisterikeskuksesta.",
+        "title": "Et ole vielä näyttänyt meille rikosrekisteriotettasi",
+        "body": "Ennen hyväksyntää esität lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen (rikostaustaote). Tilaat sen itse Oikeusrekisterikeskuksesta.",
         "action": "Lue, miten ote hankitaan"
       }
     }

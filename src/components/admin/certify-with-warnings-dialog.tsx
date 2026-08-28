@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardX, FileWarning } from "lucide-react";
+import { FileWarning, Scale } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -70,7 +70,7 @@ export function CertifyWithWarningsDialog({
           </WarningLine>
         )}
         {criminalRecordCheckMissing && (
-          <WarningLine icon={<ClipboardX className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />}>
+          <WarningLine icon={<Scale className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />}>
             {t("checkWarning")}
           </WarningLine>
         )}

@@ -131,12 +131,20 @@ session, and there is no backend caller because nothing server-side can look at
 a document. The extension table carries no write grant, so the audit pair cannot
 be written by the person it is about.
 
-The stamp is non-null **exactly when** the flag is true, which is why the admin
-dashboard's queue ships only the moment: a second field beside it would be
-derivable from the first and could only ever contradict it. The acting admin is
-audit-only — nothing renders it, and the shared profile-columns constant does not
-even select it — and its FK is `ON DELETE SET NULL`, so a departed admin leaves
-the check recorded without the name.
+The stamp is non-null **exactly when** the flag is true, and a CHECK constraint
+enforces the equivalence rather than leaving it to the RPC's good behaviour —
+two admin surfaces read different halves of it (the dashboard queue ships only
+the moment, the users list reads only the flag), so a disagreeing row would have
+them describing one educator differently. That is also why the queue ships only
+the moment: a second field beside it would be derivable from the first and could
+only ever contradict it.
+
+The acting admin renders in exactly one place — the admin user-detail card,
+beside the date, the same way `certified_by` does — and nowhere else. Its FK is
+`ON DELETE SET NULL`, so a departed admin leaves the check recorded without the
+name and the line falls back to the date alone. It is deliberately outside the
+equivalence above for that reason: losing an account must not turn a recorded
+check into a constraint violation.
 
 ### Surfaces
 
@@ -161,29 +169,43 @@ recorded and the account is not yet certified — the contract band takes priori
 and only one band is ever shown, because the two are steps of one process in the
 order they happen.
 
-**Icon language: `ClipboardCheck` / `ClipboardX`,** one pair across every
-surface. It is deliberately distinct from the contract's `FileCheck` /
-`FileWarning` and from certification's `ShieldCheck` / `ShieldAlert`: three
-facts about one educator can appear on one row, and a glyph that stood for two
-of them would make a scanned column unreadable.
+**Icon language: `Scale`, one glyph across every surface**, with colour and
+words carrying whether the check stands. Three facts about one educator can
+appear on one row, so each needs a mark nobody confuses with another — and
+*shape family* is what does that work at 16px, not the tick or cross drawn
+inside it. The clipboard pair this replaces failed on exactly that: a clipboard
+and the contract's `FileCheck` / `FileWarning` are the same
+rectangle-with-lines, and admins could not tell the two subjects apart in a
+scanned column. Scales are a different silhouette and read "law" cold. One glyph
+rather than two is the second half: the state is already in the colour
+(`text-success` / `text-warning`, muted where the queue chip is muted) and in
+the words beside it, and a check/cross variant was only ever restating them.
 
 ### Reads and writes
 
 `useSetGeduCriminalRecordCheck` calls the RPC and invalidates the whole
 `gedu-profiles` root, exactly as `useSetGeduCertified` does — the flag lives on
 that row, so the detail card, the users list and the picker are all reading what
-it just changed. It deliberately does **not** invalidate the admin dashboard's
-key: recording a check neither adds anybody to the certification queue nor takes
-anybody out, and that queue's own copy of the stamp refreshes on its next read.
-(Certifying *does* invalidate it, because that is the write that moves a row.)
+it just changed — **and the admin dashboard's key alongside it**, because the
+certification queue renders the fact on every row it draws (a standing chip, and
+whether the certify button raises the missing-prerequisite confirmation). It
+moves nobody in or out of that queue, which is a different question from whether
+the queue is now stale. Both mutations' invalidations are **returned** from
+`onSuccess`, so `mutateAsync` settles only once the refetch has landed and a
+control cannot re-enable showing the value it just replaced.
 
 The flag rides the shared `gedu_profiles` column list, so every surface already
-reading certification state gets it in the same request. The gedu-facing
-surfaces read it server-side from the educator's own row instead, because both
-decide something above the fold and neither can afford an answer that arrives
-after the first paint — and the two answer a failed read *differently*: the
-contract page's status line is an assertion and stays silent, while the
-dashboard band is a nudge and fails toward showing itself.
+reading certification state gets it in the same request. **The list read and the
+detail read are two different column lists**, and the split is what keeps the
+recording admin's name off a gedu's screen by construction: only the detail
+select — the one the admin user-detail card uses — embeds the acting admins'
+profile rows, which admin RLS permits and an educator's own session does not.
+The gedu-facing surfaces read the flag and the moment server-side from the
+educator's own row and nothing else, because both decide something above the
+fold and neither can afford an answer that arrives after the first paint — and
+the two answer a failed read *differently*: the contract page's status line is
+an assertion and stays silent, while the dashboard band is a nudge and fails
+toward showing itself.
 
 ## The gedu contract
 

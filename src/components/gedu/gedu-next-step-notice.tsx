@@ -3,8 +3,8 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  ClipboardX,
   FileSignature,
+  Scale,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -91,12 +91,15 @@ export function GeduContractNotice() {
  * platform — it is obtained from the Legal Register Centre and shown to us in
  * person — so what the educator needs is the explanation, and the explanation
  * lives on the contract page beside the other thing certification waits on.
+ *
+ * The scales are the check's one glyph everywhere it appears, so the band an
+ * educator meets and the section it leads to are marked the same.
  */
 export function GeduCriminalRecordCheckNotice() {
   const t = useTranslations("gedu.criminalRecordCheck.notice");
   return (
     <GeduNextStepBand
-      icon={ClipboardX}
+      icon={Scale}
       title={t("title")}
       body={t("body")}
       action={t("action")}

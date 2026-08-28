@@ -3,7 +3,12 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { GeduProfilesService, type GeduCertification } from "./gedu-profiles.service";
+import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
+import {
+  GeduProfilesService,
+  type GeduCertification,
+  type GeduCertificationDetail,
+} from "./gedu-profiles.service";
 
 export const geduProfileKeys = {
   all: ["gedu-profiles"] as const,
@@ -25,7 +30,7 @@ export function useGeduProfiles() {
 /** Certification state for a single gedu. Seed `initialData` from a server fetch. */
 export function useGeduProfile(
   geduId: string,
-  options?: { initialData?: GeduCertification | null },
+  options?: { initialData?: GeduCertificationDetail | null },
 ) {
   const supabase = getClient();
   const service = new GeduProfilesService(supabase);
@@ -71,6 +76,21 @@ export function useGeduCertificationMap(): GeduCertificationLookup {
   );
 }
 
+/**
+ * Certify — or de-certify — one educator.
+ *
+ * **The invalidation is returned, not fired and forgotten.** React Query awaits
+ * whatever `onSuccess` returns before it settles `mutateAsync`, so returning the
+ * promise is what makes "the write landed" mean "and every surface reading it
+ * has been refetched". Dropped, `mutateAsync` resolves while the card still
+ * holds the pre-write row, and the button re-enables showing the old verdict —
+ * long enough for a second click to toggle it straight back.
+ *
+ * The admin dashboard's key is invalidated by the dashboard shell rather than
+ * here, because that is where the certify action's *other* effect lives: the
+ * row leaving the queue and the strip's certified count are one fact the shell
+ * already owns.
+ */
 export function useSetGeduCertified() {
   const queryClient = useQueryClient();
   const supabase = getClient();
@@ -79,9 +99,8 @@ export function useSetGeduCertified() {
   return useMutation({
     mutationFn: ({ geduId, certified }: { geduId: string; certified: boolean }) =>
       service.setCertified(geduId, certified),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: geduProfileKeys.all });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: geduProfileKeys.all }),
   });
 }
 
@@ -93,16 +112,24 @@ export function useSetGeduCertified() {
  * for the same reason: the flag lives on the same row, so the detail card, the
  * users list and the picker are all reading the value this call just changed.
  *
- * **The admin dashboard's key is deliberately not invalidated here.** Its cache
- * entry only ever exists in an admin's browser, so it *could* be — but the
- * certification queue is a list of *uncertified* educators, and recording a
- * check neither adds anybody to it nor takes anybody out; the queue's own copy
- * of the stamp refreshes on its next read. The certify action invalidates that
- * key because it is the one write that moves a row out of the list.
+ * **And the admin dashboard's key alongside it.** Recording a check moves
+ * nobody in or out of the certification queue — it is a list of *uncertified*
+ * educators and this write does not certify anybody — but the queue renders the
+ * fact itself: each row carries a standing chip for the check, and whether the
+ * certify button raises the missing-prerequisite confirmation is decided by the
+ * same stamp. Left stale, a dashboard open in another tab goes on warning about
+ * an extract the admin has just recorded. That entry only ever exists in an
+ * admin's own browser, and this is an admin's write, so it is always there to
+ * invalidate.
  *
- * The caller owns the disabled state across the success path: React Query's
- * `isPending` flips false before `onSuccess` runs, so a control must hold its
- * own committing flag set synchronously before `mutate()`.
+ * **Both invalidations are returned rather than fired and forgotten**, so
+ * `mutateAsync` settles only once the refetches have landed. Dropped, the
+ * checkbox re-enables still showing the pre-write value, and a second click
+ * would re-stamp `criminal_record_check_at` at a new moment.
+ *
+ * The caller still owns the disabled state across the success path: React
+ * Query's `isPending` flips false before `onSuccess` runs, so a control must
+ * hold its own committing flag set synchronously before `mutate()`.
  */
 export function useSetGeduCriminalRecordCheck() {
   const queryClient = useQueryClient();
@@ -112,8 +139,10 @@ export function useSetGeduCriminalRecordCheck() {
   return useMutation({
     mutationFn: ({ geduId, passed }: { geduId: string; passed: boolean }) =>
       service.setCriminalRecordCheck(geduId, passed),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: geduProfileKeys.all });
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: geduProfileKeys.all }),
+        queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all }),
+      ]),
   });
 }
