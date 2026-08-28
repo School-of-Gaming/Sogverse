@@ -154,8 +154,6 @@ export const ROUTES = {
     `/shop/confirmation?session_id=${sessionId}`,
   /** "Back to listing" URL — `/shop` with the type's category pre-selected. */
   shopBrowse: shopBrowseHref,
-  yty: "/#yty",
-  about: "/#about",
   docs: "/docs",
   login: "/login",
   register: "/register",
@@ -302,13 +300,9 @@ export const ROUTES = {
     user: (id: string) => `/admin/users/${id}`,
     product: adminProductHref,
     consumerClubs: "/admin/consumer-clubs",
-    consumerClubsNew: "/admin/consumer-clubs/new",
     municipalityClubs: "/admin/municipality-clubs",
-    municipalityClubsNew: "/admin/municipality-clubs/new",
     camps: "/admin/camps",
-    campsNew: "/admin/camps/new",
     events: "/admin/events",
-    eventsNew: "/admin/events/new",
     /**
      * Platform-operations tools that belong to no one product — the instant
      * voice room and the Minecraft Education password reset, both shared by
