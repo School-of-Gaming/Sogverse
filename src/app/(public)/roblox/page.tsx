@@ -22,7 +22,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
 import { RobloxHero } from "@/components/roblox/roblox-hero";
 import { ProgrammeCta } from "@/components/roblox/programme-cta";
-import { UpcomingEvents } from "@/components/roblox/upcoming-events";
+import { ProgrammeFaq } from "@/components/roblox/programme-faq";
+import { UpcomingEventsSection } from "@/components/roblox/upcoming-events-section";
 import { ROBLOX_OG_DESCRIPTION, ROBLOX_OG_TITLE } from "./metadata-copy";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -171,7 +172,7 @@ export default function RobloxPage() {
         </div>
       </section>
 
-      <UpcomingEvents />
+      <UpcomingEventsSection />
 
       {/* Why join — after the events, where it answers the hesitation a reader
           has once they have seen what is actually on offer. */}
@@ -219,8 +220,11 @@ export default function RobloxPage() {
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
               {t("parents.body")}
             </p>
-            <button
-              type="button"
+            {/* The parent-audience slice of the storefront, not the teens' one
+                the hero and closing CTAs point at — the sessions this paragraph
+                describes are sold to the parent, not to the child. */}
+            <Link
+              href={ROUTES.robloxParentSessions}
               className={buttonVariants({
                 variant: "outline",
                 size: "lg",
@@ -229,10 +233,12 @@ export default function RobloxPage() {
             >
               {t("parents.cta")}
               <ArrowRight className="h-4 w-4" />
-            </button>
+            </Link>
           </div>
         </div>
       </section>
+
+      <ProgrammeFaq />
 
       <ProgrammeCta />
 

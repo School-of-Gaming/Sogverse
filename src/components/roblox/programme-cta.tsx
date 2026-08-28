@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 
 /**
  * Closing call-to-action for the programme page — the second of the two
@@ -15,8 +17,9 @@ import { Card, CardContent } from "@/components/ui/card";
  * product, driven off the product itself rather than off the sign-up route.
  * So this stays a call to action pointing at the standard flow.
  *
- * The button is deliberately inert while the copy is unsigned — see the note on
- * the hero CTA in the page for why nothing here navigates yet.
+ * It targets the *same* filtered storefront URL as the hero CTA, deliberately:
+ * this is that CTA repeated for a reader who scrolled, and two "start here"
+ * prompts landing in different places would be two different promises.
  */
 export function ProgrammeCta() {
   const t = useTranslations("roblox.cta");
@@ -27,13 +30,13 @@ export function ProgrammeCta() {
         <CardContent className="flex flex-col items-center py-12 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">{t("heading")}</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>
-          <button
-            type="button"
+          <Link
+            href={ROUTES.robloxShop}
             className={buttonVariants({ size: "lg", className: "mt-8 gap-2" })}
           >
             {t("button")}
             <ArrowRight className="h-4 w-4" />
-          </button>
+          </Link>
         </CardContent>
       </Card>
     </section>

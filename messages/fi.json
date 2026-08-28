@@ -2804,7 +2804,7 @@
     "hero": {
       "title": "Rakenna<br></br><primary>Pelaa</primary><br></br><secondary>Omista</secondary>",
       "subtitle": "Ilmainen Roblox-pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
-      "cta": "Ilmoittaudu nyt"
+      "cta": "Hyppää mukaan!"
     },
     "lockup": {
       "heading": "Yhteistyössä",
@@ -2815,7 +2815,7 @@
     "what": {
       "eyebrow": "Mistä on kyse",
       "heading": "Opi rakentamaan Robloxissa.",
-      "paragraph1": "Ohjelma antaa 15–18-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Lynx Educaten ja School of Gamingin toteuttama ja Robloxin tukema ohjelma on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
+      "paragraph1": "Ohjelma antaa 15–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Lynx Educaten ja School of Gamingin toteuttama ja Robloxin tukema ohjelma on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
       "paragraph2": "Ohjelman päätteeksi osallistujat ovat julkaisseet oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
     },
     "why": {
@@ -2849,14 +2849,14 @@
     "how": {
       "eyebrow": "Näin se toimii",
       "heading": "Aloita neljässä helpossa vaiheessa",
-      "subheading": "Valitse sopiva muoto: lähitapahtumia ja verkkotapahtumia yhdestä tunnista neljään viikkoon.",
+      "subheading": "Valitse sopiva muoto: paikan päällä tai verkossa, yhdestä tunnista neljään viikkoon.",
       "step1": {
-        "title": "Valitse tapahtuma",
-        "description": "Poimi sopiva alta – lisäämme uusia tapahtumia usein, joten käy katsomassa uudelleen."
+        "title": "Valitse ajankohta",
+        "description": "Poimi sopiva alta – lisäämme uusia ajankohtia usein, joten käy katsomassa uudelleen."
       },
       "step2": {
         "title": "Luo tili",
-        "description": "Suoraan tapahtuman sivulla. Uusille vanhemmille nopeaa ja ilmaista."
+        "description": "Suoraan ilmoittautumissivulla. Uusille vanhemmille nopeaa ja ilmaista."
       },
       "step3": {
         "title": "Täytä nuoren tiedot",
@@ -2868,15 +2868,18 @@
       }
     },
     "events": {
-      "heading": "Tulevat tapahtumat",
-      "subheading": "Lisäämme uusia tapahtumia usein – käy katsomassa, mitä on tulossa.",
-      "empty": "Ensimmäisiä tapahtumia aikataulutetaan juuri nyt. Käy pian katsomassa, mitä on tulossa."
+      "heading": "Tulevat ajankohdat",
+      "subheading": "Lisäämme uusia ajankohtia usein – käy katsomassa, mitä on tulossa.",
+      "empty": "Ensimmäisiä ajankohtia vahvistetaan parhaillaan. Käy pian katsomassa, mitä on tulossa."
     },
     "parents": {
       "eyebrow": "Vanhemmille",
       "heading": "Tiedämme, että verkkoturvallisuus on tärkeää",
       "body": "Nuorten ohjelman rinnalla järjestämme vanhemmille omia tilaisuuksia verkkoturvallisuudesta, lapsilukoista ja siitä, miten voit tukea nuoren luovaa työtä.",
       "cta": "Katso vanhempien tilaisuudet"
+    },
+    "faq": {
+      "heading": "Usein kysytyt kysymykset"
     },
     "cta": {
       "heading": "Valmis aloittamaan?",

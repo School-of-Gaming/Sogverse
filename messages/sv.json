@@ -2804,7 +2804,7 @@
     "hero": {
       "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
       "subtitle": "Ett gratis Roblox-speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
-      "cta": "Anmäl dig nu"
+      "cta": "Häng med!"
     },
     "lockup": {
       "heading": "Ett samarbete mellan",
@@ -2815,7 +2815,7 @@
     "what": {
       "eyebrow": "Vad är det här",
       "heading": "Lär dig bygga i Roblox.",
-      "paragraph1": "Programmet ger 15–18-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming med stöd av Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
+      "paragraph1": "Programmet ger 15–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming med stöd av Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
       "paragraph2": "När programmet är slut har deltagarna publicerat sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
     },
     "why": {
@@ -2849,14 +2849,14 @@
     "how": {
       "eyebrow": "Så fungerar det",
       "heading": "Kom igång i fyra enkla steg",
-      "subheading": "Välj det format som passar: evenemang på plats eller online, från en timme till fyra veckor.",
+      "subheading": "Välj det format som passar: på plats eller online, från en timme till fyra veckor.",
       "step1": {
-        "title": "Välj ett evenemang",
+        "title": "Välj ett datum",
         "description": "Bland alternativen nedan — vi lägger till nya ofta, så titta in igen."
       },
       "step2": {
         "title": "Skapa ditt konto",
-        "description": "Direkt på evenemangssidan. Snabbt och gratis för nya föräldrar."
+        "description": "Direkt på anmälningssidan. Snabbt och gratis för nya föräldrar."
       },
       "step3": {
         "title": "Fyll i din tonårings uppgifter",
@@ -2868,15 +2868,18 @@
       }
     },
     "events": {
-      "heading": "Kommande evenemang",
-      "subheading": "Vi lägger till nya evenemang ofta — titta in och se vad som är på gång.",
-      "empty": "De första evenemangen planeras just nu. Titta in snart och se vad som är på gång."
+      "heading": "Kommande datum",
+      "subheading": "Vi lägger till nya datum ofta — titta in och se vad som är på gång.",
+      "empty": "De första datumen planeras just nu. Titta in snart och se vad som är på gång."
     },
     "parents": {
       "eyebrow": "För föräldrar",
       "heading": "Vi vet att trygghet online spelar roll",
       "body": "Parallellt med tonårsprogrammet håller vi egna föräldrasessioner om digital trygghet, föräldrakontroller och hur du stöttar din tonårings skapande.",
       "cta": "Se våra föräldrasessioner"
+    },
+    "faq": {
+      "heading": "Vanliga frågor"
     },
     "cta": {
       "heading": "Redo att börja?",

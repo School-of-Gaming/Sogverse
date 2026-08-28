@@ -1869,7 +1869,7 @@
     "hero": {
       "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
       "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
-      "cta": "Register now"
+      "cta": "Jump in!"
     },
     "lockup": {
       "heading": "A collaboration between",
@@ -1880,7 +1880,7 @@
     "what": {
       "eyebrow": "What is this",
       "heading": "Learn to build on Roblox.",
-      "paragraph1": "This programme gives 15–18 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
+      "paragraph1": "This programme gives 15–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
       "paragraph2": "By the end of the programme, participants will have published their own original creation on Roblox. No experience necessary — just curiosity."
     },
     "why": {
@@ -1914,14 +1914,14 @@
     "how": {
       "eyebrow": "How it works",
       "heading": "Get Started in Four Simple Steps",
-      "subheading": "Choose the format that suits: in-person or online events, ranging from one hour to four weeks.",
+      "subheading": "Choose the format that suits: in person or online, ranging from one hour to four weeks.",
       "step1": {
-        "title": "Choose an event",
-        "description": "Pick from the options below — we add new events often, so keep checking back."
+        "title": "Pick a date",
+        "description": "Pick from the options below — we add new dates often, so keep checking back."
       },
       "step2": {
         "title": "Create your account",
-        "description": "Right on the event page. Quick and free for new parents."
+        "description": "Right on the sign-up page. Quick and free for new parents."
       },
       "step3": {
         "title": "Register your teen’s details",
@@ -1933,15 +1933,18 @@
       }
     },
     "events": {
-      "heading": "Upcoming Events",
-      "subheading": "We add new events often — check back to see what is coming up.",
-      "empty": "The first events are being scheduled now. Check back shortly to see what is coming up."
+      "heading": "What’s On",
+      "subheading": "We add new dates often — check back to see what is coming up.",
+      "empty": "The first dates are being scheduled now. Check back shortly to see what is coming up."
     },
     "parents": {
       "eyebrow": "For parents",
       "heading": "We Know Online Safety Matters",
       "body": "Alongside the teen programme we run dedicated parent sessions on digital safety, parental controls, and how to support your teen’s creative journey.",
       "cta": "See our parent sessions"
+    },
+    "faq": {
+      "heading": "Frequently Asked Questions"
     },
     "cta": {
       "heading": "Ready to Get Started?",
