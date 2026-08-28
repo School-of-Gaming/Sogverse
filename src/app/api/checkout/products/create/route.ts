@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { consentRefusalError } from "@/services/participations/consent-refusal";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import {
   DEFAULT_LOCALE,
@@ -68,7 +69,8 @@ export const POST = defineRoute({
 
   // The RPC's refusals are written for the parent to read — "registration has
   // not yet opened", "product is not accepting signups" — and the shop renders
-  // them verbatim beside the signup button.
+  // them verbatim beside the signup button. The consent refusal is the one
+  // exception and is swapped for a code below, before it can be disclosed.
   discloseErrorMessages:
     "create_participation's messages are the user-facing explanation of a refused signup, and the shop surface renders them as-is",
 
@@ -216,7 +218,10 @@ export const POST = defineRoute({
       },
     );
 
-    if (rpcErr) throw rpcErr;
+    // Every refusal but one travels on to be disclosed verbatim. The consent
+    // refusal is swapped for a generic message and a code the panel can act on
+    // — see `consent-refusal.ts` for why this one is not the parent's to read.
+    if (rpcErr) throw consentRefusalError(rpcErr) ?? rpcErr;
 
     const rpcParsed = createParticipationRpcResult.safeParse(rpcResult);
     if (!rpcParsed.success) {

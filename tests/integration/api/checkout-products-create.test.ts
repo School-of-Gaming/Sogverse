@@ -760,6 +760,33 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(400);
   });
 
+  it("does not disclose the consent refusal, and answers with a code instead", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "23514",
+        message:
+          "this product requires consent to roblox-privacy-policy before enrolling",
+      },
+    });
+
+    const res = await POST(createRequest(VALID_BODY));
+    const data = await res.json();
+
+    // This route discloses the RPC's refusals verbatim, and this is the one it
+    // must not: it names raw document slugs and describes a requirement the
+    // parent's screen has not caught up with. The slug in particular must not
+    // survive.
+    expect(res.status).toBe(400);
+    expect(data.error).not.toContain("roblox-privacy-policy");
+    expect(data.error).not.toContain("requires consent");
+    // The code is what the panel acts on — it refetches the product so the new
+    // document appears and the retry is a different request.
+    expect(data.code).toBe("consent_documents_required");
+  });
+
   // ── Single-payment redirect path ──────────────────────────────────
 
   it("creates a Stripe Checkout session for a single_payment camp and returns the redirect URL", async () => {

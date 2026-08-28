@@ -206,9 +206,16 @@ export interface SignupPanelViewProps {
    * under a parent part-way through the form.
    */
   requiredConsentSlugs: readonly string[];
-  /** Which of them are ticked. Never seeded; see `useSignupPanelFields`. */
-  consentedSlugs: ReadonlySet<string>;
-  onConsentChange: (slug: string, next: boolean) => void;
+  /**
+   * Whether the parent has agreed to ALL of them, as one fact.
+   *
+   * Not a per-document map: the documents a product requires are handed over
+   * together and cannot be accepted apart — a parent who agrees to one and not
+   * the other has not met the product's conditions, so there was never a
+   * partial state worth modelling. Never seeded; see `useSignupPanelFields`.
+   */
+  consentsAgreed: boolean;
+  onConsentsAgreedChange: (next: boolean) => void;
   onSubmit: () => void;
   /** Separate from onSubmit — the waitlist branch calls this. */
   onJoinWaitlist: () => void;
@@ -446,11 +453,18 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 //
 // **A disabled CTA is an instruction.** It names the single next missing step,
 // in the order the sections stand on the page: add a gamer → set your location
-// → agree to the rules → agree to the documents → wait for the window. The
-// documents step exists only on a product that requires some, which is very
-// few of them. The label points at the nearest
-// unfinished thing above the button, so following it is a walk down the panel
-// rather than a hunt.
+// → give the required consent → wait for the window. The label points at the
+// nearest unfinished thing above the button, so following it is a walk down the
+// panel rather than a hunt.
+//
+// **Everything a parent has to agree to lives in ONE section, and it is the last
+// one before the button.** Required consent is a single heading holding one
+// tickable row per thing being agreed to: the product's own documents when it
+// attaches any, and — always, at the bottom — our rules. They are the same
+// control in the same box, because they are the same act, and the CTA therefore
+// names one step rather than walking a reader through two headings that look
+// alike. A new thing to agree to becomes another row in this section, above the
+// rules row; it does not become a section of its own.
 //
 // **Actions live in the sections, never in the CTA.** A section that needs
 // something offers its own affordance: the dashed add-a-gamer row inside the
@@ -794,16 +808,15 @@ function SignupForm(
   // stops the CTA. The wrong-country half never reaches this component — it
   // replaced the form upstream — and `unlocked` renders nothing at all.
   const needsLocation = props.regionGate?.gate.kind === "no_location";
-  // Every required document, ticked. Vacuously true on the products that
+  // The product's documents, agreed to. Vacuously true on the products that
   // require none, which is nearly all of them — so this step costs the ordinary
   // panel nothing and does not appear in its CTA checklist at all.
-  const allConsentsAgreed = props.requiredConsentSlugs.every((slug) =>
-    props.consentedSlugs.has(slug),
-  );
+  const consentsSatisfied =
+    props.requiredConsentSlugs.length === 0 || props.consentsAgreed;
   const formReady =
     props.selectedParticipantId !== null &&
     props.agreed &&
-    allConsentsAgreed &&
+    consentsSatisfied &&
     !needsLocation;
   const clickable = formReady && props.active && !props.submitting;
 
@@ -834,19 +847,17 @@ function SignupForm(
         : t("ctaAllSet")
       : needsLocation
         ? t("regionLock.setLocation")
-        : !props.agreed
-          ? t("ctaAgreeRules")
-          : // The documents come after the rules because their section does:
-            // the rules box is on every panel and the documents are the extra
-            // this product asks for, so they are appended below rather than
-            // wedged between the rules and the button a reader has already
-            // learned sit together. On a product requiring none the leaf is
-            // unreachable, and the checklist is the one it has always been.
-            !allConsentsAgreed
-            ? t("ctaAgreeConsents")
-            : props.active
-              ? props.ctaLabelActive
-              : t("ctaReadyWaiting");
+        : // One leaf for the whole consent section, whatever is unticked inside
+          // it. Two labels would have made the reader's next move ambiguous —
+          // both boxes sit under one heading and look identical, so "agree to
+          // the rules" would be pointing at a row the reader cannot tell from
+          // the one above it. The section is what they act on, so the section
+          // is what the button names.
+          !consentsSatisfied || !props.agreed
+          ? t("ctaAgreeConsent")
+          : props.active
+            ? props.ctaLabelActive
+            : t("ctaReadyWaiting");
 
   return (
     <div className="space-y-4">
@@ -995,25 +1006,15 @@ function SignupForm(
         />
       )}
 
-      <RulesCheckbox
+      <RequiredConsentSection
         productType={props.productType}
         selfSeat={selectedIsSelf}
-        agreed={props.agreed}
-        onAgreedChange={props.onAgreedChange}
+        slugs={props.requiredConsentSlugs}
+        documentsAgreed={props.consentsAgreed}
+        onDocumentsAgreedChange={props.onConsentsAgreedChange}
+        rulesAgreed={props.agreed}
+        onRulesAgreedChange={props.onAgreedChange}
       />
-
-      {/* The extra conditions this particular product attaches to a seat, below
-          the rules every product carries. Absent entirely on a product that
-          requires none — no heading, no empty box, nothing reserved — because
-          the requirement set arrives with the product read and cannot change
-          under a reader mid-form, so there is no late arrival to hold room for. */}
-      {props.requiredConsentSlugs.length > 0 && (
-        <RequiredConsents
-          slugs={props.requiredConsentSlugs}
-          consented={props.consentedSlugs}
-          onConsentChange={props.onConsentChange}
-        />
-      )}
 
       <Button
         size="lg"
@@ -1034,11 +1035,58 @@ function SignupForm(
   );
 }
 
-function RulesCheckbox({
+/**
+ * **Everything a parent has to agree to, under one heading.**
+ *
+ * One section, always present, holding one tickable row per thing being agreed
+ * to: the product's own required documents when it attaches any, and — always,
+ * last — our rules. Both rows are the same control, a bordered clickable box
+ * that lights when ticked, because they are the same act. The heading names the
+ * act rather than the paperwork ("Required consent"), which is also what the
+ * disabled CTA points at, so a reader following the button lands on a section
+ * rather than on one of two boxes they cannot tell apart.
+ *
+ * **The rules row carries no heading of its own.** It used to be its own titled
+ * section, and beside a second titled section of identically-shaped boxes that
+ * title stopped meaning anything: two headings, two boxes, one act. What the
+ * heading was doing — giving the CTA's prompt a visible referent — is now done
+ * by the section's own, so the row is left to be a sentence and a checkbox.
+ *
+ * **The documents row is one checkbox covering all of them, not one per
+ * document.** A product hands its documents over together and they cannot be
+ * accepted apart — a parent who agreed to the terms but not the privacy policy
+ * has not met the conditions and cannot enrol — so a box per document offered a
+ * choice that does not exist and made the common case two clicks instead of
+ * one. The database still records one acceptance row per document against its
+ * own version; that is the server's bookkeeping of one act, and it does not
+ * need a control each. The shape also scales: a third document lengthens the
+ * list and changes no sentence, where a per-document sentence would need one
+ * more translated string in five locales every time.
+ *
+ * **The links sit outside the clickable box, above it.** Reading comes before
+ * agreeing, so the documents are what the reader meets first, and putting them
+ * outside the `<label>` is what makes "clicking a link must not tick the box" a
+ * structural fact rather than a handler that could be deleted. They open in a
+ * new tab, deliberately and not as a stylistic default — the panel behind them
+ * is holding a chosen child, a possibly half-answered location question and a
+ * ticked box or two, and navigating away would throw all of it out to read a
+ * document the panel is *asking* them to read.
+ *
+ * **A slug this deploy cannot name is still listed, and still gated.** It
+ * appears as its raw slug with no link to follow. It looks wrong, which is
+ * correct: registry rows arrive by migration and the name map ships in the same
+ * deploy, so this is a defect to notice — and the alternative, dropping it from
+ * the list, would let the enrolment through without a consent the product
+ * legally requires.
+ */
+function RequiredConsentSection({
   productType,
   selfSeat,
-  agreed,
-  onAgreedChange,
+  slugs,
+  documentsAgreed,
+  onDocumentsAgreedChange,
+  rulesAgreed,
+  onRulesAgreedChange,
 }: {
   productType: ProductType;
   /**
@@ -1048,17 +1096,23 @@ function RulesCheckbox({
    * which row is lit, and the sentence has to follow the row.
    */
   selfSeat: boolean;
-  agreed: boolean;
-  onAgreedChange: (next: boolean) => void;
+  /**
+   * The documents this product requires. Empty on nearly every product, and the
+   * documents row is then absent — leaving the heading and the rules row, which
+   * is the baseline every panel shows. Nothing is reserved for a row that is
+   * not there: the requirement set arrives with the product read and cannot
+   * change under a reader mid-form, so there is no late arrival to hold room
+   * for.
+   */
+  slugs: readonly string[];
+  documentsAgreed: boolean;
+  onDocumentsAgreedChange: (next: boolean) => void;
+  rulesAgreed: boolean;
+  onRulesAgreedChange: (next: boolean) => void;
 }) {
-  const t = useTranslations("productDetail.signupPanel.rules");
-  // Heading names this section "The Rules" so the CTA's "Agree to the rules"
-  // prompt has a visible referent — the rule sentence itself never says the
-  // word. The whole box is one clickable toggle (heading + rule + checkbox)
-  // that highlights when agreed. No nested box: unlike the gamer picker — whose
-  // outer box wraps a border-per-selectable-row — the rules section is a single
-  // choice, so a box-in-a-box would just be visual noise.
-  const tPanel = useTranslations("productDetail.signupPanel");
+  const t = useTranslations("productDetail.signupPanel");
+  const tRules = useTranslations("productDetail.signupPanel.rules");
+  const tNames = useTranslations("consentDocuments.names");
   // Exactly one of the four rules third-persons a child: the municipality
   // club's, which is a consent about "my child's seat" opening for the next
   // family. The other three are about conduct and read identically whoever
@@ -1067,134 +1121,95 @@ function RulesCheckbox({
   // that would then have to be kept in step in five locales.
   const ruleText =
     selfSeat && productType === "municipality_club"
-      ? t("municipality_club_self")
-      : t(productType);
+      ? tRules("municipality_club_self")
+      : tRules(productType);
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
+      {slugs.length > 0 && (
+        <>
+          {/* A list, because that is what it is: the reader is being told which
+              documents this seat comes with before being asked about them. */}
+          <ul className="space-y-1 text-xs">
+            {slugs.map((slug) => {
+              const meta = consentDocumentMeta(slug);
+              return (
+                <li key={slug}>
+                  {meta === null ? (
+                    // Never an anchor with nowhere to go — an empty href
+                    // resolves to the page the reader is already on.
+                    <span className="font-medium text-foreground">{slug}</span>
+                  ) : (
+                    <a
+                      href={meta.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary underline-offset-2 hover:underline"
+                    >
+                      {tNames(meta.nameKey)}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <ConsentRow
+            agreed={documentsAgreed}
+            onAgreedChange={onDocumentsAgreedChange}
+            sentence={t("consents.agree")}
+          />
+        </>
+      )}
+      {/* Ours, and always last: whatever else a product attaches to a seat, the
+          final thing a parent agrees to before the button is the one thing
+          School of Gaming asks of them. */}
+      <ConsentRow
+        agreed={rulesAgreed}
+        onAgreedChange={onRulesAgreedChange}
+        sentence={ruleText}
+      />
+    </div>
+  );
+}
+
+/**
+ * One thing to agree to: a sentence and a checkbox in a bordered box that
+ * lights when ticked, the whole box clickable.
+ *
+ * Shared by both rows rather than written twice, because "the two rows are
+ * indistinguishable" is the point of the section — a reader must not be able to
+ * tell our rules from a product's documents by their treatment, only by what
+ * they say. No nested box: unlike the gamer picker — whose outer box wraps a
+ * border-per-selectable-row — each row is a single choice, so a box-in-a-box
+ * would just be visual noise.
+ */
+function ConsentRow({
+  agreed,
+  onAgreedChange,
+  sentence,
+}: {
+  agreed: boolean;
+  onAgreedChange: (next: boolean) => void;
+  sentence: string;
+}) {
   return (
     <label
       className={cn(
         "block cursor-pointer rounded-md border p-4 transition-colors",
         agreed
           ? "border-primary bg-primary/5"
-          : "border-border bg-muted/30 hover:bg-accent/50"
+          : "border-border bg-muted/30 hover:bg-accent/50",
       )}
     >
-      <h3 className="text-sm font-semibold">{tPanel("rulesHeading")}</h3>
-      <div className="mt-3 flex items-start gap-3 text-xs">
+      <div className="flex items-start gap-3 text-xs">
         <Checkbox
           className="mt-0.5"
           checked={agreed}
           onChange={(e) => onAgreedChange(e.target.checked)}
         />
-        <span className="text-muted-foreground">{ruleText}</span>
+        <span className="text-muted-foreground">{sentence}</span>
       </div>
     </label>
-  );
-}
-
-/**
- * **The product's enrolment conditions, one tickable sentence per document.**
- *
- * The same control the rules box is — a bordered, clickable box that lights
- * when ticked — repeated once per required document, because a parent who has
- * met the rules box on every other product already knows what this is. One box
- * per document rather than one covering all of them: each is a separate
- * agreement to a separate text, recorded as its own row against its own
- * version, and a single box would record several agreements from one click.
- *
- * **The document name is a link, and it opens in a new tab.** That is the whole
- * reason the sentence is rich text rather than a label beside a link: the words
- * a parent clicks have to be the name of the thing they are agreeing to. The
- * new tab is deliberate and not a stylistic default — the panel behind it is
- * holding a chosen child, a ticked rules box and possibly a half-answered
- * location question, and navigating away would throw all of it out to read a
- * document the panel is *asking* them to read.
- *
- * **Clicking the link must not tick the box.** The whole box is a `<label>`, so
- * a click anywhere inside it toggles the input — including on the anchor, which
- * would tick a box for a document at the exact moment the reader said they
- * wanted to read it first. The anchor stops the click from reaching the label,
- * and the navigation still happens because that is the anchor's own default,
- * not something the label was doing for it.
- *
- * **A slug this deploy cannot name still renders, still gates, and carries no
- * link.** The label falls back to the raw slug and the sentence loses its
- * anchor rather than gaining one that points nowhere. It looks wrong, which is
- * correct: registry rows arrive by migration and the name map ships in the same
- * deploy, so this is a defect to notice — and the alternative, dropping the
- * checkbox, would let the enrolment through without a consent the product
- * legally requires.
- */
-function RequiredConsents({
-  slugs,
-  consented,
-  onConsentChange,
-}: {
-  slugs: readonly string[];
-  consented: ReadonlySet<string>;
-  onConsentChange: (slug: string, next: boolean) => void;
-}) {
-  const t = useTranslations("productDetail.signupPanel");
-  const tNames = useTranslations("consentDocuments.names");
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
-      {slugs.map((slug) => {
-        const meta = consentDocumentMeta(slug);
-        const checked = consented.has(slug);
-        const name = meta === null ? slug : tNames(meta.nameKey);
-        return (
-          <label
-            key={slug}
-            className={cn(
-              "block cursor-pointer rounded-md border p-4 transition-colors",
-              checked
-                ? "border-primary bg-primary/5"
-                : "border-border bg-muted/30 hover:bg-accent/50",
-            )}
-          >
-            <div className="flex items-start gap-3 text-xs">
-              <Checkbox
-                className="mt-0.5"
-                checked={checked}
-                onChange={(e) => onConsentChange(slug, e.target.checked)}
-              />
-              <span className="text-muted-foreground">
-                {t.rich("consents.item", {
-                  document: name,
-                  link: (chunks) =>
-                    meta === null ? (
-                      <span className="font-medium text-foreground">
-                        {chunks}
-                      </span>
-                    ) : (
-                      <a
-                        href={meta.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        // Belt and braces, and the braces are the DOM's: a
-                        // `<label>` has no activation behaviour when the click
-                        // lands inside an interactive descendant, so the box
-                        // does not toggle when this anchor is clicked even
-                        // with this handler gone. That guarantee lives in a
-                        // spec nobody reading this file can see, and reading
-                        // the document must never be mistaken for agreeing to
-                        // it, so the click is stopped here as well. The unit
-                        // test pins the two claims separately — the browser's
-                        // and this handler's — rather than crediting one for
-                        // the other's work.
-                        onClick={(e) => e.stopPropagation()}
-                        className="font-medium text-primary underline-offset-2 hover:underline"
-                      >
-                        {chunks}
-                      </a>
-                    ),
-                })}
-              </span>
-            </div>
-          </label>
-        );
-      })}
-    </div>
   );
 }
 

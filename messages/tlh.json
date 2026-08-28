@@ -427,7 +427,7 @@
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
         "consents": "poQlu’bogh chaw’mey",
-        "consentsDescription": "ghItlhmey lulajnIS vavpu’ ’e’ poQlu’. motlh pagh poQlu’.",
+        "consentsDescription": "ghItlhmey lulajnIS vavpu’ ’e’ poQlu’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -1781,8 +1781,7 @@
       "ctaSubmitting": "yIloS…",
       "ctaAddGamer": "QujwI’ yIchel ’ej taH",
       "ctaAllSet": "bIghuHrup",
-      "ctaAgreeRules": "chutmey yIlaj",
-      "ctaAgreeConsents": "poQlu’bogh ghItlhmey yIlaj",
+      "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
       "ctaWaitlist": "tetlh DaqaD",
       "ctaSignIn": {
         "consumer_club": "qonmeH yI’el",
@@ -1801,7 +1800,6 @@
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
       "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
       "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
-      "rulesHeading": "chutmey",
       "rules": {
         "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
         "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
@@ -1810,8 +1808,8 @@
         "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj."
       },
       "consents": {
-        "heading": "poQlu’bogh ghItlhmey",
-        "item": "<link>{document}</link> vIlaDpu’ ’ej vIlaj."
+        "heading": "poQlu’bogh chaw’",
+        "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj."
       },
       "whoAreYouSigningUp": {
         "consumer_club": "’Iv muvbogh SoH?",

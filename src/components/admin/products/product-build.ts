@@ -14,6 +14,7 @@ import {
   isSupportedCurrency,
   SUPPORTED_CURRENCIES,
 } from "@/lib/constants";
+import { completeConsentBundles } from "@/lib/constants/consent-documents";
 import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
@@ -584,7 +585,13 @@ function buildSharedFields(
     // so an omitted answer would drop a product's conditions rather than
     // preserve them. Not gated by any type config: the mechanism is generic and
     // the database has no per-type rule for it to mirror.
-    required_consent_slugs: Array.from(state.requiredConsentSlugs),
+    //
+    // Bundles are completed on the way out, so what is written matches what the
+    // form showed: a stored half-bundle ticks its row, and a save must not
+    // leave the product in a state the form says it is not in.
+    required_consent_slugs: completeConsentBundles(
+      Array.from(state.requiredConsentSlugs),
+    ),
     primary_gedu_fee_cents: feeDraftToCents(
       state.primaryGeduFee.status,
       state.primaryGeduFee.amount,

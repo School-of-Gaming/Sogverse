@@ -379,7 +379,7 @@
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
         "consents": "Consentements obligatoires",
-        "consentsDescription": "Documents qu’un parent doit accepter avant de s’inscrire. La plupart des produits n’en exigent aucun.",
+        "consentsDescription": "Documents qu’un parent doit accepter avant de s’inscrire.",
         "visibility": "Catalogue",
         "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
@@ -1737,8 +1737,7 @@
       "ctaSubmitting": "Un instant…",
       "ctaAddGamer": "Ajoutez un joueur pour continuer",
       "ctaAllSet": "Tout est prêt",
-      "ctaAgreeRules": "Acceptez les règles",
-      "ctaAgreeConsents": "Acceptez les documents obligatoires",
+      "ctaAgreeConsent": "Donnez le consentement requis",
       "ctaWaitlist": "Rejoindre la liste d’attente",
       "ctaSignIn": {
         "consumer_club": "Connectez-vous pour vous inscrire",
@@ -1757,7 +1756,6 @@
       "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
       "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
-      "rulesHeading": "Les règles",
       "rules": {
         "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
         "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
@@ -1766,8 +1764,8 @@
         "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques."
       },
       "consents": {
-        "heading": "Documents obligatoires",
-        "item": "J’ai lu et j’accepte le document suivant : <link>{document}</link>"
+        "heading": "Consentement requis",
+        "agree": "J’ai lu et j’accepte ces documents."
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Qui inscrivez-vous ?",
@@ -3506,6 +3504,9 @@
     "names": {
       "robloxProgrammeTerms": "Conditions générales du Programme Roblox",
       "robloxPrivacyPolicy": "Politique de confidentialité du Programme Roblox"
+    },
+    "bundles": {
+      "robloxProgramme": "Documents du Programme Roblox"
     }
   }
 }

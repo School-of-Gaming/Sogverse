@@ -51,16 +51,22 @@ export interface SignupPanelFields {
    * The consent documents this product requires, as slugs, in the order the
    * panel renders them. Empty on nearly every product.
    *
-   * **A slug this deploy cannot name stays in here.** The panel renders it with
-   * the slug as its own label and no link to read, and it still gates the CTA —
+   * **A slug this deploy cannot name stays in here.** The panel lists it as its
+   * raw slug with no link to read, and the section still gates the CTA —
    * dropping it would let an enrolment through without a consent the product
-   * legally requires, which is the one outcome worse than an ugly checkbox.
+   * legally requires, which is the one outcome worse than an ugly list entry.
    */
   requiredConsentSlugs: readonly string[];
-  /** Which of them the parent has ticked. Never seeded — always empty at mount,
-   *  on every product, however many times this family has enrolled before. */
-  consentedSlugs: ReadonlySet<string>;
-  onConsentChange: (slug: string, next: boolean) => void;
+  /**
+   * Whether the parent has agreed to all of them — one fact, because the
+   * documents come together and cannot be accepted apart.
+   *
+   * Never seeded: false at mount on every product, however many times this
+   * family has enrolled before, and false again whenever the requirement set
+   * itself changes underneath.
+   */
+  consentsAgreed: boolean;
+  onConsentsAgreedChange: (next: boolean) => void;
   currency: SupportedCurrency;
   locale: string;
 }
@@ -170,16 +176,26 @@ export function useSignupPanelFields(
 
   const [agreed, setAgreed] = useState(false);
 
-  // Every box starts unticked, and there is no path that seeds one. These are
+  // The box starts unticked, and there is no path that seeds it. These are
   // per-enrolment conditions: a family enrolling a second child, or re-joining
   // a term later, is agreeing again, and a pre-ticked box would make that
   // agreement something the platform asserted on their behalf rather than
-  // something they did. The Set is keyed by slug so the state survives a
-  // requirement set that changes under a long-open tab — a slug that stops
-  // being required simply stops being read.
-  const [consentedSlugs, setConsentedSlugs] = useState<ReadonlySet<string>>(
-    () => new Set(),
+  // something they did.
+  //
+  // **The agreement is stamped with the set it was given for, and does not
+  // survive that set changing.** One tick now covers every listed document, so
+  // a requirement added under a long-open tab — or arriving in the refetch the
+  // enrolment routes trigger when the database refuses a stale list — would
+  // otherwise be carried by a click made before that document was on screen.
+  // Comparing the stamp during render rather than clearing it from an effect
+  // keeps the tick and the list it belongs to consistent in every frame; the
+  // key is the joined slugs so a caller rebuilding the array each render (which
+  // both adapters do) does not count as a change.
+  const slugsKey = requiredConsentSlugs.join(" ");
+  const [consent, setConsent] = useState<{ slugsKey: string; agreed: boolean }>(
+    () => ({ slugsKey, agreed: false }),
   );
+  const consentsAgreed = consent.slugsKey === slugsKey && consent.agreed;
 
   return {
     productType: product.product_type,
@@ -191,14 +207,8 @@ export function useSignupPanelFields(
     agreed,
     onAgreedChange: setAgreed,
     requiredConsentSlugs,
-    consentedSlugs,
-    onConsentChange: (slug, next) =>
-      setConsentedSlugs((current) => {
-        const updated = new Set(current);
-        if (next) updated.add(slug);
-        else updated.delete(slug);
-        return updated;
-      }),
+    consentsAgreed,
+    onConsentsAgreedChange: (next) => setConsent({ slugsKey, agreed: next }),
     currency,
     locale,
   };

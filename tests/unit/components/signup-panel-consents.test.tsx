@@ -9,35 +9,25 @@ import {
 import { ROUTES } from "@/lib/constants";
 
 /**
- * **What a product's required consents do to the signup panel.**
+ * **The panel's Required consent section.**
  *
- * The panel is presentational, so this drives it directly with props — no
- * mutation, no query client, no router. Translations are stubbed to echo their
- * keys, so nothing here depends on English wording; `rich` echoes the same way
- * and then hands the result to the tag functions the call passed, so the link
- * wrapper is really invoked and the anchor it builds is really in the DOM.
+ * One section, always present, holding one tickable row per thing the parent is
+ * agreeing to: the product's own documents when it attaches any, and — always,
+ * last — our rules. The panel is presentational, so this drives it directly with
+ * props: no mutation, no query client, no router. Translations are stubbed to
+ * echo their keys, so nothing here depends on English wording.
  *
- * The gate itself is one rule — every required slug ticked — and the three
- * things worth pinning are its ends: a product requiring none is untouched, a
- * product requiring some cannot be submitted until all of them are ticked, and
- * a slug this deploy cannot name still counts.
+ * What is worth pinning: the section is never empty, the documents are named as
+ * links a reader can follow before agreeing, one tick covers all of them, the
+ * CTA names the section until every row in it is ticked, and a slug this deploy
+ * cannot name is still listed and still gates.
  */
 vi.mock("next-intl", () => {
-  type TagFn = (chunks: unknown) => unknown;
   type PlainValue = string | number;
   const echo = (key: string, values?: Record<string, PlainValue>) =>
     values ? `${key}:${JSON.stringify(values)}` : key;
   const t = (key: string, values?: Record<string, PlainValue>) =>
     echo(key, values);
-  t.rich = (key: string, values?: Record<string, PlainValue | TagFn>) => {
-    const plain: Record<string, PlainValue> = {};
-    const tags: TagFn[] = [];
-    for (const [name, value] of Object.entries(values ?? {})) {
-      if (typeof value === "function") tags.push(value);
-      else plain[name] = value;
-    }
-    return tags.reduce<unknown>((chunks, tag) => tag(chunks), echo(key, plain));
-  };
   return { useTranslations: () => t };
 });
 
@@ -74,14 +64,14 @@ function panel(
     selectedParticipantId: CHILD.id,
     onSelectParticipant: () => {},
     onAddGamer: () => {},
-    // The rules box is already ticked in every case here, so "the documents
-    // are what is left" is a real assertion rather than a tie with the step
-    // above it.
+    // The rules row is ticked in every case here unless a test says otherwise,
+    // so "the documents are what is left" is a real assertion rather than a tie
+    // with the row below them.
     agreed: true,
     onAgreedChange: () => {},
     requiredConsentSlugs: [],
-    consentedSlugs: new Set<string>(),
-    onConsentChange: () => {},
+    consentsAgreed: false,
+    onConsentsAgreedChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
@@ -96,7 +86,7 @@ const cta = (c: HTMLElement) => {
   return buttons[buttons.length - 1];
 };
 
-/** Every checkbox in the panel: the rules one, then one per document. */
+/** Every checkbox in the panel, in DOM order: documents first, rules last. */
 const checkboxes = (c: HTMLElement) => [
   ...c.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
 ];
@@ -104,33 +94,36 @@ const checkboxes = (c: HTMLElement) => [
 const links = (c: HTMLElement) => [...c.querySelectorAll("a")];
 
 describe("a product with no required consents", () => {
-  it("renders no consent section and leaves the CTA on its live label", () => {
+  it("still renders the section, holding the rules row alone", () => {
     const { container } = render(<SignupPanelView {...panel()} />);
 
-    expect(container.textContent).not.toContain("consents.");
-    // The rules box, and nothing beside it.
+    // The heading is not conditional: the rules live under it, so the section
+    // exists on every product and this is the baseline every panel shows.
+    expect(container.textContent).toContain("consents.heading");
+    // No document list, no document sentence — nothing is reserved for a row
+    // that is not there.
+    expect(container.textContent).not.toContain("consents.agree");
     expect(checkboxes(container)).toHaveLength(1);
+    expect(links(container)).toHaveLength(0);
     expect(cta(container).textContent).toContain("ctaActive");
     expect(cta(container).disabled).toBe(false);
+  });
+
+  it("names the section when the rules row is the only thing unticked", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ agreed: false })} />,
+    );
+
+    // One label for the whole section, whichever row inside it is outstanding —
+    // the two rows look alike, so pointing at one of them by name would be
+    // pointing at something the reader cannot pick out.
+    expect(cta(container).textContent).toBe("ctaAgreeConsent");
+    expect(cta(container).disabled).toBe(true);
   });
 });
 
 describe("a product that requires consents", () => {
-  it("renders one checkbox per document, none of them ticked", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panel({ requiredConsentSlugs: [TERMS, PRIVACY] })}
-      />,
-    );
-
-    const boxes = checkboxes(container);
-    // The rules box plus one per document.
-    expect(boxes).toHaveLength(3);
-    expect(boxes.slice(1).every((box) => !box.checked)).toBe(true);
-    expect(container.textContent).toContain("consents.heading");
-  });
-
-  it("names each document in a link that opens in a new tab", () => {
+  it("names every document in a link that opens in a new tab", () => {
     const { container } = render(
       <SignupPanelView
         {...panel({ requiredConsentSlugs: [TERMS, PRIVACY] })}
@@ -151,81 +144,113 @@ describe("a product that requires consents", () => {
     }
   });
 
-  it("does not tick the box when the document link is clicked", () => {
-    const onConsentChange = vi.fn();
+  it("offers ONE unticked box for the documents, plus the rules row", () => {
     const { container } = render(
       <SignupPanelView
-        {...panel({ requiredConsentSlugs: [TERMS], onConsentChange })}
+        {...panel({ requiredConsentSlugs: [TERMS, PRIVACY] })}
+      />,
+    );
+
+    // Two documents, one consent: the pair is handed over together and cannot
+    // be accepted apart, so a second box would offer a choice that does not
+    // exist. The second checkbox here is the rules row, which is ticked.
+    const boxes = checkboxes(container);
+    expect(boxes).toHaveLength(2);
+    expect(boxes[0].checked).toBe(false);
+    expect(container.textContent).toContain("consents.agree");
+  });
+
+  it("does not tick the box when a document link is clicked", () => {
+    const onConsentsAgreedChange = vi.fn();
+    const { container } = render(
+      <SignupPanelView
+        {...panel({ requiredConsentSlugs: [TERMS], onConsentsAgreedChange })}
       />,
     );
 
     // A listener OUTSIDE React's root container, so it sees the native click
-    // only after React has dispatched the anchor's own handler. React attaches
-    // its listeners to the root container rather than to each element, so a
-    // listener on the `<label>` itself would run *before* the handler and prove
-    // nothing; this one runs after, which is what makes it a test of the
-    // handler rather than of event order.
+    // only after React has dispatched any handler of ours.
     const escaped = vi.fn();
     container.parentElement!.addEventListener("click", escaped);
 
     fireEvent.click(links(container)[0]);
 
-    // Two claims, separated because only the second one is about our code.
+    // Two claims, separated because they are guaranteed by different things.
     //
-    // The box staying unticked is the DOM's own guarantee and would hold with
-    // the anchor's onClick deleted: the activation algorithm gives a `<label>`
-    // no activation behaviour when the click's target lies inside an
-    // interactive descendant, and jsdom implements that. So this pins the
-    // browser-level contract the component leans on — not the handler.
-    expect(onConsentChange).not.toHaveBeenCalled();
-    // The handler is what this one pins: `e.stopPropagation()` on the anchor
-    // means the click never leaves the panel, so removing it makes this fail
-    // while the assertion above goes on passing.
-    expect(escaped).not.toHaveBeenCalled();
+    // The box staying unticked is now STRUCTURAL: the links are rendered above
+    // the `<label>`, not inside it, so no click on one can reach the input. The
+    // assertion below is what would catch a future edit that moved the list
+    // back into the box — where it would need a handler again.
+    expect(onConsentsAgreedChange).not.toHaveBeenCalled();
+    // The other half, pinned separately: the anchor really is outside the
+    // label. Without this, a component that moved the list inside the box and
+    // added a `stopPropagation` would pass the assertion above while having
+    // quietly changed which mechanism is doing the work.
+    const label = container.querySelector("label:has(input)");
+    expect(label?.querySelector("a")).toBeNull();
+    // Nothing stops the click, because nothing needs to: it never entered a
+    // label in the first place.
+    expect(escaped).toHaveBeenCalled();
   });
 
-  it("reports the slug and the new value when a box is ticked", () => {
-    const onConsentChange = vi.fn();
+  it("reports the new value when the documents box is ticked", () => {
+    const onConsentsAgreedChange = vi.fn();
     const { container } = render(
       <SignupPanelView
         {...panel({
           requiredConsentSlugs: [TERMS, PRIVACY],
-          onConsentChange,
+          onConsentsAgreedChange,
         })}
       />,
     );
 
-    fireEvent.click(checkboxes(container)[2]);
+    fireEvent.click(checkboxes(container)[0]);
 
-    expect(onConsentChange).toHaveBeenCalledWith(PRIVACY, true);
+    expect(onConsentsAgreedChange).toHaveBeenCalledWith(true);
   });
 
-  it("blocks the CTA and names the step while any document is unticked", () => {
+  it("blocks the CTA and names the section while the documents are unticked", () => {
     const onSubmit = vi.fn();
     const { container } = render(
       <SignupPanelView
         {...panel({
           requiredConsentSlugs: [TERMS, PRIVACY],
-          // One of two — the case a boolean "have they agreed" would get wrong.
-          consentedSlugs: new Set([TERMS]),
+          consentsAgreed: false,
           onSubmit,
         })}
       />,
     );
 
-    expect(cta(container).textContent).toBe("ctaAgreeConsents");
+    expect(cta(container).textContent).toBe("ctaAgreeConsent");
     expect(cta(container).disabled).toBe(true);
     fireEvent.click(cta(container));
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("releases the CTA once every document is ticked", () => {
+  it("still blocks the CTA when only the rules row is outstanding", () => {
+    const { container } = render(
+      <SignupPanelView
+        {...panel({
+          requiredConsentSlugs: [TERMS, PRIVACY],
+          consentsAgreed: true,
+          agreed: false,
+        })}
+      />,
+    );
+
+    // Same label as the case above, which is the point of merging the two
+    // steps: the reader is sent to one section, not to one of two boxes.
+    expect(cta(container).textContent).toBe("ctaAgreeConsent");
+    expect(cta(container).disabled).toBe(true);
+  });
+
+  it("releases the CTA once both rows are ticked", () => {
     const onSubmit = vi.fn();
     const { container } = render(
       <SignupPanelView
         {...panel({
           requiredConsentSlugs: [TERMS, PRIVACY],
-          consentedSlugs: new Set([TERMS, PRIVACY]),
+          consentsAgreed: true,
           onSubmit,
         })}
       />,
@@ -236,35 +261,40 @@ describe("a product that requires consents", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it("names the rules step first, and the documents step after it", () => {
+  it("puts the rules row last, below the documents", () => {
     const { container } = render(
       <SignupPanelView
         {...panel({
-          agreed: false,
           requiredConsentSlugs: [TERMS],
+          consentsAgreed: true,
+          agreed: false,
         })}
       />,
     );
 
-    // Both steps are outstanding; the checklist walks down the panel, and the
-    // rules box sits above the documents.
-    expect(cta(container).textContent).toBe("ctaAgreeRules");
+    // Ours is the final thing agreed to before the button, so it is the last
+    // checkbox in the section — and the only unticked one here.
+    const boxes = checkboxes(container);
+    expect(boxes).toHaveLength(2);
+    expect(boxes[0].checked).toBe(true);
+    expect(boxes[1].checked).toBe(false);
   });
 });
 
 describe("a required slug this deploy cannot name", () => {
   const UNKNOWN = "some-future-document";
 
-  it("still renders a checkbox, labelled with the slug and carrying no link", () => {
+  it("is still listed, as the slug itself and with no link", () => {
     const { container } = render(
       <SignupPanelView {...panel({ requiredConsentSlugs: [UNKNOWN] })} />,
     );
 
-    expect(checkboxes(container)).toHaveLength(2);
     expect(container.textContent).toContain(UNKNOWN);
     // Never an anchor with nowhere to go: an empty href resolves to the page
     // the reader is already on.
     expect(links(container)).toHaveLength(0);
+    // The documents row is offered exactly as it is for a named document.
+    expect(checkboxes(container)).toHaveLength(2);
   });
 
   it("still gates the CTA", () => {
@@ -274,8 +304,8 @@ describe("a required slug this deploy cannot name", () => {
 
     // The whole point of the fallback: dropping an unnameable requirement
     // would let the enrolment through without a consent the product legally
-    // requires, which is worse than an ugly checkbox.
+    // requires, which is worse than an ugly list entry.
     expect(cta(container).disabled).toBe(true);
-    expect(cta(container).textContent).toBe("ctaAgreeConsents");
+    expect(cta(container).textContent).toBe("ctaAgreeConsent");
   });
 });

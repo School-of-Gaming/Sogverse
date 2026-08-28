@@ -5,28 +5,18 @@ import { fireEvent, render } from "@testing-library/react";
  * **What the panel actually sends once the boxes are ticked.**
  *
  * The gate itself is tested against the view (`signup-panel-consents`); this is
- * the other half — that the adapter turns the ticked set into the field the
- * enrolment routes read, on both doors. Both are worth pinning separately: a
- * CTA that unlocks while the request goes out empty would leave the database
+ * the other half — that the adapter turns one tick into the whole list of slugs
+ * the enrolment routes read, on both doors. Both are worth pinning separately:
+ * a CTA that unlocks while the request goes out short would leave the database
  * refusing an enrolment the parent had every reason to think they had
  * completed.
  */
 vi.mock("next-intl", () => {
-  type TagFn = (chunks: unknown) => unknown;
   type PlainValue = string | number;
   const echo = (key: string, values?: Record<string, PlainValue>) =>
     values ? `${key}:${JSON.stringify(values)}` : key;
   const t = (key: string, values?: Record<string, PlainValue>) =>
     echo(key, values);
-  t.rich = (key: string, values?: Record<string, PlainValue | TagFn>) => {
-    const plain: Record<string, PlainValue> = {};
-    const tags: TagFn[] = [];
-    for (const [name, value] of Object.entries(values ?? {})) {
-      if (typeof value === "function") tags.push(value);
-      else plain[name] = value;
-    }
-    return tags.reduce<unknown>((chunks, tag) => tag(chunks), echo(key, plain));
-  };
   return { useTranslations: () => t, useLocale: () => "en" };
 });
 
@@ -94,7 +84,7 @@ const cta = (c: HTMLElement) => {
   return buttons[buttons.length - 1];
 };
 
-/** Tick the rules box and then every document box, in order. */
+/** Tick every row of the Required consent section: documents, then rules. */
 function agreeToEverything(container: HTMLElement) {
   for (const box of boxes(container)) fireEvent.click(box);
 }
@@ -104,8 +94,8 @@ beforeEach(() => {
   waitlistMutate.mockReset();
 });
 
-describe("the ticked documents reach the enrolment request", () => {
-  it("sends them on a signup", () => {
+describe("the agreed documents reach the enrolment request", () => {
+  it("sends the whole required list on a signup, from one tick", () => {
     const { container } = render(
       <SignupPanel
         product={PRODUCT}
@@ -134,7 +124,7 @@ describe("the ticked documents reach the enrolment request", () => {
     });
   });
 
-  it("sends them on a waitlist join too", () => {
+  it("sends the whole list on a waitlist join too", () => {
     const { container } = render(
       <SignupPanel
         product={PRODUCT}

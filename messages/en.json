@@ -379,7 +379,7 @@
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
         "consents": "Required consents",
-        "consentsDescription": "Documents a parent must agree to before they can sign up. Most products require none.",
+        "consentsDescription": "Documents a parent must agree to before they can sign up.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -1737,8 +1737,7 @@
       "ctaSubmitting": "One moment…",
       "ctaAddGamer": "Add a gamer to continue",
       "ctaAllSet": "You’re all set",
-      "ctaAgreeRules": "Agree to the rules",
-      "ctaAgreeConsents": "Agree to the required documents",
+      "ctaAgreeConsent": "Give the required consent",
       "ctaWaitlist": "Join the waitlist",
       "ctaSignIn": {
         "consumer_club": "Sign in to register",
@@ -1757,7 +1756,6 @@
       "nonCustomerNote": "Only parents can register a gamer here.",
       "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
-      "rulesHeading": "The Rules",
       "rules": {
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
@@ -1766,8 +1764,8 @@
         "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
       },
       "consents": {
-        "heading": "Required documents",
-        "item": "I have read and agree to the <link>{document}</link>."
+        "heading": "Required consent",
+        "agree": "I have read and agree to these documents."
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Who are you enrolling?",
@@ -3506,6 +3504,9 @@
     "names": {
       "robloxProgrammeTerms": "Roblox Programme Terms & Conditions",
       "robloxPrivacyPolicy": "Roblox Programme Privacy Policy"
+    },
+    "bundles": {
+      "robloxProgramme": "Roblox Programme documents"
     }
   }
 }

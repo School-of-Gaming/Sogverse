@@ -379,7 +379,7 @@
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
         "consents": "Vaaditut suostumukset",
-        "consentsDescription": "Asiakirjat, jotka vanhemman on hyväksyttävä ennen ilmoittautumista. Useimmat tuotteet eivät vaadi mitään.",
+        "consentsDescription": "Asiakirjat, jotka vanhemman on hyväksyttävä ennen ilmoittautumista.",
         "visibility": "Listaus",
         "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
       },
@@ -1737,8 +1737,7 @@
       "ctaSubmitting": "Hetki…",
       "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
       "ctaAllSet": "Olet valmis",
-      "ctaAgreeRules": "Hyväksy säännöt",
-      "ctaAgreeConsents": "Hyväksy vaaditut asiakirjat",
+      "ctaAgreeConsent": "Anna vaadittu suostumus",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaSignIn": {
         "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
@@ -1757,7 +1756,6 @@
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
       "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
       "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
-      "rulesHeading": "Säännöt",
       "rules": {
         "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
         "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
@@ -1766,8 +1764,8 @@
         "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
       },
       "consents": {
-        "heading": "Vaaditut asiakirjat",
-        "item": "Olen lukenut seuraavan asiakirjan ja hyväksyn sen: <link>{document}</link>"
+        "heading": "Vaadittu suostumus",
+        "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne."
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Kenet ilmoitat?",
@@ -3506,6 +3504,9 @@
     "names": {
       "robloxProgrammeTerms": "Roblox-ohjelman käyttöehdot",
       "robloxPrivacyPolicy": "Roblox-ohjelman tietosuojaseloste"
+    },
+    "bundles": {
+      "robloxProgramme": "Roblox-ohjelman asiakirjat"
     }
   }
 }

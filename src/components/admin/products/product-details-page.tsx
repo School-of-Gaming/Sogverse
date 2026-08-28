@@ -37,7 +37,10 @@ import { ProductOverviewCard } from "@/components/public/products/product-overvi
 import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
-import { consentDocumentMeta } from "@/lib/constants/consent-documents";
+import {
+  consentDocumentMeta,
+  describeRequiredConsents,
+} from "@/lib/constants/consent-documents";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -319,6 +322,7 @@ function OperationalFacts({
   // checkboxes with, so the admin reading this row and the parent ticking the
   // box are looking at one name for one document.
   const tConsent = useTranslations("consentDocuments.names");
+  const tConsentBundle = useTranslations("consentDocuments.bundles");
 
   // Render a per-session fee from its stored cents. The state is derived from
   // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
@@ -486,19 +490,29 @@ function OperationalFacts({
             A slug this deploy cannot name renders as the raw slug, which is the
             same loud-not-broken answer the form's checkbox gives: registry rows
             arrive by migration and the name map ships with them, so an unnamed
-            slug is a defect worth seeing rather than a state worth hiding. */}
+            slug is a defect worth seeing rather than a state worth hiding.
+
+            Bundled documents are reported as the bundle, because that is the
+            unit the form offered — an admin who ticked one box should not read
+            two lines back and wonder what they picked. Anything outside a
+            bundle is still listed on its own. */}
         <Fact icon={FileCheck} label={t("detailsPage.fields.requiredConsents")}>
           {product.product_required_consents.length === 0 ? (
             <span className="text-muted-foreground">{t("consents.none")}</span>
           ) : (
             <ul>
-              {product.product_required_consents.map((consent) => {
-                const meta = consentDocumentMeta(consent.document_slug);
+              {describeRequiredConsents(
+                product.product_required_consents.map((c) => c.document_slug),
+              ).map((row) => {
+                if (row.kind === "bundle") {
+                  return (
+                    <li key={row.key}>{tConsentBundle(row.bundle.labelKey)}</li>
+                  );
+                }
+                const meta = consentDocumentMeta(row.slug);
                 return (
-                  <li key={consent.document_slug}>
-                    {meta === null
-                      ? consent.document_slug
-                      : tConsent(meta.nameKey)}
+                  <li key={row.key}>
+                    {meta === null ? row.slug : tConsent(meta.nameKey)}
                   </li>
                 );
               })}

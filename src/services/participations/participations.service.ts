@@ -12,6 +12,7 @@ import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
 import {
   parseJsonResponse,
+  readApiError,
   readErrorMessage,
 } from "@/lib/api/json-response";
 import {
@@ -872,9 +873,10 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Failed to start checkout"),
-      );
+      // An `ApiError` rather than a bare `Error`: the panel branches on the
+      // consent-refusal code this route can attach, and only this shape carries
+      // it. The message is unchanged either way.
+      throw await readApiError(response, "Failed to start checkout");
     }
     return parseJsonResponse(response, createParticipationResponse);
   }
@@ -886,9 +888,9 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Failed to join waitlist"),
-      );
+      // Same shape as the signup door above, and for the same reason: this
+      // route can refuse a stale consent list too.
+      throw await readApiError(response, "Failed to join waitlist");
     }
     return parseJsonResponse(response, joinWaitlistResponse);
   }

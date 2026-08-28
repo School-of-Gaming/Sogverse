@@ -27,6 +27,20 @@ interface RequiredConsentsScenarioMeta {
   documentSlugs: readonly string[];
 }
 
+// TEMP — strip before merge.
+//
+// The same scenario with filler stacked under the signup panel, so the rail is
+// unmistakably taller than a 1080p viewport and the two-end sticky clamp can be
+// judged by scrolling rather than by measurement. It exists to be looked at
+// once; nothing in the product depends on it, and the filler component it
+// renders goes with it.
+export const REQUIRED_CONSENTS_TALL_SCENARIO: RequiredConsentsScenarioMeta = {
+  slug: "required-consents-tall",
+  label: "Required consents — TEMPORARY tall-panel filler",
+  baseScenario: "consumer-club",
+  documentSlugs: ["roblox-programme-terms", "roblox-privacy-policy"],
+};
+
 export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {
   slug: "required-consents",
   /** Link text on the admin UI Previews page. Developer-facing English. */

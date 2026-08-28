@@ -18,7 +18,11 @@ import {
   REGION_LOCK_BASE_SCENARIO,
   findRegionLockScenario,
 } from "@/components/public/products/region-lock/region-lock-scenarios";
-import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
+import {
+  REQUIRED_CONSENTS_SCENARIO,
+  // TEMP — strip before merge.
+  REQUIRED_CONSENTS_TALL_SCENARIO,
+} from "@/components/public/products/required-consents-scenario";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -79,6 +83,18 @@ const SCENE_RENDERERS: Record<
         <ProductDetailScene
           scenario={REQUIRED_CONSENTS_SCENARIO.baseScenario}
           requiredConsentSlugs={REQUIRED_CONSENTS_SCENARIO.documentSlugs}
+        />
+      );
+    }
+    // TEMP — strip before merge. The same page with filler under the panel, so
+    // the sticky rail's two-end clamp can be judged by scrolling a rail that is
+    // taller than the window.
+    if (scenario === REQUIRED_CONSENTS_TALL_SCENARIO.slug) {
+      return (
+        <ProductDetailScene
+          scenario={REQUIRED_CONSENTS_TALL_SCENARIO.baseScenario}
+          requiredConsentSlugs={REQUIRED_CONSENTS_TALL_SCENARIO.documentSlugs}
+          tallFiller
         />
       );
     }

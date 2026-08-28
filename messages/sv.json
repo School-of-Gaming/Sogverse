@@ -379,7 +379,7 @@
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
         "consents": "Obligatoriska samtycken",
-        "consentsDescription": "Dokument som en förälder måste godkänna innan anmälan. De flesta produkter kräver inga.",
+        "consentsDescription": "Dokument som en förälder måste godkänna innan anmälan.",
         "visibility": "Listning",
         "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
@@ -1737,8 +1737,7 @@
       "ctaSubmitting": "Ett ögonblick…",
       "ctaAddGamer": "Lägg till en gamer först",
       "ctaAllSet": "Du är klar",
-      "ctaAgreeRules": "Godkänn reglerna",
-      "ctaAgreeConsents": "Godkänn de obligatoriska dokumenten",
+      "ctaAgreeConsent": "Ge det obligatoriska samtycket",
       "ctaWaitlist": "Gå med på väntelistan",
       "ctaSignIn": {
         "consumer_club": "Logga in för att anmäla",
@@ -1757,7 +1756,6 @@
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
       "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
       "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
-      "rulesHeading": "Regler",
       "rules": {
         "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
         "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
@@ -1766,8 +1764,8 @@
         "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende."
       },
       "consents": {
-        "heading": "Obligatoriska dokument",
-        "item": "Jag har läst och godkänner följande dokument: <link>{document}</link>"
+        "heading": "Obligatoriskt samtycke",
+        "agree": "Jag har läst och godkänner dessa dokument."
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Vem anmäler du?",
@@ -3506,6 +3504,9 @@
     "names": {
       "robloxProgrammeTerms": "Användarvillkor för Roblox-programmet",
       "robloxPrivacyPolicy": "Integritetspolicy för Roblox-programmet"
+    },
+    "bundles": {
+      "robloxProgramme": "Dokument för Roblox-programmet"
     }
   }
 }

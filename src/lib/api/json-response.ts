@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ApiError } from "./api-error";
 
 /**
  * Parse a JSON API response body against its contract schema.
@@ -18,7 +19,7 @@ export async function parseJsonResponse<T>(
   return schema.parse(await response.json());
 }
 
-const errorBody = z.object({ error: z.string() });
+const errorBody = z.object({ error: z.string(), code: z.string().optional() });
 
 /**
  * Read the `{ error: string }` message our API routes return on failure,
@@ -30,4 +31,25 @@ export async function readErrorMessage(
 ): Promise<string> {
   const parsed = errorBody.safeParse(await response.json().catch(() => null));
   return parsed.success ? parsed.data.error : fallback;
+}
+
+/**
+ * The same read, kept as an `ApiError` so the route's stable `code` survives
+ * the trip into the caller.
+ *
+ * For the callers that branch on *which* failure happened rather than only
+ * showing its message: a code is the one part of an error body a client may
+ * act on, and `readErrorMessage` throws it away. `ApiError` extends `Error`, so
+ * a caller still doing `err instanceof Error` is unaffected.
+ */
+export async function readApiError(
+  response: Response,
+  fallback: string
+): Promise<ApiError> {
+  const parsed = errorBody.safeParse(await response.json().catch(() => null));
+  return new ApiError(
+    parsed.success ? parsed.data.error : fallback,
+    response.status,
+    parsed.success ? parsed.data.code : undefined
+  );
 }

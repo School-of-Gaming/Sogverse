@@ -13,6 +13,7 @@ import {
   useJoinWaitlist,
   type CreateParticipationInput,
 } from "@/services/participations";
+import { isConsentRefusal } from "@/services/participations/consent-refusal";
 import { useUpdateProfile } from "@/services/users";
 import { purchaseShapeFor } from "./pricing-options";
 import type { RegionGate } from "./region-lock/region-gate";
@@ -76,6 +77,30 @@ interface SignupPanelProps {
   onLocationConfirmed: (confirmed: ConfirmedHomeLocation) => void;
 }
 
+/**
+ * What the panel says when an enrolment fails.
+ *
+ * Almost every refusal arrives as a sentence the database wrote for the parent
+ * to read — registration has not opened, the waitlist is off — and the panel
+ * shows it verbatim, which is the whole reason those two routes disclose their
+ * messages at all. The consent refusal is the exception: the route replaces it
+ * with a code (see `consent-refusal.ts`), the mutation hook answers by
+ * refetching the product so the newly required document appears, and the line
+ * beside the button falls back to the same generic one it already shows for
+ * anything with no message of its own. There is deliberately no bespoke copy
+ * for it — the useful half of the answer is the panel changing under the
+ * reader, not a sentence explaining a race they did not see.
+ */
+function failureMessage(error: unknown, fallback: string): string {
+  if (isConsentRefusal(error)) return fallback;
+  return error instanceof Error ? error.message : fallback;
+}
+
+const signupErrorMessage = (error: unknown) =>
+  failureMessage(error, "Could not sign up");
+const waitlistErrorMessage = (error: unknown) =>
+  failureMessage(error, "Could not join waitlist");
+
 export function SignupPanel({
   product,
   requiredConsentSlugs,
@@ -124,20 +149,19 @@ export function SignupPanel({
   const purchaseShape = purchaseShapeFor(fields.pricingOption);
 
   /**
-   * The ticked documents, in the product's own order and narrowed to what it
-   * actually requires.
+   * The documents the parent agreed to, in the product's own order.
    *
-   * Derived at click time from the required list rather than sent as the raw
-   * ticked set: a requirement dropped while this tab sat open would otherwise
-   * travel as a slug the product no longer asks for. The RPC ignores an extra
-   * slug anyway — this just keeps the request saying only what it means. The
-   * CTA is what stops a *short* list from ever being sent; the RPC refuses one
-   * regardless, which is the guarantee that matters.
+   * One tick covers the whole list, so this is the list itself — or nothing at
+   * all when the box is unticked, which the CTA already stops from being sent.
+   * Read from the required list at click time rather than from anything held
+   * beside it: the agreement is stamped with the set it was given for (see
+   * `useSignupPanelFields`), so a requirement that changed under a long-open
+   * tab has already dropped the tick, and this cannot send a slug the parent
+   * was not shown. The RPC refuses a short list regardless, which is the
+   * guarantee that matters.
    */
   const consentedDocuments = () =>
-    fields.requiredConsentSlugs.filter((slug) =>
-      fields.consentedSlugs.has(slug),
-    );
+    fields.consentsAgreed ? [...fields.requiredConsentSlugs] : [];
 
   const handleSubmit = () => {
     if (!fields.selectedParticipantId || !purchaseShape) return;
@@ -181,8 +205,10 @@ export function SignupPanel({
         setCommitting(false);
       },
       onError: (err) => {
+        // Released on every error outcome, which is what makes the retry the
+        // refetch below sets up actually clickable.
         setCommitting(false);
-        setSubmitError(err instanceof Error ? err.message : "Could not sign up");
+        setSubmitError(signupErrorMessage(err));
       },
     });
   };
@@ -205,9 +231,7 @@ export function SignupPanel({
         },
         onError: (err) => {
           setCommitting(false);
-          setSubmitError(
-            err instanceof Error ? err.message : "Could not join waitlist",
-          );
+          setSubmitError(waitlistErrorMessage(err));
         },
       },
     );

@@ -65,9 +65,9 @@ describe("loadMessages", () => {
     expect(messages.metadata.pages.about).toBe(tlh.metadata.pages.about);
     expect(messages.header.nav).toEqual(tlh.header.nav);
     // The consent *sentence* is ordinary product copy, unlike the document
-    // names it points at.
-    expect(messages.productDetail.signupPanel.consents.item).toBe(
-      tlh.productDetail.signupPanel.consents.item,
+    // names and the bundle label it points at.
+    expect(messages.productDetail.signupPanel.consents.agree).toBe(
+      tlh.productDetail.signupPanel.consents.agree,
     );
   });
 

@@ -332,6 +332,31 @@ describe("POST /api/participations/waitlist", () => {
     expect(args.p_consented_documents).toEqual(["roblox-programme-terms"]);
   });
 
+  it("does not disclose the consent refusal, and answers with a code instead", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message:
+          "this product requires consent to roblox-privacy-policy before enrolling",
+      },
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+    );
+    const data = await res.json();
+
+    // Same one exception the signup door makes: this route discloses the RPC's
+    // refusals, and this refusal names raw slugs about a page the reader is no
+    // longer looking at.
+    expect(res.status).toBe(400);
+    expect(data.error).not.toContain("roblox-privacy-policy");
+    expect(data.error).not.toContain("requires consent");
+    expect(data.code).toBe("consent_documents_required");
+  });
+
   it("is idempotent — returns the existing row's position when the gamer is already on the waitlist", async () => {
     mockAuthenticatedCustomer();
     // The RPC itself short-circuits on existing participation rows; the route

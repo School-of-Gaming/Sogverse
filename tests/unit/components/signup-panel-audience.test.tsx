@@ -88,8 +88,8 @@ function panel({
     // No enrolment conditions: the ordinary product, which is what every
     // assertion in this file is about.
     requiredConsentSlugs: [],
-    consentedSlugs: new Set<string>(),
-    onConsentChange: () => {},
+    consentsAgreed: false,
+    onConsentsAgreedChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
