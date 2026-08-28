@@ -13,11 +13,17 @@ import { CheckboxRow } from "@/components/ui/checkbox-row";
  * surface cannot collide.
  */
 function textOfReferenced(element: Element, attribute: string): string | null {
-  const id = element.getAttribute(attribute);
-  if (id === null) return null;
-  const target = document.getElementById(id);
-  if (target === null) throw new Error(`${attribute} points at no element`);
-  return target.textContent;
+  const ids = element.getAttribute(attribute);
+  if (ids === null) return null;
+  return ids
+    .split(" ")
+    .filter(Boolean)
+    .map((id) => {
+      const target = document.getElementById(id);
+      if (target === null) throw new Error(`${attribute} points at no element`);
+      return target.textContent;
+    })
+    .join(" ");
 }
 
 describe("CheckboxRow", () => {
@@ -67,34 +73,41 @@ describe("CheckboxRow", () => {
 
     const box = screen.getByRole("checkbox");
 
-    // The chip, the hint and the trailing status all sit inside the same
-    // <label>, so without the explicit labelledby the browser would fold every
-    // one of them into the name.
+    // The name is the sentence alone: the chip, the hint and the trailing
+    // status all sit inside the same <label>, so without the explicit
+    // labelledby the browser would fold every one of them into it.
     expect(textOfReferenced(box, "aria-labelledby")).toBe(
       "Send me news about clubs.",
     );
+    // **Both the hint and the chip are handed back as the description**, and
+    // the chip half is the load-bearing one: there is a single visual shape,
+    // so "Optional" is the entire distinction between this row and a gate. A
+    // chip that only rendered would leave a screen-reader user with no way to
+    // tell which rows they may skip. Trailing status stays out — it is a
+    // transient save state, not something that qualifies the question.
     expect(textOfReferenced(box, "aria-describedby")).toBe(
-      "You can change this any time in your settings.",
+      "You can change this any time in your settings. Optional",
     );
   });
 
-  it("renders the tag's word, which is the only thing distinguishing a required row from an optional one", () => {
-    // There is one visual shape, so a reader — and a screen reader walking the
-    // row — has nothing but this word to go on. A regression that dropped it
-    // would leave two identical rows saying nothing about which gates the CTA.
+  it("announces the tag even on a row with no hint", () => {
     render(
       <CheckboxRow
         checked={false}
         onCheckedChange={() => undefined}
-        label="I agree to the policy."
-        tag="Required"
+        label="Share my email with our partner."
+        tag="Optional"
       />,
     );
 
-    expect(screen.getByText("Required")).not.toBeNull();
+    const box = screen.getByRole("checkbox");
+    expect(screen.getByText("Optional")).not.toBeNull();
+    expect(textOfReferenced(box, "aria-describedby")).toBe("Optional");
   });
 
-  it("points at no description when there is no hint", () => {
+  it("points at no description when there is neither hint nor tag", () => {
+    // An empty `aria-describedby` is a dangling reference rather than an absent
+    // one, so a row with nothing to describe must carry no attribute at all.
     render(
       <CheckboxRow
         checked={false}

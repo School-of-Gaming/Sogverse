@@ -97,7 +97,6 @@
     "roleGedu": "Gedu",
     "gedus": "Gedupu’",
     "consentTag": {
-      "required": "poQlu’",
       "optional": "ra’be’lu’"
     }
   },
@@ -583,7 +582,7 @@
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "DawIvchugh, ilmoittautumisDaq ra’be’lu’bogh tlhob chel: boqwI’maj Lynx Educate-vaD De’chaj lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
+            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: boqwI’maj Lynx Educate-vaD De’chaj lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
           }
         }
       },

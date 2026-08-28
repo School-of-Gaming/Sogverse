@@ -15,9 +15,7 @@ import { useLocale } from "next-intl";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { AudienceSection } from "./sections/audience-section";
 import { BillingSection } from "./sections/billing-section";
-import {
-  ConsentsSection,
-} from "./sections/consents-section";
+import { ConsentsSection } from "./sections/consents-section";
 import { FeesSection } from "./sections/fees-section";
 import { IdentitySection } from "./sections/identity-section";
 import { RegistrationSection } from "./sections/registration-section";

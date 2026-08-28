@@ -83,7 +83,11 @@ export function robloxServiceModule() {
  */
 export function marketingConsentsServiceModule() {
   return {
-    useMyMarketingConsents: () => ({ data: [] }),
+    // `isError` is stated rather than left off: a failed read is its own state
+    // on the settings page (the boxes render enabled against an empty baseline
+    // instead of staying disabled), so a factory that omitted the flag would
+    // leave every consumer relying on `undefined` reading as false.
+    useMyMarketingConsents: () => ({ data: [], isError: false }),
     useMarketingConsentsForCustomer: () => ({ data: [] }),
     useSetMarketingConsent: () => ({ mutateAsync: vi.fn() }),
   };

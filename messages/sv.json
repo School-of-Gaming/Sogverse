@@ -104,7 +104,6 @@
     "roleGedu": "Gedu",
     "gedus": "Geduer",
     "consentTag": {
-      "required": "Obligatoriskt",
       "optional": "Valfritt"
     }
   },

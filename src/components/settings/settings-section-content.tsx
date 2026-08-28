@@ -38,10 +38,20 @@ import {
 } from "@/services/marketing-consents";
 import {
   isGamerProfile,
+  type MarketingConsent,
   type MarketingConsentType,
   type ProfileUpdate,
   type SpokenLanguageCode,
 } from "@/types";
+
+/**
+ * The baseline a failed marketing-consent read falls back to: nothing granted.
+ *
+ * Module-level so it is one stable array rather than a fresh one per render —
+ * the value is read during render and never mutated, and a new identity each
+ * time is churn with no reader.
+ */
+const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
 
 /**
  * A keyed location read, as the picker's own value shape. The two are already
@@ -245,12 +255,38 @@ export function SettingsSectionContent({
   // and holds no grant for `anon`, so a caller that cannot promise a customer
   // session must not make it.
   // ---------------------------------------------------------------------
-  const { data: marketingConsents } = useMyMarketingConsents({
-    enabled: isParent,
-  });
+  const { data: marketingConsentRows, isError: marketingReadFailed } =
+    useMyMarketingConsents({ enabled: isParent });
   const setMarketingConsent = useSetMarketingConsent();
 
-  /** What the database currently holds. A consent with no row at all is a no. */
+  /**
+   * The baseline the boxes render from and a save diffs against.
+   *
+   * **A failed read resolves to "nothing granted" rather than to "not known
+   * yet".** The two states are the same `undefined` from the query's data, and
+   * collapsing them left a parent staring at two boxes disabled forever with
+   * nothing saying why — a dead control is a worse answer than a wrong-looking
+   * one. So on an error the group renders unticked and *usable*, and the
+   * ordinary change-only save logic runs against that empty baseline.
+   *
+   * **What makes an assumed-empty baseline safe is the change-only save.** An
+   * untouched box equals the assumed baseline, so it is not written at all: a
+   * parent who granted a consent months ago, hits a network blip today, and
+   * saves an unrelated name change is not silently withdrawn — nothing about
+   * their consents is sent. Only a box they actually moved is written, and it is
+   * written as shown, because submitting the form is the parent saying the UI
+   * state in front of them is what they want on file. Ticking something they
+   * already held is then a no-op at the database, which the RPC handles by
+   * appending no event.
+   *
+   * The loading path is untouched and still `undefined`: the boxes stay disabled
+   * until the seed lands, which guards an edit/seed race rather than an error.
+   */
+  const marketingConsents = marketingReadFailed
+    ? NO_MARKETING_CONSENTS
+    : marketingConsentRows;
+
+  /** What the baseline says is granted. A consent with no row at all is a no. */
   const savedMarketingGranted = (consentType: MarketingConsentType) =>
     marketingConsents?.some(
       (row) => row.consent_type === consentType && row.granted,
@@ -322,9 +358,13 @@ export function SettingsSectionContent({
       // unchanged one, but a no-op still costs a round trip and still writes a
       // "source: settings" touch nobody made.
       //
-      // Skipped entirely while the read is unresolved: the boxes were disabled,
+      // Skipped entirely while the read is UNRESOLVED: the boxes were disabled,
       // so there are no edits, and comparing against a seed of `false` would
-      // manufacture a write for a parent who is already opted in.
+      // manufacture a write for a parent who is already opted in. A read that
+      // FAILED is a different case and passes this gate deliberately — its
+      // baseline is the empty one above, and the change-only comparison is what
+      // keeps that safe: an untouched box matches the assumed baseline and is
+      // never sent, so only a box the parent actually moved is written.
       //
       // **A refusal here throws into the catch below**, which is the deliberate
       // partial-failure shape: the profile half has already saved, so the
@@ -333,15 +373,28 @@ export function SettingsSectionContent({
       // edits are local and a failed write leaves them untouched), so pressing
       // Save again re-attempts exactly the consents that still differ. The
       // profile update re-running with identical values is harmless.
+      //
+      // **The refusal is re-thrown as our own translated sentence**, and that is
+      // the point of the inner catch. These are `.rpc()` calls, so a failure
+      // arrives as a PostgrestError carrying raw Postgres English — a guard's
+      // message, a constraint name — and the catch below prints an error's
+      // `message` verbatim. Showing a parent "new row violates row-level
+      // security policy" is worse than useless: it is untranslated, it means
+      // nothing to them, and it leaks the shape of the schema. The original is
+      // kept as `cause` so it still reaches a console or a report.
       if (isParent && marketingConsents !== undefined) {
-        for (const consentType of MARKETING_CONSENT_ORDER) {
-          const next = marketingGranted(consentType);
-          if (next === savedMarketingGranted(consentType)) continue;
-          await setMarketingConsent.mutateAsync({
-            consentType,
-            granted: next,
-            source: "settings",
-          });
+        try {
+          for (const consentType of MARKETING_CONSENT_ORDER) {
+            const next = marketingGranted(consentType);
+            if (next === savedMarketingGranted(consentType)) continue;
+            await setMarketingConsent.mutateAsync({
+              consentType,
+              granted: next,
+              source: "settings",
+            });
+          }
+        } catch (consentError: unknown) {
+          throw new Error(t('failedToUpdateProfile'), { cause: consentError });
         }
       }
 

@@ -4,6 +4,7 @@ import type { Database } from "@/types/database.types";
 import {
   accessTokenFor,
   callRpcRaw,
+  callServiceRoleRpcResult,
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
@@ -668,6 +669,137 @@ describe("marketing consents (00220)", () => {
       expect(new Set((res.data ?? []).map((r) => r.product_id))).toEqual(
         new Set(ALL_TEST_PRODUCTS),
       );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // The registration writer (00221)
+  // -------------------------------------------------------------------------
+
+  /**
+   * The register route's writer, and the one function in this system that names
+   * its subject in an argument.
+   *
+   * It exists because the route used to write the state row and its event row
+   * as two PostgREST calls, which is two transactions — a failed second one
+   * left `marketing_consents` asserting an answer `marketing_consent_events`
+   * could not corroborate, on the one consent whose whole value is provable
+   * provenance. So the pair is one function call now, and the cases below pin
+   * the three properties that buys: both rows or neither, a retry that records
+   * nothing twice, and — the load-bearing one — that a parameter naming the
+   * subject is unreachable by anything but `service_role`.
+   */
+  describe("record_registration_marketing_consent (00221)", () => {
+    function record(
+      client: SupabaseClient<Database>,
+      granted: boolean,
+      // Widened to `string`: the default narrows to the seeded customer's
+      // literal type, and three cases here deliberately aim it elsewhere.
+      customerId: string = TEST_IDS.CUSTOMER,
+    ) {
+      return client.rpc("record_registration_marketing_consent", {
+        p_customer_id: customerId,
+        p_granted: granted,
+      });
+    }
+
+    it("writes the state and its event together, sourced to the registration", async () => {
+      const res = await record(admin, true);
+      expect(res.error).toBeNull();
+
+      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
+        { consent_type: SOG, granted: true },
+      ]);
+      // The source is not a parameter — the function hardcodes it — which is
+      // what makes this provenance unforgeable rather than merely unclaimed.
+      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
+        { consent_type: SOG, granted: true, source: "registration" },
+      ]);
+    });
+
+    it("records a decline, because the form asked and an absent row would not say so", async () => {
+      const res = await record(admin, false);
+      expect(res.error).toBeNull();
+
+      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
+        { consent_type: SOG, granted: false },
+      ]);
+      // A first explicit "no" is a move away from "never asked", so it earns
+      // its event exactly as a grant does.
+      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
+        { consent_type: SOG, granted: false, source: "registration" },
+      ]);
+    });
+
+    it("appends nothing on a retry of the same answer", async () => {
+      expect((await record(admin, true)).error).toBeNull();
+      expect((await record(admin, true)).error).toBeNull();
+
+      // The route's two blind writes could not promise this: a retried request
+      // would have appended a second event for a state that never moved, and
+      // the log would answer "how often did this parent change their mind" with
+      // a number made of retries.
+      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
+        { consent_type: SOG, granted: true, source: "registration" },
+      ]);
+    });
+
+    it("touches only our own list, never the partner's", async () => {
+      expect((await record(admin, true)).error).toBeNull();
+
+      // The consent type is hardcoded, so this function cannot stamp a Lynx
+      // opt-in as having been given on a sign-up form that never asked for one.
+      const state = await stateFor(TEST_IDS.CUSTOMER);
+      expect(state.map((row) => row.consent_type)).toEqual([SOG]);
+    });
+
+    it("refuses a profile that is not a customer", async () => {
+      // The invariant assert_role gives the self-service writer, read off the
+      // named profile because there is no session here to ask about. A gedu's
+      // relationship with us is a contract, not a mailing list.
+      const res = await record(admin, true, TEST_IDS.GEDU);
+      expect(res.error).not.toBeNull();
+      expect(await stateFor(TEST_IDS.GEDU)).toEqual([]);
+
+      const child = await record(admin, true, TEST_IDS.GAMER);
+      expect(child.error).not.toBeNull();
+      expect(await stateFor(TEST_IDS.GAMER)).toEqual([]);
+    });
+
+    it("refuses a missing answer", async () => {
+      // Raw, because the generated signature cannot express the NULL that is
+      // the input under test, and casting around it would be the suppression
+      // the code-style rule warns about. `callServiceRoleRpcResult` is the
+      // member of that family for a service-role-only function whose REFUSAL is
+      // what is being asserted.
+      const res = await callServiceRoleRpcResult(
+        "record_registration_marketing_consent",
+        { p_customer_id: TEST_IDS.CUSTOMER, p_granted: null },
+      );
+      expect(res.code).toBe(CHECK_VIOLATION);
+      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([]);
+    });
+
+    // **The one that matters.** Every other function in this system takes its
+    // subject from auth.uid(); this one takes it as an argument, because no
+    // session exists when the register route calls it. That makes the grant the
+    // whole of its access control: a reachable role could otherwise write a
+    // registration-sourced consent for any customer id it liked.
+    it("is unreachable by every role a browser can hold", async () => {
+      for (const [role, client] of [
+        ["customer", customer],
+        ["gedu", gedu],
+        ["gamer", gamer],
+        ["admin", adminAuth],
+        ["anon", anon],
+      ] as const) {
+        const res = await record(client, true, TEST_IDS.CUSTOMER_2);
+        expect(res.error, `${role} could call it`).not.toBeNull();
+        expect(res.error?.code, `${role} was not refused execute`).toBe(
+          FORBIDDEN,
+        );
+      }
+      expect(await stateFor(TEST_IDS.CUSTOMER_2)).toEqual([]);
     });
   });
 });

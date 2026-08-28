@@ -503,11 +503,12 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 // to agree to becomes another row in this section, above the rules row; it does
 // not become a section of its own.
 //
-// **Every consent row wears a chip, and the chip is the only thing saying which
-// rows gate the button.** The optional marketing row below the section is the
-// same bordered control as the gates above it — the border draws the click
-// target, not the stakes — so "Required" and "Optional" are what a reader (and
-// a screen reader) tells them apart by.
+// **One consent row wears a chip, and it is the one that does NOT gate the
+// button.** The optional marketing row below the section is the same bordered
+// control as the gates above it — the border draws the click target, not the
+// stakes — so the info-toned "Optional" is what a reader (and, through
+// `aria-describedby`, a screen reader) tells them apart by. Every gate is
+// unmarked, because a gate is the ordinary thing to find here.
 //
 // **Actions live in the sections, never in the CTA.** A section that needs
 // something offers its own affordance: the dashed add-a-gamer row inside the
@@ -1108,22 +1109,21 @@ function SignupForm(
  * CTA points at, so a reader following the button lands on a section rather
  * than on one of two boxes they cannot tell apart.
  *
- * **The heading says "Consent" and not "Required consent", because every row
- * now says which it is.** The word "Required" moved from the heading onto the
- * rows themselves, where it can also stand beside the "Optional" chip on the
- * marketing row below and be read as the contrast it is. A heading claiming
- * "required" over a stack whose rows carry their own chips would be saying it
- * twice in the section and not at all outside it.
+ * **The heading says "Consent" and not "Required consent", because the rows
+ * below it are no longer the only consent rows on the panel.** The optional
+ * marketing row sits just outside this section wearing the same border, so a
+ * heading claiming "required" would be the only thing separating them and it
+ * would sit above one of the two rather than on either. The distinction lives on
+ * the rows instead — and on exactly one of them: the optional row carries the
+ * word, every gate carries nothing.
  *
  * **The rules row carries no heading of its own.** It used to be its own titled
  * section, and beside a second titled section of identically-shaped boxes that
  * title stopped meaning anything: two headings, two boxes, one act. What the
  * heading was doing — giving the CTA's prompt a visible referent — is now done
- * by the section's own, so the row is left to be a sentence and a checkbox. It
- * carries the "Required" chip like every other row here: it sits in the same
- * stack, under the same heading, at the same spacing, and it gates the CTA
- * exactly as they do, so singling it out by omission would be a distinction
- * with nothing behind it.
+ * by the section's own, so the row is left to be a sentence and a checkbox. Like
+ * every gate here it is unchipped: it sits in the same stack, under the same
+ * heading, at the same spacing, and it gates the CTA exactly as they do.
  *
  * **And its sentence names its own document, exactly as a bundle's does.** The
  * rules row is a consent to our Anti-Bullying and Discipline policy, so the
@@ -1285,13 +1285,15 @@ function RequiredConsentSection({
  *   section is one act — everything a parent must agree to, which the CTA names
  *   as one step — and a row inside it that did not gate the button would be a
  *   box the reader cannot tell from the ones that do.
- * - **It says "Optional" on the row itself**, in the chip every row in the
- *   consent area now carries. This used to be done by *withholding* the border
- *   the required rows wear — a plain line beside boxed gates, visibly lighter.
- *   That is gone: the border marks the click target, not the stakes, so
+ * - **It says "Optional" on the row itself**, in the one chip the consent area
+ *   carries — every gate above it is unmarked, so this word is the exception
+ *   rather than one label among many. This used to be done by *withholding* the
+ *   border the required rows wear — a plain line beside boxed gates, visibly
+ *   lighter. That is gone: the border marks the click target, not the stakes, so
  *   spending it on weight left the lighter rows reading as gates that had
  *   failed to render, and left the distinction invisible to anyone not looking
- *   at the screen. A word says it to everybody.
+ *   at the screen. A word in the row's accessible description says it to
+ *   everybody.
  * - **It says it is optional in its own words** too, under the sentence, and names
  *   where the answer can be changed later — because it *can* be, which is the
  *   deepest difference between this and everything above it. A required consent
@@ -1437,12 +1439,12 @@ function ConsentSentenceLink({
  * tell our rules from a product's documents by their treatment, only by what
  * they say.
  *
- * **The chip is on every row in this section, including the rules row.** It
- * carries the whole of the required/optional distinction now: the row and the
- * optional marketing row beneath the section are the same control wearing the
- * same border, because the border marks the click target rather than the
- * stakes. A gate with no chip beside a chipped one would read as the lighter of
- * the two, which is the reverse of the truth.
+ * **No chip, and that is what says "required".** Every row here is a gate, and
+ * gates are the ordinary case in this section — the exception is the optional
+ * marketing row below it, which is the only row that carries a word. Labelling
+ * both kinds was tried and made a column of repeated chips that wrapped badly
+ * at rail width and told a reader nothing they could act on; one marked
+ * exception among unmarked defaults says the same thing in one word.
  *
  * `sentence` takes a node rather than a string because a consent sentence
  * carries its own links inline — a bundle's documents, the rules row's policy,
@@ -1459,11 +1461,9 @@ function ConsentRow({
   onAgreedChange: (next: boolean) => void;
   sentence: React.ReactNode;
 }) {
-  const tTag = useTranslations("common.consentTag");
   return (
     <CheckboxRow
       size="xs"
-      tag={tTag("required")}
       checked={agreed}
       onCheckedChange={onAgreedChange}
       label={<span className="text-muted-foreground">{sentence}</span>}

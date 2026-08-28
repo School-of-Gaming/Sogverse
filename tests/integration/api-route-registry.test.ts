@@ -447,7 +447,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — marketing_consents and marketing_consent_events carry no Data API write grant at all, and set_marketing_consent refuses the 'registration' source precisely so that provenance can only be claimed by this route with the service-role client",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here",
     handlers: {
       POST: {
         posture: {

@@ -179,7 +179,7 @@ describe("a product that asks for a partner's marketing", () => {
     expect(rows(container)[2].contains(boxes[2])).toBe(true);
   });
 
-  it("labels every row in words — Required on the gates, Optional on the ask", () => {
+  it("marks only the ask — the gates carry no chip at all", () => {
     const { container } = render(
       <SignupPanelView
         {...asking({
@@ -189,18 +189,35 @@ describe("a product that asks for a partner's marketing", () => {
       />,
     );
 
-    // **The chips are the whole of the distinction now.** Every consent row is
+    // **One marked exception among unmarked defaults.** Every consent row is
     // the same bordered control — the border marks the click target, not the
-    // stakes — so a parent who cannot tell the bundle and our rules from the
-    // partner's mailing list has nothing else to go on, and a regression that
-    // dropped a chip would be invisible to every other assertion in this file.
-    // The rules row is chipped too: it sits in the same stack, under the same
-    // heading, and gates the CTA exactly as the bundle does.
+    // stakes — so this single word is all a parent has to tell the partner's
+    // mailing list from the two rows holding the button. Chipping the gates too
+    // was tried and made a column of repeated words that wrapped badly at rail
+    // width; a gate is the ordinary thing to find here, so it goes unmarked.
     const [bundle, rules, marketing] = rows(container);
-    expect(bundle.textContent).toContain("required");
-    expect(rules.textContent).toContain("required");
+    expect(bundle.textContent).not.toContain("optional");
+    expect(rules.textContent).not.toContain("optional");
     expect(marketing.textContent).toContain("optional");
-    expect(marketing.textContent).not.toContain("required");
+    // Nothing anywhere in the panel claims "required" any more — the heading
+    // dropped the word when the chip took over the job.
+    expect(container.textContent).not.toContain("required");
+  });
+
+  it("announces the Optional chip, so the distinction is not screen-only", () => {
+    const { container } = render(<SignupPanelView {...asking()} />);
+
+    // The chip is the whole distinction, so a chip nobody reads out is a
+    // distinction a screen-reader user does not have. It rides in the box's
+    // `aria-describedby` beside the hint.
+    const box = checkboxes(container)[1];
+    const described = (box.getAttribute("aria-describedby") ?? "")
+      .split(" ")
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? "")
+      .join(" ");
+    expect(described).toContain("optional");
+    expect(described).toContain("hint");
   });
 
   it("names the partner as a link, in a new tab", () => {

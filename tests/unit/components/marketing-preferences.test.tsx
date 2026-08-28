@@ -49,13 +49,16 @@ import type { MarketingConsent, MarketingConsentType, Profile } from "@/types";
 // The services, stood in for. `mine` and `forCustomer` are separate handles
 // because the two surfaces read different queries and one test renders both.
 // --------------------------------------------------------------------------
-const mine: { data: MarketingConsent[] | undefined } = { data: [] };
+const mine: { data: MarketingConsent[] | undefined; isError: boolean } = {
+  data: [],
+  isError: false,
+};
 const forCustomer: { data: MarketingConsent[] | undefined } = { data: [] };
 const setConsentAsync = vi.fn();
 const updateProfileAsync = vi.fn();
 
 vi.mock("@/services/marketing-consents", () => ({
-  useMyMarketingConsents: () => ({ data: mine.data }),
+  useMyMarketingConsents: () => ({ data: mine.data, isError: mine.isError }),
   useMarketingConsentsForCustomer: () => ({ data: forCustomer.data }),
   useSetMarketingConsent: () => ({ mutateAsync: setConsentAsync }),
 }));
@@ -112,6 +115,23 @@ function renderSettings() {
 }
 
 /**
+ * Re-render after changing `mine.data`, standing in for the query invalidation
+ * a successful write triggers.
+ *
+ * The mocked hook reads the handle afresh on every render, but nothing re-runs
+ * the tree when the handle is reassigned — so without this the component keeps
+ * the seed it was last rendered with, and a "what does a second Save send"
+ * assertion would be measuring a stale baseline rather than the real one.
+ */
+function reseed(view: ReturnType<typeof renderIntl>) {
+  view.rerender(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <SettingsSectionContent />
+    </NextIntlClientProvider>,
+  );
+}
+
+/**
  * The two marketing boxes, in render order (ours, then the partner's).
  *
  * Read off the DOM rather than by test id, and deliberately *not* by taking
@@ -132,12 +152,15 @@ const saveButton = () => screen.getByRole("button", { name: /save changes/i });
 const GROUP_TITLE = messages.settings.marketing.title;
 const SOG_LABEL = messages.settings.marketing.schoolOfGaming;
 const PROFILE_SAVED = messages.settings.profileUpdated;
+/** The one sentence a failed save shows, profile half or consent half. */
+const PROFILE_SAVE_FAILED = messages.settings.failedToUpdateProfile;
 const NOT_GRANTED = messages.admin.users.marketing.notGranted;
 const GRANTED = messages.admin.users.marketing.granted;
 
 beforeEach(() => {
   vi.clearAllMocks();
   mine.data = [];
+  mine.isError = false;
   forCustomer.data = [];
   auth.profile = createMockProfile();
   updateProfileAsync.mockResolvedValue(undefined);
@@ -180,6 +203,63 @@ describe("the marketing preferences group", () => {
     renderSettings();
 
     for (const box of marketingBoxes()) expect(box.disabled).toBe(true);
+  });
+
+  // --- A read that failed, which is NOT the same state as one still loading ---
+  //
+  // Both arrive as `undefined` data, and treating them alike left a parent
+  // looking at two boxes disabled forever with nothing saying why. A dead
+  // control is a worse answer than a usable one showing an assumed baseline, so
+  // a failed read renders unticked and enabled and the ordinary change-only
+  // save runs against "nothing granted".
+
+  describe("when the consent read fails", () => {
+    it("renders both boxes enabled and unticked", () => {
+      mine.data = undefined;
+      mine.isError = true;
+      renderSettings();
+
+      for (const box of marketingBoxes()) {
+        expect(box.disabled).toBe(false);
+        expect(box.checked).toBe(false);
+      }
+    });
+
+    // **The guardrail that makes the assumed baseline safe.** A parent who
+    // granted a consent months ago, hits a network blip today and saves an
+    // unrelated name change must not be silently withdrawn — and they are not,
+    // because an untouched box equals the assumed baseline and is never sent.
+    it("writes no consent at all when the boxes are left alone", async () => {
+      mine.data = undefined;
+      mine.isError = true;
+      renderSettings();
+
+      fireEvent.click(saveButton());
+
+      await screen.findByText(PROFILE_SAVED);
+      expect(updateProfileAsync).toHaveBeenCalledTimes(1);
+      expect(setConsentAsync).not.toHaveBeenCalled();
+    });
+
+    // A box the parent actually moved is written as shown: submitting the form
+    // is them saying the state in front of them is what they want on file. If
+    // they already held it, the RPC no-ops and appends no event.
+    it("writes exactly the consent the parent ticked", async () => {
+      mine.data = undefined;
+      mine.isError = true;
+      renderSettings();
+
+      fireEvent.click(marketingBoxes()[0]);
+      fireEvent.click(saveButton());
+
+      await screen.findByText(PROFILE_SAVED);
+      expect(setConsentAsync).toHaveBeenCalledTimes(1);
+      expect(setConsentAsync.mock.calls[0][0]).toEqual({
+        consentType: "school_of_gaming",
+        granted: true,
+        source: "settings",
+      });
+    });
   });
 
   it("keeps a tick as an unsaved edit — nothing is written until Save", () => {
@@ -258,22 +338,74 @@ describe("the marketing preferences group", () => {
     expect(order).toEqual(["profile", "consent"]);
   });
 
-  it("shows the failure and no success line when a consent write is refused, leaving the choice on screen to retry", async () => {
-    setConsentAsync.mockRejectedValue(new Error("consent refused"));
+  it("shows our own translated failure — never the database's English — and no success line", async () => {
+    // A consent write is an `.rpc()`, so a refusal arrives as a PostgrestError
+    // carrying raw Postgres English ("new row violates row-level security
+    // policy"). The card prints an error's `message` verbatim, so the loop
+    // re-throws its own translated sentence rather than letting that through:
+    // it is untranslated, it means nothing to a parent, and it leaks the shape
+    // of the schema.
+    setConsentAsync.mockRejectedValue(
+      new Error("new row violates row-level security policy"),
+    );
     mine.data = [];
     renderSettings();
 
     fireEvent.click(marketingBoxes()[0]);
     fireEvent.click(saveButton());
 
-    await screen.findByText("consent refused");
-    // The profile half did land; saying "saved" would be a card claiming more
+    await screen.findByText(PROFILE_SAVE_FAILED);
+    expect(
+      screen.queryByText(/row-level security/i),
+      "raw Postgres English reached the page",
+    ).toBeNull();
+    // The profile half did land; saying "saved" would be the card claiming more
     // than happened.
     expect(updateProfileAsync).toHaveBeenCalledTimes(1);
     expect(screen.queryByText(PROFILE_SAVED)).toBeNull();
     // The edit is local and the failed write left it alone, so Save again
     // re-attempts exactly the consent that is still outstanding.
     expect(marketingBoxes()[0].checked).toBe(true);
+  });
+
+  it("retries only what still differs after a partial failure", async () => {
+    // Ours is switched ON and the partner's OFF in one edit, so the save has
+    // two writes to make. The first lands; the second is refused.
+    mine.data = [consentRow("lynx_educate", true)];
+    setConsentAsync
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("refused"));
+    const view = renderSettings();
+
+    fireEvent.click(marketingBoxes()[0]); // school_of_gaming → true
+    fireEvent.click(marketingBoxes()[1]); // lynx_educate → false
+    fireEvent.click(saveButton());
+
+    await screen.findByText(PROFILE_SAVE_FAILED);
+    expect(setConsentAsync).toHaveBeenCalledTimes(2);
+
+    // **The retry is the claim under test.** The first write landed, so the
+    // query invalidation it triggered brings that consent back as the saved
+    // value — and the loop compares against the saved value, not against a
+    // "dirty" flag. So pressing Save again must re-send the failed one alone;
+    // re-sending the successful one would cost a round trip and stamp a second
+    // "source: settings" touch the parent never made.
+    mine.data = [
+      consentRow("school_of_gaming", true),
+      consentRow("lynx_educate", true),
+    ];
+    reseed(view);
+    setConsentAsync.mockClear();
+    setConsentAsync.mockResolvedValue(undefined);
+    fireEvent.click(saveButton());
+
+    await screen.findByText(PROFILE_SAVED);
+    expect(setConsentAsync).toHaveBeenCalledTimes(1);
+    expect(setConsentAsync.mock.calls[0][0]).toEqual({
+      consentType: "lynx_educate",
+      granted: false,
+      source: "settings",
+    });
   });
 
   it("disables the boxes while a save is in flight", async () => {

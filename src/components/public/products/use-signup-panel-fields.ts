@@ -183,10 +183,26 @@ export function useSignupPanelFields(
    *
    * `undefined` is not the same as an empty set: nothing is known yet. It reads
    * as "not granted" for rendering, because a box has to be drawn either way
-   * and unticked is the safe direction — a tick made before the answer lands is
-   * a grant the RPC treats as idempotent, while a *false* seed of a granted
-   * consent could only cause harm if the reader then acted on it, which is the
-   * exact case an edit outranking a late seed covers.
+   * and unticked is the safe direction — the box, its sentence and its hint are
+   * all on screen from the first frame, so only the tick can change when the
+   * answer lands, and nothing moves.
+   *
+   * **What that costs, stated plainly rather than argued away.** An edit
+   * outranks a late seed, and an edit is recorded by the box having been
+   * *touched*, not by its value differing from anything. So a parent who is
+   * already opted in, and who ticks and unticks this box before their account's
+   * answer arrives, submits an unticked box that counts as an edit — and the
+   * enrolment records a withdrawal of a consent they never meant to withdraw.
+   *
+   * This is the accepted behaviour, and the rule it follows is the one worth
+   * keeping: **what the box shows at submit is what is recorded.** The
+   * alternative — treating a touched box that happens to match the eventual seed
+   * as no answer at all — would mean the panel silently discarding an unticked
+   * box a parent was looking at when they pressed the button, which is the worse
+   * failure of the two and the harder one to explain. A consent is account-level
+   * and revocable from settings that evening, so the cost of the case above is a
+   * mailing list the parent can switch back on; the cost of the alternative is a
+   * control that does not do what it says while you watch it.
    */
   seededMarketingConsents: ReadonlySet<MarketingConsentType> | undefined,
 ): SignupPanelFields {

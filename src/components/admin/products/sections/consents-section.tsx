@@ -27,15 +27,17 @@ import type { FormState } from "../product-form-state";
  * sits directly after Registration timing and before Listing; the two of them
  * together are the signup act, in the order a parent meets them.
  *
- * **One section, not two, and the chips are why.** The conditions and the asks
+ * **One section, not two, and the chip is why.** The conditions and the asks
  * were two headed sections for a while, on the reasoning that a condition and a
  * question are what an admin most needs to be unable to confuse. The rows are
- * now the shared `CheckboxRow`, which wears one bordered shape everywhere —
- * the border marks the click target, not the stakes — so telling the two apart
- * fell to the "Required" / "Optional" chip each row carries. With the
- * distinction stated on every row, a second heading was repeating in a title
- * what the rows already say, and separating rows that an admin reads as one
- * list: everything this product will put in front of a parent, in the order
+ * now the shared `CheckboxRow`, which wears one bordered shape everywhere — the
+ * border marks the click target, not the stakes — so telling the two apart fell
+ * to the "Optional" chip, carried by the marketing rows and by nothing else. A
+ * required row is unmarked, because in a list of enrolment conditions a
+ * condition is the ordinary thing to find and the ask is the exception. With
+ * the exception marked on the row itself, a second heading was repeating in a
+ * title what the row already says, and separating rows that an admin reads as
+ * one list: everything this product will put in front of a parent, in the order
  * they will meet it.
  *
  * The difference itself has not softened. A required row is a *condition*: a
@@ -120,19 +122,72 @@ export function ConsentsSection({
 
   // Slugs the database knows and this deploy does not.
   //
-  // **Appending the drift rows at the END of the required run is load-bearing,
-  // not cosmetic.** They can only appear once the query resolves, and a late row
-  // inserted anywhere but the end of a run moves every row after it — plus the
-  // marketing rows, the Listing section and the submit button below. Appended,
-  // it grows into the slack the form already has and nothing painted moves. A
-  // later tidy-up that sorts this list alphabetically would reintroduce the
-  // shift silently, and would look like an improvement.
+  // **These are the only rows in the section that can arrive after first paint,
+  // which is why they are rendered LAST — after the marketing rows, not before
+  // them.** Everything else here is known from the bundle: the document
+  // registry and the marketing asks both ship in the deploy, so their rows are
+  // on screen in the first frame. A drift row appears a round trip later, and a
+  // late row inserted anywhere but the very end of the section pushes every row
+  // after it down — which, when the marketing rows sat below the required run,
+  // meant an admin's cursor moving off an optional-ask checkbox on the
+  // database's schedule. Rendered last it grows into the slack the form already
+  // has beneath the list, and nothing painted moves.
+  //
+  // So the section's order is: bundles, loose documents, marketing asks, drift.
+  // The first three are the reading order an admin wants — conditions, then
+  // questions — and the fourth is placed by this rule rather than by that one.
+  // A later tidy-up that groups the drift rows back with the other required
+  // rows, or sorts this list alphabetically, reintroduces the shift silently and
+  // will look like an improvement.
   const driftSlugs = (documents ?? [])
     .map((doc) => doc.slug)
     .filter((slug) => consentDocumentMeta(slug) === null);
 
   const setSlugs = (next: Set<string>) =>
     setState({ ...state, requiredConsentSlugs: next });
+
+  /**
+   * One document offered on its own — a loose slug, or a drift row.
+   *
+   * A function rather than a component so the two runs render identical rows
+   * from one definition while standing in different places in the section: they
+   * are the same control and must not be told apart, but only one of them can
+   * arrive late, and that is what decides where each goes.
+   */
+  const documentRow = (slug: string) => {
+    const meta = consentDocumentMeta(slug);
+    const checked = state.requiredConsentSlugs.has(slug);
+    const label = versionLabel(slug);
+    return (
+      <CheckboxRow
+        key={slug}
+        checked={checked}
+        onCheckedChange={() => {
+          const next = new Set(state.requiredConsentSlugs);
+          if (next.has(slug)) next.delete(slug);
+          else next.add(slug);
+          setSlugs(next);
+        }}
+        label={
+          <span className="flex min-w-0 items-baseline gap-3">
+            {/* A slug this deploy cannot name shows the slug itself: loud
+                rather than broken, and it tells whoever sees it exactly what to
+                report. Registry rows arrive by migration and the name map ships
+                in the same deploy, so this can only be a defect in the change
+                that added the row. */}
+            <span className="truncate font-medium">
+              {meta === null ? slug : tNames(meta.nameKey)}
+            </span>
+            {label !== null && (
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {label}
+              </span>
+            )}
+          </span>
+        }
+      />
+    );
+  };
 
   return (
     <FormSection
@@ -157,7 +212,6 @@ export function ConsentsSection({
           return (
             <CheckboxRow
               key={bundle.id}
-              tag={tTag("required")}
               checked={checked}
               onCheckedChange={() => {
                 const next = new Set(state.requiredConsentSlugs);
@@ -203,44 +257,13 @@ export function ConsentsSection({
             />
           );
         })}
-        {[...looseSlugs, ...driftSlugs].map((slug) => {
-          const meta = consentDocumentMeta(slug);
-          const checked = state.requiredConsentSlugs.has(slug);
-          const label = versionLabel(slug);
-          return (
-            <CheckboxRow
-              key={slug}
-              tag={tTag("required")}
-              checked={checked}
-              onCheckedChange={() => {
-                const next = new Set(state.requiredConsentSlugs);
-                if (next.has(slug)) next.delete(slug);
-                else next.add(slug);
-                setSlugs(next);
-              }}
-              label={
-                <span className="flex min-w-0 items-baseline gap-3">
-                  {/* A slug this deploy cannot name shows the slug itself: loud
-                      rather than broken, and it tells whoever sees it exactly
-                      what to report. Registry rows arrive by migration and the
-                      name map ships in the same deploy, so this can only be a
-                      defect in the change that added the row. */}
-                  <span className="truncate font-medium">
-                    {meta === null ? slug : tNames(meta.nameKey)}
-                  </span>
-                  {label !== null && (
-                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                      {label}
-                    </span>
-                  )}
-                </span>
-              }
-            />
-          );
-        })}
-        {/* The optional asks, after every condition. Same list, same control,
-            same border — the chip and the caption are what say a parent may
-            decline these and cannot decline the rows above. */}
+        {looseSlugs.map(documentRow)}
+        {/* The optional asks, after every document this deploy can name and
+            before the drift run below. Same list, same control, same border —
+            the caption and the one "Optional" chip are what say a parent may
+            decline these and cannot decline the rows above; a required row
+            carries no chip, because a condition is the ordinary thing to find
+            in this section. */}
         {ATTACHABLE_MARKETING_CONSENT_TYPES.map((type) => {
           const checked = state.marketingConsentTypes.has(type);
           const { sentenceKey } = MARKETING_CONSENT_ASKS[type];
@@ -271,6 +294,9 @@ export function ConsentsSection({
             />
           );
         })}
+        {/* Last in the section, and see `driftSlugs` above for why: these are
+            the only rows here that can arrive after the page has painted. */}
+        {driftSlugs.map(documentRow)}
       </div>
     </FormSection>
   );

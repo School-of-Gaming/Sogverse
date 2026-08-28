@@ -104,7 +104,6 @@
     "roleGedu": "Gedu",
     "gedus": "Gedus",
     "consentTag": {
-      "required": "Obligatoire",
       "optional": "Facultatif"
     }
   },

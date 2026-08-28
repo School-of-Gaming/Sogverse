@@ -252,33 +252,31 @@ export const POST = defineRoute({
     // NEVER FATAL, on the same reasoning as the home-location write above and
     // then some: losing an opt-in under-markets, which is the safe direction to
     // fail in, and there is nothing here worth destroying a working account
-    // over. The pair is all-or-nothing — a failed state write skips the event —
-    // because an event asserting a state that is not on file is worse than no
-    // record at all, and the log exists to corroborate the state table.
+    // over.
+    //
+    // ONE RPC, AND THAT IS THE POINT. The state row and its event row are
+    // written by `record_registration_marketing_consent` (00221) in a single
+    // transaction. This used to be two PostgREST calls — an upsert then an
+    // insert — and two calls are two transactions: a failed second one left
+    // `marketing_consents` asserting an answer that `marketing_consent_events`
+    // could not corroborate, which is the exact state 00220 built the log to
+    // rule out. On the one consent whose whole value is provable provenance, an
+    // opt-in nobody can evidence is worse than an opt-in nobody recorded.
+    //
+    // The function is service-role-only and hardcodes both the consent type and
+    // the `registration` source, so this route cannot claim that provenance for
+    // anything but our own mailing list, and nothing a client can reach can
+    // claim it at all.
+    //
+    // WRITTEN EVEN WHEN THEY DECLINED, and the function agrees: an absent row
+    // means "never asked", a `granted = false` row means "asked and said no",
+    // and a first explicit no is a change that earns its event.
     try {
-      const granted = marketingConsent ?? false;
-
-      const { error: consentError } = await admin
-        .from("marketing_consents")
-        .upsert(
-          {
-            customer_id: userId,
-            consent_type: "school_of_gaming",
-            granted,
-          },
-          { onConflict: "customer_id,consent_type" },
-        );
+      const { error: consentError } = await admin.rpc(
+        "record_registration_marketing_consent",
+        { p_customer_id: userId, p_granted: marketingConsent ?? false },
+      );
       if (consentError) throw consentError;
-
-      const { error: consentEventError } = await admin
-        .from("marketing_consent_events")
-        .insert({
-          customer_id: userId,
-          consent_type: "school_of_gaming",
-          granted,
-          source: "registration",
-        });
-      if (consentEventError) throw consentEventError;
     } catch (error) {
       console.error("[auth/register] marketing consent write failed", error);
     }
