@@ -939,6 +939,14 @@
         "title": "QujmeH tetlh",
         "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."
       },
+      "marketing": {
+        "title": "QIn chaw’mey",
+        "schoolOfGaming": "noH Quj yejHaD",
+        "lynxEducate": "Lynx Educate",
+        "granted": "chaw’lu’",
+        "notGranted": "chaw’be’lu’",
+        "since": "{date}vo’"
+      },
       "participationStatus": {
         "active": "vangtaH",
         "waitlisted": "loStaH",
@@ -2129,7 +2137,14 @@
     "sendVerificationEmail": "ngu’meH QIn yIngeH",
     "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
     "verificationEmailRateLimited": "law’qu’ Datlhobpu’! yIloS. tugh yInID je.",
-    "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID."
+    "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID.",
+    "marketing": {
+      "title": "QIn chaw’mey",
+      "description": "ra’be’lu’ — QIn DaneHbogh yIwIv. reH DachoHlaH.",
+      "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
+      "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH.",
+      "saveFailed": "wIv pollu’be’. yIboq."
+    }
   },
   "tools": {
     "uncertified": {

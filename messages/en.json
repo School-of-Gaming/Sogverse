@@ -891,6 +891,14 @@
         "title": "Game accounts",
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
       },
+      "marketing": {
+        "title": "Marketing preferences",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Granted",
+        "notGranted": "Not granted",
+        "since": "since {date}"
+      },
       "participationStatus": {
         "active": "Active",
         "waitlisted": "Waitlisted",
@@ -2720,7 +2728,14 @@
     "sendVerificationEmail": "Send verification email",
     "verificationEmailSent": "Verification email sent — check your inbox.",
     "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
-    "verificationEmailFailed": "We couldn’t send the verification email. Please try again."
+    "verificationEmailFailed": "We couldn’t send the verification email. Please try again.",
+    "marketing": {
+      "title": "Marketing preferences",
+      "description": "Optional — choose what marketing you’d like to receive. You can change these anytime.",
+      "schoolOfGaming": "School of Gaming may send me news and offers by email.",
+      "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers.",
+      "saveFailed": "We couldn’t save that preference. Please try again."
+    }
   },
   "tools": {
     "uncertified": {

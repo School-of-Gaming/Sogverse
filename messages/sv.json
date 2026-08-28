@@ -891,6 +891,14 @@
         "title": "Spelkonton",
         "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
       },
+      "marketing": {
+        "title": "Marknadsföringsinställningar",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Godkänt",
+        "notGranted": "Inte godkänt",
+        "since": "sedan {date}"
+      },
       "participationStatus": {
         "active": "Aktiv",
         "waitlisted": "På väntelista",
@@ -2085,7 +2093,14 @@
     "sendVerificationEmail": "Skicka verifieringsmejl",
     "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
     "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
-    "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen."
+    "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen.",
+    "marketing": {
+      "title": "Marknadsföringsinställningar",
+      "description": "Valfritt — välj vilken marknadsföring du vill få. Du kan ändra detta när som helst.",
+      "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
+      "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden.",
+      "saveFailed": "Vi kunde inte spara valet. Försök igen."
+    }
   },
   "tools": {
     "uncertified": {

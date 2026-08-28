@@ -891,6 +891,14 @@
         "title": "Pelitilit",
         "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
       },
+      "marketing": {
+        "title": "Markkinointiasetukset",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Sallittu",
+        "notGranted": "Ei sallittu",
+        "since": "{date} alkaen"
+      },
       "participationStatus": {
         "active": "Aktiivinen",
         "waitlisted": "Jonossa",
@@ -2085,7 +2093,14 @@
     "sendVerificationEmail": "Lähetä vahvistusviesti",
     "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
     "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
-    "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
+    "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen.",
+    "marketing": {
+      "title": "Markkinointiasetukset",
+      "description": "Vapaaehtoinen — valitse, millaista markkinointia haluat saada. Voit muuttaa valintoja milloin tahansa.",
+      "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
+      "lynxEducate": "Yhteystietoni saa jakaa luotetun kumppanimme <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia ja tarjouksia.",
+      "saveFailed": "Valinnan tallennus epäonnistui. Yritä uudelleen."
+    }
   },
   "tools": {
     "uncertified": {

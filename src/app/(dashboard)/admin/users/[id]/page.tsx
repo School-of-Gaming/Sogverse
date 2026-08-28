@@ -13,6 +13,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
+import { UserMarketingConsentsCard } from "@/components/admin/user-marketing-consents-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { cn, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -464,6 +465,15 @@ export default async function AdminUserDetailPage({
 
       {/* Coverage areas, for substitute matching. */}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
+
+      {/* Last on the page, and the position is load-bearing: this is the only
+          block here whose data is fetched client-side after first paint, so at
+          the end of the run its arrival is paid for out of the page's own slack
+          and nothing already painted moves. A later tidy-up that files it beside
+          the summary card on aesthetic grounds would reintroduce that shift
+          silently. Customers only — gamers and gedus hold no marketing consents
+          at all. */}
+      {isCustomer && <UserMarketingConsentsCard customerId={userId} />}
     </div>
   );
 }

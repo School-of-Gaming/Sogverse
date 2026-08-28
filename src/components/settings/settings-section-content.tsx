@@ -19,6 +19,7 @@ import {
   type GeduContractSeed,
 } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { HomeLocationField } from "@/components/locations/home-location-field";
+import { MarketingPreferencesCard } from "@/components/settings/marketing-preferences-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
@@ -441,6 +442,13 @@ export function SettingsSectionContent({
           </Button>
         </CardContent>
       </Card>
+
+      {/* Parents only: a marketing consent is held by the adult whose mailbox it
+          is about. A gamer's synthetic address reaches nobody and a gedu's
+          relationship with us is a contract rather than a mailing list, which is
+          what the RPC's `assert_role('customer')` guard enforces — so for either
+          of them this card would be a control the database refuses. */}
+      {isParent && <MarketingPreferencesCard />}
 
       {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
 

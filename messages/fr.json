@@ -891,6 +891,14 @@
         "title": "Comptes de jeu",
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
       },
+      "marketing": {
+        "title": "Préférences marketing",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Accordé",
+        "notGranted": "Non accordé",
+        "since": "depuis le {date}"
+      },
       "participationStatus": {
         "active": "Actif",
         "waitlisted": "En liste d’attente",
@@ -2085,7 +2093,14 @@
     "sendVerificationEmail": "Envoyer l’e-mail de vérification",
     "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
     "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
-    "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer."
+    "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer.",
+    "marketing": {
+      "title": "Préférences marketing",
+      "description": "Facultatif — choisissez le marketing que vous souhaitez recevoir. Vous pouvez modifier ces choix à tout moment.",
+      "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+      "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
+      "saveFailed": "Nous n’avons pas pu enregistrer cette préférence. Veuillez réessayer."
+    }
   },
   "tools": {
     "uncertified": {
