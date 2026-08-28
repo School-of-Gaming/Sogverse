@@ -2804,7 +2804,7 @@
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
       "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
-      "cta": "Inscrivez-vous"
+      "cta": "Lancez-vous !"
     },
     "lockup": {
       "heading": "Une collaboration entre",
@@ -2849,14 +2849,14 @@
     "how": {
       "eyebrow": "Comment ça marche",
       "heading": "Commencez en quatre étapes simples",
-      "subheading": "Choisissez le format qui vous convient : des événements en présentiel ou en ligne, d’une heure à quatre semaines.",
+      "subheading": "Choisissez le format qui vous convient : en présentiel ou en ligne, d’une heure à quatre semaines.",
       "step1": {
-        "title": "Choisissez un événement",
+        "title": "Choisissez une date",
         "description": "Parmi les options ci-dessous — nous en ajoutons souvent, alors revenez y jeter un œil."
       },
       "step2": {
         "title": "Créez votre compte",
-        "description": "Directement sur la page de l’événement. Rapide et gratuit pour les nouveaux parents."
+        "description": "Directement depuis la page d’inscription. Rapide et gratuit pour les nouveaux parents."
       },
       "step3": {
         "title": "Renseignez les informations de votre ado",
@@ -2868,9 +2868,9 @@
       }
     },
     "events": {
-      "heading": "Événements à venir",
-      "subheading": "Nous ajoutons souvent de nouveaux événements — revenez voir ce qui arrive.",
-      "empty": "Les premiers événements sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive."
+      "heading": "Prochaines dates",
+      "subheading": "Nous ajoutons souvent de nouvelles dates — revenez voir ce qui arrive.",
+      "empty": "Les premières dates sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive."
     },
     "parents": {
       "eyebrow": "Pour les parents",

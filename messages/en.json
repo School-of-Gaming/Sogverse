@@ -1869,7 +1869,7 @@
     "hero": {
       "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
       "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
-      "cta": "Register now"
+      "cta": "Jump in!"
     },
     "lockup": {
       "heading": "A collaboration between",
@@ -1914,14 +1914,14 @@
     "how": {
       "eyebrow": "How it works",
       "heading": "Get Started in Four Simple Steps",
-      "subheading": "Choose the format that suits: in-person or online events, ranging from one hour to four weeks.",
+      "subheading": "Choose the format that suits: in person or online, ranging from one hour to four weeks.",
       "step1": {
-        "title": "Choose an event",
-        "description": "Pick from the options below — we add new events often, so keep checking back."
+        "title": "Pick a date",
+        "description": "Pick from the options below — we add new dates often, so keep checking back."
       },
       "step2": {
         "title": "Create your account",
-        "description": "Right on the event page. Quick and free for new parents."
+        "description": "Right on the sign-up page. Quick and free for new parents."
       },
       "step3": {
         "title": "Register your teen’s details",
@@ -1933,9 +1933,9 @@
       }
     },
     "events": {
-      "heading": "Upcoming Events",
-      "subheading": "We add new events often — check back to see what is coming up.",
-      "empty": "The first events are being scheduled now. Check back shortly to see what is coming up."
+      "heading": "Upcoming Dates",
+      "subheading": "We add new dates often — check back to see what is coming up.",
+      "empty": "The first dates are being scheduled now. Check back shortly to see what is coming up."
     },
     "parents": {
       "eyebrow": "For parents",

@@ -2527,7 +2527,7 @@
     "hero": {
       "title": "yIchen<br></br><primary>yItIv</primary><br></br><secondary>yIghaj</secondary>",
       "subtitle": "Roblox qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
-      "cta": "DaH yIjeS"
+      "cta": "may’Daq yIghoS!"
     },
     "lockup": {
       "heading": "boqwI’pu’",
@@ -2572,14 +2572,14 @@
     "how": {
       "eyebrow": "chay’ Qu’",
       "heading": "loS Qu’mey ngeD — yIchu’",
-      "subheading": "Do’Ha’ yIwIv: Daq pagh jIrDaq wanI’mey, wa’ rep ghap loS Hogh.",
+      "subheading": "Do’Ha’ yIwIv: pa’Daq pagh jIrDaq, wa’ rep ghap loS Hogh.",
       "step1": {
-        "title": "wanI’ yIwIv",
-        "description": "bIngDaq yIwIv — reH wanI’mey chu’ wImaH, vaj reH yIleghqa’."
+        "title": "jaj yIwIv",
+        "description": "bIngDaq yIwIv — reH jajmey chu’ wImaH, vaj reH yIleghqa’."
       },
       "step2": {
         "title": "Account yIchenmoH",
-        "description": "wanI’ QIn Daq. nom je Huch Hutlh vavpu’ chu’vaD."
+        "description": "jeSmeH QIn Daq. nom je Huch Hutlh vavpu’ chu’vaD."
       },
       "step3": {
         "title": "loDHom De’ yIqIn",
@@ -2591,9 +2591,9 @@
       }
     },
     "events": {
-      "heading": "wanI’mey wa’leS",
-      "subheading": "reH wanI’mey chu’ wImaH — nuq ghoS yIlegh.",
-      "empty": "wanI’mey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov."
+      "heading": "ghoSbogh jajmey",
+      "subheading": "reH jajmey chu’ wImaH — nuq ghoS yIlegh.",
+      "empty": "jajmey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov."
     },
     "parents": {
       "eyebrow": "vavpu’ SoSpu’vaD",
