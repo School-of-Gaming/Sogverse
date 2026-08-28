@@ -65,6 +65,7 @@ export function GeduContractScene({
     <GeduContractPageBody
       contract={contract}
       acceptance={fixture.acceptance}
+      criminalRecordCheck={fixture.criminalRecordCheck}
       signerName={fixture.signerName}
       committing={false}
       acceptFailed={false}

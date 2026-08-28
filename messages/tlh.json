@@ -296,10 +296,27 @@
       "previousVersion": "wa’Hu’ mIw {version} qonpu’: {date}.",
       "queueAccepted": "chut qonlu’pu’ {date}",
       "queueNotAccepted": "chut qonlu’be’",
-      "confirmTitle": "chut qonbe’pu’ — patlh yInob ’e’ DaHech’a’?",
-      "confirmBody": "patlh nobmeH chut qonlu’pu’bogh poQlu’be’ — vaj patlh Danob laH.",
-      "confirmWarning": "chut ratlhbogh qonbe’taH Geduvam. patlh ghajDI’, chut HarchoHpa’ ghob je’lu’ net chaw’.",
-      "confirmAction": "patlh yInob ’e’ yIruch"
+      "rowNotAccepted": "chut ratlhbogh qonbe’taH"
+    },
+    "geduCriminalRecordCheck": {
+      "heading": "HeS ta’ ghItlh",
+      "recorded": "HeS ta’ ghItlh qonlu’pu’",
+      "recordedOn": "HeS ta’ ghItlh qonlu’pu’: {date}",
+      "recordedByOn": "HeS ta’ ghItlh qonpu’ {name}: {date}",
+      "notRecorded": "HeS ta’ ghItlh cha’lu’be’",
+      "processDetail": "yejquv qumvo’ ghItlh Suq Gedu ’ej SoHvaD cha’. jav maSmey qanbe’nIS ghItlh. ghItlh wIwoHbe’ — cha’lu’pu’ ’e’ neH wIqon.",
+      "recordLabel": "Geduvam HeS ta’ ghItlh QaQ vIleghpu’",
+      "error": "HeS ta’ ghItlh choHlu’be’pu’. yInID.",
+      "queueRecorded": "ghItlh cha’lu’pu’ {date}",
+      "queueNotRecorded": "ghItlh cha’lu’be’",
+      "rowNotRecorded": "HeS ta’ ghItlh cha’be’taH"
+    },
+    "geduCertifyWarnings": {
+      "title": "patlh yInob ’e’ DaHech’a’?",
+      "body": "patlh nobmeH pagh poQlu’ — vaj patlh Danob laH.",
+      "action": "patlh yInob ’e’ yIruch",
+      "contractWarning": "chut ratlhbogh qonbe’taH Geduvam. patlh ghajDI’, chut HarchoHpa’ ghob je’lu’ net chaw’.",
+      "checkWarning": "HeS ta’ ghItlh cha’be’taH Geduvam. patlh ghajDI’, ghItlh legh pagh ’ach ghob je’lu’ net chaw’."
     },
     "products": {
       "types": {
@@ -1478,6 +1495,19 @@
         "view": "chut yIlegh"
       },
       "acceptedMeta": "mIw {version}, qonlu’pu’ {date}"
+    },
+    "criminalRecordCheck": {
+      "title": "HeS ta’ ghItlhlIj",
+      "howItWorks": "patlh DaHevpa’, puqpu’ DaqIHmeH HeS ta’ ghItlh je Dacha’nIS. yejquv qumvo’ ghItlh yISuq. maHvaD Dacha’DI’, jav maSmey qanbe’nIS ghItlh.",
+      "noCopyKept": "ghItlh wIwoHbe’, ’ej ghItlhvo’ pagh wIqon — cha’lu’pu’ ’e’ ’ej ghorgh ’e’ neH wIqon.",
+      "recorded": "qonlu’pu’ HeS ta’ ghItlhlIj.",
+      "recordedOn": "qonlu’pu’ HeS ta’ ghItlhlIj: {date}.",
+      "stillNeeded": "ratlhtaH wanI’ wa’: HeS ta’ ghItlhlIj yIcha’!",
+      "notice": {
+        "title": "HeS ta’ ghItlhlIj Dacha’be’taH!",
+        "body": "patlh DaHevpa’, puqpu’ DaqIHmeH HeS ta’ ghItlh yIcha’. yejquv qumvo’ ghItlh yISuq.",
+        "action": "chay’ ’oH yIlaD"
+      }
     }
   },
   "productType": {

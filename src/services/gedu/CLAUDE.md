@@ -1,4 +1,4 @@
-# Gedu profiles, self-registration, certification & the contract
+# Gedu profiles, self-registration, certification, the contract & the record check
 
 Game educators ("gedu") self-register like parents and are **certified by an admin**
 before they can be assigned to work. This directory owns the gedu extension table
@@ -17,9 +17,10 @@ confirmed address — in a fixed order, and never one glyph standing for both.
 - **`gedu_profiles`** — the 1:1 extension table for gedus (the gedu analogue of
   `customer_profiles`/`gamer_profiles`): `user_id` PK, `certified` (bool, default false),
   `certified_at`, `certified_by` (FK → profiles, `ON DELETE SET NULL` so losing the
-  certifying admin never silently de-certifies a working gedu). RLS: admin reads all, a
-  gedu reads its own; **no table-level write grant** — writes go only through the RPC
-  below so the audit columns can't be forged.
+  certifying admin never silently de-certifies a working gedu), plus the criminal record
+  check's own trio in the same shape (`criminal_record_check_passed` / `_at` / `_by`).
+  RLS: admin reads all, a gedu reads its own; **no table-level write grant** — writes go
+  only through the RPCs below so the audit columns can't be forged.
 - Other gedu data (name, phone, `spoken_languages`, `locale`) lives on `profiles`;
   coverage lives in `gedu_locations` (see `../locations/`).
 
@@ -86,13 +87,125 @@ open to an uncertified gedu.
 - **Surfaces**: a positive-only certification mark on the admin users list — a shield on a
   gedu who is certified, and nothing at all otherwise, so an uncertified educator is
   simply unmarked rather than badged; a certify/de-certify card on the admin user-detail
-  page.
+  page. The users list's other two gedu marks are **negative**-only (see the record
+  check's surfaces below), and the row's mark order is fixed and documented in the
+  component, because the group is right-packed and late arrivals have to insert at its
+  left end.
 - **Backfill**: every gedu that existed before this feature was marked certified
   (`certified_by` NULL) — they were all admin-invited and already trusted.
 
 Certification state is read via `useGeduProfiles` / `useGeduCertificationMap`
 (lists/picker) and `useGeduProfile` (detail, seeded with a server fetch).
 `useSetGeduCertified` invalidates the whole `gedu-profiles` key on success.
+
+## The criminal record check
+
+Finnish law (504/2002) requires a person working with children to present a
+**criminal record extract** — a *rikostaustaote* — and two of its properties
+decide the whole design:
+
+- **The educator obtains it themselves**, from the Legal Register Centre. We
+  never request it, receive it, or hold it.
+- **We may not keep it.** The law permits recording only that an acceptable
+  extract was presented, and when.
+
+**Rule: the document is never stored, and there is nowhere to store it.** No
+file, no reference number, no issue date, no offence data — the schema is a
+boolean plus an audit pair, and that is the entire fact the platform is allowed
+to hold. A field that would carry anything out of the extract is not a feature
+to add later; it is the thing the statute forbids.
+
+**Rule: the check gates nothing.** Exactly like contract acceptance, a missing
+or withdrawn check does not narrow a gedu's access, hide a surface or fail a
+call anywhere. Certification stays the platform's only blocking lever over an
+educator, for the same reason it is the contract's: independent gates on one
+person are how an account ends up in a state nobody can explain. What the check
+buys is *visibility* — the admin certification queue reports it so the decision
+is better informed, not pre-empted.
+
+**Rule: `set_gedu_criminal_record_check(gedu_id, passed)` is the only way in.**
+Admin-only (guard-first `assert_admin()`), refuses a target that is not a gedu,
+and stamps the moment and the acting admin server-side; withdrawing the check
+nulls both. Granted to `authenticated` alone — an admin calls it with their own
+session, and there is no backend caller because nothing server-side can look at
+a document. The extension table carries no write grant, so the audit pair cannot
+be written by the person it is about.
+
+The stamp is non-null **exactly when** the flag is true, and a CHECK constraint
+enforces the equivalence rather than leaving it to the RPC's good behaviour —
+two admin surfaces read different halves of it (the dashboard queue ships only
+the moment, the users list reads only the flag), so a disagreeing row would have
+them describing one educator differently. That is also why the queue ships only
+the moment: a second field beside it would be derivable from the first and could
+only ever contradict it.
+
+The acting admin renders in exactly one place — the admin user-detail card,
+beside the date, the same way `certified_by` does — and nowhere else. Its FK is
+`ON DELETE SET NULL`, so a departed admin leaves the check recorded without the
+name and the line falls back to the date alone. It is deliberately outside the
+equivalence above for that reason: losing an account must not turn a recorded
+check into a constraint violation.
+
+### Surfaces
+
+**Admin.** The user-detail certification card carries the standing *and* the one
+control that changes it — a checkbox an admin ticks to say they have seen an
+acceptable extract, untickable again with no confirmation, exactly as
+de-certifying asks nothing. The dashboard's certification queue carries a second
+standing chip per row beside the contract's. Both certify affordances share one
+confirm dialog that names whichever prerequisites are missing, one warning line
+each, so a row missing both is asked once rather than twice. The users list
+gains a **negative-only** warning mark on gedu rows — nothing when the check is
+recorded, a tinted mark when it is not — shown regardless of certification,
+because the accounts worth finding are the legacy ones certified before either
+fact was ever recorded.
+
+**Gedu.** The contract page explains the process (you obtain the extract
+yourself, it must be under six months old when presented, we keep no copy) and
+states this reader's own standing under it; that explanation is unconditional
+and the standing is not, so a failed read prints the process and no claim. My
+SOG shows a next-step band when the contract is signed, the check is not
+recorded and the account is not yet certified — the contract band takes priority
+and only one band is ever shown, because the two are steps of one process in the
+order they happen.
+
+**Icon language: `Scale`, one glyph across every surface**, with colour and
+words carrying whether the check stands. Three facts about one educator can
+appear on one row, so each needs a mark nobody confuses with another — and
+*shape family* is what does that work at 16px, not the tick or cross drawn
+inside it. The clipboard pair this replaces failed on exactly that: a clipboard
+and the contract's `FileCheck` / `FileWarning` are the same
+rectangle-with-lines, and admins could not tell the two subjects apart in a
+scanned column. Scales are a different silhouette and read "law" cold. One glyph
+rather than two is the second half: the state is already in the colour
+(`text-success` / `text-warning`, muted where the queue chip is muted) and in
+the words beside it, and a check/cross variant was only ever restating them.
+
+### Reads and writes
+
+`useSetGeduCriminalRecordCheck` calls the RPC and invalidates the whole
+`gedu-profiles` root, exactly as `useSetGeduCertified` does — the flag lives on
+that row, so the detail card, the users list and the picker are all reading what
+it just changed — **and the admin dashboard's key alongside it**, because the
+certification queue renders the fact on every row it draws (a standing chip, and
+whether the certify button raises the missing-prerequisite confirmation). It
+moves nobody in or out of that queue, which is a different question from whether
+the queue is now stale. Both mutations' invalidations are **returned** from
+`onSuccess`, so `mutateAsync` settles only once the refetch has landed and a
+control cannot re-enable showing the value it just replaced.
+
+The flag rides the shared `gedu_profiles` column list, so every surface already
+reading certification state gets it in the same request. **The list read and the
+detail read are two different column lists**, and the split is what keeps the
+recording admin's name off a gedu's screen by construction: only the detail
+select — the one the admin user-detail card uses — embeds the acting admins'
+profile rows, which admin RLS permits and an educator's own session does not.
+The gedu-facing surfaces read the flag and the moment server-side from the
+educator's own row and nothing else, because both decide something above the
+fold and neither can afford an answer that arrives after the first paint — and
+the two answer a failed read *differently*: the contract page's status line is
+an assertion and stays silent, while the dashboard band is a nudge and fails
+toward showing itself.
 
 ## The gedu contract
 

@@ -1,3 +1,4 @@
+import type { GeduCriminalRecordCheck } from "@/services/gedu/gedu-profiles.service";
 import type { GeduContractAcceptance } from "@/types";
 import {
   geduContractStoredVersion,
@@ -34,6 +35,18 @@ export interface GeduContractFixture {
   acceptance: GeduContractAcceptance | null;
   /** The name the signature line draws — the fixture gedu's, not the viewer's. */
   signerName: string;
+  /**
+   * The criminal record check standing the section above the terms renders.
+   *
+   * It rides the *same* axis as the signature rather than earning scenarios of
+   * its own, because the two states of that section are the two states of this
+   * page: an educator who has not signed has almost certainly not presented an
+   * extract either, and one who has done both is the settled account. The third
+   * possibility — the read failed and the section shows its explanation with no
+   * standing line — is a rendering of an error, not a state a reader is ever
+   * meant to be in, so no scenario is spent on it.
+   */
+  criminalRecordCheck: GeduCriminalRecordCheck;
 }
 
 /**
@@ -48,6 +61,12 @@ const FIXTURE_SIGNER_NAME = "Aino Virtanen";
 
 /** How long ago the signed scenario's signature was given. */
 const SIGNED_DAYS_AGO = 12;
+
+/**
+ * How long ago that scenario's extract was recorded — after the signature,
+ * because that is the order the two steps happen in.
+ */
+const CHECKED_DAYS_AGO = 9;
 
 /**
  * The version string on the fixture row, in the encoded `<base>/<language>`
@@ -103,7 +122,11 @@ export function buildGeduContractFixture(
   scenario: GeduContractScenario,
 ): GeduContractFixture {
   if (scenario === "unaccepted") {
-    return { acceptance: null, signerName: FIXTURE_SIGNER_NAME };
+    return {
+      acceptance: null,
+      signerName: FIXTURE_SIGNER_NAME,
+      criminalRecordCheck: { passed: false, recordedAt: null },
+    };
   }
   return {
     signerName: FIXTURE_SIGNER_NAME,
@@ -112,5 +135,14 @@ export function buildGeduContractFixture(
         now.getTime() - SIGNED_DAYS_AGO * 24 * 60 * 60 * 1000,
       ).toISOString(),
     }),
+    criminalRecordCheck: {
+      passed: true,
+      // A few days after the signature, derived from the same clock and for the
+      // same reason: a hardcoded date reads as recent for one week and as
+      // ancient history forever after.
+      recordedAt: new Date(
+        now.getTime() - CHECKED_DAYS_AGO * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    },
   };
 }

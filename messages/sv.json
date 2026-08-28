@@ -248,10 +248,27 @@
       "previousVersion": "Godkände tidigare version {version} den {date}.",
       "queueAccepted": "Avtalet godkänt {date}",
       "queueNotAccepted": "Avtalet inte godkänt",
-      "confirmTitle": "Certifiera utan godkänt avtal?",
-      "confirmBody": "Certifieringen kräver inget godkänt avtal, så du kan certifiera hen ändå.",
-      "confirmWarning": "Den här Gedun har inte godkänt det gällande avtalet. Som certifierad kan hen tilldelas grupper innan hen har godkänt villkoren hen arbetar under.",
-      "confirmAction": "Certifiera ändå"
+      "rowNotAccepted": "Har inte godkänt det gällande avtalet"
+    },
+    "geduCriminalRecordCheck": {
+      "heading": "Kontroll av brottslig bakgrund",
+      "recorded": "Straffregisterutdrag noterat",
+      "recordedOn": "Straffregisterutdrag noterat {date}",
+      "recordedByOn": "Straffregisterutdrag noterat av {name} {date}",
+      "notRecorded": "Inget straffregisterutdrag har uppvisats",
+      "processDetail": "Gedun skaffar utdraget själv från Rättsregistercentralen och visar det för dig. Det får vara högst sex månader gammalt när det visas upp, och vi sparar ingen kopia av det — bara noteringen om att ett godtagbart utdrag har visats.",
+      "recordLabel": "Jag har sett ett godtagbart straffregisterutdrag för den här Gedun",
+      "error": "Det gick inte att uppdatera kontrollen av brottslig bakgrund. Försök igen.",
+      "queueRecorded": "Utdrag uppvisat {date}",
+      "queueNotRecorded": "Utdrag inte uppvisat",
+      "rowNotRecorded": "Har inte uppvisat något straffregisterutdrag"
+    },
+    "geduCertifyWarnings": {
+      "title": "Certifiera ändå?",
+      "body": "Certifieringen kräver ingetdera av dessa, så du kan certifiera hen ändå.",
+      "action": "Certifiera ändå",
+      "contractWarning": "Den här Gedun har inte godkänt det gällande avtalet. Som certifierad kan hen tilldelas grupper innan hen har godkänt villkoren hen arbetar under.",
+      "checkWarning": "Den här Gedun har inte uppvisat något straffregisterutdrag. Som certifierad kan hen tilldelas grupper innan någon har sett det."
     },
     "products": {
       "types": {
@@ -1434,6 +1451,19 @@
         "view": "Visa avtalet"
       },
       "acceptedMeta": "Version {version}, godkänt {date}"
+    },
+    "criminalRecordCheck": {
+      "title": "Ditt straffregisterutdrag",
+      "howItWorks": "Innan du certifieras uppvisar du också ett straffregisterutdrag för arbete med barn. Du beställer det själv från Rättsregistercentralen, och det får vara högst sex månader gammalt när du visar det för oss.",
+      "noCopyKept": "Vi sparar ingen kopia av utdraget och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när.",
+      "recorded": "Ditt straffregisterutdrag har noterats.",
+      "recordedOn": "Ditt straffregisterutdrag noterades {date}.",
+      "stillNeeded": "Kvar att göra: visa oss ditt straffregisterutdrag.",
+      "notice": {
+        "title": "Du har inte visat oss ditt straffregisterutdrag",
+        "body": "Innan du kan certifieras uppvisar du ett straffregisterutdrag för arbete med barn. Du beställer det själv från Rättsregistercentralen.",
+        "action": "Läs hur det går till"
+      }
     }
   },
   "productType": {

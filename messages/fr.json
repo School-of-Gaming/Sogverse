@@ -248,10 +248,27 @@
       "previousVersion": "A accepté auparavant la version {version} le {date}.",
       "queueAccepted": "Contrat accepté le {date}",
       "queueNotAccepted": "Contrat non accepté",
-      "confirmTitle": "Certifier sans contrat accepté ?",
-      "confirmBody": "La certification n’exige pas de contrat accepté : vous pouvez donc le certifier quand même.",
-      "confirmWarning": "Ce Gedu n’a pas accepté le contrat en vigueur. Une fois certifié, il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
-      "confirmAction": "Certifier quand même"
+      "rowNotAccepted": "N’a pas accepté le contrat en vigueur"
+    },
+    "geduCriminalRecordCheck": {
+      "heading": "Vérification du casier judiciaire",
+      "recorded": "Extrait de casier judiciaire enregistré",
+      "recordedOn": "Extrait de casier judiciaire enregistré le {date}",
+      "recordedByOn": "Extrait de casier judiciaire enregistré par {name} le {date}",
+      "notRecorded": "Aucun extrait de casier judiciaire enregistré",
+      "processDetail": "Le Gedu obtient lui-même l’extrait auprès du Centre finlandais des registres judiciaires et vous le présente. Il doit dater de moins de six mois au moment de la présentation, et nous n’en conservons aucune copie — seulement la trace indiquant qu’un extrait acceptable a été présenté.",
+      "recordLabel": "J’ai vu un extrait de casier judiciaire acceptable pour ce Gedu",
+      "error": "Impossible de mettre à jour la vérification du casier judiciaire. Veuillez réessayer.",
+      "queueRecorded": "Extrait enregistré le {date}",
+      "queueNotRecorded": "Extrait non enregistré",
+      "rowNotRecorded": "N’a pas présenté d’extrait de casier judiciaire"
+    },
+    "geduCertifyWarnings": {
+      "title": "Certifier quand même ?",
+      "body": "La certification n’exige ni l’un ni l’autre : vous pouvez donc le certifier quand même.",
+      "action": "Certifier quand même",
+      "contractWarning": "Ce Gedu n’a pas accepté le contrat en vigueur. Une fois certifié, il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
+      "checkWarning": "Ce Gedu n’a pas présenté d’extrait de casier judiciaire. Une fois certifié, il pourra être affecté à des groupes avant que quiconque l’ait vu."
     },
     "products": {
       "types": {
@@ -1434,6 +1451,19 @@
         "view": "Voir le contrat"
       },
       "acceptedMeta": "Version {version}, accepté le {date}"
+    },
+    "criminalRecordCheck": {
+      "title": "Votre extrait de casier judiciaire",
+      "howItWorks": "Avant votre certification, vous présentez également un extrait de casier judiciaire pour le travail auprès d’enfants. Vous le demandez vous-même au Centre finlandais des registres judiciaires, et il doit dater de moins de six mois au moment où vous nous le montrez.",
+      "noCopyKept": "Nous n’en conservons aucune copie et n’en enregistrons rien — seulement le fait qu’un extrait acceptable a été présenté, et quand.",
+      "recorded": "Votre extrait de casier judiciaire a été enregistré.",
+      "recordedOn": "Votre extrait de casier judiciaire a été enregistré le {date}.",
+      "stillNeeded": "Il reste à faire : nous montrer votre extrait de casier judiciaire.",
+      "notice": {
+        "title": "Vous ne nous avez pas montré votre extrait de casier judiciaire",
+        "body": "Avant de pouvoir être certifié, vous présentez un extrait de casier judiciaire pour le travail auprès d’enfants. Vous le demandez vous-même au Centre finlandais des registres judiciaires.",
+        "action": "Voir comment faire"
+      }
     }
   },
   "productType": {

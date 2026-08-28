@@ -59,6 +59,7 @@ export function GeduDashboardPage({
   initialSummaries,
   certified,
   contractAccepted,
+  criminalRecordCheckPassed,
 }: {
   initialRows: MyAssignedProductSessionRow[];
   /**
@@ -76,6 +77,13 @@ export function GeduDashboardPage({
    * whole page down under the reader.
    */
   contractAccepted: boolean;
+  /**
+   * Has an admin recorded seeing this gedu's criminal record extract? Resolved
+   * by the route for the same reason as `contractAccepted`: it decides a band
+   * that sits above every section, and an answer arriving after the first paint
+   * would push the whole dashboard down under the reader.
+   */
+  criminalRecordCheckPassed: boolean;
 }) {
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
@@ -95,13 +103,20 @@ export function GeduDashboardPage({
   );
 
   if (assignments === null)
-    return <GeduDashboardSkeleton contractAccepted={contractAccepted} />;
+    return (
+      <GeduDashboardSkeleton
+        contractAccepted={contractAccepted}
+        criminalRecordCheckPassed={criminalRecordCheckPassed}
+        certified={certified}
+      />
+    );
 
   return (
     <GeduDashboardPageBody
       assignments={assignments}
       certified={certified}
       contractAccepted={contractAccepted}
+      criminalRecordCheckPassed={criminalRecordCheckPassed}
       toolsCard={<MinecraftPasswordResetCard />}
       instantRoomCard={<CreateInstantRoomCard />}
     />

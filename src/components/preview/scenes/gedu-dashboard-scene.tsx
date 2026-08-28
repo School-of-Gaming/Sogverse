@@ -47,6 +47,7 @@ export function GeduDashboardScene({
     <GeduDashboardPageBody
       certified={fixture.certified}
       contractAccepted={fixture.contractAccepted}
+      criminalRecordCheckPassed={fixture.criminalRecordCheckPassed}
       assignments={fixture.assignments}
       toolsCard={
         // Idle, with the submit inert: the textarea, the parsing and the

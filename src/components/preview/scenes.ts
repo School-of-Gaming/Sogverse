@@ -203,7 +203,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The body /gedu renders, over fixtures: the unsigned-contract band, one roll-up card per group grouped by type noun, and the Tools section beneath. Badge counts are counted out of the feed each card links to.",
+      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, and the Tools section beneath. Badge counts are counted out of the feed each card links to.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -216,13 +216,13 @@ export const PREVIEW_SCENES = [
         slug: "clubs-only",
         label: "Clubs only",
         description:
-          "The single-noun composition, at the card count where the grid wraps — and the page with the band signed away.",
+          "The single-noun composition, at the card count where the grid wraps — and the page with no band at all.",
       },
       {
         slug: "uncertified",
         label: "Awaiting certification",
         description:
-          "An account awaiting approval, which by definition has no assignments.",
+          "An account awaiting approval, which by definition has no assignments — under the criminal-record band, the other of the two.",
       },
     ],
   },
@@ -230,7 +230,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-contract",
     title: "Gedu contract",
     description:
-      "The page a Game Educator reads and signs their contract on: the terms verbatim in your own locale's language, with the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
+      "The page a Game Educator reads and signs their contract on: the criminal record extract explained above, the terms verbatim in your own locale's language, and the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
     chrome: "dashboard",
     scenarios: [
       {

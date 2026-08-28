@@ -83,6 +83,12 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },
+  // Recording that an educator presented a criminal record extract (00213).
+  // Same shape as the certification RPC beside it: past the admin guard, a NULL
+  // target is nobody's account and the "is not a gedu" raise answers with P0001
+  // rather than a second 42501 — so the positive half of the matrix is
+  // assertable here with no fixture.
+  set_gedu_criminal_record_check: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
@@ -478,6 +484,13 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["gedu_profiles", "certified"],
   ["gedu_profiles", "certified_at"],
   ["gedu_profiles", "certified_by"],
+  // The criminal record check gates nothing, but it is an admin's statement
+  // about the person whose row it sits on — writable, it would let an educator
+  // certify their own background check to whoever reads the queue. Its audit
+  // pair is stamped server-side by set_gedu_criminal_record_check.
+  ["gedu_profiles", "criminal_record_check_passed"],
+  ["gedu_profiles", "criminal_record_check_at"],
+  ["gedu_profiles", "criminal_record_check_by"],
   // Enrollment state — a writable status is a free seat.
   ["participations", "status"],
   ["participations", "customer_id"],

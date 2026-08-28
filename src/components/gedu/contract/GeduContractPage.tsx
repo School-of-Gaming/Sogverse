@@ -6,6 +6,7 @@ import {
   useAcceptGeduContract,
   useGeduContractAcceptances,
 } from "@/services/gedu";
+import type { GeduCriminalRecordCheck } from "@/services/gedu/gedu-profiles.service";
 import type { GeduContractAcceptance } from "@/types";
 import type { GeduContractDocument } from "./contract-document";
 import {
@@ -40,11 +41,22 @@ export function GeduContractPage({
   geduId,
   contract,
   initialAcceptances,
+  criminalRecordCheck,
 }: {
   geduId: string;
   contract: GeduContractDocument;
   /** Prefetched rows, or `null` when that read failed. */
   initialAcceptances: GeduContractAcceptance[] | null;
+  /**
+   * The gedu's criminal record check standing, resolved by the route, or `null`
+   * when that read failed.
+   *
+   * Passed straight through rather than turned into a query: nothing on this
+   * page can change it — only an admin can — so there is nothing for a cache
+   * entry to keep fresh, and a value settled on the server is one the section
+   * above the terms can paint with on the first frame.
+   */
+  criminalRecordCheck: GeduCriminalRecordCheck | null;
 }) {
   const { profile } = useAuth();
   const { data: acceptances } = useGeduContractAcceptances(
@@ -103,6 +115,7 @@ export function GeduContractPage({
     <GeduContractPageBody
       contract={contract}
       acceptance={acceptance}
+      criminalRecordCheck={criminalRecordCheck}
       signerName={signerName}
       committing={committing}
       acceptFailed={acceptFailed}
