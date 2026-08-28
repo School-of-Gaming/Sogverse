@@ -121,11 +121,15 @@ The SDK is now instantiated once, in a single shared module, with an explicit
   compiler can see. Fields that merely *moved* type-check fine when read through a
   fallback and have to be eyeballed.
 
-**The webhook *endpoint*, by contrast, was still unpinned at triage (2026-08-28)** — it
-tracks the account default, with the dual-reads above as the compensating measure.
-Recreating the endpoint pinned to a current version (making the payload version an
-explicit, reviewable decision instead of a dashboard prompt) went to the owner as an
-open item.
+**The webhook *endpoint* was pinned too, by its own delivered plan (2026-08-11):** both
+modes run a single products endpoint pinned to the same version the SDK is pinned to,
+and the retired unpinned endpoints were deleted — so a Stripe Dashboard account-version
+upgrade can no longer silently reshape our webhook payloads. The dual-reads above stay
+as defense-in-depth, because an endpoint's pin is still a Dashboard-side setting. Two
+deliberate leftovers from that cutover, ruled by the owner: the pre-Sogverse endpoints
+stay untouched (unknown blast radius), and the account-default version bump was skipped
+with them — the unpinned Klaviyo endpoint tracks the account default, and flipping it
+would reshape payloads for a consumer nobody understands.
 
 ### A recurring-value field to keep in mind: `current_period_end`
 
