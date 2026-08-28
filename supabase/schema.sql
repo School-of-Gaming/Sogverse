@@ -2000,6 +2000,13 @@ BEGIN
   -- so signing either makes a candidate current. min() because a candidate may
   -- hold both languages' rows — the first signature is the moment they agreed,
   -- and a scalar subquery would error rather than answer.
+  --
+  -- `criminal_record_check_at` (00213) is when an admin recorded seeing this
+  -- candidate's criminal record extract, or NULL if none has been recorded. The
+  -- flag beside it is deliberately not shipped: the stamp is non-NULL exactly
+  -- when the flag is true, so a second field could only ever contradict the
+  -- first. It informs the decision on the same terms as the contract stamp and
+  -- gates nothing either.
   -- ---------------------------------------------------------------------------
   SELECT COALESCE(
            jsonb_agg(
@@ -2018,7 +2025,8 @@ BEGIN
                            ORDER BY v.created_at DESC, v.version DESC
                            LIMIT 1
                         )
-               )
+               ),
+               'criminal_record_check_at', gp.criminal_record_check_at
              )
              ORDER BY pr.created_at, pr.id
            ),
@@ -2257,7 +2265,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
@@ -5479,6 +5487,39 @@ COMMENT ON FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified boolea
 
 
 --
+-- Name: set_gedu_criminal_record_check(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_gedu_criminal_record_check(p_gedu_id uuid, p_passed boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = p_gedu_id AND role = 'gedu'
+  ) THEN
+    RAISE EXCEPTION 'set_gedu_criminal_record_check: % is not a gedu', p_gedu_id;
+  END IF;
+
+  UPDATE public.gedu_profiles
+  SET criminal_record_check_passed = p_passed,
+      criminal_record_check_at     = CASE WHEN p_passed THEN now() ELSE NULL END,
+      criminal_record_check_by     = CASE WHEN p_passed THEN (SELECT auth.uid()) ELSE NULL END
+  WHERE user_id = p_gedu_id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_gedu_criminal_record_check(p_gedu_id uuid, p_passed boolean); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_gedu_criminal_record_check(p_gedu_id uuid, p_passed boolean) IS 'Record — or withdraw — that an admin has seen an acceptable criminal record extract (rikostaustaote) for one game educator. The document itself is never stored: Finnish law 504/2002 has the educator obtain it themselves and lets us keep only the fact that it was presented and when. Admin-only, guard-first on assert_admin, and it refuses a target that is not a gedu. It stamps criminal_record_check_at / criminal_record_check_by server-side so the audit trail cannot be forged — which is why gedu_profiles carries no write grant at all and this RPC is the only way in — and nulls both when the check is withdrawn. Recording it GATES NOTHING: like contract acceptance it informs the certification decision, and admin certification remains the only blocking lever over an educator. Called from the admin user-detail page through the admin''s own session, which is why authenticated is the only role granted EXECUTE.';
+
+
+--
 -- Name: set_group_member_minecraft(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -6702,7 +6743,11 @@ CREATE TABLE public.gedu_profiles (
     user_id uuid NOT NULL,
     certified boolean DEFAULT false NOT NULL,
     certified_at timestamp with time zone,
-    certified_by uuid
+    certified_by uuid,
+    criminal_record_check_passed boolean DEFAULT false NOT NULL,
+    criminal_record_check_at timestamp with time zone,
+    criminal_record_check_by uuid,
+    CONSTRAINT gedu_profiles_criminal_record_check_stamp_matches_flag CHECK (((criminal_record_check_at IS NOT NULL) = criminal_record_check_passed))
 );
 
 
@@ -6718,6 +6763,34 @@ COMMENT ON COLUMN public.gedu_profiles.certified IS 'Whether an admin has vouche
 --
 
 COMMENT ON COLUMN public.gedu_profiles.certified_by IS 'The admin whose call this was, or NULL — either because the gedu is not certified, or because they predate the feature and were backfilled as trusted. ON DELETE SET NULL: losing the certifying admin''s account must never silently de-certify a working educator.';
+
+
+--
+-- Name: COLUMN gedu_profiles.criminal_record_check_passed; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_profiles.criminal_record_check_passed IS 'Whether an admin has seen an acceptable criminal record extract (rikostaustaote) for this educator. The DOCUMENT IS NEVER STORED: Finnish law 504/2002 has the person obtain the extract themselves and permits the employer to record only that it was presented and when, so this flag plus criminal_record_check_at is the whole of what the platform may hold. Gates NOTHING — exactly like contract acceptance, it informs the certification decision and does not pre-empt it; admin certification remains the only blocking lever over an educator. false covers both "not recorded yet" and "recorded as not passing", which are the same operational state.';
+
+
+--
+-- Name: COLUMN gedu_profiles.criminal_record_check_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_profiles.criminal_record_check_at IS 'When the extract was presented, stamped server-side by set_gedu_criminal_record_check and NULL whenever the flag is false. It is the second half of what the law allows us to record, and a client never supplies it — a moment the subject could choose would prove nothing about when anybody saw anything.';
+
+
+--
+-- Name: COLUMN gedu_profiles.criminal_record_check_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_profiles.criminal_record_check_by IS 'The admin whose statement this was, stamped alongside criminal_record_check_at by set_gedu_criminal_record_check and NULL whenever the flag is false. Rendered on the admin user-detail card — the recording admin''s name beside the date, exactly like certified_by — and nowhere else; the gedu-facing surfaces read only the flag and the moment from their own row, so an educator is never shown who looked at their document. Unforgeable regardless of who reads it: the table carries no write grant for any Data API role and the RPC derives this from the calling session. ON DELETE SET NULL, so a departed admin leaves the check recorded without the name; losing an account must never silently unrecord a check that was made.';
+
+
+--
+-- Name: CONSTRAINT gedu_profiles_criminal_record_check_stamp_matches_flag ON gedu_profiles; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT gedu_profiles_criminal_record_check_stamp_matches_flag ON public.gedu_profiles IS 'The criminal record check''s moment is non-NULL exactly when its flag is true. Asserted in prose by 00213 and relied on by two admin surfaces that read different halves of it — the dashboard''s certification queue ships only criminal_record_check_at and reads NULL as "no check", while the users list reads only criminal_record_check_passed — so a disagreeing row would have the two describing the same educator differently. Nothing reachable can write one without the other (no write grant on the table; one RPC sets both in a single statement), which is why this fires only against a migration, a backfill or a hand-run UPDATE, and why failing loudly there is the whole of its job. criminal_record_check_by is deliberately outside it: ON DELETE SET NULL means a departed admin leaves a recorded check without a name, and that is correct.';
 
 
 --
@@ -8681,6 +8754,14 @@ ALTER TABLE ONLY public.gedu_profiles
 
 
 --
+-- Name: gedu_profiles gedu_profiles_criminal_record_check_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_profiles
+    ADD CONSTRAINT gedu_profiles_criminal_record_check_by_fkey FOREIGN KEY (criminal_record_check_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
 -- Name: gedu_profiles gedu_profiles_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -10567,6 +10648,14 @@ GRANT ALL ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant
 
 REVOKE ALL ON FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_gedu_certified(p_gedu_id uuid, p_certified boolean) TO authenticated;
+
+
+--
+-- Name: FUNCTION set_gedu_criminal_record_check(p_gedu_id uuid, p_passed boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_gedu_criminal_record_check(p_gedu_id uuid, p_passed boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_gedu_criminal_record_check(p_gedu_id uuid, p_passed boolean) TO authenticated;
 
 
 --
