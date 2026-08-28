@@ -475,6 +475,7 @@ DECLARE
   v_customer_id      uuid;
   v_participation_id uuid;
   v_auto_group_id    uuid;
+  v_required_slugs   text[];
 BEGIN
   PERFORM public.assert_admin();
 
@@ -562,6 +563,24 @@ BEGIN
   VALUES (p_product_id, p_participant_id, v_customer_id, 'active', v_auto_group_id)
   RETURNING id INTO v_participation_id;
 
+  -- THE ENROLMENT CONDITIONS (00212). The seat exists, so the product's
+  -- required consents bind to it exactly as they would on a family signup —
+  -- but the admin is not prompted and is never refused. Every required slug is
+  -- supplied automatically from the product's own requirement set, so the gate
+  -- passes by construction and its job here is the WRITE rather than the check;
+  -- the family stays the customer, and the acting admin is stamped as the one
+  -- who performed the act. A product requiring nothing leaves v_required_slugs
+  -- NULL and the call is a no-op, which is every product but one.
+  SELECT array_agg(prc.document_slug ORDER BY prc.document_slug)
+    INTO v_required_slugs
+    FROM public.product_required_consents prc
+   WHERE prc.product_id = p_product_id;
+
+  PERFORM public.record_required_consents(
+    p_product_id, v_customer_id, p_participant_id, (SELECT auth.uid()),
+    v_required_slugs
+  );
+
   RETURN jsonb_build_object(
     'participation_id', v_participation_id,
     'customer_id', v_customer_id
@@ -574,7 +593,7 @@ $$;
 -- Name: FUNCTION admin_enroll_participant(p_product_id uuid, p_participant_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) IS 'Admin-gated comp-enrollment: drops a participant onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event. Since 00173 it also enforces the audience: a customer profile takes a seat as their own customer and needs for_parents, anyone else is resolved through the parent link and needs for_gamers. Renamed from admin_enroll_gamer in 00175 — it has not only enrolled gamers since 00173. Since 00206 it places the seat automatically when the product charges nothing (billing_mode free or external_contract) AND has exactly one group, matching the family self-enrollment path; a PAID camp or event still lands in the unassigned inbox, as does any product with zero or several groups, and whether the single group has a gedu assigned is not consulted. That placement is why the product read now takes FOR UPDATE — the group count has to be taken under the same lock the group editor holds. group_joined_at is never written here; a trigger stamps it from group_id.';
+COMMENT ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) IS 'Admin-gated comp-enrollment: drops a participant onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event. Since 00173 it also enforces the audience: a customer profile takes a seat as their own customer and needs for_parents, anyone else is resolved through the parent link and needs for_gamers. Renamed from admin_enroll_gamer in 00175 — it has not only enrolled gamers since 00173. Since 00206 it places the seat automatically when the product charges nothing (billing_mode free or external_contract) AND has exactly one group, matching the family self-enrollment path; a PAID camp or event still lands in the unassigned inbox, as does any product with zero or several groups, and whether the single group has a gedu assigned is not consulted. That placement is why the product read now takes FOR UPDATE — the group count has to be taken under the same lock the group editor holds. group_joined_at is never written here; a trigger stamps it from group_id. Since 00212 it is the THIRD door into record_required_consents, and the only one that neither prompts nor refuses: admins are trusted, a comp-enrollment is arranged with the family off-platform, so every slug in the product''s requirement set is supplied automatically and the acceptance rows are written on the family''s behalf — customer_id the family''s, accepted_by the acting admin''s auth.uid(). It runs AFTER the INSERT because the partial unique index is the already-enrolled gate on this path, so an acceptance exists only where a seat does. There is no consent argument on this function or on the route above it, and no UI change: nothing about the Add button''s behaviour differs on a consent-requiring product.';
 
 
 --
@@ -1265,10 +1284,10 @@ $$;
 
 
 --
--- Name: create_participation(uuid, uuid, uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_participation(uuid, uuid, uuid, text, text, text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) RETURNS jsonb
+CREATE FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text, p_consented_documents text[] DEFAULT NULL::text[]) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -1376,6 +1395,25 @@ BEGIN
     END IF;
   END IF;
 
+  -- THE ENROLMENT CONDITIONS (00210). Every gate above has passed and a seat is
+  -- available, so this signup is one the platform will accept — which is
+  -- precisely when the product's required consents bind. Raises check_violation
+  -- naming any document the caller did not agree to; otherwise writes one
+  -- acceptance row per required document at that document's current version.
+  -- Runs for EVERY purchase shape, the paid ones included: they write no
+  -- participation row here, but the parent agreed here, so the record belongs
+  -- here. A no-op for the overwhelming majority of products, which require
+  -- nothing.
+  --
+  -- The customer is BOTH the agreeing party and the actor on this path (00212):
+  -- a parent enrolling their own child ticked the boxes themselves, which is
+  -- exactly what distinguishes these rows from the ones an admin writes through
+  -- admin_enroll_participant.
+  PERFORM public.record_required_consents(
+    p_product_id, p_customer_id, p_participant_id, p_customer_id,
+    p_consented_documents
+  );
+
   -- AUTOMATIC PLACEMENT (00206), for the two branches below that seat somebody
   -- on the spot. A no-charge product with exactly one group has no placement
   -- decision left in it, so the seat goes straight into that group instead of
@@ -1446,17 +1484,17 @@ $$;
 
 
 --
--- Name: FUNCTION create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text, p_consented_documents text[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) IS 'The family self-enrollment gate: validates one signup against the product (audience, effective status, registration window, currency, purchase shape, duplicate seat, seat cap) and then either writes the seat or reports that the caller may go and take the money. The two no-charge shapes — free and external (municipality, invoiced off-platform) — insert an active row here and now; the paid shapes return kind=''validated'' and nothing is written until confirm_paid_participation runs from the Stripe webhook, so an abandoned Checkout leaves nothing behind. Holds the product row FOR UPDATE from its first statement, which is what makes the seat-cap count and the group read below race-free against a concurrent signup or group edit. Since 00206 the two instant-active branches place the seat automatically when the product charges nothing AND has exactly one group: that combination has no placement decision left in it, so the row lands in that group rather than in the unassigned inbox. Zero groups, two or more groups, or any paid product still land group_id NULL — the inbox — and whether the single group has a gedu assigned is not consulted. group_joined_at is never written here; a trigger stamps it from group_id. service_role only: this function has no auth.uid() and trusts the calling route to have pinned p_customer_id to the session user.';
+COMMENT ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text, p_consented_documents text[]) IS 'The family self-enrollment gate: validates one signup against the product (audience, effective status, registration window, currency, purchase shape, duplicate seat, seat cap) and then either writes the seat or reports that the caller may go and take the money. The two no-charge shapes — free and external (municipality, invoiced off-platform) — insert an active row here and now; the paid shapes return kind=''validated'' and nothing is written until confirm_paid_participation runs from the Stripe webhook, so an abandoned Checkout leaves nothing behind. Holds the product row FOR UPDATE from its first statement, which is what makes the seat-cap count and the group read below race-free against a concurrent signup or group edit. Since 00206 the two instant-active branches place the seat automatically when the product charges nothing AND has exactly one group: that combination has no placement decision left in it, so the row lands in that group rather than in the unassigned inbox. Zero groups, two or more groups, or any paid product still land group_id NULL — the inbox — and whether the single group has a gedu assigned is not consulted. group_joined_at is never written here; a trigger stamps it from group_id. Since 00210 it takes p_consented_documents and, just after the seat-cap gate, calls record_required_consents: an enrolment onto a product with required consent documents is refused with check_violation unless the array covers all of them, and otherwise records one acceptance row per required document at that document''s current version. That runs for EVERY purchase shape — the paid ones write no participation row here, but the parent agreed here, so the record is made here, and an acceptance behind an abandoned Checkout is a harmless true statement. A full product returns kind=''full'' before any of it, because nobody enrolled. Since 00212 it names p_customer_id as the acceptance''s accepted_by as well as its customer: on this path the parent ticked the boxes themselves, which is what tells these rows apart from the ones admin_enroll_participant writes. service_role only: this function has no auth.uid() and trusts the calling route to have pinned p_customer_id to the session user.';
 
 
 --
--- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, public.product_status, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text, public.product_tag, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, public.product_status, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text, public.product_tag, text, text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_status public.product_status DEFAULT 'pending'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text) RETURNS uuid
+CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_status public.product_status DEFAULT 'pending'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[]) RETURNS uuid
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -1555,16 +1593,24 @@ BEGIN
     SELECT v_product_id, unnest(p_holiday_calendar_ids);
   END IF;
 
+  -- The enrolment conditions (00210). Delegated rather than written inline
+  -- because this function is SECURITY INVOKER and product_required_consents
+  -- carries no write grant for `authenticated` — the guarded DEFINER writer is
+  -- what makes that possible. Unconditional: NULL means "requires nothing",
+  -- which on a create is the same as doing nothing, and calling it anyway keeps
+  -- this function and update_product reading identically.
+  PERFORM public.set_product_required_consents(v_product_id, p_required_consent_slugs);
+
   RETURN v_product_id;
 END;
 $$;
 
 
 --
--- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) IS 'Admin-gated product create: the parent row plus its translations, schedule slots, prices, holiday calendars and the staff-only material link. SECURITY INVOKER — the assert_admin() first statement runs as the caller, which is also why assert_admin itself is granted to authenticated. p_for_gamers/p_for_parents are non-defaulted on purpose: a defaulted audience is one an omitting caller could set without meaning to. p_tag (00178) IS defaulted, and for the opposite reason: null is a legal value for a tag, no CHECK backstops it, and codegen cannot express an explicit null for a non-defaulted argument at all — so omission is how "untagged" reaches the column, and the required-nullable wire schema is what stops an accidental omission upstream. p_region_lock_country (00193) is defaulted for exactly that reason too, and carries one more thing worth knowing: the lock it writes is enforced in the UI alone, because a family''s location is self-attested — see the column comment. This function does NOT take a picture: 00198 dropped p_image_path, because a product''s picture is the product_images entry its image_id points at, written by the route in a second statement, and the served image_path column is derived from that link by trg_products_apply_image_path. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone.';
+COMMENT ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) IS 'Admin-gated product create: the parent row plus its translations, schedule slots, prices, holiday calendars, the staff-only material link and, since 00210, the consent documents enrolling on it requires. SECURITY INVOKER — the assert_admin() first statement runs as the caller, which is also why assert_admin itself is granted to authenticated. p_for_gamers/p_for_parents are non-defaulted on purpose: a defaulted audience is one an omitting caller could set without meaning to. p_tag (00178) IS defaulted, and for the opposite reason: null is a legal value for a tag, no CHECK backstops it, and codegen cannot express an explicit null for a non-defaulted argument at all — so omission is how "untagged" reaches the column, and the required-nullable wire schema is what stops an accidental omission upstream. p_region_lock_country (00193) is defaulted for exactly that reason too, and carries one more thing worth knowing: the lock it writes is enforced in the UI alone, because a family''s location is self-attested — see the column comment. p_required_consent_slugs (00210) is defaulted on the same argument and is NOT written inline: this function is SECURITY INVOKER and product_required_consents carries no write grant, so the row goes through set_product_required_consents, the join table''s single guarded writer. This function does NOT take a picture: 00198 dropped p_image_path, because a product''s picture is the product_images entry its image_id points at, written by the route in a second statement, and the served image_path column is derived from that link by trg_products_apply_image_path. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone.';
 
 
 --
@@ -4180,10 +4226,10 @@ $$;
 
 
 --
--- Name: join_product_waitlist(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: join_product_waitlist(uuid, uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) RETURNS jsonb
+CREATE FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[] DEFAULT NULL::text[]) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -4191,26 +4237,28 @@ BEGIN
   PERFORM public.assert_role('customer');
 
   -- Everything else — product lock, parent-of-gamer check, waitlist_enabled
-  -- gate, idempotency, the clock_timestamp() ordering stamp — is unchanged and
-  -- lives in the engine. This function's whole job is authorization plus
-  -- pinning the actor to the session.
-  RETURN public.join_waitlist(p_product_id, p_participant_id, (SELECT auth.uid()));
+  -- gate, idempotency, the consent gate, the clock_timestamp() ordering stamp —
+  -- is unchanged and lives in the engine. This function's whole job is
+  -- authorization plus pinning the actor to the session.
+  RETURN public.join_waitlist(
+    p_product_id, p_participant_id, (SELECT auth.uid()), p_consented_documents
+  );
 END;
 $$;
 
 
 --
--- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_participant_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) IS 'Guarded, authenticated-facing entry point for joining a product waitlist. The customer is auth.uid(); the parent-of-gamer check lives in join_waitlist.';
+COMMENT ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[]) IS 'Guarded, authenticated-facing entry point for joining a product waitlist. The customer is auth.uid(); the parent-of-gamer check and, since 00210, the required-consent gate both live in join_waitlist.';
 
 
 --
--- Name: join_waitlist(uuid, uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: join_waitlist(uuid, uuid, uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid) RETURNS jsonb
+CREATE FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[] DEFAULT NULL::text[]) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -4289,6 +4337,21 @@ BEGIN
     );
   END IF;
 
+  -- THE ENROLMENT CONDITIONS (00210), below the idempotency return so a replay
+  -- records nothing: the same enrolment agreed once. Raises check_violation
+  -- naming any required document the caller did not agree to; otherwise writes
+  -- one acceptance row per required document at its current version. Joining a
+  -- queue IS the enrolment moment on this path — meeting the conditions for the
+  -- first time at promotion would ask a family to agree at the moment they are
+  -- least able to decline.
+  --
+  -- The customer is both the agreeing party and the actor (00212), for the
+  -- reason create_participation states.
+  PERFORM public.record_required_consents(
+    p_product_id, p_customer_id, p_participant_id, p_customer_id,
+    p_consented_documents
+  );
+
   -- Stamp the join time; order is derived from it, never stored as a rank.
   -- clock_timestamp(), NOT now(): now() is transaction_timestamp() (frozen at
   -- transaction start), so concurrent joins serialized on the gate lock can
@@ -4322,10 +4385,10 @@ $$;
 
 
 --
--- Name: FUNCTION join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid) IS 'Waitlist engine behind join_product_waitlist: gates the audience, refuses a product with the waitlist off, and either writes a waitlisted participation stamped with clock_timestamp() or returns the waitlisted/reserving/active row already there. Returns participation_id, waitlist_position (0 when the row already holds a seat rather than a place in line), status, and idempotent — false only on the call that ran the INSERT, true on a call that recognised an existing row. Anything that must happen exactly once per place in line (the confirmation email) keys on idempotent=false; the flag is the only way to tell a replay apart, since both answers are otherwise identical. No EXECUTE grant to anyone: the guarded wrapper is the only caller.';
+COMMENT ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[]) IS 'Waitlist engine behind join_product_waitlist: gates the audience, refuses a product with the waitlist off, and either writes a waitlisted participation stamped with clock_timestamp() or returns the waitlisted/reserving/active row already there. Returns participation_id, waitlist_position (0 when the row already holds a seat rather than a place in line), status, and idempotent — false only on the call that ran the INSERT, true on a call that recognised an existing row. Anything that must happen exactly once per place in line (the confirmation email) keys on idempotent=false; the flag is the only way to tell a replay apart, since both answers are otherwise identical. Since 00210 it takes p_consented_documents and calls record_required_consents just below the idempotency return, so joining a queue is held to the same enrolment conditions as taking a seat — a family that could queue unconsented would first meet the conditions at promotion, which is the moment they are least able to decline — and a replay records nothing, because it is the same enrolment agreed once. Since 00212 it names p_customer_id as the acceptance''s accepted_by as well as its customer, the parent having ticked the boxes themselves. No EXECUTE grant to anyone: the guarded wrapper is the only caller.';
 
 
 --
@@ -4694,6 +4757,118 @@ $$;
 --
 
 COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE participant''s attendance mark for one session. Per-mark so concurrent writers cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before. Open to an ADMIN or to the gedu assigned to the group (00200) — the guard admits either role and only the assignment half of the gate is skipped for an admin. The TARGET check is not: both callers must aim the mark at somebody who actually holds an active seat in the group, and both are refused before the session starts. The target is whoever holds the seat — an adult is marked present exactly as a child is, with no branch for it.';
+
+
+--
+-- Name: record_required_consents(uuid, uuid, uuid, uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.record_required_consents(p_product_id uuid, p_customer_id uuid, p_participant_id uuid, p_accepted_by uuid, p_consented_documents text[]) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_required text[];
+  v_missing  text[];
+BEGIN
+  -- FIRST, before anything reads the product: an array carrying a NULL element
+  -- is refused outright (00211). A NULL is not a slug, so it can never be an
+  -- agreement to a document, and the only thing it has ever been good for is
+  -- turning the membership test below into a three-valued expression that
+  -- answers "nothing is missing" for a caller who agreed to nothing.
+  -- `unnest(NULL::text[])` yields no rows, so an omitted array (the ordinary
+  -- shape on a product that requires nothing) passes straight through here.
+  IF EXISTS (
+    SELECT 1 FROM unnest(p_consented_documents) AS c WHERE c IS NULL
+  ) THEN
+    RAISE EXCEPTION
+      'the consented-document list contains a NULL entry, which is not a document'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT array_agg(prc.document_slug ORDER BY prc.document_slug)
+    INTO v_required
+    FROM public.product_required_consents prc
+   WHERE prc.product_id = p_product_id;
+
+  -- The overwhelmingly common case: a product with no required consents. It is
+  -- not an error to send slugs anyway — an extra slug is a client that has not
+  -- refreshed, not an attack — so nothing is written and nothing is refused.
+  IF v_required IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- COALESCE rather than a NULL check: a caller who sent nothing and a caller
+  -- who sent an empty array are making the same claim, and both must be refused
+  -- with the same message naming what is missing.
+  --
+  -- NOT EXISTS rather than 00210's `NOT (r = ANY (...))` (00211): the ANY form
+  -- is three-valued and a NULL element makes it answer NULL instead of false for
+  -- every required document, which drops every row from this ARRAY() and
+  -- reports that nothing is missing. This form is two-valued — a NULL element
+  -- fails `c = r` and contributes nothing — so a required document with no
+  -- match stays missing whatever else is in the array. The guard at the top of
+  -- this function already refuses that input; this is the second lock on the
+  -- same door, and it is deliberate.
+  v_missing := ARRAY(
+    SELECT r
+      FROM unnest(v_required) AS r
+     WHERE NOT EXISTS (
+       SELECT 1
+         FROM unnest(COALESCE(p_consented_documents, ARRAY[]::text[])) AS c
+        WHERE c = r
+     )
+  );
+
+  IF array_length(v_missing, 1) > 0 THEN
+    RAISE EXCEPTION
+      'this product requires consent to % before enrolling',
+      array_to_string(v_missing, ', ')
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- One row per REQUIRED document — never one per slug the caller sent, so a
+  -- client that ticks a document the product does not require records nothing
+  -- extra. The version is resolved here and never taken from the caller: the
+  -- greatest created_at for that slug, with `version DESC` as a tiebreaker so
+  -- two revisions published in one transaction pick deterministically rather
+  -- than arbitrarily (an arbitrary answer to "what is current" is worse than a
+  -- wrong one, because it changes between reads).
+  --
+  -- A required slug with NO published version yields NULL here and the NOT NULL
+  -- on document_version aborts the enrolment. That is the intended handling: it
+  -- is a data error only a migration could create, and enrolling somebody
+  -- against a document that has never been published is not a lesser outcome
+  -- than failing loudly.
+  --
+  -- accepted_by is likewise the caller's to state and not the caller's to
+  -- forge: every one of the three callers is SECURITY DEFINER and passes either
+  -- the customer it already pinned or its own auth.uid(), so no wire field
+  -- reaches this column.
+  INSERT INTO public.consent_acceptances (
+    customer_id, participant_id, product_id, document_slug, document_version,
+    accepted_by
+  )
+  SELECT p_customer_id,
+         p_participant_id,
+         p_product_id,
+         r,
+         (SELECT cdv.version
+            FROM public.consent_document_versions cdv
+           WHERE cdv.document_slug = r
+           ORDER BY cdv.created_at DESC, cdv.version DESC
+           LIMIT 1),
+         p_accepted_by
+    FROM unnest(v_required) AS r;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION record_required_consents(p_product_id uuid, p_customer_id uuid, p_participant_id uuid, p_accepted_by uuid, p_consented_documents text[]); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.record_required_consents(p_product_id uuid, p_customer_id uuid, p_participant_id uuid, p_accepted_by uuid, p_consented_documents text[]) IS 'The enrolment-consent gate, and the only writer of consent_acceptances. Loads the product''s required document slugs, refuses the enrolment with check_violation unless the caller''s array covers ALL of them (naming the missing ones), and then writes one acceptance row per REQUIRED slug at that slug''s CURRENT version — the row with the greatest created_at, resolved server-side and never supplied by a caller. A product requiring nothing is a no-op, including when slugs are sent anyway. Carries no EXECUTE grant for any role, because every caller is SECURITY DEFINER and already holds the privilege as the owner. Since 00211 an array containing a NULL element is refused before anything else happens, and the missing-set test is a two-valued NOT EXISTS rather than 00210''s `NOT (r = ANY (...))`: the ANY form answered SQL NULL — which NOT turns into NULL, not true — whenever the array held a NULL and nothing matched, so ARRAY[NULL] passed the gate for every required document and recorded acceptances nobody had given. Since 00212 it takes p_accepted_by, the profile that PERFORMED the act, and there are THREE callers rather than two: create_participation and join_waitlist pass their own p_customer_id, because the parent ticked the boxes themselves, and admin_enroll_participant passes the acting admin''s auth.uid() while leaving customer_id the family''s. These consents are NON-REVOCABLE enrolment conditions — see the consent_acceptances table comment.';
 
 
 --
@@ -5866,6 +6041,65 @@ $_$;
 
 
 --
+-- Name: set_product_required_consents(uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_product_required_consents(p_product_id uuid, p_slugs text[]) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  -- A NULL element is refused rather than repaired. Without this the DELETE
+  -- below matches nothing — `document_slug = ANY (array containing NULL)` is
+  -- NULL for every row that does not match, and `NOT NULL` is NULL — so a
+  -- wipe-and-replace silently degrades into a merge, and the INSERT then dies
+  -- on the NOT NULL with an error that says nothing about which argument was
+  -- wrong. NULL as the whole array still means "requires nothing"; it is only a
+  -- NULL *element* that is meaningless.
+  IF EXISTS (SELECT 1 FROM unnest(p_slugs) AS s WHERE s IS NULL) THEN
+    RAISE EXCEPTION
+      'the required-consent slug list contains a NULL entry, which is not a document'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- NOT EXISTS rather than `NOT (document_slug = ANY (...))`, for the same
+  -- reason record_required_consents uses it: two-valued, so the set really is
+  -- replaced whatever the array holds. The guard above already refuses the one
+  -- input that made the difference; this is the second lock.
+  DELETE FROM public.product_required_consents
+   WHERE product_id = p_product_id
+     AND NOT EXISTS (
+       SELECT 1
+         FROM unnest(COALESCE(p_slugs, ARRAY[]::text[])) AS s
+        WHERE s = document_slug
+     );
+
+  -- ON CONFLICT DO NOTHING rather than a blind insert after a blind delete: the
+  -- pair above and below is a *set* replacement, and leaving an unchanged row
+  -- in place keeps the delete from churning rows an admin did not touch. A slug
+  -- the whitelist has never heard of is refused by the foreign key, which is
+  -- the only validation this needs — admins are trusted, and a bad slug is a
+  -- broken deploy rather than an attack.
+  IF p_slugs IS NOT NULL AND array_length(p_slugs, 1) > 0 THEN
+    INSERT INTO public.product_required_consents (product_id, document_slug)
+    SELECT p_product_id, s
+      FROM unnest(p_slugs) AS s
+    ON CONFLICT (product_id, document_slug) DO NOTHING;
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_product_required_consents(p_product_id uuid, p_slugs text[]); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_product_required_consents(p_product_id uuid, p_slugs text[]) IS 'Replace the set of consent documents a product requires, admin-only and guard-first on assert_admin. The only writer of product_required_consents: that table carries no write grant for any Data API role, and this function is what create_product and update_product both call so the join table has exactly one door. NULL and an empty array both mean "requires nothing", which is how a requirement is cleared. An unknown slug is refused by the foreign key into consent_documents — the only validation needed, since admins are trusted and a bad slug is a broken deploy rather than an attack. Since 00211 a NULL *element* is refused with check_violation, and the replacing DELETE uses a two-valued NOT EXISTS rather than 00210''s `NOT (document_slug = ANY (...))`, which matched no row at all once the array held a NULL and quietly turned the replacement into a merge.';
+
+
+--
 -- Name: set_site_notes(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -6085,10 +6319,10 @@ $$;
 
 
 --
--- Name: update_product(uuid, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text, public.product_tag, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: update_product(uuid, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text, public.product_tag, text, text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text) RETURNS uuid
+CREATE FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[]) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -6287,16 +6521,24 @@ BEGIN
     SELECT p_id, unnest(p_holiday_calendar_ids);
   END IF;
 
+  -- product_required_consents — wipe and replace (00210), through the join
+  -- table's single guarded writer. NULL clears the set, which is the only
+  -- expressible way to clear one and is why the wire schema demands the field
+  -- on every update. Existing consent_acceptances are untouched: dropping a
+  -- requirement changes what FUTURE enrolments must agree to and says nothing
+  -- about what past ones did agree to.
+  PERFORM public.set_product_required_consents(p_id, p_required_consent_slugs);
+
   RETURN p_id;
 END;
 $$;
 
 
 --
--- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) IS 'Admin-gated product edit: parent row plus wipe-and-replace of translations, schedule slots, prices, holiday calendars and the staff-only material link, under the product gate lock. Since 00171 it also DELETES the product''s waitlist whenever the saved waitlist_enabled is false — the flag goes off by unticking it or by uncapping, and the groups panel draws its waitlist column only while it is on, so a surviving queue would be invisible to every affordance that could work it. Deletion rather than promotion: promoting would grant seats with no subscription behind them, while the edit itself opens seats, so a dropped family can simply sign up again. It is silent by owner decision — no confirmation, warning or email — and keyed to the flag''s value rather than to it changing, so it also heals a queue stranded before the rule existed. One exception: a waitlisted row carrying a LIVE subscription (a family_subscriptions row with status <> ''cancelled'', 00170''s predicate) is skipped, because the FK cascades and deleting it would orphan billing Stripe still runs. SECURITY DEFINER since 00171 — participations grants authenticated no writes, so the delete cannot run as the caller; the assert_admin() first statement is what authorizes the whole function. Since 00173 it assigns for_gamers/for_parents, which are non-defaulted parameters precisely because this statement assigns every editable column on every call. Since 00178 it also assigns tag, whose parameter IS defaulted — null is a legal tag and no CHECK backstops it, so omission is the only expressible way to clear one, and the required-nullable wire schema is what keeps that deliberate. Since 00193 it assigns region_lock_country the same way, and that column is deliberately editable on a live product: the lock gates future enrolments only, is never re-run against a seat already held, and is enforced in the UI alone because a family''s location is self-attested. Since 00198 it does NOT assign image_path and takes no p_image_path: that column is derived from image_id by trg_products_apply_image_path on this very UPDATE, so the assignment was always overwritten a moment later. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone.';
+COMMENT ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) IS 'Admin-gated product edit: parent row plus wipe-and-replace of translations, schedule slots, prices, holiday calendars, the staff-only material link and — since 00210 — the set of consent documents enrolling on it requires, under the product gate lock. Since 00171 it also DELETES the product''s waitlist whenever the saved waitlist_enabled is false — the flag goes off by unticking it or by uncapping, and the groups panel draws its waitlist column only while it is on, so a surviving queue would be invisible to every affordance that could work it. Deletion rather than promotion: promoting would grant seats with no subscription behind them, while the edit itself opens seats, so a dropped family can simply sign up again. It is silent by owner decision — no confirmation, warning or email — and keyed to the flag''s value rather than to it changing, so it also heals a queue stranded before the rule existed. One exception: a waitlisted row carrying a LIVE subscription (a family_subscriptions row with status <> ''cancelled'', 00170''s predicate) is skipped, because the FK cascades and deleting it would orphan billing Stripe still runs. SECURITY DEFINER since 00171 — participations grants authenticated no writes, so the delete cannot run as the caller; the assert_admin() first statement is what authorizes the whole function. Since 00173 it assigns for_gamers/for_parents, which are non-defaulted parameters precisely because this statement assigns every editable column on every call. Since 00178 it also assigns tag, whose parameter IS defaulted — null is a legal tag and no CHECK backstops it, so omission is the only expressible way to clear one, and the required-nullable wire schema is what keeps that deliberate. Since 00193 it assigns region_lock_country the same way, and that column is deliberately editable on a live product: the lock gates future enrolments only, is never re-run against a seat already held, and is enforced in the UI alone because a family''s location is self-attested. Since 00198 it does NOT assign image_path and takes no p_image_path: that column is derived from image_id by trg_products_apply_image_path on this very UPDATE, so the assignment was always overwritten a moment later. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone. Since 00210 p_required_consent_slugs replaces the requirement set through set_product_required_consents — NULL clears it, and past acceptances are never touched, because dropping a requirement changes what future enrolments must agree to and says nothing about what past ones did.';
 
 
 --
@@ -6531,6 +6773,143 @@ CREATE TABLE public.calendar_holidays (
     date date NOT NULL,
     reason text
 );
+
+
+--
+-- Name: consent_acceptances; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.consent_acceptances (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    customer_id uuid NOT NULL,
+    participant_id uuid NOT NULL,
+    product_id uuid NOT NULL,
+    document_slug text NOT NULL,
+    document_version text NOT NULL,
+    accepted_at timestamp with time zone DEFAULT now() NOT NULL,
+    accepted_by uuid NOT NULL
+);
+
+
+--
+-- Name: TABLE consent_acceptances; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.consent_acceptances IS 'One row per (enrolment, required document): the whole of what the platform records about a parent agreeing to a product''s enrolment conditions. INSERT-ONLY — nothing updates or deletes a row here, and no Data API role holds a write grant, because every field a forger would want is stamped server-side by record_required_consents, which is the only writer and is reachable only from inside create_participation and join_waitlist. DELIBERATELY carries no unique constraint: enrolling a second child, or leaving and re-joining a term later, each produce fresh rows, and those are history rather than duplicates — a constraint would make the second enrolment silently inherit the first one''s agreement. These consents are NON-REVOCABLE enrolment conditions and are not the (future, separate) revocable marketing/media consent system; there is no revoked_at column and there must never be one on this table.';
+
+
+--
+-- Name: COLUMN consent_acceptances.customer_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_acceptances.customer_id IS 'The adult who agreed — the purchasing customer, taken from the enrolment in hand rather than from anything the caller supplied separately. Same FK and same cascade as participations.customer_id.';
+
+
+--
+-- Name: COLUMN consent_acceptances.participant_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_acceptances.participant_id IS 'Whose seat the agreement conditions: the child being enrolled, or the adult themselves on a product whose audience admits parents (participant_id = customer_id is what a self seat looks like, exactly as on participations).';
+
+
+--
+-- Name: COLUMN consent_acceptances.product_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_acceptances.product_id IS 'The product enrolled onto. ON DELETE CASCADE, matching participations: a deleted product takes its seats with it, and an agreement to conditions of an enrolment that no longer exists conditions nothing.';
+
+
+--
+-- Name: COLUMN consent_acceptances.document_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_acceptances.document_version IS 'The version that was CURRENT for this slug at the moment of enrolment, resolved server-side — never supplied by a caller. Together with document_slug it is a foreign key into consent_document_versions, so a row can only ever name a document the platform actually published.';
+
+
+--
+-- Name: COLUMN consent_acceptances.accepted_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_acceptances.accepted_at IS 'When the agreement was recorded, stamped by the server. A client never supplies it — a timestamp the agreeing party chooses proves nothing about when they agreed.';
+
+
+--
+-- Name: COLUMN consent_acceptances.accepted_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_acceptances.accepted_by IS 'The profile that PERFORMED the consent act — a different question from customer_id, which names the adult the agreement binds. On both family paths they are the same id, because the parent ticked the boxes themselves; on the admin comp-enrolment path (00212) this is the acting admin''s own profile while customer_id stays the family''s, so a staff-made record can never be read back as a parent''s own click. Taken from auth.uid() on that path and from the enrolment in hand on the others — never from a caller argument. No cascade on the FK, matching products.created_by: the profile that made a legal record is part of it, so it cannot be hard-deleted while the record stands; the family''s own removal runs through customer_id, which does cascade.';
+
+
+--
+-- Name: consent_document_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.consent_document_versions (
+    document_slug text NOT NULL,
+    version text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_consent_document_versions_version_not_empty CHECK ((btrim(version) <> ''::text))
+);
+
+
+--
+-- Name: TABLE consent_document_versions; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.consent_document_versions IS 'One row per published revision of a consent document. Rows arrive by MIGRATION only — no Data API role holds a write grant — because a version is a document that was published, not a value an app invents. The CURRENT version OF A SLUG is the row with the greatest created_at for that slug, the same derivation gedu_contract_versions uses (00201), and that is the version an enrolment records. Publishing a new revision is therefore one INSERT and touches no product: existing acceptances go on naming the version that was live when they were made, which is the whole point of storing a version rather than a boolean.';
+
+
+--
+-- Name: COLUMN consent_document_versions.document_slug; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_document_versions.document_slug IS 'Which document this is a revision of. ON DELETE CASCADE only because a slug that is gone has no revisions; nothing deletes one today.';
+
+
+--
+-- Name: COLUMN consent_document_versions.version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_document_versions.version IS 'The version label as the published document carries it — the date under "Last updated" on the page a parent reads. The value consent_acceptances stores.';
+
+
+--
+-- Name: COLUMN consent_document_versions.created_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_document_versions.created_at IS 'When this revision was added to the platform. Ordering key and nothing else: the greatest created_at for a slug IS that document''s current version, which is the one question anything asks of this table.';
+
+
+--
+-- Name: consent_documents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.consent_documents (
+    slug text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_consent_documents_slug_not_empty CHECK ((btrim(slug) <> ''::text))
+);
+
+
+--
+-- Name: TABLE consent_documents; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.consent_documents IS 'One row per consent DOCUMENT the platform knows about — its identity, not any one revision of its text. A product points at a slug here to say "a parent must agree to this before enrolling", and that pointer survives every republication of the document. Rows arrive by MIGRATION only: there is no write grant for any Data API role, because a document is something that was drafted and published, not a value an app invents. Readable by anon as well as authenticated, because the public shop names a product''s required consents before anybody has signed in.';
+
+
+--
+-- Name: COLUMN consent_documents.slug; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_documents.slug IS 'The document''s stable identifier, e.g. roblox-programme-terms. The primary key, the value product_required_consents points at, and the value consent_acceptances stores alongside a version.';
+
+
+--
+-- Name: COLUMN consent_documents.created_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.consent_documents.created_at IS 'When this document identity was added to the platform. Not an ordering key for anything — versions carry that — just a record of when the slug started existing.';
 
 
 --
@@ -7173,6 +7552,30 @@ CREATE TABLE public.product_prices (
 
 
 --
+-- Name: product_required_consents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_required_consents (
+    product_id uuid NOT NULL,
+    document_slug text NOT NULL
+);
+
+
+--
+-- Name: TABLE product_required_consents; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.product_required_consents IS 'The admin-picked set: which consent documents a parent must agree to before enrolling on this product. Empty for almost every product — the Roblox programme is what this exists for. Written only by set_product_required_consents, which create_product and update_product both call; no Data API role holds a write grant, so the join table has exactly one writer. Readable through the product''s own read predicate, exactly as product_prices and schedule_slots are, because the shop has to tell a stranger what enrolling would commit them to. ON DELETE CASCADE from products: a requirement is a property of a product and means nothing without it. NO cascade from consent_documents, deliberately — a slug that products still require must not be deletable out from under them.';
+
+
+--
+-- Name: COLUMN product_required_consents.document_slug; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_required_consents.document_slug IS 'The DOCUMENT, never a version. Which version a parent actually agreed to is resolved at the moment of enrolment and stored on the acceptance row, so a republished document reaches every product that requires it without a single row changing here.';
+
+
+--
 -- Name: product_seat_counts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -7603,6 +8006,30 @@ ALTER TABLE ONLY public.calendar_holidays
 
 
 --
+-- Name: consent_acceptances consent_acceptances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_acceptances
+    ADD CONSTRAINT consent_acceptances_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: consent_document_versions consent_document_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_document_versions
+    ADD CONSTRAINT consent_document_versions_pkey PRIMARY KEY (document_slug, version);
+
+
+--
+-- Name: consent_documents consent_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_documents
+    ADD CONSTRAINT consent_documents_pkey PRIMARY KEY (slug);
+
+
+--
 -- Name: customer_profiles customer_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -7842,6 +8269,14 @@ ALTER TABLE ONLY public.product_prices
 
 
 --
+-- Name: product_required_consents product_required_consents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_required_consents
+    ADD CONSTRAINT product_required_consents_pkey PRIMARY KEY (product_id, document_slug);
+
+
+--
 -- Name: product_seat_counts product_seat_counts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8013,6 +8448,27 @@ CREATE INDEX group_sessions_group_date_idx ON public.group_sessions USING btree 
 --
 
 CREATE INDEX idx_calendar_holidays_date ON public.calendar_holidays USING btree (date);
+
+
+--
+-- Name: idx_consent_acceptances_accepted_by; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_consent_acceptances_accepted_by ON public.consent_acceptances USING btree (accepted_by);
+
+
+--
+-- Name: idx_consent_acceptances_customer; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_consent_acceptances_customer ON public.consent_acceptances USING btree (customer_id);
+
+
+--
+-- Name: idx_consent_acceptances_product_participant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_consent_acceptances_product_participant ON public.consent_acceptances USING btree (product_id, participant_id);
 
 
 --
@@ -8626,6 +9082,54 @@ ALTER TABLE ONLY public.calendar_holidays
 
 
 --
+-- Name: consent_acceptances consent_acceptances_accepted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_acceptances
+    ADD CONSTRAINT consent_acceptances_accepted_by_fkey FOREIGN KEY (accepted_by) REFERENCES public.profiles(id);
+
+
+--
+-- Name: consent_acceptances consent_acceptances_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_acceptances
+    ADD CONSTRAINT consent_acceptances_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: consent_acceptances consent_acceptances_document_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_acceptances
+    ADD CONSTRAINT consent_acceptances_document_fkey FOREIGN KEY (document_slug, document_version) REFERENCES public.consent_document_versions(document_slug, version);
+
+
+--
+-- Name: consent_acceptances consent_acceptances_participant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_acceptances
+    ADD CONSTRAINT consent_acceptances_participant_id_fkey FOREIGN KEY (participant_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: consent_acceptances consent_acceptances_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_acceptances
+    ADD CONSTRAINT consent_acceptances_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: consent_document_versions consent_document_versions_document_slug_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.consent_document_versions
+    ADD CONSTRAINT consent_document_versions_document_slug_fkey FOREIGN KEY (document_slug) REFERENCES public.consent_documents(slug) ON DELETE CASCADE;
+
+
+--
 -- Name: customer_profiles customer_profiles_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8911,6 +9415,22 @@ ALTER TABLE ONLY public.product_holiday_calendars
 
 ALTER TABLE ONLY public.product_prices
     ADD CONSTRAINT product_prices_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: product_required_consents product_required_consents_document_slug_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_required_consents
+    ADD CONSTRAINT product_required_consents_document_slug_fkey FOREIGN KEY (document_slug) REFERENCES public.consent_documents(slug);
+
+
+--
+-- Name: product_required_consents product_required_consents_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_required_consents
+    ADD CONSTRAINT product_required_consents_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
 
 
 --
@@ -9332,6 +9852,13 @@ CREATE POLICY admin_manage_locations ON public.locations TO authenticated USING 
 
 
 --
+-- Name: consent_acceptances admins_read_consent_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_consent_acceptances ON public.consent_acceptances FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
 -- Name: gedu_contract_acceptances admins_read_gedu_contract_acceptances; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -9357,6 +9884,24 @@ CREATE POLICY authenticated_read_locations ON public.locations FOR SELECT TO aut
 --
 
 ALTER TABLE public.calendar_holidays ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: consent_acceptances; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.consent_acceptances ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: consent_document_versions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.consent_document_versions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: consent_documents; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.consent_documents ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: customer_profiles; Type: ROW SECURITY; Schema: public; Owner: -
@@ -9404,6 +9949,13 @@ CREATE POLICY customers_read_assignments_via_gamers ON public.gedu_group_assignm
 --
 
 CREATE POLICY customers_read_groups_via_gamers ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
+
+
+--
+-- Name: consent_acceptances customers_read_own_consent_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY customers_read_own_consent_acceptances ON public.consent_acceptances FOR SELECT TO authenticated USING ((customer_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -9670,6 +10222,12 @@ ALTER TABLE public.product_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.product_prices ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: product_required_consents; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.product_required_consents ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: product_seat_counts; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -9727,6 +10285,20 @@ CREATE POLICY public_read_product_seat_counts ON public.product_seat_counts FOR 
 
 
 --
+-- Name: consent_document_versions public_reads_consent_document_versions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY public_reads_consent_document_versions ON public.consent_document_versions FOR SELECT TO authenticated, anon USING (true);
+
+
+--
+-- Name: consent_documents public_reads_consent_documents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY public_reads_consent_documents ON public.consent_documents FOR SELECT TO authenticated, anon USING (true);
+
+
+--
 -- Name: product_holiday_calendars read_product_holiday_calendars_via_product; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -9738,6 +10310,13 @@ CREATE POLICY read_product_holiday_calendars_via_product ON public.product_holid
 --
 
 CREATE POLICY read_product_prices_via_product ON public.product_prices FOR SELECT TO authenticated, anon USING (public.can_read_product(product_id));
+
+
+--
+-- Name: product_required_consents read_product_required_consents_via_product; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY read_product_required_consents_via_product ON public.product_required_consents FOR SELECT TO authenticated, anon USING (public.can_read_product(product_id));
 
 
 --
@@ -10137,20 +10716,20 @@ GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_f
 
 
 --
--- Name: FUNCTION create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text, p_consented_documents text[]); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text) TO service_role;
+REVOKE ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text, p_consented_documents text[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text, p_consented_documents text[]) TO service_role;
 
 
 --
--- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) TO authenticated;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) TO service_role;
+REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) TO authenticated;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) TO service_role;
 
 
 --
@@ -10491,19 +11070,19 @@ GRANT ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) TO authen
 
 
 --
--- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_participant_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[]); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[]) TO authenticated;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[]) TO service_role;
 
 
 --
--- Name: FUNCTION join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[]); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[]) FROM PUBLIC;
 
 
 --
@@ -10575,6 +11154,13 @@ GRANT ALL ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_gr
 REVOKE ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) TO authenticated;
 GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) TO service_role;
+
+
+--
+-- Name: FUNCTION record_required_consents(p_product_id uuid, p_customer_id uuid, p_participant_id uuid, p_accepted_by uuid, p_consented_documents text[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.record_required_consents(p_product_id uuid, p_customer_id uuid, p_participant_id uuid, p_accepted_by uuid, p_consented_documents text[]) FROM PUBLIC;
 
 
 --
@@ -10719,6 +11305,15 @@ GRANT ALL ON FUNCTION public.set_pin_for_user(p_user_id uuid, p_pin text) TO ser
 
 
 --
+-- Name: FUNCTION set_product_required_consents(p_product_id uuid, p_slugs text[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_product_required_consents(p_product_id uuid, p_slugs text[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_product_required_consents(p_product_id uuid, p_slugs text[]) TO authenticated;
+GRANT ALL ON FUNCTION public.set_product_required_consents(p_product_id uuid, p_slugs text[]) TO service_role;
+
+
+--
 -- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -10767,12 +11362,12 @@ GRANT ALL ON FUNCTION public.trg_seed_product_seat_counts() TO service_role;
 
 
 --
--- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) TO authenticated;
-GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text) TO service_role;
+REVOKE ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) TO authenticated;
+GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) TO service_role;
 
 
 --
@@ -10849,6 +11444,32 @@ GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 GRANT SELECT ON TABLE public.calendar_holidays TO anon;
 GRANT ALL ON TABLE public.calendar_holidays TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authenticated;
+
+
+--
+-- Name: TABLE consent_acceptances; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.consent_acceptances TO authenticated;
+GRANT ALL ON TABLE public.consent_acceptances TO service_role;
+
+
+--
+-- Name: TABLE consent_document_versions; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.consent_document_versions TO anon;
+GRANT SELECT ON TABLE public.consent_document_versions TO authenticated;
+GRANT ALL ON TABLE public.consent_document_versions TO service_role;
+
+
+--
+-- Name: TABLE consent_documents; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.consent_documents TO anon;
+GRANT SELECT ON TABLE public.consent_documents TO authenticated;
+GRANT ALL ON TABLE public.consent_documents TO service_role;
 
 
 --
@@ -11039,6 +11660,15 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_images TO service_role
 GRANT SELECT ON TABLE public.product_prices TO anon;
 GRANT ALL ON TABLE public.product_prices TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_prices TO authenticated;
+
+
+--
+-- Name: TABLE product_required_consents; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.product_required_consents TO anon;
+GRANT SELECT ON TABLE public.product_required_consents TO authenticated;
+GRANT ALL ON TABLE public.product_required_consents TO service_role;
 
 
 --
