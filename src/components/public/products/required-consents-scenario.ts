@@ -62,11 +62,12 @@ export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {
   /**
    * The partner ask, in the same render as the conditions above. It is the only
    * one there is, and one is enough for what the scene is for: the question is
-   * whether a box carrying the "Optional" chip and its hint reads as skippable
-   * directly beneath two identically bordered boxes that hold the button. The
-   * ask no longer differs from a gate in shape — the border marks the click
-   * target, not the stakes — so the chip is the whole of the distinction, and
-   * that needs the two kinds side by side, not two of the same kind.
+   * whether a box whose only marker is an info-toned hint sentence reads as
+   * skippable directly beneath two identically bordered boxes that hold the
+   * button. The ask no longer differs from a gate in shape — the border marks
+   * the click target, not the stakes — so that one sentence is the whole of the
+   * distinction, and judging it needs the two kinds side by side at rail width,
+   * not two of the same kind.
    */
   marketingConsentTypes: ["lynx_educate"],
 };

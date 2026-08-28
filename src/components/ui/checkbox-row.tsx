@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { cva } from "class-variance-authority";
-import { badgeVariants } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
@@ -57,49 +56,35 @@ export interface CheckboxRowProps {
    */
   label: React.ReactNode;
   /**
-   * A muted sub-line under the sentence — what the tick means, or where the
-   * answer can be changed later. It sits in the sentence's own column, so it
-   * aligns with the label text rather than with the box, and it is wired to the
-   * input with `aria-describedby`: a hint rendered as loose text is not
-   * announced at all.
+   * A sub-line under the sentence — what the tick means, or where the answer can
+   * be changed later. It sits in the sentence's own column, so it aligns with
+   * the label text rather than with the box, and it is wired to the input with
+   * `aria-describedby`: a hint rendered as loose text is not announced at all.
    */
   hint?: React.ReactNode;
   /**
-   * A word parked at the end of the row's first line, in a quiet info-toned
-   * chip. **In practice there is one word, and it is "Optional".**
+   * How the hint reads. `muted` is an aside; `info` makes the sentence the row's
+   * marker.
    *
-   * **The chip marks the exception, and required is the unlabeled default.**
-   * Both kinds were labelled at first — "Required" on every gate, "Optional" on
-   * every ask — and a stack of consent rows each carrying a chip turned out to
-   * be a column of repeated words that said the same thing five times and
-   * wrapped badly in the product panel's 20rem rail. What a reader actually
-   * needs is to find the one row they may skip; the rest are the ordinary case,
-   * and the ordinary case is what a design should leave unmarked. So a required
-   * row takes no chip at all, and its bare-ness is the statement.
+   * **`info` is how an optional row says so, and it is the only marker there
+   * is.** A chip lived at the end of the first line for a while, carrying the
+   * word "Optional" — and it cost a line of vertical space in a 20rem rail to
+   * say a word the hint sentence underneath was already saying ("Optional — you
+   * can change this anytime in your settings."). So the sentence does the job
+   * alone, in the info colour the chip wore. Nothing is repeated, nothing is
+   * spent on chrome, and the marker is a sentence a reader can act on rather
+   * than a label they have to interpret.
    *
-   * That places real weight on this word, because it is now the *only* thing
-   * distinguishing an ask from a gate — the rows are the same control wearing
-   * the same border, since the border draws the click target rather than the
-   * stakes. Which is why it is wired into the input's `aria-describedby`
-   * alongside the hint: a distinction carried by a chip nobody announces is a
-   * distinction a screen-reader user does not have.
+   * It reaches a screen reader for free, because the hint is already in
+   * `aria-describedby` — which is the property that made the chip removable
+   * without losing anything: the word was never carried by the styling.
    *
-   * A row that has nothing to contrast with still takes no chip: on a page with
-   * one consent on it, "Optional" is answering a question nobody asked.
-   *
-   * The component owns the chip's look and the caller supplies only the word —
-   * a node, so it is always a translated string. It wears the app's quiet-info
-   * pill (`border-info/50 text-info` over the outline badge, the same tokens the
-   * family session feed's upcoming pill uses), because "you may skip this" is
-   * information about the row rather than a warning or a call to act. It is
-   * never primary-filled: a chip that competed with the checkbox for attention
-   * would be answering the row's question for the reader.
-   *
-   * Right-packed like `trailing`, though nothing about it arrives late: it is
-   * settled at first paint, so it moves nothing and only has to stay out of the
-   * sentence's way.
+   * `info` and not `warning` or `primary`: "you may skip this" is information
+   * about the row, not a hazard and not a call to act. Same token family as the
+   * region-lock notices and the session feed's upcoming pill, at their quiet
+   * tier — coloured text, no fill, no border.
    */
-  tag?: React.ReactNode;
+  hintTone?: "muted" | "info";
   /**
    * The two text scales the app uses: `sm` for a full-width form (the
    * registration card, the admin product form), `xs` for the product panel's
@@ -150,12 +135,11 @@ export interface CheckboxRowProps {
  * where you may click.** A checkbox glyph is 16px square; the sentence beside it
  * is not obviously part of the same target, and a bare row leaves a reader
  * guessing whether they have to hit the little box. The border draws the target,
- * and then the whole row really is one — the box, the sentence, the hint, the
- * chip and the trailing slot all toggle it, because the row is a `<label>` and
- * the browser gives that for free. On a phone, where the glyph is well under the
- * comfortable touch minimum and the row is comfortably over it, this is the
- * difference between a control that works and one that is missed twice before it
- * is hit.
+ * and then the whole row really is one — the box, the sentence, the hint and the
+ * trailing slot all toggle it, because the row is a `<label>` and the browser
+ * gives that for free. On a phone, where the glyph is well under the comfortable
+ * touch minimum and the row is comfortably over it, this is the difference
+ * between a control that works and one that is missed twice before it is hit.
  *
  * **So the border is not a weight, and must never be spent as one.** An earlier
  * draft had a quiet unbordered variant for optional asks and the bordered one
@@ -163,20 +147,26 @@ export interface CheckboxRowProps {
  * quiet rows read as the loud ones failing to render. Required and optional look
  * identical here on purpose.
  *
- * **What separates them is one word, and only the exception gets it.** Wherever
- * consents mix, an optional row carries the info-toned "Optional" chip and a
- * required row carries nothing — the absence *is* the "required", because the
- * gate is the ordinary case and marking every ordinary row produced a column of
- * repeated chips that wrapped badly and told the reader nothing they could act
- * on. See `tag`.
+ * **What separates them is one sentence, and only the exception gets it.**
+ * Wherever consents mix, an optional row carries an info-toned hint that says so
+ * in words — "Optional — you can change this anytime in your settings." — and a
+ * required row carries no marker at all. **The absence *is* the "required"**,
+ * because the gate is the ordinary case and marking every ordinary row produced
+ * a column of repeated labels that wrapped badly and told the reader nothing
+ * they could act on.
+ *
+ * That marker was briefly a chip at the end of the first line, carrying the
+ * single word "Optional". It went because it spent a line of vertical space
+ * repeating a word the hint underneath already said. See `hintTone`.
  *
  * The input's accessible name comes from `aria-labelledby` pointing at the
  * sentence rather than from the label's text content, because the content also
- * holds the chip, the hint and whatever `trailing` carries — without it, a
- * screen reader would read the hint twice, once as part of the name and again as
- * the description. The chip and the hint are then handed back deliberately
- * through `aria-describedby`: the name stays the sentence, and the description
- * carries the two things that qualify it.
+ * holds the hint and whatever `trailing` carries — without it, a screen reader
+ * would read the hint twice, once as part of the name and again as the
+ * description. The hint is then handed back deliberately through
+ * `aria-describedby`, which is what keeps the optional marker legible to a
+ * reader who cannot see the colour: the word travels in the sentence, never in
+ * the styling.
  *
  * The box pins to the first line of a wrapping sentence (`mt-0.5`) rather than
  * centring on the whole block, which is what keeps a three-line consent from
@@ -190,7 +180,7 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
       disabled = false,
       label,
       hint,
-      tag,
+      hintTone = "muted",
       size = "sm",
       trailing,
       className,
@@ -203,14 +193,9 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
     // the DOM happened to hold.
     const generated = React.useId();
     const labelId = `${generated}-label`;
-    const hintId = hint === undefined ? undefined : `${generated}-hint`;
-    const tagId = tag === undefined ? undefined : `${generated}-tag`;
-    // The hint first, then the chip: the hint qualifies the sentence and the
-    // chip qualifies the row, which is the order a reader meets them on screen.
-    // Undefined when the row has neither — an empty `aria-describedby` is a
+    // Undefined when there is no hint — an empty `aria-describedby` is a
     // dangling reference, not an absent one.
-    const describedBy =
-      [hintId, tagId].filter((id) => id !== undefined).join(" ") || undefined;
+    const hintId = hint === undefined ? undefined : `${generated}-hint`;
 
     return (
       <label
@@ -226,41 +211,26 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
           onChange={(e) => onCheckedChange(e.target.checked)}
           disabled={disabled}
           aria-labelledby={labelId}
-          aria-describedby={describedBy}
+          aria-describedby={hintId}
         />
         {/* `min-w-0` so a long word or a truncating title inside the label can
             actually shrink; `flex-1` so the slack the trailing slot grows into
             lives here, at the end of the row, rather than between the box and
             the sentence. */}
         <span className="min-w-0 flex-1">
-          {/* The sentence and its chip share one line; `items-start` keeps the
-              chip on the first of them however far the sentence wraps, and
-              `flex-1` on the sentence is what leaves the chip the slack at the
-              end to sit in. */}
-          <span className="flex items-start gap-3">
-            <span id={labelId} className="min-w-0 flex-1">
-              {label}
-            </span>
-            {tag !== undefined && (
-              <span
-                id={tagId}
-                className={cn(
-                  badgeVariants({ variant: "outline" }),
-                  // The app's quiet-info pill. `font-medium` rather than the
-                  // badge's own semibold: this word qualifies the row, and a
-                  // chip shouting beside a muted consent sentence would pull
-                  // the eye off the sentence it is about.
-                  "shrink-0 border-info/50 font-medium text-info",
-                )}
-              >
-                {tag}
-              </span>
-            )}
+          <span id={labelId} className="block">
+            {label}
           </span>
           {hint !== undefined && (
             <span
               id={hintId}
-              className="mt-1 block text-xs text-muted-foreground"
+              className={cn(
+                "mt-1 block text-xs",
+                // Quiet info: coloured text, no fill and no border. The row is
+                // already bordered, so a second edge here would read as a box
+                // inside a box rather than as a note.
+                hintTone === "info" ? "text-info" : "text-muted-foreground",
+              )}
             >
               {hint}
             </span>

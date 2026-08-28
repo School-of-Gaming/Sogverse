@@ -305,15 +305,18 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               the hint sits under it in the same column, and `aria-describedby`
               is wired for us.
 
-              No `tag`. The chip exists to tell a required row from an optional
-              one, and this is the only consent on the page — a lone "Optional"
-              would be answering a contrast the reader has no other half of. */}
+              The hint is info-toned, exactly as the signup panel's marketing
+              row is — it is the same sentence, opening on the same word, doing
+              the same job of saying this one may be skipped. Leaving one of the
+              two muted and the other coloured would be drift a reader could
+              actually notice, since a parent meets both within one signup. */}
           <CheckboxRow
             checked={marketingConsent}
             onCheckedChange={setMarketingConsent}
             disabled={isLoading}
             label={t('register.marketingConsentLabel')}
             hint={t('register.marketingConsentHint')}
+            hintTone="info"
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">

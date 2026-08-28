@@ -27,25 +27,26 @@ import type { FormState } from "../product-form-state";
  * sits directly after Registration timing and before Listing; the two of them
  * together are the signup act, in the order a parent meets them.
  *
- * **One section, not two, and the chip is why.** The conditions and the asks
- * were two headed sections for a while, on the reasoning that a condition and a
- * question are what an admin most needs to be unable to confuse. The rows are
- * now the shared `CheckboxRow`, which wears one bordered shape everywhere — the
- * border marks the click target, not the stakes — so telling the two apart fell
- * to the "Optional" chip, carried by the marketing rows and by nothing else. A
- * required row is unmarked, because in a list of enrolment conditions a
- * condition is the ordinary thing to find and the ask is the exception. With
- * the exception marked on the row itself, a second heading was repeating in a
- * title what the row already says, and separating rows that an admin reads as
- * one list: everything this product will put in front of a parent, in the order
- * they will meet it.
+ * **One section, not two, and what each row SAYS is why.** The conditions and
+ * the asks were two headed sections for a while, on the reasoning that a
+ * condition and a question are what an admin most needs to be unable to confuse.
+ * The rows are now the shared `CheckboxRow`, which wears one bordered shape
+ * everywhere — the border marks the click target, not the stakes — so telling
+ * the two apart fell to the marketing rows' own caption, which states that
+ * ticking one adds an optional question a parent may decline. A required row
+ * needs no such line, because in a list of enrolment conditions a condition is
+ * the ordinary thing to find and the ask is the exception. With the exception
+ * described on the row itself, a second heading was repeating in a title what
+ * the row already says, and separating rows that an admin reads as one list:
+ * everything this product will put in front of a parent, in the order they will
+ * meet it.
  *
  * The difference itself has not softened. A required row is a *condition*: a
  * parent who declines cannot enrol, the agreement is per seat, and it can never
  * be withdrawn. A marketing row is a *question*: declining is a complete
  * answer, the seat is unaffected, the consent is account-level, and the parent
- * can switch it off in settings that evening. That is what each row's chip and
- * its caption say.
+ * can switch it off in settings that evening. That is what a marketing row's
+ * caption says in words.
  *
  * **Offered on every product type**, with no `product-type-config` flag gating
  * it. The database has no per-type rule here — any product may point at any
@@ -92,7 +93,6 @@ export function ConsentsSection({
   const tNames = useTranslations("consentDocuments.names");
   const tBundles = useTranslations("consentDocuments.bundles");
   const tMarketing = useTranslations("admin.products.consents.marketing");
-  const tTag = useTranslations("common.consentTag");
   const { data: documents } = useConsentDocuments();
 
   // Slug → current version, once the query lands. `undefined` for a slug means
@@ -260,17 +260,18 @@ export function ConsentsSection({
         {looseSlugs.map(documentRow)}
         {/* The optional asks, after every document this deploy can name and
             before the drift run below. Same list, same control, same border —
-            the caption and the one "Optional" chip are what say a parent may
-            decline these and cannot decline the rows above; a required row
-            carries no chip, because a condition is the ordinary thing to find
-            in this section. */}
+            the caption under each name is what says a parent may decline these
+            and cannot decline the rows above. It stays in the ordinary muted
+            description styling rather than borrowing the parent-facing rows'
+            info tone: this is an admin reading a form they are filling in, not
+            a family being asked to consent to something, and the sentence
+            already says what ticking it does. */}
         {ATTACHABLE_MARKETING_CONSENT_TYPES.map((type) => {
           const checked = state.marketingConsentTypes.has(type);
           const { sentenceKey } = MARKETING_CONSENT_ASKS[type];
           return (
             <CheckboxRow
               key={type}
-              tag={tTag("optional")}
               checked={checked}
               onCheckedChange={() => {
                 const next = new Set(state.marketingConsentTypes);

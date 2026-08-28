@@ -65,47 +65,69 @@ describe("CheckboxRow", () => {
         checked={false}
         onCheckedChange={() => undefined}
         label="Send me news about clubs."
-        hint="You can change this any time in your settings."
-        tag="Optional"
+        hint="Optional — you can change this anytime in your settings."
         trailing={<span>Saved</span>}
       />,
     );
 
     const box = screen.getByRole("checkbox");
 
-    // The name is the sentence alone: the chip, the hint and the trailing
-    // status all sit inside the same <label>, so without the explicit
-    // labelledby the browser would fold every one of them into it.
+    // The name is the sentence alone: the hint and the trailing status both sit
+    // inside the same <label>, so without the explicit labelledby the browser
+    // would fold them into it.
     expect(textOfReferenced(box, "aria-labelledby")).toBe(
       "Send me news about clubs.",
     );
-    // **Both the hint and the chip are handed back as the description**, and
-    // the chip half is the load-bearing one: there is a single visual shape,
-    // so "Optional" is the entire distinction between this row and a gate. A
-    // chip that only rendered would leave a screen-reader user with no way to
-    // tell which rows they may skip. Trailing status stays out — it is a
-    // transient save state, not something that qualifies the question.
+    // **The hint is handed back as the description, and that is load-bearing.**
+    // There is one visual shape for every consent row, so this sentence — which
+    // opens on the word "Optional" — is the entire distinction between an ask
+    // and a gate. It has to reach a focused control, or a screen-reader user
+    // cannot tell which rows they may skip. It is also what made the retired
+    // "Optional" chip safe to delete: the word was always in the sentence,
+    // never in the styling. Trailing status stays out — a transient save state
+    // does not qualify the question.
     expect(textOfReferenced(box, "aria-describedby")).toBe(
-      "You can change this any time in your settings. Optional",
+      "Optional — you can change this anytime in your settings.",
     );
   });
 
-  it("announces the tag even on a row with no hint", () => {
-    render(
+  it("tones the hint muted by default and info on request, without touching the size", () => {
+    const optionality = "Optional — you can change this anytime in your settings.";
+    const { rerender } = render(
       <CheckboxRow
         checked={false}
         onCheckedChange={() => undefined}
         label="Share my email with our partner."
-        tag="Optional"
+        hint={optionality}
       />,
     );
 
-    const box = screen.getByRole("checkbox");
-    expect(screen.getByText("Optional")).not.toBeNull();
-    expect(textOfReferenced(box, "aria-describedby")).toBe("Optional");
+    // Default: an aside, in the same muted grey every other sub-line uses.
+    expect(screen.getByText(optionality).className).toContain(
+      "text-muted-foreground",
+    );
+
+    rerender(
+      <CheckboxRow
+        checked={false}
+        onCheckedChange={() => undefined}
+        label="Share my email with our partner."
+        hint={optionality}
+        hintTone="info"
+      />,
+    );
+
+    // Info: the quiet tier of the app's info family — coloured text, no fill
+    // and no border, because the row already has an edge of its own. The size
+    // does not move with the tone; a marker that changed scale would read as a
+    // different kind of thing rather than the same note said in colour.
+    const hint = screen.getByText(optionality);
+    expect(hint.className).toContain("text-info");
+    expect(hint.className).not.toContain("text-muted-foreground");
+    expect(hint.className).toContain("text-xs");
   });
 
-  it("points at no description when there is neither hint nor tag", () => {
+  it("points at no description when there is no hint", () => {
     // An empty `aria-describedby` is a dangling reference rather than an absent
     // one, so a row with nothing to describe must carry no attribute at all.
     render(

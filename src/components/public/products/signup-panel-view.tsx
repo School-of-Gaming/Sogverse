@@ -503,12 +503,13 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 // to agree to becomes another row in this section, above the rules row; it does
 // not become a section of its own.
 //
-// **One consent row wears a chip, and it is the one that does NOT gate the
+// **One consent row carries a marker, and it is the one that does NOT gate the
 // button.** The optional marketing row below the section is the same bordered
 // control as the gates above it — the border draws the click target, not the
-// stakes — so the info-toned "Optional" is what a reader (and, through
-// `aria-describedby`, a screen reader) tells them apart by. Every gate is
-// unmarked, because a gate is the ordinary thing to find here.
+// stakes — so its info-toned hint sentence, which opens with the word
+// "Optional", is what a reader (and, through `aria-describedby`, a screen
+// reader) tells them apart by. Every gate is unmarked, because a gate is the
+// ordinary thing to find here.
 //
 // **Actions live in the sections, never in the CTA.** A section that needs
 // something offers its own affordance: the dashed add-a-gamer row inside the
@@ -1070,9 +1071,9 @@ function SignupForm(
           before the CTA, and deliberately NOT a row inside the section above.
           See the component's own note — the section above is one act the button
           names, and this question does not gate it. What tells the two apart is
-          the chip on every row, not the treatment of the box. Its existence
-          comes off the product read, so it is here or absent from the first
-          paint; only its tick arrives late. */}
+          its own info-toned hint sentence, not the treatment of the box. Its
+          existence comes off the product read, so it is here or absent from the
+          first paint; only its tick arrives late. */}
       <OptionalMarketingSection
         rows={describeMarketingConsents(props.marketingConsentTypes)}
         granted={props.marketingConsents}
@@ -1122,8 +1123,8 @@ function SignupForm(
  * title stopped meaning anything: two headings, two boxes, one act. What the
  * heading was doing — giving the CTA's prompt a visible referent — is now done
  * by the section's own, so the row is left to be a sentence and a checkbox. Like
- * every gate here it is unchipped: it sits in the same stack, under the same
- * heading, at the same spacing, and it gates the CTA exactly as they do.
+ * every gate here it carries no marker: it sits in the same stack, under the
+ * same heading, at the same spacing, and it gates the CTA exactly as they do.
  *
  * **And its sentence names its own document, exactly as a bundle's does.** The
  * rules row is a consent to our Anti-Bullying and Discipline policy, so the
@@ -1285,15 +1286,18 @@ function RequiredConsentSection({
  *   section is one act — everything a parent must agree to, which the CTA names
  *   as one step — and a row inside it that did not gate the button would be a
  *   box the reader cannot tell from the ones that do.
- * - **It says "Optional" on the row itself**, in the one chip the consent area
- *   carries — every gate above it is unmarked, so this word is the exception
- *   rather than one label among many. This used to be done by *withholding* the
- *   border the required rows wear — a plain line beside boxed gates, visibly
- *   lighter. That is gone: the border marks the click target, not the stakes, so
- *   spending it on weight left the lighter rows reading as gates that had
- *   failed to render, and left the distinction invisible to anyone not looking
- *   at the screen. A word in the row's accessible description says it to
- *   everybody.
+ * - **It says "Optional" in its own hint, and that sentence is the only marker
+ *   in the consent area** — every gate above it is unmarked, so this is the
+ *   exception rather than one label among many. The distinction has been carried
+ *   three ways now and the current one is the cheapest: first by *withholding*
+ *   the border the required rows wear (a plain line beside boxed gates), which
+ *   died when the border became the click target rather than a weight — the
+ *   lighter rows read as gates that had failed to render, and nothing reached a
+ *   reader who was not looking at the screen. Then by an info-toned chip at the
+ *   end of the first line, which said one word the hint underneath was already
+ *   saying and spent a line of rail height doing it. Now the hint says it alone,
+ *   in the colour the chip wore, and it is in the row's accessible description
+ *   either way.
  * - **It says it is optional in its own words** too, under the sentence, and names
  *   where the answer can be changed later — because it *can* be, which is the
  *   deepest difference between this and everything above it. A required consent
@@ -1324,19 +1328,18 @@ function OptionalMarketingSection({
   onGrantedChange: (consentType: MarketingConsentType, next: boolean) => void;
 }) {
   const t = useTranslations("productDetail.signupPanel.consents.marketing");
-  const tTag = useTranslations("common.consentTag");
   if (rows.length === 0) return null;
   return (
     <div className="space-y-2">
       {/* The hint goes under the sentence rather than beside it: at rail width
           there is no beside, and the sentence is what the tick means while this
-          is a note about the tick. The chip says *that* the row is optional;
-          the hint says what that means and where the answer can be changed. */}
+          is a note about the tick. In the info tone, because this sentence is
+          also the row's optional marker — it opens with the word, so nothing
+          else has to carry it. */}
       {rows.map(({ type, ask }) => (
         <CheckboxRow
           key={type}
           size="xs"
-          tag={tTag("optional")}
           checked={granted.has(type)}
           onCheckedChange={(next) => onGrantedChange(type, next)}
           label={
@@ -1351,6 +1354,7 @@ function OptionalMarketingSection({
             </span>
           }
           hint={t("hint")}
+          hintTone="info"
         />
       ))}
     </div>
@@ -1432,19 +1436,19 @@ function ConsentSentenceLink({
 
 /**
  * One thing to agree to: the shared `CheckboxRow`, carrying the sentence and
- * the "Required" chip.
+ * nothing else.
  *
  * Shared by every row rather than written per kind, because "the rows are
  * indistinguishable" is the point of the section — a reader must not be able to
  * tell our rules from a product's documents by their treatment, only by what
  * they say.
  *
- * **No chip, and that is what says "required".** Every row here is a gate, and
+ * **No marker, and that is what says "required".** Every row here is a gate, and
  * gates are the ordinary case in this section — the exception is the optional
- * marketing row below it, which is the only row that carries a word. Labelling
- * both kinds was tried and made a column of repeated chips that wrapped badly
- * at rail width and told a reader nothing they could act on; one marked
- * exception among unmarked defaults says the same thing in one word.
+ * marketing row below it, which is the only one that says anything about which
+ * kind it is. Labelling both was tried and made a column of repeated words that
+ * wrapped badly at rail width and told a reader nothing they could act on; one
+ * marked exception among unmarked defaults says the same thing for free.
  *
  * `sentence` takes a node rather than a string because a consent sentence
  * carries its own links inline — a bundle's documents, the rules row's policy,

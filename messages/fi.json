@@ -102,10 +102,7 @@
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
     "roleGedu": "Gedu",
-    "gedus": "Gedut",
-    "consentTag": {
-      "optional": "Vapaaehtoinen"
-    }
+    "gedus": "Gedut"
   },
   "about": {
     "hero": {

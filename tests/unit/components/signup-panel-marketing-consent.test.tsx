@@ -179,7 +179,7 @@ describe("a product that asks for a partner's marketing", () => {
     expect(rows(container)[2].contains(boxes[2])).toBe(true);
   });
 
-  it("marks only the ask — the gates carry no chip at all", () => {
+  it("marks only the ask — the gates say nothing about which kind they are", () => {
     const { container } = render(
       <SignupPanelView
         {...asking({
@@ -191,32 +191,34 @@ describe("a product that asks for a partner's marketing", () => {
 
     // **One marked exception among unmarked defaults.** Every consent row is
     // the same bordered control — the border marks the click target, not the
-    // stakes — so this single word is all a parent has to tell the partner's
-    // mailing list from the two rows holding the button. Chipping the gates too
-    // was tried and made a column of repeated words that wrapped badly at rail
-    // width; a gate is the ordinary thing to find here, so it goes unmarked.
+    // stakes — so the marketing row's own hint sentence is all a parent has to
+    // tell the partner's mailing list from the two rows holding the button.
+    // Marking the gates too was tried, twice: first by withholding the border,
+    // then by an "Optional"/"Required" chip pair. Both are gone, and a gate is
+    // the ordinary thing to find here, so it goes unmarked.
     const [bundle, rules, marketing] = rows(container);
-    expect(bundle.textContent).not.toContain("optional");
-    expect(rules.textContent).not.toContain("optional");
-    expect(marketing.textContent).toContain("optional");
-    // Nothing anywhere in the panel claims "required" any more — the heading
-    // dropped the word when the chip took over the job.
+    expect(bundle.textContent).not.toContain("hint");
+    expect(rules.textContent).not.toContain("hint");
+    expect(marketing.textContent).toContain("hint");
+    // No chip anywhere any more — neither half of the retired pair survives.
+    expect(container.textContent).not.toContain("optional");
     expect(container.textContent).not.toContain("required");
   });
 
-  it("announces the Optional chip, so the distinction is not screen-only", () => {
+  it("announces the optionality hint, so the distinction is not screen-only", () => {
     const { container } = render(<SignupPanelView {...asking()} />);
 
-    // The chip is the whole distinction, so a chip nobody reads out is a
-    // distinction a screen-reader user does not have. It rides in the box's
-    // `aria-describedby` beside the hint.
+    // The hint sentence IS the marker now, and it opens with the word
+    // "Optional". It has to reach a focused control, or a screen-reader user has
+    // no way to tell this row from the gates above it — which is precisely the
+    // property that made the chip safe to delete: the word was always carried by
+    // the sentence, never by the styling.
     const box = checkboxes(container)[1];
     const described = (box.getAttribute("aria-describedby") ?? "")
       .split(" ")
       .filter(Boolean)
       .map((id) => document.getElementById(id)?.textContent ?? "")
       .join(" ");
-    expect(described).toContain("optional");
     expect(described).toContain("hint");
   });
 

@@ -102,10 +102,7 @@
     "roleParent": "Parent",
     "roleGamer": "Gamer",
     "roleGedu": "Gedu",
-    "gedus": "Gedus",
-    "consentTag": {
-      "optional": "Optional"
-    }
+    "gedus": "Gedus"
   },
   "about": {
     "hero": {
