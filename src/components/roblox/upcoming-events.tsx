@@ -1,6 +1,3 @@
-"use client";
-
-import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,13 +50,12 @@ export function UpcomingEvents({
 }: UpcomingEventsProps) {
   const t = useTranslations("roblox.events");
 
-  const countsByProduct = useMemo(() => {
-    const map = new Map<string, ParticipationCounts>();
-    for (const c of counts) {
-      map.set(c.productId, c);
-    }
-    return map;
-  }, [counts]);
+  // A handful of rows at most — a plain map build, so the file needs no hooks
+  // beyond translations and stays renderable from either environment.
+  const countsByProduct = new Map<string, ParticipationCounts>();
+  for (const c of counts) {
+    countsByProduct.set(c.productId, c);
+  }
 
   return (
     <section className="container mx-auto px-4 py-16 sm:py-24">

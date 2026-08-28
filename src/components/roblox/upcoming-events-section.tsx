@@ -22,15 +22,19 @@ import { UpcomingEventsBrowse } from "./upcoming-events-browse";
  * because the count query is keyed on the product ids — which is also why one
  * catch covers both: a failed product read leaves nothing to count.
  *
- * Both reads sit inside a single try/catch with empty fallbacks (mirroring the
- * shop page): on any failure the page still renders — the section falls back to
- * its own empty state and the client hooks refetch on mount — so a prefetch
- * that misses costs the first frame's data rather than the page.
+ * On failure this returns `null` and **nothing is seeded** — deliberately not
+ * the shop page's empty-array fallback. The entry being seeded here is the
+ * storefront's own cache key, and `initialData` lands fresh for the query
+ * provider's staleTime: seeding `[]` after a transient miss would blank the
+ * `/shop` grid for a reader who follows this page's CTAs there within that
+ * window, while the unseeded hook has no data and genuinely fetches on mount.
+ * The page still renders either way — a miss costs this one section's first
+ * frame, never the page.
  */
 async function getInitialProgrammeData(): Promise<{
   products: ProductBrowseRow[];
   counts: ParticipationCounts[];
-}> {
+} | null> {
   try {
     const supabase = await createClient();
     const products = await new ProductsService(supabase).listVisibleByTypes(
@@ -43,14 +47,26 @@ async function getInitialProgrammeData(): Promise<{
     );
     return { products, counts };
   } catch {
-    return { products: [], counts: [] };
+    return null;
   }
 }
 
-/** The data shell around the presentational "Upcoming Events" section. */
+/**
+ * The data shell around the presentational "Upcoming Events" section.
+ *
+ * Rendered inline, with no Suspense boundary — a deliberate trade. The route's
+ * HTML waits on one indexed read (the same one `/shop` makes), and the
+ * alternative is a fallback that must hold this section's exact final height or
+ * it reintroduces the mid-page shift the layout rules forbid. If this read ever
+ * turns perceptibly slow, that is an anomaly to investigate, not a case to
+ * design a skeleton for.
+ */
 export async function UpcomingEventsSection() {
-  const { products, counts } = await getInitialProgrammeData();
+  const initial = await getInitialProgrammeData();
   return (
-    <UpcomingEventsBrowse initialProducts={products} initialCounts={counts} />
+    <UpcomingEventsBrowse
+      initialProducts={initial?.products}
+      initialCounts={initial?.counts}
+    />
   );
 }

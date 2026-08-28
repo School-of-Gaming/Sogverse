@@ -6,6 +6,13 @@ import {
   SHOP_CATEGORIES,
   parseCategories,
 } from "@/components/public/products/shop-categories";
+import {
+  PROGRAMME_LANGUAGE,
+  PROGRAMME_TOPIC,
+} from "@/components/roblox/programme-filters";
+import { isAudienceFilterValue } from "@/components/public/products/product-audience";
+import { isSpokenLanguageCode } from "@/lib/constants/spoken-languages";
+import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import type { ProductType } from "@/types";
 
 describe("ROUTES.admin.product", () => {
@@ -67,5 +74,40 @@ describe("ROUTES.shopBrowse", () => {
     // derived cases above can't cover this: there is no category to derive it
     // from, which is exactly the point.
     expect(ROUTES.shopBrowse("municipality_club")).toBe("/shop");
+  });
+});
+
+describe("the /roblox programme's shop hrefs", () => {
+  // Both constants promise, in a comment, to stay in sync with the browse
+  // filter's param grammar. These tests are that promise made mechanical (the
+  // same arrangement shopBrowse has above): each emitted param is read back the
+  // way the shop reads it, so a renamed param, a retired enum value, or a typo'd
+  // href fails here instead of silently degrading to an unfiltered shop.
+
+  it("robloxShop filters to the programme's topic and language", () => {
+    const params = new URL(ROUTES.robloxShop, "https://example.test")
+      .searchParams;
+    // Topic values are matched as lowercase strings against the product's
+    // `topic` enum column (see use-browse-filters/filter-products); membership
+    // in the enum's own value list is what "recognised" means.
+    expect(params.get("topic")).toBe(PROGRAMME_TOPIC);
+    expect(PRODUCT_TOPIC_VALUES).toContain(params.get("topic"));
+    const lang = params.get("lang");
+    expect(lang).toBe(PROGRAMME_LANGUAGE);
+    expect(lang !== null && isSpokenLanguageCode(lang)).toBe(true);
+  });
+
+  it("robloxParentSessions filters to French products for parents", () => {
+    const params = new URL(ROUTES.robloxParentSessions, "https://example.test")
+      .searchParams;
+    const lang = params.get("lang");
+    expect(lang).toBe(PROGRAMME_LANGUAGE);
+    expect(lang !== null && isSpokenLanguageCode(lang)).toBe(true);
+    const audience = params.get("audience");
+    expect(audience !== null && isAudienceFilterValue(audience)).toBe(true);
+    expect(audience).toBe("parents");
+    // Deliberately not topic-filtered — a parent digital-safety session is not
+    // a Roblox Studio product (the route constant's comment owns the why).
+    expect(params.get("topic")).toBeNull();
   });
 });
