@@ -2933,7 +2933,9 @@
     "events": {
       "heading": "Tulevat ajankohdat",
       "subheading": "Lisäämme uusia ajankohtia usein – käy katsomassa, mitä on tulossa.",
-      "empty": "Ensimmäisiä ajankohtia vahvistetaan parhaillaan. Käy pian katsomassa, mitä on tulossa."
+      "empty": "Ensimmäisiä ajankohtia vahvistetaan parhaillaan. Käy pian katsomassa, mitä on tulossa.",
+      "previous": "Edelliset tapahtumat",
+      "next": "Seuraavat tapahtumat"
     },
     "parents": {
       "eyebrow": "Vanhemmille",

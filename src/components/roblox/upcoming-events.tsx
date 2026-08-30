@@ -1,9 +1,9 @@
 import { useTranslations } from "next-intl";
 import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProductBrowseCard } from "@/components/public/products/product-browse-card";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
+import { EventsRail } from "./events-rail";
 
 interface UpcomingEventsProps {
   /**
@@ -14,8 +14,8 @@ interface UpcomingEventsProps {
   products?: readonly ProductBrowseRow[];
   /**
    * Seat counts covering those products, in any order — the raw query result,
-   * built into a per-id map here so the shell hands over what it fetched rather
-   * than a map it had to assemble.
+   * so the shell hands over what it fetched rather than a map it had to
+   * assemble. The per-id map is built where the cards are, in the rail.
    */
   counts?: readonly ParticipationCounts[];
 }
@@ -27,7 +27,11 @@ interface UpcomingEventsProps {
  * Presentational by design: it takes rows and renders them, so it stays
  * demoable from fixtures and the data work lives in the shell that wraps it
  * (`upcoming-events-section.tsx` prefetches, `upcoming-events-browse.tsx` keeps
- * the query live and applies the programme narrowing).
+ * the query live and applies the programme narrowing). This file is the frame —
+ * heading, subheading, and the choice between the empty state and the rail —
+ * and holds no interactive state of its own; the scrolling lives one level down
+ * in `events-rail.tsx`, which is the only part that needs a client directive
+ * and only exists when there is something to scroll.
  *
  * The card is `ProductBrowseCard`, the same component the shop grid renders,
  * not a lookalike: a family who taps through from here and a family who found
@@ -40,22 +44,22 @@ interface UpcomingEventsProps {
  * Cards link to `/shop/[id]`, the card's own default, so the detail page a
  * reader lands on is the storefront one with its real signup panel.
  *
- * The brief asks for a carousel. This renders a plain responsive grid: a
- * horizontally-scrolling row would hide events behind an interaction on the one
- * section whose whole job is to show what is on offer.
+ * The cards are a carousel — a horizontally snapping rail — chosen with the
+ * owner, reversing what this file used to say. The old note refused one on the
+ * grounds that a scrolling row "would hide events behind an interaction on the
+ * one section whose whole job is to show what is on offer", and the peek is the
+ * answer to exactly that: a card is 85% of the rail on a phone, so the next one
+ * is always visibly cut off at the screen edge and a reader can see there is
+ * more without touching anything. The grid it replaced hid more, not less —
+ * a fourth event was a full scroll of the page below the fold, with nothing at
+ * the third card saying it existed. At `lg` the rail fits three cards exactly,
+ * so the desktop shape a reader already knows is unchanged.
  */
 export function UpcomingEvents({
   products = [],
   counts = [],
 }: UpcomingEventsProps) {
   const t = useTranslations("roblox.events");
-
-  // A handful of rows at most — a plain map build, so the file needs no hooks
-  // beyond translations and stays renderable from either environment.
-  const countsByProduct = new Map<string, ParticipationCounts>();
-  for (const c of counts) {
-    countsByProduct.set(c.productId, c);
-  }
 
   return (
     <section className="container mx-auto px-4 py-16 sm:py-24">
@@ -74,15 +78,7 @@ export function UpcomingEvents({
           </CardContent>
         </Card>
       ) : (
-        <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <ProductBrowseCard
-              key={product.id}
-              product={product}
-              counts={countsByProduct.get(product.id) ?? null}
-            />
-          ))}
-        </div>
+        <EventsRail products={products} counts={counts} />
       )}
     </section>
   );

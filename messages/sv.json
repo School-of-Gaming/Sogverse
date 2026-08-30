@@ -2933,7 +2933,9 @@
     "events": {
       "heading": "Kommande datum",
       "subheading": "Vi lägger till nya datum ofta — titta in och se vad som är på gång.",
-      "empty": "De första datumen planeras just nu. Titta in snart och se vad som är på gång."
+      "empty": "De första datumen planeras just nu. Titta in snart och se vad som är på gång.",
+      "previous": "Föregående evenemang",
+      "next": "Nästa evenemang"
     },
     "parents": {
       "eyebrow": "För föräldrar",

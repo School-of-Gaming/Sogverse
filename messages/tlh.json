@@ -2656,7 +2656,9 @@
     "events": {
       "heading": "ghoSbogh jajmey",
       "subheading": "reH jajmey chu’ wImaH — nuq ghoS yIlegh.",
-      "empty": "jajmey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov."
+      "empty": "jajmey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov.",
+      "previous": "jajmey ret yIcha’",
+      "next": "jajmey veb yIcha’"
     },
     "parents": {
       "eyebrow": "vavpu’ SoSpu’vaD",

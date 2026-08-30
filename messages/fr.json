@@ -2933,7 +2933,9 @@
     "events": {
       "heading": "Prochaines dates",
       "subheading": "Nous ajoutons souvent de nouvelles dates — revenez voir ce qui arrive.",
-      "empty": "Les premières dates sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive."
+      "empty": "Les premières dates sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive.",
+      "previous": "Événements précédents",
+      "next": "Événements suivants"
     },
     "parents": {
       "eyebrow": "Pour les parents",
