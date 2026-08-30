@@ -497,18 +497,6 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 - [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
 
-## Waitlist — the parent/gamer side
-
-A waitlisted seat is a state of the shared enrollment card on both dashboards, and
-its leave affordance has a backend. One open question remains:
-
-- [ ] **The waitlist copy promises an email nobody sends.** The card's footer
-  reassurance and the confirmation page's `next1` both say we'll email the moment a seat opens.
-  There is no waitlist email template and promotion is a manual admin drag that
-  notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
-  this is a note, not a bug — but if manual sending ever slips, soften the copy
-  rather than leave the promise standing.
-
 ## The filled button on Gmail iOS is unverified, and it is the one that matters
 
 Everything else about how our mail renders is now either machine-checked or has
