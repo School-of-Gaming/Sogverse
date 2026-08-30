@@ -1937,7 +1937,7 @@
     "what": {
       "eyebrow": "What is this",
       "heading": "Learn to build on Roblox.",
-      "paragraph1": "This programme gives 13–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
+      "paragraph1": "This programme gives 13–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, in collaboration with Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
       "paragraph2": "By the end of the programme, participants will have published their own original creation on Roblox. No experience necessary — just curiosity."
     },
     "why": {
@@ -1971,7 +1971,7 @@
     "how": {
       "eyebrow": "How it works",
       "heading": "Get Started in Four Simple Steps",
-      "subheading": "Choose the format that suits: in person or online, ranging from one hour to four weeks.",
+      "subheading": "Choose the format that suits: in person or online, ranging from one hour to nine weeks.",
       "step1": {
         "title": "Pick a date",
         "description": "Pick from the options below — we add new dates often, so keep checking back."
@@ -2055,7 +2055,7 @@
     },
     "cta": {
       "heading": "Ready to Get Started?",
-      "body": "Spots are limited by city and cohort.",
+      "body": "Spots are limited.",
       "button": "Get started"
     },
     "legal": {

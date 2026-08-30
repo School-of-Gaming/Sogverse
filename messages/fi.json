@@ -2878,7 +2878,7 @@
     "what": {
       "eyebrow": "Mistä on kyse",
       "heading": "Opi rakentamaan Robloxissa.",
-      "paragraph1": "Ohjelma antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Lynx Educaten ja School of Gamingin toteuttama ja Robloxin tukema ohjelma on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
+      "paragraph1": "Ohjelma antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
       "paragraph2": "Ohjelman päätteeksi osallistujat ovat julkaisseet oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
     },
     "why": {
@@ -2912,7 +2912,7 @@
     "how": {
       "eyebrow": "Näin se toimii",
       "heading": "Aloita neljässä helpossa vaiheessa",
-      "subheading": "Valitse sopiva muoto: paikan päällä tai verkossa, yhdestä tunnista neljään viikkoon.",
+      "subheading": "Valitse sopiva muoto: paikan päällä tai verkossa, yhdestä tunnista yhdeksään viikkoon.",
       "step1": {
         "title": "Valitse ajankohta",
         "description": "Poimi sopiva alta – lisäämme uusia ajankohtia usein, joten käy katsomassa uudelleen."
@@ -2996,7 +2996,7 @@
     },
     "cta": {
       "heading": "Valmis aloittamaan?",
-      "body": "Paikkoja on rajoitetusti kaupungeittain ja ryhmittäin.",
+      "body": "Paikkoja on rajoitetusti.",
       "button": "Aloita"
     },
     "legal": {
