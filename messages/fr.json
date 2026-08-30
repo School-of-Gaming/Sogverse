@@ -2878,7 +2878,7 @@
     "what": {
       "eyebrow": "Le programme",
       "heading": "Apprenez à construire sur Roblox.",
-      "paragraph1": "Ce programme donne aux ados de 15–17 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, et soutenu par Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
+      "paragraph1": "Ce programme donne aux ados de 13–17 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, et soutenu par Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
       "paragraph2": "À la fin du programme, les participants auront publié leur propre création originale sur Roblox. Aucune expérience requise — juste de la curiosité."
     },
     "why": {
@@ -2942,7 +2942,55 @@
       "cta": "Voir nos sessions parents"
     },
     "faq": {
-      "heading": "Questions fréquentes"
+      "heading": "Questions fréquentes",
+      "items": {
+        "programme": {
+          "question": "Qu’est-ce que le Programme ?",
+          "answer": "Un programme gratuit de création de jeux où les jeunes apprennent à construire sur Roblox, animé par Lynx Educate et School of Gaming, en collaboration avec Roblox. Il se déroule en ligne comme en présentiel partout en France, et se conclut par la publication du jeu ou de l’objet créé par votre enfant."
+        },
+        "eligibility": {
+          "question": "Qui peut participer ?",
+          "answer": "Les jeunes de 13 à 17 ans résidant en France, inscrits par un parent ou un représentant légal."
+        },
+        "cost": {
+          "question": "Est-ce que c’est payant ?",
+          "answer": "Non, le Programme est 100 % gratuit pour les familles inscrites !"
+        },
+        "experience": {
+          "question": "Mon enfant doit-il déjà connaître Roblox ?",
+          "answer": "Aucune expérience préalable n’est nécessaire — les sessions sont conçues pour apprendre la création de jeux, des bases jusqu’à la publication."
+        },
+        "where": {
+          "question": "Où se déroulent les sessions ?",
+          "answer": "Les sessions en présentiel ont lieu à Paris, Lille, Strasbourg et Bordeaux. Les sessions en ligne sont ouvertes aux familles partout en France. Leur durée va de 60 minutes à 9 semaines.",
+          "answer2": "Consultez chaque événement pour le détail."
+        },
+        "language": {
+          "question": "Dans quelle langue se déroulent les sessions ?",
+          "answer": "Les sessions se déroulent en français."
+        },
+        "equipment": {
+          "question": "De quel matériel mon enfant a-t-il besoin ?",
+          "answer": "Un ordinateur (Windows ou Mac) connecté à Internet, ainsi qu’un accès à Roblox Studio.",
+          "answer2": "Pour les événements en ligne, les jeunes se connectent avec leur propre ordinateur, Roblox Studio installé. Pour les événements en présentiel, les ordinateurs et le matériel sont fournis sur place."
+        },
+        "dataSharing": {
+          "question": "Les informations de mon enfant sont-elles transmises à Roblox ?",
+          "answer": "Certaines informations de compte sont transmises à Lynx Educate et à Roblox pour assurer le déroulement du Programme et en évaluer l’efficacité. Le détail complet figure dans notre <linkPrivacy>politique de confidentialité</linkPrivacy>."
+        },
+        "media": {
+          "question": "Mon enfant sera-t-il photographié ou filmé ?",
+          "answer": "Les sessions peuvent être photographiées pour nos archives internes. L’utilisation des images à des fins de communication externe relève entièrement de votre choix, exprimé à l’inscription et modifiable à tout moment."
+        },
+        "facilitators": {
+          "question": "Qui anime les sessions, et comment les animateurs sont-ils vérifiés ?",
+          "answer": "Les animateurs sont formés et vérifiés par School of Gaming, conformément à notre <linkSafeguarding>politique de protection de l’enfance</linkSafeguarding> commune."
+        },
+        "contact": {
+          "question": "Qui contacter en cas de question ?",
+          "answer": "Écrivez-nous à <linkEmail>{email}</linkEmail> pour toute question ou préoccupation."
+        }
+      }
     },
     "cta": {
       "heading": "Prêt à commencer ?",

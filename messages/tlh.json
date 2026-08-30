@@ -2601,7 +2601,7 @@
     "what": {
       "eyebrow": "nuq ’oH",
       "heading": "Robloxdaq chenmoH yIghoj.",
-      "paragraph1": "France Sepdaq 15–17 ben loDHompu’ be’Hompu’ je qetlhmey luchenmoH, chuvmey lulughmoH, ’ej Robloxdaq luqIn. LughojmoH Lynx Educate je School of Gaming; Roblox tungHa’. qetlh chenmoHghach, De’ laHmey, je jIrDaq QaQ boqghach ghojmoH.",
+      "paragraph1": "France Sepdaq 13–17 ben loDHompu’ be’Hompu’ je qetlhmey luchenmoH, chuvmey lulughmoH, ’ej Robloxdaq luqIn. LughojmoH Lynx Educate je School of Gaming; Roblox tungHa’. qetlh chenmoHghach, De’ laHmey, je jIrDaq QaQ boqghach ghojmoH.",
       "paragraph2": "ghojmoH van, Hoch jeSwI’ Robloxdaq qetlhDaj chu’ qInpu’. laH tIn Hutlh — neH tu’lI’ neH."
     },
     "why": {
@@ -2665,7 +2665,55 @@
       "cta": "vavpu’ poHmey yIlegh"
     },
     "faq": {
-      "heading": "pIj lujatlhlu’bogh yu’mey"
+      "heading": "pIj lujatlhlu’bogh yu’mey",
+      "items": {
+        "programme": {
+          "question": "nuq ’oH ghojmoHghachvam’e’?",
+          "answer": "Huch Hutlh ghojmoHghach ’oH: Robloxdaq chenmoHmeH loDHompu’ be’Hompu’ je ghojmoH. luqaSmoH Lynx Educate School of Gaming je; Roblox luboq. France Sepdaq jIrDaq pa’Daq je qaS, ’ej puqlI’ qetlhDaj janDaj ghap qInDI’ rIn."
+        },
+        "eligibility": {
+          "question": "’Iv jeSlaH?",
+          "answer": "France Sepdaq 13–17 ben loDHompu’ be’Hompu’ je. vav SoS ghap chaH qIn."
+        },
+        "cost": {
+          "question": "Huch poQ’a’?",
+          "answer": "ghobe’! qInta’bogh qorDu’vaD ghojmoHghach Huch Hutlh — 100 %!"
+        },
+        "experience": {
+          "question": "Roblox laH ghajnIS’a’ puqwI’?",
+          "answer": "laH poQlu’be’. mung mo’vo’ qInmeH poH ghoS — Hoch ghojmoH poHmey."
+        },
+        "where": {
+          "question": "nuqDaq qaS poHmey?",
+          "answer": "pa’ poHmey qaS Paris, Lille, Strasbourg, Bordeaux je. jIr poHmeyvaD poSlu’ France Sep Hoch qorDu’vaD. poHmey ’ar? 60 tup ghap 9 Hogh.",
+          "answer2": "Hoch qaSbogh De’ yIlegh."
+        },
+        "language": {
+          "question": "nuq Hol lo’lu’ poHmeyDaq?",
+          "answer": "France Hol lo’lu’."
+        },
+        "equipment": {
+          "question": "nuq jan poQ puqwI’?",
+          "answer": "De’wI’ (Windows pagh Mac) jIrDaq rarlu’bogh, ’ej Roblox Studio poS.",
+          "answer2": "jIr qaSmoHghachvaD De’wI’Daj lo’nIS jeSwI’ — Roblox Studio chelta’. pa’ qaSmoHghachvaD De’wI’mey janmey je tu’lu’ pa’Daq."
+        },
+        "dataSharing": {
+          "question": "puqwI’ De’ lulo’chuq’a’ Roblox je?",
+          "answer": "account De’ puS lulo’chuq Lynx Educate Roblox je — ghojmoHghach qaSmoHmeH, ’ej Qapla’Daj juvmeH. Hoch De’ tu’lu’ maj <linkPrivacy>Privacy Policy</linkPrivacy>Daq."
+        },
+        "media": {
+          "question": "puqwI’ mIllogh chenmoHlu’’a’?",
+          "answer": "poHmeyDaq mIlloghmey chenmoHlu’laH — maHvaD neH. Hurghaj ngoqvaD mIlloghmey lo’lu’chugh, SoH DawIv qInmeH poHDaq, ’ej reH DachoHlaH."
+        },
+        "facilitators": {
+          "question": "’Iv poHmey Sep, ’ej chay’ nuDlu’?",
+          "answer": "ghojmoHwI’pu’ ghojmoH ’ej nuD School of Gaming, maj <linkSafeguarding>Child Safeguarding Policy</linkSafeguarding> tlhej."
+        },
+        "contact": {
+          "question": "yu’ vIghajchugh, ’Iv vIja’?",
+          "answer": "<linkEmail>{email}</linkEmail>-Daq yIghItlh — Hoch yu’, Hoch buSHa’ je."
+        }
+      }
     },
     "cta": {
       "heading": "bIchu’meH bIQap’a’?",

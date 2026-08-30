@@ -2878,7 +2878,7 @@
     "what": {
       "eyebrow": "Vad är det här",
       "heading": "Lär dig bygga i Roblox.",
-      "paragraph1": "Programmet ger 15–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming med stöd av Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
+      "paragraph1": "Programmet ger 13–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming med stöd av Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
       "paragraph2": "När programmet är slut har deltagarna publicerat sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
     },
     "why": {
@@ -2942,7 +2942,55 @@
       "cta": "Se våra föräldrasessioner"
     },
     "faq": {
-      "heading": "Vanliga frågor"
+      "heading": "Vanliga frågor",
+      "items": {
+        "programme": {
+          "question": "Vad är Programmet?",
+          "answer": "Ett gratis speldesignprogram där unga lär sig bygga i Roblox, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Det genomförs både online och på plats runt om i Frankrike, och avslutas med att ditt barn publicerar sitt eget spel eller föremål."
+        },
+        "eligibility": {
+          "question": "Vem kan vara med?",
+          "answer": "Unga i Frankrike i åldern 13–17 år, anmälda av en förälder eller vårdnadshavare."
+        },
+        "cost": {
+          "question": "Kostar det något?",
+          "answer": "Nej, Programmet är 100 % gratis för anmälda familjer!"
+        },
+        "experience": {
+          "question": "Behöver mitt barn redan kunna Roblox?",
+          "answer": "Ingen tidigare erfarenhet behövs — träffarna är upplagda för att lära ut spelbyggande från grunderna hela vägen till publicering."
+        },
+        "where": {
+          "question": "Var hålls träffarna?",
+          "answer": "Träffar på plats hålls i Paris, Lille, Strasbourg och Bordeaux. Träffar online är öppna för familjer var som helst i Frankrike. Längden varierar från 60 minuter till 9 veckor.",
+          "answer2": "Se det enskilda evenemanget för detaljer."
+        },
+        "language": {
+          "question": "Vilket språk hålls träffarna på?",
+          "answer": "Träffarna hålls på franska."
+        },
+        "equipment": {
+          "question": "Vilken utrustning behöver mitt barn?",
+          "answer": "En dator (Windows eller Mac) med internetuppkoppling, samt tillgång till Roblox Studio.",
+          "answer2": "Till evenemang online ansluter deltagarna med sin egen dator med Roblox Studio installerat. Vid evenemang på plats finns datorer och utrustning tillgängliga i lokalen."
+        },
+        "dataSharing": {
+          "question": "Delas mitt barns uppgifter med Roblox?",
+          "answer": "Vissa kontouppgifter delas med Lynx Educate och Roblox för att genomföra Programmet och för att utvärdera Programmets effekt. Alla detaljer finns i vår <linkPrivacy>integritetspolicy</linkPrivacy>."
+        },
+        "media": {
+          "question": "Kommer mitt barn att fotograferas eller filmas?",
+          "answer": "Träffarna kan fotograferas för interna anteckningar. Om materialet används externt i marknadsföring är helt ditt val vid anmälan, och du kan ändra det när som helst."
+        },
+        "facilitators": {
+          "question": "Vem håller i träffarna, och hur kontrolleras de?",
+          "answer": "Spelfostrarna är utbildade och kontrollerade av School of Gaming enligt vår gemensamma <linkSafeguarding>barnskyddspolicy</linkSafeguarding>."
+        },
+        "contact": {
+          "question": "Vem kontaktar jag med frågor?",
+          "answer": "Skriv till <linkEmail>{email}</linkEmail> med frågor eller funderingar."
+        }
+      }
     },
     "cta": {
       "heading": "Redo att börja?",

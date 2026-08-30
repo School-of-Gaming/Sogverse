@@ -1937,7 +1937,7 @@
     "what": {
       "eyebrow": "What is this",
       "heading": "Learn to build on Roblox.",
-      "paragraph1": "This programme gives 15–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
+      "paragraph1": "This programme gives 13–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
       "paragraph2": "By the end of the programme, participants will have published their own original creation on Roblox. No experience necessary — just curiosity."
     },
     "why": {
@@ -2001,7 +2001,55 @@
       "cta": "See our parent sessions"
     },
     "faq": {
-      "heading": "Frequently Asked Questions"
+      "heading": "Frequently Asked Questions",
+      "items": {
+        "programme": {
+          "question": "What is the Programme?",
+          "answer": "A free game-design programme where young people learn to build on Roblox, run by Lynx Educate and School of Gaming, in collaboration with Roblox. It runs both online and in person across France, and finishes with your child publishing their own game or item."
+        },
+        "eligibility": {
+          "question": "Who can take part?",
+          "answer": "Young people in France aged 13–17, registered by a parent or legal guardian."
+        },
+        "cost": {
+          "question": "Does it cost anything?",
+          "answer": "No, the Programme is 100% free for registered families!"
+        },
+        "experience": {
+          "question": "Does my child need Roblox experience already?",
+          "answer": "No prior experience needed — sessions are designed to teach game-building from the basics through to publishing."
+        },
+        "where": {
+          "question": "Where do sessions happen?",
+          "answer": "In-person sessions run in Paris, Lille, Strasbourg and Bordeaux. Online sessions are open to families anywhere in France. Sessions range from 60 minutes to 9 weeks.",
+          "answer2": "See each specific event for details."
+        },
+        "language": {
+          "question": "What language are sessions delivered in?",
+          "answer": "Sessions are delivered in French."
+        },
+        "equipment": {
+          "question": "What equipment does my child need?",
+          "answer": "A computer (Windows or Mac) connected to the internet, plus access to Roblox Studio.",
+          "answer2": "For online events, gamers should join with their own computer with Roblox Studio installed. For in-person events, computers and equipment will be available at the venue."
+        },
+        "dataSharing": {
+          "question": "Is my child’s information shared with Roblox?",
+          "answer": "Some account information is shared with Lynx Educate and Roblox to deliver the Programme and to evaluate the Programme’s efficacy. Full detail is in our <linkPrivacy>Privacy Policy</linkPrivacy>."
+        },
+        "media": {
+          "question": "Will my child be photographed or filmed?",
+          "answer": "Sessions may be photographed for internal records. Whether footage is used externally in marketing is entirely your choice at registration, and you can change it anytime."
+        },
+        "facilitators": {
+          "question": "Who runs the sessions, and how are they vetted?",
+          "answer": "Game Educators are trained and vetted by School of Gaming per our joint <linkSafeguarding>Child Safeguarding Policy</linkSafeguarding>."
+        },
+        "contact": {
+          "question": "Who do I contact with questions?",
+          "answer": "Please write to <linkEmail>{email}</linkEmail> with any questions or concerns."
+        }
+      }
     },
     "cta": {
       "heading": "Ready to Get Started?",
