@@ -37,8 +37,7 @@
   - **What does not fix it (verified 2026-08-20):** dropping `[skip ci]` — the step pushes with the default `GITHUB_TOKEN`, and GitHub never triggers workflows from `GITHUB_TOKEN` pushes, so the marker is redundant and removing it changes nothing. Re-running CI via `workflow_dispatch` on `dev` — the run goes green, its suite is even associated with the PR, but the commit's status rollup (what the merge box and branch protection read) excludes dispatch-run check runs by design.
   - **The unblock when it bites:** a human pushes an empty commit to `dev` (`git commit --allow-empty`), which gets a normal push-event run; the PR head follows it and auto-merge fires. One empty commit of history per occurrence — tolerable while this is rare.
   - **Real fixes, pick one when it stops being rare:** **(A)** push the snapshot with a fine-grained PAT (contents: write, this repo) via `token:` on the job's checkout and drop `[skip ci]` — the bot commit then gets its own run and the step's `diff -q` guard stops recursion (proven over weeks of runs). Costs a secret with a ≤1-year expiry, and the step currently *warns* on a failed push (race tolerance), so an expired token would silently stop `schema.sql` updating — make an auth failure loud, keep only the non-fast-forward reject as a warning. **(B)** same, with a GitHub App token (`actions/create-github-app-token`): no expiry, cleaner attribution, more setup. **(C)** no credential: teach `/pr-dev-to-main` to detect a check-less `[skip ci]` tip and push the empty commit itself — zero CI change, but it bakes the workaround in and adds an empty commit to every post-migration release.
-- [ ] Add CHECK constraints to `profiles.locale` (`IN ('en', 'fi', 'sv', 'tlh')`) and `profiles.currency` (`IN ('EUR', 'SEK', 'USD', 'GBP')`) — both are plain text columns with app-level validation only
-- [ ] **Enforce required `last_name` on the parent register API and `profiles.last_name` column.** `RegisterForm` now marks last name `required` (UX-only), but `supabase.auth.signUp` accepts any `options.data` payload and the `profiles.last_name` column is nullable — a scripted/API caller can still create a parent account with no last name. Tighten the server side to match: add a NOT NULL + length check on `profiles.last_name` (after backfilling any existing nulls — check whether the trigger that creates the profile row from `auth.users.raw_user_meta_data` needs adjusting too), and validate the field in whatever server-side path handles parent signup.
+- [ ] Add CHECK constraints to `profiles.locale` (`IN ('en', 'fi', 'sv', 'fr', 'tlh')`) and `profiles.currency` (`IN ('EUR', 'SEK', 'USD', 'GBP')`) — both are plain text columns with app-level validation only
 - [ ] **No rate-limiting / bot protection on the public gedu endpoints — accepted for now, don't let it get lost.** Self-registration added two unauthenticated surfaces: `POST /api/gedu/register` (creates an auth user + profile + `gedu_profiles` row per call — a bulk account-creation / resource-exhaustion vector) and `GET /api/minecraft/verify` (was role-gated, now public because `/register-gedu` calls it before any account exists — an open, unauthenticated proxy to Mojang's username→UUID API; hammering it can exhaust Mojang's per-IP rate limit and break Minecraft verification for *all* users). Both are read/write-light and the registration shape mirrors the existing public parent `/register`, so the risk is accepted today. Mitigations when revisited: an IP rate-limit (and/or a CAPTCHA on registration) in front of both routes; a short-TTL cache on the Mojang lookup so repeated probes don't fan out to Mojang.
   - **`GET /api/roblox/verify` is now a third such surface, and it is the sharpest of them — treat it first when this is revisited.** It is the same shape as the Minecraft one (public because a username is checked before any account exists) but it is worse in three specific ways. One inbound request fans out to **three** upstream calls — username→id, then id→bust *and* id→headshot (the compact figure's render, added when the row grew a `head` variant; the two thumbnails are issued in parallel, so this costs latency once but budget twice) — so it amplifies 3×. The thumbnail hops are rate-limited to **60 requests per minute per IP**, and a serverless fleet shares its egress IPs, so our whole deployment draws on one bucket that a modest script can drain; the route deliberately keeps the browser off that hop, which means we absorb all of it. And there is no cache, so probing one username repeatedly fans out every time. The consequence of exhausting it is degraded rather than broken — the avatar resolver returns `null` and verification still succeeds without a picture — but a short-TTL cache keyed on the username buys more here than anywhere else on this list. Unverified gedus can't reach any child data (access keys off `gedu_group_assignments`, which the verification gate blocks), so the registration spam is a resource/cleanup concern, not a data-exposure one.
   - **`GET /api/roblox/avatars` is a second amplifier on the same bucket, and it is the one that runs on every page view.** It draws from the identical 60-per-minute-per-IP thumbnail budget as the verify route above, so the two contend: exhausting one degrades the other. It is *milder* per call — one upstream request per figure asked for (the default is the full figure alone), and the cost is independent of how many ids are in the batch, so a hundred-row roster still costs one — and it requires a session, so a stranger cannot reach it at all. But it is the one on the hot path: every settings, gamer-detail and admin-user view resolves a render. **Intended shape when this is picked up:** the in-repo precedent is the feedback route's atomic RPC limiter (a counter incremented and checked in one statement, so two concurrent requests cannot both pass), applied per user rather than per IP here since the route is authenticated.
@@ -111,7 +110,6 @@ Every supported country is seeded complete from GeoNames and admins never hand-t
 
 - [ ] **`useUpdateLocation` + the `PATCH /api/admin/locations/[id]` route have no caller.** Nothing in the UI renames a location — the naming dialog is only ever opened in "add a site" mode — so the route, the hook and the dialog's edit mode (`src/services/locations/`, `src/components/admin/location-form-dialog.tsx`) are dead. Remove them, or repurpose if we add a site-rename affordance to the venue picker.
 - [ ] **Consider enforcing site-only creation server-side.** `POST /api/admin/locations/create` is the only route that inserts a location, and `createLocationBody` (`src/services/locations/locations.contracts.ts`) still accepts any `location_type` — the site-only restriction is UI-only, so a scripted admin call could still create a region or a municipality by hand and put an unofficial row in seeded reference data. Tighten the contract to `type === 'site'` if we want the invariant enforced at the API.
-- [ ] **Dead i18n keys in `admin.locations.*`.** `title`, `description`, `searchPlaceholder`, `noLocationsYet` and `noLocationsMatchSearch` have no consumer; the naming dialog still uses the rest of the namespace. `noLocationsYet` is also wrong on its face ("Add a country to get started" — you cannot). Prune them across all five `messages/*.json` when convenient.
 
 ### `/admin/users` server-side pagination — deferred until scale demands it
 
@@ -144,34 +142,6 @@ Three reasons the gap bites:
   the database either way; the question is whether the surface shows it, and
   whether gedus are told it does — a note written under "families never see this"
   is not the same promise as "nobody but gedus sees this".
-
-### "Needs attention" — one admin surface for problems across the whole platform
-
-Raised in the 2026-08-10 testing session, where it surfaced from the family side
-first: gamers enrolled into a club nobody had assigned to a group, and no admin
-had any way to know. Its own project, not a panel someone adds in passing.
-
-Today every condition an admin must notice is discoverable only by opening the
-thing that has it. A club with unassigned gamers looks healthy in the products
-list — the only tell is opening its details page and finding the unassigned inbox
-non-empty. Same for a club with no gedu assigned, a session that ran without a
-report, a subscription in a payment-problem state, a gedu account waiting on
-verification. Each has a surface that shows it; none has a surface that
-*announces* it, so noticing is a matter of an admin happening to look.
-
-- [ ] **Decide the inventory of conditions before designing anything.** The value
-  is entirely in which checks exist, and each one is a judgement about whether it
-  is genuinely actionable or merely unusual — a list that cries wolf gets ignored
-  within a week and is worse than no list. Known candidates: unassigned
-  participants on a running product, a product with no gedu, a past session with
-  no report, a family subscription in a payment-problem state, a waitlist with
-  free seats above it.
-- [ ] **Decide where it lives and how it stays cheap.** A dashboard section is the
-  ask, but every condition is a query and the surface loads on every admin visit
-  — so it wants one aggregate read (a view or an RPC returning counts plus enough
-  identity to link through), not a fan-out of per-condition queries.
-- [ ] Each entry links straight to the thing that needs fixing, so the surface is
-  a work queue rather than a report.
 
 ### Deferred billing for future-start clubs — the follow-ups
 
@@ -276,7 +246,7 @@ The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn c
 2. **Restore the customer currency selector.** The picker + provider were deleted — recover them from git (the EUR-only-checkout branch / its merge commit): `src/providers/currency-provider.tsx`, `src/hooks/use-currency.ts`, `src/components/layout/currency-picker.tsx`, plus the `CurrencyProvider` wrapper/export in `src/providers/index.tsx`. Re-point `signup-panel.tsx` and `product-browse-card.tsx` from the `DEFAULT_CURRENCY` constant back to `useCurrency()`, and re-add `<CurrencyPickerRow />` in `pricing-panel-view.tsx`.
 3. **Restore persistence + detection (optional).** `src/app/api/user/currency/route.ts` (writes `profiles.currency` — the column was kept, still unused), the `"currency"` cookie logic, and `detectCurrencyFromLocale()` in `currency.ts`. Only needed if you want the chosen currency to stick across sessions/devices.
 4. **Restore the admin per-currency UI + FX suggestion.** Re-add the currency tabs, `manualEdits`/`activeCurrency`/`focusCurrency` to `FormState` + `product-build.ts`, and the FX auto-fill trio: `src/components/admin/products/pricing-block-fx.ts`, `src/app/api/admin/fx-rates/route.ts`, `src/services/products/fx.queries.ts`. All recoverable from git.
-5. **Restore i18n keys:** `common.selectCurrency`, `admin.products.pricing.{currencyPickerLabel,fxSuggested}`, `productDetail.pricing.pricesIn` across `messages/{en,fi,sv,tlh}.json`.
+5. **Restore i18n keys:** `common.selectCurrency`, `admin.products.pricing.{currencyPickerLabel,fxSuggested}`, `productDetail.pricing.pricesIn` across all five `messages/*.json`.
 6. **Decide on Adaptive Pricing.** Once you present multiple currencies *yourself*, decide whether to keep Adaptive Pricing on (it can still convert into currencies you don't list) or turn it off and rely solely on your authored per-currency prices.
 
 **Gotchas / things that did NOT change (so re-enabling stays safe):**
@@ -293,7 +263,7 @@ The coverage worth having is the authenticated half — admin-only pages, role-b
 **Approach:** Run `supabase start` in CI to spin up a local Supabase stack (Postgres, Auth, Storage) in Docker. Existing migration files are applied automatically, giving an identical schema. Test accounts are created via `supabase/seed.sql`.
 
 Setup tasks:
-- [ ] Add `supabase/seed.sql` with test accounts (admin, customer, gedu, gamer) using known passwords
+- [ ] Extend `supabase/seed.sql` with a gamer test account — it already carries admin, customer ×2 and gedu accounts (`*@test.local`, password `testpassword123`)
 - [ ] Add `.env.test.local` with local Supabase URL/keys (`supabase start` prints these)
 - [ ] Add a `tests/e2e/` directory and a Playwright project for it — the smoke config is deliberately browserless (one project, no device emulation, no retries, no browser install in CI), so browser tests need their own project rather than being folded into that one
 - [ ] Create a Playwright auth setup project that logs in via the UI and saves `storageState` per role
@@ -309,13 +279,6 @@ Test cases to add:
 - [ ] Core purchase flow
 
 **Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
-
-### Shared `<Select>` UI Component
-
-Several files define inline `selectClassName` strings that duplicate `<Input>` styling for native `<select>` elements. Extract a `components/ui/select.tsx` wrapper and replace the inline patterns.
-
-- [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
-- [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the add-gamer dialog, plus any other occurrences
 
 ### Product image renditions — then re-enable AVIF
 
@@ -342,7 +305,7 @@ Owner-proposed, not designed. Gedus want to put pictures in a session report —
 
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
-Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
+Parents already set `date_of_birth` and `gender` when *creating* a gamer (`create_gamer` takes both); what's missing is *editing* them afterwards. When that lands, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
 
 ### WhatsApp Service Layer Extraction
 
@@ -351,24 +314,6 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 - [ ] Add server-side methods to `WhatsAppService` (e.g., `storeOutboundMessage()`, `upsertInboundMessage()`, `updateMessageStatus()`)
 - [ ] Extract `extractMessageContent()` and error-code mapping from the webhook into `src/lib/whatsapp.ts`
 - [ ] Update both route handlers to delegate persistence to the service
-
-### Audit setState-in-effect violations from eslint-plugin-react-hooks@7
-
-A few files trip the new `react-hooks/set-state-in-effect` rule with the "set state once on mount" shape (currently suppressed inline pointing here). The clean, safe cases have been migrated; the ones below remain because each has a wrinkle that makes the rewrite non-trivial or risky.
-
-Already done (no action needed):
-- `src/app/(dashboard)/admin/ui-components/page.tsx` — migrated to `useNow()`; no suppression left.
-- `src/components/pin/unlock-gate.tsx` — the `?redirect=` read moved into a lazy, SSR-guarded `useState` initializer. Safe because `redirectTo` is read only in the post-unlock navigation, never in rendered markup, so the server default and the client-resolved value can't mismatch.
-
-Remaining — the risky/non-trivial tier:
-- `src/components/auth/reset-password-form.tsx` — parses `window.location.hash` once on mount, then makes an **async** `supabase.auth.setSession()` call and sets several pieces of state across its `.then()`. The synchronous no-hash → `setSessionReady(true)` path could move to an initializer, but the async session work legitimately belongs in an effect/handler. Auth-critical (recovery link) and hard to exercise locally — verify carefully before touching.
-- `src/components/family/FamilyProfileSelector.tsx` — reads a URL marker on mount but also calls `window.history.replaceState` (a real side effect that doesn't belong in a `useState` initializer), and `pendingAddGamerIntent` drives rendered output — so a client-only initializer would risk a hydration mismatch. The effect is the right home; satisfying the rule here needs more than a lazy initializer.
-
-The rule's preferred patterns: derive from props/`useMemo`, use `useSyncExternalStore` for SSR-safe mount detection, or move the one-shot logic into an initializer / event handler. None of these rewrites are urgent — the current code works and the rule's concern (cascading renders) is mild for one-shot mount setup — but they should be revisited when touching these files.
-
-- [ ] Move `window.location.hash` parsing in the auth forms out of `useEffect` where it's the synchronous path (e.g., a `typeof window`-guarded `useState` initializer), keeping only the async `setSession` work in the effect.
-- [ ] Decide whether `FamilyProfileSelector`'s URL-marker read can be restructured to avoid the in-effect setState without losing the `replaceState` cleanup.
-- [ ] Once each is rewritten, drop its `eslint-disable-next-line` comment.
 
 ### Adopt `useTimezone()` + `useNow()` across the app
 
@@ -397,19 +342,19 @@ Two layers worth setting up together:
 
 Caveats to be honest about:
   - Only catches dynamic templates when the variable is typed as a literal union. If someone widens to `string`, the check silently degrades. Worth pairing with a lint rule that disallows raw `string` template parts in `t(\`...\`)` calls.
-  - Only the canonical bundle (en.json) is type-checked. Drift between en/fi/sv/tlh is not caught — see (2).
+  - Only the canonical bundle (en.json) is type-checked. Drift across the other locales is not caught — see (2).
 
 **2. Locale-parity unit test.** Small Vitest test (`tests/unit/i18n/locale-parity.test.ts` or similar) that:
-  - Loads all four bundles
+  - Loads all five bundles
   - Flattens each to its set of leaf key paths
-  - Asserts every non-en bundle's key set equals en's
+  - Asserts every non-en bundle's key set equals en's — except `tlh`, which deliberately **omits** the legal-page keys (see `src/i18n/CLAUDE.md`), so its assertion is "en's set minus the legal namespaces"
   - Fails CI if any locale is missing a key (or has an extra one)
 
 Catches the case where en.json gets a new key but a translation file is forgotten — common when adding features.
 
 - [ ] Set up next-intl typed messages augmentation (one-liner global.d.ts referencing en.json)
 - [ ] Verify `npm run type-check` flags a deliberately-mistyped key in a sandbox before committing
-- [ ] Add `tests/unit/i18n/locale-parity.test.ts` comparing flat key sets across all four bundles
+- [ ] Add `tests/unit/i18n/locale-parity.test.ts` comparing flat key sets across all five bundles
 - [ ] Optionally: lint rule rejecting `t(\`...${someVar}...\`)` where `someVar` is `string` rather than a literal union
 
 ### Dead-code detection (knip) — reconsider
