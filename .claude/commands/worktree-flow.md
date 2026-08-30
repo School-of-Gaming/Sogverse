@@ -12,10 +12,10 @@ every time, because a description leaves a decision open everywhere it doesn't
 name an exact value. This file names them. Where it gives an exact command, use
 that command rather than an equivalent.
 
-**First action, before any of the work:** register Phases 3–5 as tasks
-(`TaskCreate`). Landing happens hours after setup, quite possibly past a context
-compaction, and the tasks are what survive that. A worktree still sitting on disk
-a day later is this command having failed.
+**Where this command ends:** at teardown, not at a working build. Phases 3–5
+come hours after setup, when the work itself already feels done, and they are the
+half most easily dropped. A worktree still sitting on disk a day later is this
+command having failed.
 
 ---
 
