@@ -2914,7 +2914,7 @@
       "heading": "Kom igång i fyra enkla steg",
       "subheading": "Välj det format som passar: på plats eller online, från en timme till nio veckor.",
       "step1": {
-        "title": "Välj ett datum",
+        "title": "Välj ett evenemang",
         "description": "Bland alternativen nedan — vi lägger till nya ofta, så titta in igen."
       },
       "step2": {
@@ -2931,12 +2931,12 @@
       }
     },
     "events": {
-      "heading": "Kommande datum",
-      "subheading": "Vi lägger till nya datum ofta — titta in och se vad som är på gång.",
-      "empty": "De första datumen planeras just nu. Titta in snart och se vad som är på gång.",
-      "previous": "Föregående datum",
-      "next": "Nästa datum",
-      "browseShop": "Se alla datum i butiken"
+      "heading": "Kommande evenemang",
+      "subheading": "Vi lägger till nya evenemang ofta — titta in och se vad som är på gång.",
+      "empty": "De första evenemangen planeras just nu. Titta in snart och se vad som är på gång.",
+      "previous": "Föregående evenemang",
+      "next": "Nästa evenemang",
+      "browseShop": "Se alla evenemang i butiken"
     },
     "parents": {
       "eyebrow": "För föräldrar",

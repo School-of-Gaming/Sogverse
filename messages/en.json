@@ -1973,8 +1973,8 @@
       "heading": "Get Started in Four Simple Steps",
       "subheading": "Choose the format that suits: in person or online, ranging from one hour to nine weeks.",
       "step1": {
-        "title": "Pick a date",
-        "description": "Pick from the options below — we add new dates often, so keep checking back."
+        "title": "Pick an event",
+        "description": "Pick from the options below — we add new events often, so keep checking back."
       },
       "step2": {
         "title": "Create your account",
@@ -1991,11 +1991,11 @@
     },
     "events": {
       "heading": "What’s On",
-      "subheading": "We add new dates often — check back to see what is coming up.",
-      "empty": "The first dates are being scheduled now. Check back shortly to see what is coming up.",
-      "previous": "Previous dates",
-      "next": "Next dates",
-      "browseShop": "Browse all dates in the shop"
+      "subheading": "We add new events often — check back to see what is coming up.",
+      "empty": "The first events are being scheduled now. Check back shortly to see what is coming up.",
+      "previous": "Previous events",
+      "next": "Next events",
+      "browseShop": "Browse all events in the shop"
     },
     "parents": {
       "eyebrow": "For parents",
