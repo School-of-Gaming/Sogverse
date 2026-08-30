@@ -562,6 +562,16 @@ lawyer is not reviewing sections that are about to be restructured.
 
 ## Open decisions
 
+- [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30, to
+      look into later: the product cards' FREE display doesn't show a waitlist, and
+      waitlist behaviour is believed to be effectively municipality-club-only today. A
+      first look says the machinery itself is capability-driven rather than type-gated —
+      the full/waitlist registration states key on the product's `waitlist_enabled`
+      column — so the things to verify are where that toggle can actually be switched on
+      (the admin product form may only expose it for municipality clubs), and whether a
+      free programme event that fills can offer a waitlist and have the browse card and
+      signup panel show it. Matters here because the programme's events are free,
+      capacity-capped, and exactly the kind of product that fills.
 - [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
       the "copy pending / in draft" warning added while content is incomplete). Not an
       escalation of its own — it resolves as a consequence of the signoff above, and the
