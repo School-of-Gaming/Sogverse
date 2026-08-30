@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CalendarDays } from "lucide-react";
+import { ArrowRight, CalendarDays } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
 import { EventsRail } from "./events-rail";
@@ -78,7 +81,27 @@ export function UpcomingEvents({
           </CardContent>
         </Card>
       ) : (
-        <EventsRail products={products} counts={counts} />
+        <>
+          <EventsRail products={products} counts={counts} />
+          {/* The completist's exit from the rail: the same programme slice in
+              the shop's own vertical layout and filters. Deliberately absent in
+              the empty state above — it would point at an equally empty shop —
+              and rendered from the same server data as the rail, so it is in
+              the HTML from the first byte and nothing below it ever moves. */}
+          <div className="mt-10 text-center">
+            <Link
+              href={ROUTES.robloxShop}
+              className={buttonVariants({
+                variant: "outline",
+                size: "lg",
+                className: "gap-2",
+              })}
+            >
+              {t("browseShop")}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </>
       )}
     </section>
   );

@@ -1993,8 +1993,9 @@
       "heading": "What’s On",
       "subheading": "We add new dates often — check back to see what is coming up.",
       "empty": "The first dates are being scheduled now. Check back shortly to see what is coming up.",
-      "previous": "Previous events",
-      "next": "Next events"
+      "previous": "Previous dates",
+      "next": "Next dates",
+      "browseShop": "Browse all dates in the shop"
     },
     "parents": {
       "eyebrow": "For parents",
