@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ProductBrowseCard } from "@/components/public/products/product-browse-card";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
@@ -59,13 +60,17 @@ interface EventsRailProps {
  *    so a programme with three or fewer events looks like the plain grid this
  *    replaced, with nothing hidden behind an interaction. That the width is
  *    *exact* is what makes desktop overflow a fact about the product count, and
- *    so a fact the server already has — which is what lets the paddle row live
- *    in normal flow instead of floating above the rail.
- *  - **The paddles are in flow, under the rail, and never move.** Whether they
- *    render is decided from the product count; which of them is dimmed is
- *    measured. Those are two different questions and only the second one is
- *    allowed to change after first paint, because only the second one moves
- *    nothing when it does.
+ *    so a fact the server already has.
+ *  - **Two circular arrows flank the cards**, straddling the left and right
+ *    edges of the card column at its vertical centre — the pattern any reader
+ *    has already met on a shopping or listings site, so nothing about it has to
+ *    be learned here. Each one fades out when the rail cannot scroll that way
+ *    and stays in the DOM while it is gone.
+ *  - **Existence is decided on the server; only visibility is measured.** The
+ *    arrows render from the product count, on the first paint, and the scroll
+ *    measurement moves nothing but their opacity. Those are deliberately two
+ *    different questions: the one that could move the page is answered before
+ *    the page is sent, and the one answered later cannot move anything.
  *  - **Reduced motion is handled in CSS, not JS.** `scrollBy` is called with no
  *    `behavior`, which per CSSOM means "use the element's `scroll-behavior`" —
  *    so `scroll-smooth motion-reduce:scroll-auto` decides it, and there is no
@@ -78,18 +83,19 @@ interface EventsRailProps {
  *  - **No edge fade.** The one on the session calendar works because it fades
  *    into a card of known colour; here it would sit over cards whose whole
  *    hover feedback is a brightened border and a shadow, dimming exactly the
- *    thing the reader is reaching for. The peek and the paddles already say
+ *    thing the reader is reaching for. The peek and the arrows already say
  *    "more".
  */
 export function EventsRail({ products, counts }: EventsRailProps) {
   const t = useTranslations("roblox.events");
   const railRef = useRef<HTMLDivElement>(null);
 
-  // The paddle row is decided from the product count alone (see the note at its
-  // JSX below), so the same arithmetic seeds the initial disabled states: a rail
-  // that overflows starts parked at the left, which is back-disabled and
-  // forward-enabled. Getting that right on the server is what keeps the first
-  // paint from showing a briefly dead pair that lights up a frame later.
+  // Whether the arrows exist is decided from the product count alone (see the
+  // note at their JSX below), and the same arithmetic seeds which of them starts
+  // visible: a rail that overflows is parked at its left, so the forward arrow
+  // is live and the back one is faded out. Server-rendering that correctly is
+  // what keeps the first paint from showing an empty edge that an arrow fades
+  // into a frame later.
   const overflowsAtDesktop = products.length > CARDS_PER_DESKTOP_ROW;
   const [canScrollBack, setCanScrollBack] = useState(false);
   const [canScrollForward, setCanScrollForward] = useState(overflowsAtDesktop);
@@ -129,7 +135,7 @@ export function EventsRail({ products, counts }: EventsRailProps) {
   // own box, which a ResizeObserver cannot see. Re-measuring after every render
   // is two reads, and the bail-out above means it re-renders nothing when the
   // answer is the same. Note what this measurement is and is not for: it decides
-  // which paddle is *dimmed*, never whether the pair exists.
+  // which arrow is *visible*, never whether the pair exists.
   useEffect(read);
 
   const scrollByCard = (direction: 1 | -1) => {
@@ -137,7 +143,7 @@ export function EventsRail({ products, counts }: EventsRailProps) {
     if (!rail) return;
     // The distance between two consecutive cards is one card plus one gap, with
     // no need to parse a computed gap value. A rail with fewer than two cards
-    // renders no paddles at all, so the fallback is unreachable from a click.
+    // renders no arrows at all, so the fallback is unreachable from a click.
     const first = rail.firstElementChild;
     const second = first?.nextElementSibling;
     const step =
@@ -148,7 +154,15 @@ export function EventsRail({ products, counts }: EventsRailProps) {
   };
 
   return (
-    <div className="mx-auto mt-12 max-w-5xl">
+    /* `flow-root` is doing real work: it makes this wrapper a block formatting
+       context, so the rail's `-mb-4` is absorbed into the wrapper's own height
+       instead of collapsing out through its bottom edge. The wrapper is then
+       exactly as tall as the cards — the rail's shadow padding cancelled by its
+       own negative margin — which is what makes `top-1/2` on the arrows below
+       land on the visual centre of a card rather than 8px under it. Written this
+       way rather than as a hand-tuned offset so retuning `pb-4` cannot silently
+       decentre the arrows. */
+    <div className="relative mx-auto mt-12 max-w-5xl flow-root">
       <div
         ref={railRef}
         className="-mx-4 -mb-4 flex snap-x snap-mandatory gap-6 overflow-x-auto overscroll-x-contain scroll-smooth px-4 pb-4 scroll-px-4 motion-reduce:scroll-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -166,87 +180,106 @@ export function EventsRail({ products, counts }: EventsRailProps) {
         ))}
       </div>
 
-      {/* The paddles, in normal flow under the rail and right-aligned to the
-          same edge the cards align to — this wrapper's edge, which is what the
-          rail's `-mx-4 px-4` bleed is arranged to preserve. They read as the
-          rail's own controls because they are attached to it; the pair used to
-          float up by the heading and did not.
+      {/* Whether the arrows exist at all is decided on the server, from the
+          product count and nothing else. At `lg` a card is exactly a third of a
+          rail capped at `max-w-5xl`, so "the rail overflows on desktop" *is*
+          "there are more cards than fill one desktop row" — no measurement can
+          say anything the count does not already. What is measured is only which
+          arrow is currently reachable, and that flips nothing but opacity.
 
-          Rendering is decided on the server, from the product count and
-          nothing else. In flow, a pair that appeared after a client-side
-          overflow measurement would push everything below it down a frame after
-          first paint — the shift the layout rule forbids — and the measurement
-          buys nothing anyway: at `lg` the cards are exactly a third of a rail
-          capped at `max-w-5xl`, so "overflows on desktop" *is* "more cards than
-          fill one desktop row". Below `lg` the row is hidden in CSS rather than
-          by sniffing for touch, which is also exactly the width at which the
-          cards start peeking and the rail advertises itself without help.
-
-          The one way the row can appear or disappear after paint is the product
-          list itself crossing the boundary of three while the page is open.
-          That is a data-driven change rather than a layout one, and it is
-          effectively unreachable here — the shell seeds this query from the
-          server prefetch, so the first render already holds the list — but it is
-          named rather than left as a silent assumption.
-
-          `mt-6` is not the gap it looks like: it collapses against the rail's
-          `-mb-4`, leaving 8px, which lands on top of the 16px of rail padding
-          the cards' hover shadow lives in. 24px below the cards is the number to
-          reason about if this is ever retuned. */}
+          The one way the pair can appear or disappear after paint is the product
+          list itself crossing the boundary of three while the page is open. That
+          is a data-driven change rather than a layout one, and it is effectively
+          unreachable here — the shell seeds this query from the server prefetch,
+          so the first render already holds the list — but it is named rather
+          than left as a silent assumption. */}
       {overflowsAtDesktop && (
-        <div className="mt-6 hidden justify-end gap-2 lg:flex">
-          <RailPaddle
+        <>
+          <EdgeArrow
+            side="start"
             label={t("previous")}
-            disabled={!canScrollBack}
+            inactive={!canScrollBack}
             onClick={() => scrollByCard(-1)}
           >
             <ChevronLeft />
-          </RailPaddle>
-          <RailPaddle
+          </EdgeArrow>
+          <EdgeArrow
+            side="end"
             label={t("next")}
-            disabled={!canScrollForward}
+            inactive={!canScrollForward}
             onClick={() => scrollByCard(1)}
           >
             <ChevronRight />
-          </RailPaddle>
-        </div>
+          </EdgeArrow>
+        </>
       )}
     </div>
   );
 }
 
 /**
- * One round paddle.
+ * One circular arrow, straddling the edge of the card column.
  *
- * A quiet filled ground rather than an outline: the paddles sit under a row of
- * bordered cards, and a third bordered shape there reads as a fourth card's
- * corner rather than as a control.
+ * **Elevated, not flat.** A round `bg-card` ground with a border and a shadow,
+ * because this control overlaps the cards rather than sitting beside them: an
+ * overlaid button needs its own edge and its own lift or it reads as a smudge on
+ * whatever it covers. That is the whole reason it does not share the flat fill a
+ * button standing on the page background would take.
  *
- * **At an end a paddle dims; it never leaves.** The pair is a fixed landmark the
- * reader aims at, so its size and position may not depend on where the rail
- * happens to be parked — and a control that vanishes under the cursor mid-reach
- * is the same harm the layout rule is written against, at button scale.
- * `disabled` gives both halves of that for free from the shared button base:
- * `disabled:opacity-50` and `disabled:pointer-events-none`.
+ * **Vertically** it is centred on the wrapper, which `flow-root` above makes
+ * exactly as tall as a card — so this is the card's centre, not the centre of
+ * the card plus its shadow gutter.
+ *
+ * **Horizontally it straddles the card column's edge**, half of the standard
+ * pattern's appeal being that the control is visibly attached to the row it
+ * scrolls. The overhang is 12px rather than a true half: the section's own
+ * `px-4` is the entire budget outside the card column at the `lg` tier, and a
+ * 20px overhang there puts the right-hand arrow past the viewport for widths
+ * between 1024 and 1032px — a horizontal document scrollbar, which is never
+ * acceptable. 12px keeps clearance at the tightest width and still reads as
+ * sitting on the edge line.
+ *
+ * **At an end the arrow fades out rather than disappearing.** `disabled` is the
+ * single source for all three of the states that need to agree — invisible
+ * (`disabled:opacity-0`, replacing the shared button base's `disabled:opacity-50`
+ * by name so the two cannot both apply), inert (`disabled:pointer-events-none`,
+ * already in the base) and unfocusable (the attribute itself). The element stays
+ * in the DOM throughout, so nothing reflows when it goes, and the transition is
+ * opacity alone — nothing moves, which is what keeps it honest under
+ * `prefers-reduced-motion` without needing to be switched off there.
  */
-function RailPaddle({
+function EdgeArrow({
+  side,
   label,
-  disabled,
+  inactive,
   onClick,
   children,
 }: {
+  side: "start" | "end";
   label: string;
-  disabled: boolean;
+  /** True when the rail cannot scroll this way — the arrow fades out and stops
+   *  taking pointer or keyboard input, without leaving the DOM. */
+  inactive: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
   return (
     <Button
-      variant="secondary"
+      variant="outline"
       size="icon"
-      className="h-11 w-11 rounded-full"
+      className={cn(
+        // `hidden lg:inline-flex` rather than a touch check: below `lg` the
+        // cards peek past the edge and advertise the rail without help, and a
+        // control overlapping a card is worth far less to a thumb than to a
+        // pointer.
+        "absolute top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-card shadow-md lg:inline-flex",
+        // The transition list is stated explicitly so it replaces — rather than
+        // races — the `transition-colors` the button base sets.
+        "transition-[opacity,color,background-color] disabled:opacity-0",
+        side === "start" ? "left-0 -translate-x-3" : "right-0 translate-x-3",
+      )}
       aria-label={label}
-      disabled={disabled}
+      disabled={inactive}
       onClick={onClick}
     >
       {children}
