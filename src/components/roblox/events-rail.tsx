@@ -18,6 +18,42 @@ import type { ProductBrowseRow } from "@/types";
  */
 const CARDS_PER_DESKTOP_ROW = 3;
 
+/**
+ * Where an arrow's centre line sits, measured down from the top of the rail.
+ *
+ * It lands on the middle of a card's **banner**, not the middle of the card. An
+ * arrow overlapping artwork costs nothing; one overlapping the title and topic
+ * line — which is exactly where a card's own centre falls — is unreadable, and
+ * covering a product's name is the worst thing a control on this rail could do.
+ * Centring on the media band rather than the row is why the rails this pattern
+ * comes from can overlap at all.
+ *
+ * The arithmetic, with the wrapper declared a size container so `100cqw` is the
+ * rail's own content width:
+ *
+ *     card width      = (100cqw - 3rem) / 3    two 1.5rem gaps removed, then
+ *                                              split three ways — the same calc
+ *                                              the cards take at `lg`
+ *     banner width    = card width - 2px       the card's 1px border, twice
+ *     banner height   = banner width * 2/3     ProductBanner's 3:2 frame
+ *     centre from top = 1px + banner height/2
+ *                     = 1px + (card width - 2px) / 3
+ *
+ * The 1px is the whole inset: the card puts its media block flush against its
+ * top content edge, with no padding above it.
+ *
+ * **This value and `ProductBanner`'s `aspect-[3/2]` are one fact.** The `/3` on
+ * the last line is that ratio halved and nothing else, so re-cropping the banner
+ * moves these arrows. The card-width half is a second such coupling — it is the
+ * card's own `lg:` width restated — and the two have to be changed together.
+ *
+ * Sanity check: `max-w-5xl` bounds the rail to 992–1024px wherever the arrows
+ * are shown, which puts a ~210px banner band's centre at 105–109px. A 40px arrow
+ * sits inside that with ~85px clear at either end, so drift of a pixel or two
+ * here is harmless — only a changed aspect ratio is not.
+ */
+const ARROW_TOP = "top-[calc(1px+((100cqw-3rem)/3-2px)/3)]";
+
 interface EventsRailProps {
   /** The programme's products, already narrowed. Never empty — the section
    *  above renders its own empty state instead of mounting a rail. */
@@ -62,10 +98,16 @@ interface EventsRailProps {
  *    *exact* is what makes desktop overflow a fact about the product count, and
  *    so a fact the server already has.
  *  - **Two circular arrows flank the cards**, straddling the left and right
- *    edges of the card column at its vertical centre — the pattern any reader
- *    has already met on a shopping or listings site, so nothing about it has to
- *    be learned here. Each one fades out when the rail cannot scroll that way
- *    and stays in the DOM while it is gone.
+ *    edges of the card column — the pattern any reader has already met on a
+ *    shopping or listings site, so nothing about it has to be learned here. Each
+ *    one fades out when the rail cannot scroll that way and stays in the DOM
+ *    while it is gone.
+ *  - **They ride on the banner band, not the card's centre.** An overlaid
+ *    control has to land on artwork rather than on the title beneath it, so
+ *    their vertical position is derived from the card width and the banner's
+ *    aspect ratio (`ARROW_TOP`) rather than from the card's own height. The
+ *    banner's crop is therefore load-bearing here: change `aspect-[3/2]` and
+ *    these arrows move with it.
  *  - **Existence is decided on the server; only visibility is measured.** The
  *    arrows render from the product count, on the first paint, and the scroll
  *    measurement moves nothing but their opacity. Those are deliberately two
@@ -154,15 +196,21 @@ export function EventsRail({ products, counts }: EventsRailProps) {
   };
 
   return (
-    /* `flow-root` is doing real work: it makes this wrapper a block formatting
-       context, so the rail's `-mb-4` is absorbed into the wrapper's own height
-       instead of collapsing out through its bottom edge. The wrapper is then
-       exactly as tall as the cards — the rail's shadow padding cancelled by its
-       own negative margin — which is what makes `top-1/2` on the arrows below
-       land on the visual centre of a card rather than 8px under it. Written this
-       way rather than as a hand-tuned offset so retuning `pb-4` cannot silently
-       decentre the arrows. */
-    <div className="relative mx-auto mt-12 max-w-5xl flow-root">
+    /* Declared a size container so the arrows can be placed with `cqw` — see
+       `ARROW_TOP`, which needs the rail's own content width and cannot get it
+       from a percentage, because a percentage `top` resolves against height.
+       This is a measurement the browser makes during layout, so the arrows are
+       on their line in the first painted frame; a JS measurement would put them
+       there a frame later, and moving them afterwards is precisely what the
+       layout rule forbids.
+
+       It also makes the wrapper an independent formatting context, so the rail's
+       `-mb-4` is absorbed into the wrapper's height rather than escaping through
+       its bottom edge. Nothing visible turns on that — the spacing below is the
+       same either way — but the wrapper's box is then honestly the cards' box.
+       Note that inline-size containment does not clip: the rail still bleeds
+       past this element by `-mx-4`, and the arrows still straddle its edges. */
+    <div className="relative mx-auto mt-12 max-w-5xl [container-type:inline-size]">
       <div
         ref={railRef}
         className="-mx-4 -mb-4 flex snap-x snap-mandatory gap-6 overflow-x-auto overscroll-x-contain scroll-smooth px-4 pb-4 scroll-px-4 motion-reduce:scroll-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -226,9 +274,10 @@ export function EventsRail({ products, counts }: EventsRailProps) {
  * whatever it covers. That is the whole reason it does not share the flat fill a
  * button standing on the page background would take.
  *
- * **Vertically** it is centred on the wrapper, which `flow-root` above makes
- * exactly as tall as a card — so this is the card's centre, not the centre of
- * the card plus its shadow gutter.
+ * **Vertically it sits on the middle of the card's banner**, not the middle of
+ * the card — see `ARROW_TOP` for the arithmetic and for what a re-cropped banner
+ * would do to it. The card's own centre falls on its title and topic line, which
+ * is the one place on the card an overlaid control must not go.
  *
  * **Horizontally it straddles the card column's edge**, half of the standard
  * pattern's appeal being that the control is visibly attached to the row it
@@ -272,7 +321,8 @@ function EdgeArrow({
         // cards peek past the edge and advertise the rail without help, and a
         // control overlapping a card is worth far less to a thumb than to a
         // pointer.
-        "absolute top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-card shadow-md lg:inline-flex",
+        "absolute z-10 hidden -translate-y-1/2 rounded-full bg-card shadow-md lg:inline-flex",
+        ARROW_TOP,
         // The transition list is stated explicitly so it replaces — rather than
         // races — the `transition-colors` the button base sets.
         "transition-[opacity,color,background-color] disabled:opacity-0",
