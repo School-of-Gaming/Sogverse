@@ -317,22 +317,53 @@ describe("templateRegistry sessionReport", () => {
   });
 
   /**
-   * No origin, no photos — the same degradation the shell's brand mark takes,
-   * and for the same reason: a src nobody's client can fetch paints a broken
-   * box, which is worse than the section not being there.
+   * A dev machine still gets its grid, which is the one place this fixture
+   * parts company with the shell's brand mark. The mark drops itself on a
+   * loopback origin because a failed fetch looks worse than no picture and the
+   * lockup already says what it said; a photos section that suppresses itself
+   * leaves whoever opened the testing tool nothing to look at — not the pairs,
+   * not the stacking, and not the reserved wells the design turns on. So the
+   * URLs are emitted, they point at the dev server, and a browser on that
+   * machine resolves them.
+   */
+  it("keeps the photos on a loopback origin, pointed at the dev server", () => {
+    for (const origin of ["http://localhost:3000", "http://127.0.0.1:3000"]) {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
+      try {
+        const { html } = templateRegistry.sessionReport.render(
+          { ...params, photoCount: "5" },
+          t,
+          "en",
+        );
+        expect(html).toContain("Photos from this session");
+        const sources = html.match(/<img src="[^"]+"/g) ?? [];
+        expect(sources.filter((tag) => tag.startsWith(`<img src="${origin}/preview-art/`)))
+          .toHaveLength(5);
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    }
+  });
+
+  /**
+   * No origin is the other case, and it is an impossibility rather than a
+   * judgment: there is no absolute URL to put in a `src`, and a half-built one
+   * is what this directory never emits.
    */
   it("sends no photos at all when no site origin can be built", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
-    try {
-      const { html } = templateRegistry.sessionReport.render(
-        { ...params, photoCount: "5" },
-        t,
-        "en",
-      );
-      expect(html).not.toContain("Photos from this session");
-      expect(html).not.toContain("localhost");
-    } finally {
-      vi.unstubAllEnvs();
+    for (const origin of ["", "not-a-url"]) {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
+      try {
+        const { html } = templateRegistry.sessionReport.render(
+          { ...params, photoCount: "5" },
+          t,
+          "en",
+        );
+        expect(html, `origin ${JSON.stringify(origin)} produced photos`)
+          .not.toContain("Photos from this session");
+      } finally {
+        vi.unstubAllEnvs();
+      }
     }
   });
 
