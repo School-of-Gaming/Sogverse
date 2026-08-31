@@ -15,7 +15,7 @@
  * both shapes are built from live in `@/components/session-feed`.
  */
 
-import type { AttendanceMark } from "@/components/session-feed";
+import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 
 /**
  * One person on the group's roster, as the workspace's session surfaces need
@@ -102,6 +102,15 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
    * kind split, whose only real job was getting that editor onto the card.
    */
   attendance: AttendanceMarks;
+  /**
+   * The photos attached to this session, oldest first — see
+   * {@link PastSessionFeedEntry.images}, which this is the same field as.
+   *
+   * Present on a future entry for the same reason `attendance` is: one of them
+   * can be the session **in progress**, and a gedu taking the register mid-club
+   * is exactly the person photographing what the group just built.
+   */
+  images: readonly SessionPhoto[];
   /** Who last touched this session — see the type's own note. */
   lastEditedBy: SessionEditor | null;
 }
@@ -177,6 +186,19 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    */
   attendance: AttendanceMarks;
   /**
+   * The photos attached to this session, oldest first — stored order, which is
+   * the display order on every surface. An empty array when there are none,
+   * never a missing field, so a renderer has one shape to handle.
+   *
+   * **They are content, not a draft.** A photo is attached the moment it
+   * uploads and removed the moment it is removed, so this field never carries
+   * anything unsaved — which is the whole reason the strip that manages it is a
+   * separate block from the editor's Save. It plays no part in what a session
+   * *owes*: a session with five photos and no write-up still owes its report,
+   * on the card and in the dashboard's SQL twin alike.
+   */
+  images: readonly SessionPhoto[];
+  /**
    * Whether a write-up is **owed** for this session: dated from the enforcement
    * epoch onward, **and** actually finished.
    *
@@ -223,6 +245,15 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
  * included, through the same record editor every past entry uses. Once anything
  * is recorded, the merge stops emitting it as a gap and it becomes an ordinary
  * past entry whose `owed` flag is false.
+ *
+ * **It carries no `images` field, and cannot.** A photo needs a stored session
+ * row to hang off, and a row is precisely what this kind is the absence of — so
+ * a gap that acquired one would stop being a gap on the very next read. That is
+ * also why the photo strip is not offered on this row: it is a quiet dashed
+ * line rather than a card, and an attachment strip on it would both crowd a
+ * deliberately silent gap and mutate it into a card mid-edit the moment the
+ * first photo landed. Write anything on it first and it is an ordinary past
+ * entry with the strip.
  */
 export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
   kind: "no_record";

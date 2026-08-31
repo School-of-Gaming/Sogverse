@@ -139,6 +139,13 @@ export function GeduProductPageScene({
    * re-rendered the card.
    */
   const sendOutcomes = useRef(new Map(fixture.sendOutcomes));
+  /**
+   * Which demo picture the next "upload" settles into. A ref, because nothing
+   * renders from it and it must not reset a scene's photos when something else
+   * re-renders — and a counter rather than a random pick, so two reviewers
+   * adding a photo to the same card get the same page.
+   */
+  const scenePhotoIndex = useRef(0);
   useEffect(() => {
     const timers = pendingTimers.current;
     return () => {
@@ -237,6 +244,66 @@ export function GeduProductPageScene({
       }, SIMULATED_SEND_MS);
       pendingTimers.current.add(timer);
     });
+
+  /**
+   * Attach one photo — locally, and to nobody.
+   *
+   * The bytes really are decoded, downscaled and re-encoded in the browser
+   * before this is called, so what a reviewer picks is what they see, at the
+   * shape it will actually be stored at. What the scene stands in for is only
+   * the round trip: a delay long enough to watch the pending tile sit in its
+   * own final-size box with a spinner over it, then a *stored* photo taking its
+   * place. The stored id is one of the committed demo pictures rather than the
+   * pick, because the scene has no bucket to have put the pick in and a
+   * `blob:` id is not something the URL helper can resolve.
+   *
+   * **The claimed dimensions are the pick's, not the demo picture's**, so the
+   * box does not change size at the moment the tile settles — the one thing in
+   * this sequence a reviewer is here to check.
+   */
+  const handleAddPhoto = (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ): Promise<string> =>
+    new Promise((resolve) => {
+      const timer = window.setTimeout(() => {
+        pendingTimers.current.delete(timer);
+        const id = `${SCENE_STORED_PHOTO_ART[
+          scenePhotoIndex.current % SCENE_STORED_PHOTO_ART.length
+        ]}#${scenePhotoIndex.current}`;
+        scenePhotoIndex.current += 1;
+        setEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === entryId && entry.kind !== "no_record"
+              ? {
+                  ...entry,
+                  images: [
+                    ...entry.images,
+                    { id, width: photo.width, height: photo.height },
+                  ],
+                }
+              : entry,
+          ),
+        );
+        resolve(id);
+      }, SIMULATED_PHOTO_MS);
+      pendingTimers.current.add(timer);
+    });
+
+  /** Detach one photo — immediately, exactly as the live remove reads. */
+  const handleRemovePhoto = (imageId: string): Promise<void> => {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.kind === "no_record"
+          ? entry
+          : {
+              ...entry,
+              images: entry.images.filter((photo) => photo.id !== imageId),
+            },
+      ),
+    );
+    return Promise.resolve();
+  };
 
   const handleSaveGroupNotes = (draft: GroupNotesDraft) => {
     setGroupNotes({
@@ -407,6 +474,8 @@ export function GeduProductPageScene({
       onEditEntry={setEditingEntryId}
       onSaveEntry={handleSave}
       onSendReport={handleSendReport}
+      onAddPhoto={handleAddPhoto}
+      onRemovePhoto={handleRemovePhoto}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       // Every scenario has one, because the page requires one. Passed whole at
@@ -454,6 +523,29 @@ const SIMULATED_CHECK_MS = 800;
  * the card moves when the label lands.
  */
 const SIMULATED_SEND_MS = 1400;
+
+/**
+ * Roughly what a few hundred KB of JPEG costs over a home connection's upstream
+ * — the slowest of the three, because it is the only one carrying a file. Long
+ * enough that the pending tile is genuinely watched, which is the whole reason
+ * the local preview exists.
+ */
+const SIMULATED_PHOTO_MS = 1800;
+
+/**
+ * What a scene's "uploaded" photo settles into.
+ *
+ * The scene has no bucket, so it cannot hand back the picture that was picked —
+ * a `blob:` URL is not something the session-image helper can resolve into a
+ * stored object. These are the committed demo pictures instead, taking turns,
+ * each one carrying a fragment so that adding the same art twice still gives
+ * two distinct ids and so two React keys.
+ */
+const SCENE_STORED_PHOTO_ART = [
+  "/preview-art/session-build.jpg",
+  "/preview-art/session-tower.jpg",
+  "/preview-art/session-badge.jpg",
+] as const;
 
 /**
  * The account key a passed check lands, one per platform, standing in for what

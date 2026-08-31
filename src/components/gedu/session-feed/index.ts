@@ -20,7 +20,9 @@ export { CollapsibleRegion } from "./CollapsibleRegion";
 export { FamilyNoteBlock } from "./FamilyNoteBlock";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
+export { SessionPhotoStrip } from "./SessionPhotoStrip";
 export { StaffNoteBlock } from "./StaffNoteBlock";
+export { sessionPhotoErrorCode } from "./photo-failure";
 export {
   applyDraftToEntry,
   applyPlanDraftToEntry,

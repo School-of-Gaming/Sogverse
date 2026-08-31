@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Eye, Loader2, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,20 @@ interface SessionRecordEditorProps {
    * exactly as the gedu left them so the retry costs nothing.
    */
   error: string | null;
+  /**
+   * The session's photo block, rendered between the family-facing report and
+   * the gedu note — or nothing, on an entry that has no stored row to hang a
+   * photo off.
+   *
+   * **A slot rather than props, because it is not this editor's to own.** What
+   * goes in here attaches and detaches immediately; everything else on this
+   * component is a draft held until Save. Handing it in whole keeps that split
+   * honest at the type level — there is no photo state in the draft, no photo
+   * argument on the save, and nothing here that could accidentally start
+   * treating a photo as unsaved work. All this component decides is *where* the
+   * block goes.
+   */
+  photoStrip?: ReactNode;
   onCancel: () => void;
   onSave: (draft: SessionRecordDraft) => void;
 }
@@ -86,6 +100,14 @@ interface SessionRecordEditorProps {
  * invites an edit that the in-flight write will not carry — and on failure the
  * editor stays exactly where it is, re-enabled, with the text untouched and one
  * line saying so. The only thing that closes this editor is a save that landed.
+ *
+ * **The photo block is the one thing a save does not grey, and that is the
+ * point of it.** Everything the sentence above locks is work this Save is
+ * about to carry; a photo is already stored the moment it uploads, so locking
+ * it would be claiming a relationship the two do not have. A block that goes
+ * on working while the rest of the editor is frozen is the clearest possible
+ * statement that it is not part of the draft — and it is a statement made
+ * without a word of instruction, which is what this feature was asked for.
  */
 export function SessionRecordEditor({
   open,
@@ -93,6 +115,7 @@ export function SessionRecordEditor({
   initialState,
   committing,
   error,
+  photoStrip,
   onCancel,
   onSave,
 }: SessionRecordEditorProps) {
@@ -181,6 +204,11 @@ export function SessionRecordEditor({
           onChange={(report) => setDraft((d) => ({ ...d, report }))}
         />
       </FamilyNoteBlock>
+
+      {/* Directly under the report and above the gedu note, which is where the
+          collapsed card puts the same photos: the two things families read sit
+          together, in one order, whether the card is open or shut. */}
+      {photoStrip}
 
       {/* The gedu note keeps the recessed treatment while it is being
           *written*, not only while it is read: the whole risk of a two-audience

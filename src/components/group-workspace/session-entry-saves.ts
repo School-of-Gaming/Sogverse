@@ -16,9 +16,9 @@ import {
 } from "@/services/gedu-sessions";
 
 /**
- * What a session editor's Save and its Send button actually do — the ordering,
- * the diffing and the failure classification — held **once**, for every surface
- * that mounts the gedu session feed.
+ * What a session card's writes actually do — the Save's ordering and diffing,
+ * the Send's failure classification, and the photo block's attach and remove —
+ * held **once**, for every surface that mounts the gedu session feed.
  *
  * Two shells hand these entries to a feed: the gedu's own group workspace, and
  * the admin group details page that renders the same body. They bind different
@@ -35,7 +35,7 @@ import {
  */
 
 /**
- * The three writes a session editor can make. Structurally what the React Query
+ * The five writes a session card can make. Structurally what the React Query
  * hooks on either surface hand back, deliberately: no adapter at either call
  * site, and no dependency here on which service is behind them.
  */
@@ -59,6 +59,25 @@ export interface SessionEntrySaveMutations {
       sessionDate: string;
     }) => Promise<SessionReportSendResult>;
   };
+  /**
+   * Attach one already-normalized JPEG, answering with the stored row's id.
+   *
+   * The gedu shell's hook refreshes the group feed and the admin shell's the
+   * product document — the same split every other write on this page has, and
+   * the only thing about a photo that differs between the two surfaces.
+   */
+  addSessionImage: {
+    mutateAsync: (vars: {
+      sessionDate: string;
+      width: number;
+      height: number;
+      file: Blob;
+    }) => Promise<{ id: string }>;
+  };
+  /** Remove one photo by id — the RPC resolves its group from the row. */
+  deleteSessionImage: {
+    mutateAsync: (vars: { imageId: string }) => Promise<unknown>;
+  };
 }
 
 export interface SessionEntrySaveArgs extends SessionEntrySaveMutations {
@@ -73,6 +92,11 @@ export interface SessionEntrySaveArgs extends SessionEntrySaveMutations {
 export interface SessionEntrySaves {
   saveEntry: (entryId: string, draft: SessionEntryDraft) => Promise<void>;
   sendReport: (entryId: string) => Promise<SessionReportSendResult>;
+  addPhoto: (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ) => Promise<string>;
+  removePhoto: (imageId: string) => Promise<void>;
 }
 
 /**
@@ -91,6 +115,8 @@ export function createSessionEntrySaves({
   setSessionNotes,
   recordAttendance,
   emailSessionReport,
+  addSessionImage,
+  deleteSessionImage,
 }: SessionEntrySaveArgs): SessionEntrySaves {
   /**
    * Persist one session's edit.
@@ -212,7 +238,47 @@ export function createSessionEntrySaves({
     }
   };
 
-  return { saveEntry, sendReport };
+  /**
+   * Attach one photo to a session, answering with the stored id.
+   *
+   * **The bytes arrive already normalized.** Decoding, downscaling and
+   * re-encoding happen in the strip, because that is where the *preview* is
+   * drawn and the preview has to be the encoded image — its dimensions are what
+   * the tile's box is arithmetic from, so a raw-file preview would resize itself
+   * the moment the encode finished. What is left for this layer is what every
+   * other write here does: turn an entry id back into the (group, date) pair
+   * Postgres keys the row by, and call the surface's own mutation.
+   *
+   * Nothing is caught. A refusal — from the browser's encoder or from the route
+   * — travels out untouched, because the one vocabulary of stable codes is what
+   * the strip translates, and a wrapper here could only blur it.
+   */
+  const addPhoto = async (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ): Promise<string> => {
+    const { id } = await addSessionImage.mutateAsync({
+      sessionDate: sessionDateOf(entryId, groupId),
+      width: photo.width,
+      height: photo.height,
+      file: photo.file,
+    });
+    return id;
+  };
+
+  /**
+   * Remove one photo.
+   *
+   * The id is the whole request, and the group is nowhere in it: the RPC
+   * resolves the photo's session — and so its group — from the row itself, and
+   * that resolution is the authorization. So this takes no entry id and does no
+   * date arithmetic.
+   */
+  const removePhoto = async (imageId: string): Promise<void> => {
+    await deleteSessionImage.mutateAsync({ imageId });
+  };
+
+  return { saveEntry, sendReport, addPhoto, removePhoto };
 }
 
 /**

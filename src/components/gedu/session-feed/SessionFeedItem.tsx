@@ -9,9 +9,11 @@ import { Card } from "@/components/ui/card";
 import { Markdown } from "@/components/ui/markdown";
 import {
   SessionAttributionChip,
+  SessionPhotoGallery,
   SessionReport,
   hasReport,
   type SessionLabels,
+  type SessionPhoto,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
 import { AttendanceSummary } from "./AttendanceSummary";
@@ -25,6 +27,7 @@ import {
   type SessionCompleteness,
 } from "./entry-state";
 import type { SessionReportSendResult } from "./send-report";
+import { SessionPhotoStrip } from "./SessionPhotoStrip";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
 import { SessionReportSend } from "./SessionReportSend";
@@ -100,6 +103,18 @@ interface SessionFeedItemProps {
   sendError: string | null;
   /** Email this session's report to the families. */
   onSendReport: () => void;
+  /**
+   * Attach one already-normalized JPEG to this session, resolving with the
+   * stored id. Bound to this entry by the feed, so the strip below never has to
+   * hold a session date.
+   */
+  onAddPhoto: (photo: {
+    file: Blob;
+    width: number;
+    height: number;
+  }) => Promise<string>;
+  /** Remove one of this session's photos. */
+  onRemovePhoto: (imageId: string) => Promise<void>;
   /**
    * Hand the Edit button up to the feed as it mounts.
    *
@@ -228,6 +243,8 @@ export function SessionFeedItem({
   sendResult,
   sendError,
   onSendReport,
+  onAddPhoto,
+  onRemovePhoto,
   registerEditButton,
   onToggleEdit,
   onCancelEdit,
@@ -243,6 +260,40 @@ export function SessionFeedItem({
   const plannable = isPlannableEntry(entry, now);
   const editorId = useId();
 
+  /**
+   * This session's photos, or an empty run.
+   *
+   * A pre-epoch gap has no field for them and can have none — a photo needs a
+   * stored row, and a gap is the absence of one — so the two carded kinds
+   * answer and the third answers with nothing.
+   */
+  const photos: readonly SessionPhoto[] =
+    entry.kind === "no_record" ? [] : entry.images;
+
+  /**
+   * The photo block, on the record editor and nowhere else.
+   *
+   * **Only a card gets one.** The pre-epoch dashed line is a 2rem row that
+   * deliberately does not compete with the sessions around it, and hanging an
+   * attachment strip off it would do two wrong things at once: crowd a row whose
+   * whole design is quietness, and turn that row into a card the instant the
+   * first photo materialized its session — a card swap under an open editor. A
+   * gedu who wants photos on a pre-epoch session writes a line on it first, at
+   * which point it is an ordinary past entry with the strip.
+   *
+   * The **plan** editor never sees this either, and that is the plan's own
+   * decision rather than an oversight: photos document what happened, and a
+   * session that has not started has nothing to document.
+   */
+  const photoStrip = entry.kind === "no_record" ? undefined : (
+    <SessionPhotoStrip
+      open={editing}
+      photos={photos}
+      onAddPhoto={onAddPhoto}
+      onRemovePhoto={onRemovePhoto}
+    />
+  );
+
   const recordEditor = recordable && (
     <CollapsibleRegion open={editing} instant id={editorId}>
       <SessionRecordEditor
@@ -251,6 +302,7 @@ export function SessionFeedItem({
         initialState={editorStateFromEntry(entry, roster)}
         committing={committing}
         error={saveError}
+        photoStrip={photoStrip}
         onCancel={onCancelEdit}
         onSave={onSave}
       />
@@ -342,6 +394,13 @@ export function SessionFeedItem({
         // chip's size does not change with the viewport) leaves ~11px between
         // the content's bottom edge and the top of the chip. Re-derive this if
         // the chip's height or its `-bottom-*` offset ever moves.
+        //
+        // **Re-checked when photos landed, and it did not have to change.** The
+        // gallery can now be the card's last block — a report with photos and no
+        // gedu note ends on a row of thumbnails — but the reservation is derived
+        // from the *chip's* geometry, not from what happens to be underneath it,
+        // and the chip's size does not change. The ~11px it leaves clears a
+        // thumbnail's bottom border exactly as it clears the staff-note box's.
         signedBy !== null && "pb-8 sm:pb-8",
         entry.kind === "future" && prominent && "border-info/50",
       )}
@@ -577,8 +636,8 @@ function SessionEntryBody({
 }
 
 /**
- * The two written halves of an entry — the family-facing report, then the
- * gedu-only note in its padlocked panel.
+ * What an entry has to show for itself — the family-facing report, the photos
+ * beside it, then the gedu-only note in its padlocked panel.
  *
  * One component for both sides of the present, because they render identically
  * on both: a note written on Sunday about Monday and one written on Tuesday
@@ -587,6 +646,19 @@ function SessionEntryBody({
  * not here, because a past entry says the same thing a different way — the
  * missing report is one of the gaps its header is already alerting on, and a
  * second line in the body restating it would be the same nag twice.
+ *
+ * **The photos sit inside the report's own block, under the write-up and above
+ * the Send.** They are content, like the text — the same shared gallery a family
+ * reads them through — and they go out in the same mail that button sends, so a
+ * gedu about to press it sees the whole of what is going. That also makes the
+ * order identical to the open editor's, where the strip sits in exactly this
+ * slot: the collapsed card and the expanded one say the same things in the same
+ * sequence.
+ *
+ * The block renders for photos *without* a report, which is a state the model
+ * genuinely has — a session photographed on the night and written up later. The
+ * send row is still gated on there being a write-up to send, so nothing offers
+ * to mail a report that does not exist.
  */
 function WrittenFields({
   entry,
@@ -600,9 +672,14 @@ function WrittenFields({
 }) {
   return (
     <>
-      {hasText(entry.report) && (
+      {(hasText(entry.report) || entry.images.length > 0) && (
         <div className="space-y-2">
-          <SessionReport markdown={entry.report} clamped={clampReport} />
+          {hasText(entry.report) && (
+            <SessionReport markdown={entry.report} clamped={clampReport} />
+          )}
+          {/* Draws nothing at all on an empty run, so no space is held open for
+              photos a session may never have. */}
+          <SessionPhotoGallery photos={entry.images} />
           {reportAction}
         </div>
       )}

@@ -50,8 +50,12 @@ ban, and the ESLint config says so.
 - **`GroupNotesPanel.tsx` / `SiteNotesPanel.tsx` / `TwoAudienceNotesPanel.tsx`** — the
   standing notes. The two named panels are the same two-audience editor with different
   copy and a different owner (the group; the venue).
-- **`session-entry-saves.ts`** — what a session editor's Save and Send *do* between the
-  draft and the writes, taking the mutations as arguments so both shells run one copy.
+- **`session-entry-saves.ts`** — what a session card's writes *do* between what is on
+  screen and the mutations behind them: the Save's diff and ordering, the Send's failure
+  classification, and the photo block's attach and remove. All of them take the mutations
+  as arguments so both shells run one copy. The photo pair is the thinnest of the five and
+  is here anyway, because turning an entry id back into the (group, date) pair Postgres
+  keys a session by is the same arithmetic every other write on this page makes.
 - **`game-username-save.ts`** — the same split for the roster's username editor: the
   platform dispatch and the checking/verified/unverified machine, taking both platforms'
   mutations and the shell's status setter as arguments.

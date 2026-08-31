@@ -1451,7 +1451,21 @@
       "reportSentToParents": "vavpu’ SoSpu’ je lunobta’ · {sentAt}",
       "reportSendPartial": "{sent} lunobta’, {failed} luj",
       "sendReportNoReport": "may’vamvaD ngeHmeH De’ polta’ tu’lu’be’ DaH. Hal yIchIDqa’ ’ej qonta’ yIlegh.",
-      "sendReportFailed": "De’ ngeHlu’laHbe’. pagh qorDu’ Suqta’ — yIboq."
+      "sendReportFailed": "De’ ngeHlu’laHbe’. pagh qorDu’ Suqta’ — yIboq.",
+      "photosTitle": "mIlloghmey",
+      "photosEmpty": "may’vo’ mIllogh yIchel.",
+      "addPhoto": "mIllogh yIchel",
+      "photoUploading": "mIllogh vIngeHtaH",
+      "removePhoto": "mIllogh {index} yIteq",
+      "photosTrimmed": "{cap} mIlloghmey neH ngaSlaH De’ — vaj {count, plural, one {wa’ neH chellu’ta’} other {# neH chellu’ta’}}.",
+      "photoErrorDecodeFailed": "De’vam poSmoHlu’laHbe’. iPhone Do’Ha’! JPEG yIchenmoH ’ej yIboq.",
+      "photoErrorEncodeFailed": "janvam mIllogh vumlaHbe’. yIboq, ghap mIllogh mach yIwIv.",
+      "photoErrorNotJpeg": "JPEG PNG WebP je ghaHbe’ De’vam. JPEG yIchenmoH ’ej yIboq.",
+      "photoErrorTooLarge": "tIn law’ mIlloghvam — ngeHlu’laHbe’. mIllogh mach yInuD.",
+      "photoErrorBadDimensions": "mIllogh juHmey laDlu’laHbe’. latlh yInuD.",
+      "photoErrorCapReached": "buy’ De’vam. wa’ mIllogh yIteq, ’ej latlh yIchel.",
+      "photoErrorNotAllowed": "may’vamvaD mIllogh Dachel net chaw’be’.",
+      "photoErrorUploadFailed": "mIllogh ngeHlu’be’. yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",

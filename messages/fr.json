@@ -1407,7 +1407,21 @@
       "reportSentToParents": "Envoyé aux parents · {sentAt}",
       "reportSendPartial": "{sent} envoyés, {failed} en échec",
       "sendReportNoReport": "Cette séance n’a plus de compte rendu enregistré à envoyer. Rechargez la page pour voir ce qu’elle contient maintenant.",
-      "sendReportFailed": "Le compte rendu n’a pas pu être envoyé. Aucune famille ne l’a reçu — réessayez."
+      "sendReportFailed": "Le compte rendu n’a pas pu être envoyé. Aucune famille ne l’a reçu — réessayez.",
+      "photosTitle": "Photos",
+      "photosEmpty": "Ajoutez une photo de la séance.",
+      "addPhoto": "Ajouter une photo",
+      "photoUploading": "Envoi de la photo",
+      "removePhoto": "Supprimer la photo {index}",
+      "photosTrimmed": "Un compte rendu accepte {cap} photos au maximum : {count, plural, one {seule la première a été ajoutée} other {seules les # premières ont été ajoutées}}.",
+      "photoErrorDecodeFailed": "Ce fichier n’a pas pu être ouvert. S’il vient d’un iPhone, enregistrez-le en JPEG et réessayez.",
+      "photoErrorEncodeFailed": "Cette photo n’a pas pu être préparée sur cet appareil. Réessayez ou choisissez-en une plus petite.",
+      "photoErrorNotJpeg": "Ce fichier n’est ni un JPEG, ni un PNG, ni un WebP. Convertissez-le en JPEG et réessayez.",
+      "photoErrorTooLarge": "Cette photo est trop lourde pour être envoyée. Essayez-en une plus petite.",
+      "photoErrorBadDimensions": "Les dimensions de cette photo n’ont pas pu être lues. Essayez-en une autre.",
+      "photoErrorCapReached": "Ce compte rendu est déjà complet. Supprimez une photo pour en ajouter une autre.",
+      "photoErrorNotAllowed": "Vous ne pouvez pas ajouter de photos à cette séance.",
+      "photoErrorUploadFailed": "Cette photo n’a pas été envoyée. Réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",

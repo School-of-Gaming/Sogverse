@@ -20,7 +20,9 @@ import {
  * 00200 the five RPCs behind a session record — the notes writer, the
  * per-mark register, the send's claim, the group notes and the site notes —
  * admit an admin beside the assigned gedu, and the report-email route admits
- * one too. They are the *same* wire: same functions, same arguments, same
+ * one too. The two session-photo routes are the same shape again: role-gated to
+ * gedu **and** admin, with the RPC's assignment guard behind them doing the real
+ * authorizing. They are the *same* wire: same functions, same arguments, same
  * refusals. So this class holds a `GeduSessionsService` and hands each call
  * straight to it rather than restating the RPC names, the null-status
  * convention or the error translation a second time. The delegations exist so
@@ -73,6 +75,16 @@ export class AdminSessionsService {
   /** @see GeduSessionsService.emailSessionReport */
   emailSessionReport(args: { groupId: string; sessionDate: string }) {
     return this.sessions.emailSessionReport(args);
+  }
+
+  /** @see GeduSessionsService.addSessionImage */
+  addSessionImage(args: Parameters<GeduSessionsService["addSessionImage"]>[0]) {
+    return this.sessions.addSessionImage(args);
+  }
+
+  /** @see GeduSessionsService.deleteSessionImage */
+  deleteSessionImage(imageId: string) {
+    return this.sessions.deleteSessionImage(imageId);
   }
 
   /** @see GeduSessionsService.setGroupNotes */

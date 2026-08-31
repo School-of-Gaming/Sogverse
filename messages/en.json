@@ -1407,7 +1407,21 @@
       "reportSentToParents": "Sent to parents · {sentAt}",
       "reportSendPartial": "{sent} sent, {failed} failed",
       "sendReportNoReport": "This session no longer has a saved report to email. Reload the page to see what it says now.",
-      "sendReportFailed": "The report couldn’t be emailed. No family received it — try again."
+      "sendReportFailed": "The report couldn’t be emailed. No family received it — try again.",
+      "photosTitle": "Photos",
+      "photosEmpty": "Add a photo from the session.",
+      "addPhoto": "Add photo",
+      "photoUploading": "Uploading photo",
+      "removePhoto": "Remove photo {index}",
+      "photosTrimmed": "A report holds up to {cap} photos, so {count, plural, one {only the first one was} other {only the first # were}} added.",
+      "photoErrorDecodeFailed": "That file couldn’t be opened. If it came from an iPhone, save it as a JPEG and try again.",
+      "photoErrorEncodeFailed": "That photo couldn’t be prepared on this device. Try again, or pick a smaller one.",
+      "photoErrorNotJpeg": "That file isn’t a JPEG, PNG or WebP. Convert it to a JPEG and try again.",
+      "photoErrorTooLarge": "That photo is too large to upload. Try a smaller one.",
+      "photoErrorBadDimensions": "That photo’s size couldn’t be read. Try a different one.",
+      "photoErrorCapReached": "This report is already full. Remove a photo to add another.",
+      "photoErrorNotAllowed": "You can’t add photos to this session.",
+      "photoErrorUploadFailed": "That photo didn’t upload. Try again."
     },
     "groupNotes": {
       "heading": "About this group",

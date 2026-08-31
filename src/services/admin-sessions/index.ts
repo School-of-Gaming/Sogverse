@@ -1,6 +1,8 @@
 export { AdminSessionsService } from "./admin-sessions.service";
 export { adminSessionKeys } from "./admin-sessions.keys";
 export {
+  useAdminAddSessionImage,
+  useAdminDeleteSessionImage,
   useAdminEmailSessionReport,
   useAdminProductSessions,
   useAdminRecordAttendance,

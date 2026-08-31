@@ -20,6 +20,8 @@ import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { useNow } from "@/providers";
 import {
+  useAdminAddSessionImage,
+  useAdminDeleteSessionImage,
   useAdminEmailSessionReport,
   useAdminProductSessions,
   useAdminRecordAttendance,
@@ -327,6 +329,12 @@ function Workspace({
   const setSessionNotes = useAdminSetSessionNotes(productId, groupId);
   const recordAttendance = useAdminRecordAttendance(productId, groupId);
   const emailSessionReport = useAdminEmailSessionReport(productId, groupId);
+  // The photo block's two writes, product-keyed. The block itself came free
+  // with the shared card; what does not travel is which document a landed
+  // photo has to reappear in, which is why these are bound here rather than
+  // inherited.
+  const addSessionImage = useAdminAddSessionImage(productId, groupId);
+  const deleteSessionImage = useAdminDeleteSessionImage(productId);
   const setGroupNotes = useAdminSetGroupNotes(productId, groupId);
   const setSiteNotes = useAdminSetSiteNotes(productId);
   // Both platforms' mutations, unconditionally: a hook cannot be called behind
@@ -502,14 +510,17 @@ function Workspace({
    * partial-failure classification are rules about the record, not about who is
    * looking at it.
    */
-  const { saveEntry, sendReport } = createSessionEntrySaves({
-    groupId,
-    entries,
-    roster: feedRoster,
-    setSessionNotes,
-    recordAttendance,
-    emailSessionReport,
-  });
+  const { saveEntry, sendReport, addPhoto, removePhoto } =
+    createSessionEntrySaves({
+      groupId,
+      entries,
+      roster: feedRoster,
+      setSessionNotes,
+      recordAttendance,
+      emailSessionReport,
+      addSessionImage,
+      deleteSessionImage,
+    });
 
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
     await setGroupNotes.mutateAsync({
@@ -604,6 +615,8 @@ function Workspace({
       onEditEntry={handleEditEntry}
       onSaveEntry={saveEntry}
       onSendReport={sendReport}
+      onAddPhoto={addPhoto}
+      onRemovePhoto={removePhoto}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}

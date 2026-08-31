@@ -1407,7 +1407,21 @@
       "reportSentToParents": "Lähetetty vanhemmille · {sentAt}",
       "reportSendPartial": "{sent} lähetetty, {failed} epäonnistui",
       "sendReportNoReport": "Tällä kerralla ei ole enää tallennettua raporttia lähetettäväksi. Lataa sivu uudelleen nähdäksesi nykyisen sisällön.",
-      "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen."
+      "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen.",
+      "photosTitle": "Kuvat",
+      "photosEmpty": "Lisää kuva tältä kerralta.",
+      "addPhoto": "Lisää kuva",
+      "photoUploading": "Kuvaa ladataan",
+      "removePhoto": "Poista kuva {index}",
+      "photosTrimmed": "Raporttiin mahtuu enintään {cap} kuvaa, joten niistä lisättiin {count, plural, one {vain yksi} other {vain #}}.",
+      "photoErrorDecodeFailed": "Tiedostoa ei voitu avata. Jos kuva on iPhonesta, tallenna se JPEG-muotoon ja yritä uudelleen.",
+      "photoErrorEncodeFailed": "Kuvaa ei voitu käsitellä tällä laitteella. Yritä uudelleen tai valitse pienempi kuva.",
+      "photoErrorNotJpeg": "Tiedosto ei ole JPEG, PNG tai WebP. Muunna se JPEG-muotoon ja yritä uudelleen.",
+      "photoErrorTooLarge": "Kuva on liian suuri ladattavaksi. Kokeile pienempää.",
+      "photoErrorBadDimensions": "Kuvan mittoja ei voitu lukea. Kokeile toista kuvaa.",
+      "photoErrorCapReached": "Tämä raportti on jo täynnä. Poista kuva, jotta voit lisätä uuden.",
+      "photoErrorNotAllowed": "Et voi lisätä kuvia tähän kertaan.",
+      "photoErrorUploadFailed": "Kuvan lataus ei onnistunut. Yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",

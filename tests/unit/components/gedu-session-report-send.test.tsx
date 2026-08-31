@@ -77,6 +77,7 @@ function pastEntry(
     report: "# Redstone week\n\nWe built item sorters.",
     staffNote: null,
     attendance: {},
+    images: [],
     owed: true,
     reportEmailedAt: null,
     lastEditedBy: null,
@@ -115,6 +116,10 @@ function Harness({
             onEditEntry={() => {}}
             onSaveEntry={() => {}}
             onSendReport={handleSend}
+            // Never reached: this suite is about the send, and no card here
+            // opens an editor or holds a photo.
+            onAddPhoto={() => Promise.resolve("")}
+            onRemovePhoto={() => Promise.resolve()}
           />
         </NowProvider>
       </TimezoneProvider>

@@ -98,6 +98,62 @@ export function useAdminEmailSessionReport(productId: string, groupId: string) {
   });
 }
 
+/**
+ * Attach one already-normalized JPEG to a session's report.
+ *
+ * The product-keyed twin of the gedu hook, and it exists for exactly the reason
+ * the shared body's rule says it must: an admin sees the gedu's session card,
+ * so the photo block came to this page free — but which document a landed photo
+ * has to appear in is the one thing the two surfaces do not share. The gedu's
+ * strip is drawn from the group feed; this one is drawn from the product's
+ * session record, so that is what a successful attach refreshes.
+ *
+ * The group id rides in the request rather than the key: the route names a
+ * session by (group, date) as every session write does, while the invalidation
+ * is the product's.
+ */
+export function useAdminAddSessionImage(productId: string, groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new AdminSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: {
+      sessionDate: string;
+      width: number;
+      height: number;
+      file: Blob;
+    }) => service.addSessionImage({ groupId, ...vars }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: adminSessionKeys.byProduct(productId),
+      });
+    },
+  });
+}
+
+/**
+ * Remove one photo from a session's report.
+ *
+ * No group id at all, and that is the RPC's doing rather than an omission: it
+ * resolves the photo's session — and so its group — from the row itself, and
+ * that resolution is the authorization. The product id is here for the
+ * invalidation and nothing else.
+ */
+export function useAdminDeleteSessionImage(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new AdminSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: { imageId: string }) =>
+      service.deleteSessionImage(vars.imageId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: adminSessionKeys.byProduct(productId),
+      });
+    },
+  });
+}
+
 export function useAdminSetGroupNotes(productId: string, groupId: string) {
   const queryClient = useQueryClient();
   const service = new AdminSessionsService(getClient());

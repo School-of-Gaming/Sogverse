@@ -87,6 +87,24 @@ interface SessionFeedProps {
    * report has *already* gone is answered by the sent state, not by a message.
    */
   onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
+  /**
+   * Attach one already-normalized JPEG to a session's report, resolving with
+   * the stored id.
+   *
+   * **Passed straight through to the card's photo block, with no state of this
+   * component's around it** — and that is the difference between a photo and
+   * everything else on this feed. A save is held open, disabled and anchored
+   * here because the feed owns which editor is open and what closes it; a photo
+   * is attached the moment it uploads and belongs to nothing but its own strip,
+   * so the pending tiles, the batch's disabled state and the refusal line all
+   * live down there. The feed only binds the callback to an entry.
+   */
+  onAddPhoto: (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ) => Promise<string>;
+  /** Remove one photo, by its stored id. @see onAddPhoto */
+  onRemovePhoto: (imageId: string) => Promise<void>;
   className?: string;
 }
 
@@ -145,6 +163,8 @@ export function SessionFeed({
   onEditEntry,
   onSaveEntry,
   onSendReport,
+  onAddPhoto,
+  onRemovePhoto,
   className,
 }: SessionFeedProps) {
   const t = useTranslations("gedu.sessionFeed");
@@ -405,6 +425,8 @@ export function SessionFeed({
               sendError?.entryId === entry.id ? sendError.message : null
             }
             onSendReport={() => void sendReport(entry.id)}
+            onAddPhoto={(photo) => onAddPhoto(entry.id, photo)}
+            onRemovePhoto={onRemovePhoto}
             registerEditButton={(node) => {
               if (node === null) editButtons.current.delete(entry.id);
               else editButtons.current.set(entry.id, node);

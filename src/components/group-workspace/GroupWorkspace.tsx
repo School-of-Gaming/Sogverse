@@ -258,6 +258,17 @@ interface GroupWorkspaceProps {
    */
   onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
   /**
+   * Attach one already-normalized JPEG to a session's report, resolving with
+   * the stored id. Awaited by the card's photo block, which holds its add
+   * control disabled for the whole of a multi-file batch.
+   */
+  onAddPhoto: (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ) => Promise<string>;
+  /** Remove one photo by its stored id. Awaited by the same block. */
+  onRemovePhoto: (imageId: string) => Promise<void>;
+  /**
    * Save a roster member's game username, on whichever platform this product's
    * topic is about. A gedu is the person who finds out a name is wrong —
    * mid-session, when the server doesn't recognise it — so the roster is where
@@ -368,6 +379,8 @@ export function GroupWorkspace({
   onEditEntry,
   onSaveEntry,
   onSendReport,
+  onAddPhoto,
+  onRemovePhoto,
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
@@ -572,6 +585,8 @@ export function GroupWorkspace({
               onEditEntry={onEditEntry}
               onSaveEntry={onSaveEntry}
               onSendReport={onSendReport}
+              onAddPhoto={onAddPhoto}
+              onRemovePhoto={onRemovePhoto}
             />
           ) : (
             <Card>
