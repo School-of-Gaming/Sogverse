@@ -21,6 +21,30 @@ const PAGE_SIZE = 1000;
 const MAX_PAGES = 100;
 
 /**
+ * How many keys go into one `in.(…)` filter.
+ *
+ * Two things bound it: a URL long enough for a proxy to refuse, and `max_rows` —
+ * a chunk asking for N keys can come back with at most one row per key on a
+ * keyed lookup, so keeping the chunk well under the cap is what lets such a read
+ * skip the walk entirely rather than reimplementing it. 100 keys is ~4 KB of
+ * query string.
+ *
+ * A chunked read whose rows are *not* one-per-key — a tally, a child list — is
+ * still unbounded within a chunk and must walk each chunk. The chunking is then
+ * about the URL alone.
+ */
+export const KEY_LOOKUP_CHUNK_SIZE = 100;
+
+/** Split a key list into `in.(…)`-sized batches, preserving order. */
+export function chunkKeys(keys: readonly string[]): string[][] {
+  const chunks: string[][] = [];
+  for (let i = 0; i < keys.length; i += KEY_LOOKUP_CHUNK_SIZE) {
+    chunks.push(keys.slice(i, i + KEY_LOOKUP_CHUNK_SIZE));
+  }
+  return chunks;
+}
+
+/**
  * One page request. The caller builds a **fresh** query each time rather than
  * re-ranging one builder: a PostgREST builder carries mutable URL state, and
  * reusing it across pages is the kind of thing that works until someone adds a

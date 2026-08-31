@@ -35,10 +35,10 @@ export const locationKeys = {
   sites: () => [...locationKeys.all, "sites"] as const,
   sitesByParent: (parentId: string) =>
     [...locationKeys.sites(), "by-parent", parentId] as const,
-  // The admin sites table's accumulating pages, under `sites()` so a created
-  // or renamed venue refreshes the table exactly as it refreshes the
+  // The admin sites table's whole-level read, under `sites()` so a created or
+  // renamed venue refreshes the table exactly as it refreshes the
   // per-municipality lists — neither mutation has to know this surface exists.
-  sitesPaged: () => [...locationKeys.sites(), "paged"] as const,
+  sitesAll: () => [...locationKeys.sites(), "all"] as const,
   // Browsing is keyed by the node opened, with the root under its own key so
   // "the countries" is a cache entry like any other level.
   children: () => [...locationKeys.all, "children"] as const,
@@ -133,24 +133,20 @@ export function useLocationChildren(parentId: string | null) {
 }
 
 /**
- * Every venue on the platform, a page at a time, each with its ancestor chain.
+ * Every venue on the platform, each with its ancestor chain.
  *
- * Infinite for the same reason browsing a level is: pages accumulate rather
- * than replace, so "show more" appends under rows the admin is already reading
- * instead of moving them. Sites are the one level of the tree the application
- * creates, so this set only ever grows — the page is what bounds the payload,
- * never a claim about how many venues there are.
+ * A plain query over a walked read, not an infinite one: the admin sites table
+ * renders every row it is handed, so there is no page for the UI to advance and
+ * nothing for a "show more" to fetch. The walking is the service's, server-side
+ * and invisible here.
  */
-export function useSitesPages() {
+export function useAllSites() {
   const supabase = getClient();
   const service = new LocationsService(supabase);
 
-  return useInfiniteQuery({
-    queryKey: locationKeys.sitesPaged(),
-    queryFn: ({ pageParam }) => service.getSitesPage({ page: pageParam }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.hasMore ? allPages.length : undefined,
+  return useQuery({
+    queryKey: locationKeys.sitesAll(),
+    queryFn: () => service.getAllSites(),
     staleTime: REFERENCE_DATA_STALE_MS,
   });
 }
@@ -213,14 +209,25 @@ export function useLocationSearch(
   });
 }
 
-/** Specific rows by id, each with its chain — coverage chips, a stored pick. */
-export function useLocationsByIds(ids: readonly string[]) {
+/**
+ * Specific rows by id, each with its chain — coverage chips, a stored pick.
+ *
+ * `retry` follows the same rule as the search hook's: React Query's default is
+ * left in place, and only a call site that has thought about what its wait looks
+ * like names a different one. How long a failure may take is a property of what
+ * the caller renders while it is unresolved, not of the read.
+ */
+export function useLocationsByIds(
+  ids: readonly string[],
+  options?: { retry?: number | boolean },
+) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
 
   return useQuery({
     queryKey: locationKeys.byIds(ids),
     queryFn: () => service.getLocationsByIds(ids),
+    retry: options?.retry,
   });
 }
 
@@ -276,15 +283,23 @@ export function useUpdateLocation() {
     mutationFn: ({ id, updates }: { id: string; updates: Pick<Location, "name"> }) =>
       service.updateLocation(id, updates),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
-      queryClient.invalidateQueries({ queryKey: locationKeys.children() });
-      // Every key-set lookup, not only one naming this id: those reads exist to
-      // *render* a row, so the name they are holding is now the old one, and
-      // the mutation has no way to tell which selections contain it.
-      queryClient.invalidateQueries({ queryKey: locationKeys.keyed() });
-      // A rename changes what search matches, so every cached needle is stale.
-      queryClient.invalidateQueries({ queryKey: locationKeys.search() });
+      // RETURNED, not fired-and-forgotten: React Query awaits a promise returned
+      // from onSuccess before resolving mutateAsync, so a rename editor holding
+      // a `committing` flag across the await keeps its Save button disabled
+      // until the refetches land. Without the return, `mutateAsync` resolves on
+      // the write alone and the button re-enables over a name the page is still
+      // about to replace.
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) }),
+        queryClient.invalidateQueries({ queryKey: locationKeys.sites() }),
+        queryClient.invalidateQueries({ queryKey: locationKeys.children() }),
+        // Every key-set lookup, not only one naming this id: those reads exist
+        // to *render* a row, so the name they are holding is now the old one,
+        // and the mutation has no way to tell which selections contain it.
+        queryClient.invalidateQueries({ queryKey: locationKeys.keyed() }),
+        // A rename changes what search matches, so every cached needle is stale.
+        queryClient.invalidateQueries({ queryKey: locationKeys.search() }),
+      ]);
     },
   });
 }

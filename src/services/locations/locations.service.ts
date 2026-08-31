@@ -3,7 +3,7 @@ import type {
   LocationType,
   AppSupabaseClient,
 } from "@/types";
-import { walkPages, type PageFetcher } from "@/lib/supabase/paging";
+import { chunkKeys, walkPages, type PageFetcher } from "@/lib/supabase/paging";
 import {
   parseJsonResponse,
   readErrorMessage,
@@ -18,15 +18,6 @@ import {
   type CreateLocationBody,
 } from "./locations.contracts";
 import type { z } from "zod";
-
-/**
- * How many keys go into one `in.(…)` filter. Two things bound it: a URL long
- * enough to be refused by a proxy, and `max_rows` — a chunk can return at most
- * one row per key, so keeping the chunk well under the cap is what lets the
- * key-set lookups below skip the paged walk entirely rather than reimplementing
- * it. 100 keys is ~4 KB of query string.
- */
-const KEY_LOOKUP_CHUNK_SIZE = 100;
 
 /**
  * One page of a list read, for a caller that wants a screenful rather than
@@ -52,17 +43,6 @@ export interface LocationsPage<Row> {
 /** How many children one browse request returns. */
 export const LOCATION_BROWSE_PAGE_SIZE = 200;
 
-/**
- * How many venues one page of the admin sites table returns.
- *
- * Much smaller than a browse level's page, because each row here drags its
- * whole ancestor chain along — four embedded lookups per row — and the table it
- * feeds is read a screenful at a time rather than scrolled through. A browse
- * level pays for none of that: its rows all share the parent the caller asked
- * for, so it carries no chain at all.
- */
-export const SITE_LIST_PAGE_SIZE = 25;
-
 async function readPage<Row>(
   page: number,
   pageSize: number,
@@ -76,15 +56,6 @@ async function readPage<Row>(
   // to what arrived keeps the shape total rather than making the type lie.
   const total = count ?? from + data.length;
   return { rows: data, total, hasMore: from + data.length < total };
-}
-
-/** Split a key list into `in.(…)`-sized batches, preserving order. */
-function chunkKeys(keys: readonly string[]): string[][] {
-  const chunks: string[][] = [];
-  for (let i = 0; i < keys.length; i += KEY_LOOKUP_CHUNK_SIZE) {
-    chunks.push(keys.slice(i, i + KEY_LOOKUP_CHUNK_SIZE));
-  }
-  return chunks;
 }
 
 /** Deduplicated and sorted, so the same input always produces the same batches. */
@@ -326,8 +297,8 @@ export class LocationsService {
   }
 
   /**
-   * One page of **every** venue on the platform, each with its ancestor chain —
-   * the admin sites table.
+   * **Every** venue on the platform, each with its ancestor chain — the admin
+   * sites table.
    *
    * The third read in this service that carries a chain, and the only one whose
    * rows do not share a parent: a venue list scoped to one municipality needs no
@@ -335,20 +306,18 @@ export class LocationsService {
    * same shape. Here the rows come from everywhere, so the path is the column
    * that tells two identically-named schools apart.
    *
-   * **Paged, not walked**, for the reason browsing is: the payload has to stay
-   * proportional to the screen. What bounds it is the page, never a claim about
-   * how many venues exist — sites are the one level of this table the
-   * application creates, so the set only grows.
+   * **Walked, not paged.** The surface reading this renders every row it gets,
+   * so the whole result is what it needs — the same legitimacy the
+   * per-municipality venue list has, one scope wider. The walking is the shared
+   * paging primitive's, which is server-side and invisible to the caller: no
+   * page parameter, no "show more", no total to report.
    *
    * **Unfiltered by `retired_at`, and it needs no filter**: nothing retires a
    * `site`. Sites are ours, created by an admin and absent from every upstream
    * source, so no refresh path can reach them.
    */
-  async getSitesPage(
-    options?: { page?: number },
-  ): Promise<LocationsPage<LocationWithChain>> {
-    const page = options?.page ?? 0;
-    const raw = await readPage(page, SITE_LIST_PAGE_SIZE, (from, to) =>
+  async getAllSites(): Promise<LocationWithChain[]> {
+    const rows = await walkPages("getAllSites", (from, to) =>
       this.supabase
         .from("locations")
         .select(`${LOCATION_COLUMNS}, ${SITE_CHAIN_EMBED}`, { count: "exact" })
@@ -360,7 +329,7 @@ export class LocationsService {
         .order("id")
         .range(from, to),
     );
-    return { ...raw, rows: raw.rows.map(flattenChain) };
+    return rows.map(flattenChain);
   }
 
   /**

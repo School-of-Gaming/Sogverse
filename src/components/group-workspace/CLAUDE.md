@@ -56,11 +56,14 @@ ban, and the ESLint config says so.
   *building*, not to any product running in it, so the gedu prepping a session there and
   the admin editing the venue record are looking at one pair of paragraphs — and a second
   editor with its own copy and its own layout would be a second way to say the same thing,
-  free to drift the moment either changed. That page passes the same `addressEditor` slot
-  the admin product shell passes, for the same reason: the address is the location record's
-  and an admin's alone. This does not widen the directory's claim — the panel is still the
-  group workspace's component, still staff-only, and still inside the family-privacy import
-  zone; it simply has a second staff surface rendering the same venue fields.
+  free to drift the moment either changed. That page passes **no** `addressEditor`, and the
+  contrast is what the slot is for: the address is edited there in the card that owns the
+  venue record, beside the name, so the panel renders it exactly as a gedu meets it. The
+  slot exists for a surface whose only reach into that record *is* this section — the admin
+  product page, where the site is a fact about the group being worked on. This does not
+  widen the directory's claim — the panel is still the group workspace's component, still
+  staff-only, and still inside the family-privacy import zone; it simply has a second staff
+  surface rendering the same two notes.
 - **`session-entry-saves.ts`** — what a session editor's Save and Send *do* between the
   draft and the writes, taking the mutations as arguments so both shells run one copy.
 - **`game-username-save.ts`** — the same split for the roster's username editor: the

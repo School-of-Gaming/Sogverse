@@ -220,4 +220,56 @@ describe("SitesService.getProductCountsBySite", () => {
       service.getProductCountsBySite(["a"]),
     ).rejects.toMatchObject({ message: "boom" });
   });
+
+  // The caller holds every site there is, so an unchunked `in.(…)` grows with
+  // the table until a proxy refuses the URL. Zero-padded ids so the sorted
+  // order the service imposes is the order they were generated in.
+  const manyIds = Array.from(
+    { length: 150 },
+    (_, i) => `site-${String(i).padStart(3, "0")}`,
+  );
+
+  it("splits the key list into chunks no request could outgrow", async () => {
+    // A fresh Response per call: this read makes two requests, and a single
+    // canned one has its body read once.
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(postgrestPage([], { from: 0, total: 0 })),
+    );
+
+    await service.getProductCountsBySite(manyIds);
+
+    const filters = fetchMock.mock.calls.map(([input]) =>
+      requestedUrl(input).searchParams.get("location_id"),
+    );
+    expect(filters).toHaveLength(2);
+    expect(filters[0]).toBe(`in.(${manyIds.slice(0, 100).join(",")})`);
+    expect(filters[1]).toBe(`in.(${manyIds.slice(100).join(",")})`);
+  });
+
+  // A chunk is bounded as a *request*, not as a response: a hundred sites can
+  // carry any number of products between them, so each chunk is still walked.
+  it("tallies across every chunk, and every id still gets an entry", async () => {
+    fetchMock.mockImplementation((input) =>
+      Promise.resolve(
+        requestedUrl(input).searchParams
+          .get("location_id")
+          ?.includes("site-100")
+          ? postgrestPage([{ location_id: "site-100" }], {
+              from: 0,
+              total: 1,
+            })
+          : postgrestPage(
+              [{ location_id: "site-000" }, { location_id: "site-000" }],
+              { from: 0, total: 2 },
+            ),
+      ),
+    );
+
+    const counts = await service.getProductCountsBySite(manyIds);
+
+    expect(Object.keys(counts)).toHaveLength(150);
+    expect(counts["site-000"]).toBe(2);
+    expect(counts["site-100"]).toBe(1);
+    expect(counts["site-042"]).toBe(0);
+  });
 });

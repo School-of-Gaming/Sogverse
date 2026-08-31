@@ -687,20 +687,23 @@ The reads come in three shapes.
 so the caller knows whether to offer another page. Pages accumulate rather than replace,
 so "load more" appends under rows the user is already reading.
 
-There are two, and the difference between them is what the level is *scoped by*: browsing
-reads one node's children, while the admin sites table reads the `site` level across every
-parent there is. The second is the one read here whose rows do not share a parent, so it is
-also the only paged read that carries a chain — a venue's name is ambiguous the moment two
-municipalities have a school called the same thing, which is precisely why browsing needs
-no chain and this does. Its page is much smaller for the same reason: each row drags four
-embedded ancestor lookups along. It is still a *level* read rather than a whole-table one,
-and it stays legitimate on exactly that basis — the payload is the screen's, and sites are
-the one level this application creates, so the set only grows.
+**Whole-list reads** — one municipality's venues, and every venue there is. Two, and the
+argument for both is the same one: a surface needs the whole result because it *renders*
+the whole result. The per-municipality list is bounded by the row the caller already
+confirmed; the admin sites table is bounded by the level, and lists every row of it. Both
+are pages showing their content rather than controls choosing from a collection, which is
+the distinction that makes a whole-list read legitimate at all — neither is ever a picker.
 
-**Whole-list reads** — one municipality's venues. That one and no others, and the count is
-the point: a surface needs this in full because the row the caller already confirmed bounds
-it, and it lists whatever it gets. It is read by the page that *renders* the venues inside
-a confirmed municipality, never by a picker choosing from them.
+The wider of the two is the only read here whose rows do not share a parent, so it is also
+the only non-keyed read that carries a chain: a venue's name is ambiguous the moment two
+municipalities have a school called the same thing, which is precisely why browsing needs
+no chain and this does. It walks its pages through the shared primitive rather than
+returning one, and that walking is entirely server-side — the surface asks for the sites
+and gets the sites, with no page parameter, no "show more" and no total to print beside a
+list that is already complete. What keeps this affordable is not a bound argued from
+today's data but the level itself: sites are the one level of this table the application
+creates, so it grows a building at a time. Watch that, not the walk — a level that outgrew
+a screen would be a reason to reshape the *surface*, and only then the read.
 
 **Rule: no read here is bounded by a country.** One was — every municipality of one
 country, each with its chain, walked past the response cap — and it is deleted rather than
@@ -785,7 +788,7 @@ duplicate spellings are therefore structurally impossible above site level.
 
 **Rule: mutations invalidate via the key hierarchy** — a created site invalidates the
 sites key, which is a grouping key with no query of its own sitting above the
-per-municipality venue lists *and* the admin sites table's accumulating pages, so every one
+per-municipality venue lists *and* the admin sites table's whole-level read, so every one
 of them refreshes without the mutation having to know which municipality the row landed in
 or which surfaces list it; it also invalidates the browse level it
 landed in, and every cached search needle. A rename invalidates the row's detail key and

@@ -70,11 +70,12 @@ describe("LocationsService.getSitesByParent", () => {
   });
 });
 
-// Every venue on the platform, a page at a time. The read that feeds the admin
-// sites table, and the only chain-carrying one whose rows do not share a
-// parent — which is exactly why it carries a chain at all.
+// Every venue on the platform, in full. The read that feeds the admin sites
+// table, and the only chain-carrying one whose rows do not share a parent —
+// which is exactly why it carries a chain at all. The page renders every row it
+// gets, so the read walks rather than returning a window.
 
-describe("LocationsService.getSitesPage", () => {
+describe("LocationsService.getAllSites", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
 
@@ -88,7 +89,7 @@ describe("LocationsService.getSitesPage", () => {
       postgrestPage(locationRows(2), { from: 0, total: 2 }),
     );
 
-    await service.getSitesPage();
+    await service.getAllSites();
 
     const url = requestedUrl(fetchMock.mock.calls[0][0]);
     expect(url.searchParams.get("type")).toBe("eq.site");
@@ -106,35 +107,57 @@ describe("LocationsService.getSitesPage", () => {
       postgrestPage(locationRows(1), { from: 0, total: 1 }),
     );
 
-    await service.getSitesPage();
+    await service.getAllSites();
 
     expect(
       requestedUrl(fetchMock.mock.calls[0][0]).searchParams.has("retired_at"),
     ).toBe(false);
   });
 
-  it("returns one page and reports the true total behind it", async () => {
+  // The walk's guard: a short page only means "done" because the server said
+  // how many rows there are, so the count is load-bearing rather than
+  // informational.
+  it("asks for an exact count", async () => {
     fetchMock.mockResolvedValue(
-      postgrestPage(locationRows(25), { from: 0, total: 91 }),
+      postgrestPage(locationRows(1), { from: 0, total: 1 }),
     );
 
-    const page = await service.getSitesPage();
+    await service.getAllSites();
 
-    expect(page.rows).toHaveLength(25);
-    expect(page.total).toBe(91);
-    expect(page.hasMore).toBe(true);
-    // One request, not a walk: the payload stays proportional to the screen.
+    const [, init] = fetchMock.mock.calls[0];
+    expect(String(new Headers(init?.headers).get("prefer"))).toContain(
+      "count=exact",
+    );
+  });
+
+  // One short page is the whole answer, and the caller gets rows rather than a
+  // window — there is no page parameter and no total for a UI to render.
+  it("returns every row from a single short page", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(25), { from: 0, total: 25 }),
+    );
+
+    const rows = await service.getAllSites();
+
+    expect(rows).toHaveLength(25);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("asks for the window the requested page names", async () => {
-    fetchMock.mockResolvedValue(
-      postgrestPage(locationRows(25, 50), { from: 50, total: 91 }),
-    );
+  // The walking is the point of the shape: a level bigger than one response
+  // still arrives whole, and the caller cannot tell how many requests it took.
+  it("walks until a page comes back short and concatenates the result", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(1000), { from: 0, total: 1500 }),
+      )
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(500, 1000), { from: 1000, total: 1500 }),
+      );
 
-    await service.getSitesPage({ page: 2 });
+    const rows = await service.getAllSites();
 
-    expect(requestedRanges(fetchMock)).toEqual(["50:25"]);
+    expect(rows).toHaveLength(1500);
+    expect(requestedRanges(fetchMock)).toEqual(["0:1000", "1000:1000"]);
   });
 
   // A name with no path is ambiguous the moment two municipalities have a
@@ -162,14 +185,14 @@ describe("LocationsService.getSitesPage", () => {
       ),
     );
 
-    const page = await service.getSitesPage();
+    const rows = await service.getAllSites();
 
-    expect(page.rows[0].ancestors.map((node) => node.name)).toEqual([
+    expect(rows[0].ancestors.map((node) => node.name)).toEqual([
       "Helsinki",
       "Uusimaa",
       "Suomi",
     ]);
-    expect(page.rows[0].ancestors[0]).not.toHaveProperty("parent");
+    expect(rows[0].ancestors[0]).not.toHaveProperty("parent");
   });
 });
 
@@ -605,7 +628,7 @@ const READS: [string, (service: LocationsService) => Promise<unknown>][] = [
   ["getChildren (root)", (s) => s.getChildren(null)],
   ["getChildren (node)", (s) => s.getChildren("loc-0")],
   ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
-  ["getSitesPage", (s) => s.getSitesPage()],
+  ["getAllSites", (s) => s.getAllSites()],
   ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],
   [
     "getMunicipalitiesByPostalCode",

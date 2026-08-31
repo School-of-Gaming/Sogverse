@@ -73,7 +73,14 @@ Pick deliberately; they are not interchangeable.
   into batches sized well under the cap means each request can return at most one row per
   key, so the read is bounded by construction and skips the walk entirely rather than
   reimplementing it. Two things bound the chunk size: the cap, and a query string long
-  enough for a proxy to refuse.
+  enough for a proxy to refuse. The chunking primitive lives here beside the walk, so one
+  size answers to both bounds in one place.
+
+  **Chunking and walking are not alternatives, and a read over an id list may need both.**
+  Only a *keyed* read gets one row per key; a read that filters by a key list and returns
+  many rows per key — a tally, a child list — is chunked for the URL's sake and still
+  unbounded inside each chunk. Chunk it and walk each chunk: the chunk bounds the request,
+  the walk bounds the response, and neither substitutes for the other.
 
 ## Accepted limitation: the offset race
 

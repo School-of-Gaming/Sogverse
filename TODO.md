@@ -108,7 +108,7 @@ line, so the helper returns null for them.
 
 Every supported country is seeded complete from GeoNames and admins never hand-type a place name: everything above a `site` is seed data, and a site is the only row the app creates (see `src/services/locations/CLAUDE.md`). Follow-ups:
 
-- [ ] **`useUpdateLocation` + the `PATCH /api/admin/locations/[id]` route have no caller.** Nothing in the UI renames a location — the naming dialog is only ever opened in "add a site" mode — so the route, the hook and the dialog's edit mode (`src/services/locations/`, `src/components/admin/location-form-dialog.tsx`) are dead. Remove them, or repurpose if we add a site-rename affordance to the venue picker.
+- [ ] **`LocationFormDialog`'s edit mode has no caller.** The admin site page renames a location now, so the hook and the `PATCH /api/admin/locations/[id]` route behind it are live — but the dialog's edit branch is not: its one call site (`src/components/admin/products/site-picker-dialog.tsx`) only ever opens it to add a site. Remove the branch, or point something at it.
 - [ ] **Consider enforcing site-only creation server-side.** `POST /api/admin/locations/create` is the only route that inserts a location, and `createLocationBody` (`src/services/locations/locations.contracts.ts`) still accepts any `location_type` — the site-only restriction is UI-only, so a scripted admin call could still create a region or a municipality by hand and put an unofficial row in seeded reference data. Tighten the contract to `type === 'site'` if we want the invariant enforced at the API.
 
 ### `/admin/users` server-side pagination — deferred until scale demands it

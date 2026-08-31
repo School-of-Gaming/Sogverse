@@ -1,6 +1,6 @@
 import type { QueryData } from "@supabase/supabase-js";
 import type { AppSupabaseClient } from "@/types";
-import { walkPages } from "@/lib/supabase/paging";
+import { chunkKeys, walkPages } from "@/lib/supabase/paging";
 import {
   SITE_DETAILS_COLUMNS,
   SITE_PRODUCT_COLUMNS,
@@ -135,10 +135,16 @@ export class SitesService {
   /**
    * How many products each of the given sites carries.
    *
-   * PostgREST has no GROUP BY, so the tally is done here — over a set the
-   * *caller's page* bounds, never over the table. The read asks for one column
-   * of the products at those sites and counts them; the ids come from one page
-   * of the sites table, so the `in.(…)` filter stays a few hundred bytes.
+   * PostgREST has no GROUP BY, so the tally is done here: the read asks for one
+   * column of the products at those sites and counts them.
+   *
+   * **The key list is chunked, and both halves of the read need it.** The caller
+   * is the admin sites table, which holds every site there is — so an unchunked
+   * `in.(…)` grows with the table until a proxy refuses the URL, which is the
+   * bound the shared chunk size exists for. Within a chunk the rows are *not*
+   * one-per-key (a site carries many products), so each chunk is walked rather
+   * than trusted to fit: chunking bounds the request, the walk bounds the
+   * response, and neither substitutes for the other.
    *
    * Every requested id gets an entry, including the ones with no products at
    * all. A caller rendering a count needs zero to be an answer rather than an
@@ -151,22 +157,24 @@ export class SitesService {
     const wanted = [...new Set(siteIds)].sort();
     if (wanted.length === 0) return {};
 
-    const rows = await walkPages("getProductCountsBySite", (from, to) =>
-      this.supabase
-        .from("products")
-        .select(SITE_PRODUCT_TALLY_COLUMNS, { count: "exact" })
-        .in("location_id", wanted)
-        // The primary key alone is a total order, and this read has no order
-        // it would rather have — nothing downstream reads the sequence.
-        .order("id")
-        .range(from, to),
-    );
-
     const counts: Record<string, number> = {};
     for (const id of wanted) counts[id] = 0;
-    for (const row of rows) {
-      const id = row.location_id;
-      if (id !== null && id in counts) counts[id] += 1;
+
+    for (const batch of chunkKeys(wanted)) {
+      const rows = await walkPages("getProductCountsBySite", (from, to) =>
+        this.supabase
+          .from("products")
+          .select(SITE_PRODUCT_TALLY_COLUMNS, { count: "exact" })
+          .in("location_id", batch)
+          // The primary key alone is a total order, and this read has no order
+          // it would rather have — nothing downstream reads the sequence.
+          .order("id")
+          .range(from, to),
+      );
+      for (const row of rows) {
+        const id = row.location_id;
+        if (id !== null && id in counts) counts[id] += 1;
+      }
     }
     return counts;
   }

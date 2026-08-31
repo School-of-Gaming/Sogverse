@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
 import { ProductStatusChip } from "@/components/admin/products/product-status-chip";
-import { SiteAddressField } from "@/components/admin/products/group-details/site-address-field";
 import {
   SiteNotesPanel,
   type SiteNotesDraft,
@@ -40,20 +39,43 @@ import {
 import { sitePlacePath } from "./site-place-path";
 
 /**
+ * How many times each of this page's three reads is retried before it gives up.
+ *
+ * React Query's default of three, with backoff, is roughly seven seconds — and
+ * this page's body renders *nothing at all* until every read has settled, so
+ * every one of those seconds is a blank page under a URL the admin can see they
+ * opened. Worse, a malformed uuid in the path is a 400 that will never succeed
+ * and gets retried anyway. One retry covers the flaky hop these reads actually
+ * meet and reaches the notice fast enough that the page stops looking broken.
+ *
+ * The same budget the public municipality directory's index arm sets, for the
+ * same reason: how long a failure may take is decided by what the call site
+ * renders while it waits, so it is decided here rather than in the hooks.
+ */
+const DETAIL_RETRIES = 1;
+
+/**
  * One site, as the person who owns the platform's venue records works it: the
  * place it sits in, the products connected to it, and the four fields anybody
  * is allowed to change about it.
  *
  * **What this page deliberately cannot do is as much of its shape as what it
- * can.** A site is never created here — creation stays inside a product's site
- * picker, which is the flow that has somewhere to put it and a reason to name
- * it — and it is never re-parented or deleted: the tree's own `parent_id` is
- * `ON DELETE RESTRICT`, `authenticated` holds no DELETE on `locations` at all,
- * and re-parenting a row leaves nothing to fix here that the picker did not
- * already get right. So the editors are exactly four: the name, the street
- * address, the note families read and the note only staff do.
+ * can.** A site is never created here — creation is the site picker dialog,
+ * wherever it is opened from, because naming a building means first saying which
+ * municipality it stands in — and a site is never re-parented or deleted: the
+ * tree's own `parent_id` is `ON DELETE RESTRICT`, `authenticated` holds no
+ * DELETE on `locations` at all, and re-parenting a row leaves nothing to fix
+ * here that the picker did not already get right. So the editable fields are
+ * exactly four: the name, the street address, the note families read and the
+ * note only staff do.
  *
- * **The two notes are the same panel the product page renders**, not a copy of
+ * **They are grouped by what they are, not by where they are stored.** The name
+ * and the address are the venue record and share one card with one Save, though
+ * they sit in two tables behind two routes — a seam in the schema is not a
+ * reason to ask an admin to save one building's details twice. The two notes
+ * are a pair of paragraphs with two audiences, and keep the panel that says so.
+ *
+ * **That notes panel is the same one the product page renders**, not a copy of
  * it. They belong to the building rather than to any product running in it, so
  * a gedu prepping a session at this venue and an admin on this page are looking
  * at one pair of paragraphs; a second editor with its own copy would be a
@@ -67,12 +89,17 @@ export function AdminSiteDetailPage({ siteId }: { siteId: string }) {
   // both halves of this page's header. A key with no row is a resolved answer
   // (no such site), never "not fetched yet" — that distinction is what lets the
   // guard below tell a bad id from a read still in flight.
-  const keyed = useLocationsByIds([siteId]);
+  const keyed = useLocationsByIds([siteId], { retry: DETAIL_RETRIES });
   const site = keyed.data?.[0];
   const isSite = site?.type === "site";
 
-  const notes = useSiteNotes(isSite ? siteId : null);
-  const products = useProductsAtSite(isSite ? siteId : null);
+  // All three fly at once rather than waiting on the keyed read to say this id
+  // is a site. Gating them bought nothing — an id that turns out not to be one
+  // answers with three empty fields and no products, which the guard below
+  // discards anyway — and cost a second round trip on every visit that *is* a
+  // site, which is every real one.
+  const notes = useSiteNotes(siteId, { retry: DETAIL_RETRIES });
+  const products = useProductsAtSite(siteId, { retry: DETAIL_RETRIES });
 
   const path = site ? sitePlacePath(site.ancestors, locale) : "";
   const name = site ? localizedLocationName(site, locale) : "";
@@ -171,7 +198,20 @@ function SiteBody({
             <CardTitle className="text-base">{t("detailsHeading")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <SiteNameField siteId={siteId} name={site.name} />
+            {notes === undefined ? (
+              // The card writes the address as well as the name, so it cannot
+              // be rendered off a read that failed: an empty box the admin did
+              // not empty is an invitation to save the emptiness back.
+              <p className="text-sm text-muted-foreground">
+                {c("somethingWentWrong")}
+              </p>
+            ) : (
+              <SiteDetailsFields
+                siteId={siteId}
+                name={site.name}
+                address={notes.address}
+              />
+            )}
           </CardContent>
         </Card>
 
@@ -231,7 +271,23 @@ function Notice({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * The rename.
+ * What a site is called and where it is — one card, one Save.
+ *
+ * **The two fields are stored in two tables and written by two routes, and none
+ * of that is the admin's problem.** The name is a `locations` column behind the
+ * location update route; the address hangs off `site_details` behind the
+ * site-notes route. Splitting the UI along that seam — which is what this
+ * replaced — asked somebody editing one building to notice that two of its
+ * facts save separately, for a reason visible only in the schema.
+ *
+ * **Only the fields that changed are written.** A name save and an address save
+ * are two requests, so sending both on every Save would put an untouched value
+ * back over whatever somebody else changed in between; the site-notes route
+ * leaves an absent field alone, which is what makes omitting the untouched half
+ * safe rather than merely cheaper. If one write fails and the other lands, the
+ * failed one stays dirty and the line under the fields says so: the succeeded
+ * field re-seeds from its refetched value, so what is left highlighted is
+ * exactly what still needs saving.
  *
  * `name` is the canonical, native-language column — not the localized display
  * name — because that is the value being written. A site carries no
@@ -240,56 +296,113 @@ function Notice({ children }: { children: React.ReactNode }) {
  * is what keeps that a fact about the data rather than a coincidence the editor
  * depends on.
  */
-function SiteNameField({ siteId, name }: { siteId: string; name: string }) {
+function SiteDetailsFields({
+  siteId,
+  name,
+  address,
+}: {
+  siteId: string;
+  name: string;
+  /** What is stored. `null` when nobody has filled one in. */
+  address: string | null;
+}) {
   const t = useTranslations("admin.sites");
   const c = useTranslations("common");
-  const update = useUpdateLocation();
+  const rename = useUpdateLocation();
+  const updateNotes = useUpdateSiteNotes();
 
-  const [draft, setDraft] = useState(name);
+  const nameId = useId();
+  const addressId = useId();
+
+  const storedAddress = address ?? "";
+
+  const [nameDraft, setNameDraft] = useState(name);
+  const [addressDraft, setAddressDraft] = useState(storedAddress);
   const [error, setError] = useState<string | null>(null);
   /**
-   * Flipped synchronously before the mutation runs, so no render between the
-   * click and the disabled state can leave Save clickable. This editor stays on
-   * screen through a success, so it is cleared on both outcomes — a flag left
-   * set here would strand the button rather than being tidied by an unmount.
+   * Flipped synchronously before the first mutation runs and cleared only once
+   * both have settled, so no render between the click and the disabled state
+   * can leave Save clickable and no gap between the two writes can re-enable
+   * it. This editor stays on screen through a success, so the flag is cleared
+   * on every outcome — one left set here would strand the button rather than
+   * being tidied by an unmount.
    */
   const [committing, setCommitting] = useState(false);
 
-  // Re-seed when the stored name changes underneath — a save landing, or a
-  // refetch — with React's adjust-state-during-render pattern, so no frame of
-  // the stale draft is ever painted.
-  const [seeded, setSeeded] = useState(name);
-  if (name !== seeded) {
-    setSeeded(name);
-    setDraft(name);
-    setError(null);
+  // Re-seed when a stored value changes underneath — a save landing, or a
+  // refetch — with React's adjust-state-during-render pattern, so no frame of a
+  // stale draft is ever painted. The two are tracked separately: re-seeding
+  // both when one lands would wipe an edit the admin has not saved yet, which
+  // is precisely the state a partial failure leaves them in.
+  const [seededName, setSeededName] = useState(name);
+  if (name !== seededName) {
+    setSeededName(name);
+    setNameDraft(name);
+  }
+  const [seededAddress, setSeededAddress] = useState(storedAddress);
+  if (storedAddress !== seededAddress) {
+    setSeededAddress(storedAddress);
+    setAddressDraft(storedAddress);
   }
 
-  const trimmed = draft.trim();
-  const dirty = trimmed.length > 0 && trimmed !== name;
+  const trimmedName = nameDraft.trim();
+  const trimmedAddress = addressDraft.trim();
+  // A name is required — a blank one is an edit in progress, not an intent —
+  // where a blank address is a real value meaning "we do not have one".
+  const nameDirty = trimmedName.length > 0 && trimmedName !== name;
+  const addressDirty = trimmedAddress !== storedAddress;
+  const dirty = nameDirty || addressDirty;
 
   async function save() {
     setError(null);
     setCommitting(true);
-    try {
-      await update.mutateAsync({ id: siteId, updates: { name: trimmed } });
-    } catch {
-      // The thrown message is English server text written for a log, so one
-      // translated line stands in for it and the draft stays where it is.
-      setError(t("renameFailed"));
-    } finally {
-      setCommitting(false);
+    let failed = false;
+
+    if (nameDirty) {
+      try {
+        // Resolves only once the reads rendering this name have been refetched
+        // — the mutation returns its invalidations — so Save stays disabled
+        // until the header above has the name it just wrote.
+        await rename.mutateAsync({ id: siteId, updates: { name: trimmedName } });
+      } catch {
+        failed = true;
+      }
     }
+
+    if (addressDirty) {
+      try {
+        await updateNotes.mutateAsync({
+          location_id: siteId,
+          member: { address: trimmedAddress },
+        });
+      } catch {
+        failed = true;
+      }
+    }
+
+    // The thrown messages are English server text written for a log, so one
+    // translated line stands in for either, and the drafts stay where they are.
+    if (failed) setError(t("saveFailed"));
+    setCommitting(false);
   }
 
   return (
-    <div className="space-y-3">
-      <Field label={t("nameLabel")} htmlFor="site-name">
+    <div className="space-y-4">
+      <Field label={t("nameLabel")} htmlFor={nameId}>
         <Input
-          id="site-name"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          id={nameId}
+          value={nameDraft}
+          onChange={(event) => setNameDraft(event.target.value)}
           placeholder={t("namePlaceholder")}
+          disabled={committing}
+        />
+      </Field>
+      <Field label={t("addressLabel")} htmlFor={addressId} optional>
+        <Input
+          id={addressId}
+          value={addressDraft}
+          onChange={(event) => setAddressDraft(event.target.value)}
+          placeholder={t("addressPlaceholder")}
           disabled={committing}
         />
       </Field>
@@ -317,14 +430,21 @@ function SiteNameField({ siteId, name }: { siteId: string; name: string }) {
 }
 
 /**
- * The address and the two standing notes, in the panel every other surface
- * showing them renders.
+ * The two standing notes, in the panel every other surface showing them
+ * renders — and it renders here exactly as a gedu meets it, with the address
+ * shown and no control to change it.
+ *
+ * **The address is edited in the details card above and nowhere else on this
+ * page.** The panel's `addressEditor` slot exists for a surface whose *only*
+ * reach into the venue record is this section — the admin product page, where
+ * the site is a fact about the group being worked on. This page is the venue
+ * record, so the field belongs beside the name in the card that owns it, and a
+ * second control here would be two places to change one value.
  *
  * **The notes save omits the address and the address save omits the notes**,
  * and the route leaves an absent field alone rather than writing it null. That
  * is what stops one control from carrying the other's stale value back over a
- * correction somebody made a moment earlier — the same split the product page
- * makes, for the same reason.
+ * correction somebody made a moment earlier.
  */
 function SiteNotesEditor({
   siteId,
@@ -355,9 +475,6 @@ function SiteNotesEditor({
       editing={editing}
       onEditingChange={setEditing}
       onSave={handleSave}
-      addressEditor={
-        <SiteAddressField locationId={siteId} address={notes.address} />
-      }
     />
   );
 }
