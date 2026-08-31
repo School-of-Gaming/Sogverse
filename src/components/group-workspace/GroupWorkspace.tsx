@@ -613,7 +613,7 @@ function RailCard({
     <Card>
       <CardContent className="space-y-3 p-4">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-[11px] font-medium tracking-wider text-muted-foreground">
+          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {title}
           </h2>
           {trailing}

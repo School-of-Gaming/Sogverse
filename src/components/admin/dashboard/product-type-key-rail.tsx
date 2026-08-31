@@ -50,7 +50,7 @@ export function ProductTypeKeyRail() {
       className="mt-6 xl:mt-0 xl:sticky xl:top-[calc(var(--header-height)+1.5rem)] xl:max-h-[calc(100vh-var(--header-height)-3rem)] xl:self-start xl:overflow-y-auto"
     >
       <div className="rounded-lg border border-border bg-card p-3">
-        <h2 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("heading")}
         </h2>
 

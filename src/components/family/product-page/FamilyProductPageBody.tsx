@@ -495,7 +495,7 @@ export function FamilyProductPageBody({
       )}
 
       <section className="mt-6">
-        <h2 className="mb-3 text-[11px] font-medium tracking-wider text-muted-foreground">
+        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {t("feedHeading")}
         </h2>
         <FamilySessionFeed
@@ -583,7 +583,7 @@ function ProblemNotice({
 function NoteBlock({ heading, body }: { heading: string; body: string }) {
   return (
     <div>
-      <h3 className="text-[11px] font-medium tracking-wider text-muted-foreground">
+      <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {heading}
       </h3>
       <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed">

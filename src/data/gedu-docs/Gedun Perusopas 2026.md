@@ -442,10 +442,10 @@ Sairastumisesta pitää ilmoittaa mahdollisimman pikaisesti. Jos edellisenä pä
 Akuuteissa sairastumisissa tai tapaturmissa ilmoita niin pian kuin kykenet.
 
 **Tuuraustiketin luominen**  
-Avaa **tuuraustiketti**, joka vastaa kerhoa jolle etsit tuuraajaa. Tiketit avataan toistaiseksi virtuaalitoimistossa:  
+Avaa **tuuraustiketti**, joka vastaa kerhoa, jolle etsit tuuraajaa. Tuuraukset tiketöidään virtuaalitoimistossa, joka on henkilökunnan ja pelikasvattajien sisäinen työkalu:  
 **Office Channels ➜ \#substitutions**.
 
-⚠️ **Täydennettävä (kanslia):** Discord on sisäisenä työkaluna jäämässä pois käytöstä. Tähän kirjataan, miten tuuraukset tiketöidään jatkossa.
+Discord on jäämässä vähitellen pois käytöstä, mutta virtuaalitoimisto ja sen tuuraustiketit ovat toistaiseksi normaalisti käytössä.
 
 Kirjoita tuuraustikettiin tarpeellinen info, jotta tuuraajan on helppo hypätä hommiin. Kattava raportointi ja ryhmän projektien backupaaminen kerhon Google Driveen helpottaa tuuraajan työtä eikä aiheuta häiriöitä kerhon kulkuun.
 
@@ -940,7 +940,7 @@ Tehdään yhteistyötä turvallisen verkkopelaamisen puolesta\!
 # Update Log {#update-log}
 
 **31.8.2026**  
-Kerhot kokoontuvat Sogversessa: gamerit ja huoltajat eivät ole enää Discordissa. Discord on vain henkilökunnan ja pelikasvattajien sisäinen työkalu, joka on jäämässä vähitellen pois käytöstä. Oppaassa on ⚠️-merkinnällä kohdat, jotka kanslia täydentää.
+Kerhot kokoontuvat Sogversessa: gamerit ja huoltajat eivät ole enää Discordissa. Discord on vain henkilökunnan ja pelikasvattajien sisäinen työkalu, joka on jäämässä vähitellen pois käytöstä; tuuraustiketit avataan edelleen virtuaalitoimistossa. Oppaassa on ⚠️-merkinnällä kohta, jonka kanslia täydentää.
 
 **27.3.2026**  
 GeduGuru-botti on otettu käyttöön ja sen ohjeistus lisätty tabiin: Minulla on kysymys. Tästä eteenpäin yleisluontoiset kysymykset menee GeduGurun kautta.

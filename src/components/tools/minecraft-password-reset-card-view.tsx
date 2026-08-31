@@ -157,7 +157,7 @@ export function MinecraftPasswordResetCardView({
         {results !== null && (
           <div className="space-y-3 border-t border-border pt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold tracking-wider text-muted-foreground">
+              <h3 className="text-sm font-semibold text-muted-foreground">
                 {t("resultsHeading")}
               </h3>
               {successes.length > 0 && (

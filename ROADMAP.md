@@ -88,3 +88,9 @@ The brand describes a world — Yty and its four elements, a currency, quests, s
 - **Gedu Path** — A Gedu's own progression through the world, alongside the Gedu Academy that trains them.
 - **Princi-Pal voice surface** — Somewhere in the product the Princi-Pal actually speaks, rather than only being quoted.
 - **Level-3 gamer dashboard** — The gamer's own dashboard written in the world's fullest voice, the register the brand reserves for gamers, instead of the neutral product tone it uses today.
+
+**Safety**
+
+The strongest safeguard is data we never held. This hangs off **Gamer Profile** above rather than running on a schedule of its own, so it carries no bar on the timeline until it is picked up and scoped.
+
+- **Display name and age bracket** — Hold a display name and an age bracket for a gamer, and nothing else: no real name, no birth date, no real email. Then there is nothing about a child to lose, leak, or sell. Today a parent types a first name, the parent's surname is snapshotted onto it, and a birth month plus an optional gender are stored.
