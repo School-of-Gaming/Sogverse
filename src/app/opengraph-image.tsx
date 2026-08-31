@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import { DARK_THEME, BRAND, GRADIENT } from "@/lib/constants/colors";
 import { BRAND_LOCKUP } from "@/lib/constants";
 import { SogMark } from "@/components/og/marks";
-import { interFonts } from "@/components/og/fonts";
+import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 
 export const alt = BRAND_LOCKUP;
 export const size = { width: 1200, height: 630 };
@@ -26,7 +26,7 @@ export const contentType = "image/png";
  * number, because the click has to still be worth having once they arrive.
  */
 export default async function Image() {
-  const fonts = await interFonts();
+  const fonts = await ogFonts();
 
   return new ImageResponse(
     (
@@ -55,7 +55,7 @@ export default async function Image() {
             display: "flex",
             gap: "14px",
             marginTop: "44px",
-            fontFamily: "Inter",
+            fontFamily: OG_FONT_FAMILY,
             fontSize: "50px",
             fontWeight: 600,
             letterSpacing: "-1px",
@@ -72,7 +72,7 @@ export default async function Image() {
           style={{
             display: "flex",
             marginTop: "20px",
-            fontFamily: "Inter",
+            fontFamily: OG_FONT_FAMILY,
             fontSize: "32px",
             fontWeight: 400,
             color: DARK_THEME.mutedFg,

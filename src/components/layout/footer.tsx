@@ -4,7 +4,12 @@ import { useTranslations } from 'next-intl';
 import sogLogoFullMono from "@/assets/brand/sog-logo-full-mono.svg";
 import sogLogoSimpleMono from "@/assets/brand/sog-logo-simple-mono.svg";
 import { Copyright } from "./copyright";
-import { ROUTES, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import {
+  REGISTERED_TRADEMARK,
+  ROUTES,
+  SENDER_NAME,
+  SUPPORT_EMAIL,
+} from "@/lib/constants";
 
 export function Footer() {
   const t = useTranslations('footer');
@@ -37,6 +42,23 @@ export function Footer() {
               className="hidden h-20 w-auto sm:block"
               unoptimized
             />
+            {/* The registered-trademark symbol, once per page, and only here:
+                the mark is registered and the Brand Guidebook asks for the ®
+                on the website footer, at the mark's most prominent appearance.
+                Once per page is enough, so no other logo placement carries it.
+
+                It behaves as a superscript without being one: `self-start`
+                against the centred row lifts it to the top of the badge (the
+                artwork starts ~1.5% into its own box, so the box top is the
+                badge top), and it is sized per breakpoint against the two logo
+                heights rather than inheriting body size — at h-20 a 14px glyph
+                reads as a character standing beside the mark instead of a
+                notice attached to it. Left as real text, not aria-hidden: it is
+                a legal notice on the name, and it belongs in the announcement
+                of it. */}
+            <span className="ml-0.5 self-start text-[0.5rem] leading-none sm:ml-1 sm:text-xs">
+              {REGISTERED_TRADEMARK}
+            </span>
           </div>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}

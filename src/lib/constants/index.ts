@@ -53,6 +53,23 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
 export const SENDER_NAME = "School of Gaming";
 
 /**
+ * The REGISTERED SIGN, U+00AE — never the letter-in-parens spelling `(R)`, and
+ * never the trademark sign `™`, which claims something different.
+ *
+ * It lives here for the same reason the lockup's en dash does: it is a
+ * character of the mark, not copy, so it is spelled once in the module that owns
+ * the brand's strings rather than typed into whatever markup happens to need it.
+ * Nothing about it is translated — a locale localises the words around a mark,
+ * not the mark's own symbol.
+ *
+ * The brand guidelines ask for it on the website footer, at the mark's most
+ * prominent appearance, and say once per page is enough — so there is exactly
+ * one placement (the site footer's logo) and a second one is a decision, not a
+ * tidy-up.
+ */
+export const REGISTERED_TRADEMARK = "®";
+
+/**
  * The half of the lockup that follows the brand: a SPACED EN DASH (U+2013 —
  * never a hyphen `-`, never an em dash `—`) and then the platform name.
  *
