@@ -21,6 +21,11 @@ import {
   type SessionReportEmailOptions,
 } from "./session-report";
 import { SESSION_REPORT_SAMPLES } from "./fixtures/session-report-samples";
+import {
+  SESSION_REPORT_PHOTO_COUNTS,
+  SESSION_REPORT_PHOTO_COUNT_LABELS,
+  sessionReportPhotoFixtures,
+} from "./fixtures/session-report-photos";
 import type { EmailTranslator } from "./translator";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -245,8 +250,29 @@ const SESSION_REPORT_COPY_OPTIONS = SESSION_REPORT_COPIES.map((value) => ({
   value,
 }));
 
+/**
+ * How many demo photos to hang on the fixture session.
+ *
+ * A count rather than a picker: what is worth looking at here is the grid —
+ * how a pair sits at a desktop width, what an odd one does with the row it has
+ * to itself, and what all of it reserves when a client blocks every image —
+ * and which particular screenshots fill it makes no difference to any of that.
+ * The order the fixtures come in is chosen so a small count is already mixed.
+ */
+const SESSION_REPORT_PHOTO_OPTIONS = SESSION_REPORT_PHOTO_COUNTS.map((value) => ({
+  label: SESSION_REPORT_PHOTO_COUNT_LABELS[value],
+  value,
+}));
+
 function resolveSessionReport(
-  { sample: sampleId, viewerTimezone, reportMarkdown, copy, ...rest }: SessionReportParams,
+  {
+    sample: sampleId,
+    viewerTimezone,
+    reportMarkdown,
+    copy,
+    photoCount,
+    ...rest
+  }: SessionReportParams,
   locale: string,
 ): SessionReportEmailOptions {
   const sample =
@@ -265,6 +291,7 @@ function resolveSessionReport(
     }),
     sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, viewerTimezone),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
+    photos: sessionReportPhotoFixtures(Number(photoCount)),
   };
 }
 
@@ -398,6 +425,8 @@ const sessionReportParamsSchema = z.object({
    * reaches this schema through the UI can omit it.
    */
   copy: z.enum(SESSION_REPORT_COPIES),
+  /** How many demo photos to attach. Required for the same reason `copy` is. */
+  photoCount: z.enum(SESSION_REPORT_PHOTO_COUNTS),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -597,6 +626,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
       { key: "copy", label: "Which copy", type: "select", options: SESSION_REPORT_COPY_OPTIONS },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
+      { key: "photoCount", label: "Photos", type: "select", options: SESSION_REPORT_PHOTO_OPTIONS },
       { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {
         key: "reportMarkdown",

@@ -117,6 +117,11 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
     copy: "family",
+    // Three, so the sweep sees the photo grid at all: a pair of cells, an odd
+    // one spanning the row, and three toned wells whose fills and corners have
+    // to answer to the same rules as everything else in a mail. The stub above
+    // is what makes the fixture URLs resolvable, exactly as it does the mark's.
+    photoCount: "3",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",

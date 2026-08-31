@@ -2517,6 +2517,7 @@
       "groupLabel": "Ryhmä",
       "dateLabel": "Päivä",
       "timeLabel": "Aika",
+      "photosHeading": "Kuvia tästä kerrasta",
       "productButton": "Avaa Oma SOG",
       "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}.",
       "staffCopyLabel": "Kopio Geduille ja ylläpitäjille",

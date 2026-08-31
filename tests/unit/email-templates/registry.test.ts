@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { BRAND } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
@@ -179,6 +179,7 @@ describe("templateRegistry sessionReport", () => {
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
     copy: "family",
+    photoCount: "0",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -281,6 +282,60 @@ describe("templateRegistry sessionReport", () => {
     expect(staff.html).toContain(styledName("Usvalaakso: Kettukallio"));
   });
 
+  /**
+   * The photo count is the tool's whole answer to a question no unit test can
+   * settle: what a grid of pictures looks like in a real inbox, with images on
+   * and with images off. So the select has to actually hang photos on the
+   * fixture session — and the fixtures have to be absolute, because a relative
+   * path is unfetchable from wherever the test send lands.
+   */
+  it("hangs the chosen number of demo photos on the fixture session", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    try {
+      const none = templateRegistry.sessionReport.render(params, t, "en");
+      expect(none.html).not.toContain("Photos from this session");
+
+      const three = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "3" },
+        t,
+        "en",
+      );
+      expect(three.html).toContain("Photos from this session");
+      expect(three.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+        .toHaveLength(3);
+      // The staff copy is the same mail behind a banner, pictures included.
+      const staff = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "3", copy: "staff" },
+        t,
+        "en",
+      );
+      expect(staff.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+        .toHaveLength(3);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
+   * No origin, no photos — the same degradation the shell's brand mark takes,
+   * and for the same reason: a src nobody's client can fetch paints a broken
+   * box, which is worse than the section not being there.
+   */
+  it("sends no photos at all when no site origin can be built", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const { html } = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "5" },
+        t,
+        "en",
+      );
+      expect(html).not.toContain("Photos from this session");
+      expect(html).not.toContain("localhost");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("rejects a sample id it does not know", () => {
     expect(() =>
       templateRegistry.sessionReport.render({ ...params, sample: "1999-01-01" }, t, "en"),
@@ -365,6 +420,9 @@ describe("every template renders in every locale", () => {
       productName: "Minecraft: Cozy Adventures",
       groupName: "Usvalaakso: Kettukallio",
       copy: "family",
+      // Photos, so the locale sweep also reaches the one section with a
+      // translated line of its own above it.
+      photoCount: "3",
       sample: "en",
       viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",

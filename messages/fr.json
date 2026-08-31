@@ -2517,6 +2517,7 @@
       "groupLabel": "Groupe",
       "dateLabel": "Date",
       "timeLabel": "Heure",
+      "photosHeading": "Photos de la session",
       "productButton": "Ouvrir dans Mon SOG",
       "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG.",
       "staffCopyLabel": "Copie pour les Gedus et les admins",

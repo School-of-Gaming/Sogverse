@@ -2,6 +2,11 @@ import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
 import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
 import { RADIUS } from "@/lib/constants/radius";
 import { pinnedFill } from "./utils";
+import {
+  PHOTO_CELL_CLASS,
+  PHOTO_GUTTER,
+  PHOTO_STACK_BREAKPOINT,
+} from "./session-photos";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -198,6 +203,32 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
       -webkit-background-clip: text !important;
       background-clip: text !important;
       color: transparent !important;
+    }
+    /* Session-report photos: two per row on a desktop-width card, one per row
+       on a phone. The cells are a fixed 50/50 split — email clients do not
+       reflow table columns — so stacking them is the one thing that cannot be
+       said inline, and this block is the only stylesheet a mail has. That is
+       why a rule emitted by a single template lives in the shell: it has no
+       other home, not because a per-template technique was promoted here.
+
+       The breakpoint is arithmetic, not a round number. The card's content
+       column is the viewport less the shell's 20px gutters and the panel's
+       32px padding; two cells and the 8px gutters between and around them
+       split what is left. At the breakpoint below, that leaves each cell
+       exactly the width one photo box is budgeted, so anything narrower has
+       to stack. Where a client strips the block entirely the pairs simply
+       stay pairs, which is why nothing about the mail's correctness rests
+       on it.
+
+       The class name, the breakpoint and the gutter all come from the module
+       that emits the cells, so this selector cannot drift away from the
+       markup it was written for. */
+    @media only screen and (max-width: ${PHOTO_STACK_BREAKPOINT}px) {
+      .${PHOTO_CELL_CLASS} {
+        display: block !important;
+        width: 100% !important;
+        padding-bottom: ${PHOTO_GUTTER}px !important;
+      }
     }
   </style>
 </head>

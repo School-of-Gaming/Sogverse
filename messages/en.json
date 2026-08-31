@@ -3203,6 +3203,7 @@
       "groupLabel": "Group",
       "dateLabel": "Date",
       "timeLabel": "Time",
+      "photosHeading": "Photos from this session",
       "productButton": "View in My SOG",
       "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG.",
       "staffCopyLabel": "Gedu and Admin copy",
