@@ -336,9 +336,15 @@ export function SettingsSectionContent({
       const updates: ProfileUpdate = {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        phone: toE164Digits(phone),
         spoken_languages: spokenLanguages,
       };
+
+      // A child's phone number is data we do not want to hold, so a gamer's
+      // settings neither render the phone field nor write the key — omitting
+      // it here is what guarantees a save can never store one.
+      if (!isGamer) {
+        updates.phone = toE164Digits(phone);
+      }
 
       // Only when we know what the current value is. An unresolved read is
       // `undefined`, and writing `null` for it would clear a location the user
@@ -487,13 +493,17 @@ export function SettingsSectionContent({
             </Field>
           )}
 
-          <Field label={c('phoneNumber')} htmlFor="phone" optional>
-            <InternationalPhoneInput
-              id="phone"
-              value={phone || undefined}
-              onChange={(value) => setPhone(value ?? "")}
-            />
-          </Field>
+          {/* No phone for gamers — a child's phone number is data we do not
+              want to hold. The save path omits the key for gamers too. */}
+          {!isGamer && (
+            <Field label={c('phoneNumber')} htmlFor="phone" optional>
+              <InternationalPhoneInput
+                id="phone"
+                value={phone || undefined}
+                onChange={(value) => setPhone(value ?? "")}
+              />
+            </Field>
+          )}
 
           <SpokenLanguageCheckboxes
             selected={spokenLanguages}

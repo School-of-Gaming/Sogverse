@@ -51,13 +51,16 @@ export function Footer() {
                 positioning (`left-full` on the `relative` row) so it adds no
                 width to the row — the footer centres the row's content, and an
                 in-flow glyph beside the logo would shift the mark itself
-                off-centre. Sized per breakpoint against the two logo heights
+                off-centre. `top-0` lands on the badge's own top rather than an
+                arbitrary line above it: the artwork starts ~1.5% into its own
+                box, so the box top is the badge top. Sized per breakpoint
+                against the two logo heights
                 rather than inheriting body size — and deliberately larger than
                 a print lockup's fine-print ratio, because at that ratio it
                 disappeared on the dark ground.
                 Left as real text, not aria-hidden: it is a legal notice on the
                 name, and it belongs in the announcement of it. */}
-            <span className="absolute left-full top-0 ml-0.5 text-base leading-none sm:ml-1 sm:text-2xl">
+            <span className="absolute left-full top-0 ml-0.5 text-xl leading-none sm:ml-1 sm:text-3xl">
               {REGISTERED_TRADEMARK}
             </span>
           </div>

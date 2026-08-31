@@ -139,7 +139,7 @@
     "howClubsWork": {
       "heading": "Så fungerar våra klubbar",
       "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelfostrare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
-      "paragraph2": "Våra Gedus är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
+      "paragraph2": "Våra Geduer är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
       "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan veckovisa sessioner får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
       "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt."
     },
@@ -539,7 +539,7 @@
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Hela presentationen, som visas endast på produktens detaljsida. Rubriker, listor, betoning och länkar är tillgängliga.",
         "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
-        "materialUrlHint": "Valfritt. Endast för Gedus — familjer ser aldrig detta.",
+        "materialUrlHint": "Valfritt. Endast för Geduer — familjer ser aldrig detta.",
         "seatAudienceHint": "Välj minst ett. Väljer du båda blir det en produkt som en förälder och hens spelare deltar i tillsammans – i butiken märks den ”För familjer”.",
         "forGamersHint": "En förälder anmäler sin spelare och spelaren tar platsen. Kräver ett åldersintervall.",
         "forParentsHint": "En förälder tar en plats åt sig själv och deltar. Inget åldersintervall – ålder beskriver barn, inte vuxna.",
@@ -1214,7 +1214,7 @@
       },
       "integrationNotes": {
         "heading": "Integrationsanteckningar",
-        "note1": "Anropa detta endpoint vid varje spelaranslutning. Både Gedus och spelare är sessionsstyrda — de kan bara gå med under sitt schemalagda sessionsfönster.",
+        "note1": "Anropa detta endpoint vid varje spelaranslutning. Både Geduer och spelare är sessionsstyrda — de kan bara gå med under sitt schemalagda sessionsfönster.",
         "note2": "Sessionsfönstret öppnas 5 minuter före schemalagd start och stängs 5 minuter efter schemalagt slut.",
         "note3": "När <code1>allowed: true</code1>, använd <code2>endTime</code2> för att schemalägga en ny kontroll eller kick. Om det finns sessioner rygg i rygg (t.ex. en slutar 14:00, nästa börjar 14:05) kickas spelaren vid den första sessionens slut och ansluter igen för nästa.",
         "note4": "En <code>404</code> betyder att spelaren inte har kopplat sitt Minecraft-konto i Sogverse ännu. Du kan visa ett meddelande om att koppla sitt konto i profilinställningarna.",
@@ -1386,10 +1386,10 @@
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
       "unmarkedLabel": "Inte markerad",
-      "staffNoteLabel": "Gedus och administratörer",
+      "staffNoteLabel": "Geduer och administratörer",
       "familyNoteLabel": "Familjer ser det här",
-      "staffNoteTitle": "Anteckning om tillfället – Gedus och administratörer",
-      "staffNoteHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffNoteTitle": "Anteckning om tillfället – Geduer och administratörer",
+      "staffNoteHint": "Bara Geduer och administratörer ser det här, aldrig familjerna.",
       "staffNotePlaceholder": "Allt en annan Gedu bör veta – och allt du behöver få nedskrivet privat: en incident, mobbning eller oro för en spelare.",
       "attendanceLegend": "Närvaro",
       "attendanceRevertHint": "Välj samma svar igen för att ta bort en markering. Du kan spara en del av listan och fortsätta senare.",
@@ -1420,8 +1420,8 @@
       "publicLabel": "Anteckning till familjerna",
       "publicHint": "Skriv aldrig privat eller känslig information om en spelare här.",
       "publicPlaceholder": "Hur gruppen fungerar, vad som följer med mellan tillfällena…",
-      "staffLabel": "Anteckning till Gedus",
-      "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffLabel": "Anteckning till Geduer",
+      "staffHint": "Bara Geduer och administratörer ser det här, aldrig familjerna.",
       "staffPlaceholder": "Sådant som en annan Gedu bör veta om gruppen över tid.",
       "saveFailed": "Anteckningarna sparades inte. Försök igen."
     },
@@ -1437,8 +1437,8 @@
       "publicLabel": "Anteckning till familjerna",
       "publicHint": "Skriv aldrig privat eller känslig information här.",
       "publicPlaceholder": "Vilken dörr man använder, var man väntar, vad man tar med…",
-      "staffLabel": "Anteckning till Gedus",
-      "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffLabel": "Anteckning till Geduer",
+      "staffHint": "Bara Geduer och administratörer ser det här, aldrig familjerna.",
       "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
       "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
     },
@@ -1514,14 +1514,14 @@
   },
   "groups": {
     "materialAction": "Undervisningsmaterial",
-    "materialStaffOnly": "Endast Gedus — familjerna ser aldrig den här länken"
+    "materialStaffOnly": "Endast Geduer — familjerna ser aldrig den här länken"
   },
   "memberFlair": {
     "newcomer": "Ny",
     "newcomerTooltip": "Ny i den här gruppen — gick med {days, plural, =0 {i dag} one {för # dag sedan} other {för # dagar sedan}}",
     "openNote": "Gedu-anteckning om {name}",
     "noteTitle": "Anteckning om {name}",
-    "notePrivacy": "Bara Gedus och administratörer ser den här anteckningen. Den stannar i den här gruppen, från gång till gång.",
+    "notePrivacy": "Bara Geduer och administratörer ser den här anteckningen. Den stannar i den här gruppen, från gång till gång.",
     "notePlaceholder": "Anteckningar om {name} i den här gruppen.",
     "noteLastEdited": "Senast redigerad av {name}"
   },
@@ -1577,11 +1577,11 @@
         },
         "safety": {
           "q": "Är det säkert för mitt barn?",
-          "a": "Det är byggt för att vara det. Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
+          "a": "Det är byggt för att vara det. Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Chatten inne i spelen är en annan sak och sköts av spelen själva – på vår egen Minecraft-server har våra Geduer moderationsverktyg för den, bland annat att tysta och rapportera. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
         },
         "howToStart": {
           "q": "Hur kommer jag igång?",
-          "a": "Skapa ett föräldrakonto, bläddra bland utbudet och anmäl ditt barn. Hen loggar in med sitt eget konto inför träffarna."
+          "a": "Skapa ett föräldrakonto, bläddra bland utbudet och anmäl ditt barn. Till träffarna går hen in via ditt konto: du växlar till barnets profil, så hen behöver inget eget lösenord."
         }
       }
     }
@@ -1891,7 +1891,7 @@
       "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell spelfostrare som finns där för att vägleda och hjälpa.",
       "minecraftClubs": {
         "title": "Varje session har en Gedu",
-        "description": "Våra spelfostrare — Gedus — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
+        "description": "Våra spelfostrare — Geduer — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
       },
       "screenTime": {
         "title": "Utformat för riktiga färdigheter",
@@ -2371,7 +2371,7 @@
       "heading": "Hur spelare tjänar Yty",
       "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i veckovisa klubbsessioner, klara uppdrag, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
       "paragraph2": "När poäng samlas under specifika prestationsmärken går spelarna upp i nivå på dessa märken — från brons till silver, guld, platina och diamant. Varje poäng bidrar också till deras totala Yty-nivå och det Yty-element det tillhör.",
-      "paragraph3": "Och det är inte bara spelare. Gedus, föräldrar och hela gemenskapen kan delta i att bygga Ytyn i Sogverse genom event och gemensamma aktiviteter."
+      "paragraph3": "Och det är inte bara spelare. Geduer, föräldrar och hela gemenskapen kan delta i att bygga Ytyn i Sogverse genom event och gemensamma aktiviteter."
     }
   },
   "email": {
@@ -2505,9 +2505,9 @@
       "timeLabel": "Tid",
       "productButton": "Öppna i Min SOG",
       "closing": "Den här rapporten, de tidigare och de kommande passen finns alla på sidan för {productName} i Min SOG.",
-      "staffCopyLabel": "Kopia till Gedus och administratörer",
+      "staffCopyLabel": "Kopia till Geduer och administratörer",
       "staffCopyBody": "Det här är en kopia av rapporten som skickades till gruppens familjer. Du får den som avsändare eller som administratör, inte som förälder.",
-      "staffCopyPrivacy": "Varje familj fick ett eget separat mejl, adresserat enbart till dem. Adresserna till Gedus och administratörer i den här kopians Till- och Kopia-fält finns bara på den här kopian: ingen förälder ser dem, och ingen familj ser en annan familj."
+      "staffCopyPrivacy": "Varje familj fick ett eget separat mejl, adresserat enbart till dem. Adresserna till Geduer och administratörer i den här kopians Till- och Kopia-fält finns bara på den här kopian: ingen förälder ser dem, och ingen familj ser en annan familj."
     },
     "seatOffer": {
       "heading": "En plats har blivit ledig",
@@ -2558,7 +2558,7 @@
     "intro": {
       "heading": "Kort sammanfattning",
       "paragraphs": [
-        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Den här sidan listar allt vi lagrar om ditt barn, och varför – på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det. Ett spelarkonto har en intern Sogverse-adress i stället för en riktig e-postadress, och det finns bara inuti ditt eget konto.",
+        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Den här sidan listar det viktigaste vi lagrar om ditt barn, och varför – på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det. Ett spelarkonto har en intern Sogverse-adress i stället för en riktig e-postadress, och det finns bara inuti ditt eget konto.",
         "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla {supportEmail}."
       ]
     },
@@ -2585,9 +2585,9 @@
           "Dina språk- och valutainställningar – så att webbplatsen visas som du förväntar dig.",
           "Ditt lösenord, som vi endast lagrar i krypterad (hashad) form – vi kan aldrig se det.",
           "Betaluppgifter hanteras direkt i Stripe. Vi ser eller lagrar aldrig hela ditt kortnummer.",
-          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Gedus och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress.",
-          "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att barnet kan ansluta till våra servrar under träffarna.",
-          "Anteckningar från träffarna som våra spelfostrare skriver – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
+          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress.",
+          "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att vi känner igen barnet i spelet och så att barnet kan ansluta till vår Minecraft-server under träffarna.",
+          "Våra spelfostrares anteckningar från träffarna – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
           "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan).",
           "En kort kod som visar vilken skola, klubb eller samarbetspartner som delade länken du kom hit via – så att vi vet vilken information som faktiskt når familjer, och kan berätta för våra partner om deras länk fungerade."
         ]
@@ -2597,7 +2597,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Allt vi lagrar om ett barn står uppräknat ovan under \"Vilka uppgifter vi samlar in\" – mer än så samlar vi inte in. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Gedus).",
+          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -2639,7 +2639,9 @@
           "Brevo – skickar våra e-postmeddelanden, till exempel kvitton och påminnelser.",
           "Daily.co – möjliggör de direktsända röst- och videoträffarna.",
           "Vercel – är värd för webbplatsen och tillhandahåller anonym, cookiefri användningsstatistik.",
-          "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp."
+          "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",
+          "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot och visa barnets avatarbild.",
+          "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot."
         ]
       },
       "cookies": {
@@ -2653,7 +2655,7 @@
       "voice": {
         "heading": "Röst- och videoträffar",
         "paragraphs": [
-          "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Varje träff leds och övervakas av en av våra utbildade spelfostrare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till."
+          "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Träffarna leds live av våra utbildade spelfostrare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till."
         ]
       },
       "retention": {
@@ -2741,7 +2743,7 @@
       "online": {
         "heading": "Trygghet online",
         "paragraphs": [
-          "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto. Sessionerna leds live av våra utbildade spelfostrare (vi kallar dem geduer)."
+          "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto. Sessionerna leds live av våra utbildade spelfostrare (vi kallar dem Geduer)."
         ]
       },
       "pricing": {
@@ -2816,32 +2818,32 @@
       "approach": {
         "heading": "Så hanterar vi problem",
         "paragraphs": [
-          "När ett barn beter sig på ett sätt som sårar eller stör andra svarar våra spelfostrare (vi kallar dem geduer) på ett sätt som är lugnt, vänligt och anpassat efter barnets ålder. Målet är alltid att hjälpa barnet förstå effekten av det de gjorde och att ställa det till rätta – inte att bara straffa.",
+          "När ett barn beter sig på ett sätt som sårar eller stör andra svarar våra spelfostrare (vi kallar dem Geduer) på ett sätt som är lugnt, vänligt och anpassat efter barnets ålder. Målet är alltid att hjälpa barnet förstå effekten av det de gjorde och att ställa det till rätta – inte att bara straffa.",
           "Vi hanterar de flesta situationer varsamt, med ett lugnt samtal. Om beteendet fortsätter tar vi bestämdare steg, ett i taget. Stegen nedan är den trappa vi följer, och du hålls alltid med på vägen."
         ]
       },
       "step1": {
         "heading": "Steg 1 – En påminnelse och att ställa till rätta",
         "paragraphs": [
-          "Geduen pratar med ditt barn om vad som hände och hur det påverkade andra, och hjälper barnet hitta ett bättre sätt att hantera det. Det är milt och sakligt – till exempel: ”Kom ihåg att inte ta saker ur någon annans kista utan att fråga. Du kan fråga om de vill byta i stället.”"
+          "Gedun pratar med ditt barn om vad som hände och hur det påverkade andra, och hjälper barnet hitta ett bättre sätt att hantera det. Det är milt och sakligt – till exempel: ”Kom ihåg att inte ta saker ur någon annans kista utan att fråga. Du kan fråga om de vill byta i stället.”"
         ]
       },
       "step2": {
         "heading": "Steg 2 – Ett lugnt samtal",
         "paragraphs": [
-          "Om det händer igen pratar geduen enskilt med ditt barn för att tänka igenom vad barnet gjorde och hur det påverkar andra. Vi berättar också hemma att vi har pratat med ditt barn om beteendet i klubben."
+          "Om det händer igen pratar Gedun enskilt med ditt barn för att tänka igenom vad barnet gjorde och hur det påverkar andra. Vi berättar också hemma att vi har pratat med ditt barn om beteendet i klubben."
         ]
       },
       "step3": {
         "heading": "Steg 3 – Att gripa in under sessionen",
         "paragraphs": [
-          "Om det störande beteendet fortsätter griper geduen in för att stoppa det under sessionen – till exempel genom att stänga av ditt barns mikrofon en stund eller begränsa vad barnet kan göra i spelet. Geduen pratar enskilt med ditt barn, och vi hör av oss hem."
+          "Om det störande beteendet fortsätter griper Gedun in för att stoppa det under sessionen – till exempel genom att stänga av ditt barns mikrofon en stund eller begränsa vad barnet kan göra i spelet. Gedun pratar enskilt med ditt barn, och vi hör av oss hem."
         ]
       },
       "step4": {
         "heading": "Steg 4 – En paus från en session",
         "paragraphs": [
-          "Om det ändå inte lugnar sig kan geduen be ditt barn sitta över resten av den sessionen. Om en längre paus behövs berättar vi det i förväg. Geduen pratar igenom det enskilt med ditt barn, vi hör av oss hem, och vårt kansli ({supportEmail}) kommer med i samtalet."
+          "Om det ändå inte lugnar sig kan Gedun be ditt barn sitta över resten av den sessionen. Om en längre paus behövs berättar vi det i förväg. Gedun pratar igenom det enskilt med ditt barn, vi hör av oss hem, och vårt kansli ({supportEmail}) kommer med i samtalet."
         ]
       },
       "step5": {

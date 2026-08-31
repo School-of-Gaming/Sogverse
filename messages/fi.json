@@ -106,7 +106,7 @@
   },
   "about": {
     "hero": {
-      "title": "Tietoa <primary>School of Gaming</primary> -kerhosta",
+      "title": "Tämä on <primary>School of Gaming</primary>",
       "subtitle": "Ruutuajasta laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelit, joita lapset jo rakastavat — Minecraft, Roblox, Fortnite ja moni muu — ja luomme leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat oikeita taitoja ja pitävät hauskaa."
     },
     "quote": {
@@ -1577,11 +1577,11 @@
         },
         "safety": {
           "q": "Onko se turvallista lapselleni?",
-          "a": "Se on rakennettu turvalliseksi. Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
+          "a": "Se on rakennettu turvalliseksi. Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Pelien sisäinen chat on eri asia, ja siitä vastaavat pelit itse – omalla Minecraft-palvelimellamme Geduillamme on siihen moderointityökalut, kuten mykistys ja raportointi. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
         },
         "howToStart": {
           "q": "Miten pääsen alkuun?",
-          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Hän kirjautuu omalla tunnuksellaan tapaamisiin."
+          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Tapaamisiin hän tulee sinun tilisi kautta: vaihdat hänen profiiliinsa, eikä hän tarvitse omaa salasanaa."
         }
       }
     }
@@ -1891,7 +1891,7 @@
       "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
       "minecraftClubs": {
         "title": "Jokaisessa tapaamisessa on Gedu",
-        "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
+        "description": "Pelikasvattajamme eli Gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
         "title": "Suunniteltu kartuttamaan oikeita taitoja",
@@ -2558,7 +2558,7 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Tällä sivulla kerromme kaiken, mitä lapsestasi säilytämme, ja miksi – selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa asian itse. Pelaajatilillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ja tili on olemassa vain oman tilisi sisällä.",
+        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Tällä sivulla kerromme tärkeimmät tiedot, joita lapsestasi säilytämme, ja miksi – selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa asian itse. Pelaajatilillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ja tili on olemassa vain oman tilisi sisällä.",
         "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen {supportEmail}."
       ]
     },
@@ -2586,7 +2586,7 @@
           "Salasanasi, jonka tallennamme vain salatussa (tiivistetyssä) muodossa – emme voi koskaan nähdä sitä.",
           "Maksutiedot käsitellään suoraan Stripessä. Emme koskaan näe emmekä tallenna koko korttinumeroasi.",
           "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan.",
-          "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta hän voi yhdistää palvelimillemme tapaamisten aikana.",
+          "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
           "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä).",
           "Lyhyen koodin, joka kertoo, minkä koulun, kerhon tai kumppanin jakaman linkin kautta tulit sivustollemme – jotta tiedämme, mikä viestintä tavoittaa perheitä, ja voimme kertoa kumppaneillemme, toimiko heidän linkkinsä."
@@ -2597,7 +2597,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Kaikki, mitä lapsesta säilytämme, on lueteltu edellä kohdassa \"Mitä tietoja keräämme\" – muuta emme kerää. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
+          "Kerromme edellä kohdassa \"Mitä tietoja keräämme\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -2639,7 +2639,9 @@
           "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
           "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
           "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät, evästeettömät käyttötilastot.",
-          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia."
+          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
+          "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin ja näyttää hänen hahmokuvansa.",
+          "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin."
         ]
       },
       "cookies": {
@@ -2653,7 +2655,7 @@
       "voice": {
         "heading": "Ääni- ja videotapaamiset",
         "paragraphs": [
-          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Jokaista tapaamista johtaa ja valvoo yksi koulutetuista pelikasvattajistamme, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
+          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Koulutetut pelikasvattajamme ohjaavat tapaamiset livenä, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
         ]
       },
       "retention": {
@@ -2741,7 +2743,7 @@
       "online": {
         "heading": "Turvallisesti verkossa",
         "paragraphs": [
-          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta. Koulutetut pelikasvattajamme (kutsumme heitä geduiksi) ohjaavat istunnot livenä."
+          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta. Koulutetut pelikasvattajamme (kutsumme heitä Geduiksi) ohjaavat istunnot livenä."
         ]
       },
       "pricing": {
@@ -2816,7 +2818,7 @@
       "approach": {
         "heading": "Miten käsittelemme ongelmia",
         "paragraphs": [
-          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
+          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä Geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
           "Hoidamme useimmat tilanteet hellävaraisesti, juttelemalla kahden kesken. Jos käytös jatkuu, otamme tiukempia askelia yksi kerrallaan. Alla olevat vaiheet ovat portaikko, jota seuraamme, ja pidämme sinut mukana koko matkan."
         ]
       },
@@ -2829,19 +2831,19 @@
       "step2": {
         "heading": "Vaihe 2 – Kahdenkeskinen juttelu",
         "paragraphs": [
-          "Jos tilanne toistuu, gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
+          "Jos tilanne toistuu, Gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
         ]
       },
       "step3": {
         "heading": "Vaihe 3 – Puuttuminen istunnon aikana",
         "paragraphs": [
-          "Jos häiritsevä käytös jatkuu, gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
+          "Jos häiritsevä käytös jatkuu, Gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
         ]
       },
       "step4": {
         "heading": "Vaihe 4 – Jäähy istunnosta",
         "paragraphs": [
-          "Jos tilanne ei vieläkään rauhoitu, gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
+          "Jos tilanne ei vieläkään rauhoitu, Gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
         ]
       },
       "step5": {
@@ -3115,7 +3117,7 @@
         "blocks": [
           "Toiminnasta riippuen voimme kerätä seuraavat tiedot:",
           [
-            "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät näe sukunimeä koskaan – lapsi osallistuu etunimellään.",
+            "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät koskaan näe sukunimeä – lapsi osallistuu etunimellään.",
             "Ikä, ikäryhmä tai syntymäkuukausi ja -vuosi täydellisen syntymäajan sijaan.",
             "Roblox-käyttäjätunnus ja Roblox-käyttäjätunniste.",
             "Kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",

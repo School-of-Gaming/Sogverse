@@ -1577,11 +1577,11 @@
         },
         "safety": {
           "q": "Est-ce sans danger pour mon enfant ?",
-          "a": "C’est ainsi qu’il a été conçu. La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
+          "a": "C’est ainsi qu’il a été conçu. La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Le chat dans les jeux est une autre affaire, géré par les jeux eux-mêmes — sur notre propre serveur Minecraft, nos Gedus disposent d’outils de modération, dont la mise en sourdine et le signalement. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
         },
         "howToStart": {
           "q": "Comment commencer ?",
-          "a": "Créez un compte parent, parcourez notre offre et inscrivez votre enfant. Il se connectera avec son propre compte pour les sessions."
+          "a": "Créez un compte parent, parcourez notre offre et inscrivez votre enfant. Pour les sessions, il se connecte via votre compte : vous basculez sur son profil, il n’a donc jamais besoin d’un mot de passe à lui."
         }
       }
     }
@@ -2558,7 +2558,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Cette page liste tout ce que nous conservons sur votre enfant, et pourquoi — en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même. Un compte joueur porte une adresse interne Sogverse plutôt qu’un véritable e-mail, et il n’existe qu’à l’intérieur de votre propre compte.",
+        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Cette page liste l’essentiel de ce que nous conservons sur votre enfant, et pourquoi — en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même. Un compte joueur porte une adresse interne Sogverse plutôt qu’un véritable e-mail, et il n’existe qu’à l’intérieur de votre propre compte.",
         "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à {supportEmail}."
       ]
     },
@@ -2586,7 +2586,7 @@
           "Votre mot de passe, que nous ne conservons que sous forme chiffrée (hachée) — nous ne pouvons jamais le voir.",
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
           "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail.",
-          "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour qu’il puisse se connecter à nos serveurs pendant les sessions.",
+          "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous).",
           "Si vous êtes arrivé par un lien partagé par une école, un club ou une organisation partenaire, un code court indiquant lequel — pour que nous sachions quelles actions touchent réellement les familles, et que nous puissions dire à nos partenaires si la leur a fonctionné."
@@ -2597,7 +2597,7 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Tout ce que nous conservons au sujet d’un enfant est listé ci-dessus sous « Les informations que nous collectons » — nous ne collectons rien de plus. Nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
+          "Ce que nous conservons au sujet d’un enfant est présenté ci-dessus sous « Les informations que nous collectons », et nous ne collectons rien sur un enfant au-delà de ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne montrons jamais de publicité aux enfants et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
@@ -2639,7 +2639,9 @@
           "Brevo — envoie nos e-mails, comme les reçus et les rappels.",
           "Daily.co — assure les sessions audio et vidéo en direct.",
           "Vercel — héberge le site et fournit des statistiques d’utilisation anonymes et sans cookies.",
-          "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp."
+          "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp.",
+          "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte et afficher son avatar.",
+          "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte."
         ]
       },
       "cookies": {
@@ -2653,7 +2655,7 @@
       "voice": {
         "heading": "Sessions audio et vidéo",
         "paragraphs": [
-          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos animateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
+          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Les sessions sont animées en direct par nos animateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
         ]
       },
       "retention": {
