@@ -129,7 +129,7 @@
       },
       "keepChildrenSafe": {
         "title": "Keep children safe online",
-        "description": "There are no private messages in Sogverse: gamers talk in the group, never one to one, and that chat is not stored. Every gamer account is linked to a parent account, and a child signs in through it rather than holding a password of their own. Zero tolerance for bullying and toxicity."
+        "description": "The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. Every gamer account is linked to a parent account, and a child signs in through it rather than holding a password of their own. Zero tolerance for bullying and toxicity."
       },
       "familyInTheLoop": {
         "title": "Family in the loop",
@@ -1577,7 +1577,7 @@
         },
         "safety": {
           "q": "Is it safe for my child?",
-          "a": "It is built to be. There are no private messages: gamers talk in the group, never one to one, and that chat is not stored. A gamer account carries an internal Sogverse address rather than your child’s real email, it is linked to your parent account, and your child signs in through that account rather than with a password of their own. Purchases and enrolments ask for your parent PIN. And we have zero tolerance for bullying."
+          "a": "It is built to be. The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. A gamer account carries an internal Sogverse address rather than your child’s real email, it is linked to your parent account, and your child signs in through that account rather than with a password of their own. Purchases and enrolments ask for your parent PIN. And we have zero tolerance for bullying."
         },
         "howToStart": {
           "q": "How do I get started?",
@@ -3282,7 +3282,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "We keep children’s information to a minimum, we never show children advertising, and we never sell or share their data for marketing. During live sessions, children are always with one of our trained Game Educators (we call them Gedus).",
+          "We keep children’s information to a minimum, we never show children advertising, and we never sell or share their data for marketing. Live sessions are run by our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -3394,7 +3394,7 @@
       "heading": "The short version",
       "paragraphs": [
         "These are the terms for using Sogverse and signing your child up for our clubs, camps, and events. We’ve written them in plain language, because we want you to actually understand what you’re agreeing to — not wade through legal jargon.",
-        "In short: our clubs happen online, with your child always supervised by a trained Game Educator. You can cancel a monthly club whenever you like, and every club carries a 30-day money-back guarantee — if it isn’t right for your child, tell us within 30 days of their first session and we refund you in full. If you ever have a question, email {supportEmail} and a real person will help."
+        "In short: our clubs happen online, run live by our trained Game Educators. You can cancel a monthly club whenever you like, and every club carries a 30-day money-back guarantee — if it isn’t right for your child, tell us within 30 days of their first session and we refund you in full. If you ever have a question, email {supportEmail} and a real person will help."
       ]
     },
     "sections": {
@@ -3487,7 +3487,7 @@
     "intro": {
       "heading": "The short version",
       "paragraphs": [
-        "Every child should feel safe, respected, and welcome in our clubs. Bullying and unkindness have no place here — and there is nowhere private for them to happen: there are no private messages in Sogverse, so gamers talk in the group, never one to one.",
+        "Every child should feel safe, respected, and welcome in our clubs. Bullying and unkindness have no place here — and the Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored.",
         "When something goes wrong, we don’t just punish — we help. We use a calm, step-by-step approach that focuses on helping a child understand what happened, make it right, and do better next time. We only move to a firmer step if the behaviour keeps happening, and we keep you informed the whole way through."
       ]
     },

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "description": "Du temps d’écran au temps qui fait grandir. Clubs, stages et événements sur Minecraft, Roblox, Fortnite et bien d’autres, encadrés par des animateurs professionnels.",
+    "description": "Du temps d’écran au temps qui fait grandir. Clubs, stages et événements sur Minecraft, Roblox, Fortnite et bien d’autres, encadrés par des professionnels.",
     "pages": {
       "signIn": "Connexion",
       "createAccount": "Créer un compte",
@@ -129,7 +129,7 @@
       },
       "keepChildrenSafe": {
         "title": "Protéger les enfants en ligne",
-        "description": "Il n’y a pas de messages privés dans Sogverse : les joueurs discutent en groupe, jamais en tête-à-tête, et ces conversations ne sont pas conservées. Chaque compte joueur est rattaché à un compte parent, et l’enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Tolérance zéro pour le harcèlement."
+        "description": "La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Chaque compte joueur est rattaché à un compte parent, et l’enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Tolérance zéro pour le harcèlement."
       },
       "familyInTheLoop": {
         "title": "La famille reste dans la boucle",
@@ -138,7 +138,7 @@
     },
     "howClubsWork": {
       "heading": "Comment fonctionnent nos clubs",
-      "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour dans l’univers Minecraft, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
+      "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
       "paragraph2": "Nos Gedus sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de construire son identité en ligne, de se lier d’amitié à travers un écran. Cette expérience, ils la mettent au service des enfants à chaque session.",
       "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de stages, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
       "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie de tous les jours. Les mêmes valeurs, partout."
@@ -1577,7 +1577,7 @@
         },
         "safety": {
           "q": "Est-ce sans danger pour mon enfant ?",
-          "a": "C’est ainsi qu’il a été conçu. Il n’y a pas de messages privés : les joueurs discutent en groupe, jamais en tête-à-tête, et ces conversations ne sont pas conservées. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
+          "a": "C’est ainsi qu’il a été conçu. La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
         },
         "howToStart": {
           "q": "Comment commencer ?",
@@ -2596,7 +2596,7 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l’un de nos animateurs formés (nous les appelons les Gedus).",
+          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
@@ -2708,7 +2708,7 @@
       "heading": "En bref",
       "paragraphs": [
         "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, stages et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
-        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un animateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et chaque club est couvert par une garantie satisfait ou remboursé de 30 jours : si cela ne convient pas à votre enfant, dites-le-nous dans les 30 jours suivant sa première session et nous vous remboursons intégralement. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
+        "En résumé : nos clubs se déroulent en ligne, animés en direct par nos animateurs formés. Vous pouvez résilier un club mensuel quand vous le souhaitez, et chaque club est couvert par une garantie satisfait ou remboursé de 30 jours : si cela ne convient pas à votre enfant, dites-le-nous dans les 30 jours suivant sa première session et nous vous remboursons intégralement. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
       ]
     },
     "sections": {
@@ -2801,7 +2801,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place — et ils n’ont nulle part où se cacher : il n’existe pas de messages privés dans Sogverse, les joueurs discutent en groupe, jamais en tête-à-tête.",
+        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place — et la plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés.",
         "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner. Nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l’enfant à comprendre ce qui s’est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
       ]
     },

@@ -129,7 +129,7 @@
       },
       "keepChildrenSafe": {
         "title": "Pidetään lapset turvassa verkossa",
-        "description": "Sogversessa ei ole yksityisviestejä: pelaajat juttelevat ryhmässä, eivät koskaan kahden kesken, eikä keskusteluja tallenneta. Jokainen pelaajatili on liitetty vanhemman tiliin, ja lapsi kirjautuu sisään sen kautta eikä omalla salasanallaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokainen pelaajatili on liitetty vanhemman tiliin, ja lapsi kirjautuu sisään sen kautta eikä omalla salasanallaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
       },
       "familyInTheLoop": {
         "title": "Perhe mukana",
@@ -1577,7 +1577,7 @@
         },
         "safety": {
           "q": "Onko se turvallista lapselleni?",
-          "a": "Se on rakennettu turvalliseksi. Yksityisviestejä ei ole: pelaajat juttelevat ryhmässä, eivät koskaan kahden kesken, eikä keskusteluja tallenneta. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
+          "a": "Se on rakennettu turvalliseksi. Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
         },
         "howToStart": {
           "q": "Miten pääsen alkuun?",
@@ -2596,7 +2596,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisissa lapset ovat aina koulutetun pelikasvattajan (kutsumme heitä Geduiksi) seurassa.",
+          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -2708,7 +2708,7 @@
       "heading": "Lyhyesti",
       "paragraphs": [
         "Nämä ovat Sogversen käyttöehdot ja ehdot, joilla ilmoitat lapsesi kerhoihin, leireille ja tapahtumiin. Olemme kirjoittaneet ne selkeällä kielellä, koska haluamme sinun ymmärtävän, mihin sitoudut – emme halua piilottaa asioita lakitekstin taakse.",
-        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu pelikasvattaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja jokaisessa kerhossa on 30 päivän rahat takaisin -takuu: jos kerho ei ole oikea lapsellesi, kerro meille 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme koko maksun. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
+        "Lyhyesti: kerhomme toimivat verkossa, ja niitä ohjaavat koulutetut pelikasvattajamme. Voit perua kuukausittaisen kerhon milloin tahansa, ja jokaisessa kerhossa on 30 päivän rahat takaisin -takuu: jos kerho ei ole oikea lapsellesi, kerro meille 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme koko maksun. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
       ]
     },
     "sections": {
@@ -2801,7 +2801,7 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa – eikä niille ole yksityistä paikkaa: Sogversessa ei ole yksityisviestejä, joten pelaajat juttelevat ryhmässä, eivät koskaan kahden kesken.",
+        "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa – eikä Sogverse-alustalla voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta.",
         "Kun jokin menee pieleen, emme pelkästään rankaise – me autamme. Käytämme rauhallista, askel askeleelta etenevää tapaa, joka keskittyy auttamaan lasta ymmärtämään tapahtunutta, korjaamaan tilanteen ja toimimaan paremmin seuraavalla kerralla. Siirrymme tiukempaan vaiheeseen vain, jos käytös jatkuu, ja pidämme sinut ajan tasalla koko ajan."
       ]
     },

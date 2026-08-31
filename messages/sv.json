@@ -129,7 +129,7 @@
       },
       "keepChildrenSafe": {
         "title": "Håll barn trygga online",
-        "description": "Det finns inga privata meddelanden i Sogverse: spelarna pratar i gruppen, aldrig en mot en, och den chatten sparas inte. Varje spelarkonto är kopplat till ett föräldrakonto, och barnet loggar in via det i stället för att ha ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
+        "description": "Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Varje spelarkonto är kopplat till ett föräldrakonto, och barnet loggar in via det i stället för att ha ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
       },
       "familyInTheLoop": {
         "title": "Familjen är delaktig",
@@ -1577,7 +1577,7 @@
         },
         "safety": {
           "q": "Är det säkert för mitt barn?",
-          "a": "Det är byggt för att vara det. Det finns inga privata meddelanden: spelarna pratar i gruppen, aldrig en mot en, och den chatten sparas inte. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
+          "a": "Det är byggt för att vara det. Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
         },
         "howToStart": {
           "q": "Hur kommer jag igång?",
@@ -2596,7 +2596,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Vi håller barnens uppgifter till ett minimum, vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Under träffarna är barnen alltid tillsammans med en av våra utbildade spelfostrare (vi kallar dem Gedus).",
+          "Vi håller barnens uppgifter till ett minimum, vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Gedus).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -2708,7 +2708,7 @@
       "heading": "Kort sagt",
       "paragraphs": [
         "Det här är villkoren för att använda Sogverse och anmäla ditt barn till våra klubbar, läger och evenemang. Vi har skrivit dem på ett enkelt språk, eftersom vi vill att du faktiskt ska förstå vad du går med på – inte tvingas vada genom juridiskt krångel.",
-        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad spelfostrare som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och varje klubb har 30 dagars pengarna-tillbaka-garanti – om den inte passar ditt barn, säg till inom 30 dagar från barnets första träff så betalar vi tillbaka allt. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
+        "Kort sagt: våra klubbar hålls online och leds av våra utbildade spelfostrare. Du kan säga upp en månadsklubb när du vill, och varje klubb har 30 dagars pengarna-tillbaka-garanti – om den inte passar ditt barn, säg till inom 30 dagar från barnets första träff så betalar vi tillbaka allt. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
       ]
     },
     "sections": {
@@ -2801,7 +2801,7 @@
     "intro": {
       "heading": "Kort sagt",
       "paragraphs": [
-        "Varje barn ska känna sig tryggt, respekterat och välkommet i våra klubbar. Mobbning och elakhet hör inte hemma här – och det finns ingen privat plats där de kan ske: det finns inga privata meddelanden i Sogverse, så spelarna pratar i gruppen, aldrig en mot en.",
+        "Varje barn ska känna sig tryggt, respekterat och välkommet i våra klubbar. Mobbning och elakhet hör inte hemma här – och Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig.",
         "När något går snett straffar vi inte bara – vi hjälper. Vi använder ett lugnt tillvägagångssätt steg för steg som fokuserar på att hjälpa barnet förstå vad som hände, ställa det till rätta och göra bättre nästa gång. Vi går vidare till ett bestämdare steg bara om beteendet fortsätter, och vi håller dig informerad hela vägen."
       ]
     },
@@ -3419,7 +3419,7 @@
     "intro": {
       "heading": "Vårt åtagande",
       "blocks": [
-        "Varje barn som deltar i det här Programmet har rätt att känna sig tryggt, respekterat och skyddat – oavsett om barnet deltar online eller på ett fysiskt evenemang. Det bärs upp av hur Programmet är byggt: varje barns konto är kopplat till en förälders konto, all kommunikation sker i grupp utan privata meddelanden mellan barn, och bara registrerade deltagare och granskade spelfostrare kan delta."
+        "Varje barn som deltar i det här Programmet har rätt att känna sig tryggt, respekterat och skyddat – oavsett om barnet deltar online eller på ett fysiskt evenemang. Det bärs upp av hur Programmet är byggt: varje barns konto är kopplat till en förälders konto, all kommunikation sker i grupp utan privata meddelanden mellan barn, och bara registrerade deltagare och kontrollerade spelfostrare kan delta."
       ]
     },
     "sections": {

@@ -48,7 +48,13 @@ export default async function Image() {
           padding: "48px 80px",
         }}
       >
-        <SogMark height={350} />
+        {/* The mark's height is what the rest of the card is budgeted against:
+            630px less the 48px padding top and bottom leaves 534px, and the
+            two-line statement plus its sub-line spend 206 of it. 310 keeps the
+            column inside that budget with room to spare — a taller mark pushes
+            the sub-line's descenders onto the bottom edge, which reads as a
+            crop rather than as a card. */}
+        <SogMark height={310} />
 
         {/* The vision statement, drawn the way the styled home hero draws it:
             the canonical capitalization, broken across lines, and no full stop
@@ -60,7 +66,7 @@ export default async function Image() {
             flexDirection: "column",
             alignItems: "center",
             lineHeight: 1.12,
-            marginTop: "44px",
+            marginTop: "36px",
             fontFamily: OG_FONT_FAMILY,
             fontSize: "50px",
             fontWeight: 600,
