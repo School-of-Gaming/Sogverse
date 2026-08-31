@@ -1418,7 +1418,7 @@
       "sendReportNoReport": "Tällä kerralla ei ole enää tallennettua raporttia lähetettäväksi. Lataa sivu uudelleen nähdäksesi nykyisen sisällön.",
       "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen.",
       "photosTitle": "Kuvat",
-      "photosEmpty": "Lisää kuva tältä kerralta.",
+      "photosEmpty": "Lisää kuva tälle kerralle.",
       "photosDropHint": "Voit myös pudottaa kuvia tähän.",
       "addPhoto": "Lisää kuva",
       "removePhoto": "Poista kuva {index}",

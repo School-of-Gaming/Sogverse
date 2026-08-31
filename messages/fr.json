@@ -1418,7 +1418,7 @@
       "sendReportNoReport": "Cette séance n’a plus de compte rendu enregistré à envoyer. Rechargez la page pour voir ce qu’elle contient maintenant.",
       "sendReportFailed": "Le compte rendu n’a pas pu être envoyé. Aucune famille ne l’a reçu — réessayez.",
       "photosTitle": "Photos",
-      "photosEmpty": "Ajoutez une photo de la séance.",
+      "photosEmpty": "Ajoutez une photo à cette séance.",
       "photosDropHint": "Vous pouvez aussi déposer des photos ici.",
       "addPhoto": "Ajouter une photo",
       "removePhoto": "Supprimer la photo {index}",

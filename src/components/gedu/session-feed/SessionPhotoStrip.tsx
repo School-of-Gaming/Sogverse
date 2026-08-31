@@ -87,8 +87,8 @@ interface SessionPhotoStripProps extends SessionPhotoEditing {
 }
 
 /**
- * The photo block on a session's record editor: what the report will hold once
- * this edit is saved, and the two controls that change it.
+ * The photo block on an open session editor — either of them: what the report
+ * will hold once this edit is saved, and the two controls that change it.
  *
  * **It is draft scope, exactly like the register and the two written fields.**
  * A picked file is decoded, downscaled and re-encoded here and then *held* — no

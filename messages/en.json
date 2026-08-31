@@ -1418,7 +1418,7 @@
       "sendReportNoReport": "This session no longer has a saved report to email. Reload the page to see what it says now.",
       "sendReportFailed": "The report couldn’t be emailed. No family received it — try again.",
       "photosTitle": "Photos",
-      "photosEmpty": "Add a photo from the session.",
+      "photosEmpty": "Add a photo to this session.",
       "photosDropHint": "You can also drop photos here.",
       "addPhoto": "Add photo",
       "removePhoto": "Remove photo {index}",

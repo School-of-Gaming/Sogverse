@@ -1418,7 +1418,7 @@
       "sendReportNoReport": "Det här tillfället har ingen sparad rapport att mejla längre. Ladda om sidan för att se vad som står där nu.",
       "sendReportFailed": "Rapporten kunde inte mejlas. Ingen familj fick den – försök igen.",
       "photosTitle": "Bilder",
-      "photosEmpty": "Lägg till en bild från tillfället.",
+      "photosEmpty": "Lägg till en bild för det här tillfället.",
       "photosDropHint": "Du kan också släppa bilder här.",
       "addPhoto": "Lägg till bild",
       "removePhoto": "Ta bort bild {index}",

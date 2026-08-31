@@ -512,8 +512,21 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
   An earlier deviation withheld it there because attach-on-pick would have mutated the
   quiet row into a card mid-edit; staged-until-Save removed that mechanism, and the
   exclusion turned out to bite in practice — on a group whose past sessions all predate
-  the epoch it left no photo affordance anywhere on the page *(owner-found)*. The plan
-  editor still gets no strip.
+  the epoch it left no photo affordance anywhere on the page *(owner-found)*.
+- **The future session's plan editor gets the strip too — *(owner, reversing the plan)*.**
+  The *Upload flow* section's "Photos attach to record-editor sessions only (past and
+  live) — they document what happened, so the future-session plan editor gets no photo
+  strip" was flagged to the owner as the author's default, and he reversed it: *"I don't
+  think I want to block Gedus and admins from adding photos to upcoming sessions. They can
+  still take notes, why not photos too?"* So every editor a staff card opens now carries
+  the block, in the one slot between the report and the gedu note. Nothing about the
+  mechanism moved: the plan editor takes the same `photoStrip` slot the record editor
+  does, the staged state and its removals-then-uploads-then-notes sequencing were already
+  owned by the feed's save rather than by either editor, and the card's Save was already
+  one function for both drafts — so the reversal is the strip being passed and the two
+  comments that said it would not be. The DB needed nothing either: the insert RPC gates
+  on the same writability helper the notes RPC does, which admits any date inside the
+  product's horizon, so a future session was always attachable and only the UI refused.
 - **Photos are staged until Save — *(owner, reversing the plan)*.** "Stage-photos-until-
   Save" under *Rejected alternatives* is overruled, and with it the "Gedu editor UI"
   section's attach-on-pick idiom and the accepted consequence that a family could briefly

@@ -268,20 +268,24 @@ export function SessionFeedItem({
     entry.kind === "no_record" ? [] : entry.images;
 
   /**
-   * The photo block, on every RECORD editor — the pre-epoch row's included.
+   * The photo block, on **every** editor this card can open — the pre-epoch
+   * row's and the future session's plan editor included.
    *
-   * The no_record editor used to be excluded, and the reason was attach-on-pick:
-   * a photo committing the moment it was picked would have materialized the
-   * session and turned the quiet dashed row into a card mid-edit. Photos are
-   * draft scope now — a Save carries text and photos together — so nothing
-   * mutates until the gedu commits, and the exclusion's rationale is gone. It
-   * mattered in practice: on a group whose past sessions all predate the
-   * record-keeping epoch, the exclusion left no photo affordance anywhere on
+   * Two exclusions used to live here and both have gone, each for its own
+   * reason. The no_record editor's was attach-on-pick: a photo committing the
+   * moment it was picked would have materialized the session and turned the
+   * quiet dashed row into a card mid-edit. Photos are draft scope now — a Save
+   * carries text and photos together — so nothing mutates until the gedu
+   * commits. It mattered in practice: on a group whose past sessions all predate
+   * the record-keeping epoch, the exclusion left no photo affordance anywhere on
    * the page (owner-found).
    *
-   * The **plan** editor still never sees this, and that is the plan's own
-   * decision rather than an oversight: photos document what happened, and a
-   * session that has not started has nothing to document.
+   * The **plan** editor's exclusion was the plan's own reasoning — photos
+   * document what happened — and the owner has reversed it: a gedu who can write
+   * notes about next Monday has no reason to be refused a picture of it. So one
+   * block, one slot and one set of staged semantics on both sides of the
+   * present; what still separates the two editors is the register, which a
+   * session that has not started cannot take.
    */
   const photoStrip = (
     <SessionPhotoStrip
@@ -475,6 +479,7 @@ export function SessionFeedItem({
             initialState={planEditorStateFromEntry(entry)}
             committing={committing}
             error={saveError}
+            photoStrip={photoStrip}
             onCancel={onCancelEdit}
             onSave={onSave}
           />

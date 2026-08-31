@@ -21,10 +21,12 @@ import type {
  * Three rules about *where*:
  *
  *   - **Photos are content**, so the shared gallery is drawn on the card's own
- *     body beside the report — the same component a family reads them through.
- *   - **The manage block belongs to the record editor alone.** A session that
- *     has not started has nothing to document, and a pre-epoch gap is a quiet
- *     dashed line with no stored row to hang a photo off.
+ *     body beside the report — the same component a family reads them through,
+ *     on both sides of the present.
+ *   - **The manage block is on every editor a card can open** — the record
+ *     editor, the pre-epoch gap's, and the future session's plan editor
+ *     *(owner)*: a gedu who may write notes about next Monday may attach a
+ *     picture of it too, and what separates the two editors is the register.
  *   - **The block draws what is *stored*; the strip inside the editor draws
  *     what the report would hold if it were saved now.**
  *
@@ -110,17 +112,21 @@ function pastEntry(
   };
 }
 
-const futureEntry: SessionFeedEntry = {
-  kind: "future",
-  id: FUTURE_ID,
-  startsAt: FUTURE_STARTS,
-  endsAt: FUTURE_ENDS,
-  report: null,
-  staffNote: null,
-  attendance: {},
-  images: [],
-  lastEditedBy: null,
-};
+function futureEntry(
+  images: readonly { id: string; width: number; height: number }[] = [],
+): SessionFeedEntry {
+  return {
+    kind: "future",
+    id: FUTURE_ID,
+    startsAt: FUTURE_STARTS,
+    endsAt: FUTURE_ENDS,
+    report: null,
+    staffNote: null,
+    attendance: {},
+    images,
+    lastEditedBy: null,
+  };
+}
 
 /** A pre-epoch occurrence nobody recorded anything on — the dashed line. */
 const gapEntry: SessionFeedEntry = {
@@ -256,6 +262,18 @@ describe("photos on a gedu session card", () => {
     ).toBeNull();
   });
 
+  it("draws the shared gallery on a future card too", () => {
+    // Photos are content wherever they are: a session still ahead that already
+    // has a picture on it renders the same row a past card does, and the family
+    // side has always drawn it.
+    const { getByRole } = renderFeed({ entries: [futureEntry(PHOTOS)] });
+    expect(
+      getByRole("list", {
+        name: messages.sessionFeed.photos.list,
+      }).querySelectorAll("li"),
+    ).toHaveLength(2);
+  });
+
   it("puts the manage block on the record editor", () => {
     const { queryByText } = renderFeed({
       entries: [pastEntry(PHOTOS)],
@@ -264,10 +282,13 @@ describe("photos on a gedu session card", () => {
     expect(queryByText(copy.photosTitle)).not.toBeNull();
   });
 
-  it("keeps the manage block off the plan editor", () => {
-    // A session that has not started documents nothing yet.
-    const plan = renderFeed({ entries: [futureEntry], editing: FUTURE_ID });
-    expect(plan.queryByText(copy.photosTitle)).toBeNull();
+  it("puts the manage block on the plan editor as well", () => {
+    // Reversed from the plan (owner): "they can still take notes, why not
+    // photos too". The plan editor takes the same slot, with the same staged
+    // semantics — the register is the only thing a future session goes without.
+    const plan = renderFeed({ entries: [futureEntry()], editing: FUTURE_ID });
+    expect(plan.queryByText(copy.photosTitle)).not.toBeNull();
+    expect(plan.queryByText(copy.attendanceLegend)).toBeNull();
   });
 
   it("gives a pre-epoch gap's record editor the manage block too", () => {
@@ -320,6 +341,57 @@ describe("saving a card's photos", () => {
     expect(log).toEqual([`remove ${PHOTOS[0].id}`, "add", "write"]);
     // A save that landed closes the editor, photos or no photos. (The editor
     // stays mounted while collapsed — it is the expanded flag that says so.)
+    await waitFor(() =>
+      expect(
+        getByRole("button", { name: copy.edit }).getAttribute("aria-expanded"),
+      ).toBe("false"),
+    );
+  });
+
+  it("runs the same sequence from the plan editor of a future session", async () => {
+    // The mirror of the case above, on the other side of the present. Nothing
+    // about the mechanism is the plan editor's own: the staged state and the
+    // sequencing belong to the feed's save, and that save was already one
+    // function for both drafts — so a future card commits its photos on exactly
+    // the terms a past one does.
+    const log: string[] = [];
+    const onRemovePhoto = vi.fn((imageId: string) => {
+      log.push(`remove ${imageId}`);
+      return Promise.resolve();
+    });
+    const onAddPhoto = vi.fn((entryId: string) => {
+      log.push(`add ${entryId}`);
+      return Promise.resolve(nextStoredId());
+    });
+    const onSaveEntry = vi.fn((_entryId: string, draft: SessionEntryDraft) => {
+      log.push(`write ${draft.kind}`);
+    });
+
+    const { container, getByRole } = renderFeed({
+      entries: [futureEntry(PHOTOS)],
+      editing: FUTURE_ID,
+      onAddPhoto,
+      onRemovePhoto,
+      onSaveEntry,
+    });
+
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    pick(container, 1);
+    await waitFor(() => expect(tiles(container)).toHaveLength(2));
+    expect(log).toEqual([]);
+
+    fireEvent.click(getByRole("button", { name: copy.save }));
+
+    // Same order, and the written record is the plan draft rather than the
+    // record one — which is the only difference between the two editors' saves.
+    await waitFor(() => expect(onSaveEntry).toHaveBeenCalledTimes(1));
+    expect(log).toEqual([
+      `remove ${PHOTOS[0].id}`,
+      `add ${FUTURE_ID}`,
+      "write plan",
+    ]);
     await waitFor(() =>
       expect(
         getByRole("button", { name: copy.edit }).getAttribute("aria-expanded"),
@@ -500,7 +572,12 @@ describe("the strip while the stored photos are still stale", () => {
     // Nothing left pointing at bytes that have been let go, and the deleted
     // photo does not come back for the frames before the refetch.
     expect(sources.some((src) => src.startsWith("blob:"))).toBe(false);
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1");
+    // The revoke runs in a post-commit drain effect, which under suite load can
+    // land a commit after the editor's collapse — wait for it rather than
+    // asserting the same frame.
+    await waitFor(() =>
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1"),
+    );
     expect(sources.some((src) => src.includes("session-build.jpg"))).toBe(false);
     // Two of five slots used, so the Add button is back where it was.
     expect(queryByRole("button", { name: copy.addPhoto })).not.toBeNull();

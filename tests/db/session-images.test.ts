@@ -90,6 +90,14 @@ function dayOffset(offset: number): string {
 
 const YESTERDAY = dayOffset(-1);
 const TWO_DAYS_AGO = dayOffset(-2);
+/**
+ * A session still ahead of us, inside the horizon.
+ *
+ * The fixture products carry no `end_date`, so the writability helper's horizon
+ * is today + 90 and a week out is comfortably inside it — while being far enough
+ * ahead that no clock skew in CI could make it today's session.
+ */
+const NEXT_WEEK = dayOffset(7);
 
 
 describe("session photos", () => {
@@ -693,6 +701,42 @@ describe("session photos", () => {
         p_max_images: CAP,
       });
       expect(error?.code).toBe("23514");
+    });
+
+    it("attaches to a session still ahead, exactly as the notes RPC writes to one", async () => {
+      // The gedu UI used to withhold the photo block from a future session's
+      // plan editor; the owner reversed that, and this is the assertion that the
+      // database never had an opinion either way. `add_group_session_image`
+      // gates on `group_session_date_is_writable` — the SAME helper
+      // `set_group_session_notes` gates on — which bounds a date by the
+      // product's start and horizon and says nothing about the present. So the
+      // two writers are checked side by side on one future date: if a later
+      // change ever narrows the photo path to past sessions alone, this fails
+      // while the notes half goes on passing, which names the divergence.
+      const notes = await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP_MINE,
+        p_session_date: NEXT_WEEK,
+        p_report: "Next week we start on item sorters.",
+        p_gedu_note: "",
+      });
+      expect(notes.error).toBeNull();
+
+      const id = await attach(geduAuth, NEXT_WEEK, {
+        width: 1600,
+        height: 900,
+      });
+
+      const stored = await storedImages();
+      expect(stored).toHaveLength(1);
+      expect(stored[0].id).toBe(id);
+
+      // And it comes off again on the same terms — a plan editor's Save stages
+      // removals exactly as a record editor's does.
+      const removed = await geduAuth.rpc("delete_group_session_image", {
+        p_image_id: id,
+      });
+      expect(removed.error).toBeNull();
+      expect(await storedImages()).toHaveLength(0);
     });
 
     it("takes a session's photos with it when the session row goes", async () => {

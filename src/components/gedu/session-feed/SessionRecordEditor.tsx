@@ -42,8 +42,8 @@ interface SessionRecordEditorProps {
   error: string | null;
   /**
    * The session's photo block, rendered between the family-facing report and
-   * the gedu note — or nothing, on an entry that has no stored row to hang a
-   * photo off.
+   * the gedu note. The plan editor takes it in the same slot, so a card says the
+   * same things in the same order whichever editor it opens.
    *
    * **A slot rather than props, because the staged photos are not this
    * editor's to hold.** They are draft scope exactly like the register and the

@@ -243,6 +243,15 @@ same row in a card's read state whether an editor is open or not. The staff-only
 adding and removing — is a separate block that stays on the gedu side; only the read
 half is shared.
 
+**Rule: every editor a staff card can open carries the block, on both sides of the
+present.** A past session, the one running now, a pre-epoch row and a session still ahead
+all take the same block in the same slot. It was withheld from the future session's plan
+editor on the reasoning that photos document what happened; that is overruled *(owner)* —
+a gedu who may write notes about next Monday has no reason to be refused a picture of it,
+and a rule that let one half of a card's draft cross the present but not the other half
+was a distinction the model does not have. What still separates the two editors is the
+register, which a session that has not started cannot take.
+
 **Rule: the staff block is draft scope, exactly like the register and the two written
 fields.** A picked file is prepared in the browser and *held*; the ✕ on a stored photo
 crosses it out without deleting anything; one Save commits the whole card and Cancel
