@@ -3673,5 +3673,87 @@
     "bundles": {
       "robloxProgramme": "Dokument för Roblox-programmet"
     }
+  },
+  "chat": {
+    "title": "Chat",
+    "log": "Chat messages",
+    "empty": "Nothing said yet.",
+    "unread": "{count, plural, one {# new message} other {# new messages}}",
+    "jumpToLatest": "Jump to the newest message",
+    "composer": {
+      "label": "Write a message",
+      "placeholder": "Write a message",
+      "send": "Send",
+      "addImage": "Add an image",
+      "staged": "Images ready to send",
+      "removeImage": "Remove {name}",
+      "imagesRefused": "You can send {count} images at a time, so the rest were left out.",
+      "lockNotice": "Chat is locked for you right now. You can still read everything here.",
+      "mentionList": "Mention someone",
+      "mentionOpen": "Mention someone"
+    },
+    "editor": {
+      "label": "Edit your message",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "reply": {
+      "action": "Reply",
+      "banner": "Replying to {name}",
+      "cancel": "Stop replying",
+      "jump": "Show the message from {name}",
+      "image": "an image",
+      "removed": "a removed message"
+    },
+    "message": {
+      "actions": "More actions",
+      "edited": "edited",
+      "edit": "Edit",
+      "delete": "Delete",
+      "hide": "Remove for everyone",
+      "restore": "Put it back",
+      "sending": "Sending",
+      "failed": "Not sent",
+      "retry": "Try again",
+      "mentionsYou": "Mentions you"
+    },
+    "tombstone": {
+      "text": "This message was removed.",
+      "staffOnly": "Staff can still read it."
+    },
+    "reactions": {
+      "add": "Add a reaction",
+      "toggle": "{name}, {count}",
+      "thumbs_up": "Thumbs up",
+      "heart": "Heart",
+      "laugh": "Laughing",
+      "surprised": "Surprised",
+      "celebrate": "Celebrating",
+      "thinking": "Thinking"
+    },
+    "moderation": {
+      "lock": "Lock {name} out of chat",
+      "unlock": "Let {name} chat again",
+      "lockedTag": "Locked out of chat",
+      "deleteTitle": "Delete this message?",
+      "deleteBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
+      "deleteConfirm": "Delete",
+      "hideTitle": "Remove this message for everyone?",
+      "hideBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
+      "hideConfirm": "Remove"
+    },
+    "typing": {
+      "one": "{name} is writing",
+      "two": "{first} and {second} are writing",
+      "many": "Several people are writing"
+    },
+    "images": {
+      "row": "Images",
+      "open": "Open image {index} of {count}",
+      "viewer": "Image {index} of {count}",
+      "previous": "Previous image",
+      "next": "Next image",
+      "close": "Close"
+    }
   }
 }

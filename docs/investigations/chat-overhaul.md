@@ -1,10 +1,11 @@
 # Chat overhaul — persisted messaging, starting in the voice room
 
-**Status: direction and behavior decided; the build starts scene-first via
-`docs/plans/chat-preview-scene.md`, then wires straight into the voice rooms. Do not
-build the wire-up from this file yet** — its remaining open decisions (see the final
-section) are wire-up-time, and the wire-up plan will be written from this file once
-the scene design is signed off. Researched August 2026 (images-only round early August;
+**Status: direction and behavior decided; phase 1 (the design, whole, in the preview
+scene) is built** — the components live in `src/components/chat/` and the scene renders
+at `/preview/chat/session`; see `src/components/chat/CLAUDE.md` for the contract they
+hold to. **Do not build the wire-up from this file yet** — its remaining open decisions
+(see the final section) are wire-up-time, and the wire-up plan will be written from this
+file once the owner has signed the scene design off. Researched August 2026 (images-only round early August;
 widened 2026-08-31 after the owner set a new direction and answered the behavior
 interview). Supersedes the earlier `voice-chat-images.md` investigation, whose durable
 findings are folded in below.
@@ -342,9 +343,10 @@ channels after — renders the same components.
 
 **Phasing** (scene-first, then wired straight into the voice rooms):
 1. **The design, whole, in the preview scene** — every feature interactive against
-   fixtures, mock accounts, simulated latency and activity. Planned in
-   `docs/plans/chat-preview-scene.md`. The scene designs all phases at once; the
-   wire-up lands them incrementally.
+   fixtures, mock accounts, simulated latency and activity. **Built**: the components
+   and the client-side capability derivation are in `src/components/chat/`, the scene is
+   at `/preview/chat/session`, and the scene designs all phases at once; the wire-up
+   lands them incrementally.
 2. **Wire-up: the text core into the voice rooms** — schema, membership-scoped RPCs,
    realtime, late-joiner history, text moderation (lock chat + soft delete),
    edit/delete-own, removal of chat from instant rooms, the `voice/CLAUDE.md`

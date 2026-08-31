@@ -1,0 +1,275 @@
+"use client";
+
+import { useState } from "react";
+import {
+  CornerUpLeft,
+  Lock,
+  MoreHorizontal,
+  Pencil,
+  SmilePlus,
+  Trash2,
+  Undo2,
+  Unlock,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import type { ChatReactionCode } from "@/lib/constants/chat";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { cn } from "@/lib/utils";
+import type { ChatMessageCapabilities } from "./capabilities";
+import { ChatPopover } from "./ChatPopover";
+import { ChatReactionPicker } from "./ChatReactionRow";
+import type { ChatAccount } from "./types";
+
+/**
+ * Everything a reader can do to one message.
+ *
+ * **Absolutely positioned, and therefore free.** The bar appears on hover and
+ * on keyboard focus and takes no space in the row, so nothing on screen moves
+ * when it arrives — which matters more here than anywhere else in the app,
+ * because it arrives as a pointer passes over a *scrolling log* and a row that
+ * grew under a moving cursor would push the next message out from under it.
+ *
+ * **What it offers comes from the capability module, never from a role test
+ * written here.** Edit and delete are the sender's own, remove-for-everyone and
+ * the chat lock are a moderator's, a removed message offers only putting it
+ * back, and a locked member is offered nothing that writes. Those rules live in
+ * one pure function so the composer, this bar and the wire-up's guards cannot
+ * drift into three different answers.
+ */
+export function ChatMessageActions({
+  sender,
+  capabilities,
+  onReply,
+  onToggleReaction,
+  onStartEdit,
+  onDelete,
+  onHide,
+  onRestore,
+  onSetLock,
+  className,
+}: {
+  sender: ChatAccount | null;
+  capabilities: ChatMessageCapabilities;
+  onReply: () => void;
+  onToggleReaction: (code: ChatReactionCode) => void;
+  onStartEdit: () => void;
+  onDelete: () => void;
+  onHide: () => void;
+  onRestore: () => void;
+  onSetLock: (locked: boolean) => void;
+  className?: string;
+}) {
+  const t = useTranslations("chat.message");
+  const m = useTranslations("chat.moderation");
+  const r = useTranslations("chat.reactions");
+  const rp = useTranslations("chat.reply");
+
+  // The overlays hang off the button that opened them, and *which* button that
+  // was is state rather than a ref: it decides what renders, and a ref read
+  // during render is both a lint error and a real staleness hazard.
+  const [reactAnchor, setReactAnchor] = useState<HTMLElement | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [confirming, setConfirming] = useState<"delete" | "hide" | null>(null);
+
+  const picking = reactAnchor !== null;
+  const menuOpen = menuAnchor !== null;
+
+  const name = sender?.name ?? "";
+  const hasMenu =
+    capabilities.canEdit ||
+    capabilities.canDelete ||
+    capabilities.canHide ||
+    capabilities.canRestore ||
+    capabilities.lockControl !== null;
+
+  if (!capabilities.canReact && !capabilities.canReply && !hasMenu) return null;
+
+  return (
+    <>
+      <div
+        className={cn(
+          "absolute right-0 top-0 flex items-center gap-0.5 rounded-md border border-border bg-popover p-0.5 shadow-sm",
+          // Present for a pointer on hover, for a keyboard on focus, and
+          // whenever one of its own overlays is up — otherwise opening the menu
+          // would hide the button that opened it.
+          "opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100",
+          (picking || menuOpen) && "opacity-100",
+          className,
+        )}
+      >
+        {capabilities.canReact && (
+          <ActionButton
+            label={r("add")}
+            onClick={(event) => {
+              setMenuAnchor(null);
+              setReactAnchor(picking ? null : event.currentTarget);
+            }}
+          >
+            <SmilePlus className="h-3.5 w-3.5" aria-hidden />
+          </ActionButton>
+        )}
+        {capabilities.canReply && (
+          <ActionButton label={rp("action")} onClick={onReply}>
+            <CornerUpLeft className="h-3.5 w-3.5" aria-hidden />
+          </ActionButton>
+        )}
+        {hasMenu && (
+          <ActionButton
+            label={t("actions")}
+            onClick={(event) => {
+              setReactAnchor(null);
+              setMenuAnchor(menuOpen ? null : event.currentTarget);
+            }}
+          >
+            <MoreHorizontal className="h-3.5 w-3.5" aria-hidden />
+          </ActionButton>
+        )}
+      </div>
+
+      {picking && (
+        <ChatPopover anchor={reactAnchor} onClose={() => setReactAnchor(null)}>
+          <ChatReactionPicker
+            onPick={(code) => {
+              onToggleReaction(code);
+              setReactAnchor(null);
+            }}
+          />
+        </ChatPopover>
+      )}
+
+      {menuOpen && (
+        <ChatPopover anchor={menuAnchor} onClose={() => setMenuAnchor(null)}>
+          <div className="min-w-48 rounded-md border border-border bg-popover p-1 shadow-lg">
+            {capabilities.canEdit && (
+              <MenuItem
+                icon={<Pencil className="h-3.5 w-3.5" aria-hidden />}
+                label={t("edit")}
+                onClick={() => {
+                  setMenuAnchor(null);
+                  onStartEdit();
+                }}
+              />
+            )}
+            {capabilities.canDelete && (
+              <MenuItem
+                icon={<Trash2 className="h-3.5 w-3.5" aria-hidden />}
+                label={t("delete")}
+                destructive
+                onClick={() => {
+                  setMenuAnchor(null);
+                  setConfirming("delete");
+                }}
+              />
+            )}
+            {capabilities.canHide && (
+              <MenuItem
+                icon={<Trash2 className="h-3.5 w-3.5" aria-hidden />}
+                label={t("hide")}
+                destructive
+                onClick={() => {
+                  setMenuAnchor(null);
+                  setConfirming("hide");
+                }}
+              />
+            )}
+            {capabilities.canRestore && (
+              <MenuItem
+                icon={<Undo2 className="h-3.5 w-3.5" aria-hidden />}
+                label={t("restore")}
+                onClick={() => {
+                  setMenuAnchor(null);
+                  onRestore();
+                }}
+              />
+            )}
+            {capabilities.lockControl !== null && (
+              <MenuItem
+                icon={
+                  capabilities.lockControl === "lock" ? (
+                    <Lock className="h-3.5 w-3.5" aria-hidden />
+                  ) : (
+                    <Unlock className="h-3.5 w-3.5" aria-hidden />
+                  )
+                }
+                label={
+                  capabilities.lockControl === "lock"
+                    ? m("lock", { name })
+                    : m("unlock", { name })
+                }
+                onClick={() => {
+                  const locking = capabilities.lockControl === "lock";
+                  setMenuAnchor(null);
+                  onSetLock(locking);
+                }}
+              />
+            )}
+          </div>
+        </ChatPopover>
+      )}
+
+      <ConfirmDialog
+        open={confirming !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirming(null);
+        }}
+        title={confirming === "hide" ? m("hideTitle") : m("deleteTitle")}
+        description={confirming === "hide" ? m("hideBody") : m("deleteBody")}
+        confirmLabel={confirming === "hide" ? m("hideConfirm") : m("deleteConfirm")}
+        onConfirm={() => {
+          if (confirming === "hide") onHide();
+          else onDelete();
+        }}
+      />
+    </>
+  );
+}
+
+function ActionButton({
+  ref,
+  label,
+  onClick,
+  children,
+}: {
+  ref?: React.Ref<HTMLButtonElement>;
+  label: string;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {children}
+    </button>
+  );
+};
+
+function MenuItem({
+  icon,
+  label,
+  destructive,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  destructive?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+        destructive === true ? "text-destructive" : "text-foreground",
+      )}
+    >
+      <span className="shrink-0">{icon}</span>
+      <span className="min-w-0 flex-1">{label}</span>
+    </button>
+  );
+}
