@@ -26,6 +26,13 @@
 
 export { NowDivider } from "./NowDivider";
 export { SessionAttributionChip } from "./SessionAttributionChip";
+export { SessionPhotoGallery } from "./SessionPhotoGallery";
+export { SessionPhotoViewer } from "./SessionPhotoViewer";
+export {
+  SESSION_PHOTO_THUMB_ASPECT_LIMIT,
+  SESSION_PHOTO_THUMB_HEIGHT,
+  sessionThumbnailWidth,
+} from "./session-photo-geometry";
 export { SessionReport } from "./SessionReport";
 export { SessionFeedShell } from "./SessionFeedShell";
 export type { SessionFeedRowContext } from "./SessionFeedShell";
@@ -58,4 +65,4 @@ export {
 } from "./scroll-anchor";
 export { formatMonthLabel, formatSessionLabels } from "./session-labels";
 export type { SessionLabels } from "./session-labels";
-export type { AttendanceMark } from "./types";
+export type { AttendanceMark, SessionPhoto } from "./types";

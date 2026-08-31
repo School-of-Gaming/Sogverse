@@ -1553,7 +1553,13 @@
     "readMore": "latlh yIlaD",
     "showLess": "puS yIcha’",
     "lastEditedBy": "choHwI’ Qav: {name}",
-    "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}"
+    "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}",
+    "photos": {
+      "list": "may’ mIlloghmey",
+      "open": "mIllogh {index}/{count} yIlegh",
+      "viewer": "mIllogh {index}/{count}",
+      "close": "mIllogh yImev"
+    }
   },
   "groups": {
     "materialAction": "ghojmeH De’",

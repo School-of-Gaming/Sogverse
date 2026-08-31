@@ -62,6 +62,11 @@ import {
   type FixtureClock,
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
+import {
+  SessionPhotoGallery,
+  SessionPhotoViewer,
+  type SessionPhoto,
+} from "@/components/session-feed";
 import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
 import { GeduContractSettingsCardView } from "@/components/gedu/contract/gedu-contract-settings-card-view";
 import {
@@ -1879,6 +1884,135 @@ function ProductTypePaletteDemo() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Session photos — the shared gallery and its viewer                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The fixture art, with its real dimensions.
+ *
+ * The `id` field carries a path rather than a UUID on purpose: the session-image
+ * URL helper passes a leading-slash value straight through, so demo art travels
+ * in the same field a stored photo's id does and the gallery needs no
+ * demo-only prop. The files are genuine JPEGs — the optimizer has to be able to
+ * actually serve them — and the numbers below are the files' own pixel sizes,
+ * because sizing from the stored dimensions is the whole behaviour under test.
+ */
+const SESSION_PHOTO_ART = {
+  build: { id: "/preview-art/session-build.jpg", width: 1600, height: 900 },
+  arena: { id: "/preview-art/session-arena.jpg", width: 1600, height: 900 },
+  parkour: { id: "/preview-art/session-parkour.jpg", width: 1440, height: 810 },
+  badge: { id: "/preview-art/session-badge.jpg", width: 1200, height: 1200 },
+  tower: { id: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
+} as const;
+
+const SESSION_PHOTO_CASES: readonly {
+  caption: string;
+  photos: readonly SessionPhoto[];
+  /** A width cap on the box the gallery is drawn in, where the point of the
+   *  case is how the row behaves inside it. */
+  frameClassName?: string;
+}[] = [
+  {
+    caption: "Five — the cap, mixed ratios",
+    photos: [
+      SESSION_PHOTO_ART.build,
+      SESSION_PHOTO_ART.badge,
+      SESSION_PHOTO_ART.tower,
+      SESSION_PHOTO_ART.parkour,
+      SESSION_PHOTO_ART.arena,
+    ],
+  },
+  {
+    caption: "One",
+    photos: [SESSION_PHOTO_ART.arena],
+  },
+  {
+    caption: "A portrait beside a landscape",
+    photos: [SESSION_PHOTO_ART.tower, SESSION_PHOTO_ART.build],
+  },
+  {
+    // 312px is what a 360px phone leaves after the dashboard layout's own
+    // gutter, which is the width the mobile floor is actually judged at.
+    caption: "Five, at the 360px floor (312px of card)",
+    photos: [
+      SESSION_PHOTO_ART.build,
+      SESSION_PHOTO_ART.badge,
+      SESSION_PHOTO_ART.tower,
+      SESSION_PHOTO_ART.parkour,
+      SESSION_PHOTO_ART.arena,
+    ],
+    frameClassName: "w-[312px]",
+  },
+];
+
+function SessionPhotosDemo() {
+  const [viewerPhoto, setViewerPhoto] = useState<SessionPhoto | null>(null);
+
+  return (
+    <Section title="Session photos">
+      <p className="text-sm text-muted-foreground -mt-2">
+        The photos attached to a session report, drawn identically on the staff
+        feed and the family one &mdash; a wrapping row of thumbnails that share
+        a <strong>height</strong> and keep their own widths, so mixed ratios sit
+        together uncropped. Every box is sized by arithmetic from the stored
+        dimensions, never from a decoded image, which is what keeps the row from
+        reshuffling as the JPEGs land.
+      </p>
+
+      <SubSection title="Gallery">
+        <div className="grid gap-6 xl:grid-cols-2">
+          {SESSION_PHOTO_CASES.map((demoCase) => (
+            <div key={demoCase.caption} className="space-y-2">
+              <DemoCaption>{demoCase.caption}</DemoCaption>
+              <div
+                className={cn(
+                  "rounded-lg border bg-card p-4",
+                  demoCase.frameClassName,
+                )}
+              >
+                <SessionPhotoGallery photos={demoCase.photos} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Fullscreen viewer">
+        <p className="text-sm text-muted-foreground">
+          Tapping any thumbnail above opens it; the two buttons here open it
+          directly, because the shape worth comparing is a wide picture against
+          a tall one and an overlay can only be looked at one at a time. There
+          is deliberately no previous/next &mdash; at a cap of five, every
+          thumbnail is already in one row behind it. Escape, the backdrop, the
+          margins beside the picture, the picture itself and the corner button
+          all close it.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setViewerPhoto(SESSION_PHOTO_ART.arena)}
+          >
+            Open a 16:9 photo
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setViewerPhoto(SESSION_PHOTO_ART.tower)}
+          >
+            Open a portrait photo
+          </Button>
+        </div>
+        <SessionPhotoViewer
+          photo={viewerPhoto}
+          index={1}
+          count={1}
+          onClose={() => setViewerPhoto(null)}
+        />
+      </SubSection>
+    </Section>
+  );
+}
+
 export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
@@ -2607,6 +2741,8 @@ export default function AdminUIComponentsPage() {
         </p>
         <EnrollmentCardDemo />
       </Section>
+
+      <SessionPhotosDemo />
 
       <Section title="Rich text editor — authoring and what it stores">
         <p className="text-sm text-muted-foreground -mt-2">

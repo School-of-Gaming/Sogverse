@@ -235,6 +235,52 @@ draft into an entry locally carries the existing editor through rather than rewr
 for the same reason: the stamp belongs to the database, and the authoritative answer arrives
 with the refetched row.
 
+## Session photos
+
+**Rule: the gallery and its viewer live here because a family surface cannot import a
+gedu one.** Photos are *content*, like the report beside them, so both feeds draw the
+same row in a card's read state whether an editor is open or not. The staff-only half —
+adding and removing — is a separate block that stays on the gedu side; only the read
+half is shared.
+
+**Rule: the photo type this module renders is declared here, structurally, and is not
+imported from either feed's contracts.** The two documents each carry their own image
+summary with the same three fields (id, width, height), and the ESLint privacy zone
+forbids a family module from reaching for the gedu one — so a locally-declared shape both
+arrays satisfy is what lets one component serve both without an adapter or a hole in the
+zone.
+
+**Rule: every box is arithmetic from the stored dimensions, and nothing measures a
+decoded image.** That is what makes the server's HTML and the browser's first paint agree,
+and it is the only reason a card holding five photos does not reshuffle itself as the
+JPEGs land one after another — the same discipline the report clamp above follows, for the
+same reason. The id is also the only address a renderer needs: the object name is derived
+from it by the shared session-image URL helper, whose leading-slash passthrough is what
+lets fixture art travel in that same field, so the gallery carries no preview-only prop.
+
+**Rule: thumbnails share a height and keep their own widths, uncropped, and the row
+wraps.** Photos arrive as mixed ratios — mostly 16:9 screenshots, with the odd square or
+portrait — and cropping them to a common box would cut a build in half to make a grid
+tidy. A shared *height* gives the row a baseline and a cap while wrapping absorbs whatever
+width is left, which is what makes one layout work at the 360px floor and on a desktop
+card. Because a box's ratio comes from data the database only sanity-bounds, the derived
+width is clamped and pictures are drawn contained: a degenerate stored pair letterboxes
+rather than stretching the row off the page.
+
+**Rule: the viewer is built on the shared dialog primitive, and it has no previous/next.**
+The primitive already owns the portal, the backdrop, the z-layer and an Escape answered by
+exactly one dialog when several are stacked; a lightbox of its own would be a second
+answer to all four, free to disagree. Paging is redundant at a cap of five with every
+thumbnail visible in one row behind the overlay — close-and-tap-the-next is the same
+number of gestures — which is also what makes it safe for *any* tap to close: with nothing
+to page through, a tap can only have meant "I am done", and touch has neither hover nor an
+Escape key to offer instead.
+
+**Rule: which photo is open belongs to the gallery, not to the page around it.** The
+answer is per-gallery and no surface has a use for it, so a feed never threads viewer state
+through itself. The gallery is also what returns focus to the thumbnail that was pressed,
+because the overlay does not know which one that was.
+
 ## Contracts the shell holds (and why they are load-bearing)
 
 - **One keyed list, one boundary.** Future entries, month labels, the now-divider and the

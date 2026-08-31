@@ -1509,7 +1509,13 @@
     "readMore": "Lue lisää",
     "showLess": "Näytä vähemmän",
     "lastEditedBy": "Muokannut {name}",
-    "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}"
+    "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}",
+    "photos": {
+      "list": "Tämän kerran kuvat",
+      "open": "Avaa kuva {index}/{count}",
+      "viewer": "Kuva {index}/{count}",
+      "close": "Sulje kuva"
+    }
   },
   "groups": {
     "materialAction": "Opetusmateriaalit",

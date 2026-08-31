@@ -1509,7 +1509,13 @@
     "readMore": "Lire la suite",
     "showLess": "Réduire",
     "lastEditedBy": "Par {name}",
-    "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}"
+    "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}",
+    "photos": {
+      "list": "Photos de la séance",
+      "open": "Ouvrir la photo {index} sur {count}",
+      "viewer": "Photo {index} sur {count}",
+      "close": "Fermer la photo"
+    }
   },
   "groups": {
     "materialAction": "Supports pédagogiques",
