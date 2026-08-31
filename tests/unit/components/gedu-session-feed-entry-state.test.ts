@@ -987,8 +987,11 @@ describe("applyDraftToEntry", () => {
       // An emptied note collapses to null so its block stops rendering.
       staffNote: null,
       attendance: ALL_MARKED,
-      // Carried through untouched too, and never taken from the draft: a photo
-      // is stored the moment it uploads, so a save has nothing to say about it.
+      // Carried through untouched too, and never taken from the draft. Photos
+      // are draft scope, but they are committed by their own two writes before
+      // this draft is folded in — so the entry already carries whatever those
+      // writes made of it, and reading them off the draft could only overwrite
+      // that with an older list.
       images: [],
       // Carried through rather than rewritten: the stamp is the database's, so
       // a session saved locally stays unsigned until the row comes back.

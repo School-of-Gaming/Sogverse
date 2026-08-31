@@ -1412,7 +1412,6 @@
       "photosEmpty": "Lägg till en bild från tillfället.",
       "photosDropHint": "Du kan också släppa bilder här.",
       "addPhoto": "Lägg till bild",
-      "photoUploading": "Laddar upp bilden",
       "removePhoto": "Ta bort bild {index}",
       "photosTrimmed": "En rapport rymmer högst {cap} bilder, så {count, plural, one {bara den första lades till} other {bara de # första lades till}}.",
       "photoErrorDecodeFailed": "Filen gick inte att öppna. Om den kommer från en iPhone, spara den som JPEG och försök igen.",

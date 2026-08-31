@@ -1412,7 +1412,6 @@
       "photosEmpty": "Add a photo from the session.",
       "photosDropHint": "You can also drop photos here.",
       "addPhoto": "Add photo",
-      "photoUploading": "Uploading photo",
       "removePhoto": "Remove photo {index}",
       "photosTrimmed": "A report holds up to {cap} photos, so {count, plural, one {only the first one was} other {only the first # were}} added.",
       "photoErrorDecodeFailed": "That file couldn’t be opened. If it came from an iPhone, save it as a JPEG and try again.",

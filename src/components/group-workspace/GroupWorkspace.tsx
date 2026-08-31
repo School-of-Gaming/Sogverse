@@ -259,14 +259,15 @@ interface GroupWorkspaceProps {
   onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
   /**
    * Attach one already-normalized JPEG to a session's report, resolving with
-   * the stored id. Awaited by the card's photo block, which holds its add
-   * control disabled for the whole of a multi-file batch.
+   * the stored id. **Called by the card's Save**, not by the picker: a photo is
+   * held in the browser with the rest of the draft until the whole card
+   * commits.
    */
   onAddPhoto: (
     entryId: string,
     photo: { file: Blob; width: number; height: number },
   ) => Promise<string>;
-  /** Remove one photo by its stored id. Awaited by the same block. */
+  /** Remove one photo by its stored id. Called by the same Save. */
   onRemovePhoto: (imageId: string) => Promise<void>;
   /**
    * Save a roster member's game username, on whichever platform this product's

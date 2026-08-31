@@ -241,13 +241,19 @@ export function createSessionEntrySaves({
   /**
    * Attach one photo to a session, answering with the stored id.
    *
+   * **Called by the card's Save, once per staged picture.** A photo is held in
+   * the browser with the rest of the draft, so this runs inside the same
+   * committing window as the notes and the register — the feed sequences the
+   * three, because dropping each photo operation from the staged set as it
+   * lands is what makes a retry after a half-landed save do only what is left.
+   *
    * **The bytes arrive already normalized.** Decoding, downscaling and
-   * re-encoding happen in the strip, because that is where the *preview* is
-   * drawn and the preview has to be the encoded image — its dimensions are what
-   * the tile's box is arithmetic from, so a raw-file preview would resize itself
-   * the moment the encode finished. What is left for this layer is what every
-   * other write here does: turn an entry id back into the (group, date) pair
-   * Postgres keys the row by, and call the surface's own mutation.
+   * re-encoding happen in the strip, at pick time, because a file the browser
+   * cannot open has to be refused while the gedu is still choosing it — and
+   * because the encoded dimensions are what the tile's box is arithmetic from.
+   * What is left for this layer is what every other write here does: turn an
+   * entry id back into the (group, date) pair Postgres keys the row by, and call
+   * the surface's own mutation.
    *
    * Nothing is caught. A refusal — from the browser's encoder or from the route
    * — travels out untouched, because the one vocabulary of stable codes is what
@@ -267,7 +273,7 @@ export function createSessionEntrySaves({
   };
 
   /**
-   * Remove one photo.
+   * Remove one photo — called by the card's Save, once per crossed-out tile.
    *
    * The id is the whole request, and the group is nowhere in it: the RPC
    * resolves the photo's session — and so its group — from the row itself, and

@@ -24,6 +24,16 @@ export { SessionPhotoStrip } from "./SessionPhotoStrip";
 export { StaffNoteBlock } from "./StaffNoteBlock";
 export { sessionPhotoErrorCode } from "./photo-failure";
 export {
+  NO_STAGED_PHOTOS,
+  keptPhotos,
+  stagedPhotoCount,
+} from "./staged-photos";
+export type {
+  SessionPhotoEditing,
+  StagedSessionPhoto,
+  StagedSessionPhotos,
+} from "./staged-photos";
+export {
   applyDraftToEntry,
   applyPlanDraftToEntry,
   attendanceTally,

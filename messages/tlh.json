@@ -1456,7 +1456,6 @@
       "photosEmpty": "may’vo’ mIllogh yIchel.",
       "photosDropHint": "naDev je mIlloghmey yIwoD.",
       "addPhoto": "mIllogh yIchel",
-      "photoUploading": "mIllogh vIngeHtaH",
       "removePhoto": "mIllogh {index} yIteq",
       "photosTrimmed": "{cap} mIlloghmey neH ngaSlaH De’ — vaj {count, plural, one {wa’ neH chellu’ta’} other {# neH chellu’ta’}}.",
       "photoErrorDecodeFailed": "De’vam poSmoHlu’laHbe’. iPhone Do’Ha’! JPEG yIchenmoH ’ej yIboq.",

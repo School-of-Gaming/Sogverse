@@ -1412,7 +1412,6 @@
       "photosEmpty": "Ajoutez une photo de la séance.",
       "photosDropHint": "Vous pouvez aussi déposer des photos ici.",
       "addPhoto": "Ajouter une photo",
-      "photoUploading": "Envoi de la photo",
       "removePhoto": "Supprimer la photo {index}",
       "photosTrimmed": "Un compte rendu accepte {cap} photos au maximum : {count, plural, one {seule la première a été ajoutée} other {seules les # premières ont été ajoutées}}.",
       "photoErrorDecodeFailed": "Ce fichier n’a pas pu être ouvert. S’il vient d’un iPhone, enregistrez-le en JPEG et réessayez.",

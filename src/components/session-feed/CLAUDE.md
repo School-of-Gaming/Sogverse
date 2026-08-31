@@ -243,10 +243,43 @@ same row in a card's read state whether an editor is open or not. The staff-only
 adding and removing — is a separate block that stays on the gedu side; only the read
 half is shared.
 
+**Rule: the staff block is draft scope, exactly like the register and the two written
+fields.** A picked file is prepared in the browser and *held*; the ✕ on a stored photo
+crosses it out without deleting anything; one Save commits the whole card and Cancel
+throws the whole card away. Photos used to attach the instant they were picked, which made
+them the one thing on an open editor that was already stored and cost a whole idiom to say
+so; the edit is one edit now, and the block greys with everything else while it commits.
+What still happens at pick time is any refusal the *browser* can make — a file the decoder
+will not open — because learning at Save that one of five files was never usable is the
+worst possible moment to be told. What waits for Save is the network, not the verdict on
+the bytes.
+
+**Corollary: a crossed-out photo leaves the strip rather than greying inside it.** That is
+what deleting a paragraph of the write-up looks like, and the two are held to one grammar:
+nothing is stored yet, so nothing needs an undo of its own — Cancel is the undo, for the
+whole card at once. A per-tile restore control would be a second, photo-only notion of
+"unsaved change" inside an editor that already has one.
+
+**Rule: the staged photos belong to whatever awaits the save, not to the block that edits
+them.** A save can half-land — a deletion goes through and an upload is refused — and the
+only honest thing to leave behind is exactly what still needs doing, so each operation
+drops out of the staged set the moment it lands and a second press of Save retries the
+remainder and nothing twice. That state therefore lives with the component that runs and
+awaits the save, and the block is controlled by it; a block holding its own copy would
+have no way to learn which half of a save survived.
+
+**Rule: the save's photo operations are ordered deletions, then uploads, then the written
+record.** Deletions first because swapping a photo at the cap is remove-one-add-one and
+the insert counts stored rows under a lock, so an upload sent before the deletion it is
+making room for is refused for a report the gedu has already made room in. Photos before
+the write-up so the last thing the sequence does is the notes-and-marks save whose own
+partial-failure classification the editor's two error lines are about — a photo refusal in
+the middle of it would leave the card choosing which of two unrelated failures to report.
+
 **Rule: the staff block takes files two ways and treats them as one.** Its whole recessed
 area is a drop target as well as a picker — gedu surfaces are desktop-default, and a
 screenshot is one drag from the folder it landed in — but a dropped file joins the very
-same pipeline: one accept list, one trim to the remaining slots, one normalize-then-attach
+same pipeline: one accept list, one trim to the remaining slots, one normalize-and-stage
 pass, one refusal line. The drop path owns only the two answers a file dialog gives by
 construction, because a drop has neither: the accept list has to be applied by hand, and a
 drop at the cap has to say so in words where the picker simply has no button. A drag over
@@ -254,11 +287,18 @@ the block is always accepted at the event level even when the drop will be refus
 unhandled drop makes the browser navigate the tab to the file and takes an open editor
 with it.
 
-**Rule: a refused removal keeps its tile, live.** The row is what the report holds, so a
-remove that failed has changed nothing: the picture stays, its control comes back
-pressable, and one line in the block's own refusal vocabulary says why. A tile that
-vanished optimistically or one that span for ever would both have the interface claiming
-something the record does not say.
+**Rule: the cap counts what the report *would* hold** — stored, minus what is crossed out,
+plus what is staged. It is the number on the strip, which is the only one the affordances
+may be derived from, and it is what lets a photo be swapped at the cap without the gedu
+ever meeting a refusal.
+
+**Rule: a refusal during the save keeps the editor open with the draft intact, and says
+what was refused in the photo block's own vocabulary.** A deletion the route would not make
+leaves its photo crossed out rather than restoring the tile — the strip draws the edit as
+the gedu has left it, and one line under it says why that edit has not landed, which is the
+same promise a refused write-up save makes about the text still on screen. Restoring the
+tile would throw away an intention the gedu still holds; a general "nothing saved" line
+would be the wrong words for something only a file-level refusal can explain.
 
 **Rule: the photo type this module renders is declared here, structurally, and is not
 imported from either feed's contracts.** The two documents each carry their own image

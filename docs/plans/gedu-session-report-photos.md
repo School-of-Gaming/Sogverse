@@ -511,9 +511,32 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
 - **The photo strip is withheld from pre-epoch `no_record` rows** — a strip would crowd
   a deliberately quiet row and mutate it into a card mid-edit on first upload; writing a
   line first makes it an ordinary past entry with the strip.
-- **The strip stays enabled while the draft editor commits** — a block that still works
-  while the rest of the editor is greyed is the strongest wordless statement that photos
-  are not draft scope.
+- **Photos are staged until Save — *(owner, reversing the plan)*.** "Stage-photos-until-
+  Save" under *Rejected alternatives* is overruled, and with it the "Gedu editor UI"
+  section's attach-on-pick idiom and the accepted consequence that a family could briefly
+  see photos before the write-up. The owner's words: *"Why not have the entire edit in
+  memory. We only touch the backend on save."* So a picked or dropped file is normalized
+  immediately — every client-side refusal still surfaces at pick time, because learning at
+  Save that a file was never usable is the worst moment to be told — and then held as a
+  local blob drawn at its final box size; the ✕ on a stored photo crosses it out without
+  deleting anything; the ✕ on a staged one drops it and revokes its object URL. The card's
+  Save runs deletions, then uploads, then the existing notes-and-marks save. Deletions
+  first so a swap at the cap is not refused by the insert's own count; photos before the
+  written record so the last thing to run is the save whose partial-failure classification
+  the editor's two error lines describe. Each operation leaves the staged set as it lands,
+  so a refusal keeps the editor open on exactly what is left and a second Save retries only
+  that, printing the refusal in the photo block's own translated vocabulary. The staged
+  state lives in the feed rather than in the strip, because only what awaits the save knows
+  which half of it survived. Discard follows the text draft exactly: closing the editor
+  throws the staged photos away, bytes included. Families now see a photo only once the
+  card has been saved. The attach-on-pick machinery — pending tiles, per-tile busy states,
+  the landed-handover filter and the ghost-tile fix — went with it.
+- **The strip greys with the rest of the editor while it commits — *(owner, reversing an
+  earlier deviation)*.** The previous entry here said the opposite: the strip stayed
+  enabled during a save, as the strongest wordless statement that photos were not draft
+  scope. They are draft scope now, so the block locks with the register and the two written
+  fields; a block still taking files while the write it belongs to is in flight would be
+  inviting work that Save cannot carry.
 - **`/admin/testing` gained a photo-count select** — the Gmail/Outlook blocked-images
   acceptance check needs a sendable variant, and the testing directory's standing rule
   is that a variant nobody can send themselves is a variant nobody checks.
@@ -539,10 +562,12 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
   gives for free — filtering by the accept list, and saying out loud what the hidden Add
   button says by absence at the cap. A standing one-line hint is the only visible copy,
   since drag-and-drop otherwise leaves no trace on the page.
-- **A refused removal is surfaced and retryable.** The delete route now leaves the row
-  intact and answers `removeFailed` when the object delete fails, so the strip keeps the
-  tile, re-arms its ✕ and prints that code through the same total error map — which is
-  what forced the new copy in all five locales.
+- **A refused removal is surfaced and retryable.** The delete route leaves the row intact
+  and answers `removeFailed` when the object delete fails; under the staged shape above
+  that means the crossing-out stays staged, the editor stays open, and the code prints
+  through the same total error map — which is what forced the new copy in all five locales.
+  The tile is *not* restored: the strip draws the edit as the gedu left it, exactly as a
+  refused write-up save leaves the typed text on screen.
 
 ## Follow-ups (live and die with this plan; owner names any keepers at completion)
 

@@ -1,36 +1,45 @@
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { ApiError } from "@/lib/api/api-error";
 import { NormalizeImageError } from "@/lib/images/normalize-image";
 import type { SessionPhoto } from "@/components/session-feed";
+import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
+import {
+  NO_STAGED_PHOTOS,
+  type StagedSessionPhoto,
+  type StagedSessionPhotos,
+} from "@/components/gedu/session-feed/staged-photos";
 
 /**
  * ============================================================================
- * The photo strip is a block that manages itself, and these pin the five rules
- * that make it legible as one.
+ * The photo block is draft scope, and these pin the rules that make it read
+ * like the rest of the editor.
  * ============================================================================
  *
- * Everything else on a session card is a draft held until Save. A photo is
- * attached the moment it uploads, and the strip has to say so without a word of
- * instruction — which puts the weight on behaviour rather than on copy, and so
- * on tests rather than on an eye:
+ * Photos used to attach the moment they were picked. They do not any more
+ * *(owner)*: the whole card edit lives in the browser and only Save touches the
+ * backend, so this block picks, prepares and holds — and everything below is
+ * about what it does *without* a network.
  *
- *   - **The cap hides the add control**, rather than disabling it. A slot that
- *     can never fill is dead space.
- *   - **An over-cap selection is trimmed once, before anything uploads**, so a
- *     gedu who picks eight for a report with three slots left gets one line
- *     about one decision instead of five refusals.
- *   - **A batch stops at the first refusal**, because the likely ones are facts
- *     about the batch, and it says which refusal it was in *our* words — never
- *     the thrown error's, whose English is written for a log.
+ *   - **A pick is prepared and staged, and nothing leaves the browser.** The
+ *     block has no upload of its own to call any more; what it produces is a
+ *     staged picture for the save to carry.
+ *   - **A refusal the browser can make is still made at pick time.** A file the
+ *     decoder will not open says so while the gedu is choosing it, not at Save.
+ *   - **The cap counts what the report would hold** — stored, minus what is
+ *     crossed out, plus what is staged — so swapping a photo at the cap works
+ *     and never shows a refusal.
+ *   - **An over-cap selection is trimmed once, before anything is prepared**, so
+ *     a gedu who picks eight for a report with three slots left gets one line
+ *     about one decision.
+ *   - **A batch stops at the first refusal** and says which refusal it was in
+ *     *our* words — never the thrown error's, whose English is written for a log.
  *   - **The add control stays disabled for the whole batch**, not per file.
- *   - **A local preview hands over to its stored twin once, and for good.** It
- *     is drawn until the refetched feed carries the photo it became, and never
- *     again after that — a removal takes that id back out of the feed, and a
- *     preview that reappeared there would be a busy tile with no ✕ on it,
- *     holding a slot the removal had just freed.
+ *   - **The block greys with the rest of the editor while the card commits**,
+ *     which is the reversal of its original design: it used to stay live, as a
+ *     way of saying photos were not part of the draft.
  *
  * The normalization pass is mocked throughout: it reaches for
  * `createImageBitmap` and a real canvas, neither of which jsdom has, and none of
@@ -59,39 +68,54 @@ function stored(n: number): SessionPhoto {
 }
 
 /**
- * The element itself, so a case that needs to hand the strip a *changed* feed —
- * the refetch is the only way a photo ever arrives or leaves — can re-render it
- * with new `photos` and the same handlers.
+ * The staged state the feed holds for an open card, stood up locally.
+ *
+ * The block is controlled — it reports picks and crossings-out upward and draws
+ * whatever comes back — so a test of it needs the other half. This is the same
+ * four reducers the feed runs, minus the object-URL bookkeeping, which is the
+ * feed's own concern rather than the block's.
  */
-interface StripProps {
-  photos?: readonly SessionPhoto[];
-  onAddPhoto?: (photo: {
-    file: Blob;
-    width: number;
-    height: number;
-  }) => Promise<string>;
-  onRemovePhoto?: (imageId: string) => Promise<void>;
-}
-
-function stripElement({
+function Harness({
   photos = [],
-  onAddPhoto = vi.fn().mockResolvedValue("stored-id"),
-  onRemovePhoto = vi.fn().mockResolvedValue(undefined),
-}: StripProps = {}) {
+  disabled = false,
+}: {
+  photos?: readonly SessionPhoto[];
+  disabled?: boolean;
+}) {
+  const [staged, setStaged] = useState<StagedSessionPhotos>(NO_STAGED_PHOTOS);
+  const [error, setError] = useState<SessionPhotoErrorCode | null>(null);
+
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <SessionPhotoStrip
         open
         photos={photos}
-        onAddPhoto={onAddPhoto}
-        onRemovePhoto={onRemovePhoto}
+        staged={staged}
+        disabled={disabled}
+        error={error}
+        onStageAdd={(photo: StagedSessionPhoto) =>
+          setStaged((prev) => ({ ...prev, adds: [...prev.adds, photo] }))
+        }
+        onUnstageAdd={(key) =>
+          setStaged((prev) => ({
+            ...prev,
+            adds: prev.adds.filter((add) => add.key !== key),
+          }))
+        }
+        onStageRemoval={(imageId) =>
+          setStaged((prev) => ({
+            ...prev,
+            removals: [...prev.removals, imageId],
+          }))
+        }
+        onError={setError}
       />
     </NextIntlClientProvider>
   );
 }
 
-function renderStrip(props: StripProps = {}) {
-  return render(stripElement(props));
+function renderStrip(props: Parameters<typeof Harness>[0] = {}) {
+  return render(<Harness {...props} />);
 }
 
 function jpegs(count: number) {
@@ -117,6 +141,13 @@ function drop(container: HTMLElement, files: readonly File[]) {
   fireEvent.drop(block, { dataTransfer: { files } });
 }
 
+/** Every tile on the strip, stored and staged alike — they render identically. */
+function tiles(container: HTMLElement) {
+  return container.querySelectorAll("ul > li img");
+}
+
+let mintedUrls = 0;
+
 beforeEach(() => {
   normalizeImage.mockReset();
   normalizeImage.mockResolvedValue({
@@ -124,8 +155,10 @@ beforeEach(() => {
     width: 1600,
     height: 900,
   });
-  // jsdom has neither, and the strip mints one preview URL per pick.
-  URL.createObjectURL = vi.fn(() => "blob:preview");
+  // jsdom has neither, and a distinct URL per pick so a revoke of one cannot
+  // read as a revoke of all.
+  mintedUrls = 0;
+  URL.createObjectURL = vi.fn(() => `blob:preview-${(mintedUrls += 1)}`);
   URL.revokeObjectURL = vi.fn();
 });
 
@@ -134,7 +167,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("the session photo strip", () => {
+describe("the session photo block", () => {
   it("invites a first photo, and stops inviting once there is one", () => {
     const empty = renderStrip();
     expect(empty.queryByText(copy.photosEmpty)).not.toBeNull();
@@ -147,212 +180,207 @@ describe("the session photo strip", () => {
     expect(one.queryByText(copy.photosEmpty)).toBeNull();
   });
 
-  it("hides the add control at the cap rather than disabling it", () => {
-    const full = renderStrip({
-      photos: [stored(1), stored(2), stored(3), stored(4), stored(5)],
-    });
-    // Absent, not present-and-dead: a control that can never be pressed is one
-    // more thing to read on the way past.
-    expect(full.queryByRole("button", { name: copy.addPhoto })).toBeNull();
-  });
-
-  it("trims an over-cap selection once, before anything uploads", async () => {
-    const onAddPhoto = vi.fn().mockResolvedValue("stored-id");
-    const { container, findByText } = renderStrip({
-      photos: [stored(1), stored(2), stored(3)],
-      onAddPhoto,
-    });
-
-    pick(container, 4);
-
-    // Two slots left, four picked: two uploads and one line about it — never
-    // four uploads and two refusals.
-    await waitFor(() => expect(onAddPhoto).toHaveBeenCalledTimes(2));
-    await findByText(/only the first 2 were added/i);
-  });
-
-  it("stops the batch at the first refusal and says which one it was", async () => {
-    const onAddPhoto = vi
-      .fn()
-      .mockResolvedValueOnce("stored-id")
-      .mockRejectedValueOnce(
-        // The route's own English is a log line; what the gedu reads is ours,
-        // chosen by the stable code beside it.
-        new ApiError("add_group_session_image refused (P0023)", 409, "capReached"),
-      );
-    const { container, findByText } = renderStrip({ onAddPhoto });
-
-    pick(container, 3);
-
-    await findByText(copy.photoErrorCapReached);
-    // The third file is never attempted: a full report is a fact about the
-    // batch, so carrying on would print the same refusal twice more.
-    expect(onAddPhoto).toHaveBeenCalledTimes(2);
-  });
-
-  it("translates a browser-side refusal through the same vocabulary", async () => {
-    normalizeImage.mockRejectedValue(new NormalizeImageError("decodeFailed"));
-    const onAddPhoto = vi.fn();
-    const { container, findByText } = renderStrip({ onAddPhoto });
+  it("stages a pick locally, with nothing to upload it through", async () => {
+    const { container, findAllByRole } = renderStrip();
 
     pick(container, 1);
 
-    // The decoder refused, so nothing was ever uploaded — and the gedu is told
-    // the one thing they can act on, which is the HEIC advice.
-    await findByText(copy.photoErrorDecodeFailed);
-    expect(onAddPhoto).not.toHaveBeenCalled();
+    // The tile is drawn from the bytes the browser just encoded — a `blob:`
+    // src, not a bucket URL — and it carries the ordinary remove control,
+    // because a staged photo and a stored one are the same thing to a reader.
+    await waitFor(() => expect(tiles(container)).toHaveLength(1));
+    expect(tiles(container)[0].getAttribute("src")).toMatch(/^blob:/);
+    await findAllByRole("button", {
+      name: copy.removePhoto.replace("{index}", "1"),
+    });
+    expect(container.querySelector("[role='alert']")).toBeNull();
   });
 
-  it("holds the add control disabled across a whole multi-file batch", async () => {
-    const gates: Array<(id: string) => void> = [];
-    const onAddPhoto = vi.fn(
-      () => new Promise<string>((resolve) => gates.push(resolve)),
+  it("counts stored, crossed-out and staged photos against the one cap", async () => {
+    const { container, getByRole, queryByRole } = renderStrip({
+      photos: [stored(1), stored(2), stored(3), stored(4)],
+    });
+
+    // Four stored and one staged is five: the add control goes, because a slot
+    // that can never fill is dead space.
+    pick(container, 1);
+    await waitFor(() =>
+      expect(queryByRole("button", { name: copy.addPhoto })).toBeNull(),
     );
-    const { container, getByRole } = renderStrip({ onAddPhoto });
 
-    pick(container, 2);
-
-    const addIsDisabled = () =>
-      getByRole("button", { name: copy.addPhoto }).hasAttribute("disabled");
-    await waitFor(() => expect(gates).toHaveLength(1));
-    // One upload resolved is NOT the batch finishing — the gap between them is
-    // exactly where a fast second click used to start a second batch over the
-    // same remaining slots.
-    expect(addIsDisabled()).toBe(true);
-    gates[0]("first-id");
-    await waitFor(() => expect(gates).toHaveLength(2));
-    expect(addIsDisabled()).toBe(true);
-
-    gates[1]("second-id");
-    await waitFor(() => expect(addIsDisabled()).toBe(false));
+    // Crossing one stored photo out makes room again — which is what lets a
+    // photo be swapped at the cap without ever meeting a refusal.
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    await waitFor(() =>
+      expect(queryByRole("button", { name: copy.addPhoto })).not.toBeNull(),
+    );
+    // Four tiles: three stored still kept, plus the staged one.
+    expect(tiles(container)).toHaveLength(4);
   });
 
-  it("puts a dropped file through the picker's pipeline, trim and all", async () => {
-    const onAddPhoto = vi.fn().mockResolvedValue("stored-id");
-    const { container, findByText } = renderStrip({
-      photos: [stored(1), stored(2), stored(3)],
-      onAddPhoto,
-    });
-
-    drop(container, jpegs(4));
-
-    // Two slots left and four dropped: the trim is the picker's, applied to a
-    // drop, because there is one pipeline and the drop only feeds it.
-    await waitFor(() => expect(onAddPhoto).toHaveBeenCalledTimes(2));
-    await findByText(/only the first 2 were added/i);
-  });
-
-  it("refuses a drop of the wrong kind of file in its own words", async () => {
-    const onAddPhoto = vi.fn();
-    const { container, findByText } = renderStrip({ onAddPhoto });
-
-    drop(container, [new File(["notes"], "notes.txt", { type: "text/plain" })]);
-
-    // A file dialog filters this out by construction; a drop has no dialog, so
-    // the accept list is applied by hand and the answer is said out loud.
-    await findByText(copy.photoErrorNotJpeg);
-    expect(onAddPhoto).not.toHaveBeenCalled();
-  });
-
-  it("refuses a drop at the cap rather than swallowing it", async () => {
-    const onAddPhoto = vi.fn();
-    const { container, findByText } = renderStrip({
-      photos: [stored(1), stored(2), stored(3), stored(4), stored(5)],
-      onAddPhoto,
-    });
-
-    drop(container, jpegs(1));
-
-    // The Add button says this by being absent. A drop cannot, so it says it.
-    await findByText(copy.photoErrorCapReached);
-    expect(onAddPhoto).not.toHaveBeenCalled();
-  });
-
-  it("keeps a refused removal's tile live, and lets the next press try again", async () => {
-    const removeLabel = copy.removePhoto.replace("{index}", "1");
-    const onRemovePhoto = vi
-      .fn()
-      // The route leaves the row standing when the object delete fails, so the
-      // photo really is still on the report — the tile has to say so by
-      // staying, and its control by coming back.
-      .mockRejectedValueOnce(
-        new ApiError("delete refused", 500, "removeFailed"),
-      )
-      .mockResolvedValueOnce(undefined);
-    const { getByRole, findByRole } = renderStrip({
-      photos: [stored(1)],
-      onRemovePhoto,
-    });
-
-    fireEvent.click(getByRole("button", { name: removeLabel }));
-
-    // One line, through the same total map every other refusal goes through,
-    // and in this feature's own vocabulary rather than the route's English.
-    const alert = await findByRole("alert");
-    expect(alert.textContent).toBe(copy.photoErrorRemoveFailed);
-    const remove = getByRole("button", { name: removeLabel });
-    expect(remove.hasAttribute("disabled")).toBe(false);
-
-    fireEvent.click(remove);
-    await waitFor(() => expect(onRemovePhoto).toHaveBeenCalledTimes(2));
-  });
-
-  it("removes a stored photo through its own control", async () => {
-    const onRemovePhoto = vi.fn().mockResolvedValue(undefined);
-    const { getByRole } = renderStrip({
+  it("takes a crossed-out photo off the strip rather than greying it", async () => {
+    const { container, getByRole } = renderStrip({
       photos: [stored(1), stored(2)],
-      onRemovePhoto,
     });
 
     fireEvent.click(
       getByRole("button", { name: copy.removePhoto.replace("{index}", "2") }),
     );
 
-    // By stored id, and immediately: there is no draft for a removal to wait
-    // for.
-    expect(onRemovePhoto).toHaveBeenCalledWith(stored(2).id);
-    // The resolved removal tidies the preview it was uploaded from, so let that
-    // land inside the test rather than after it.
-    await act(async () => {});
+    // Same grammar as deleting a paragraph of the write-up: it is simply gone
+    // from the draft, and Cancel is the undo for the whole card at once.
+    await waitFor(() => expect(tiles(container)).toHaveLength(1));
   });
 
-  it("leaves no ghost behind when a photo it uploaded is removed again", async () => {
-    // Four stored and one slot left, so the cap is what the ghost would be
-    // measured against: a preview that came back would be both a tile nobody can
-    // remove and a slot nobody can fill.
-    const before = [stored(1), stored(2), stored(3), stored(4)];
-    const landed = stored(5);
-    const onAddPhoto = vi.fn().mockResolvedValue(landed.id);
-    const onRemovePhoto = vi.fn().mockResolvedValue(undefined);
-    const props = { onAddPhoto, onRemovePhoto };
-
-    const { container, rerender, queryByRole, getByRole } = render(
-      stripElement({ ...props, photos: before }),
-    );
+  it("drops a staged photo outright when its own control is pressed", async () => {
+    const { container, getByRole } = renderStrip();
 
     pick(container, 1);
-    await waitFor(() => expect(onAddPhoto).toHaveBeenCalledTimes(1));
-
-    // The refetched feed carries the stored twin: the preview hands over here,
-    // and the row is at the cap, so the add control is gone.
-    rerender(stripElement({ ...props, photos: [...before, landed] }));
-    await waitFor(() =>
-      expect(queryByRole("button", { name: copy.addPhoto })).toBeNull(),
-    );
+    await waitFor(() => expect(tiles(container)).toHaveLength(1));
 
     fireEvent.click(
-      getByRole("button", { name: copy.removePhoto.replace("{index}", "5") }),
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
     );
-    await waitFor(() => expect(onRemovePhoto).toHaveBeenCalledWith(landed.id));
 
-    // And the refetch that follows the removal. The preview's id has now left
-    // the feed, which is the moment a filter asking "is this id stored?" would
-    // change its mind and draw the tile again — permanently busy, with no ✕ on
-    // it, and holding the slot the removal just freed.
-    rerender(stripElement({ ...props, photos: before }));
-    await waitFor(() =>
-      expect(queryByRole("button", { name: copy.addPhoto })).not.toBeNull(),
+    // Nothing was ever uploaded, so there is nothing to cross out — the picture
+    // simply leaves, and the invitation comes back.
+    await waitFor(() => expect(tiles(container)).toHaveLength(0));
+    expect(container.textContent).toContain(copy.photosEmpty);
+  });
+
+  it("trims an over-cap selection once, before anything is prepared", async () => {
+    const { container, findByText } = renderStrip({
+      photos: [stored(1), stored(2), stored(3)],
+    });
+
+    pick(container, 4);
+
+    // Two slots left, four picked: two files prepared and one line about it —
+    // never four prepared and two refusals.
+    await waitFor(() => expect(normalizeImage).toHaveBeenCalledTimes(2));
+    await findByText(/only the first 2 were added/i);
+  });
+
+  it("stops the batch at the first refusal and says which one it was", async () => {
+    normalizeImage
+      .mockResolvedValueOnce({
+        blob: new Blob(["jpeg"], { type: "image/jpeg" }),
+        width: 1600,
+        height: 900,
+      })
+      .mockRejectedValueOnce(new NormalizeImageError("encodeFailed"));
+    const { container, findByText } = renderStrip();
+
+    pick(container, 3);
+
+    await findByText(copy.photoErrorEncodeFailed);
+    // The third file is never attempted: a device that cannot encode is a fact
+    // about the batch, so carrying on would print the same refusal twice more.
+    expect(normalizeImage).toHaveBeenCalledTimes(2);
+    // And the one that did work is still staged — the gedu picks again for the
+    // rest rather than starting over.
+    expect(tiles(container)).toHaveLength(1);
+  });
+
+  it("translates a browser-side refusal through the feature's own vocabulary", async () => {
+    normalizeImage.mockRejectedValue(new NormalizeImageError("decodeFailed"));
+    const { container, findByText } = renderStrip();
+
+    pick(container, 1);
+
+    // The decoder refused while the gedu was still choosing, which is the whole
+    // point of preparing at pick time — and the line is the one thing they can
+    // act on, the HEIC advice.
+    await findByText(copy.photoErrorDecodeFailed);
+    expect(tiles(container)).toHaveLength(0);
+  });
+
+  it("holds the add control disabled across a whole multi-file batch", async () => {
+    const gates: Array<(result: unknown) => void> = [];
+    normalizeImage.mockImplementation(
+      () => new Promise((resolve) => gates.push(resolve)),
     );
-    expect(container.querySelectorAll("[aria-busy]")).toHaveLength(0);
+    const { container, getByRole } = renderStrip();
+
+    pick(container, 2);
+
+    const addIsDisabled = () =>
+      getByRole("button", { name: copy.addPhoto }).hasAttribute("disabled");
+    await waitFor(() => expect(gates).toHaveLength(1));
+    // One file prepared is NOT the batch finishing — the gap between them is
+    // exactly where a fast second click would start a second batch over the
+    // same remaining slots.
+    expect(addIsDisabled()).toBe(true);
+    gates[0]({
+      blob: new Blob(["jpeg"], { type: "image/jpeg" }),
+      width: 1600,
+      height: 900,
+    });
+    await waitFor(() => expect(gates).toHaveLength(2));
+    expect(addIsDisabled()).toBe(true);
+
+    gates[1]({
+      blob: new Blob(["jpeg"], { type: "image/jpeg" }),
+      width: 1600,
+      height: 900,
+    });
+    await waitFor(() => expect(addIsDisabled()).toBe(false));
+  });
+
+  it("greys out with the rest of the editor while the card commits", () => {
+    const { getByRole } = renderStrip({
+      photos: [stored(1)],
+      disabled: true,
+    });
+
+    // The reversal of the block's original design: it used to stay live through
+    // a save, which said photos were not part of what was being saved. They are
+    // now, so it locks with everything else.
+    expect(
+      getByRole("button", { name: copy.addPhoto }).hasAttribute("disabled"),
+    ).toBe(true);
+    expect(
+      getByRole("button", {
+        name: copy.removePhoto.replace("{index}", "1"),
+      }).hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("puts a dropped file through the picker's pipeline, trim and all", async () => {
+    const { container, findByText } = renderStrip({
+      photos: [stored(1), stored(2), stored(3)],
+    });
+
+    drop(container, jpegs(4));
+
+    // Two slots left and four dropped: the trim is the picker's, applied to a
+    // drop, because there is one pipeline and the drop only feeds it.
+    await waitFor(() => expect(normalizeImage).toHaveBeenCalledTimes(2));
+    await findByText(/only the first 2 were added/i);
+  });
+
+  it("refuses a drop of the wrong kind of file in its own words", async () => {
+    const { container, findByText } = renderStrip();
+
+    drop(container, [new File(["notes"], "notes.txt", { type: "text/plain" })]);
+
+    // A file dialog filters this out by construction; a drop has no dialog, so
+    // the accept list is applied by hand and the answer is said out loud.
+    await findByText(copy.photoErrorNotJpeg);
+    expect(normalizeImage).not.toHaveBeenCalled();
+  });
+
+  it("refuses a drop at the cap rather than swallowing it", async () => {
+    const { container, findByText } = renderStrip({
+      photos: [stored(1), stored(2), stored(3), stored(4), stored(5)],
+    });
+
+    drop(container, jpegs(1));
+
+    // The Add button says this by being absent. A drop cannot, so it says it.
+    await findByText(copy.photoErrorCapReached);
+    expect(normalizeImage).not.toHaveBeenCalled();
   });
 });

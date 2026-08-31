@@ -1412,7 +1412,6 @@
       "photosEmpty": "Lisää kuva tältä kerralta.",
       "photosDropHint": "Voit myös pudottaa kuvia tähän.",
       "addPhoto": "Lisää kuva",
-      "photoUploading": "Kuvaa ladataan",
       "removePhoto": "Poista kuva {index}",
       "photosTrimmed": "Raporttiin mahtuu enintään {cap} kuvaa, joten niistä lisättiin {count, plural, one {vain yksi} other {vain #}}.",
       "photoErrorDecodeFailed": "Tiedostoa ei voitu avata. Jos kuva on iPhonesta, tallenna se JPEG-muotoon ja yritä uudelleen.",

@@ -429,11 +429,13 @@ export function applyDraftToEntry(
     report: draft.report.length > 0 ? draft.report : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
     attendance: draft.attendance,
-    // Carried through untouched, and never *from* the draft: photos are not
-    // draft state. One is stored the moment it uploads and gone the moment it
-    // is removed, so folding a save in locally has nothing to say about them —
-    // the row already agrees with what is on screen. A gap being saved into has
-    // none, which is the truth: there was no row to hang one off.
+    // Carried through untouched, and never *from* the draft. Photos are draft
+    // scope now, but they are committed by their own two writes rather than by
+    // the notes-and-marks save this draft describes — so by the time a draft is
+    // folded in, the entry already carries whatever the photo writes made of
+    // it, and reading them off the draft could only overwrite that with an
+    // older list. A gap being saved into has none, which is the truth: there
+    // was no row to hang one off.
     images: entry.kind === "no_record" ? [] : entry.images,
     lastEditedBy: entry.kind === "no_record" ? null : entry.lastEditedBy,
   };

@@ -45,13 +45,13 @@ interface SessionRecordEditorProps {
    * the gedu note — or nothing, on an entry that has no stored row to hang a
    * photo off.
    *
-   * **A slot rather than props, because it is not this editor's to own.** What
-   * goes in here attaches and detaches immediately; everything else on this
-   * component is a draft held until Save. Handing it in whole keeps that split
-   * honest at the type level — there is no photo state in the draft, no photo
-   * argument on the save, and nothing here that could accidentally start
-   * treating a photo as unsaved work. All this component decides is *where* the
-   * block goes.
+   * **A slot rather than props, because the staged photos are not this
+   * editor's to hold.** They are draft scope exactly like the register and the
+   * two written fields, but the save that commits them is the feed's — and so,
+   * for the partial-failure reason written down there, is the state saying what
+   * is left to commit. Handing the block in whole keeps this component's own
+   * state to what it can honestly answer for. All it decides is *where* the
+   * block goes and that it greys with everything else.
    */
   photoStrip?: ReactNode;
   onCancel: () => void;
@@ -101,13 +101,12 @@ interface SessionRecordEditorProps {
  * editor stays exactly where it is, re-enabled, with the text untouched and one
  * line saying so. The only thing that closes this editor is a save that landed.
  *
- * **The photo block is the one thing a save does not grey, and that is the
- * point of it.** Everything the sentence above locks is work this Save is
- * about to carry; a photo is already stored the moment it uploads, so locking
- * it would be claiming a relationship the two do not have. A block that goes
- * on working while the rest of the editor is frozen is the clearest possible
- * statement that it is not part of the draft — and it is a statement made
- * without a word of instruction, which is what this feature was asked for.
+ * **The photo block greys with everything else, and that is the point of it.**
+ * It used to stay live through a save, as a wordless way of saying photos were
+ * already stored and not part of the draft. They are part of it now *(owner)* —
+ * the whole card edit is held in the browser and only Save touches the backend —
+ * so a block that went on accepting files while the write it belongs to was in
+ * flight would be inviting work this Save cannot carry.
  */
 export function SessionRecordEditor({
   open,

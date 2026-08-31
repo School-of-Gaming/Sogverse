@@ -63,8 +63,15 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * pressed again — a failed send is the only one of the three that leaves a
  * button to press, so the retry is part of what there is to look at.
  *
- * Every save resolves immediately, so the in-flight and failure states the live
- * page has are not what this scene is for; the send is the single exception on
+ * **Photos are part of the edit, and nothing leaves the browser until Save.** A
+ * picked or dropped file is prepared here and then sits on the strip as a tile;
+ * the ✕ crosses one out; Cancel throws the lot away. Pressing Save is what
+ * commits them, which is also the one save in this scene with a pause in it —
+ * long enough to see the photo block greyed alongside the register and the two
+ * written fields, which is exactly what it did not used to do.
+ *
+ * Every other save resolves immediately, so the in-flight and failure states the
+ * live page has are not what this scene is for; the send is the exception on
  * both counts, and its pause is there precisely because the in-flight frame is
  * the one a screenshot cannot show.
  *
@@ -246,19 +253,21 @@ export function GeduProductPageScene({
     });
 
   /**
-   * Attach one photo — locally, and to nobody.
+   * Attach one photo — locally, and to nobody. **Reached only by pressing
+   * Save**, once per picture the reviewer staged on the card.
    *
-   * The bytes really are decoded, downscaled and re-encoded in the browser
-   * before this is called, so what a reviewer picks is what they see, at the
+   * The bytes really are decoded, downscaled and re-encoded in the browser at
+   * pick time, so what a reviewer picks is what they see on the strip, at the
    * shape it will actually be stored at. What the scene stands in for is only
-   * the round trip: a delay long enough to watch the pending tile sit in its
-   * own final-size box with a spinner over it, then a *stored* photo taking its
-   * place. The stored id is one of the committed demo pictures rather than the
-   * pick, because the scene has no bucket to have put the pick in and a
-   * `blob:` id is not something the URL helper can resolve.
+   * the round trip Save makes: a delay long enough to watch the whole editor —
+   * the photo block now included — sit greyed while the card commits, and then
+   * the staged tiles reappear on the collapsed card as *stored* photos. The
+   * stored id is one of the committed demo pictures rather than the pick,
+   * because the scene has no bucket to have put the pick in and a `blob:` id is
+   * not something the URL helper can resolve.
    *
-   * **The claimed dimensions are the pick's, not the demo picture's**, so the
-   * box does not change size at the moment the tile settles — the one thing in
+   * **The claimed dimensions are the pick's, not the demo picture's**, so a
+   * photo occupies the same box before and after the save — the one thing in
    * this sequence a reviewer is here to check.
    */
   const handleAddPhoto = (
@@ -290,7 +299,11 @@ export function GeduProductPageScene({
       pendingTimers.current.add(timer);
     });
 
-  /** Detach one photo — immediately, exactly as the live remove reads. */
+  /**
+   * Detach one photo — also only on Save, and immediately once there. The
+   * crossing-out itself is what the reviewer sees on the strip; this is the
+   * write behind it.
+   */
   const handleRemovePhoto = (imageId: string): Promise<void> => {
     setEntries((prev) =>
       prev.map((entry) =>
@@ -525,12 +538,15 @@ const SIMULATED_CHECK_MS = 800;
 const SIMULATED_SEND_MS = 1400;
 
 /**
- * Roughly what a few hundred KB of JPEG costs over a home connection's upstream
- * — the slowest of the three, because it is the only one carrying a file. Long
- * enough that the pending tile is genuinely watched, which is the whole reason
- * the local preview exists.
+ * Roughly what a few hundred KB of JPEG costs over a home connection's upstream.
+ *
+ * Shorter than the send's, because a save can carry several photos and they go
+ * one after another — five staged pictures at the send's latency would leave a
+ * reviewer watching a frozen editor for seven seconds. Long enough, at this
+ * value, to see the one thing photos changed about a save: the block greys with
+ * the rest of the card instead of going on working beside it.
  */
-const SIMULATED_PHOTO_MS = 1800;
+const SIMULATED_PHOTO_MS = 600;
 
 /**
  * What a scene's "uploaded" photo settles into.

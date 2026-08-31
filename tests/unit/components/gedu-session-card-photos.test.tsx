@@ -1,31 +1,50 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { useState } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { ApiError } from "@/lib/api/api-error";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
-import { SessionFeed } from "@/components/gedu/session-feed/SessionFeed";
 import type {
+  SessionEntryDraft,
   SessionFeedEntry,
   SessionFeedGamer,
 } from "@/components/gedu/session-feed/types";
 
 /**
  * ============================================================================
- * Which cards carry photos, and which editors carry the block that manages
- * them.
+ * Which cards carry photos, which editors carry the block that manages them,
+ * and what the card's Save does with what that block is holding.
  * ============================================================================
  *
- * Two rules, and both are about *where* rather than about how:
+ * Three rules about *where*:
  *
  *   - **Photos are content**, so the shared gallery is drawn on the card's own
  *     body beside the report — the same component a family reads them through.
  *   - **The manage block belongs to the record editor alone.** A session that
  *     has not started has nothing to document, and a pre-epoch gap is a quiet
- *     dashed line with no stored row to hang a photo off; hanging an attachment
- *     strip on either would be offering a control that cannot mean anything
- *     yet.
+ *     dashed line with no stored row to hang a photo off.
+ *   - **The block draws what is *stored*; the strip inside the editor draws
+ *     what the report would hold if it were saved now.**
+ *
+ * And three about the save, which is where photos changed *(owner)*: the whole
+ * card edit is held in the browser and only Save touches the backend, so a
+ * picked photo is uploaded by the same button that writes the report, a
+ * crossed-out one is deleted by it, and Cancel throws both away.
  */
+
+const normalizeImage = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/images/normalize-image", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/images/normalize-image")>()),
+  normalizeImage,
+}));
+
+const { SessionFeed } = await import(
+  "@/components/gedu/session-feed/SessionFeed"
+);
+
+const copy = messages.gedu.sessionFeed;
 
 /** Real generated UUIDs: ids reaching an identicon must never be readable stubs. */
 const ROSTER: readonly SessionFeedGamer[] = [
@@ -90,11 +109,36 @@ const gapEntry: SessionFeedEntry = {
   endsAt: new Date("2025-09-01T15:00:00.000Z"),
 };
 
-function renderFeed(
-  entries: readonly SessionFeedEntry[],
-  editingEntryId: string | null = null,
-) {
-  return render(
+interface FeedProps {
+  entries: readonly SessionFeedEntry[];
+  editing?: string | null;
+  onAddPhoto?: (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ) => Promise<string>;
+  onRemovePhoto?: (imageId: string) => Promise<void>;
+  onSaveEntry?: (
+    entryId: string,
+    draft: SessionEntryDraft,
+  ) => void | Promise<void>;
+}
+
+/**
+ * The feed with the one piece of state its caller owns — which entry is open.
+ *
+ * Held here rather than passed as a constant because the save's whole contract
+ * is that it closes the editor when the write lands and leaves it open when it
+ * does not, and neither is observable against a frozen prop.
+ */
+function Feed({
+  entries,
+  editing = null,
+  onAddPhoto = () => Promise.resolve("stored-id"),
+  onRemovePhoto = () => Promise.resolve(),
+  onSaveEntry = () => {},
+}: FeedProps) {
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(editing);
+  return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <TimezoneProvider initialTimezone="Europe/Helsinki">
         <NowProvider initialNow={NOW}>
@@ -104,19 +148,57 @@ function renderFeed(
             roster={ROSTER}
             sourceTimeZone="Europe/Helsinki"
             editingEntryId={editingEntryId}
-            onEditEntry={() => {}}
-            onSaveEntry={() => {}}
+            onEditEntry={setEditingEntryId}
+            onSaveEntry={onSaveEntry}
             onSendReport={() =>
               Promise.resolve({ sent: 0, failed: 0, skipped: 0 })
             }
-            onAddPhoto={() => Promise.resolve("")}
-            onRemovePhoto={() => Promise.resolve()}
+            onAddPhoto={onAddPhoto}
+            onRemovePhoto={onRemovePhoto}
           />
         </NowProvider>
       </TimezoneProvider>
-    </NextIntlClientProvider>,
+    </NextIntlClientProvider>
   );
 }
+
+function renderFeed(props: FeedProps) {
+  return render(<Feed {...props} />);
+}
+
+/** Drive the open editor's hidden file input, one JPEG at a time. */
+function pick(container: HTMLElement, count: number) {
+  const input = container.querySelector("input[type='file']");
+  if (!(input instanceof HTMLInputElement)) throw new Error("no file input");
+  fireEvent.change(input, {
+    target: {
+      files: Array.from(
+        { length: count },
+        (_, i) => new File([`bytes-${i}`], `pick-${i}.jpg`, { type: "image/jpeg" }),
+      ),
+    },
+  });
+}
+
+/** Every tile on the open editor's strip. */
+function tiles(container: HTMLElement) {
+  const block = container.querySelector("section[aria-labelledby]");
+  return block === null ? [] : block.querySelectorAll("ul > li img");
+}
+
+let mintedUrls = 0;
+
+beforeEach(() => {
+  normalizeImage.mockReset();
+  normalizeImage.mockResolvedValue({
+    blob: new Blob(["jpeg"], { type: "image/jpeg" }),
+    width: 1600,
+    height: 900,
+  });
+  mintedUrls = 0;
+  URL.createObjectURL = vi.fn(() => `blob:preview-${(mintedUrls += 1)}`);
+  URL.revokeObjectURL = vi.fn();
+});
 
 afterEach(() => {
   cleanup();
@@ -125,7 +207,7 @@ afterEach(() => {
 
 describe("photos on a gedu session card", () => {
   it("draws the shared gallery on a past card, and nothing at all without photos", () => {
-    const withPhotos = renderFeed([pastEntry(PHOTOS)]);
+    const withPhotos = renderFeed({ entries: [pastEntry(PHOTOS)] });
     const gallery = withPhotos.getByRole("list", {
       name: messages.sessionFeed.photos.list,
     });
@@ -135,29 +217,154 @@ describe("photos on a gedu session card", () => {
     cleanup();
 
     // No slot is held open for photos a session may never have.
-    const without = renderFeed([pastEntry([])]);
+    const without = renderFeed({ entries: [pastEntry([])] });
     expect(
       without.queryByRole("list", { name: messages.sessionFeed.photos.list }),
     ).toBeNull();
   });
 
   it("puts the manage block on the record editor", () => {
-    const { queryByText } = renderFeed([pastEntry(PHOTOS)], PAST_ID);
-    expect(queryByText(messages.gedu.sessionFeed.photosTitle)).not.toBeNull();
+    const { queryByText } = renderFeed({
+      entries: [pastEntry(PHOTOS)],
+      editing: PAST_ID,
+    });
+    expect(queryByText(copy.photosTitle)).not.toBeNull();
   });
 
   it("keeps the manage block off the plan editor and off a pre-epoch gap", () => {
     // A session that has not started documents nothing yet.
-    const plan = renderFeed([futureEntry], FUTURE_ID);
-    expect(
-      plan.queryByText(messages.gedu.sessionFeed.photosTitle),
-    ).toBeNull();
+    const plan = renderFeed({ entries: [futureEntry], editing: FUTURE_ID });
+    expect(plan.queryByText(copy.photosTitle)).toBeNull();
     cleanup();
 
     // And a gap is a quiet dashed row with no stored session behind it — it
     // opens the record editor like any past occurrence, but with nothing to
     // attach a photo to.
-    const gap = renderFeed([gapEntry], GAP_ID);
-    expect(gap.queryByText(messages.gedu.sessionFeed.photosTitle)).toBeNull();
+    const gap = renderFeed({ entries: [gapEntry], editing: GAP_ID });
+    expect(gap.queryByText(copy.photosTitle)).toBeNull();
+  });
+});
+
+describe("saving a card's photos", () => {
+  it("touches nothing until Save, then deletes, uploads and writes in that order", async () => {
+    const log: string[] = [];
+    const onRemovePhoto = vi.fn((imageId: string) => {
+      log.push(`remove ${imageId}`);
+      return Promise.resolve();
+    });
+    const onAddPhoto = vi.fn(() => {
+      log.push("add");
+      return Promise.resolve("stored-id");
+    });
+    const onSaveEntry = vi.fn(() => {
+      log.push("write");
+    });
+
+    const { container, getByRole } = renderFeed({
+      entries: [pastEntry(PHOTOS)],
+      editing: PAST_ID,
+      onAddPhoto,
+      onRemovePhoto,
+      onSaveEntry,
+    });
+
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    pick(container, 1);
+    // Crossed out and picked, and the backend has heard nothing: this is the
+    // whole of what changed about photos.
+    await waitFor(() => expect(tiles(container)).toHaveLength(2));
+    expect(log).toEqual([]);
+
+    fireEvent.click(getByRole("button", { name: copy.save }));
+
+    // Removals before uploads, because at the cap a swap is remove-one-add-one
+    // and the insert counts stored rows; the written record last, so the only
+    // failure that can reach the editor's own two error lines is one of its own.
+    await waitFor(() => expect(onSaveEntry).toHaveBeenCalledTimes(1));
+    expect(log).toEqual([`remove ${PHOTOS[0].id}`, "add", "write"]);
+    // A save that landed closes the editor, photos or no photos. (The editor
+    // stays mounted while collapsed — it is the expanded flag that says so.)
+    await waitFor(() =>
+      expect(
+        getByRole("button", { name: copy.edit }).getAttribute("aria-expanded"),
+      ).toBe("false"),
+    );
+  });
+
+  it("keeps the editor open on a refused upload and retries only what is left", async () => {
+    const onRemovePhoto = vi.fn(() => Promise.resolve());
+    const onAddPhoto = vi
+      .fn()
+      .mockRejectedValueOnce(
+        // The route's own English is a log line; what the gedu reads is ours,
+        // chosen by the stable code beside it.
+        new ApiError("upload refused", 502, "uploadFailed"),
+      )
+      .mockResolvedValue("stored-id");
+    const onSaveEntry = vi.fn();
+
+    const { container, getByRole, findByText } = renderFeed({
+      entries: [pastEntry([PHOTOS[0]])],
+      editing: PAST_ID,
+      onAddPhoto,
+      onRemovePhoto,
+      onSaveEntry,
+    });
+
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    pick(container, 2);
+    await waitFor(() => expect(tiles(container)).toHaveLength(2));
+
+    fireEvent.click(getByRole("button", { name: copy.save }));
+
+    // One line, in the photo block's own vocabulary rather than the editor's
+    // general "nothing saved" — a failed file is a thing a gedu can act on.
+    await findByText(copy.photoErrorUploadFailed);
+    expect(onSaveEntry).not.toHaveBeenCalled();
+    // Nothing closed: the draft, the register and both staged photos are
+    // exactly where the gedu left them.
+    expect(
+      getByRole("button", { name: copy.edit }).getAttribute("aria-expanded"),
+    ).toBe("true");
+
+    fireEvent.click(getByRole("button", { name: copy.save }));
+
+    await waitFor(() => expect(onSaveEntry).toHaveBeenCalledTimes(1));
+    // The deletion landed the first time and left the staged set with it, so
+    // the retry never repeats it; both uploads are still owed, and the one that
+    // was refused is simply attempted again.
+    expect(onRemovePhoto).toHaveBeenCalledTimes(1);
+    expect(onAddPhoto).toHaveBeenCalledTimes(3);
+  });
+
+  it("throws the staged photos away when the editor is cancelled", async () => {
+    const onAddPhoto = vi.fn(() => Promise.resolve("stored-id"));
+    const { container, getByRole, getAllByRole } = renderFeed({
+      entries: [pastEntry([PHOTOS[0]])],
+      editing: PAST_ID,
+      onAddPhoto,
+    });
+
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    pick(container, 1);
+    await waitFor(() => expect(tiles(container)).toHaveLength(1));
+
+    fireEvent.click(getByRole("button", { name: copy.cancel }));
+    // Reopening is what shows the discard: the same rule the text draft
+    // follows, applied to the picture and to the crossing-out alike.
+    fireEvent.click(getAllByRole("button", { name: copy.edit })[0]);
+
+    await waitFor(() => expect(tiles(container)).toHaveLength(1));
+    expect(tiles(container)[0].getAttribute("src")).not.toMatch(/^blob:/);
+    // And the bytes behind the abandoned pick are let go rather than held for
+    // as long as the page lives.
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1");
+    expect(onAddPhoto).not.toHaveBeenCalled();
   });
 });

@@ -28,6 +28,7 @@ import {
 } from "./entry-state";
 import type { SessionReportSendResult } from "./send-report";
 import { SessionPhotoStrip } from "./SessionPhotoStrip";
+import type { SessionPhotoEditing } from "./staged-photos";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
 import { SessionReportSend } from "./SessionReportSend";
@@ -104,17 +105,14 @@ interface SessionFeedItemProps {
   /** Email this session's report to the families. */
   onSendReport: () => void;
   /**
-   * Attach one already-normalized JPEG to this session, resolving with the
-   * stored id. Bound to this entry by the feed, so the strip below never has to
-   * hold a session date.
+   * This entry's staged photo edit, and the controls that change it.
+   *
+   * **It belongs to the feed, not to this card**, for the same reason the save
+   * itself does: a Save that half-lands has to leave behind exactly what still
+   * needs doing, and only the component that awaits the save knows what that
+   * is. The card renders it and edits it; it never commits it.
    */
-  onAddPhoto: (photo: {
-    file: Blob;
-    width: number;
-    height: number;
-  }) => Promise<string>;
-  /** Remove one of this session's photos. */
-  onRemovePhoto: (imageId: string) => Promise<void>;
+  photoEditing: SessionPhotoEditing;
   /**
    * Hand the Edit button up to the feed as it mounts.
    *
@@ -243,8 +241,7 @@ export function SessionFeedItem({
   sendResult,
   sendError,
   onSendReport,
-  onAddPhoto,
-  onRemovePhoto,
+  photoEditing,
   registerEditButton,
   onToggleEdit,
   onCancelEdit,
@@ -274,12 +271,12 @@ export function SessionFeedItem({
    * The photo block, on the record editor and nowhere else.
    *
    * **Only a card gets one.** The pre-epoch dashed line is a 2rem row that
-   * deliberately does not compete with the sessions around it, and hanging an
-   * attachment strip off it would do two wrong things at once: crowd a row whose
-   * whole design is quietness, and turn that row into a card the instant the
-   * first photo materialized its session — a card swap under an open editor. A
-   * gedu who wants photos on a pre-epoch session writes a line on it first, at
-   * which point it is an ordinary past entry with the strip.
+   * deliberately does not compete with the sessions around it, and hanging a
+   * photo block off it would do two wrong things at once: crowd a row whose
+   * whole design is quietness, and turn that row into a card the moment a save
+   * materialized its session — the row would come back as something else
+   * entirely. A gedu who wants photos on a pre-epoch session writes a line on it
+   * first, at which point it is an ordinary past entry with the block.
    *
    * The **plan** editor never sees this either, and that is the plan's own
    * decision rather than an oversight: photos document what happened, and a
@@ -289,8 +286,10 @@ export function SessionFeedItem({
     <SessionPhotoStrip
       open={editing}
       photos={photos}
-      onAddPhoto={onAddPhoto}
-      onRemovePhoto={onRemovePhoto}
+      // Greyed with everything else while the card commits: what is staged here
+      // is part of what this Save is carrying.
+      disabled={committing}
+      {...photoEditing}
     />
   );
 

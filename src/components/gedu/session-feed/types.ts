@@ -190,12 +190,13 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * the display order on every surface. An empty array when there are none,
    * never a missing field, so a renderer has one shape to handle.
    *
-   * **They are content, not a draft.** A photo is attached the moment it
-   * uploads and removed the moment it is removed, so this field never carries
-   * anything unsaved — which is the whole reason the strip that manages it is a
-   * separate block from the editor's Save. It plays no part in what a session
-   * *owes*: a session with five photos and no write-up still owes its report,
-   * on the card and in the dashboard's SQL twin alike.
+   * **This is what is stored, never what is staged.** An open editor holds
+   * picked photos and crossed-out ones in the browser until Save, exactly as it
+   * holds the register and the two written fields; this field is only ever the
+   * report as the database has it, which is what every read surface draws. It
+   * plays no part in what a session *owes*: a session with five photos and no
+   * write-up still owes its report, on the card and in the dashboard's SQL twin
+   * alike.
    */
   images: readonly SessionPhoto[];
   /**
@@ -249,11 +250,11 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
  * **It carries no `images` field, and cannot.** A photo needs a stored session
  * row to hang off, and a row is precisely what this kind is the absence of — so
  * a gap that acquired one would stop being a gap on the very next read. That is
- * also why the photo strip is not offered on this row: it is a quiet dashed
- * line rather than a card, and an attachment strip on it would both crowd a
- * deliberately silent gap and mutate it into a card mid-edit the moment the
- * first photo landed. Write anything on it first and it is an ordinary past
- * entry with the strip.
+ * also why the photo block is not offered on this row: it is a quiet dashed
+ * line rather than a card, and a photo block on it would both crowd a
+ * deliberately silent gap and turn the row into a card the moment a save
+ * materialized its session. Write anything on it first and it is an ordinary
+ * past entry with the block.
  */
 export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
   kind: "no_record";

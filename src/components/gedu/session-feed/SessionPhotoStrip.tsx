@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Images, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -20,6 +20,11 @@ import {
 } from "@/services/gedu-sessions";
 import { cn } from "@/lib/utils";
 import { sessionPhotoErrorCode } from "./photo-failure";
+import {
+  keptPhotos,
+  stagedPhotoCount,
+  type SessionPhotoEditing,
+} from "./staged-photos";
 
 /**
  * The height a strip thumbnail is drawn at, in CSS pixels, at the wide
@@ -64,211 +69,120 @@ const PHOTO_ERROR_KEY = {
  */
 const ACCEPTED_TYPES = new Set(SESSION_PHOTO_ACCEPT.split(","));
 
-/**
- * One photo the browser has prepared but the feed has not yet handed back.
- *
- * It carries its own **encoded** dimensions, which is what lets the thumbnail
- * appear at the exact size its stored twin will occupy: the box is right before
- * the upload starts, so nothing in the strip moves when the round trip lands.
- */
-interface PendingPhoto {
-  /** Local identity, stable across the upload. Never a stored id. */
-  key: string;
-  /** `URL.createObjectURL` of the normalized JPEG — revoked when it lands. */
-  url: string;
-  width: number;
-  height: number;
+interface SessionPhotoStripProps extends SessionPhotoEditing {
   /**
-   * The stored id once the upload has answered, `null` while it is in the air.
-   *
-   * It is what lets this tile hand over to its stored twin *exactly* when the
-   * refetched feed carries it, rather than a frame earlier — which would blank
-   * the row for the length of an invalidation.
-   */
-  id: string | null;
-}
-
-interface SessionPhotoStripProps {
-  /**
-   * Whether the editor around this strip is expanded. The strip stays mounted
-   * while collapsed — an upload started here must survive the gedu closing the
-   * card — so this is only how a stale refusal line is cleared on the way back
-   * in.
+   * Whether the editor around this strip is expanded. Used only to clear the
+   * one transient line this block still owns — a trim is the answer to one
+   * pick, and finding last week's still sitting there is worse than finding
+   * nothing.
    */
   open: boolean;
-  /** The session's stored photos, oldest first, exactly as the card renders them. */
+  /** The session's **stored** photos, oldest first, exactly as the card renders them. */
   photos: readonly SessionPhoto[];
   /**
-   * Attach one normalized JPEG. **Awaited**, and it resolves with the stored
-   * id — which is what this component matches against the refetched feed to
-   * know when its own preview may go.
+   * A save is in flight. The strip greys out with every other field on the
+   * card, because a photo is now part of what that Save is carrying.
    */
-  onAddPhoto: (photo: {
-    file: Blob;
-    width: number;
-    height: number;
-  }) => Promise<string>;
-  /** Remove one stored photo. Awaited; the refetch is what redraws the row. */
-  onRemovePhoto: (imageId: string) => Promise<void>;
+  disabled: boolean;
 }
 
 /**
- * The photo block on a session's record editor: what is attached, and the two
- * controls that change it.
+ * The photo block on a session's record editor: what the report will hold once
+ * this edit is saved, and the two controls that change it.
  *
- * **It is not part of the draft, and everything about it says so without saying
- * so.** The register and the two written fields are held until Save; a photo is
- * attached the instant it uploads and gone the instant it is removed. That is a
- * genuine difference in what a control does, so it is carried by *idiom* rather
- * than by a sentence nobody reads: thumbnails with a corner ✕, a spinner over
- * the one still going up, an Add button at the end of the run — the vocabulary
- * every mail client and chat window has already taught. Two further signals
- * back it up. The block sits on its own recessed ground rather than inside one
- * of the editor's bordered field boxes, and — the load-bearing one — **it stays
- * live while a Save is in flight**, alone in a greyed editor. A control that
- * still works while everything around it is locked is not part of what is being
- * saved, and a reader learns that in one glance the first time they see it.
+ * **It is draft scope, exactly like the register and the two written fields.**
+ * A picked file is decoded, downscaled and re-encoded here and then *held* — no
+ * upload happens until Save, and the ✕ on a stored photo crosses it out rather
+ * than deleting it. One button commits the whole card, and Cancel throws the
+ * whole card away. This reverses the block's original shape *(owner)*: photos
+ * attached on pick, which made them the one thing on an open editor that was
+ * already stored, and required an idiom whose entire job was to say so.
+ *
+ * **A refusal the browser can make is still made at pick time.** A file the
+ * decoder will not open — the raw-HEIC case — says so the moment it is chosen,
+ * because learning at Save that one of five files was never usable is the worst
+ * possible moment to be told. What waits for Save is the *network*, not the
+ * verdict on the bytes.
+ *
+ * **A crossed-out photo simply leaves the row.** That is what deleting a
+ * paragraph of the write-up looks like, and photos are held to the same
+ * grammar: nothing is stored yet, so nothing needs an undo of its own — Cancel
+ * is the undo, for the whole card at once. A greyed tile with its own restore
+ * control would be a second, photo-only notion of "unsaved change" sitting
+ * inside an editor that already has one.
  *
  * **The add affordance disappears at the cap rather than going disabled.** A
  * slot that can never fill is dead space, and a button that can never be pressed
- * is one more thing to read on the way past. Its absence is the whole of the
- * message; the copy that explains it belongs to the refusal a racing second tab
- * gets, not to the ordinary case.
+ * is one more thing to read on the way past. The cap counts what the report
+ * *would* hold — stored, minus what is crossed out, plus what is staged — so
+ * swapping a photo at the cap works without ever showing a refusal.
  *
  * **A batch is trimmed once, up front, rather than refused one file at a time.**
  * Multi-select is allowed, so a gedu can pick eight photos for a report with
- * three slots left. Cutting the selection to what fits *before* anything
- * uploads makes that one visible line about one decision; uploading the lot and
- * letting the RPC refuse five of them would be five error states about a
- * mistake nobody made.
+ * three slots left. Cutting the selection to what fits *before* anything is
+ * prepared makes that one visible line about one decision.
  *
- * **The whole batch stops at the first refusal.** The three most likely ones —
- * the session is full, this is not your group, the connection is gone — are
- * facts about the batch rather than about the file that hit them, so carrying on
- * would produce exactly the run of identical refusals the trim above exists to
- * prevent. The photos that landed before it stay landed, and the gedu picks
- * again for the rest.
+ * **The whole batch stops at the first refusal**, because the likely refusals
+ * are facts about the batch rather than about the file that hit them. The
+ * pictures already staged stay staged, and the gedu picks again for the rest.
  *
  * **A drop is a pick.** The whole block is a drop target — gedu surfaces are
  * desktop-default, and a screenshot a gedu just took is one drag from the
  * folder it landed in — but a dropped file joins the *same* pipeline the picker
  * feeds: the same accept list, the same trim to the remaining slots, the same
- * normalize-then-attach pass, the same one-line refusal. What the drop path
- * owns is only the pair of answers a file dialog gives by construction — it
- * will not select a `.txt`, and the Add button it hangs off is gone at the cap
- * — which a drop has to say in words instead.
- *
- * **A refused removal keeps its tile.** The row is what the report has; a
- * remove that fails has changed nothing, so the picture stays, the ✕ comes back
- * live, and one line says why. The alternative — a tile that vanishes
- * optimistically, or one that spins for ever — would both be the interface
- * claiming something the record does not say.
+ * normalize pass, the same one-line refusal. What the drop path owns is only the
+ * pair of answers a file dialog gives by construction — it will not select a
+ * `.txt`, and the Add button it hangs off is gone at the cap — which a drop has
+ * to say in words instead.
  *
  * **Nothing here is measured.** Every box is arithmetic from the encoded
- * dimensions the browser just produced, so the preview is already the shape its
- * stored twin will be and the row does not reshuffle when the round trip lands.
+ * dimensions the browser just produced, so a staged tile is already the shape
+ * its stored twin will be and the row does not reshuffle when the save lands.
  */
 export function SessionPhotoStrip({
   open,
   photos,
-  onAddPhoto,
-  onRemovePhoto,
+  staged,
+  disabled,
+  error,
+  onStageAdd,
+  onUnstageAdd,
+  onStageRemoval,
+  onError,
 }: SessionPhotoStripProps) {
   const t = useTranslations("gedu.sessionFeed");
   const titleId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const [pending, setPending] = useState<PendingPhoto[]>([]);
   /**
-   * Held true from **before** the first `mutate` of a batch until the last one
-   * settles, and used for the button's disabled state and its spinner.
+   * Held true from **before** the first `await` of a batch until the last file
+   * has been prepared, and used for the Add button's disabled state and its
+   * spinner.
    *
-   * `isPending` on the mutation is not enough and is not consulted: it goes
-   * false the moment React Query dispatches each success, which is one render
-   * before the next upload in the batch has started — so a fast second click
-   * would land in the gap and start a second batch over the same remaining
-   * slots.
+   * Preparing a 4K screenshot is a real decode-and-re-encode pass, so a batch
+   * is not instant even though nothing leaves the browser. The flag is live
+   * before the first render after the click, which is what stops a fast second
+   * press starting a second batch over the same remaining slots.
    */
-  const [committing, setCommitting] = useState(false);
-  /** The stored id whose removal is in flight, or `null`. */
-  const [removing, setRemoving] = useState<string | null>(null);
-  const [error, setError] = useState<SessionPhotoErrorCode | null>(null);
+  const [preparing, setPreparing] = useState(false);
   /** How many of an over-cap selection were taken, or `null` for no trim. */
   const [trimmed, setTrimmed] = useState<number | null>(null);
   /** Whether files are currently being dragged over the block. */
   const [dragging, setDragging] = useState(false);
 
-  // Clear the transient lines on the way back into an open editor, exactly as
-  // the editor around this re-seeds its draft: a refusal is the answer to one
-  // click, and finding last week's still sitting there is worse than finding
-  // nothing. The uploads themselves are deliberately untouched — one may still
-  // be in the air.
+  // Clear the trim line on the way back into an open editor, exactly as the
+  // editor around this re-seeds its draft. The refusal line is the feed's, and
+  // is cleared there on the same two occasions.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
-    if (open) {
-      setError(null);
-      setTrimmed(null);
-    }
+    if (open) setTrimmed(null);
   }
 
-  const storedIds = useMemo(
-    () => new Set(photos.map((photo) => photo.id)),
-    [photos],
-  );
-
-  /**
-   * The previews still worth drawing — **derived, never stored**.
-   *
-   * A preview hands over to its stored twin at exactly the render where the
-   * refetched feed carries it, and not one earlier: dropping it when the upload
-   * resolved would blank the tile for the length of the invalidation that
-   * follows, which is the flicker the local preview exists to prevent. Deriving
-   * that is also what keeps this component free of the effect-that-sets-state
-   * shape, whose real cost here would have been a cascading render on every
-   * feed refresh, photos or no photos.
-   *
-   * A landed entry stays in `pending` until the next pick tidies it — or until
-   * the photo it became is removed, which is the one other moment this filter
-   * would otherwise change its mind about: the predicate asks whether the id is
-   * *currently* stored, so a removal that takes the id back out of `storedIds`
-   * would bring the preview back. It costs one small object in the meantime,
-   * which is why every count below reads *this* list rather than that one.
-   */
-  const visiblePending = pending.filter(
-    (photo) => photo.id === null || !storedIds.has(photo.id),
-  );
-
-  /**
-   * Every object URL this strip has minted, so none outlives the card.
-   *
-   * A ref rather than state, and touched only from handlers and the unmount
-   * cleanup: nothing renders from it, and a blob the browser is still holding
-   * is not something a render should be deciding about.
-   */
-  const objectUrls = useRef(new Set<string>());
-  useEffect(
-    () => () => {
-      for (const url of objectUrls.current) URL.revokeObjectURL(url);
-      objectUrls.current.clear();
-    },
-    [],
-  );
-
-  /** Let go of a preview and the bytes behind it, together. */
-  const dropPreview = (matches: (photo: PendingPhoto) => boolean) => {
-    setPending((prev) =>
-      prev.filter((photo) => {
-        if (!matches(photo)) return true;
-        URL.revokeObjectURL(photo.url);
-        objectUrls.current.delete(photo.url);
-        return false;
-      }),
-    );
-  };
-
-  const shown = photos.length + visiblePending.length;
+  const kept = keptPhotos(photos, staged);
+  const shown = stagedPhotoCount(photos, staged);
   const room = Math.max(0, SESSION_PHOTO_CAP - shown);
+  const busy = disabled || preparing;
   /**
    * Whether a drop would be taken right now — the same two conditions the Add
    * button expresses by being disabled and by being absent. It decides the
@@ -276,65 +190,44 @@ export function SessionPhotoStrip({
    * `onDragOver`), because a refusal a gedu can read beats a file the browser
    * quietly opens in the tab.
    */
-  const canDrop = !committing && room > 0;
+  const canDrop = !busy && room > 0;
 
   const handlePick = async (picked: readonly File[]) => {
     // Synchronous, before the first await: the button has to be disabled on the
-    // very next render, not on the one after the first upload resolves.
-    setCommitting(true);
-    setError(null);
+    // very next render, not on the one after the first file is prepared.
+    setPreparing(true);
+    onError(null);
     setTrimmed(null);
-    // The previous batch's landed previews are still in the list, invisible.
-    // This is the moment to let their blobs go: a pick is a user action, so the
-    // work is theirs rather than a refetch's.
-    dropPreview((photo) => photo.id !== null && storedIds.has(photo.id));
 
     const batch = picked.slice(0, room);
     if (batch.length < picked.length) setTrimmed(batch.length);
 
     for (const file of batch) {
-      const key = crypto.randomUUID();
-      let url: string | null = null;
       try {
-        // Normalize FIRST, then preview. The encoded dimensions are what the
-        // box is drawn from, so previewing the raw pick would mean a tile that
-        // resized itself the moment the encode finished — a shift on data's own
+        // Normalize FIRST, then stage. The encoded dimensions are what the box
+        // is drawn from, so staging the raw pick would mean a tile that resized
+        // itself the moment the encode finished — a shift on data's own
         // schedule, in the one place the gedu is watching.
         const normalized = await normalizeImage(file, {
           maxEdge: SESSION_PHOTO_MAX_EDGE,
           quality: SESSION_PHOTO_JPEG_QUALITY,
         });
-        url = URL.createObjectURL(normalized.blob);
-        objectUrls.current.add(url);
-        const preview: PendingPhoto = {
-          key,
-          url,
-          width: normalized.width,
-          height: normalized.height,
-          id: null,
-        };
-        setPending((prev) => [...prev, preview]);
-
-        const id = await onAddPhoto({
+        onStageAdd({
+          key: crypto.randomUUID(),
+          url: URL.createObjectURL(normalized.blob),
           file: normalized.blob,
           width: normalized.width,
           height: normalized.height,
         });
-        setPending((prev) =>
-          prev.map((photo) => (photo.key === key ? { ...photo, id } : photo)),
-        );
       } catch (cause) {
-        // A tile only exists past the encode, so a decode refusal has nothing
-        // to take down and the guard says which half failed.
-        if (url !== null) dropPreview((photo) => photo.key === key);
-        setError(sessionPhotoErrorCode(cause));
+        onError(sessionPhotoErrorCode(cause));
         // The rest of the batch is abandoned on purpose — see the component
         // note. The gedu gets one line, not five.
         break;
       }
     }
 
-    setCommitting(false);
+    setPreparing(false);
   };
 
   /**
@@ -342,68 +235,36 @@ export function SessionPhotoStrip({
    * produced — and then handed to the same function.
    *
    * **One pipeline, two ways in.** Everything that makes a pick safe lives past
-   * this point: the accept list, the trim to the remaining slots, the
-   * normalize-then-attach pass, the batch's single refusal line. A drop that
-   * grew its own copy of any of those would be a second, quietly different
-   * definition of what this block takes — so all this does is answer the two
-   * questions the file input answers before a change event ever fires (are
-   * these the right kind of file, and is there anywhere to put them) and then
-   * get out of the way.
-   *
-   * The two refusals it does own are the ones the picker expresses as *absence*
-   * — a dialog that will not select a `.txt`, an Add button that is gone at the
-   * cap. A drop has neither, so the answer has to be said out loud, in the
-   * vocabulary the block already refuses in.
+   * this point: the accept list, the trim to the remaining slots, the normalize
+   * pass, the batch's single refusal line. A drop that grew its own copy of any
+   * of those would be a second, quietly different definition of what this block
+   * takes — so all this does is answer the two questions the file input answers
+   * before a change event ever fires (are these the right kind of file, and is
+   * there anywhere to put them) and then get out of the way.
    */
   const handleDrop = (dropped: readonly File[]) => {
-    // A batch in flight owns the remaining slots; the Add button is disabled
-    // for the same reason, and it says nothing either.
-    if (committing) return;
+    // A batch being prepared owns the remaining slots, and a save in flight owns
+    // the whole card; the Add button is disabled for the same two reasons, and
+    // it says nothing either.
+    if (busy) return;
     if (room === 0) {
       setTrimmed(null);
-      setError("capReached");
+      onError("capReached");
       return;
     }
     const usable = dropped.filter((file) => ACCEPTED_TYPES.has(file.type));
     if (usable.length === 0) {
       setTrimmed(null);
-      setError("notJpeg");
+      onError("notJpeg");
       return;
     }
     void handlePick(usable);
   };
 
-  const handleRemove = async (imageId: string) => {
-    setRemoving(imageId);
-    setError(null);
-    try {
-      await onRemovePhoto(imageId);
-      // `removing` is left set: the refetch that follows takes the tile off the
-      // row, and clearing first would hand back a live ✕ over a photo that is
-      // already gone.
-      //
-      // The preview this photo was uploaded from goes here, though, and this is
-      // the last moment it can. It has been invisible since the feed first
-      // carried its stored twin — but only because the filter above asks
-      // whether its id is stored *now*, so leaving the entry behind would let
-      // this removal un-hide it as a permanently-busy tile with no ✕, counting
-      // against the cap for as long as the card stays mounted.
-      dropPreview((photo) => photo.id === imageId);
-    } catch (cause) {
-      // The tile is still there and it still has a photo behind it: a refused
-      // removal leaves the row standing on purpose, so the ✕ has to come back
-      // rather than spin for ever over a photo that never went. Clearing
-      // `removing` is what re-arms it, and the line below says why the first
-      // press did nothing.
-      setRemoving(null);
-      setError(sessionPhotoErrorCode(cause));
-    }
-  };
-
   return (
     // Recessed rather than bordered: the editor's two written fields sit in
-    // bordered boxes that mean "this is a field you are drafting", and this
-    // block is the one thing here that is not.
+    // bordered boxes of their own, and a third box around a row of pictures
+    // would read as a fourth field rather than as the report's attachments.
     <section
       aria-labelledby={titleId}
       // The whole block is the drop target, not a separate dashed rectangle
@@ -431,6 +292,9 @@ export function SessionPhotoStrip({
         // here" has to be visible without the block growing under a pointer
         // that is mid-gesture.
         dragging && "bg-primary/10 ring-2 ring-primary",
+        // Greyed with the rest of the editor while the card commits, because
+        // what is on this strip is part of what that Save is carrying.
+        disabled && "opacity-60",
       )}
     >
       <p
@@ -442,29 +306,35 @@ export function SessionPhotoStrip({
       </p>
 
       {/* `items-end` so the Add button sits on the thumbnails' baseline
-          whatever their heights round to, and the run reads as one row. */}
+          whatever their heights round to, and the run reads as one row.
+
+          Stored and staged tiles are drawn in one continuous run and look
+          identical, which is the point: after Save they will be the same thing,
+          and a picture the gedu has just added is as much a part of what the
+          report will say as one added last week. */}
       <ul className="mt-2 flex flex-wrap items-end gap-2">
-        {photos.map((photo, index) => (
+        {kept.map((photo, index) => (
           <StripThumbnail
             key={photo.id}
             src={sessionImageUrl(photo.id)}
             width={photo.width}
             height={photo.height}
             optimized
-            busy={removing === photo.id}
+            disabled={busy}
             label={t("removePhoto", { index: index + 1 })}
-            onRemove={() => void handleRemove(photo.id)}
+            onRemove={() => onStageRemoval(photo.id)}
           />
         ))}
-        {visiblePending.map((photo) => (
+        {staged.adds.map((photo, index) => (
           <StripThumbnail
             key={photo.key}
             src={photo.url}
             width={photo.width}
             height={photo.height}
             optimized={false}
-            busy
-            uploadingLabel={t("photoUploading")}
+            disabled={busy}
+            label={t("removePhoto", { index: kept.length + index + 1 })}
+            onRemove={() => onUnstageAdd(photo.key)}
           />
         ))}
 
@@ -476,12 +346,12 @@ export function SessionPhotoStrip({
               size="sm"
               // Disabled through the whole batch, not per file — the flag is
               // live before the first render after the click and only drops
-              // once every upload in the run has settled.
-              disabled={committing}
+              // once every file in the run has been prepared.
+              disabled={busy}
               onClick={() => inputRef.current?.click()}
               className="gap-1.5"
             >
-              {committing ? (
+              {preparing ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
               ) : (
                 <ImagePlus className="h-3.5 w-3.5" aria-hidden />
@@ -520,7 +390,7 @@ export function SessionPhotoStrip({
         onChange={(event) => {
           // Copied out of the live `FileList` **before** the input is cleared:
           // that list is a view onto the input's own selection, so resetting
-          // the value first would empty the very array about to be uploaded.
+          // the value first would empty the very array about to be prepared.
           const picked = Array.from(event.target.files ?? []);
           // Cleared so picking the same file twice in a row still fires a
           // change the second time.
@@ -556,24 +426,25 @@ export function SessionPhotoStrip({
 }
 
 /**
- * One tile in the strip: the picture, and whatever is happening to it.
+ * One tile in the strip: the picture, and the control that takes it off the
+ * report.
  *
  * The ✕ sits *inside* the picture's top-right corner rather than hanging off
  * it. Hanging controls overlap the neighbouring tile at this gap, and a row
  * whose photos each half-cover the one before is not a row anybody can aim at.
  *
- * A tile with no `onRemove` is one still going up — the control it would carry
- * has nothing to remove yet, and the spinner over it is the whole of what there
- * is to say.
+ * **One tile, whatever is behind it.** A stored photo and one picked a moment
+ * ago look and behave identically here, because after Save they are the same
+ * thing — only the src differs, and with it whether the image optimizer can be
+ * asked for a variant.
  */
 function StripThumbnail({
   src,
   width,
   height,
   optimized,
-  busy,
+  disabled,
   label,
-  uploadingLabel,
   onRemove,
 }: {
   src: string;
@@ -586,10 +457,9 @@ function StripThumbnail({
    * optimizer is a server, and the bytes only exist in this tab.
    */
   optimized: boolean;
-  busy: boolean;
-  label?: string;
-  uploadingLabel?: string;
-  onRemove?: () => void;
+  disabled: boolean;
+  label: string;
+  onRemove: () => void;
 }) {
   const boxWidth = sessionThumbnailWidth(width, height, STRIP_THUMB_HEIGHT);
   // `h-20 w-auto` against the intrinsic pair below is the layout: the browser
@@ -597,13 +467,11 @@ function StripThumbnail({
   // the box is right before the JPEG decodes. `contain` turns the half-pixel
   // the rounding costs — and a clamped extreme ratio — into a letterbox rather
   // than a crop.
-  const imageClass = cn(
-    "h-20 w-auto max-w-full rounded-md border border-border bg-muted object-contain sm:h-24",
-    busy && "opacity-40",
-  );
+  const imageClass =
+    "h-20 w-auto max-w-full rounded-md border border-border bg-muted object-contain sm:h-24";
 
   return (
-    <li className="relative max-w-full shrink-0" aria-busy={busy || undefined}>
+    <li className="relative max-w-full shrink-0">
       {optimized ? (
         <Image
           src={src}
@@ -623,26 +491,15 @@ function StripThumbnail({
         />
       )}
 
-      {busy && (
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-foreground" aria-hidden />
-          {uploadingLabel !== undefined && (
-            <span className="sr-only">{uploadingLabel}</span>
-          )}
-        </span>
-      )}
-
-      {onRemove !== undefined && label !== undefined && (
-        <button
-          type="button"
-          aria-label={label}
-          disabled={busy}
-          onClick={onRemove}
-          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-        >
-          <X className="h-3.5 w-3.5" aria-hidden />
-        </button>
-      )}
+      <button
+        type="button"
+        aria-label={label}
+        disabled={disabled}
+        onClick={onRemove}
+        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden />
+      </button>
     </li>
   );
 }

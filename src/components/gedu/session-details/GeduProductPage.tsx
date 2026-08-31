@@ -176,10 +176,10 @@ function Workspace({
   const setSessionNotes = useSetSessionNotes(groupId);
   const emailSessionReport = useEmailSessionReport(groupId);
   const recordAttendance = useRecordAttendance(groupId);
-  // The photo block's two writes. Both refresh this group's feed, which is the
-  // document the strip's thumbnails are drawn from — so an attached photo
-  // arrives on the card, and a removed one leaves it, with nothing here
-  // refetching by hand.
+  // The photo block's two writes, made by the card's Save rather than by the
+  // picker. Both refresh this group's feed, which is the document the card's
+  // photos are drawn from — so a saved photo arrives on the card, and a removed
+  // one leaves it, with nothing here refetching by hand.
   const addSessionImage = useAddSessionImage(groupId);
   const deleteSessionImage = useDeleteSessionImage(groupId);
   const setGroupNotes = useSetGroupNotes(groupId);

@@ -329,10 +329,10 @@ function Workspace({
   const setSessionNotes = useAdminSetSessionNotes(productId, groupId);
   const recordAttendance = useAdminRecordAttendance(productId, groupId);
   const emailSessionReport = useAdminEmailSessionReport(productId, groupId);
-  // The photo block's two writes, product-keyed. The block itself came free
-  // with the shared card; what does not travel is which document a landed
-  // photo has to reappear in, which is why these are bound here rather than
-  // inherited.
+  // The photo block's two writes, product-keyed and made by the card's Save.
+  // The block itself came free with the shared card; what does not travel is
+  // which document a saved photo has to reappear in, which is why these are
+  // bound here rather than inherited.
   const addSessionImage = useAdminAddSessionImage(productId, groupId);
   const deleteSessionImage = useAdminDeleteSessionImage(productId);
   const setGroupNotes = useAdminSetGroupNotes(productId, groupId);
