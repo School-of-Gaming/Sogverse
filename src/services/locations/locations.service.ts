@@ -52,6 +52,17 @@ export interface LocationsPage<Row> {
 /** How many children one browse request returns. */
 export const LOCATION_BROWSE_PAGE_SIZE = 200;
 
+/**
+ * How many venues one page of the admin sites table returns.
+ *
+ * Much smaller than a browse level's page, because each row here drags its
+ * whole ancestor chain along — four embedded lookups per row — and the table it
+ * feeds is read a screenful at a time rather than scrolled through. A browse
+ * level pays for none of that: its rows all share the parent the caller asked
+ * for, so it carries no chain at all.
+ */
+export const SITE_LIST_PAGE_SIZE = 25;
+
 async function readPage<Row>(
   page: number,
   pageSize: number,
@@ -312,6 +323,44 @@ export class LocationsService {
         .order("id")
         .range(from, to),
     );
+  }
+
+  /**
+   * One page of **every** venue on the platform, each with its ancestor chain —
+   * the admin sites table.
+   *
+   * The third read in this service that carries a chain, and the only one whose
+   * rows do not share a parent: a venue list scoped to one municipality needs no
+   * chain because the caller already named the place, and a browse level is the
+   * same shape. Here the rows come from everywhere, so the path is the column
+   * that tells two identically-named schools apart.
+   *
+   * **Paged, not walked**, for the reason browsing is: the payload has to stay
+   * proportional to the screen. What bounds it is the page, never a claim about
+   * how many venues exist — sites are the one level of this table the
+   * application creates, so the set only grows.
+   *
+   * **Unfiltered by `retired_at`, and it needs no filter**: nothing retires a
+   * `site`. Sites are ours, created by an admin and absent from every upstream
+   * source, so no refresh path can reach them.
+   */
+  async getSitesPage(
+    options?: { page?: number },
+  ): Promise<LocationsPage<LocationWithChain>> {
+    const page = options?.page ?? 0;
+    const raw = await readPage(page, SITE_LIST_PAGE_SIZE, (from, to) =>
+      this.supabase
+        .from("locations")
+        .select(`${LOCATION_COLUMNS}, ${SITE_CHAIN_EMBED}`, { count: "exact" })
+        .eq("type", "site")
+        // `name` alone is not a total order — two schools in two municipalities
+        // share a name often enough — so a page boundary under it would drop
+        // rows and repeat others between requests.
+        .order("name")
+        .order("id")
+        .range(from, to),
+    );
+    return { ...raw, rows: raw.rows.map(flattenChain) };
   }
 
   /**

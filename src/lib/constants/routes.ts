@@ -304,6 +304,17 @@ export const ROUTES = {
     camps: "/admin/camps",
     events: "/admin/events",
     /**
+     * Every site on the platform — the `site` rows of the location tree, listed
+     * and edited as things in their own right rather than as a field on
+     * whichever product happens to run there.
+     *
+     * Sites are still *created* from a product's site picker and nowhere else,
+     * which is why there is no "new site" route here: a site exists to be
+     * pointed at, and the flow that needs one is the flow that names it.
+     */
+    sites: "/admin/sites",
+    site: (id: string) => `/admin/sites/${id}`,
+    /**
      * Platform-operations tools that belong to no one product — the instant
      * voice room and the Minecraft Education password reset, both shared by
      * admins and certified gedus. The gedu half lives on their dashboard's

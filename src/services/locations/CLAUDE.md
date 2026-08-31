@@ -687,6 +687,16 @@ The reads come in three shapes.
 so the caller knows whether to offer another page. Pages accumulate rather than replace,
 so "load more" appends under rows the user is already reading.
 
+There are two, and the difference between them is what the level is *scoped by*: browsing
+reads one node's children, while the admin sites table reads the `site` level across every
+parent there is. The second is the one read here whose rows do not share a parent, so it is
+also the only paged read that carries a chain — a venue's name is ambiguous the moment two
+municipalities have a school called the same thing, which is precisely why browsing needs
+no chain and this does. Its page is much smaller for the same reason: each row drags four
+embedded ancestor lookups along. It is still a *level* read rather than a whole-table one,
+and it stays legitimate on exactly that basis — the payload is the screen's, and sites are
+the one level this application creates, so the set only grows.
+
 **Whole-list reads** — one municipality's venues. That one and no others, and the count is
 the point: a surface needs this in full because the row the caller already confirmed bounds
 it, and it lists whatever it gets. It is read by the page that *renders* the venues inside
@@ -775,10 +785,14 @@ duplicate spellings are therefore structurally impossible above site level.
 
 **Rule: mutations invalidate via the key hierarchy** — a created site invalidates the
 sites key, which is a grouping key with no query of its own sitting above the
-per-municipality venue lists, so every one of them refreshes without the mutation having
-to know which municipality the row landed in; it also invalidates the browse level it
+per-municipality venue lists *and* the admin sites table's accumulating pages, so every one
+of them refreshes without the mutation having to know which municipality the row landed in
+or which surfaces list it; it also invalidates the browse level it
 landed in, and every cached search needle. A rename invalidates the row's detail key and
-the lists that render it, and the search needles for the same reason. **Anything that
+the lists that render it, and the search needles for the same reason. **It also invalidates
+the whole key-set grouping key rather than one selection**: those reads exist to *render* a
+row, so a rename leaves every cached selection containing it holding the old name, and a
+mutation cannot know which selections those are. **Anything that
 changes what search matches invalidates the search key, and creating a row is one of
 those**: sites are in the index carrying their whole ancestor chain, and the needle most
 likely to be cached is the one an admin typed just before deciding the venue did not

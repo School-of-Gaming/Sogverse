@@ -70,6 +70,109 @@ describe("LocationsService.getSitesByParent", () => {
   });
 });
 
+// Every venue on the platform, a page at a time. The read that feeds the admin
+// sites table, and the only chain-carrying one whose rows do not share a
+// parent — which is exactly why it carries a chain at all.
+
+describe("LocationsService.getSitesPage", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("filters to sites across every parent, under a total order", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(2), { from: 0, total: 2 }),
+    );
+
+    await service.getSitesPage();
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("type")).toBe("eq.site");
+    // No parent filter: this read is about the level, not about one place.
+    expect(url.searchParams.has("parent_id")).toBe(false);
+    // `name` alone ties often enough (two schools, two municipalities), and a
+    // tie straddling a page boundary drops one row and repeats another.
+    expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
+  });
+
+  // Nothing retires a site — they are ours, created by an admin and absent from
+  // every upstream source — so unlike a browse level this read needs no filter.
+  it("applies no retirement filter", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(1), { from: 0, total: 1 }),
+    );
+
+    await service.getSitesPage();
+
+    expect(
+      requestedUrl(fetchMock.mock.calls[0][0]).searchParams.has("retired_at"),
+    ).toBe(false);
+  });
+
+  it("returns one page and reports the true total behind it", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(25), { from: 0, total: 91 }),
+    );
+
+    const page = await service.getSitesPage();
+
+    expect(page.rows).toHaveLength(25);
+    expect(page.total).toBe(91);
+    expect(page.hasMore).toBe(true);
+    // One request, not a walk: the payload stays proportional to the screen.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for the window the requested page names", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(25, 50), { from: 50, total: 91 }),
+    );
+
+    await service.getSitesPage({ page: 2 });
+
+    expect(requestedRanges(fetchMock)).toEqual(["50:25"]);
+  });
+
+  // A name with no path is ambiguous the moment two municipalities have a
+  // school of the same name, so the chain rides along — flattened nearest-first
+  // exactly as the keyed read's is, so one renderer serves both.
+  it("flattens each row's embedded parent nest into a nearest-first chain", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(
+        [
+          {
+            ...locationRows(1)[0],
+            type: "site",
+            parent: {
+              id: "muni",
+              name: "Helsinki",
+              parent: {
+                id: "region",
+                name: "Uusimaa",
+                parent: { id: "country", name: "Suomi", parent: null },
+              },
+            },
+          },
+        ],
+        { from: 0, total: 1 },
+      ),
+    );
+
+    const page = await service.getSitesPage();
+
+    expect(page.rows[0].ancestors.map((node) => node.name)).toEqual([
+      "Helsinki",
+      "Uusimaa",
+      "Suomi",
+    ]);
+    expect(page.rows[0].ancestors[0]).not.toHaveProperty("parent");
+  });
+});
+
 describe("LocationsService.getLocationsByIds", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
@@ -502,6 +605,7 @@ const READS: [string, (service: LocationsService) => Promise<unknown>][] = [
   ["getChildren (root)", (s) => s.getChildren(null)],
   ["getChildren (node)", (s) => s.getChildren("loc-0")],
   ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
+  ["getSitesPage", (s) => s.getSitesPage()],
   ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],
   [
     "getMunicipalitiesByPostalCode",

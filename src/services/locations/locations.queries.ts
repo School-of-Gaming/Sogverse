@@ -35,6 +35,10 @@ export const locationKeys = {
   sites: () => [...locationKeys.all, "sites"] as const,
   sitesByParent: (parentId: string) =>
     [...locationKeys.sites(), "by-parent", parentId] as const,
+  // The admin sites table's accumulating pages, under `sites()` so a created
+  // or renamed venue refreshes the table exactly as it refreshes the
+  // per-municipality lists — neither mutation has to know this surface exists.
+  sitesPaged: () => [...locationKeys.sites(), "paged"] as const,
   // Browsing is keyed by the node opened, with the root under its own key so
   // "the countries" is a cache entry like any other level.
   children: () => [...locationKeys.all, "children"] as const,
@@ -57,8 +61,12 @@ export const locationKeys = {
       types ? [...types].sort().join(",") : "",
       country ?? "",
     ] as const,
+  // A grouping key with no query of its own, sitting above every key-set
+  // lookup: a rename changes what those reads render, and the mutation cannot
+  // know which selections happen to contain the row it just renamed.
+  keyed: () => [...locationKeys.all, "by-ids"] as const,
   byIds: (ids: readonly string[]) =>
-    [...locationKeys.all, "by-ids", keySet(ids)] as const,
+    [...locationKeys.keyed(), keySet(ids)] as const,
 };
 
 export function useLocation(id: string) {
@@ -117,6 +125,29 @@ export function useLocationChildren(parentId: string | null) {
   return useInfiniteQuery({
     queryKey: locationKeys.childrenOf(parentId),
     queryFn: ({ pageParam }) => service.getChildren(parentId, { page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.hasMore ? allPages.length : undefined,
+    staleTime: REFERENCE_DATA_STALE_MS,
+  });
+}
+
+/**
+ * Every venue on the platform, a page at a time, each with its ancestor chain.
+ *
+ * Infinite for the same reason browsing a level is: pages accumulate rather
+ * than replace, so "show more" appends under rows the admin is already reading
+ * instead of moving them. Sites are the one level of the tree the application
+ * creates, so this set only ever grows — the page is what bounds the payload,
+ * never a claim about how many venues there are.
+ */
+export function useSitesPages() {
+  const supabase = getClient();
+  const service = new LocationsService(supabase);
+
+  return useInfiniteQuery({
+    queryKey: locationKeys.sitesPaged(),
+    queryFn: ({ pageParam }) => service.getSitesPage({ page: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length : undefined,
@@ -248,6 +279,10 @@ export function useUpdateLocation() {
       queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
       queryClient.invalidateQueries({ queryKey: locationKeys.children() });
+      // Every key-set lookup, not only one naming this id: those reads exist to
+      // *render* a row, so the name they are holding is now the old one, and
+      // the mutation has no way to tell which selections contain it.
+      queryClient.invalidateQueries({ queryKey: locationKeys.keyed() });
       // A rename changes what search matches, so every cached needle is stale.
       queryClient.invalidateQueries({ queryKey: locationKeys.search() });
     },

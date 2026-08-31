@@ -125,8 +125,8 @@ export function VenuePickerDialog({
         onOpenChange={(next) => {
           if (!next) close();
         }}
-        title={t("venuePickerTitle")}
-        description={t("venuePickerDescription")}
+        title={t("sitePickerTitle")}
+        description={t("sitePickerDescription")}
         pickableTypes={VENUE_PICKABLE_TYPES}
         countryCode={countryCode}
         initialPath={initialPath}
@@ -177,8 +177,8 @@ export function VenuePickerDialog({
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("venuesIn", { name: placeName })}</DialogTitle>
-          <DialogDescription>{t("venuesInDescription")}</DialogDescription>
+          <DialogTitle>{t("sitesIn", { name: placeName })}</DialogTitle>
+          <DialogDescription>{t("sitesInDescription")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -207,7 +207,7 @@ export function VenuePickerDialog({
               </div>
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                {t("venuesHereEmpty")}
+                {t("sitesHereEmpty")}
               </p>
             )}
           </div>
@@ -227,7 +227,7 @@ export function VenuePickerDialog({
               onClick={() => setNaming(true)}
             >
               <Plus className="h-3.5 w-3.5" />
-              {t("addVenue")}
+              {t("addSite")}
             </Button>
           </div>
         </div>

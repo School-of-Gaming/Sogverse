@@ -384,7 +384,7 @@ export function FamilyProductPageBody({
               aria-hidden
             />
             <div className="min-w-0">
-              <span className="sr-only">{t("venueLabel")}: </span>
+              <span className="sr-only">{t("siteLabel")}: </span>
               <p className="font-medium">{venue.name}</p>
               {venue.address !== null && (
                 <p className="text-muted-foreground">{venue.address}</p>
@@ -486,7 +486,7 @@ export function FamilyProductPageBody({
             )}
             {venueNote !== null && venue !== null && (
               <NoteBlock
-                heading={t("venueNoteHeading", { site: venue.name })}
+                heading={t("siteNoteHeading", { site: venue.name })}
                 body={venueNote}
               />
             )}

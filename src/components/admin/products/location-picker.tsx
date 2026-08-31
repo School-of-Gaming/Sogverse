@@ -159,7 +159,7 @@ function SitePicker({
         value={value}
         dropping={dropping}
         row={row}
-        emptyLabel={t("chooseVenue")}
+        emptyLabel={t("chooseSite")}
         isVenue
         onOpen={() => setPicking(true)}
       />
@@ -442,7 +442,7 @@ function SelectedLocationCard({
                   allow, since it wraps and the form sits underneath. */}
               {!isVenue && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {t("noVenueHint")}
+                  {t("noSiteHint")}
                 </p>
               )}
             </div>
