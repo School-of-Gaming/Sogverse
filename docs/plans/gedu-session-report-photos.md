@@ -487,11 +487,11 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
   works with touch and keyboard; nothing reflows as images decode.
 - The three preview scenes render sessions with photos (mixed ratios) without layout
   faults.
-- Deploy-window compatibility holds structurally: the old family-feed RPC and its
-  strict schema are untouched by this change, and the existing DB parse test for
-  that schema keeps running (and passing) until the cleanup migration retires both.
-  No simulated-window harness is built — leaving the old pair alone *is* the
-  guarantee.
+- Deploy-window behavior is the accepted one, not the versioned one *(owner ruling —
+  see Deviations)*: the canonical family-feed RPC is widened in place, its strict
+  schema parses the widened document, and the still-deployed app's parse failing for
+  the sub-minute window is inside the accepted release cost. No versioned twin, no
+  cleanup migration, no simulated-window harness.
 - Owed/complete derivation unchanged: photos-only sessions still count as owing a
   report (existing DB tests still pass untouched).
 - Lint, type-check, unit+integration suites green locally; DB tests green in CI;
@@ -584,11 +584,6 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
 
 ## Follow-ups (live and die with this plan; owner names any keepers at completion)
 
-- The cleanup migration dropping the old family-feed RPC — the one follow-up that is
-  part of finishing, not optional. It cannot ride the same release (the window needs
-  the old RPC live), so it lands in the next routine release; if none is imminent
-  when the plan is deleted, this is the follow-up proposed to the owner for
-  `TODO.md` by name.
 - Captions per photo.
 - A replace operation with URL indirection so old emails track edits.
 - Adopting the normalization module for admin product images (the TODO's rendition
