@@ -60,7 +60,7 @@ export function FamilyProductPageScene({
       cancellation={fixture.cancellation}
       gedus={fixture.gedus}
       groupPublicNote={fixture.groupPublicNote}
-      venue={fixture.venue}
+      site={fixture.site}
       voiceHref={fixture.voiceHref}
       // Passing a handler is what makes the Join a `<button>` rather than a
       // link, so the lit state can be looked at without the click going

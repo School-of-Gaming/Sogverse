@@ -16,7 +16,7 @@ import {
  * client sent is discarded.** The column is denormalized onto every row purely
  * so country filtering needs no recursion — which means the parent's code is
  * the only value that can be correct, and a caller-supplied one is a second
- * source of truth for a field with exactly one. The venue dialog happens to
+ * source of truth for a field with exactly one. The site dialog happens to
  * send the right code today; that is not a guarantee, and country-scoping the
  * dialog later depends on this being true of every row rather than of every
  * well-behaved client. The read is the same user-bound client, so a parent the

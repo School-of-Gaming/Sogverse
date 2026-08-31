@@ -95,7 +95,7 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  * - **An in-person product also carries its site's notes**, beside the group's
  *   own on the same row and inside the same card — a bordered column, not a
  *   second card, because a card inside a card says "different kind of thing"
- *   when these are two instances of one kind. Site notes belong to the *venue*
+ *   when these are two instances of one kind. Site notes belong to the *building*
  *   and every product running there reads the same two paragraphs, so the panel
  *   names the site and says so; a remote product has no building and the row
  *   collapses back to one column.
@@ -123,7 +123,7 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  *   the cross-product signal.
  */
 /**
- * The venue an in-person product runs at, with the two notes that hang off it.
+ * The site an in-person product runs at, with the two notes that hang off it.
  *
  * Both notes are **site-scoped**: they are shared by every product running
  * there, which is why the panel that renders them says so by name.
@@ -166,7 +166,7 @@ export interface RosterMemberFlair {
 
 export interface ProductSite {
   name: string;
-  /** Street address, family-facing. `null` when the venue record has none. */
+  /** Street address, family-facing. `null` when the site record has none. */
   address: string | null;
   /** The site note families can eventually read. */
   publicNote: string | null;
@@ -215,7 +215,7 @@ interface GroupWorkspaceProps {
   /** Persist the group's notes. Awaited by the panel — see its own note. */
   onSaveGroupNotes: (draft: GroupNotesDraft) => void | Promise<void>;
   /**
-   * The venue an in-person product runs at, or `null` for a remote one.
+   * The site an in-person product runs at, or `null` for a remote one.
    *
    * **The question is `is_remote`, never "does it have a location".** A remote
    * municipality club carries a `location_id` by CHECK — the town it is run
@@ -228,10 +228,10 @@ interface GroupWorkspaceProps {
   site: ProductSite | null;
   siteNotesEditing: boolean;
   onSiteNotesEditingChange: (editing: boolean) => void;
-  /** Persist the venue's shared notes. Awaited by the panel. */
+  /** Persist the site's shared notes. Awaited by the panel. */
   onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
   /**
-   * A control that writes the venue's **address**, for a shell whose viewer owns
+   * A control that writes the site's **address**, for a shell whose viewer owns
    * that field. Omitted — which is what the gedu shell does, and what a scene
    * does — the site section is exactly what it has always been.
    *

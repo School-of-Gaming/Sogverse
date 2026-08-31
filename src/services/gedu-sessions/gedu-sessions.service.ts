@@ -209,13 +209,13 @@ export class GeduSessionsService {
   }
 
   /**
-   * Write the venue's shared notes — the two notes, and nothing else.
+   * Write the site's shared notes — the two notes, and nothing else.
    *
    * Site notes belong to the *location*, so every product running at that
    * building reads and writes the same paragraphs — the workspace says so out
    * loud, and this method is the write path behind it.
    *
-   * **The address is not one of them.** It is family-facing venue detail owned
+   * **The address is not one of them.** It is family-facing site detail owned
    * by the location record and edited by admins; a note-taking path that carried
    * it let a gedu save over an admin's correction with a stale cached copy
    * without either of them noticing, and let any assigned gedu rewrite it

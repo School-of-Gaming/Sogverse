@@ -114,7 +114,7 @@ export function useAdminSetGroupNotes(productId: string, groupId: string) {
 }
 
 /**
- * Write the venue's two shared notes.
+ * Write the site's two shared notes.
  *
  * The address is not a parameter and never travels: it belongs to the location
  * record and is edited there. That is a property of the RPC rather than a

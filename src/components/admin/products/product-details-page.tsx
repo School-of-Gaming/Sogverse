@@ -184,7 +184,7 @@ export function ProductDetailsPage({
         opensTime={voice.opensTime}
       />
 
-      {/* What happened *inside* a group — its standing notes, its venue's, its
+      {/* What happened *inside* a group — its standing notes, its site's, its
           roster and its whole session record — is no longer re-composed at the
           foot of this page. Each group's header above links to its own page,
           which renders the gedu's workspace for that group unchanged. */}

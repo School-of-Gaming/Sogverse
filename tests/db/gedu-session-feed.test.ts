@@ -1369,7 +1369,7 @@ describe("gedu session feed", () => {
       // know the name".
       expect(mine?.site_name).toBeNull();
 
-      // In-person: the venue name the dashboard card puts in its footer.
+      // In-person: the site name the dashboard card puts in its footer.
       expect(onSite?.site_name).toBeTruthy();
 
       // The gedu teaches neither of these.
@@ -1746,7 +1746,7 @@ describe("gedu session feed", () => {
   // 9. set_site_notes does not touch the address
   // -------------------------------------------------------------------------
 
-  describe("set_site_notes and the venue address", () => {
+  describe("set_site_notes and the site address", () => {
     it("preserves an admin's address across a gedu's note save", async () => {
       // The bug this pins: the RPC took an address, and the workspace echoed
       // back its cached copy on every save — so a gedu writing a note against a

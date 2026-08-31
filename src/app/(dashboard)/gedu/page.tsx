@@ -51,7 +51,7 @@ async function getInitialAssignmentRows(): Promise<MyAssignedProductSessionRow[]
 }
 
 /**
- * Prefetch the per-assignment summaries — group name, group size, venue, and
+ * Prefetch the per-assignment summaries — group name, group size, site, and
  * the outstanding-write-up count each card's badge shows.
  *
  * **Failure answers `null`, not an empty list**, and the difference matters

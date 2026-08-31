@@ -62,13 +62,13 @@ import {
  * - **The footer answers "where is this happening" — and is absent when there is
  *   no answer.** A remote product answers with the Join button (lit inside its
  *   window, locked and naming the next session outside it); an in-person one
- *   with its venue and a pin; a waitlisted one with the family's place in line
+ *   with its site and a pin; a waitlisted one with the family's place in line
  *   and what happens when a seat opens; an unplaced one with the fact that a
  *   Gedu is being matched; a finished one with the day it ended.
  *   Those are exclusive by construction, so the row is populated rather than
  *   reserved — and on the one card where every branch comes up empty (a running
  *   enrollment whose product has no schedule slots yet, so there is no session
- *   for a Join to name and no venue to name instead) the row is not drawn at
+ *   for a Join to name and no site to name instead) the row is not drawn at
  *   all. The schedule row above it has already said "No schedule set yet", which
  *   is the whole of what that card knows; an empty flex row underneath would add
  *   a band of nothing to say it a second time.
@@ -126,7 +126,7 @@ import {
  *
  * **The footer is part of the card.** Lifting the whole footer row rather than
  * the button was the easy version of that and quietly cost a click target: the
- * venue name, the ended-on date and the waitlist sentence rode up with it, so
+ * site name, the ended-on date and the waitlist sentence rode up with it, so
  * the bottom strip of every card without a Join swallowed clicks and did
  * nothing. Only the button is interactive, so only the button sits above the
  * anchor.
@@ -382,7 +382,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * Awaiting placement is excluded alongside a waitlist place, and for the same
    * reason rather than a similar one: with no group there is no room, no feed
    * and no page, so every affordance `running` gates — the Join, the Live
-   * badge, the venue line — would be describing something that does not exist
+   * badge, the site line — would be describing something that does not exist
    * yet. The difference between the two is what the footer *says*, not what the
    * card is allowed to do.
    */
@@ -606,19 +606,19 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
 
           {/* Four flat conditions rather than a nested chain — they are mutually
               exclusive by construction, and a run that is over has neither a
-              session left to join nor a venue anybody is travelling to, so the
+              session left to join nor a site anybody is travelling to, so the
               end date wins over all of them.
 
               No minimum height: these cards stack in one column on a phone, so
               there is no grid row to square off, and every branch below puts
               something real in the row. Holding a button's worth of height under
-              a single line of venue text would be dead space on the majority of
+              a single line of site text would be dead space on the majority of
               cards — and where no branch lands at all, the row itself does not
               render.
 
               **Nothing here is lifted above the card's stretched link except the
               Join itself.** The lift used to sit on the row, which also lifted
-              the venue name, the ended-on date and the waitlist sentence — none
+              the site name, the ended-on date and the waitlist sentence — none
               of them a control — and turned the bottom strip of most cards into
               a dead zone. The button is the only thing in the row with a click
               of its own to receive, so it is the only thing that takes the
@@ -659,7 +659,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 )}
                 {endedOn === null && awaiting && (
                   // The seat is bought; nobody has been placed yet. This wins
-                  // over the venue line an in-person product would otherwise get,
+                  // over the site line an in-person product would otherwise get,
                   // because the footer's question is "where is this happening"
                   // and the honest answer here is "nowhere yet" — a building
                   // named beside a group that does not exist would read as an

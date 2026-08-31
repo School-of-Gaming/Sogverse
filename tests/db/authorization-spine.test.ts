@@ -444,7 +444,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   location_search_blob: {
     scopeTest: "tests/db/search-fold-agreement.test.ts",
-    why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a venue needs it",
+    why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a site needs it",
   },
 };
 

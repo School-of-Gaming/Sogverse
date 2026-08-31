@@ -26,7 +26,7 @@ import { FamilyProductBackLink } from "./BackLink";
 import { FamilySessionFeed } from "./FamilySessionFeed";
 import type {
   FamilyProductGedu,
-  FamilyProductVenue,
+  FamilyProductSite,
   FamilySessionEntry,
 } from "./types";
 
@@ -114,7 +114,7 @@ export interface FamilyProductPageBodyProps {
   schedule: FamilyProductSchedule;
   /**
    * Whether the product runs in a voice room rather than a building. The
-   * question is `is_remote`, never "does it have a venue": a remote
+   * question is `is_remote`, never "does it have a site": a remote
    * municipality club carries a location — the town it is run for — so a caller
    * testing for one would print an address for a club that meets online.
    */
@@ -164,8 +164,8 @@ export interface FamilyProductPageBodyProps {
   gedus: readonly FamilyProductGedu[];
   /** The group's standing note for families, plain text. `null` = none. */
   groupPublicNote: string | null;
-  /** The venue and its family-facing detail, or `null` for a remote product. */
-  venue: FamilyProductVenue | null;
+  /** The site and its family-facing detail, or `null` for a remote product. */
+  site: FamilyProductSite | null;
   /** Where the Join navigates when the window is open. */
   voiceHref: string;
   /**
@@ -260,7 +260,7 @@ export function FamilyProductPageBody({
   cancellation = null,
   gedus,
   groupPublicNote,
-  venue,
+  site,
   voiceHref,
   onJoinClick,
   entries,
@@ -299,7 +299,7 @@ export function FamilyProductPageBody({
   const showJoin = isRemote && voiceState.hasUpcomingSession;
 
   const groupNote = nonEmpty(groupPublicNote);
-  const venueNote = nonEmpty(venue?.publicNote ?? null);
+  const siteNote = nonEmpty(site?.publicNote ?? null);
 
   return (
     // No horizontal padding of its own — the dashboard layout this body renders
@@ -377,7 +377,7 @@ export function FamilyProductPageBody({
           </div>
         </div>
 
-        {venue !== null && (
+        {site !== null && (
           <div className="mt-2 flex items-start gap-2 text-sm">
             <MapPin
               className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
@@ -385,9 +385,9 @@ export function FamilyProductPageBody({
             />
             <div className="min-w-0">
               <span className="sr-only">{t("siteLabel")}: </span>
-              <p className="font-medium">{venue.name}</p>
-              {venue.address !== null && (
-                <p className="text-muted-foreground">{venue.address}</p>
+              <p className="font-medium">{site.name}</p>
+              {site.address !== null && (
+                <p className="text-muted-foreground">{site.address}</p>
               )}
             </div>
           </div>
@@ -478,16 +478,16 @@ export function FamilyProductPageBody({
           sessions. Rendered only when there is something to say — an empty
           "About this group" card on a page whose real content is underneath it
           would push the feed down a screen to hold nothing. */}
-      {(groupNote !== null || venueNote !== null) && (
+      {(groupNote !== null || siteNote !== null) && (
         <Card className="mt-5">
           <CardContent className="space-y-4 p-4 sm:p-5">
             {groupNote !== null && (
               <NoteBlock heading={t("aboutHeading")} body={groupNote} />
             )}
-            {venueNote !== null && venue !== null && (
+            {siteNote !== null && site !== null && (
               <NoteBlock
-                heading={t("siteNoteHeading", { site: venue.name })}
-                body={venueNote}
+                heading={t("siteNoteHeading", { site: site.name })}
+                body={siteNote}
               />
             )}
           </CardContent>

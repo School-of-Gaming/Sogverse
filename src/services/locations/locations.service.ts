@@ -25,7 +25,7 @@ import type { z } from "zod";
  *
  * The sibling of `walkPages` (`src/lib/supabase/paging.ts`), and it exists for
  * the opposite reason: the walk
- * is for reads whose *whole* result a surface needs (one municipality's venues
+ * is for reads whose *whole* result a surface needs (one municipality's sites
  * to list), and this is for
  * browsing, where the payload has to stay proportional to what is on screen no matter how
  * many children a node has. Both share the same two disciplines — `count:
@@ -96,7 +96,7 @@ const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, exter
 //     has not landed" from "this id resolves to nothing", and a retired row is
 //     a *valid* pick, never cleared. Filtering it here would turn a live
 //     reference into a silently wiped one.
-//   * **The venue list is not filtered either**, and does not need to be:
+//   * **The site list is not filtered either**, and does not need to be:
 //     nothing retires a `site`. Sites are ours, created by an admin and absent
 //     from every upstream source, so no refresh path can reach them.
 //
@@ -280,7 +280,7 @@ export class LocationsService {
   }
 
   /**
-   * The sites under one municipality — the venues an admin sees once they have
+   * The sites under one municipality — what an admin sees once they have
    * drilled the tree down to a place.
    */
   async getSitesByParent(parentId: string): Promise<Location[]> {
@@ -297,18 +297,18 @@ export class LocationsService {
   }
 
   /**
-   * **Every** venue on the platform, each with its ancestor chain — the admin
+   * **Every** site on the platform, each with its ancestor chain — the admin
    * sites table.
    *
    * The third read in this service that carries a chain, and the only one whose
-   * rows do not share a parent: a venue list scoped to one municipality needs no
+   * rows do not share a parent: a site list scoped to one municipality needs no
    * chain because the caller already named the place, and a browse level is the
    * same shape. Here the rows come from everywhere, so the path is the column
    * that tells two identically-named schools apart.
    *
    * **Walked, not paged.** The surface reading this renders every row it gets,
    * so the whole result is what it needs — the same legitimacy the
-   * per-municipality venue list has, one scope wider. The walking is the shared
+   * per-municipality site list has, one scope wider. The walking is the shared
    * paging primitive's, which is server-side and invisible to the caller: no
    * page parameter, no "show more", no total to report.
    *

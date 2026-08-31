@@ -12,13 +12,13 @@ import {
 export type SiteNotesDraft = TwoAudienceNotesDraft;
 
 interface SiteNotesPanelProps {
-  /** The venue's name — the thing these notes actually belong to. */
+  /** The site's name — the thing these notes actually belong to. */
   siteName: string;
   /**
    * The site's street address, or `null` when nobody has filled one in.
    *
    * **Displayed, never edited by this panel** — it is family-facing detail that
-   * belongs to the venue record, and a Gedu who needs it needs to *read* it on
+   * belongs to the site record, and a Gedu who needs it needs to *read* it on
    * the way there, not retype it. A surface whose viewer owns the field supplies
    * `addressEditor` below; this prop stays the display value on every surface.
    */
@@ -56,7 +56,7 @@ interface SiteNotesPanelProps {
  *
  * A remote club has no building; an in-person one has a building with a door
  * code, a room that is booked until half past, and a caretaker who locks up at
- * six. None of that is true of the *group* — it is true of the venue, and it is
+ * six. None of that is true of the *group* — it is true of the site, and it is
  * true of every other product running there — so it is stored on the site and
  * surfaced here rather than being retyped into each group's notes and going
  * stale in four places at once.

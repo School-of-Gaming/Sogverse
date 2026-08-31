@@ -7,7 +7,7 @@ import type {
 } from "./FamilyProductPageBody";
 import type {
   FamilyProductGedu,
-  FamilyProductVenue,
+  FamilyProductSite,
   FamilySessionEntry,
 } from "./types";
 
@@ -35,7 +35,7 @@ const TIMEZONE = "Europe/Helsinki";
  * **Five scenarios, chosen for what they cannot show each other.**
  *
  * `active-club` is the kitchen sink and the only one with a live room.
- * `in-person-club` is the venue shape, which is the one arrangement where the
+ * `in-person-club` is the site shape, which is the one arrangement where the
  * page has an address and no Join at all. `camp` is a finished, end-dated
  * product: no future block, no divider, and a remote room that will never open
  * again. `locked-join` is the page in its resting state — the locked button
@@ -91,7 +91,7 @@ export interface FamilyProductPageFixture {
   cancellation: FamilyProductCancellation | null;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
-  venue: FamilyProductVenue | null;
+  site: FamilyProductSite | null;
   voiceHref: string;
   entries: FamilySessionEntry[];
   sourceTimeZone: string;
@@ -594,7 +594,7 @@ interface ScenarioConfig {
   groupName: string;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
-  venue: FamilyProductVenue | null;
+  site: FamilyProductSite | null;
   /**
    * The parent-only billing states, both of which the gamer's copy of this page
    * must render nothing for. Only one scenario carries each: they are mutually
@@ -638,7 +638,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [SANNA, PETRA],
     groupPublicNote:
       "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
-    venue: null,
+    site: null,
     // The membership winding down, on the club rather than the camp: a camp is
     // bought outright and has no subscription to not-renew, so a "won't renew"
     // line there would be describing something that cannot happen. The parent's
@@ -649,9 +649,9 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   },
 
   /**
-   * **The venue shape.** In person, so there is no room and therefore no Join
+   * **The site shape.** In person, so there is no room and therefore no Join
    * at all — not a locked one — and the masthead carries an address instead.
-   * It is also the only scenario with a second standing note, because the venue
+   * It is also the only scenario with a second standing note, because the site
    * has things to say that the group does not: where to drop off, which floor,
    * when the café shuts.
    */
@@ -667,7 +667,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [PETRA, JOONAS],
     groupPublicNote:
       "Wednesday green are working through Roblox Studio from the beginning. Nothing needs installing at home — everything happens on the library's machines.",
-    venue: {
+    site: {
       name: "Sello Library, Espoo",
       address: "Leppävaarankatu 9, 02600 Espoo",
       publicNote:
@@ -704,7 +704,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [SANNA, JOONAS],
     groupPublicNote:
       "Builders red worked towards one shared obstacle course by Friday. Everything each team built got snapped into it at the end of the week.",
-    venue: null,
+    site: null,
   },
 
   /**
@@ -726,7 +726,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [SANNA],
     groupPublicNote:
       "Starters B is a brand-new group and everybody in it is starting from the same place. The first couple of sessions are mostly getting set up and getting to know each other.",
-    venue: null,
+    site: null,
     startsWithFeed: true,
   },
 
@@ -758,7 +758,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [JOONAS],
     groupPublicNote:
       "An hour a week for the grown-ups: what your children are building, how the games work, and what the settings actually do. No experience assumed, and nothing to install.",
-    venue: null,
+    site: null,
     paymentProblem: true,
   },
 };
@@ -836,7 +836,7 @@ export function buildFamilyProductPageFixture(
           },
     gedus: config.gedus,
     groupPublicNote: config.groupPublicNote,
-    venue: config.venue,
+    site: config.site,
     voiceHref: `/voice/group/${GROUP_ID}`,
     entries,
     sourceTimeZone: TIMEZONE,

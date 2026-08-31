@@ -76,7 +76,7 @@
  *     off the country row, all by the code join, with a `RAISE WARNING` naming
  *     anything that did not map. A site whose old parent has no counterpart is
  *     parked under the country row: never left NULL, because a NULL parent is
- *     the picker's root level and the venue would surface beside the countries,
+ *     the picker's root level and the site would surface beside the countries,
  *     and never deleted, because a product may RESTRICT on it. A product whose
  *     old row has no counterpart stays parked the same way, for the same
  *     reasons — visible, named, and legal where it stands.
@@ -436,7 +436,7 @@ UPDATE public.locations s
    AND t.new_parent_id IS NOT NULL;
 
 -- A site whose old parent has no counterpart is parked under the country row.
--- Never NULL: a NULL parent is the picker's root level, so the venue would
+-- Never NULL: a NULL parent is the picker's root level, so the site would
 -- surface beside the countries. Never deleted: a product may RESTRICT on it.
 UPDATE public.locations s
    SET parent_id = c.id

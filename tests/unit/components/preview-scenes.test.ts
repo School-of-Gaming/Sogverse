@@ -895,14 +895,14 @@ describe("every roster row carries exactly one contact email", () => {
 /**
  * Remote-vs-in-person is the axis the two scenarios exist to split, and site
  * notes hang off exactly one side of it: an in-person product always has a
- * venue (the schema requires a location), a remote one never does. A fixture
+ * site (the schema requires a location), a remote one never does. A fixture
  * that lost the site would silently take the whole site-notes panel off every
  * scene without failing anything else.
  */
 describe("site notes follow in-person, and only in-person", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("gives the in-person camp a venue with an address and a half-written pair", () => {
+  it("gives the in-person camp a site with an address and a half-written pair", () => {
     const { data, site, groupNotes } = buildGroupWorkspaceFixture(now, "camp");
     expect(data.product.is_remote).toBe(false);
     expect(site).not.toBeNull();
@@ -919,7 +919,7 @@ describe("site notes follow in-person, and only in-person", () => {
     expect(groupNotes.staffNote).not.toBeNull();
   });
 
-  it("gives the remote club no venue at all", () => {
+  it("gives the remote club no site at all", () => {
     const { data, site } = buildGroupWorkspaceFixture(now, "club");
     expect(data.product.is_remote).toBe(true);
     expect(site).toBeNull();
@@ -1326,13 +1326,13 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
   /**
    * **Every card's footer holds something.** It used to be a reserved zone that
    * stood empty on any product with no room, which bought uniform heights with
-   * two bands of nothing. Now it is the Join on a remote product and the venue
+   * two bands of nothing. Now it is the Join on a remote product and the site
    * on an in-person one. That the two are mutually exclusive is the roll-up's
    * own rule and is pinned there; what is this fixture's job — and would put the
    * hole straight back without failing anything else — is that each of its
    * in-person cards actually names a building.
    */
-  it("names a venue on every in-person card", () => {
+  it("names a site on every in-person card", () => {
     const onsite = summaries().filter((a) => !a.hasVoiceRoom);
     expect(onsite.length).toBeGreaterThan(0);
     for (const assignment of onsite) {
@@ -1340,7 +1340,7 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
     }
   });
 
-  it("names the camp's venue with the same string its product page does", () => {
+  it("names the camp's site with the same string its product page does", () => {
     const camp = summaries().find((a) => a.productType === "camp");
     const { site } = buildGroupWorkspaceFixture(now, "camp");
     expect(camp?.siteName).toBe(site?.name);

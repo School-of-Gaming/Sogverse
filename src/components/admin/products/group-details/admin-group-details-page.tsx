@@ -72,7 +72,7 @@ interface AdminGroupDetailsPageProps {
  * documents rather than one.**
  *
  * - The **admin product session record** answers the product's schedule, its
- *   timezone, its venue and every group's stored sessions and standing notes.
+ *   timezone, its site and every group's stored sessions and standing notes.
  *   It is the document the admin write hooks below invalidate, which is what
  *   makes a saved report, a ticked register or an edited note repaint the card
  *   it was made on.
@@ -519,7 +519,7 @@ function Workspace({
   };
 
   /**
-   * Persist the venue's shared notes.
+   * Persist the site's shared notes.
    *
    * The address is **not** sent: it belongs to the location record, the RPC
    * does not accept one, and it is written by its own control beside these
@@ -590,7 +590,7 @@ function Workspace({
       onSiteNotesEditingChange={setSiteNotesEditing}
       onSaveSiteNotes={handleSaveSiteNotes}
       // The one thing this page adds to the site section that a gedu's does not
-      // have: the address is family-facing venue detail owned by the location
+      // have: the address is family-facing site detail owned by the location
       // record, and an admin is the only person who may write it.
       siteAddressEditor={
         sessions.site === null ? undefined : (

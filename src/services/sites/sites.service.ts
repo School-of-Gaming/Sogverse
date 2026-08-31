@@ -115,7 +115,7 @@ export class SitesService {
    * Every product whose `location_id` is this site.
    *
    * Walked rather than paged: the page renders the whole list, and nothing
-   * about the query bounds it — a long-running venue accumulates a club per
+   * about the query bounds it — a long-running site accumulates a club per
    * term for as long as it is in use. A filter that matches few rows today is
    * not a bound.
    *

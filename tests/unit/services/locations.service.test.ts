@@ -70,7 +70,7 @@ describe("LocationsService.getSitesByParent", () => {
   });
 });
 
-// Every venue on the platform, in full. The read that feeds the admin sites
+// Every site on the platform, in full. The read that feeds the admin sites
 // table, and the only chain-carrying one whose rows do not share a parent —
 // which is exactly why it carries a chain at all. The page renders every row it
 // gets, so the read walks rather than returning a window.
@@ -223,7 +223,7 @@ describe("LocationsService.getLocationsByIds", () => {
   // A key set is whatever a caller stored, and a stored pick can be a site —
   // the deepest row in the tree — so this read asks for four ancestor levels
   // rather than the three a municipality needs. Under-asking would silently
-  // truncate a French venue's chain at its région.
+  // truncate a French site's chain at its région.
   it("asks for four embedded ancestor levels, the deepest chain any country has", async () => {
     fetchMock.mockResolvedValue(postgrestJson([]));
 

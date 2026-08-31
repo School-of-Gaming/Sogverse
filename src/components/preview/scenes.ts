@@ -270,7 +270,7 @@ export const PREVIEW_SCENES = [
         slug: "camp",
         label: "Camp — in person, daily",
         description:
-          "The in-person, daily, end-dated shape — the only one with a venue and a long future block.",
+          "The in-person, daily, end-dated shape — the only one with a site and a long future block.",
       },
       {
         slug: "roblox",
@@ -322,7 +322,7 @@ export const PREVIEW_SCENES = [
       {
         slug: "in-person-club",
         label: "Club — in person",
-        description: "The venue shape: an address, and no Join at all.",
+        description: "The site shape: an address, and no Join at all.",
       },
       {
         slug: "camp",

@@ -49,16 +49,16 @@ ban, and the ESLint config says so.
   game account editor, and the staff flair (newcomer badge, note button).
 - **`GroupNotesPanel.tsx` / `SiteNotesPanel.tsx` / `TwoAudienceNotesPanel.tsx`** — the
   standing notes. The two named panels are the same two-audience editor with different
-  copy and a different owner (the group; the venue).
+  copy and a different owner (the group; the site).
 
   **`SiteNotesPanel` has one consumer outside this workspace, and that is the point of it
   rather than a leak: the admin site page (`/admin/sites/[id]`).** Its notes belong to the
   *building*, not to any product running in it, so the gedu prepping a session there and
-  the admin editing the venue record are looking at one pair of paragraphs — and a second
+  the admin editing the site record are looking at one pair of paragraphs — and a second
   editor with its own copy and its own layout would be a second way to say the same thing,
   free to drift the moment either changed. That page passes **no** `addressEditor`, and the
   contrast is what the slot is for: the address is edited there in the card that owns the
-  venue record, beside the name, so the panel renders it exactly as a gedu meets it. The
+  site record, beside the name, so the panel renders it exactly as a gedu meets it. The
   slot exists for a surface whose only reach into that record *is* this section — the admin
   product page, where the site is a fact about the group being worked on. This does not
   widen the directory's claim — the panel is still the group workspace's component, still

@@ -55,7 +55,7 @@ import { sitePlacePath } from "./site-place-path";
 const DETAIL_RETRIES = 1;
 
 /**
- * One site, as the person who owns the platform's venue records works it: the
+ * One site, as the person who owns the platform's site records works it: the
  * place it sits in, the products connected to it, and the four fields anybody
  * is allowed to change about it.
  *
@@ -70,14 +70,14 @@ const DETAIL_RETRIES = 1;
  * note only staff do.
  *
  * **They are grouped by what they are, not by where they are stored.** The name
- * and the address are the venue record and share one card with one Save, though
+ * and the address are the site record and share one card with one Save, though
  * they sit in two tables behind two routes — a seam in the schema is not a
  * reason to ask an admin to save one building's details twice. The two notes
  * are a pair of paragraphs with two audiences, and keep the panel that says so.
  *
  * **That notes panel is the same one the product page renders**, not a copy of
  * it. They belong to the building rather than to any product running in it, so
- * a gedu prepping a session at this venue and an admin on this page are looking
+ * a gedu prepping a session at this site and an admin on this page are looking
  * at one pair of paragraphs; a second editor with its own copy would be a
  * second way to say the same thing, free to drift.
  */
@@ -183,7 +183,7 @@ function SiteBody({
   if (pending) return null;
   if (failed) return <Notice>{c("somethingWentWrong")}</Notice>;
   if (site === undefined) return <Notice>{t("notFound")}</Notice>;
-  // A location that is not a venue — a municipality id typed into the URL, or a
+  // A location that is not a site — a municipality id typed into the URL, or a
   // stored pick that was never a site. It resolves perfectly well; it simply
   // has no editors here, and saying so is better than showing the wrong ones.
   if (!isSite) return <Notice>{t("notASite")}</Notice>;
@@ -436,8 +436,8 @@ function SiteDetailsFields({
  *
  * **The address is edited in the details card above and nowhere else on this
  * page.** The panel's `addressEditor` slot exists for a surface whose *only*
- * reach into the venue record is this section — the admin product page, where
- * the site is a fact about the group being worked on. This page is the venue
+ * reach into the site record is this section — the admin product page, where
+ * the site is a fact about the group being worked on. This page is the site
  * record, so the field belongs beside the name in the card that owns it, and a
  * second control here would be two places to change one value.
  *

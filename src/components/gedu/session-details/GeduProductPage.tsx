@@ -375,10 +375,10 @@ function Workspace({
   };
 
   /**
-   * Persist the venue's shared notes.
+   * Persist the site's shared notes.
    *
    * The address is **not** sent, and there is no way from here to send one. It
-   * is read-only on this surface because it is family-facing venue detail owned
+   * is read-only on this surface because it is family-facing site detail owned
    * by the location record — and it used to be echoed back on every save, which
    * meant a page loaded before an admin corrected the address quietly reverted
    * that correction the next time a gedu touched a note. The RPC no longer takes

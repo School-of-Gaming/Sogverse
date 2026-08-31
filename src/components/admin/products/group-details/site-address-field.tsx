@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { useUpdateSiteNotes } from "@/services/products";
 
 /**
- * The one affordance on this page that writes the venue's street address.
+ * The one affordance on this page that writes the site's street address.
  *
  * **It is a control of its own inside the site-notes section because the two
  * fields have different owners, and that split is the point.** The two site
  * *notes* are written by whoever runs the building's sessions — an admin or an
  * assigned gedu — through an RPC that deliberately takes no address at all. The
- * address is family-facing venue detail belonging to the location record, an
+ * address is family-facing site detail belonging to the location record, an
  * admin's alone, and it travels on the admin route instead. One control per
  * owner is what stops a note save carrying a stale address back with it, which
  * is the bug the RPC dropped its address parameter to kill.

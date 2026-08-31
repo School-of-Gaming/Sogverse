@@ -59,11 +59,11 @@ interface GeduAssignmentCardProps {
  * difference of a couple of lines stops reading as a shorter card and starts
  * reading as a broken one.
  *
- * - **The footer holds the Join on a remote product and the venue on an
+ * - **The footer holds the Join on a remote product and the site on an
  *   in-person one.** Those are the same question — where is this happening —
  *   answered the two ways a product can answer it, and they are exclusive by
  *   construction, so an assignment with a session ahead of it always has exactly
- *   one of them. The venue is text with a pin, deliberately not a link: there is
+ *   one of them. The site is text with a pin, deliberately not a link: there is
  *   nothing to open, and a card whose bottom row is sometimes a button and
  *   sometimes a link would teach a click that only works half the time. **A run
  *   that is over answers a third way**: the day it ended. Both of the usual
@@ -158,7 +158,7 @@ interface GeduAssignmentCardProps {
  *
  * **The footer is part of the card.** Lifting the whole footer row rather than
  * the button was the easy version of that and quietly cost a click target: the
- * venue name and the ended-on date rode up with it, so the bottom strip of every
+ * site name and the ended-on date rode up with it, so the bottom strip of every
  * card without a Join swallowed clicks and did nothing. Nothing in the footer
  * but the button is interactive, so nothing else may sit above the link.
  *
@@ -384,11 +384,11 @@ export function GeduAssignmentCard({
               conditions rather than one nested chain — they are mutually
               exclusive by construction, and the end date wins over both of the
               others because a run that is over has neither a session left to
-              join nor a venue anyone is travelling to.
+              join nor a site anyone is travelling to.
 
               `min-h-9` is the Join button's own height (`size="sm"`), held by the
               row whatever lands in it. Without it the footer is as tall as its
-              content, so a card whose answer is a line of text — a venue, the
+              content, so a card whose answer is a line of text — a site, the
               day a run ended — sits a button's worth shorter than the card
               beside it. Inside a grid row that is invisible (the row stretches
               and the difference lands as padding), which is exactly why it went
@@ -398,7 +398,7 @@ export function GeduAssignmentCard({
 
               **Nothing in this row is lifted above the card's stretched link
               except the Join itself.** The lift used to sit on the row, which
-              also lifted the venue name and the ended-on date — neither of which
+              also lifted the site name and the ended-on date — neither of which
               is a control — and made the bottom strip of most cards a dead zone
               where a click hit nothing at all. The button is the only thing here
               with a click of its own to receive, so it is the only thing that

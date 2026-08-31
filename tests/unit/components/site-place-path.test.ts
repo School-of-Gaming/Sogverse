@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { sitePlacePath } from "@/components/admin/sites/site-place-path";
 
 // Both reads behind the admin sites surfaces return a site's chain NEAREST
-// first — `ancestors[0]` is the level immediately above the venue, whatever the
+// first — `ancestors[0]` is the level immediately above the site, whatever the
 // country — and a breadcrumb reads the other way. Getting the direction wrong
 // is silent: the line still renders, it just claims Finland sits inside
 // Helsinki.
@@ -40,7 +40,7 @@ describe("sitePlacePath", () => {
     ).toBe("Ranska › Hauts-de-France › Nord › Lille");
   });
 
-  // Countries sit at depth 0, so a venue parked directly under one has a chain
+  // Countries sit at depth 0, so a site parked directly under one has a chain
   // of exactly one link — the shape that would break a hardcoded depth.
   it("renders a one-link chain without a separator", () => {
     expect(sitePlacePath([{ name: "Suomi", name_i18n: null }], "en")).toBe(

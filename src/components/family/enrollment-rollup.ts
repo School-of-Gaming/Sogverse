@@ -65,7 +65,7 @@ export interface FamilyEnrollmentSummary {
   /** Where the Join navigates. `"#"` keeps it inert. */
   voiceHref: string;
   /**
-   * The venue an in-person enrollment runs at, `null` for a remote one. The
+   * The site an in-person enrollment runs at, `null` for a remote one. The
    * in-person counterpart of the Join button — the same question (where is this
    * happening) answered the other way a product can answer it.
    */
@@ -281,7 +281,7 @@ export interface FamilyRollUpArgs {
   waitlistRows: readonly MyWaitlistRow[];
   /** The instant every derivation is anchored to — the shared clock's tick. */
   now: Date;
-  /** Viewer's UI locale, for the product name and the venue name. */
+  /** Viewer's UI locale, for the product name and the site name. */
   locale: SupportedLocale;
   /** Viewer's IANA zone — the schedule sentence is stated in it. */
   timeZone: string;

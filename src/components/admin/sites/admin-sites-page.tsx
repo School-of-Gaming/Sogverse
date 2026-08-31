@@ -40,12 +40,12 @@ interface SiteRow {
 }
 
 /**
- * Every site on the platform: a searchable table of the venue rows an admin has
+ * Every site on the platform: a searchable table of the site rows an admin has
  * created, each row opening its own page.
  *
  * **The listing is the whole level, and there is nothing to page through.** The
  * read walks its pages server-side and hands back every site; this table renders
- * every row it is handed. That is the same legitimacy the per-municipality venue
+ * every row it is handed. That is the same legitimacy the per-municipality site
  * list has, one scope wider — a page showing its content rather than a control
  * choosing from a collection — so there is no "show more" and no total printed
  * beside a list that is already complete. The one count on this page is the

@@ -145,7 +145,7 @@ interface TwoAudienceNotesPanelProps {
  * was typed.** The panel closes only once the write has landed; a refused one
  * leaves it open, re-enabled, with the text untouched and one line saying so.
  * That matters more here than almost anywhere else on the page, because the
- * site scope's fields are shared by every product at the venue — retyping two
+ * site scope's fields are shared by every product in that building — retyping two
  * paragraphs somebody had just finished is a good way to get them typed
  * shorter the second time.
  *

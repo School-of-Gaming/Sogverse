@@ -245,7 +245,7 @@ function adminSessions(): AdminProductSessions {
       timezone: "Europe/Helsinki",
       start_date: "2025-09-01",
       end_date: null,
-      // In person, so the venue's section — and the address control on it —
+      // In person, so the site's section — and the address control on it —
       // renders.
       is_remote: false,
       schedule_slots: [],
@@ -443,7 +443,7 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     expect(isLit(noteButton("Siiri"))).toBe(true);
   });
 
-  it("offers the admin-only address control inside the venue's section", () => {
+  it("offers the admin-only address control inside the site's section", () => {
     renderPage("consumer_club");
 
     // The address itself is read-only on both surfaces and shown by the shared

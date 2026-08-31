@@ -29,7 +29,7 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * absent (including saving half a roster and coming back to it), typing both
  * session notes on a past *or* a future session — pre-epoch ones included,
  * which open the same record editor — writing the group's standing notes, and,
- * on an in-person product, the venue's shared ones, plus correcting a child's
+ * on an in-person product, the site's shared ones, plus correcting a child's
  * game username from the roster — on whichever platform the scenario's topic
  * names, or not at all on the one topic that names none. A flagged session
  * turning into a finished one, and a part-marked one staying flagged, are the
@@ -246,7 +246,7 @@ export function GeduProductPageScene({
     setGroupNotesEditing(false);
   };
 
-  // Site notes belong to the venue, so a save here would in reality touch every
+  // Site notes belong to the building, so a save here would in reality touch every
   // product running there. In the scene it touches this page's copy and stops —
   // but the panel says out loud what the real write would do, which is the part
   // that has to be right before any of this is wired up.

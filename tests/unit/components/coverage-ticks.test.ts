@@ -66,7 +66,7 @@ function pick(
 describe("ticksFromRows", () => {
   it("keys every saved row by its id, whatever kind of place it is", () => {
     // The catalog era split saved rows into "tickable" and "legacy" chips a
-    // gedu could remove but never re-add — venues, country rows, anything from
+    // gedu could remove but never re-add — sites, country rows, anything from
     // a country with no shipped catalog. Browsing the table itself removed the
     // distinction: they are all rows, and all of them tick.
     const ticks = ticksFromRows(

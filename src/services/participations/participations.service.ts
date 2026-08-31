@@ -33,7 +33,7 @@ import {
 } from "./seat-offer.contracts";
 
 /**
- * A venue's name as it comes off the row — the canonical `name` plus the
+ * A site's name as it comes off the row — the canonical `name` plus the
  * `locale -> name` override map — resolved to the viewer's locale at render
  * time by the shared location-name helper.
  *
@@ -100,7 +100,7 @@ export interface MyUpcomingSessionRow {
      */
     isRemote: boolean;
     /**
-     * The venue an **in-person** product runs at, `null` on a remote one.
+     * The site an **in-person** product runs at, `null` on a remote one.
      *
      * Gated on `is_remote` rather than on whether the join found a row: a
      * remote municipality club carries a `location_id` too (the municipality
@@ -168,7 +168,7 @@ export interface MyUpcomingSessionRow {
  * formatter reads for a dated run.
  *
  * What it still does not carry is anything that only a *seat* produces: no
- * group, no subscription state, and no venue. A waitlisted family has no
+ * group, no subscription state, and no site. A waitlisted family has no
  * placement to derive a next session from and no billing relationship to be in
  * trouble with, and their card's footer is the queue sentence, so nothing
  * downstream has a use for them. The product's own id is absent for the same
@@ -1029,7 +1029,7 @@ type RawMyUpcomingSessionRow = QueryData<
  * The product shell it selects mirrors the sessions builder's minus the parts
  * only a seat produces — see `MyWaitlistRow` for why each half is where it is.
  * No location embed: a waitlisted card's footer is the queue sentence, so there
- * is no venue line for one to fill.
+ * is no site line for one to fill.
  *
  * `seat_offer_sent_at` is the one column here that is not about the product,
  * and it is selected rather than asked of the position RPC on purpose: that RPC
@@ -1095,7 +1095,7 @@ function toMyUpcomingSessionRow(
       isRemote: product.is_remote,
       // The join is gated here rather than in the select, because the select
       // cannot express it: a remote municipality club has a `location_id` and
-      // no venue. See `MyUpcomingSessionRow.product.site`.
+      // no site. See `MyUpcomingSessionRow.product.site`.
       site: product.is_remote ? null : product.location,
       translations: product.product_translations,
     },

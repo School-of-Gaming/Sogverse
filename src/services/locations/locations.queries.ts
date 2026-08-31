@@ -31,12 +31,12 @@ export const locationKeys = {
   detail: (id: string) => [...locationKeys.details(), id] as const,
   // A grouping key with no query of its own: `sites()` is the parent of
   // `sitesByParent`, so invalidating it after a site is created refreshes every
-  // per-municipality venue list at once, whichever one the new row landed in.
+  // per-municipality site list at once, whichever one the new row landed in.
   sites: () => [...locationKeys.all, "sites"] as const,
   sitesByParent: (parentId: string) =>
     [...locationKeys.sites(), "by-parent", parentId] as const,
   // The admin sites table's whole-level read, under `sites()` so a created or
-  // renamed venue refreshes the table exactly as it refreshes the
+  // renamed site refreshes the table exactly as it refreshes the
   // per-municipality lists — neither mutation has to know this surface exists.
   sitesAll: () => [...locationKeys.sites(), "all"] as const,
   // Browsing is keyed by the node opened, with the root under its own key so
@@ -99,7 +99,7 @@ export function useSitesByParent(parentId: string | null | undefined) {
  * How long a browsed or searched level stays fresh. Countries, regions and
  * communes are seeded reference data that changes when a migration says so, and
  * reopening the picker should not re-fetch the top of the tree; the one thing
- * that does change under a user — a newly created venue — invalidates this key
+ * that does change under a user — a newly created site — invalidates this key
  * explicitly from the create mutation.
  */
 const REFERENCE_DATA_STALE_MS = 5 * 60 * 1000;
@@ -133,7 +133,7 @@ export function useLocationChildren(parentId: string | null) {
 }
 
 /**
- * Every venue on the platform, each with its ancestor chain.
+ * Every site on the platform, each with its ancestor chain.
  *
  * A plain query over a walked read, not an infinite one: the admin sites table
  * renders every row it is handed, so there is no page for the UI to advance and
@@ -240,12 +240,12 @@ export function useCreateLocation() {
     mutationFn: (location: CreateLocationBody) => service.createLocation(location),
     onSuccess: () => {
       // The only thing this route creates is a site, and a new site changes
-      // the per-municipality venue list it landed in — plus the browse level it
+      // the per-municipality site list it landed in — plus the browse level it
       // was created under, which is now one row longer.
       //
       // And every cached search needle, for the same reason a rename does:
       // sites are in the search index carrying their whole ancestor chain, so
-      // an admin who names a venue and then types its name must find it. A
+      // an admin who names a site and then types its name must find it. A
       // cached "no results" for that very needle is the likely one to be
       // holding, because looking before creating is how the flow goes.
       //
@@ -255,14 +255,14 @@ export function useCreateLocation() {
       // search goes through /api/locations/search, whose responses are keyed by
       // URL in a shared cache for five minutes and served stale for an hour
       // while they revalidate. So the refetch can legitimately be answered with
-      // the same pre-creation response the admin already saw, and the venue
+      // the same pre-creation response the admin already saw, and the site
       // stays missing from that one needle until the entry ages out. Nothing on
       // this side can shorten that window: seeding the new row into the search
       // cache by hand would be this client inventing a ranked result the server
       // did not produce, which is worse than a stale one it did.
       //
       // RETURNED, not fired-and-forgotten: React Query awaits a promise
-      // returned from onSuccess before resolving mutateAsync, so the venue
+      // returned from onSuccess before resolving mutateAsync, so the site
       // dialog cannot hand a freshly created id back to a form whose caches
       // still describe the world before it existed.
       return Promise.all([

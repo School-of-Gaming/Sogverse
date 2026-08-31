@@ -87,7 +87,7 @@ export function GeduDashboardSkeleton({
 
 /**
  * One assignment card's shape: the eyebrow, the product name, the group line,
- * the next-session line, the cadence, and the footer the Join or the venue
+ * the next-session line, the cadence, and the footer the Join or the site
  * lands in. Bars where rows will be, rather than one solid block — the point of
  * a skeleton is that the page is already recognisable before it is readable.
  */
