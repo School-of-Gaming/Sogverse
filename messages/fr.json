@@ -1439,7 +1439,7 @@
     },
     "siteNotes": {
       "heading": "Site",
-      "sharedCaption": "{site} — tous les produits organisés sur ce site affichent les mêmes informations : une modification ici les change partout.",
+      "sharedCaption": "{site} — tous les produits organisés sur ce site affichent les mêmes informations : une modification les change partout.",
       "nameLabel": "Nom",
       "namePlaceholder": "Le nom de ce site",
       "nameRequired": "Un site doit avoir un nom.",
@@ -1447,6 +1447,7 @@
       "addressPlaceholder": "Rue, code postal, ville",
       "addressEmpty": "Ajoutez l’adresse dont les familles ont besoin pour trouver le site.",
       "edit": "Modifier",
+      "editSite": "Modifier le site",
       "cancel": "Annuler",
       "save": "Enregistrer",
       "publicEmpty": "Ajoutez une note pour les familles — par quelle porte entrer, où attendre, quoi apporter.",

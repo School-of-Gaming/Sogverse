@@ -1439,7 +1439,7 @@
     },
     "siteNotes": {
       "heading": "Site",
-      "sharedCaption": "{site} — shared by every product running at this site, so an edit here changes them everywhere.",
+      "sharedCaption": "{site} — shared by every product running at this site, so a change to it changes them everywhere.",
       "nameLabel": "Name",
       "namePlaceholder": "What this site is called",
       "nameRequired": "A site needs a name.",
@@ -1447,6 +1447,7 @@
       "addressPlaceholder": "Street, postal code, city",
       "addressEmpty": "Add the street address families need to find the building.",
       "edit": "Edit",
+      "editSite": "Edit site",
       "cancel": "Cancel",
       "save": "Save",
       "publicEmpty": "Add a note for families — which door to use, where to wait, what to bring.",

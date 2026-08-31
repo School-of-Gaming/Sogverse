@@ -37,11 +37,7 @@ import { SessionDetailsBackLink } from "./BackLink";
 import { ParticipantRosterRow } from "./ParticipantRosterRow";
 import { rosterContactEmail } from "./types";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
-import {
-  SitePanel,
-  type SiteDetailsDraft,
-  type SiteNotesDraft,
-} from "./SitePanel";
+import { SitePanel, type SiteNotesDraft } from "./SitePanel";
 
 /**
  * One group of one product, as the people running it work it: the group's
@@ -102,9 +98,11 @@ import {
  *   when these are two instances of one kind. A site's name, address and two
  *   notes belong to the *building* and every product running there reads the
  *   same four fields, so the panel names the site and says so; a remote product
- *   has no building and the row collapses back to one column. Whether those
- *   fields can be *written* here is the shell's answer, and it arrives as a
- *   save callback rather than as a claim about who is looking.
+ *   has no building and the row collapses back to one column. **What is
+ *   writable here is the same on both shells**: the two notes, which describe
+ *   the building. The name and the address are the site *record* and are edited
+ *   on the site's own page, which an admin shell links to and a gedu shell does
+ *   not have — the one difference, and it is a link rather than a capability.
  * - **The rail holds the two things that are true between sessions**, this
  *   group first: its co-teachers and roster (the reference a gedu actually
  *   reaches for mid-session), then the other groups on the product — the
@@ -238,18 +236,21 @@ interface GroupWorkspaceProps {
   /** Persist the site's shared notes. Awaited by the panel. */
   onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
   /**
-   * Persist the site's **name and address**, for a shell whose viewer owns the
-   * site record. Omitted — which is what the gedu shell does, and what a scene
-   * does — those two fields are read-only and the site section is exactly what
-   * it has always been.
+   * Where this site's record is edited, for a shell whose viewer has such a
+   * page. Absent — the gedu shell's answer, and a scene's — the site section
+   * carries no way out, which is correct: a gedu has no admin site page.
    *
-   * It is a whole capability or none of it, and it is a *save* rather than a
-   * slot: the panel renders one editor with one Save whatever it is given, so
-   * handing it somebody else's controls would put a second Save inside it. The
-   * body only passes this through; where the fields sit and how they fail is
-   * the panel's, and what the writes are is the shell's.
+   * **The body's site section is otherwise identical on both shells, and that is
+   * deliberate rather than incidental.** Both pass the notes save and neither
+   * passes a details save, so both surfaces render the same four fields with the
+   * same two editable — which is what "an admin sees what the gedu sees" has to
+   * mean literally. The name and the address are the site *record*, and a page
+   * scoped to one group is not where a record shared by every product in the
+   * building gets renamed; this link is how an admin gets to the page that is.
+   * Like the back link and the voice rooms' way back, it is a statement about
+   * who brought you here — the one kind of thing a shared body cannot know.
    */
-  onSaveSiteDetails?: (draft: SiteDetailsDraft) => void | Promise<void>;
+  siteEditHref?: string;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -372,7 +373,7 @@ export function GroupWorkspace({
   siteNotesEditing,
   onSiteNotesEditingChange,
   onSaveSiteNotes,
-  onSaveSiteDetails,
+  siteEditHref,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
@@ -557,7 +558,7 @@ export function GroupWorkspace({
                       editing={siteNotesEditing}
                       onEditingChange={onSiteNotesEditingChange}
                       onSaveNotes={onSaveSiteNotes}
-                      onSaveDetails={onSaveSiteDetails}
+                      editHref={siteEditHref}
                     />
                   </div>
                 )}

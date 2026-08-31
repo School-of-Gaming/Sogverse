@@ -14,11 +14,11 @@ import { deriveRosterFlairMaps } from "@/components/group-workspace/derive-roste
 import { createGameUsernameSave } from "@/components/group-workspace/game-username-save";
 import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
-import { createSiteDetailsSave } from "@/components/group-workspace/site-details-save";
 import type { SiteNotesDraft } from "@/components/group-workspace/SitePanel";
 import type { SessionFeedGamer } from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
+import { ROUTES } from "@/lib/constants";
 import { useNow } from "@/providers";
 import {
   useAdminEmailSessionReport,
@@ -34,10 +34,8 @@ import { useGeduGroupFeed, type GeduGroupFeed } from "@/services/gedu-sessions";
 import { useProductGroups } from "@/services/groups";
 import { useSetGamerGroupNote } from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
-import { useUpdateLocation } from "@/services/locations";
 import {
   useProductAdmin,
-  useUpdateSiteNotes,
   type ProductAdminDetailRow,
 } from "@/services/products";
 import {
@@ -334,12 +332,6 @@ function Workspace({
   const emailSessionReport = useAdminEmailSessionReport(productId, groupId);
   const setGroupNotes = useAdminSetGroupNotes(productId, groupId);
   const setSiteNotes = useAdminSetSiteNotes(productId);
-  // The two halves of the site record this page may also write. They are a
-  // different pair of routes from the notes above — the location row for the
-  // name, the site-notes route for the address alone — and the panel keeps them
-  // behind the same Save.
-  const renameSite = useUpdateLocation();
-  const updateSiteAddress = useUpdateSiteNotes();
   // Both platforms' mutations, unconditionally: a hook cannot be called behind
   // a branch, and the one that is never fired costs nothing but the object it
   // returns.
@@ -547,27 +539,22 @@ function Workspace({
   };
 
   /**
-   * Persist the site's name and address — **the one thing this page adds to a
-   * section a gedu already edits.**
+   * Where this site's record is edited — **not here.**
    *
-   * The site is a fact about the group being worked on, so an admin who spots a
-   * wrong address or a renamed building fixes it here rather than navigating to
-   * the site's own page and back. The gedu shell rendering this same body
-   * passes nothing, and those two fields are read-only there.
+   * The notes above are the building's shared staff content and stay writable on
+   * this page for gedu and admin alike. The name and the address are the site
+   * *record*, shared by every product running in the building, and this page is
+   * scoped to one group of one product: a rename typed here would read as a
+   * change to this group and land on all of them. So the panel offers a link to
+   * `/admin/sites/[id]`, whose scope says what it is, and nothing on this page
+   * writes the record.
    *
-   * **The same implementation the admin site page runs**, imported rather than
-   * reproduced: which route each field travels on, and what a half-failed save
-   * leaves behind, are rules about the record rather than about which page you
-   * reached it from.
+   * That also restores the plain reading of "an admin sees what the gedu sees":
+   * the two shells now pass the site section exactly the same capability, and
+   * differ only in whether there is a page to send the viewer to.
    */
-  const saveSiteDetails =
-    sessions.site === null
-      ? undefined
-      : createSiteDetailsSave({
-          locationId: sessions.site.location_id,
-          rename: renameSite,
-          updateAddress: updateSiteAddress,
-        });
+  const siteEditHref =
+    sessions.site === null ? undefined : ROUTES.admin.site(sessions.site.location_id);
 
   /**
    * An admin correcting a child's game username, with the platform's real round
@@ -623,11 +610,10 @@ function Workspace({
       siteNotesEditing={siteNotesEditing}
       onSiteNotesEditingChange={setSiteNotesEditing}
       onSaveSiteNotes={handleSaveSiteNotes}
-      // The one thing this page adds to the site section that a gedu's does not
-      // have: the name and the address belong to the location record, and an
-      // admin is the only person who may write them. Supplying the save is the
-      // whole of that difference — the panel decides what it turns into.
-      onSaveSiteDetails={saveSiteDetails}
+      // The one thing this page adds to the site section a gedu sees: a way to
+      // the site's own page, where its record is edited. Not a capability — the
+      // two shells write exactly the same fields here.
+      siteEditHref={siteEditHref}
       editingEntryId={editingEntryId}
       onEditEntry={handleEditEntry}
       onSaveEntry={saveEntry}

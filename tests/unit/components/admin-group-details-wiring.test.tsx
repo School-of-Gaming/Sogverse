@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { ROUTES } from "@/lib/constants";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { AdminGroupDetailsPage } from "@/components/admin/products/group-details/admin-group-details-page";
@@ -42,10 +43,13 @@ import type { ProductGroupsSnapshot, ProductType } from "@/types";
  *  4. **The note write is the shared mutation**, once, with the trimmed text —
  *     the same one the gedu page and the voice room call, which is what makes
  *     an edit here show up there.
- *  5. **The site section is handed the admin-only details save**, which is the
- *     whole of what this surface adds to a section a gedu already edits: the
- *     shared panel is what turns that one callback into an editable name and
- *     address, so what this file checks is that the callback was supplied.
+ *  5. **The site section is handed a link, not a second capability.** The notes
+ *     are writable here, exactly as they are on the gedu's own page; the site's
+ *     name and address are the building's record and are edited on the site's
+ *     own page, which this shell links to and a gedu shell has no way to. That
+ *     is the whole of what this surface adds to the section, and it is what
+ *     keeps "an admin sees what the gedu sees" literally true of it — so what
+ *     this file checks is that the link is there and the record editor is not.
  *
  * Every read and every mutation is stubbed at its hook: what is under test is
  * what the shell did with an answer, never how it asked.
@@ -93,13 +97,6 @@ const noopMutation = vi.hoisted(() => () => ({
 
 vi.mock("@/services/products", () => ({
   useProductAdmin: () => ({ data: reads.product, isPending: false }),
-  // The address half of the admin-only details save inside the site section.
-  useUpdateSiteNotes: noopMutation,
-}));
-
-vi.mock("@/services/locations", () => ({
-  // The name half of the same save.
-  useUpdateLocation: noopMutation,
 }));
 
 vi.mock("@/services/admin-sessions", () => ({
@@ -464,32 +461,34 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     expect(isLit(noteButton("Siiri"))).toBe(true);
   });
 
-  it("makes the site's name and address editable inside the shared panel", () => {
+  it("links to the site's own page instead of editing the record here", () => {
     renderPage("consumer_club");
 
-    // Read-only until the panel's one pencil is used — the same display a gedu
-    // gets, on the same component.
+    // The address reads the same as it does for a gedu, on the same component.
     expect(screen.getByText("Viides linja 11, 00530 Helsinki")).toBeTruthy();
 
-    // The editor stays mounted and `inert` while shut, so what says it is open
-    // is the pencil's own state rather than the fields' absence.
     const panel = sitePanel();
+
+    // The notes stay editable — that is the shared staff content, and the
+    // gedu's whole edit surface. The editor stays mounted and `inert` while
+    // shut, so what says it is open is the pencil's own state rather than the
+    // fields' absence.
     const pencil = panel.getByRole("button", { name: "Edit" });
     expect(pencil.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(pencil);
     expect(pencil.getAttribute("aria-expanded")).toBe("true");
+    expect(panel.getByLabelText("Note for families")).toBeTruthy();
 
-    // What this shell adds is one save callback; the panel turns it into these
-    // two fields, beside the two notes, behind the one Save it already had.
-    expect(panel.getByLabelText("Name")).toHaveProperty(
-      "value",
-      "Kallion kirjasto",
-    );
-    expect(panel.getByLabelText("Address")).toHaveProperty(
-      "value",
-      "Viides linja 11, 00530 Helsinki",
-    );
-    expect(panel.getAllByRole("button", { name: "Save" })).toHaveLength(1);
+    // The record is not editable here, open editor or not: this page is scoped
+    // to one group of one product, and a rename typed on it would land on every
+    // product in the building while reading as a change to this one.
+    expect(panel.queryByLabelText("Name")).toBeNull();
+    expect(panel.queryByLabelText("Address")).toBeNull();
+
+    // The way through is one navigation, to the page whose scope says so.
+    expect(
+      panel.getByRole("link", { name: "Edit site" }).getAttribute("href"),
+    ).toBe(ROUTES.admin.site(IDS.location));
   });
 });
 

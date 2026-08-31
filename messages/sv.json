@@ -1439,7 +1439,7 @@
     },
     "siteNotes": {
       "heading": "Lokal",
-      "sharedCaption": "{site} — alla produkter som körs i den här lokalen visar samma uppgifter, så en ändring här slår igenom överallt.",
+      "sharedCaption": "{site} — alla produkter som körs i den här lokalen visar samma uppgifter, så en ändring slår igenom överallt.",
       "nameLabel": "Namn",
       "namePlaceholder": "Vad lokalen heter",
       "nameRequired": "Lokalen måste ha ett namn.",
@@ -1447,6 +1447,7 @@
       "addressPlaceholder": "Gata, postnummer, stad",
       "addressEmpty": "Lägg till gatuadressen familjerna behöver för att hitta till lokalen.",
       "edit": "Redigera",
+      "editSite": "Redigera lokalen",
       "cancel": "Avbryt",
       "save": "Spara",
       "publicEmpty": "Lägg till en anteckning till familjerna — vilken dörr man använder, var man väntar, vad man tar med.",

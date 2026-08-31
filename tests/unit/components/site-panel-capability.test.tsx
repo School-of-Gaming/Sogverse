@@ -14,14 +14,20 @@ import {
  * One site panel, two capabilities — expressed by which saves the caller gives.
  * ============================================================================
  *
- * This is the whole of what separates the gedu's view of a site from an
- * admin's: **a callback, not a role flag and not a slot**. So what is under
- * test here is the contract itself, on the one component both surfaces render —
- * a shell test can only ever say that its own shell passed the right thing.
+ * This is the whole of what separates a product page's view of a site, a group
+ * page's, and the site page's own: **which callbacks the caller passes, never a
+ * role flag and never a slot**. So what is under test here is the contract
+ * itself, on the one component all three surfaces render — a shell test can only
+ * ever say that its own shell passed the right thing.
  *
- * Seven claims, and the first is the permission model:
+ * Eight claims, and the first two are the permission model:
  *
- *  1. **No details save, no way in to the name or the address.** A gedu surface
+ *  0. **Neither save, and the panel is a pure view.** No pencil, so no editor at
+ *     all, and no ghost anywhere: every ghost is an imperative, and an
+ *     imperative shown to somebody with no way to act on it is an instruction
+ *     with nothing behind it. This is what a page scoped to something *else*
+ *     gets — a product form showing which building its club runs in.
+ *  1. **No details save, no way in to the name or the address.** A group surface
  *     supplies only the notes save, and the two location-record fields are not
  *     merely disabled — they are not rendered, so there is no affordance to
  *     find. The ghost inviting an address is part of that capability and is
@@ -48,13 +54,15 @@ import {
 function Harness({
   onSaveNotes,
   onSaveDetails,
+  editHref,
   siteName = "Kallion kirjasto",
   address = "Viides linja 11, 00530 Helsinki",
   publicNote = "Come in through the side door.",
   staffNote = null,
 }: {
-  onSaveNotes: (draft: SiteNotesDraft) => void | Promise<void>;
+  onSaveNotes?: (draft: SiteNotesDraft) => void | Promise<void>;
   onSaveDetails?: (draft: SiteDetailsDraft) => void | Promise<void>;
+  editHref?: string;
   siteName?: string;
   address?: string | null;
   publicNote?: string | null;
@@ -73,6 +81,7 @@ function Harness({
         onEditingChange={setEditing}
         onSaveNotes={onSaveNotes}
         onSaveDetails={onSaveDetails}
+        editHref={editHref}
       />
     </NextIntlClientProvider>
   );
@@ -85,7 +94,76 @@ const save = () => fireEvent.click(screen.getByRole("button", { name: "Save" }))
 
 afterEach(cleanup);
 
+describe("site panel — a page that only shows which site this is", () => {
+  it("renders the record with no way to change any of it", () => {
+    render(<Harness editHref="/admin/sites/abc" />);
+
+    // Everything stored is readable — this is a view of the site, not a
+    // redaction of it.
+    expect(screen.getByText("Viides linja 11, 00530 Helsinki")).toBeTruthy();
+    expect(screen.getByText("Come in through the side door.")).toBeTruthy();
+
+    // And nothing at all invites or accepts a change. Not a disabled editor: a
+    // greyed control says "not now", where the honest message is that this page
+    // is not where a site's record is written.
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
+    expect(screen.queryByLabelText("Name")).toBeNull();
+    expect(screen.queryByLabelText("Note for families")).toBeNull();
+
+    // The way through is the link out, to the page whose scope is the site.
+    expect(
+      screen.getByRole("link", { name: "Edit site" }).getAttribute("href"),
+    ).toBe("/admin/sites/abc");
+  });
+
+  it("offers no ghost of any kind where nothing is written", () => {
+    // Every ghost is an imperative ("Add a note for families — …"), and both of
+    // the reasons they exist — teach that the split is there, offer somewhere to
+    // write — need an editor behind them. An empty padlocked staff block would
+    // be worse still: a banner over nothing reads as content that failed to
+    // load.
+    render(
+      <Harness
+        editHref="/admin/sites/abc"
+        address={null}
+        publicNote={null}
+        staffNote={null}
+      />,
+    );
+
+    expect(
+      screen.queryByText(
+        "Add the street address families need to find the building.",
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText(/^Add a note for families/),
+    ).toBeNull();
+    expect(
+      screen.queryByText(/^Add what the next Gedu at this site needs to know/),
+    ).toBeNull();
+    // The site is still named, and the link out is still there — an empty
+    // record is not an empty panel.
+    expect(screen.getByRole("link", { name: "Edit site" })).toBeTruthy();
+  });
+});
+
 describe("site panel — a viewer who may write only the notes", () => {
+  it("keeps the notes editable and still links out for the record", () => {
+    // The group page's shape: the shared staff content is writable here for gedu
+    // and admin alike, and only the admin gets the link, which is a statement
+    // about who brought you here rather than a capability.
+    render(<Harness onSaveNotes={vi.fn()} editHref="/admin/sites/abc" />);
+
+    expect(screen.getByRole("button", { name: "Edit" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Edit site" })).toBeTruthy();
+
+    openEditor();
+    expect(screen.getByLabelText("Note for families")).toBeTruthy();
+    expect(screen.queryByLabelText("Name")).toBeNull();
+  });
+
   it("renders the address to read and offers no way to change it", () => {
     render(<Harness onSaveNotes={vi.fn()} />);
 

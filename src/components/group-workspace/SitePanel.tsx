@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import { MapPin, Share2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, MapPin, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -35,41 +36,60 @@ interface SitePanelProps {
   address: string | null;
   publicNote: string | null;
   staffNote: string | null;
-  editing: boolean;
-  onEditingChange: (editing: boolean) => void;
   /**
-   * Persist the two notes. **Awaited**, and supplied by every caller: a surface
-   * that renders this panel at all is a surface whose viewer may write them.
-   *
-   * Called only when a note actually changed.
+   * Whether the editor is open — the caller's, never the panel's. Meaningless
+   * without {@link onSaveNotes}, and omitted alongside it.
    */
-  onSaveNotes: (draft: SiteNotesDraft) => void | Promise<void>;
+  editing?: boolean;
+  onEditingChange?: (editing: boolean) => void;
   /**
-   * Persist the name and the address. **Awaited**, and the whole of this
-   * panel's capability model.
+   * Persist the two notes. **Awaited**, and called only when a note actually
+   * changed.
    *
-   * **Supplying it is what makes those two fields editable; omitting it is what
-   * makes them read-only** — never a role flag, and never a slot holding
-   * somebody else's controls. A gedu shell can only write the notes, so it
-   * passes nothing and gets exactly the panel it has always had: the name in
-   * the caption, the address on its line, and two editable notes. An admin
-   * shell owns the site record, so it passes this and gets the same panel with
-   * the same one pencil, the same one Save, and four fields behind them.
+   * **Omitted, the whole panel is a pure view**: no pencil, no editor, no
+   * ghosts. That is the shape a surface takes when it is showing *which* site a
+   * product runs at rather than owning the site's record — the product form's
+   * site field is the case, and it pairs the view with {@link editHref}.
+   */
+  onSaveNotes?: (draft: SiteNotesDraft) => void | Promise<void>;
+  /**
+   * Persist the name and the address — the `locations` record itself.
    *
-   * **Omitted is the default because it is the gedu answer**, which is the one
-   * shell with no other — the same rule the workspace's back link, way-back and
-   * roster heading follow.
+   * **Exactly one surface supplies it: the admin site page, which *is* that
+   * record.** Everywhere else the panel is reached from a page scoped to
+   * something else (a product, a group), and there "Edit → rename → Save" reads
+   * as changing this product's site while actually renaming the building for
+   * every product in it. A shared record is edited where its scope is visible,
+   * and nowhere else; the way there from those pages is {@link editHref}.
    *
-   * It is called only when the name or the address changed, with only the
-   * halves that did, and it **throws** if either write is refused.
+   * It is a capability rather than a role flag, and a *save* rather than a slot:
+   * the panel renders one editor with one Save whatever it is given, so handing
+   * it somebody else's controls would put a second Save inside it. Supplying it
+   * without {@link onSaveNotes} is meaningless — the notes' Save is the one this
+   * rides on.
+   *
+   * Called only when the name or the address changed, with only the halves that
+   * did, and it **throws** if either write is refused.
    */
   onSaveDetails?: (draft: SiteDetailsDraft) => void | Promise<void>;
+  /**
+   * Where this site's record is edited — rendered as a quiet link in the header
+   * row.
+   *
+   * **A statement about who brought you here, which is exactly what a shared
+   * body cannot know**, so it enters as a prop whose default is the gedu answer:
+   * absent. A gedu has no admin site page to be sent to; the admin surfaces that
+   * show a site they do not own (the product form's site field, the group page)
+   * pass it; the site page itself does not, because it is already there.
+   */
+  editHref?: string;
 }
 
 /**
  * **One site, everywhere staff meet one** — its name, its address, the note
- * families read and the note only Gedus and admins do, in one panel with one
- * pencil and one Save.
+ * families read and the note only Gedus and admins do, in one panel: read the
+ * same way on every surface, and written behind one pencil and one Save on
+ * whichever of them may write.
  *
  * A remote club has no building; an in-person one has a building with a door
  * code, a room that is booked until half past, and a caretaker who locks up at
@@ -89,15 +109,32 @@ interface SitePanelProps {
  * two different arrangements of the same four fields.
  *
  * **A surface may mount this inside a `<form>` of its own, and the product form
- * does.** Every control here is a `type="button"` and every save reaches its own
- * route directly, so nothing in this panel can commit a surrounding form. The
- * one thing that can is Enter inside a text input — a browser's implicit submit
- * of whichever form the input sits in — which is therefore the mounting
- * surface's to refuse.
+ * does.** Every control here is a `type="button"` or a link and every save
+ * reaches its own route directly, so nothing in this panel can commit a
+ * surrounding form. The one thing that could is Enter inside a text input — a
+ * browser's implicit submit of whichever form the input sits in — and the one
+ * surface that mounts this in a form renders it read-only, so it has no text
+ * input to press Enter in.
  *
- * **What differs between those surfaces is edit access, and it enters as a
- * callback** — see {@link SitePanelProps.onSaveDetails}. The panel never asks
- * who is looking.
+ * **What differs between those surfaces is edit access, and it enters as
+ * callbacks — three capabilities, widest last:**
+ *
+ * 1. **Neither save: a pure view.** No pencil, no editor, no ghosts, and the way
+ *    to change anything is the `editHref` link out. This is what a page scoped
+ *    to something *else* gets — the product form's site field shows which
+ *    building a product runs in, and a rename typed there would read as
+ *    repointing the product while actually renaming the building for every
+ *    product in it.
+ * 2. **`onSaveNotes`: the shared staff content.** The note families read and the
+ *    note only staff do, which describe the building rather than identify it and
+ *    are the gedu's whole edit surface. Every staff surface rendering a group
+ *    has this — and both the gedu shell and the admin one have exactly it, which
+ *    is what keeps "an admin sees what the gedu sees" literally true.
+ * 3. **Both saves: the record.** The name and the address join the same editor
+ *    behind the same one Save. One surface supplies it, the admin site page,
+ *    because that page *is* the site and its scope is legible from its URL down.
+ *
+ * The panel never asks who is looking; it asks what it was given.
  *
  * **The scope caveat is the load-bearing part of this component.** The notes
  * look exactly like the group notes beside them, and somebody editing anything
@@ -105,7 +142,11 @@ interface SitePanelProps {
  * event at the same library read the same name, the same address and the same
  * two paragraphs. So the panel says whose these are, by name, in a line that
  * stays visible while the editor is open — an editable field whose blast radius
- * is invisible is the one way this feature could do damage.
+ * is invisible is the one way this feature could do damage. **The caption stays
+ * on a read-only panel too**, where it is describing the destination of the
+ * `editHref` link rather than a field on screen: the copy therefore says what a
+ * change to the site does, never what "an edit here" does, so it is true in
+ * both modes.
  *
  * **The address is shown on its own line until it is editable and being
  * edited**, and then it is the field. It is never both at once: one value with
@@ -119,15 +160,20 @@ export function SitePanel({
   address,
   publicNote,
   staffNote,
-  editing,
+  editing = false,
   onEditingChange,
   onSaveNotes,
   onSaveDetails,
+  editHref,
 }: SitePanelProps) {
   const t = useTranslations("gedu.siteNotes");
   const fieldId = useId();
 
-  const editsDetails = onSaveDetails !== undefined;
+  const editsNotes = onSaveNotes !== undefined;
+  // Details ride on the notes' Save, so a details save with no notes save has
+  // nothing to commit it. Reading the pair rather than `onSaveDetails` alone
+  // keeps that from rendering two name fields nobody can submit.
+  const editsDetails = editsNotes && onSaveDetails !== undefined;
   const storedAddress = address ?? "";
 
   const [nameDraft, setNameDraft] = useState(siteName);
@@ -241,7 +287,7 @@ export function SitePanel({
     const notesChanged =
       notes.publicNote !== (publicNote ?? "").trim() ||
       notes.staffNote !== (staffNote ?? "").trim();
-    if (notesChanged) {
+    if (onSaveNotes !== undefined && notesChanged) {
       try {
         await onSaveNotes(notes);
       } catch (error) {
@@ -277,6 +323,22 @@ export function SitePanel({
           <Share2 className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           <span>{t("sharedCaption", { site: siteName })}</span>
         </p>
+      }
+      /* The way out to the record, on the surfaces that show a site they do not
+         own. Quieter than the pencil beside it on purpose — this leaves the
+         page, and leaving is the smaller of the two things an admin came to the
+         product form to do. The trailing arrow is the repo's idiom for a link
+         that navigates rather than acts. */
+      headerLink={
+        editHref === undefined ? undefined : (
+          <Link
+            href={editHref}
+            className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {t("editSite")}
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+          </Link>
+        )
       }
       // The line steps aside only for the field that replaces it. A reader who
       // cannot write the address keeps it in front of them while they write the
@@ -321,7 +383,9 @@ export function SitePanel({
       staffNote={staffNote}
       editing={editing}
       onEditingChange={onEditingChange}
-      onSave={handleSave}
+      // No notes save, no save at all — the details ride on this one, so the
+      // panel below turns read-only as a whole rather than half of it.
+      onSave={editsNotes ? handleSave : undefined}
     />
   );
 }

@@ -1,18 +1,23 @@
 import type { SiteDetailsDraft } from "./SitePanel";
 
 /**
- * What writing a site's **name and address** does between the panel and the
- * two routes behind them — held once, for every shell that may offer it.
+ * What writing a site's **name and address** does between the panel and the two
+ * routes behind them.
  *
- * Three admin surfaces bind this: the site page, which is the site record; the
- * group details page, where the site is a fact about the group being worked on;
- * and the product form's site field, where it is the building the product being
- * edited runs in. They reach it from different pages, but what happens between
- * one Save and those writes is not a per-surface decision — it is the rules below,
- * and a second copy of them is a second place for a half-failed save to behave
- * differently depending on which page you were on. Same split
- * `session-entry-saves.ts` and `game-username-save.ts` make, for the same
- * reason.
+ * **Exactly one surface binds this today: the admin site page, which *is* the
+ * site record.** It briefly had three — the group details page and the product
+ * form's site field bound it too — and both lost it to a scope ruling rather
+ * than to a refactor: those pages are scoped to a product, so an edit made on
+ * one reads as a change to that product while landing on every product in the
+ * building. They link to the site page instead. Read that as the reason this
+ * module is not deleted for having one caller: what it holds is the *record's*
+ * save rules, and where they may be invoked from has already moved once.
+ *
+ * It also stays a module rather than an inline handler because it is the same
+ * kind of split `session-entry-saves.ts` and `game-username-save.ts` make: what
+ * happens between one Save and two writes is a rule about the record, not a
+ * per-page decision, and a second copy of it is a second place for a half-failed
+ * save to behave differently.
  *
  * The rules:
  *
@@ -34,7 +39,7 @@ import type { SiteDetailsDraft } from "./SitePanel";
  *   text it is about to replace.
  */
 
-/** The two writes, structurally as both surfaces' React Query hooks hand them back. */
+/** The two writes, structurally as the surface's React Query hooks hand them back. */
 export interface SiteDetailsSaveMutations {
   /** The location update route: renames the site row itself. */
   rename: {
@@ -45,9 +50,8 @@ export interface SiteDetailsSaveMutations {
   };
   /**
    * The site-notes route, carrying the address alone. The notes travel on
-   * their own save — a differently-keyed one on each surface — so this must
-   * never be handed a `notes` field, or one control would start writing the
-   * other's stale value back.
+   * their own save, so this must never be handed a `notes` field, or one
+   * control would start writing the other's stale value back.
    */
   updateAddress: {
     mutateAsync: (vars: {
@@ -65,8 +69,8 @@ export interface SiteDetailsSaveArgs extends SiteDetailsSaveMutations {
 /**
  * Bind the site panel's details save to one site and one surface's mutations.
  *
- * Called during render on both surfaces, exactly where an inline handler would
- * otherwise be written. Rejects if either write was refused, which is what the
+ * Called during render, exactly where an inline handler would otherwise be
+ * written. Rejects if either write was refused, which is what the
  * panel reads as "leave the editor open and say so".
  */
 export function createSiteDetailsSave({

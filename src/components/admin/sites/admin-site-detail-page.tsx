@@ -291,10 +291,13 @@ function SiteEditor({
   };
 
   /**
-   * **The same implementation the admin group details page runs**, imported
-   * rather than reproduced: which route each field travels on, and what a
-   * half-failed save leaves behind, are rules about the record rather than
-   * about which page you reached it from.
+   * **This is the only page that binds the details save**, and the module it
+   * comes from is where the rules live: which route each field travels on, and
+   * what a half-failed save leaves behind. Two product-scoped surfaces used to
+   * bind it as well and no longer may — a site's name and address are the
+   * building's, and a page scoped to one product renames it for all of them
+   * while looking like it changed one. They link here instead, which is why this
+   * page is worth being the single editor rather than a duplicate of one.
    */
   const handleSaveDetails = createSiteDetailsSave({
     locationId: siteId,

@@ -1447,6 +1447,7 @@
       "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
       "addressEmpty": "Lisää katuosoite, jotta perheet löytävät toimipisteen.",
       "edit": "Muokkaa",
+      "editSite": "Muokkaa toimipistettä",
       "cancel": "Peruuta",
       "save": "Tallenna",
       "publicEmpty": "Lisää muistiinpano perheille — mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan.",

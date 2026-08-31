@@ -34,6 +34,10 @@ export interface TwoAudienceNotesCopy {
    * no banner above it, so it has to **name the audience itself** — it is the
    * only thing on screen saying who that half is for.
    *
+   * **Read-only panels render no ghost at all** — see {@link
+   * TwoAudienceNotesPanelProps.onSave}. An imperative shown to somebody who
+   * cannot act on it is an instruction with nothing behind it.
+   *
    * Both ghosts are worded as **imperatives** ("Add a note…"), and that mood is
    * load-bearing: visually a ghost differs from a saved note only by italics,
    * so the imperative is the one cue a screen reader gets that this is an
@@ -72,6 +76,17 @@ interface TwoAudienceNotesPanelProps {
   /** Always-visible read-only detail under the caption, e.g. a street address. */
   intro?: ReactNode;
   /**
+   * A quiet link in the header row, left of the pencil — the way *out* of this
+   * panel to wherever the thing it describes is actually edited.
+   *
+   * A node rather than an href, because the panel has no business knowing which
+   * route a scope's record lives on or what to call it; the caller builds the
+   * link and this decides only where it sits. It is left of the pencil because
+   * the pencil is this panel's own action and the link leaves for another page:
+   * primary rightmost, the app-wide button order in a header row.
+   */
+  headerLink?: ReactNode;
+  /**
    * Fields at the **head of the editor**, for a scope whose caller can write
    * more than the two notes.
    *
@@ -97,15 +112,29 @@ interface TwoAudienceNotesPanelProps {
   saveBlockedReason?: string | null;
   publicNote: string | null;
   staffNote: string | null;
-  editing: boolean;
-  onEditingChange: (editing: boolean) => void;
+  /**
+   * Whether the editor is open. Owned by the caller — the panel never owns it.
+   *
+   * Required in spirit whenever {@link onSave} is supplied, and meaningless
+   * without it: a read-only panel has nothing to open, so a caller in that mode
+   * omits both this and {@link onEditingChange}.
+   */
+  editing?: boolean;
+  onEditingChange?: (editing: boolean) => void;
   /**
    * Persist both notes. **Awaited**: the panel greys itself out for the round
    * trip, closes only once the write has landed, and on a rejection stays open
    * with both textareas exactly as they were. A synchronous handler resolves
    * immediately and the panel behaves as it always did.
+   *
+   * **Omitted, the panel is a pure view of what is stored.** No pencil, no
+   * editor region, no ghosts — nothing that invites or accepts a change is
+   * rendered at all, rather than rendered disabled. That is the difference
+   * between "you may not write this here" and "this is broken", and a panel
+   * reached from a page with no claim on the record has to say the first: the
+   * way to change it is {@link headerLink}, which goes to the page that does.
    */
-  onSave: (draft: TwoAudienceNotesDraft) => void | Promise<void>;
+  onSave?: (draft: TwoAudienceNotesDraft) => void | Promise<void>;
 }
 
 /**
@@ -152,6 +181,15 @@ interface TwoAudienceNotesPanelProps {
  * The pencil follows from that: there is no "empty" state to have a different
  * affordance for, so the header control is always Edit.
  *
+ * **All of which is true of an *editable* panel, and a panel with no `onSave` is
+ * not one.** There, nothing that invites or accepts a change is rendered — no
+ * pencil, no editor region, and no ghosts, because a ghost is an imperative and
+ * the two reasons for one (teach that the split exists, offer somewhere to
+ * write) both need an editor behind them. It is deliberately not a disabled
+ * editor: greyed-out controls say "you may not do this *now*", where the honest
+ * message is that this page is not where the thing is written. The way to write
+ * it is `headerLink`, which goes to the page that is.
+ *
  * **Neither field is marked "(optional)"**, though both are. On a gedu surface
  * the marker reads as permission: it lands on somebody at the exact moment they
  * are deciding whether to bother writing the thing, and tells them nobody
@@ -189,15 +227,28 @@ export function TwoAudienceNotesPanel({
   copy,
   caption,
   intro,
+  headerLink,
   editorFields,
   saveBlockedReason = null,
   publicNote,
   staffNote,
-  editing,
+  editing = false,
   onEditingChange,
   onSave,
 }: TwoAudienceNotesPanelProps) {
   const fieldId = useId();
+
+  /**
+   * **The whole capability, and it is one question: was a save supplied?**
+   *
+   * Everything downstream reads `editable` rather than asking who is looking —
+   * the pencil, the editor region, the ghosts, and whether an `editing` prop
+   * means anything at all. A read-only caller that still passed `editing` (an
+   * old call site, a scene) is answered here rather than opening an editor with
+   * no Save behind it.
+   */
+  const editable = onSave !== undefined;
+  const isEditing = editable && editing;
   const [draft, setDraft] = useState<TwoAudienceNotesDraft>({
     publicNote: publicNote ?? "",
     staffNote: staffNote ?? "",
@@ -208,10 +259,10 @@ export function TwoAudienceNotesPanel({
   // Re-seed on open with React's "adjust state during render" pattern, so a
   // cancelled edit is gone the next time the editor opens and no frame of the
   // stale draft is ever painted. A stale failure message goes with it.
-  const [wasEditing, setWasEditing] = useState(editing);
-  if (editing !== wasEditing) {
-    setWasEditing(editing);
-    if (editing) {
+  const [wasEditing, setWasEditing] = useState(isEditing);
+  if (isEditing !== wasEditing) {
+    setWasEditing(isEditing);
+    if (isEditing) {
       setDraft({ publicNote: publicNote ?? "", staffNote: staffNote ?? "" });
       setError(null);
     }
@@ -232,6 +283,7 @@ export function TwoAudienceNotesPanel({
    * the same commit as the close, where the region shuts around it anyway.
    */
   const handleSave = async () => {
+    if (onSave === undefined) return;
     setError(null);
     setCommitting(true);
     try {
@@ -245,11 +297,52 @@ export function TwoAudienceNotesPanel({
       return;
     }
     setCommitting(false);
-    onEditingChange(false);
+    onEditingChange?.(false);
   };
 
   const hasPublic = publicNote !== null && publicNote.length > 0;
   const hasStaff = staffNote !== null && staffNote.length > 0;
+
+  /**
+   * What is stored, and — on an editable panel only — a ghost where nothing is.
+   *
+   * **A read-only panel shows an empty note as nothing at all**, its padlocked
+   * block included: the ghosts are imperatives inviting a write ("Add a note for
+   * families…"), and the reason they exist is that a Gedu who never opened the
+   * editor never discovered there were two notes. Neither half of that survives
+   * where there is no editor to open. An empty `StaffNoteBlock` would be worse
+   * still — a padlock banner over nothing, which reads as content that failed to
+   * load. So a site with nothing written renders its heading, its caption and
+   * the way out, and says nothing it cannot back up.
+   */
+  const body = (
+    <div className="space-y-3 pt-2">
+      {hasPublic ? (
+        <p className="whitespace-pre-line text-sm leading-relaxed">
+          {publicNote}
+        </p>
+      ) : (
+        editable && (
+          <p className="text-sm italic leading-relaxed text-muted-foreground">
+            {copy.publicEmpty}
+          </p>
+        )
+      )}
+      {(hasStaff || editable) && (
+        <StaffNoteBlock>
+          {hasStaff ? (
+            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              {staffNote}
+            </p>
+          ) : (
+            <p className="text-sm italic leading-relaxed text-muted-foreground">
+              {copy.staffEmpty}
+            </p>
+          )}
+        </StaffNoteBlock>
+      )}
+    </div>
+  );
 
   // No divider or top padding of its own: the panel is a whole section of the
   // card it sits in, so its header row *is* that section's heading row.
@@ -259,49 +352,41 @@ export function TwoAudienceNotesPanel({
         <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {copy.heading}
         </h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={committing}
-          onClick={() => onEditingChange(!editing)}
-          aria-expanded={editing}
-          className="-my-1 gap-1.5"
-        >
-          <Pencil className="h-3.5 w-3.5" aria-hidden />
-          {copy.edit}
-        </Button>
+        {(headerLink !== undefined || editable) && (
+          <div className="flex shrink-0 items-center gap-2">
+            {headerLink}
+            {editable && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={committing}
+                onClick={() => onEditingChange?.(!isEditing)}
+                aria-expanded={isEditing}
+                className="-my-1 gap-1.5"
+              >
+                <Pencil className="h-3.5 w-3.5" aria-hidden />
+                {copy.edit}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {caption}
       {intro}
 
-      <CollapsibleRegion open={!editing}>
-        <div className="space-y-3 pt-2">
-          {hasPublic ? (
-            <p className="whitespace-pre-line text-sm leading-relaxed">
-              {publicNote}
-            </p>
-          ) : (
-            <p className="text-sm italic leading-relaxed text-muted-foreground">
-              {copy.publicEmpty}
-            </p>
-          )}
-          <StaffNoteBlock>
-            {hasStaff ? (
-              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                {staffNote}
-              </p>
-            ) : (
-              <p className="text-sm italic leading-relaxed text-muted-foreground">
-                {copy.staffEmpty}
-              </p>
-            )}
-          </StaffNoteBlock>
-        </div>
-      </CollapsibleRegion>
+      {/* A read-only panel has no second region to animate between, so the body
+          is rendered directly: a collapsing region that can never collapse is
+          an overflow clip and a transition maintained for nothing. */}
+      {editable ? (
+        <CollapsibleRegion open={!isEditing}>{body}</CollapsibleRegion>
+      ) : (
+        body
+      )}
 
-      <CollapsibleRegion open={editing}>
+      {editable && (
+      <CollapsibleRegion open={isEditing}>
         {/* `pb-1` gives the Save row's focus ring room: a collapsible region
             has to clip its overflow for the open/close animation to work. */}
         <div className="space-y-4 pb-1 pt-3">
@@ -376,7 +461,7 @@ export function TwoAudienceNotesPanel({
               variant="outline"
               size="sm"
               disabled={committing}
-              onClick={() => onEditingChange(false)}
+              onClick={() => onEditingChange?.(false)}
             >
               {copy.cancel}
             </Button>
@@ -395,6 +480,7 @@ export function TwoAudienceNotesPanel({
           </div>
         </div>
       </CollapsibleRegion>
+      )}
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { useState } from "react";
 import {
   act,
   cleanup,
-  createEvent,
   fireEvent,
   render,
   screen,
@@ -391,7 +390,22 @@ describe("the product form's site field", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  // The building itself, editable where the product that runs in it is edited.
+  /**
+   * The building itself — **shown here, edited somewhere else.**
+   *
+   * This page is scoped to a product, so an Edit on it reads as a change to
+   * *that* product; a rename typed here would land on the camp, the club and the
+   * birthday party that also run in the building. So the panel is supplied
+   * neither save and renders as a pure view, and the way to the record is a link
+   * to `/admin/sites/[id]`, whose scope says what it is.
+   *
+   * That also settles the form question the case above exists for: with no
+   * controls beyond a link, there is nothing here that can reach the product
+   * form — not by click, and not by Enter, which needs a text input. The wrapper
+   * used to refuse that key and the test used to pin the refusal; both went with
+   * the inputs that made them necessary. What remains of that concern lives in
+   * `dialog-form-containment`, which is about portals rather than this panel.
+   */
   describe("the site panel under the chosen-place card", () => {
     beforeEach(() => {
       vi.spyOn(SitesService.prototype, "getSiteNotes").mockResolvedValue({
@@ -401,43 +415,32 @@ describe("the product form's site field", () => {
       });
     });
 
-    // The capability model: both saves are supplied, and supplying the details
-    // one is the only thing that puts a name and an address in the editor.
-    it("offers the name and the address, not only the two notes", async () => {
+    it("shows the site and links out to edit it, offering no editor of its own", async () => {
       mountInForm(IDS.siteA);
 
-      // Bound to the site the field holds, said by name in the caption that
-      // stays visible while the editor is open.
+      // Bound to the site the field holds, and said by name.
       await waitFor(() =>
         expect(screen.getByText("sharedCaption site=Site A")).toBeTruthy(),
       );
 
-      fireEvent.click(screen.getByRole("button", { name: "edit" }));
-      expect(screen.getByLabelText("nameLabel")).toBeTruthy();
-      expect(screen.getByLabelText("addressLabel")).toBeTruthy();
+      // No pencil, so no editor to open — and therefore no name field, no
+      // address field, and no Save that could write the building's record from
+      // a page about one product in it.
+      expect(screen.queryByRole("button", { name: "edit" })).toBeNull();
+      expect(screen.queryByLabelText("nameLabel")).toBeNull();
+      expect(screen.queryByLabelText("addressLabel")).toBeNull();
+      expect(screen.queryByRole("button", { name: "save" })).toBeNull();
+
+      // The way through: one navigation to the page that owns the record.
+      const link = screen.getByRole("link", { name: "editSite" });
+      expect(link.getAttribute("href")).toBe(`/admin/sites/${IDS.siteA}`);
     });
 
     it("is absent until a site is chosen", async () => {
       mountInForm(null);
       await waitFor(() => screen.getByRole("button", { name: "chooseSite" }));
-      expect(screen.queryByRole("button", { name: "edit" })).toBeNull();
-    });
-
-    // The one way this panel could reach the form it is mounted in: Enter in a
-    // text input is a browser's implicit submit. jsdom performs no implicit
-    // submission of its own, so the assertion is on the default action being
-    // refused rather than on a handler that would never have fired here.
-    it("refuses Enter in its own fields, so the product form cannot submit", async () => {
-      mountInForm(IDS.siteA);
-      await waitFor(() =>
-        expect(screen.getByText("sharedCaption site=Site A")).toBeTruthy(),
-      );
-      fireEvent.click(screen.getByRole("button", { name: "edit" }));
-
-      const address = screen.getByLabelText("addressLabel");
-      const enter = createEvent.keyDown(address, { key: "Enter" });
-      fireEvent(address, enter);
-      expect(enter.defaultPrevented).toBe(true);
+      expect(screen.queryByRole("link", { name: "editSite" })).toBeNull();
+      expect(screen.queryByText(/^sharedCaption/)).toBeNull();
     });
   });
 
