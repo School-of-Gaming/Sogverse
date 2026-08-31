@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "description": "nuqDaq Qapla’ ’oH? Minecraft ghom’a’Daq. Gedu’pu’ Dun chaH — toy’wI’pu’ tIqhommoH, jIH mevbe’.",
+    "description": "naDev Quj yay’ moj. Minecraft, Roblox, Fortnite latlh je: ghom’a’mey, raghmey, wanI’mey — Gedu’pu’ Dun DevtaH.",
     "pages": {
       "signIn": "yI’el",
       "createAccount": "Account yIchenmoH",
@@ -100,11 +100,11 @@
   "about": {
     "hero": {
       "title": "<primary>noH Quj yejHaD</primary> tIqel",
-      "subtitle": "Minecraft ghom’a’meyDaq, tIvqu’ poH moj DuHmoHwI’ poH. puqpu’, Gedu’pu’ Dun, je Minecraft — wa’ Daq ngeHlu’. jaHDaq jIH mojaH, juppu’ chu’ wISuqta’, Hujqu’ nughpu’ wISovmoH."
+      "subtitle": "naDev Quj yay’ moj. puqpu’, Gedu’pu’ Dun, je Qujmey puqpu’ muSHa’bogh — Minecraft, Roblox, Fortnite latlh je — DIboqmoH. jup chu’ luSuq, laHmey teH luchenmoH, ’ej lutIvqu’."
     },
     "quote": {
       "text": "”DaHjaj bIHtaHbogh, chalDaq qablaHbogh neH ’oH.”",
-      "attribution": "— noH Quj yejHaD HoD"
+      "attribution": "— The Princi-Pal"
     },
     "mission": {
       "heading": "maH ngoQ",
@@ -122,7 +122,7 @@
       },
       "keepChildrenSafe": {
         "title": "moQ DIvI’ Daq puqpu’ yISuq",
-        "description": "yItlhej, ’IHqu’, je QaQ HablI’ DIvI’ wI’el. qoHwI’ batlh SuvwI’ wI’el — ghomwI’ wI’el. bIQong’a’? ghobe’. qaS tIv."
+        "description": "Sogverse-Daq pegh QInmey tu’lu’be’: ghomDaq jatlh toy’wI’pu’, not wa’ wa’ je, ’ej QInvetlh polbe’lu’. Hoch toy’wI’ account vav account tlhej boqlu’, ’ej vav accountDaq ’el puq — pegh mu’mey Daj Hutlh. qIp ’ej tlhejHa’: not wIchaw’."
       },
       "familyInTheLoop": {
         "title": "qorDu’ Qu’ SoH",
@@ -134,7 +134,7 @@
       "paragraph1": "wa’ tup Hoch, toy’wI’pu’ ’el — Gedu’ chaHvaD jatlh. Gedu’ QaD jaj De’, puq HoS je ngoQ moj — jaH pIq je Haq.",
       "paragraph2": "maH Gedu’pu’ toy’wI’pu’ chaH. bIH Sovchu’ puqpu’ je tengchaH ngupwI’pu’ jupwI’ chenmoHlu’ HablI’ je moQ. batlh vum chaH Hoch tup.",
       "paragraph3": "Hoch maH ghom’a’mey HaqwI’ De’ ngeH — toy’wI’pu’ je ghoS, chenmoh, je HaqwI’. Hoch tup, qoH laHmey, Duj De’, je Qapla’ wanI’ nIvqu’.",
-      "paragraph4": "Hoch toy’wI’ batlh ghoH — Daq moQ, jatlh, qoj moQ Dat. Hoch ngoQmey Doch Dat."
+      "paragraph4": "Hoch toy’wI’ batlh ’Ip — Qujdaq, ghogh QInDaq, jaj Hoch yIntaHvIS je. Dat rap ngoQmey."
     },
     "forParents": {
       "heading": "vav/SoSmey",
@@ -1086,6 +1086,7 @@
     },
     "registerGedu": {
       "title": "noH Quj yejHaD Gedu account yIchenmoH",
+      "slogan": "HablI’ poH ghoqwI’pu’",
       "certificationAlertTitle": "patlh DaghajnIS",
       "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
@@ -1099,11 +1100,11 @@
     "create": {
       "enterTitle": "vav PIN yIchenmoH",
       "confirmTitle": "PIN yI’ol",
-      "description": "qorDu’lI’ Qan vav PIN. SoH neH — not puqpu’lI’ — DI’on Damaghlaw’ ’ej She’meH ghoStaH ’Iv Davu’. School of Gaming maHvaD potlh law’ puqpu’ QanmeH Qu’."
+      "description": "Hoch je’ghach, Hoch muvghach, ’ej Hoch choHghach — puqpu’lI’ tlhej Quj ’Iv — wa’DIch PINvam poQ. SoH neH DaSov; vaj SoHHutlh accountvamDaq pagh je’lu’, pagh choHlu’."
     },
     "unlock": {
       "title": "vav PIN yIghItlh",
-      "description": "puqpu’lI’ Qan PIN — SoH neH DI’on Damaghlaw’ ’ej account’mey Davu’. School of Gaming maHvaD potlh law’ puqpu’ QanmeH Qu’.",
+      "description": "PINvam ’oH puqpu’lI’ accountmey lojmIt’e’: je’ghachmey choHghachmey je. vaj SoH neH DaruchlaH.",
       "forgot": "PIN DalIj’a’?"
     },
     "mismatch": "rapbe’ PINmey. wInIDqa’.",
@@ -1608,7 +1609,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Sogverse ’oH nuq?",
-          "a": "noH Quj yejHaD Daq ’oH Sogverse’e’. Minecraft ghom’a’mey wIcheH, ghojmoHwI’pu’ Quj DevtaHvIS, vaj Daq tIv mojchoH Qap tIv."
+          "a": "noH Quj yejHaD pat ’oH Sogverse’e’: ghom’a’mey, raghmey, wanI’mey je — Gedu’pu’ Dun DevtaH — Minecraft, Roblox, Fortnite latlh je. naDev Quj yay’ moj."
         },
         "productTypes": {
           "q": "ghom’a’mey, raghmey, wanI’mey: chay’ juHHa’chuq?",
@@ -1620,7 +1621,7 @@
         },
         "safety": {
           "q": "puqwI’ QaQ’a’?",
-          "a": "Hoch qepvaD ghojmoHwI’ tu’lu’, maghomvam Qaw’ law’lu’, ’ej Hochna’ Qoqbe’lu’."
+          "a": "vaj chenmoHlu’. pegh QInmey tu’lu’be’: ghomDaq jatlh toy’wI’pu’, not wa’ wa’ je, ’ej QInvetlh polbe’lu’. Sogverse pong pegh ghaj toy’wI’ account — puqlI’ QIn Daq teH lo’be’ — ’ej vav account tlhej boqlu’; vav accountDaq ’el puqlI’, pegh mu’mey Daj Hutlh. je’ghach muvghach je poQ vav PIN. ’ej qIp: not wIchaw’."
         },
         "howToStart": {
           "q": "chay’ jIQaplaH?",
@@ -1889,7 +1890,12 @@
       "upfrontHint": "wa’logh Huch.",
       "notAvailable": "{currency} Huch DaH ghajbe’.",
       "cadenceMonth": "/ jar",
-      "firstChargeOn": "wa’DIch DIlmeH jaj: {date} — DaHjaj pagh DaDIlnIS."
+      "firstChargeOn": "wa’DIch DIlmeH jaj: {date} — DaHjaj pagh DaDIlnIS.",
+      "guarantee": {
+        "title": "wejmaH jaj Huch nobHa’ ’Ip",
+        "body": "puqlI’vaD QaQbe’chugh, HuchlIj wInobHa’ — ja’chuqghach Qatlh poQbe’lu’. puqlI’ qep wa’DIchvo’ tagh wejmaH jaj.",
+        "contact": "<link>{email}</link>Daq QIn yIngeH; nuv teH DuQaH."
+      }
     },
     "countdown": {
       "days": "jaj",
@@ -1922,17 +1928,17 @@
   "home": {
     "hero": {
       "title": "naDev<br></br><primary>Daq tIv</primary><br></br>moj<br></br><secondary>Qap tIv</secondary>",
-      "subtitle": "Minecraft ghom’a’mey DaHjaj laHmey wIboqmoH. Gedu’pu’ Dun Hoch poH Qapla’ ghojmoH — puqpu’ jupwI’ chu’ Suq, laHmey boqmoH, je chaH muSHa’ tIvqu’."
+      "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv."
     },
     "features": {
       "heading": "toy’a’ QaQ Hob yIchenmoH",
       "subheading": "toy’a’ QaQ Hob ’oH Hoch latlh rur — juppu’ QaQ je Gedu’ tIqqu’ tI’ang.",
       "minecraftClubs": {
-        "title": "Minecraft ghom’a’mey Gedu’pu’",
+        "title": "Hoch qep: Gedu’ tu’lu’",
         "description": "Gedu’pu’ — toy’wI’pu’ chaH. bIH Sovchu’ puqpu’ pong je jupwI’ chenmoHlu’ HablI’ je moQ. Hoch poH chaH bIH ghoStaH."
       },
       "screenTime": {
-        "title": "naDev Quj yay’ moj",
+        "title": "laHmey teH chenmoHmeH ngoQ",
         "description": "ghom’a’mey tIv chenmoH — puqpu’ laHmey boqmoH je tIvqu’."
       },
       "newFriends": {
@@ -1945,8 +1951,8 @@
       }
     },
     "howItWorks": {
-      "heading": "nuq ghoS",
-      "subheading": "Minecraft ghom’a’Daq wej Hoch ghoS.",
+      "heading": "QujtaHvIS ghojtaH.",
+      "subheading": "chay’ qaS: wej mIwmey ngeD — ghom’a’, ragh, wanI’ ghap yImuv.",
       "step1": {
         "title": "Account yIchenmoH",
         "description": "vav/SoS Account yIchenmoH — puqpu’ toy’wI’ accountmey yIchenmoH."
@@ -1957,7 +1963,7 @@
       },
       "step3": {
         "title": "QoQ yImuv",
-        "description": "toy’wI’pu’ Hoch Hogh ’el — Gedu’ legh je Minecraft QoQ juppu’ chu’."
+        "description": "Hoch Hogh ’el toy’wI’pu’lI’, Gedu’chaj lughom, ’ej juppu’ chu’ tlhej lengDaq luSup."
       }
     },
     "cta": {
@@ -2102,11 +2108,11 @@
         "description": "toy’wI’ account HoHlu’ qoj DaghajlaHbe’."
       },
       "minecraft": {
-        "title": "Minecraft Account",
+        "title": "Minecraft account",
         "description": "Minecraft Java Edition lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
       },
       "roblox": {
-        "title": "Roblox Account",
+        "title": "Roblox account",
         "description": "Roblox lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
       }
     },
@@ -2130,9 +2136,9 @@
     "resetPasswordEmailSent": "{email}vaD chovmoH QIn ngeHlu’. QIn tepqengwI’lIj yIbej!",
     "resetPasswordEmailFailed": "QIn ngeHlu’be’pu’. yInID je.",
     "changePin": "PIN yIchoH",
-    "minecraftAccount": "Minecraft Account",
+    "minecraftAccount": "Minecraft account",
     "minecraftDescription": "Minecraft Java Edition account jonmoH",
-    "robloxAccount": "Roblox Account",
+    "robloxAccount": "Roblox account",
     "robloxDescription": "Roblox account jonmoH",
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
     "spokenLanguages": "Holmey jatlhlu’",
@@ -2374,16 +2380,16 @@
   "yty": {
     "hero": {
       "title": "<primary>Yty</primary> nuq?",
-      "subtitle": "Yty ’oH HoS Sogverse Qo’noS wIvmeH. QaQ Qu’mey — laHmey ghoj, jupwI’ Suq, batlh ghoH, je DIvI’ muv — toy’wI’pu’ Yty Suq je Hoch."
+      "subtitle": "Yty ’oH HoS’e’ Sogverse rojmoHbogh. QaQ Qu’mey lutaHvIS — laHmey chu’ lughoj, juppu’ luSuq, batlh luDa, ’ej ghomDaq lumuv — Yty luSuq toy’wI’pu’, chaHvaD HochvaD je."
     },
     "overview": {
       "heading": "Yty nuq ghoS",
-      "paragraph1": "Hoch toy’wI’ pagh SoQ. Hoch poH, Hoch Qu’, je Hoch batlh — toy’wI’pu’ Yty Hoch ’ebbe’ Suq. HSDu’mey chen loS ngoQmey — Hoch Hoch Duj chenmoH.",
+      "paragraph1": "pagh lughoS Hoch toy’wI’pu’. Hoch qep lumuvbogh, Hoch Quest lurInmoHbogh, Hoch batlh luDabogh — Yty-Points luSuq. loS Yty-Elements luchenmoH Pointsvam; Hoch Element ’oH wa’ Duj pIm’e’ — nen QaQ.",
       "paragraph2": "toy’wI’pu’ Yty Suqmo’, Sogverse Yty boq — Hoch wanI’ je Qu’ chen."
     },
     "elements": {
-      "heading": "Yty loS ngoQmey",
-      "subheading": "Hoch ngoQ toy’wI’ Duj Hoch ngoQ Daj Del",
+      "heading": "loS Yty-Elements",
+      "subheading": "Hoch Yty-Element ’oH wa’ Duj’e’ chenmoHbogh toy’wI’: ghaH je, latlhpu’ je, nugh je, jonwI’mey je",
       "harmony": {
         "name": "batlh",
         "description": "SoH Duj",
@@ -2396,19 +2402,19 @@
       },
       "valor": {
         "name": "HoS",
-        "description": "qo’ Duj",
-        "detail": "qo’ DachoHlaH nuq? HoS ’oH Daq Suq je HoS boq. vum, ngoQ ngeH, lo’laH ghoS, je Qap qo’ ghoS."
+        "description": "nugh Duj",
+        "detail": "chay’ vIchoHlaH? nughDaq DaqlIj DaSam ’ej DaboQmeH bIyoHnIS — ’oH Valor’e’. ghom vum, ngoQmey ngeH, najmeH laH lo’, ’ej wa’leS QaQ ghoS — naDev Dat je."
       },
       "wit": {
         "name": "nI’",
-        "description": "De’ je Qu’ Duj",
-        "detail": "De’ Daq bIghItlhlaH nuq? nI’ ’oH QaQ, Qatlh De’ je Qu’. HablI’ ghoH Sov, De’ Qatlh qel, je tIv je moQ boqHa’."
+        "description": "jonwI’mey Duj",
+        "detail": "chay’ jonwI’mey vIlo’chu’? Qujmey, QInmey, je janmey Duj QaQ ’ej qelwI’ — ’oH Wit’e’. HablI’Daq Dochmey yaj, De’ yepqu’ qel, ’ej Quj poH yIn poH je juvchuq."
       }
     },
     "earning": {
       "heading": "toy’wI’pu’ Yty nuqDaq",
-      "paragraph1": "Yty HSDu’mey muv vo’ Suq. Hoch Hogh ghom’a’ poH muv, Qu’mey tIvmoH, jupwI’ batlh, DIvI’ wanI’ je qo’ — Hoch toy’wI’ Yty boq.",
-      "paragraph2": "HSDu’mey Hoch Duj chen — ghom’a’, Qav, je Qajma’. Hoch HSDu’ Yty jer je Duj boq.",
+      "paragraph1": "muvghach vo’ Yty-Points Suqlu’. Hoch Hogh ghom’a’ qep muv, Quests rInmoH, toy’wI’pu’vaD batlh Da, ghom wanI’mey raghmey je muv — Hoch toy’wI’ Yty boq.",
+      "paragraph2": "Achievement Badge bIngDaq Points chenDI’, badgevetlh nIvmoH toy’wI’ — bronze, silver, gold, platinum, diamond. Hoch Point Yty-Level naQ Yty-Element Daj je boq.",
       "paragraph3": "toy’wI’pu’ neH Dabe’. Gedu’pu’, vav/SoSmey, je Hoch DIvI’ Sogverse Yty boq — wanI’ je Qu’ Hoch."
     }
   },
@@ -2608,8 +2614,8 @@
       "eyebrow": "qatlh yIjeS",
       "heading": "chuvmey ghojmoH law’qu’",
       "skills": {
-        "title": "wa’leS laHmey",
-        "description": "Roblox Studio, qorDu’ nISwI’ boq chenmoHghach, je chuvmey meq patlh."
+        "title": "nugh laHmey",
+        "description": "Roblox Studio, jonwI’ yab boQbogh chenmoHghach, je chuvmey meq patlh — latlhpu’ tlhej ghojlu’, mob ghojbe’lu’."
       },
       "people": {
         "title": "lIj tuq yISam",

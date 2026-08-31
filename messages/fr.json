@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
+    "description": "Du temps d’écran au temps qui fait grandir. Clubs, stages et événements sur Minecraft, Roblox, Fortnite et bien d’autres, encadrés par des animateurs professionnels.",
     "pages": {
       "signIn": "Connexion",
       "createAccount": "Créer un compte",
@@ -18,7 +18,7 @@
       "familyProduct": "Séances et comptes rendus",
       "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
       "gamerDashboard": "Mon SOG",
-      "gamerDashboardDescription": "Vos clubs, stages et événements dans le Sogverse",
+      "gamerDashboardDescription": "Vos clubs, stages et événements dans Sogverse",
       "voiceSession": "Session vocale",
       "help": "Aide",
       "shop": "Boutique",
@@ -107,11 +107,11 @@
   "about": {
     "hero": {
       "title": "À propos de <primary>School of Gaming</primary>",
-      "subtitle": "Dans nos clubs Minecraft, le temps d’écran devient du temps qui fait vraiment grandir. Nous réunissons les enfants, des animateurs passionnés et le jeu qu’ils adorent, pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
+      "subtitle": "Du temps d’écran au temps qui fait grandir. Nous réunissons les enfants, des animateurs professionnels et les jeux qu’ils adorent déjà — Minecraft, Roblox, Fortnite et bien d’autres — pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
     },
     "quote": {
       "text": "« Tout ce qui est réel aujourd’hui n’était hier que dans votre imagination. »",
-      "attribution": "— Le Maître du Jeu, School of Gaming"
+      "attribution": "— The Princi-Pal"
     },
     "mission": {
       "heading": "Notre mission",
@@ -129,7 +129,7 @@
       },
       "keepChildrenSafe": {
         "title": "Protéger les enfants en ligne",
-        "description": "Nous construisons des communautés où la bienveillance est la règle. Nos clubs apprennent aux enfants à être de bons citoyens du numérique : ceux qui veillent sur les autres, pas ceux qui font du mal. Tolérance zéro pour le harcèlement."
+        "description": "Il n’y a pas de messages privés dans Sogverse : les joueurs discutent en groupe, jamais en tête-à-tête, et ces conversations ne sont pas conservées. Chaque compte joueur est rattaché à un compte parent, et l’enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Tolérance zéro pour le harcèlement."
       },
       "familyInTheLoop": {
         "title": "La famille reste dans la boucle",
@@ -141,7 +141,7 @@
       "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour dans l’univers Minecraft, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
       "paragraph2": "Nos Gedus sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de construire son identité en ligne, de se lier d’amitié à travers un écran. Cette expérience, ils la mettent au service des enfants à chaque session.",
       "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de stages, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
-      "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie réelle. Les mêmes valeurs, partout."
+      "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie de tous les jours. Les mêmes valeurs, partout."
     },
     "forParents": {
       "heading": "Pour les parents",
@@ -1038,6 +1038,7 @@
     },
     "registerGedu": {
       "title": "Créez votre compte Gedu chez School of Gaming",
+      "slogan": "Les scouts de l’ère connectée",
       "certificationAlertTitle": "Votre compte doit être certifié",
       "certificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit certifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
@@ -1051,11 +1052,11 @@
     "create": {
       "enterTitle": "Créer un code PIN parent",
       "confirmTitle": "Confirmez votre code PIN",
-      "description": "Votre code PIN parent protège votre famille. Vous seul — jamais vos enfants — pouvez valider des achats ou gérer avec qui ils jouent. Leur sécurité est au cœur de tout ce que nous faisons à School of Gaming."
+      "description": "Chaque achat, chaque inscription et chaque changement dans les personnes avec qui vos enfants jouent demande d’abord ce code PIN. Vous seul le connaissez : rien ne peut être acheté ni modifié sur ce compte sans vous."
     },
     "unlock": {
       "title": "Saisissez votre code PIN parent",
-      "description": "Votre code PIN protège vos enfants — vous seul pouvez effectuer des achats ou gérer leurs comptes. Leur sécurité est au cœur de tout ce que nous faisons à School of Gaming.",
+      "description": "Les achats et les modifications des comptes de vos enfants passent par ce code PIN : vous seul pouvez les effectuer.",
       "forgot": "Vous avez oublié votre code PIN ?"
     },
     "mismatch": "Ces codes PIN ne correspondent pas. Réessayons.",
@@ -1315,7 +1316,7 @@
     "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions."
   },
   "selectProfile": {
-    "title": "Qui entre dans le Sogverse ?"
+    "title": "Qui entre dans Sogverse ?"
   },
   "footer": {
     "copyright": "© {year} School of Gaming. Tous droits réservés.",
@@ -1564,7 +1565,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Qu’est-ce que Sogverse ?",
-          "a": "Sogverse est la plateforme de School of Gaming dédiée aux clubs Minecraft encadrés par des animateurs professionnels, où le temps d’écran devient du temps qui fait grandir."
+          "a": "Sogverse est la plateforme de School of Gaming dédiée aux clubs, stages et événements encadrés par des animateurs professionnels, sur Minecraft, Roblox, Fortnite et bien d’autres. Du temps d’écran au temps qui fait grandir."
         },
         "productTypes": {
           "q": "Quelle est la différence entre les clubs, les stages et les événements ?",
@@ -1576,7 +1577,7 @@
         },
         "safety": {
           "q": "Est-ce sans danger pour mon enfant ?",
-          "a": "Un animateur accompagne chaque session, nos communautés sont modérées et nous appliquons une tolérance zéro face au harcèlement."
+          "a": "C’est ainsi qu’il a été conçu. Il n’y a pas de messages privés : les joueurs discutent en groupe, jamais en tête-à-tête, et ces conversations ne sont pas conservées. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
         },
         "howToStart": {
           "q": "Comment commencer ?",
@@ -1708,7 +1709,7 @@
           "linkLabel": "Où se le procurer"
         },
         "minecraft_education": {
-          "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour la classe : la même construction ouverte et bienveillante, avec des outils supplémentaires pour les enseignants, pensée pour des activités encadrées par un animateur plutôt que pour le jeu en solo.",
+          "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour la classe : la même construction ouverte et bienveillante, avec des outils supplémentaires pour l’adulte qui anime la session, pensée pour des activités encadrées plutôt que pour le jeu en solo.",
           "note": "Il n’y a rien à acheter ni de compte scolaire à obtenir — School of Gaming fournit les comptes Minecraft Education que les participants utilisent pendant le club. Pour les clubs à distance, votre enfant doit en plus télécharger le jeu lui-même, gratuitement, depuis le Microsoft Store ou depuis le site de Minecraft Education.",
           "linkLabel": "À propos de Minecraft Education"
         },
@@ -1845,7 +1846,12 @@
       "upfrontHint": "Paiement unique.",
       "notAvailable": "Les tarifs ne sont pas encore disponibles en {currency}.",
       "cadenceMonth": "/ mois",
-      "firstChargeOn": "Premier paiement le {date} — rien à payer aujourd’hui."
+      "firstChargeOn": "Premier paiement le {date} — rien à payer aujourd’hui.",
+      "guarantee": {
+        "title": "30 jours satisfait ou remboursé",
+        "body": "Si cela ne convient pas à votre enfant, nous vous remboursons — sans discussion gênante. Les 30 jours courent à partir de sa première session.",
+        "contact": "Écrivez simplement à <link>{email}</link> et une vraie personne s’en occupe."
+      }
     },
     "countdown": {
       "days": "j",
@@ -1878,17 +1884,17 @@
   "home": {
     "hero": {
       "title": "Du temps d’écran<br></br><primary>au temps qui</primary><br></br>fait<br></br><secondary>grandir</secondary>",
-      "subtitle": "Nos clubs Minecraft, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter."
+      "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter."
     },
     "features": {
       "heading": "Le jeu vidéo, un vrai loisir",
       "subheading": "Comme le foot ou la musique, avec de bons amis et quelqu’un pour guider.",
       "minecraftClubs": {
-        "title": "Des clubs Minecraft avec des animateurs",
+        "title": "Chaque session a son animateur",
         "description": "Nos animateurs sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de se faire des amis en ligne, de construire son identité à travers un écran. Chaque session est encadrée par quelqu’un qui comprend vraiment."
       },
       "screenTime": {
-        "title": "Du temps d’écran au temps qui fait grandir",
+        "title": "Conçu pour développer de vraies compétences",
         "description": "Des clubs pensés pour que le jeu soit formateur : les enfants développent des compétences concrètes, se lient d’amitié, et vivent des aventures qui leur appartiennent."
       },
       "newFriends": {
@@ -1901,8 +1907,8 @@
       }
     },
     "howItWorks": {
-      "heading": "Comment ça marche",
-      "subheading": "Rejoignez un club en trois étapes simples.",
+      "heading": "Apprendre en jouant.",
+      "subheading": "Comment ça marche : rejoignez un club, un stage ou un événement en trois étapes simples.",
       "step1": {
         "title": "Créez votre compte",
         "description": "Inscrivez-vous en tant que parent et créez les comptes de jeu de vos enfants."
@@ -1913,7 +1919,7 @@
       },
       "step3": {
         "title": "À vous de jouer !",
-        "description": "Chaque semaine, vos enfants rejoignent leur animateur et plongent dans une nouvelle aventure Minecraft avec leurs amis."
+        "description": "Chaque semaine, vos enfants rejoignent leur animateur et plongent dans une nouvelle aventure avec leurs amis."
       }
     },
     "cta": {
@@ -2330,16 +2336,16 @@
   "yty": {
     "hero": {
       "title": "Qu’est-ce que l’<primary>Yty</primary> ?",
-      "subtitle": "L’Yty est la force qui maintient l’équilibre des mondes du Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle du Sogverse tout entier."
+      "subtitle": "L’Yty est la force qui maintient l’équilibre de Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle de Sogverse tout entier."
     },
     "overview": {
       "heading": "Comment fonctionne l’Yty",
-      "paragraph1": "Chaque joueur part de zéro. Sessions suivies, défis relevés, gestes de bienveillance : tout se transforme en points d’Yty. Ces points se répartissent sur quatre éléments, chacun reflétant une dimension de la croissance personnelle.",
-      "paragraph2": "En accumulant de l’Yty pour eux-mêmes, les joueurs font aussi grandir celle du Sogverse entier, influençant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
+      "paragraph1": "Chaque joueur part de zéro. Sessions suivies, quêtes accomplies, gestes de bienveillance : tout se transforme en points d’Yty. Ces points se répartissent sur les quatre éléments de l’Yty, chacun reflétant une dimension de la croissance personnelle.",
+      "paragraph2": "En accumulant de l’Yty pour eux-mêmes, les joueurs font aussi grandir celle de Sogverse tout entier, influençant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
     },
     "elements": {
       "heading": "Les quatre éléments de l’Yty",
-      "subheading": "Chaque élément reflète la relation d’un joueur à une dimension différente de son monde.",
+      "subheading": "Chaque élément de l’Yty est une relation que le joueur fait grandir : à lui-même, aux autres, à la société et à la technologie",
       "harmony": {
         "name": "Harmonie",
         "description": "Ta relation à toi-même",
@@ -2352,20 +2358,20 @@
       },
       "valor": {
         "name": "Bravoure",
-        "description": "Ta relation au monde",
-        "detail": "Comment est-ce que je fais une différence ? La Bravoure, c’est trouver sa place dans le monde et avoir le cran d’y contribuer. Travailler en équipe, porter ses idées, utiliser son imagination pour construire quelque chose qui compte."
+        "description": "Ta relation à la société",
+        "detail": "Comment est-ce que je fais une différence ? La Bravoure, c’est trouver sa place dans la société et avoir le cran d’y contribuer. Travailler en équipe, porter ses idées, utiliser son imagination pour construire quelque chose qui compte."
       },
       "wit": {
         "name": "Discernement",
-        "description": "Ta relation aux médias et à la technologie",
-        "detail": "Comment je m’y retrouve dans le monde numérique ? Le Discernement, c’est avoir un rapport sain et critique à la technologie. Comprendre les dynamiques en ligne, reconnaître une fausse info, et trouver le bon équilibre entre l’écran et le reste de la vie."
+        "description": "Ta relation à la technologie",
+        "detail": "Comment bien utiliser la technologie ? Le Discernement, c’est avoir un rapport sain et critique aux jeux, aux médias et aux outils qui les entourent. Comprendre les dynamiques en ligne, reconnaître une fausse info, et trouver le bon équilibre entre l’écran et le reste de la vie."
       }
     },
     "earning": {
       "heading": "Comment les joueurs gagnent de l’Yty",
-      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
-      "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau global et l’élément auquel il correspond.",
-      "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty du Sogverse à travers les événements et les activités partagées."
+      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes accomplies, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
+      "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau d’Yty global et l’élément auquel il correspond.",
+      "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty de Sogverse à travers les événements et les activités partagées."
     }
   },
   "email": {
@@ -2552,7 +2558,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Protéger la vie privée de votre famille — et celle de votre enfant avant tout — compte beaucoup pour nous : nous avons donc rédigé ce document en langage clair plutôt qu’en jargon juridique.",
+        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Nous conservons le moins d’informations possible sur votre enfant : un compte joueur porte une adresse interne Sogverse plutôt qu’un véritable e-mail, et il n’existe qu’à l’intérieur de votre propre compte. Cette page est rédigée en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même.",
         "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à {supportEmail}."
       ]
     },
@@ -2702,7 +2708,7 @@
       "heading": "En bref",
       "paragraphs": [
         "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, stages et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
-        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un animateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
+        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un animateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et chaque club est couvert par une garantie satisfait ou remboursé de 30 jours : si cela ne convient pas à votre enfant, dites-le-nous dans les 30 jours suivant sa première session et nous vous remboursons intégralement. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
       ]
     },
     "sections": {
@@ -2747,7 +2753,7 @@
         "heading": "Résilier un club mensuel",
         "paragraphs": [
           "Nos clubs fonctionnent par abonnement mensuel, et vous êtes libre de résilier quand vous le souhaitez — il n’y a aucun engagement de durée. Vous pouvez le faire vous-même depuis votre compte, et votre enfant conserve sa place jusqu’à la fin du mois déjà réglé.",
-          "Nous voulons aussi que vous puissiez nous essayer en toute confiance. Si votre enfant assiste à sa première session et que cela ne lui convient finalement pas, dites-le-nous dans les 2 jours suivant cette première session et nous vous remboursons intégralement."
+          "Nous voulons aussi que vous puissiez nous essayer en toute confiance : chaque club est couvert par une garantie satisfait ou remboursé de 30 jours. Si cela ne convient finalement pas à votre enfant, écrivez à {supportEmail} dans les 30 jours suivant sa première session et nous vous remboursons tout ce que vous avez versé pour ce club. Aucun formulaire à remplir, aucune justification à donner."
         ]
       },
       "campsCancellation": {
@@ -2772,7 +2778,7 @@
       "privacy": {
         "heading": "La vie privée de votre famille",
         "paragraphs": [
-          "Nous prenons très au sérieux la vie privée de votre famille — et surtout celle de votre enfant — et nous traitons vos informations conformément au droit finlandais et européen de la protection des données. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
+          "Nous traitons les informations de votre famille conformément au droit finlandais et européen de la protection des données, et nous en conservons le moins possible sur votre enfant : un compte joueur est créé par vous, porte une adresse interne Sogverse plutôt que l’e-mail de votre enfant, et ne sert jamais à lui adresser de la publicité. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
         ]
       },
       "changes": {
@@ -2795,13 +2801,13 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place, et nous les prenons au sérieux.",
+        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place — et ils n’ont nulle part où se cacher : il n’existe pas de messages privés dans Sogverse, les joueurs discutent en groupe, jamais en tête-à-tête.",
         "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner. Nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l’enfant à comprendre ce qui s’est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
       ]
     },
     "sections": {
       "commitment": {
-        "heading": "Notre promesse à votre enfant",
+        "heading": "Les enfants d’abord. Toujours.",
         "paragraphs": [
           "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos animateurs et par les autres enfants."
         ]
@@ -2840,7 +2846,7 @@
       "step5": {
         "heading": "Étape 5 — Une mise à l’écart de la communauté",
         "paragraphs": [
-          "Si le comportement persiste malgré tout ce qui précède, un enfant peut être écarté de la communauté SOG pendant un temps — cela concerne ses clubs, notre serveur Minecraft et notre Discord. Notre bureau vous contacte pour vous expliquer la décision, et nous en parlons aussi avec votre enfant."
+          "Si le comportement persiste malgré tout ce qui précède, un enfant peut être écarté de la communauté School of Gaming pendant un temps — cela concerne ses clubs et Sogverse lui-même, y compris nos serveurs de jeu. Notre bureau vous contacte pour vous expliquer la décision, et nous en parlons aussi avec votre enfant."
         ]
       },
       "step6": {
@@ -2883,10 +2889,10 @@
     },
     "why": {
       "eyebrow": "Pourquoi participer",
-      "heading": "Bien plus qu’un cours de code",
+      "heading": "Bien plus qu’apprendre à coder",
       "skills": {
-        "title": "Des compétences pour l’avenir",
-        "description": "Roblox Studio, la conception assistée par IA et les bases de la logique de programmation."
+        "title": "Compétences humaines",
+        "description": "Roblox Studio, la conception assistée par IA et les bases de la logique de programmation — appris avec d’autres, pas tout seul."
       },
       "people": {
         "title": "Rencontrez les vôtres",
@@ -3062,7 +3068,7 @@
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming exploite Sogverse, gère l’environnement d’inscription et d’apprentissage, fournit le programme pédagogique et les animateurs, anime les sessions d’apprentissage et assure la supervision en matière de protection de l’enfance.",
+          "School of Gaming exploite Sogverse, gère l’environnement d’inscription et d’apprentissage, fournit le contenu des sessions et les animateurs, anime les sessions d’apprentissage et assure la supervision en matière de protection de l’enfance.",
           "School of Gaming Galactic Oy",
           "Numéro d’entreprise : 3110461-1",
           "Isokatu 56",
@@ -3111,7 +3117,7 @@
             "Un nom d’affichage et, lorsque cela est réellement nécessaire, un prénom.",
             "L’âge, une tranche d’âge, ou le mois et l’année de naissance plutôt qu’une date de naissance complète.",
             "Le nom d’utilisateur Roblox et l’identifiant Roblox.",
-            "Le cours, le club, le stage, l’événement ou le groupe fréquenté.",
+            "Le club, le stage, l’événement ou le groupe fréquenté.",
             "La présence, la participation, la progression et l’achèvement du parcours.",
             "Le fait que l’enfant publie son premier jeu, sa première expérience ou son premier objet numérique Roblox.",
             "Le nom ou le lien d’une expérience publiée, lorsque cela est nécessaire pour vérifier le résultat du Programme.",
@@ -3413,7 +3419,7 @@
     "intro": {
       "heading": "Notre engagement",
       "blocks": [
-        "Chaque enfant qui participe à ce Programme a le droit de se sentir en sécurité, respecté et protégé — qu’il participe en ligne ou qu’il assiste à un événement en présentiel. Lynx Educate et School of Gaming prennent tous deux cette responsabilité au sérieux."
+        "Chaque enfant qui participe à ce Programme a le droit de se sentir en sécurité, respecté et protégé — qu’il participe en ligne ou qu’il assiste à un événement en présentiel. Cela repose sur la manière dont le Programme est construit : le compte de chaque enfant est rattaché à celui d’un parent, la communication se fait en groupe, sans messagerie privée entre enfants, et seuls les participants inscrits et des animateurs vérifiés peuvent y prendre part."
       ]
     },
     "sections": {
@@ -3551,7 +3557,7 @@
   },
   "attributions": {
     "title": "Crédits et licences",
-    "intro": "Certaines parties du Sogverse s’appuient sur des données et des services que d’autres partagent librement. Cette page les recense, explique ce que chacun apporte et renvoie aux conditions dans lesquelles nous les utilisons.",
+    "intro": "Certaines parties de Sogverse s’appuient sur des données et des services que d’autres partagent librement. Cette page les recense, explique ce que chacun apporte et renvoie aux conditions dans lesquelles nous les utilisons.",
     "sourceLabel": "Source :",
     "licenceLabel": "Licence :",
     "dataVersion": "Données publiées le {date}",

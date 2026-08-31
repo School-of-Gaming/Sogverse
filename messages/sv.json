@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "description": "När skärmtid blir kvalitetstid – Minecraft-klubbar ledda av professionella spelfostrare.",
+    "description": "Där skärmtid blir kvalitetstid. Klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer, ledda av professionella spelfostrare.",
     "pages": {
       "signIn": "Logga in",
       "createAccount": "Skapa konto",
@@ -107,11 +107,11 @@
   "about": {
     "hero": {
       "title": "Om <primary>School of Gaming</primary>",
-      "subtitle": "I våra Minecraft-klubbar blir skärmtid kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelet som barnen redan älskar — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
+      "subtitle": "Där skärmtid blir kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelen som barnen redan älskar — Minecraft, Roblox, Fortnite och fler — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
     },
     "quote": {
       "text": "”Det som är sant nu, var en gång bara din fantasi.”",
-      "attribution": "— Rektorn för School of Gaming"
+      "attribution": "— The Princi-Pal"
     },
     "mission": {
       "heading": "Vårt uppdrag",
@@ -129,7 +129,7 @@
       },
       "keepChildrenSafe": {
         "title": "Håll barn trygga online",
-        "description": "Vi vårdar inkluderande, vänliga och trygga onlinegemenskaper. Vi fostrar omtänksamma och artiga digitala medborgare som ser till sina medspelare. Nolltolerans mot mobbning och toxicitet."
+        "description": "Det finns inga privata meddelanden i Sogverse: spelarna pratar i gruppen, aldrig en mot en, och den chatten sparas inte. Varje spelarkonto är kopplat till ett föräldrakonto, och barnet loggar in via det i stället för att ha ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
       },
       "familyInTheLoop": {
         "title": "Familjen är delaktig",
@@ -141,7 +141,7 @@
       "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelfostrare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
       "paragraph2": "Våra Gedus är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
       "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan veckovisa sessioner får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
-      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller ute i verkligheten. Samma värderingar gäller överallt."
+      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt."
     },
     "forParents": {
       "heading": "För föräldrar",
@@ -1038,6 +1038,7 @@
     },
     "registerGedu": {
       "title": "Skapa ditt spelfostrarkonto hos School of Gaming",
+      "slogan": "Scouter i den uppkopplade tidsåldern",
       "certificationAlertTitle": "Ditt konto måste certifieras",
       "certificationAlertDescription": "Du kan logga in direkt, men en administratör måste certifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du arbeta?",
@@ -1051,11 +1052,11 @@
     "create": {
       "enterTitle": "Skapa en föräldra-PIN",
       "confirmTitle": "Bekräfta din PIN",
-      "description": "Din föräldra-PIN håller din familj trygg. Bara du – aldrig dina barn – kan godkänna köp eller bestämma vilka de spelar med. Deras trygghet är kärnan i allt vi gör på School of Gaming."
+      "description": "Varje köp, varje anmälan och varje ändring av vilka dina barn spelar med kräver den här PIN-koden först. Bara du känner till den, så ingenting på det här kontot kan köpas eller ändras utan dig."
     },
     "unlock": {
       "title": "Ange din föräldra-PIN",
-      "description": "Din PIN håller dina barn trygga – bara du kan göra köp eller hantera deras konton. Deras trygghet är kärnan i allt vi gör på School of Gaming.",
+      "description": "Köp och ändringar av dina barns konton kräver den här PIN-koden, så bara du kan göra dem.",
       "forgot": "Glömt din PIN?"
     },
     "mismatch": "PIN-koderna matchade inte. Vi försöker igen.",
@@ -1564,7 +1565,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Vad är Sogverse?",
-          "a": "Sogverse är School of Gamings plattform för Minecraft-klubbar ledda av professionella spelfostrare, där skärmtid blir kvalitetstid."
+          "a": "Sogverse är School of Gamings plattform för klubbar, läger och evenemang ledda av professionella spelfostrare — i Minecraft, Roblox, Fortnite och mer. Där skärmtid blir kvalitetstid."
         },
         "productTypes": {
           "q": "Vad är skillnaden mellan klubbar, läger och evenemang?",
@@ -1576,7 +1577,7 @@
         },
         "safety": {
           "q": "Är det säkert för mitt barn?",
-          "a": "En spelfostrare är med vid varje träff, våra gemenskaper är modererade och vi har nolltolerans mot mobbning."
+          "a": "Det är byggt för att vara det. Det finns inga privata meddelanden: spelarna pratar i gruppen, aldrig en mot en, och den chatten sparas inte. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
         },
         "howToStart": {
           "q": "Hur kommer jag igång?",
@@ -1708,7 +1709,7 @@
           "linkLabel": "Var du köper det"
         },
         "minecraft_education": {
-          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för klassrummet: samma trevliga och öppna byggande, plus extra verktyg för lärare, utformad för guidade aktiviteter som leds av en instruktör snarare än för ensamspel.",
+          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för klassrummet: samma trevliga och öppna byggande, plus extra verktyg för den vuxna som leder sessionen, utformad för guidade aktiviteter snarare än för ensamspel.",
           "note": "Det finns inget att köpa och inget skolkonto att ordna – School of Gaming tillhandahåller de Minecraft Education-konton som deltagarna använder under klubben. För distansklubbar behöver ditt barn dessutom ladda ner själva spelet, gratis, från Microsoft Store eller från Minecraft Educations egen webbplats.",
           "linkLabel": "Om Minecraft Education"
         },
@@ -1845,7 +1846,12 @@
       "upfrontHint": "Engångsbetalning.",
       "notAvailable": "Pris inte tillgängligt i {currency} ännu.",
       "cadenceMonth": "/ mån",
-      "firstChargeOn": "Första betalningen {date} — inget att betala i dag."
+      "firstChargeOn": "Första betalningen {date} — inget att betala i dag.",
+      "guarantee": {
+        "title": "30 dagars pengarna-tillbaka-garanti",
+        "body": "Om det inte passar ditt barn betalar vi tillbaka — utan krångel och utan jobbiga samtal. De 30 dagarna räknas från ditt barns första träff.",
+        "contact": "Mejla bara <link>{email}</link>, så löser en riktig människa det."
+      }
     },
     "countdown": {
       "days": "dagar",
@@ -1878,17 +1884,17 @@
   "home": {
     "hero": {
       "title": "Där<br></br><primary>skärmtid</primary><br></br>blir<br></br><secondary>kvalitetstid</secondary>",
-      "subtitle": "Våra skickligt utformade Minecraft-klubbar främjar hälsosamt spelande som hobby. Professionella spelfostrare i världsklass gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar."
+      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar."
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
       "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell spelfostrare som finns där för att vägleda och hjälpa.",
       "minecraftClubs": {
-        "title": "Minecraft-klubbar med Gedus",
+        "title": "Varje session har en Gedu",
         "description": "Våra spelfostrare — Gedus — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
       },
       "screenTime": {
-        "title": "Skärmtid blir kvalitetstid",
+        "title": "Utformat för riktiga färdigheter",
         "description": "Skickligt utformade klubbar förvandlar spelande till en lekfull lärandeupplevelse där barn utvecklar riktiga färdigheter och har roligt med det de älskar."
       },
       "newFriends": {
@@ -1901,8 +1907,8 @@
       }
     },
     "howItWorks": {
-      "heading": "Så fungerar det",
-      "subheading": "Gå med i en Minecraft-klubb i tre enkla steg.",
+      "heading": "Lärande genom spelande.",
+      "subheading": "Så fungerar det: gå med i en klubb, ett läger eller ett evenemang i tre enkla steg.",
       "step1": {
         "title": "Skapa ditt konto",
         "description": "Registrera dig som förälder och skapa spelarkonton åt dina barn."
@@ -1913,7 +1919,7 @@
       },
       "step3": {
         "title": "Ge dig ut på äventyr",
-        "description": "Dina spelare loggar in varje vecka, träffar sin Gedu och ger sig ut på Minecraft-äventyr med nya vänner."
+        "description": "Dina spelare loggar in varje vecka, träffar sin Gedu och ger sig ut på äventyret med nya vänner."
       }
     },
     "cta": {
@@ -2330,16 +2336,16 @@
   "yty": {
     "hero": {
       "title": "Vad är <primary>Yty</primary>?",
-      "subtitle": "Yty är en magisk kraft som upprätthåller den känsliga balansen i Sogverse-världarna. Genom att göra bra saker — lära sig nya färdigheter, skaffa vänner, uppföra sig väl och delta i gemenskapen — tjänar spelare Yty åt sig själva och åt alla."
+      "subtitle": "Yty är kraften som håller Sogverse i balans. Genom att göra bra saker — lära sig nya färdigheter, skaffa vänner, uppföra sig väl och delta i gemenskapen — tjänar spelare Yty åt sig själva och åt alla."
     },
     "overview": {
       "heading": "Så fungerar Yty",
-      "paragraph1": "Varje spelare börjar på noll. Från varje session de deltar i, varje utmaning de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över fyra element, som var och ett speglar en del av att växa upp väl.",
+      "paragraph1": "Varje spelare börjar på noll. Från varje session de deltar i, varje uppdrag de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över de fyra Yty-elementen, som var och ett speglar en del av att växa upp väl.",
       "paragraph2": "När spelare samlar Yty åt sig själva ökar de också det totala Yty i Sogverse — formar berättelsen och låser upp nya möjligheter för hela gemenskapen."
     },
     "elements": {
-      "heading": "Ytys fyra element",
-      "subheading": "Varje element speglar en spelares relation till en del av sin värld",
+      "heading": "De fyra Yty-elementen",
+      "subheading": "Varje Yty-element är en relation som spelaren utvecklar: till sig själv, till andra, till samhället och till tekniken",
       "harmony": {
         "name": "Harmoni",
         "description": "Din relation till dig själv",
@@ -2352,19 +2358,19 @@
       },
       "valor": {
         "name": "Mod",
-        "description": "Din relation till världen",
-        "detail": "Hur kan jag göra skillnad? Mod handlar om att hitta sin plats i världen och ha modet att bidra. Det innebär lagarbete, att uttrycka sina idéer, använda sin fantasi och arbeta mot en bättre framtid — lokalt och globalt."
+        "description": "Din relation till samhället",
+        "detail": "Hur kan jag göra skillnad? Mod handlar om att hitta sin plats i samhället och ha modet att bidra till det. Det innebär lagarbete, att uttrycka sina idéer, använda sin fantasi och arbeta mot en bättre framtid — lokalt och globalt."
       },
       "wit": {
         "name": "Vett",
-        "description": "Din relation till media och teknik",
-        "detail": "Hur navigerar jag i den digitala världen? Vett handlar om en hälsosam, kritisk relation till spel, media och teknik. Det innebär att förstå onlinebeteende, tänka kritiskt om information och balansera skärmtid med resten av livet."
+        "description": "Din relation till tekniken",
+        "detail": "Hur hanterar jag tekniken väl? Vett handlar om en hälsosam, kritisk relation till spel, media och verktygen omkring dem. Det innebär att förstå onlinebeteende, tänka kritiskt om information och balansera skärmtid med resten av livet."
       }
     },
     "earning": {
       "heading": "Hur spelare tjänar Yty",
-      "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i veckovisa klubbsessioner, klara uppdrag och utmaningar, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
-      "paragraph2": "När poäng samlas under specifika prestationsmärken går spelarna upp i nivå på dessa märken — från brons till silver, guld, platina och diamant. Varje poäng bidrar också till deras totala Yty-nivå och elementet det tillhör.",
+      "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i veckovisa klubbsessioner, klara uppdrag, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
+      "paragraph2": "När poäng samlas under specifika prestationsmärken går spelarna upp i nivå på dessa märken — från brons till silver, guld, platina och diamant. Varje poäng bidrar också till deras totala Yty-nivå och det Yty-element det tillhör.",
       "paragraph3": "Och det är inte bara spelare. Gedus, föräldrar och hela gemenskapen kan delta i att bygga Ytyn i Sogverse genom event och gemensamma aktiviteter."
     }
   },
@@ -2552,7 +2558,7 @@
     "intro": {
       "heading": "Kort sammanfattning",
       "paragraphs": [
-        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Att skydda din familjs integritet – och framför allt ditt barns – är viktigt för oss, så vi har skrivit det här på ett tydligt språk utan juridisk jargong.",
+        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Vi lagrar så lite som möjligt om ditt barn: ett spelarkonto har en intern Sogverse-adress i stället för en riktig e-postadress, och det finns bara inuti ditt eget konto. Den här sidan är skriven på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det.",
         "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla {supportEmail}."
       ]
     },
@@ -2702,7 +2708,7 @@
       "heading": "Kort sagt",
       "paragraphs": [
         "Det här är villkoren för att använda Sogverse och anmäla ditt barn till våra klubbar, läger och evenemang. Vi har skrivit dem på ett enkelt språk, eftersom vi vill att du faktiskt ska förstå vad du går med på – inte tvingas vada genom juridiskt krångel.",
-        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad spelfostrare som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och ditt barns första gång omfattas av en pengarna-tillbaka-garanti. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
+        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad spelfostrare som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och varje klubb har 30 dagars pengarna-tillbaka-garanti – om den inte passar ditt barn, säg till inom 30 dagar från barnets första träff så betalar vi tillbaka allt. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
       ]
     },
     "sections": {
@@ -2747,7 +2753,7 @@
         "heading": "Säga upp en månadsklubb",
         "paragraphs": [
           "Våra klubbar löper som en månadsprenumeration, och du är fri att säga upp den när du vill – det finns ingen bindningstid. Du kan göra det själv från ditt konto, och ditt barn behåller sin plats till slutet av den månad du redan har betalat för.",
-          "Vi vill också att du ska kunna prova oss med trygghet. Om ditt barn deltar i sin första gång och det visar sig att det inte passar, hör av dig inom 2 dagar från den första gången så ger vi dig full återbetalning."
+          "Vi vill också att du ska kunna prova oss med trygghet, så varje klubb har 30 dagars pengarna-tillbaka-garanti. Om det visar sig att den inte passar ditt barn, mejla {supportEmail} inom 30 dagar från barnets första träff så betalar vi tillbaka allt du har betalat för den klubben. Ingen blankett att fylla i och ingen anledning behöver anges."
         ]
       },
       "campsCancellation": {
@@ -2772,7 +2778,7 @@
       "privacy": {
         "heading": "Din familjs integritet",
         "paragraphs": [
-          "Vi tar din familjs – och särskilt ditt barns – integritet på största allvar, och vi hanterar dina uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
+          "Vi hanterar din familjs uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning, och vi lagrar så lite som möjligt om ditt barn: ett spelarkonto skapas av dig, har en intern Sogverse-adress i stället för barnets egen e-postadress, och används aldrig för att rikta reklam till barnet. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
         ]
       },
       "changes": {
@@ -2795,13 +2801,13 @@
     "intro": {
       "heading": "Kort sagt",
       "paragraphs": [
-        "Varje barn ska känna sig tryggt, respekterat och välkommet i våra klubbar. Mobbning och elakhet hör inte hemma här, och vi tar dem på allvar.",
+        "Varje barn ska känna sig tryggt, respekterat och välkommet i våra klubbar. Mobbning och elakhet hör inte hemma här – och det finns ingen privat plats där de kan ske: det finns inga privata meddelanden i Sogverse, så spelarna pratar i gruppen, aldrig en mot en.",
         "När något går snett straffar vi inte bara – vi hjälper. Vi använder ett lugnt tillvägagångssätt steg för steg som fokuserar på att hjälpa barnet förstå vad som hände, ställa det till rätta och göra bättre nästa gång. Vi går vidare till ett bestämdare steg bara om beteendet fortsätter, och vi håller dig informerad hela vägen."
       ]
     },
     "sections": {
       "commitment": {
-        "heading": "Vårt löfte till ditt barn",
+        "heading": "Barnen först. Alltid.",
         "paragraphs": [
           "Våra klubbar är en plats för att lära, få vänner och ha kul – och det fungerar bara om alla känner sig trygga. Vi är engagerade i en gemenskap fri från mobbning, trakasserier och elakhet, där varje barn behandlas med respekt av våra spelfostrare och av varandra."
         ]
@@ -2840,7 +2846,7 @@
       "step5": {
         "heading": "Steg 5 – Tid borta från gemenskapen",
         "paragraphs": [
-          "Om beteendet fortsätter trots allt ovanstående kan ett barn tas bort från SOG-gemenskapen en tid – det vill säga barnets klubbar, vår Minecraft-server och vår Discord. Vårt kansli kontaktar dig för att förklara beslutet, och vi pratar igenom det med ditt barn också."
+          "Om beteendet fortsätter trots allt ovanstående kan ett barn tas bort från School of Gaming-gemenskapen en tid – det vill säga barnets klubbar och Sogverse självt, inklusive våra spelservrar. Vårt kansli kontaktar dig för att förklara beslutet, och vi pratar igenom det med ditt barn också."
         ]
       },
       "step6": {
@@ -2883,10 +2889,10 @@
     },
     "why": {
       "eyebrow": "Varför vara med",
-      "heading": "Mer än en kodningskurs",
+      "heading": "Mer än att lära sig koda",
       "skills": {
-        "title": "Färdigheter för framtiden",
-        "description": "Roblox Studio, AI-assisterad design och grunderna i kodningslogik."
+        "title": "Mänskliga färdigheter",
+        "description": "Roblox Studio, AI-assisterad design och grunderna i kodningslogik — som man lär sig tillsammans med andra, inte ensam."
       },
       "people": {
         "title": "Hitta ditt gäng",
@@ -3111,7 +3117,7 @@
             "Ett visningsnamn och, när det verkligen behövs, ett förnamn.",
             "Ålder, åldersgrupp eller födelsemånad och födelseår i stället för fullständigt födelsedatum.",
             "Roblox-användarnamn och Roblox-ID.",
-            "Kursen, klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
+            "Klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
             "Närvaro, deltagande, lärandeframsteg och slutförande.",
             "Om barnet publicerar sitt första Roblox-spel, sin första upplevelse eller sitt första digitala föremål.",
             "Namnet på eller länken till en publicerad upplevelse, när det behövs för att bekräfta resultatet i Programmet.",
@@ -3413,7 +3419,7 @@
     "intro": {
       "heading": "Vårt åtagande",
       "blocks": [
-        "Varje barn som deltar i det här Programmet har rätt att känna sig tryggt, respekterat och skyddat – oavsett om barnet deltar online eller på ett fysiskt evenemang. Både Lynx Educate och School of Gaming tar det ansvaret på allvar."
+        "Varje barn som deltar i det här Programmet har rätt att känna sig tryggt, respekterat och skyddat – oavsett om barnet deltar online eller på ett fysiskt evenemang. Det bärs upp av hur Programmet är byggt: varje barns konto är kopplat till en förälders konto, all kommunikation sker i grupp utan privata meddelanden mellan barn, och bara registrerade deltagare och granskade spelfostrare kan delta."
       ]
     },
     "sections": {
