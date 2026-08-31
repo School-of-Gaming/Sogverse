@@ -22,6 +22,8 @@ import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
 import { seatOfferState, type SeatOfferState } from "@/lib/seat-offer-state";
+import type { YtyPalette } from "@/lib/constants/yty";
+import { ENROLLMENT_TONES } from "./enrollment-tones";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
 import { SeatOfferBlock } from "./SeatOfferBlock";
 import {
@@ -138,6 +140,15 @@ import {
  */
 interface EnrollmentCardCommonProps {
   enrollment: FamilyEnrollmentSummary;
+  /**
+   * **Design-pass draft.** Which palette the card's state colours are drawn in.
+   * Defaults to the live one, so every real dashboard renders byte-for-byte what
+   * it rendered before; only a preview scene's brand scenario passes anything
+   * else. The class strings themselves live in `enrollment-tones.ts` — a module
+   * of their own, because the walkthrough deck is a server component and cannot
+   * read an export out of this `"use client"` file. Retires with the draft.
+   */
+  palette?: YtyPalette;
 }
 
 /**
@@ -300,7 +311,8 @@ const WAITLIST_FOOTER_KEY = {
 } as const;
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
-  const { enrollment } = props;
+  const { enrollment, palette = "current" } = props;
+  const tones = ENROLLMENT_TONES[palette];
   // Narrowed once, so every adult-only branch below reads as one question ("is
   // there somebody paying behind this card?") rather than repeating the
   // audience check beside each of the props it guards. Both parent arms answer
@@ -451,16 +463,14 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           "group relative overflow-hidden transition-[border-color,box-shadow,opacity]",
           opensAPage &&
             "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
-          live &&
-            "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
+          live && tones.live,
           // The awaiting tone: the same lit-card treatment in `info` rather than
           // `primary`, because this *is* a card with something happening on it
           // — a purchase has landed and placement is under way — and it must
           // read as that rather than as a fault or as a waitlist place. Blue is
           // already this product's colour for "we are telling you something",
           // and the two gradients are mutually exclusive by `running`.
-          awaiting &&
-            "border-info/40 bg-gradient-to-r from-info/5 to-transparent",
+          awaiting && tones.awaiting,
           // Dimmed in place while the leave is in flight, so the card that is
           // about to disappear says so without moving. Matches the treatment
           // the badge-era waitlist card used, for continuity.
@@ -502,10 +512,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               {canGoLive && (
                 <Badge
                   variant="outline"
-                  className={cn(
-                    "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
-                    !live && "invisible",
-                  )}
+                  className={cn(tones.liveBadge, !live && "invisible")}
                 >
                   <Radio className="h-3 w-3" aria-hidden />
                   {b("live")}
@@ -668,7 +675,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   // loading cue would promise seconds.
                   <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
                     <UserRoundSearch
-                      className="mt-0.5 h-4 w-4 shrink-0 text-info"
+                      className={tones.awaitingGlyph}
                       aria-hidden
                     />
                     <span className="min-w-0">{f(AWAITING_KEY[audience])}</span>
@@ -764,6 +771,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           {seatOffer !== null && (
             <SeatOfferBlock
               offer={seatOffer}
+              palette={palette}
               gamerFirstName={childSeat?.gamerFirstName ?? null}
               // A child sees that a seat has opened and that a parent has been
               // asked; only the parent may answer. The route and the database

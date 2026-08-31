@@ -8,25 +8,25 @@ interface AboutSectionProps {
   id?: string;
   /**
    * Which draft palette the section's one tinted card draws in. Defaults to the
-   * live one, so the public route renders exactly what it rendered before; only
-   * the flat dose changes anything here, and only because its whole claim is
-   * that no blended gradient survives anywhere on the page. Retires with the
-   * draft.
+   * live one, so the public route renders exactly what it rendered before; both
+   * brand doses flatten the card, because a draft whose whole claim is that no
+   * blended gradient survives anywhere on the page cannot leave one here.
+   * Retires with the draft.
    */
   palette?: YtyPalette;
 }
 
 /**
  * The mission card's wash. Today it is an amber→violet blend — a two-colour-era
- * construct, and one of the sites the gradient ruling covers — so the flat dose
- * replaces it with a single-hue wash of the dose's workhorse pink at the alpha
- * that lands it at roughly the card's own brightness. Every other dose keeps
+ * construct, and one of the sites the flat default retires — so every brand dose
+ * replaces it with a single-hue wash of the drafts' workhorse pink, at the alpha
+ * that lands it at roughly the card's own brightness. The live path keeps
  * today's literal, which is what makes this a comparison rather than a change.
  */
 function missionCardClass(palette: YtyPalette): string {
-  return palette === "brand-lively-flat"
-    ? "bg-yty-harmony-strong/10"
-    : "bg-gradient-to-r from-primary/5 to-secondary/5";
+  return palette === "current"
+    ? "bg-gradient-to-r from-primary/5 to-secondary/5"
+    : "bg-yty-harmony-strong/10";
 }
 
 const valueIcons = [Sparkles, Heart, Shield, Users];

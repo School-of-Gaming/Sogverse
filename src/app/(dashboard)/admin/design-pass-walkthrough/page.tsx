@@ -5,7 +5,14 @@ import {
   HomeFeaturesSection,
   HomeHeroSection,
   HomeHowItWorksSection,
+  type HomeDraftClasses,
 } from "@/components/home/home-page-body";
+import { ENROLLMENT_TONES } from "@/components/family/enrollment-tones";
+import { ATTENDANCE_TONE } from "@/components/session-feed/attendance-tone";
+import {
+  PRODUCT_TYPE_ORDER,
+  PRODUCT_TYPE_PRESENTATION,
+} from "@/components/admin/dashboard/product-type-presentation";
 import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
 import {
   YTY_PRESENTATIONS,
@@ -47,7 +54,7 @@ import { cn } from "@/lib/utils";
  * colour is judged against the ground the page actually has.
  *
  * Buttons and links in the samples are hand-written literal classes rather than
- * `buttonVariants` calls, on purpose: slide 10 quotes the recounted blast
+ * `buttonVariants` calls, on purpose: slide 11 quotes the recounted blast
  * radius of the `outline` variant, and a review aid that inflates the number it
  * asks a decision about would be arguing for the wrong decision.
  */
@@ -61,8 +68,9 @@ const SLIDES = [
   { id: "palette-today", title: "Why the palette is wrong today" },
   { id: "strong-soft", title: "The strong and soft split" },
   { id: "grammar", title: "Colour as grammar" },
+  { id: "grammar-wild", title: "The grammar in the wild" },
   { id: "home-yty", title: "Home Yty section" },
-  { id: "gradients", title: "Gradients are a Sogverse invention" },
+  { id: "gradients", title: "Gradients are retired — one candidate left" },
   { id: "gamer-floor", title: "Gamer dashboard at the 360 floor" },
   { id: "greeting-face", title: "The greeting face" },
   { id: "wit", title: "Wit, up close" },
@@ -285,7 +293,7 @@ function Swatch({
 /* ------------------------------------------------------------------ */
 
 /**
- * The three doses slide 5 compares, each paired with the scenario slug whose
+ * The three doses slide 6 compares, each paired with the scenario slug whose
  * page it is a slice of — so a sample and the link beside it can never point at
  * different things.
  */
@@ -299,15 +307,43 @@ const HOME_DOSES: readonly {
   { slug: "brand-lively", label: "Lively", palette: "brand-lively" },
 ];
 
-/** The two the gradient slide compares: the same dose, laid down two ways. */
-const GRADIENT_DOSES: readonly {
-  slug: string;
-  label: string;
-  palette: YtyPalette;
-}[] = [
-  { slug: "brand-lively", label: "Dusk gradient", palette: "brand-lively" },
-  { slug: "brand-lively-flat", label: "Flat fields", palette: "brand-lively-flat" },
-];
+/**
+ * **The retired dusk hero, kept as an exhibit and nothing else.**
+ *
+ * Flat is the drafts' default now, so there is no scenario drawing this and no
+ * page anywhere that renders it. It survives here because it is the one
+ * brand-hue blend with a case to make — it imitates the dusk sky of the brand's
+ * own social imagery rather than mixing two hues for want of a third — and a
+ * case cannot be judged against a description.
+ *
+ * The class strings are the ones the lively dose carried before the flat
+ * default landed, copied verbatim and frozen. Every slot but the hero's own is
+ * the *current* lively dose, because nothing else on this exhibit is under
+ * question: `HomeHeroSection` reads only `hero`, `heroTitle`, `heroPrimary` and
+ * `heroSecondary`, and the rest are here to satisfy the shape.
+ *
+ * **Exhibit-only. Do not copy these into a dose.** If the ruling keeps the dusk
+ * sky, it goes back into the lively dose as a sanctioned exception and this
+ * constant is deleted; if the ruling kills it, this constant is deleted. Either
+ * way it has no future outside this slide.
+ */
+const DUSK_HERO_EXHIBIT: HomeDraftClasses = {
+  hero:
+    "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),radial-gradient(75%_60%_at_74%_6%,_color-mix(in_oklab,_var(--color-yty-harmony-strong)_22%,_transparent)_0%,_transparent_72%),radial-gradient(70%_62%_at_16%_34%,_color-mix(in_oklab,_var(--color-yty-wit-strong)_18%,_transparent)_0%,_transparent_72%)] pt-[var(--header-height)]",
+  heroTitle:
+    "font-display text-2xl font-bold leading-tight tracking-tight md:text-6xl",
+  heroPrimary: "text-foreground",
+  heroSecondary:
+    "box-decoration-clone rounded-lg bg-yty-glow-strong px-3 text-background",
+  howItWorksSection: "bg-yty-harmony-strong/10 py-24",
+  stepCircles: [
+    "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-harmony-strong text-2xl font-bold text-background ring-4 ring-yty-harmony-strong/25",
+    "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-glow-strong text-2xl font-bold text-background ring-4 ring-yty-glow-strong/25",
+    "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background ring-4 ring-yty-wit-soft/25",
+  ],
+  ctaCard: "mx-auto max-w-3xl bg-yty-harmony-strong/15",
+  sectionRule: "mx-auto mt-6 h-1 w-24 rounded-full bg-yty-harmony-strong",
+};
 
 /** The live tokens, each against the hue the brand actually fixes for it. */
 const TODAY_TOKENS: readonly {
@@ -446,7 +482,7 @@ const GRAMMAR_CHIPS: readonly {
     swatch: "bg-yty-glow-strong",
     wordClass: "text-yty-glow-soft",
     examples: ["Progress", "Achievements", "Yty-Points"],
-    note: "The success token converges into it — slide 14.",
+    note: "The success token converges into it — slide 15.",
   },
   {
     family: "Wit blue",
@@ -454,7 +490,7 @@ const GRAMMAR_CHIPS: readonly {
     swatch: "bg-yty-wit-strong",
     wordClass: "text-yty-wit-soft",
     examples: ["Information", "Learning", "Tips"],
-    note: "The info token converges into it — slide 14.",
+    note: "The info token converges into it — slide 15.",
   },
   {
     family: "Valor orange",
@@ -594,7 +630,7 @@ const MULTI_STATE_SURFACES: readonly {
     surface: "Session-feed rail dots",
     states: "4",
     today: "Info, warning, success, muted",
-    grammar: "Knowledge and growth by construction, once slide 14 converges",
+    grammar: "Knowledge and growth by construction, once slide 15 converges",
   },
   {
     surface: "Game-account verification",
@@ -632,7 +668,151 @@ const MULTI_STATE_SURFACES: readonly {
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Slide 6 — the gradient inventory                                   */
+/*  Slide 5 — the grammar in the wild                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * **The product-type mapping the grammar would give the shop.**
+ *
+ * Derived from what each type *is* rather than assigned: a camp is an
+ * adventure, a club is where a child grows week by week, a municipality club
+ * reaches them through school, and an event is people in a room together.
+ *
+ * The tile takes the strong variant at a tenth and the glyph the soft one, which
+ * is the same split every other draft surface follows — a chip label is
+ * body-size text, so the 4.5:1 bar applies and soft is what clears it (6.35–7.20
+ * over its own tint on the card ground).
+ *
+ * Classes are literal strings because Tailwind scans source text; the icons come
+ * from the app's own product-type map rather than being re-picked here, so the
+ * glyph in a sample is the glyph the product uses.
+ */
+const PRODUCT_TYPE_GRAMMAR: Record<
+  (typeof PRODUCT_TYPE_ORDER)[number],
+  { family: string; tile: string; glyph: string; edge: string; why: string }
+> = {
+  consumer_club: {
+    family: "Glow — growth",
+    tile: "border-yty-glow-strong/40 bg-yty-glow-strong/10",
+    glyph: "text-yty-glow-soft",
+    edge: "border-yty-glow-strong/25",
+    why: "A club is the same children, every week, getting better at something",
+  },
+  municipality_club: {
+    family: "Wit — knowledge",
+    tile: "border-yty-wit-strong/40 bg-yty-wit-strong/10",
+    glyph: "text-yty-wit-soft",
+    edge: "border-yty-wit-strong/25",
+    why: "The club a school or a municipality puts on, reaching a child through their education",
+  },
+  camp: {
+    family: "Valor — adventure",
+    tile: "border-yty-valor-strong/40 bg-yty-valor-strong/10",
+    glyph: "text-yty-valor-soft",
+    edge: "border-yty-valor-strong/25",
+    why: "A week away from the ordinary week — the clearest fit of the four",
+  },
+  event: {
+    family: "Harmony — people",
+    tile: "border-yty-harmony-strong/40 bg-yty-harmony-strong/10",
+    glyph: "text-yty-harmony-soft",
+    edge: "border-yty-harmony-strong/25",
+    why: "A one-off everybody turns up to; the point of it is who is there",
+  },
+};
+
+/**
+ * The two parent-dashboard states the grammar moves, each drawn from the card's
+ * own tone map so the sample is the card's real presentation.
+ *
+ * A third state is deliberately absent: the live card's amber edge, which does
+ * not move. That is on the slide as prose rather than as a row, because a
+ * before-and-after pair showing no difference reads as a rendering fault.
+ */
+const PARENT_STATE_SAMPLES: readonly {
+  label: string;
+  today: string;
+  draft: string;
+  why: string;
+}[] = [
+  {
+    label: "Live",
+    today: ENROLLMENT_TONES.current.liveBadge,
+    draft: ENROLLMENT_TONES.brand.liveBadge,
+    why: "Growth, where it takes the success token today — and the same green either way once the tokens converge",
+  },
+];
+
+/**
+ * The family feed's rail marker, today and under the grammar.
+ *
+ * **Restated rather than imported, and the reason is the finding.** The family
+ * feed builds this class inline and deliberately keeps no state vocabulary —
+ * "the markers on the rail carry no state here" is its own comment — so there is
+ * no map to read. What it distinguishes is future from past and prominent from
+ * quiet, nothing more.
+ */
+const FEED_MARKER_SAMPLES: readonly {
+  label: string;
+  today: string;
+  draft: string;
+  why: string;
+}[] = [
+  {
+    label: "Next session",
+    today: "bg-info",
+    draft: "bg-yty-wit-soft",
+    why: "Knowledge — the same blue either way once the tokens converge",
+  },
+  {
+    label: "Later sessions",
+    today: "bg-info/40",
+    draft: "bg-yty-wit-soft/40",
+    why: "The same hue at the quiet alpha the rail already uses",
+  },
+  {
+    label: "Sessions that have run",
+    today: "bg-muted-foreground/60",
+    draft: "bg-muted-foreground/60",
+    why: "Unchanged. History is not a state, and the family feed grades nothing",
+  },
+];
+
+/**
+ * The attendance chip's three states under the grammar, beside the app's own
+ * `ATTENDANCE_TONE`.
+ *
+ * Only one of the three moves, and that is worth seeing: present converges onto
+ * growth, absent keeps warning amber because absent-is-not-a-failure is a
+ * decision this pass does not reopen, and unmarked stays muted because it is the
+ * absence of a mark rather than a state.
+ */
+const ATTENDANCE_STATES = [
+  "present",
+  "absent",
+  "unmarked",
+] as const satisfies readonly (keyof typeof ATTENDANCE_TONE)[];
+
+const ATTENDANCE_GRAMMAR: Record<
+  keyof typeof ATTENDANCE_TONE,
+  { text: string; why: string }
+> = {
+  present: {
+    text: "text-yty-glow-soft",
+    why: "Growth — the one of the three that moves",
+  },
+  absent: {
+    text: "text-warning",
+    why: "Unchanged. Warning amber is far enough from valor to stay, and absent is not a failure",
+  },
+  unmarked: {
+    text: "text-muted-foreground/70",
+    why: "Unchanged. The absence of a mark is not a state to colour",
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/*  Slide 7 — the gradient inventory                                   */
 /* ------------------------------------------------------------------ */
 
 const GRADIENT_SITES: readonly {
@@ -643,35 +823,45 @@ const GRADIENT_SITES: readonly {
   {
     site: "Home hero",
     today: "Two radial brand glows blended into a dusk sky",
-    proposal: "Under review here — the two heroes above",
+    proposal:
+      "The one candidate. Retired in both drafts; drawn above as an exhibit, and yours to reinstate",
   },
   {
-    site: "Lively how-it-works band",
+    site: "Hero wash on the accented dose",
+    today: "Amber on the left, violet on the right — today's live page",
+    proposal:
+      "Retired. One harmony wash in its place; the subtitle over it measures 6.28:1",
+  },
+  {
+    site: "How-it-works band",
     today: "Harmony into wit, both at 10%",
-    proposal: "Under review here — flat is one harmony wash at the same 10%",
+    proposal: "Retired. One harmony wash at the same 10%",
   },
   {
     site: "Closing CTA card",
-    today: "Three stops: harmony into wit into glow",
+    today:
+      "Three stops on the lively dose, amber into pink on the accented one",
     proposal:
-      "Flatten. One hue says the same thing, and its copy measures better — 6.39:1 against 5.86:1",
+      "Retired both. One hue says the same thing and measures better — 6.39:1 against 5.86:1 on the lively card; the accented card takes amber, the act colour, at 6.52:1",
   },
   {
-    site: "Lively section rule",
+    site: "Section rule",
     today: "Pink through blue into green",
     proposal:
-      "Flatten to solid — which forces a hue to be chosen. The draft takes pink",
+      "Retired. Solid pink — which is the standing cost: flattening forces a hue to be chosen",
   },
   {
     site: "Mission card and Yty overview card",
     today: "Amber into violet at 5%, on the home page and nowhere else",
-    proposal: "Flatten with the rest — the flat scenario already does",
+    proposal:
+      "Retired in every brand dose. One harmony wash at 10%, on both cards",
   },
   {
     site: "Same-hue fades to transparent",
     today:
-      "The gamer Yty cards' bgGradient slot, and the live-card edges on enrollment and assignment cards",
-    proposal: "Reclassify as washes and keep — one hue is not a blend",
+      "The gamer Yty cards' bgGradient slot, the accented hero's harmony radial, and the live-card edges on enrollment and assignment cards",
+    proposal:
+      "Kept, and reclassified: one hue fading to transparent adds no second colour and invents nothing, so it is a wash rather than a smear",
   },
   {
     site: "Gedu role badge",
@@ -861,7 +1051,7 @@ const PS2P_SITES: readonly {
   {
     site: "Gamer dashboard greeting",
     decision: "Swap to Space Mono",
-    why: "Slide 8. The same child reads this line on every visit, which is the opposite of rare; and in-platform UI is the Guidebook's first named use for Space Mono.",
+    why: "Slide 9. The same child reads this line on every visit, which is the opposite of rare; and in-platform UI is the Guidebook's first named use for Space Mono.",
   },
   {
     site: "Roblox programme hero",
@@ -1074,6 +1264,135 @@ function GrammarChip({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Slide 5 — the samples                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The four type nouns, in English, for the deck's own labels.
+ *
+ * The app reads these out of `admin.products.types` per locale; this page is
+ * admin-only English narration, and importing a translator into a review aid to
+ * say the word "Camp" would be ceremony.
+ */
+const TYPE_LABELS: Record<(typeof PRODUCT_TYPE_ORDER)[number], string> = {
+  consumer_club: "Club",
+  municipality_club: "Municipality club",
+  camp: "Camp",
+  event: "Event",
+};
+
+/** A tinted glyph tile — the mark both palettes hang the product type on. */
+function TypeGlyph({
+  type,
+  tile,
+  glyph,
+}: {
+  type: (typeof PRODUCT_TYPE_ORDER)[number];
+  tile: string;
+  glyph: string;
+}) {
+  const Icon = PRODUCT_TYPE_PRESENTATION[type].icon;
+  return (
+    <span
+      className={cn(
+        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border",
+        tile,
+      )}
+    >
+      <Icon className={cn("h-4 w-4", glyph)} aria-hidden />
+    </span>
+  );
+}
+
+/**
+ * A slice of a shop browse card: the edge, the type mark, the name, and the
+ * amber price row.
+ *
+ * **The markup is a copy and the colours are the argument.** The real browse
+ * card is four components deep with a five-way fan-out at the leaves, and it
+ * carries *no* product-type mark at all today — so a threaded palette prop here
+ * would not be recolouring an existing element, it would be adding one to a live
+ * component for a draft's benefit. That is the case the scene rules call a third
+ * fork, so the shop is drawn here and linked rather than forked. What is real is
+ * the glyph (the app's own product-type map) and every class string, which are
+ * the card's own literals.
+ */
+function ShopCardSample({
+  type,
+  draft,
+}: {
+  type: (typeof PRODUCT_TYPE_ORDER)[number];
+  draft: boolean;
+}) {
+  const grammar = PRODUCT_TYPE_GRAMMAR[type];
+  return (
+    <div
+      className={cn(
+        "w-56 space-y-3 rounded-lg border bg-card p-4",
+        draft && grammar.edge,
+      )}
+    >
+      <div className="flex items-center gap-2">
+        {draft ? (
+          <TypeGlyph type={type} tile={grammar.tile} glyph={grammar.glyph} />
+        ) : null}
+        <span
+          className={cn(
+            "text-[11px] font-semibold uppercase tracking-wider",
+            draft ? grammar.glyph : "text-muted-foreground",
+          )}
+        >
+          {TYPE_LABELS[type]}
+        </span>
+      </div>
+      <div className="text-sm font-semibold leading-snug text-foreground">
+        Explorers Club
+      </div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-base font-semibold text-foreground">€29/mo</span>
+        <span className="text-sm font-medium text-primary">Read more ›</span>
+      </div>
+    </div>
+  );
+}
+
+/** A rail dot at the size the family feed draws it, with its label beside it. */
+function MarkerRow({
+  label,
+  className,
+}: {
+  label: string;
+  className: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className={cn("h-2.5 w-2.5 rounded-full", className)} aria-hidden />
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </span>
+  );
+}
+
+/** The attendance chip's shape, so the tone is judged where it is spent. */
+function AttendanceChip({
+  label,
+  className,
+}: {
+  label: string;
+  className: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-medium",
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Element cards, zone tiles and the gamer grid                       */
 /* ------------------------------------------------------------------ */
 
@@ -1205,7 +1524,7 @@ export default function DesignPassWalkthroughPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Brand design pass — walkthrough</h1>
         <p className="max-w-prose text-muted-foreground">
-          Fifteen slides. Each one shows today beside the draft, says why the
+          Sixteen slides. Each one shows today beside the draft, says why the
           draft is what it is, and names the ruling it wants from you.
         </p>
       </div>
@@ -1248,7 +1567,7 @@ export default function DesignPassWalkthroughPage() {
         </ol>
       </nav>
 
-      {/* ---------------------------------------------------------- 1 */}
+      {/* ----------------------------------------------------------- 1 */}
       <Slide id="context">
         <Prose>
           This branch is the visual half of the Guidebook alignment: the
@@ -1294,7 +1613,7 @@ export default function DesignPassWalkthroughPage() {
         </NoRuling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 2 */}
+      {/* ----------------------------------------------------------- 2 */}
       <Slide id="palette-today">
         <Prose>
           The four Yty tokens the app ships today are raw Tailwind defaults that
@@ -1343,7 +1662,7 @@ export default function DesignPassWalkthroughPage() {
         </NoRuling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 3 */}
+      {/* ----------------------------------------------------------- 3 */}
       <Slide id="strong-soft">
         <Prose>
           Each element arrives as a pair rather than one colour, and the draft
@@ -1405,7 +1724,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 4 */}
+      {/* ----------------------------------------------------------- 4 */}
       <Slide id="grammar">
         <Prose>
           School of Gaming has an unusually large approved palette — amber and
@@ -1470,7 +1789,7 @@ export default function DesignPassWalkthroughPage() {
             gradient, because a fourth role arrived and there was no hue left to
             give it. That badge is the clearest evidence in the app that the
             two-colour palette ran out, and it is why the gradient question on
-            slide 6 and the grammar question here are the same question.
+            slide 7 and the grammar question here are the same question.
           </Prose>
         </div>
 
@@ -1551,12 +1870,321 @@ export default function DesignPassWalkthroughPage() {
           </p>
           <p>
             Product types: converge into the grammar, or stay a separate
-            categorical palette.
+            categorical palette. The next slide draws the mapping.
           </p>
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 5 */}
+      {/* ----------------------------------------------------------- 5 */}
+      <Slide id="grammar-wild">
+        <Prose>
+          A vocabulary is only worth adopting if it survives contact with real
+          pages, so here it is on the three surfaces you named: the shop, My SOG,
+          and a family&rsquo;s product page. Each one shows today beside the
+          draft, and each says whether the draft is a threaded scenario you can
+          open full-page or a sample drawn here from the real class maps.
+        </Prose>
+        <Prose>
+          <strong className="font-semibold text-foreground">
+            The buttons do not change, and that is the grammar working rather
+            than the grammar stopping.
+          </strong>{" "}
+          Amber is the act colour, so every primary CTA on all three surfaces
+          stays exactly the amber it is today — a family-coloured button would be
+          saying &ldquo;this is a camp&rdquo; with the one colour reserved for
+          &ldquo;press this&rdquo;. If you want family-coloured buttons somewhere
+          specific, that is a ruling to add rather than a gap to fill.
+        </Prose>
+
+        {/* ---- the shop ---- */}
+        <div className="space-y-4">
+          <Marker>Shop — the product card</Marker>
+          <Prose>
+            The public browse card carries no product-type mark at all today: the
+            type decides which section heading a card sits under and nothing
+            else. The colours below are drawn here rather than threaded through
+            the real card, because the real card is four components deep with a
+            five-way fan-out at the leaves — and because a palette prop there
+            would not be recolouring an element, it would be adding one to a live
+            component for a draft&rsquo;s benefit.
+          </Prose>
+
+          <SampleGroup title="Today, on the card a parent meets">
+            <div className="flex flex-wrap gap-4 p-4">
+              {PRODUCT_TYPE_ORDER.map((type) => (
+                <ShopCardSample key={type} type={type} draft={false} />
+              ))}
+            </div>
+          </SampleGroup>
+
+          <div className="space-y-3">
+            <Marker>
+              Today, on admin surfaces — the product-type palette that exists
+            </Marker>
+            <div className="flex flex-wrap items-center gap-4">
+              {PRODUCT_TYPE_ORDER.map((type) => (
+                <span key={type} className="inline-flex items-center gap-2">
+                  <TypeGlyph
+                    type={type}
+                    tile={PRODUCT_TYPE_PRESENTATION[type].tint}
+                    glyph={PRODUCT_TYPE_PRESENTATION[type].text}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {TYPE_LABELS[type]}
+                  </span>
+                </span>
+              ))}
+            </div>
+            <Prose>
+              Cyan, magenta, lime and indigo — the four <code>--product-*</code>{" "}
+              tokens, drawn straight from the map the admin dashboard reads.
+              These are the colours the convergence question is really about.
+            </Prose>
+          </div>
+
+          <SampleGroup title="Under the grammar">
+            <div className="flex flex-wrap gap-4 p-4">
+              {PRODUCT_TYPE_ORDER.map((type) => (
+                <ShopCardSample key={type} type={type} draft />
+              ))}
+            </div>
+          </SampleGroup>
+
+          <DeckTable head={["Type", "Family", "Why"]}>
+            {PRODUCT_TYPE_ORDER.map((type) => (
+              <tr key={type}>
+                <Cell>{TYPE_LABELS[type]}</Cell>
+                <Cell>{PRODUCT_TYPE_GRAMMAR[type].family}</Cell>
+                <Cell muted>{PRODUCT_TYPE_GRAMMAR[type].why}</Cell>
+              </tr>
+            ))}
+          </DeckTable>
+
+          <Prose>
+            <strong className="font-semibold text-foreground">
+              The trade, stated plainly.
+            </strong>{" "}
+            The existing four were chosen <em>deliberately apart</em> from the
+            state colours, and the reasoning is written into the stylesheet: a
+            categorical colour a reader can mistake for a state colour is worse
+            than no colour at all, because they have to check which of the two
+            they are looking at every time. Converging buys meaning — camp equals
+            adventure is something a family could actually learn — and it buys
+            brand colour on the storefront, which is where a stranger meets us.
+            What it spends is exactly that separation: once camp is valor orange,
+            an orange mark on a page could be a type or could be a state.
+          </Prose>
+          <p className="text-xs">
+            <a
+              href="/preview/shop/default"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the storefront grid as it ships
+            </a>
+          </p>
+        </div>
+
+        {/* ---- My SOG ---- */}
+        <div className="space-y-4">
+          <Marker>My SOG — the parent dashboard</Marker>
+          <Prose>
+            This one <em>is</em> threaded: the page body takes the palette and
+            hands it to the enrollment cards, so there is a real scenario to open
+            beside the ordinary one. The samples below are drawn from the
+            card&rsquo;s own tone map rather than restated.
+          </Prose>
+          <Prose>
+            Almost nothing changes, and that is the finding. Two of the
+            card&rsquo;s three coloured states already carry a functional token
+            sitting inside a brand family, so the draft is a convergence rather
+            than a repaint — one green instead of two, one blue instead of two.
+          </Prose>
+
+          <div className="space-y-3">
+            <Marker>The Live badge — today, then the draft</Marker>
+            {PARENT_STATE_SAMPLES.map((row) => (
+              <div key={row.label} className="flex flex-wrap items-center gap-4">
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full border font-semibold",
+                    row.today,
+                  )}
+                >
+                  {row.label}
+                </span>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full border font-semibold",
+                    row.draft,
+                  )}
+                >
+                  {row.label}
+                </span>
+                <span className="max-w-prose text-xs text-muted-foreground">
+                  {row.why}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <DeckTable head={["State", "Today", "Under the grammar"]}>
+            <tr>
+              <Cell>Live</Cell>
+              <Cell muted>Success green</Cell>
+              <Cell muted>Glow — growth</Cell>
+            </tr>
+            <tr>
+              <Cell>Awaiting placement</Cell>
+              <Cell muted>Info blue, on the card edge and the glyph</Cell>
+              <Cell muted>Wit — knowledge, in both slots</Cell>
+            </tr>
+            <tr>
+              <Cell>A seat has opened</Cell>
+              <Cell muted>Info blue, on the rule, the glyph and the title</Cell>
+              <Cell muted>Wit — knowledge, in all three</Cell>
+            </tr>
+            <tr>
+              <Cell>Session in progress</Cell>
+              <Cell muted>Amber card edge and wash</Cell>
+              <Cell muted>
+                Unchanged — amber is the act colour and the Join is the act
+              </Cell>
+            </tr>
+            <tr>
+              <Cell>A place in line</Cell>
+              <Cell muted>No colour at all — muted body text</Cell>
+              <Cell muted>
+                Unchanged. Warning amber is reserved for it, but nothing is wrong
+                with a place in line and the card has said so quietly since it
+                was designed
+              </Cell>
+            </tr>
+          </DeckTable>
+
+          <div className="flex flex-wrap gap-4 text-xs">
+            <a
+              href="/preview/parent-dashboard/busy-family"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the busy family as it ships
+            </a>
+            <a
+              href="/preview/parent-dashboard/brand-palette"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the same page under the grammar
+            </a>
+          </div>
+        </div>
+
+        {/* ---- the family product page ---- */}
+        <div className="space-y-4">
+          <Marker>The family product page</Marker>
+          <Prose>
+            Samples rather than a scenario here. The rail marker is built inline
+            inside the feed and the attendance tone comes out of the shared
+            session-feed map, three components down behind a render callback —
+            so the tone map is imported and drawn here, and the page itself is a
+            link.
+          </Prose>
+
+          <div className="space-y-3">
+            <Marker>Session-feed rail markers</Marker>
+            <div className="space-y-2">
+              {FEED_MARKER_SAMPLES.map((row) => (
+                <div key={row.label} className="flex flex-wrap items-center gap-6">
+                  <span className="w-52 shrink-0">
+                    <MarkerRow label={row.label} className={row.today} />
+                  </span>
+                  <span className="w-52 shrink-0">
+                    <MarkerRow label={row.label} className={row.draft} />
+                  </span>
+                  <span className="max-w-prose text-xs text-muted-foreground">
+                    {row.why}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <Prose>
+              Left is today, right is the draft — and again they are nearly the
+              same blue, which is the convergence rather than a mistake. One
+              honesty note: a family&rsquo;s feed deliberately carries no
+              done-or-owed vocabulary at all. Complete and needs-attention are
+              the <em>gedu</em> feed&rsquo;s markers, on a surface family code
+              cannot even import, and they inherit growth green and warning amber
+              from the status ruling on the last slide rather than from anything
+              here.
+            </Prose>
+          </div>
+
+          <div className="space-y-3">
+            <Marker>Attendance chips — today, then the draft</Marker>
+            <div className="space-y-2">
+              {ATTENDANCE_STATES.map((state) => (
+                <div key={state} className="flex flex-wrap items-center gap-4">
+                  <span className="w-24 shrink-0">
+                    <AttendanceChip
+                      label={state}
+                      className={ATTENDANCE_TONE[state].text}
+                    />
+                  </span>
+                  <span className="w-24 shrink-0">
+                    <AttendanceChip
+                      label={state}
+                      className={ATTENDANCE_GRAMMAR[state].text}
+                    />
+                  </span>
+                  <span className="max-w-prose text-xs text-muted-foreground">
+                    {ATTENDANCE_GRAMMAR[state].why}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <Prose>
+              The left column is the app&rsquo;s own attendance tone map,
+              imported. One of the three moves; the other two are a deliberate
+              decision not to touch them.
+            </Prose>
+          </div>
+
+          <p className="text-xs">
+            <a
+              href="/preview/parent-club/active-club"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the family product page as it ships
+            </a>
+          </p>
+        </div>
+
+        <Ruling>
+          <p>
+            The product-type mapping: adopt it as drawn — camp adventure, club
+            growth, municipality club knowledge, event people — or keep the
+            separate categorical palette and its written separation from the
+            state colours.
+          </p>
+          <p>
+            The status convergence, on these surfaces rather than in the
+            abstract: the Live badge, awaiting placement, the seat offer and the
+            feed markers as drafted.
+          </p>
+          <p>
+            Sign off the grammar in the wild per surface — shop, My SOG, the
+            family product page — or name which of the three to hold back.
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ----------------------------------------------------------- 6 */}
       <Slide id="home-yty">
         <Prose>
           The home page is where the cover&rsquo;s question gets answered,
@@ -1578,22 +2206,31 @@ export default function DesignPassWalkthroughPage() {
         </Prose>
         <Prose>
           <strong className="font-semibold text-foreground">Accented</strong>{" "}
-          keeps today&rsquo;s hero wash and adds one pink hint; the section
-          grounds, the headline and the page&rsquo;s rhythm do not move.{" "}
+          spends one pink wash on the hero and leaves the section grounds, the
+          headline and the page&rsquo;s rhythm where they are.{" "}
           <strong className="font-semibold text-foreground">Lively</strong>{" "}
-          draws the brand&rsquo;s own social look: a dusk sky of pink and blue
-          with <em>no ambient amber at all</em>, so the only amber on screen is
-          the CTA button; the headline goes white with a glow-green marker
-          stroke behind its payoff words; the feature washes double; the
-          how-it-works band is tinted rather than grey; and a palette rule sits
-          under each section heading.
+          gives up ambient amber entirely, so the only amber on screen is the CTA
+          button; the headline goes white with a glow-green marker stroke behind
+          its payoff words; the feature washes double; the how-it-works band is
+          tinted rather than grey; and a palette rule sits under each section
+          heading.
         </Prose>
         <Prose>
-          Both are contrast-measured, not eyeballed. The binding number on the
-          lively hero is where its two glows overlap into dusk purple — the
-          subtitle over that composite reads 4.78:1, which is why the glows are
-          22% and 18% and why a third one was cut. Every circle numeral clears
-          the body-text bar on its fill: 6.11, 6.63 and 8.10.
+          <strong className="font-semibold text-foreground">
+            Both are flat.
+          </strong>{" "}
+          Neither draws a two-hue blend anywhere — that is your gradient
+          direction landed rather than an option, and the one candidate still
+          arguing its case is the whole of the next slide. What flattening cost
+          the accented dose is today&rsquo;s amber-to-violet hero band, replaced
+          by a single pink wash; what it cost the lively dose was a dusk sky.
+        </Prose>
+        <Prose>
+          Both are contrast-measured, not eyeballed. The accented hero&rsquo;s
+          subtitle reads 6.28:1 over its pink wash before the fade above it,
+          which only darkens; the lively hero&rsquo;s sits on the plain page
+          ground at 7.70:1. Every circle numeral clears the body-text bar on its
+          fill: 6.11, 6.63 and 8.10.
         </Prose>
 
         <SampleGroup title="The hero">
@@ -1678,16 +2315,9 @@ export default function DesignPassWalkthroughPage() {
           <Prose>
             The element cards are identical under both drafts — the dose question
             is about the page around them — so there is one draft row here rather
-            than two. Slide 9 looks at the wit card in that row up close.
+            than two. Slide 10 looks at the wit card in that row up close.
           </Prose>
         </div>
-        <Prose>
-          There is a fourth home scenario, and it is deliberately not here.{" "}
-          <em>How much</em> colour and <em>how it is laid down</em> are two
-          questions, and a fourth sample in every run above would make both of
-          them harder to answer; the flat version of the lively page is the whole
-          of slide 6, beside the version it is being compared against.
-        </Prose>
 
         <Ruling>
           <p>
@@ -1701,78 +2331,77 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 6 */}
+      {/* ----------------------------------------------------------- 7 */}
       <Slide id="gradients">
         <Prose>
           <strong className="font-semibold text-foreground">
-            The brand has never combined its colours in a gradient.
+            This slide used to ask whether to keep brand-hue gradients. You have
+            answered it: they smear colours we no longer need to smear.
           </strong>{" "}
-          Every brand-hue blend in this app is a Sogverse invention, and all of
-          them date from the two-colour era, when amber and violet were the only
-          hues there were and anything needing a third look had to be given a
-          mix of the two. The gedu role badge on slide 4 is the smoking gun.
+          So flat is not a scenario any more — it is what both drafts are. Every
+          sample on every other slide of this deck is already drawn without a
+          two-hue blend anywhere in it.
         </Prose>
         <Prose>
-          So the hero glow is not settled either. Below are the same page, the
-          same hues and the same dose, drawn twice: once with the dusk blend, and
-          once with the colour laid down as flat fields — a flat dark ground, a
-          solid harmony edge closing the hero, single-hue washes on the band and
-          the CTA card, and a solid section rule. The white headline, the
-          glow-green marker stroke, the family-coloured cards and circles are
-          identical in both.
+          The reasoning behind the direction, kept because it is what makes the
+          one exception below judgeable: the brand has never combined its colours
+          in a gradient, and every blend in this app dates from the two-colour
+          era, when amber and violet were the only hues there were and anything
+          needing a third look had to be given a mix of the two. The gedu role
+          badge on slide 4 is the smoking gun — a colour invented out of a
+          gradient because a fourth role arrived with no hue left to give it.
+        </Prose>
+        <Prose>
+          <strong className="font-semibold text-foreground">
+            One candidate still has a case, and this is it.
+          </strong>{" "}
+          The dusk hero is not two brand hues mixed for want of a third: it is an
+          imitation of the brand&rsquo;s own social imagery, where a pink-and-blue
+          night sky is a *picture* rather than a colour. That makes it a
+          different argument from the rest of the inventory, and the only one
+          worth drawing rather than describing. Below is the hero as both drafts
+          now render it, and then the retired dusk sky as an exhibit — the same
+          component, handed the old classes.
         </Prose>
 
-        <SampleGroup title="The hero">
-          {GRADIENT_DOSES.map((dose) => (
-            <Sample
-              key={dose.slug}
-              label={dose.label}
-              href={`/preview/home/${dose.slug}`}
-              surface={HERO_SURFACE}
-            >
-              <HomeHeroSection palette={dose.palette} />
-            </Sample>
-          ))}
+        <SampleGroup title="The hero as it stands — flat">
+          <Sample
+            label="Flat, and the default"
+            href="/preview/home/brand-lively"
+            surface={HERO_SURFACE}
+          >
+            <HomeHeroSection palette="brand-lively" />
+          </Sample>
         </SampleGroup>
 
-        <SampleGroup title="The how-it-works band">
-          {GRADIENT_DOSES.map((dose) => (
-            <Sample
-              key={dose.slug}
-              label={dose.label}
-              href={`/preview/home/${dose.slug}`}
-              surface={PAGE_SURFACE}
-            >
-              <HomeHowItWorksSection palette={dose.palette} />
-            </Sample>
-          ))}
-        </SampleGroup>
-
-        <SampleGroup title="The closing CTA card">
-          {GRADIENT_DOSES.map((dose) => (
-            <Sample
-              key={dose.slug}
-              label={dose.label}
-              href={`/preview/home/${dose.slug}`}
-              surface={PAGE_SURFACE}
-            >
-              <HomeCtaSection palette={dose.palette} />
-            </Sample>
-          ))}
+        <SampleGroup title="The exhibit — the retired dusk sky">
+          <Sample
+            label="Dusk gradient (exhibit only — no page renders this)"
+            href="/preview/home/brand-lively"
+            linkLabel="Open the flat page it would replace"
+            surface={HERO_SURFACE}
+            note="Rendered by the page's own hero component with the retired class set passed in, so it is the real treatment rather than a picture of it. There is no scenario behind it: if you keep it, it goes back into the lively dose as a sanctioned exception; if you kill it, the exhibit is deleted."
+          >
+            <HomeHeroSection exhibitClasses={DUSK_HERO_EXHIBIT} />
+          </Sample>
         </SampleGroup>
 
         <Prose>
-          Removing colour from behind text can only help the numbers, and it
-          does: the hero subtitle goes from 4.78:1 over the dusk composite to
-          7.70:1 on the plain ground, and the CTA card&rsquo;s copy from 5.86:1
-          to 6.39:1. Nothing in the flat page needed a new measurement.
+          What the flat hero gives up is the sky; what it gains is a number.
+          Removing colour from behind text can only help, and it does: the
+          subtitle goes from 4.78:1 over the dusk composite to 7.70:1 on the
+          plain ground. What the flat hero <em>adds</em> is the one thing it
+          needed — a solid harmony edge closing the section, because three
+          centred lines on bare ground read as an unstyled page rather than a
+          restrained one.
         </Prose>
 
         <Prose>
-          Every brand-gradient site in the product, with a proposal for each:
+          Every brand-gradient site in the product, and where each one now
+          stands:
         </Prose>
 
-        <DeckTable head={["Site", "Today", "Proposal"]}>
+        <DeckTable head={["Site", "Today", "Where it stands"]}>
           {GRADIENT_SITES.map((row) => (
             <tr key={row.site}>
               <Cell>{row.site}</Cell>
@@ -1785,29 +2414,29 @@ export default function DesignPassWalkthroughPage() {
         <Prose>
           The line the table draws: a <em>same-hue</em> fade to transparent is a
           wash and stays, because there is no second colour in it and nothing was
-          invented. A <em>two-hue blend</em> is the construct under question. One
-          thing worth seeing before you rule: flattening a blend forces a hue to
-          be chosen, and that choice is a small design decision each time — the
-          section rule went from pink-blue-green to plain pink, and the mission
-          card from amber-violet to pink, because pink is the lively dose&rsquo;s
-          workhorse. That cost is real and it is the argument for keeping some of
-          them.
+          invented — the accented hero&rsquo;s pink radial, the Yty cards&rsquo;
+          own fades, the live enrollment card&rsquo;s amber edge. A{" "}
+          <em>two-hue blend</em> is what retires. The standing cost, worth naming
+          because it recurs: flattening a multi-hue rule forces a hue to be
+          chosen, and that is a small design decision each time — the section
+          rule went from pink-blue-green to plain pink and the mission card from
+          amber-violet to pink, both because pink is the drafts&rsquo; workhorse.
         </Prose>
 
         <Ruling>
           <p>
-            Sanction gradients deliberately — name the places a brand-hue blend
-            is allowed, and everything else flattens — or retire brand-hue blends
-            app-wide.
+            The dusk sky: keep it as the one sanctioned gradient in the product,
+            or kill it and go fully flat.
           </p>
           <p>
-            Either way, the hero: dusk blend, or flat fields with the solid
-            harmony edge.
+            If you keep it, name the boundary — is the sanction &ldquo;this
+            hero&rdquo;, or &ldquo;heroes that imitate the social imagery&rdquo;?
+            Anything wider re-opens the inventory above.
           </p>
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 7 */}
+      {/* ----------------------------------------------------------- 8 */}
       <Slide id="gamer-floor">
         <Prose>
           The gamer dashboard is a mobile-first surface, so it is judged at the
@@ -1853,7 +2482,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 8 */}
+      {/* ----------------------------------------------------------- 9 */}
       <Slide id="greeting-face">
         <Prose>
           Press Start 2P lives under your own ruling that it is for rare,
@@ -1929,7 +2558,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 9 */}
+      {/* ---------------------------------------------------------- 10 */}
       <Slide id="wit">
         <Prose>
           One element shows a seam, and it is worth your eye before you sign the
@@ -1967,7 +2596,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 10 */}
+      {/* ---------------------------------------------------------- 11 */}
       <Slide id="buttons">
         <Prose>
           The Guidebook&rsquo;s button set mapped onto our dark ground. Its
@@ -2057,7 +2686,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 11 */}
+      {/* ---------------------------------------------------------- 12 */}
       <Slide id="faces">
         <Prose>
           Three faces are loaded: Poppins does body and every heading, Space
@@ -2133,7 +2762,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 12 */}
+      {/* ---------------------------------------------------------- 13 */}
       <Slide id="zones">
         <Prose>
           The Yty-named voice zones are the third surface the palette feeds, and
@@ -2177,7 +2806,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 13 */}
+      {/* ---------------------------------------------------------- 14 */}
       <Slide id="reach">
         <Prose>
           The Guidebook rations colour by surface, and its rule restated so this
@@ -2193,9 +2822,10 @@ export default function DesignPassWalkthroughPage() {
           This slide used to ask an open question about how far the palette
           reaches. You have since answered it — the site should be brighter and
           more fun, the way the marketing is — so the drafts stopped fencing the
-          palette inside the Yty section. Slide 5 is what that decision looks
+          palette inside the Yty section. Slide 6 is what that decision looks
           like on a real page, at two doses; slide 4 is what it would mean for
-          the colours to carry meaning rather than only brightness.
+          the colours to carry meaning rather than only brightness, and slide 5
+          is that meaning on the shop, My SOG and a family&rsquo;s product page.
         </Prose>
         <Prose>
           That leaves one part of the rationing rule unanswered, and it is the
@@ -2225,7 +2855,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 14 */}
+      {/* ---------------------------------------------------------- 15 */}
       <Slide id="status-colours">
         <Prose>
           The app has four functional status colours — info, success, warning,
@@ -2331,12 +2961,12 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 15 */}
+      {/* ---------------------------------------------------------- 16 */}
       <Slide id="recap">
         <Prose>
-          Twenty rulings, in the order they were asked. Any of them can come
-          back as tune this rather than yes. The cover&rsquo;s question is the
-          one they add up to: whether this app can be as bright and lively as
+          Twenty-two rulings, in the order they were asked. Any of them can
+          come back as tune this rather than yes. The cover&rsquo;s question is
+          the one they add up to: whether this app can be as bright and lively as
           the marketing site on a dark ground, inside the Guidebook.
         </Prose>
 
@@ -2358,53 +2988,62 @@ export default function DesignPassWalkthroughPage() {
             mapping is settled with you.
           </li>
           <li>
-            Slide 4 — product types: converge into the grammar, or stay a
-            separate categorical palette.
+            Slide 5 — the product-type mapping: adopt it as drawn (camp
+            adventure, club growth, municipality club knowledge, event people),
+            or keep the separate categorical palette.
           </li>
           <li>
-            Slide 5 — the home draft: the Yty section plus the feature cards,
+            Slide 5 — the status convergence on the parent surfaces as drafted:
+            the Live badge, awaiting placement, the seat offer, the feed markers.
+          </li>
+          <li>
+            Slide 5 — sign off the grammar in the wild per surface: shop, My SOG,
+            the family product page.
+          </li>
+          <li>
+            Slide 6 — the home draft: the Yty section plus the feature cards,
             the how-it-works circles and the hero.
           </li>
-          <li>Slide 5 — the dose: accented, or lively.</li>
+          <li>Slide 6 — the dose: accented, or lively.</li>
           <li>
-            Slide 6 — gradients: sanction them deliberately and name where, or
-            retire brand-hue blends app-wide.
+            Slide 7 — the dusk sky: keep it as the one sanctioned gradient, or
+            kill it and go fully flat.
           </li>
           <li>
-            Slide 6 — the hero: dusk blend, or flat fields with the solid
-            harmony edge.
+            Slide 7 — if kept, the boundary of that sanction: this hero, or
+            heroes imitating the social imagery.
           </li>
-          <li>Slide 7 — the gamer dashboard Yty grid at the 360 floor.</li>
-          <li>Slide 8 — the greeting swaps from Press Start 2P to Space Mono.</li>
+          <li>Slide 8 — the gamer dashboard Yty grid at the 360 floor.</li>
+          <li>Slide 9 — the greeting swaps from Press Start 2P to Space Mono.</li>
           <li>
-            Slide 8 — the greeting&rsquo;s wide-screen size: text-4xl as
+            Slide 9 — the greeting&rsquo;s wide-screen size: text-4xl as
             drafted, or text-5xl.
           </li>
           <li>
-            Slide 9 — wit&rsquo;s strong and soft pair: accept the seam, or
+            Slide 10 — wit&rsquo;s strong and soft pair: accept the seam, or
             escalate a tuned dark wit to the Guidebook&rsquo;s author.
           </li>
           <li>
-            Slide 10 — the violet fill: retire into Secondary-on-dark, or
+            Slide 11 — the violet fill: retire into Secondary-on-dark, or
             survive under another name.
           </li>
           <li>
-            Slide 10 — the third button tier: A ghost as today, B a quiet 1 px
+            Slide 11 — the third button tier: A ghost as today, B a quiet 1 px
             border, or C label only.
           </li>
           <li>
-            Slide 10 — CTA type: today&rsquo;s 14 px at 500, or 16 px at 600.
+            Slide 11 — CTA type: today&rsquo;s 14 px at 500, or 16 px at 600.
           </li>
           <li>
-            Slide 11 — ratify the Press Start 2P table, or amend rows.
+            Slide 12 — ratify the Press Start 2P table, or amend rows.
           </li>
-          <li>Slide 12 — the voice-zone Yty tiles.</li>
+          <li>Slide 13 — the voice-zone Yty tiles.</li>
           <li>
-            Slide 13 — the calm ring: confirm the Guidebook&rsquo;s amber-only
+            Slide 14 — the calm ring: confirm the Guidebook&rsquo;s amber-only
             treatment of billing, safeguarding and legal, or adjust it.
           </li>
           <li>
-            Slide 14 — the status colours: converge info onto wit and success
+            Slide 15 — the status colours: converge info onto wit and success
             onto glow, keep both sets, or defer to the categorical-labelling
             follow-up.
           </li>
@@ -2421,7 +3060,7 @@ export default function DesignPassWalkthroughPage() {
               surfaces. The palette rules you settle here are written into the
               root CLAUDE.md and the deviations log — the colour grammar of
               slide 4 among them, which is what makes it binding on a surface
-              nobody has built yet. If slide 14 says converge, the two status
+              nobody has built yet. If slide 15 says converge, the two status
               tokens move in the same commit as the Yty ones — they are tokens,
               so it is a value change and no call site is touched. The two
               rulings with real call-site cost are the grammar&rsquo;s state

@@ -37,37 +37,20 @@ export const BRAND_PALETTE_SCENARIO = {
  * `brand-palette` uses the palette as accents, `brand-lively` gives it whole
  * fields. Same hues, same contrast rules, different dose; the owner picks.
  *
+ * **Both doses are flat.** There was a third scenario for a while — the lively
+ * page with every two-hue blend taken out of it — because whether to keep
+ * brand-hue gradients was an open ruling. It is no longer open: gradients smear
+ * colours the palette no longer needs smeared, so flat is the drafts' default
+ * and the flat scenario collapsed into this one. What survives of the question
+ * is a single exhibit on the walkthrough's gradient slide, where the dusk hero
+ * makes its own case beside the flat one.
+ *
  * Home only. The gamer dashboard keeps its two scenarios, because the dose
  * question is about a marketing surface and that is not one.
  */
 export const BRAND_LIVELY_SCENARIO = {
   slug: "brand-lively",
   label: "Brand palette, lively (draft)",
-} as const;
-
-/**
- * The lively dose with every blended gradient taken out of it.
- *
- * **Brand-hue gradients are a Sogverse invention, not a Guidebook construct** —
- * the brand has never combined its colours in a blend, and the ones in this app
- * are a crutch from the two-colour era, when amber and violet were the only
- * hues available and a fourth thing to label had to be given a mix of them. Now
- * that six families exist, the crutch is worth removing rather than restyling —
- * but that is a ruling, and a ruling needs the two pages side by side.
- *
- * So this scenario is `brand-lively` with the same colour, the same dose and
- * the same contrast rules, spent as **flat fields and single-hue washes**: a
- * flat dark hero with a solid harmony edge instead of a dusk blend, one-hue
- * section and CTA washes instead of two- and three-stop ones, a solid section
- * rule instead of a three-stop one. Same-hue fades to transparent are washes
- * rather than blends and are left alone, which is why the Yty element cards are
- * untouched here.
- *
- * Home only, like `brand-lively`, and it retires with it.
- */
-export const BRAND_LIVELY_FLAT_SCENARIO = {
-  slug: "brand-lively-flat",
-  label: "Brand palette, lively — flat (draft)",
 } as const;
 
 export const CURRENT_PALETTE_SCENARIO = {
@@ -77,7 +60,6 @@ export const CURRENT_PALETTE_SCENARIO = {
 
 /** Which palette a scenario slug asks for; anything else is the live one. */
 export function ytyPaletteFor(scenario: string): YtyPalette {
-  if (scenario === BRAND_LIVELY_FLAT_SCENARIO.slug) return "brand-lively-flat";
   if (scenario === BRAND_LIVELY_SCENARIO.slug) return "brand-lively";
   return scenario === BRAND_PALETTE_SCENARIO.slug ? "brand" : "current";
 }
@@ -101,15 +83,14 @@ export function displayFaceFor(scenario: string): DisplayFace {
 /**
  * The home scene's scenarios *are* the palette axis and nothing else: the page
  * has no data and no states, so there is nothing else for a scenario to vary.
- * Four of them, because there are two open questions a page cannot answer twice
- * in one render — how much colour (accented against lively) and how it is laid
- * down (blended against flat).
+ * Three of them, because one open question remains that a page cannot answer
+ * twice in one render — how much colour, accented against lively. How the
+ * colour is laid down is no longer an axis: both doses are flat.
  */
 export const HOME_SCENARIOS = [
   CURRENT_PALETTE_SCENARIO.slug,
   BRAND_PALETTE_SCENARIO.slug,
   BRAND_LIVELY_SCENARIO.slug,
-  BRAND_LIVELY_FLAT_SCENARIO.slug,
 ] as const;
 
 export type HomeScenario = (typeof HOME_SCENARIOS)[number];

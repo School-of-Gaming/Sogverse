@@ -74,7 +74,6 @@ export function GamerDashboardPageBody({
   firstName,
   enrollments,
   helpForm,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- accepted now so the scene's brand-palette scenario can pass it; the design-pass commits that follow thread it into what this page still colours (the enrollment cards). The Yty grid this prop originally drove left this page in the About restructure.
   palette = "current",
   greetingFace = "display",
 }: {
@@ -200,9 +199,14 @@ export function GamerDashboardPageBody({
                 ) : (
                   <div className="space-y-3">
                     {group.items.map((enrollment) => (
+                      // The draft scenario is the whole proposal rather than
+                      // one axis of it, so the cards take the palette here as
+                      // well as the Yty grid below — a child's My SOG and a
+                      // parent's have to agree about what a Live badge is.
                       <EnrollmentCard
                         key={enrollment.participationId}
                         enrollment={enrollment}
+                        palette={palette}
                         audience="gamer"
                       />
                     ))}

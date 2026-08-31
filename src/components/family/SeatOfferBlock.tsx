@@ -6,7 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SUPPORT_EMAIL } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import type { YtyPalette } from "@/lib/constants/yty";
+import { cn, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { SeatOfferState } from "@/lib/seat-offer-state";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
@@ -32,7 +33,53 @@ interface SeatOfferBlockProps {
    * thing, so a button here would only ever produce a refusal.
    */
   onRespond?: (accept: boolean) => Promise<Outcome>;
+  /**
+   * **Design-pass draft.** Which palette the block's three blue slots are drawn
+   * in. `--info` today; the wit family under the proposed grammar, where blue
+   * means knowledge and this block's whole job is telling the parent something.
+   * Defaults to the live one, so every real dashboard is byte-for-byte what it
+   * was. Retires with the draft.
+   */
+  palette?: YtyPalette;
 }
+
+/**
+ * **Design-pass draft.** The block's three blue slots per palette.
+ *
+ * All three are the same decision — `--info` converging onto the wit family —
+ * so they move together or not at all. The title is body-size text, so it takes
+ * wit's *soft* variant (7.57:1 on the card, against a 4.5:1 bar); the container's
+ * top rule and the glyph carry no text and could take either, and take soft too
+ * so the block reads as one hue rather than as two blues stacked.
+ *
+ * The container's *whole* class string lives here rather than only its border,
+ * so the live path's `className` is the exact string it was before this map
+ * existed — a draft must not reorder a live surface's classes on its way past.
+ * Classes are literal strings because Tailwind scans source text.
+ */
+const SEAT_OFFER_TONES: Record<
+  YtyPalette,
+  { container: string; glyph: string; title: string }
+> = {
+  current: {
+    container: "w-full space-y-3 border-t border-info/25 pt-4 text-left",
+    glyph: "mt-0.5 h-4 w-4 shrink-0 text-info",
+    title: "text-info",
+  },
+  brand: {
+    container:
+      "w-full space-y-3 border-t border-yty-wit-soft/25 pt-4 text-left",
+    glyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
+    title: "text-yty-wit-soft",
+  },
+  /** Dose is a home-page question; a dashboard card takes the one draft. */
+  "brand-lively": {
+    container:
+      "w-full space-y-3 border-t border-yty-wit-soft/25 pt-4 text-left",
+    glyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
+    title: "text-yty-wit-soft",
+  },
+};
 
 /**
  * The offer, on the family's own card in My SOG.
@@ -87,7 +134,9 @@ export function SeatOfferBlock({
   offer,
   gamerFirstName,
   onRespond,
+  palette = "current",
 }: SeatOfferBlockProps) {
+  const tone = SEAT_OFFER_TONES[palette];
   const t = useTranslations("parent.waitlist.seatOffer");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -188,17 +237,14 @@ export function SeatOfferBlock({
     //
     // The Accept button below keeps the default (primary) variant: the block is
     // the notice, the button is the action, and they are not the same claim.
-    <div className="w-full space-y-3 border-t border-info/25 pt-4 text-left">
+    <div className={tone.container}>
       <div className="flex items-start gap-2">
-        <CalendarClock
-          className="mt-0.5 h-4 w-4 shrink-0 text-info"
-          aria-hidden
-        />
+        <CalendarClock className={tone.glyph} aria-hidden />
         <div className="min-w-0 space-y-1">
           {/* The heading takes the tone the border box used to carry. With no
               fill behind it, the icon alone is a small mark to hang a section
               on; the icon and the title together are the section's marker. */}
-          <p className="text-sm font-semibold leading-snug text-info">
+          <p className={cn("text-sm font-semibold leading-snug", tone.title)}>
             {t("title")}
           </p>
           <p className="text-sm leading-snug text-muted-foreground">

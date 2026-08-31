@@ -153,32 +153,33 @@ export const YTY_ELEMENT_DRAFT_COLORS: Record<YtyElementId, YtyElementColor> = {
  * Which Yty palette a surface draws in — and, on the home page, at what dose.
  *
  * `"current"` is the live map and the default, so a route that does not opt in
- * renders exactly what it rendered before. The three `brand*` values are all
- * the draft map above; they differ only in how far — and by what means — the
- * *rest* of a page spends the same four families:
+ * renders exactly what it rendered before. The two `brand*` values are both the
+ * draft map above; they differ only in how far the *rest* of a page spends the
+ * same four families:
  *
  * - `"brand"` — accents.
- * - `"brand-lively"` — the marketing site's brightness, drawn with blended
- *   two-hue gradients (a dusk hero, a harmony→wit band, a three-stop CTA).
- * - `"brand-lively-flat"` — the same brightness with **no blended gradient
- *   anywhere**: flat ground, solid colour fields, single-hue washes. Brand-hue
- *   gradients are a Sogverse invention rather than a Guidebook construct, so
- *   this is the scenario that shows what the page looks like without them.
+ * - `"brand-lively"` — the marketing site's brightness, at whole-field strength.
  *
- * The element cards themselves are identical under all three, which is
+ * **Neither draws a two-hue blend anywhere, and that is the settled default
+ * rather than a variant.** Brand-hue gradients are a Sogverse invention rather
+ * than a Guidebook construct — a crutch from the two-colour era — and the owner's
+ * direction is that they smear colours we no longer need to smear. So both doses
+ * lay colour down as flat fields and single-hue washes; a gradient now needs a
+ * case made for it, one site at a time.
+ *
+ * **A single-hue fade is a wash, not a smear.** One hue fading to transparent
+ * introduces no second colour and invents nothing — the element cards'
+ * `bgGradient` slot and the accented hero's harmony radial are both that shape —
+ * so they are outside the retirement and stay.
+ *
+ * The element cards themselves are identical under both doses, which is
  * deliberate: the open questions are about the page around them, and varying
- * both at once would make the comparison unreadable. (Their `bgGradient` slot
- * is a same-hue fade to transparent — a wash, not a two-hue blend — so the flat
- * dose leaves it alone.)
+ * both at once would make the comparison unreadable.
  *
  * Only the preview scenes pass anything but `"current"`, and the whole type
  * retires with the draft map at promotion.
  */
-export type YtyPalette =
-  | "current"
-  | "brand"
-  | "brand-lively"
-  | "brand-lively-flat";
+export type YtyPalette = "current" | "brand" | "brand-lively";
 
 /** The five class slots for one element under the requested palette. */
 export function ytyElementColor(

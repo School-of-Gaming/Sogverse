@@ -14,6 +14,7 @@ import {
 import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
+import { ytyPaletteFor } from "../palette-scenarios";
 
 /**
  * The parent dashboard as a parent meets it: a section per child, then the
@@ -55,6 +56,10 @@ export function ParentDashboardScene({
     <ParentDashboardPageBody
       gamers={fixture.gamers}
       self={fixture.self}
+      // The one scenario that is a palette rather than a family shape. It is
+      // read only by the enrollment cards' state colours, so every other
+      // scenario passes `"current"` and renders exactly what the live page does.
+      palette={ytyPaletteFor(scenario)}
       billingCard={<FixtureBillingCard accounts={fixture.accounts} />}
       helpForm={<InertHelpFeedbackCard audience="adult" />}
       onAddGamer={noop}

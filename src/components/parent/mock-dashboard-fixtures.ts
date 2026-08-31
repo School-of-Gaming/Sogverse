@@ -6,6 +6,7 @@ import {
   type FixtureClock,
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
+import { BRAND_PALETTE_SCENARIO } from "@/components/preview/palette-scenarios";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ParentDashboardParticipant } from "./parent-dashboard-page-body";
 
@@ -86,6 +87,11 @@ import type { ParentDashboardParticipant } from "./parent-dashboard-page-body";
  * empty card pointing at the shop, and the page has to read as an invitation
  * rather than a fault — this is the state every real family passes through
  * between adding their gamers and their first purchase.
+ *
+ * `brand-palette` is `busy-family`'s data under the design pass's draft state
+ * colours — the busy page precisely because it is the one carrying every card
+ * state at once, so the Live badge, the awaiting-placement card and the seat
+ * offer are all on screen together. It retires with the draft.
  */
 export const PARENT_DASHBOARD_SCENARIOS = [
   "typical",
@@ -94,6 +100,7 @@ export const PARENT_DASHBOARD_SCENARIOS = [
   "new-family",
   "parent-only",
   "no-enrollments",
+  BRAND_PALETTE_SCENARIO.slug,
 ] as const;
 
 export type ParentDashboardScenario =
@@ -201,6 +208,12 @@ export function buildParentDashboardFixture(
         ],
       };
 
+    // The busy family's data again, drawn under the draft grammar's state
+    // colours. Not a seventh state of the page: a palette cannot coexist with
+    // another palette in one render, which is the test a second scenario has to
+    // pass, and the comparison is made by switching between two identical
+    // pages. Retires with the draft.
+    case BRAND_PALETTE_SCENARIO.slug:
     case "busy-family":
       return {
         gamers: [

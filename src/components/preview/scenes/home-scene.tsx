@@ -10,17 +10,19 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * the live body with nothing standing in for anything — the only thing the
  * scenario chooses is how much of that body the brand palette colours.
  *
- * The four scenarios exist to be switched between: the brand hues have to be
- * judged against the ones they replace, and each open question has to be judged
- * against itself, and the fastest honest comparison is the same page at the
- * same scroll position under each. `brand-palette` spends the palette as
- * accents; `brand-lively` spends it the way the brand's own marketing does — a
- * dusk sky in the hero, whole tinted fields, and amber kept for the CTA alone;
- * `brand-lively-flat` spends exactly the same colour with no blended gradient
- * anywhere, because brand-hue gradients are a Sogverse invention rather than a
- * Guidebook construct and whether to keep them is its own ruling. The Yty
- * element cards are identical under all three, deliberately: the open questions
- * are about the page around them.
+ * The three scenarios exist to be switched between: the brand hues have to be
+ * judged against the ones they replace, and the fastest honest comparison is the
+ * same page at the same scroll position under each. `brand-palette` spends the
+ * palette as accents; `brand-lively` spends it the way the brand's own marketing
+ * does — whole tinted fields, and amber kept for the CTA alone. The Yty element
+ * cards are identical under both, deliberately: the open question is about the
+ * page around them.
+ *
+ * **Both drafts are flat.** Brand-hue gradients are a Sogverse invention rather
+ * than a Guidebook construct and are retired by owner direction, so there is no
+ * fourth scenario drawing the flat comparison — flat is what the drafts *are*.
+ * The one blend still arguing its case, the dusk hero, lives as an exhibit on
+ * the walkthrough deck's gradient slide rather than as a page here.
  *
  * **The hero's h1 stays in Press Start 2P under the draft, deliberately.** The
  * design pass reviews every Press Start 2P placement against the owner's
@@ -28,7 +30,7 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * *for*: the front page's one arcade sentence, seen once, by a stranger,
  * before anything else. Swapping it here would leave the face with no
  * flagship placement while keeping it loaded, which is the worst of both — so
- * the h1's *face* is unchanged across all four scenarios and the comparison
+ * the h1's *face* is unchanged across all three scenarios and the comparison
  * stays about the palette; what the lively doses change is its colour, from
  * amber and violet to white with a green marker stroke behind the payoff
  * words. The gamer dashboard's greeting is the placement that moves;

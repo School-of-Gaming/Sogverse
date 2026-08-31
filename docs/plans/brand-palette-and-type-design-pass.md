@@ -83,10 +83,10 @@ Owner direction (2026-08-31), added during implementation:
    hypothesis is settled on the permissive side: the home page is a marketing surface, so
    the brand draft colours the feature cards, the how-it-works circles and the hero glow
    as well. Two doses are drafted rather than one — `brand-palette` (accents) and
-   `brand-lively` (the marketing site's own energy: a dusk pink/blue hero with no ambient
-   amber, a glow-green marker stroke behind the headline's payoff words, fuller washes, a
-   tinted band, palette rules under section headings) — and the owner picks the dose from
-   the scenes. Only the **calm ring** (billing, safeguarding, legal), which the Guidebook
+   `brand-lively` (the marketing site's own energy: no ambient amber at all, a glow-green
+   marker stroke behind the headline's payoff words, fuller washes, a tinted band, palette
+   rules under section headings) — and the owner picks the dose from the scenes. Both are
+   drawn flat; see direction 11. Only the **calm ring** (billing, safeguarding, legal), which the Guidebook
    keeps amber-only, is still an open ruling.
 9. **The status tokens collide with the brand families, and convergence is raised for
    ruling.** `--info` (#308CE8) sits between wit-strong #3A71DE and wit-soft #4DB3F5;
@@ -106,20 +106,32 @@ Owner direction (2026-08-31), added during implementation:
     narrow violet, give role badges real families, converge or keep the product-type
     palette. All four are pending; the adopted ones are codified in the root `CLAUDE.md`
     at wiring.
-11. **Brand-hue gradients are a Sogverse invention, and whether to keep them is open**
-    (owner direction, 2026-08-31). The brand has never blended its colours; every blend
-    here is a two-colour-era crutch, the gedu role badge being the smoking gun. A fourth
-    home scenario, `brand-lively-flat`, draws the lively dose with no two-hue blend
-    anywhere so the flat-vs-gradient comparison can be made on a real page; the deck's
-    gradient slide inventories every site and asks whether to sanction gradients
-    deliberately (naming where) or retire brand-hue blends app-wide. The role-badge
-    gradient is slated for retirement if the grammar is adopted. Same-hue fades to
-    transparent are washes, not blends, and stay.
+11. **Brand-hue gradients are retired by default** (owner direction, 2026-08-31, hardened
+    the same day): they "smear colours — we have a lot of colours now, we don't need to
+    smear anymore". Flat is therefore not a scenario but what both home doses *are*; the
+    fourth scenario that drew the flat comparison is gone, and its treatment is now the
+    lively dose. A gradient needs a case made for it site by site, and exactly one
+    candidate has one — the dusk hero, which imitates the brand's own social imagery
+    rather than mixing two hues for want of a third. The deck's gradient slide holds it
+    as an exhibit-only class set handed to the real hero component, and asks: keep it as
+    the sole sanctioned gradient, or go fully flat. Same-hue fades to transparent are
+    washes, not smears, and stay. The role-badge gradient retires with the grammar.
 12. **The walkthrough deck renders real components inline — no iframes** (owner
     direction, 2026-08-31). Each comparison draws the live components with a link to the
     full preview scene or style-guide anchor beside it, which is why the home page's four
     colour-bearing sections are exported from its body: a sample is the route's own code
     under a different palette prop and cannot drift from the page it shows.
+13. **The grammar is drafted on the shop, My SOG and the family product page** (owner
+    direction, 2026-08-31). Each surface is threaded where its body takes props cleanly
+    and drawn as a deck sample where it does not: My SOG is threaded (a `brand-palette`
+    scenario on the parent-dashboard scene, the palette handed to the enrollment cards),
+    while the shop and the family product page are deck samples built from the real class
+    maps — the public browse card carries no product-type mark at all today, so threading
+    there would mean adding an element to a live component for a draft's benefit. The
+    proposed product-type mapping is camp = valor, consumer club = glow, municipality club
+    = wit, event = harmony; the deck names the trade against the deliberately-separate
+    categorical palette and leaves the ruling with the owner. Buttons keep amber
+    everywhere, because amber is the act colour.
 
 ## Rejected alternatives
 

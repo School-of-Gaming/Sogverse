@@ -19,16 +19,16 @@ interface YtySectionProps {
 
 /**
  * The overview card's wash — an amber→violet blend today, and one of the sites
- * the gradient ruling covers. Only the flat dose changes it, to a single-hue
- * wash: that scenario's whole claim is that no blended gradient survives
- * anywhere on the page, and this card sits on the same page. The element cards
- * below are identical under every dose, which is deliberate and unaffected —
- * their fade is same-hue, so it is a wash rather than a blend.
+ * the flat default retires. Every brand dose replaces it with a single-hue wash;
+ * the live path keeps today's literal, which is what makes this a comparison
+ * rather than a change. The element cards below are identical under every dose,
+ * which is deliberate and unaffected — their fade is same-hue, so it is a wash
+ * rather than a blend.
  */
 function overviewCardClass(palette: YtyPalette): string {
-  return palette === "brand-lively-flat"
-    ? "bg-yty-harmony-strong/10"
-    : "bg-gradient-to-r from-primary/5 to-secondary/5";
+  return palette === "current"
+    ? "bg-gradient-to-r from-primary/5 to-secondary/5"
+    : "bg-yty-harmony-strong/10";
 }
 
 export function YtySection({ id, palette = "current" }: YtySectionProps) {
