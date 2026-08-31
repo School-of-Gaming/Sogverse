@@ -78,6 +78,15 @@ ban, and the ESLint config says so.
   page, the group details page and the product form's site field); the gedu shell and the
   preview scene supply nothing.
 
+  **The empty address is a ghost line, and it belongs to that same capability.** A site
+  with no address renders an italic-muted invitation to write one, in the imperative, in
+  the slot the address itself occupies — the grammar the two note ghosts already use, for
+  the reason the notes' own record gives: structure that is invisible until the editor is
+  open is a feature nobody discovers, and a newly named site starts with three of its four
+  fields empty. A viewer who supplies no details save gets *nothing* there instead: the
+  ghost is an invitation, and there is no invitation to make to somebody who could not
+  accept it.
+
   **A consumer that mounts it inside a `<form>` owes it one thing**: Enter in a text input
   is a browser's implicit submit of whichever form the input sits in, and this panel's
   fields belong to the building rather than to that form. The product form's site field

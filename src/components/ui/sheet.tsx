@@ -38,6 +38,12 @@ function Sheet({ open, onOpenChange, children }: SheetProps) {
         "fixed inset-0 z-50",
         open ? "pointer-events-auto" : "pointer-events-none",
       )}
+      // A sheet is a portal, so a `<form>` inside one submits the form it was
+      // *opened from* rather than nothing at all — React dispatches on the tree
+      // it rendered. `Dialog` carries the same line, and the paragraph
+      // explaining it. No sheet holds a form today; the containment is here
+      // because the first one to do so would have no warning that it needed it.
+      onSubmit={(event) => event.stopPropagation()}
     >
       <div
         className={cn(

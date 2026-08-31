@@ -1445,6 +1445,7 @@
       "nameRequired": "Un site doit avoir un nom.",
       "addressLabel": "Adresse",
       "addressPlaceholder": "Rue, code postal, ville",
+      "addressEmpty": "Ajoutez l’adresse dont les familles ont besoin pour trouver le site.",
       "edit": "Modifier",
       "cancel": "Annuler",
       "save": "Enregistrer",

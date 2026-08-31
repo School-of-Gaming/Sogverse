@@ -19,12 +19,13 @@ import {
  * test here is the contract itself, on the one component both surfaces render —
  * a shell test can only ever say that its own shell passed the right thing.
  *
- * Four claims, and the first is the permission model:
+ * Seven claims, and the first is the permission model:
  *
  *  1. **No details save, no way in to the name or the address.** A gedu surface
  *     supplies only the notes save, and the two location-record fields are not
  *     merely disabled — they are not rendered, so there is no affordance to
- *     find.
+ *     find. The ghost inviting an address is part of that capability and is
+ *     absent there too.
  *  2. **The details save turns them into fields behind the same one Save**, and
  *     only what changed is sent: an untouched half would land on top of
  *     whatever somebody else corrected in between.
@@ -32,18 +33,29 @@ import {
  *     editor over a discarded field.
  *  4. **A refused write leaves the editor open with the failure line**, and the
  *     write that did land still landed.
+ *  5. **A stored value changing under an open editor does not touch the
+ *     draft.** Refetches land on their own schedule; typing is not theirs to
+ *     overwrite.
+ *  6. **A retry after a half-failed save writes only what is still dirty**, so
+ *     the half that landed is not written a second time.
+ *  7. **A refusal that a block hid does not come back when the block lifts.**
+ *     The two share one slot, so an error behind a live reason is an error
+ *     nobody is being shown — and re-showing it later would describe an attempt
+ *     from two edits ago.
  */
 
 /** Drives `editing` the way both real shells do — the panel never owns it. */
 function Harness({
   onSaveNotes,
   onSaveDetails,
+  siteName = "Kallion kirjasto",
   address = "Viides linja 11, 00530 Helsinki",
   publicNote = "Come in through the side door.",
   staffNote = null,
 }: {
   onSaveNotes: (draft: SiteNotesDraft) => void | Promise<void>;
   onSaveDetails?: (draft: SiteDetailsDraft) => void | Promise<void>;
+  siteName?: string;
   address?: string | null;
   publicNote?: string | null;
   staffNote?: string | null;
@@ -53,7 +65,7 @@ function Harness({
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <SitePanel
-        siteName="Kallion kirjasto"
+        siteName={siteName}
         address={address}
         publicNote={publicNote}
         staffNote={staffNote}
@@ -84,6 +96,23 @@ describe("site panel — a viewer who may write only the notes", () => {
     expect(screen.queryByLabelText("Address")).toBeNull();
     // The notes are still theirs to write — this is a capability, not a lock.
     expect(screen.getByLabelText("Note for families")).toBeTruthy();
+  });
+
+  it("says nothing at all where there is no address", () => {
+    render(<Harness onSaveNotes={vi.fn()} address={null} />);
+
+    // The ghost is an invitation to write one, so it belongs only to a viewer
+    // who could — and the two note ghosts beside it are still theirs.
+    expect(
+      screen.queryByText(
+        "Add the street address families need to find the building.",
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByText(
+        "Add what the next Gedu at this site needs to know — keys, kit, room quirks.",
+      ),
+    ).toBeTruthy();
   });
 
   it("saves the notes alone", async () => {
@@ -145,6 +174,31 @@ describe("site panel — a viewer who owns the site record", () => {
     expect(saveNotes).not.toHaveBeenCalled();
   });
 
+  // Claim 2 from the other side: the draft is always trimmed, so the stored
+  // value has to be compared trimmed too. A row carrying padding — a seed, an
+  // import — otherwise reads as dirty on a field nobody touched, and the Save
+  // writes the trimmed value back over it as though that had been asked for.
+  it("does not treat padding on a stored value as an edit", async () => {
+    const saveNotes = vi.fn();
+    const saveDetails = vi.fn();
+    render(
+      <Harness
+        onSaveNotes={saveNotes}
+        onSaveDetails={saveDetails}
+        address="  Viides linja 11, 00530 Helsinki  "
+      />,
+    );
+
+    openEditor();
+    fireEvent.change(screen.getByLabelText("Note for families"), {
+      target: { value: "Use the main entrance." },
+    });
+    save();
+
+    await waitFor(() => expect(saveNotes).toHaveBeenCalledTimes(1));
+    expect(saveDetails).not.toHaveBeenCalled();
+  });
+
   it("refuses a blank name in words rather than discarding the edit", () => {
     const saveDetails = vi.fn();
     render(<Harness onSaveNotes={vi.fn()} onSaveDetails={saveDetails} />);
@@ -185,5 +239,117 @@ describe("site panel — a viewer who owns the site record", () => {
       "value",
       "Kallion kirjaston monitoimisali",
     );
+  });
+
+  it("does not resurface a hidden failure when the block that hid it lifts", async () => {
+    const onSaveDetails = vi.fn().mockRejectedValue(new Error("nope"));
+    render(<Harness onSaveNotes={vi.fn()} onSaveDetails={onSaveDetails} />);
+
+    openEditor();
+    fireEvent.change(screen.getByLabelText("Address"), {
+      target: { value: "Toinen linja 4, 00530 Helsinki" },
+    });
+    save();
+    await screen.findByRole("alert");
+
+    // Blanking the name blocks the Save, and the reason takes the failure
+    // line's slot — so from here on the failure is not on screen.
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "" } });
+    expect(screen.getByText("A site needs a name.")).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    // Typing a name back lifts the block. What must not come back with it is a
+    // refusal of an attempt two edits ago, over a draft that has changed since.
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Kallion kirjasto" },
+    });
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("offers the ghost line where there is no address yet", () => {
+    render(<Harness onSaveNotes={vi.fn()} onSaveDetails={vi.fn()} address={null} />);
+
+    expect(
+      screen.getByText(
+        "Add the street address families need to find the building.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("leaves an open draft alone when the stored values change underneath", () => {
+    const onSaveNotes = vi.fn();
+    const onSaveDetails = vi.fn();
+    const { rerender } = render(
+      <Harness onSaveNotes={onSaveNotes} onSaveDetails={onSaveDetails} />,
+    );
+
+    openEditor();
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Kallion kirjaston monitoimisali" },
+    });
+    fireEvent.change(screen.getByLabelText("Address"), {
+      target: { value: "Toinen linja 4, 00530 Helsinki" },
+    });
+
+    // A background refetch lands — React Query refetches on window focus, so
+    // this arrives on nobody's schedule and certainly not the admin's. Both
+    // stored halves change while the editor is open and being typed into.
+    rerender(
+      <Harness
+        onSaveNotes={onSaveNotes}
+        onSaveDetails={onSaveDetails}
+        siteName="Kallion kirjaston sivupiste"
+        address="Kolmas linja 7, 00530 Helsinki"
+      />,
+    );
+
+    expect(screen.getByLabelText("Name")).toHaveProperty(
+      "value",
+      "Kallion kirjaston monitoimisali",
+    );
+    expect(screen.getByLabelText("Address")).toHaveProperty(
+      "value",
+      "Toinen linja 4, 00530 Helsinki",
+    );
+  });
+
+  it("retrying a half-failed save does not write the half that landed", async () => {
+    const onSaveNotes = vi.fn();
+    const onSaveDetails = vi.fn().mockRejectedValue(new Error("nope"));
+    const { rerender } = render(
+      <Harness onSaveNotes={onSaveNotes} onSaveDetails={onSaveDetails} />,
+    );
+
+    openEditor();
+    fireEvent.change(screen.getByLabelText("Address"), {
+      target: { value: "Toinen linja 4, 00530 Helsinki" },
+    });
+    fireEvent.change(screen.getByLabelText("Note for families"), {
+      target: { value: "Use the main entrance." },
+    });
+    save();
+
+    await waitFor(() => expect(onSaveNotes).toHaveBeenCalledTimes(1));
+    await screen.findByRole("alert");
+
+    // The notes write landed, so its awaited invalidation puts the written
+    // value back on the prop — which is what the real shells' returned
+    // invalidations do, and what makes the retry below able to tell the two
+    // halves apart.
+    rerender(
+      <Harness
+        onSaveNotes={onSaveNotes}
+        onSaveDetails={onSaveDetails}
+        publicNote="Use the main entrance."
+      />,
+    );
+
+    save();
+
+    // The address is still dirty, so it is attempted again — and the notes are
+    // not, because they are no longer dirty. "Only what changed is written"
+    // holds across a retry, not just on a first attempt.
+    await waitFor(() => expect(onSaveDetails).toHaveBeenCalledTimes(2));
+    expect(onSaveNotes).toHaveBeenCalledTimes(1);
   });
 });

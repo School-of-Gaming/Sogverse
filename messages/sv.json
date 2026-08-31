@@ -1445,6 +1445,7 @@
       "nameRequired": "Lokalen måste ha ett namn.",
       "addressLabel": "Adress",
       "addressPlaceholder": "Gata, postnummer, stad",
+      "addressEmpty": "Lägg till gatuadressen familjerna behöver för att hitta till lokalen.",
       "edit": "Redigera",
       "cancel": "Avbryt",
       "save": "Spara",

@@ -1445,6 +1445,7 @@
       "nameRequired": "A site needs a name.",
       "addressLabel": "Address",
       "addressPlaceholder": "Street, postal code, city",
+      "addressEmpty": "Add the street address families need to find the building.",
       "edit": "Edit",
       "cancel": "Cancel",
       "save": "Save",

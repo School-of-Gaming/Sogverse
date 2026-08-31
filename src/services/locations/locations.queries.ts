@@ -304,9 +304,18 @@ export function useUpdateLocation() {
         // at, and that name is now the old one — the same reason the site-notes
         // mutation invalidates this key, and the same arrangement: every
         // product rather than one, because only mounted queries refetch and
-        // exactly one product document is ever mounted. The gedu group feed
-        // carries the name too and is deliberately not invalidated: this write
-        // is admin-only, so a client that can reach it has never held one.
+        // exactly one product document is ever mounted.
+        //
+        // **The gedu group feed carries the name too, and is deliberately not
+        // invalidated — but not because no client here holds one.** One does:
+        // the admin group details page mounts the feed alongside the session
+        // record. What it takes from the feed is the roster and the product's
+        // own title and material link; the *site* it renders comes from the
+        // session document above. So no surface able to fire this write reads
+        // the feed's copy of the name, and invalidating it would refetch a
+        // value nothing is looking at. What would change that is a surface
+        // rendering `feed.product.site` beside a rename — add the key here in
+        // the same change, rather than trusting this paragraph.
         queryClient.invalidateQueries({ queryKey: adminSessionKeys.products() }),
       ]);
     },

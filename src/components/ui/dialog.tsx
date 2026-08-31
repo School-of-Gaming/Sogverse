@@ -135,7 +135,39 @@ function Dialog({ open, onOpenChange, size = "default", children }: DialogProps)
   return createPortal(
     <DialogDepthContext.Provider value={depth + 1}>
       <DialogSizeContext.Provider value={size}>
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          // **A submit inside a dialog never reaches the page behind it**, and
+          // the portal is the reason that is not already true.
+          //
+          // The DOM node moves to `document.body`, so a *browser* can never
+          // submit a host form from in here. React can: it dispatches on the
+          // tree it rendered, not the one the browser laid out, and in that
+          // tree the dialog is still a child of whatever opened it. So a dialog
+          // carrying a `<form>` of its own, opened from inside another form,
+          // hands its submit straight to that form's `onSubmit` —
+          // indistinguishable from the user pressing the page's own Save.
+          //
+          // Not hypothetical: naming a new site from the product form's site
+          // picker saved the product — with the *old* site, since the pick
+          // lands a round trip later — and navigated off the edit page while
+          // the create request was still in the air. `preventDefault` in the
+          // inner handler does not touch it; that cancels the browser's default
+          // action, and the host's handler is another React listener on the
+          // same event.
+          //
+          // **It is contained here rather than in each dialog** because the
+          // trap belongs to portals rather than to any one dialog: it fails
+          // silently, only when a dialog is opened from inside a form, and the
+          // dialog's author is rarely the person who chose to mount it there.
+          // One line at the portal's own root makes the class impossible for
+          // every dialog, present and future, and it can cost nothing
+          // legitimate — a form inside a dialog is by definition the dialog's
+          // own, and every handler *within* the dialog still runs, since those
+          // sit below this node rather than above it. `Sheet` carries the same
+          // line for the same reason.
+          onSubmit={(event) => event.stopPropagation()}
+        >
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => onOpenChange(false)}

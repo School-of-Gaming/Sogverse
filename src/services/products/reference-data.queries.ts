@@ -117,10 +117,17 @@ export interface UpdateSiteNotesInput {
  * the invalidation belongs on the mutation rather than on whichever component
  * happened to fire it. The admin product's session document carries a site's
  * address and notes alongside the product running there; the admin site page
- * reads the same three fields on their own. The gedu group feed carries them
- * too, but it is not invalidated here and must not be: this route is
- * admin-only, so a client that can reach this mutation has never held a gedu
- * feed, and invalidating one would be a no-op dressed up as thoroughness.
+ * reads the same three fields on their own.
+ *
+ * **The gedu group feed carries them too, and is deliberately not invalidated —
+ * but not because no client here holds one.** One does: the admin group details
+ * page mounts the feed alongside the session record. What it takes from the feed
+ * is the roster and the product's own title and material link; the *site* it
+ * renders comes from the session document above. So no surface able to fire this
+ * mutation reads the feed's copy of these fields, and invalidating it would
+ * refetch a value nothing is looking at. What would change that is a surface
+ * rendering `feed.product.site` beside one of these writes — add the key here in
+ * the same change, rather than trusting this paragraph.
  *
  * Keyed at every product rather than one: a site is shared by every product at
  * the building, and this mutation is not told which of them is on screen. Only

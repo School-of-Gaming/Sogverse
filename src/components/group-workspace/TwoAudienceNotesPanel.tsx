@@ -217,6 +217,14 @@ export function TwoAudienceNotesPanel({
     }
   }
 
+  // A live blocked reason takes the error's slot below, so an error standing
+  // behind one is an error nobody is being shown — and it would reappear the
+  // moment the block lifted, describing an attempt from two edits ago. Clearing
+  // it as the block arrives is what keeps that slot honest. No previous-value
+  // tracker: the condition is self-cancelling, and Save is unreachable while a
+  // reason is live, so nothing can set an error the block is meant to preserve.
+  if (saveBlockedReason !== null && error !== null) setError(null);
+
   /**
    * `committing` is flipped **before** the caller's write is reached, so no
    * render between the click and the disabled state can leave Save clickable.

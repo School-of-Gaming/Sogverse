@@ -162,6 +162,28 @@ function mount(initialValue: string | null) {
   return onChange;
 }
 
+/**
+ * Mount the field inside a real `<form>`, the way the product form holds it —
+ * and the way `mount` above deliberately does not, which is the shape of every
+ * bug this file exists to catch that the picker alone cannot show.
+ */
+function mountInForm(initialValue: string | null) {
+  const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
+  const onChange = vi.fn();
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <form onSubmit={onSubmit}>
+        <Field initialValue={initialValue} onChange={onChange} />
+        <button type="submit">submitProduct</button>
+      </form>
+    </QueryClientProvider>,
+  );
+  return { onSubmit, onChange };
+}
+
 function click(name: RegExp | string) {
   fireEvent.click(screen.getByRole("button", { name }));
 }
@@ -290,25 +312,87 @@ describe("the product form's site field", () => {
     expect(onChange).not.toHaveBeenCalledWith(null);
   });
 
+  /**
+   * **Naming a site must not submit the product.**
+   *
+   * The create dialog is the one screen in this chain with a `<form>` of its
+   * own, and it is mounted — through a portal — inside the product form's
+   * `<form>`. A portal moves the *DOM* node out; it does not move the React
+   * tree, and React dispatches an event up the tree it rendered rather than the
+   * one the browser laid out. So the inner form's own submit walked straight
+   * into the product form's `onSubmit`, which validated the state as it stood
+   * (the old site — the pick had not landed yet), saved the product and
+   * navigated away from the edit page, while the create request was still in
+   * the air.
+   *
+   * The suite above could not see any of this: it mounts the picker bare, so
+   * there was no outer handler in the path to be called. That is why this case
+   * mounts in a form and asserts on the *outer* handler.
+   *
+   * **The containment is on the `Dialog` primitive, not in this chain** — the
+   * trap belongs to portals rather than to this dialog, so `dialog-form-
+   * containment` is where the class is pinned. This case is the real chain end
+   * to end, which is the half that says the fix is reached by the code an admin
+   * actually drives.
+   *
+   * jsdom performs no implicit form submission of its own, but that is not what
+   * is being exercised here — this is React's synthetic propagation, which jsdom
+   * reproduces exactly, because it is React's own dispatch loop rather than the
+   * browser's.
+   */
+  it("does not submit the surrounding product form when a site is named", async () => {
+    const created = loc(
+      "6f708192-a3b4-4fd0-8152-6d7e8f901234",
+      "New School",
+      "site",
+      IDS.helsinki,
+    );
+    vi.spyOn(LocationsService.prototype, "createLocation").mockResolvedValue(
+      created,
+    );
+    vi.spyOn(LocationsService.prototype, "getLocationsByIds").mockImplementation(
+      async (ids) =>
+        [SITE_A, SITE_B, HELSINKI, created]
+          .filter((row) => ids.includes(row.id))
+          .map(withChain),
+    );
+    vi.spyOn(SitesService.prototype, "getSiteNotes").mockResolvedValue({
+      address: null,
+      memberNote: null,
+      staffNote: null,
+    });
+
+    const { onSubmit, onChange } = mountInForm(null);
+
+    click("chooseSite");
+    await waitFor(() => screen.getByRole("button", { name: /Finland/ }));
+    click(/Finland/);
+    await waitFor(() => screen.getByRole("button", { name: /Uusimaa$/ }));
+    click(/Uusimaa$/);
+    await waitFor(() => screen.getByRole("button", { name: /Helsinki$/ }));
+    click(/Helsinki$/);
+    click("confirm");
+
+    await waitFor(() => screen.getByRole("button", { name: "addSite" }));
+    click("addSite");
+
+    const nameInput = document.getElementById("loc-name");
+    if (!(nameInput instanceof HTMLInputElement)) {
+      throw new Error("the name field did not render");
+    }
+    fireEvent.change(nameInput, { target: { value: "New School" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^addType/ }));
+    });
+
+    // The site is created and picked …
+    expect(onChange).toHaveBeenCalledWith(created.id);
+    // … and the product form is left exactly where the admin left it.
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   // The building itself, editable where the product that runs in it is edited.
   describe("the site panel under the chosen-place card", () => {
-    /** Mount the field inside a real `<form>`, the way the product form does. */
-    function mountInForm(initialValue: string | null) {
-      const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
-      const client = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
-      });
-      render(
-        <QueryClientProvider client={client}>
-          <form onSubmit={onSubmit}>
-            <Field initialValue={initialValue} onChange={vi.fn()} />
-            <button type="submit">submitProduct</button>
-          </form>
-        </QueryClientProvider>,
-      );
-      return onSubmit;
-    }
-
     beforeEach(() => {
       vi.spyOn(SitesService.prototype, "getSiteNotes").mockResolvedValue({
         address: null,

@@ -1489,6 +1489,7 @@
       "nameRequired": "pong Hutlhbe’nIS Daq.",
       "addressLabel": "Daq ngoq",
       "addressPlaceholder": "He, mI’, veng",
+      "addressEmpty": "Daq ngoq yIchel — qach lutu’meH qorDu’.",
       "edit": "yIchoH",
       "cancel": "yIqIl",
       "save": "yIpol",

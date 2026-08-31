@@ -110,7 +110,9 @@ interface SitePanelProps {
  * **The address is shown on its own line until it is editable and being
  * edited**, and then it is the field. It is never both at once: one value with
  * a display line above the input that writes it was the original defect, and it
- * is exactly the kind of duplication that survives by looking harmless.
+ * is exactly the kind of duplication that survives by looking harmless. When
+ * there is no address at all, that line is a ghost inviting one — but only for
+ * a viewer who could write it.
  */
 export function SitePanel({
   siteName,
@@ -133,16 +135,26 @@ export function SitePanel({
 
   // Re-seed when a stored value changes underneath — a save landing, or a
   // refetch — with React's adjust-state-during-render pattern, so no frame of a
-  // stale draft is ever painted. The two are tracked separately: re-seeding
-  // both when one lands would wipe an edit that has not saved yet, which is
-  // precisely the state a partial failure leaves them in.
+  // stale draft is ever painted.
+  //
+  // **Only while the editor is closed.** A background refetch (React Query
+  // refetches on window focus by default) lands on its own schedule, and an
+  // admin who alt-tabs away mid-edit must not come back to a field that has
+  // silently reverted to what the server holds. What is typed is only ever
+  // replaced by the on-open seed below, which is the admin's own click.
+  //
+  // The two are still tracked separately, because they are two writes and one
+  // can land without the other. What makes a partial failure retry correctly is
+  // **not** this re-seed — it is that each mutation's invalidation is awaited,
+  // so the succeeded half's fresh value is in `siteName`/`address` by the time
+  // the dirty comparisons below run, and the retry sends only what is left.
   const [seededName, setSeededName] = useState(siteName);
-  if (siteName !== seededName) {
+  if (!editing && siteName !== seededName) {
     setSeededName(siteName);
     setNameDraft(siteName);
   }
   const [seededAddress, setSeededAddress] = useState(storedAddress);
-  if (storedAddress !== seededAddress) {
+  if (!editing && storedAddress !== seededAddress) {
     setSeededAddress(storedAddress);
     setAddressDraft(storedAddress);
   }
@@ -167,12 +179,17 @@ export function SitePanel({
    * name, the address and the notes are three writes on two routes, so an
    * untouched value going along for the ride would land on top of somebody
    * else's correction, and each route leaves an absent field alone.
+   *
+   * **Both sides are trimmed**, because the draft always is: a stored value
+   * carrying padding — a seeded row, an import — would otherwise read as dirty
+   * on a field nobody touched, and the Save would write the trimmed value back
+   * over it as if that had been asked for.
    */
-  const nameChanged = trimmedName !== siteName;
-  const addressChanged = trimmedAddress !== storedAddress;
+  const nameChanged = trimmedName !== siteName.trim();
+  const addressChanged = trimmedAddress !== storedAddress.trim();
 
   const addressLine =
-    address === null ? null : (
+    address !== null ? (
       <p className="mt-1.5 flex items-start gap-1.5 text-sm">
         <MapPin
           className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
@@ -183,16 +200,29 @@ export function SitePanel({
           {address}
         </span>
       </p>
-    );
+    ) : editsDetails ? (
+      // A ghost line where the address would be, for a viewer who can write
+      // one — the same italic-muted grammar and the same imperative mood as the
+      // two note ghosts below, and for the same reason those exist: the two
+      // editors this panel replaced each had an "add address" affordance, and
+      // the notes' own record says structure that is invisible until the editor
+      // is open is a feature nobody discovers. A gedu, who cannot write it,
+      // gets nothing here — there is no invitation to make.
+      <p className="mt-1.5 text-sm italic leading-relaxed text-muted-foreground">
+        {t("addressEmpty")}
+      </p>
+    ) : null;
 
   /**
    * Run every write this Save owes, and refuse as a whole if any of them was.
    *
    * **Every dirty field is attempted, even after one has failed**, and the two
-   * halves settle independently: whichever landed re-seeds from its refetched
-   * value above, so what is left dirty in the reopened editor is exactly what
-   * still needs saving. Throwing is what keeps the editor open and puts the
-   * failure line under it — the panel around this owns both.
+   * halves settle independently. What makes the retry send only what is left is
+   * that each write's invalidation is awaited: whichever landed has its written
+   * value back on the props by the time this returns, so the dirty comparisons
+   * above stop naming it while the editor stays open over the untouched draft.
+   * Throwing is what keeps the editor open and puts the failure line under it —
+   * the panel around this owns both.
    */
   const handleSave = async (notes: SiteNotesDraft) => {
     const failures: string[] = [];

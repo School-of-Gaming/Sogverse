@@ -1445,6 +1445,7 @@
       "nameRequired": "Toimipisteellä on oltava nimi.",
       "addressLabel": "Osoite",
       "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
+      "addressEmpty": "Lisää katuosoite, jotta perheet löytävät toimipisteen.",
       "edit": "Muokkaa",
       "cancel": "Peruuta",
       "save": "Tallenna",
