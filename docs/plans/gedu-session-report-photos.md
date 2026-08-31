@@ -497,6 +497,29 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
 - Lint, type-check, unit+integration suites green locally; DB tests green in CI;
   posture-registry and authorization-spine completeness checks pass.
 
+## Deviations recorded during implementation
+
+- **There was a third document to widen after all.** `get_admin_product_sessions`
+  composes its own session objects yet parses through the shared gedu session schema, so
+  requiring `images` there broke the admin group page. Migration 00223 widened it in
+  place — its reader is tolerant, so no versioned name was needed (reasoned in the
+  migration header).
+- **Raw HEIC is refused client-side, not by the server sniff.** `createImageBitmap`
+  cannot decode it, so the refusal surfaces as the decode-failure code with the
+  actionable "convert to JPEG" copy; the server magic-byte check stands behind it as
+  defense-in-depth rather than the mainline HEIC path.
+- **The photo strip is withheld from pre-epoch `no_record` rows** — a strip would crowd
+  a deliberately quiet row and mutate it into a card mid-edit on first upload; writing a
+  line first makes it an ordinary past entry with the strip.
+- **The strip stays enabled while the draft editor commits** — a block that still works
+  while the rest of the editor is greyed is the strongest wordless statement that photos
+  are not draft scope.
+- **`/admin/testing` gained a photo-count select** — the Gmail/Outlook blocked-images
+  acceptance check needs a sendable variant, and the testing directory's standing rule
+  is that a variant nobody can send themselves is a variant nobody checks.
+- **The insert RPC returns a bare uuid** (the id is the only thing the caller lacks);
+  cap-reached got its own SQLSTATE `P0023`; delete refusals are oracle-free.
+
 ## Follow-ups (live and die with this plan; owner names any keepers at completion)
 
 - The cleanup migration dropping the old family-feed RPC — the one follow-up that is
