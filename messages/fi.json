@@ -1731,10 +1731,10 @@
   "productDetail": {
     "jumpToSignup": "{verb} nyt!",
     "back": {
-      "consumer_club": "Kaikki kerhot",
-      "municipality_club": "Kaikki kuntakerhot",
-      "camp": "Kaikki leirit",
-      "event": "Kaikki tapahtumat"
+      "consumer_club": "Takaisin kerhoihin",
+      "municipality_club": "Takaisin kuntakerhoihin",
+      "camp": "Takaisin leireihin",
+      "event": "Takaisin tapahtumiin"
     },
     "typeLabel": {
       "consumer_club": "Kerho",

@@ -1,12 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
+import { withBrowseState } from "./browse-state";
+import { ROUTES } from "@/lib/constants";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilters } from "./product-browse-filters";
 
@@ -79,7 +82,11 @@ interface ProductBrowseResultsProps {
    *  whole scope (the municipality page). */
   scopeHasProducts?: boolean;
   /** Detail-page URL builder for each card. Defaults to the storefront
-   *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`. */
+   *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`.
+   *
+   *  It supplies the PATH only — the grid's live filter state is appended here,
+   *  for both surfaces at once, so neither host can forget it and the two
+   *  cannot carry different things. */
   productHref?: (id: string) => string;
   /** True on a single-municipality page — drops the redundant municipality name
    *  from online muni cards (see `ProductBrowseCard`). */
@@ -101,6 +108,17 @@ export function ProductBrowseResults({
   const tFilters = useTranslations("productBrowse.filters");
   const { topics, format, languages, audiences, tags, age, days, clear } =
     useBrowseFilters();
+  // The raw params, not the parsed filters above: what a card carries is the
+  // grid's URL state verbatim, so the listing the back link rebuilds is the one
+  // the reader actually left rather than a re-serialization of it.
+  const searchParams = useSearchParams();
+
+  // A card's href, with the grid's filter state stapled on. The default lives
+  // here rather than in the card so that BOTH browse surfaces pick the state up
+  // from one place — the shop passes no `productHref` at all, and a card left to
+  // fall back on its own `/shop/[id]` would silently drop the filters.
+  const detailHrefFor = (id: string) =>
+    withBrowseState(productHref?.(id) ?? ROUTES.shopProduct(id), searchParams);
 
   const countsByProduct = useMemo(() => {
     const map = new Map<string, ParticipationCounts>();
@@ -192,7 +210,7 @@ export function ProductBrowseResults({
                     key={p.id}
                     product={p}
                     counts={countsByProduct.get(p.id) ?? null}
-                    detailHref={productHref?.(p.id)}
+                    detailHref={detailHrefFor(p.id)}
                     municipalityScoped={municipalityScoped}
                   />
                 ))}

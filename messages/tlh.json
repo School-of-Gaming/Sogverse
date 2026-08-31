@@ -1775,10 +1775,10 @@
   "productDetail": {
     "jumpToSignup": "DaH {verb}!",
     "back": {
-      "consumer_club": "Hoch ghom’a’mey yIchegh",
-      "municipality_club": "Hoch veng ghom’a’mey yIchegh",
-      "camp": "Hoch raghmey yIchegh",
-      "event": "Hoch wanI’mey yIchegh"
+      "consumer_club": "ghom’a’meyDaq yIchegh",
+      "municipality_club": "veng ghom’a’meyDaq yIchegh",
+      "camp": "raghmeyDaq yIchegh",
+      "event": "wanI’meyDaq yIchegh"
     },
     "typeLabel": {
       "consumer_club": "ghom’a’",

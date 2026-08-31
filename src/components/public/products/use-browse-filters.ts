@@ -15,14 +15,18 @@ import {
   type SpokenLanguageCode,
 } from "@/lib/constants/spoken-languages";
 import { CATEGORY_PARAM } from "./shop-categories";
-
-const TOPIC_PARAM = "topic";
-const FORMAT_PARAM = "format";
-const LANGUAGE_PARAM = "lang";
-const AUDIENCE_PARAM = "audience";
-const TAG_PARAM = "tag";
-const AGE_PARAM = "age";
-const DAYS_PARAM = "days";
+// The param names live in `browse-state.ts` because the detail page's back link
+// reads them back out of a carried URL — see that module for why they stopped
+// being private to this hook.
+import {
+  AGE_PARAM,
+  AUDIENCE_PARAM,
+  DAYS_PARAM,
+  FORMAT_PARAM,
+  LANGUAGE_PARAM,
+  TAG_PARAM,
+  TOPIC_PARAM,
+} from "./browse-state";
 
 function parseList(raw: string | null): string[] {
   if (!raw) return [];

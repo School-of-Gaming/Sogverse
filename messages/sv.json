@@ -1731,10 +1731,10 @@
   "productDetail": {
     "jumpToSignup": "{verb} nu!",
     "back": {
-      "consumer_club": "Alla klubbar",
-      "municipality_club": "Alla kommunklubbar",
-      "camp": "Alla läger",
-      "event": "Alla evenemang"
+      "consumer_club": "Tillbaka till klubbarna",
+      "municipality_club": "Tillbaka till kommunklubbarna",
+      "camp": "Tillbaka till lägren",
+      "event": "Tillbaka till evenemangen"
     },
     "typeLabel": {
       "consumer_club": "Klubb",

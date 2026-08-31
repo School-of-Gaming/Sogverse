@@ -1731,10 +1731,10 @@
   "productDetail": {
     "jumpToSignup": "{verb} now!",
     "back": {
-      "consumer_club": "All clubs",
-      "municipality_club": "All municipality clubs",
-      "camp": "All camps",
-      "event": "All events"
+      "consumer_club": "Back to clubs",
+      "municipality_club": "Back to municipality clubs",
+      "camp": "Back to camps",
+      "event": "Back to events"
     },
     "typeLabel": {
       "consumer_club": "Club",

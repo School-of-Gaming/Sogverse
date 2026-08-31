@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import type { ProductDetailRow } from "@/services/products";
 import type { ProductType } from "@/types";
 import { LongDescription } from "./long-description";
+import { cameFromBrowse, listingHrefWithBrowseState } from "./browse-state";
 import { audienceLabelKey } from "./product-audience";
 import { ProductMediaChips } from "./product-chips";
 import { ProductOverviewCard } from "./product-overview-card";
@@ -580,9 +582,33 @@ export function BackLink({
   // Reuse the listing page's own heading copy ("{name} Clubs") so the back link
   // and the page it returns to always read identically.
   const tm = useTranslations("schools.municipality");
-  const href = municipality
+  // The filter state the card link carried here, if this page was opened from a
+  // browse grid — see `browse-state.ts`.
+  const searchParams = useSearchParams();
+
+  // **The destination is where the reader was, not what they are looking at.**
+  // A card link carries the grid's filter state into this URL, so the listing
+  // is rebuilt from it and the reader lands on the grid they left — every chip
+  // intact, and crucially with no Type selection they never made. Opened cold
+  // (a shared link, an unfurl, a search result) there is no state to return to
+  // and the type's own listing is the only sensible destination, which is the
+  // behaviour this page has always had.
+  const base = municipality
     ? ROUTES.schoolMunicipality(municipality.slug)
     : ROUTES.shopBrowse(productType);
+  const href =
+    municipality || cameFromBrowse(searchParams)
+      ? listingHrefWithBrowseState(
+          municipality ? base : ROUTES.shop,
+          searchParams,
+        )
+      : base;
+
+  // **The label names what you are leaving, not where you land** *(owner)* — a
+  // club's page says "Back to clubs" whatever the restored grid is filtered to.
+  // Spelling the destination instead would mean copy that changes with the
+  // chips, and a link whose words move under the reader is worse than one that
+  // names the thing they can see.
   const label = municipality
     ? tm("heading", { name: municipality.name })
     : t(productType);
