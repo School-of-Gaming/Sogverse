@@ -966,7 +966,12 @@
       "preview": "Förhandsgranskning",
       "previewDescription": "Så här återges meddelandet. Det ritas upp här i din webbläsare och skickas inte, och bilderna laddas från den här servern – därför visar en förhandsgranskning även de foton som ett utskick från en utvecklingsmaskin utelämnar.",
       "refreshPreview": "Uppdatera förhandsgranskningen",
-      "previewError": "Kunde inte rendera mallen: {message}"
+      "previewError": "Kunde inte rendera mallen: {message}",
+      "previewWidth": {
+        "label": "Förhandsgranskningens bredd",
+        "desktop": "Dator",
+        "mobile": "Mobil"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",

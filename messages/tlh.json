@@ -1014,7 +1014,12 @@
       "preview": "QIn bejwI’",
       "previewDescription": "ngeHbe’lu’ — naDev neH QIn Dalegh. De’wI’vamvo’ mIlloghmey Suqlu’, vaj Hoch mIlloghmey Dalegh; ’ach ngeHlu’chugh, mIlloghmeyvam Hutlh QIn.",
       "refreshPreview": "QIn yIchu’qa’",
-      "previewError": "De’ tIng chenmoHlaHbe’lu’: {message}"
+      "previewError": "De’ tIng chenmoHlaHbe’lu’: {message}",
+      "previewWidth": {
+        "label": "QIn leghmeH Daq",
+        "desktop": "De’wI’ tIn",
+        "mobile": "De’wI’ mach"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",

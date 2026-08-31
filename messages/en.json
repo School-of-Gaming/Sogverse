@@ -966,7 +966,12 @@
       "preview": "Preview",
       "previewDescription": "How the mail renders. It is drawn here in your browser and not sent, and its images load from this server — so a preview shows the photos a send from a dev machine leaves out.",
       "refreshPreview": "Refresh preview",
-      "previewError": "Could not render this template: {message}"
+      "previewError": "Could not render this template: {message}",
+      "previewWidth": {
+        "label": "Preview width",
+        "desktop": "Desktop",
+        "mobile": "Mobile"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",

@@ -18,7 +18,7 @@ import { useAuth } from "@/providers";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { findOption } from "@/lib/utils";
+import { cn, findOption } from "@/lib/utils";
 import {
   templateRegistry,
   type TemplateDefinition,
@@ -30,6 +30,27 @@ const EMAIL_PROVIDERS = ["brevo", "klaviyo"] as const;
 type EmailProvider = (typeof EMAIL_PROVIDERS)[number];
 const EMAIL_MODES = ["custom", "template"] as const;
 type EmailMode = (typeof EMAIL_MODES)[number];
+
+/**
+ * The two viewports the preview frame can be given.
+ *
+ * A mail is not one document: the shared layout stacks the session-report photo
+ * pairs full-width below its 560px breakpoint, so the same template renders as
+ * two different pages and only one of them is on screen at a time. This is what
+ * puts the other one there.
+ *
+ * `desktop` is the frame filling the card, which is wider than the mail's own
+ * 560px table — so the mail sits centred at its authored width, exactly as an
+ * inbox on a laptop shows it. `mobile` is 360 CSS px: the house mobile design
+ * floor (the archetypal Android family phone) and comfortably inside the mail's
+ * breakpoint, so what it shows is the stacked layout rather than a slightly
+ * squeezed desktop one. An iframe matches media queries against its own
+ * viewport, so narrowing the element is the whole of the trick — no second
+ * render, and the `srcDoc` is never reassigned, so the reader keeps their
+ * scroll position in the mail across a toggle.
+ */
+const PREVIEW_WIDTHS = ["desktop", "mobile"] as const;
+type PreviewWidth = (typeof PREVIEW_WIDTHS)[number];
 
 interface EmailResult {
   type: "success" | "error";
@@ -123,6 +144,10 @@ export default function TestingPage() {
   }));
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  // Deliberately *not* part of the snapshot above: the width is which viewport
+  // the same rendered document is being shown in, not which document it is, so
+  // it never re-runs the render effect.
+  const [previewWidth, setPreviewWidth] = useState<PreviewWidth>("desktop");
 
   const selectedTemplate = templateRegistry[templateName];
 
@@ -493,10 +518,37 @@ export default function TestingPage() {
                 </div>
                 <CardDescription>{t('previewDescription')}</CardDescription>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={refreshPreview}>
-                <RefreshCw />
-                {t('refreshPreview')}
-              </Button>
+              {/* Both controls are on screen at first paint and stay there, so
+                  this right-packed group never grows or shrinks under the
+                  reader's cursor. */}
+              <div className="flex shrink-0 items-center gap-2">
+                <div
+                  role="group"
+                  aria-label={t('previewWidth.label')}
+                  className="inline-flex rounded-md border border-input p-1"
+                >
+                  {PREVIEW_WIDTHS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={previewWidth === option}
+                      onClick={() => setPreviewWidth(option)}
+                      className={cn(
+                        "rounded px-3 py-1 text-xs transition-colors",
+                        previewWidth === option
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {t(`previewWidth.${option}`)}
+                    </button>
+                  ))}
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={refreshPreview}>
+                  <RefreshCw />
+                  {t('refreshPreview')}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -536,7 +588,18 @@ export default function TestingPage() {
                   title={t('preview')}
                   srcDoc={preview.html}
                   sandbox="allow-same-origin"
-                  className="h-full w-full border-0"
+                  className={cn(
+                    "mx-auto block h-full border-0",
+                    // Only the element's width changes between the two, so the
+                    // frame is never remounted and the mail is never re-rendered
+                    // — the document keeps its scroll across a toggle. The ring
+                    // draws outside the box rather than inside it, so the narrow
+                    // frame is visibly a phone without the border stealing two
+                    // pixels from the viewport being demonstrated.
+                    previewWidth === "mobile"
+                      ? "w-[360px] ring-1 ring-border"
+                      : "w-full",
+                  )}
                 />
               ) : null}
             </div>
