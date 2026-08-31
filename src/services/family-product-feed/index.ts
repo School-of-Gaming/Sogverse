@@ -9,10 +9,8 @@ export {
   familyFeedPerson,
   familyFeedSession,
   familyFeedSessionImage,
-  familyFeedSessionV2,
   familyFeedSite,
   familyProductFeed,
-  familyProductFeedV2,
 } from "./family-product-feed.contracts";
 export type {
   FamilyFeedPerson,

@@ -823,12 +823,14 @@ describe("session photos", () => {
 
     it("still parses through the contract the deployed app carries", async () => {
       // The gedu half of the release-window question. This schema is tolerant of
-      // unknown keys — it strips them — which is exactly why the gedu document
-      // could be widened IN PLACE while the family one needed a versioned name:
-      // the app deployed a minute before the migration went on parsing this
-      // document happily, ignoring the key it had never heard of. The whole
-      // document is parsed here, so a failure means the widening changed
-      // something other than adding that key.
+      // unknown keys — it strips them — so the app deployed a minute before the
+      // migration went on parsing this document happily, ignoring the key it had
+      // never heard of. (The family document is `.strict()` and does briefly
+      // fail its parse in that window; the severity paragraph in
+      // docs/plans/CLAUDE.md's "Landing in stages" section settles that transient
+      // read-side breakage as inside the accepted window.) The whole document is
+      // parsed here, so a failure means the widening changed something other
+      // than adding that key.
       await attach(geduAuth, YESTERDAY);
 
       const { data } = await geduAuth.rpc("get_gedu_group_feed", {

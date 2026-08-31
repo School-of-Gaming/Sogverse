@@ -292,20 +292,6 @@ Test cases to add:
 - [ ] **Decide the shape against the gedu session-photo pipeline, which has since landed.** That feature was the second consumer, and it settled its own answer instead of waiting for this step: client-side normalization at the edge of trust — decode, capped-edge downscale, JPEG re-encode (which strips metadata for free) — with the normalized image as the master and no server rendition machinery. Adopting that module for admin uploads is the candidate shape here; HEIC, stripping and retention were all decided there and no longer constrain this item.
 - [ ] **Confirm a WhatsApp/Slack unfurl fetches the smaller og:image** once the rendition is what that tag points at.
 
-### Drop the old family-feed RPC (session-photos deploy-window cleanup)
-
-Named by the session-report photos plan as part of finishing, not optional. The photos
-release widened the family feed by expand-contract: the new app reads
-`get_my_family_product_feed_v2`, and the old `get_my_family_product_feed` was left live
-so the still-deployed app could parse its strict document through the deploy window.
-
-- [ ] **A cleanup migration drops `get_my_family_product_feed` and nothing more.** It
-  cannot ride the photos release (the window needs the old RPC live); it lands in the
-  next routine release after it. The versioned name stays permanently — renaming it back
-  would need a deploy window of its own. Retire with it: the frozen v1
-  `familyProductFeed`/`familyFeedSession` contracts schemas and the DB tests that keep
-  the old RPC and its no-`images` guarantee alive.
-
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
 Parents already set `date_of_birth` and `gender` when *creating* a gamer (`create_gamer` takes both); what's missing is *editing* them afterwards. When that lands, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.

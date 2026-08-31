@@ -2384,10 +2384,6 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
-      get_my_family_product_feed_v2: {
-        Args: { p_participation_id: string }
-        Returns: Json
-      }
       get_my_gamers: {
         Args: never
         Returns: {

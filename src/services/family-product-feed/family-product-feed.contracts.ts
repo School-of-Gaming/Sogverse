@@ -8,7 +8,7 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  *
  * The RPC returns a JSONB document, which the type generator can only see as
  * `Json`, so this schema — written from the function body, most recently
- * rewritten by migration 00174 — is the structure. A db test parses real
+ * widened with the per-session photos — is the structure. A db test parses real
  * Postgres output through it in CI, so
  * the two cannot drift apart quietly: a changed key fails the parse loudly
  * instead of arriving as `undefined` three components later.
@@ -89,6 +89,28 @@ export const familyFeedPerson = z
   .strict();
 
 /**
+ * One photo on a family-facing session card.
+ *
+ * Byte-identical to the gedu document's image shape and **not imported from
+ * it**, on the same terms as the two duplicated shapes above: a vocabulary is
+ * shared, a document shape is not. What a family may receive has to be a
+ * visible edit in this file, and `created_by` — safeguarding audit that gates
+ * nothing and renders nowhere — is exactly the field `.strict()` is here to
+ * refuse.
+ *
+ * The id is the whole address (the object is `<id>.jpg`, derived by helper, not
+ * stored) and the dimensions are what the gallery's geometry is arithmetic
+ * from, so nothing reflows as an image decodes.
+ */
+export const familyFeedSessionImage = z
+  .object({
+    id: z.string(),
+    width: z.number(),
+    height: z.number(),
+  })
+  .strict();
+
+/**
  * One stored session, as a family may see it.
  *
  * The gedu twin of this shape carries `gedu_note`, the audit columns and a
@@ -142,6 +164,8 @@ export const familyFeedSession = z
      */
     updated_by: z.string().nullable(),
     updated_by_first_name: z.string().nullable(),
+    /** Oldest first, `(created_at, id)` — the display order on every surface. */
+    images: z.array(familyFeedSessionImage),
     attendance: attendanceStatus.nullable(),
   })
   .strict();
@@ -229,81 +253,8 @@ export const familyProductFeed = z
   })
   .strict();
 
-// ---------------------------------------------------------------------------
-// The versioned document — get_my_family_product_feed_v2
-// ---------------------------------------------------------------------------
-
-/**
- * **Everything above this line describes the OLD RPC and is frozen.**
- *
- * Session photos gave every session an `images` array, and the schema above
- * could not simply grow one: it is `.strict()` at every level — deliberately,
- * as its own header explains — so the app still deployed during a release
- * window would fail to PARSE its own read the moment the widened function went
- * live. That is the one case the release rules call out as needing a
- * compatibility step, and the step is expand-contract on the function: the
- * migration added `get_my_family_product_feed_v2`, the new app calls it, and
- * `get_my_family_product_feed` stays untouched — including this schema and the
- * db test that parses real output through it — until a cleanup migration drops
- * the pair after the window. Leaving the old pair alone *is* the guarantee;
- * there is no simulated-window harness.
- *
- * The versioned name then stays permanently. Renaming it back to the canonical
- * name would need a deploy window of its own, which is the exact cost this step
- * exists to avoid.
- */
-
-/**
- * One photo on a family-facing session card.
- *
- * Byte-identical to the gedu document's image shape and **not imported from
- * it**, on the same terms as the two duplicated shapes above: a vocabulary is
- * shared, a document shape is not. What a family may receive has to be a
- * visible edit in this file, and `created_by` — safeguarding audit that gates
- * nothing and renders nowhere — is exactly the field `.strict()` is here to
- * refuse.
- *
- * The id is the whole address (the object is `<id>.jpg`, derived by helper, not
- * stored) and the dimensions are what the gallery's geometry is arithmetic
- * from, so nothing reflows as an image decodes.
- */
-export const familyFeedSessionImage = z
-  .object({
-    id: z.string(),
-    width: z.number(),
-    height: z.number(),
-  })
-  .strict();
-
-/**
- * A family-facing session, plus its photos.
- *
- * Built by extending the frozen shape rather than transcribing it, which is
- * what makes "the original document plus exactly one key" a property of the
- * code instead of a claim in a comment. `.strict()` is restated for the same
- * reason it is written everywhere else here — so nobody has to know that zod
- * carries it through an extend.
- */
-export const familyFeedSessionV2 = familyFeedSession
-  .extend({
-    /** Oldest first, `(created_at, id)` — the display order on every surface. */
-    images: z.array(familyFeedSessionImage),
-  })
-  .strict();
-
-/** The document the app reads today. @see familyFeedSessionV2 */
-export const familyProductFeedV2 = familyProductFeed
-  .extend({ sessions: z.array(familyFeedSessionV2) })
-  .strict();
-
-/**
- * The feed type every family surface consumes — inferred from the **versioned**
- * document, because that is the one the service reads. The frozen schema above
- * keeps no type of its own: nothing in the app should be shaped like the
- * document it is about to stop calling.
- */
-export type FamilyProductFeed = z.infer<typeof familyProductFeedV2>;
-export type FamilyFeedSession = z.infer<typeof familyFeedSessionV2>;
+export type FamilyProductFeed = z.infer<typeof familyProductFeed>;
+export type FamilyFeedSession = z.infer<typeof familyFeedSession>;
 export type FamilyFeedSessionImage = z.infer<typeof familyFeedSessionImage>;
 export type FamilyFeedSite = z.infer<typeof familyFeedSite>;
 export type FamilyFeedPerson = z.infer<typeof familyFeedPerson>;

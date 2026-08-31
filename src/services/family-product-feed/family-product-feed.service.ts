@@ -1,6 +1,6 @@
 import type { AppSupabaseClient } from "@/types";
 import {
-  familyProductFeedV2,
+  familyProductFeed,
   type FamilyProductFeed,
 } from "./family-product-feed.contracts";
 
@@ -56,8 +56,8 @@ export class FamilyProductFeedService {
    * Everything one (participant × product) enrollment renders, in a single
    * round trip: whoever holds the seat, the product shell and its schedule, the
    * group and its public note, the venue on in-person products, the gedus, and
-   * the group's **full** stored session history with that one participant's
-   * attendance marks.
+   * the group's **full** stored session history — reports, photos, and that one
+   * participant's attendance marks.
    *
    * The whole history comes back at once and that is load-bearing rather than
    * merely convenient. The client projects past occurrences from the schedule
@@ -78,14 +78,8 @@ export class FamilyProductFeedService {
   async getProductFeed(
     participationId: string,
   ): Promise<FamilyProductFeedResult> {
-    // **The versioned name, and it stays permanently.** The original could not
-    // be widened with the sessions' photo arrays: the contract above is
-    // `.strict()` at every level, so an app deployed a minute before the
-    // migration would have failed to parse its own read. The compatibility step
-    // was a second function; the original is untouched and a cleanup migration
-    // drops it after the window, at which point this call site does not move.
     const { data, error } = await this.supabase.rpc(
-      "get_my_family_product_feed_v2",
+      "get_my_family_product_feed",
       { p_participation_id: participationId },
     );
 
@@ -103,6 +97,6 @@ export class FamilyProductFeedService {
       throw error;
     }
 
-    return { status: "ok", feed: familyProductFeedV2.parse(data) };
+    return { status: "ok", feed: familyProductFeed.parse(data) };
   }
 }
