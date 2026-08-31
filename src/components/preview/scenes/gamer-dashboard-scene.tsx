@@ -11,7 +11,7 @@ import {
 import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
-import { ytyPaletteFor } from "../palette-scenarios";
+import { displayFaceFor, ytyPaletteFor } from "../palette-scenarios";
 
 /**
  * The gamer dashboard as a child meets it: the greeting by name, their
@@ -24,9 +24,11 @@ import { ytyPaletteFor } from "../palette-scenarios";
  * for the same reason the parent and gedu scenes hold theirs — see
  * `parent-dashboard-scene.tsx`.
  *
- * One scenario differs from `typical` in nothing but the Yty palette: the draft
- * brand hues are judged here rather than on a card in the style guide, because
- * this is a mobile-first surface and the grid is two columns at 360px.
+ * One scenario differs from `typical` in nothing but the brand draft: the Yty
+ * hues and the greeting's face are judged here rather than on a card in the
+ * style guide, because this is a mobile-first surface — the grid is two columns
+ * at 360px, and the greeting is the one heading in the app whose face has to
+ * survive the widest locale in that width.
  */
 export function GamerDashboardScene({
   scenario,
@@ -46,6 +48,7 @@ export function GamerDashboardScene({
       enrollments={enrollments}
       helpForm={<InertHelpFeedbackCard audience="gamer" />}
       palette={ytyPaletteFor(scenario)}
+      greetingFace={displayFaceFor(scenario)}
     />
   );
 }

@@ -230,6 +230,20 @@
      Poppins (src/components/og/fonts.ts). */
   --font-sans: var(--font-poppins);
   --font-display: var(--font-press-start-2p);
+  /* Space Mono — the Guidebook's sanctioned mono, whose named first use is
+     "in-platform UI". DESIGN-PASS DRAFT: the only thing rendering it is the
+     gamer dashboard's greeting under the preview scenes' `brand` draft, so no
+     live route reads this token yet (which is also why the face still loads
+     with `preload: false` — see src/app/layout.tsx).
+
+     Deliberately NOT `--font-mono`: that name owns Tailwind's own `font-mono`
+     utility, which ~7 live surfaces already spend on machine text — a room
+     code, a Minecraft password, an inline `<code>`, an admin id. Those want a
+     plain code face and must not silently become branded; a separate token
+     means the brand face is asked for by name. The fallbacks are the UA's own
+     mono stack, never a second webfont, matching --font-sans above. */
+  --font-brand-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
   /* Handwriting, for a signature and nothing else — a name typed into a
      signing field, rendered the way it would be signed. Not a body or display
      face: anything longer than a name in it is unreadable. */

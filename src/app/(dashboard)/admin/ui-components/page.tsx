@@ -91,6 +91,7 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
+import type { YtyPalette } from "@/lib/constants/yty";
 import type { GeduContractAcceptance, UserRole, VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
@@ -953,22 +954,59 @@ function VoiceZonesDemo() {
   for (const z of zones) participantsByZone.set(z.id, []);
   for (const p of participants) participantsByZone.get(p.zoneId)?.push(p);
 
-  const noop = () => {};
-  const asyncNoop = async () => {};
-
-  const value: VoiceRoomContextValue = {
-    joined: true,
-    joining: false,
-    callObject: null,
+  const value = buildDemoVoiceContext({
+    zones,
+    customZones,
+    participants,
+    participantsByZone,
+    currentZoneId: "lobby",
     localSessionId: "s1",
     localRole: "admin",
     isModerator: true,
     groupId: "demo",
-    participants,
-    zones,
-    customZones,
-    currentZoneId: "lobby",
-    participantsByZone,
+  });
+
+  return (
+    <VoiceRoomContext.Provider value={value}>
+      <div className="max-w-sm">
+        <ZoneList />
+      </div>
+    </VoiceRoomContext.Provider>
+  );
+}
+
+/** What a zone demo actually decides: which room this is and who is looking. */
+type DemoRoom = Pick<
+  VoiceRoomContextValue,
+  | "zones"
+  | "customZones"
+  | "participants"
+  | "participantsByZone"
+  | "currentZoneId"
+  | "localSessionId"
+  | "localRole"
+  | "isModerator"
+  | "groupId"
+>;
+
+/**
+ * The inert half of a mock voice context: every action a no-op, no call object,
+ * no devices, no chat. Shared by the zone demos below so each states only the
+ * room it is demonstrating rather than forty fields of scaffolding.
+ *
+ * The media/moderation defaults here are the ones `ZoneList` never reads — a
+ * demo that renders the control dock or the participant rail has to state its
+ * own, or it will draw a gamer holding a screen-share button.
+ */
+function buildDemoVoiceContext(room: DemoRoom): VoiceRoomContextValue {
+  const noop = () => {};
+  const asyncNoop = async () => {};
+
+  return {
+    ...room,
+    joined: true,
+    joining: false,
+    callObject: null,
     moveSelfToZone: noop,
     moveParticipantToZone: noop,
     createZone: asyncNoop,
@@ -1002,13 +1040,135 @@ function VoiceZonesDemo() {
     join: asyncNoop,
     leave: asyncNoop,
   };
+}
 
+/* ------------------------------------------------------------------ */
+/*  Yty zone tiles — today's palette beside the design-pass draft      */
+/* ------------------------------------------------------------------ */
+
+/** One person per zone, so every tile under review carries a roster. */
+const ZONE_PALETTE_DEMO_PEOPLE: readonly {
+  userId: string;
+  userName: string;
+  zoneId: string;
+  isLocal: boolean;
+  isSpeaking: boolean;
+}[] = [
+  // Real generated UUIDs, hardcoded: the tile's avatar is an identicon hashed
+  // out of the id, so a readable stand-in draws a degenerate face.
+  {
+    userId: "0b3f4b6a-4a24-4a54-9a5a-6c1d0f5d3f21",
+    userName: "You",
+    zoneId: "yty-valor",
+    isLocal: true,
+    isSpeaking: false,
+  },
+  {
+    userId: "6c2a0e58-3f0b-4b8a-9d6f-8f1a2c4b7e90",
+    userName: "Aino",
+    zoneId: "yty-harmony",
+    isLocal: false,
+    isSpeaking: false,
+  },
+  {
+    userId: "b71c9d34-5e2f-4c1a-8a3d-2f6b9c0e4d17",
+    userName: "Eero",
+    zoneId: "yty-glow",
+    isLocal: false,
+    isSpeaking: false,
+  },
+  {
+    userId: "3d84f0a2-9c17-4b6e-a1f5-7e2c8d5b0a63",
+    userName: "Väinö",
+    zoneId: "yty-wit",
+    isLocal: false,
+    isSpeaking: true,
+  },
+  {
+    userId: "e5910c7b-2d48-4f3a-b0c6-1a7d9e4f2b85",
+    userName: "Helmi",
+    zoneId: "lobby",
+    isLocal: false,
+    isSpeaking: false,
+  },
+];
+
+function ytyZonePaletteContext(palette: YtyPalette): VoiceRoomContextValue {
+  const zones = composeZones(null, null, palette);
+  const participants: VoiceParticipant[] = ZONE_PALETTE_DEMO_PEOPLE.map(
+    (person) => ({
+      sessionId: person.userId,
+      userId: person.userId,
+      userName: person.userName,
+      zoneId: person.zoneId,
+      role: "gamer",
+      audioOn: true,
+      videoOn: false,
+      screenShareOn: false,
+      isLocal: person.isLocal,
+      isOwner: false,
+      isSpeaking: person.isSpeaking,
+      isBroadcasting: false,
+    }),
+  );
+
+  const participantsByZone = new Map<string, VoiceParticipant[]>();
+  for (const zone of zones) participantsByZone.set(zone.id, []);
+  for (const p of participants) participantsByZone.get(p.zoneId)?.push(p);
+
+  return buildDemoVoiceContext({
+    zones,
+    customZones: [],
+    participants,
+    participantsByZone,
+    // A Yty zone, so the active-zone treatment — the high-contrast border with
+    // the element's colour spilling in from it — is one of the four under
+    // review rather than the lobby's neutral white.
+    currentZoneId: "yty-valor",
+    localSessionId: ZONE_PALETTE_DEMO_PEOPLE[0].userId,
+    localRole: "gamer",
+    isModerator: false,
+    groupId: null,
+  });
+}
+
+/**
+ * The four Yty zones are the third surface the palette feeds — the home
+ * section and the gamer grid are the other two, and both are judged full-page
+ * in their preview scenes. This one lives in the style guide because a zone
+ * card is a component that reads the same at any width, and because the
+ * comparison has to be *adjacent*: the question is whether a soft glyph still
+ * reads on a strong 10% tint, and nobody can answer that from two browser tabs.
+ *
+ * A room of its own rather than a second copy of the demo above. That one is a
+ * moderator's crowded session, and the twenty-five avatars in one of its Yty
+ * cards would push the two runs a scroll apart — so this is the instant-room
+ * shape (`groupId: null` → lobby plus the four Yty zones, no custom zones and
+ * no create button), the smallest honest room containing every tile under
+ * review. Both columns render the real `ZoneList`, so nothing here restates a
+ * class the zone card owns; the only thing that differs is which presentation
+ * `composeZones` was asked for.
+ */
+function YtyZonePaletteDemo() {
   return (
-    <VoiceRoomContext.Provider value={value}>
-      <div className="max-w-sm">
-        <ZoneList />
+    <div className="grid gap-6 sm:grid-cols-2">
+      <div className="space-y-2">
+        <DemoCaption>Today</DemoCaption>
+        <VoiceRoomContext.Provider value={ytyZonePaletteContext("current")}>
+          <div className="max-w-sm">
+            <ZoneList />
+          </div>
+        </VoiceRoomContext.Provider>
       </div>
-    </VoiceRoomContext.Provider>
+      <div className="space-y-2">
+        <DemoCaption>Brand draft</DemoCaption>
+        <VoiceRoomContext.Provider value={ytyZonePaletteContext("brand")}>
+          <div className="max-w-sm">
+            <ZoneList />
+          </div>
+        </VoiceRoomContext.Provider>
+      </div>
+    </div>
   );
 }
 
@@ -2322,6 +2482,131 @@ function ButtonProposalDemo() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Type faces                                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The three faces the app has loaded, in one place, at one string.
+ *
+ * They are unreadable against each other anywhere else: Poppins is everywhere,
+ * Press Start 2P is on six scattered surfaces, and Space Mono is on none — so
+ * "which of these should carry a heading" is a question that has, until now,
+ * only been answerable from memory. Dancing Script is deliberately absent: it
+ * draws a typed signature and nothing else, so it is not a candidate for any
+ * heading and putting it in a comparison would imply it is.
+ */
+const TYPE_SPECIMEN_SAMPLE = "Clubs, camps and events";
+
+const TYPE_FACES: readonly {
+  name: string;
+  note: string;
+  className: string;
+}[] = [
+  {
+    name: "Poppins",
+    note: "--font-sans · body and every heading",
+    className: "font-sans",
+  },
+  {
+    name: "Space Mono",
+    note: "--font-brand-mono · loaded, placed nowhere",
+    className: "font-brand-mono",
+  },
+  {
+    name: "Press Start 2P",
+    note: "--font-display · rare use, by ruling",
+    className: "font-display",
+  },
+];
+
+const TYPE_SPECIMEN_SIZES: readonly { label: string; className: string }[] = [
+  { label: "Display — 30px / 700", className: "text-3xl font-bold" },
+  { label: "Heading — 18px / 600", className: "text-lg font-semibold" },
+  { label: "Body — 14px / 400", className: "text-sm" },
+];
+
+/**
+ * The greeting on the gamer dashboard, which is the one Press Start 2P site the
+ * design pass proposes moving. Finnish because it sets the longest first word
+ * of the five locales ("Tervetuloa," against French's "Bienvenue,"), and a real
+ * fixture name because the name is the part of the line no translator controls.
+ */
+const GREETING_SAMPLE = "Tervetuloa, Aino!";
+
+/**
+ * The gamer dashboard's content width at the 360px mobile floor: the shell is
+ * `container p-6`, and the container is full-width below `sm`. Every greeting
+ * cell is drawn in exactly that box, so the wrap is the real one.
+ */
+const MOBILE_FLOOR_WIDTH = "w-[312px]";
+
+const GREETING_CELLS: readonly { label: string; className: string }[] = [
+  { label: "Press Start 2P · text-xl", className: "font-display text-xl" },
+  { label: "Space Mono · text-xl", className: "font-brand-mono text-xl" },
+  { label: "Space Mono · text-2xl", className: "font-brand-mono text-2xl" },
+];
+
+function TypeFacesDemo() {
+  return (
+    <Section title="Type faces">
+      <SubSection title="Specimens">
+        <p className="text-sm text-muted-foreground">
+          One string, three faces, three sizes. Press Start 2P ships a single
+          weight, so its bold and semibold are synthesised by the browser;
+          Poppins and Space Mono draw theirs.
+        </p>
+        <div className="grid gap-6 md:grid-cols-3">
+          {TYPE_FACES.map((face) => (
+            <div key={face.name} className="min-w-0 space-y-4 rounded-lg border p-4">
+              <div>
+                <div className="text-sm text-foreground">{face.name}</div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  {face.note}
+                </div>
+              </div>
+              {TYPE_SPECIMEN_SIZES.map((size) => (
+                <div key={size.label} className="space-y-1">
+                  <DemoCaption>{size.label}</DemoCaption>
+                  <p className={cn(face.className, size.className, "break-words")}>
+                    {TYPE_SPECIMEN_SAMPLE}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="The gamer greeting, at the 360px floor">
+        <p className="text-sm text-muted-foreground">
+          Press Start 2P advances a full em per character and Space Mono about
+          0.6, so the draft raises the size rather than keeping the number: the
+          middle cell is the swap at today&rsquo;s size, the right one is what
+          the draft ships.
+        </p>
+        <div className="flex flex-wrap gap-6">
+          {GREETING_CELLS.map((cell) => (
+            <div key={cell.label} className="space-y-1.5">
+              <DemoCaption>{cell.label}</DemoCaption>
+              <div className={cn(MOBILE_FLOOR_WIDTH, "rounded-lg border p-3")}>
+                <p
+                  className={cn(
+                    cell.className,
+                    "text-center font-bold text-primary break-words",
+                  )}
+                >
+                  {GREETING_SAMPLE}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </SubSection>
+    </Section>
+  );
+}
+
 export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
@@ -2404,6 +2689,8 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       <ProductTypePaletteDemo />
+
+      <TypeFacesDemo />
 
       <Section title="Button">
         <SubSection title="Variants">
@@ -2889,6 +3176,16 @@ export default function AdminUIComponentsPage() {
             controls — renders from the fixture.
           </p>
           <VoiceZonesDemo />
+        </SubSection>
+
+        <SubSection title="Yty zones — today beside the brand draft">
+          <p className="text-sm text-muted-foreground">
+            The same four zones under each palette: a strong 10% tint behind a
+            soft glyph, and the active card&rsquo;s colour spilling in from its
+            border. An instant room&rsquo;s zone set, so the tiles under review
+            are the whole list.
+          </p>
+          <YtyZonePaletteDemo />
         </SubSection>
 
         <SubSection title="Avatar (speaking glow)">

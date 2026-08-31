@@ -230,7 +230,7 @@ export const PREVIEW_SCENES = [
         slug: BRAND_PALETTE_SCENARIO.slug,
         label: BRAND_PALETTE_SCENARIO.label,
         description:
-          "The booked page again, with the Yty grid in the draft brand hues — the palette comparison on the mobile-first surface.",
+          "The booked page again under the whole brand draft: the Yty grid in the brand hues, and the greeting swapped from Press Start 2P to Space Mono.",
       },
     ],
   },

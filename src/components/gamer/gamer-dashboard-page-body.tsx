@@ -8,6 +8,30 @@ import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rol
 import { GamerHelpFaq } from "@/components/help/help-faq";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
 import type { YtyPalette } from "@/lib/constants/yty";
+import type { DisplayFace } from "@/components/preview/palette-scenarios";
+
+/**
+ * The greeting's face and its size, as one choice per face — literal class
+ * strings, because Tailwind scans source text and a size picked by template
+ * emits a class with no rule behind it.
+ *
+ * **The size is not shared, because the two faces are not the same width.**
+ * Press Start 2P advances a full em per character; Space Mono advances ~0.6em
+ * at the same cap height, so keeping the numbers would shrink the greeting by
+ * two fifths. The draft's numbers are the arithmetic at the 360px floor, in the
+ * widest locale: the dashboard shell is `container p-6`, which is 312px of
+ * content there, and Finnish sets the longest first word ("Tervetuloa," — 11
+ * characters, against French's "Bienvenue,"). At 24px Space Mono that whole
+ * greeting is ~245px for a typical first name and stays on one line; today's
+ * 20px Press Start 2P is ~340px and wraps. A long name (Aleksanteri) wraps
+ * under either, at the space, which `break-words` already handles.
+ *
+ * Retires with the draft: promotion picks one row and deletes the map.
+ */
+const GREETING_FACE: Record<DisplayFace, string> = {
+  display: "font-display text-xl md:text-3xl",
+  mono: "font-brand-mono text-2xl md:text-4xl",
+};
 
 /**
  * The gamer dashboard's page body — everything below the route's data shell.
@@ -52,6 +76,7 @@ export function GamerDashboardPageBody({
   helpForm,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- accepted now so the scene's brand-palette scenario can pass it; the design-pass commits that follow thread it into what this page still colours (the enrollment cards). The Yty grid this prop originally drove left this page in the About restructure.
   palette = "current",
+  greetingFace = "display",
 }: {
   /** The child's own first name, for the greeting. */
   firstName: string;
@@ -69,6 +94,12 @@ export function GamerDashboardPageBody({
    * `"brand"` to show the design-pass draft. Retires when the draft promotes.
    */
   palette?: YtyPalette;
+  /**
+   * Which face the greeting is set in — same shape and same default rule as
+   * `palette`: today's Press Start 2P unless the draft scenario asks otherwise.
+   * See `GREETING_FACE` above for why each face carries its own size.
+   */
+  greetingFace?: DisplayFace;
 }) {
   const t = useTranslations("gamer");
   const s = useTranslations("dashboardSections");
@@ -110,13 +141,15 @@ export function GamerDashboardPageBody({
             would be the first thing a child met on their own home page. The pill
             still sticks the moment it reaches the top of the viewport. */}
         <div className="text-center">
-          {/* Two-size pattern matching the public Home heading:
-              font-display (Press Start 2P) is monospaced ~1em-wide, so a
-              long Finnish word like "Tervetuloa," overflows mobile at
-              text-3xl. break-words is a safety net for longer translations —
-              and now for the name too, which is the longest thing that can
-              land in this line and the one part of it no translator controls. */}
-          <h2 className="font-display text-xl font-bold text-primary break-words md:text-3xl">
+          {/* Two-size pattern matching the public Home heading: the face is
+              monospaced either way, so a long Finnish word like "Tervetuloa,"
+              overflows mobile at the next size up. break-words is a safety net
+              for longer translations — and for the name too, which is the
+              longest thing that can land in this line and the one part of it no
+              translator controls. */}
+          <h2
+            className={`${GREETING_FACE[greetingFace]} font-bold text-primary break-words`}
+          >
             {t("welcomeNamed", { name: firstName })}
           </h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>

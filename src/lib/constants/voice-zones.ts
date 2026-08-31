@@ -42,7 +42,11 @@ import {
   Coffee,
   type LucideIcon,
 } from "lucide-react";
-import { YTY_ELEMENTS, type YtyElementId } from "./yty";
+import {
+  YTY_ELEMENTS,
+  YTY_ELEMENT_DRAFT_COLORS,
+  type YtyElementId,
+} from "./yty";
 
 /**
  * The discrete-zone voice model (see src/components/voice/CLAUDE.md).
@@ -339,3 +343,52 @@ export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
     },
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Design-pass draft — the same four zones in the brand's own Yty hues.
+//
+// Consumed only where a draft is asked for by name (the style guide's zone
+// comparison, and `composeZones`' optional palette argument, which nothing live
+// passes). Promotion replaces the two maps above and deletes these — not a
+// second permanent presentation.
+//
+// The strong/soft split is the one the contrast script settled and the Yty
+// element map already applies (see YTY_ELEMENT_DRAFT_COLORS): **soft carries
+// text and glyphs on the dark ground, strong fills, borders, rings and glows.**
+// The zone card is exactly that division — a 10% tint behind a soft glyph, with
+// a strong ring and a strong colour spilling in from the active card's border —
+// so the glyph and tile come straight off the element map's `accent` and `bg`
+// and nothing here re-decides them.
+// ---------------------------------------------------------------------------
+
+/** Draft counterpart to `YTY_ZONE_GLOW`. Literal strings, same reason. */
+const YTY_ZONE_GLOW_DRAFT: Record<YtyElementId, string> = {
+  harmony: "zone-glow [--glow-color:var(--color-yty-harmony-strong)]",
+  glow: "zone-glow [--glow-color:var(--color-yty-glow-strong)]",
+  valor: "zone-glow [--glow-color:var(--color-yty-valor-strong)]",
+  wit: "zone-glow [--glow-color:var(--color-yty-wit-strong)]",
+};
+
+/** Draft counterpart to `YTY_ZONE_SOLID` — the full-saturation fill, so strong. */
+const YTY_ZONE_SOLID_DRAFT: Record<YtyElementId, string> = {
+  harmony: "bg-yty-harmony-strong",
+  glow: "bg-yty-glow-strong",
+  valor: "bg-yty-valor-strong",
+  wit: "bg-yty-wit-strong",
+};
+
+/** The 4 Yty zones under the draft palette. Same ids, icons and name keys — a
+ *  zone's identity does not change, only what it is drawn in. */
+export const YTY_PRESENTATIONS_DRAFT: VirtualZonePresentation[] =
+  YTY_ELEMENTS.map((e) => ({
+    id: `yty-${e.id}`,
+    nameKey: `yty.elements.${e.id}.name`,
+    icon: e.icon,
+    color: {
+      tile: YTY_ELEMENT_DRAFT_COLORS[e.id].bg,
+      glyph: YTY_ELEMENT_DRAFT_COLORS[e.id].accent,
+      ring: YTY_ELEMENT_DRAFT_COLORS[e.id].ring,
+      glow: YTY_ZONE_GLOW_DRAFT[e.id],
+      solid: YTY_ZONE_SOLID_DRAFT[e.id],
+    },
+  }));
