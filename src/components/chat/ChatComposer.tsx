@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Lock, Send, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -76,23 +76,54 @@ export function ChatComposer({
   const [refused, setRefused] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+
+  // The queue, readable synchronously. Staging is asynchronous — the files are
+  // decoded before they can join — so the value captured when `stage` was
+  // called is a render old by the time it lands, and two drops in quick
+  // succession would have the second overwrite the first.
+  const stagedRef = useRef(staged);
+  const commitStaged = (next: StagedChatImage[]) => {
+    stagedRef.current = next;
+    setStaged(next);
+  };
+
+  // Where the caret has to be once React has committed a value this component
+  // rewrote — after a mention is inserted, that is just past the token, not
+  // wherever a controlled re-render would leave it.
+  const caretRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const caret = caretRef.current;
+    if (caret === null) return;
+    caretRef.current = null;
+    const field = fieldRef.current;
+    if (field === null) return;
+    field.focus();
+    field.setSelectionRange(caret, caret);
+  });
 
   const stage = async (files: readonly File[]) => {
     if (!capabilities.canAttachImages || files.length === 0) return;
     const incoming = await readStagedChatImages(files);
-    setStaged((current) => {
-      const result = stageChatImages(current, incoming);
-      setRefused(result.refused);
-      return result.staged;
-    });
+    const result = stageChatImages(stagedRef.current, incoming);
+    // The refused tail never becomes a message, so nothing downstream will ever
+    // take its object URLs over — the sent ones hand that ownership to the
+    // message, these have nobody to hand it to and are released here.
+    if (result.refused > 0) {
+      for (const image of incoming.slice(incoming.length - result.refused)) {
+        URL.revokeObjectURL(image.src);
+      }
+    }
+    commitStaged(result.staged);
+    setRefused(result.refused);
   };
 
   const submit = () => {
-    const drafts = fanOutChatSend(text, staged);
+    const drafts = fanOutChatSend(text, staged, replyingTo?.id ?? null);
     if (drafts.length === 0) return;
     onSend(drafts);
     setText("");
-    setStaged([]);
+    commitStaged([]);
     setRefused(0);
     setMentionQuery(null);
   };
@@ -102,16 +133,18 @@ export function ChatComposer({
     setRefused(0);
     const match = MENTION_PATTERN.exec(next.slice(0, caret));
     setMentionQuery(match === null ? null : match[1].toLowerCase());
+    setMentionIndex(0);
   };
 
   const insertMention = (account: ChatAccount) => {
     const field = fieldRef.current;
     const caret = field?.selectionStart ?? text.length;
     const before = text.slice(0, caret).replace(MENTION_PATTERN, "");
-    const next = `${before}${chatMentionToken(account)} ${text.slice(caret)}`;
-    setText(next);
+    const token = `${chatMentionToken(account)} `;
+    setText(`${before}${token}${text.slice(caret)}`);
     setMentionQuery(null);
-    field?.focus();
+    setMentionIndex(0);
+    caretRef.current = before.length + token.length;
   };
 
   const suggestions =
@@ -122,6 +155,16 @@ export function ChatComposer({
             account.name.toLowerCase().startsWith(mentionQuery),
           )
           .slice(0, 5);
+
+  // Clamped rather than reset: a list that shortens under the highlight — one
+  // more character typed — must not silently point past its own end.
+  const activeIndex =
+    suggestions.length === 0 ? 0 : Math.min(mentionIndex, suggestions.length - 1);
+
+  // A depth count rather than a boolean, because `dragleave` fires every time
+  // the pointer crosses into a child of this box — the thumbnails, the field,
+  // the buttons — and a naive handler flickers the highlight off on each one.
+  const dragDepth = useRef(0);
 
   if (capabilities.showsLockNotice) {
     return (
@@ -144,15 +187,22 @@ export function ChatComposer({
         dragging && "border-primary bg-primary/5",
         className,
       )}
+      onDragEnter={() => {
+        dragDepth.current += 1;
+        setDragging(true);
+      }}
       onDragOver={(event) => {
         // Always accepted at the event level: an unhandled drop makes the
         // browser navigate the tab to the file and take the room with it.
         event.preventDefault();
-        setDragging(true);
       }}
-      onDragLeave={() => setDragging(false)}
+      onDragLeave={() => {
+        dragDepth.current = Math.max(0, dragDepth.current - 1);
+        if (dragDepth.current === 0) setDragging(false);
+      }}
       onDrop={(event) => {
         event.preventDefault();
+        dragDepth.current = 0;
         setDragging(false);
         void stage([...event.dataTransfer.files]);
       }}
@@ -183,8 +233,8 @@ export function ChatComposer({
                 aria-label={t("removeImage", { name: image.name })}
                 onClick={() => {
                   URL.revokeObjectURL(image.src);
-                  setStaged((current) =>
-                    current.filter((entry) => entry.key !== image.key),
+                  commitStaged(
+                    stagedRef.current.filter((entry) => entry.key !== image.key),
                   );
                   setRefused(0);
                 }}
@@ -202,12 +252,22 @@ export function ChatComposer({
           aria-label={t("mentionList")}
           className="m-2 mb-0 overflow-hidden rounded border border-border bg-popover"
         >
-          {suggestions.map((account) => (
+          {suggestions.map((account, index) => (
             <li key={account.id}>
               <button
                 type="button"
+                // The pointer takes the highlight with it, so a reader who
+                // reaches for the mouse mid-list and then goes back to Enter
+                // sends the one under their hand rather than the one the arrow
+                // keys were last on.
+                onMouseMove={() => setMentionIndex(index)}
                 onClick={() => insertMention(account)}
-                className="flex w-full items-center px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent"
+                className={cn(
+                  "flex w-full items-center px-2 py-1.5 text-left text-sm transition-colors",
+                  index === activeIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-accent",
+                )}
               >
                 {account.name}
               </button>
@@ -268,6 +328,34 @@ export function ChatComposer({
             void stage(files);
           }}
           onKeyDown={(event) => {
+            // While the suggestion list is open the arrows, Enter and Tab
+            // belong to it: a reader picking a name has their hands on exactly
+            // those keys, and Enter sending the half-typed `@ai` instead of
+            // naming Aino is the whole reason this branch is first.
+            if (suggestions.length > 0) {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setMentionIndex((activeIndex + 1) % suggestions.length);
+                return;
+              }
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setMentionIndex(
+                  (activeIndex - 1 + suggestions.length) % suggestions.length,
+                );
+                return;
+              }
+              if (event.key === "Enter" || event.key === "Tab") {
+                event.preventDefault();
+                insertMention(suggestions[activeIndex]);
+                return;
+              }
+              if (event.key === "Escape") {
+                event.preventDefault();
+                setMentionQuery(null);
+                return;
+              }
+            }
             // Enter sends, Shift+Enter starts a line — the chat convention, and
             // the reason this is a textarea rather than an input at all.
             if (event.key === "Enter" && !event.shiftKey) {
@@ -275,7 +363,10 @@ export function ChatComposer({
               submit();
             }
           }}
-          className="min-h-9 resize-none py-1.5 text-sm"
+          // `text-base` is inherited deliberately: a sub-16px field makes iOS
+          // Safari auto-zoom the page on focus. The density the row wants comes
+          // out of the padding and the line box instead.
+          className="min-h-9 resize-none py-1.5 leading-6"
         />
 
         <Button

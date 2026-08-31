@@ -1,5 +1,5 @@
-/* eslint-disable i18next/no-literal-string -- the control strip below is scene machinery on an admin-only preview page: the account switcher, the latency mode and the activity trigger are developer-facing metadata in the same category as the scene's own registry title, and never ship in any locale. Everything the scene *renders as the product* — the whole chat surface — goes through the `chat` namespace like any other component. */
 "use client";
+/* eslint-disable i18next/no-literal-string -- the control strip below is scene machinery on an admin-only preview page: the account switcher, the latency mode and the activity trigger are developer-facing metadata in the same category as the scene's own registry title, and never ship in any locale. Everything the scene *renders as the product* — the whole chat surface — goes through the `chat` namespace like any other component. */
 
 import { useState } from "react";
 import { Play } from "lucide-react";

@@ -71,6 +71,8 @@ export function stageChatImages(
 export interface ChatSendDraft {
   body: string | null;
   image: StagedChatImage | null;
+  /** The message this draft answers, or `null`. */
+  replyToId: string | null;
 }
 
 /**
@@ -82,18 +84,28 @@ export interface ChatSendDraft {
  * capped; an empty draft with an empty queue produces nothing at all, which is
  * what makes "Send does nothing when there is nothing to send" a property
  * rather than a guard at the call site.
+ *
+ * **One reply target per burst, on exactly one draft.** The composer answers one
+ * message, so quoting it on every picture would draw the same quote five times
+ * over one set. It rides on the words when there are any — that is the half of
+ * the burst that is actually answering — and on the first picture when there are
+ * none, because an image-only reply that dropped its quote would send a reply
+ * that is no longer a reply to anything.
  */
 export function fanOutChatSend(
   text: string,
   staged: readonly StagedChatImage[],
+  replyToId: string | null = null,
   maxLength: number = MAX_CHAT_MESSAGE_LENGTH,
 ): ChatSendDraft[] {
   const body = text.trim().slice(0, maxLength);
   const drafts: ChatSendDraft[] = staged.map((image) => ({
     body: null,
     image,
+    replyToId: null,
   }));
-  if (body.length > 0) drafts.push({ body, image: null });
+  if (body.length > 0) drafts.push({ body, image: null, replyToId });
+  else if (drafts.length > 0) drafts[0] = { ...drafts[0], replyToId };
   return drafts;
 }
 

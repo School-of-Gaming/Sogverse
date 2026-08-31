@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
+/** How far the overlay stands off its trigger, and off the viewport edge. */
+const GAP_PX = 8;
 
 /**
  * A small overlay anchored to the control that opened it.
@@ -17,6 +20,15 @@ import { createPortal } from "react-dom";
  * **It closes on a scroll rather than following one.** Following would mean
  * re-measuring every frame of a scroll the user started in order to get *away*
  * from the thing they opened; closing is what they meant.
+ *
+ * **It opens upward, and flips below when there is not room to.** The trigger is
+ * a bubble's top-right corner, so upward is what keeps the menu off the message
+ * it is about — but the first message in a log sits near the top of the window,
+ * and an overlay hung above *that* one is drawn off the top of the viewport
+ * where no clamp can retrieve it: pinning its top edge on screen while it is
+ * still translated up by its own height moves it further out, not less. So the
+ * height is measured once, before the browser paints, and the side is chosen
+ * from it.
  *
  * Not built on `Dialog`: this is a popover, not a modal — it takes no focus
  * trap, dims nothing, and several of them opening in sequence must not stack.
@@ -34,6 +46,7 @@ export function ChatPopover({
   children: React.ReactNode;
 }) {
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const [below, setBelow] = useState(false);
 
   // Measured during render rather than held in state: this component only
   // exists while the overlay is up, the anchor is already on screen, and a
@@ -41,6 +54,17 @@ export function ChatPopover({
   // one measurement per opening either way, and state would only add a frame
   // in which the overlay is mounted with nowhere to be.
   const rect = anchor === null ? null : anchor.getBoundingClientRect();
+
+  // A *layout* effect, so the side is settled before the first paint: the
+  // overlay is never seen in the place it would not have fitted. The overlay's
+  // own height is the one number no arithmetic off the trigger can supply, and
+  // it does not change while the overlay is up — a scroll or a resize closes it.
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    if (anchor === null || box === null) return;
+    const spaceAbove = anchor.getBoundingClientRect().top - GAP_PX;
+    setBelow(spaceAbove < box.offsetHeight);
+  }, [anchor]);
 
   useEffect(() => {
     if (anchor === null) return;
@@ -76,14 +100,13 @@ export function ChatPopover({
   return createPortal(
     <div
       ref={boxRef}
-      // Right-aligned to the trigger and sitting above it: the trigger is at a
-      // bubble's top-right corner, so opening upward keeps the menu off the
-      // message it is about.
+      // Right-aligned to the trigger either way; above it by preference, below
+      // it when above would not fit.
       style={{
         position: "fixed",
-        top: Math.max(8, rect.top - 8),
-        right: Math.max(8, window.innerWidth - rect.right),
-        transform: "translateY(-100%)",
+        top: below ? rect.bottom + GAP_PX : Math.max(GAP_PX, rect.top - GAP_PX),
+        right: Math.max(GAP_PX, window.innerWidth - rect.right),
+        transform: below ? undefined : "translateY(-100%)",
       }}
       className="z-50"
     >

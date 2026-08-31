@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Clock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ChatReactionCode } from "@/lib/constants/chat";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/lib/constants/chat";
@@ -11,6 +10,7 @@ import { cn } from "@/lib/utils";
 import type { ChatMessageCapabilities } from "./capabilities";
 import { chatBodyMentions } from "./chat-body";
 import { ChatBodyText } from "./ChatBodyText";
+import { ChatDeliveryNote } from "./ChatDeliveryNote";
 import { ChatImageRun } from "./ChatImageRun";
 import { ChatMessageActions } from "./ChatMessageActions";
 import { ChatQuotedMessage } from "./ChatReply";
@@ -97,6 +97,9 @@ export function ChatMessageRow({
           message.delivery === "pending" && "opacity-60",
         )}
       >
+        {/* The ring says "this one is about you" to whoever can see it; this is
+            the same sentence for whoever cannot. */}
+        {mentionsViewer && <span className="sr-only">{t("mentionsYou")}</span>}
         {hidden ? (
           <>
             <ChatTombstone withOriginal={capabilities.canSeeHiddenBody} />
@@ -146,34 +149,11 @@ export function ChatMessageRow({
         )}
       </div>
 
-      {message.delivery !== "sent" && (
-        <p
-          className={cn(
-            "mt-0.5 flex items-center gap-1 px-1.5 text-[11px]",
-            message.delivery === "failed"
-              ? "text-destructive"
-              : "text-muted-foreground",
-          )}
-        >
-          {message.delivery === "failed" ? (
-            <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
-          ) : (
-            <Clock className="h-3 w-3 shrink-0" aria-hidden />
-          )}
-          <span>
-            {message.delivery === "failed" ? t("failed") : t("sending")}
-          </span>
-          {message.delivery === "failed" && (
-            <button
-              type="button"
-              onClick={handlers.onRetry}
-              className="font-medium underline underline-offset-2 hover:no-underline"
-            >
-              {t("retry")}
-            </button>
-          )}
-        </p>
-      )}
+      <ChatDeliveryNote
+        delivery={message.delivery}
+        onRetry={handlers.onRetry}
+        className="px-1.5"
+      />
 
       <ChatReactionRow
         reactions={message.reactions}

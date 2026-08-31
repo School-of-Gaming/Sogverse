@@ -9,7 +9,7 @@ import {
   chatThumbnailWidth,
 } from "./chat-image-geometry";
 import { ChatImageViewer } from "./ChatImageViewer";
-import type { ChatImageRef } from "./types";
+import type { ChatDelivery, ChatImageRef } from "./types";
 
 /**
  * A burst of images, as one wrapping row.
@@ -29,10 +29,21 @@ import type { ChatImageRef } from "./types";
  */
 export function ChatImageRun({
   images,
+  deliveries,
   overlay,
+  footer,
   className,
 }: {
   images: readonly ChatImageRef[];
+  /**
+   * Where each picture is in its own round trip, positionally.
+   *
+   * A burst is one message per picture, so a photo the server never took is a
+   * *failed message* — and a run with no delivery at all would draw a pending
+   * upload as a finished one. Omitted where the caller already answers for
+   * delivery a level up, which is the single-image case inside a message row.
+   */
+  deliveries?: readonly ChatDelivery[];
   /**
    * Per-thumbnail controls, drawn over the picture's top-right corner.
    *
@@ -43,6 +54,17 @@ export function ChatImageRun({
    * same. Absolutely positioned, so a control appearing on hover moves nothing.
    */
   overlay?: (index: number) => React.ReactNode;
+  /**
+   * Per-thumbnail content *below* the picture — the reactions standing on that
+   * one message, and its retry line when it did not go.
+   *
+   * Under the picture rather than over it because both of those are content a
+   * reader acts on rather than an affordance that appears on hover, and a pill
+   * floating over the photograph it counts would cover the thing being reacted
+   * to. It grows the thumbnail's own cell downward, which in a wrapping row
+   * moves nothing already drawn to the left of it.
+   */
+  footer?: (index: number) => React.ReactNode;
   className?: string;
 }) {
   const t = useTranslations("chat.images");
@@ -59,7 +81,10 @@ export function ChatImageRun({
 
   return (
     <>
-      <ul aria-label={t("row")} className={cn("flex flex-wrap gap-1.5", className)}>
+      <ul
+        aria-label={t("row")}
+        className={cn("flex flex-wrap items-start gap-1.5", className)}
+      >
         {images.map((image, index) => (
           <li key={image.id} className="group/thumb relative max-w-full shrink-0">
             <button
@@ -69,7 +94,12 @@ export function ChatImageRun({
                 triggerRef.current = event.currentTarget;
                 setOpenIndex(index);
               }}
-              className="inline-flex max-w-full rounded-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(
+                "inline-flex max-w-full rounded-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                // The same dimming a pending text bubble wears, on the one
+                // thing a pending picture has to show it with.
+                deliveries?.[index] === "pending" && "opacity-60",
+              )}
             >
               <Image
                 src={image.src}
@@ -82,6 +112,7 @@ export function ChatImageRun({
               />
             </button>
             {overlay?.(index)}
+            {footer?.(index)}
           </li>
         ))}
       </ul>

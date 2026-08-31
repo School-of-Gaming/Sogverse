@@ -11,6 +11,7 @@ export { ChatComposer } from "./ChatComposer";
 export { ChatMessageRow } from "./ChatMessageRow";
 export { ChatTombstone } from "./ChatTombstone";
 export { ChatQuotedMessage, ChatReplyStrip } from "./ChatReply";
+export { ChatDeliveryNote } from "./ChatDeliveryNote";
 export { ChatReactionRow, ChatReactionPicker } from "./ChatReactionRow";
 export { ChatImageRun } from "./ChatImageRun";
 export { ChatImageViewer } from "./ChatImageViewer";

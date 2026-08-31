@@ -311,7 +311,7 @@ export const PREVIEW_SCENES = [
     surface: "chat",
     title: "Chat",
     description:
-      "The chat surface over fixtures, at the geometry the voice room gives it. Switch the acting account to change what the composer and the message menus offer; the latency and activity controls drive pending, retry and arrivals.",
+      "The chat surface over fixtures, at the geometry the voice room gives it.",
     chrome: "dashboard",
     scenarios: [{ slug: "session", label: "Session chat" }],
   },

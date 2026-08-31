@@ -3675,7 +3675,6 @@
     }
   },
   "chat": {
-    "title": "Chatt",
     "log": "Chattmeddelanden",
     "empty": "Inget sagt än.",
     "unread": "{count, plural, one {# nytt meddelande} other {# nya meddelanden}}",
@@ -3689,8 +3688,7 @@
       "removeImage": "Ta bort {name}",
       "imagesRefused": "Du kan skicka {count} bilder åt gången, så resten togs inte med.",
       "lockNotice": "Chatten är låst för dig just nu. Du kan fortfarande läsa allt här.",
-      "mentionList": "Nämn någon",
-      "mentionOpen": "Nämn någon"
+      "mentionList": "Nämn någon"
     },
     "editor": {
       "label": "Redigera ditt meddelande",

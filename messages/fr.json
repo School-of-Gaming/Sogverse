@@ -3675,7 +3675,6 @@
     }
   },
   "chat": {
-    "title": "Chat",
     "log": "Messages du chat",
     "empty": "Rien n’a encore été dit.",
     "unread": "{count, plural, one {# nouveau message} other {# nouveaux messages}}",
@@ -3689,8 +3688,7 @@
       "removeImage": "Retirer {name}",
       "imagesRefused": "Vous pouvez envoyer {count} images à la fois : les autres n’ont pas été retenues.",
       "lockNotice": "Le chat est verrouillé pour vous en ce moment. Vous pouvez toujours tout lire ici.",
-      "mentionList": "Mentionner quelqu’un",
-      "mentionOpen": "Mentionner quelqu’un"
+      "mentionList": "Mentionner quelqu’un"
     },
     "editor": {
       "label": "Modifier votre message",

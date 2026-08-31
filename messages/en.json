@@ -3675,7 +3675,6 @@
     }
   },
   "chat": {
-    "title": "Chat",
     "log": "Chat messages",
     "empty": "Nothing said yet.",
     "unread": "{count, plural, one {# new message} other {# new messages}}",
@@ -3689,8 +3688,7 @@
       "removeImage": "Remove {name}",
       "imagesRefused": "You can send {count} images at a time, so the rest were left out.",
       "lockNotice": "Chat is locked for you right now. You can still read everything here.",
-      "mentionList": "Mention someone",
-      "mentionOpen": "Mention someone"
+      "mentionList": "Mention someone"
     },
     "editor": {
       "label": "Edit your message",

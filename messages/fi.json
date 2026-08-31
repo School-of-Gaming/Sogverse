@@ -3675,7 +3675,6 @@
     }
   },
   "chat": {
-    "title": "Keskustelu",
     "log": "Keskusteluviestit",
     "empty": "Täällä ei ole vielä sanottu mitään.",
     "unread": "{count, plural, one {# uusi viesti} other {# uutta viestiä}}",
@@ -3689,8 +3688,7 @@
       "removeImage": "Poista {name}",
       "imagesRefused": "Voit lähettää {count} kuvaa kerrallaan, joten loput jäivät pois.",
       "lockNotice": "Keskustelu on nyt lukittu sinulta. Voit silti lukea kaiken täällä.",
-      "mentionList": "Mainitse joku",
-      "mentionOpen": "Mainitse joku"
+      "mentionList": "Mainitse joku"
     },
     "editor": {
       "label": "Muokkaa viestiäsi",

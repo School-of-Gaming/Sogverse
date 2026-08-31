@@ -77,22 +77,27 @@ export function useChatSceneStore(now: Date): ChatSceneStore {
   const [latency, setLatency] = useState<ChatSceneLatency>("instant");
   const [auto, setAuto] = useState(false);
 
-  // Every pending timer, so unmounting the scene does not leave one firing
-  // into a store nobody is rendering.
-  const timers = useRef<number[]>([]);
+  // Every *still pending* timer, so unmounting the scene does not leave one
+  // firing into a store nobody is rendering. A handle drops out of the set as
+  // it fires: a scene somebody leaves open with the activity toggle on would
+  // otherwise accumulate one dead id per arrival for as long as it is up.
+  const timers = useRef(new Set<number>());
   const scriptCursor = useRef(0);
   const alreadyFailed = useRef(new Set<string>());
 
   const later = useCallback((fn: () => void, ms: number) => {
-    const id = window.setTimeout(fn, ms);
-    timers.current.push(id);
+    const id = window.setTimeout(() => {
+      timers.current.delete(id);
+      fn();
+    }, ms);
+    timers.current.add(id);
   }, []);
 
   useEffect(() => {
     const pending = timers.current;
     return () => {
       for (const id of pending) window.clearTimeout(id);
-      pending.length = 0;
+      pending.clear();
     };
   }, []);
 
@@ -107,7 +112,16 @@ export function useChatSceneStore(now: Date): ChatSceneStore {
     [],
   );
 
-  /** The round trip a sent message takes, per the current latency mode. */
+  /**
+   * The round trip a sent message takes, per the current latency mode.
+   *
+   * **The mode is read at send time and holds for that message**, because the
+   * closure captures it: flipping the control to `instant` while a slow send is
+   * in the air still lands that send slowly. That is chosen rather than
+   * incidental — a message's fate settled when it left is what a real transport
+   * does, and re-reading the mode mid-flight would make the control able to
+   * rewrite history that is already on screen.
+   */
   const settle = useCallback(
     (messageId: string) => {
       if (latency === "instant") {
@@ -140,7 +154,7 @@ export function useChatSceneStore(now: Date): ChatSceneStore {
                 width: draft.image.width,
                 height: draft.image.height,
               },
-        replyToId: null,
+        replyToId: draft.replyToId,
         editedAt: null,
         hiddenAt: null,
         hiddenBy: null,

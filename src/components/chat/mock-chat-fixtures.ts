@@ -237,19 +237,19 @@ const REACTIONS: Record<
   number,
   readonly { code: ChatReactionCode; senderId: string }[]
 > = {
-    2: [{ code: "heart", senderId: CHAT_ACCOUNT_IDS.sanna }],
-    8: [
-      { code: "thumbs_up", senderId: CHAT_ACCOUNT_IDS.sanna },
-      { code: "thumbs_up", senderId: CHAT_ACCOUNT_IDS.aino },
-      { code: "celebrate", senderId: CHAT_ACCOUNT_IDS.marja },
-      { code: "surprised", senderId: CHAT_ACCOUNT_IDS.vaino },
-    ],
-    14: [
-      { code: "celebrate", senderId: CHAT_ACCOUNT_IDS.sanna },
-      { code: "celebrate", senderId: CHAT_ACCOUNT_IDS.siiri },
-      { code: "thumbs_up", senderId: CHAT_ACCOUNT_IDS.petra },
-    ],
-  };
+  2: [{ code: "heart", senderId: CHAT_ACCOUNT_IDS.sanna }],
+  8: [
+    { code: "thumbs_up", senderId: CHAT_ACCOUNT_IDS.sanna },
+    { code: "thumbs_up", senderId: CHAT_ACCOUNT_IDS.aino },
+    { code: "celebrate", senderId: CHAT_ACCOUNT_IDS.marja },
+    { code: "surprised", senderId: CHAT_ACCOUNT_IDS.vaino },
+  ],
+  14: [
+    { code: "celebrate", senderId: CHAT_ACCOUNT_IDS.sanna },
+    { code: "celebrate", senderId: CHAT_ACCOUNT_IDS.siiri },
+    { code: "thumbs_up", senderId: CHAT_ACCOUNT_IDS.petra },
+  ],
+};
 
 /** Väinö, locked by the Gedu after the message she removed. */
 export const CHAT_SCENE_LOCKED_IDS: readonly string[] = [

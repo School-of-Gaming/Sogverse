@@ -102,6 +102,21 @@ Decoding a picked file happens once, at staging, and its numbers are then treate
 stored. Measuring at *ingest* is the pipeline doing its job; measuring at *render* is what
 the layout rule forbids.
 
+**Rule: a staged picture's object URL is released by whoever last holds it, and a *sent*
+one is deliberately never released here.** Staging mints an object URL per file, and there
+are exactly three ends for one: the ✕ revokes it, the over-cap refusal revokes the tail it
+turned away, and a send hands ownership to the message it became — the log is drawing that
+blob, so revoking it at the composer would blank the thumbnail the sender just posted. The
+message's URL is freed when the page goes, which is the honest lifetime until a bucket
+exists to re-point `src` at.
+
+**Rule: every chat image renders `unoptimized`, and the wire-up has to revisit that.** It
+is right today because every `src` this surface meets is a blob URL or fixture art, neither
+of which Next's optimizer can fetch — but the renderer takes a URL somebody else produced
+and cannot tell one kind from another, so it cannot make the decision per image. When real
+stored images land, the choice belongs wherever the container resolves `src`, and leaving
+the flag on unexamined would ship an unoptimized image pipeline to every family.
+
 ## One home: the preview scene, not the style guide
 
 **Rule: these components have no style-guide demo, and must not gain one.** A chat is

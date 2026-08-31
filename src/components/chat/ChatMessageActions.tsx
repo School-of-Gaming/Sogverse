@@ -225,19 +225,16 @@ export function ChatMessageActions({
 }
 
 function ActionButton({
-  ref,
   label,
   onClick,
   children,
 }: {
-  ref?: React.Ref<HTMLButtonElement>;
   label: string;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
 }) {
   return (
     <button
-      ref={ref}
       type="button"
       aria-label={label}
       onClick={onClick}
@@ -246,7 +243,7 @@ function ActionButton({
       {children}
     </button>
   );
-};
+}
 
 function MenuItem({
   icon,

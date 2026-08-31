@@ -2829,7 +2829,6 @@
     }
   },
   "chat": {
-    "title": "ja’chuq",
     "log": "ja’chuq QInmey",
     "empty": "not jatlhlu’.",
     "unread": "{count, plural, one {# QIn chu’} other {# QInmey chu’}}",
@@ -2843,8 +2842,7 @@
       "removeImage": "{name} yIteq",
       "imagesRefused": "wa’logh {count} mIlloghmey neH DangeHlaH. latlhpu’ lujpu’.",
       "lockNotice": "DaH SoH ja’chuq jonlu’. ’ach Hoch DalaDlaH.",
-      "mentionList": "vay’ yIpong",
-      "mentionOpen": "vay’ yIpong"
+      "mentionList": "vay’ yIpong"
     },
     "editor": {
       "label": "QInlIj yIchoH",

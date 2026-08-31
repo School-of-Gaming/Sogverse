@@ -94,7 +94,7 @@ describe("fanOutChatSend", () => {
 
   it("sends words alone when nothing is staged", () => {
     expect(fanOutChatSend("just talking", [])).toEqual([
-      { body: "just talking", image: null },
+      { body: "just talking", image: null, replyToId: null },
     ]);
   });
 
@@ -113,9 +113,43 @@ describe("fanOutChatSend", () => {
     expect(fanOutChatSend("  padded  ", [])[0].body).toBe("padded");
 
     const long = "x".repeat(MAX_CHAT_MESSAGE_LENGTH + 50);
-    expect(fanOutChatSend(long, [])[0].body).toHaveLength(
-      MAX_CHAT_MESSAGE_LENGTH,
-    );
+    expect(fanOutChatSend(long, [], null, MAX_CHAT_MESSAGE_LENGTH)[0].body)
+      .toHaveLength(MAX_CHAT_MESSAGE_LENGTH);
+  });
+
+  /**
+   * The reply target has to survive the fan-out or a composed reply is sent as
+   * an ordinary message — the quote the sender put on it silently gone. It
+   * rides on exactly **one** draft of the burst, because the composer answers
+   * one message and five copies of the same quote over one set of pictures is
+   * not what the sender wrote.
+   */
+  describe("the reply target", () => {
+    it("rides on the words, once, when anything was typed", () => {
+      const drafts = fanOutChatSend("what he said", images(3), "seed-4");
+      expect(drafts.map((draft) => draft.replyToId)).toEqual([
+        null,
+        null,
+        null,
+        "seed-4",
+      ]);
+    });
+
+    it("falls to the first picture when nothing was typed", () => {
+      // An image-only reply that dropped its target would be a reply to
+      // nothing, which is the one outcome worse than quoting twice.
+      const drafts = fanOutChatSend("", images(2), "seed-4");
+      expect(drafts.map((draft) => draft.replyToId)).toEqual(["seed-4", null]);
+    });
+
+    it("is null throughout when nothing is being answered", () => {
+      const drafts = fanOutChatSend("just talking", images(1));
+      expect(drafts.every((draft) => draft.replyToId === null)).toBe(true);
+    });
+
+    it("produces nothing at all from an empty composer, reply or not", () => {
+      expect(fanOutChatSend("  ", [], "seed-4")).toEqual([]);
+    });
   });
 });
 

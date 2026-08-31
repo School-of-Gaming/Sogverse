@@ -63,6 +63,10 @@ export function ChatView({
   className?: string;
 }) {
   const [replyToId, setReplyToId] = useState<string | null>(null);
+  // One press of Send, counted. The log cannot tell the viewer's own arrival
+  // from anybody else's, and the two want opposite scroll behaviour — so the
+  // view, which knows which of the two just happened, says so.
+  const [outboundToken, setOutboundToken] = useState(0);
 
   const byId = new Map(accounts.map((account) => [account.id, account]));
   const viewerLocked = lockedAccountIds.has(viewer.id);
@@ -92,6 +96,7 @@ export function ChatView({
           lockedAccountIds={lockedAccountIds}
           timeZone={timeZone}
           handlers={logHandlers}
+          outboundToken={outboundToken}
         />
         <ChatTypingIndicator names={typingNames} />
       </div>
@@ -110,6 +115,7 @@ export function ChatView({
         onSend={(drafts) => {
           handlers.onSend(drafts);
           setReplyToId(null);
+          setOutboundToken((token) => token + 1);
         }}
       />
     </div>
