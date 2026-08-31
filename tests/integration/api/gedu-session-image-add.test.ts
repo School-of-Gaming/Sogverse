@@ -159,15 +159,21 @@ describe("POST /api/gedu/sessions/images", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("gates on a gedu or an admin, and nothing else", async () => {
+  it("gates on a certified educator, or an admin", async () => {
     mockGedu();
     await POST(createRequest());
 
     // The roles are the coarse filter; the RPC's assignment guard is the real
     // boundary. Recorded here so widening the gate is a visible change.
+    //
+    // Putting a picture of a child in front of a family is the same trust
+    // boundary as mailing the report it rides in, so this carries that route's
+    // certification gate. The gate applies it to a `gedu` caller alone, so
+    // naming admin widens who may attach without relaxing anything for
+    // educators.
     expect(mockRequireRole).toHaveBeenCalledWith(
       ["gedu", "admin"],
-      expect.anything(),
+      expect.objectContaining({ requireCertifiedGedu: true }),
     );
   });
 

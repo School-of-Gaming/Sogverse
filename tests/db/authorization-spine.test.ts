@@ -257,6 +257,24 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "42501 deliberately rather than distinguishing itself from someone " +
       "else's row. Positive paths, for both roles: session-images.test.ts.",
   },
+  // The check-only half of removal (00224). It mutates nothing and answers one
+  // question — may this caller remove this photo? — and it exists because the
+  // route deletes the storage OBJECT before the row, on the service-role client:
+  // an admin client must never act for a caller whose authorization has not been
+  // proved, and object-first is what makes a failed removal visible and
+  // retryable. Role-gated like the pair above rather than self-scoping: its
+  // first statement is the same guard primitive, and the group half of the gate
+  // is resolved from the photo's own session row, not from auth.uid() alone.
+  assert_can_delete_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "byte for byte the delete RPC's gate above, so it is refused the same way " +
+      "on NULL arguments and for BOTH permitted roles — a NULL image id " +
+      "resolves to no group, and the no-such-row arm answers 42501 rather than " +
+      "distinguishing itself from someone else's row, which is what keeps it " +
+      "from being an oracle for real photo ids. Positive paths, for both " +
+      "roles: session-images.test.ts.",
+  },
   set_group_notes: {
     permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:

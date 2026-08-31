@@ -7,15 +7,13 @@ import {
 } from "@/lib/images/session-image-url";
 import { deleteSessionImageParams } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
-const ROUTE_LABEL = "/api/gedu/sessions/images/[id]";
-
 /**
  * DELETE /api/gedu/sessions/images/[id] — remove one photo from a report.
  *
- * **The RPC's guard is the real authorization boundary; the role gate below is
- * the coarse filter in front of it.** The delete runs on the caller's own
- * client and takes the photo id alone — the group is resolved from the image's
- * own session row, and that resolution IS the second half of the gate. A photo
+ * **The RPCs' guard is the real authorization boundary; the role gate below is
+ * the coarse filter in front of it.** Both RPCs run on the caller's own client
+ * and take the photo id alone — the group is resolved from the image's own
+ * session row, and that resolution IS the second half of the gate. A photo
  * belonging to another group and one belonging to nothing are refused
  * identically, so this cannot be used as an oracle for real photo ids, and
  * nothing here may weaken that by looking the row up first to say which it was.
@@ -24,47 +22,118 @@ const ROUTE_LABEL = "/api/gedu/sessions/images/[id]";
  * report itself is edited under the last-editor model. There is no per-photo
  * ownership; `created_by` is safeguarding audit and gates nothing.
  *
- * **Row first, then the object, and through the Storage API — never SQL.** A
- * SQL delete of `storage.objects` orphans the backing file, which is a verified
- * Supabase behaviour. If the object delete fails it is logged and that is all:
- * the row is gone, so the URL is dead to the app, an already-emailed copy simply
- * stops loading, and the leftover bytes are recoverable by joining derived
- * object names against `storage.objects.name` — the same reconciliation the
- * product catalogue's orphans get. Deleting the object is the kill switch for
- * every emailed copy of the URL, which is why it is not skipped when it is
- * merely inconvenient.
+ * **The OBJECT goes first and the row second, and that order is the feature's
+ * one requirement about failure.** A removal that did not remove the picture has
+ * to be visible, with the photo still on the card so the gedu can try again. Row
+ * first cannot offer that: the row is what every surface reads, so taking it out
+ * removes the tile — and with it the retry — while the object may still be
+ * sitting in a public bucket, which is the one thing removal exists to prevent.
+ * Deleting the object is the kill switch for every emailed copy of the URL, so
+ * it is the half that must not be skipped when it is merely inconvenient.
+ *
+ * Object first means the row delete is no longer what proves the caller may do
+ * this, so authorization moves in front of the storage call:
+ *
+ * 1. `assert_can_delete_session_image` on the USER'S client — mutates nothing,
+ *    and refuses exactly as the delete RPC would. The admin client below never
+ *    acts for a caller whose right to this photo has not been established.
+ * 2. The object, on the admin client and through the Storage API — never SQL, a
+ *    SQL delete of `storage.objects` orphans the backing file. A failure here
+ *    answers `removeFailed` and leaves the row alone: the tile stays, the photo
+ *    is genuinely still there, and pressing remove again is a real retry.
+ * 3. The row, on the user's client. Its own guard runs again on the actual
+ *    delete — the check in step 1 does not replace it.
+ *
+ * **The TOCTOU window between the check and the delete is cosmetic, not a
+ * hole.** Nothing inside it can widen what the caller may do: an assignment lost
+ * mid-request only makes step 3 fail, never succeed, and step 3 re-derives the
+ * caller from `auth.uid()` exactly as step 1 did.
+ *
+ * **A retry of a photo whose object is already gone still clears it**, which is
+ * what makes the surviving-row case self-repairing rather than permanent.
+ * Verified against the live Storage API (2026-08-31): `remove()` answers
+ * `{ data: [], error: null }` for a name that is not in the bucket — a missing
+ * object is a successful delete, not a 404 — so step 2 passes and step 3 takes
+ * the row out.
  */
 export const DELETE = defineRoute({
   posture: "role-gated",
   roles: ["gedu", "admin"],
+  // Removing a photo of a child from a report is a trust boundary, and it is
+  // the destructive half of the pair — so it carries the same gate the report
+  // mail does. Group assignment already implies an admin certified the
+  // educator, so this declares the posture rather than narrowing who gets
+  // through; the gate applies the certification test to a caller whose role is
+  // `gedu` alone, so the admin above is unaffected.
+  requireCertifiedGedu: true,
   params: deleteSessionImageParams,
 
   handler: async ({ supabase, params }) => {
-    const { error } = await supabase.rpc("delete_group_session_image", {
-      p_image_id: params.id,
-    });
+    // --- 1. Authorization, mutating nothing --------------------------------
+    const { error: guardError } = await supabase.rpc(
+      "assert_can_delete_session_image",
+      { p_image_id: params.id },
+    );
 
-    if (error) {
-      const message = `delete_group_session_image refused (${error.code}): ${error.message}`;
+    if (guardError) {
+      const message = `assert_can_delete_session_image refused (${guardError.code}): ${guardError.message}`;
       // By SQLSTATE, never by message. 42501 covers both "not your group" and
       // "no such photo", deliberately indistinguishable.
-      if (error.code === "42501") {
+      if (guardError.code === "42501") {
         throw new ApiError(message, 403, "notAllowed");
       }
-      throw new ApiError(message, 500, "uploadFailed");
+      // Nothing was touched, so this is a removal that did not happen: the same
+      // answer the gedu gets for every other incomplete removal, and the photo
+      // is still on the card to try again with.
+      throw new ApiError(message, 500, "removeFailed");
     }
 
+    // --- 2. The object, on the service-role client -------------------------
+    //
+    // The bucket carries no policies at all — the unguessable name IS the
+    // access control — so storage is the admin client's, exactly as it is for
+    // the upload. Through the Storage API and never SQL: a SQL delete of
+    // `storage.objects` orphans the backing file.
     const { error: objectError } = await createAdminClient()
       .storage.from(SESSION_IMAGES_BUCKET)
       .remove([sessionImageObjectName(params.id)]);
 
     if (objectError) {
-      // Logged, and the request still succeeded: the row is what every surface
-      // reads, and it is gone. Retrying here would be machinery for a state the
-      // orphan join already covers.
-      console.error(
-        `[${ROUTE_LABEL}] the row for image ${params.id} was deleted but its object was not:`,
-        objectError,
+      // The row is deliberately untouched. The photo is still listed, still
+      // fetchable, and still removable — which is the whole point of doing this
+      // half first — so the answer is an error the gedu can see and act on
+      // rather than a 204 that claims a removal nobody performed.
+      throw new ApiError(
+        `the object for image ${params.id} could not be removed: ${objectError.message}`,
+        502,
+        "removeFailed",
+      );
+    }
+
+    // --- 3. The row, on the caller's own client ----------------------------
+    const { error: rowError } = await supabase.rpc(
+      "delete_group_session_image",
+      { p_image_id: params.id },
+    );
+
+    if (rowError) {
+      if (rowError.code === "42501") {
+        // The check a moment ago said this caller may remove this photo, so a
+        // refusal now means the ROW is gone: the delete RPC answers 42501 for a
+        // photo id that belongs to nothing, deliberately indistinguishably from
+        // one belonging to another group. A concurrent remove won the race, and
+        // between them the caller's intent is fully served — object gone, row
+        // gone — so this is a success, not a refusal to report.
+        return undefined;
+      }
+      // The object is gone and the row survives, so the card shows a tile whose
+      // picture will not load. Answered as a failed removal, which is exactly
+      // what it is: the tile's own remove control is the repair, and it works,
+      // because step 2 treats an already-missing object as removed.
+      throw new ApiError(
+        `the object for image ${params.id} was removed but its row survives (${rowError.code}): ${rowError.message}`,
+        500,
+        "removeFailed",
       );
     }
 

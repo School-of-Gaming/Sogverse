@@ -2235,6 +2235,10 @@ export type Database = {
         Returns: Json
       }
       assert_admin: { Args: never; Returns: undefined }
+      assert_can_delete_session_image: {
+        Args: { p_image_id: string }
+        Returns: string
+      }
       assert_role: {
         Args: { p_role: Database["public"]["Enums"]["user_role"] }
         Returns: undefined

@@ -12,11 +12,11 @@ import {
 } from "./product-helpers";
 
 /**
- * Session-report photos (00222): the two write RPCs, the cap, and the photos'
- * arrival on the gedu document.
+ * Session-report photos (00222): the two write RPCs, the removal check 00224
+ * put in front of them, the cap, and the photos' arrival on the gedu document.
  *
  * `group_session_images` grants nothing to `authenticated` and carries no RLS
- * policy at all — the same posture as `group_sessions` itself — so these two
+ * policy at all — the same posture as `group_sessions` itself — so these
  * SECURITY DEFINER functions are the ONLY way a client reaches the table, and
  * this file is where "who may attach and remove what" is settled. Three
  * authorizations, and they fail differently:
@@ -29,6 +29,14 @@ import {
  *      and nothing else, so the group is resolved from the row. A photo id
  *      belonging to another group and one belonging to nothing are refused
  *      identically, which is what keeps it from being an oracle for real ids.
+ *
+ * Removal is two functions rather than one. The route deletes the storage OBJECT
+ * before the row — so a removal that did not remove the picture stays visible,
+ * with the photo on the card to retry — and that storage call runs on the
+ * service-role client, which must never act for a caller whose right to the
+ * photo has not been proved. `assert_can_delete_session_image` (00224) is that
+ * proof: no mutation, and the delete RPC's gate byte for byte, oracle-free
+ * refusal included.
  *
  * There is deliberately no per-photo ownership: ANY gedu assigned to the group
  * may remove any photo on it, matching how the report itself is edited under the
@@ -239,7 +247,7 @@ describe("session photos", () => {
   // -------------------------------------------------------------------------
 
   describe("role gate", () => {
-    it("refuses a customer and a gamer on both photo RPCs", async () => {
+    it("refuses a customer and a gamer on every photo RPC", async () => {
       // An admin is deliberately absent from this loop: the admin product page
       // renders the gedu session components, so both RPCs admit one, and the
       // admin's positive path is pinned further down. What stays refused is a
@@ -258,6 +266,15 @@ describe("session photos", () => {
           p_image_id: NO_SUCH_IMAGE,
         });
         expect(remove.error?.code).toBe("42501");
+
+        // The check-only half (00224) is refused on the same first statement.
+        // It is what the route calls BEFORE deleting the object with the
+        // service-role client, so a family reaching past it would be a
+        // privileged storage delete performed for an unauthorized caller.
+        const check = await client.rpc("assert_can_delete_session_image", {
+          p_image_id: NO_SUCH_IMAGE,
+        });
+        expect(check.error?.code).toBe("42501");
       }
 
       // Refused on the FIRST statement, so nothing was materialized on the way.
@@ -356,6 +373,108 @@ describe("session photos", () => {
       expect(theirs.error?.code).toBe("42501");
       expect(missing.error?.code).toBe("42501");
       expect(missing.error?.message).toBe(theirs.error?.message);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 2b. The removal check (00224)
+  // -------------------------------------------------------------------------
+  //
+  // The route deletes the storage OBJECT before the row, so that a removal which
+  // did not remove the picture is visible with the photo still on the card to
+  // retry. That inversion means the row delete is no longer what proves the
+  // caller may do this — and the object delete runs on the service-role client
+  // against a bucket with no policies at all. So this function is what stands in
+  // front of it: it mutates nothing, and its gate is byte for byte the delete
+  // RPC's, refusals included.
+  describe("assert_can_delete_session_image", () => {
+    /** One photo on a group the test gedu does not teach. */
+    async function photoOnOtherGroup(date: string): Promise<string> {
+      const { data: session } = await admin
+        .from("group_sessions")
+        .insert({
+          group_id: GROUP_OTHER,
+          session_date: date,
+          starts_at: `${date}T23:00:00Z`,
+          ends_at: `${date}T23:59:00Z`,
+        })
+        .select("id")
+        .single();
+      const { data: image } = await admin
+        .from("group_session_images")
+        .insert({ session_id: session!.id, width: 1920, height: 1080 })
+        .select("id")
+        .single();
+      return image!.id;
+    }
+
+    it("refuses a gedu the photos of a group they do not teach", async () => {
+      const id = await photoOnOtherGroup(YESTERDAY);
+
+      const { error } = await geduAuth.rpc("assert_can_delete_session_image", {
+        p_image_id: id,
+      });
+      expect(error?.code).toBe("42501");
+
+      // And nothing moved. A refusal here is what keeps the route's privileged
+      // storage call from ever running for this caller.
+      const { count } = await admin
+        .from("group_session_images")
+        .select("*", { count: "exact", head: true })
+        .eq("id", id);
+      expect(count).toBe(1);
+    });
+
+    it("answers a photo id that belongs to nothing exactly as it answers someone else's", async () => {
+      // The same oracle-free refusal the delete RPC carries, and a check-only
+      // function is exactly the shape that would tempt somebody to distinguish
+      // the two "for a better message" — which would turn it into an oracle for
+      // real photo ids, and a real id names an object in a public bucket.
+      const id = await photoOnOtherGroup(TWO_DAYS_AGO);
+
+      const theirs = await geduAuth.rpc("assert_can_delete_session_image", {
+        p_image_id: id,
+      });
+      const missing = await geduAuth.rpc("assert_can_delete_session_image", {
+        p_image_id: NO_SUCH_IMAGE,
+      });
+
+      expect(theirs.error?.code).toBe("42501");
+      expect(missing.error?.code).toBe("42501");
+      expect(missing.error?.message).toBe(theirs.error?.message);
+    });
+
+    it("passes ANY assigned gedu, hands back the id, and deletes nothing", async () => {
+      // No per-photo ownership here either: the check has to admit whoever the
+      // delete admits, or the route would refuse a removal the RPC behind it
+      // would have allowed.
+      const id = await attach(geduAuth, YESTERDAY);
+
+      const { data, error } = await peerAuth.rpc(
+        "assert_can_delete_session_image",
+        { p_image_id: id },
+      );
+      expect(error).toBeNull();
+      // The id it validated — a positive answer rather than the absence of an
+      // error. It discloses nothing: it is the id the caller just sent, and it
+      // comes back only on the path where they were allowed.
+      expect(data).toBe(id);
+
+      // It is a CHECK. The photo is still there, which is what lets the route
+      // put it before the storage delete and still keep the row as the retry.
+      expect(await storedImages()).toHaveLength(1);
+    });
+
+    it("passes an admin on a group they teach nothing of", async () => {
+      const id = await attach(geduAuth, YESTERDAY);
+
+      const { data, error } = await adminAuth.rpc(
+        "assert_can_delete_session_image",
+        { p_image_id: id },
+      );
+      expect(error).toBeNull();
+      expect(data).toBe(id);
+      expect(await storedImages()).toHaveLength(1);
     });
   });
 

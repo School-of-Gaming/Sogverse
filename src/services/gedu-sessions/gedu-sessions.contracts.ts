@@ -534,7 +534,9 @@ export const SESSION_PHOTO_CAP_REACHED_SQLSTATE = "P0023";
  * they care what to do next — so both halves travel as members of ONE union
  * that the UI resolves with `t()`. The two client codes are absorbed from the
  * normalization module rather than restated, so there is no second spelling of
- * `decodeFailed` to keep in step.
+ * `decodeFailed` to keep in step. **Removal answers from the same union**: the
+ * strip that shows a photo is the strip that takes it away, so a refusal from
+ * either direction has to reach one error slot.
  *
  * These are **keys, not copy**: nothing renders `err.message`, and a route's
  * own English is written for a log.
@@ -548,10 +550,18 @@ export const SESSION_PHOTO_CAP_REACHED_SQLSTATE = "P0023";
  * - `capReached` — the session already holds {@link SESSION_PHOTO_CAP} photos.
  *   Reachable despite the editor hiding its add control, because two tabs can
  *   race and the RPC is what actually decides.
- * - `notAllowed` — not this caller's group, or not a role that may attach.
- * - `uploadFailed` — everything else: storage refused the object, the
- *   compensation ran, or the session date turned out not to be writable. One
- *   code because the gedu's next move is the same for all of them — try again.
+ * - `notAllowed` — not this caller's group, or not a role that may attach or
+ *   remove.
+ * - `removeFailed` — a REMOVAL did not complete. The photo is still on the card
+ *   and the control beside it is the retry: this code is only ever answered
+ *   while there is something left to retry against, which is the whole reason
+ *   the delete route deletes the object before the row (see that route's
+ *   docblock). Its copy says the photo was not removed and to try again — never
+ *   that it was.
+ * - `uploadFailed` — everything else on the ADD path: storage refused the
+ *   object, the compensation ran, or the session date turned out not to be
+ *   writable. One code because the gedu's next move is the same for all of
+ *   them — try again.
  */
 export const SESSION_PHOTO_ERROR_CODES = [
   ...NORMALIZE_IMAGE_ERROR_CODES,
@@ -560,6 +570,7 @@ export const SESSION_PHOTO_ERROR_CODES = [
   "badDimensions",
   "capReached",
   "notAllowed",
+  "removeFailed",
   "uploadFailed",
 ] as const;
 

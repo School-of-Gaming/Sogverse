@@ -68,6 +68,13 @@ const JPEG_SOI = [0xff, 0xd8, 0xff];
 export const POST = defineRoute({
   posture: "role-gated",
   roles: ["gedu", "admin"],
+  // Putting a picture of a child in front of a family is a trust boundary, and
+  // it carries the same gate the report mail does — the two travel in the same
+  // envelope. Group assignment already implies an admin certified the educator,
+  // so this declares the posture rather than narrowing who gets through; the
+  // gate applies the certification test to a caller whose role is `gedu` alone,
+  // so the admin above is unaffected.
+  requireCertifiedGedu: true,
   response: addSessionImageResponse,
 
   handler: async ({ request, supabase }) => {
