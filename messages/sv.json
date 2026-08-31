@@ -1410,6 +1410,7 @@
       "sendReportFailed": "Rapporten kunde inte mejlas. Ingen familj fick den – försök igen.",
       "photosTitle": "Bilder",
       "photosEmpty": "Lägg till en bild från tillfället.",
+      "photosDropHint": "Du kan också släppa bilder här.",
       "addPhoto": "Lägg till bild",
       "photoUploading": "Laddar upp bilden",
       "removePhoto": "Ta bort bild {index}",
@@ -1421,7 +1422,8 @@
       "photoErrorBadDimensions": "Bildens mått gick inte att läsa. Prova en annan.",
       "photoErrorCapReached": "Den här rapporten är redan full. Ta bort en bild för att lägga till en ny.",
       "photoErrorNotAllowed": "Du kan inte lägga till bilder på det här tillfället.",
-      "photoErrorUploadFailed": "Bilden laddades inte upp. Försök igen."
+      "photoErrorUploadFailed": "Bilden laddades inte upp. Försök igen.",
+      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -1528,6 +1530,8 @@
       "list": "Bilder från tillfället",
       "open": "Öppna bild {index} av {count}",
       "viewer": "Bild {index} av {count}",
+      "previous": "Föregående bild",
+      "next": "Nästa bild",
       "close": "Stäng bilden"
     }
   },

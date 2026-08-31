@@ -24,6 +24,12 @@ import type { SessionPhoto } from "./types";
  * beside them, which is why this renders in a card's read state on both feeds
  * regardless of whether an editor is open.
  *
+ * **Centred in its row.** A wrapping run of natural widths almost never fills
+ * its last line, and a left-packed remainder reads as a row that failed to
+ * finish rather than as a set. Centring costs nothing — every box keeps its own
+ * width and the wrap points are unchanged — and it puts the slack where it
+ * belongs, split evenly outside the pictures.
+ *
  * **Fixed height, natural width, uncropped.** Photos arrive as mixed ratios —
  * 16:9 screenshots mostly, with the odd 1:1 or portrait — and cropping them to
  * a common box would cut a build in half to make a grid tidy. Sharing a
@@ -40,9 +46,12 @@ import type { SessionPhoto } from "./types";
  *
  * **Which photo is open lives here**, because the answer is per-gallery and
  * nothing outside one has any use for it: a card renders a gallery, the gallery
- * owns its overlay, and no page has to thread viewer state through a feed.
- * Closing puts focus back on the thumbnail that was pressed — the overlay
- * cannot do that itself, since the trigger is this component's.
+ * owns its overlay, and no page has to thread viewer state through a feed. The
+ * overlay pages through the same list this row draws, so the open *position*
+ * is the state and the viewer is handed both — a controlled overlay with no
+ * second copy of the list to fall out of step with this one. Closing puts focus
+ * back on the thumbnail that was pressed — the overlay cannot do that itself,
+ * since the trigger is this component's.
  */
 export function SessionPhotoGallery({
   photos,
@@ -53,14 +62,13 @@ export function SessionPhotoGallery({
   className?: string;
 }) {
   const t = useTranslations("sessionFeed");
-  // The open photo is held whole rather than as an index into the array: an
-  // index is a claim about a list that can change underneath it, and the one
-  // thing this state must never do is resolve to nothing while the overlay is
-  // up.
-  const [open, setOpen] = useState<{
-    photo: SessionPhoto;
-    index: number;
-  } | null>(null);
+  // Which photo is open, as a position in the list — because the overlay pages
+  // through that list, and a position is the only thing "the next one" can be
+  // said against. The risk an index carries is that the list changes underneath
+  // it; the viewer reads through it defensively for exactly that reason, and a
+  // list that empties takes the whole gallery (and its overlay) off the page at
+  // the guard below.
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
   // The thumbnail that opened the viewer, so focus has somewhere to land when
   // it closes. A ref rather than state: nothing renders differently for it.
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -74,7 +82,7 @@ export function SessionPhotoGallery({
     <>
       <ul
         aria-label={t("photos.list")}
-        className={cn("flex flex-wrap gap-2", className)}
+        className={cn("flex flex-wrap justify-center gap-2", className)}
       >
         {photos.map((photo, index) => (
           // `shrink-0` so a row that runs out of width wraps instead of
@@ -88,7 +96,7 @@ export function SessionPhotoGallery({
               })}
               onClick={(event) => {
                 triggerRef.current = event.currentTarget;
-                setOpen({ photo, index: index + 1 });
+                setOpenIndex(index);
               }}
               // `inline-flex`, so the button is exactly the size of the one
               // picture inside it. A block button would take the whole row's
@@ -128,11 +136,14 @@ export function SessionPhotoGallery({
       </ul>
 
       <SessionPhotoViewer
-        photo={open?.photo ?? null}
-        index={open?.index ?? 1}
-        count={photos.length}
+        photos={photos}
+        index={openIndex}
+        onIndexChange={setOpenIndex}
         onClose={() => {
-          setOpen(null);
+          setOpenIndex(null);
+          // Back to the thumbnail that was pressed — not to whichever one the
+          // overlay ended on. The trigger is where the reader's place on the
+          // page is, and paging inside an overlay never moved it.
           triggerRef.current?.focus();
         }}
       />

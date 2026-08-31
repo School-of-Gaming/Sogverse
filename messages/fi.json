@@ -1410,6 +1410,7 @@
       "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen.",
       "photosTitle": "Kuvat",
       "photosEmpty": "Lisää kuva tältä kerralta.",
+      "photosDropHint": "Voit myös pudottaa kuvia tähän.",
       "addPhoto": "Lisää kuva",
       "photoUploading": "Kuvaa ladataan",
       "removePhoto": "Poista kuva {index}",
@@ -1421,7 +1422,8 @@
       "photoErrorBadDimensions": "Kuvan mittoja ei voitu lukea. Kokeile toista kuvaa.",
       "photoErrorCapReached": "Tämä raportti on jo täynnä. Poista kuva, jotta voit lisätä uuden.",
       "photoErrorNotAllowed": "Et voi lisätä kuvia tähän kertaan.",
-      "photoErrorUploadFailed": "Kuvan lataus ei onnistunut. Yritä uudelleen."
+      "photoErrorUploadFailed": "Kuvan lataus ei onnistunut. Yritä uudelleen.",
+      "photoErrorRemoveFailed": "Kuvan poistaminen ei onnistunut. Kuva on yhä raportissa — yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -1528,6 +1530,8 @@
       "list": "Tämän kerran kuvat",
       "open": "Avaa kuva {index}/{count}",
       "viewer": "Kuva {index}/{count}",
+      "previous": "Edellinen kuva",
+      "next": "Seuraava kuva",
       "close": "Sulje kuva"
     }
   },

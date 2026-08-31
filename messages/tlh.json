@@ -1454,6 +1454,7 @@
       "sendReportFailed": "De’ ngeHlu’laHbe’. pagh qorDu’ Suqta’ — yIboq.",
       "photosTitle": "mIlloghmey",
       "photosEmpty": "may’vo’ mIllogh yIchel.",
+      "photosDropHint": "naDev je mIlloghmey yIwoD.",
       "addPhoto": "mIllogh yIchel",
       "photoUploading": "mIllogh vIngeHtaH",
       "removePhoto": "mIllogh {index} yIteq",
@@ -1465,7 +1466,8 @@
       "photoErrorBadDimensions": "mIllogh juHmey laDlu’laHbe’. latlh yInuD.",
       "photoErrorCapReached": "buy’ De’vam. wa’ mIllogh yIteq, ’ej latlh yIchel.",
       "photoErrorNotAllowed": "may’vamvaD mIllogh Dachel net chaw’be’.",
-      "photoErrorUploadFailed": "mIllogh ngeHlu’be’. yIboq."
+      "photoErrorUploadFailed": "mIllogh ngeHlu’be’. yIboq.",
+      "photoErrorRemoveFailed": "mIllogh teqlu’be’ — De’vamDaq ratlh. yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -1572,6 +1574,8 @@
       "list": "may’ mIlloghmey",
       "open": "mIllogh {index}/{count} yIlegh",
       "viewer": "mIllogh {index}/{count}",
+      "previous": "mIllogh nung yIlegh",
+      "next": "mIllogh veb yIlegh",
       "close": "mIllogh yImev"
     }
   },

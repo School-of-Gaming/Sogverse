@@ -49,7 +49,20 @@ const PHOTO_ERROR_KEY = {
   capReached: "photoErrorCapReached",
   notAllowed: "photoErrorNotAllowed",
   uploadFailed: "photoErrorUploadFailed",
+  removeFailed: "photoErrorRemoveFailed",
 } as const satisfies Record<SessionPhotoErrorCode, string>;
+
+/**
+ * The file types a drop is allowed to carry — the input's own `accept` list,
+ * read as a set.
+ *
+ * A file input filters the picker dialog for free; a drop has no dialog and
+ * arrives with whatever was dragged, so the same list has to be applied by
+ * hand. It is derived from the one constant rather than restated, because a
+ * drop that accepted something the picker refuses would be a second, wider
+ * definition of what this feature takes.
+ */
+const ACCEPTED_TYPES = new Set(SESSION_PHOTO_ACCEPT.split(","));
 
 /**
  * One photo the browser has prepared but the feed has not yet handed back.
@@ -136,6 +149,21 @@ interface SessionPhotoStripProps {
  * prevent. The photos that landed before it stay landed, and the gedu picks
  * again for the rest.
  *
+ * **A drop is a pick.** The whole block is a drop target — gedu surfaces are
+ * desktop-default, and a screenshot a gedu just took is one drag from the
+ * folder it landed in — but a dropped file joins the *same* pipeline the picker
+ * feeds: the same accept list, the same trim to the remaining slots, the same
+ * normalize-then-attach pass, the same one-line refusal. What the drop path
+ * owns is only the pair of answers a file dialog gives by construction — it
+ * will not select a `.txt`, and the Add button it hangs off is gone at the cap
+ * — which a drop has to say in words instead.
+ *
+ * **A refused removal keeps its tile.** The row is what the report has; a
+ * remove that fails has changed nothing, so the picture stays, the ✕ comes back
+ * live, and one line says why. The alternative — a tile that vanishes
+ * optimistically, or one that spins for ever — would both be the interface
+ * claiming something the record does not say.
+ *
  * **Nothing here is measured.** Every box is arithmetic from the encoded
  * dimensions the browser just produced, so the preview is already the shape its
  * stored twin will be and the row does not reshuffle when the round trip lands.
@@ -167,6 +195,8 @@ export function SessionPhotoStrip({
   const [error, setError] = useState<SessionPhotoErrorCode | null>(null);
   /** How many of an over-cap selection were taken, or `null` for no trim. */
   const [trimmed, setTrimmed] = useState<number | null>(null);
+  /** Whether files are currently being dragged over the block. */
+  const [dragging, setDragging] = useState(false);
 
   // Clear the transient lines on the way back into an open editor, exactly as
   // the editor around this re-seeds its draft: a refusal is the answer to one
@@ -239,6 +269,14 @@ export function SessionPhotoStrip({
 
   const shown = photos.length + visiblePending.length;
   const room = Math.max(0, SESSION_PHOTO_CAP - shown);
+  /**
+   * Whether a drop would be taken right now — the same two conditions the Add
+   * button expresses by being disabled and by being absent. It decides the
+   * highlight only; the drop itself still arrives (see the block's
+   * `onDragOver`), because a refusal a gedu can read beats a file the browser
+   * quietly opens in the tab.
+   */
+  const canDrop = !committing && room > 0;
 
   const handlePick = async (picked: readonly File[]) => {
     // Synchronous, before the first await: the button has to be disabled on the
@@ -299,6 +337,42 @@ export function SessionPhotoStrip({
     setCommitting(false);
   };
 
+  /**
+   * A drop, turned into exactly the selection the file input would have
+   * produced — and then handed to the same function.
+   *
+   * **One pipeline, two ways in.** Everything that makes a pick safe lives past
+   * this point: the accept list, the trim to the remaining slots, the
+   * normalize-then-attach pass, the batch's single refusal line. A drop that
+   * grew its own copy of any of those would be a second, quietly different
+   * definition of what this block takes — so all this does is answer the two
+   * questions the file input answers before a change event ever fires (are
+   * these the right kind of file, and is there anywhere to put them) and then
+   * get out of the way.
+   *
+   * The two refusals it does own are the ones the picker expresses as *absence*
+   * — a dialog that will not select a `.txt`, an Add button that is gone at the
+   * cap. A drop has neither, so the answer has to be said out loud, in the
+   * vocabulary the block already refuses in.
+   */
+  const handleDrop = (dropped: readonly File[]) => {
+    // A batch in flight owns the remaining slots; the Add button is disabled
+    // for the same reason, and it says nothing either.
+    if (committing) return;
+    if (room === 0) {
+      setTrimmed(null);
+      setError("capReached");
+      return;
+    }
+    const usable = dropped.filter((file) => ACCEPTED_TYPES.has(file.type));
+    if (usable.length === 0) {
+      setTrimmed(null);
+      setError("notJpeg");
+      return;
+    }
+    void handlePick(usable);
+  };
+
   const handleRemove = async (imageId: string) => {
     setRemoving(imageId);
     setError(null);
@@ -316,6 +390,11 @@ export function SessionPhotoStrip({
       // against the cap for as long as the card stays mounted.
       dropPreview((photo) => photo.id === imageId);
     } catch (cause) {
+      // The tile is still there and it still has a photo behind it: a refused
+      // removal leaves the row standing on purpose, so the ✕ has to come back
+      // rather than spin for ever over a photo that never went. Clearing
+      // `removing` is what re-arms it, and the line below says why the first
+      // press did nothing.
       setRemoving(null);
       setError(sessionPhotoErrorCode(cause));
     }
@@ -327,7 +406,32 @@ export function SessionPhotoStrip({
     // block is the one thing here that is not.
     <section
       aria-labelledby={titleId}
-      className="rounded-md bg-muted/40 p-3 sm:p-3.5"
+      // The whole block is the drop target, not a separate dashed rectangle
+      // inside it: what a gedu is dropping onto is "the photos", and the block
+      // already draws exactly that. A second target would also have to be held
+      // open at the cap, where there is nowhere for a file to go.
+      onDragOver={(event) => {
+        // Always prevented, even where a drop will be refused — an unprevented
+        // dragover makes this not a drop target at all, and the browser answers
+        // the drop by *navigating the tab to the file*, taking an open editor
+        // with it. Refusing out loud is the whole reason the event has to
+        // arrive here first.
+        event.preventDefault();
+        if (canDrop) setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        setDragging(false);
+        handleDrop(Array.from(event.dataTransfer.files));
+      }}
+      className={cn(
+        "rounded-md bg-muted/40 p-3 transition-colors sm:p-3.5",
+        // Tinted and ringed rather than resized: the answer to "will this land
+        // here" has to be visible without the block growing under a pointer
+        // that is mid-gesture.
+        dragging && "bg-primary/10 ring-2 ring-primary",
+      )}
     >
       <p
         id={titleId}
@@ -390,9 +494,17 @@ export function SessionPhotoStrip({
         {/* The invitation, and the whole of the "encourage a photo" ask: it sits
             beside the one control that answers it and is gone the moment there
             is a photo, so it can never read as a nag on a report that already
-            has five. */}
+            has five.
+
+            `self-center` against the row's `items-end`: that baseline exists to
+            line thumbnails up with the Add button whatever their heights round
+            to, and a single line of text has no baseline to share — bottom-
+            aligning it drops the sentence below the button's own label, which
+            is what made the empty block read as broken. */}
         {shown === 0 && (
-          <li className="text-sm text-muted-foreground">{t("photosEmpty")}</li>
+          <li className="self-center text-sm text-muted-foreground">
+            {t("photosEmpty")}
+          </li>
         )}
       </ul>
 
@@ -416,6 +528,18 @@ export function SessionPhotoStrip({
           if (picked.length > 0) void handlePick(picked);
         }}
       />
+
+      {/* Drag-and-drop leaves no trace on a page, so the one line that says it
+          exists has to be standing copy. It is shown only while there is
+          somewhere for a file to land — at the cap it would be an instruction
+          for something that cannot happen — and it sits *above* the two
+          transient lines so a refusal arriving lands at the end of the run and
+          pushes nothing already on screen. */}
+      {room > 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {t("photosDropHint")}
+        </p>
+      )}
 
       {trimmed !== null && (
         <p className="mt-2 text-xs text-muted-foreground">

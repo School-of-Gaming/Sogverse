@@ -1410,6 +1410,7 @@
       "sendReportFailed": "The report couldn’t be emailed. No family received it — try again.",
       "photosTitle": "Photos",
       "photosEmpty": "Add a photo from the session.",
+      "photosDropHint": "You can also drop photos here.",
       "addPhoto": "Add photo",
       "photoUploading": "Uploading photo",
       "removePhoto": "Remove photo {index}",
@@ -1421,7 +1422,8 @@
       "photoErrorBadDimensions": "That photo’s size couldn’t be read. Try a different one.",
       "photoErrorCapReached": "This report is already full. Remove a photo to add another.",
       "photoErrorNotAllowed": "You can’t add photos to this session.",
-      "photoErrorUploadFailed": "That photo didn’t upload. Try again."
+      "photoErrorUploadFailed": "That photo didn’t upload. Try again.",
+      "photoErrorRemoveFailed": "That photo couldn’t be removed. It is still on the report — try again."
     },
     "groupNotes": {
       "heading": "About this group",
@@ -1528,6 +1530,8 @@
       "list": "Session photos",
       "open": "Open photo {index} of {count}",
       "viewer": "Photo {index} of {count}",
+      "previous": "Previous photo",
+      "next": "Next photo",
       "close": "Close photo"
     }
   },

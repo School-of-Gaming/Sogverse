@@ -94,16 +94,27 @@ function renderStrip(props: StripProps = {}) {
   return render(stripElement(props));
 }
 
+function jpegs(count: number) {
+  return Array.from(
+    { length: count },
+    (_, i) => new File([`bytes-${i}`], `pick-${i}.jpg`, { type: "image/jpeg" }),
+  );
+}
+
 /** Drive the hidden file input the Add button clicks. */
 function pick(container: HTMLElement, count: number) {
   const input = container.querySelector("input[type='file']");
   if (!(input instanceof HTMLInputElement)) throw new Error("no file input");
-  const files = Array.from(
-    { length: count },
-    (_, i) => new File([`bytes-${i}`], `pick-${i}.jpg`, { type: "image/jpeg" }),
-  );
-  fireEvent.change(input, { target: { files } });
+  fireEvent.change(input, { target: { files: jpegs(count) } });
   return input;
+}
+
+/** Drop files onto the block, which is the drop target in its entirety. */
+function drop(container: HTMLElement, files: readonly File[]) {
+  const block = container.querySelector("section");
+  if (!(block instanceof HTMLElement)) throw new Error("no photo block");
+  fireEvent.dragOver(block, { dataTransfer: { files } });
+  fireEvent.drop(block, { dataTransfer: { files } });
 }
 
 beforeEach(() => {
@@ -214,6 +225,76 @@ describe("the session photo strip", () => {
 
     gates[1]("second-id");
     await waitFor(() => expect(addIsDisabled()).toBe(false));
+  });
+
+  it("puts a dropped file through the picker's pipeline, trim and all", async () => {
+    const onAddPhoto = vi.fn().mockResolvedValue("stored-id");
+    const { container, findByText } = renderStrip({
+      photos: [stored(1), stored(2), stored(3)],
+      onAddPhoto,
+    });
+
+    drop(container, jpegs(4));
+
+    // Two slots left and four dropped: the trim is the picker's, applied to a
+    // drop, because there is one pipeline and the drop only feeds it.
+    await waitFor(() => expect(onAddPhoto).toHaveBeenCalledTimes(2));
+    await findByText(/only the first 2 were added/i);
+  });
+
+  it("refuses a drop of the wrong kind of file in its own words", async () => {
+    const onAddPhoto = vi.fn();
+    const { container, findByText } = renderStrip({ onAddPhoto });
+
+    drop(container, [new File(["notes"], "notes.txt", { type: "text/plain" })]);
+
+    // A file dialog filters this out by construction; a drop has no dialog, so
+    // the accept list is applied by hand and the answer is said out loud.
+    await findByText(copy.photoErrorNotJpeg);
+    expect(onAddPhoto).not.toHaveBeenCalled();
+  });
+
+  it("refuses a drop at the cap rather than swallowing it", async () => {
+    const onAddPhoto = vi.fn();
+    const { container, findByText } = renderStrip({
+      photos: [stored(1), stored(2), stored(3), stored(4), stored(5)],
+      onAddPhoto,
+    });
+
+    drop(container, jpegs(1));
+
+    // The Add button says this by being absent. A drop cannot, so it says it.
+    await findByText(copy.photoErrorCapReached);
+    expect(onAddPhoto).not.toHaveBeenCalled();
+  });
+
+  it("keeps a refused removal's tile live, and lets the next press try again", async () => {
+    const removeLabel = copy.removePhoto.replace("{index}", "1");
+    const onRemovePhoto = vi
+      .fn()
+      // The route leaves the row standing when the object delete fails, so the
+      // photo really is still on the report — the tile has to say so by
+      // staying, and its control by coming back.
+      .mockRejectedValueOnce(
+        new ApiError("delete refused", 500, "removeFailed"),
+      )
+      .mockResolvedValueOnce(undefined);
+    const { getByRole, findByRole } = renderStrip({
+      photos: [stored(1)],
+      onRemovePhoto,
+    });
+
+    fireEvent.click(getByRole("button", { name: removeLabel }));
+
+    // One line, through the same total map every other refusal goes through,
+    // and in this feature's own vocabulary rather than the route's English.
+    const alert = await findByRole("alert");
+    expect(alert.textContent).toBe(copy.photoErrorRemoveFailed);
+    const remove = getByRole("button", { name: removeLabel });
+    expect(remove.hasAttribute("disabled")).toBe(false);
+
+    fireEvent.click(remove);
+    await waitFor(() => expect(onRemovePhoto).toHaveBeenCalledTimes(2));
   });
 
   it("removes a stored photo through its own control", async () => {

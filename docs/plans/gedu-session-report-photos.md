@@ -519,6 +519,30 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
   is that a variant nobody can send themselves is a variant nobody checks.
 - **The insert RPC returns a bare uuid** (the id is the only thing the caller lacks);
   cap-reached got its own SQLSTATE `P0023`; delete refusals are oracle-free.
+- **The viewer pages after all — *(owner, reversing the plan)*.** "No prev/next" and
+  "Lightbox prev/next" under *Rejected alternatives* are both overruled: the overlay is
+  handed the whole set plus a position and cycles with two side arrows and the
+  left/right arrow keys. **The ends wrap**, so neither control is ever present-and-dead,
+  and the arrows are hidden outright for a set of one. The controls stop their click, so
+  the close-on-any-tap behaviour the plan describes survives beside them.
+- **The viewer is near-fullscreen — *(owner, reversing the plan)*.** The `wide` dialog
+  size only grew the picture a little; the primitive gained a `fullscreen` size (no width
+  cap, full wrapper height) and the overlay paints a dark ground and contains the picture
+  in nearly the whole viewport. Extending the primitive rather than forking it is what
+  keeps the plan's "one overlay, one Escape register" reasoning intact.
+- **Gallery rows are centred *(owner)*** — one class on the shared row, so family, gedu
+  and admin move together. Boxes and wrap points are unchanged; only the last line's
+  slack moves.
+- **The photo strip is a drop target *(owner)***, mirroring the admin image picker's
+  idiom (dragover tint, `dataTransfer` files, accept-list filtering). A dropped file
+  joins the *picker's* pipeline unchanged; the drop path owns only what a file dialog
+  gives for free — filtering by the accept list, and saying out loud what the hidden Add
+  button says by absence at the cap. A standing one-line hint is the only visible copy,
+  since drag-and-drop otherwise leaves no trace on the page.
+- **A refused removal is surfaced and retryable.** The delete route now leaves the row
+  intact and answers `removeFailed` when the object delete fails, so the strip keeps the
+  tile, re-arms its ✕ and prints that code through the same total error map — which is
+  what forced the new copy in all five locales.
 
 ## Follow-ups (live and die with this plan; owner names any keepers at completion)
 

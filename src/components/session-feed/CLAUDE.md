@@ -243,6 +243,23 @@ same row in a card's read state whether an editor is open or not. The staff-only
 adding and removing — is a separate block that stays on the gedu side; only the read
 half is shared.
 
+**Rule: the staff block takes files two ways and treats them as one.** Its whole recessed
+area is a drop target as well as a picker — gedu surfaces are desktop-default, and a
+screenshot is one drag from the folder it landed in — but a dropped file joins the very
+same pipeline: one accept list, one trim to the remaining slots, one normalize-then-attach
+pass, one refusal line. The drop path owns only the two answers a file dialog gives by
+construction, because a drop has neither: the accept list has to be applied by hand, and a
+drop at the cap has to say so in words where the picker simply has no button. A drag over
+the block is always accepted at the event level even when the drop will be refused — an
+unhandled drop makes the browser navigate the tab to the file and takes an open editor
+with it.
+
+**Rule: a refused removal keeps its tile, live.** The row is what the report holds, so a
+remove that failed has changed nothing: the picture stays, its control comes back
+pressable, and one line in the block's own refusal vocabulary says why. A tile that
+vanished optimistically or one that span for ever would both have the interface claiming
+something the record does not say.
+
 **Rule: the photo type this module renders is declared here, structurally, and is not
 imported from either feed's contracts.** The two documents each carry their own image
 summary with the same three fields (id, width, height), and the ESLint privacy zone
@@ -258,28 +275,51 @@ same reason. The id is also the only address a renderer needs: the object name i
 from it by the shared session-image URL helper, whose leading-slash passthrough is what
 lets fixture art travel in that same field, so the gallery carries no preview-only prop.
 
-**Rule: thumbnails share a height and keep their own widths, uncropped, and the row
-wraps.** Photos arrive as mixed ratios — mostly 16:9 screenshots, with the odd square or
+**Rule: thumbnails share a height, keep their own widths, sit centred in the row, and
+wrap.** Photos arrive as mixed ratios — mostly 16:9 screenshots, with the odd square or
 portrait — and cropping them to a common box would cut a build in half to make a grid
 tidy. A shared *height* gives the row a baseline and a cap while wrapping absorbs whatever
 width is left, which is what makes one layout work at the 360px floor and on a desktop
-card. Because a box's ratio comes from data the database only sanity-bounds, the derived
-width is clamped and pictures are drawn contained: a degenerate stored pair letterboxes
-rather than stretching the row off the page.
+card. Centring is what the wrap costs nothing to buy: a run of natural widths almost never
+fills its last line, and a left-packed remainder reads as a row that failed to finish
+rather than as a set — the wrap points and every box are unchanged, only the slack moves.
+Because a box's ratio comes from data the database only sanity-bounds, the derived width
+is clamped and pictures are drawn contained: a degenerate stored pair letterboxes rather
+than stretching the row off the page.
 
-**Rule: the viewer is built on the shared dialog primitive, and it has no previous/next.**
-The primitive already owns the portal, the backdrop, the z-layer and an Escape answered by
-exactly one dialog when several are stacked; a lightbox of its own would be a second
-answer to all four, free to disagree. Paging is redundant at a cap of five with every
-thumbnail visible in one row behind the overlay — close-and-tap-the-next is the same
-number of gestures — which is also what makes it safe for *any* tap to close: with nothing
-to page through, a tap can only have meant "I am done", and touch has neither hover nor an
-Escape key to offer instead.
+**Rule: the viewer is built on the shared dialog primitive, at a near-fullscreen size the
+primitive itself expresses.** The primitive already owns the portal, the backdrop, the
+z-layer and an Escape answered by exactly one dialog when several are stacked; a lightbox
+of its own would be a second answer to all four, free to disagree. A photo opened in order
+to be *looked at* wants the screen — dark ground, the picture contained in nearly the whole
+viewport — and that is a width-and-height cap, so it is a size on the dialog rather than a
+fork of it. Anything else wanting the same treatment takes that size, and never a second
+overlay.
 
-**Rule: which photo is open belongs to the gallery, not to the page around it.** The
-answer is per-gallery and no surface has a use for it, so a feed never threads viewer state
-through itself. The gallery is also what returns focus to the thumbnail that was pressed,
-because the overlay does not know which one that was.
+**Rule: the viewer holds the whole set and pages through it, wrapping at both ends.**
+Somebody who opened a photo is looking at the report's photos, not at one file, so closing
+the overlay to reach the next thumbnail costs a gesture and puts the reader back on a page
+they deliberately left. Paging is two side arrows plus the left/right arrow keys, and it
+wraps because a short ring keeps both controls able to act at every position — the same
+reasoning that removes them outright for a set of one, where an arrow could never do
+anything at all.
+
+**Corollary: everything in the overlay closes it except the controls, which stop the
+click.** The backdrop, the margins beside a portrait photo and the picture itself all
+close, because touch has neither hover nor an Escape key and the forgiving gesture has to
+be the ordinary one. The arrows and the close button stop propagation, so pressing next is
+never also a request to leave.
+
+**Rule: which photo is open belongs to the gallery, not to the page around it — and it is
+held as a position in the list the gallery drew.** The answer is per-gallery and no surface
+has a use for it, so a feed never threads viewer state through itself; the viewer is
+handed that list and that position and is otherwise controlled, so there is no second copy
+of the set to fall out of step. A position is what "the next one" can be said against,
+which is what paging needs; the viewer reads through it defensively because a list can
+shorten underneath it, and an empty list takes the gallery and its overlay off the page
+outright. Focus returns to the thumbnail that was *pressed*, never to whichever one the
+overlay ended on — the reader's place on the page never moved — and the overlay cannot do
+that itself, because it does not know which thumbnail that was.
 
 ## Contracts the shell holds (and why they are load-bearing)
 

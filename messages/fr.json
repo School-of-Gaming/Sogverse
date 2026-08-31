@@ -1410,6 +1410,7 @@
       "sendReportFailed": "Le compte rendu n’a pas pu être envoyé. Aucune famille ne l’a reçu — réessayez.",
       "photosTitle": "Photos",
       "photosEmpty": "Ajoutez une photo de la séance.",
+      "photosDropHint": "Vous pouvez aussi déposer des photos ici.",
       "addPhoto": "Ajouter une photo",
       "photoUploading": "Envoi de la photo",
       "removePhoto": "Supprimer la photo {index}",
@@ -1421,7 +1422,8 @@
       "photoErrorBadDimensions": "Les dimensions de cette photo n’ont pas pu être lues. Essayez-en une autre.",
       "photoErrorCapReached": "Ce compte rendu est déjà complet. Supprimez une photo pour en ajouter une autre.",
       "photoErrorNotAllowed": "Vous ne pouvez pas ajouter de photos à cette séance.",
-      "photoErrorUploadFailed": "Cette photo n’a pas été envoyée. Réessayez."
+      "photoErrorUploadFailed": "Cette photo n’a pas été envoyée. Réessayez.",
+      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -1528,6 +1530,8 @@
       "list": "Photos de la séance",
       "open": "Ouvrir la photo {index} sur {count}",
       "viewer": "Photo {index} sur {count}",
+      "previous": "Photo précédente",
+      "next": "Photo suivante",
       "close": "Fermer la photo"
     }
   },

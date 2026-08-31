@@ -1906,6 +1906,19 @@ const SESSION_PHOTO_ART = {
   tower: { id: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
 } as const;
 
+/**
+ * A full report's worth of photos, at the cap and in mixed ratios — the set the
+ * gallery cases and the viewer's paging demo both draw, so the row and the
+ * overlay are demonstrably showing the same five pictures.
+ */
+const SESSION_PHOTO_SET: readonly SessionPhoto[] = [
+  SESSION_PHOTO_ART.build,
+  SESSION_PHOTO_ART.badge,
+  SESSION_PHOTO_ART.tower,
+  SESSION_PHOTO_ART.parkour,
+  SESSION_PHOTO_ART.arena,
+];
+
 const SESSION_PHOTO_CASES: readonly {
   caption: string;
   photos: readonly SessionPhoto[];
@@ -1915,13 +1928,7 @@ const SESSION_PHOTO_CASES: readonly {
 }[] = [
   {
     caption: "Five — the cap, mixed ratios",
-    photos: [
-      SESSION_PHOTO_ART.build,
-      SESSION_PHOTO_ART.badge,
-      SESSION_PHOTO_ART.tower,
-      SESSION_PHOTO_ART.parkour,
-      SESSION_PHOTO_ART.arena,
-    ],
+    photos: SESSION_PHOTO_SET,
   },
   {
     caption: "One",
@@ -1935,27 +1942,30 @@ const SESSION_PHOTO_CASES: readonly {
     // 312px is what a 360px phone leaves after the dashboard layout's own
     // gutter, which is the width the mobile floor is actually judged at.
     caption: "Five, at the 360px floor (312px of card)",
-    photos: [
-      SESSION_PHOTO_ART.build,
-      SESSION_PHOTO_ART.badge,
-      SESSION_PHOTO_ART.tower,
-      SESSION_PHOTO_ART.parkour,
-      SESSION_PHOTO_ART.arena,
-    ],
+    photos: SESSION_PHOTO_SET,
     frameClassName: "w-[312px]",
   },
 ];
 
 function SessionPhotosDemo() {
-  const [viewerPhoto, setViewerPhoto] = useState<SessionPhoto | null>(null);
+  // One overlay, so one piece of state — which set is open and where in it.
+  // The single-photo case is a set of one rather than a second holder: it is
+  // the same component answering a shorter list, which is the whole of what
+  // hides its arrows.
+  const [viewer, setViewer] = useState<{
+    photos: readonly SessionPhoto[];
+    index: number;
+  } | null>(null);
 
   return (
     <Section title="Session photos">
       <p className="text-sm text-muted-foreground -mt-2">
         The photos attached to a session report, drawn identically on the staff
         feed and the family one &mdash; a wrapping row of thumbnails that share
-        a <strong>height</strong> and keep their own widths, so mixed ratios sit
-        together uncropped. Every box is sized by arithmetic from the stored
+        a <strong>height</strong>, keep their own widths and sit{" "}
+        <strong>centred</strong> in the row, so mixed ratios sit together
+        uncropped and a part-full last line reads as a set rather than as a row
+        that ran out. Every box is sized by arithmetic from the stored
         dimensions, never from a decoded image, which is what keeps the row from
         reshuffling as the JPEGs land.
       </p>
@@ -1981,32 +1991,41 @@ function SessionPhotosDemo() {
       <SubSection title="Fullscreen viewer">
         <p className="text-sm text-muted-foreground">
           Tapping any thumbnail above opens it; the two buttons here open it
-          directly, because the shape worth comparing is a wide picture against
-          a tall one and an overlay can only be looked at one at a time. There
-          is deliberately no previous/next &mdash; at a cap of five, every
-          thumbnail is already in one row behind it. Escape, the backdrop, the
-          margins beside the picture, the picture itself and the corner button
-          all close it.
+          directly, because an overlay can only be looked at one at a time. It
+          takes the whole viewport &mdash; dark ground, the picture contained
+          inside it &mdash; and it <strong>pages through the set</strong> with
+          the two side arrows or the left/right arrow keys, wrapping at both
+          ends so neither control is ever sitting there unable to act. A set of
+          one gets no arrows at all. Escape, the backdrop, the margins beside
+          the picture, the picture itself and the corner button all close it;
+          the three controls do not, which is why pressing next is never also a
+          request to leave.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button
             variant="outline"
-            onClick={() => setViewerPhoto(SESSION_PHOTO_ART.arena)}
+            onClick={() =>
+              setViewer({ photos: SESSION_PHOTO_SET, index: 0 })
+            }
           >
-            Open a 16:9 photo
+            Open the five-photo set
           </Button>
           <Button
             variant="outline"
-            onClick={() => setViewerPhoto(SESSION_PHOTO_ART.tower)}
+            onClick={() =>
+              setViewer({ photos: [SESSION_PHOTO_ART.tower], index: 0 })
+            }
           >
-            Open a portrait photo
+            Open a single photo
           </Button>
         </div>
         <SessionPhotoViewer
-          photo={viewerPhoto}
-          index={1}
-          count={1}
-          onClose={() => setViewerPhoto(null)}
+          photos={viewer?.photos ?? []}
+          index={viewer?.index ?? null}
+          onIndexChange={(index) =>
+            setViewer((open) => (open === null ? null : { ...open, index }))
+          }
+          onClose={() => setViewer(null)}
         />
       </SubSection>
     </Section>
