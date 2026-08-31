@@ -96,6 +96,30 @@ Owner direction (2026-08-31), added during implementation:
    `--destructive` are far enough from valor and harmony to stay either way. **If the
    owner rules to converge, step 6's wiring scope gains the two status-token values**, in
    the same commit as the Yty tokens — both are tokens, so no call site changes.
+10. **Colour becomes UI grammar, not decoration** (owner direction, 2026-08-31). Each
+    family carries one meaning, derived from the elements themselves: amber = act (CTAs,
+    links, the mark), harmony = people, glow = growth, wit = knowledge, valor =
+    adventure; violet narrows to "the world" — lore, dusk, display — and stops competing
+    as grammar. The walkthrough's grammar slide carries the evidence (violet means five
+    unrelated things today; the gedu role badge invents a colour out of a gradient; ten
+    surfaces label three or more states each) and asks four rulings — adopt the grammar,
+    narrow violet, give role badges real families, converge or keep the product-type
+    palette. All four are pending; the adopted ones are codified in the root `CLAUDE.md`
+    at wiring.
+11. **Brand-hue gradients are a Sogverse invention, and whether to keep them is open**
+    (owner direction, 2026-08-31). The brand has never blended its colours; every blend
+    here is a two-colour-era crutch, the gedu role badge being the smoking gun. A fourth
+    home scenario, `brand-lively-flat`, draws the lively dose with no two-hue blend
+    anywhere so the flat-vs-gradient comparison can be made on a real page; the deck's
+    gradient slide inventories every site and asks whether to sanction gradients
+    deliberately (naming where) or retire brand-hue blends app-wide. The role-badge
+    gradient is slated for retirement if the grammar is adopted. Same-hue fades to
+    transparent are washes, not blends, and stay.
+12. **The walkthrough deck renders real components inline — no iframes** (owner
+    direction, 2026-08-31). Each comparison draws the live components with a link to the
+    full preview scene or style-guide anchor beside it, which is why the home page's four
+    colour-bearing sections are exported from its body: a sample is the route's own code
+    under a different palette prop and cannot drift from the page it shows.
 
 ## Rejected alternatives
 

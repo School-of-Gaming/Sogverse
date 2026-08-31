@@ -1,6 +1,21 @@
 /* eslint-disable i18next/no-literal-string -- temporary admin-only review deck for the brand design pass; every string here is owner-facing walkthrough narration about drafts, never product copy that ships in any locale, and the whole page is deleted before the wiring phase merges */
 
-import { YTY_ELEMENTS, ytyElementColor } from "@/lib/constants/yty";
+import {
+  HomeCtaSection,
+  HomeFeaturesSection,
+  HomeHeroSection,
+  HomeHowItWorksSection,
+} from "@/components/home/home-page-body";
+import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
+import {
+  YTY_PRESENTATIONS,
+  YTY_PRESENTATIONS_DRAFT,
+} from "@/lib/constants/voice-zones";
+import {
+  YTY_ELEMENTS,
+  ytyElementColor,
+  type YtyPalette,
+} from "@/lib/constants/yty";
 import { cn } from "@/lib/utils";
 
 /**
@@ -14,19 +29,27 @@ import { cn } from "@/lib/utils";
  * role-gates every path under `/admin` to the admin role, so reaching it by URL
  * is already gated without this page doing anything.
  *
- * **Before and after are real pages in same-origin iframes, not screenshots.**
- * Security headers allow self-framing (`X-Frame-Options: SAMEORIGIN`,
- * `frame-ancestors 'self'`, `frame-src 'self'`), and an iframe is its own
- * viewport — so a mobile surface framed at 360 CSS px hits the same Tailwind
- * breakpoints a phone does, which a 360px `<div>` on a wide page never would.
- * Desktop surfaces are framed at 1280 and CSS-scaled down to a picture, with a
- * full-size link beside them. Every frame is lazy, because each one is a whole
- * page render and there are several.
+ * **Every comparison renders the real components inline, right here** — never a
+ * screenshot and never an iframed page. The home page's four colour-bearing
+ * sections are exported from the page body for exactly this, so a sample in the
+ * deck is the route's own code under a different palette prop and cannot drift
+ * from it; the Yty section, the zone presentation maps and the Yty colour maps
+ * are consumed the same way. Beside each sample is a plain link to the full
+ * preview scene or style-guide anchor, which is where the full-page truth
+ * lives.
  *
- * The full-size links are plain anchors rather than `buttonVariants` ones on
- * purpose: slide 8 quotes the recounted blast radius of the `outline` variant,
- * and a review aid that inflates the number it asks a decision about would be
- * arguing for the wrong decision.
+ * **Two honesty caveats, stated inline wherever they bite.** Tailwind
+ * breakpoints read the *viewport*, not the container, so an inline sample is
+ * always showing desktop styling however narrow its box is — where the 360 px
+ * truth is the point (the gamer grid, the greeting's wrapping) the deck says so
+ * and leans on the link. And a sample sits on the deck's own ground unless it
+ * says otherwise; the page-shaped samples are given `bg-background` so their
+ * colour is judged against the ground the page actually has.
+ *
+ * Buttons and links in the samples are hand-written literal classes rather than
+ * `buttonVariants` calls, on purpose: slide 10 quotes the recounted blast
+ * radius of the `outline` variant, and a review aid that inflates the number it
+ * asks a decision about would be arguing for the wrong decision.
  */
 
 /* ------------------------------------------------------------------ */
@@ -37,7 +60,9 @@ const SLIDES = [
   { id: "context", title: "What this pass is, and how to read the deck" },
   { id: "palette-today", title: "Why the palette is wrong today" },
   { id: "strong-soft", title: "The strong and soft split" },
+  { id: "grammar", title: "Colour as grammar" },
   { id: "home-yty", title: "Home Yty section" },
+  { id: "gradients", title: "Gradients are a Sogverse invention" },
   { id: "gamer-floor", title: "Gamer dashboard at the 360 floor" },
   { id: "greeting-face", title: "The greeting face" },
   { id: "wit", title: "Wit, up close" },
@@ -116,107 +141,75 @@ function NoRuling({ children }: { children: React.ReactNode }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Frames                                                             */
+/*  Inline samples                                                     */
 /* ------------------------------------------------------------------ */
 
-function FrameHeader({ label, src }: { label: string; src: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground">
-        {label}
-      </span>
-      <a
-        href={src}
-        target="_blank"
-        rel="noreferrer"
-        className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-      >
-        Open full size
-      </a>
-    </div>
-  );
-}
-
 /**
- * A mobile surface at the real floor: 360 CSS px, unscaled, scrollable. The
- * frame is its own viewport, so the page inside picks the same layout a phone
- * would — which is the whole reason this is an iframe and not a screenshot.
+ * One live sample — the real components, rendered here — with a plain link to
+ * the page or style-guide anchor that holds the full-size truth.
+ *
+ * `surface` lets a caller give the sample the page's own ground rather than the
+ * deck's card, and absorb the hero's negative top margin where one is inside.
  */
-function MobileFrame({
+function Sample({
   label,
-  src,
-  height = 800,
+  href,
+  linkLabel = "Open the full page",
+  note,
+  surface,
+  children,
 }: {
   label: string;
-  src: string;
-  height?: number;
+  href: string;
+  linkLabel?: string;
+  note?: string;
+  surface?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
-      <FrameHeader label={label} src={src} />
-      <iframe
-        src={src}
-        title={label}
-        loading="lazy"
-        className="rounded-lg border bg-background"
-        style={{ width: 360, height }}
-      />
-      <p className="text-[11px] text-muted-foreground">
-        360 px wide, unscaled — the real mobile viewport. Scrolls.
-      </p>
-    </div>
-  );
-}
-
-/**
- * A desktop surface at 1280, scaled down to a picture. `pointer-events-none`
- * is what makes it read as one: a half-scale page that could be clicked into
- * would be a trap, so interaction goes through the full-size link instead.
- */
-function DesktopFrame({
-  label,
-  src,
-  height,
-  scale = 0.4,
-  width = 1280,
-}: {
-  label: string;
-  src: string;
-  height: number;
-  scale?: number;
-  width?: number;
-}) {
-  return (
-    <div className="space-y-2">
-      <FrameHeader label={label} src={src} />
-      <div
-        className="overflow-hidden rounded-lg border bg-background"
-        style={{ width: Math.round(width * scale), height: Math.round(height * scale) }}
-      >
-        <iframe
-          src={src}
-          title={label}
-          loading="lazy"
-          className="pointer-events-none border-0"
-          style={{
-            width,
-            height,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-          }}
-        />
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground">
+          {label}
+        </span>
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        >
+          {linkLabel}
+        </a>
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        {width} px wide, drawn at {Math.round(scale * 100)}% — a picture, not a
-        control.
-      </p>
+      <div className={cn("overflow-hidden rounded-lg border", surface)}>
+        {children}
+      </div>
+      {note ? (
+        <p className="text-[11px] text-muted-foreground">{note}</p>
+      ) : null}
     </div>
   );
 }
 
-function FrameRow({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-wrap items-start gap-6">{children}</div>;
+/** A titled run of samples that are meant to be compared with each other. */
+function SampleGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <Marker>{title}</Marker>
+      <div className="space-y-5">{children}</div>
+    </div>
+  );
 }
+
+/** The page ground plus the room the hero's negative top margin eats. */
+const PAGE_SURFACE = "bg-background";
+const HERO_SURFACE = "bg-background pt-[var(--header-height)]";
 
 /* ------------------------------------------------------------------ */
 /*  Tables and swatches                                                */
@@ -290,6 +283,31 @@ function Swatch({
 /* ------------------------------------------------------------------ */
 /*  Slide data                                                         */
 /* ------------------------------------------------------------------ */
+
+/**
+ * The three doses slide 5 compares, each paired with the scenario slug whose
+ * page it is a slice of — so a sample and the link beside it can never point at
+ * different things.
+ */
+const HOME_DOSES: readonly {
+  slug: string;
+  label: string;
+  palette: YtyPalette;
+}[] = [
+  { slug: "current", label: "Today", palette: "current" },
+  { slug: "brand-palette", label: "Accented", palette: "brand" },
+  { slug: "brand-lively", label: "Lively", palette: "brand-lively" },
+];
+
+/** The two the gradient slide compares: the same dose, laid down two ways. */
+const GRADIENT_DOSES: readonly {
+  slug: string;
+  label: string;
+  palette: YtyPalette;
+}[] = [
+  { slug: "brand-lively", label: "Dusk gradient", palette: "brand-lively" },
+  { slug: "brand-lively-flat", label: "Flat fields", palette: "brand-lively-flat" },
+];
 
 /** The live tokens, each against the hue the brand actually fixes for it. */
 const TODAY_TOKENS: readonly {
@@ -390,6 +408,343 @@ const CONTRAST_ROWS: readonly {
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Slide 4 — colour as grammar                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The proposed vocabulary: one family, one meaning, derived from what the Yty
+ * elements already stand for rather than invented beside them.
+ */
+const GRAMMAR_CHIPS: readonly {
+  family: string;
+  word: string;
+  swatch: string;
+  wordClass: string;
+  examples: readonly string[];
+  note: string | null;
+}[] = [
+  {
+    family: "Amber — the incumbent",
+    word: "Act",
+    swatch: "bg-primary",
+    wordClass: "text-primary",
+    examples: ["Primary CTA", "Links", "The identity mark"],
+    note: "Its power is scarcity. Every other use spends some of it.",
+  },
+  {
+    family: "Harmony pink",
+    word: "People",
+    swatch: "bg-yty-harmony-strong",
+    wordClass: "text-yty-harmony-soft",
+    examples: ["Friends", "Groups", "Community", "Parent and child"],
+    note: null,
+  },
+  {
+    family: "Glow green",
+    word: "Growth",
+    swatch: "bg-yty-glow-strong",
+    wordClass: "text-yty-glow-soft",
+    examples: ["Progress", "Achievements", "Yty-Points"],
+    note: "The success token converges into it — slide 14.",
+  },
+  {
+    family: "Wit blue",
+    word: "Knowledge",
+    swatch: "bg-yty-wit-strong",
+    wordClass: "text-yty-wit-soft",
+    examples: ["Information", "Learning", "Tips"],
+    note: "The info token converges into it — slide 14.",
+  },
+  {
+    family: "Valor orange",
+    word: "Adventure",
+    swatch: "bg-yty-valor-strong",
+    wordClass: "text-yty-valor-soft",
+    examples: ["Camps", "Events", "Live now"],
+    note: "Used with care: it neighbours amber.",
+  },
+  {
+    family: "Violet — open ruling",
+    word: "The world",
+    swatch: "bg-secondary",
+    wordClass: "text-secondary",
+    examples: ["Lore", "Dusk", "Display moments"],
+    note: "Today it is the ambient second colour. The proposal narrows it to this and takes it out of UI grammar.",
+  },
+];
+
+/**
+ * Five chips the app draws in the same violet, meaning five unrelated things.
+ * Identical on purpose — that is the exhibit.
+ */
+const VIOLET_MEANINGS: readonly {
+  chip: string;
+  meaning: string;
+  where: string;
+}[] = [
+  {
+    chip: "Parent",
+    meaning: "A role",
+    where: "The customer role badge",
+  },
+  {
+    chip: "Join voice",
+    meaning: "Locked and inert",
+    where: "The Join button outside its window",
+  },
+  {
+    chip: "Read",
+    meaning: "A delivery receipt",
+    where: "The admin WhatsApp double-check",
+  },
+  {
+    chip: "Completed",
+    meaning: "A finished participation",
+    where: "The admin user detail's status badge",
+  },
+  {
+    chip: "12 waiting",
+    meaning: "A neutral count or tag",
+    where: "Waitlist and unassigned counts, category tags",
+  },
+];
+
+/** The four role badges exactly as the app draws them today. */
+const ROLE_BADGES_TODAY: readonly { label: string; className: string }[] = [
+  { label: "Gamer", className: ROLE_BADGE_STYLES.gamer },
+  { label: "Parent", className: ROLE_BADGE_STYLES.customer },
+  { label: "Gedu", className: ROLE_BADGE_STYLES.gedu },
+  { label: "Admin", className: ROLE_BADGE_STYLES.admin },
+];
+
+/**
+ * **An illustration, not a proposal.** One way the four roles could take real
+ * families under the grammar, drawn so the question has something to look at.
+ * Gedu uses wit's *soft* variant rather than its strong one for the same reason
+ * the home page's third circle does: ink on wit-strong measures 3.81:1, under
+ * the bar a chip label needs.
+ */
+const ROLE_BADGES_ILLUSTRATED: readonly {
+  label: string;
+  className: string;
+  why: string;
+}[] = [
+  {
+    label: "Gamer",
+    className: "bg-yty-glow-strong text-background",
+    why: "Growth — or amber, unchanged, if the child's badge should stay the mark's colour",
+  },
+  {
+    label: "Parent",
+    className: "bg-yty-harmony-strong text-background",
+    why: "People",
+  },
+  {
+    label: "Gedu",
+    className: "bg-yty-wit-soft text-background",
+    why: "Knowledge",
+  },
+  {
+    label: "Admin",
+    className: "bg-foreground text-background",
+    why: "Ink, unchanged — the one role that is not a family",
+  },
+];
+
+/**
+ * Every surface in the app that has to tell three or more states apart. This is
+ * the argument that colour is already grammar here: ten systems, each of which
+ * picked its colours alone.
+ */
+const MULTI_STATE_SURFACES: readonly {
+  surface: string;
+  states: string;
+  today: string;
+  grammar: string;
+}[] = [
+  {
+    surface: "Role badges",
+    states: "4",
+    today: "Amber, violet, ink — and an amber-to-violet gradient for the fourth",
+    grammar: "Real families, and no invented colour",
+  },
+  {
+    surface: "Participation status",
+    states: "4",
+    today: "Success green, warning amber, muted, violet for completed",
+    grammar:
+      "Growth for active; the queue and the finished seat get meanings rather than whatever was unused",
+  },
+  {
+    surface: "Product status chip",
+    states: "5",
+    today:
+      "Amber tint, amber fill, muted, destructive tint — and muted again, so two of the five are identical",
+    grammar: "Adventure and growth are both unspent here",
+  },
+  {
+    surface: "Attendance tone",
+    states: "3",
+    today: "Success, muted, and warning for absent — deliberately not red",
+    grammar:
+      "Growth reads a register better than 'success' does; absent-is-not-a-failure survives either way",
+  },
+  {
+    surface: "Session-feed rail dots",
+    states: "4",
+    today: "Info, warning, success, muted",
+    grammar: "Knowledge and growth by construction, once slide 14 converges",
+  },
+  {
+    surface: "Game-account verification",
+    states: "4",
+    today: "Success, warning, destructive, muted",
+    grammar: "Unchanged in meaning; it inherits the converged green",
+  },
+  {
+    surface: "WhatsApp delivery",
+    states: "4",
+    today: "Muted, muted, success — and violet for read",
+    grammar:
+      "Knowledge or growth says 'read' without borrowing the world's colour",
+  },
+  {
+    surface: "Product-type presentation",
+    states: "4",
+    today:
+      "Cyan, magenta, lime, indigo — the one system with a written rationale for staying separate",
+    grammar: "Converge, or stay separate. The ruling below",
+  },
+  {
+    surface: "Voice-zone rainbow",
+    states: "16",
+    today: "A tuned sixteen-hue identity ring, meaning-free by design",
+    grammar:
+      "Stays meaning-free, and must stay visually clear of the state colours — a constraint the grammar tightens rather than relaxes",
+  },
+  {
+    surface: "Fee status",
+    states: "4",
+    today: "No colour at all",
+    grammar: "The gap: four states with nothing to read them by",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 6 — the gradient inventory                                   */
+/* ------------------------------------------------------------------ */
+
+const GRADIENT_SITES: readonly {
+  site: string;
+  today: string;
+  proposal: string;
+}[] = [
+  {
+    site: "Home hero",
+    today: "Two radial brand glows blended into a dusk sky",
+    proposal: "Under review here — the two heroes above",
+  },
+  {
+    site: "Lively how-it-works band",
+    today: "Harmony into wit, both at 10%",
+    proposal: "Under review here — flat is one harmony wash at the same 10%",
+  },
+  {
+    site: "Closing CTA card",
+    today: "Three stops: harmony into wit into glow",
+    proposal:
+      "Flatten. One hue says the same thing, and its copy measures better — 6.39:1 against 5.86:1",
+  },
+  {
+    site: "Lively section rule",
+    today: "Pink through blue into green",
+    proposal:
+      "Flatten to solid — which forces a hue to be chosen. The draft takes pink",
+  },
+  {
+    site: "Mission card and Yty overview card",
+    today: "Amber into violet at 5%, on the home page and nowhere else",
+    proposal: "Flatten with the rest — the flat scenario already does",
+  },
+  {
+    site: "Same-hue fades to transparent",
+    today:
+      "The gamer Yty cards' bgGradient slot, and the live-card edges on enrollment and assignment cards",
+    proposal: "Reclassify as washes and keep — one hue is not a blend",
+  },
+  {
+    site: "Gedu role badge",
+    today: "Amber into violet, because a fourth role had no hue left",
+    proposal: "Retire — solved by the role families on slide 4",
+  },
+  {
+    site: "Email hero glows",
+    today:
+      "Amber and violet glows, already pre-blended to flat hexes for mail clients",
+    proposal:
+      "Decide at wiring with the email suite — the blend survives only in the name",
+  },
+];
+
+/**
+ * The button shape every sample below wears — the base of the real variant
+ * recipe at its default size.
+ *
+ * **Written out rather than called for.** Using the button primitive here would
+ * add call sites to the very counts this slide asks a decision about, so the
+ * samples are literal copies of the variants' own class strings on inert spans.
+ * They are at rest only; the style guide draws every state.
+ */
+const BUTTON_SHAPE =
+  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
+
+const BUTTON_SAMPLES: readonly {
+  name: string;
+  note: string;
+  className: string;
+}[] = [
+  {
+    name: "Primary",
+    note: "Today's default, and the Guidebook's Primary to the digit — nothing to decide",
+    className: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+  },
+  {
+    name: "Secondary on dark — proposed",
+    note: "The Guidebook's own on-dark button: transparent, 2 px foreground border",
+    className:
+      "border-2 border-foreground bg-transparent text-foreground hover:bg-foreground/10",
+  },
+  {
+    name: "outline — today",
+    note: "1 px grey border, 61 call sites",
+    className:
+      "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+  },
+  {
+    name: "secondary — today",
+    note: "The violet fill, 1 call site",
+    className:
+      "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+  },
+  {
+    name: "Third tier, A — ghost as today",
+    note: "No border, no fill until hover, 24 call sites",
+    className: "hover:bg-accent hover:text-accent-foreground",
+  },
+  {
+    name: "Third tier, B — quiet 1 px border",
+    note: "Proposed: bounded, but recessive",
+    className:
+      "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground",
+  },
+  {
+    name: "Third tier, C — label only",
+    note: "Proposed: no border and no fill, ever",
+    className: "text-muted-foreground hover:text-foreground",
+  },
+];
+
 const BUTTON_COUNTS: readonly {
   variant: string;
   count: string;
@@ -412,6 +767,87 @@ const BUTTON_COUNTS: readonly {
   },
 ];
 
+/**
+ * The gamer greeting, in both candidate faces at both of their sizes.
+ *
+ * Sizes are written out one per row rather than left to a `md:` breakpoint on
+ * purpose: a breakpoint reads the browser window, so inside a 360 px box on a
+ * wide screen it would quietly show the wide size and call it the phone.
+ */
+const GREETING_SPECIMENS: readonly {
+  label: string;
+  text: string;
+  className: string;
+  boxClass: string;
+}[] = [
+  {
+    label: "Today — Press Start 2P at the 360 floor (text-xl)",
+    text: "Welcome, Aino!",
+    className: "font-display text-xl",
+    boxClass: "w-[360px]",
+  },
+  {
+    label: "Today — Press Start 2P at the 360 floor, in Finnish",
+    text: "Tervetuloa, Aino!",
+    className: "font-display text-xl",
+    boxClass: "w-[360px]",
+  },
+  {
+    label: "Draft — Space Mono at the 360 floor (text-2xl)",
+    text: "Welcome, Aino!",
+    className: "font-brand-mono text-2xl",
+    boxClass: "w-[360px]",
+  },
+  {
+    label: "Draft — Space Mono at the 360 floor, in Finnish",
+    text: "Tervetuloa, Aino!",
+    className: "font-brand-mono text-2xl",
+    boxClass: "w-[360px]",
+  },
+  {
+    label: "Today — Press Start 2P on a wide screen (text-3xl)",
+    text: "Welcome, Aino!",
+    className: "font-display text-3xl",
+    boxClass: "w-full",
+  },
+  {
+    label: "Draft — Space Mono on a wide screen, as drafted (text-4xl)",
+    text: "Welcome, Aino!",
+    className: "font-brand-mono text-4xl",
+    boxClass: "w-full",
+  },
+  {
+    label:
+      "Draft — Space Mono on a wide screen, the larger option (text-5xl), roughly today's footprint",
+    text: "Welcome, Aino!",
+    className: "font-brand-mono text-5xl",
+    boxClass: "w-full",
+  },
+];
+
+/** The three loaded faces, one line each at the size each is used at. */
+const FACE_SPECIMENS: readonly {
+  name: string;
+  role: string;
+  className: string;
+}[] = [
+  {
+    name: "Poppins",
+    role: "the app face: body copy and every heading",
+    className: "font-sans text-2xl font-semibold",
+  },
+  {
+    name: "Space Mono",
+    role: "sanctioned, in-platform display, placed nowhere yet",
+    className: "font-brand-mono text-2xl font-bold",
+  },
+  {
+    name: "Press Start 2P",
+    role: "the rare-use display face",
+    className: "font-display text-lg font-bold",
+  },
+];
+
 const PS2P_SITES: readonly {
   site: string;
   decision: string;
@@ -425,7 +861,7 @@ const PS2P_SITES: readonly {
   {
     site: "Gamer dashboard greeting",
     decision: "Swap to Space Mono",
-    why: "Slide 6. The same child reads this line on every visit, which is the opposite of rare; and in-platform UI is the Guidebook's first named use for Space Mono.",
+    why: "Slide 8. The same child reads this line on every visit, which is the opposite of rare; and in-platform UI is the Guidebook's first named use for Space Mono.",
   },
   {
     site: "Roblox programme hero",
@@ -594,21 +1030,71 @@ function StatusChip({
   );
 }
 
+/** A filled badge, the shape the app's role and status badges already take. */
+function Pill({ label, className }: { label: string; className: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+/** One family of the proposed grammar: the colour, the word, and its beat. */
+function GrammarChip({
+  chip,
+}: {
+  chip: (typeof GRAMMAR_CHIPS)[number];
+}) {
+  return (
+    <div className="w-56 space-y-2 rounded-lg border p-4">
+      <div className={cn("h-10 w-full rounded-md", chip.swatch)} />
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        {chip.family}
+      </div>
+      <div className={cn("text-lg font-semibold", chip.wordClass)}>
+        {chip.word}
+      </div>
+      <ul className="space-y-0.5 text-xs text-foreground">
+        {chip.examples.map((example) => (
+          <li key={example}>{example}</li>
+        ))}
+      </ul>
+      {chip.note ? (
+        <p className="text-[11px] leading-snug text-muted-foreground">
+          {chip.note}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
-/*  Slide 7's four draft cards                                         */
+/*  Element cards, zone tiles and the gamer grid                       */
 /* ------------------------------------------------------------------ */
 
 /**
- * One element as the draft draws it: soft on the glyph and every word, strong
- * on the wash and the edge. The four side by side is the only way the wit seam
- * is visible — on its own, a wit card looks fine.
+ * One element under the requested palette: soft on the glyph and every word,
+ * strong on the wash and the edge. The four side by side is the only way the
+ * wit seam is visible — on its own, a wit card looks fine.
+ *
+ * The classes come from the app's own colour map rather than being restated, so
+ * this card is the draft's real presentation and not a picture of it. The
+ * copy is the canonical English in the constants; the shipped surfaces read the
+ * same words out of the `yty` messages.
  */
-function DraftElementCard({
+function PaletteElementCard({
   element,
+  palette,
 }: {
   element: (typeof YTY_ELEMENTS)[number];
+  palette: YtyPalette;
 }) {
-  const color = ytyElementColor(element, "brand");
+  const color = ytyElementColor(element, palette);
   const Icon = element.icon;
 
   return (
@@ -624,6 +1110,76 @@ function DraftElementCard({
         {element.name}
       </div>
       <p className={cn("text-sm", color.accent)}>{element.description}</p>
+    </div>
+  );
+}
+
+/**
+ * The gamer dashboard's Yty grid, drawn from the same colour map the dashboard
+ * draws it from.
+ *
+ * It is rebuilt here rather than imported because the grid is inline markup
+ * inside the dashboard body and is not separable without carving up a live
+ * page for a review aid's benefit — so the *colours* are the real ones and the
+ * *markup* is a copy, which is the honest way round: what this slide rules on
+ * is the palette.
+ */
+function GamerYtyGrid({ palette }: { palette: YtyPalette }) {
+  return (
+    <div className="grid w-[360px] grid-cols-2 gap-4 p-4">
+      {YTY_ELEMENTS.map((element) => {
+        const color = ytyElementColor(element, palette);
+        const Icon = element.icon;
+        return (
+          <div
+            key={element.id}
+            className={cn(
+              "rounded-lg border bg-gradient-to-br p-4 text-center",
+              color.bgGradient,
+            )}
+          >
+            <Icon className={cn("mx-auto h-8 w-8", color.accent)} aria-hidden />
+            <div className="mt-2 text-base font-semibold">{element.name}</div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {element.description}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * A strip of the four Yty voice zones, straight out of the presentation maps
+ * the voice room composes its zone list from — so the tile wash, the glyph
+ * colour and the ring are the real ones. The room's own tile carries more
+ * (occupancy, a glow, moderator controls); what is ruled on here is the colour.
+ */
+function ZoneTileStrip({ palette }: { palette: YtyPalette }) {
+  const presentations =
+    palette === "current" ? YTY_PRESENTATIONS : YTY_PRESENTATIONS_DRAFT;
+
+  return (
+    <div className="flex flex-wrap gap-3 p-4">
+      {presentations.map((zone, index) => {
+        const Icon = zone.icon;
+        return (
+          <div
+            key={zone.id}
+            className={cn(
+              "flex w-36 flex-col items-center gap-2 rounded-lg p-4 ring-1",
+              zone.color.tile,
+              zone.color.ring,
+            )}
+          >
+            <Icon className={cn("h-6 w-6", zone.color.glyph)} aria-hidden />
+            <span className={cn("text-sm font-semibold", zone.color.glyph)}>
+              {YTY_ELEMENTS[index].name}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -649,7 +1205,7 @@ export default function DesignPassWalkthroughPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Brand design pass — walkthrough</h1>
         <p className="max-w-prose text-muted-foreground">
-          Thirteen slides. Each one shows today beside the draft, says why the
+          Fifteen slides. Each one shows today beside the draft, says why the
           draft is what it is, and names the ruling it wants from you.
         </p>
       </div>
@@ -711,19 +1267,24 @@ export default function DesignPassWalkthroughPage() {
         </Prose>
 
         <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-          <Marker>How to read the pictures</Marker>
+          <Marker>How to read the samples</Marker>
           <div className="max-w-prose space-y-2 text-sm text-muted-foreground">
             <p>
-              Every before and after below is the real page, live, in a frame —
-              not a screenshot and not a mock. A frame is its own viewport, so a
-              mobile surface framed at 360 px lays itself out the way it does on
-              a phone; a 360 px box on a wide page would not.
+              Every before and after below is the real thing, rendered here —
+              not a screenshot, not a mock, and not a framed copy of a page. The
+              home page&rsquo;s sections are the route&rsquo;s own code with a
+              different palette passed in, so a sample cannot drift from the page
+              it claims to show. Beside each one is a link to the full preview
+              scene, which is where you go for the whole page.
             </p>
             <p>
-              Mobile frames are unscaled and scroll. Desktop frames are drawn at
-              1280 px and scaled down to a picture you cannot click into — use
-              the full-size link beside each one to open the real page in a new
-              tab.
+              Two things a sample cannot do, said again wherever they matter.
+              Layout breakpoints read the browser window rather than the box a
+              sample sits in, so everything below is showing the{" "}
+              <em>desktop</em> layout however narrow it looks — where the 360 px
+              phone layout is the point, the slide says so and the link is the
+              answer. And a sample is a slice, so vertical rhythm between
+              sections is the page&rsquo;s, not the deck&rsquo;s.
             </p>
           </div>
         </div>
@@ -845,12 +1406,166 @@ export default function DesignPassWalkthroughPage() {
       </Slide>
 
       {/* ---------------------------------------------------------- 4 */}
+      <Slide id="grammar">
+        <Prose>
+          School of Gaming has an unusually large approved palette — amber and
+          violet already here, pink, green, orange and blue arriving. The
+          proposal is that they stop being decoration and become{" "}
+          <strong className="font-semibold text-foreground">grammar</strong>: a
+          family means one thing everywhere, and the meanings come from what the
+          Yty elements already stand for rather than being invented beside them.
+        </Prose>
+
+        <div className="flex flex-wrap gap-4">
+          {GRAMMAR_CHIPS.map((chip) => (
+            <GrammarChip key={chip.word} chip={chip} />
+          ))}
+        </div>
+
+        <Prose>
+          The evidence for it is that colour{" "}
+          <em>already</em> works this way here — just uncoordinated, one system
+          at a time, each picking from whatever was unused.
+        </Prose>
+
+        <div className="space-y-3">
+          <Marker>Exhibit — one violet, five meanings</Marker>
+          <div className="space-y-2">
+            {VIOLET_MEANINGS.map((row) => (
+              <div key={row.chip} className="flex flex-wrap items-center gap-3">
+                <span className="w-28 shrink-0">
+                  <Pill
+                    label={row.chip}
+                    className="bg-secondary text-secondary-foreground"
+                  />
+                </span>
+                <span className="w-52 shrink-0 text-sm text-foreground">
+                  {row.meaning}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {row.where}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Prose>
+            Same fill, five unrelated meanings, plus pure decoration — the hero
+            headline&rsquo;s second chunk and the page&rsquo;s gradient washes.
+            A sixth turned up while this exhibit was built: the shop card&rsquo;s
+            audience chip, which is the same violet again for &ldquo;who may hold
+            this seat&rdquo;. The read receipt draws it as a glyph rather than a
+            fill; everything else is the pill above.
+          </Prose>
+        </div>
+
+        <div className="space-y-3">
+          <Marker>Exhibit — the gradient-invented colour</Marker>
+          <div className="flex flex-wrap items-center gap-3">
+            {ROLE_BADGES_TODAY.map((badge) => (
+              <Pill key={badge.label} {...badge} />
+            ))}
+          </div>
+          <Prose>
+            Gamer amber, parent violet, admin ink — and gedu is an amber-to-violet
+            gradient, because a fourth role arrived and there was no hue left to
+            give it. That badge is the clearest evidence in the app that the
+            two-colour palette ran out, and it is why the gradient question on
+            slide 6 and the grammar question here are the same question.
+          </Prose>
+        </div>
+
+        <div className="space-y-3">
+          <Marker>
+            Illustration only — what real families could look like
+          </Marker>
+          <div className="space-y-2">
+            {ROLE_BADGES_ILLUSTRATED.map((badge) => (
+              <div key={badge.label} className="flex flex-wrap items-center gap-3">
+                <span className="w-28 shrink-0">
+                  <Pill label={badge.label} className={badge.className} />
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {badge.why}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Prose>
+            One option set, drawn so the question has something to look at.{" "}
+            <strong className="font-semibold text-foreground">
+              It is not a decided mapping
+            </strong>{" "}
+            — the ruling below asks whether roles take families at all, and the
+            mapping is then settled with you.
+          </Prose>
+        </div>
+
+        <Prose>
+          And the scale of it. Ten surfaces in this app have to tell three or
+          more states apart, and each of them chose its colours alone:
+        </Prose>
+
+        <DeckTable
+          head={[
+            "Surface",
+            "States",
+            "Colours today",
+            "What the grammar would offer",
+          ]}
+        >
+          {MULTI_STATE_SURFACES.map((row) => (
+            <tr key={row.surface}>
+              <Cell>{row.surface}</Cell>
+              <Cell>{row.states}</Cell>
+              <Cell muted>{row.today}</Cell>
+              <Cell muted>{row.grammar}</Cell>
+            </tr>
+          ))}
+        </DeckTable>
+
+        <Prose>
+          One row is a genuine question rather than a defect. The product-type
+          palette — cyan, magenta, lime, indigo — was chosen{" "}
+          <em>deliberately apart</em> from the state tokens, and the reasoning is
+          written into the stylesheet: a categorical colour must never be
+          mistaken for a state colour. Under the grammar it could converge, and
+          camp equals valor equals adventure is the natural fit; or it could stay
+          the one system that is meaning-free on purpose. That is a ruling, and
+          this deck does not recommend either way.
+        </Prose>
+
+        <Ruling>
+          <p>
+            Adopt the grammar as the app&rsquo;s colour vocabulary — amber act,
+            pink people, green growth, blue knowledge, orange adventure. Wiring
+            then writes it into the Styling section of the root CLAUDE.md so a
+            future surface does not re-decide it.
+          </p>
+          <p>
+            Violet narrows to &ldquo;the world&rdquo; — lore, dusk, display
+            moments — and stops carrying UI grammar.
+          </p>
+          <p>
+            Role badges take real families, retiring the gradient. The mapping
+            itself is decided with you; the chips above are an illustration.
+          </p>
+          <p>
+            Product types: converge into the grammar, or stay a separate
+            categorical palette.
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 5 */}
       <Slide id="home-yty">
         <Prose>
           The home page is where the cover&rsquo;s question gets answered,
           because it is a marketing surface and the Guidebook lets a marketing
-          surface have the whole palette. Three frames, one page, same copy and
-          same layout in all three — only how much colour it spends changes.
+          surface have the whole palette. Below, section by section, the same
+          page under three doses — same copy and same layout in all three, only
+          how much colour it spends changes. Each sample is the route&rsquo;s own
+          component with a different palette passed in, so what is drawn here is
+          what the page draws.
         </Prose>
         <Prose>
           The draft no longer stops at the Yty section. The four feature cards
@@ -881,32 +1596,97 @@ export default function DesignPassWalkthroughPage() {
           the body-text bar on its fill: 6.11, 6.63 and 8.10.
         </Prose>
 
-        <FrameRow>
-          <DesktopFrame
-            label="Today"
-            src="/preview/home/current"
-            height={980}
-            scale={0.3}
-          />
-          <DesktopFrame
-            label="Accented"
-            src="/preview/home/brand-palette"
-            height={980}
-            scale={0.3}
-          />
-          <DesktopFrame
-            label="Lively"
-            src="/preview/home/brand-lively"
-            height={980}
-            scale={0.3}
-          />
-        </FrameRow>
+        <SampleGroup title="The hero">
+          {HOME_DOSES.map((dose) => (
+            <Sample
+              key={dose.slug}
+              label={dose.label}
+              href={`/preview/home/${dose.slug}`}
+              surface={HERO_SURFACE}
+            >
+              <HomeHeroSection palette={dose.palette} />
+            </Sample>
+          ))}
+        </SampleGroup>
 
         <Prose>
-          The frames open at the top so the hero is the first thing compared.
-          The Yty section is the same in both drafts — the dose question is
-          about the page around it — so open a draft full size and scroll to it
-          to judge the element cards.
+          One honest oddity in those three, and it is the samples being real
+          rather than a fault: the hero&rsquo;s button knows who is reading it,
+          and you are signed in, so it says Dashboard where a stranger is asked
+          to get started. Same button, same colour, different word.
+        </Prose>
+
+        <SampleGroup title="The feature cards">
+          {HOME_DOSES.map((dose) => (
+            <Sample
+              key={dose.slug}
+              label={dose.label}
+              href={`/preview/home/${dose.slug}`}
+              surface={PAGE_SURFACE}
+            >
+              <HomeFeaturesSection palette={dose.palette} />
+            </Sample>
+          ))}
+        </SampleGroup>
+
+        <SampleGroup title="How it works">
+          {HOME_DOSES.map((dose) => (
+            <Sample
+              key={dose.slug}
+              label={dose.label}
+              href={`/preview/home/${dose.slug}`}
+              surface={PAGE_SURFACE}
+            >
+              <HomeHowItWorksSection palette={dose.palette} />
+            </Sample>
+          ))}
+        </SampleGroup>
+
+        <SampleGroup title="The closing CTA">
+          {HOME_DOSES.map((dose) => (
+            <Sample
+              key={dose.slug}
+              label={dose.label}
+              href={`/preview/home/${dose.slug}`}
+              surface={PAGE_SURFACE}
+            >
+              <HomeCtaSection palette={dose.palette} />
+            </Sample>
+          ))}
+        </SampleGroup>
+
+        <div className="space-y-3">
+          <Marker>The Yty element cards — today beside the draft</Marker>
+          <div className="flex flex-wrap gap-4">
+            {YTY_ELEMENTS.map((element) => (
+              <PaletteElementCard
+                key={element.id}
+                element={element}
+                palette="current"
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {YTY_ELEMENTS.map((element) => (
+              <PaletteElementCard
+                key={element.id}
+                element={element}
+                palette="brand"
+              />
+            ))}
+          </div>
+          <Prose>
+            The element cards are identical under both drafts — the dose question
+            is about the page around them — so there is one draft row here rather
+            than two. Slide 9 looks at the wit card in that row up close.
+          </Prose>
+        </div>
+        <Prose>
+          There is a fourth home scenario, and it is deliberately not here.{" "}
+          <em>How much</em> colour and <em>how it is laid down</em> are two
+          questions, and a fourth sample in every run above would make both of
+          them harder to answer; the flat version of the lively page is the whole
+          of slide 6, beside the version it is being compared against.
         </Prose>
 
         <Ruling>
@@ -921,13 +1701,120 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 5 */}
+      {/* ---------------------------------------------------------- 6 */}
+      <Slide id="gradients">
+        <Prose>
+          <strong className="font-semibold text-foreground">
+            The brand has never combined its colours in a gradient.
+          </strong>{" "}
+          Every brand-hue blend in this app is a Sogverse invention, and all of
+          them date from the two-colour era, when amber and violet were the only
+          hues there were and anything needing a third look had to be given a
+          mix of the two. The gedu role badge on slide 4 is the smoking gun.
+        </Prose>
+        <Prose>
+          So the hero glow is not settled either. Below are the same page, the
+          same hues and the same dose, drawn twice: once with the dusk blend, and
+          once with the colour laid down as flat fields — a flat dark ground, a
+          solid harmony edge closing the hero, single-hue washes on the band and
+          the CTA card, and a solid section rule. The white headline, the
+          glow-green marker stroke, the family-coloured cards and circles are
+          identical in both.
+        </Prose>
+
+        <SampleGroup title="The hero">
+          {GRADIENT_DOSES.map((dose) => (
+            <Sample
+              key={dose.slug}
+              label={dose.label}
+              href={`/preview/home/${dose.slug}`}
+              surface={HERO_SURFACE}
+            >
+              <HomeHeroSection palette={dose.palette} />
+            </Sample>
+          ))}
+        </SampleGroup>
+
+        <SampleGroup title="The how-it-works band">
+          {GRADIENT_DOSES.map((dose) => (
+            <Sample
+              key={dose.slug}
+              label={dose.label}
+              href={`/preview/home/${dose.slug}`}
+              surface={PAGE_SURFACE}
+            >
+              <HomeHowItWorksSection palette={dose.palette} />
+            </Sample>
+          ))}
+        </SampleGroup>
+
+        <SampleGroup title="The closing CTA card">
+          {GRADIENT_DOSES.map((dose) => (
+            <Sample
+              key={dose.slug}
+              label={dose.label}
+              href={`/preview/home/${dose.slug}`}
+              surface={PAGE_SURFACE}
+            >
+              <HomeCtaSection palette={dose.palette} />
+            </Sample>
+          ))}
+        </SampleGroup>
+
+        <Prose>
+          Removing colour from behind text can only help the numbers, and it
+          does: the hero subtitle goes from 4.78:1 over the dusk composite to
+          7.70:1 on the plain ground, and the CTA card&rsquo;s copy from 5.86:1
+          to 6.39:1. Nothing in the flat page needed a new measurement.
+        </Prose>
+
+        <Prose>
+          Every brand-gradient site in the product, with a proposal for each:
+        </Prose>
+
+        <DeckTable head={["Site", "Today", "Proposal"]}>
+          {GRADIENT_SITES.map((row) => (
+            <tr key={row.site}>
+              <Cell>{row.site}</Cell>
+              <Cell muted>{row.today}</Cell>
+              <Cell muted>{row.proposal}</Cell>
+            </tr>
+          ))}
+        </DeckTable>
+
+        <Prose>
+          The line the table draws: a <em>same-hue</em> fade to transparent is a
+          wash and stays, because there is no second colour in it and nothing was
+          invented. A <em>two-hue blend</em> is the construct under question. One
+          thing worth seeing before you rule: flattening a blend forces a hue to
+          be chosen, and that choice is a small design decision each time — the
+          section rule went from pink-blue-green to plain pink, and the mission
+          card from amber-violet to pink, because pink is the lively dose&rsquo;s
+          workhorse. That cost is real and it is the argument for keeping some of
+          them.
+        </Prose>
+
+        <Ruling>
+          <p>
+            Sanction gradients deliberately — name the places a brand-hue blend
+            is allowed, and everything else flattens — or retire brand-hue blends
+            app-wide.
+          </p>
+          <p>
+            Either way, the hero: dusk blend, or flat fields with the solid
+            harmony edge.
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 7 */}
       <Slide id="gamer-floor">
         <Prose>
           The gamer dashboard is a mobile-first surface, so it is judged at the
           360 px floor — the Android baseline, and the archetypal family phone
-          in our markets. Both frames below are real 360 px viewports, so the
-          wrapping is the real wrapping.
+          in our markets. The grid below is drawn in a 360 px box, and for{" "}
+          <em>this</em> grid that is honest: it is a two-column grid at every
+          width, with no breakpoint in it, so what you see is what a phone gets.
         </Prose>
         <Prose>
           The draft carries two changes at once, because they cannot compete for
@@ -936,20 +1823,37 @@ export default function DesignPassWalkthroughPage() {
           slide next; this slide is about the grid.
         </Prose>
 
-        <FrameRow>
-          <MobileFrame label="Today" src="/preview/gamer-dashboard/typical" />
-          <MobileFrame
+        <SampleGroup title="The Yty grid at the 360 floor">
+          <Sample
+            label="Today"
+            href="/preview/gamer-dashboard/typical"
+            surface={PAGE_SURFACE}
+          >
+            <GamerYtyGrid palette="current" />
+          </Sample>
+          <Sample
             label="Draft"
-            src="/preview/gamer-dashboard/brand-palette"
-          />
-        </FrameRow>
+            href="/preview/gamer-dashboard/brand-palette"
+            surface={PAGE_SURFACE}
+          >
+            <GamerYtyGrid palette="brand" />
+          </Sample>
+        </SampleGroup>
+
+        <Prose>
+          What the samples cannot show is the page around the grid — the
+          greeting&rsquo;s wrapping, the enrollment cards above it, and how the
+          grid lands after a scroll. Everything on this page is drawn at the
+          browser&rsquo;s width whatever box it is in, so the two links are the
+          real 360 px answer and are worth opening on a phone-sized window.
+        </Prose>
 
         <Ruling>
           <p>Sign off the Yty grid at the floor, or name what to tune.</p>
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 6 */}
+      {/* ---------------------------------------------------------- 8 */}
       <Slide id="greeting-face">
         <Prose>
           Press Start 2P lives under your own ruling that it is for rare,
@@ -970,14 +1874,51 @@ export default function DesignPassWalkthroughPage() {
           text-5xl on wide screens is roughly today&rsquo;s line footprint.
         </Prose>
 
-        <FrameRow>
-          <DesktopFrame
-            label="The three candidates at the 360 floor, in the style guide"
-            src="/admin/ui-components#type-faces-the-gamer-greeting-at-the-360px-floor"
-            height={560}
-            scale={0.68}
-          />
-        </FrameRow>
+        <div className="space-y-3">
+          <Marker>The greeting line, in each face at each size</Marker>
+          <div className="space-y-4">
+            {GREETING_SPECIMENS.map((row) => (
+              <div key={row.label} className="space-y-1">
+                <div className="text-[11px] text-muted-foreground">
+                  {row.label}
+                </div>
+                <div
+                  className={cn(
+                    "rounded-lg border bg-background p-3",
+                    row.boxClass,
+                  )}
+                >
+                  <p
+                    className={cn(
+                      "font-bold text-primary break-words",
+                      row.className,
+                    )}
+                  >
+                    {row.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Prose>
+            The box is 360 px wide, which is what makes the wrapping honest here
+            — but the <em>sizes</em> are written out one per row rather than left
+            to a breakpoint, because a breakpoint would read this browser window
+            and show the wide size in a narrow box. Finnish is set beside English
+            because it is the longest of the five and the one that wraps first.
+            For the whole page around it, use the link.
+          </Prose>
+          <p className="text-xs">
+            <a
+              href="/admin/ui-components#type-faces-the-gamer-greeting-at-the-360px-floor"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the full comparison in the style guide
+            </a>
+          </p>
+        </div>
 
         <Ruling>
           <p>Approve the swap from Press Start 2P to Space Mono.</p>
@@ -988,7 +1929,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 7 */}
+      {/* ---------------------------------------------------------- 9 */}
       <Slide id="wit">
         <Prose>
           One element shows a seam, and it is worth your eye before you sign the
@@ -1005,7 +1946,11 @@ export default function DesignPassWalkthroughPage() {
 
         <div className="flex flex-wrap gap-4">
           {YTY_ELEMENTS.map((element) => (
-            <DraftElementCard key={element.id} element={element} />
+            <PaletteElementCard
+              key={element.id}
+              element={element}
+              palette="brand"
+            />
           ))}
         </div>
 
@@ -1022,7 +1967,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 8 */}
+      {/* --------------------------------------------------------- 10 */}
       <Slide id="buttons">
         <Prose>
           The Guidebook&rsquo;s button set mapped onto our dark ground. Its
@@ -1036,14 +1981,40 @@ export default function DesignPassWalkthroughPage() {
           introduce a second hue.
         </Prose>
 
-        <FrameRow>
-          <DesktopFrame
-            label="Today beside proposed, every state adjacent"
-            src="/admin/ui-components#button-guidebook-proposal-today-beside-proposed"
-            height={1180}
-            scale={0.68}
-          />
-        </FrameRow>
+        <div className="space-y-3">
+          <Marker>Today beside proposed, at rest</Marker>
+          <div className="space-y-2">
+            {BUTTON_SAMPLES.map((row) => (
+              <div key={row.name} className="flex flex-wrap items-center gap-4">
+                <span className="w-64 shrink-0 text-xs text-foreground">
+                  {row.name}
+                </span>
+                <span className={cn(BUTTON_SHAPE, row.className)}>
+                  Explore clubs
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {row.note}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Prose>
+            These are the variants&rsquo; own class strings, at rest. Hover,
+            disabled and loading are three more states each and they belong side
+            by side rather than in a list — the style guide draws the full grid,
+            and it is one click away.
+          </Prose>
+          <p className="text-xs">
+            <a
+              href="/admin/ui-components#button-guidebook-proposal-today-beside-proposed"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open every state in the style guide
+            </a>
+          </p>
+        </div>
 
         <Prose>
           The blast radius, recounted from scratch — every real button plus
@@ -1086,7 +2057,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 9 */}
+      {/* --------------------------------------------------------- 11 */}
       <Slide id="faces">
         <Prose>
           Three faces are loaded: Poppins does body and every heading, Space
@@ -1096,14 +2067,37 @@ export default function DesignPassWalkthroughPage() {
           from memory.
         </Prose>
 
-        <FrameRow>
-          <DesktopFrame
-            label="Specimens — one string, three faces, three sizes"
-            src="/admin/ui-components#type-faces-specimens"
-            height={660}
-            scale={0.68}
-          />
-        </FrameRow>
+        <div className="space-y-3">
+          <Marker>One string, three faces</Marker>
+          <div className="space-y-4">
+            {FACE_SPECIMENS.map((face) => (
+              <div key={face.name} className="space-y-1">
+                <div className="text-[11px] text-muted-foreground">
+                  {face.name} — {face.role}
+                </div>
+                <p className={cn("break-words", face.className)}>
+                  Where screen time becomes quality time
+                </p>
+              </div>
+            ))}
+          </div>
+          <Prose>
+            One line each, at the size the face is actually used at, so the
+            widths are comparable rather than nominal — Press Start 2P advances a
+            full em per character and Space Mono about 0.6, which is why the same
+            sentence is a different length in each.
+          </Prose>
+          <p className="text-xs">
+            <a
+              href="/admin/ui-components#type-faces-specimens"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the full specimens in the style guide
+            </a>
+          </p>
+        </div>
 
         <Prose>
           And every Press Start 2P site in the product, with the draft decision
@@ -1139,7 +2133,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 10 */}
+      {/* --------------------------------------------------------- 12 */}
       <Slide id="zones">
         <Prose>
           The Yty-named voice zones are the third surface the palette feeds, and
@@ -1150,21 +2144,40 @@ export default function DesignPassWalkthroughPage() {
           6.32:1 — so what is left is whether it looks right.
         </Prose>
 
-        <FrameRow>
-          <DesktopFrame
-            label="Today beside the brand draft, both real zone lists"
-            src="/admin/ui-components#voice-room-yty-zones-today-beside-the-brand-draft"
-            height={760}
-            scale={0.68}
-          />
-        </FrameRow>
+        <SampleGroup title="The four Yty zones, today beside the draft">
+          <Sample
+            label="Today"
+            href="/admin/ui-components#voice-room-yty-zones-today-beside-the-brand-draft"
+            linkLabel="Open the full zone list in the style guide"
+            surface={PAGE_SURFACE}
+          >
+            <ZoneTileStrip palette="current" />
+          </Sample>
+          <Sample
+            label="Draft"
+            href="/admin/ui-components#voice-room-yty-zones-today-beside-the-brand-draft"
+            linkLabel="Open the full zone list in the style guide"
+            surface={PAGE_SURFACE}
+          >
+            <ZoneTileStrip palette="brand" />
+          </Sample>
+        </SampleGroup>
+
+        <Prose>
+          The tile wash, the glyph colour and the ring above are read straight
+          out of the zone presentation maps the voice room composes from, so
+          they are the real thing. What a room adds around them — the lobby and
+          any custom zones beside these four, occupancy, the glow on the active
+          tile, moderator controls — needs the room, and the style guide draws
+          the whole list.
+        </Prose>
 
         <Ruling>
           <p>Sign off the zone tiles, or name what to tune.</p>
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 11 */}
+      {/* --------------------------------------------------------- 13 */}
       <Slide id="reach">
         <Prose>
           The Guidebook rations colour by surface, and its rule restated so this
@@ -1180,8 +2193,9 @@ export default function DesignPassWalkthroughPage() {
           This slide used to ask an open question about how far the palette
           reaches. You have since answered it — the site should be brighter and
           more fun, the way the marketing is — so the drafts stopped fencing the
-          palette inside the Yty section. Slide 4 is what that decision looks
-          like on a real page, at two doses.
+          palette inside the Yty section. Slide 5 is what that decision looks
+          like on a real page, at two doses; slide 4 is what it would mean for
+          the colours to carry meaning rather than only brightness.
         </Prose>
         <Prose>
           That leaves one part of the rationing rule unanswered, and it is the
@@ -1211,7 +2225,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 12 */}
+      {/* --------------------------------------------------------- 14 */}
       <Slide id="status-colours">
         <Prose>
           The app has four functional status colours — info, success, warning,
@@ -1294,6 +2308,12 @@ export default function DesignPassWalkthroughPage() {
           than a brand set plus a legacy set that happen to overlap. Warning and
           destructive are untouched either way.
         </Prose>
+        <Prose>
+          Slide 4 asks the same thing from the other end. If colour is grammar,
+          then &ldquo;this is information&rdquo; and &ldquo;this is Wit&rdquo;
+          are not two meanings that need two blues — they are one meaning,
+          knowledge, and convergence is what says so.
+        </Prose>
 
         <Ruling>
           <p>
@@ -1311,10 +2331,10 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 13 */}
+      {/* --------------------------------------------------------- 15 */}
       <Slide id="recap">
         <Prose>
-          Fourteen rulings, in the order they were asked. Any of them can come
+          Twenty rulings, in the order they were asked. Any of them can come
           back as tune this rather than yes. The cover&rsquo;s question is the
           one they add up to: whether this app can be as bright and lively as
           the marketing site on a dark ground, inside the Guidebook.
@@ -1326,41 +2346,65 @@ export default function DesignPassWalkthroughPage() {
             strong on fills, borders, rings and glows.
           </li>
           <li>
-            Slide 4 — the home draft: the Yty section plus the feature cards,
+            Slide 4 — adopt the colour grammar: amber act, pink people, green
+            growth, blue knowledge, orange adventure.
+          </li>
+          <li>
+            Slide 4 — violet narrows to &ldquo;the world&rdquo; and stops
+            carrying UI grammar.
+          </li>
+          <li>
+            Slide 4 — role badges take real families, retiring the gradient. The
+            mapping is settled with you.
+          </li>
+          <li>
+            Slide 4 — product types: converge into the grammar, or stay a
+            separate categorical palette.
+          </li>
+          <li>
+            Slide 5 — the home draft: the Yty section plus the feature cards,
             the how-it-works circles and the hero.
           </li>
-          <li>Slide 4 — the dose: accented, or lively.</li>
-          <li>Slide 5 — the gamer dashboard Yty grid at the 360 floor.</li>
-          <li>Slide 6 — the greeting swaps from Press Start 2P to Space Mono.</li>
+          <li>Slide 5 — the dose: accented, or lively.</li>
           <li>
-            Slide 6 — the greeting&rsquo;s wide-screen size: text-4xl as
+            Slide 6 — gradients: sanction them deliberately and name where, or
+            retire brand-hue blends app-wide.
+          </li>
+          <li>
+            Slide 6 — the hero: dusk blend, or flat fields with the solid
+            harmony edge.
+          </li>
+          <li>Slide 7 — the gamer dashboard Yty grid at the 360 floor.</li>
+          <li>Slide 8 — the greeting swaps from Press Start 2P to Space Mono.</li>
+          <li>
+            Slide 8 — the greeting&rsquo;s wide-screen size: text-4xl as
             drafted, or text-5xl.
           </li>
           <li>
-            Slide 7 — wit&rsquo;s strong and soft pair: accept the seam, or
+            Slide 9 — wit&rsquo;s strong and soft pair: accept the seam, or
             escalate a tuned dark wit to the Guidebook&rsquo;s author.
           </li>
           <li>
-            Slide 8 — the violet fill: retire into Secondary-on-dark, or survive
-            under another name.
+            Slide 10 — the violet fill: retire into Secondary-on-dark, or
+            survive under another name.
           </li>
           <li>
-            Slide 8 — the third button tier: A ghost as today, B a quiet 1 px
+            Slide 10 — the third button tier: A ghost as today, B a quiet 1 px
             border, or C label only.
           </li>
           <li>
-            Slide 8 — CTA type: today&rsquo;s 14 px at 500, or 16 px at 600.
+            Slide 10 — CTA type: today&rsquo;s 14 px at 500, or 16 px at 600.
           </li>
           <li>
-            Slide 9 — ratify the Press Start 2P table, or amend rows.
+            Slide 11 — ratify the Press Start 2P table, or amend rows.
           </li>
-          <li>Slide 10 — the voice-zone Yty tiles.</li>
+          <li>Slide 12 — the voice-zone Yty tiles.</li>
           <li>
-            Slide 11 — the calm ring: confirm the Guidebook&rsquo;s amber-only
+            Slide 13 — the calm ring: confirm the Guidebook&rsquo;s amber-only
             treatment of billing, safeguarding and legal, or adjust it.
           </li>
           <li>
-            Slide 12 — the status colours: converge info onto wit and success
+            Slide 14 — the status colours: converge info onto wit and success
             onto glow, keep both sets, or defer to the categorical-labelling
             follow-up.
           </li>
@@ -1375,10 +2419,14 @@ export default function DesignPassWalkthroughPage() {
               documenting the old colours. The button variants swap with their
               call sites fixed. The face decisions are applied to the live
               surfaces. The palette rules you settle here are written into the
-              root CLAUDE.md and the deviations log. If slide 12 says converge,
-              the two status tokens move in the same commit as the Yty ones —
-              they are tokens, so it is a value change and no call site is
-              touched.
+              root CLAUDE.md and the deviations log — the colour grammar of
+              slide 4 among them, which is what makes it binding on a surface
+              nobody has built yet. If slide 14 says converge, the two status
+              tokens move in the same commit as the Yty ones — they are tokens,
+              so it is a value change and no call site is touched. The two
+              rulings with real call-site cost are the grammar&rsquo;s state
+              colours and the gradient retirement; both are enumerable and both
+              are scoped in their own slides.
             </p>
             <p>
               Then the scaffolding goes: the draft scenarios, the draft colour

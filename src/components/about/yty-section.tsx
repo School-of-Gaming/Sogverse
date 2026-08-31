@@ -11,10 +11,24 @@ interface YtySectionProps {
   id?: string;
   /**
    * Which Yty palette the element cards draw in. Defaults to the live one, so
-   * the public route is untouched; the home preview scene passes `"brand"` to
-   * show the design-pass draft. Retires when the draft palette promotes.
+   * the public route is untouched; the home preview scene passes a draft dose.
+   * Retires when the draft palette promotes.
    */
   palette?: YtyPalette;
+}
+
+/**
+ * The overview card's wash — an amber→violet blend today, and one of the sites
+ * the gradient ruling covers. Only the flat dose changes it, to a single-hue
+ * wash: that scenario's whole claim is that no blended gradient survives
+ * anywhere on the page, and this card sits on the same page. The element cards
+ * below are identical under every dose, which is deliberate and unaffected —
+ * their fade is same-hue, so it is a wash rather than a blend.
+ */
+function overviewCardClass(palette: YtyPalette): string {
+  return palette === "brand-lively-flat"
+    ? "bg-yty-harmony-strong/10"
+    : "bg-gradient-to-r from-primary/5 to-secondary/5";
 }
 
 export function YtySection({ id, palette = "current" }: YtySectionProps) {
@@ -38,7 +52,7 @@ export function YtySection({ id, palette = "current" }: YtySectionProps) {
 
       {/* Overview */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+        <Card className={overviewCardClass(palette)}>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("overview.heading")}</CardTitle>
           </CardHeader>

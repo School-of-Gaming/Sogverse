@@ -41,6 +41,13 @@ type HomeDraftPalette = Exclude<YtyPalette, "current">;
  *   one amber on the screen is the CTA button), a glow-green marker stroke
  *   behind the headline's payoff words, fuller card washes, a tinted
  *   how-it-works band, and a palette rule under each section heading.
+ * - **`brand-lively-flat`** — the same dose with **no blended gradient
+ *   anywhere**. Brand-hue gradients are a Sogverse invention rather than a
+ *   Guidebook construct — a crutch from the two-colour era — so this dose asks
+ *   what the page looks like with the colour laid down as flat fields and
+ *   single-hue washes instead. Same hues, same numbers, same everything else.
+ *   A same-hue fade to transparent is a wash, not a blend, so the Yty element
+ *   cards are identical here too.
  *
  * **Amber stays the identity mark and the CTA colour in both.** It is the
  * ambient wash that the lively dose gives up, not the button.
@@ -101,6 +108,35 @@ const FEATURE_DRAFT_ACCENTS: Record<
     },
   },
   "brand-lively": {
+    minecraftClubs: {
+      card: "border-yty-harmony-strong/25 bg-card/50",
+      tile: "border-yty-harmony-strong/40 bg-yty-harmony-strong/20",
+      glyph: "text-yty-harmony-soft",
+    },
+    screenTime: {
+      card: "border-yty-glow-strong/25 bg-card/50",
+      tile: "border-yty-glow-strong/40 bg-yty-glow-strong/20",
+      glyph: "text-yty-glow-soft",
+    },
+    newFriends: {
+      card: "border-yty-valor-strong/25 bg-card/50",
+      tile: "border-yty-valor-strong/40 bg-yty-valor-strong/20",
+      glyph: "text-yty-valor-soft",
+    },
+    parents: {
+      card: "border-yty-wit-strong/25 bg-card/50",
+      tile: "border-yty-wit-strong/40 bg-yty-wit-strong/20",
+      glyph: "text-yty-wit-soft",
+    },
+  },
+  /**
+   * Identical to the lively dose, and that is the finding rather than a
+   * shortcut: the feature cards were never drawn with a gradient. A solid tint,
+   * a solid edge and a soft glyph are already flat, so the flat scenario has
+   * nothing to take away here and the comparison between the two pages stays
+   * about the hero, the band and the CTA.
+   */
+  "brand-lively-flat": {
     minecraftClubs: {
       card: "border-yty-harmony-strong/25 bg-card/50",
       tile: "border-yty-harmony-strong/40 bg-yty-harmony-strong/20",
@@ -242,7 +278,278 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
     sectionRule:
       "mx-auto mt-6 h-1 w-24 rounded-full bg-gradient-to-r from-yty-harmony-strong via-yty-wit-strong to-yty-glow-strong",
   },
+
+  /**
+   * The lively dose again, with every two-hue blend replaced by a flat field or
+   * a single-hue wash. Four slots differ from `brand-lively` and nothing else
+   * does — the feature cards, the circles, the headline and its marker stroke
+   * are already flat and are carried over untouched, which is what keeps the
+   * two pages a comparison of gradients rather than of two designs.
+   *
+   * **The hero is the ruling this dose exists for.** The dusk sky is two
+   * radial glows blended over the ground; taking them out leaves the flat
+   * `--background` the rest of the page sits on, and the liveliness is then
+   * carried by solid things: the white headline, the glow-green marker stroke
+   * behind its payoff words, and the amber CTA. One element the gradient
+   * version does not have is added, because a hero of three centred lines on
+   * bare ground reads as an unstyled page rather than a restrained one — a
+   * solid harmony edge closing the section. It is a 4 px band of the dose's own
+   * workhorse hue, it carries no text, and it is the whole of what was added.
+   *
+   * **Contrast: nothing here needs a new measurement, and every changed pairing
+   * is looser than the one it replaces.** The subtitle now sits on the plain
+   * page ground at 7.70:1 rather than on the lively hero's dusk composite at
+   * 4.78:1 — removing colour from behind text can only help. The band is the
+   * lively band's own from-stop (harmony at 10% over the page: muted foreground
+   * 6.87:1, full foreground 14.29:1). The CTA card's wash replaces the card
+   * ground rather than layering over it, so its muted copy reads 6.39:1 against
+   * the lively card's 5.86:1. The marker stroke's ink on glow-strong is
+   * unchanged at 6.63:1, and the section rule and the hero edge carry no text
+   * at all.
+   */
+  "brand-lively-flat": {
+    hero:
+      "relative -mt-[var(--header-height)] overflow-hidden border-b-4 border-yty-harmony-strong bg-background pt-[var(--header-height)]",
+    heroTitle: "font-display text-2xl font-bold leading-tight tracking-tight md:text-6xl",
+    heroPrimary: "text-foreground",
+    heroSecondary:
+      "box-decoration-clone rounded-lg bg-yty-glow-strong px-3 text-background",
+    /** One hue where the lively dose blends two: harmony at the same 10%. */
+    howItWorksSection: "bg-yty-harmony-strong/10 py-24",
+    stepCircles: [
+      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-harmony-strong text-2xl font-bold text-background ring-4 ring-yty-harmony-strong/25",
+      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-glow-strong text-2xl font-bold text-background ring-4 ring-yty-glow-strong/25",
+      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background ring-4 ring-yty-wit-soft/25",
+    ],
+    /**
+     * One hue where the lively dose runs three stops. A flat wash is a
+     * background *colour*, so it replaces the card's own ground rather than
+     * layering on it — which is why this reads slightly lighter than the same
+     * alpha does under a gradient, and why its measured number is the better
+     * one.
+     */
+    ctaCard: "mx-auto max-w-3xl bg-yty-harmony-strong/15",
+    /**
+     * Solid harmony, where the lively rule runs pink through blue into green.
+     * Flattening a multi-hue rule forces a hue to be chosen, and that choice is
+     * itself part of what the gradient ruling decides — pink is taken because
+     * it is the dose's workhorse everywhere else.
+     */
+    sectionRule: "mx-auto mt-6 h-1 w-24 rounded-full bg-yty-harmony-strong",
+  },
 };
+
+/** Every colour-bearing home section takes the palette and nothing else. */
+interface HomeSectionProps {
+  /**
+   * Which brand palette — and at what dose — the section draws in. Defaults to
+   * the live one, so the public route is byte-for-byte what it was.
+   */
+  palette?: YtyPalette;
+}
+
+/** `null` on the live path — which is what keeps every literal reachable. */
+function draftClassesFor(palette: YtyPalette): HomeDraftClasses | null {
+  return palette === "current" ? null : HOME_DRAFT_CLASSES[palette];
+}
+
+/* ------------------------------------------------------------------ */
+/*  The page's four colour-bearing sections                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * **The four sections below are exported because the design-pass walkthrough
+ * renders them inline, one per dose, as its own comparison.** That deck used to
+ * frame whole preview pages in iframes; rendering the real section instead
+ * means the picture in the deck cannot drift from the page, because it *is* the
+ * page's code. The body below composes them in the same order and with the same
+ * wrappers it always had, so the live route's output is unchanged.
+ *
+ * They export together with the page body rather than moving to files of their
+ * own: they are one page's sections, not a component library, and splitting
+ * them would put the draft class map at arm's length from the markup it
+ * describes.
+ */
+export function HomeHeroSection({ palette = "current" }: HomeSectionProps) {
+  const t = useTranslations('home');
+  const c = useTranslations('common');
+  const draft = draftClassesFor(palette);
+
+  return (
+    <section className={draft ? draft.hero : "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]"}>
+      <div className="container mx-auto px-4 py-24 sm:py-32">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className={draft ? draft.heroTitle : "font-display text-2xl font-bold tracking-tight md:text-6xl"}>
+            {t.rich('hero.title', {
+              br: () => <br />,
+              primary: (chunks) => <span className={draft ? draft.heroPrimary : "text-primary"}>{chunks}</span>,
+              secondary: (chunks) => <span className={draft ? draft.heroSecondary : "text-secondary"}>{chunks}</span>,
+            })}
+          </h1>
+          <p className="mt-6 text-lg leading-8 text-muted-foreground">
+            {t('hero.subtitle')}
+          </p>
+          {/* The app-wide button order shape — root `CLAUDE.md`, "Button
+              Order". Getting started is what the hero is steering toward,
+              so it is last in the DOM (right in a row, top in a stack);
+              the trip to About is the alternative beside it, and it is the
+              home page's one route to the identity copy that used to sit
+              further down this page. */}
+          <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row">
+            <Link
+              href={ROUTES.about}
+              className={buttonVariants({ variant: "outline", size: "lg" })}
+            >
+              {t('hero.aboutCta')}
+            </Link>
+            <HomeCtaLink
+              signedOutHref={ROUTES.register}
+              signedOutLabel={c('getStarted')}
+              className={buttonVariants({ size: "lg", className: "gap-2" })}
+            >
+              <ArrowRight className="h-4 w-4" />
+            </HomeCtaLink>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function HomeFeaturesSection({ palette = "current" }: HomeSectionProps) {
+  const t = useTranslations('home');
+  const draft = draftClassesFor(palette);
+  const featureAccents = palette === "current" ? null : FEATURE_DRAFT_ACCENTS[palette];
+
+  const features = featureKeys.map((key, i) => ({
+    key,
+    title: t(`features.${key}.title`),
+    description: t(`features.${key}.description`),
+    icon: featureIcons[i],
+  }));
+
+  return (
+    <section className="container mx-auto px-4 py-24">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          {t('features.heading')}
+        </h2>
+        <p className="mt-4 text-muted-foreground">
+          {t('features.subheading')}
+        </p>
+        {draft?.sectionRule ? <div className={draft.sectionRule} aria-hidden /> : null}
+      </div>
+      <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
+        {features.map((feature) => (
+          <Card key={feature.key} className={featureAccents ? featureAccents[feature.key].card : "bg-card/50"}>
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className={featureAccents ? `flex h-12 w-12 items-center justify-center rounded-lg border ${featureAccents[feature.key].tile}` : "flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"}>
+                  <feature.icon className={featureAccents ? `h-6 w-6 ${featureAccents[feature.key].glyph}` : "h-6 w-6 text-primary"} />
+                </div>
+                <CardTitle className="text-xl">{feature.title}</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                {feature.description}
+              </CardDescription>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function HomeHowItWorksSection({ palette = "current" }: HomeSectionProps) {
+  const t = useTranslations('home');
+  const draft = draftClassesFor(palette);
+
+  return (
+    <section className={draft ? draft.howItWorksSection : "bg-muted/30 py-24"}>
+      <div className="container mx-auto px-4">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {t('howItWorks.heading')}
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            {t('howItWorks.subheading')}
+          </p>
+          {draft?.sectionRule ? <div className={draft.sectionRule} aria-hidden /> : null}
+        </div>
+        <div className="mx-auto mt-16 grid max-w-4xl gap-8 md:grid-cols-3">
+          <div className="text-center">
+            <div className={draft ? draft.stepCircles[0] : "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground"}>
+              1
+            </div>
+            <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step1.title')}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t('howItWorks.step1.description')}
+            </p>
+          </div>
+          <div className="text-center">
+            <div className={draft ? draft.stepCircles[1] : "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-2xl font-bold text-secondary-foreground"}>
+              2
+            </div>
+            <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step2.title')}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t('howItWorks.step2.description')}
+            </p>
+          </div>
+          <div className="text-center">
+            <div className={draft ? draft.stepCircles[2] : "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground"}>
+              3
+            </div>
+            <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step3.title')}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t('howItWorks.step3.description')}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function HomeCtaSection({ palette = "current" }: HomeSectionProps) {
+  const t = useTranslations('home');
+  const c = useTranslations('common');
+  const draft = draftClassesFor(palette);
+
+  return (
+    <section className="container mx-auto px-4 py-24">
+      <Card className={draft ? draft.ctaCard : "mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10"}>
+        <CardContent className="flex flex-col items-center py-12 text-center">
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            {t('cta.heading')}
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            {t('cta.subheading')}
+          </p>
+          {/* The app-wide button order shape — root `CLAUDE.md`, "Button
+              Order". Creating an account is the primary CTA (last in the DOM,
+              so right in a row and top in a stack); exploring the shop is the
+              secondary alternative beside it. This is the same pair the
+              purchase confirmation draws, and the two have to agree. */}
+          <div className="mt-8 flex flex-col-reverse gap-4 sm:flex-row">
+            <Link
+              href={ROUTES.shop}
+              className={buttonVariants({ variant: "outline", size: "lg" })}
+            >
+              {c('exploreClubs')}
+            </Link>
+            <HomeCtaLink
+              signedOutHref={ROUTES.register}
+              signedOutLabel={t('cta.createFreeAccount')}
+              className={buttonVariants({ size: "lg" })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
 
 /**
  * The public home page's body — everything the route renders.
@@ -259,173 +566,18 @@ export function HomePageBody({
   /**
    * Which brand palette — and at what dose — the page draws in. Defaults to
    * the live one, so the public route is byte-for-byte what it was; the home
-   * scene's `brand-palette` and `brand-lively` scenarios pass the two drafts.
-   * Retires when the draft palette promotes and the Yty tokens change value.
+   * scene's three `brand*` scenarios pass the drafts. Retires when the draft
+   * palette promotes and the Yty tokens change value.
    */
   palette?: YtyPalette;
 }) {
-  const t = useTranslations('home');
-  const c = useTranslations('common');
-
-  const features = featureKeys.map((key, i) => ({
-    key,
-    title: t(`features.${key}.title`),
-    description: t(`features.${key}.description`),
-    icon: featureIcons[i],
-  }));
-
-  /** `null` on the live path — which is what keeps every literal below reachable. */
-  const draft = palette === "current" ? null : HOME_DRAFT_CLASSES[palette];
-  const featureAccents = palette === "current" ? null : FEATURE_DRAFT_ACCENTS[palette];
-
   return (
     <>
-      {/* Hero Section */}
-      <section className={draft ? draft.hero : "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]"}>
-        <div className="container mx-auto px-4 py-24 sm:py-32">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className={draft ? draft.heroTitle : "font-display text-2xl font-bold tracking-tight md:text-6xl"}>
-              {t.rich('hero.title', {
-                br: () => <br />,
-                primary: (chunks) => <span className={draft ? draft.heroPrimary : "text-primary"}>{chunks}</span>,
-                secondary: (chunks) => <span className={draft ? draft.heroSecondary : "text-secondary"}>{chunks}</span>,
-              })}
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-muted-foreground">
-              {t('hero.subtitle')}
-            </p>
-            {/* The app-wide button order shape — root `CLAUDE.md`, "Button
-                Order". Getting started is what the hero is steering toward,
-                so it is last in the DOM (right in a row, top in a stack);
-                the trip to About is the alternative beside it, and it is the
-                home page's one route to the identity copy that used to sit
-                further down this page. */}
-            <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href={ROUTES.about}
-                className={buttonVariants({ variant: "outline", size: "lg" })}
-              >
-                {t('hero.aboutCta')}
-              </Link>
-              <HomeCtaLink
-                signedOutHref={ROUTES.register}
-                signedOutLabel={c('getStarted')}
-                className={buttonVariants({ size: "lg", className: "gap-2" })}
-              >
-                <ArrowRight className="h-4 w-4" />
-              </HomeCtaLink>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomeHeroSection palette={palette} />
+      <HomeFeaturesSection palette={palette} />
+      <HomeHowItWorksSection palette={palette} />
 
-      {/* Features Section */}
-      <section className="container mx-auto px-4 py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {t('features.heading')}
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            {t('features.subheading')}
-          </p>
-          {draft?.sectionRule ? <div className={draft.sectionRule} aria-hidden /> : null}
-        </div>
-        <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
-          {features.map((feature) => (
-            <Card key={feature.key} className={featureAccents ? featureAccents[feature.key].card : "bg-card/50"}>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className={featureAccents ? `flex h-12 w-12 items-center justify-center rounded-lg border ${featureAccents[feature.key].tile}` : "flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"}>
-                    <feature.icon className={featureAccents ? `h-6 w-6 ${featureAccents[feature.key].glyph}` : "h-6 w-6 text-primary"} />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  {feature.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className={draft ? draft.howItWorksSection : "bg-muted/30 py-24"}>
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              {t('howItWorks.heading')}
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              {t('howItWorks.subheading')}
-            </p>
-            {draft?.sectionRule ? <div className={draft.sectionRule} aria-hidden /> : null}
-          </div>
-          <div className="mx-auto mt-16 grid max-w-4xl gap-8 md:grid-cols-3">
-            <div className="text-center">
-              <div className={draft ? draft.stepCircles[0] : "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground"}>
-                1
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step1.title')}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('howItWorks.step1.description')}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className={draft ? draft.stepCircles[1] : "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-2xl font-bold text-secondary-foreground"}>
-                2
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step2.title')}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('howItWorks.step2.description')}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className={draft ? draft.stepCircles[2] : "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground"}>
-                3
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step3.title')}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('howItWorks.step3.description')}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-24">
-        <Card className={draft ? draft.ctaCard : "mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10"}>
-          <CardContent className="flex flex-col items-center py-12 text-center">
-            <h2 className="text-2xl font-bold sm:text-3xl">
-              {t('cta.heading')}
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              {t('cta.subheading')}
-            </p>
-            {/* The app-wide button order shape — root `CLAUDE.md`, "Button
-                Order". Creating an account is the primary CTA (last in the DOM,
-                so right in a row and top in a stack); exploring the shop is the
-                secondary alternative beside it. This is the same pair the
-                purchase confirmation draws, and the two have to agree. */}
-            <div className="mt-8 flex flex-col-reverse gap-4 sm:flex-row">
-              <Link
-                href={ROUTES.shop}
-                className={buttonVariants({ variant: "outline", size: "lg" })}
-              >
-                {c('exploreClubs')}
-              </Link>
-              <HomeCtaLink
-                signedOutHref={ROUTES.register}
-                signedOutLabel={t('cta.createFreeAccount')}
-                className={buttonVariants({ size: "lg" })}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      <HomeCtaSection palette={palette} />
     </>
   );
 }

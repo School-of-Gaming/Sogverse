@@ -153,17 +153,32 @@ export const YTY_ELEMENT_DRAFT_COLORS: Record<YtyElementId, YtyElementColor> = {
  * Which Yty palette a surface draws in — and, on the home page, at what dose.
  *
  * `"current"` is the live map and the default, so a route that does not opt in
- * renders exactly what it rendered before. `"brand"` and `"brand-lively"` are
- * both the draft map above; they differ only in how far the *rest* of a page
- * spends the same four families — accents on `"brand"`, marketing-site
- * brightness on `"brand-lively"`. The element cards themselves are identical
- * under the two, which is deliberate: the dose question is about the page
- * around them, and varying both at once would make the comparison unreadable.
+ * renders exactly what it rendered before. The three `brand*` values are all
+ * the draft map above; they differ only in how far — and by what means — the
+ * *rest* of a page spends the same four families:
+ *
+ * - `"brand"` — accents.
+ * - `"brand-lively"` — the marketing site's brightness, drawn with blended
+ *   two-hue gradients (a dusk hero, a harmony→wit band, a three-stop CTA).
+ * - `"brand-lively-flat"` — the same brightness with **no blended gradient
+ *   anywhere**: flat ground, solid colour fields, single-hue washes. Brand-hue
+ *   gradients are a Sogverse invention rather than a Guidebook construct, so
+ *   this is the scenario that shows what the page looks like without them.
+ *
+ * The element cards themselves are identical under all three, which is
+ * deliberate: the open questions are about the page around them, and varying
+ * both at once would make the comparison unreadable. (Their `bgGradient` slot
+ * is a same-hue fade to transparent — a wash, not a two-hue blend — so the flat
+ * dose leaves it alone.)
  *
  * Only the preview scenes pass anything but `"current"`, and the whole type
  * retires with the draft map at promotion.
  */
-export type YtyPalette = "current" | "brand" | "brand-lively";
+export type YtyPalette =
+  | "current"
+  | "brand"
+  | "brand-lively"
+  | "brand-lively-flat";
 
 /** The five class slots for one element under the requested palette. */
 export function ytyElementColor(
