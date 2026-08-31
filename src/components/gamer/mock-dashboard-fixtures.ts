@@ -9,6 +9,7 @@ import {
   type FixtureClock,
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
+import { BRAND_PALETTE_SCENARIO } from "@/components/preview/palette-scenarios";
 import type { SupportedLocale } from "@/lib/constants/locales";
 
 /**
@@ -21,7 +22,8 @@ import type { SupportedLocale } from "@/lib/constants/locales";
  */
 
 /**
- * **Two scenarios — populated and empty, the one mutually exclusive split.**
+ * **Two scenarios — populated and empty, the one mutually exclusive split —
+ * plus the palette comparison.**
  *
  * `typical` carries everything that can coexist: a club running right now with
  * its Join lit, a second club the gamer is queued for (the waitlist sentence in
@@ -38,8 +40,18 @@ import type { SupportedLocale } from "@/lib/constants/locales";
  * `empty` is the child with nothing booked yet: the greeting, one "Clubs"
  * heading over the quiet empty card — the same convention the gedu's empty
  * dashboard uses — and the Help section, which is theirs regardless.
+ *
+ * `brand-palette` is `typical`'s data under the draft Yty hues. It is not a
+ * fourth state of the page: a palette cannot coexist with another palette in
+ * one render, which is exactly the test a second scenario has to pass, and the
+ * comparison is made by switching between two identical pages. It retires with
+ * the draft palette.
  */
-export const GAMER_DASHBOARD_SCENARIOS = ["typical", "empty"] as const;
+export const GAMER_DASHBOARD_SCENARIOS = [
+  "typical",
+  "empty",
+  BRAND_PALETTE_SCENARIO.slug,
+] as const;
 
 /**
  * Whose dashboard this is. The same child the parent scene's busy family leads
@@ -72,6 +84,10 @@ export function buildGamerDashboardFixture(
   switch (scenario) {
     case "empty":
       return [];
+    // The palette scenario is `typical`'s page — same enrollments, same
+    // sections — so it reuses these specs rather than authoring a second set
+    // that could drift out of agreement with the page it is compared against.
+    case BRAND_PALETTE_SCENARIO.slug:
     case "typical":
       break;
   }

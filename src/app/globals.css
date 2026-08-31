@@ -167,6 +167,30 @@
   --color-yty-glow: #fbbf24;
   --color-yty-valor: #fb7185;
   --color-yty-wit: #a78bfa;
+  /* YTY Element colors — the brand's exact hues, as strong/soft pairs.
+     DESIGN-PASS DRAFT, pending owner sign-off: these are consumed only by the
+     preview scenes' `brand` palette (see YTY_ELEMENT_DRAFT_COLORS in
+     src/lib/constants/yty.ts), so nothing live renders them yet. The four
+     single tokens above stay until the scenes are signed off, at which point
+     these names are what the wiring lands on and those retire.
+
+     The four above are raw Tailwind defaults and are wrong on every element —
+     the brand fixes Harmony pink, Glow green, Valor orange, Wit blue, and two
+     of the stand-ins are effectively swapped. Contrast on this ground is
+     script-verified rather than eyeballed: `node scripts/yty-contrast.mjs`
+     prints every pairing against #121212 with its WCAG threshold. The one
+     result that constrains the presentation: wit-strong is 4.10:1, which
+     clears 3:1 for an icon or large text and misses 4.5:1 for body copy — so
+     soft is what carries text on dark, for every element, and strong is for
+     fills, borders and rings. */
+  --color-yty-harmony-strong: #F55B9A;
+  --color-yty-harmony-soft: #FA7FA3;
+  --color-yty-glow-strong: #1AB061;
+  --color-yty-glow-soft: #6AC66B;
+  --color-yty-valor-strong: #FD700D;
+  --color-yty-valor-soft: #FF993D;
+  --color-yty-wit-strong: #3A71DE;
+  --color-yty-wit-soft: #4DB3F5;
   /* Voice-zone palette — the 16 colors a moderator picks for a custom voice
      zone (src/lib/constants/voice-zones.ts maps these to tile/glyph/ring/glow/
      solid classes). A full, even sweep around the color wheel — red → orange →

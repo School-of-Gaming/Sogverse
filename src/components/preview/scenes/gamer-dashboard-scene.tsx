@@ -11,6 +11,7 @@ import {
 import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
+import { ytyPaletteFor } from "../palette-scenarios";
 
 /**
  * The gamer dashboard as a child meets it: the greeting by name, their
@@ -22,6 +23,10 @@ import { useNow, useTimezone } from "@/providers";
  * The fixture is built once from the first `useNow()` value and held in state,
  * for the same reason the parent and gedu scenes hold theirs — see
  * `parent-dashboard-scene.tsx`.
+ *
+ * One scenario differs from `typical` in nothing but the Yty palette: the draft
+ * brand hues are judged here rather than on a card in the style guide, because
+ * this is a mobile-first surface and the grid is two columns at 360px.
  */
 export function GamerDashboardScene({
   scenario,
@@ -40,6 +45,7 @@ export function GamerDashboardScene({
       firstName={GAMER_DASHBOARD_FIRST_NAME}
       enrollments={enrollments}
       helpForm={<InertHelpFeedbackCard audience="gamer" />}
+      palette={ytyPaletteFor(scenario)}
     />
   );
 }

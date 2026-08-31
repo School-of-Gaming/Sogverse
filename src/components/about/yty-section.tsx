@@ -1,13 +1,23 @@
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { YTY_ELEMENTS } from "@/lib/constants/yty";
+import {
+  YTY_ELEMENTS,
+  ytyElementColor,
+  type YtyPalette,
+} from "@/lib/constants/yty";
 
 interface YtySectionProps {
   /** Optional anchor id for scrollspy navigation. */
   id?: string;
+  /**
+   * Which Yty palette the element cards draw in. Defaults to the live one, so
+   * the public route is untouched; the home preview scene passes `"brand"` to
+   * show the design-pass draft. Retires when the draft palette promotes.
+   */
+  palette?: YtyPalette;
 }
 
-export function YtySection({ id }: YtySectionProps) {
+export function YtySection({ id, palette = "current" }: YtySectionProps) {
   const t = useTranslations("yty");
 
   return (
@@ -44,26 +54,29 @@ export function YtySection({ id }: YtySectionProps) {
         <h3 className="text-center text-2xl font-bold">{t("elements.heading")}</h3>
         <p className="mt-2 text-center text-muted-foreground">{t("elements.subheading")}</p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          {YTY_ELEMENTS.map((el) => (
-            <Card key={el.id} className={`border-2 ${el.color.border}`}>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${el.color.bg}`}>
-                    <el.icon className={`h-6 w-6 ${el.color.accent}`} />
+          {YTY_ELEMENTS.map((el) => {
+            const color = ytyElementColor(el, palette);
+            return (
+              <Card key={el.id} className={`border-2 ${color.border}`}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${color.bg}`}>
+                      <el.icon className={`h-6 w-6 ${color.accent}`} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{t(`elements.${el.id}.name`)}</CardTitle>
+                      <p className={`text-sm ${color.accent}`}>{t(`elements.${el.id}.description`)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">{t(`elements.${el.id}.name`)}</CardTitle>
-                    <p className={`text-sm ${el.color.accent}`}>{t(`elements.${el.id}.description`)}</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  {t(`elements.${el.id}.detail`)}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {t(`elements.${el.id}.detail`)}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

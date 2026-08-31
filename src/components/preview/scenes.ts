@@ -5,6 +5,10 @@ import {
 } from "@/components/public/products/mock-detail-fixtures";
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
+import {
+  BRAND_PALETTE_SCENARIO,
+  CURRENT_PALETTE_SCENARIO,
+} from "./palette-scenarios";
 
 /**
  * The **full-page preview scene registry**.
@@ -120,6 +124,23 @@ const REGION_LOCK_SCENARIO_META: readonly PreviewScenarioMeta[] =
 
 export const PREVIEW_SCENES = [
   {
+    surface: "home",
+    title: "Home page",
+    description:
+      "The public front page exactly as it ships — it has no data, so nothing here stands in for anything. The two scenarios differ only in which Yty palette the four element cards draw in.",
+    chrome: "public",
+    scenarios: [
+      {
+        slug: CURRENT_PALETTE_SCENARIO.slug,
+        label: CURRENT_PALETTE_SCENARIO.label,
+      },
+      {
+        slug: BRAND_PALETTE_SCENARIO.slug,
+        label: BRAND_PALETTE_SCENARIO.label,
+      },
+    ],
+  },
+  {
     surface: "shop",
     title: "Shop browse",
     description:
@@ -205,6 +226,12 @@ export const PREVIEW_SCENES = [
     scenarios: [
       { slug: "typical", label: "Everything booked" },
       { slug: "empty", label: "Nothing booked yet" },
+      {
+        slug: BRAND_PALETTE_SCENARIO.slug,
+        label: BRAND_PALETTE_SCENARIO.label,
+        description:
+          "The booked page again, with the Yty grid in the draft brand hues — the palette comparison on the mobile-first surface.",
+      },
     ],
   },
   {

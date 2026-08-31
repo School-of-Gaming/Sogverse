@@ -7,6 +7,7 @@ import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
 import { GamerHelpFaq } from "@/components/help/help-faq";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
+import type { YtyPalette } from "@/lib/constants/yty";
 
 /**
  * The gamer dashboard's page body — everything below the route's data shell.
@@ -49,6 +50,8 @@ export function GamerDashboardPageBody({
   firstName,
   enrollments,
   helpForm,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- accepted now so the scene's brand-palette scenario can pass it; the design-pass commits that follow thread it into what this page still colours (the enrollment cards). The Yty grid this prop originally drove left this page in the About restructure.
+  palette = "current",
 }: {
   /** The child's own first name, for the greeting. */
   firstName: string;
@@ -60,6 +63,12 @@ export function GamerDashboardPageBody({
    * inert one — a scene must never gain a live submit that emails every admin.
    */
   helpForm: React.ReactNode;
+  /**
+   * Which Yty palette the draft doses draw in. Defaults to the live one, so
+   * `/gamer` is untouched; the preview scene's `brand-palette` scenario passes
+   * `"brand"` to show the design-pass draft. Retires when the draft promotes.
+   */
+  palette?: YtyPalette;
 }) {
   const t = useTranslations("gamer");
   const s = useTranslations("dashboardSections");

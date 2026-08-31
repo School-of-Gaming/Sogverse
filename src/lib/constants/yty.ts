@@ -62,3 +62,100 @@ export const YTY_ELEMENTS = [
 
 export type YtyElementId = (typeof YTY_ELEMENTS)[number]["id"];
 export type YtyElement = (typeof YTY_ELEMENTS)[number];
+
+/**
+ * The five class slots every Yty presentation fills.
+ *
+ * Declared structurally rather than derived from `YTY_ELEMENTS`: that array is
+ * `as const`, so its `color` objects have literal string types and a type read
+ * off them would only accept the exact classes already written there.
+ */
+export interface YtyElementColor {
+  bg: string;
+  bgGradient: string;
+  border: string;
+  accent: string;
+  ring: string;
+}
+
+/**
+ * **Design-pass draft — the brand's own Yty hues, on the dark ground.**
+ *
+ * Consumed only by the preview scenes (`palette="brand"`); no live route reads
+ * it, so promoting the palette means replacing `YTY_ELEMENTS[n].color` with
+ * these classes and deleting this export — not adding a second permanent map.
+ *
+ * **Which variant feeds which slot is decided by `scripts/yty-contrast.mjs`,
+ * not by eye.** Every pairing was measured against `#121212`:
+ *
+ * - **`accent` takes the soft variant, on all four elements.** The accent class
+ *   carries body-size text as well as icons — the home section renders the
+ *   element's description in it at `text-sm` — so the binding threshold is
+ *   4.5:1, not 3:1. Wit-strong (`#3A71DE`) measures 4.10:1: fine for a 24px
+ *   icon, short of body copy. Soft clears it on every element (7.70 / 8.83 /
+ *   8.81 / 8.10), and using soft uniformly is what keeps the four elements one
+ *   family rather than three-plus-an-exception.
+ * - **`bg`, `bgGradient`, `border` and `ring` take the strong variant.** None
+ *   of them carries text: the tints are 10% and 5% washes behind an icon, the
+ *   border is a 30% card edge, and the ring is a non-text state indicator where
+ *   the 3:1 bar applies and even wit-strong clears it. Strong is the truer
+ *   brand hue, and at those alphas it is what keeps a wash from washing out.
+ *   The app's own foreground over the 10% tint measures 13.6–14.7:1 for every
+ *   hue and variant, so that pairing constrains nothing.
+ *
+ * The visible cost, and the thing worth the owner's eye in the scenes: wit's
+ * two variants are further apart in hue than the other three pairs are
+ * (`#3A71DE` royal against `#4DB3F5` sky), so a wit card shows a light-blue
+ * glyph on a royal-blue wash. That is the numbers' answer, not a preference.
+ *
+ * Classes are literal strings for the same reason the live map's are — Tailwind
+ * scans source text, and a templated `bg-yty-${id}-strong/10` emits a class name
+ * with no rule behind it.
+ */
+export const YTY_ELEMENT_DRAFT_COLORS: Record<YtyElementId, YtyElementColor> = {
+  harmony: {
+    bg: "bg-yty-harmony-strong/10",
+    bgGradient: "from-yty-harmony-strong/10 to-yty-harmony-strong/5",
+    border: "border-yty-harmony-strong/30",
+    accent: "text-yty-harmony-soft",
+    ring: "ring-yty-harmony-strong",
+  },
+  glow: {
+    bg: "bg-yty-glow-strong/10",
+    bgGradient: "from-yty-glow-strong/10 to-yty-glow-strong/5",
+    border: "border-yty-glow-strong/30",
+    accent: "text-yty-glow-soft",
+    ring: "ring-yty-glow-strong",
+  },
+  valor: {
+    bg: "bg-yty-valor-strong/10",
+    bgGradient: "from-yty-valor-strong/10 to-yty-valor-strong/5",
+    border: "border-yty-valor-strong/30",
+    accent: "text-yty-valor-soft",
+    ring: "ring-yty-valor-strong",
+  },
+  wit: {
+    bg: "bg-yty-wit-strong/10",
+    bgGradient: "from-yty-wit-strong/10 to-yty-wit-strong/5",
+    border: "border-yty-wit-strong/30",
+    accent: "text-yty-wit-soft",
+    ring: "ring-yty-wit-strong",
+  },
+};
+
+/**
+ * Which Yty palette a surface draws in.
+ *
+ * `"current"` is the live map and the default, so a route that does not opt in
+ * renders exactly what it rendered before; `"brand"` is the draft above, which
+ * only the preview scenes pass. Retires with the draft map at promotion.
+ */
+export type YtyPalette = "current" | "brand";
+
+/** The five class slots for one element under the requested palette. */
+export function ytyElementColor(
+  element: YtyElement,
+  palette: YtyPalette,
+): YtyElementColor {
+  return palette === "brand" ? YTY_ELEMENT_DRAFT_COLORS[element.id] : element.color;
+}

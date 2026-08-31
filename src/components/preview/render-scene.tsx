@@ -20,11 +20,13 @@ import {
   findRegionLockScenario,
 } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
+import { isHomeScenario, ytyPaletteFor } from "./palette-scenarios";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { ChatScene } from "./scenes/chat-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
+import { HomeScene } from "./scenes/home-scene";
 import { GeduContractScene } from "./scenes/gedu-contract-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
@@ -52,6 +54,13 @@ const SCENE_RENDERERS: Record<
   PreviewSurface,
   (scenario: string) => React.ReactNode
 > = {
+  home: (scenario) => {
+    // The home page has no fixtures, so the slug carries only which palette to
+    // draw — checked here so a slug the registry does not declare 404s rather
+    // than silently falling back to the live palette.
+    if (!isHomeScenario(scenario)) notFound();
+    return <HomeScene palette={ytyPaletteFor(scenario)} />;
+  },
   shop: (scenario) => {
     // Checked and not handed on: there is one storefront grid, so the scene
     // body branches on nothing. The check still belongs here — it is what makes
