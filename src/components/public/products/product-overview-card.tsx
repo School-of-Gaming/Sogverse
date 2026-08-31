@@ -153,7 +153,7 @@ export function ProductOverviewCard({
           railFrom2xl && "2xl:p-4",
         )}
       >
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="text-sm font-semibold tracking-wider text-muted-foreground">
           {t("sections.overview")}
         </h2>
         {/* Two-up on wider widths and a single stacked column on mobile, where
@@ -239,8 +239,9 @@ export function ProductOverviewCard({
  *
  * In the rail that gutter is 28px off a ~207px measure, spent on decoration
  * while "Tapiolan koulu, Espoo" wraps beside it. So from `2xl` the icon joins
- * the label on its own line — uppercase, small, the same treatment the card's
- * own heading uses — and the value drops beneath it at the **full** rail width.
+ * the label on its own line — small and uppercase, the label treatment used
+ * throughout, not the card's own heading, which is sentence case like every
+ * heading — and the value drops beneath it at the **full** rail width.
  * Same elements, same order, same words; the icon simply stops indenting the
  * only thing in the row that needs the room.
  */

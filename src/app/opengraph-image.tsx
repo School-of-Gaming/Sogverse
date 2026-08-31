@@ -50,10 +50,16 @@ export default async function Image() {
       >
         <SogMark height={350} />
 
+        {/* The vision statement, drawn the way the styled home hero draws it:
+            the canonical capitalization, broken across lines, and no full stop
+            — a graphic rather than a sentence. Two lines, not the hero's four,
+            because this one has to stay readable at thumbnail width. */}
         <div
           style={{
             display: "flex",
-            gap: "14px",
+            flexDirection: "column",
+            alignItems: "center",
+            lineHeight: 1.12,
             marginTop: "44px",
             fontFamily: OG_FONT_FAMILY,
             fontSize: "50px",
@@ -62,10 +68,10 @@ export default async function Image() {
             color: DARK_THEME.foreground,
           }}
         >
-          <span>Where screen time becomes</span>
-          {/* The payoff half of the tagline in the mark's own yellow — the only
-              accent below the badge, so the eye finishes the line. */}
-          <span style={{ color: BRAND.primary }}>quality time</span>
+          <span>Where Screen Time Becomes</span>
+          {/* The payoff half in the mark's own yellow — the only accent below
+              the badge, so the eye finishes the line. */}
+          <span style={{ color: BRAND.primary }}>Quality Time</span>
         </div>
 
         <div

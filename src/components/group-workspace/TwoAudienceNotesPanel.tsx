@@ -214,7 +214,7 @@ export function TwoAudienceNotesPanel({
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <h2 className="text-[11px] font-medium tracking-wider text-muted-foreground">
           {copy.heading}
         </h2>
         <Button

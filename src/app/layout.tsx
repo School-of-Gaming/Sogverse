@@ -84,7 +84,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // The longer sentence is the one that tells a stranger what we actually run,
     // which is the job of both a snippet and a link preview, so both get it.
     description,
-    keywords: ["gaming", "education", "learning", "kids", "games"],
+    keywords: ["gaming", "education", "learning", "children", "games"],
     openGraph: {
       type: "website",
       siteName: "School of Gaming",

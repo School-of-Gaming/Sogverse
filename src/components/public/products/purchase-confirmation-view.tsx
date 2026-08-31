@@ -142,7 +142,7 @@ export function PurchaseConfirmationView({
 
         <Card className="mt-8">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 className="text-sm font-semibold tracking-wider text-muted-foreground">
               {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
             </h2>
             {/* The picture, at the 3:2 crop the card and the detail hero paint
@@ -205,7 +205,7 @@ export function PurchaseConfirmationView({
 
         <Card className="mt-6">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 className="text-sm font-semibold tracking-wider text-muted-foreground">
               {t("nextTitle")}
             </h2>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
