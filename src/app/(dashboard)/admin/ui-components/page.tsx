@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Info,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -2040,6 +2041,287 @@ function SessionPhotosDemo() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Button — the Guidebook-proposed set, beside today's                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A review surface, not a component. Every class here is local to this page:
+ * `Button` renders exactly as it does everywhere else in the app, and nothing
+ * promotes until the owner has picked from what this section shows.
+ *
+ * The Guidebook specs, so this section stands without it: Primary is a #FAA901
+ * fill with a #121212 label and no border — which is what `--primary` and
+ * `--primary-foreground` already are, to the digit. Its Secondary is a 2px
+ * border on transparent, specced dark-on-white and therefore invisible on our
+ * ground; its "on dark backgrounds" button — a 2px light border on transparent —
+ * is the one that works here, and is what the proposed secondary is built from.
+ * The third tier is ours to design, and the options below are the ask.
+ *
+ * Both halves of the change are drawn separately on purpose: the colour set at
+ * today's CTA type, then the same set at today's type beside the Guidebook's
+ * 16px/600, so a verdict on the type is not a verdict on the palette.
+ */
+
+/**
+ * The live button's base and default size, minus the type classes — those are
+ * the variable in the second table, so they can't be baked in here.
+ */
+const DRAFT_BUTTON_BASE =
+  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
+
+/** 14px / 500 is what every button in the app wears today. */
+const DRAFT_TYPE_TODAY = "text-sm font-medium";
+/** 16px / 600 is the Guidebook's CTA type. */
+const DRAFT_TYPE_GUIDEBOOK = "text-base font-semibold";
+
+type DraftButtonRow = {
+  /** The row's name in the comparison. */
+  name: string;
+  /** Where it comes from — live variant with its blast radius, or proposal. */
+  note: string;
+  /** What the interactive copy wears, `hover:` variants included. */
+  className: string;
+  /** The same rules with the hover declarations applied statically, so the
+      hover treatment can be looked at rather than remembered. */
+  hoverClassName: string;
+};
+
+const DRAFT_ROWS = {
+  // Byte-for-byte today's `default`. Shown as one row rather than two identical
+  // ones: "unchanged" is the finding, and two rows would imply a difference.
+  primary: {
+    name: "Primary",
+    note: "today's default · unchanged",
+    className: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+    hoverClassName: "bg-primary/90",
+  },
+  todayOutline: {
+    name: "outline",
+    note: "today · ~51 call sites",
+    className:
+      "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+    hoverClassName: "bg-accent text-accent-foreground",
+  },
+  todaySecondary: {
+    name: "secondary",
+    note: "today · ~5 call sites",
+    className:
+      "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+    hoverClassName: "bg-secondary/80",
+  },
+  // Hover fills with the border's own colour at a tenth alpha: the shape the
+  // Guidebook draws has no fill to darken, so the only move that doesn't
+  // introduce a second hue is to let the border's colour wash inward. Disabled
+  // is the app's uniform half-opacity fade — border, label and fill together —
+  // so a bordered variant stays legible as the same button.
+  secondaryOnDark: {
+    name: "Secondary on dark",
+    note: "proposed",
+    className:
+      "border-2 border-foreground bg-transparent text-foreground hover:bg-foreground/10",
+    hoverClassName: "bg-foreground/10",
+  },
+  tierGhost: {
+    name: "Third tier, option A — ghost as today",
+    note: "today's ghost · ~24 call sites",
+    className: "hover:bg-accent hover:text-accent-foreground",
+    hoverClassName: "bg-accent text-accent-foreground",
+  },
+  tierQuietOutline: {
+    name: "Third tier, option B — quiet 1px border",
+    note: "proposed · reads as a bounded but recessive button",
+    className:
+      "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground",
+    hoverClassName: "bg-accent text-accent-foreground",
+  },
+  tierLabel: {
+    name: "Third tier, option C — label only",
+    note: "proposed · no border, no fill, ever",
+    className: "text-muted-foreground hover:text-foreground",
+    hoverClassName: "text-foreground",
+  },
+} as const satisfies Record<string, DraftButtonRow>;
+
+const BUTTON_PROPOSAL_GROUPS: readonly {
+  title: string;
+  caption: string;
+  rows: readonly DraftButtonRow[];
+}[] = [
+  {
+    title: "Primary — already conformant",
+    caption:
+      "The Guidebook's Primary is today's default to the digit: amber fill, ink label, no border. Nothing to decide.",
+    rows: [DRAFT_ROWS.primary],
+  },
+  {
+    title: "Secondary on dark — replaces both of today's filled-or-bordered mids",
+    caption:
+      "Open decision: does the violet fill retire into this one, or survive under another name for the job it does today?",
+    rows: [
+      DRAFT_ROWS.todayOutline,
+      DRAFT_ROWS.todaySecondary,
+      DRAFT_ROWS.secondaryOnDark,
+    ],
+  },
+  {
+    title: "Third tier — open design",
+    caption:
+      "The Guidebook stops after two. Three candidates for the quietest tier, all inheriting whatever the row above settles.",
+    rows: [
+      DRAFT_ROWS.tierGhost,
+      DRAFT_ROWS.tierQuietOutline,
+      DRAFT_ROWS.tierLabel,
+    ],
+  },
+];
+
+/** The proposed set, for the type table — every row a decision could land on. */
+const BUTTON_PROPOSAL_SET: readonly DraftButtonRow[] = [
+  DRAFT_ROWS.primary,
+  DRAFT_ROWS.secondaryOnDark,
+  DRAFT_ROWS.tierGhost,
+  DRAFT_ROWS.tierQuietOutline,
+  DRAFT_ROWS.tierLabel,
+];
+
+function DraftButtonLabel({ row }: { row: DraftButtonRow }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-sm text-foreground">{row.name}</div>
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        {row.note}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One draft button. `typeClass` is the variable the second table sweeps; the
+ * frozen-hover copy takes the row's hover rules as static ones, and twMerge
+ * resolves them against the resting rules they override.
+ */
+function DraftButton({
+  row,
+  typeClass,
+  state,
+}: {
+  row: DraftButtonRow;
+  typeClass: string;
+  state: "resting" | "hover" | "disabled" | "loading";
+}) {
+  return (
+    <button
+      type="button"
+      disabled={state === "disabled" || state === "loading"}
+      // The frozen copy is a picture of a state, not something to click into.
+      tabIndex={state === "hover" ? -1 : undefined}
+      className={cn(
+        DRAFT_BUTTON_BASE,
+        typeClass,
+        row.className,
+        state === "hover" && row.hoverClassName,
+      )}
+    >
+      {state === "loading" && <Loader2 className="animate-spin" aria-hidden />}
+      Join club
+    </button>
+  );
+}
+
+function ButtonProposalDemo() {
+  return (
+    <Fragment>
+      <SubSection title="Guidebook proposal — today beside proposed">
+        <p className="text-sm text-muted-foreground">
+          Draft classes local to this page. The live Button is untouched, and
+          destructive and link stay as functional variants outside this set.
+        </p>
+        {/* One grid for all three groups, so a column means the same thing all
+            the way down and the comparison is made by looking, not by scrolling
+            back. Hover can't be frozen on a real button, so each row carries a
+            static copy of its hover rules beside the interactive one. */}
+        <div className="grid grid-cols-[minmax(14rem,auto)_repeat(4,minmax(8rem,1fr))] items-center gap-x-6 gap-y-3">
+          <div />
+          <DemoCaption>Resting &mdash; hover it</DemoCaption>
+          <DemoCaption>Hover, frozen</DemoCaption>
+          <DemoCaption>Disabled</DemoCaption>
+          <DemoCaption>Loading</DemoCaption>
+
+          {BUTTON_PROPOSAL_GROUPS.map((group) => (
+            <Fragment key={group.title}>
+              <div className="col-span-full space-y-0.5 border-t pt-4">
+                <h4 className="text-sm font-semibold">{group.title}</h4>
+                <p className="text-xs text-muted-foreground">{group.caption}</p>
+              </div>
+              {group.rows.map((row) => (
+                <Fragment key={row.name}>
+                  <DraftButtonLabel row={row} />
+                  <div>
+                    <DraftButton
+                      row={row}
+                      typeClass={DRAFT_TYPE_TODAY}
+                      state="resting"
+                    />
+                  </div>
+                  <div>
+                    <DraftButton
+                      row={row}
+                      typeClass={DRAFT_TYPE_TODAY}
+                      state="hover"
+                    />
+                  </div>
+                  <div>
+                    <DraftButton
+                      row={row}
+                      typeClass={DRAFT_TYPE_TODAY}
+                      state="disabled"
+                    />
+                  </div>
+                  <div>
+                    <DraftButton
+                      row={row}
+                      typeClass={DRAFT_TYPE_TODAY}
+                      state="loading"
+                    />
+                  </div>
+                </Fragment>
+              ))}
+            </Fragment>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="CTA type — today beside Guidebook">
+        <div className="grid grid-cols-[minmax(14rem,auto)_repeat(2,minmax(10rem,1fr))] items-center gap-x-6 gap-y-3">
+          <div />
+          <DemoCaption>Today &mdash; 14px / 500</DemoCaption>
+          <DemoCaption>Guidebook &mdash; 16px / 600</DemoCaption>
+          {BUTTON_PROPOSAL_SET.map((row) => (
+            <Fragment key={row.name}>
+              <DraftButtonLabel row={row} />
+              <div>
+                <DraftButton
+                  row={row}
+                  typeClass={DRAFT_TYPE_TODAY}
+                  state="resting"
+                />
+              </div>
+              <div>
+                <DraftButton
+                  row={row}
+                  typeClass={DRAFT_TYPE_GUIDEBOOK}
+                  state="resting"
+                />
+              </div>
+            </Fragment>
+          ))}
+        </div>
+      </SubSection>
+    </Fragment>
+  );
+}
+
 export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
@@ -2092,6 +2374,31 @@ export default function AdminUIComponentsPage() {
             <span className="text-sm font-medium text-success">Success</span>
             <span className="text-sm font-medium text-info">Info</span>
             <span className="text-sm font-medium text-warning">Warning</span>
+          </div>
+        </SubSection>
+
+        {/* The four Yty-Elements. Today's tokens are raw Tailwind defaults with
+            two of the four in the wrong family; the incoming pairs are the
+            brand's own hues, strong beside soft, so the swap can be judged as
+            eight decisions rather than described as one. */}
+        <SubSection title="Yty elements">
+          <DemoCaption>Today</DemoCaption>
+          <div className="flex flex-wrap gap-4">
+            <Swatch label="Harmony" className="bg-yty-harmony" />
+            <Swatch label="Glow" className="bg-yty-glow" />
+            <Swatch label="Valor" className="bg-yty-valor" />
+            <Swatch label="Wit" className="bg-yty-wit" />
+          </div>
+          <DemoCaption>Incoming &mdash; strong beside soft</DemoCaption>
+          <div className="flex flex-wrap gap-4">
+            <Swatch label="Harmony strong" className="bg-yty-harmony-strong" />
+            <Swatch label="Harmony soft" className="bg-yty-harmony-soft" />
+            <Swatch label="Glow strong" className="bg-yty-glow-strong" />
+            <Swatch label="Glow soft" className="bg-yty-glow-soft" />
+            <Swatch label="Valor strong" className="bg-yty-valor-strong" />
+            <Swatch label="Valor soft" className="bg-yty-valor-soft" />
+            <Swatch label="Wit strong" className="bg-yty-wit-strong" />
+            <Swatch label="Wit soft" className="bg-yty-wit-soft" />
           </div>
         </SubSection>
       </Section>
@@ -2159,6 +2466,8 @@ export default function AdminUIComponentsPage() {
             </Button>
           </div>
         </SubSection>
+
+        <ButtonProposalDemo />
       </Section>
 
       <Section title="Badge">
