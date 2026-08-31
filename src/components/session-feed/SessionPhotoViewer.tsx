@@ -64,7 +64,14 @@ export function SessionPhotoViewer({
   // An index is a claim about a list that can change underneath it, and the one
   // thing this must never do is resolve to nothing while the overlay is up. A
   // photo removed from another tab shortens the array; reading through it here
-  // means the worst case is the neighbour, never a blank screen.
+  // means a removal from the middle lands on the neighbour rather than on a
+  // blank screen.
+  //
+  // The `?? null` is the backstop and not the handling: a position past the end
+  // of the list has no neighbour to fall back to, and an overlay that "closed"
+  // by rendering nothing would leave whoever owns the position still holding it
+  // — so a list that grew back would put it up again unasked. That case is
+  // dropped by the owner of the position, which is the only half that can.
   const photo = index === null ? null : (photos[index] ?? null);
   const open = photo !== null;
 

@@ -344,6 +344,31 @@ describe("templateRegistry sessionReport", () => {
   });
 
   /**
+   * And the default is the send — pinned where it can actually be told apart.
+   *
+   * The two cases above and below both pass a context or have no origin to build
+   * from, so neither would notice the default drifting to `preview`. A reachable-
+   * looking loopback origin with **no context argument at all** is the one shape
+   * that separates them: as a send it drops the photos, as a preview it would
+   * keep them. A caller who has not thought about where the mail is going is
+   * sending it, which is the conservative half of the pair.
+   */
+  it("defaults to the send, so an unstated context drops a loopback origin's photos", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const { html } = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "5" },
+        t,
+        "en",
+      );
+      expect(html).not.toContain("Photos from this session");
+      expect(html).not.toContain("/preview-art/");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
    * The preview is the other destination, and the reason the context exists:
    * the mail drawn in `/admin/testing` is fetched by the browser looking at
    * it, so the loopback origin that is useless in an inbox is the right one

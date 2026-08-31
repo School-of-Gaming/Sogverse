@@ -16,7 +16,9 @@ import { entryCompleteness, type SessionCompleteness } from "./entry-state";
 import { isPartialSessionSaveError } from "./partial-save";
 import { sessionPhotoErrorCode } from "./photo-failure";
 import {
+  NO_LANDED_PHOTOS,
   NO_STAGED_PHOTOS,
+  type LandedSessionPhotos,
   type StagedSessionPhoto,
   type StagedSessionPhotos,
 } from "./staged-photos";
@@ -156,6 +158,14 @@ interface SessionFeedProps {
  * retries the remainder and nothing twice. One record rather than a map, for the
  * same reason the save flag is one — only one editor is ever open.
  *
+ * **That ledger is not on its own enough to draw the strip from, so there are
+ * two sets.** The stored photos arrive as a prop and do not move until the feed
+ * refetches; the ledger empties as the save runs. Between the two, a landed
+ * deletion would put its tile back and a landed upload would take its own away —
+ * so what has landed is remembered beside what is still owed, and the strip is
+ * derived from both. The gedu goes on looking at the arrangement they made,
+ * through a partial failure and until the next editor opens.
+ *
  * **The order is fixed, and removals come first.** At the cap, swapping a photo
  * is remove-one-add-one, and uploading first would be refused by the insert's
  * own cap check for a report the gedu has already made room in. Photos then go
@@ -217,6 +227,28 @@ export function SessionFeed({
   const [staged, setStaged] = useState<
     (StagedSessionPhotos & { entryId: string }) | null
   >(null);
+  /**
+   * The other half of what the strip draws: which of this card's photo
+   * operations have **already landed**, tagged with the entry the same way.
+   *
+   * The staged set above is the retry ledger and is emptied as the save runs,
+   * which is what stops a second press repeating an operation — and is also what
+   * makes it a bad render source on its own, because the `entries` prop the
+   * stored photos come from does not move until the feed refetches. This record
+   * covers exactly that window; see its own note for the shape of the strip
+   * without it.
+   *
+   * **Cleared when an editor is opened, not when one closes.** A fresh editor
+   * opens on nothing, the same as the text draft re-seeding — but a save that
+   * lands closes its editor in the same commit, and dropping the record there
+   * would flip the strip back to the stale props for the length of the collapse.
+   * It costs nothing to keep: the derivation folds it into the props in a way the
+   * refetch makes a no-op, so a record left lying around stops contributing
+   * rather than starting to lie.
+   */
+  const [landed, setLanded] = useState<
+    (LandedSessionPhotos & { entryId: string }) | null
+  >(null);
   /** Why the last photo operation was refused, or `null`. */
   const [photoError, setPhotoError] = useState<SessionPhotoErrorCode | null>(
     null,
@@ -240,9 +272,34 @@ export function SessionFeed({
     [],
   );
 
-  /** Let go of one staged picture's bytes. Safe to call for a URL already gone. */
-  const forgetStagedUrl = (url: string) => {
-    if (stagedUrls.current.delete(url)) URL.revokeObjectURL(url);
+  /**
+   * Object URLs whose tiles are on their way off the strip, and the drain that
+   * revokes them **after** the commit that took those tiles away.
+   *
+   * Revoking beside the `setStaged` that drops a tile is one commit too early:
+   * the state change is batched, so the `<img>` is still on screen when the bytes
+   * go and the browser is briefly asked to draw a `blob:` that resolves to
+   * nothing. Queueing here and draining in a post-commit effect puts the revoke
+   * where there is no longer anything holding the URL. **Every revocation goes
+   * through this**, so no call site has to re-derive the ordering; the unmount
+   * cleanup above is the one exception, and it has no next commit to wait for.
+   */
+  const pendingRevokes = useRef<string[]>([]);
+  useEffect(() => {
+    if (pendingRevokes.current.length === 0) return;
+    const draining = pendingRevokes.current;
+    pendingRevokes.current = [];
+    for (const url of draining) {
+      if (stagedUrls.current.delete(url)) URL.revokeObjectURL(url);
+    }
+  });
+
+  /**
+   * Let go of one staged picture's bytes, once the render that removed its tile
+   * has landed. Safe to call for a URL already gone.
+   */
+  const releaseStagedUrl = (url: string) => {
+    pendingRevokes.current.push(url);
   };
 
   /**
@@ -256,8 +313,7 @@ export function SessionFeed({
    * be gained by holding megabytes until somebody comes back.
    */
   const discardStaged = () => {
-    for (const url of stagedUrls.current) URL.revokeObjectURL(url);
-    stagedUrls.current.clear();
+    for (const url of stagedUrls.current) releaseStagedUrl(url);
     setStaged(null);
     setPhotoError(null);
   };
@@ -369,12 +425,19 @@ export function SessionFeed({
 
   /** Take one staged picture back off the strip — it was never uploaded. */
   const unstageAdd = (entryId: string, key: string) => {
+    // The same entry-id guard the updater below applies, applied to the bytes as
+    // well: a call naming another entry changes nothing, so it must not revoke a
+    // picture that is still on that entry's strip. Read before the update rather
+    // than inside it, because an updater may be run more than once.
+    const dropped =
+      staged !== null && staged.entryId === entryId
+        ? staged.adds.find((add) => add.key === key)
+        : undefined;
     setStaged((prev) => {
       if (prev === null || prev.entryId !== entryId) return prev;
       return { ...prev, adds: prev.adds.filter((add) => add.key !== key) };
     });
-    const dropped = staged?.adds.find((add) => add.key === key);
-    if (dropped !== undefined) forgetStagedUrl(dropped.url);
+    if (dropped !== undefined) releaseStagedUrl(dropped.url);
   };
 
   /**
@@ -399,6 +462,14 @@ export function SessionFeed({
    * the report is full, this is not your group, the connection is gone — are
    * facts about the whole batch rather than about the file that hit them.
    *
+   * **And each operation joins the landed record in the same commit as it leaves
+   * the staged set**, because those two sets answer different questions and only
+   * both together say what the strip should draw. Dropping an operation from the
+   * ledger is what stops it being repeated; remembering it here is what stops the
+   * row snapping back to props that have not refetched yet. The pair of state
+   * calls per operation is one render — React batches them either side of an
+   * `await` — so no frame ever sees an operation in neither.
+   *
    * Removals go first so that swapping a photo at the cap is possible at all:
    * the insert counts stored rows under a lock, so an upload sent before the
    * deletion it is making room for would be refused.
@@ -409,6 +480,11 @@ export function SessionFeed({
 
     for (const imageId of edit.removals) {
       await onRemovePhoto(imageId);
+      setLanded((prev) =>
+        prev !== null && prev.entryId === entryId
+          ? { ...prev, removedIds: [...prev.removedIds, imageId] }
+          : { entryId, removedIds: [imageId], added: [] },
+      );
       setStaged((prev) =>
         prev === null || prev.entryId !== entryId
           ? prev
@@ -417,17 +493,30 @@ export function SessionFeed({
     }
 
     for (const photo of edit.adds) {
-      await onAddPhoto(entryId, {
+      const storedId = await onAddPhoto(entryId, {
         file: photo.file,
         width: photo.width,
         height: photo.height,
       });
-      forgetStagedUrl(photo.url);
+      // The stored row it has just become, at the dimensions the tile was
+      // already drawn at — so the picture stops being a local preview and starts
+      // being a fetch from the bucket without the box changing shape.
+      const stored = {
+        id: storedId,
+        width: photo.width,
+        height: photo.height,
+      };
+      setLanded((prev) =>
+        prev !== null && prev.entryId === entryId
+          ? { ...prev, added: [...prev.added, stored] }
+          : { entryId, removedIds: [], added: [stored] },
+      );
       setStaged((prev) =>
         prev === null || prev.entryId !== entryId
           ? prev
           : { ...prev, adds: prev.adds.filter((add) => add.key !== photo.key) },
       );
+      releaseStagedUrl(photo.url);
     }
   };
 
@@ -608,6 +697,10 @@ export function SessionFeed({
                 staged !== null && staged.entryId === entry.id
                   ? staged
                   : NO_STAGED_PHOTOS,
+              landed:
+                landed !== null && landed.entryId === entry.id
+                  ? landed
+                  : NO_LANDED_PHOTOS,
               error: editing ? photoError : null,
               onStageAdd: (photo) => stageAdd(entry.id, photo),
               onUnstageAdd: (key) => unstageAdd(entry.id, key),
@@ -630,6 +723,11 @@ export function SessionFeed({
               // as well as on the close so no path can carry another card's
               // staged pictures into this one.
               discardStaged();
+              // And this is the *only* place the landed record is cleared: it
+              // is not a draft, it is what a save on this visit actually did,
+              // and it has to outlive the close it happened on (see its own
+              // note). A fresh editor starts on the props alone.
+              setLanded(null);
               onEditEntry(entry.id);
             }}
             onCancelEdit={() => closeEditor(entry.id)}

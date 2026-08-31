@@ -519,6 +519,14 @@ export default function TestingPage() {
                 anything is drawn in it, so neither the first render nor a
                 refusal moves the page. */}
             <div className="h-[720px] overflow-hidden rounded-md border border-border bg-background">
+              {/* The caught error's own message, rendered — a signed-off
+                  exception to the rule that a thrown message never reaches a
+                  screen *(owner)*. This page is admin-only developer tooling
+                  for composing test mail, and the message here is a zod path
+                  naming the parameter that was mistyped, which is the whole of
+                  what makes the line useful. A sweep replacing it with our own
+                  copy would leave an admin told only that something is wrong
+                  with a form of twenty fields. */}
               {previewError ? (
                 <p className="p-4 text-sm text-destructive">
                   {t('previewError', { message: previewError })}

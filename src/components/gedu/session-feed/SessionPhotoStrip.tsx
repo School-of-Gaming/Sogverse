@@ -117,6 +117,14 @@ interface SessionPhotoStripProps extends SessionPhotoEditing {
  * *would* hold — stored, minus what is crossed out, plus what is staged — so
  * swapping a photo at the cap works without ever showing a refusal.
  *
+ * **The run it draws is the arrangement the gedu left, not the props plus a
+ * diff.** A save that half-lands empties the staged set as it goes, and the
+ * stored `photos` do not change until the feed refetches — so the row is derived
+ * from the staged set *and* the record of what has already landed, which between
+ * them cover that window. Without the second half a landed deletion would put
+ * its tile back and a landed upload would take its own away, at the exact moment
+ * a refusal line is asking the gedu to look at the row and decide what to retry.
+ *
  * **A batch is trimmed once, up front, rather than refused one file at a time.**
  * Multi-select is allowed, so a gedu can pick eight photos for a report with
  * three slots left. Cutting the selection to what fits *before* anything is
@@ -143,6 +151,7 @@ export function SessionPhotoStrip({
   open,
   photos,
   staged,
+  landed,
   disabled,
   error,
   onStageAdd,
@@ -179,8 +188,12 @@ export function SessionPhotoStrip({
     if (open) setTrimmed(null);
   }
 
-  const kept = keptPhotos(photos, staged);
-  const shown = stagedPhotoCount(photos, staged);
+  // Both halves of the edit, and neither alone: `photos` is a prop that does not
+  // move until the feed refetches, so between an operation landing and that
+  // refetch the staged set has forgotten what the props have not yet learned.
+  // See the landed record's own note for what the strip looks like without it.
+  const kept = keptPhotos(photos, staged, landed);
+  const shown = stagedPhotoCount(photos, staged, landed);
   const room = Math.max(0, SESSION_PHOTO_CAP - shown);
   const busy = disabled || preparing;
   /**

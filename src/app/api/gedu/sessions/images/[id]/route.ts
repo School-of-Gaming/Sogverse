@@ -44,10 +44,26 @@ import { deleteSessionImageParams } from "@/services/gedu-sessions/gedu-sessions
  * 3. The row, on the user's client. Its own guard runs again on the actual
  *    delete — the check in step 1 does not replace it.
  *
- * **The TOCTOU window between the check and the delete is cosmetic, not a
- * hole.** Nothing inside it can widen what the caller may do: an assignment lost
- * mid-request only makes step 3 fail, never succeed, and step 3 re-derives the
- * caller from `auth.uid()` exactly as step 1 did.
+ * **The TOCTOU window between the check and the delete widens nothing, but it is
+ * not free.** No authorization is gained inside it: step 3 re-derives the caller
+ * from `auth.uid()` exactly as step 1 did, so an assignment lost mid-request
+ * makes the row delete fail rather than succeed. What the window costs is the
+ * *report* of that failure. Step 3's 42501 is deliberately mapped to 204 — see
+ * below — and a revocation and a concurrent delete answer with the same
+ * SQLSTATE, by design, so there is no oracle-free way to tell them apart. The
+ * mapping therefore accepts reading a mid-request revocation as a race the
+ * caller has already won.
+ *
+ * **What that costs, when it happens:** the object is gone, the row survives,
+ * and the gedu is told the removal succeeded — so the client drops the staged
+ * removal and the next refetch brings the row back as a tile whose picture will
+ * not load. It is the same broken-tile state step 3's *other* failure produces,
+ * and it has the same repair: pressing remove again clears the row, because step
+ * 2 treats an already-missing object as removed. Losing an assignment in the
+ * seconds between two RPCs of one request is rare enough, and the repair cheap
+ * enough, that this is preferred to the alternative — reporting every concurrent
+ * delete as a failure, which is the common case of the two and would leave a
+ * gedu retrying a removal that has already fully happened.
  *
  * **A retry of a photo whose object is already gone still clears it**, which is
  * what makes the surviving-row case self-repairing rather than permanent.
@@ -119,11 +135,15 @@ export const DELETE = defineRoute({
     if (rowError) {
       if (rowError.code === "42501") {
         // The check a moment ago said this caller may remove this photo, so a
-        // refusal now means the ROW is gone: the delete RPC answers 42501 for a
-        // photo id that belongs to nothing, deliberately indistinguishably from
-        // one belonging to another group. A concurrent remove won the race, and
-        // between them the caller's intent is fully served — object gone, row
-        // gone — so this is a success, not a refusal to report.
+        // refusal now is read as the ROW being gone: the delete RPC answers
+        // 42501 for a photo id that belongs to nothing, deliberately
+        // indistinguishably from one belonging to another group. A concurrent
+        // remove won the race, and between them the caller's intent is fully
+        // served — object gone, row gone — so this is a success, not a refusal
+        // to report. It is a *reading*, not a deduction: a caller whose
+        // assignment was revoked inside this request answers 42501 too, and is
+        // told the same thing. See the TOCTOU note above for why that trade is
+        // taken and what it leaves on screen.
         return undefined;
       }
       // The object is gone and the row survives, so the card shows a tile whose

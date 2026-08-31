@@ -65,13 +65,46 @@ export function SessionPhotoGallery({
   // Which photo is open, as a position in the list — because the overlay pages
   // through that list, and a position is the only thing "the next one" can be
   // said against. The risk an index carries is that the list changes underneath
-  // it; the viewer reads through it defensively for exactly that reason, and a
-  // list that empties takes the whole gallery (and its overlay) off the page at
-  // the guard below.
+  // it, and it is answered twice over: the viewer reads through the position
+  // defensively so a removal from the middle lands on the neighbour, and the
+  // adjustment below drops it when the list has shortened past it, so a
+  // position with nothing left to resolve to is never simply left set.
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   // The thumbnail that opened the viewer, so focus has somewhere to land when
   // it closes. A ref rather than state: nothing renders differently for it.
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  /**
+   * A list that shortens **past** the open position closes the overlay rather
+   * than merely failing to draw one — and does it in the render that notices,
+   * not in an effect afterwards.
+   *
+   * The two shortenings are not the same case. A photo removed from the
+   * *middle* shifts the ones after it, so the open position resolves to the
+   * neighbour and the reader goes on looking at the set — that is the viewer's
+   * own defensive read of the array, and it stays. A removal that takes the
+   * position off the **end** has no neighbour to fall back to, and rendering
+   * nothing for it is not the same as closing: the position stays set, so the
+   * reader is left behind an overlay that is no longer on the page and a list
+   * that grows back — a refetch, a photo added in another tab — puts it up
+   * again unasked.
+   *
+   * **Nothing is focused on the way out, because there is nothing left to
+   * focus.** The ordinary close hands focus back to the thumbnail that was
+   * pressed; here that thumbnail is exactly the one the shortening unmounted,
+   * so the browser has already moved focus off it and the best available answer
+   * is the one it picked. That is also what lets this be a render-time
+   * adjustment rather than an effect: the whole of what has to happen is a state
+   * correction, and correcting state from the props that invalidated it is what
+   * this shape is for.
+   *
+   * The empty-list guard below unmounts the gallery outright, which is this case
+   * at its limit rather than a second rule — every position is past the end of
+   * an empty list, so it comes through here first.
+   */
+  if (openIndex !== null && openIndex >= photos.length) {
+    setOpenIndex(null);
+  }
 
   // No photos, no row. An empty strip would be a slot held open for something
   // that is not coming — the layout rule's own corollary — and the card's other

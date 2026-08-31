@@ -7,6 +7,7 @@ import { NormalizeImageError } from "@/lib/images/normalize-image";
 import type { SessionPhoto } from "@/components/session-feed";
 import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
 import {
+  NO_LANDED_PHOTOS,
   NO_STAGED_PHOTOS,
   type StagedSessionPhoto,
   type StagedSessionPhotos,
@@ -91,6 +92,11 @@ function Harness({
         open
         photos={photos}
         staged={staged}
+        // Nothing has been saved from this harness — every rule below is about
+        // what the block does *without* a network, so the landed half of the
+        // derivation is empty throughout. What it covers is pinned against the
+        // whole feed instead, where a save can actually half-land.
+        landed={NO_LANDED_PHOTOS}
         disabled={disabled}
         error={error}
         onStageAdd={(photo: StagedSessionPhoto) =>

@@ -71,6 +71,27 @@ const PHOTOS = [
   { id: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
 ] as const;
 
+/**
+ * A stored photo, addressed by committed demo art with a fragment on the end:
+ * the URL helper passes a leading-slash id straight through, so no bucket env
+ * var has to exist, and the fragment makes each one identifiable in a rendered
+ * `src` without inventing a second addressing scheme.
+ */
+function stored(tag: string) {
+  return { id: `/preview-art/session-build.jpg#${tag}`, width: 1600, height: 900 };
+}
+
+/**
+ * The id the route answers an upload with, in the same passthrough form.
+ *
+ * Distinct per call, because a real one is a `gen_random_uuid()` and because two
+ * uploads landing under one id would be two tiles claiming the same photo.
+ */
+let storedIds = 0;
+function nextStoredId() {
+  return `/preview-art/session-badge.jpg#uploaded-${(storedIds += 1)}`;
+}
+
 function pastEntry(
   images: readonly { id: string; width: number; height: number }[],
 ): SessionFeedEntry {
@@ -133,7 +154,7 @@ interface FeedProps {
 function Feed({
   entries,
   editing = null,
-  onAddPhoto = () => Promise.resolve("stored-id"),
+  onAddPhoto = () => Promise.resolve(nextStoredId()),
   onRemovePhoto = () => Promise.resolve(),
   onSaveEntry = () => {},
 }: FeedProps) {
@@ -186,9 +207,21 @@ function tiles(container: HTMLElement) {
   return block === null ? [] : block.querySelectorAll("ul > li img");
 }
 
+/**
+ * What each tile on the strip is actually drawn from, decoded — a stored photo
+ * goes through the image optimizer, so its own id arrives percent-encoded inside
+ * the optimizer's query, and a staged one is a bare `blob:`.
+ */
+function tileSources(container: HTMLElement) {
+  return Array.from(tiles(container), (img) =>
+    decodeURIComponent(img.getAttribute("src") ?? ""),
+  );
+}
+
 let mintedUrls = 0;
 
 beforeEach(() => {
+  storedIds = 0;
   normalizeImage.mockReset();
   normalizeImage.mockResolvedValue({
     blob: new Blob(["jpeg"], { type: "image/jpeg" }),
@@ -254,7 +287,7 @@ describe("saving a card's photos", () => {
     });
     const onAddPhoto = vi.fn(() => {
       log.push("add");
-      return Promise.resolve("stored-id");
+      return Promise.resolve(nextStoredId());
     });
     const onSaveEntry = vi.fn(() => {
       log.push("write");
@@ -302,7 +335,7 @@ describe("saving a card's photos", () => {
         // chosen by the stable code beside it.
         new ApiError("upload refused", 502, "uploadFailed"),
       )
-      .mockResolvedValue("stored-id");
+      .mockImplementation(() => Promise.resolve(nextStoredId()));
     const onSaveEntry = vi.fn();
 
     const { container, getByRole, findByText } = renderFeed({
@@ -342,7 +375,7 @@ describe("saving a card's photos", () => {
   });
 
   it("throws the staged photos away when the editor is cancelled", async () => {
-    const onAddPhoto = vi.fn(() => Promise.resolve("stored-id"));
+    const onAddPhoto = vi.fn(() => Promise.resolve(nextStoredId()));
     const { container, getByRole, getAllByRole } = renderFeed({
       entries: [pastEntry([PHOTOS[0]])],
       editing: PAST_ID,
@@ -366,5 +399,109 @@ describe("saving a card's photos", () => {
     // as long as the page lives.
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1");
     expect(onAddPhoto).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * ============================================================================
+ * The strip draws the arrangement the gedu made, across the window in which
+ * the save has landed something the stored photos have not heard about yet.
+ * ============================================================================
+ *
+ * Both of these run against a feed whose `entries` never change — which is not
+ * an artificial setup but the real one: the stored photos arrive as a prop and
+ * do not move until the feed refetches, and every one of these assertions is
+ * about the frames before that. What the staged set says on its own is "nothing
+ * left to do", and drawing the strip from that alone would answer with the
+ * props: the deleted photo back on the row, the uploaded one off it, and the
+ * cap arithmetic derived from neither number.
+ */
+describe("the strip while the stored photos are still stale", () => {
+  /** Three the gedu is keeping, two they are crossing out — a report at the cap. */
+  const KEPT = [stored("kept-1"), stored("kept-2"), stored("kept-3")];
+  const CROSSED = [stored("crossed-1"), stored("crossed-2")];
+
+  it("holds the arrangement when the deletions land and the upload is refused", async () => {
+    const onRemovePhoto = vi.fn(() => Promise.resolve());
+    const onAddPhoto = vi.fn(() =>
+      Promise.reject(new ApiError("upload refused", 502, "uploadFailed")),
+    );
+
+    const { container, getByRole, queryByRole, queryByText, findByText } =
+      renderFeed({
+        // The crossed-out pair first, so one label takes them both in turn.
+        entries: [pastEntry([...CROSSED, ...KEPT])],
+        editing: PAST_ID,
+        onAddPhoto,
+        onRemovePhoto,
+      });
+
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    pick(container, 1);
+    // Five stored, two crossed out, one picked: four on the row and one slot
+    // still free, which is what the Add button and the drop hint are derived
+    // from.
+    await waitFor(() => expect(tiles(container)).toHaveLength(4));
+    expect(queryByRole("button", { name: copy.addPhoto })).not.toBeNull();
+
+    fireEvent.click(getByRole("button", { name: copy.save }));
+    await findByText(copy.photoErrorUploadFailed);
+
+    // Both deletions went through and left the staged set; the upload did not.
+    expect(onRemovePhoto).toHaveBeenCalledTimes(2);
+    const sources = tileSources(container);
+    // Exactly the row the gedu was looking at when the refusal arrived. Without
+    // the landed half of the derivation the two deleted photos would be back —
+    // six tiles, two of them for pictures that no longer exist, and the Add
+    // button gone because the count says the report is over its cap.
+    expect(sources).toHaveLength(4);
+    expect(sources.filter((src) => src.includes("#kept-"))).toHaveLength(3);
+    expect(sources.filter((src) => src.startsWith("blob:"))).toHaveLength(1);
+    expect(sources.some((src) => src.includes("#crossed-"))).toBe(false);
+    // And the affordances follow the same number: one slot free, so the Add
+    // button and the standing drop hint are both still there.
+    expect(queryByRole("button", { name: copy.addPhoto })).not.toBeNull();
+    expect(queryByText(copy.photosDropHint)).not.toBeNull();
+  });
+
+  it("holds it after a save that fully landed, before any refetch", async () => {
+    const { container, getByRole, queryByRole } = renderFeed({
+      entries: [pastEntry(PHOTOS)],
+      editing: PAST_ID,
+    });
+
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "1") }),
+    );
+    pick(container, 1);
+    await waitFor(() => expect(tiles(container)).toHaveLength(2));
+
+    fireEvent.click(getByRole("button", { name: copy.save }));
+    // The editor closes on a save that lands — and collapses over a strip that
+    // still has to be showing the right thing while it does.
+    await waitFor(() =>
+      expect(
+        getByRole("button", { name: copy.edit }).getAttribute("aria-expanded"),
+      ).toBe("false"),
+    );
+
+    const sources = tileSources(container);
+    expect(sources).toHaveLength(2);
+    // The survivor, and the upload — now drawn from the id the route answered
+    // with rather than from the local preview, at the same box it already had.
+    expect(sources.some((src) => src.includes("session-tower"))).toBe(true);
+    expect(sources.some((src) => src.includes("#uploaded-1"))).toBe(true);
+    // Nothing left pointing at bytes that have been let go, and the deleted
+    // photo does not come back for the frames before the refetch.
+    expect(sources.some((src) => src.startsWith("blob:"))).toBe(false);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1");
+    expect(sources.some((src) => src.includes("session-build.jpg"))).toBe(false);
+    // Two of five slots used, so the Add button is back where it was.
+    expect(queryByRole("button", { name: copy.addPhoto })).not.toBeNull();
   });
 });

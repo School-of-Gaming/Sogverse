@@ -36,12 +36,16 @@ const photos: readonly SessionPhoto[] = [
 
 const copy = messages.sessionFeed.photos;
 
-function renderGallery(set: readonly SessionPhoto[] = photos) {
-  return render(
+function gallery(set: readonly SessionPhoto[]) {
+  return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <SessionPhotoGallery photos={set} />
-    </NextIntlClientProvider>,
+    </NextIntlClientProvider>
   );
+}
+
+function renderGallery(set: readonly SessionPhoto[] = photos) {
+  return render(gallery(set));
 }
 
 /** The spoken name of the overlay, which is also where its position shows. */
@@ -129,5 +133,56 @@ describe("the session photo viewer", () => {
     // Where the reader's place on the page is — which paging inside an overlay
     // never moved.
     expect(document.activeElement).toBe(trigger);
+  });
+
+  /**
+   * A list can shorten underneath an open overlay — another tab, another gedu,
+   * a refetch — and the two ways that lands are genuinely different.
+   *
+   * From the middle, the positions after it shift and the open one resolves to
+   * the neighbour, which is the viewer's own defensive read of the array. Past
+   * the end there is no neighbour, and *not drawing* the overlay is not the same
+   * as closing it: the position stays set, so the reader's focus is stranded on
+   * an overlay that is no longer on the page and a list that grows back puts it
+   * on screen again without anybody asking.
+   */
+  it("lands on the neighbour when a photo is removed from the middle", () => {
+    const { getByRole, rerender } = renderGallery();
+    fireEvent.click(getByRole("button", { name: thumbnailName(2, 3) }));
+
+    rerender(gallery([photos[0], photos[2]]));
+
+    // Still open, on what is now at that position — the last of two.
+    expect(getByRole("dialog", { name: viewerLabel(2, 2) })).not.toBeNull();
+  });
+
+  it("closes outright when the list shortens past the open photo", () => {
+    const { getByRole, queryByRole, rerender } = renderGallery();
+    fireEvent.click(getByRole("button", { name: thumbnailName(3, 3) }));
+    expect(getByRole("dialog", { name: viewerLabel(3, 3) })).not.toBeNull();
+
+    rerender(gallery(photos.slice(0, 2)));
+    expect(queryByRole("dialog")).toBeNull();
+
+    // And the position went with it, which is the half a null render does not
+    // do: an overlay that had merely failed to draw would still be holding the
+    // third position, and a list coming back to three would reopen it.
+    rerender(gallery(photos));
+    expect(queryByRole("dialog")).toBeNull();
+  });
+
+  it("closes when the whole set goes, which takes the gallery with it", () => {
+    const { getByRole, queryByRole, rerender } = renderGallery();
+    fireEvent.click(getByRole("button", { name: thumbnailName(1, 3) }));
+
+    // The empty-list guard unmounts the row and the overlay together; every
+    // position is past the end of an empty list, so this is the case above at
+    // its limit rather than a second rule.
+    rerender(gallery([]));
+    expect(queryByRole("dialog")).toBeNull();
+    expect(queryByRole("list", { name: messages.sessionFeed.photos.list })).toBeNull();
+
+    rerender(gallery(photos));
+    expect(queryByRole("dialog")).toBeNull();
   });
 });
