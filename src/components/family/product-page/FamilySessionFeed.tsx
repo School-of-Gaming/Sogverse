@@ -132,14 +132,22 @@ export function FamilySessionFeed({
 }
 
 /**
- * Whether a past session has nothing to say about itself — no write-up, and no
- * mark this reader is shown. It is the row that renders as a quiet dashed line
- * rather than a card, and the marker drops to match it.
+ * Whether a past session has nothing to say about itself — no write-up, no
+ * photos, and no mark this reader is shown. It is the row that renders as a
+ * quiet dashed line rather than a card, and the marker drops to match it.
+ *
+ * **This is the card renderer's own condition and has to stay it.** The two
+ * answer the same question from opposite sides — one draws the line, the other
+ * sizes the dot beside it — so a term that lands in one and not the other puts
+ * a quiet-row marker against a full card. Photos were exactly that term: a
+ * session with pictures and no prose is a card, and its dot belongs at a card's
+ * height.
  */
 function isQuiet(entry: FamilySessionEntry, showAttendance: boolean): boolean {
   return (
     entry.kind === "past" &&
     !hasReport(entry.report) &&
+    entry.images.length === 0 &&
     (entry.attendance === null || !showAttendance)
   );
 }

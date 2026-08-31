@@ -270,6 +270,12 @@ export function buildFamilySessionFeed(
  * one newline is "no write-up" to every surface at once. Deciding it here would
  * put a second copy of that rule in a third place.
  *
+ * **Photos come through in the order the RPC emitted them, and an occurrence
+ * with no row has none.** They are content beside the report rather than a
+ * state of it: they play no part in what a session owes, and the only thing
+ * they change about an entry is that a past one carrying them has something to
+ * show — which is what turns the quiet dashed line into a card at the renderer.
+ *
  * **`attendance: null` is unmarked, and it stays a third state.** It is not
  * "absent": nobody answered for this child on this date, which is a gap in the
  * gedu's paperwork rather than a claim about the child. The entry carries the
@@ -295,6 +301,11 @@ function toFamilyEntry(args: {
       startsAt,
       endsAt,
       report: row?.report ?? null,
+      // Carried on a future entry because one of them can be the session **in
+      // progress**, which is exactly the card a gedu is photographing from. An
+      // occurrence with no stored row has none, which is the honest answer
+      // rather than a placeholder.
+      images: row?.images ?? [],
       lastEditedBy,
     };
   }
@@ -305,6 +316,10 @@ function toFamilyEntry(args: {
     startsAt,
     endsAt,
     report: row?.report ?? null,
+    // Straight through in the RPC's own order — `(created_at, id)`, the display
+    // order on every surface — because nothing here re-sorts what the database
+    // already ordered.
+    images: row?.images ?? [],
     attendance: row?.attendance ?? null,
     lastEditedBy,
   };

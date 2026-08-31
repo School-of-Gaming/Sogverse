@@ -36,7 +36,7 @@
  * schedule against the stored records and emits one entry per occurrence.
  */
 
-import type { AttendanceMark } from "@/components/session-feed";
+import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 
 interface FamilySessionEntryBase {
   /**
@@ -71,6 +71,31 @@ interface FamilySessionEntryBase {
    * shows no attribution at all.
    */
   lastEditedBy: FamilyProductGedu | null;
+  /**
+   * The photos attached to this session, oldest first — empty when there are
+   * none, never a missing field, so a renderer has one shape to handle.
+   *
+   * **They are content, and they are the family's half of the report.** A gedu
+   * attaches them to document what happened, and the card draws them under the
+   * write-up on both feeds through the same shared gallery — which is also why
+   * the type is the shared component one rather than anything of this module's:
+   * the staff document and the family document carry the same three fields, and
+   * a locally-declared shape both satisfy is what lets one gallery serve two
+   * surfaces across the privacy zone.
+   *
+   * **Carried on both kinds**, because one future entry can be the session
+   * *in progress* — the hour a gedu is standing in with something worth
+   * photographing in front of them — and a family reading that card should see
+   * what has already been attached to it. An occurrence with no stored row
+   * behind it has none.
+   *
+   * It says nothing about attendance and nothing about whether a report is
+   * owed: a session with photos and no write-up is still a session with no
+   * write-up. What it *does* change is the shape of the row — a past session
+   * with photos has something to show, so it renders as a card rather than as
+   * the quiet dashed line.
+   */
+  images: readonly SessionPhoto[];
 }
 
 /**

@@ -34,9 +34,9 @@ gedu-only lesson-material link, never a completeness or owed state. This is the 
 constraint the whole directory is arranged around, and it is enforced three ways rather
 than remembered:
 
-- **The types have no field for it.** The family entry carries a report and one child's
-  mark; the staff entry carries a note, the group's whole attendance map and an owed
-  flag. Narrowing the type rather than filtering in a component is what makes the
+- **The types have no field for it.** The family entry carries a report, its photos and
+  one child's mark; the staff entry carries a note, the group's whole attendance map and
+  an owed flag. Narrowing the type rather than filtering in a component is what makes the
   guarantee a compile-time fact. Anything that would have to be stripped on the way in
   has nowhere to be stripped from.
 - **The shared feed module holds no staff component.** Family components build their feed
@@ -94,12 +94,27 @@ wire schema is strict so nothing can arrive alongside it. The chip's placement, 
 last-editor semantics and the accepted mis-attribution edge are all documented once, with
 the shared feed machinery.
 
-**A past session with nothing on it renders as a quiet line, not a card.** No report and
-no mark means there is genuinely nothing to say about that evening, and a full card
-holding one apologetic sentence would give an absence of paperwork the same weight as an
-actual write-up. There is no placeholder for an empty *past* either: a timeline that
+**A past session with nothing on it renders as a quiet line, not a card.** No report, no
+photos and no mark means there is genuinely nothing to say about that evening, and a full
+card holding one apologetic sentence would give an absence of paperwork the same weight as
+an actual write-up. There is no placeholder for an empty *past* either: a timeline that
 starts fresh simply ends at the divider, which reads as a club that has not met yet. A
 feed with nothing in it at all does get a line, worded per audience.
+
+**Rule: anything to show earns a card, and photos are something to show — but only prose
+earns the chip.** A session photographed and never written up is a card carrying its
+gallery and no attribution, because the two questions are different ones: whether there is
+content on this row, and whether there is a write-up to sign. **The condition is written
+twice** — the item draws the row, the feed sizes the rail marker beside it — so a term
+added to one and not the other puts a quiet-row dot against a full card; they are edited
+together. Photos change nothing else: not attendance, not what a session owes.
+
+**Rule: the gallery is the shared one, and photos sit under the write-up as one block with
+it.** They are the family's half of the report rather than a decoration beside it, so the
+padding belongs to the block and a card carrying only pictures sits exactly where a card
+carrying only prose does. Every box is arithmetic from the stored dimensions, which is what
+keeps the feed still while the JPEGs decode; the rules for the row itself and its viewer
+live with the shared session-feed machinery.
 
 **There is no `no_record` kind on this surface.** The staff feed distinguishes a
 pre-epoch occurrence from a recent unwritten one because the enforcement epoch decides
