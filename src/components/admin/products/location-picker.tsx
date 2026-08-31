@@ -20,7 +20,7 @@ import {
   type AcceptedLocation,
 } from "@/lib/locations/stored-pick";
 import { MUNI_CLUB_COUNTRY_CODE } from "./product-type-config";
-import { VenuePickerDialog } from "./venue-picker-dialog";
+import { SitePickerDialog } from "./site-picker-dialog";
 
 type PickableMode = "site" | "municipality";
 
@@ -164,7 +164,7 @@ function SitePicker({
         onOpen={() => setPicking(true)}
       />
 
-      <VenuePickerDialog
+      <SitePickerDialog
         open={picking}
         onOpenChange={setPicking}
         countryCode={countryCode}

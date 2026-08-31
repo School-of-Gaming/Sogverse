@@ -62,7 +62,7 @@ import type { LocationType } from "@/types";
  * Nothing above a site is ever created here; the hierarchy is seeded.
  */
 
-interface VenuePickerDialogProps {
+interface SitePickerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** A venue was chosen — searched for, listed, or named just now. */
@@ -81,14 +81,14 @@ interface VenuePickerDialogProps {
  * to search — what a search hit may be. A municipality confirms as "show me the
  * venues here"; a site confirms as the venue itself.
  */
-const VENUE_PICKABLE_TYPES: readonly LocationType[] = ["municipality", "site"];
+const SITE_PICKABLE_TYPES: readonly LocationType[] = ["municipality", "site"];
 
-export function VenuePickerDialog({
+export function SitePickerDialog({
   open,
   onOpenChange,
   onPick,
   countryCode,
-}: VenuePickerDialogProps) {
+}: SitePickerDialogProps) {
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
   const initialPath = useCountryInitialPath(countryCode);
@@ -127,7 +127,7 @@ export function VenuePickerDialog({
         }}
         title={t("sitePickerTitle")}
         description={t("sitePickerDescription")}
-        pickableTypes={VENUE_PICKABLE_TYPES}
+        pickableTypes={SITE_PICKABLE_TYPES}
         countryCode={countryCode}
         initialPath={initialPath}
         boundCountryName={boundCountryName}
