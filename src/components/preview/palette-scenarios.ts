@@ -28,6 +28,23 @@ export const BRAND_PALETTE_SCENARIO = {
   label: "Brand palette (draft)",
 } as const;
 
+/**
+ * The same four families, spent at the marketing site's dose.
+ *
+ * The question the whole pass answers is whether this app can be as bright and
+ * lively as sog.gg while keeping the dark ground — and that is a question about
+ * *how much* colour, not which. So the draft is two scenarios rather than one:
+ * `brand-palette` uses the palette as accents, `brand-lively` gives it whole
+ * fields. Same hues, same contrast rules, different dose; the owner picks.
+ *
+ * Home only. The gamer dashboard keeps its two scenarios, because the dose
+ * question is about a marketing surface and that is not one.
+ */
+export const BRAND_LIVELY_SCENARIO = {
+  slug: "brand-lively",
+  label: "Brand palette, lively (draft)",
+} as const;
+
 export const CURRENT_PALETTE_SCENARIO = {
   slug: "current",
   label: "Current palette",
@@ -35,6 +52,7 @@ export const CURRENT_PALETTE_SCENARIO = {
 
 /** Which palette a scenario slug asks for; anything else is the live one. */
 export function ytyPaletteFor(scenario: string): YtyPalette {
+  if (scenario === BRAND_LIVELY_SCENARIO.slug) return "brand-lively";
   return scenario === BRAND_PALETTE_SCENARIO.slug ? "brand" : "current";
 }
 
@@ -57,10 +75,13 @@ export function displayFaceFor(scenario: string): DisplayFace {
 /**
  * The home scene's scenarios *are* the palette axis and nothing else: the page
  * has no data and no states, so there is nothing else for a scenario to vary.
+ * Three of them, because the dose is the open question and a page cannot be
+ * drawn at two doses at once.
  */
 export const HOME_SCENARIOS = [
   CURRENT_PALETTE_SCENARIO.slug,
   BRAND_PALETTE_SCENARIO.slug,
+  BRAND_LIVELY_SCENARIO.slug,
 ] as const;
 
 export type HomeScenario = (typeof HOME_SCENARIOS)[number];

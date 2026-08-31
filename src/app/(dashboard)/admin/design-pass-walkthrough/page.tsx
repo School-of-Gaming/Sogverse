@@ -45,6 +45,7 @@ const SLIDES = [
   { id: "faces", title: "Type faces, and every Press Start 2P site" },
   { id: "zones", title: "Voice-zone Yty tiles" },
   { id: "reach", title: "How far the palette reaches" },
+  { id: "status-colours", title: "Status colours meet the brand palette" },
   { id: "recap", title: "Recap, and the decisions checklist" },
 ] as const;
 
@@ -448,6 +449,151 @@ const PS2P_SITES: readonly {
   },
 ];
 
+/**
+ * The functional status tokens against the brand family each one now sits in.
+ *
+ * Hexes are what the browser resolves the HSL triples in globals.css to, and
+ * the distances are CIE76 in Lab — a rough but honest "how far apart would a
+ * person call these". Under about 25 is the range where two colours read as
+ * two shades of one thing rather than two things.
+ */
+const STATUS_COLLISIONS: readonly {
+  token: string;
+  hex: string;
+  against: string;
+  againstHex: string;
+  hue: string;
+  distance: string;
+}[] = [
+  {
+    token: "--info",
+    hex: "#308CE8",
+    against: "Wit strong",
+    againstHex: "#3A71DE",
+    hue: "210° vs 220°",
+    distance: "17.5",
+  },
+  {
+    token: "--info",
+    hex: "#308CE8",
+    against: "Wit soft",
+    againstHex: "#4DB3F5",
+    hue: "210° vs 204°",
+    distance: "22.7",
+  },
+  {
+    token: "--success",
+    hex: "#2EB88A",
+    against: "Glow strong",
+    againstHex: "#1AB061",
+    hue: "160° vs 148°",
+    distance: "19.1",
+  },
+  {
+    token: "--success",
+    hex: "#2EB88A",
+    against: "Glow soft",
+    againstHex: "#6AC66B",
+    hue: "160° vs 121°",
+    distance: "24.7",
+  },
+  {
+    token: "--warning",
+    hex: "#E7B008",
+    against: "Valor strong",
+    againstHex: "#FD700D",
+    hue: "45° vs 25°",
+    distance: "43.9",
+  },
+  {
+    token: "--destructive",
+    hex: "#EF4343",
+    against: "Harmony strong",
+    againstHex: "#F55B9A",
+    hue: "0° vs 335°",
+    distance: "42.6",
+  },
+];
+
+/** A swatch row: the status token, then the two brand variants beside it. */
+const STATUS_SWATCH_ROWS: readonly {
+  heading: string;
+  swatches: readonly { label: string; hex: string; className: string }[];
+}[] = [
+  {
+    heading: "One blue, or three?",
+    swatches: [
+      { label: "--info", hex: "#308CE8", className: "bg-info" },
+      { label: "Wit strong", hex: "#3A71DE", className: "bg-yty-wit-strong" },
+      { label: "Wit soft", hex: "#4DB3F5", className: "bg-yty-wit-soft" },
+    ],
+  },
+  {
+    heading: "One green, or three?",
+    swatches: [
+      { label: "--success", hex: "#2EB88A", className: "bg-success" },
+      { label: "Glow strong", hex: "#1AB061", className: "bg-yty-glow-strong" },
+      { label: "Glow soft", hex: "#6AC66B", className: "bg-yty-glow-soft" },
+    ],
+  },
+];
+
+/**
+ * The same collision as the app actually draws it — the tinted chip shape both
+ * halves already use, so the confusion is visible in context rather than as
+ * squares. Left of each pair is a real status chip; right of it is the brand
+ * family the draft would put beside it on the same screen.
+ */
+const STATUS_CHIPS: readonly {
+  caption: string;
+  status: { label: string; className: string };
+  brand: { label: string; className: string };
+}[] = [
+  {
+    caption: "Blue",
+    status: {
+      label: "Info notice",
+      className: "border-info/40 bg-info/10 text-info",
+    },
+    brand: {
+      label: "Wit — technology",
+      className:
+        "border-yty-wit-strong/40 bg-yty-wit-strong/10 text-yty-wit-soft",
+    },
+  },
+  {
+    caption: "Green",
+    status: {
+      label: "Payment succeeded",
+      className: "border-success/40 bg-success/10 text-success",
+    },
+    brand: {
+      label: "Glow — others",
+      className:
+        "border-yty-glow-strong/40 bg-yty-glow-strong/10 text-yty-glow-soft",
+    },
+  },
+];
+
+function StatusChip({
+  label,
+  className,
+}: {
+  label: string;
+  className: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold",
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Slide 7's four draft cards                                         */
 /* ------------------------------------------------------------------ */
@@ -503,8 +649,27 @@ export default function DesignPassWalkthroughPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Brand design pass — walkthrough</h1>
         <p className="max-w-prose text-muted-foreground">
-          Twelve slides. Each one shows today beside the draft, says why the
+          Thirteen slides. Each one shows today beside the draft, says why the
           draft is what it is, and names the ruling it wants from you.
+        </p>
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-5">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+          The question this pass answers
+        </div>
+        <p className="max-w-prose text-lg font-semibold leading-snug text-foreground">
+          Can Sogverse be as fun, colourful, bright and lively as the sog.gg
+          marketing site while keeping the dark ground — all while adhering to
+          the Guidebook?
+        </p>
+        <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+          Every slide below is evidence toward that answer. The Guidebook does
+          not stand in the way of it: its own colour-rationing rule welcomes the
+          full palette on marketing, gamer, community and in-world surfaces, and
+          caps liveliness only in the calm ring — billing, safety and legal —
+          where amber stays the single accent on a quiet ground. The home page
+          is a marketing surface, so it is where the answer is drawn.
         </p>
       </div>
 
@@ -682,26 +847,77 @@ export default function DesignPassWalkthroughPage() {
       {/* ---------------------------------------------------------- 4 */}
       <Slide id="home-yty">
         <Prose>
-          The four-element story on the public home page, in the brand&rsquo;s
-          actual hues on our dark ground. Same section, same copy, same layout —
-          only the colours move, spent as slide 3 describes.
+          The home page is where the cover&rsquo;s question gets answered,
+          because it is a marketing surface and the Guidebook lets a marketing
+          surface have the whole palette. Three frames, one page, same copy and
+          same layout in all three — only how much colour it spends changes.
+        </Prose>
+        <Prose>
+          The draft no longer stops at the Yty section. The four feature cards
+          each take one element family in display order — pink, green, orange,
+          blue — with the soft variant on the glyph and the strong one on the
+          tile wash and its edge. The three how-it-works circles become harmony,
+          glow and wit fills carrying ink. And the hero gains colour in its
+          glow. Valor is deliberately absent from the circles: an orange one
+          beside the amber CTA is the same collision slide 2 opened with.
+        </Prose>
+        <Prose>
+          <strong className="font-semibold text-foreground">Accented</strong>{" "}
+          keeps today&rsquo;s hero wash and adds one pink hint; the section
+          grounds, the headline and the page&rsquo;s rhythm do not move.{" "}
+          <strong className="font-semibold text-foreground">Lively</strong>{" "}
+          draws the brand&rsquo;s own social look: a dusk sky of pink and blue
+          with <em>no ambient amber at all</em>, so the only amber on screen is
+          the CTA button; the headline goes white with a glow-green marker
+          stroke behind its payoff words; the feature washes double; the
+          how-it-works band is tinted rather than grey; and a palette rule sits
+          under each section heading.
+        </Prose>
+        <Prose>
+          Both are contrast-measured, not eyeballed. The binding number on the
+          lively hero is where its two glows overlap into dusk purple — the
+          subtitle over that composite reads 4.78:1, which is why the glows are
+          22% and 18% and why a third one was cut. Every circle numeral clears
+          the body-text bar on its fill: 6.11, 6.63 and 8.10.
         </Prose>
 
         <FrameRow>
           <DesktopFrame
             label="Today"
-            src="/preview/home/current#yty"
+            src="/preview/home/current"
             height={980}
+            scale={0.3}
           />
           <DesktopFrame
-            label="Draft"
-            src="/preview/home/brand-palette#yty"
+            label="Accented"
+            src="/preview/home/brand-palette"
             height={980}
+            scale={0.3}
+          />
+          <DesktopFrame
+            label="Lively"
+            src="/preview/home/brand-lively"
+            height={980}
+            scale={0.3}
           />
         </FrameRow>
 
+        <Prose>
+          The frames open at the top so the hero is the first thing compared.
+          The Yty section is the same in both drafts — the dose question is
+          about the page around it — so open a draft full size and scroll to it
+          to judge the element cards.
+        </Prose>
+
         <Ruling>
-          <p>Sign off the section as drafted, or name what to tune.</p>
+          <p>
+            Sign off the home draft — the Yty section plus the new feature,
+            how-it-works and hero colour — or name what to tune.
+          </p>
+          <p>
+            Pick the dose: accented, lively, or a point between the two named as
+            a change.
+          </p>
         </Ruling>
       </Slide>
 
@@ -958,37 +1174,150 @@ export default function DesignPassWalkthroughPage() {
           welcome the full palette.
         </Prose>
         <Prose>
-          Mapping that onto our own parent-versus-gamer split is marked in the
-          plan as a starting hypothesis, not a decided rule — you have said you
-          want the friendlier colours working broadly, and pink, green and blue
-          only exist as tokens at all once this pass lands. Whatever you pick
-          becomes a written rule in the Styling section of the root CLAUDE.md at
-          wiring time, so a future surface does not re-decide it.
+          <strong className="font-semibold text-foreground">
+            Direction given: broad.
+          </strong>{" "}
+          This slide used to ask an open question about how far the palette
+          reaches. You have since answered it — the site should be brighter and
+          more fun, the way the marketing is — so the drafts stopped fencing the
+          palette inside the Yty section. Slide 4 is what that decision looks
+          like on a real page, at two doses.
+        </Prose>
+        <Prose>
+          That leaves one part of the rationing rule unanswered, and it is the
+          part the Guidebook is most specific about: the calm ring. Billing,
+          safeguarding and legal surfaces are specced as amber-single-accent on
+          a quiet ground, and there is a real argument for keeping them that way
+          that has nothing to do with taste — a page about a charge or a
+          child&rsquo;s safety reads as more serious when it is not decorated.
+          Whatever you pick becomes a written rule in the Styling section of the
+          root CLAUDE.md at wiring time, so a future surface does not re-decide
+          it.
         </Prose>
 
         <Ruling>
-          <p>How far do pink, green and blue reach into parent surfaces?</p>
           <p>
-            A — the hypothesis as stated: parent surfaces stay amber as the
-            single accent.
+            The calm ring — billing, safeguarding, legal. Confirm the
+            Guidebook&rsquo;s amber-only treatment there, or adjust it.
           </p>
           <p>
-            B — friendlier: palette families are allowed on parent family-story
-            surfaces, such as a child&rsquo;s card, an enrollment or a session
-            report.
+            A — confirm: those surfaces stay amber as the single accent, and the
+            palette stops at their door.
           </p>
           <p>
-            C — decide per surface, in the scene, as each one comes up for
-            design.
+            B — adjust: name what the palette is allowed to do there, such as
+            status and category marks but not decoration.
           </p>
         </Ruling>
       </Slide>
 
       {/* --------------------------------------------------------- 12 */}
+      <Slide id="status-colours">
+        <Prose>
+          The app has four functional status colours — info, success, warning,
+          destructive — and they predate the brand palette by a long way. Two of
+          them now land inside a brand family, which is the same defect slide 2
+          opened with: the old glow amber colliding with the CTA amber. One hue,
+          two meanings, and nothing on screen to tell a reader which one it is.
+        </Prose>
+        <Prose>
+          <code>--info</code> resolves to #308CE8. Wit strong is #3A71DE and wit
+          soft is #4DB3F5 — info sits between them, at 210° between their 220°
+          and 204°. <code>--success</code> resolves to #2EB88A against glow
+          strong #1AB061, twelve degrees apart. The other two are safely clear:
+          warning and destructive are 43.9 and 42.6 away from their nearest
+          brand family, which is a different colour by any measure.
+        </Prose>
+
+        {STATUS_SWATCH_ROWS.map((row) => (
+          <div key={row.heading} className="space-y-3">
+            <Marker>{row.heading}</Marker>
+            <div className="flex flex-wrap gap-4">
+              {row.swatches.map((swatch) => (
+                <Swatch key={swatch.label} {...swatch} />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <div className="space-y-3">
+          <Marker>The same collision, as the app draws it</Marker>
+          <div className="space-y-3">
+            {STATUS_CHIPS.map((pair) => (
+              <div key={pair.caption} className="flex flex-wrap items-center gap-3">
+                <span className="w-16 shrink-0 text-xs text-muted-foreground">
+                  {pair.caption}
+                </span>
+                <StatusChip {...pair.status} />
+                <StatusChip {...pair.brand} />
+              </div>
+            ))}
+          </div>
+          <Prose>
+            Left of each pair is a status chip the app ships today; right of it
+            is the brand family the draft would put on the same screen. Nothing
+            distinguishes &ldquo;this is information&rdquo; from &ldquo;this is
+            the Wit element&rdquo; except the words inside them.
+          </Prose>
+        </div>
+
+        <DeckTable
+          head={["Token", "Resolves to", "Against", "Brand hex", "Hue", "Distance"]}
+        >
+          {STATUS_COLLISIONS.map((row) => (
+            <tr key={`${row.token}-${row.against}`}>
+              <Cell>
+                <code>{row.token}</code>
+              </Cell>
+              <Cell muted>{row.hex}</Cell>
+              <Cell>{row.against}</Cell>
+              <Cell muted>{row.againstHex}</Cell>
+              <Cell muted>{row.hue}</Cell>
+              <Cell>{row.distance}</Cell>
+            </tr>
+          ))}
+        </DeckTable>
+
+        <Prose>
+          Distance is CIE76 in Lab — a rough but honest &ldquo;would a person
+          call these two colours or two shades&rdquo;. Under about 25 is the
+          range where they read as one thing.
+        </Prose>
+
+        <Prose>
+          The recommendation is to converge at wiring time: point{" "}
+          <code>--info</code> at the wit family and <code>--success</code> at
+          the glow family, so the app has one blue and one green and a reader
+          never has to work out which system a colour belongs to. It costs
+          nothing at the call sites — both are tokens, and every consumer
+          inherits — and it means the palette is genuinely one palette rather
+          than a brand set plus a legacy set that happen to overlap. Warning and
+          destructive are untouched either way.
+        </Prose>
+
+        <Ruling>
+          <p>
+            A — converge: <code>--info</code> takes the wit family,{" "}
+            <code>--success</code> takes the glow family.
+          </p>
+          <p>
+            B — keep both, accepting that the app carries two blues and two
+            greens that mean different things.
+          </p>
+          <p>
+            C — defer it to the categorical-labelling follow-up, which is
+            already the place a meaning-free multi-state palette gets designed.
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* --------------------------------------------------------- 13 */}
       <Slide id="recap">
         <Prose>
-          Twelve rulings, in the order they were asked. Any of them can come
-          back as tune this rather than yes.
+          Fourteen rulings, in the order they were asked. Any of them can come
+          back as tune this rather than yes. The cover&rsquo;s question is the
+          one they add up to: whether this app can be as bright and lively as
+          the marketing site on a dark ground, inside the Guidebook.
         </Prose>
 
         <ol className="max-w-prose list-decimal space-y-2 pl-5 text-sm text-foreground">
@@ -996,7 +1325,11 @@ export default function DesignPassWalkthroughPage() {
             Slide 3 — accept the strong and soft split: soft on text and glyphs,
             strong on fills, borders, rings and glows.
           </li>
-          <li>Slide 4 — the home Yty section as drafted.</li>
+          <li>
+            Slide 4 — the home draft: the Yty section plus the feature cards,
+            the how-it-works circles and the hero.
+          </li>
+          <li>Slide 4 — the dose: accented, or lively.</li>
           <li>Slide 5 — the gamer dashboard Yty grid at the 360 floor.</li>
           <li>Slide 6 — the greeting swaps from Press Start 2P to Space Mono.</li>
           <li>
@@ -1023,8 +1356,13 @@ export default function DesignPassWalkthroughPage() {
           </li>
           <li>Slide 10 — the voice-zone Yty tiles.</li>
           <li>
-            Slide 11 — how far pink, green and blue reach into parent surfaces:
-            A, B or C.
+            Slide 11 — the calm ring: confirm the Guidebook&rsquo;s amber-only
+            treatment of billing, safeguarding and legal, or adjust it.
+          </li>
+          <li>
+            Slide 12 — the status colours: converge info onto wit and success
+            onto glow, keep both sets, or defer to the categorical-labelling
+            follow-up.
           </li>
         </ol>
 
@@ -1037,7 +1375,10 @@ export default function DesignPassWalkthroughPage() {
               documenting the old colours. The button variants swap with their
               call sites fixed. The face decisions are applied to the live
               surfaces. The palette rules you settle here are written into the
-              root CLAUDE.md and the deviations log.
+              root CLAUDE.md and the deviations log. If slide 12 says converge,
+              the two status tokens move in the same commit as the Yty ones —
+              they are tokens, so it is a value change and no call site is
+              touched.
             </p>
             <p>
               Then the scaffolding goes: the draft scenarios, the draft colour

@@ -150,18 +150,25 @@ export const YTY_ELEMENT_DRAFT_COLORS: Record<YtyElementId, YtyElementColor> = {
 };
 
 /**
- * Which Yty palette a surface draws in.
+ * Which Yty palette a surface draws in — and, on the home page, at what dose.
  *
  * `"current"` is the live map and the default, so a route that does not opt in
- * renders exactly what it rendered before; `"brand"` is the draft above, which
- * only the preview scenes pass. Retires with the draft map at promotion.
+ * renders exactly what it rendered before. `"brand"` and `"brand-lively"` are
+ * both the draft map above; they differ only in how far the *rest* of a page
+ * spends the same four families — accents on `"brand"`, marketing-site
+ * brightness on `"brand-lively"`. The element cards themselves are identical
+ * under the two, which is deliberate: the dose question is about the page
+ * around them, and varying both at once would make the comparison unreadable.
+ *
+ * Only the preview scenes pass anything but `"current"`, and the whole type
+ * retires with the draft map at promotion.
  */
-export type YtyPalette = "current" | "brand";
+export type YtyPalette = "current" | "brand" | "brand-lively";
 
 /** The five class slots for one element under the requested palette. */
 export function ytyElementColor(
   element: YtyElement,
   palette: YtyPalette,
 ): YtyElementColor {
-  return palette === "brand" ? YTY_ELEMENT_DRAFT_COLORS[element.id] : element.color;
+  return palette === "current" ? element.color : YTY_ELEMENT_DRAFT_COLORS[element.id];
 }

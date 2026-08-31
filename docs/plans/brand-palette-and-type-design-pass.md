@@ -73,6 +73,30 @@ Owner rulings (2026-08-24):
    it. Both judged in the scenes.
 6. **Nothing promotes without the owner's sign-off on the scene.**
 
+Owner direction (2026-08-31), added during implementation:
+
+7. **The question the pass answers, stated by the owner:** *can Sogverse be as fun,
+   colourful, bright and lively as the sog.gg marketing site while keeping the dark
+   ground — all while adhering to the Guidebook?* The walkthrough deck's cover carries it
+   verbatim and every slide is read as evidence toward it.
+8. **The palette's reach is broad, not fenced to the Yty section.** Step 9's rationing
+   hypothesis is settled on the permissive side: the home page is a marketing surface, so
+   the brand draft colours the feature cards, the how-it-works circles and the hero glow
+   as well. Two doses are drafted rather than one — `brand-palette` (accents) and
+   `brand-lively` (the marketing site's own energy: a dusk pink/blue hero with no ambient
+   amber, a glow-green marker stroke behind the headline's payoff words, fuller washes, a
+   tinted band, palette rules under section headings) — and the owner picks the dose from
+   the scenes. Only the **calm ring** (billing, safeguarding, legal), which the Guidebook
+   keeps amber-only, is still an open ruling.
+9. **The status tokens collide with the brand families, and convergence is raised for
+   ruling.** `--info` (#308CE8) sits between wit-strong #3A71DE and wit-soft #4DB3F5;
+   `--success` (#2EB88A) sits beside glow-strong #1AB061 — the same one-hue-two-meanings
+   defect this plan opened with. The deck asks: converge (info → wit, success → glow),
+   keep both, or defer to the categorical-labelling follow-up. `--warning` and
+   `--destructive` are far enough from valor and harmony to stay either way. **If the
+   owner rules to converge, step 6's wiring scope gains the two status-token values**, in
+   the same commit as the Yty tokens — both are tokens, so no call site changes.
+
 ## Rejected alternatives
 
 - **Mechanical token swap without design review** — rejected. The brand hues were tuned
