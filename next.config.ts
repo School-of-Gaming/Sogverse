@@ -5,13 +5,15 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 /**
  * The one remote host the image optimizer is allowed to fetch from: this
- * deployment's own Supabase Storage, and only the public `product-images`
- * bucket inside it.
+ * deployment's own Supabase Storage, and only the public buckets named below
+ * inside it. **One pattern per bucket** — `remotePatterns` matches on the
+ * pathname, so a bucket that is not listed here is not optimizable, which is
+ * the point: the host is shared, the permission is not.
  *
  * **Derived from the env var rather than hardcoded**, because the project ref
  * is part of the hostname and staging and production have different ones — a
  * literal would work on exactly one of them. Each deployment only ever serves
- * its own bucket, so deriving gives each the right single host instead of a
+ * its own buckets, so deriving gives each the right single host instead of a
  * wildcard that would let the optimizer proxy any Supabase project on the
  * internet.
  *
@@ -28,7 +30,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
  * `images.dangerouslyAllowLocalIP` is set, and the error names neither this
  * file nor the flag. No local stack exists today, so the flag is not set here.
  */
-function productImagePattern() {
+function bucketPattern(bucket: string) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) {
     throw new Error(
@@ -41,13 +43,20 @@ function productImagePattern() {
     protocol: protocol.replace(/:$/, "") as "http" | "https",
     hostname,
     port,
-    pathname: "/storage/v1/object/public/product-images/**",
+    pathname: `/storage/v1/object/public/${bucket}/**`,
   };
 }
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [productImagePattern()],
+    remotePatterns: [
+      bucketPattern("product-images"),
+      // Gedu session-report photos. They go through the optimizer for the same
+      // reason product banners do and a stronger one: a family feed card can
+      // show five of them, unpaged, and serving ~300 KB masters into 200 px
+      // thumbnails is the real delivery cost of the feature.
+      bucketPattern("session-images"),
+    ],
     // WebP only — AVIF was weighed and rejected (owner decision, 2026-08-18).
     // AVIF saves a further ~20–30% over WebP but its encode is far slower, and
     // the encode is paid synchronously by the FIRST visitor to each
@@ -74,6 +83,14 @@ const nextConfig: NextConfig = {
     // product's picture points it at a different object, which is a cache miss
     // by construction; uploading the same file twice resolves to the object
     // already there, which is a hit.
+    //
+    // A session photo's name is immutable for a different reason with the same
+    // force: it is the row's own random UUID, uploaded with `upsert: false` and
+    // never reused, so a URL's bytes cannot change either. The one consequence
+    // worth naming is that a deleted photo's cached variants can outlive its
+    // object — harmless, because nothing renders a photo whose row is gone, and
+    // the acceptance criterion for deletion is stated against the raw bucket
+    // URL rather than an optimizer variant.
     minimumCacheTTL: 31_536_000,
   },
   async headers() {
